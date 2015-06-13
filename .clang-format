@@ -1,0 +1,19 @@
+---
+IndentWidth: 4
+UseTab: Never
+ColumnLimit: 100
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+BreakConstructorInitializersBeforeComma: true
+IndentCaseLabels: true
+BreakBeforeBraces: Allman
+NamespaceIndentation: None
+MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: true
+PointerAlignment: Left
+SpaceBeforeParens: Never
+SpaceBeforeAssignmentOperators: true
+SpacesInParentheses: false
+AlwaysBreakTemplateDeclarations: true
+Standard: Auto
+AccessModifierOffset: -4

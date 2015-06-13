@@ -1,0 +1,60 @@
+import QtQuick 2.2
+import QtQuick.Controls 1.3
+import QtQuick.Layouts 1.1
+
+import "../delegates"
+import "../../styles"
+
+Item {
+    id: root
+
+    property variant model: null // resources model
+    property bool selectable: false
+
+    // signal itemClicked(url resourceUrl)
+    // signal itemDoubleClicked(url resourceUrl)
+
+    function getSelectionList() {
+        var selectionList = [];
+        for(var i = root.model.resources.length; i > 0 ; i--) {
+            if(grid.contentItem.children[i-1].selected) {
+                selectionList.push(root.model.resources[i-1].url);
+            }
+        }
+        return selectionList;
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        // gallery
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            GridView {
+                id: grid
+                anchors.fill: parent
+                cellWidth: 120
+                cellHeight: 120
+                model: root.model.resources
+                delegate: ResourceGridDelegate {
+                    onItemClicked: {
+                        if(!root.selectable)
+                            return;
+                        toggleSelectedState();
+                        // itemClicked(modelData.url);
+                    }
+                    onItemDoubleClicked: {
+                        if(!root.selectable)
+                            return;
+                        if(modelData.isDir())
+                            return;
+                        // itemDoubleClicked(modelData.url);
+                    }
+                }
+                clip: true
+            }
+        }
+    }
+}

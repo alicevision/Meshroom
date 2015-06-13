@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <g>
+  <title>Layer 1</title>
+  <g fill-opacity="0.8" id="svg_1">
+   <path fill="#ffffff" id="svg_2" d="m112,400l288,0l0,-192l-288,0l0,192zm112,-160l64,0c8.799988,0 16,7.199997 16,16s-7.200012,16 -16,16l-64,0c-8.800003,0 -16,-7.200012 -16,-16s7.199997,-16 16,-16z"/>
+   <polygon fill="#ffffff" id="svg_3" points="96,112 96,192 112,192 400,192 416,192 416,112  "/>
+  </g>
+ </g>
+</svg>

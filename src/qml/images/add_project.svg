@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <g>
+  <title>Layer 1</title>
+  <g stroke-opacity="0.8" fill-opacity="0.8" id="svg_1">
+   <path stroke="#ffffff" fill="#ffffff" id="svg_2" d="m286.799988,240c8.799988,0 16.100006,7.199997 16.100006,16s-7,16 -15.899994,16l-64.000015,0c-8.800003,0 -16,-7.200012 -16,-16s7.199997,-16 16,-16l63.000015,0m1,-16l-64,0c-17.600006,0 -32,14.399994 -32,32s14.399994,32 32,32l64,0c17.600006,0 32,-14.399994 32,-32s-14.399994,-32 -32,-32l0,0z"/>
+   <g id="svg_3">
+    <path stroke="#ffffff" fill="#ffffff" id="svg_4" d="m415,112l-320,0l0,80l16,0l0,208l288,0l0,-208l16,0l0,-80zm-32,272l-256,0l0,-192l256,0l0,192zm16,-208l-288,0l0,-48l288,0l0,48z"/>
+   </g>
+   <line id="svg_7" y2="491.513878" x2="438.5" y1="383.495361" x1="438.5" stroke-width="25" stroke="#ffffff" fill="#ffffff"/>
+   <line transform="rotate(-90 438.50000000000006,437.504638671875) " id="svg_8" y2="491.513894" x2="438.5" y1="383.495377" x1="438.5" stroke-width="25" stroke="#ffffff" fill="#ffffff"/>
+  </g>
+ </g>
+
+</svg>

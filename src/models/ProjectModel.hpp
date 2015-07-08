@@ -15,6 +15,7 @@ class ProjectModel : public QObject
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
     Q_PROPERTY(QList<QObject*> jobs READ jobs WRITE setJobs NOTIFY jobsChanged)
+    Q_PROPERTY(QObject* tmpJob READ tmpJob WRITE setTmpJob NOTIFY tmpJobChanged)
 
 public:
     enum ERROR_TYPE
@@ -36,7 +37,10 @@ public slots:
     void setUrl(const QUrl& url);
     const QList<QObject*>& jobs() const;
     void setJobs(const QList<QObject*>& name);
-    QObject* tmpJob();
+
+    QObject* tmpJob() const;
+    void setTmpJob(QObject* job);
+    void newTmpJob();
     bool addTmpJob();
 
 public slots:
@@ -52,6 +56,7 @@ signals:
     void nameChanged();
     void urlChanged();
     void jobsChanged();
+    void tmpJobChanged();
 
 private:
     QString _name;

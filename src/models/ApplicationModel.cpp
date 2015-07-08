@@ -13,13 +13,6 @@ ApplicationModel::ApplicationModel(Application& app)
     exposeToQML();
 }
 
-void ApplicationModel::clear()
-{
-    _projects.clear();
-    _application.settings().clear();
-    emit projectsChanged();
-}
-
 const QList<QObject*>& ApplicationModel::projects() const
 {
     return _projects;
@@ -31,6 +24,26 @@ void ApplicationModel::setProjects(const QList<QObject*>& projects)
         return;
     _projects = projects;
     emit projectsChanged();
+}
+
+void ApplicationModel::clear()
+{
+    _projects.clear();
+    _application.settings().clearRecentProjects();
+    emit projectsChanged();
+}
+
+void ApplicationModel::removeProject(QObject* projectModel)
+{
+    ProjectModel* project = qobject_cast<ProjectModel*>(projectModel);
+    if(!project)
+        return;
+    QUrl url = project->url();
+    if(_projects.removeAll(projectModel) > 0)
+    {
+        _application.settings().removeFromRecentProjects(url);
+        emit projectsChanged();
+    }
 }
 
 QObject* ApplicationModel::tmpProject()

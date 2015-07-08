@@ -18,6 +18,7 @@ Item {
     }
 
     signal crumbChanged(int index)
+    signal actionCancelled()
 
     RowLayout {
         anchors.fill: parent
@@ -83,7 +84,7 @@ Item {
             ToolButton {
                 style: DefaultStyle.smallToolButton
                 iconSource: 'qrc:/images/close.svg'
-                onClicked: stackView.pop()
+                onClicked: actionCancelled()
             }
         }
     }

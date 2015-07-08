@@ -64,25 +64,14 @@ Item {
                         color: "white"
                         elide: Text.ElideRight
                         wrapMode: Text.WrapAnywhere
-                        text: modelData.name
+                        text: root.expanded ? modelData.url : modelData.name
                         maximumLineCount: 1
-                        font.pointSize: 16
+                        font.pointSize: root.expanded ? 10 : 16
                     }
                 }
                 Item { // spacer
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                }
-                Item { // job count
-                    Layout.fillWidth: false
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: childrenRect.width
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.jobs.length
-                        color: "white"
-                        font.pointSize: 10
-                    }
                 }
                 RowLayout {
                     Layout.fillWidth: false
@@ -91,7 +80,7 @@ Item {
                     spacing: 0
                     ToolButton {
                         style: DefaultStyle.smallToolButton
-                        tooltip: "job count"
+                        tooltip: "add job to project "+modelData.name
                         iconSource: 'qrc:/images/add_job.svg'
                         onClicked: {
                             root.expanded = true;
@@ -99,6 +88,12 @@ Item {
                                 item: Qt.resolvedUrl("qrc:/pages/NewJobPage.qml"),
                                 properties: { model: modelData }});
                         }
+                    }
+                    ToolButton {
+                        style: DefaultStyle.smallToolButton
+                        tooltip: "remove project "+modelData.name
+                        iconSource: 'qrc:/images/trash_outline.svg'
+                        onClicked: _applicationModel.removeProject(modelData)
                     }
                 }
             }

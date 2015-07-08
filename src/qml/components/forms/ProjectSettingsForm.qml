@@ -46,7 +46,7 @@ Item {
                 style: DefaultStyle.textField
                 text: (root.model) ? root.model.url : ""
                 placeholderText: "/path"
-                onEditingFinished: if(root.model) root.model.url = text
+                onEditingFinished: if(root.model) root.model.url = "file://"+text
             }
             ToolButton {
                 style: DefaultStyle.largeToolButton

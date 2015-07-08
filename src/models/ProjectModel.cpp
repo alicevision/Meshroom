@@ -60,29 +60,47 @@ void ProjectModel::setJobs(const QList<QObject*>& jobs)
     emit jobsChanged();
 }
 
-QObject* ProjectModel::tmpJob()
+QObject* ProjectModel::tmpJob() const
 {
+    return _tmpJob;
+}
+
+void ProjectModel::setTmpJob(QObject* job)
+{
+    JobModel* jobmodel = qobject_cast<JobModel*>(job);
+    if(!jobmodel)
+        return;
+    if(jobmodel == _tmpJob)
+        return;
+    _tmpJob = jobmodel;
+    emit tmpJobChanged();
+}
+
+void ProjectModel::newTmpJob()
+{
+    if(_tmpJob)
+        delete _tmpJob;
     QDateTime jobtime = QDateTime::currentDateTime();
     QString jobdate = jobtime.toString("yyyy-MM-dd HH:mm");
     QString dirname = jobtime.toString("yyyyMMdd_HHmm");
-
     QDir dir(_url.toLocalFile()); // project dir
     dir.cd("reconstructions");
-    if(!_tmpJob)
-        _tmpJob = new JobModel(dir.absoluteFilePath(dirname), this);
+    _tmpJob = new JobModel(dir.absoluteFilePath(dirname), this);
     _tmpJob->setUrl(QUrl::fromLocalFile(dir.absoluteFilePath(dirname)));
     _tmpJob->setDate(jobdate);
-
-    return _tmpJob;
+    emit tmpJobChanged();
 }
 
 bool ProjectModel::addTmpJob()
 {
+    if(!_tmpJob)
+        return false;
     if(!_tmpJob->saveToDisk())
         return false;
     _tmpJob->start();
     _jobs.append(_tmpJob);
     _tmpJob = nullptr;
+    emit tmpJobChanged();
     emit jobsChanged();
     return true;
 }

@@ -34,6 +34,7 @@ TitledPageLayout {
             // change page
             body = eval("page"+index);
         }
+        onActionCancelled: stackView.pop()
     }
     body: page0
 }

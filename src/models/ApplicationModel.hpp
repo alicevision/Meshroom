@@ -23,6 +23,7 @@ public:
 
 public slots:
     void clear();
+    void removeProject(QObject* projectModel);
     QObject* tmpProject();
     bool addTmpProject();
 

@@ -18,26 +18,36 @@ TitledPageLayout {
 
     // page #0
     property Component page0: ResourceDropArea {
-        onFilesDropped: root.model.tmpJob().addResources(files);
+        function removeResource() {
+            if(root.body != page0)
+                return;
+            root.model.tmpJob.removeResources(gallery.getSelectionList());
+        }
+        onFilesDropped: root.model.tmpJob.addResources(files);
         ResourceGallery {
             id: gallery
             anchors.fill: parent
             anchors.margins: 30
-            model: root.model.tmpJob()
+            model: root.model.tmpJob
             selectable: true
             Shortcut {
                 key: "Backspace"
-                onActivated: {
-                    if(root.body != page0)
-                        return;
-                    root.model.tmpJob().removeResources(gallery.getSelectionList());
-                }
+                onActivated: removeResource()
+            }
+            Shortcut {
+                key: "Delete"
+                onActivated: removeResource()
             }
         }
     }
+
     // page #1
     property Component page1: JobSettingsForm {
-        model: root.model.tmpJob()
+        model: root.model.tmpJob
+    }
+
+    Component.onCompleted: {
+        root.model.newTmpJob();
     }
 
     // header
@@ -49,16 +59,20 @@ TitledPageLayout {
         onCrumbChanged: {
             if(index == model.count) {
                 // job added properly
-                if(root.model.addTmpJob()){
+                if(root.model.addTmpJob()) {
                     stackView.pop();
                     return;
                 }
                 // an error occurred
-                popupDialog.popup(root.model.tmpJob().errorString());
+                popupDialog.popup(root.model.tmpJob.errorString());
                 return;
             }
             // change page
             body = eval("page"+index);
+        }
+        onActionCancelled: {
+            // root.model.clearTmpJob();
+            stackView.pop();
         }
     }
     body: page0

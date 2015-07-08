@@ -11,9 +11,6 @@ Item {
     property variant model: null // resources model
     property bool selectable: false
 
-    // signal itemClicked(url resourceUrl)
-    // signal itemDoubleClicked(url resourceUrl)
-
     function getSelectionList() {
         var selectionList = [];
         for(var i = root.model.resources.length; i > 0 ; i--) {
@@ -37,20 +34,18 @@ Item {
                 anchors.fill: parent
                 cellWidth: 120
                 cellHeight: 120
-                model: root.model.resources
+                model: root.model ? root.model.resources : 0
                 delegate: ResourceGridDelegate {
                     onItemClicked: {
                         if(!root.selectable)
                             return;
                         toggleSelectedState();
-                        // itemClicked(modelData.url);
                     }
                     onItemDoubleClicked: {
                         if(!root.selectable)
                             return;
                         if(modelData.isDir())
                             return;
-                        // itemDoubleClicked(modelData.url);
                     }
                 }
                 clip: true

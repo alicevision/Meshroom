@@ -1,11 +1,10 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.3
 import QtQuick.Dialogs 1.1
-// import Popart 0.1
 
 import "pages"
 import "styles"
-import "components/forms"
+import "components"
 
 ApplicationWindow {
 
@@ -14,15 +13,6 @@ ApplicationWindow {
     height: 800
     visible: true
     style: DefaultStyle.application
-
-    // GLVideoStreamView {
-    //     anchors.fill: parent
-    //     color: "black"
-    // }
-
-    PopupDialog {
-        id: popupDialog
-    }
 
     StackView {
         id: stackView
@@ -34,5 +24,9 @@ ApplicationWindow {
             }
         }
         initialItem: OverviewPage {}
+    }
+
+    LogBar {
+        model: _applicationModel.logs
     }
 }

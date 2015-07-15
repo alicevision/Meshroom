@@ -1,5 +1,6 @@
 #include "JobsIO.hpp"
 #include "models/JobModel.hpp"
+#include "models/ProjectModel.hpp"
 #include "models/ResourceModel.hpp"
 #include <QCoreApplication>
 #include <QJsonObject>
@@ -12,64 +13,49 @@
 namespace mockup
 {
 
-namespace // empty namespace
-{
+// namespace // empty namespace
+// {
+//
+// typedef std::function<void(const QUrl&)> fun_t;
+// void traverseDirectory(const QUrl& url, fun_t f)
+// {
+//     QDir dir(url.toLocalFile());
+//     if(!dir.exists())
+//         return;
+//     f(url);
+//     QStringList list = dir.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+//     for(int i = 0; i < list.size(); ++i)
+//         traverseDirectory(QUrl::fromLocalFile(dir.absoluteFilePath(list[i])), f);
+// }
+//
+// } // empty namespace
 
-typedef std::function<void(const QUrl&)> fun_t;
-void traverseDirectory(const QUrl& url, fun_t f)
+JobModel* JobsIO::create(QObject* parent)
 {
+    return new JobModel(parent);
+}
+
+JobModel* JobsIO::load(QObject* parent, const QUrl& url)
+{
+    if(!url.isValid())
+    {
+        qCritical("Loading job : invalid project URL (malformed or empty URL)");
+        return nullptr;
+    }
+
     QDir dir(url.toLocalFile());
     if(!dir.exists())
-        return;
-    f(url);
-    QStringList list = dir.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
-    for(int i = 0; i < list.size(); ++i)
-        traverseDirectory(QUrl::fromLocalFile(dir.absoluteFilePath(list[i])), f);
-}
-
-} // empty namespace
-
-JobsIO::JobsIO(JobModel& jobModel)
-    : QObject(&jobModel)
-    , _job(jobModel)
-{
-    QString defaultScriptPath = QCoreApplication::applicationDirPath() + "/scripts";
-    _startCommand = std::getenv("MOCKUP_START_COMMAND");
-    if(_startCommand.isEmpty())
-        _startCommand = defaultScriptPath + "/job_start.py";
-    _stopCommand = std::getenv("MOCKUP_STOP_COMMAND");
-    if(_stopCommand.isEmpty())
-        _stopCommand = defaultScriptPath + "/job_stop.py";
-    _statusCommand = std::getenv("MOCKUP_STATUS_COMMAND");
-    if(_statusCommand.isEmpty())
-        _statusCommand = defaultScriptPath + "/job_status.py";
-    QObject::connect(&_watcher, SIGNAL(directoryChanged(const QString&)), &_job, SLOT(refresh()));
-}
-
-bool JobsIO::load()
-{
-    // set as clean
-    _job.setError(JobModel::ERR_NOERROR);
+    {
+        qCritical("Loading job : invalid project URL (not found)");
+        return nullptr;
+    }
 
     // load the job descriptor file
-    if(!_job.url().isValid())
-    {
-        _job.setError(JobModel::ERR_INVALID_URL);
-        return false;
-    }
-
-    QDir dir(_job.url().toLocalFile());
-    if(!dir.exists())
-    {
-        _job.setError(JobModel::ERR_INVALID_URL);
-        return false;
-    }
-
     QFile file(dir.filePath("job.json"));
     if(!file.open(QIODevice::ReadOnly))
     {
-        _job.setError(JobModel::ERR_INVALID_DESCRIPTOR);
-        return false;
+        qCritical("Loading job : invalid descriptor file");
+        return nullptr;
     }
 
     // read it and close the file handler
@@ -81,18 +67,21 @@ bool JobsIO::load()
     QJsonDocument jsondoc(QJsonDocument::fromJson(data, &parseError));
     if(parseError.error != QJsonParseError::NoError)
     {
-        _job.setError(JobModel::ERR_MALFORMED_DESCRIPTOR);
-        return false;
+        qCritical("Loading job : malformed descriptor file");
+        return nullptr;
     }
 
-    QJsonObject json = jsondoc.object();
+    // create a new JobModel and set its attributes
+    JobModel* jobModel = JobsIO::create(parent);
+    jobModel->setUrl(url);
 
     // JSON: resources
+    QJsonObject json = jsondoc.object();
     QJsonArray resourceArray = json["resources"].toArray();
     QObjectList resources;
     for(int i = 0; i < resourceArray.count(); ++i)
         resources.append(
-            new ResourceModel(QUrl::fromLocalFile(resourceArray.at(i).toString()), &_job));
+            new ResourceModel(QUrl::fromLocalFile(resourceArray.at(i).toString()), jobModel));
 
     // JSON: steps
     QJsonObject stepsObject = json["steps"].toObject();
@@ -111,82 +100,102 @@ bool JobsIO::load()
     QJsonObject meshingObject = stepsObject["meshing"].toObject();
 
     // update job parameters
-    _job.setDate(json["date"].toString());
-    _job.setUser(json["user"].toString());
-    _job.setNote(json["note"].toString());
-    _job.setResources(resources);
-    _job.setPair(pair);
-    _job.setMeshingScale(meshingObject["scale"].toDouble());
-    _job.setPeakThreshold(featureDetectObject["peak_threshold"].toDouble());
+    jobModel->setDate(json["date"].toString());
+    jobModel->setUser(json["user"].toString());
+    jobModel->setNote(json["note"].toString());
+    jobModel->setResources(resources);
+    jobModel->setPair(pair);
+    jobModel->setMeshingScale(meshingObject["scale"].toDouble());
+    jobModel->setPeakThreshold(featureDetectObject["peak_threshold"].toDouble());
 
-    // reset watchfolders
-    QStringList directories = _watcher.directories();
-    if(!directories.isEmpty())
-        _watcher.removePaths(directories);
-    fun_t f = [&](const QUrl& dir)
-    {
-        _watcher.addPath(dir.toLocalFile());
-    };
-    traverseDirectory(_job.buildUrl(), f);
-    traverseDirectory(_job.matchUrl(), f);
+    // // reset watchfolders
+    // QStringList directories = _watcher.directories();
+    // if(!directories.isEmpty())
+    //     _watcher.removePaths(directories);
+    // fun_t f = [&](const QUrl& dir)
+    // {
+    //     _watcher.addPath(dir.toLocalFile());
+    // };
+    // traverseDirectory(jobModel->buildUrl(), f);
+    // traverseDirectory(jobModel->matchUrl(), f);
 
-    return true;
+    return jobModel;
 }
 
-bool JobsIO::save() const
+void JobsIO::loadAllJobs(ProjectModel& projectModel)
 {
-    // start without error
-    _job.setError(JobModel::ERR_NOERROR);
-
-    if(_job.cameras().count() < 2)
+    // list sub-directories to retrieve all jobs
+    QDir dir(projectModel.url().toLocalFile());
+    dir.cd("reconstructions");
+    QStringList jobs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    QList<QObject*> validJobs;
+    for(size_t i = 0; i < jobs.length(); ++i)
     {
-        _job.setError(JobModel::ERR_SOURCE_LACK);
+        JobModel* job = JobsIO::load(&projectModel, QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
+        if(!job)
+            continue;
+        validJobs.append(job);
+    }
+    projectModel.setJobs(validJobs);
+}
+
+bool JobsIO::save(JobModel& jobModel)
+{
+    if(!jobModel.url().isValid())
+    {
+        qCritical("Saving job: invalid project URL (malformed or empty URL)");
         return false;
     }
 
-    if(_job.pair().count() != 2)
+    if(jobModel.cameras().count() < 2)
     {
-        _job.setError(JobModel::ERR_INVALID_INITIAL_PAIR);
+        qCritical("Saving job: insufficient number of sources");
+        return false;
+    }
+
+    if(jobModel.pair().count() != 2)
+    {
+        qCritical("Saving job: invalid initial pair");
         return false;
     }
 
     // create filesystem structure
     QDir dir;
-    if(!dir.mkpath(_job.url().toLocalFile()))
+    if(!dir.mkpath(jobModel.url().toLocalFile()))
     {
-        _job.setError(JobModel::ERR_INVALID_URL);
+        qCritical("Saving job: unable to create directory structure (job url)");
         return false;
     }
 
-    if(!dir.mkpath(_job.buildUrl().toLocalFile()))
+    if(!dir.mkpath(jobModel.buildUrl().toLocalFile()))
     {
-        _job.setError(JobModel::ERR_INVALID_URL);
+        qCritical("Saving job: unable to create directory structure (build url)");
         return false;
     }
 
-    if(!dir.mkpath(_job.matchUrl().toLocalFile()))
+    if(!dir.mkpath(jobModel.matchUrl().toLocalFile()))
     {
-        _job.setError(JobModel::ERR_INVALID_URL);
+        qCritical("Saving job: unable to create directory structure (match url)");
         return false;
     }
 
     // open file handler
-    QDir rootdir(_job.url().toLocalFile());
+    QDir rootdir(jobModel.url().toLocalFile());
     QFile file(rootdir.filePath("job.json"));
     if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        _job.setError(JobModel::ERR_INVALID_DESCRIPTOR);
+        qCritical("Saving job: unable to write the job descriptor file");
         return false;
     }
 
     // JSON: paths
     QJsonObject pathsObject;
-    pathsObject["build"] = _job.buildUrl().toLocalFile();
-    pathsObject["match"] = _job.matchUrl().toLocalFile();
+    pathsObject["build"] = jobModel.buildUrl().toLocalFile();
+    pathsObject["match"] = jobModel.matchUrl().toLocalFile();
 
     // JSON: resources
     QJsonArray resourceArray;
-    foreach(QObject* r, _job.resources())
+    foreach(QObject* r, jobModel.resources())
     {
         ResourceModel* resource = qobject_cast<ResourceModel*>(r);
         if(!resource)
@@ -196,18 +205,18 @@ bool JobsIO::save() const
 
     // JSON: feature detection parameters
     QJsonObject featureDetectObject;
-    featureDetectObject["peak_threshold"] = _job.peakThreshold();
+    featureDetectObject["peak_threshold"] = jobModel.peakThreshold();
 
     // JSON: structure from motion parameters
     QJsonObject sfmObject;
     QJsonArray pairArray;
-    foreach(QUrl elmt, _job.pair())
+    foreach(QUrl elmt, jobModel.pair())
         pairArray.append(elmt.toLocalFile());
     sfmObject["initial_pair"] = pairArray;
 
     // JSON: meshing parameters
     QJsonObject meshingObject;
-    meshingObject["scale"] = _job.meshingScale();
+    meshingObject["scale"] = jobModel.meshingScale();
 
     // JSON: steps
     QJsonObject stepsObject;
@@ -217,9 +226,9 @@ bool JobsIO::save() const
 
     // build document
     QJsonObject json;
-    json["date"] = _job.date();
-    json["user"] = _job.user();
-    json["note"] = _job.note();
+    json["date"] = jobModel.date();
+    json["user"] = jobModel.user();
+    json["note"] = jobModel.note();
     json["steps"] = stepsObject;
     json["paths"] = pathsObject;
     json["resources"] = resourceArray;
@@ -229,135 +238,6 @@ bool JobsIO::save() const
     file.write(jsondoc.toJson());
     file.close();
     return true;
-}
-
-void JobsIO::start()
-{
-    QStringList arguments;
-    arguments.append(_job.url().toLocalFile() + "/job.json");
-    _process.setArguments(arguments);
-    _process.setProgram(_startCommand);
-    _process.start();
-}
-
-void JobsIO::stop()
-{
-    QStringList arguments;
-    arguments.append(_job.url().toLocalFile() + "/job.json");
-    _process.setArguments(arguments);
-    _process.setProgram(_stopCommand);
-    _process.start();
-}
-
-void JobsIO::refresh()
-{
-    QObject::connect(&_process, SIGNAL(finished(int, QProcess::ExitStatus)), this,
-                     SLOT(readProcessOutput(int, QProcess::ExitStatus)));
-    QStringList arguments;
-    arguments.append(_job.url().toLocalFile() + "/job.json");
-    _process.setArguments(arguments);
-    _process.setProgram(_statusCommand);
-    _process.start();
-}
-
-// private
-void JobsIO::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
-{
-    QObject::disconnect(&_process, SIGNAL(finished(int, QProcess::ExitStatus)), this,
-                        SLOT(readProcessOutput(int, QProcess::ExitStatus)));
-
-    // parse standard output as JSON
-    QJsonParseError parseError;
-    QString response(_process.readAllStandardOutput());
-    QJsonDocument jsondoc(QJsonDocument::fromJson(response.toUtf8(), &parseError));
-    if(parseError.error != QJsonParseError::NoError)
-    {
-        _job.setCompletion(computeJobCompletion());
-        return;
-    }
-
-    // retrieve or compute job completion
-    QJsonObject json = jsondoc.object();
-    if(!json.contains("completion"))
-        _job.setCompletion(computeJobCompletion());
-    else
-        _job.setCompletion(json["completion"].toDouble());
-
-    // retrieve job status
-    switch(json["status"].toInt())
-    {
-        case 0: // BLOCKED
-        case 1: // READY
-        case 2: // RUNNING
-        case 3: // DONE
-            _job.setRunning(true);
-            break;
-        case 4: // ERROR
-        case 5: // CANCELED
-        case 6: // PAUSED
-            _job.setRunning(false);
-            break;
-    }
-}
-
-float JobsIO::computeJobCompletion()
-{
-    QFileInfoList fileInfoList;
-    QFileInfo fileInfo;
-    QDir buildDir(_job.buildUrl().toLocalFile());
-    QDir matchDir(_job.matchUrl().toLocalFile());
-
-    // final mesh (with texture)
-    fileInfo.setFile(buildDir.filePath("texturing/texrecon_surface.obj"));
-    if(fileInfo.exists())
-        return 1.f;
-
-    // final mesh (without texture)
-    fileInfo.setFile(buildDir.filePath("mve/surface.ply"));
-    if(fileInfo.exists())
-        return 0.9f;
-
-    // final (dense) pointcloud
-    fileInfo.setFile(buildDir.filePath("mve/OUTPUT.ply"));
-    if(fileInfo.exists())
-        return 0.8f;
-
-    // final (non-dense) pointcloud
-    fileInfo.setFile(buildDir.filePath("FinalColorized.ply"));
-    if(fileInfo.exists())
-        return 0.7f;
-
-    // temporary pointclouds
-    size_t plyCount = 0;
-    fileInfoList = buildDir.entryInfoList();
-    for(int i = 0; i < fileInfoList.size(); ++i)
-    {
-        fileInfo = fileInfoList.at(i);
-        if(fileInfo.completeSuffix() == "ply" && fileInfo.baseName().endsWith("_Resection"))
-            plyCount++;
-    }
-    if(plyCount != 0)
-        return 0.5f + 0.2f * (plyCount / (float)_job.cameras().count());
-
-    // feature detection & matching
-    matchDir.setFilter(QDir::Dirs | QDir::Files | QDir::NoSymLinks | QDir::NoDotAndDotDot);
-    size_t descCount = 0;
-    size_t matchCount = 0;
-    fileInfoList = matchDir.entryInfoList();
-    for(int i = 0; i < fileInfoList.size(); ++i)
-    {
-        fileInfo = fileInfoList.at(i);
-        if(fileInfo.completeSuffix() == "desc")
-            descCount++;
-        if(fileInfo.completeSuffix() == "matches.f.txt")
-            matchCount++;
-    }
-    if(matchCount != 0)
-        return 0.2f + 0.3f * (matchCount / (float)_job.cameras().count());
-    if(descCount != 0)
-        return 0.2f * (descCount / (float)_job.cameras().count());
-
-    return 0.f;
 }
 
 } // namespace

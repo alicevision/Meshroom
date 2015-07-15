@@ -3,32 +3,31 @@ import QtQuick.Controls 1.3
 import QtQuick.Layouts 1.1
 
 import "layouts"
+import "../components"
 import "../components/forms"
 import "../components/delegates"
-import "../components/gallery"
 import "../components/headers"
 import Popart 0.1
 
 TitledPageLayout {
 
     id : root
-
-    // project model
-    property variant model: null
+    property variant model: null // job model
+    property variant projectModel: null // project model
 
     // page #0
     property Component page0: ResourceDropArea {
         function removeResource() {
             if(root.body != page0)
                 return;
-            root.model.tmpJob.removeResources(gallery.getSelectionList());
+            root.model.removeResources(gallery.getSelectionList());
         }
-        onFilesDropped: root.model.tmpJob.addResources(files);
+        onFilesDropped: root.model.addResources(files);
         ResourceGallery {
             id: gallery
             anchors.fill: parent
             anchors.margins: 30
-            model: root.model.tmpJob
+            model: root.model
             selectable: true
             Shortcut {
                 key: "Backspace"
@@ -43,11 +42,7 @@ TitledPageLayout {
 
     // page #1
     property Component page1: JobSettingsForm {
-        model: root.model.tmpJob
-    }
-
-    Component.onCompleted: {
-        root.model.newTmpJob();
+        model: root.model
     }
 
     // header
@@ -58,20 +53,14 @@ TitledPageLayout {
         }
         onCrumbChanged: {
             if(index == model.count) {
-                // job added properly
-                if(root.model.addTmpJob()) {
+                if(root.model.save())
                     stackView.pop();
-                    return;
-                }
-                // an error occurred
-                popupDialog.popup(root.model.tmpJob.errorString());
                 return;
             }
-            // change page
             body = eval("page"+index);
         }
         onActionCancelled: {
-            // root.model.clearTmpJob();
+            root.projectModel.removeJob(root.model);
             stackView.pop();
         }
     }

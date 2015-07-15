@@ -1,6 +1,8 @@
 #include "ApplicationModel.hpp"
 #include "ProjectModel.hpp"
+#include "LogModel.hpp"
 #include "Application.hpp"
+#include "io/ProjectsIO.hpp"
 #include <QtQml/QQmlContext>
 
 namespace mockup
@@ -26,42 +28,53 @@ void ApplicationModel::setProjects(const QList<QObject*>& projects)
     emit projectsChanged();
 }
 
-void ApplicationModel::clear()
+const QList<QObject*>& ApplicationModel::logs() const
 {
-    _projects.clear();
-    _application.settings().clearRecentProjects();
-    emit projectsChanged();
+    return _logs;
 }
 
-void ApplicationModel::removeProject(QObject* projectModel)
+void ApplicationModel::addLog(QObject* log)
 {
-    ProjectModel* project = qobject_cast<ProjectModel*>(projectModel);
-    if(!project)
+    _logs.append(log);
+    emit logsChanged();
+}
+
+void ApplicationModel::setLogs(const QList<QObject*>& logs)
+{
+    if(logs == _logs)
         return;
-    QUrl url = project->url();
-    if(_projects.removeAll(projectModel) > 0)
-    {
-        _application.settings().removeFromRecentProjects(url);
-        emit projectsChanged();
-    }
+    _logs = logs;
+    emit logsChanged();
 }
 
-QObject* ApplicationModel::tmpProject()
+QObject* ApplicationModel::addNewProject()
 {
-    if(!_tmpProject)
-        _tmpProject = new ProjectModel(QUrl(), this);
-    return _tmpProject;
-}
-
-bool ApplicationModel::addTmpProject()
-{
-    if(!_tmpProject->saveToDisk())
-        return false;
-    _projects.append(_tmpProject);
-    _application.settings().addToRecentProjects(_tmpProject->url());
-    _tmpProject = nullptr;
+    ProjectModel* projectModel = ProjectsIO::create(this);
+    _projects.append(projectModel);
     emit projectsChanged();
-    return true;
+    return projectModel;
+}
+
+QObject* ApplicationModel::addExistingProject(const QUrl& url)
+{
+    ProjectModel* projectModel = ProjectsIO::load(this, url);
+    if(!projectModel)
+        return nullptr;
+    _projects.append(projectModel);
+    emit projectsChanged();
+    SettingsIO::saveRecentProjects(*this);
+    return projectModel;
+}
+
+void ApplicationModel::removeProject(QObject* model)
+{
+    ProjectModel* projectModel = qobject_cast<ProjectModel*>(model);
+    if(!projectModel)
+        return;
+    delete projectModel;
+    if(_projects.removeAll(projectModel) > 0)
+        emit projectsChanged();
+    SettingsIO::saveRecentProjects(*this);
 }
 
 // private

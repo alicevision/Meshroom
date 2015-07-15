@@ -84,9 +84,10 @@ Item {
                         iconSource: 'qrc:/images/add_job.svg'
                         onClicked: {
                             root.expanded = true;
+                            var newModel = modelData.addJob();
                             stackView.push({
                                 item: Qt.resolvedUrl("qrc:/pages/NewJobPage.qml"),
-                                properties: { model: modelData }});
+                                properties: { model: newModel, projectModel: modelData }});
                         }
                     }
                     ToolButton {
@@ -125,14 +126,14 @@ Item {
                             color: containsMouse ? "#000" : "transparent"
                             Behavior on color { ColorAnimation {} }
                         }
-                        Timer { // timer
-                            id: timer
-                            interval: 10000
-                            running: modelData.running
-                            repeat: true
-                            // triggeredOnStart: true
-                            onTriggered: modelData.refresh()
-                        }
+                        // Timer { // timer
+                        //     id: timer
+                        //     interval: 10000
+                        //     running: modelData.running
+                        //     repeat: true
+                        //     // triggeredOnStart: true
+                        //     onTriggered: modelData.refresh()
+                        // }
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 30
@@ -155,7 +156,7 @@ Item {
                                 }
                                 Image {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    source: modelData.cameras[0].url
+                                    source: (modelData.cameras.length > 0) ? modelData.cameras[0].url : ""
                                     width: parent.height
                                     height: width*3/4.0
                                     asynchronous: true
@@ -204,7 +205,7 @@ Item {
                                 ToolButton {
                                     style: DefaultStyle.smallToolButton
                                     iconSource: 'qrc:/images/refresh.svg'
-                                    onClicked: modelData.refresh()
+                                    // onClicked: modelData.refresh()
                                 }
                             }
                             ToolButton {

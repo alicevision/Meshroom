@@ -1,77 +1,63 @@
 #include "SettingsIO.hpp"
-#include "Application.hpp"
+#include "models/ApplicationModel.hpp"
 #include "models/ProjectModel.hpp"
 #include <QSettings>
 #include <QUrl>
+#include <iostream>
 
 namespace mockup
 {
 
-SettingsIO::SettingsIO(Application& app)
-    : QObject(&app)
-    , _application(app)
-{
-}
-
-void SettingsIO::load() const
-{
-    QVariantList recents = recentProjects();
-    QVariantList::iterator it = recents.begin();
-    QList<QObject*> projects;
-    while(it != recents.end())
-    {
-        QUrl url((*it).toUrl());
-        // in case of readable project
-        if(url.isValid())
-        {
-            ProjectModel* project = new ProjectModel(url, &_application);
-            if(project->error() == ProjectModel::ERR_NOERROR)
-            {
-                projects.append(project);
-                ++it;
-                continue;
-            }
-        }
-        // in case of invalid project
-        removeFromRecentProjects(url);
-        ++it;
-    }
-    _application.model().setProjects(projects);
-}
-
-void SettingsIO::clear() const
+void SettingsIO::clearAll()
 {
     QSettings settings;
     settings.clear();
 }
 
-void SettingsIO::clearRecentProjects() const
+void SettingsIO::clearRecentProjects()
 {
     QSettings settings;
     QVariantList empty;
     settings.setValue("project/recent", empty);
 }
 
-QVariantList SettingsIO::recentProjects() const
-{
-    QSettings settings;
-    return settings.value("project/recent").toList();
-}
-
-void SettingsIO::addToRecentProjects(const QUrl& url) const
+void SettingsIO::loadRecentProjects(ApplicationModel& applicationModel)
 {
     QSettings settings;
     QVariantList recents = settings.value("project/recent").toList();
-    recents.removeAll(url);
-    recents.push_front(url);
-    settings.setValue("project/recent", recents);
+    QVariantList::iterator it = recents.begin();
+    QList<QObject*> projects;
+    while(it != recents.end())
+    {
+        QUrl url(it->toUrl());
+        if(!applicationModel.addExistingProject(url))
+        {
+            // invalid project, remove from settings
+            QSettings settings;
+            QVariantList recents = settings.value("project/recent").toList();
+            recents.removeAll(url);
+            settings.setValue("project/recent", recents);
+        }
+        ++it;
+    }
 }
 
-void SettingsIO::removeFromRecentProjects(const QUrl& url) const
+void SettingsIO::saveRecentProjects(ApplicationModel& applicationModel)
 {
+    // clear recent project list
+    SettingsIO::clearRecentProjects();
+    // rebuild it by iterating over all loaded projects
     QSettings settings;
-    QVariantList recents = settings.value("project/recent").toList();
-    recents.removeAll(url);
+    QVariantList recents;
+    const QList<QObject*>& projects = applicationModel.projects();
+    QObjectList::const_iterator it = projects.begin();
+    while(it != projects.end())
+    {
+        ProjectModel* project = dynamic_cast<ProjectModel*>(*it);
+        if(project)
+            recents.push_front(project->url());
+        ++it;
+    }
     settings.setValue("project/recent", recents);
 }
 

@@ -14,19 +14,20 @@ class Application : public QObject
 
 public:
     Application(QObject* parent = nullptr);
-    ~Application() = default;
+    ~Application();
 
 public:
     ApplicationModel& model() { return _model; }
     QQmlApplicationEngine& engine() { return _engine; }
-    SettingsIO& settings() { return _settings; }
+
+public slots:
+    void onObjectCreated(QObject* object, const QUrl& url);
 
 private:
     QQmlApplicationEngine _engine;
 
 private:
     ApplicationModel _model;
-    SettingsIO _settings;
 };
 
 } // namespace

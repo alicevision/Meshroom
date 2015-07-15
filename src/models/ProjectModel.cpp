@@ -1,36 +1,23 @@
 #include "ProjectModel.hpp"
 #include "JobModel.hpp"
+#include "ApplicationModel.hpp"
+#include "io/ProjectsIO.hpp"
+#include "io/SettingsIO.hpp"
+#include "io/JobsIO.hpp"
 #include <QDateTime>
 #include <QDir>
 
 namespace mockup
 {
 
-ProjectModel::ProjectModel(const QUrl& url, QObject* parent)
+ProjectModel::ProjectModel(QObject* parent)
     : QObject(parent)
-    , _url(url)
-    , _io(*this)
 {
-    loadFromDisk();
-}
-
-ProjectModel::~ProjectModel()
-{
-    if(_tmpJob)
-        delete _tmpJob;
 }
 
 const QString& ProjectModel::name() const
 {
     return _name;
-}
-
-void ProjectModel::setName(const QString& name)
-{
-    if(name == _name)
-        return;
-    _name = name;
-    emit nameChanged();
 }
 
 const QUrl& ProjectModel::url() const
@@ -43,8 +30,12 @@ void ProjectModel::setUrl(const QUrl& url)
     if((_url == url) || url.isEmpty())
         return;
     _url = url;
-    loadFromDisk();
+    _name = url.fileName();
+
+    JobsIO::loadAllJobs(*this);
+
     emit urlChanged();
+    emit nameChanged();
 }
 
 const QList<QObject*>& ProjectModel::jobs() const
@@ -60,87 +51,39 @@ void ProjectModel::setJobs(const QList<QObject*>& jobs)
     emit jobsChanged();
 }
 
-QObject* ProjectModel::tmpJob() const
+QObject* ProjectModel::addJob()
 {
-    return _tmpJob;
-}
-
-void ProjectModel::setTmpJob(QObject* job)
-{
-    JobModel* jobmodel = qobject_cast<JobModel*>(job);
-    if(!jobmodel)
-        return;
-    if(jobmodel == _tmpJob)
-        return;
-    _tmpJob = jobmodel;
-    emit tmpJobChanged();
-}
-
-void ProjectModel::newTmpJob()
-{
-    if(_tmpJob)
-        delete _tmpJob;
+    JobModel* jobModel = JobsIO::create(this);
     QDateTime jobtime = QDateTime::currentDateTime();
     QString jobdate = jobtime.toString("yyyy-MM-dd HH:mm");
     QString dirname = jobtime.toString("yyyyMMdd_HHmm");
-    QDir dir(_url.toLocalFile()); // project dir
+    QDir dir(_url.toLocalFile());
     dir.cd("reconstructions");
-    _tmpJob = new JobModel(dir.absoluteFilePath(dirname), this);
-    _tmpJob->setUrl(QUrl::fromLocalFile(dir.absoluteFilePath(dirname)));
-    _tmpJob->setDate(jobdate);
-    emit tmpJobChanged();
-}
-
-bool ProjectModel::addTmpJob()
-{
-    if(!_tmpJob)
-        return false;
-    if(!_tmpJob->saveToDisk())
-        return false;
-    _tmpJob->start();
-    _jobs.append(_tmpJob);
-    _tmpJob = nullptr;
-    emit tmpJobChanged();
+    jobModel->setUrl(QUrl::fromLocalFile(dir.absoluteFilePath(dirname)));
+    jobModel->setDate(jobdate);
+    _jobs.append(jobModel);
     emit jobsChanged();
-    return true;
+    return jobModel;
 }
 
-ProjectModel::ERROR_TYPE ProjectModel::error() const
+void ProjectModel::removeJob(QObject* model)
 {
-    return _error;
-}
-
-QString ProjectModel::errorString() const
-{
-    switch(_error)
-    {
-        case ERR_INVALID_URL:
-            return "Invalid URL";
-        case ERR_INVALID_DESCRIPTOR:
-            return "Invalid descriptor file";
-        case ERR_MALFORMED_DESCRIPTOR:
-            return "Malformed descriptor file";
-        case ERR_NOERROR:
-            return "";
-    }
-    return "";
-}
-
-void ProjectModel::setError(ERROR_TYPE e)
-{
-    if(_error == e)
+    JobModel* jobModel = qobject_cast<JobModel*>(model);
+    if(!jobModel)
         return;
-    _error = e;
+    delete jobModel;
+    if(_jobs.removeAll(jobModel) > 0)
+        emit jobsChanged();
 }
 
-bool ProjectModel::loadFromDisk()
+bool ProjectModel::save()
 {
-    return _io.load();
-}
-
-bool ProjectModel::saveToDisk() const
-{
-    return _io.save();
+    if(!ProjectsIO::save(*this))
+        return false;
+    ApplicationModel* applicationModel = qobject_cast<ApplicationModel*>(parent());
+    if(applicationModel)
+        SettingsIO::saveRecentProjects(*applicationModel);
+    return true;
 }
 
 } // namespace

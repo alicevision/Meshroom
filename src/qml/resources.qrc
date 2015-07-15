@@ -3,26 +3,22 @@
     <qresource prefix="/">
 
         <file>main.qml</file>
-
         <file>components/delegates/JobListDelegate.qml</file>
         <file>components/delegates/ResourceGridDelegate.qml</file>
         <file>components/forms/JobSettingsForm.qml</file>
         <file>components/forms/ProjectSettingsForm.qml</file>
-        <file>components/forms/PopupDialog.qml</file>
-        <file>components/gallery/ResourceDropArea.qml</file>
-        <file>components/gallery/ResourceGallery.qml</file>
         <file>components/headers/BreadcrumbHeader.qml</file>
         <file>components/headers/OverviewHeader.qml</file>
-
+        <file>components/LogBar.qml</file>
+        <file>components/ResourceDropArea.qml</file>
+        <file>components/ResourceGallery.qml</file>
         <file>pages/layouts/StandardPageLayout.qml</file>
         <file>pages/layouts/TitledPageLayout.qml</file>
         <file>pages/OverviewPage.qml</file>
         <file>pages/NewJobPage.qml</file>
         <file>pages/NewProjectPage.qml</file>
-
         <file>styles/qmldir</file>
         <file>styles/DefaultStyle.qml</file>
-
         <file>images/add_job.svg</file>
         <file>images/add_project.svg</file>
         <file>images/arrow_right.svg</file>
@@ -40,6 +36,7 @@
         <file>images/job.svg</file>
         <file>images/job_outline.svg</file>
         <file>images/list.svg</file>
+        <file>images/monitor.svg</file>
         <file>images/project.svg</file>
         <file>images/pause.svg</file>
         <file>images/pause_outline.svg</file>

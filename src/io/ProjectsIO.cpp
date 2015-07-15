@@ -1,4 +1,5 @@
 #include "ProjectsIO.hpp"
+#include "JobsIO.hpp"
 #include "models/ProjectModel.hpp"
 #include "models/JobModel.hpp"
 #include <QDir>
@@ -6,73 +7,50 @@
 namespace mockup
 {
 
-ProjectsIO::ProjectsIO(ProjectModel& projectModel)
-    : QObject(&projectModel)
-    , _project(projectModel)
+ProjectModel* ProjectsIO::create(QObject* parent)
 {
+    return new ProjectModel(parent);
 }
 
-bool ProjectsIO::load()
+ProjectModel* ProjectsIO::load(QObject* parent, const QUrl& url)
 {
-    // set as clean
-    _project.setError(ProjectModel::ERR_NOERROR);
-
-    if(!_project.url().isValid())
+    if(!url.isValid())
     {
-        _project.setError(ProjectModel::ERR_INVALID_URL);
-        return false;
+        qCritical("Loading project : invalid project URL (malformed or empty URL)");
+        return nullptr;
     }
 
-    QDir dir(_project.url().toLocalFile());
+    QDir dir(url.toLocalFile());
     if(!dir.exists())
     {
-        _project.setError(ProjectModel::ERR_INVALID_URL);
-        return false;
+        qCritical("Loading project : invalid project URL (not found)");
+        return nullptr;
     }
 
-    // set project name
-    _project.setName(dir.dirName());
-
-    // retrieve project jobs
     if(!dir.cd("reconstructions"))
     {
-        _project.setError(ProjectModel::ERR_INVALID_URL);
-        return false;
+        qCritical("Loading project : invalid project URL (invalid structure)");
+        return nullptr;
     }
 
-    QStringList jobs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    QList<QObject*> validJobs;
-    for(size_t i = 0; i < jobs.length(); ++i)
-    {
-        JobModel* job = new JobModel(QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])), &_project);
-        if(job->error() != JobModel::ERR_NOERROR)
-        {
-            delete job;
-            continue;
-        }
-        validJobs.append(job);
-    }
-    _project.setJobs(validJobs);
+    // create a new ProjectModel and set its URL attribute
+    ProjectModel* projectModel = ProjectsIO::create(parent);
+    projectModel->setUrl(url);
 
-    return true;
+    return projectModel;
 }
 
-bool ProjectsIO::save() const
+bool ProjectsIO::save(ProjectModel& projectModel)
 {
-    // set as clean
-    _project.setError(ProjectModel::ERR_NOERROR);
-
-    if(!_project.url().isValid())
+    if(!projectModel.url().isValid())
     {
-        _project.setError(ProjectModel::ERR_INVALID_URL);
+        qCritical("Saving project: invalid project URL (malformed or empty URL)");
         return false;
     }
-
-    // create reconstruction dir
-    QDir dir(_project.url().toLocalFile());
+    QDir dir(projectModel.url().toLocalFile());
     if(!dir.mkpath("reconstructions"))
     {
-        _project.setError(ProjectModel::ERR_INVALID_URL);
+        qCritical("Saving project: unable to create directory structure");
         return false;
     }
     return true;

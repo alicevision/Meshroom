@@ -3,16 +3,16 @@ import QtQuick.Controls 1.3
 
 import "layouts"
 import "../components/forms"
-import "../components/gallery"
 import "../components/headers"
 
 TitledPageLayout {
 
     id: root
+    property variant model: null // project model
 
     // page #0
     property Component page0: ProjectSettingsForm {
-        model: _applicationModel.tmpProject()
+        model: root.model
     }
 
     // header
@@ -22,19 +22,16 @@ TitledPageLayout {
         }
         onCrumbChanged: {
             if(index == model.count) {
-                // project added properly
-                if(_applicationModel.addTmpProject()) {
+                if(root.model.save())
                     stackView.pop();
-                    return;
-                }
-                // an error occurred
-                popupDialog.popup(_applicationModel.tmpProject().errorString());
                 return;
             }
-            // change page
             body = eval("page"+index);
         }
-        onActionCancelled: stackView.pop()
+        onActionCancelled: {
+            _applicationModel.removeProject(root.model);
+            stackView.pop();
+        }
     }
     body: page0
 }

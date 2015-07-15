@@ -1,20 +1,17 @@
 #include "JobModel.hpp"
 #include "CameraModel.hpp"
 #include "ResourceModel.hpp"
+#include "io/JobsIO.hpp"
 #include <QDir>
-#include <cstdlib>
+#include <cstdlib> // std::getenv
 
 namespace mockup
 {
 
-JobModel::JobModel(const QUrl& url, QObject* parent)
+JobModel::JobModel(QObject* parent)
     : QObject(parent)
-    , _url(url)
     , _user(std::getenv("USER"))
-    , _io(*this)
-    , _error(ERR_NOERROR)
 {
-    loadFromDisk();
 }
 
 const QUrl& JobModel::url() const
@@ -27,7 +24,6 @@ void JobModel::setUrl(const QUrl& url)
     if(url == _url)
         return;
     _url = url;
-    loadFromDisk();
     emit urlChanged();
 }
 
@@ -73,14 +69,6 @@ void JobModel::setNote(const QString& note)
 const QList<QObject*>& JobModel::cameras() const
 {
     return _cameras;
-}
-
-void JobModel::setCameras(const QList<QObject*>& cameras)
-{
-    if(cameras == _cameras)
-        return;
-    _cameras = cameras;
-    emit camerasChanged();
 }
 
 const QList<QObject*>& JobModel::resources() const
@@ -197,25 +185,9 @@ const float& JobModel::completion() const
     return _completion;
 }
 
-void JobModel::setCompletion(const float& completion)
-{
-    if(completion == _completion)
-        return;
-    _completion = completion;
-    emit completionChanged();
-}
-
 const bool& JobModel::running() const
 {
     return _running;
-}
-
-void JobModel::setRunning(const bool& running)
-{
-    if(running == _running)
-        return;
-    _running = running;
-    emit runningChanged();
 }
 
 QUrl JobModel::buildUrl() const
@@ -230,64 +202,24 @@ QUrl JobModel::matchUrl() const
     return QUrl::fromLocalFile(dir.absoluteFilePath("build/matches"));
 }
 
-JobModel::ERROR_TYPE JobModel::error() const
-{
-    return _error;
-}
+// void JobModel::start()
+// {
+//     _io.start();
+// }
+//
+// void JobModel::stop()
+// {
+//     _io.stop();
+// }
+//
+// void JobModel::refresh()
+// {
+//     _io.refresh();
+// }
 
-QString JobModel::errorString() const
+bool JobModel::save()
 {
-    switch(_error)
-    {
-        case ERR_INVALID_URL:
-            return "Invalid URL";
-        case ERR_INVALID_DESCRIPTOR:
-            return "Invalid descriptor file";
-        case ERR_MALFORMED_DESCRIPTOR:
-            return "Malformed descriptor file";
-        case ERR_SOURCE_LACK:
-            return "Insufficient number of sources";
-        case ERR_INVALID_INITIAL_PAIR:
-            return "Invalid initial pair";
-        case ERR_NOERROR:
-            return "";
-    }
-    return "";
-}
-
-void JobModel::setError(ERROR_TYPE e)
-{
-    if(_error == e)
-        return;
-    _error = e;
-}
-
-void JobModel::start()
-{
-    _io.start();
-}
-
-void JobModel::stop()
-{
-    _io.stop();
-}
-
-void JobModel::refresh()
-{
-    _io.refresh();
-}
-
-bool JobModel::loadFromDisk()
-{
-    if(!_io.load())
-        return false;
-    refresh();
-    return true;
-}
-
-bool JobModel::saveToDisk() const
-{
-    return _io.save();
+    return JobsIO::save(*this);
 }
 
 // private
@@ -308,7 +240,8 @@ void JobModel::setCamerasFromResources()
         }
         cameras.append(new CameraModel(resource->url(), this));
     }
-    setCameras(cameras);
+    _cameras = cameras;
+    emit camerasChanged();
 }
 
 } // namespace

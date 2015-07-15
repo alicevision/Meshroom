@@ -111,6 +111,20 @@ Item {
         }
     }
 
+    readonly property Component microToolButton: ButtonStyle {
+        panel: Item {
+            implicitHeight: childrenRect.height
+            implicitWidth: childrenRect.width
+            Image {
+                // width: 18
+                // height: 18
+                sourceSize.width: 18
+                sourceSize.height: 18
+                source: control.iconSource
+            }
+        }
+    }
+
     readonly property Component labeledToolButton: ButtonStyle {
         panel: Item {
             implicitHeight: childrenRect.height

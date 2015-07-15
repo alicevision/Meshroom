@@ -26,8 +26,10 @@ Item {
                 iconSource: 'qrc:/images/add_project.svg'
                 tooltip: "add project"
                 onClicked: {
+                    var newModel = _applicationModel.addNewProject();
                     stackView.push({
-                        item: Qt.resolvedUrl("qrc:/pages/NewProjectPage.qml")
+                        item: Qt.resolvedUrl("qrc:/pages/NewProjectPage.qml"),
+                        properties: { model: newModel }
                     });
                 }
             }

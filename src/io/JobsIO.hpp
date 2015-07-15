@@ -1,41 +1,20 @@
 #pragma once
 
 #include <QObject>
-#include <QProcess>
-#include <QFileSystemWatcher>
 
 namespace mockup
 {
 
 class JobModel; // forward declaration
+class ProjectModel; // forward declaration
 
-class JobsIO : public QObject
+class JobsIO
 {
-    Q_OBJECT
-
 public:
-    JobsIO(JobModel& jobModel);
-
-public:
-    bool load();
-    bool save() const;
-    void start();
-    void stop();
-    void refresh();
-
-private slots:
-    void readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus);
-
-private:
-    float computeJobCompletion();
-
-private:
-    JobModel& _job;
-    QProcess _process;
-    QFileSystemWatcher _watcher;
-    QString _startCommand;
-    QString _stopCommand;
-    QString _statusCommand;
+    static JobModel* create(QObject* parent);
+    static JobModel* load(QObject* parent, const QUrl& url);
+    static void loadAllJobs(ProjectModel& projectModel);
+    static bool save(JobModel& projectModel);
 };
 
 } // namespace

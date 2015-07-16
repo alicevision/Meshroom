@@ -1,9 +1,9 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.3
 
-import "layouts"
-import "../components/forms"
-import "../components/headers"
+import "../layouts"
+import "../forms"
+import "../headers"
 
 TitledPageLayout {
 

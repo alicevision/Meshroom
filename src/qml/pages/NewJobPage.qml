@@ -2,11 +2,11 @@ import QtQuick 2.2
 import QtQuick.Controls 1.3
 import QtQuick.Layouts 1.1
 
-import "layouts"
+import "../layouts"
 import "../components"
-import "../components/forms"
-import "../components/delegates"
-import "../components/headers"
+import "../forms"
+import "../delegates"
+import "../headers"
 import Popart 0.1
 
 TitledPageLayout {

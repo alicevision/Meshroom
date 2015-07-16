@@ -3,7 +3,7 @@ import QtQuick.Layouts 1.1
 import QtQuick.Controls 1.3
 import QtQuick.Dialogs 1.0
 
-import "../../styles"
+import "../styles"
 
 Item {
 

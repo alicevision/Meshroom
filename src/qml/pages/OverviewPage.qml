@@ -9,11 +9,13 @@ import "../headers"
 TitledPageLayout {
 
     header: OverviewHeader {}
-    body: ListView {
-        model: _applicationModel.projects
-        delegate: JobListDelegate {}
-        spacing: 0
-        clip: true
+    body: ScrollView {
+        ListView {
+            model: _applicationModel.projects
+            delegate: JobListDelegate {}
+            spacing: 0
+            interactive: false
+        }
     }
 
 }

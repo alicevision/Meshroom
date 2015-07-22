@@ -2,11 +2,12 @@ import QtQuick 2.2
 import QtQuick.Controls 1.3
 import QtQuick.Layouts 1.1
 
-import "../styles"
+import "../components"
 
-Item {
+Rectangle {
 
     implicitHeight: 60
+    color: _style.window.color.darker
 
     RowLayout {
         anchors.fill: parent
@@ -21,14 +22,13 @@ Item {
             Layout.fillWidth: false
             Layout.preferredWidth: childrenRect.width
             spacing: 0
-            ToolButton {
-                style: DefaultStyle.largeToolButton
-                iconSource: 'qrc:/images/add_project.svg'
+            CustomToolButton {
+                iconSource: 'qrc:///images/add_project.svg'
                 tooltip: "add project"
                 onClicked: {
                     var newModel = _applicationModel.addNewProject();
                     stackView.push({
-                        item: Qt.resolvedUrl("qrc:/pages/NewProjectPage.qml"),
+                        item: Qt.resolvedUrl("../pages/NewProjectPage.qml"),
                         properties: { model: newModel }
                     });
                 }

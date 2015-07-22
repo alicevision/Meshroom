@@ -2,8 +2,6 @@ import QtQuick 2.2
 import QtQuick.Controls 1.3
 import QtQuick.Layouts 1.1
 
-import "../styles"
-
 Item {
 
     id: root
@@ -12,10 +10,10 @@ Item {
 
     DropArea {
         anchors.fill: parent
-        onEntered: dropBackground.color = "#5BB1F7"
-        onExited: dropBackground.color = "#222"
+        onEntered: dropBackground.color = _style.window.color.selected
+        onExited: dropBackground.color = _style.window.color.normal
         onDropped: {
-            dropBackground.color = "#222";
+            dropBackground.color = _style.window.color.lighter
             filesDropped(drop.urls);
         }
         Rectangle {
@@ -25,15 +23,15 @@ Item {
             Behavior on color { ColorAnimation {} }
             Image {
                 anchors.fill: parent
-                source: "qrc:/images/stripes.png"
+                source: "qrc:///images/stripes.png"
                 fillMode: Image.Tile
                 opacity: 0.3
             }
-            Text {
+            CustomText {
                 anchors.centerIn: parent
-                color: "#444"
                 text: "drop area"
-                font.pointSize: 18
+                textSize: _style.text.size.large
+                color: _style.window.color.xlighter
             }
         }
     }

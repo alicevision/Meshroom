@@ -1,18 +1,54 @@
 #include "ApplicationModel.hpp"
 #include "ProjectModel.hpp"
 #include "LogModel.hpp"
-#include "Application.hpp"
 #include "io/ProjectsIO.hpp"
+#include "io/SettingsIO.hpp"
 #include <QtQml/QQmlContext>
+#include <iostream>
 
 namespace mockup
 {
 
-ApplicationModel::ApplicationModel(Application& app)
-    : QObject(&app)
-    , _application(app)
+namespace { // empty namespace
+
+static mockup::ApplicationModel* _logger = nullptr;
+void doLog(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
-    exposeToQML();
+    if(!_logger)
+        return;
+    QByteArray localMsg = msg.toLocal8Bit();
+    if(QString(context.file).contains(".qml"))
+    {
+        std::cerr << localMsg.constData() << std::endl;
+        return;
+    }
+    LogModel* model = new LogModel(type, localMsg.constData(), nullptr);
+    _logger->addLog(model);
+}
+
+} // empty namespace
+
+ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
+    : QObject(nullptr)
+{
+    connect(&engine, SIGNAL(objectCreated(QObject*, const QUrl&)), this,
+            SLOT(onEngineLoaded(QObject*, const QUrl&)));
+
+    // expose this object to QML
+    if(engine.rootContext())
+        engine.rootContext()->setContextProperty("_applicationModel", this);
+
+    // load QML UI
+    engine.load(QUrl("src/qml/main.qml"));
+
+    // load user settings
+    SettingsIO::loadRecentProjects(*this);
+}
+
+ApplicationModel::~ApplicationModel()
+{
+    _logger = this;
+    qInstallMessageHandler(0);
 }
 
 const QList<QObject*>& ApplicationModel::projects() const
@@ -77,11 +113,11 @@ void ApplicationModel::removeProject(QObject* model)
     SettingsIO::saveRecentProjects(*this);
 }
 
-// private
-void ApplicationModel::exposeToQML()
+void ApplicationModel::onEngineLoaded(QObject* object, const QUrl& url)
 {
-    if(_application.engine().rootContext())
-        _application.engine().rootContext()->setContextProperty("_applicationModel", this);
+    // setup a custom logging system
+    _logger = this;
+    qInstallMessageHandler(doLog);
 }
 
 } // namespace

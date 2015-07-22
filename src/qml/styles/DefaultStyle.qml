@@ -1,225 +1,58 @@
-pragma Singleton
 import QtQuick 2.2
-import QtQuick.Controls 1.3
 import QtQuick.Controls.Styles 1.3
 
-
-Item {
-
-    // color: "#468bb7"
-    // color: "#5BB1F7"
-
-    readonly property int fontPointSize: 16
-
-    readonly property Component application: ApplicationWindowStyle {
-        background: Rectangle { color: "black" }
+QtObject {
+    id: root
+    property QtObject text: QtObject {
+        property QtObject size: QtObject {
+            property int xsmall: 9;
+            property int small: 10;
+            property int normal: 12;
+            property int large: 16;
+            property int xlarge: 24;
+        }
+        property QtObject color: QtObject {
+            property color xlighter: Qt.lighter(normal, 3);
+            property color lighter: Qt.lighter(normal, 2);
+            property color normal: "#DDD";
+            property color darker: Qt.darker(normal, 2);
+            property color xdarker: Qt.darker(normal, 3);
+            property color disabled: "#444";
+            property color selected: "#5BB1F7";
+        }
     }
-
-    readonly property Component applicationGL: ApplicationWindowStyle {
+    property QtObject icon: QtObject {
+        property QtObject size: QtObject {
+            property int xsmall: 14;
+            property int small: 18;
+            property int normal: 24;
+            property int large: 32;
+            property int xlarge: 50;
+        }
+    }
+    property QtObject log: QtObject {
+        property QtObject color: QtObject {
+            property color debug: "#444";
+            property color info: "#666";
+            property color warning: "#DAA520";
+            property color critical: "#A00";
+            property color fatal: "#A00";
+        }
+    }
+    property QtObject window: QtObject {
+        property QtObject color: QtObject {
+            property color xlighter: Qt.lighter(normal, 1.5);
+            property color lighter: Qt.lighter(normal, 1.5);
+            property color normal: "#333";
+            property color darker: Qt.darker(normal, 1.5);
+            property color xdarker: Qt.darker(normal, 1.8);
+            property color selected: "#5BB1F7";
+        }
+    }
+    property Component bggl: ApplicationWindowStyle {
         background: Item {} // hide default application background
     }
-
-    readonly property Component applicationDebug: ApplicationWindowStyle {
-        background: Rectangle { color: "#999" }
+    property Component bg: ApplicationWindowStyle {
+        background: Rectangle { color: root.window.color.normal }
     }
-
-    readonly property Component progressBar: ProgressBarStyle {
-        background: Rectangle {
-            color: "#222"
-            implicitHeight: 24
-            implicitWidth: 200
-        }
-        progress: Rectangle {
-            color: control.enabled ? "#5BB1F7" : "#D82626"
-            Text {
-                property double value: Math.round((control.value - control.minimumValue)*100 / (control.maximumValue - control.minimumValue))
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: value + '%'
-                color: "black"
-                elide: Text.ElideRight
-                wrapMode: Text.WrapAnywhere
-                maximumLineCount: 1
-                font.pointSize: 10
-                visible: (value > 10)
-            }
-        }
-    }
-
-    readonly property Component slider: SliderStyle {
-        handle: Rectangle {
-            width: 20
-            height: 20
-            radius: height
-            antialiasing: true
-            color: "#5BB1F7"
-        }
-        groove: Item {
-            implicitHeight: 10
-            implicitWidth: 200
-            Rectangle {
-                height: 5
-                width: parent.width
-                anchors.verticalCenter: parent.verticalCenter
-                color: "#444"
-                opacity: 0.8
-                Rectangle {
-                    antialiasing: true
-                    color: "#5BB1F7"
-                    height: parent.height
-                    width: parent.width * (control.value - control.minimumValue) / (control.maximumValue - control.minimumValue)
-                }
-                Text {
-                    anchors.top: parent.bottom
-                    anchors.right: parent.right
-                    text: control.value
-                    color: "white"
-                    elide: Text.ElideRight
-                    wrapMode: Text.WrapAnywhere
-                    maximumLineCount: 1
-                    font.pointSize: 12
-                }
-            }
-        }
-    }
-
-    readonly property Component largeToolButton: ButtonStyle {
-        panel: Item {
-            implicitHeight: childrenRect.height
-            implicitWidth: childrenRect.width
-            Image {
-                // width: 48
-                // height: 48
-                sourceSize.width: 48
-                sourceSize.height: 48
-                source: control.iconSource
-            }
-        }
-    }
-
-    readonly property Component smallToolButton: ButtonStyle {
-        panel: Item {
-            implicitHeight: childrenRect.height
-            implicitWidth: childrenRect.width
-            Image {
-                // width: 24
-                // height: 24
-                sourceSize.width: 24
-                sourceSize.height: 24
-                source: control.iconSource
-            }
-        }
-    }
-
-    readonly property Component microToolButton: ButtonStyle {
-        panel: Item {
-            implicitHeight: childrenRect.height
-            implicitWidth: childrenRect.width
-            Image {
-                // width: 18
-                // height: 18
-                sourceSize.width: 18
-                sourceSize.height: 18
-                source: control.iconSource
-            }
-        }
-    }
-
-    readonly property Component labeledToolButton: ButtonStyle {
-        panel: Item {
-            implicitHeight: childrenRect.height
-            implicitWidth: childrenRect.width
-            Item {
-                width: childrenRect.width
-                height: 48
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    Text {
-                        text: control.tooltip
-                        horizontalAlignment: Text.AlignHRight
-                        color: "#444"
-                        font.pointSize: 10
-                    }
-                    Text {
-                        text: control.text ? control.text : "-"
-                        color: "white"
-                        font.pointSize: 12
-                        elide: Text.ElideRight
-                        wrapMode: Text.WrapAnywhere
-                        maximumLineCount: 1
-                    }
-                }
-            }
-        }
-    }
-
-    readonly property Component button: ButtonStyle {
-        panel: Item {
-            implicitWidth: childrenRect.width
-            implicitHeight: 30
-            Rectangle {
-                width: childrenRect.width
-                height: parent.height
-                color: (control.hovered || control.checked) ? "#5BB1F7" : Qt.darker("#5BB1F7", 1.2)
-                opacity: control.pressed ? 1.0 : 0.5
-                border.width : 1
-                border.color : "#5BB1F7"
-                Text {
-                    text: control.text
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: control.enabled ? "white" : "#444"
-                    font.pointSize: 12
-                    renderType: Text.NativeRendering
-                }
-            }
-        }
-    }
-
-    readonly property Component breadcrumbButton: ButtonStyle {
-        panel: Item {
-            implicitWidth: childrenRect.width
-            implicitHeight: 30
-            Item {
-                width: txt.implicitWidth
-                height: parent.height
-                Text {
-                    id: txt
-                    text: control.text
-                    anchors.centerIn: parent
-                    color: control.enabled ? (control.hovered ? "#5BB1F7" : "white") : "#444"
-                    font.pointSize: 12
-                    renderType: Text.NativeRendering
-                }
-            }
-        }
-    }
-
-    readonly property Component textField: TextFieldStyle {
-        textColor: control.enabled ? "white" : "#666"
-        placeholderTextColor : "#444"
-        font.pointSize: 14
-        background: Rectangle {
-            implicitHeight: 30
-            implicitWidth: 200
-            color: "#FF151515"
-        }
-    }
-
-    readonly property Component textArea: TextAreaStyle {
-        textColor: control.enabled ? "white" : "#666"
-        selectionColor: "#5BB1F7"
-        selectedTextColor: "white"
-        backgroundColor: "#FF151515"
-    }
-
-    readonly property Component comboBox: ComboBoxStyle {
-        font.pointSize: 14
-        textColor: control.enabled ? "white" : "#666"
-        background: Rectangle {
-            implicitHeight: 30
-            implicitWidth: 200
-            color: "#FF151515"
-        }
-    }
-
 }

@@ -88,7 +88,7 @@ private:
     QList<QString> _steps;
     QList<QUrl> _pair;
     float _peakThreshold = 0.04f;
-    int _meshingScale = 1;
+    int _meshingScale = 2;
     float _completion = 0.f;
     bool _running = true;
 };

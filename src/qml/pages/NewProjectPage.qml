@@ -17,6 +17,7 @@ TitledPageLayout {
 
     // header
     header: BreadcrumbHeader {
+        title: "Add project"
         model: ListModel {
             ListElement { name: "project settings" }
         }

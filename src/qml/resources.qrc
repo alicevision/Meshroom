@@ -2,23 +2,6 @@
 <RCC version="1.0">
     <qresource prefix="/">
 
-        <file>main.qml</file>
-        <file>delegates/JobListDelegate.qml</file>
-        <file>delegates/ResourceGridDelegate.qml</file>
-        <file>forms/JobSettingsForm.qml</file>
-        <file>forms/ProjectSettingsForm.qml</file>
-        <file>headers/BreadcrumbHeader.qml</file>
-        <file>headers/OverviewHeader.qml</file>
-        <file>components/LogBar.qml</file>
-        <file>components/ResourceDropArea.qml</file>
-        <file>components/ResourceGallery.qml</file>
-        <file>layouts/StandardPageLayout.qml</file>
-        <file>layouts/TitledPageLayout.qml</file>
-        <file>pages/OverviewPage.qml</file>
-        <file>pages/NewJobPage.qml</file>
-        <file>pages/NewProjectPage.qml</file>
-        <file>styles/qmldir</file>
-        <file>styles/DefaultStyle.qml</file>
         <file>images/add_job.svg</file>
         <file>images/add_project.svg</file>
         <file>images/arrow_right.svg</file>

@@ -1,32 +1,23 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.3
-import QtQuick.Dialogs 1.1
 
 import "pages"
 import "styles"
-import "components"
 
 ApplicationWindow {
 
-    id: root
+    id: _mainWindow
     width: 800
     height: 800
     visible: true
-    style: DefaultStyle.application
+    style: _style.bg
 
-    StackView {
-        id: stackView
-        anchors.fill: parent
-        focus: true
-        Keys.onReleased: {
-            if(event.key === Qt.Key_Escape) {
-                root.style = DefaultStyle.applicationDebug;
-            }
-        }
-        initialItem: OverviewPage {}
+    DefaultStyle {
+        id: _style
     }
-
-    LogBar {
-        model: _applicationModel.logs
+    Loader {
+        anchors.fill: parent
+        objectName: "instanCodingLoader"
+        source: "pages/IndexPage.qml"
     }
 }

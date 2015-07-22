@@ -3,7 +3,7 @@ import QtQuick.Layouts 1.1
 import QtQuick.Controls 1.3
 import QtQuick.Dialogs 1.0
 
-import "../styles"
+import "../components"
 
 Item {
 
@@ -25,32 +25,23 @@ Item {
         anchors.margins: 30
         columns: 2
         rowSpacing: 10
-        Item {
+        CustomText {
             Layout.preferredWidth: labelWidth
             Layout.preferredHeight: childrenRect.height
-            Text {
-                text: "project path"
-                color: "white"
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
-                wrapMode: Text.WrapAnywhere
-                maximumLineCount: 1
-                font.pointSize: 12
-            }
+            text: "project path"
         }
         RowLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: childrenRect.height
-            TextField {
+            CustomTextField {
                 Layout.fillWidth: true
-                style: DefaultStyle.textField
-                text: (root.model) ? root.model.url : ""
+                text: (root.model) ? root.model.url.toString().replace("file://","") : ""
                 placeholderText: "/path"
-                onEditingFinished: if(root.model) root.model.url = "file://"+text
+                onEditingFinished: if(root.model && text) root.model.url = "file://"+text
             }
-            ToolButton {
-                style: DefaultStyle.largeToolButton
-                iconSource: 'qrc:/images/folder_outline.svg'
+            CustomToolButton {
+                iconSize: _style.icon.size.large
+                iconSource: 'qrc:///images/folder_outline.svg'
                 onClicked: fileDialog.open();
             }
         }

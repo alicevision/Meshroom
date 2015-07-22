@@ -1,11 +1,11 @@
 #pragma once
 
 #include <QObject>
+#include <QQmlApplicationEngine>
 
 namespace mockup
 {
 
-class Application;  // forward declaration
 class ProjectModel; // forward declaration
 
 class ApplicationModel : public QObject
@@ -15,8 +15,8 @@ class ApplicationModel : public QObject
     Q_PROPERTY(QList<QObject*> logs READ logs WRITE setLogs NOTIFY logsChanged)
 
 public:
-    ApplicationModel(Application& app);
-    ~ApplicationModel() = default;
+    ApplicationModel(QQmlApplicationEngine& engine);
+    ~ApplicationModel();
 
 public slots:
     const QList<QObject*>& projects() const;
@@ -28,6 +28,9 @@ public slots:
     QObject* addExistingProject(const QUrl& url);
     void removeProject(QObject* projectModel);
 
+public slots:
+    void onEngineLoaded(QObject* object, const QUrl& url);
+
 signals:
     void projectsChanged();
     void logsChanged();
@@ -38,7 +41,6 @@ private:
 private:
     QList<QObject*> _projects;
     QList<QObject*> _logs;
-    Application& _application;
 };
 
 } // namespaces

@@ -47,6 +47,7 @@ TitledPageLayout {
 
     // header
     header: BreadcrumbHeader {
+        title: "Add job"
         model: ListModel {
             ListElement { name: "image selection" }
             ListElement { name: "job settings" }

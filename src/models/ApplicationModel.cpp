@@ -34,15 +34,15 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     connect(&engine, SIGNAL(objectCreated(QObject*, const QUrl&)), this,
             SLOT(onEngineLoaded(QObject*, const QUrl&)));
 
+    // load user settings
+    SettingsIO::loadRecentProjects(*this);
+
     // expose this object to QML
     if(engine.rootContext())
         engine.rootContext()->setContextProperty("_applicationModel", this);
 
     // load QML UI
     engine.load(QUrl("src/qml/main.qml"));
-
-    // load user settings
-    SettingsIO::loadRecentProjects(*this);
 }
 
 ApplicationModel::~ApplicationModel()

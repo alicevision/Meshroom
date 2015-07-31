@@ -9,7 +9,8 @@ Item {
         id: stackView
         anchors.fill: parent
         focus: true
-        initialItem: OverviewPage {}
+        initialItem: TestPage {}
+        // initialItem: OverviewPage {}
     }
     LogBar {
         model: _applicationModel.logs

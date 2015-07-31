@@ -1,7 +1,7 @@
 #include "GLView.hpp"
 #include "GLRenderer.hpp"
 #include "models/CameraModel.hpp"
-#include <QtQuick/QQuickWindow.h>
+#include <QtQuick/QQuickWindow>
 
 namespace mockup
 {

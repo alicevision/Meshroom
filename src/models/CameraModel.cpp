@@ -8,6 +8,11 @@ CameraModel::CameraModel(const QUrl& url, QObject* parent)
     : QObject(parent)
 {
     setUrl(url);
+    // Init camera position
+    QVector3D eye = QVector3D(0, 0, -10);
+    QVector3D center = QVector3D(0, 0, 0);
+    QVector3D up = QVector3D(0, 1, 0);
+    _viewMatrix.lookAt(eye, center, up);
 }
 
 QString CameraModel::name() const
@@ -41,54 +46,60 @@ void CameraModel::setUrl(const QUrl& url)
         emit urlChanged();
     }
 }
-
-const QVector3D& CameraModel::eye() const
+void CameraModel::setViewMatrix(const QMatrix4x4 &mat)
 {
-    return _eye;
-}
-
-void CameraModel::setEye(const QVector3D& eye)
-{
-    if(eye != _eye)
+    
+    if(_viewMatrix!=mat) 
     {
-        _eye = eye;
-        emit eyeChanged();
+        _viewMatrix=mat;
+        emit viewMatrixChanged();
     }
 }
+//const QVector3D& CameraModel::eye() const
+//{
+//    return _eye;
+//}
+//
+//void CameraModel::setEye(const QVector3D& eye)
+//{
+//    if(eye != _eye)
+//    {
+//        _eye = eye;
+//        emit eyeChanged();
+//    }
+//}
+//
+//const QVector3D& CameraModel::center() const
+//{
+//    return _center;
+//}
+//
+//void CameraModel::setCenter(const QVector3D& center)
+//{
+//    if(center != _center)
+//    {
+//        _center = center;
+//        emit centerChanged();
+//    }
+//}
+//
+//const QVector3D& CameraModel::up() const
+//{
+//    return _up;
+//}
+//
+//void CameraModel::setUp(const QVector3D& up)
+//{
+//    if(up != _up)
+//    {
+//        _up = up;
+//        emit upChanged();
+//    }
+//}
 
-const QVector3D& CameraModel::center() const
+const QMatrix4x4 &CameraModel::viewMatrix() const
 {
-    return _center;
-}
-
-void CameraModel::setCenter(const QVector3D& center)
-{
-    if(center != _center)
-    {
-        _center = center;
-        emit centerChanged();
-    }
-}
-
-const QVector3D& CameraModel::up() const
-{
-    return _up;
-}
-
-void CameraModel::setUp(const QVector3D& up)
-{
-    if(up != _up)
-    {
-        _up = up;
-        emit upChanged();
-    }
-}
-
-QMatrix4x4 CameraModel::viewMatrix() const
-{
-    QMatrix4x4 viewMat;
-    viewMat.lookAt(_eye, _center, _up);
-    return viewMat;
+    return _viewMatrix;
 }
 
 

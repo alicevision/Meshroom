@@ -8,6 +8,7 @@ GLGizmo::GLGizmo(QOpenGLShaderProgram& program)
     : _positionBuffer(QOpenGLBuffer::VertexBuffer)
     , _colorBuffer(QOpenGLBuffer::VertexBuffer)
     , _program(program)
+    , _position(4.0,0.0,4.0)
 {
     _vao.create();
     _vao.bind();
@@ -21,6 +22,8 @@ GLGizmo::GLGizmo(QOpenGLShaderProgram& program)
     _program.enableAttributeArray("in_position");
     _program.setAttributeBuffer("in_position", GL_FLOAT, 0, 3);
     _positionBuffer.release();
+
+    
 
     QVector<float> colorData{1.f, 0.f,  0.f, 1.f, 0.f, 0.f, 0.f, 1.f, 0.f,
                              0.f, 1.f, 0.f, 0.f,  0.f, 1.f, 0.f, 0.f, 1.f};
@@ -44,9 +47,16 @@ void GLGizmo::draw()
     _program.release();
 }
 
+void GLGizmo::setPosition(const QVector3D &v)
+{
+    _position = v;
+}
+
 QMatrix4x4 GLGizmo::modelMatrix() const
 {
     QMatrix4x4 modelMat;
+    modelMat.translate(_position);
+
     return modelMat;
 }
 

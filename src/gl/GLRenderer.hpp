@@ -12,6 +12,7 @@ namespace mockup
 {
 
 class GLView; // forward declaration
+class GLPointCloud;
 
 class GLRenderer : public QObject
 {
@@ -25,6 +26,7 @@ public:
     void setViewportSize(const QSize& size);
     void setCameraMatrix(const QMatrix4x4& cameraMat);
     void setClearColor(const QColor& color);
+    void setGizmoPosition(const QVector3D &pos);
 
 public slots:
     void draw();
@@ -38,6 +40,7 @@ private:
     GLGrid* _grid = nullptr;
     GLSLColoredShader* _coloredShader = nullptr;
     GLSLPlainColorShader* _plainColorShader = nullptr;
+    GLPointCloud* _pointCloud = nullptr;
     QSize _viewportSize;
 };
 

@@ -3,12 +3,18 @@
 #include "models/CameraModel.hpp"
 #include <QtQuick/QQuickWindow>
 
+#include <iostream>
+
 namespace mockup
 {
 
 GLView::GLView()
     : _renderer(nullptr)
+    , _cameraMode(Idle)
 {
+    setKeepMouseGrab(true);
+    setAcceptedMouseButtons(Qt::AllButtons);
+    setFlag(ItemAcceptsInputMethod, true);
     connect(this, SIGNAL(windowChanged(QQuickWindow*)), this,
             SLOT(handleWindowChanged(QQuickWindow*)));
 }
@@ -43,9 +49,10 @@ void GLView::setCamera(QObject* camera)
     if(camera == _camera)
         return;
     _camera = camera;
-    connect(_camera, SIGNAL(eyeChanged()), this, SLOT(refresh()), Qt::DirectConnection);
-    connect(_camera, SIGNAL(centerChanged()), this, SLOT(refresh()), Qt::DirectConnection);
-    connect(_camera, SIGNAL(upChanged()), this, SLOT(refresh()), Qt::DirectConnection);
+    //connect(_camera, SIGNAL(eyeChanged()), this, SLOT(refresh()), Qt::DirectConnection);
+    //connect(_camera, SIGNAL(centerChanged()), this, SLOT(refresh()), Qt::DirectConnection);
+    //connect(_camera, SIGNAL(upChanged()), this, SLOT(refresh()), Qt::DirectConnection);
+    connect(_camera, SIGNAL(viewMatrixChanged()), this, SLOT(refresh()), Qt::DirectConnection);
     emit cameraChanged();
     refresh();
 }
@@ -92,6 +99,150 @@ void GLView::refresh()
 {
     if(window())
         window()->update();
+    if(_renderer)
+        _renderer->setGizmoPosition(_lookAt);
 }
+
+void GLView::mousePressEvent(QMouseEvent * event)
+{
+    // Dependending on the combination of key and mouse
+    // set the correct mode
+    // Also store the position of the pointer 
+    if (event->modifiers() == Qt::AltModifier) {
+        _pressedPos = event->pos();
+        CameraModel* cameraModel = dynamic_cast<CameraModel*>(_camera);
+        _cameraBegin = cameraModel->viewMatrix();
+        switch(event->buttons()){
+            case Qt::LeftButton:
+                _cameraMode = Rotate;
+                break;
+            case Qt::MidButton:
+                _cameraMode = Translate;
+                break;
+            case Qt::RightButton:
+                _cameraMode = Zoom;
+                break;
+            default:
+                break;
+        } 
+    
+    }
+    //QQuickItem::mousePressEvent(event);
+    refresh();
+}
+
+void GLView::mouseMoveEvent(QMouseEvent *event) 
+{
+    switch (_cameraMode)
+    {
+        case Idle:
+            break;
+        case Rotate:
+            {   
+                if (0) // TODO select between trackball vs turntable
+                {
+                    const float dx = _pressedPos.x()-event->pos().x(); // TODO divide by canvas size
+                    const float dy = _pressedPos.y()-event->pos().y(); // or unproject ?
+                    QMatrix4x4 cam(_cameraBegin);
+                    QVector3D x(cam.row(0).x(), cam.row(0).y(), cam.row(0).z());
+                    x.normalize();
+
+                    QVector3D y(cam.row(1).x(), cam.row(1).y(), cam.row(1).z());
+                    y.normalize();
+
+                    QQuaternion ry(1, y*dx*0.01);
+                    QQuaternion rx(1, -x*dy*0.01);
+                    rx.normalize();
+                    ry.normalize();
+                    cam.translate(_lookAt);
+                    cam.rotate(rx*ry);
+                    cam.translate(-_lookAt);
+                    CameraModel* cameraModel = dynamic_cast<CameraModel*>(_camera);
+                    cameraModel->setViewMatrix(cam);
+                    _pressedPos = event->pos();
+                    _cameraBegin = cam;
+                } 
+                else // Turntable
+                {
+                    const float dx = _pressedPos.x()-event->pos().x(); // TODO divide by canvas size
+                    const float dy = _pressedPos.y()-event->pos().y(); // or unproject ?
+
+                    QMatrix4x4 cam(_cameraBegin);
+                    QVector3D x(cam.row(0));
+                    x.normalize();
+
+                    QVector3D y(0, 1, 0);
+                    y.normalize();
+
+                    QQuaternion ry(1, -y*dx*0.01);
+                    ry.normalize();
+                    QQuaternion rx(1, -x*dy*0.01);
+                    rx.normalize();
+
+                    cam.translate(_lookAt);
+                    cam.rotate(rx*ry);
+                    cam.translate(-_lookAt);
+
+                    CameraModel* cameraModel = dynamic_cast<CameraModel*>(_camera);
+                    cameraModel->setViewMatrix(cam);
+                    _pressedPos = event->pos();
+                    _cameraBegin = cam;
+                }
+            }
+            break;
+        case Translate:
+            {
+                const float dx = _pressedPos.x()-event->pos().x(); // TODO divide by canvas size
+                const float dy = _pressedPos.y()-event->pos().y(); // or unproject ?
+                QMatrix4x4 cam(_cameraBegin);
+               
+                QVector3D x(cam.row(0));
+                x.normalize();
+
+                QVector3D y(cam.row(1));
+                y.normalize();
+
+                cam.translate(-x*0.01*dx);
+                cam.translate(y*0.01*dy);
+
+                _lookAt = cam.inverted()*QVector3D(0.0,0.0,-11.0);
+
+                CameraModel* cameraModel = dynamic_cast<CameraModel*>(_camera);
+                cameraModel->setViewMatrix(cam);
+                _pressedPos = event->pos();
+                _cameraBegin = cam;
+                
+            }
+            break;
+        case Zoom:
+            {
+                const float dx = _pressedPos.x()-event->pos().x(); // TODO divide by canvas size
+                const float dy = _pressedPos.y()-event->pos().y(); // or unproject ?
+        
+                QMatrix4x4 cam(_cameraBegin);
+               
+                QVector3D z(cam.row(2));
+                z.normalize();
+                cam.translate(-z*0.01*(dx+dy));
+                // TODO : 
+                _lookAt = cam.inverted()*QVector3D(0.0,0.0,-11.0);
+                CameraModel* cameraModel = dynamic_cast<CameraModel*>(_camera);
+                cameraModel->setViewMatrix(cam);
+                _pressedPos = event->pos();
+                _cameraBegin = cam;
+            }
+
+
+            break;
+        default:
+            break;
+    }
+}
+
+void GLView::mouseReleaseEvent(QMouseEvent *event)
+{
+    _cameraMode = Idle;
+}
+
 
 } // namespace

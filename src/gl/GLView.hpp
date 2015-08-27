@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtQuick/QQuickItem>
-
+#include <QMatrix4x4>
 namespace mockup
 {
 
@@ -33,11 +33,22 @@ signals:
     void colorChanged();
     void cameraChanged();
 
+protected:
+    void mouseMoveEvent(QMouseEvent *);
+    void mousePressEvent(QMouseEvent *);
+    void mouseReleaseEvent(QMouseEvent *);
+
 private:
     GLRenderer* _renderer = nullptr;
     QRect _rect;
     QColor _color;
     QObject* _camera = nullptr;
+
+    /// FIXME : rename variables
+    QPoint _pressedPos;         /// Position of the mousePressed event
+    QMatrix4x4  _cameraBegin;   /// Position of the camera when the mouse is pressed   
+    QVector3D _lookAt;
+    enum CameraMode {Idle, Rotate, Translate, Zoom} _cameraMode;
 };
 
 } // namespace

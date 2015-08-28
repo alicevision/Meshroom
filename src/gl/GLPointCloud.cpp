@@ -9,14 +9,6 @@ GLPointCloud::GLPointCloud(QOpenGLShaderProgram &program, const QString& cloud)
     , _program(program)
 {
     //
-
-    // DUMMY point grid
-    float *dummyPoints = new float[3000]; // 1000 points
-    for (int i=0; i<3000; i++) {
-        dummyPoints[i] = 20*(0.5-static_cast<float>(rand())/RAND_MAX);
-    }
-
-    // TODO create
     if(_vertexArrayObject.create()) {
         _vertexArrayObject.bind();
         if(_pointPositions.create()) {
@@ -27,12 +19,7 @@ GLPointCloud::GLPointCloud(QOpenGLShaderProgram &program, const QString& cloud)
             AlembicImport importer(cloud.toStdString().c_str());
             // FIXME
             _npoints = importer.pointCloudSize();
-            std::cout << "FOUND NBPOINTS:" << _npoints << std::endl;
             _pointPositions.allocate(importer.pointCloudData(), importer.pointCloudSize()*3*sizeof(float));
-
-
-            //_npoints = 1000;
-            //_pointPositions.allocate(dummyPoints, 3*_npoints*sizeof(float));
             _program.enableAttributeArray("in_position");
             _program.setAttributeBuffer("in_position", GL_FLOAT, 0, 3);
             _pointPositions.release();
@@ -43,7 +30,6 @@ GLPointCloud::GLPointCloud(QOpenGLShaderProgram &program, const QString& cloud)
     } else {
         std::cout << "unable to create VAO for point cloud" << std::endl;
     }
-    delete [] dummyPoints;
 }
 
 void GLPointCloud::draw()

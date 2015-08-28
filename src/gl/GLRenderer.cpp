@@ -60,22 +60,23 @@ void GLRenderer::updateWorldMatrix()
 {
     // projection
     QMatrix4x4 projMat;
-    projMat.perspective(100.0f, _viewportSize.width() / (float)_viewportSize.height(), 0.1f, 100.0f);
+    projMat.perspective(60.0f, _viewportSize.width() / (float)_viewportSize.height(), 0.1f, 100.0f);
     // world
     QMatrix4x4 worldMat;
-    worldMat = projMat * _cameraMat ;//* _gizmo->modelMatrix();
+    worldMat = projMat * _cameraMat ;
     // update shaders
-    //_coloredShader->setWorldMatrix(worldMat);
-    _coloredShader->setWorldMatrix(projMat*_cameraMat*_gizmo->modelMatrix());
+    _coloredShader->setWorldMatrix(worldMat*_gizmo->modelMatrix());
     _plainColorShader->setWorldMatrix(worldMat);
 }
 
+// FIXME: setGizmoPosition should certainly move away from the renderer
+// At the moment it is used as a convenience function for testing the camera
+// manipulation
 void GLRenderer::setGizmoPosition(const QVector3D &pos)
 {
     if(_gizmo)
     {
         _gizmo->setPosition(pos);
-        _coloredShader->setWorldMatrix(_gizmo->modelMatrix());
     }
 }
 } // namespace

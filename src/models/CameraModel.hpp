@@ -39,9 +39,11 @@ public slots:
     const QMatrix4x4 & viewMatrix() const;
     void setViewMatrix(const QMatrix4x4 &mat); 
 
+    void setLookAtRadius(float radius){_lookAtRadius = radius;}
+    float lookAtRadius(){return _lookAtRadius;}
 
-    void setLookAt(const QVector3D &lookAt){_lookAt=lookAt;}
-    const QVector3D & lookAt() const {return _lookAt;}
+    //void setLookAt(const QVector3D &lookAt){_lookAt=lookAt;}
+    QVector3D lookAt() const; 
 
 
 signals:
@@ -55,8 +57,9 @@ signals:
 private:
     QString _name;
     QUrl _url;
+    // TODO : add projection matrix
     QMatrix4x4  _viewMatrix;
-    QVector3D   _lookAt;
+    float _lookAtRadius;
 };
 
 } // namespace

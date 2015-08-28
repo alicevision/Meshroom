@@ -4,11 +4,13 @@
 namespace mockup
 {
 
+// FIXME: rename to GLAxisGizmo ?
+
 GLGizmo::GLGizmo(QOpenGLShaderProgram& program)
     : _positionBuffer(QOpenGLBuffer::VertexBuffer)
     , _colorBuffer(QOpenGLBuffer::VertexBuffer)
     , _program(program)
-    , _position(4.0,0.0,4.0)
+    , _position(0.0, 0.0, 0.0)
 {
     _vao.create();
     _vao.bind();

@@ -44,7 +44,7 @@ private:
     QColor _color;
     QObject* _camera = nullptr;
 
-    /// FIXME : rename variables
+    /// FIXME : rename variables to something more meaningful
     QPoint _pressedPos;         /// Position of the mousePressed event
     QMatrix4x4  _cameraBegin;   /// Position of the camera when the mouse is pressed   
     QVector3D _lookAt;

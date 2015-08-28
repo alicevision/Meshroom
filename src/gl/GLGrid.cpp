@@ -9,34 +9,23 @@ namespace // empty namespace
 
 void buildGridData(QVector<float>& griddata, float first, float last, float offset)
 {
-    for(float i=first; i<last; i+=offset)
+    for(float i=first; i<=last; i+=offset)
     {
-        for(float j=first; j<last; j+=offset)
-        {
-            griddata.append(i);
-            griddata.append(0.f);
-            griddata.append(j);
+        griddata.append(i);
+        griddata.append(0.f);
+        griddata.append(first);
 
-            griddata.append(i+offset);
-            griddata.append(0.f);
-            griddata.append(j);
+        griddata.append(i);
+        griddata.append(0.f);
+        griddata.append(last);
 
-            griddata.append(i+offset);
-            griddata.append(0.f);
-            griddata.append(j+offset);
+        griddata.append(first);
+        griddata.append(0.f);
+        griddata.append(i);
 
-            griddata.append(i);
-            griddata.append(0.f);
-            griddata.append(j);
-
-            griddata.append(i+offset);
-            griddata.append(0.f);
-            griddata.append(j+offset);
-
-            griddata.append(i);
-            griddata.append(0.f);
-            griddata.append(j+offset);
-        }
+        griddata.append(last);
+        griddata.append(0.f);
+        griddata.append(i);
     }
 }
 
@@ -71,7 +60,7 @@ void GLGrid::draw()
     _program.bind();
     _vao.bind();
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArrays(GL_TRIANGLES, 0, _verticeCount);
+    glDrawArrays(GL_LINES, 0, _verticeCount);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     _vao.release();
     _program.release();

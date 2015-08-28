@@ -13,6 +13,10 @@ GLView::GLView()
     , _cameraMode(Idle)
     , _lookAt() // Store locally camera->_lookAt to avoid recomputing it
 {
+    // FIXME: camera location should move away
+    QUrl fakeurl;
+    setCamera(new CameraModel(fakeurl, nullptr));
+
     setKeepMouseGrab(true);
     setAcceptedMouseButtons(Qt::AllButtons);
     setFlag(ItemAcceptsInputMethod, true);
@@ -85,6 +89,11 @@ void GLView::sync()
     CameraModel* cameraModel = dynamic_cast<CameraModel*>(_camera);
     if(cameraModel)
         _renderer->setCameraMatrix(cameraModel->viewMatrix());
+
+    if(!_pointCloud.isEmpty()) {
+        _renderer->setPointCloud(_pointCloud);
+        _pointCloud.clear();
+    }
 }
 
 void GLView::paint()
@@ -105,6 +114,12 @@ void GLView::refresh()
         _renderer->setGizmoPosition(_lookAt);
     if(window())
         window()->update();
+}
+
+void GLView::setPointCloud(const QString& cloud)
+{
+    _pointCloud = cloud;
+    refresh();
 }
 
 void GLView::mousePressEvent(QMouseEvent * event)
@@ -128,20 +143,20 @@ void GLView::mousePressEvent(QMouseEvent * event)
                 break;
             default:
                 break;
-        } 
-    
+        }
+
     }
     refresh();
 }
 
-void GLView::mouseMoveEvent(QMouseEvent *event) 
+void GLView::mouseMoveEvent(QMouseEvent *event)
 {
     switch (_cameraMode)
     {
         case Idle:
             break;
         case Rotate:
-            {   
+            {
                 const float dx = _pressedPos.x()-event->pos().x(); // TODO divide by canvas size
                 const float dy = _pressedPos.y()-event->pos().y(); // or unproject ?
                 if (0) // TODO select between trackball vs turntable
@@ -164,7 +179,7 @@ void GLView::mouseMoveEvent(QMouseEvent *event)
                     cameraModel->setViewMatrix(cam);
                     _pressedPos = event->pos();
                     _cameraBegin = cam;
-                } 
+                }
                 else // Turntable
                 {
                     QMatrix4x4 cam(_cameraBegin);
@@ -195,7 +210,7 @@ void GLView::mouseMoveEvent(QMouseEvent *event)
                 const float dx = _pressedPos.x()-event->pos().x(); // TODO divide by canvas size
                 const float dy = _pressedPos.y()-event->pos().y(); // or unproject ?
                 QMatrix4x4 cam(_cameraBegin);
-               
+
                 QVector3D x(cam.row(0));
                 x.normalize();
 
@@ -210,16 +225,16 @@ void GLView::mouseMoveEvent(QMouseEvent *event)
                 _lookAt = cameraModel->lookAt();
                 _pressedPos = event->pos();
                 _cameraBegin = cam;
-                
+
             }
             break;
         case Zoom:
             {
                 const float dx = _pressedPos.x()-event->pos().x(); // TODO divide by canvas size
                 const float dy = _pressedPos.y()-event->pos().y(); // or unproject ?
-        
+
                 QMatrix4x4 cam(_cameraBegin);
-               
+
                 QVector3D z(cam.row(2));
                 z.normalize();
                 float offset = 0.01*(dx+dy);

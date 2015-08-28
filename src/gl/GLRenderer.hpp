@@ -27,6 +27,7 @@ public:
     void setCameraMatrix(const QMatrix4x4& cameraMat);
     void setClearColor(const QColor& color);
     void setGizmoPosition(const QVector3D &pos);
+    void setPointCloud(const QString &cloud);
 
 public slots:
     void draw();

@@ -22,6 +22,7 @@ public slots:
     void setColor(const QColor& color);
     QObject* camera() const;
     void setCamera(QObject* camera);
+    void setPointCloud(const QString& cloud);
 
 private slots:
     void handleWindowChanged(QQuickWindow* win);
@@ -43,10 +44,11 @@ private:
     QRect _rect;
     QColor _color;
     QObject* _camera = nullptr;
+    QString _pointCloud;
 
     /// FIXME : rename variables to something more meaningful
     QPoint _pressedPos;         /// Position of the mousePressed event
-    QMatrix4x4  _cameraBegin;   /// Position of the camera when the mouse is pressed   
+    QMatrix4x4  _cameraBegin;   /// Position of the camera when the mouse is pressed
     QVector3D _lookAt;
     enum CameraMode {Idle, Rotate, Translate, Zoom} _cameraMode;
 };

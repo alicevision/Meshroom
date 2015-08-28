@@ -4,12 +4,12 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
 
-namespace mockup 
+namespace mockup
 {
 class GLPointCloud
 {
 public:
-    GLPointCloud(QOpenGLShaderProgram&);
+    GLPointCloud(QOpenGLShaderProgram&, const QString& cloud);
     ~GLPointCloud() = default;
 
     void draw();
@@ -20,7 +20,7 @@ public:
 private:
     QOpenGLVertexArrayObject _vertexArrayObject;
     QOpenGLBuffer _pointPositions;
-    GLint         _npoints;
+    GLint _npoints;
     QOpenGLShaderProgram& _program;
 };
 

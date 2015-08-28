@@ -13,7 +13,6 @@ GLRenderer::GLRenderer()
     _plainColorShader = new GLSLPlainColorShader();
     _gizmo = new GLGizmo(_coloredShader->program());
     _grid = new GLGrid(_plainColorShader->program());
-    _pointCloud = new GLPointCloud(_plainColorShader->program());
     updateWorldMatrix();
 }
 
@@ -79,4 +78,12 @@ void GLRenderer::setGizmoPosition(const QVector3D &pos)
         _gizmo->setPosition(pos);
     }
 }
+
+void GLRenderer::setPointCloud(const QString &cloud)
+{
+    if(_pointCloud)
+        delete _pointCloud;
+    _pointCloud = new GLPointCloud(_plainColorShader->program(), cloud);
+}
+
 } // namespace

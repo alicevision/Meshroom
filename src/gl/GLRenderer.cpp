@@ -10,7 +10,7 @@ namespace mockup
 GLRenderer::GLRenderer()
 {
     _coloredShader = new GLSLColoredShader();
-    _plainColorShader = new GLSLPlainColorShader();
+    _plainColorShader = new GLSLPlainColorShader(QVector4D(0.8, 0.8, 0.8, 1.0));
     _gizmo = new GLGizmo(_coloredShader->program());
     _grid = new GLGrid(_plainColorShader->program());
     updateWorldMatrix();

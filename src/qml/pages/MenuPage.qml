@@ -5,14 +5,20 @@ import QtQuick.Controls 1.3
 import "../layouts"
 import "../delegates"
 import "../headers"
+import "../components"
+import "../forms"
 
 TitledPageLayout {
 
-    header: OverviewHeader {}
+    header: MenuHeader {}
     body: ScrollView {
+        width: parent.width
         ListView {
             model: _applicationModel.projects
-            delegate: JobListDelegate {}
+            delegate: ProjectDelegate {
+                onProjectSelected: showProjectPage(projectID)
+                onJobSelected: showJobPage(projectID, jobID)
+            }
             spacing: 0
             interactive: false
         }

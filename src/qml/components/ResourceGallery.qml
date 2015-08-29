@@ -9,6 +9,7 @@ Item {
     id: root
 
     property variant model: null // resources model
+    property real thumbnailSize: 120
     property bool selectable: false
 
     function getSelectionList() {
@@ -32,8 +33,8 @@ Item {
             GridView {
                 id: grid
                 anchors.fill: parent
-                cellWidth: 120
-                cellHeight: 120
+                cellWidth: root.thumbnailSize
+                cellHeight: root.thumbnailSize
                 model: root.model ? root.model.resources : 0
                 delegate: ResourceGridDelegate {
                     onItemClicked: {
@@ -51,5 +52,15 @@ Item {
                 clip: true
             }
         }
+    }
+    Slider {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        width: 50
+        height: 10
+        minimumValue: 100
+        maximumValue: 300
+        value: 120
+        onValueChanged: root.thumbnailSize = value
     }
 }

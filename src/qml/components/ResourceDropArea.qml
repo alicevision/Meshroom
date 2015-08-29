@@ -5,31 +5,31 @@ import QtQuick.Layouts 1.1
 Item {
 
     id: root
-
+    property string title: ""
     signal filesDropped(variant files)
 
     DropArea {
         anchors.fill: parent
         onEntered: dropBackground.color = _style.window.color.selected
-        onExited: dropBackground.color = _style.window.color.normal
+        onExited: dropBackground.color = _style.window.color.darker
         onDropped: {
-            dropBackground.color = _style.window.color.lighter
+            dropBackground.color = _style.window.color.darker
             filesDropped(drop.urls);
         }
         Rectangle {
             id: dropBackground
             anchors.fill: parent;
-            color: "#222"
+            color: _style.window.color.darker
             Behavior on color { ColorAnimation {} }
             Image {
                 anchors.fill: parent
                 source: "qrc:///images/stripes.png"
                 fillMode: Image.Tile
-                opacity: 0.3
+                opacity: 0.5
             }
             CustomText {
                 anchors.centerIn: parent
-                text: "drop area"
+                text: root.title
                 textSize: _style.text.size.large
                 color: _style.window.color.xlighter
             }

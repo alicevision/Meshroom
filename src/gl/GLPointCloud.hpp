@@ -6,16 +6,18 @@
 
 namespace mockup
 {
+
 class GLPointCloud
 {
+
 public:
     GLPointCloud(QOpenGLShaderProgram&, const QString& cloud);
     ~GLPointCloud() = default;
 
+public:
     void draw();
-
-    template <typename DATA>
-    static GLPointCloud* createFrom(const DATA&);
+    // template <typename DATA>
+    // static GLPointCloud* createFrom(const DATA&);
 
 private:
     QOpenGLVertexArrayObject _vertexArrayObject;
@@ -23,4 +25,5 @@ private:
     GLint _npoints;
     QOpenGLShaderProgram& _program;
 };
-}
+
+} // namespace

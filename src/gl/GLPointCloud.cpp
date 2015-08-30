@@ -9,7 +9,6 @@ GLPointCloud::GLPointCloud(QOpenGLShaderProgram& program, const QString& cloud)
     , _npoints(0)
     , _program(program)
 {
-    //
     if(_vertexArrayObject.create())
     {
         _vertexArrayObject.bind();
@@ -50,8 +49,9 @@ void GLPointCloud::draw()
     _program.release();
 }
 
-template <>
-GLPointCloud* GLPointCloud::createFrom(const int& importer)
-{
-}
-}
+// template <>
+// GLPointCloud* GLPointCloud::createFrom(const int& importer)
+// {
+// }
+
+} // namespace

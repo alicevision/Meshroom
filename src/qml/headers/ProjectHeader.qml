@@ -10,7 +10,7 @@ Rectangle {
 
     id : root
     property variant projectModel: null
-
+    
     signal homeSelected()
 
     implicitHeight: 30

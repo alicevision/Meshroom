@@ -5,13 +5,13 @@ import Popart 0.1
 
 import "../components"
 
-
 Item {
+
     id: root
 
     property int topItemHeight: 60
     property int subItemHeight: 60
-    property bool expanded: true
+    property bool expanded: (index == 0)
     property int animationDuration: 300
     property int projectID: index
     signal projectSelected(int projectID)

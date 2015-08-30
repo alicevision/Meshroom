@@ -7,6 +7,8 @@ import "../components"
 
 Rectangle {
 
+    id: root
+
     implicitHeight: 30
     color: _style.window.color.xdarker
 

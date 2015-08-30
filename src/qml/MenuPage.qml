@@ -2,19 +2,18 @@ import QtQuick 2.2
 import QtQuick.Layouts 1.1
 import QtQuick.Controls 1.3
 
-import "../layouts"
-import "../delegates"
-import "../headers"
-import "../components"
-import "../forms"
+import "layouts"
+import "delegates"
+import "headers"
+import "components"
 
 TitledPageLayout {
 
-    background: Rectangle {
-        color: _style.window.color.darker
-    }
+    id: root
+
+    background: DefaultBackground {}
     header: MenuHeader {}
-    body: ScrollView {
+    body: CustomScrollView {
         width: parent.width
         ListView {
             model: _applicationModel.projects

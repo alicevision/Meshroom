@@ -3,23 +3,33 @@ import QtQuick.Controls 1.3
 import QtQuick.Layouts 1.1
 import QtQuick.Controls.Styles 1.3
 
-import "../layouts"
-import "../delegates"
-import "../headers"
-import "../components"
-import "../forms"
-
+import "layouts"
+import "delegates"
+import "headers"
+import "components"
 
 SplittedPageLayout {
 
     id: root
+    
+    header: Item {}
+    bodyA: MenuPage {}
+    bodyB: Loader {
+        sourceComponent: _private.currentComponent
+    }
+    footer: LogBar {
+        model: _applicationModel.logs
+    }
 
+    // private properties
     QtObject {
         id: _private
         property int currentProjectID: 0
         property int currentJobID: 0
         property Component currentComponent: homePage
     }
+
+    // available pages (bodyB)
     property Component homePage: HomePage {
     }
     property Component projectPage: ProjectPage {
@@ -29,6 +39,8 @@ SplittedPageLayout {
         projectModel: _applicationModel.projects[_private.currentProjectID]
         jobModel: _applicationModel.projects[_private.currentProjectID].jobs[_private.currentJobID]
     }
+
+    // functions
     function showHomePage() {
         _private.currentProjectID = -1;
         _private.currentJobID = -1;
@@ -55,16 +67,6 @@ SplittedPageLayout {
     }
     function currentJobID() {
         return _private.currentJobID;
-    }
-
-    header: Item {}
-    bodyA: MenuPage {}
-    bodyB: Loader {
-        id: loader
-        sourceComponent: _private.currentComponent
-    }
-    footer: LogBar {
-        model: _applicationModel.logs
     }
 
 }

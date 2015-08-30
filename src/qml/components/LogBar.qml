@@ -85,7 +85,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: _style.window.color.xdarker
-            ScrollView {
+            CustomScrollView {
                 anchors.fill: parent
                 verticalScrollBarPolicy: Qt.ScrollBarAlwaysOn
                 ListView {

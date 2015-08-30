@@ -7,9 +7,12 @@ import "../components"
 
 
 Item {
+
     id: root
+
     implicitWidth: 200
     implicitHeight: 60
+    
     MouseArea {
         id: mouseContainer
         anchors.fill: parent

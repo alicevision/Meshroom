@@ -4,32 +4,16 @@ import QtQuick.Controls 1.3
 import QtQuick.Dialogs 1.0
 import QtQuick.Controls.styles 1.3
 
-import "../layouts"
-import "../headers"
-import "../components"
-import "../delegates"
+import "layouts"
+import "headers"
+import "components"
+import "delegates"
 
 TitledPageLayout {
 
     id: root
-
-    FileDialog {
-        id: fileDialog
-        title: "Please choose a project directory"
-        folder: "/"
-        selectFolder: true
-        selectMultiple: false
-        sidebarVisible: false
-        onAccepted: {
-            var newModel = _applicationModel.addNewProject();
-            newModel.url = fileDialog.fileUrl;
-            newModel.save();
-        }
-    }
-
-    background: Rectangle {
-        color: _style.window.color.darker
-    }
+    
+    background: DefaultBackground {}
     header: HomeHeader {}
     body: Item {
         anchors.fill: parent
@@ -55,6 +39,21 @@ TitledPageLayout {
                     }
                 }
             }
+        }
+    }
+
+    // file dialog
+    FileDialog {
+        id: fileDialog
+        title: "Please choose a project directory"
+        folder: "/"
+        selectFolder: true
+        selectMultiple: false
+        sidebarVisible: false
+        onAccepted: {
+            var newModel = _applicationModel.addNewProject();
+            newModel.url = fileDialog.fileUrl;
+            newModel.save();
         }
     }
 

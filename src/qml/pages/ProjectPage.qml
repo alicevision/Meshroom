@@ -29,6 +29,9 @@ TitledPageLayout {
         }
     }
 
+    background: Rectangle {
+        color: _style.window.color.darker
+    }
     header: ProjectHeader {
         projectModel: root.projectModel
         onHomeSelected: showHomePage()

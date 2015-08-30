@@ -34,8 +34,9 @@ TitledPageLayout {
             height: 2
             color: _style.window.color.xdarker
         }
-        Item {
+        Rectangle {
             id: settings
+            color: _style.window.color.darker
             Behavior on height { NumberAnimation {}}
             Connections {
                 target: root
@@ -45,6 +46,7 @@ TitledPageLayout {
                 anchors.fill: parent
                 jobModel: root.jobModel
             }
+            clip: true
         }
         RowLayout {
             Layout.minimumHeight: 50
@@ -54,7 +56,10 @@ TitledPageLayout {
                 id: view
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                style: TabViewStyle { tab: Item {} }
+                style: TabViewStyle {
+                    tab: Item {}
+                    frame: Item {}
+                }
                 Tab {
                     title: "images"
                     ResourceDropArea {
@@ -82,30 +87,42 @@ TitledPageLayout {
                 }
                 Tab {
                     title: "3D"
-                    Rectangle { color: _style.window.color.darker }
+                    DropArea {
+                        anchors.fill: parent
+                        onDropped: glview.setPointCloud(drop.urls[0].replace("file://", ""))
+                        GLView {
+                            id: glview
+                            anchors.fill: parent
+                            color: "#333"
+                        }
+                    }
                 }
             }
-            ListView {
+            Rectangle {
                 Layout.preferredWidth: 20
                 Layout.fillHeight: true
-                model: view.count
-                spacing: 0
-                delegate: MouseArea {
-                    width: parent.width
-                    height: childrenRect.height
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: view.currentIndex = index
-                    Rectangle {
-                        color: _style.window.color.normal
-                        border.color: _style.window.color.xdarker
+                color: _style.window.color.darker
+                ListView {
+                    anchors.fill: parent
+                    model: view.count
+                    spacing: 0
+                    delegate: MouseArea {
                         width: parent.width
-                        height: childrenRect.width + 30
-                        radius: 5
-                        CustomText {
-                            text: view.getTab(index).title
-                            textSize: _style.text.size.xsmall
-                            color: (view.currentIndex==index)?_style.text.color.selected:_style.text.color.normal
-                            transform: Rotation { origin.x: 0; origin.y: 15; angle: 90}
+                        height: childrenRect.height
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: view.currentIndex = index
+                        Rectangle {
+                            color: _style.window.color.normal
+                            border.color: _style.window.color.xdarker
+                            width: parent.width
+                            height: childrenRect.width + 30
+                            radius: 5
+                            CustomText {
+                                text: view.getTab(index).title
+                                textSize: _style.text.size.xsmall
+                                color: (view.currentIndex==index)?_style.text.color.selected:_style.text.color.normal
+                                transform: Rotation { origin.x: 0; origin.y: 15; angle: 90}
+                            }
                         }
                     }
                 }

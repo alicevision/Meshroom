@@ -3,10 +3,17 @@ import QtQuick.Layouts 1.1
 import QtQuick.Controls 1.3
 
 Item {
+    property Component background: Item {}
     property Component header: Item {}
     property Component footer: Item {}
     property Component bodyA: Item {}
     property Component bodyB: Item {}
+
+    // background
+    Loader {
+        anchors.fill: parent
+        sourceComponent: background
+    }
 
     ColumnLayout {
         anchors.fill: parent

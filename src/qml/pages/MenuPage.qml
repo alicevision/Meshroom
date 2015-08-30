@@ -10,6 +10,9 @@ import "../forms"
 
 TitledPageLayout {
 
+    background: Rectangle {
+        color: _style.window.color.darker
+    }
     header: MenuHeader {}
     body: ScrollView {
         width: parent.width

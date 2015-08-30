@@ -27,6 +27,9 @@ TitledPageLayout {
         }
     }
 
+    background: Rectangle {
+        color: _style.window.color.darker
+    }
     header: HomeHeader {}
     body: Item {
         anchors.fill: parent

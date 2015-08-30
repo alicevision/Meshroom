@@ -9,7 +9,8 @@
 namespace mockup
 {
 
-namespace { // empty namespace
+namespace
+{ // empty namespace
 
 static mockup::ApplicationModel* _logger = nullptr;
 void doLog(QtMsgType type, const QMessageLogContext& context, const QString& msg)
@@ -34,15 +35,15 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     connect(&engine, SIGNAL(objectCreated(QObject*, const QUrl&)), this,
             SLOT(onEngineLoaded(QObject*, const QUrl&)));
 
+    // load user settings
+    SettingsIO::loadRecentProjects(*this);
+
     // expose this object to QML
     if(engine.rootContext())
         engine.rootContext()->setContextProperty("_applicationModel", this);
 
     // load QML UI
     engine.load(QUrl("src/qml/main.qml"));
-
-    // load user settings
-    SettingsIO::loadRecentProjects(*this);
 }
 
 ApplicationModel::~ApplicationModel()
@@ -116,8 +117,8 @@ void ApplicationModel::removeProject(QObject* model)
 void ApplicationModel::onEngineLoaded(QObject* object, const QUrl& url)
 {
     // setup a custom logging system
-    _logger = this;
-    qInstallMessageHandler(doLog);
+    // _logger = this;
+    // qInstallMessageHandler(doLog);
 }
 
 } // namespace

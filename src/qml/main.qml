@@ -10,7 +10,7 @@ ApplicationWindow {
     width: 800
     height: 800
     visible: true
-    style: _style.bg
+    style: _style.bggl
 
     DefaultStyle {
         id: _style

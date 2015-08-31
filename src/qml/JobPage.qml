@@ -1,7 +1,7 @@
 import QtQuick 2.2
 import QtQuick.Layouts 1.1
 import QtQuick.Controls 1.3
-import QtQuick.Controls.styles 1.3
+import QtQuick.Controls.Styles 1.3
 
 import "layouts"
 import "delegates"

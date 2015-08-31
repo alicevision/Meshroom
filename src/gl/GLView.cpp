@@ -75,8 +75,11 @@ void GLView::handleWindowChanged(QQuickWindow* win)
     win->setClearBeforeRendering(false);
 }
 
+// This function is called from XXXXX
+// when the GL context is current
 void GLView::sync()
 {
+    // First time
     if(!_renderer)
         _renderer = new GLRenderer();
 
@@ -96,6 +99,7 @@ void GLView::sync()
     if(_camera)
         _renderer->setCameraMatrix(_camera->viewMatrix());
 
+    // Triggers a load when the file name is not null
     if(!_alembicSceneFile.isEmpty())
     {
         _renderer->addAlembicScene(_alembicSceneFile);
@@ -123,6 +127,8 @@ void GLView::refresh()
 
 void GLView::addAlembicScene(const QString& filename)
 {
+    // Stores the filename, the load is done later on 
+    // in the sync function, inside a GL context
     _alembicSceneFile = filename;
     refresh();
 }

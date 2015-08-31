@@ -12,7 +12,7 @@ class GLGrid : public GLDrawable
 {
 
 public:
-    GLGrid(QOpenGLShaderProgram& program);
+    GLGrid();
     ~GLGrid() = default;
 
 public:

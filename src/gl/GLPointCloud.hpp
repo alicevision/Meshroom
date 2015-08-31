@@ -2,8 +2,6 @@
 
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
-#include <QOpenGLShaderProgram>
-
 #include "GLDrawable.hpp"
 
 namespace mockup
@@ -13,12 +11,11 @@ class GLPointCloud : public GLDrawable
 {
 
 public:
-    GLPointCloud(QOpenGLShaderProgram&, const QString& cloud);
+    GLPointCloud();
     ~GLPointCloud() = default;
 
     void draw() override;
-    // template <typename DATA>
-    // static GLPointCloud* createFrom(const DATA&);
+    void setRawData(const void *points, size_t npoints);
 
 private:
     QOpenGLVertexArrayObject _vertexArrayObject;

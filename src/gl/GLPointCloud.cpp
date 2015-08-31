@@ -4,11 +4,17 @@
 namespace mockup
 {
 
-GLPointCloud::GLPointCloud(QOpenGLShaderProgram& program, const QString& cloud)
+GLPointCloud::GLPointCloud()
     : _pointPositions(QOpenGLBuffer::VertexBuffer)
     , _npoints(0)
-    , _program(program)
+    , _program(_colorUniform.program())
+{}
+
+void GLPointCloud::setRawData(const void *pointsBuffer, size_t npoints)
 {
+    // Allow only one load
+    if (npoints != 0) return;
+
     if(_vertexArrayObject.create())
     {
         _vertexArrayObject.bind();
@@ -16,14 +22,8 @@ GLPointCloud::GLPointCloud(QOpenGLShaderProgram& program, const QString& cloud)
         {
             _pointPositions.setUsagePattern(QOpenGLBuffer::StaticDraw);
             _pointPositions.bind();
-            // Load alembic point cloud
-            // FIXME: importer shouldn't be in this function but rather outside and contructing a
-            // GLPointCloud
-            AlembicImport importer(cloud.toStdString().c_str());
-            // FIXME
-            _npoints = importer.pointCloudSize();
-            _pointPositions.allocate(importer.pointCloudData(),
-                                     importer.pointCloudSize() * 3 * sizeof(float));
+            _npoints = npoints;
+            _pointPositions.allocate(pointsBuffer, npoints * 3 * sizeof(float));
             _program.enableAttributeArray("in_position");
             _program.setAttributeBuffer("in_position", GL_FLOAT, 0, 3);
             _pointPositions.release();
@@ -40,18 +40,17 @@ GLPointCloud::GLPointCloud(QOpenGLShaderProgram& program, const QString& cloud)
     }
 }
 
+
 void GLPointCloud::draw()
 {
-    _program.bind();
-    _vertexArrayObject.bind();
-    glDrawArrays(GL_POINTS, 0, _npoints);
-    _vertexArrayObject.release();
-    _program.release();
+    if (_npoints) 
+    {
+        _program.bind();
+        _vertexArrayObject.bind();
+        glDrawArrays(GL_POINTS, 0, _npoints);
+        _vertexArrayObject.release();
+        _program.release();
+    }
 }
-
-// template <>
-// GLPointCloud* GLPointCloud::createFrom(const int& importer)
-// {
-// }
 
 } // namespace

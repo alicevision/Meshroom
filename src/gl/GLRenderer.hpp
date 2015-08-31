@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QOpenGLFunctions_3_2_Core>
-#include "GLDrawable.hpp"
+#include "GLScene.hpp"
 #include "GLSLColoredShader.hpp"
 #include "GLSLPlainColorShader.hpp"
 #include <QObject>
@@ -35,12 +35,12 @@ private:
 
 private:
     QMatrix4x4 _cameraMat;
-    GLSLColoredShader* _coloredShader = nullptr;
-    GLSLPlainColorShader* _plainColorShader = nullptr;
+    //GLSLColoredShader* _coloredShader = nullptr;
+    //GLSLPlainColorShader* _plainColorShader = nullptr;
     QSize _viewportSize;
 
     // Simple scene as a list of drawable objects
-    QList<GLDrawable *> _scene;
+    GLScene _scene;
 
 };
 

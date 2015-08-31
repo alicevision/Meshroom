@@ -4,6 +4,8 @@
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 
+#include "gl/GLScene.hpp"
+
 using namespace Alembic::Abc;
 namespace AbcG = Alembic::AbcGeom;
 using namespace AbcG;
@@ -17,14 +19,11 @@ public:
     explicit AlembicImport(const char* fileName);
     ~AlembicImport() = default;
 
-    // void populateScene();
-    // void populateRenderer(Renderer &r)
-    const void* pointCloudData();
-    size_t pointCloudSize();
-    void visitObject(IObject);
+    void populate(GLScene &);
 
 private:
-    P3fArraySamplePtr _points;
+    void visitObject(IObject, GLScene &);
+    IObject _rootEntity;
 };
 
 } // namespace mockup

@@ -12,7 +12,7 @@ class GLGizmo : public GLDrawable
 {
 
 public:
-    GLGizmo(QOpenGLShaderProgram& program);
+    GLGizmo();
     ~GLGizmo() = default;
 
 public:

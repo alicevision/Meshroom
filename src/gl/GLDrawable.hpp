@@ -19,7 +19,7 @@ public:
     /// SHADER stuff
     // FIXME: I don't think this is a good idea to keep 
     // different shaders as static members of the base class
-    // fix woulb be to think about it and find a solution if needed...
+    // fix would be to think about it and find a solution if needed...
     static void setWorldMatrix(const QMatrix4x4 &);
     static void setShaders(GLSLPlainColorShader *, GLSLColoredShader *);
     static void deleteShaders();

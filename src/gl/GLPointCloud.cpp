@@ -13,7 +13,7 @@ GLPointCloud::GLPointCloud()
 void GLPointCloud::setRawData(const void *pointsBuffer, size_t npoints)
 {
     // Allow only one load
-    if (npoints != 0) return;
+    if (_npoints != 0) return;
 
     if(_vertexArrayObject.create())
     {

@@ -66,7 +66,7 @@ void GLRenderer::updateWorldMatrix()
     _plainColorShader->setWorldMatrix(worldMat);
 }
 
-void GLRenderer::addPointCloud(const QString& cloud)
+void GLRenderer::addAlembicScene(const QString& cloud)
 {
     _scene.append(new GLPointCloud(_plainColorShader->program(), cloud));
 }

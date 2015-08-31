@@ -25,7 +25,7 @@ public slots:
     void setCamera(QObject* camera);
 
 
-    void addPointCloud(const QString& cloud);
+    void addAlembicScene(const QString& filename);
 
 
 private slots:
@@ -57,7 +57,7 @@ private:
     QRect _viewport;
     QColor _color;
     CameraModel * _camera = nullptr;
-    QString _pointCloud;
+    QString _alembicSceneFile;
 
     /// FIXME : rename variables to something more meaningful
     // Ideally the following variables should go in a manipulator of some sort

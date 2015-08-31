@@ -96,10 +96,10 @@ void GLView::sync()
     if(_camera)
         _renderer->setCameraMatrix(_camera->viewMatrix());
 
-    if(!_pointCloud.isEmpty())
+    if(!_alembicSceneFile.isEmpty())
     {
-        _renderer->addPointCloud(_pointCloud);
-        _pointCloud.clear();
+        _renderer->addAlembicScene(_alembicSceneFile);
+        _alembicSceneFile.clear();
     }
 }
 
@@ -121,9 +121,9 @@ void GLView::refresh()
         window()->update();
 }
 
-void GLView::addPointCloud(const QString& cloud)
+void GLView::addAlembicScene(const QString& filename)
 {
-    _pointCloud = cloud;
+    _alembicSceneFile = filename;
     refresh();
 }
 

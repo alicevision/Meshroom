@@ -20,6 +20,32 @@ Item {
         root.highlighted = !root.highlighted;
     }
 
+    Menu {
+        id: menu
+        title: "Edit"
+        MenuItem {
+            text: "Select"
+            onTriggered: console.log("delete")
+        }
+        MenuItem {
+            text: "Delete"
+            onTriggered: console.log("delete")
+        }
+        MenuSeparator { }
+        Menu {
+            title: "Set as..."
+            MenuItem {
+                text: "initial pair A"
+            }
+            MenuItem {
+                text: "initial pair B"
+            }
+            MenuItem {
+                text: "job thumbnail"
+            }
+        }
+    }
+
     width: GridView.view.cellWidth
     height: GridView.view.cellHeight
 
@@ -32,8 +58,12 @@ Item {
             id: thumbMouseArea
             anchors.fill: parent
             hoverEnabled: true
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: {
-                itemClicked(index);
+                if(mouse.button == Qt.LeftButton)
+                    itemClicked(index);
+                else
+                    menu.popup();
             }
             onDoubleClicked: {
                 itemDoubleClicked(index);

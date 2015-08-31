@@ -28,4 +28,16 @@ add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})
 target_link_libraries(${TARGETOBJ}
                     ${GLEW_LIBRARIES}
                     ${OPENGL_LIBRARIES})
+#
+# Optional alembic importer
+#
+find_package(Alembic)
+if (ALEMBIC_FOUND)
+include_directories(${ABC_INCLUDE_DIR})
+add_definitions(-DWITH_ALEMBIC)
+add_definitions("-Wl,--as-needed")
+#set (CMAKE_CXX_FLAGS "-Wl,--as-needed")
+target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
+endif (ALEMBIC_FOUND)
+
 QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick)

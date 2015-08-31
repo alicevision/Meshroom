@@ -131,7 +131,8 @@ void JobsIO::loadAllJobs(ProjectModel& projectModel)
     QList<QObject*> validJobs;
     for(size_t i = 0; i < jobs.length(); ++i)
     {
-        JobModel* job = JobsIO::load(&projectModel, QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
+        JobModel* job =
+            JobsIO::load(&projectModel, QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
         if(!job)
             continue;
         validJobs.append(job);

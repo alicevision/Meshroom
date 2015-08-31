@@ -20,7 +20,8 @@ void InstantCoding::watch(const QString& path)
         if(fileinfo.completeSuffix() == "qml")
         {
             _watcher.addPath(fileinfo.absoluteFilePath());
-            std::cout << "Watching QML file: " << fileinfo.absoluteFilePath().toStdString() << std::endl;
+            std::cout << "Watching QML file: " << fileinfo.absoluteFilePath().toStdString()
+                      << std::endl;
         }
     };
     traverseDirectory(path, f);
@@ -32,7 +33,7 @@ void InstantCoding::fileChanged(const QString& path)
     QList<QObject*> rootObjects = _engine.rootObjects();
     foreach(QObject* obj, rootObjects)
     {
-        QObject *loader = obj->findChild<QObject*>("instanCodingLoader");
+        QObject* loader = obj->findChild<QObject*>("instanCodingLoader");
         if(loader)
         {
             /*

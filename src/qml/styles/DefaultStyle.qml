@@ -35,16 +35,16 @@ QtObject {
             property color debug: "#444";
             property color info: "#666";
             property color warning: "#DAA520";
-            property color critical: "#A00";
-            property color fatal: "#A00";
+            property color critical: "red";
+            property color fatal: "red";
         }
     }
     property QtObject window: QtObject {
         property QtObject color: QtObject {
-            property color xlighter: Qt.lighter(normal, 1.5);
-            property color lighter: Qt.lighter(normal, 1.5);
-            property color normal: "#333";
-            property color darker: Qt.darker(normal, 1.5);
+            property color xlighter: Qt.lighter(normal, 1.8);
+            property color lighter: Qt.lighter(normal, 1.3);
+            property color normal: "#393939";
+            property color darker: Qt.darker(normal, 1.3);
             property color xdarker: Qt.darker(normal, 1.8);
             property color selected: "#5BB1F7";
         }
@@ -53,6 +53,6 @@ QtObject {
         background: Item {} // hide default application background
     }
     property Component bg: ApplicationWindowStyle {
-        background: Rectangle { color: root.window.color.normal }
+        background: Rectangle { color: root.window.color.darker }
     }
 }

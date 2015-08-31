@@ -2,8 +2,15 @@ import QtQuick 2.2
 import QtQuick.Layouts 1.1
 
 Item {
+    property Component background: Item {}
     property Component header: Item {}
     property Component body: Item {}
+
+    // background
+    Loader {
+        anchors.fill: parent
+        sourceComponent: background
+    }
 
     ColumnLayout {
         anchors.fill: parent

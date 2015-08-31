@@ -39,7 +39,6 @@ Item {
         onTriggered: hideTitleText()
     }
 
-    anchors.bottom: parent.bottom
     width: parent.width
     height: expanded ? Math.min(5, Math.max(model.length+1, 2)) * root.itemHeight : root.itemHeight
     Behavior on height { NumberAnimation {} }
@@ -53,7 +52,7 @@ Item {
             Layout.preferredHeight: 25
             Rectangle {
                 anchors.fill: parent
-                color: _style.window.color.darker
+                color: _style.window.color.xdarker
             }
             RowLayout {
                 anchors.fill: parent
@@ -86,7 +85,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: _style.window.color.xdarker
-            ScrollView {
+            CustomScrollView {
                 anchors.fill: parent
                 verticalScrollBarPolicy: Qt.ScrollBarAlwaysOn
                 ListView {

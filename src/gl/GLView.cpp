@@ -11,7 +11,7 @@ namespace mockup
 GLView::GLView()
     : _renderer(nullptr)
     , _cameraMode(Idle)
-    , _lookAt() // Stores camera->_lookAt locally to avoid recomputing it
+    , _lookAtTmp() // Stores camera->_lookAtTmp locally to avoid recomputing it
 {
     // FIXME: camera location should move away
     QUrl fakeurl;
@@ -60,7 +60,7 @@ void GLView::setCamera(QObject* camera)
     {
         // FIXME: do we need to disconnect the previous camera if any ?
         connect(_camera, SIGNAL(viewMatrixChanged()), this, SLOT(refresh()), Qt::DirectConnection);
-        _lookAt = _camera->lookAt();
+        _lookAtTmp = _camera->lookAt();
         emit cameraChanged();
         refresh();
     }
@@ -84,12 +84,12 @@ void GLView::sync()
 
     QPointF pos(x(), y());
     pos = mapToScene(pos);
-    _rect.setX(qRound(ratio * pos.x()));
-    _rect.setY(qRound(ratio * (window()->height() - (pos.y() + height()))));
-    _rect.setWidth(qRound(ratio * width()));
-    _rect.setHeight(qRound(ratio * height()));
+    _viewport.setX(qRound(ratio * pos.x()));
+    _viewport.setY(qRound(ratio * (window()->height() - (pos.y() + height()))));
+    _viewport.setWidth(qRound(ratio * width()));
+    _viewport.setHeight(qRound(ratio * height()));
 
-    _renderer->setViewportSize(_rect.size());
+    _renderer->setViewportSize(_viewport.size());
     _renderer->setClearColor(_color);
 
     // camera
@@ -98,7 +98,7 @@ void GLView::sync()
 
     if(!_pointCloud.isEmpty())
     {
-        _renderer->setPointCloud(_pointCloud);
+        _renderer->addPointCloud(_pointCloud);
         _pointCloud.clear();
     }
 }
@@ -106,8 +106,8 @@ void GLView::sync()
 void GLView::paint()
 {
     glEnable(GL_SCISSOR_TEST);
-    glViewport(_rect.x(), _rect.y(), _rect.width(), _rect.height());
-    glScissor(_rect.x(), _rect.y(), _rect.width(), _rect.height());
+    glViewport(_viewport.x(), _viewport.y(), _viewport.width(), _viewport.height());
+    glScissor(_viewport.x(), _viewport.y(), _viewport.width(), _viewport.height());
 
     if(_renderer)
         _renderer->draw();
@@ -121,7 +121,7 @@ void GLView::refresh()
         window()->update();
 }
 
-void GLView::setPointCloud(const QString& cloud)
+void GLView::addPointCloud(const QString& cloud)
 {
     _pointCloud = cloud;
     refresh();
@@ -131,11 +131,13 @@ void GLView::mousePressEvent(QMouseEvent* event)
 {
     // Dependending on the combination of key and mouse
     // set the correct mode
+    if(!_camera)
+        return;
     if(event->modifiers() == Qt::AltModifier)
     {
-        _pressedPos = event->pos();
-        _cameraBegin = _camera->viewMatrix();
-        _lookAt = _camera->lookAt();
+        _mousePos = event->pos();
+        _camMatTmp = _camera->viewMatrix();
+        _lookAtTmp = _camera->lookAt();
         switch(event->buttons())
         {
             case Qt::LeftButton:
@@ -213,72 +215,78 @@ void GLView::translateLineOfSightCamera(QMatrix4x4 &cam, float &radius, float dx
 
 void GLView::wheelEvent(QWheelEvent* event)
 {
-    const float dx = _pressedPos.x() - event->pos().x(); // TODO divide by canvas size
-    const float dy = _pressedPos.y() - event->pos().y(); // or unproject ?
+    if (!_camera)
+        return;
+
+    const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
+    const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
     const int numDegrees = event->delta() / 8;
     const int numSteps = numDegrees / 15;
     const float delta = numSteps*100;
 
     float radius = _camera->lookAtRadius();
-    translateLineOfSightCamera(_cameraBegin, radius, delta, 0);
+    translateLineOfSightCamera(_camMatTmp, radius, delta, 0);
 
     _camera->setLookAtRadius(radius);
-    _camera->setViewMatrix(_cameraBegin);
+    _camera->setViewMatrix(_camMatTmp);
 
-    _lookAt = _camera->lookAt();
-    _pressedPos = event->pos();
+    _lookAtTmp = _camera->lookAt();
+    _mousePos = event->pos();
 }
 
 void GLView::mouseMoveEvent(QMouseEvent* event)
 {
+    if(!_camera)
+        return;
+
     switch(_cameraMode)
     {
         case Idle:
             break;
         case Rotate:
         {
-            const float dx = _pressedPos.x() - event->pos().x(); // TODO divide by canvas size
-            const float dy = _pressedPos.y() - event->pos().y(); // or unproject ?
+            const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
+            const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
             if(0) // TODO select between trackball vs turntable
             {
-                trackBallRotateCamera(_cameraBegin, _lookAt, dx, dy);
+                trackBallRotateCamera(_camMatTmp, _lookAtTmp, dx, dy);
 
-                _camera->setViewMatrix(_cameraBegin);
-                _pressedPos = event->pos();
+                _camera->setViewMatrix(_camMatTmp);
+                _mousePos = event->pos();
             }
             else // Turntable
             {
-                turnTableRotateCamera(_cameraBegin, _lookAt, dx, dy);
+                turnTableRotateCamera(_camMatTmp, _lookAtTmp, dx, dy);
 
-                _camera->setViewMatrix(_cameraBegin);
-                _pressedPos = event->pos();
+                _camera->setViewMatrix(_camMatTmp);
+                _mousePos = event->pos();
             }
         }
         break;
         case Translate:
         {
-            const float dx = _pressedPos.x() - event->pos().x(); // TODO divide by canvas size
-            const float dy = _pressedPos.y() - event->pos().y(); // or unproject ?
+            const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
+            const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
 
-            planeTranslateCamera(_cameraBegin, dx, dy);
+            planeTranslateCamera(_camMatTmp, dx, dy);
 
-            _camera->setViewMatrix(_cameraBegin);
-            _lookAt = _camera->lookAt();
-            _pressedPos = event->pos();
+            _camera->setViewMatrix(_camMatTmp);
+            _lookAtTmp = _camera->lookAt();
+            _mousePos = event->pos();
         }
         break;
         case Zoom:
         {
-            const float dx = _pressedPos.x() - event->pos().x(); // TODO divide by canvas size
-            const float dy = _pressedPos.y() - event->pos().y(); // or unproject ?
+            const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
+            const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
 
             float radius = _camera->lookAtRadius();
-            translateLineOfSightCamera(_cameraBegin, radius, dx, dy);
+            translateLineOfSightCamera(_camMatTmp, radius, dx, dy);
 
             _camera->setLookAtRadius(radius);
-            _camera->setViewMatrix(_cameraBegin);
-            _lookAt = _camera->lookAt();
-            _pressedPos = event->pos();
+            _camera->setViewMatrix(_camMatTmp);
+            _lookAtTmp = _camera->lookAt();
+            _mousePos = event->pos();
         }
 
         break;

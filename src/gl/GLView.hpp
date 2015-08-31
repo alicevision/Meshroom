@@ -23,7 +23,10 @@ public slots:
     void setColor(const QColor& color);
     QObject * camera() const;
     void setCamera(QObject* camera);
-    void setPointCloud(const QString& cloud);
+
+
+    void addPointCloud(const QString& cloud);
+
 
 private slots:
     void handleWindowChanged(QQuickWindow* win);
@@ -49,16 +52,19 @@ protected:
     void translateLineOfSightCamera(QMatrix4x4 &cam, float &radius, float dx, float dy);
 
 private:
+    // Delegate opengl rendering
     GLRenderer* _renderer = nullptr;
-    QRect _rect;
+    QRect _viewport;
     QColor _color;
     CameraModel * _camera = nullptr;
     QString _pointCloud;
 
     /// FIXME : rename variables to something more meaningful
-    QPoint _pressedPos;      /// Position of the mousePressed event
-    QMatrix4x4 _cameraBegin; /// Position of the camera when the mouse is pressed
-    QVector3D _lookAt;
+    // Ideally the following variables should go in a manipulator of some sort
+    QPoint _mousePos;      /// Position of the mousePressed event
+    QMatrix4x4 _camMatTmp; /// Position of the camera when the mouse is pressed
+    QVector3D _lookAtTmp;
+
     enum CameraMode
     {
         Idle,

@@ -88,7 +88,7 @@ TitledPageLayout {
                     title: "3D"
                     DropArea {
                         anchors.fill: parent
-                        onDropped: glview.setPointCloud(drop.urls[0].replace("file://", ""))
+                        onDropped: glview.addPointCloud(drop.urls[0].replace("file://", ""))
                         GLView {
                             id: glview
                             anchors.fill: parent

@@ -3,11 +3,12 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
+#include "GLDrawable.hpp"
 
 namespace mockup
 {
 
-class GLGizmo
+class GLGizmo : public GLDrawable
 {
 
 public:
@@ -15,7 +16,7 @@ public:
     ~GLGizmo() = default;
 
 public:
-    void draw();
+    void draw() override;
     QMatrix4x4 modelMatrix() const;
 
     void setPosition(const QVector3D& v);

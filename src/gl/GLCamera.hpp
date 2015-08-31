@@ -3,26 +3,34 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
+
 #include "GLDrawable.hpp"
+
+// GLCamera Gizmo
+// draw a simple camera
 
 namespace mockup
 {
 
-class GLGrid : public GLDrawable
+class GLCamera : public GLDrawable
 {
 
 public:
-    GLGrid(QOpenGLShaderProgram& program);
-    ~GLGrid() = default;
+    GLCamera(QOpenGLShaderProgram& program);
+    ~GLCamera() = default;
 
 public:
     void draw() override;
+    QMatrix4x4 modelMatrix() const;
+
+    void setPosition(const QVector3D& v);
+    // TODO : set Matrix
 
 private:
     QOpenGLVertexArrayObject _vao;
     QOpenGLBuffer _positionBuffer;
     QOpenGLShaderProgram& _program;
-    size_t _verticeCount = 0;
+    QVector3D _position;
 };
 
-} // namespace
+}

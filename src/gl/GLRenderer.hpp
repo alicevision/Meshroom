@@ -1,8 +1,7 @@
 #pragma once
 
 #include <QOpenGLFunctions_3_2_Core>
-#include "GLGizmo.hpp"
-#include "GLGrid.hpp"
+#include "GLDrawable.hpp"
 #include "GLSLColoredShader.hpp"
 #include "GLSLPlainColorShader.hpp"
 #include <QObject>
@@ -26,7 +25,7 @@ public:
     void setViewportSize(const QSize& size);
     void setCameraMatrix(const QMatrix4x4& cameraMat);
     void setClearColor(const QColor& color);
-    void setPointCloud(const QString& cloud);
+    void addPointCloud(const QString& cloud);
 
 public slots:
     void draw();
@@ -36,12 +35,13 @@ private:
 
 private:
     QMatrix4x4 _cameraMat;
-    GLGizmo* _gizmo = nullptr;
-    GLGrid* _grid = nullptr;
     GLSLColoredShader* _coloredShader = nullptr;
     GLSLPlainColorShader* _plainColorShader = nullptr;
-    GLPointCloud* _pointCloud = nullptr;
     QSize _viewportSize;
+
+    // Simple scene as a list of drawable objects
+    QList<GLDrawable *> _scene;
+
 };
 
 } // namespace

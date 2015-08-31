@@ -4,18 +4,19 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
 
+#include "GLDrawable.hpp"
+
 namespace mockup
 {
 
-class GLPointCloud
+class GLPointCloud : public GLDrawable
 {
 
 public:
     GLPointCloud(QOpenGLShaderProgram&, const QString& cloud);
     ~GLPointCloud() = default;
 
-public:
-    void draw();
+    void draw() override;
     // template <typename DATA>
     // static GLPointCloud* createFrom(const DATA&);
 

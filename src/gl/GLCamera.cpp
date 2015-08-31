@@ -5,9 +5,9 @@ namespace mockup
 {
 
 
-GLCamera::GLCamera(QOpenGLShaderProgram& program)
+GLCamera::GLCamera()
     : _positionBuffer(QOpenGLBuffer::VertexBuffer)
-    , _program(program)
+    , _program(_colorUniform->program())
     , _position(0.0, 0.0, 0.0)
 {
     _vao.create();

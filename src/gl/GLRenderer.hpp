@@ -2,8 +2,6 @@
 
 #include <QOpenGLFunctions_3_2_Core>
 #include "GLScene.hpp"
-#include "GLSLColoredShader.hpp"
-#include "GLSLPlainColorShader.hpp"
 #include <QObject>
 #include <QColor>
 
@@ -35,11 +33,9 @@ private:
 
 private:
     QMatrix4x4 _cameraMat;
-    //GLSLColoredShader* _coloredShader = nullptr;
-    //GLSLPlainColorShader* _plainColorShader = nullptr;
     QSize _viewportSize;
 
-    // Simple scene as a list of drawable objects
+    // Simple scene: a list of drawable objects
     GLScene _scene;
 
 };

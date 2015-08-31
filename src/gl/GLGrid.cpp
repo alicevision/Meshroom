@@ -33,7 +33,7 @@ void buildGridData(QVector<float>& griddata, float first, float last, float offs
 
 GLGrid::GLGrid()
     : _positionBuffer(QOpenGLBuffer::VertexBuffer)
-    , _program(_colorUniform.program())
+    , _program(_colorUniform->program())
 {
     _vao.create();
     _vao.bind();

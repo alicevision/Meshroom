@@ -16,7 +16,7 @@ class GLCamera : public GLDrawable
 {
 
 public:
-    GLCamera(QOpenGLShaderProgram& program);
+    GLCamera();
     ~GLCamera() = default;
 
 public:
@@ -24,6 +24,9 @@ public:
     QMatrix4x4 modelMatrix() const;
 
     void setPosition(const QVector3D& v);
+    //
+    //
+    void setModelMatrix(const QMatrix4x4 &);
     // TODO : set Matrix
 
 private:

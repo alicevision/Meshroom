@@ -9,7 +9,7 @@ namespace mockup
 GLGizmo::GLGizmo()
     : _positionBuffer(QOpenGLBuffer::VertexBuffer)
     , _colorBuffer(QOpenGLBuffer::VertexBuffer)
-    , _program(_colorArray.program())
+    , _program(_colorArray->program())
     , _position(0.0, 0.0, 0.0)
 {
     _vao.create();
@@ -45,19 +45,6 @@ void GLGizmo::draw()
     glDrawArrays(GL_LINES, 0, 6);
     _vao.release();
     _program.release();
-}
-
-void GLGizmo::setPosition(const QVector3D& v)
-{
-    _position = v;
-}
-
-QMatrix4x4 GLGizmo::modelMatrix() const
-{
-    QMatrix4x4 modelMat;
-    modelMat.translate(_position);
-
-    return modelMat;
 }
 
 } // namespace

@@ -17,9 +17,6 @@ public:
 
 public:
     void draw() override;
-    QMatrix4x4 modelMatrix() const;
-
-    void setPosition(const QVector3D& v);
 
 private:
     QOpenGLVertexArrayObject _vao;

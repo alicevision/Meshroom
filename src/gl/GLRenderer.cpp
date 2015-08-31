@@ -12,8 +12,10 @@ namespace mockup
 
 GLRenderer::GLRenderer()
 {
-    //_coloredShader = new GLSLColoredShader();
-    //_plainColorShader = new GLSLPlainColorShader(QVector4D(0.8, 0.8, 0.8, 1.0));
+    // The shaders have to be created in a valid opengl context
+    GLDrawable::setShaders(
+            new GLSLPlainColorShader(QVector4D(0.8, 0.8, 0.8, 1.0)),
+            new GLSLColoredShader());
     _scene.append(new GLGizmo());
     _scene.append(new GLGrid());
     updateWorldMatrix();
@@ -22,10 +24,8 @@ GLRenderer::GLRenderer()
 GLRenderer::~GLRenderer()
 {
     for(auto obj: _scene) delete obj;
-    //if(_coloredShader)
-    //    delete _coloredShader;
-    //if(_plainColorShader)
-    //    delete _plainColorShader;
+
+    GLDrawable::deleteShaders();
 }
 
 void GLRenderer::setViewportSize(const QSize& size)
@@ -57,15 +57,12 @@ void GLRenderer::updateWorldMatrix()
 {
     // projection
     QMatrix4x4 projMat;
-    // TODO: get perspective matrix from camera
+    // TODO: get perspective matrix from current camera
     projMat.perspective(60.0f, _viewportSize.width() / (float)_viewportSize.height(), 0.1f, 100.0f);
     // world
-    QMatrix4x4 worldMat;
-    worldMat = projMat * _cameraMat;
+    QMatrix4x4 worldMat = projMat * _cameraMat;
     // update shaders
     GLDrawable::setWorldMatrix(worldMat);
-    //_coloredShader->setWorldMatrix(worldMat);
-    //_plainColorShader->setWorldMatrix(worldMat);
 }
 
 void GLRenderer::addAlembicScene(const QString& cloud)

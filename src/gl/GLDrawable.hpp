@@ -16,16 +16,17 @@ public:
     virtual ~GLDrawable() = default;
     virtual void draw() = 0;
 
-    static void setWorldMatrix(const QMatrix4x4 &);
-
     /// SHADER stuff
-protected:
-
     // FIXME: I don't think this is a good idea to keep 
-    // different shader as static members of the base class
-    // We should think about it ...
-    static GLSLPlainColorShader _colorUniform;
-    static GLSLColoredShader    _colorArray;
+    // different shaders as static members of the base class
+    // fix woulb be to think about it and find a solution if needed...
+    static void setWorldMatrix(const QMatrix4x4 &);
+    static void setShaders(GLSLPlainColorShader *, GLSLColoredShader *);
+    static void deleteShaders();
+
+protected:
+    static GLSLPlainColorShader *_colorUniform;
+    static GLSLColoredShader    *_colorArray;
 };
 
 

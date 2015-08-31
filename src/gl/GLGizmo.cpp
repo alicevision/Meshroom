@@ -9,7 +9,7 @@ namespace mockup
 GLGizmo::GLGizmo()
     : _positionBuffer(QOpenGLBuffer::VertexBuffer)
     , _colorBuffer(QOpenGLBuffer::VertexBuffer)
-    , _program(_colorArray->program())
+    , _program(*_colorArray)
     , _position(0.0, 0.0, 0.0)
 {
     _vao.create();

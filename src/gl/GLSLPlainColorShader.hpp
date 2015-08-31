@@ -5,7 +5,7 @@
 namespace mockup
 {
 
-class GLSLPlainColorShader
+class GLSLPlainColorShader : public QOpenGLShaderProgram
 {
 
 public:
@@ -13,14 +13,10 @@ public:
     ~GLSLPlainColorShader() = default;
 
 public:
-    QOpenGLShaderProgram& program();
     void setWorldMatrix(const QMatrix4x4& worldMat);
     void setColor(const QVector4D& color);
-    void bind();
-    void release();
 
 private:
-    QOpenGLShaderProgram _program;
     QVector4D _color;
 };
 

@@ -5,7 +5,7 @@
 namespace mockup
 {
 
-class GLSLColoredShader
+class GLSLColoredShader : public QOpenGLShaderProgram
 {
 
 public:
@@ -13,13 +13,8 @@ public:
     ~GLSLColoredShader() = default;
 
 public:
-    QOpenGLShaderProgram& program();
     void setWorldMatrix(const QMatrix4x4& worldMat);
-    void bind();
-    void release();
 
-private:
-    QOpenGLShaderProgram _program;
 };
 
 } // namespace

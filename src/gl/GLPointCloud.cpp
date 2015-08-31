@@ -7,7 +7,7 @@ namespace mockup
 GLPointCloud::GLPointCloud()
     : _pointPositions(QOpenGLBuffer::VertexBuffer)
     , _npoints(0)
-    , _program(_colorUniform->program())
+    , _program(*_colorUniform)
 {}
 
 void GLPointCloud::setRawData(const void *pointsBuffer, size_t npoints)

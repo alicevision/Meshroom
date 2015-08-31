@@ -24,43 +24,30 @@ namespace mockup
 {
 
 GLSLPlainColorShader::GLSLPlainColorShader(const QVector4D& color)
-    : _color(color)
+    : QOpenGLShaderProgram()
+    , _color(color)
 {
-    _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_shader);
-    _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fragment_shader);
-    _program.link();
-    _program.release();
+    addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_shader);
+    addShaderFromSourceCode(QOpenGLShader::Fragment, fragment_shader);
+    link();
+    release();
     setColor(color);
 }
 
-QOpenGLShaderProgram& GLSLPlainColorShader::program()
-{
-    return _program;
-}
 
 void GLSLPlainColorShader::setWorldMatrix(const QMatrix4x4& worldMat)
 {
-    _program.bind();
-    _program.setUniformValue(_program.uniformLocation("mvpMatrix"), worldMat);
-    _program.release();
+    bind();
+    setUniformValue(uniformLocation("mvpMatrix"), worldMat);
+    release();
 }
 
 void GLSLPlainColorShader::setColor(const QVector4D& color)
 {
     _color = color;
-    _program.bind();
-    _program.setUniformValue(_program.uniformLocation("color"), _color);
-    _program.release();
-}
-
-void GLSLPlainColorShader::bind()
-{
-    _program.bind();
-}
-
-void GLSLPlainColorShader::release()
-{
-    _program.release();
+    bind();
+    setUniformValue(uniformLocation("color"), _color);
+    release();
 }
 
 } // namespace

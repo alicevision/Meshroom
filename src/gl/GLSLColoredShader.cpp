@@ -29,32 +29,17 @@ namespace mockup
 GLSLColoredShader::GLSLColoredShader()
 {
     // shader compilation
-    _program.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_shader);
-    _program.addShaderFromSourceCode(QOpenGLShader::Fragment, fragment_shader);
-    _program.link();
-    _program.release();
-}
-
-QOpenGLShaderProgram& GLSLColoredShader::program()
-{
-    return _program;
+    addShaderFromSourceCode(QOpenGLShader::Vertex, vertex_shader);
+    addShaderFromSourceCode(QOpenGLShader::Fragment, fragment_shader);
+    link();
+    release();
 }
 
 void GLSLColoredShader::setWorldMatrix(const QMatrix4x4& worldMat)
 {
-    _program.bind();
-    _program.setUniformValue(_program.uniformLocation("mvpMatrix"), worldMat);
-    _program.release();
-}
-
-void GLSLColoredShader::bind()
-{
-    _program.bind();
-}
-
-void GLSLColoredShader::release()
-{
-    _program.release();
+    bind();
+    setUniformValue("mvpMatrix", worldMat);
+    release();
 }
 
 } // namespace

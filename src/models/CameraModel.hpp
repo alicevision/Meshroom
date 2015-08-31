@@ -39,7 +39,7 @@ public slots:
     const QMatrix4x4& viewMatrix() const;
     void setViewMatrix(const QMatrix4x4& mat);
 
-    void setLookAtRadius(float radius) { _lookAtRadius = radius; }
+    void setLookAtRadius(float radius) { _lookAtRadius = radius > 0.0 ? radius : 0.0; }
     float lookAtRadius() { return _lookAtRadius; }
 
     // void setLookAt(const QVector3D &lookAt){_lookAt=lookAt;}

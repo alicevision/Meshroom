@@ -4,8 +4,9 @@
 #include <QMatrix4x4>
 namespace mockup
 {
-
-class GLRenderer; // forward declaration
+// forward declaration
+class GLRenderer;
+class CameraModel;
 
 class GLView : public QQuickItem
 {
@@ -20,7 +21,7 @@ public:
 public slots:
     const QColor& color() const;
     void setColor(const QColor& color);
-    QObject* camera() const;
+    QObject * camera() const;
     void setCamera(QObject* camera);
     void setPointCloud(const QString& cloud);
 
@@ -38,12 +39,20 @@ protected:
     void mouseMoveEvent(QMouseEvent*);
     void mousePressEvent(QMouseEvent*);
     void mouseReleaseEvent(QMouseEvent*);
+    void wheelEvent(QWheelEvent* event);
+
+    // Function to manipulate cameras. 
+    // might move in a different class, eg CameraManipulator
+    void trackBallRotateCamera(QMatrix4x4 &cam, const QVector3D &lookAt, float dx, float dy);
+    void turnTableRotateCamera(QMatrix4x4 &cam, const QVector3D &lookAt, float dx, float dy);
+    void planeTranslateCamera(QMatrix4x4 &cam, float dx, float dy);
+    void translateLineOfSightCamera(QMatrix4x4 &cam, float &radius, float dx, float dy);
 
 private:
     GLRenderer* _renderer = nullptr;
     QRect _rect;
     QColor _color;
-    QObject* _camera = nullptr;
+    CameraModel * _camera = nullptr;
     QString _pointCloud;
 
     /// FIXME : rename variables to something more meaningful

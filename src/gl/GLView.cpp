@@ -117,8 +117,6 @@ void GLView::paint()
 
 void GLView::refresh()
 {
-    if(_renderer)
-        _renderer->setGizmoPosition(_lookAt);
     if(window())
         window()->update();
 }

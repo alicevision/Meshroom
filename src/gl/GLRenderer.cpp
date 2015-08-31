@@ -68,17 +68,6 @@ void GLRenderer::updateWorldMatrix()
     _plainColorShader->setWorldMatrix(worldMat);
 }
 
-// FIXME: setGizmoPosition should certainly move away from the renderer
-// At the moment it is used as a convenience function for testing the camera
-// manipulation
-void GLRenderer::setGizmoPosition(const QVector3D& pos)
-{
-    if(_gizmo)
-    {
-        _gizmo->setPosition(pos);
-    }
-}
-
 void GLRenderer::setPointCloud(const QString& cloud)
 {
     if(_pointCloud)

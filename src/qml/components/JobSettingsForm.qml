@@ -58,6 +58,7 @@ Item {
                     anchors.fill: parent
                     source: root.jobModel.pairA
                     fillMode: Image.PreserveAspectFit
+                    asynchronous: true
                 }
             }
             ResourceDropArea {
@@ -75,6 +76,7 @@ Item {
                     anchors.fill: parent
                     source: root.jobModel.pairB
                     fillMode: Image.PreserveAspectFit
+                    asynchronous: true
                 }
             }
         }

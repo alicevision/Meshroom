@@ -17,12 +17,15 @@ TitledPageLayout {
     property int labelWidth: 100
     property int settingsHeight: 0
 
+    onJobModelChanged: jobModel.refresh()
+
     header: JobHeader {
         projectModel: root.projectModel
         jobModel: root.jobModel
         onHomeSelected: showHomePage()
         onProjectSelected: showProjectPage(projectID)
-        onProjectSettingsClicked: root.settingsHeight = (root.settingsHeight<=0)?root.height*0.3:0
+        onProjectSettingsToggled: root.settingsHeight = (root.settingsHeight<=0)?root.height*0.3:0
+        onProjectSettingsOpened: root.settingsHeight = root.height*0.3
     }
     body: SplitView {
         Layout.fillWidth: true
@@ -71,7 +74,7 @@ TitledPageLayout {
                             id: gallery
                             anchors.fill: parent
                             anchors.margins: 20
-                            model: root.jobModel
+                            jobModel: root.jobModel
                             selectable: true
                             Shortcut {
                                 key: "Backspace"

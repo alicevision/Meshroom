@@ -12,7 +12,7 @@ Item {
 
     implicitWidth: 200
     implicitHeight: 60
-    
+
     MouseArea {
         id: mouseContainer
         anchors.fill: parent
@@ -31,7 +31,20 @@ Item {
             width: 3
             radius: 2
             height: parent.height * 0.8
-            color: (index%3==0)?"red":"transparent"
+            color: {
+                switch(modelData.status) {
+                    case 6: // PAUSED
+                    case 4: // ERROR
+                    case 5: // CANCELED
+                        return "red";
+                    case 0: // BLOCKED
+                    case 1: // READY
+                    case 2: // RUNNING
+                    case 3: // DONE
+                    default:
+                        return "transparent";
+                }
+            }
         }
         RowLayout {
             anchors.fill: parent
@@ -73,7 +86,23 @@ Item {
                         Layout.fillWidth: true
                     }
                     CustomText {
-                        text: "N%"
+                        text: {
+                            switch(modelData.status) {
+                                case 6: // PAUSED
+                                    return "PAUSED";
+                                case 4: // ERROR
+                                    return "ERROR";
+                                case 5: // CANCELED
+                                    return "CANCELED";
+                                case 3: // DONE
+                                    return "DONE"
+                                case 0: // BLOCKED
+                                case 1: // READY
+                                case 2: // RUNNING
+                                default:
+                                    return Math.round(modelData.completion*100)+"%"
+                            }
+                        }
                         textSize: _style.text.size.small
                         color: _style.text.color.darker
                     }

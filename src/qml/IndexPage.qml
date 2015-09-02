@@ -11,7 +11,7 @@ import "components"
 SplittedPageLayout {
 
     id: root
-    
+
     header: Item {}
     bodyA: MenuPage {}
     bodyB: Loader {
@@ -67,6 +67,12 @@ SplittedPageLayout {
     }
     function currentJobID() {
         return _private.currentJobID;
+    }
+    function removeProject() {
+        _applicationModel.removeProject(_applicationModel.projects[_private.currentProjectID]);
+    }
+    function addJob() {
+        _applicationModel.projects[_private.currentProjectID].addJob();
     }
 
 }

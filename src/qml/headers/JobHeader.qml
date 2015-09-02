@@ -14,7 +14,8 @@ Rectangle {
 
     signal homeSelected()
     signal projectSelected(int projectID)
-    signal projectSettingsClicked()
+    signal projectSettingsToggled()
+    signal projectSettingsOpened()
 
     implicitHeight: 30
     color: _style.window.color.darker
@@ -70,7 +71,7 @@ Rectangle {
         CustomToolButton {
             iconSource: "qrc:///images/gear_outline.svg"
             iconSize: _style.icon.size.small
-            onClicked: projectSettingsClicked()
+            onClicked: projectSettingsToggled()
             text: "settings"
         }
         Item { // separator
@@ -83,31 +84,53 @@ Rectangle {
                 color: _style.window.color.lighter
             }
         }
-        // ProgressBar {
-        //     Layout.preferredWidth: 60
-        //     value: Math.random()
-        //     style: ProgressBarStyle {
-        //         background: Rectangle {
-        //             color: _style.window.color.xdarker
-        //             implicitWidth: 200
-        //             implicitHeight: 18
-        //         }
-        //         progress: Rectangle {
-        //             color: _style.window.color.selected
-        //         }
-        //     }
-        // }
+        ProgressBar {
+            Layout.preferredWidth: (root.jobModel.status >= 0)? 60 : 0
+            Behavior on Layout.preferredWidth { NumberAnimation{}}
+            value: root.jobModel.completion
+            style: ProgressBarStyle {
+                background: Rectangle {
+                    color: _style.window.color.xdarker
+                    implicitWidth: 200
+                    implicitHeight: 18
+                }
+                progress: Rectangle {
+                    color: (root.jobModel.status >= 4)? "red" : _style.window.color.selected
+                }
+            }
+        }
         CustomToolButton {
-            iconSource: "qrc:///images/play.svg"
+            iconSource: {
+                switch(root.jobModel.status) {
+                    case 3: // DONE
+                    case 0: // BLOCKED
+                    case 1: // READY
+                    case 2: // RUNNING
+                        return "qrc:///images/pause.svg";
+                    case 6: // PAUSED
+                    case 4: // ERROR
+                    case 5: // CANCELED
+                    default:
+                        return "qrc:///images/play.svg";
+                }
+            }
+
+            //(root.jobModel.status>=0 )? "qrc:///images/pause.svg" : "qrc:///images/play.svg"
             iconSize: _style.icon.size.small
-            onClicked: root.jobModel.save()
-            highlighted: true
+            onClicked: {
+                if(!root.jobModel.save())
+                    projectSettingsOpened();
+                else
+                    root.jobModel.start()
+            }
+            // highlighted: true
             text: "start"
         }
         CustomToolButton {
             iconSource: "qrc:///images/refresh.svg"
             iconSize: _style.icon.size.small
             text: "refresh"
+            onClicked: root.jobModel.refresh()
         }
         Item { // separator
             Layout.preferredWidth: 20

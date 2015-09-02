@@ -15,7 +15,9 @@ Item {
     property int animationDuration: 300
     property int projectID: index
     signal projectSelected(int projectID)
+    signal projectRemoved(int projectID)
     signal jobSelected(int projectID, int jobID)
+    signal jobAdded(int projectID)
 
     width: ListView.view.width
     height: root.topItemHeight + subItemsContainer.height
@@ -61,18 +63,14 @@ Item {
                         CustomToolButton {
                             iconSource: "qrc:///images/add_job.svg"
                             iconSize: _style.icon.size.small
-                            // opacity: root.expanded ? 1 : 0
-                            // Behavior on opacity { NumberAnimation {} }
                             text: "add job"
-                            onClicked: projectSelected(index)
+                            onClicked: jobAdded(index)
                         }
                         CustomToolButton {
                             iconSource: "qrc:///images/trash_outline.svg"
                             iconSize: _style.icon.size.small
-                            // opacity: root.expanded ? 1 : 0
-                            // Behavior on opacity { NumberAnimation {} }
                             text: "hide"
-                            onClicked: projectSelected(index)
+                            onClicked: projectRemoved(index)
                         }
                     }
                     CustomToolButton {

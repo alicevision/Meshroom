@@ -13,8 +13,8 @@ Item {
         onEntered: dropBackground.color = _style.window.color.selected
         onExited: dropBackground.color = _style.window.color.darker
         onDropped: {
-            dropBackground.color = _style.window.color.darker
-            filesDropped(drop.urls);
+            dropBackground.color = _style.window.color.darker;
+            (!drag.source) ? filesDropped(drop.urls) : filesDropped([drop.source.url]);
         }
         Rectangle {
             id: dropBackground

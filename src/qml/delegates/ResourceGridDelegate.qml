@@ -10,8 +10,10 @@ Item {
     property bool selected: false
     property bool highlighted: false
 
-    signal itemClicked(int index)
-    signal itemDoubleClicked(int index)
+    signal itemToggled(int index)
+    signal itemDeleted(int index)
+    signal initialPairASetted(string url)
+    signal initialPairBSetted(string url)
 
     function toggleSelectedState() {
         root.selected = !root.selected;
@@ -20,84 +22,84 @@ Item {
         root.highlighted = !root.highlighted;
     }
 
-    Menu {
-        id: menu
-        title: "Edit"
-        MenuItem {
-            text: "Select"
-            onTriggered: console.log("delete")
-        }
-        MenuItem {
-            text: "Delete"
-            onTriggered: console.log("delete")
-        }
-        MenuSeparator { }
-        Menu {
-            title: "Set as..."
-            MenuItem {
-                text: "initial pair A"
-            }
-            MenuItem {
-                text: "initial pair B"
-            }
-            MenuItem {
-                text: "job thumbnail"
-            }
-        }
-    }
+    // Menu {
+    //     id: menu
+    //     title: "Edit"
+    //     MenuItem {
+    //         text: "Remove"
+    //         onTriggered: itemDeleted(index)
+    //     }
+    //     MenuSeparator {}
+    //     Menu {
+    //         title: "Set as..."
+    //         MenuItem {
+    //             text: "initial pair A"
+    //             onTriggered: initialPairASetted(modelData.url)
+    //         }
+    //         MenuItem {
+    //             text: "initial pair B"
+    //             onTriggered: initialPairBSetted(modelData.url)
+    //         }
+    //     }
+    // }
 
     width: GridView.view.cellWidth
     height: GridView.view.cellHeight
 
-    Rectangle {
-        id: background
+    MouseArea {
+        id: mouseArea
         anchors.fill: parent
-        anchors.margins: 5
-        color: root.highlighted ? "#A00" : root.selected ? "#5BB1F7" : "#111"
-        MouseArea {
-            id: thumbMouseArea
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: {
-                if(mouse.button == Qt.LeftButton)
-                    itemClicked(index);
-                else
-                    menu.popup();
-            }
-            onDoubleClicked: {
-                itemDoubleClicked(index);
-            }
+        anchors.margins: 2
+        drag.target: tile
+        cursorShape: Qt.PointingHandCursor
+        hoverEnabled: true
+        // acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: {
+            (mouse.button == Qt.LeftButton) ? itemToggled(index) : menu.popup();
         }
-    }
-    Image {
-        anchors.fill: parent
-        anchors.margins: 8
-        sourceSize.width: parent.width
-        sourceSize.height: parent.height
-        source: modelData.isDir() ? 'qrc:/images/folder_outline.svg' : modelData.url
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
+        onReleased: tile.Drag.drop()
         Rectangle {
-            id: container
-            property int topMargin: (thumbMouseArea.containsMouse) ? 20 : 10
-            width: parent.width
-            height: childrenRect.height + topMargin
-            color: "#AA000000"
-            Behavior on height { NumberAnimation {} }
-            Text {
-                y: container.topMargin/2
-                Behavior on y { NumberAnimation {} }
+            id: tile
+            property string url: modelData.url
+            color: root.highlighted ? "#A00" : root.selected ? "#5BB1F7" : "#111"
+            width: mouseArea.width
+            height: mouseArea.height
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.horizontalCenter: parent.horizontalCenter
+            Drag.active: mouseArea.drag.active
+            Drag.hotSpot.x: tile.width/2
+            Drag.hotSpot.y: tile.height/2
+            states: State {
+                when: mouseArea.drag.active
+                ParentChange { target: tile; parent: _mainLoader }
+                AnchorChanges { target: tile; anchors.verticalCenter: undefined; anchors.horizontalCenter: undefined }
+            }
+        }
+        Image {
+            anchors.fill: parent
+            anchors.margins: 2
+            sourceSize.width: parent.width
+            sourceSize.height: parent.height
+            source: modelData.isDir() ? 'qrc:///images/folder_outline.svg' : modelData.url
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+            Rectangle {
+                id: container
                 width: parent.width
-                text: modelData.name
-                verticalAlignment: Text.AlignVCenter
-                color: "white"
-                font.pointSize: 10
-                elide: Text.ElideRight
-                wrapMode: Text.WrapAnywhere
-                maximumLineCount: (thumbMouseArea.containsMouse) ? 4 : 1
+                height: childrenRect.height
+                color: "#99000000"
+                Behavior on height { NumberAnimation {} }
+                Text {
+                    width: parent.width
+                    text: modelData.name
+                    verticalAlignment: Text.AlignVCenter
+                    color: "white"
+                    font.pointSize: 10
+                    elide: Text.ElideRight
+                    wrapMode: Text.WrapAnywhere
+                    maximumLineCount: (mouseArea.containsMouse) ? 4 : 1
+                }
             }
         }
     }
-
 }

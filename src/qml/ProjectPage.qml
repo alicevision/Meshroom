@@ -34,7 +34,7 @@ TitledPageLayout {
                 CustomTextField {
                     Layout.fillWidth: true
                     text: (root.projectModel) ? root.projectModel.name : ""
-                    color: (text=="undefined")? "red":"white"
+                    enabled: false
                 }
             }
             RowLayout {
@@ -57,39 +57,39 @@ TitledPageLayout {
             Item { // spacer
                 Layout.preferredHeight: 30
             }
-            CustomText {
-                text: "jobs"
-                textSize: _style.text.size.large
-                color: _style.text.color.darker
-            }
-            RowLayout {
-                CustomText {
-                    Layout.preferredWidth: 80
-                    text: "jobs pattern"
-                }
-                CustomTextField {
-                    Layout.fillWidth: true
-                    text: "$(project)_$(job)_###"
-                }
-            }
-            RowLayout {
-                Item { // spacer
-                    // Layout.preferredWidth: 80
-                    Layout.fillWidth: true
-                }
-                CustomToolButton {
-                    iconSource: "qrc:///images/add_job.svg"
-                    // iconSize: _style.icon.size.small
-                    onClicked: root.projectModel.addJob()
-                    text: "add job"
-                }
-                CustomToolButton {
-                    iconSource: "qrc:///images/pause_outline.svg"
-                    // iconSize: _style.icon.size.small
-                    onClicked: root.projectModel.addJob()
-                    text: "pause all"
-                }
-            }
+            // CustomText {
+            //     text: "jobs"
+            //     textSize: _style.text.size.large
+            //     color: _style.text.color.darker
+            // }
+            // RowLayout {
+            //     CustomText {
+            //         Layout.preferredWidth: 80
+            //         text: "jobs pattern"
+            //     }
+            //     CustomTextField {
+            //         Layout.fillWidth: true
+            //         text: "$(project)_$(job)_###"
+            //     }
+            // }
+            // RowLayout {
+            //     Item { // spacer
+            //         // Layout.preferredWidth: 80
+            //         Layout.fillWidth: true
+            //     }
+            //     CustomToolButton {
+            //         iconSource: "qrc:///images/add_job.svg"
+            //         // iconSize: _style.icon.size.small
+            //         onClicked: root.projectModel.addJob()
+            //         text: "add job"
+            //     }
+            //     CustomToolButton {
+            //         iconSource: "qrc:///images/pause_outline.svg"
+            //         // iconSize: _style.icon.size.small
+            //         onClicked: root.projectModel.addJob()
+            //         text: "pause all"
+            //     }
+            // }
             // RowLayout {
             //     Item {
             //         Layout.preferredWidth: 80

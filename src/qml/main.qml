@@ -6,7 +6,7 @@ import "styles"
 ApplicationWindow {
 
     id: _mainWindow
-    
+
     width: 800
     height: 800
     visible: true
@@ -19,6 +19,7 @@ ApplicationWindow {
 
     // main loader, needed to enable instant coding
     Loader {
+        id: _mainLoader
         anchors.fill: parent
         objectName: "instanCodingLoader"
         source: "IndexPage.qml"

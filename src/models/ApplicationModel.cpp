@@ -117,8 +117,8 @@ void ApplicationModel::removeProject(QObject* model)
 void ApplicationModel::onEngineLoaded(QObject* object, const QUrl& url)
 {
     // setup a custom logging system
-    // _logger = this;
-    // qInstallMessageHandler(doLog);
+    _logger = this;
+    qInstallMessageHandler(doLog);
 }
 
 } // namespace

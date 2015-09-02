@@ -3,6 +3,9 @@
 #include "ResourceModel.hpp"
 #include "io/JobsIO.hpp"
 #include <QDir>
+#include <QJsonObject>
+#include <QJsonParseError>
+#include <QDebug>
 #include <cstdlib> // std::getenv
 
 namespace mockup
@@ -24,6 +27,8 @@ void JobModel::setUrl(const QUrl& url)
     if(url == _url)
         return;
     _url = url;
+    if(_url.isValid())
+        refresh();
     emit urlChanged();
 }
 
@@ -123,35 +128,30 @@ void JobModel::setSteps(const QList<QString>& steps)
     emit stepsChanged();
 }
 
-const QList<QUrl>& JobModel::pair() const
+const QUrl& JobModel::pairA() const
 {
-    return _pair;
+    return _pairA;
 }
 
-void JobModel::setPair(const QList<QUrl>& pair)
+void JobModel::setPairA(const QUrl& url)
 {
-    if(pair == _pair)
+    if(url == _pairA)
         return;
-    _pair = pair;
-    emit pairChanged();
+    _pairA = url;
+    emit pairAChanged();
 }
 
-bool JobModel::addPairElement(const QUrl& url)
+const QUrl& JobModel::pairB() const
 {
-    if(_pair.count() >= 2)
-        return false;
-    _pair.append(url);
-    emit pairChanged();
-    return true;
+    return _pairB;
 }
 
-bool JobModel::removePairElement(const QUrl& url)
+void JobModel::setPairB(const QUrl& url)
 {
-    int removed = _pair.removeAll(url);
-    if(removed <= 0)
-        return false;
-    emit pairChanged();
-    return true;
+    if(url == _pairB)
+        return;
+    _pairB = url;
+    emit pairBChanged();
 }
 
 const float& JobModel::peakThreshold() const
@@ -185,9 +185,25 @@ const float& JobModel::completion() const
     return _completion;
 }
 
-const bool& JobModel::running() const
+void JobModel::setCompletion(const float& completion)
 {
-    return _running;
+    if(completion == _completion)
+        return;
+    _completion = completion;
+    emit completionChanged();
+}
+
+const int& JobModel::status() const
+{
+    return _status;
+}
+
+void JobModel::setStatus(const int& status)
+{
+    if(status == _status)
+        return;
+    _status = status;
+    emit statusChanged();
 }
 
 QUrl JobModel::buildUrl() const
@@ -202,24 +218,66 @@ QUrl JobModel::matchUrl() const
     return QUrl::fromLocalFile(dir.absoluteFilePath("build/matches"));
 }
 
-// void JobModel::start()
-// {
-//     _io.start();
-// }
-//
-// void JobModel::stop()
-// {
-//     _io.stop();
-// }
-//
-// void JobModel::refresh()
-// {
-//     _io.refresh();
-// }
-
 bool JobModel::save()
 {
     return JobsIO::save(*this);
+}
+
+void JobModel::start()
+{
+    JobsIO::start(*this, _process);
+}
+
+void JobModel::stop()
+{
+    JobsIO::stop(*this, _process);
+}
+
+void JobModel::refresh()
+{
+    JobsIO::status(*this, _process);
+}
+
+void JobModel::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    QObject::disconnect(&_process, SIGNAL(finished(int, QProcess::ExitStatus)), this,
+                        SLOT(readProcessOutput(int, QProcess::ExitStatus)));
+
+    if(exitStatus != QProcess::NormalExit)
+    {
+        QString response(_process.readAllStandardError());
+        qCritical() << response;
+    }
+
+    // parse standard output as JSON
+    QJsonParseError parseError;
+    QString response(_process.readAllStandardOutput());
+    QJsonDocument jsondoc(QJsonDocument::fromJson(response.toUtf8(), &parseError));
+    if(parseError.error != QJsonParseError::NoError)
+    {
+        qCritical("Invalid response: parse error");
+        return;
+    }
+
+    // retrieve job completion
+    QJsonObject json = jsondoc.object();
+    if(!json.contains("completion") || !json.contains("status"))
+    {
+        qCritical("Invalid response: missing values");
+        return;
+    }
+
+    // set job completion & status
+    setCompletion(json["completion"].toDouble());
+    setStatus(json["status"].toInt());
+
+    // case 0: // BLOCKED
+    // case 1: // READY
+    // case 2: // RUNNING
+    // case 3: // DONE
+    // case 4: // ERROR
+    // case 5: // CANCELED
+    // case 6: // PAUSED
 }
 
 // private

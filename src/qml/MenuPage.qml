@@ -19,7 +19,9 @@ TitledPageLayout {
             model: _applicationModel.projects
             delegate: ProjectDelegate {
                 onProjectSelected: showProjectPage(projectID)
+                onProjectRemoved: removeProject(projectID)
                 onJobSelected: showJobPage(projectID, jobID)
+                onJobAdded: addJob(projectID)
             }
             spacing: 0
             interactive: false

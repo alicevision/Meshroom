@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QDir>
 #include <cstdlib>
+#include <iostream>
 
 namespace mockup
 {
@@ -92,9 +93,6 @@ JobModel* JobsIO::load(QObject* parent, const QUrl& url)
     // JSON: structure from motion parameters
     QJsonObject sfmObject = stepsObject["sfm"].toObject();
     QJsonArray pairArray = sfmObject["initial_pair"].toArray();
-    QList<QUrl> pair;
-    for(int i = 0; i < pairArray.count(); ++i)
-        pair.append(QUrl::fromLocalFile(pairArray.at(i).toString()));
 
     // JSON: meshing parameters
     QJsonObject meshingObject = stepsObject["meshing"].toObject();
@@ -104,7 +102,10 @@ JobModel* JobsIO::load(QObject* parent, const QUrl& url)
     jobModel->setUser(json["user"].toString());
     jobModel->setNote(json["note"].toString());
     jobModel->setResources(resources);
-    jobModel->setPair(pair);
+    if(pairArray.count()>0)
+        jobModel->setPairA(QUrl::fromLocalFile(pairArray.at(0).toString()));
+    if(pairArray.count()>1)
+        jobModel->setPairB(QUrl::fromLocalFile(pairArray.at(1).toString()));
     jobModel->setMeshingScale(meshingObject["scale"].toDouble());
     jobModel->setPeakThreshold(featureDetectObject["peak_threshold"].toDouble());
 
@@ -154,7 +155,7 @@ bool JobsIO::save(JobModel& jobModel)
         return false;
     }
 
-    if(jobModel.pair().count() != 2)
+    if(!jobModel.pairA().isValid() || !jobModel.pairB().isValid())
     {
         qCritical("Saving job: invalid initial pair");
         return false;
@@ -211,8 +212,8 @@ bool JobsIO::save(JobModel& jobModel)
     // JSON: structure from motion parameters
     QJsonObject sfmObject;
     QJsonArray pairArray;
-    foreach(QUrl elmt, jobModel.pair())
-        pairArray.append(elmt.toLocalFile());
+    pairArray.append(jobModel.pairA().toLocalFile());
+    pairArray.append(jobModel.pairB().toLocalFile());
     sfmObject["initial_pair"] = pairArray;
 
     // JSON: meshing parameters
@@ -239,6 +240,69 @@ bool JobsIO::save(JobModel& jobModel)
     file.write(jsondoc.toJson());
     file.close();
     return true;
+}
+
+void JobsIO::start(JobModel& jobModel, QProcess& process)
+{
+    // set program path
+    QString startCommand = std::getenv("MOCKUP_START_COMMAND");
+    if(startCommand.isEmpty())
+        startCommand = QCoreApplication::applicationDirPath() + "/scripts/job_start.py";
+    process.setProgram(startCommand);
+
+    // set command arguments
+    QStringList arguments;
+    arguments.append(jobModel.url().toLocalFile() + "/job.json");
+    process.setArguments(arguments);
+
+    // run
+    process.start();
+    if(!process.waitForStarted())
+        qCritical("Unable to start job");
+    else
+        qInfo("Job started");
+}
+
+void JobsIO::stop(JobModel& jobModel, QProcess& process)
+{
+    // set program path
+    QString stopCommand = std::getenv("MOCKUP_STOP_COMMAND");
+    if(stopCommand.isEmpty())
+        stopCommand = QCoreApplication::applicationDirPath() + "/scripts/job_stop.py";
+    process.setProgram(stopCommand);
+
+    // set command arguments
+    QStringList arguments;
+    arguments.append(jobModel.url().toLocalFile() + "/job.json");
+    process.setArguments(arguments);
+
+    // run
+    process.start();
+    if(!process.waitForStarted())
+        qCritical("Unable to stop job");
+    else
+        qInfo("Job stopped");
+}
+
+void JobsIO::status(JobModel& jobModel, QProcess& process)
+{
+    // set program path
+    QString statusCommand = std::getenv("MOCKUP_REFRESH_COMMAND");
+    if(statusCommand.isEmpty())
+        statusCommand = QCoreApplication::applicationDirPath() + "/scripts/job_status.py";
+    process.setProgram(statusCommand);
+
+    // set command arguments
+    QStringList arguments;
+    arguments.append(jobModel.url().toLocalFile() + "/job.json");
+    process.setArguments(arguments);
+
+    // run
+    QObject::connect(&process, SIGNAL(finished(int, QProcess::ExitStatus)), &jobModel,
+                     SLOT(readProcessOutput(int, QProcess::ExitStatus)));
+    process.start();
+    if(!process.waitForStarted())
+        qCritical("Unable to refresh job");
 }
 
 } // namespace

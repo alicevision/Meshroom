@@ -8,15 +8,15 @@ import "../styles"
 Item {
     id: root
 
-    property variant model: null // resources model
+    property variant jobModel: null
     property real thumbnailSize: 120
     property bool selectable: false
 
     function getSelectionList() {
         var selectionList = [];
-        for(var i = root.model.resources.length; i > 0 ; i--) {
+        for(var i = root.jobModel.resources.length; i > 0 ; i--) {
             if(grid.contentItem.children[i-1].selected) {
-                selectionList.push(root.model.resources[i-1].url);
+                selectionList.push(root.jobModel.resources[i-1].url);
             }
         }
         return selectionList;
@@ -35,19 +35,16 @@ Item {
                 anchors.fill: parent
                 cellWidth: root.thumbnailSize
                 cellHeight: root.thumbnailSize
-                model: root.model ? root.model.resources : 0
+                model: root.jobModel ? root.jobModel.resources : 0
                 delegate: ResourceGridDelegate {
-                    onItemClicked: {
+                    onItemToggled: {
                         if(!root.selectable)
                             return;
                         toggleSelectedState();
                     }
-                    onItemDoubleClicked: {
-                        if(!root.selectable)
-                            return;
-                        if(modelData.isDir())
-                            return;
-                    }
+                    onItemDeleted: root.jobModel.removeResources(root.jobModel.resources[index])
+                    onInitialPairASetted: root.jobModel.setPairA(url)
+                    onInitialPairBSetted: root.jobModel.setPairB(url)
                 }
                 clip: true
             }

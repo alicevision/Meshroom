@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QUrl>
+#include <QProcess>
 
 namespace mockup
 {
@@ -18,12 +19,13 @@ class JobModel : public QObject
     Q_PROPERTY(QList<QObject*> resources READ resources WRITE setResources NOTIFY resourcesChanged)
     Q_PROPERTY(QList<QObject*> cameras READ cameras NOTIFY camerasChanged)
     Q_PROPERTY(QList<QString> steps READ steps WRITE setSteps NOTIFY stepsChanged)
-    Q_PROPERTY(QList<QUrl> pair READ pair WRITE setPair NOTIFY pairChanged)
+    Q_PROPERTY(QUrl pairA READ pairA WRITE setPairA NOTIFY pairAChanged)
+    Q_PROPERTY(QUrl pairB READ pairB WRITE setPairB NOTIFY pairBChanged)
     Q_PROPERTY(float peakThreshold READ peakThreshold WRITE setPeakThreshold NOTIFY
                    peakThresholdChanged)
     Q_PROPERTY(int meshingScale READ meshingScale WRITE setMeshingScale NOTIFY meshingScaleChanged)
     Q_PROPERTY(float completion READ completion NOTIFY completionChanged)
-    Q_PROPERTY(bool running READ running NOTIFY runningChanged)
+    Q_PROPERTY(int status READ status NOTIFY statusChanged)
 
 public:
     JobModel(QObject* parent);
@@ -45,21 +47,27 @@ public slots:
     void removeResources(const QList<QUrl>& urls);
     const QList<QString>& steps() const;
     void setSteps(const QList<QString>& steps);
-    const QList<QUrl>& pair() const;
-    void setPair(const QList<QUrl>& pair);
-    bool addPairElement(const QUrl& url);
-    bool removePairElement(const QUrl& url);
+    const QUrl& pairA() const;
+    void setPairA(const QUrl& url);
+    const QUrl& pairB() const;
+    void setPairB(const QUrl& url);
     const float& peakThreshold() const;
     void setPeakThreshold(const float& threshold);
     const int& meshingScale() const;
     void setMeshingScale(const int& scale);
     const float& completion() const;
-    const bool& running() const;
+    void setCompletion(const float& completion);
+    const int& status() const;
+    void setStatus(const int& status);
     QUrl buildUrl() const;
     QUrl matchUrl() const;
 
 public slots:
     bool save();
+    void start();
+    void stop();
+    void refresh();
+    void readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus);
 
 private:
     void setCamerasFromResources();
@@ -72,11 +80,12 @@ signals:
     void camerasChanged();
     void resourcesChanged();
     void stepsChanged();
-    void pairChanged();
+    void pairAChanged();
+    void pairBChanged();
     void peakThresholdChanged();
     void meshingScaleChanged();
     void completionChanged();
-    void runningChanged();
+    void statusChanged();
 
 private:
     QUrl _url;
@@ -86,11 +95,13 @@ private:
     QList<QObject*> _cameras;
     QList<QObject*> _resources;
     QList<QString> _steps;
-    QList<QUrl> _pair;
+    QUrl _pairA;
+    QUrl _pairB;
     float _peakThreshold = 0.04f;
     int _meshingScale = 2;
     float _completion = 0.f;
-    bool _running = true;
+    int _status = -1;
+    QProcess _process;
 };
 
 } // namespace

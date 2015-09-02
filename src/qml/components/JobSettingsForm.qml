@@ -14,7 +14,7 @@ Item {
         anchors.fill: parent
         anchors.margins: 20
         columns: 2
-        rowSpacing: 5
+        rowSpacing: 10
         CustomText {
             text: "peak threshold"
         }
@@ -47,11 +47,35 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 title: "A"
+                onFilesDropped: root.jobModel.setPairA(files[0])
+                Rectangle {
+                    anchors.fill: parent
+                    visible: (root.jobModel.pairA!=null)
+                    opacity: 0.3
+                    color: "black"
+                }
+                Image {
+                    anchors.fill: parent
+                    source: root.jobModel.pairA
+                    fillMode: Image.PreserveAspectFit
+                }
             }
             ResourceDropArea {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 title: "B"
+                onFilesDropped: root.jobModel.setPairB(files[0])
+                Rectangle {
+                    anchors.fill: parent
+                    visible: (root.jobModel.pairB!=null)
+                    opacity: 0.3
+                    color: "black"
+                }
+                Image {
+                    anchors.fill: parent
+                    source: root.jobModel.pairB
+                    fillMode: Image.PreserveAspectFit
+                }
             }
         }
         Item { // spacer

@@ -3,6 +3,7 @@ import QtQuick.Layouts 1.1
 import QtQuick.Controls 1.3
 
 import "../styles"
+import "../components"
 
 Item {
 
@@ -61,7 +62,7 @@ Item {
         Rectangle {
             id: tile
             property string url: modelData.url
-            color: root.highlighted ? "#A00" : root.selected ? "#5BB1F7" : "#111"
+            color: root.highlighted ? "#A00" : root.selected ? "#5BB1F7" : "#99111111"
             width: mouseArea.width
             height: mouseArea.height
             anchors.verticalCenter: parent.verticalCenter
@@ -80,7 +81,7 @@ Item {
             anchors.margins: 2
             sourceSize.width: parent.width
             sourceSize.height: parent.height
-            source: modelData.isDir() ? 'qrc:///images/folder_outline.svg' : modelData.url
+            source: modelData.url
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             Rectangle {
@@ -100,6 +101,18 @@ Item {
                     maximumLineCount: (mouseArea.containsMouse) ? 4 : 1
                 }
             }
+            // Rectangle {
+            //     anchors.fill: parent
+            //     visible: (modelData.isPairImageA || modelData.isPairImageB)
+            //     color: "#99000000"
+            //     Behavior on height { NumberAnimation {} }
+            //     CustomText {
+            //         anchors.centerIn: parent
+            //         text: modelData.isPairImageA ? "A" : "B"
+            //         textSize: _style.text.size.xlarge
+            //         color: "#5BB1F7"
+            //     }
+            // }
         }
     }
 }

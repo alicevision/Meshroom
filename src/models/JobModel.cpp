@@ -92,10 +92,21 @@ void JobModel::setResources(const QList<QObject*>& resources)
 
 void JobModel::addResources(const QList<QUrl>& urls)
 {
-    for(size_t i = 0; i < urls.length(); ++i)
+    // remove existing Urls from the list
+    QList<QUrl> newUrls(urls);
+    foreach(QObject* r, _resources)
     {
-        if(ResourceModel::isValidUrl(urls[i]))
-            _resources.append(new ResourceModel(urls[i], this));
+        ResourceModel* model = qobject_cast<ResourceModel*>(r);
+        if(!model)
+            continue;
+        if(urls.contains(model->url()))
+            newUrls.removeAll(model->url());
+    }
+    // add these new resources
+    for(size_t i = 0; i < newUrls.length(); ++i)
+    {
+        if(ResourceModel::isValidUrl(newUrls[i]))
+            _resources.append(new ResourceModel(newUrls[i], this));
     }
     setCamerasFromResources();
     emit resourcesChanged();
@@ -109,7 +120,13 @@ void JobModel::removeResources(const QList<QUrl>& urls)
         if(!model)
             continue;
         if(urls.contains(model->url()))
+        {
             _resources.removeAll(model);
+            if(_pairA == model->url())
+                setPairA(QUrl());
+            if(_pairB == model->url())
+                setPairB(QUrl());
+        }
     }
     setCamerasFromResources();
     emit resourcesChanged();
@@ -137,8 +154,23 @@ void JobModel::setPairA(const QUrl& url)
 {
     if(url == _pairA)
         return;
+    if(url.isValid() && url == _pairB)
+    {
+        qCritical("Set initial pair: please select 2 distinct images");
+        return;
+    }
     _pairA = url;
     emit pairAChanged();
+    // try to add this resource in case its a new one
+    addResources({url});
+    // update resourceModels
+    foreach(QObject* r, _resources)
+    {
+        ResourceModel* model = qobject_cast<ResourceModel*>(r);
+        if(!model)
+            continue;
+        model->setIsPairImageA(model->url()==_pairA);
+    }
 }
 
 const QUrl& JobModel::pairB() const
@@ -150,8 +182,23 @@ void JobModel::setPairB(const QUrl& url)
 {
     if(url == _pairB)
         return;
+    if(url.isValid() && url == _pairA)
+    {
+        qCritical("Set initial pair: please select 2 distinct images");
+        return;
+    }
     _pairB = url;
     emit pairBChanged();
+    // try to add this resource in case its a new one
+    addResources({url});
+    // update resourceModels
+    foreach(QObject* r, _resources)
+    {
+        ResourceModel* model = qobject_cast<ResourceModel*>(r);
+        if(!model)
+            continue;
+        model->setIsPairImageB(model->url()==_pairB);
+    }
 }
 
 const float& JobModel::peakThreshold() const
@@ -287,15 +334,6 @@ void JobModel::setCamerasFromResources()
     foreach(QObject* r, resources())
     {
         ResourceModel* resource = qobject_cast<ResourceModel*>(r);
-        if(resource->isDir())
-        {
-            QDir dir(resource->url().toLocalFile());
-            QStringList list = dir.entryList(ResourceModel::validFileExtensions());
-            for(int i = 0; i < list.size(); ++i)
-                cameras.append(
-                    new CameraModel(QUrl::fromLocalFile(dir.absoluteFilePath(list[i])), this));
-            continue;
-        }
         cameras.append(new CameraModel(resource->url(), this));
     }
     _cameras = cameras;

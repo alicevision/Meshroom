@@ -3,9 +3,9 @@
 # You can help the search by providing several environment variable or cmake
 # variable:
 # ALEMBIC_ROOT
-# ALEMBIC_HDF5_ROOT
-# ALEMBIC_ILMBASE_ROOT
-# ALEMBIC_OPENEXR_ROOT
+# HDF5_ROOT
+# ILMBASE_ROOT
+# OPENEXR_ROOT
 #
 # HDF5 and ILMBASE should point to the root dir used to compile alembic
 #
@@ -21,18 +21,19 @@ MESSAGE(STATUS "Looking for Alembic. 1.5.8")
 # Alembic includes half.h for a single function "half to float", this is sad
 FIND_PATH(ABC_HALF_INCLUDE_DIR half.h
     HINTS
-    ${ALEMBIC_ILMBASE_ROOT}/include/OpenEXR
-    $ENV{ALEMBIC_ILMBASE_ROOT}/include/OpenEXR
-    $ENV{ILMBASE_INCLUDE_DIR} )
+    $ENV{ILMBASE_ROOT}/include/OpenEXR
+    $ENV{ILMBASE_INCLUDE_DIR} 
+    ${ILMBASE_ROOT}/include/OpenEXR
+    NO_DEFAULT_PATH)
 
 FIND_PATH(ABC_ILMBASE_LIBS_PATH NAMES libIex.so libIex.a
     PATHS
-        ${ALEMBIC_ILMBASE_ROOT}/lib
-        ${ALEMBIC_ILMBASE_ROOT}/lib/static
-        ${ALEMBIC_ILMBASE_ROOT}/lib64
-        $ENV{ALEMBIC_ILMBASE_ROOT}/lib
-        $ENV{ALEMBIC_ILMBASE_ROOT}/lib64
+        $ENV{ILMBASE_ROOT}/lib
+        $ENV{ILMBASE_ROOT}/lib64
         $ENV{ILMBASE_LIBRARY_DIR}
+        ${ILMBASE_ROOT}/lib
+        ${ILMBASE_ROOT}/lib/static
+        ${ILMBASE_ROOT}/lib64
     NO_DEFAULT_PATH)
 
 FIND_LIBRARY(ABC_ILMBASE_IEX Iex PATHS ${ABC_ILMBASE_LIBS_PATH} NO_DEFAULT_PATH)
@@ -43,11 +44,11 @@ SET(ABC_ILMBASE_LIBS ${ABC_ILMBASE_IEX} ${ABC_ILMBASE_IEXMATH} ${ABC_ILMBASE_HAL
 # OpenEXR
 FIND_LIBRARY(ABC_OPENEXR_LIBS IlmImf
     PATHS
-        ${ALEMBIC_OPENEXR_ROOT}/lib
-        ${ALEMBIC_OPENEXR_ROOT}/lib64
-        $ENV{ALEMBIC_OPENEXR_ROOT}/lib
-        $ENV{ALEMBIC_OPENEXR_ROOT}/lib64
+        $ENV{OPENEXR_ROOT}/lib
+        $ENV{OPENEXR_ROOT}/lib64
         $ENV{OPENEXR_LIBRARY_DIR}
+        ${OPENEXR_ROOT}/lib
+        ${OPENEXR_ROOT}/lib64
     NO_DEFAULT_PATH)
 
 ################################################################################
@@ -57,11 +58,11 @@ FIND_LIBRARY(ABC_OPENEXR_LIBS IlmImf
 # FIXME: hdf5 should be handled by a specialized module
 FIND_PATH(ABC_HDF5_LIBS_PATH NAMES libhdf5.so libhdf5.a
        PATHS
-        ${ALEMBIC_HDF5_ROOT}/lib
-        ${ALEMBIC_HDF5_ROOT}/lib64
-        $ENV{ALEMBIC_HDF5_ROOT}/lib
-        $ENV{ALEMBIC_HDF5_ROOT}/lib64
+        $ENV{HDF5_ROOT}/lib
+        $ENV{HDF5_ROOT}/lib64
         $ENV{HDF5_LIBRARY_DIR}
+        ${HDF5_ROOT}/lib
+        ${HDF5_ROOT}/lib64
        NO_DEFAULT_PATH)
 FIND_LIBRARY(ABC_HDF5 hdf5 PATHS ${ABC_HDF5_LIBS_PATH})
 FIND_LIBRARY(ABC_HDF5_HL hdf5_hl PATHS ${ABC_HDF5_LIBS_PATH})
@@ -86,14 +87,14 @@ FIND_PATH(ABC_INCLUDE_DIR Alembic/Abc/All.h
 # initialization problems.
 FIND_PATH(ABC_LIBRARY_DIR libAlembicAbc.so libAlembicAbc.a
     PATHS
-        ${ALEMBIC_ROOT}/lib
-        ${ALEMBIC_ROOT}/lib/static
-        ${ALEMBIC_ROOT}/lib64
         $ENV{ALEMBIC_ROOT}/lib
         $ENV{ALEMBIC_ROOT}/lib/static
         $ENV{ALEMBIC_ROOT}/lib64
         $ENV{ALEMBIC_LIBRARY_DIR}
         $ENV{ALEMBIC_LIBRARY_DIR}/static
+        ${ALEMBIC_ROOT}/lib
+        ${ALEMBIC_ROOT}/lib/static
+        ${ALEMBIC_ROOT}/lib64
     NO_DEFAULT_PATH)
 FIND_LIBRARY(ABC_COLLECTION libAlembicAbcCollection.so PATHS ${ABC_LIBRARY_DIR})
 FIND_LIBRARY(ABC_COREFACTORY libAlembicAbcCoreFactory.so PATHS ${ABC_LIBRARY_DIR})

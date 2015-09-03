@@ -12,7 +12,7 @@ import "delegates"
 TitledPageLayout {
 
     id: root
-    
+
     background: DefaultBackground {}
     header: HomeHeader {}
     body: Item {
@@ -50,11 +50,7 @@ TitledPageLayout {
         selectFolder: true
         selectMultiple: false
         sidebarVisible: false
-        onAccepted: {
-            var newModel = _applicationModel.addNewProject();
-            newModel.url = fileDialog.fileUrl;
-            newModel.save();
-        }
+        onAccepted: addProject(fileDialog.fileUrl)
     }
 
 }

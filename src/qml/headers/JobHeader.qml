@@ -16,6 +16,7 @@ Rectangle {
     signal projectSelected(int projectID)
     signal projectSettingsToggled()
     signal projectSettingsOpened()
+    signal jobRemoved(int projectID, int jobID)
 
     implicitHeight: 30
     color: _style.window.color.darker
@@ -151,7 +152,7 @@ Rectangle {
         CustomToolButton {
             iconSource: "qrc:///images/trash_outline.svg"
             iconSize: _style.icon.size.small
-            onClicked: root.projectModel.removeJob(root.jobModel)
+            onClicked: jobRemoved(currentProjectID(), currentJobID())
             text: "hide"
         }
     }

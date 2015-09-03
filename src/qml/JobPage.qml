@@ -26,6 +26,7 @@ TitledPageLayout {
         onProjectSelected: showProjectPage(projectID)
         onProjectSettingsToggled: root.settingsHeight = (root.settingsHeight<=0)?root.height*0.3:0
         onProjectSettingsOpened: root.settingsHeight = root.height*0.3
+        onJobRemoved: removeJob(projectID, jobID)
     }
     body: SplitView {
         Layout.fillWidth: true

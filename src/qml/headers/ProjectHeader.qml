@@ -10,7 +10,7 @@ Rectangle {
 
     id : root
     property variant projectModel: null
-    
+
     signal homeSelected()
 
     implicitHeight: 30
@@ -54,7 +54,7 @@ Rectangle {
         CustomToolButton {
             iconSource: "qrc:///images/trash_outline.svg"
             iconSize: _style.icon.size.small
-            onClicked: _applicationModel.removeProject(root.projectModel)
+            onClicked: removeProject(currentProjectID())
             text: "hide"
         }
     }

@@ -67,8 +67,10 @@ void GLRenderer::updateWorldMatrix()
 
 void GLRenderer::addAlembicScene(const QString& cloud)
 {
+    #if WITH_ALEMBIC
     AlembicImport importer(cloud.toStdString().c_str());
     importer.populate(_scene);
+    #endif
 }
 
 } // namespace

@@ -24,8 +24,7 @@ void ResourceModel::setUrl(const QUrl& url)
             return;
         _url = url;
         QFileInfo fileInfo(url.toLocalFile());
-        _isDir = fileInfo.isDir();
-        setName(_isDir ? fileInfo.dir().dirName() : fileInfo.fileName());
+        setName(fileInfo.fileName());
         emit urlChanged();
     }
 }
@@ -44,9 +43,32 @@ void ResourceModel::setName(const QString& name)
     }
 }
 
-bool ResourceModel::isDir() const
+bool ResourceModel::isPairImageA() const
 {
-    return _isDir;
+    return _isPairImageA;
+}
+
+void ResourceModel::setIsPairImageA(const bool b)
+{
+    if(b != _isPairImageA)
+    {
+        _isPairImageA = b;
+        emit isPairImageAChanged();
+    }
+}
+
+bool ResourceModel::isPairImageB() const
+{
+    return _isPairImageB;
+}
+
+void ResourceModel::setIsPairImageB(const bool b)
+{
+    if(b != _isPairImageB)
+    {
+        _isPairImageB = b;
+        emit isPairImageBChanged();
+    }
 }
 
 // static
@@ -56,7 +78,7 @@ bool ResourceModel::isValidUrl(const QUrl& url)
         return false;
     QFileInfo fileInfo(url.toLocalFile());
     if(fileInfo.isDir())
-        return true;
+        return false;
     foreach(QString e, validFileExtensions())
     {
         QString suffix = fileInfo.suffix().toLower();

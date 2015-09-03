@@ -1,5 +1,6 @@
 #include "GLPointCloud.hpp"
 #include "io/AlembicImport.hpp"
+#include <iostream>
 
 namespace mockup
 {
@@ -43,7 +44,7 @@ void GLPointCloud::setRawData(const void *pointsBuffer, size_t npoints)
 
 void GLPointCloud::draw()
 {
-    if (_npoints) 
+    if (_npoints)
     {
         _program.bind();
         _vertexArrayObject.bind();

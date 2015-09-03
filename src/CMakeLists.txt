@@ -36,8 +36,6 @@ find_package(Alembic)
 if (ALEMBIC_FOUND)
 include_directories(${ABC_INCLUDE_DIR})
 add_definitions(-DWITH_ALEMBIC)
-add_definitions("-Wl,--as-needed")
-#set (CMAKE_CXX_FLAGS "-Wl,--as-needed")
 target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
 endif (ALEMBIC_FOUND)
 

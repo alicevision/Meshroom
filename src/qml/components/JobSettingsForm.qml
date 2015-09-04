@@ -16,7 +16,7 @@ Item {
         columns: 2
         rowSpacing: 10
         CustomText {
-            text: "peak threshold"
+            text: "quality"
         }
         CustomComboBox {
             Layout.fillWidth: true

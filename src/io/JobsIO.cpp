@@ -289,7 +289,7 @@ void JobsIO::stop(JobModel& jobModel, QProcess& process)
 void JobsIO::status(JobModel& jobModel, QProcess& process)
 {
     // set program path
-    QString statusCommand = std::getenv("MOCKUP_REFRESH_COMMAND");
+    QString statusCommand = std::getenv("MOCKUP_STATUS_COMMAND");
     if(statusCommand.isEmpty())
         statusCommand = QCoreApplication::applicationDirPath() + "/scripts/job_status.py";
     process.setProgram(statusCommand);

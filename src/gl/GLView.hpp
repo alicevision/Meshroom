@@ -2,9 +2,11 @@
 
 #include <QtQuick/QQuickItem>
 #include <QMatrix4x4>
+
 namespace mockup
 {
-// forward declaration
+
+// forward declarations
 class GLRenderer;
 class CameraModel;
 
@@ -21,12 +23,9 @@ public:
 public slots:
     const QColor& color() const;
     void setColor(const QColor& color);
-    QObject * camera() const;
+    QObject* camera() const;
     void setCamera(QObject* camera);
-
-
     void addAlembicScene(const QString& filename);
-
 
 private slots:
     void handleWindowChanged(QQuickWindow* win);
@@ -44,19 +43,19 @@ protected:
     void mouseReleaseEvent(QMouseEvent*);
     void wheelEvent(QWheelEvent* event);
 
-    // Function to manipulate cameras. 
+    // Function to manipulate cameras.
     // might move in a different class, eg CameraManipulator
-    void trackBallRotateCamera(QMatrix4x4 &cam, const QVector3D &lookAt, float dx, float dy);
-    void turnTableRotateCamera(QMatrix4x4 &cam, const QVector3D &lookAt, float dx, float dy);
-    void planeTranslateCamera(QMatrix4x4 &cam, float dx, float dy);
-    void translateLineOfSightCamera(QMatrix4x4 &cam, float &radius, float dx, float dy);
+    void trackBallRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, float dx, float dy);
+    void turnTableRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, float dx, float dy);
+    void planeTranslateCamera(QMatrix4x4& cam, float dx, float dy);
+    void translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx, float dy);
 
 private:
     // Delegate opengl rendering
     GLRenderer* _renderer = nullptr;
     QRect _viewport;
     QColor _color;
-    CameraModel * _camera = nullptr;
+    CameraModel* _camera = nullptr;
     QString _alembicSceneFile;
 
     /// FIXME : rename variables to something more meaningful

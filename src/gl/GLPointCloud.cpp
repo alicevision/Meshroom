@@ -9,12 +9,14 @@ GLPointCloud::GLPointCloud()
     : _pointPositions(QOpenGLBuffer::VertexBuffer)
     , _npoints(0)
     , _program(*_colorUniform)
-{}
+{
+}
 
-void GLPointCloud::setRawData(const void *pointsBuffer, size_t npoints)
+void GLPointCloud::setRawData(const void* pointsBuffer, size_t npoints)
 {
     // Allow only one load
-    if (_npoints != 0) return;
+    if(_npoints != 0)
+        return;
 
     if(_vertexArrayObject.create())
     {
@@ -41,10 +43,9 @@ void GLPointCloud::setRawData(const void *pointsBuffer, size_t npoints)
     }
 }
 
-
 void GLPointCloud::draw()
 {
-    if (_npoints)
+    if(_npoints)
     {
         _program.bind();
         _vertexArrayObject.bind();

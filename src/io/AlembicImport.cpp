@@ -3,7 +3,6 @@
 #include "AlembicImport.hpp"
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreFactory/All.h>
-
 #include "gl/GLPointCloud.hpp"
 
 using namespace Alembic::Abc;
@@ -13,9 +12,8 @@ using namespace AbcG;
 namespace mockup
 {
 
-
 // Top down insertion of 3d objects
-void AlembicImport::visitObject(IObject iObj, GLScene &scene)
+void AlembicImport::visitObject(IObject iObj, GLScene& scene)
 {
     const MetaData& md = iObj.getMetaData();
     if(IPoints::matches(md))
@@ -23,15 +21,14 @@ void AlembicImport::visitObject(IObject iObj, GLScene &scene)
         IPoints points(iObj, kWrapExisting);
         IPointsSchema ms = points.getSchema();
         P3fArraySamplePtr positions = ms.getValue().getPositions();
-        //P3fArraySamplePtr _points;
+        // P3fArraySamplePtr _points;
         //_points = positions;
         auto pointCloud = new GLPointCloud();
         pointCloud->setRawData(positions->get(), positions->size());
         scene.append(pointCloud);
     }
-    else if (ICamera::matches(md))
+    else if(ICamera::matches(md))
     {
-    
     }
 
     // Recurse
@@ -51,13 +48,13 @@ AlembicImport::AlembicImport(const char* filename)
     _rootEntity = archive.getTop();
 }
 
-void AlembicImport::populate(GLScene &scene)
+void AlembicImport::populate(GLScene& scene)
 {
     // TODO : handle the case where the archive wasn't correctly opened
     visitObject(_rootEntity, scene);
 }
 
-//const void* AlembicImport::pointCloudData()
+// const void* AlembicImport::pointCloudData()
 //{
 //    if(_points)
 //    {
@@ -67,9 +64,11 @@ void AlembicImport::populate(GLScene &scene)
 //    return nullptr;
 //}
 //
-//size_t AlembicImport::pointCloudSize()
+// size_t AlembicImport::pointCloudSize()
 //{
 //    return _points->size();
 //}
-}
+
+} // namespace
+
 #endif // WITH_ALEMBIC

@@ -1,7 +1,11 @@
 #pragma once
+
 #include <QList>
 #include "GLDrawable.hpp"
-namespace mockup 
+
+namespace mockup
 {
+
 typedef QList<GLDrawable*> GLScene;
-}
+
+} // namespace

@@ -4,7 +4,6 @@
 namespace mockup
 {
 
-
 GLCamera::GLCamera()
     : _positionBuffer(QOpenGLBuffer::VertexBuffer)
     , _program(*_colorUniform)
@@ -49,4 +48,3 @@ QMatrix4x4 GLCamera::modelMatrix() const
 }
 
 } // namespace
-

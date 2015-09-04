@@ -14,7 +14,6 @@ public:
 
 public:
     void setWorldMatrix(const QMatrix4x4& worldMat);
-
 };
 
 } // namespace

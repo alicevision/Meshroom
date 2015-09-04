@@ -34,10 +34,7 @@ private:
 private:
     QMatrix4x4 _cameraMat;
     QSize _viewportSize;
-
-    // Simple scene: a list of drawable objects
-    GLScene _scene;
-
+    GLScene _scene; // Simple scene: a list of drawable objects
 };
 
 } // namespace

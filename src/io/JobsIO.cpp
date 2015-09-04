@@ -102,12 +102,13 @@ JobModel* JobsIO::load(QObject* parent, const QUrl& url)
     jobModel->setUser(json["user"].toString());
     jobModel->setNote(json["note"].toString());
     jobModel->setResources(resources);
-    if(pairArray.count()>0)
+    if(pairArray.count() > 0)
         jobModel->setPairA(QUrl::fromLocalFile(pairArray.at(0).toString()));
-    if(pairArray.count()>1)
+    if(pairArray.count() > 1)
         jobModel->setPairB(QUrl::fromLocalFile(pairArray.at(1).toString()));
     jobModel->setMeshingScale(meshingObject["scale"].toDouble());
-    jobModel->setDescriberPreset(JobModel::describerPresetId(featureDetectObject["describerPreset"].toString()));
+    jobModel->setDescriberPreset(
+        JobModel::describerPresetId(featureDetectObject["describerPreset"].toString()));
 
     // // reset watchfolders
     // QStringList directories = _watcher.directories();
@@ -207,7 +208,8 @@ bool JobsIO::save(JobModel& jobModel)
 
     // JSON: feature detection parameters
     QJsonObject featureDetectObject;
-    featureDetectObject["describerPreset"] = JobModel::describerPresetString(jobModel.describerPreset());
+    featureDetectObject["describerPreset"] =
+        JobModel::describerPresetString(jobModel.describerPreset());
 
     // JSON: structure from motion parameters
     QJsonObject sfmObject;

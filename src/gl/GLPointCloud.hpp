@@ -15,7 +15,7 @@ public:
     ~GLPointCloud() = default;
 
     void draw() override;
-    void setRawData(const void *points, size_t npoints);
+    void setRawData(const void* points, size_t npoints);
 
 private:
     QOpenGLVertexArrayObject _vertexArrayObject;

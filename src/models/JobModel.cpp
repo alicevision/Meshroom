@@ -169,7 +169,7 @@ void JobModel::setPairA(const QUrl& url)
         ResourceModel* model = qobject_cast<ResourceModel*>(r);
         if(!model)
             continue;
-        model->setIsPairImageA(model->url()==_pairA);
+        model->setIsPairImageA(model->url() == _pairA);
     }
 }
 
@@ -197,7 +197,7 @@ void JobModel::setPairB(const QUrl& url)
         ResourceModel* model = qobject_cast<ResourceModel*>(r);
         if(!model)
             continue;
-        model->setIsPairImageB(model->url()==_pairB);
+        model->setIsPairImageB(model->url() == _pairB);
     }
 }
 
@@ -330,7 +330,8 @@ void JobModel::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
 // static
 QString JobModel::describerPresetString(const int& describerId)
 {
-    switch(describerId) {
+    switch(describerId)
+    {
         case 0:
             return "NORMAL";
         case 2:

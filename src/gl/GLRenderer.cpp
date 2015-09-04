@@ -13,9 +13,8 @@ namespace mockup
 GLRenderer::GLRenderer()
 {
     // The shaders have to be created in a valid opengl context
-    GLDrawable::setShaders(
-            new GLSLPlainColorShader(QVector4D(0.8, 0.8, 0.8, 1.0)),
-            new GLSLColoredShader());
+    GLDrawable::setShaders(new GLSLPlainColorShader(QVector4D(0.8, 0.8, 0.8, 1.0)),
+                           new GLSLColoredShader());
     _scene.append(new GLGizmo());
     _scene.append(new GLGrid());
     updateWorldMatrix();
@@ -23,7 +22,8 @@ GLRenderer::GLRenderer()
 
 GLRenderer::~GLRenderer()
 {
-    for(auto obj: _scene) delete obj;
+    for(auto obj : _scene)
+        delete obj;
 
     GLDrawable::deleteShaders();
 }
@@ -47,7 +47,7 @@ void GLRenderer::setCameraMatrix(const QMatrix4x4& cameraMat)
 void GLRenderer::draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    for(auto obj: _scene)
+    for(auto obj : _scene)
     {
         obj->draw();
     }
@@ -67,10 +67,10 @@ void GLRenderer::updateWorldMatrix()
 
 void GLRenderer::addAlembicScene(const QString& cloud)
 {
-    #if WITH_ALEMBIC
+#if WITH_ALEMBIC
     AlembicImport importer(cloud.toStdString().c_str());
     importer.populate(_scene);
-    #endif
+#endif
 }
 
 } // namespace

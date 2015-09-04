@@ -3,7 +3,6 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
-
 #include "GLDrawable.hpp"
 
 // GLCamera Gizmo
@@ -22,11 +21,8 @@ public:
 public:
     void draw() override;
     QMatrix4x4 modelMatrix() const;
-
     void setPosition(const QVector3D& v);
-    //
-    //
-    void setModelMatrix(const QMatrix4x4 &);
+    void setModelMatrix(const QMatrix4x4&);
     // TODO : set Matrix
 
 private:
@@ -36,4 +32,4 @@ private:
     QVector3D _position;
 };
 
-}
+} // namespace

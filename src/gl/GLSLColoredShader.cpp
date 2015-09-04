@@ -2,7 +2,7 @@
 #include <QMatrix4x4>
 
 namespace
-{
+{ // empty namespace
 
 const GLchar* vertex_shader = R"(#version 330
         in vec3 in_position;
@@ -21,7 +21,7 @@ const GLchar* fragment_shader = R"(#version 330
             frag_color = vec4(ex_color, 1.0);
         })";
 
-} // namespace
+} // empty namespace
 
 namespace mockup
 {

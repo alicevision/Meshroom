@@ -18,14 +18,12 @@ Item {
         CustomText {
             text: "peak threshold"
         }
-        CustomSlider {
+        CustomComboBox {
             Layout.fillWidth: true
             Layout.preferredHeight: childrenRect.height
-            minimumValue: 0.01
-            maximumValue: 0.06
-            stepSize: 0.01
-            value: root.jobModel.peakThreshold
-            onValueChanged: if(root.jobModel) root.jobModel.peakThreshold = value;
+            model: ["NORMAL", "HIGH", "ULTRA"]
+            currentIndex: (root.jobModel)? root.jobModel.describerPreset : 1
+            onCurrentIndexChanged: if(root.jobModel) root.jobModel.describerPreset = currentIndex;
         }
         CustomText {
             text: "meshing scale"

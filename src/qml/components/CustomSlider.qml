@@ -35,7 +35,7 @@ Slider {
                     elide: Text.ElideRight
                     wrapMode: Text.WrapAnywhere
                     maximumLineCount: 1
-                    font.pointSize: 12
+                    font.pixelSize: 12
                 }
             }
         }

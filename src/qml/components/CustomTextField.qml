@@ -8,7 +8,7 @@ TextField {
     style: TextFieldStyle {
         textColor: root.color
         placeholderTextColor : _style.text.color.disabled
-        font.pointSize: _style.text.size.normal
+        font.pixelSize: _style.text.size.normal
         background: Rectangle {
             implicitHeight: 30
             implicitWidth: 200

@@ -11,6 +11,7 @@ ApplicationWindow {
     height: 800
     visible: true
     style: _style.bggl
+    title: "mockup"
 
     // main application style sheet
     DefaultStyle {

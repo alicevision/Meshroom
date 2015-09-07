@@ -26,6 +26,7 @@ void GLPointCloud::setRawData(const void* pointsBuffer, size_t npoints)
             _pointPositions.bind();
             _npoints = npoints;
             _pointPositions.allocate(pointsBuffer, npoints * 3 * sizeof(float));
+            glPointSize(3);
             _program.enableAttributeArray("in_position");
             _program.setAttributeBuffer("in_position", GL_FLOAT, 0, 3);
             _pointPositions.release();

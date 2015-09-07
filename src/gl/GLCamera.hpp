@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QOpenGLVertexArrayObject>
-#include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
 #include "GLDrawable.hpp"
 
@@ -23,8 +22,10 @@ public:
 
 private:
     QOpenGLVertexArrayObject _vao;
-    QOpenGLBuffer _positionBuffer;
     QMatrix4x4 _projectionMatrix;
+
+    static QVector<float> _cameraMesh;
+    static QVector<float> _cameraMeshColors;
 };
 
 } // namespace

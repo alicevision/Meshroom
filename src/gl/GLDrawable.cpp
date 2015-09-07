@@ -1,4 +1,5 @@
 #include "GLDrawable.hpp"
+#include <QOpenGLBuffer>
 
 namespace mockup
 {
@@ -46,5 +47,6 @@ void GLDrawable::setCameraMatrix(const QMatrix4x4 &mat)
 {
     _cameraMatrix = mat;
 } 
+
 
 } // namespace

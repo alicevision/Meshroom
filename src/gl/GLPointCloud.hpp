@@ -21,7 +21,6 @@ private:
     QOpenGLVertexArrayObject _vertexArrayObject;
     QOpenGLBuffer _pointPositions;
     GLint _npoints;
-    QOpenGLShaderProgram& _program;
 };
 
 } // namespace

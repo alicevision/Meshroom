@@ -6,10 +6,13 @@ namespace mockup
 GLSLPlainColorShader* GLDrawable::_colorUniform(nullptr);
 GLSLColoredShader*  GLDrawable::_colorArray(nullptr);
 
+QMatrix4x4 GLDrawable::_cameraMatrix;
+
 void GLDrawable::setShaders(GLSLPlainColorShader *colorUniform, GLSLColoredShader *colorArray)
 {
     _colorUniform = colorUniform;
     _colorArray = colorArray;
+    _cameraMatrix.setToIdentity();
 }
 
 void GLDrawable::deleteShaders()
@@ -27,13 +30,21 @@ void GLDrawable::deleteShaders()
     }
 }
 
-void GLDrawable::setWorldMatrix(const QMatrix4x4 &mat)
+void GLDrawable::uploadShaderMatrix()
 {
+    QMatrix4x4 mat(_cameraMatrix*_modelMatrix);
+
+    // FIXME : subclass QGLProgram so we just have to update the current program
+    // instead of updating all programs
     if(_colorUniform)
         _colorUniform->setWorldMatrix(mat);
     if(_colorArray)
         _colorArray->setWorldMatrix(mat); 
 }
 
+void GLDrawable::setCameraMatrix(const QMatrix4x4 &mat)
+{
+    _cameraMatrix = mat;
+} 
 }
 

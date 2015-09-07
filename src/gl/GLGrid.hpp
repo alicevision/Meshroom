@@ -21,7 +21,6 @@ public:
 private:
     QOpenGLVertexArrayObject _vao;
     QOpenGLBuffer _positionBuffer;
-    QOpenGLShaderProgram& _program;
     size_t _verticeCount = 0;
 };
 

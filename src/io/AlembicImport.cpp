@@ -5,6 +5,7 @@
 #include <Alembic/AbcCoreFactory/All.h>
 
 #include "gl/GLPointCloud.hpp"
+#include "gl/GLCamera.hpp"
 
 using namespace Alembic::Abc;
 namespace AbcG = Alembic::AbcGeom;
@@ -15,7 +16,7 @@ namespace mockup
 
 
 // Top down insertion of 3d objects
-void AlembicImport::visitObject(IObject iObj, GLScene &scene)
+void AlembicImport::visitObject(IObject iObj, GLScene &scene, M44d mat)
 {
     const MetaData& md = iObj.getMetaData();
     if(IPoints::matches(md))
@@ -23,21 +24,39 @@ void AlembicImport::visitObject(IObject iObj, GLScene &scene)
         IPoints points(iObj, kWrapExisting);
         IPointsSchema ms = points.getSchema();
         P3fArraySamplePtr positions = ms.getValue().getPositions();
-        //P3fArraySamplePtr _points;
-        //_points = positions;
         auto pointCloud = new GLPointCloud();
         pointCloud->setRawData(positions->get(), positions->size());
         scene.append(pointCloud);
     }
+    else if (IXform::matches(md))
+    {
+        IXform xform(iObj, kWrapExisting);
+        XformSample xs;
+        xform.getSchema().get(xs);
+        mat *= xs.getMatrix();
+    }
     else if (ICamera::matches(md))
     {
-    
+        ICamera camera(iObj, kWrapExisting);
+        ICameraSchema cs = camera.getSchema();
+
+        auto newCamera = new GLCamera();
+        QMatrix4x4 modelMat(
+            mat[0][0], mat[1][0], mat[2][0], mat[3][0],
+            mat[0][1], mat[1][1], mat[2][1], mat[3][1],
+            mat[0][2], mat[1][2], mat[2][2], mat[3][2],
+            mat[0][3], mat[1][3], mat[2][3], mat[3][3]);
+        newCamera->setModelMatrix(modelMat); 
+        CameraSample matrix = cs.getValue();
+        QMatrix4x4 projMat;
+        newCamera->setProjectionMatrix(projMat);
+        scene.append(newCamera);
     }
 
     // Recurse
     for(size_t i = 0; i < iObj.getNumChildren(); i++)
     {
-        visitObject(iObj.getChild(i), scene);
+        visitObject(iObj.getChild(i), scene, mat);
     }
 }
 
@@ -54,22 +73,9 @@ AlembicImport::AlembicImport(const char* filename)
 void AlembicImport::populate(GLScene &scene)
 {
     // TODO : handle the case where the archive wasn't correctly opened
-    visitObject(_rootEntity, scene);
+    M44d xformMat; 
+    visitObject(_rootEntity, scene, xformMat);
 }
 
-//const void* AlembicImport::pointCloudData()
-//{
-//    if(_points)
-//    {
-//        return _points->get();
-//    }
-//    std::cout << "no points in file" << std::endl;
-//    return nullptr;
-//}
-//
-//size_t AlembicImport::pointCloudSize()
-//{
-//    return _points->size();
-//}
 }
 #endif // WITH_ALEMBIC

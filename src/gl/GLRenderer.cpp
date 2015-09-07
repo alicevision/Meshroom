@@ -49,6 +49,8 @@ void GLRenderer::draw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for(auto obj: _scene)
     {
+        // Sets position and orientation
+        obj->uploadShaderMatrix();
         obj->draw();
     }
 }
@@ -62,7 +64,7 @@ void GLRenderer::updateWorldMatrix()
     // world
     QMatrix4x4 worldMat = projMat * _cameraMat;
     // update shaders
-    GLDrawable::setWorldMatrix(worldMat);
+    GLDrawable::setCameraMatrix(worldMat);
 }
 
 void GLRenderer::addAlembicScene(const QString& cloud)

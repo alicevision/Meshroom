@@ -32,8 +32,8 @@ void buildGridData(QVector<float>& griddata, float first, float last, float offs
 } // empty namespace
 
 GLGrid::GLGrid()
-    : _positionBuffer(QOpenGLBuffer::VertexBuffer)
-    , _program(*_colorUniform)
+    : GLDrawable(*_colorUniform)
+    , _positionBuffer(QOpenGLBuffer::VertexBuffer)
 {
     _vao.create();
     _vao.bind();
@@ -49,6 +49,8 @@ GLGrid::GLGrid()
     _program.enableAttributeArray("in_position");
     _program.setAttributeBuffer("in_position", GL_FLOAT, 0, 3);
     _positionBuffer.release();
+
+    uploadShaderMatrix();
 
     _vao.release();
 }

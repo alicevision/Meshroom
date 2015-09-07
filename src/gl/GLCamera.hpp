@@ -19,21 +19,13 @@ public:
     GLCamera();
     ~GLCamera() = default;
 
-public:
     void draw() override;
-    QMatrix4x4 modelMatrix() const;
-
-    void setPosition(const QVector3D& v);
-    //
-    //
-    void setModelMatrix(const QMatrix4x4 &);
-    // TODO : set Matrix
+    void setProjectionMatrix(const QMatrix4x4 &mat) {_projectionMatrix = mat;}
 
 private:
     QOpenGLVertexArrayObject _vao;
     QOpenGLBuffer _positionBuffer;
-    QOpenGLShaderProgram& _program;
-    QVector3D _position;
+    QMatrix4x4 _projectionMatrix;
 };
 
 }

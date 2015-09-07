@@ -17,6 +17,8 @@ CameraModel::CameraModel(const QUrl& url, QObject* parent)
 
     // Position of the target to look at on the z axis:
     _lookAtRadius = (eye - center).length();
+
+    emit viewMatrixChanged();
 }
 
 QString CameraModel::name() const

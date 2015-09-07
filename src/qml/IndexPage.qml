@@ -24,8 +24,6 @@ SplittedPageLayout {
     // private properties
     QtObject {
         id: _private
-        property int currentProjectID: 0
-        property int currentJobID: 0
         property Component currentComponent: homePage
     }
 
@@ -33,69 +31,43 @@ SplittedPageLayout {
     property Component homePage: HomePage {
     }
     property Component projectPage: ProjectPage {
-        projectModel: _applicationModel.projects[_private.currentProjectID]
+        projectModel: _applicationModel.currentProject
     }
     property Component jobPage: JobPage {
-        projectModel: _applicationModel.projects[_private.currentProjectID]
-        jobModel: _applicationModel.projects[_private.currentProjectID].jobs[_private.currentJobID]
+        projectModel: _applicationModel.currentProject
+        jobModel: _applicationModel.currentProject.currentJob
     }
 
     // functions
-    function showHomePage() {
-        _private.currentProjectID = -1;
-        _private.currentJobID = -1;
+    function selectHomePage() {
         _private.currentComponent = homePage;
     }
-    function showProjectPage(projectID) {
-        _private.currentProjectID = projectID;
-        _private.currentJobID = -1;
-        _private.currentComponent = projectPage;
+    function selectProjectPage(projectModel) {
+        _applicationModel.currentProject = projectModel;
+        _private.currentComponent = (projectModel)?projectPage:homePage;
     }
-    function showJobPage(projectID, jobID) {
-        _private.currentProjectID = projectID;
-        _private.currentJobID = jobID;
-        _private.currentComponent = jobPage;
-    }
-    function isCurrentProject(projectID) {
-        return (_private.currentProjectID == projectID);
-    }
-    function isCurrentJob(projectID, jobID) {
-        return (isCurrentProject(projectID) && _private.currentJobID == jobID);
-    }
-    function currentProjectID() {
-        return _private.currentProjectID;
-    }
-    function currentJobID() {
-        return _private.currentJobID;
+    function selectJobPage(projectModel, jobModel) {
+        _applicationModel.currentProject = projectModel;
+        projectModel.currentJob = jobModel;
+        _private.currentComponent = (jobModel)?jobPage:projectPage;
     }
     function addProject(projectURL) {
         var newProject = _applicationModel.addNewProject();
         newProject.url = projectURL;
         newProject.save();
-        if(newProject.jobs.length==0)
-            addJob(_applicationModel.projects.length-1);
-        else
-            showProjectPage(_applicationModel.projects.length-1);
+        selectJobPage(newProject, newProject.currentJob);
     }
-    function removeProject(projectID) {
-        _applicationModel.removeProject(_applicationModel.projects[projectID]);
-        var projectCount = _applicationModel.projects.length;
-        if(projectID>=projectCount)
-            (projectCount==0) ? showHomePage() : showProjectPage(projectID-1);
-        else
-            showProjectPage(projectID);
+    function removeProject(projectModel) {
+        _applicationModel.removeProject(projectModel);
+        selectProjectPage(_applicationModel.currentProject);
     }
-    function addJob(projectID) {
-        _applicationModel.projects[projectID].addJob();
-        showJobPage(projectID, _applicationModel.projects[projectID].jobs.length-1);
+    function addJob(projectModel) {
+        var newJob = projectModel.addJob();
+        selectJobPage(projectModel, newJob);
     }
-    function removeJob(projectID, jobID) {
-        _applicationModel.projects[projectID].removeJob(_applicationModel.projects[projectID].jobs[jobID]);
-        var jobCount = _applicationModel.projects[projectID].jobs.length;
-        if(jobID>=jobCount)
-            (jobCount==0) ? showProjectPage(projectID) : showJobPage(projectID, jobCount-1);
-        else
-            showJobPage(projectID, jobID);
+    function removeJob(projectModel, jobModel) {
+        projectModel.removeJob(jobModel);
+        selectJobPage(projectModel, projectModel.currentJob);
     }
 
 }

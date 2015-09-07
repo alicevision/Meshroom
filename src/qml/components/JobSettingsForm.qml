@@ -8,11 +8,11 @@ Item {
 
     id : root
     property variant jobModel: null
-    property int labelWidth: 120
+    property int labelWidth: 100
 
     GridLayout {
         anchors.fill: parent
-        anchors.margins: 20
+        anchors.margins: 10
         columns: 2
         rowSpacing: 10
         CustomText {

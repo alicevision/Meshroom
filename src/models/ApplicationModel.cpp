@@ -65,25 +65,6 @@ void ApplicationModel::setProjects(const QList<QObject*>& projects)
     emit projectsChanged();
 }
 
-const QList<QObject*>& ApplicationModel::logs() const
-{
-    return _logs;
-}
-
-void ApplicationModel::addLog(QObject* log)
-{
-    _logs.append(log);
-    emit logsChanged();
-}
-
-void ApplicationModel::setLogs(const QList<QObject*>& logs)
-{
-    if(logs == _logs)
-        return;
-    _logs = logs;
-    emit logsChanged();
-}
-
 QObject* ApplicationModel::addNewProject()
 {
     ProjectModel* projectModel = ProjectsIO::create(this);
@@ -108,10 +89,47 @@ void ApplicationModel::removeProject(QObject* model)
     ProjectModel* projectModel = qobject_cast<ProjectModel*>(model);
     if(!projectModel)
         return;
+    int id = _projects.indexOf(projectModel);
+    if(id<0)
+        return;
+    _projects.removeAt(id);
+    setCurrentProject((id < _projects.count()) ? _projects.at(id) :
+        (_projects.count()!=0)?_projects.last():nullptr);
+    emit projectsChanged();
     delete projectModel;
-    if(_projects.removeAll(projectModel) > 0)
-        emit projectsChanged();
     SettingsIO::saveRecentProjects(*this);
+}
+
+QObject* ApplicationModel::currentProject()
+{
+    return _currentProject;
+}
+
+void ApplicationModel::setCurrentProject(QObject* projectModel)
+{
+    if(projectModel == _currentProject)
+        return;
+    _currentProject = projectModel;
+    emit currentProjectChanged();
+}
+
+const QList<QObject*>& ApplicationModel::logs() const
+{
+    return _logs;
+}
+
+void ApplicationModel::addLog(QObject* log)
+{
+    _logs.append(log);
+    emit logsChanged();
+}
+
+void ApplicationModel::setLogs(const QList<QObject*>& logs)
+{
+    if(logs == _logs)
+        return;
+    _logs = logs;
+    emit logsChanged();
 }
 
 void ApplicationModel::onEngineLoaded(QObject* object, const QUrl& url)

@@ -11,8 +11,6 @@ Rectangle {
     id : root
     property variant projectModel: null
 
-    signal homeSelected()
-
     implicitHeight: 30
     color: _style.window.color.darker
     border.color: _style.window.color.xdarker
@@ -25,7 +23,7 @@ Rectangle {
         CustomToolButton {
             iconSource: "qrc:///images/home_outline.svg"
             iconSize: _style.icon.size.small
-            onClicked: homeSelected()
+            onClicked: selectHomePage()
             text: "home"
         }
         CustomToolButton {
@@ -54,7 +52,7 @@ Rectangle {
         CustomToolButton {
             iconSource: "qrc:///images/trash_outline.svg"
             iconSize: _style.icon.size.small
-            onClicked: removeProject(currentProjectID())
+            onClicked: removeProject(projectModel)
             text: "hide"
         }
     }

@@ -17,16 +17,11 @@ TitledPageLayout {
     property int labelWidth: 100
     property int settingsHeight: 0
 
-    onJobModelChanged: jobModel.refresh()
-
     header: JobHeader {
         projectModel: root.projectModel
         jobModel: root.jobModel
-        onHomeSelected: showHomePage()
-        onProjectSelected: showProjectPage(projectID)
         onProjectSettingsToggled: root.settingsHeight = (root.settingsHeight<=0)?root.height*0.3:0
         onProjectSettingsOpened: root.settingsHeight = root.height*0.3
-        onJobRemoved: removeJob(projectID, jobID)
     }
     body: SplitView {
         Layout.fillWidth: true

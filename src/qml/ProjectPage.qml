@@ -18,7 +18,6 @@ TitledPageLayout {
     background: DefaultBackground {}
     header: ProjectHeader {
         projectModel: root.projectModel
-        onHomeSelected: showHomePage()
     }
     body: Item {
         anchors.fill: parent
@@ -161,11 +160,7 @@ TitledPageLayout {
         selectFolder: true
         selectMultiple: false
         sidebarVisible: false
-        onAccepted: {
-            var newModel = _applicationModel.addNewProject();
-            newModel.url = fileDialog.fileUrl;
-            newModel.save();
-        }
+        onAccepted: addProject(fileDialog.fileUrl)
     }
 
 }

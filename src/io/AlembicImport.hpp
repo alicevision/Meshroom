@@ -1,9 +1,9 @@
 #pragma once
 
 #if WITH_ALEMBIC
+
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
-
 #include "gl/GLScene.hpp"
 
 using namespace Alembic::Abc;
@@ -19,7 +19,7 @@ public:
     explicit AlembicImport(const char* fileName);
     ~AlembicImport() = default;
 
-    void populate(GLScene &);
+    void populate(GLScene&);
 
 private:
     void visitObject(IObject, GLScene &, M44d);
@@ -27,4 +27,5 @@ private:
 };
 
 } // namespace mockup
+
 #endif // WITH_ALEMBIC

@@ -3,7 +3,6 @@
 #include "AlembicImport.hpp"
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreFactory/All.h>
-
 #include "gl/GLPointCloud.hpp"
 #include "gl/GLCamera.hpp"
 
@@ -13,7 +12,6 @@ using namespace AbcG;
 
 namespace mockup
 {
-
 
 // Top down insertion of 3d objects
 void AlembicImport::visitObject(IObject iObj, GLScene &scene, M44d mat)
@@ -70,7 +68,7 @@ AlembicImport::AlembicImport(const char* filename)
     _rootEntity = archive.getTop();
 }
 
-void AlembicImport::populate(GLScene &scene)
+void AlembicImport::populate(GLScene& scene)
 {
     // TODO : handle the case where the archive wasn't correctly opened
     M44d xformMat; 

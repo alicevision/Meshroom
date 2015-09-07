@@ -5,7 +5,7 @@ import QtQuick.Controls.Styles 1.2
 ComboBox {
     id: root
     style: ComboBoxStyle {
-        font.pointSize: _style.text.size.normal
+        font.pixelSize: _style.text.size.normal
         textColor: control.enabled ? _style.text.color.normal : _style.text.color.disabled
         background: Rectangle {
             implicitHeight: 30

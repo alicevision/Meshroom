@@ -9,7 +9,7 @@ Item {
     implicitWidth: childrenRect.width
     implicitHeight: childrenRect.height
     Text {
-        font.pointSize: root.textSize>0 ? root.textSize : 10
+        font.pixelSize: root.textSize>0 ? root.textSize : 10
         text: root.text
         color: root.color
         elide: Text.ElideRight

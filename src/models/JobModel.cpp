@@ -169,7 +169,7 @@ void JobModel::setPairA(const QUrl& url)
         ResourceModel* model = qobject_cast<ResourceModel*>(r);
         if(!model)
             continue;
-        model->setIsPairImageA(model->url()==_pairA);
+        model->setIsPairImageA(model->url() == _pairA);
     }
 }
 
@@ -197,21 +197,21 @@ void JobModel::setPairB(const QUrl& url)
         ResourceModel* model = qobject_cast<ResourceModel*>(r);
         if(!model)
             continue;
-        model->setIsPairImageB(model->url()==_pairB);
+        model->setIsPairImageB(model->url() == _pairB);
     }
 }
 
-const float& JobModel::peakThreshold() const
+const int& JobModel::describerPreset() const
 {
-    return _peakThreshold;
+    return _describerPreset;
 }
 
-void JobModel::setPeakThreshold(const float& threshold)
+void JobModel::setDescriberPreset(const int& threshold)
 {
-    if(threshold == _peakThreshold)
+    if(threshold == _describerPreset)
         return;
-    _peakThreshold = threshold;
-    emit peakThresholdChanged();
+    _describerPreset = threshold;
+    emit describerPresetChanged();
 }
 
 const int& JobModel::meshingScale() const
@@ -325,6 +325,32 @@ void JobModel::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     // case 4: // ERROR
     // case 5: // CANCELED
     // case 6: // PAUSED
+}
+
+// static
+QString JobModel::describerPresetString(const int& describerId)
+{
+    switch(describerId)
+    {
+        case 0:
+            return "NORMAL";
+        case 2:
+            return "ULTRA";
+        case 1:
+        default:
+            return "HIGH";
+    }
+}
+
+// static
+int JobModel::describerPresetId(const QString& describerString)
+{
+    if(describerString == "NORMAL")
+        return 0;
+    if(describerString == "ULTRA")
+        return 2;
+    else // HIGH
+        return 1;
 }
 
 // private

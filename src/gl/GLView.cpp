@@ -54,9 +54,9 @@ void GLView::setCamera(QObject* camera)
 {
     if(camera == _camera)
         return;
-    
+
     _camera = dynamic_cast<CameraModel*>(camera);
-    if (_camera) 
+    if(_camera)
     {
         // FIXME: do we need to disconnect the previous camera if any ?
         connect(_camera, SIGNAL(viewMatrixChanged()), this, SLOT(refresh()), Qt::DirectConnection);
@@ -127,7 +127,7 @@ void GLView::refresh()
 
 void GLView::addAlembicScene(const QString& filename)
 {
-    // Stores the filename, the load is done later on 
+    // Stores the filename, the load is done later on
     // in the sync function, inside a GL context
     _alembicSceneFile = filename;
     refresh();
@@ -162,8 +162,7 @@ void GLView::mousePressEvent(QMouseEvent* event)
     refresh();
 }
 
-
-void GLView::trackBallRotateCamera(QMatrix4x4 &cam, const QVector3D &lookAt, float dx, float dy)
+void GLView::trackBallRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, float dx, float dy)
 {
     QVector3D x(cam.row(0).x(), cam.row(0).y(), cam.row(0).z());
     x.normalize();
@@ -180,7 +179,7 @@ void GLView::trackBallRotateCamera(QMatrix4x4 &cam, const QVector3D &lookAt, flo
     cam.translate(-lookAt);
 }
 
-void GLView::turnTableRotateCamera(QMatrix4x4 &cam, const QVector3D &lookAt, float dx, float dy)
+void GLView::turnTableRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, float dx, float dy)
 {
     QVector3D x(cam.row(0));
     x.normalize();
@@ -198,7 +197,7 @@ void GLView::turnTableRotateCamera(QMatrix4x4 &cam, const QVector3D &lookAt, flo
     cam.translate(-lookAt);
 }
 
-void GLView::planeTranslateCamera(QMatrix4x4 &cam, float dx, float dy)
+void GLView::planeTranslateCamera(QMatrix4x4& cam, float dx, float dy)
 {
     QVector3D x(cam.row(0));
     x.normalize();
@@ -210,7 +209,7 @@ void GLView::planeTranslateCamera(QMatrix4x4 &cam, float dx, float dy)
     cam.translate(y * 0.01 * dy);
 }
 
-void GLView::translateLineOfSightCamera(QMatrix4x4 &cam, float &radius, float dx, float dy)
+void GLView::translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx, float dy)
 {
     QVector3D z(cam.row(2));
     z.normalize();
@@ -221,14 +220,14 @@ void GLView::translateLineOfSightCamera(QMatrix4x4 &cam, float &radius, float dx
 
 void GLView::wheelEvent(QWheelEvent* event)
 {
-    if (!_camera)
+    if(!_camera)
         return;
 
     const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
     const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
     const int numDegrees = event->delta() / 8;
     const int numSteps = numDegrees / 15;
-    const float delta = numSteps*100;
+    const float delta = numSteps * 100;
 
     float radius = _camera->lookAtRadius();
     translateLineOfSightCamera(_camMatTmp, radius, delta, 0);

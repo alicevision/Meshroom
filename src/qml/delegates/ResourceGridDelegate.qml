@@ -95,7 +95,7 @@ Item {
                     text: modelData.name
                     verticalAlignment: Text.AlignVCenter
                     color: "white"
-                    font.pointSize: 10
+                    font.pixelSize: 10
                     elide: Text.ElideRight
                     wrapMode: Text.WrapAnywhere
                     maximumLineCount: (mouseArea.containsMouse) ? 4 : 1

@@ -1,10 +1,10 @@
 #include "GLDrawable.hpp"
 
-namespace mockup 
+namespace mockup
 {
 
 GLSLPlainColorShader* GLDrawable::_colorUniform(nullptr);
-GLSLColoredShader*  GLDrawable::_colorArray(nullptr);
+GLSLColoredShader* GLDrawable::_colorArray(nullptr);
 
 QMatrix4x4 GLDrawable::_cameraMatrix;
 
@@ -46,5 +46,5 @@ void GLDrawable::setCameraMatrix(const QMatrix4x4 &mat)
 {
     _cameraMatrix = mat;
 } 
-}
 
+} // namespace

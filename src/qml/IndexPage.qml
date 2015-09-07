@@ -68,11 +68,34 @@ SplittedPageLayout {
     function currentJobID() {
         return _private.currentJobID;
     }
-    function removeProject() {
-        _applicationModel.removeProject(_applicationModel.projects[_private.currentProjectID]);
+    function addProject(projectURL) {
+        var newProject = _applicationModel.addNewProject();
+        newProject.url = projectURL;
+        newProject.save();
+        if(newProject.jobs.length==0)
+            addJob(_applicationModel.projects.length-1);
+        else
+            showProjectPage(_applicationModel.projects.length-1);
     }
-    function addJob() {
-        _applicationModel.projects[_private.currentProjectID].addJob();
+    function removeProject(projectID) {
+        _applicationModel.removeProject(_applicationModel.projects[projectID]);
+        var projectCount = _applicationModel.projects.length;
+        if(projectID>=projectCount)
+            (projectCount==0) ? showHomePage() : showProjectPage(projectID-1);
+        else
+            showProjectPage(projectID);
+    }
+    function addJob(projectID) {
+        _applicationModel.projects[projectID].addJob();
+        showJobPage(projectID, _applicationModel.projects[projectID].jobs.length-1);
+    }
+    function removeJob(projectID, jobID) {
+        _applicationModel.projects[projectID].removeJob(_applicationModel.projects[projectID].jobs[jobID]);
+        var jobCount = _applicationModel.projects[projectID].jobs.length;
+        if(jobID>=jobCount)
+            (jobCount==0) ? showProjectPage(projectID) : showJobPage(projectID, jobCount-1);
+        else
+            showJobPage(projectID, jobID);
     }
 
 }

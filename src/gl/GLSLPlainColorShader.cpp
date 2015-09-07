@@ -34,7 +34,6 @@ GLSLPlainColorShader::GLSLPlainColorShader(const QVector4D& color)
     setColor(color);
 }
 
-
 void GLSLPlainColorShader::setWorldMatrix(const QMatrix4x4& worldMat)
 {
     bind();

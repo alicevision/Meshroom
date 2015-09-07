@@ -21,8 +21,8 @@ class JobModel : public QObject
     Q_PROPERTY(QList<QString> steps READ steps WRITE setSteps NOTIFY stepsChanged)
     Q_PROPERTY(QUrl pairA READ pairA WRITE setPairA NOTIFY pairAChanged)
     Q_PROPERTY(QUrl pairB READ pairB WRITE setPairB NOTIFY pairBChanged)
-    Q_PROPERTY(float peakThreshold READ peakThreshold WRITE setPeakThreshold NOTIFY
-                   peakThresholdChanged)
+    Q_PROPERTY(int describerPreset READ describerPreset WRITE setDescriberPreset NOTIFY
+                   describerPresetChanged)
     Q_PROPERTY(int meshingScale READ meshingScale WRITE setMeshingScale NOTIFY meshingScaleChanged)
     Q_PROPERTY(float completion READ completion NOTIFY completionChanged)
     Q_PROPERTY(int status READ status NOTIFY statusChanged)
@@ -51,8 +51,8 @@ public slots:
     void setPairA(const QUrl& url);
     const QUrl& pairB() const;
     void setPairB(const QUrl& url);
-    const float& peakThreshold() const;
-    void setPeakThreshold(const float& threshold);
+    const int& describerPreset() const;
+    void setDescriberPreset(const int& threshold);
     const int& meshingScale() const;
     void setMeshingScale(const int& scale);
     const float& completion() const;
@@ -69,6 +69,10 @@ public slots:
     void refresh();
     void readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus);
 
+public:
+    static QString describerPresetString(const int& describerPreset);
+    static int describerPresetId(const QString& describerPreset);
+
 private:
     void setCamerasFromResources();
 
@@ -82,7 +86,7 @@ signals:
     void stepsChanged();
     void pairAChanged();
     void pairBChanged();
-    void peakThresholdChanged();
+    void describerPresetChanged();
     void meshingScaleChanged();
     void completionChanged();
     void statusChanged();
@@ -97,7 +101,7 @@ private:
     QList<QString> _steps;
     QUrl _pairA;
     QUrl _pairB;
-    float _peakThreshold = 0.04f;
+    int _describerPreset = 1; // HIGH
     int _meshingScale = 2;
     float _completion = 0.f;
     int _status = -1;

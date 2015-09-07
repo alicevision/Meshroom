@@ -3,7 +3,6 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 #include <QOpenGLShaderProgram>
-
 #include "GLDrawable.hpp"
 
 // GLCamera Gizmo
@@ -28,4 +27,4 @@ private:
     QMatrix4x4 _projectionMatrix;
 };
 
-}
+} // namespace

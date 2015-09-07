@@ -4,7 +4,6 @@
 namespace mockup
 {
 
-
 GLCamera::GLCamera()
     : GLDrawable(*_colorArray)
     , _positionBuffer(QOpenGLBuffer::VertexBuffer)
@@ -49,4 +48,3 @@ void GLCamera::draw()
 
 
 } // namespace
-

@@ -1,12 +1,11 @@
 #pragma once
 
 #include <QOpenGLShaderProgram>
-
 #include "GLSLColoredShader.hpp"
 #include "GLSLPlainColorShader.hpp"
 
-namespace mockup {
-
+namespace mockup
+{
 
 // Allows to have a list of pointers to drawable objects
 class GLDrawable
@@ -21,7 +20,7 @@ public:
     static void setCameraMatrix(const QMatrix4x4 &);
 
     /// SHADER stuff
-    // FIXME: I don't think this is a good idea to keep 
+    // FIXME: I don't think this is a good idea to keep
     // different shaders as static members of the base class
     // fix would be to think about it and find a solution if needed...
     static void setShaders(GLSLPlainColorShader *, GLSLColoredShader *);
@@ -51,5 +50,4 @@ protected:
 
 };
 
-
-}
+} // namespace

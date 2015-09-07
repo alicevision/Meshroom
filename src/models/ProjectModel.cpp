@@ -58,7 +58,7 @@ QObject* ProjectModel::addJob()
     JobModel* jobModel = JobsIO::create(this);
     QDateTime jobtime = QDateTime::currentDateTime();
     QString jobdate = jobtime.toString("yyyy-MM-dd HH:mm");
-    QString dirname = jobtime.toString("yyyyMMdd_HHmm");
+    QString dirname = jobtime.toString("yyyyMMdd_HHmmss");
     QDir dir(_url.toLocalFile());
     dir.cd("reconstructions");
     jobModel->setUrl(QUrl::fromLocalFile(dir.absoluteFilePath(dirname)));

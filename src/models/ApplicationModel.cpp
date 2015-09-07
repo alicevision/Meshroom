@@ -38,6 +38,17 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     // load user settings
     SettingsIO::loadRecentProjects(*this);
 
+    // load default project locations
+    QStringList locations = {"new location..."};
+    QString externalLocationsStr = std::getenv("MOCKUP_PROJECT_LOCATIONS");
+    QStringList externalLocations = externalLocationsStr.split(":");
+    foreach(const QString& loc, externalLocations)
+    {
+        if(QUrl::fromLocalFile(loc).isValid())
+            locations.append(loc);
+    }
+    setLocations(locations);
+
     // expose this object to QML
     if(engine.rootContext())
         engine.rootContext()->setContextProperty("_applicationModel", this);
@@ -111,6 +122,19 @@ void ApplicationModel::setCurrentProject(QObject* projectModel)
         return;
     _currentProject = projectModel;
     emit currentProjectChanged();
+}
+
+const QStringList& ApplicationModel::locations() const
+{
+    return _locations;
+}
+
+void ApplicationModel::setLocations(const QStringList& locations)
+{
+    if(locations == _locations)
+        return;
+    _locations = locations;
+    emit locationsChanged();
 }
 
 const QList<QObject*>& ApplicationModel::logs() const

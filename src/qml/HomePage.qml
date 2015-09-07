@@ -17,6 +17,7 @@ TitledPageLayout {
     header: HomeHeader {}
     body: Item {
         anchors.fill: parent
+        clip: true
         ColumnLayout {
             anchors.centerIn: parent
             spacing: 0
@@ -28,13 +29,19 @@ TitledPageLayout {
             RowLayout {
                 spacing: 10
                 CustomComboBox {
-                    model: ["new location..."]
+                    id: combo
+                    model: _applicationModel.locations
                 }
                 RowLayout {
                     CustomToolButton {
                         iconSize: _style.icon.size.xlarge
                         iconSource: 'qrc:///images/add_project.svg'
-                        onClicked: fileDialog.open()
+                        onClicked: {
+                            if(combo.currentIndex == 0)
+                                fileDialog.open();
+                            else
+                                addProject(combo.currentText);
+                        }
                         opacity: 0.8
                     }
                 }

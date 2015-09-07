@@ -9,7 +9,7 @@ ComboBox {
         textColor: control.enabled ? _style.text.color.normal : _style.text.color.disabled
         background: Rectangle {
             implicitHeight: 30
-            implicitWidth: 200
+            implicitWidth: 300
             color: _style.window.color.xdarker
             Image {
                 source: "qrc:///images/arrow_right_outline.svg"
@@ -21,7 +21,7 @@ ComboBox {
                 anchors.rightMargin: 5
             }
         }
-        label: CustomText {
+        label: CustomWrappedText {
             anchors.fill: parent
             anchors.margins: 3
             text: control.currentText

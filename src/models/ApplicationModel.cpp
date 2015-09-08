@@ -39,7 +39,7 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     SettingsIO::loadRecentProjects(*this);
 
     // load default project locations
-    QStringList locations = {"new location..."};
+    QStringList locations = {"New location..."};
     QString externalLocationsStr = std::getenv("MOCKUP_PROJECT_LOCATIONS");
     QStringList externalLocations = externalLocationsStr.split(":");
     foreach(const QString& loc, externalLocations)

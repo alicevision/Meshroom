@@ -11,7 +11,7 @@ Item {
     property variant projectModel: modelData
     property int topItemHeight: 60
     property int subItemHeight: 60
-    property bool expanded: (index == 0)
+    property bool expanded: true//(index == 0)
     property int animationDuration: 300
 
     width: ListView.view.width
@@ -37,7 +37,10 @@ Item {
                 id: projectMouseArea
                 anchors.fill: parent
                 hoverEnabled: true
-                onClicked: selectProjectPage(projectModel)
+                onClicked: {
+                    root.expanded = true;
+                    selectProjectPage(projectModel);
+                }
                 onDoubleClicked: root.expanded = !root.expanded
                 RowLayout {
                     anchors.fill: parent
@@ -64,12 +67,12 @@ Item {
                                 addJob(projectModel);
                             }
                         }
-                        CustomToolButton {
-                            iconSource: "qrc:///images/trash_outline.svg"
-                            iconSize: _style.icon.size.small
-                            text: "hide"
-                            onClicked: removeProject(projectModel)
-                        }
+                        // CustomToolButton {
+                        //     iconSource: "qrc:///images/trash_outline.svg"
+                        //     iconSize: _style.icon.size.small
+                        //     text: "hide"
+                        //     onClicked: removeProject(projectModel)
+                        // }
                     }
                     CustomToolButton {
                         iconSource: "qrc:///images/arrow_right_outline.svg"

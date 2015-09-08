@@ -101,18 +101,18 @@ Item {
                     maximumLineCount: (mouseArea.containsMouse) ? 4 : 1
                 }
             }
-            // Rectangle {
-            //     anchors.fill: parent
-            //     visible: (modelData.isPairImageA || modelData.isPairImageB)
-            //     color: "#99000000"
-            //     Behavior on height { NumberAnimation {} }
-            //     CustomText {
-            //         anchors.centerIn: parent
-            //         text: modelData.isPairImageA ? "A" : "B"
-            //         textSize: _style.text.size.xlarge
-            //         color: "#5BB1F7"
-            //     }
-            // }
+            Rectangle {
+                anchors.fill: parent
+                visible: (modelData.isPairImageA || modelData.isPairImageB)
+                color: "#99000000"
+                Behavior on height { NumberAnimation {} }
+                CustomText {
+                    anchors.centerIn: parent
+                    text: modelData.isPairImageA ? "A" : "B"
+                    textSize: _style.text.size.xlarge
+                    color: "#5BB1F7"
+                }
+            }
         }
     }
 }

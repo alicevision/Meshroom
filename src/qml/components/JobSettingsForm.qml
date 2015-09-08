@@ -14,7 +14,7 @@ Item {
         anchors.fill: parent
         anchors.margins: 10
         columns: 2
-        rowSpacing: 10
+        // rowSpacing: 5
         CustomText {
             text: "quality"
         }
@@ -42,8 +42,8 @@ Item {
         }
         RowLayout {
             ResourceDropArea {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.preferredWidth: 150
+                Layout.preferredHeight: Layout.preferredWidth*2/3
                 title: "A"
                 onFilesDropped: root.jobModel.setPairA(files[0])
                 Rectangle {
@@ -60,8 +60,8 @@ Item {
                 }
             }
             ResourceDropArea {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.preferredWidth: 150
+                Layout.preferredHeight: Layout.preferredWidth*2/3
                 title: "B"
                 onFilesDropped: root.jobModel.setPairB(files[0])
                 Rectangle {
@@ -76,6 +76,9 @@ Item {
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                 }
+            }
+            Item { // spacer
+                Layout.fillWidth: true
             }
         }
         Item { // spacer

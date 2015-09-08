@@ -39,21 +39,11 @@ Rectangle {
         Item {
             Layout.fillWidth: true
         }
-        // Item { // separator
-        //     Layout.preferredWidth: 20
-        //     Layout.fillHeight: true
-        //     Rectangle {
-        //         anchors.centerIn: parent
-        //         width : 1
-        //         height: parent.height * 0.7
-        //         color: _style.window.color.lighter
-        //     }
-        // }
         CustomToolButton {
-            iconSource: "qrc:///images/trash_outline.svg"
+            iconSource: "qrc:///images/close.svg"
             iconSize: _style.icon.size.small
             onClicked: removeProject(projectModel)
-            text: "hide"
+            text: "close"
         }
     }
 }

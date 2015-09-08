@@ -14,14 +14,13 @@ TitledPageLayout {
     id : root
     property variant projectModel: null
     property variant jobModel: null
-    property int labelWidth: 100
-    property int settingsHeight: 0
+    property bool settingsExpanded: true
 
     header: JobHeader {
         projectModel: root.projectModel
         jobModel: root.jobModel
-        onProjectSettingsToggled: root.settingsHeight = (root.settingsHeight<=0)?root.height*0.3:0
-        onProjectSettingsOpened: root.settingsHeight = root.height*0.3
+        onProjectSettingsToggled: root.settingsExpanded = !root.settingsExpanded
+        onProjectSettingsOpened: root.settingsExpanded = true
     }
     body: SplitView {
         Layout.fillWidth: true
@@ -35,10 +34,11 @@ TitledPageLayout {
         Rectangle {
             id: settings
             color: _style.window.color.darker
+            height: 200
             Behavior on height { NumberAnimation {}}
-            Connections {
+            Connections { // use this to preserve connection after manual resize
                 target: root
-                onSettingsHeightChanged: settings.height = root.settingsHeight
+                onSettingsExpandedChanged: settings.height = root.settingsExpanded?200:0
             }
             JobSettingsForm {
                 anchors.fill: parent

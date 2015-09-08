@@ -10,7 +10,7 @@ Slider {
             height: 15
             radius: height
             antialiasing: true
-            color: _style.window.color.selected
+            color: control.enabled?_style.window.color.selected:_style.window.color.xlighter
         }
         groove: Item {
             implicitHeight: 10
@@ -23,7 +23,7 @@ Slider {
                 opacity: 0.8
                 Rectangle {
                     antialiasing: true
-                    color: _style.window.color.selected
+                    color: control.enabled?_style.window.color.selected:_style.window.color.xlighter
                     height: parent.height
                     width: parent.width * (control.value - control.minimumValue) / (control.maximumValue - control.minimumValue)
                 }

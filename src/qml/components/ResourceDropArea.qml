@@ -6,10 +6,12 @@ Item {
 
     id: root
     property string title: ""
+    property bool enabled: true
     signal filesDropped(variant files)
 
     DropArea {
         anchors.fill: parent
+        enabled: root.enabled
         onEntered: dropBackground.color = _style.window.color.selected
         onExited: dropBackground.color = _style.window.color.darker
         onDropped: {

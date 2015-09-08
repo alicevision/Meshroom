@@ -65,13 +65,15 @@ TitledPageLayout {
                         function removeResource() {
                             root.jobModel.removeResources(gallery.getSelectionList());
                         }
+                        title: "drop .JPG files"
+                        enabled: root.jobModel.status < 0
                         onFilesDropped: root.jobModel.addResources(files)
                         ResourceGallery {
                             id: gallery
                             anchors.fill: parent
                             anchors.margins: 20
                             jobModel: root.jobModel
-                            selectable: true
+                            enabled: root.jobModel.status < 0
                             Shortcut {
                                 key: "Backspace"
                                 onActivated: removeResource()

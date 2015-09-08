@@ -137,6 +137,7 @@ void JobsIO::loadAllJobs(ProjectModel& projectModel)
             JobsIO::load(&projectModel, QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
         if(!job)
             continue;
+        job->autoSaveON();
         validJobs.append(job);
     }
     projectModel.setJobs(validJobs);

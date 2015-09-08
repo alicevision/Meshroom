@@ -59,10 +59,11 @@ public slots:
     void setCompletion(const float& completion);
     const int& status() const;
     void setStatus(const int& status);
-    QUrl buildUrl() const;
-    QUrl matchUrl() const;
 
 public slots:
+    QUrl buildUrl() const;
+    QUrl matchUrl() const;
+    void autoSaveON();
     bool save();
     void start();
     void stop();

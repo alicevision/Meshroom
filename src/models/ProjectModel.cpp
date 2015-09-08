@@ -63,6 +63,7 @@ QObject* ProjectModel::addJob()
     dir.cd("reconstructions");
     jobModel->setUrl(QUrl::fromLocalFile(dir.absoluteFilePath(dirname)));
     jobModel->setDate(jobdate);
+    jobModel->autoSaveON();
     _jobs.append(jobModel);
     emit jobsChanged();
     return jobModel;

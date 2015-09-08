@@ -128,27 +128,5 @@ Rectangle {
             text: "refresh"
             onClicked: root.jobModel.refresh()
         }
-        Item { // separator
-            Layout.preferredWidth: 20
-            Layout.fillHeight: true
-            Rectangle {
-                anchors.centerIn: parent
-                width : 1
-                height: parent.height * 0.7
-                color: _style.window.color.lighter
-            }
-        }
-        CustomToolButton {
-            iconSource: "qrc:///images/add_job.svg"
-            iconSize: _style.icon.size.small
-            onClicked: root.projectModel.addJob()
-            text: "duplicate"
-        }
-        CustomToolButton {
-            iconSource: "qrc:///images/trash_outline.svg"
-            iconSize: _style.icon.size.small
-            onClicked: removeJob(projectModel, jobModel)
-            text: "hide"
-        }
     }
 }

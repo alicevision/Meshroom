@@ -25,7 +25,6 @@ void ProjectModel::setUrl(const QUrl& url)
     JobsIO::loadAllJobs(*this);
     if(_jobs.isEmpty())
         addJob();
-    setCurrentJob(_jobs[0]);
 
     emit urlChanged();
     emit nameChanged();
@@ -36,6 +35,9 @@ void ProjectModel::setJobs(const QList<QObject*>& jobs)
     if(jobs == _jobs)
         return;
     _jobs = jobs;
+    if(_jobs.isEmpty())
+        addJob();
+    setCurrentJob(_jobs[0]);
     emit jobsChanged();
 }
 
@@ -49,6 +51,7 @@ void ProjectModel::addJob()
         return;
     _jobs.append(jobModel);
     emit jobsChanged();
+    setCurrentJob(jobModel);
 }
 
 void ProjectModel::removeJob(QObject* model)

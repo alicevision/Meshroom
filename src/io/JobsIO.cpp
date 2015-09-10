@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QFile>
 #include <QDir>
+#include <QDateTime>
 #include <cstdlib>
 #include <iostream>
 
@@ -22,10 +23,11 @@ JobModel* JobsIO::load(QObject* parent, const QUrl& url)
         return nullptr;
     }
 
-    // create a new JobModel and set its URL attribute
+    // create a new JobModel and set its URL and date attributes
     JobModel* jobModel = new JobModel(parent);
     jobModel->setUrl(url);
-    // TODO: set date
+    QDateTime date = QDateTime::fromString(url.fileName(), "yyyyMMdd_HHmmss");
+    jobModel->setDate(date.toString("yyyy-MM-dd HH:mm"));
 
     // try to load the job descriptor file
     QDir dir(url.toLocalFile());
@@ -67,7 +69,7 @@ JobModel* JobsIO::load(QObject* parent, const QUrl& url)
             QJsonObject meshingObject = stepsObject["meshing"].toObject();
 
             // update job parameters
-            jobModel->setDate(json["date"].toString());
+            // jobModel->setDate(json["date"].toString());
             jobModel->setUser(json["user"].toString());
             jobModel->setNote(json["note"].toString());
             jobModel->setResources(resources);

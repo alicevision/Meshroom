@@ -97,6 +97,7 @@ Item {
         }
         Item { // spacer
             Layout.preferredWidth: labelWidth
+            Layout.fillHeight: true
         }
     }
 }

@@ -49,7 +49,7 @@ Item {
             }
         }
     }
-    Slider {
+    CustomSlider {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         width: 50

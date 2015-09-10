@@ -35,6 +35,7 @@ void ProjectModel::setUrl(const QUrl& url)
     JobsIO::loadAllJobs(*this);
     if(_jobs.isEmpty())
         addJob();
+    setCurrentJob(_jobs[0]);
 
     emit urlChanged();
     emit nameChanged();
@@ -55,15 +56,12 @@ void ProjectModel::setJobs(const QList<QObject*>& jobs)
 
 QObject* ProjectModel::addJob()
 {
-    JobModel* jobModel = JobsIO::create(this);
     QDateTime jobtime = QDateTime::currentDateTime();
-    QString jobdate = jobtime.toString("yyyy-MM-dd HH:mm");
     QString dirname = jobtime.toString("yyyyMMdd_HHmmss");
-    QDir dir(_url.toLocalFile());
-    dir.cd("reconstructions");
-    jobModel->setUrl(QUrl::fromLocalFile(dir.absoluteFilePath(dirname)));
-    jobModel->setDate(jobdate);
-    jobModel->autoSaveON();
+    QUrl url = QUrl::fromLocalFile(_url.toLocalFile() + "/reconstructions/" + dirname);
+    JobModel* jobModel = JobsIO::load(this, url);
+    if(!jobModel)
+        return nullptr;
     _jobs.append(jobModel);
     emit jobsChanged();
     return jobModel;
@@ -75,7 +73,7 @@ void ProjectModel::removeJob(QObject* model)
     if(!jobModel)
         return;
     int id = _jobs.indexOf(jobModel);
-    if(id<0)
+    if(id < 0)
         return;
     _jobs.removeAt(id);
     if(_jobs.isEmpty())
@@ -92,20 +90,27 @@ QObject* ProjectModel::currentJob()
 
 void ProjectModel::setCurrentJob(QObject* jobModel)
 {
+    select(); // ensure that this project is selected
     if(jobModel == _currentJob)
         return;
     _currentJob = jobModel;
     emit currentJobChanged();
 }
 
-bool ProjectModel::save()
+void ProjectModel::select()
 {
-    if(!ProjectsIO::save(*this))
-        return false;
-    ApplicationModel* applicationModel = qobject_cast<ApplicationModel*>(parent());
-    if(applicationModel)
-        SettingsIO::saveRecentProjects(*applicationModel);
-    return true;
+    ApplicationModel* app = qobject_cast<ApplicationModel*>(parent());
+    if(!app)
+        return;
+    app->setCurrentProject(this);
+}
+
+void ProjectModel::remove()
+{
+    ApplicationModel* app = qobject_cast<ApplicationModel*>(parent());
+    if(!app)
+        return;
+    app->removeProject(this);
 }
 
 } // namespace

@@ -39,7 +39,7 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     SettingsIO::loadRecentProjects(*this);
 
     // load default project locations
-    QStringList locations = {"New location..."};
+    QStringList locations; // = {"New location..."};
     QString externalLocationsStr = std::getenv("MOCKUP_PROJECT_LOCATIONS");
     QStringList externalLocations = externalLocationsStr.split(":");
     foreach(const QString& loc, externalLocations)
@@ -76,21 +76,23 @@ void ApplicationModel::setProjects(const QList<QObject*>& projects)
     emit projectsChanged();
 }
 
-QObject* ApplicationModel::addNewProject()
+QObject* ApplicationModel::addProject(const QUrl& url)
 {
-    ProjectModel* projectModel = ProjectsIO::create(this);
-    _projects.append(projectModel);
-    emit projectsChanged();
-    return projectModel;
-}
-
-QObject* ApplicationModel::addExistingProject(const QUrl& url)
-{
+    foreach(QObject* p, _projects)
+    {
+        ProjectModel* projectModel = qobject_cast<ProjectModel*>(p);
+        if(projectModel && projectModel->url() == url)
+        {
+            qWarning("Loading project: project already loaded.");
+            return projectModel;
+        }
+    }
     ProjectModel* projectModel = ProjectsIO::load(this, url);
     if(!projectModel)
         return nullptr;
     _projects.append(projectModel);
     emit projectsChanged();
+    setCurrentProject(projectModel);
     SettingsIO::saveRecentProjects(*this);
     return projectModel;
 }
@@ -101,11 +103,12 @@ void ApplicationModel::removeProject(QObject* model)
     if(!projectModel)
         return;
     int id = _projects.indexOf(projectModel);
-    if(id<0)
+    if(id < 0)
         return;
     _projects.removeAt(id);
-    setCurrentProject((id < _projects.count()) ? _projects.at(id) :
-        (_projects.count()!=0)?_projects.last():nullptr);
+    setCurrentProject((id < _projects.count()) ? _projects.at(id) : (_projects.count() != 0)
+                                                                        ? _projects.last()
+                                                                        : nullptr);
     emit projectsChanged();
     delete projectModel;
     SettingsIO::saveRecentProjects(*this);

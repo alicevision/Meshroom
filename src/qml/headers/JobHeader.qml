@@ -28,6 +28,8 @@ Rectangle {
             iconSource: "qrc:///images/home_outline.svg"
             iconSize: _style.icon.size.small
             onClicked: selectHomePage()
+            enabled: false
+            opacity: 0.6
             text: "home"
         }
         CustomToolButton {
@@ -36,23 +38,28 @@ Rectangle {
             enabled: false
             opacity: 0.5
         }
-        Button {
+        CustomText {
             text: projectModel.name
-            style: ButtonStyle {
-                background: Rectangle {
-                    color: control.hovered ? _style.window.color.normal : _style.window.color.darker
-                    Behavior on color { ColorAnimation{} }
-                    border.color: control.hovered ? _style.window.color.xlighter : _style.window.color.lighter
-                    radius: 3
-                }
-                label: CustomText {
-                    text: control.text
-                    textSize: _style.text.size.small
-                    color: _style.text.color.normal
-                }
-            }
-            onClicked: selectProjectPage(projectModel)
+            textSize: _style.text.size.small
         }
+        // Button {
+        //     enabled: false
+        //     text: projectModel.name
+        //     style: ButtonStyle {
+        //         background: Rectangle {
+        //             color: control.hovered ? _style.window.color.normal : _style.window.color.darker
+        //             Behavior on color { ColorAnimation{} }
+        //             border.color: control.hovered ? _style.window.color.xlighter : _style.window.color.lighter
+        //             radius: 3
+        //         }
+        //         label: CustomText {
+        //             text: control.text
+        //             textSize: _style.text.size.small
+        //             color: _style.text.color.normal
+        //         }
+        //     }
+        //     onClicked: selectProjectPage(projectModel)
+        // }
         CustomToolButton {
             iconSource: "qrc:///images/arrow_right_outline.svg"
             iconSize: _style.icon.size.small

@@ -11,7 +11,7 @@ Item {
     property variant projectModel: modelData
     property int topItemHeight: 60
     property int subItemHeight: 60
-    property bool expanded: true//(index == 0)
+    property bool expanded: true
     property int animationDuration: 300
 
     width: ListView.view.width
@@ -34,14 +34,12 @@ Item {
             width: parent.width
             height: root.topItemHeight
             MouseArea {
-                id: projectMouseArea
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
                     root.expanded = true;
-                    selectProjectPage(projectModel);
+                    projectModel.select();
                 }
-                onDoubleClicked: root.expanded = !root.expanded
                 RowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: 15
@@ -64,23 +62,23 @@ Item {
                             text: "add job"
                             onClicked: {
                                 root.expanded = true;
-                                addJob(projectModel);
+                                projectModel.addJob();
                             }
                         }
-                        // CustomToolButton {
-                        //     iconSource: "qrc:///images/trash_outline.svg"
-                        //     iconSize: _style.icon.size.small
-                        //     text: "hide"
-                        //     onClicked: removeProject(projectModel)
-                        // }
-                    }
-                    CustomToolButton {
-                        iconSource: "qrc:///images/arrow_right_outline.svg"
-                        iconSize: _style.icon.size.small
-                        rotation: root.expanded ? 90 : 0
-                        opacity: 0.4
-                        Behavior on rotation { NumberAnimation {} }
-                        onClicked: root.expanded = !root.expanded
+                        CustomToolButton {
+                            iconSource: "qrc:///images/close.svg"
+                            iconSize: _style.icon.size.small
+                            text: "close"
+                            onClicked: projectModel.remove()
+                        }
+                        CustomToolButton {
+                            iconSource: "qrc:///images/arrow_right_outline.svg"
+                            iconSize: _style.icon.size.small
+                            rotation: root.expanded ? 90 : 0
+                            opacity: 0.4
+                            Behavior on rotation { NumberAnimation {} }
+                            onClicked: root.expanded = !root.expanded
+                        }
                     }
                 }
             }

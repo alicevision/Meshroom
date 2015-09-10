@@ -79,10 +79,14 @@ Item {
                     maximumLineCount: (mouseArea.containsMouse) ? 4 : 1
                 }
             }
-            Rectangle { // pair indicator
+            Item { // pair indicator
                 anchors.fill: parent
                 visible: (modelData.isPairImageA || modelData.isPairImageB)
-                color: "#99000000"
+                Rectangle {
+                    anchors.fill: parent
+                    color: "black"
+                    opacity: 0.5
+                }
                 CustomText {
                     anchors.centerIn: parent
                     text: modelData.isPairImageA ? "A" : "B"
@@ -93,7 +97,8 @@ Item {
             Rectangle { // state indicator (enabled or not)
                 anchors.fill: parent
                 visible: !root.enabled
-                color: "#99000000"
+                color: "black"
+                opacity: 0.5
             }
         }
     }

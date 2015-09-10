@@ -14,23 +14,6 @@
 namespace mockup
 {
 
-// namespace // empty namespace
-// {
-//
-// typedef std::function<void(const QUrl&)> fun_t;
-// void traverseDirectory(const QUrl& url, fun_t f)
-// {
-//     QDir dir(url.toLocalFile());
-//     if(!dir.exists())
-//         return;
-//     f(url);
-//     QStringList list = dir.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
-//     for(int i = 0; i < list.size(); ++i)
-//         traverseDirectory(QUrl::fromLocalFile(dir.absoluteFilePath(list[i])), f);
-// }
-//
-// } // empty namespace
-
 JobModel* JobsIO::create(QObject* parent)
 {
     return new JobModel(parent);
@@ -44,83 +27,65 @@ JobModel* JobsIO::load(QObject* parent, const QUrl& url)
         return nullptr;
     }
 
-    QDir dir(url.toLocalFile());
-    if(!dir.exists())
-    {
-        qCritical("Loading job : invalid project URL (not found)");
-        return nullptr;
-    }
-
-    // load the job descriptor file
-    QFile file(dir.filePath("job.json"));
-    if(!file.open(QIODevice::ReadOnly))
-    {
-        qCritical("Loading job : invalid descriptor file");
-        return nullptr;
-    }
-
-    // read it and close the file handler
-    QByteArray data = file.readAll();
-    file.close();
-
-    // parse it as JSON
-    QJsonParseError parseError;
-    QJsonDocument jsondoc(QJsonDocument::fromJson(data, &parseError));
-    if(parseError.error != QJsonParseError::NoError)
-    {
-        qCritical("Loading job : malformed descriptor file");
-        return nullptr;
-    }
-
-    // create a new JobModel and set its attributes
+    // create a new JobModel and set its URL attribute
     JobModel* jobModel = JobsIO::create(parent);
     jobModel->setUrl(url);
+    // TODO: set date
 
-    // JSON: resources
-    QJsonObject json = jsondoc.object();
-    QJsonArray resourceArray = json["resources"].toArray();
-    QObjectList resources;
-    for(int i = 0; i < resourceArray.count(); ++i)
-        resources.append(
-            new ResourceModel(QUrl::fromLocalFile(resourceArray.at(i).toString()), jobModel));
+    // try to load the job descriptor file
+    QDir dir(url.toLocalFile());
+    QFile file(dir.filePath("job.json"));
+    if(file.open(QIODevice::ReadOnly))
+    {
+        // read all data and close the file handler
+        QByteArray data = file.readAll();
+        file.close();
 
-    // JSON: steps
-    QJsonObject stepsObject = json["steps"].toObject();
+        // parse data as JSON
+        QJsonParseError parseError;
+        QJsonDocument jsondoc(QJsonDocument::fromJson(data, &parseError));
+        if(parseError.error != QJsonParseError::NoError)
+        {
+            qCritical("Loading job : malformed descriptor file");
+        }
+        else {
+            // JSON: resources
+            QJsonObject json = jsondoc.object();
+            QJsonArray resourceArray = json["resources"].toArray();
+            QObjectList resources;
+            for(int i = 0; i < resourceArray.count(); ++i)
+                resources.append(
+                    new ResourceModel(QUrl::fromLocalFile(resourceArray.at(i).toString()), jobModel));
 
-    // JSON: feature detection parameters
-    QJsonObject featureDetectObject = stepsObject["feature_detection"].toObject();
+            // JSON: steps
+            QJsonObject stepsObject = json["steps"].toObject();
 
-    // JSON: structure from motion parameters
-    QJsonObject sfmObject = stepsObject["sfm"].toObject();
-    QJsonArray pairArray = sfmObject["initial_pair"].toArray();
+            // JSON: feature detection parameters
+            QJsonObject featureDetectObject = stepsObject["feature_detection"].toObject();
 
-    // JSON: meshing parameters
-    QJsonObject meshingObject = stepsObject["meshing"].toObject();
+            // JSON: structure from motion parameters
+            QJsonObject sfmObject = stepsObject["sfm"].toObject();
+            QJsonArray pairArray = sfmObject["initial_pair"].toArray();
 
-    // update job parameters
-    jobModel->setDate(json["date"].toString());
-    jobModel->setUser(json["user"].toString());
-    jobModel->setNote(json["note"].toString());
-    jobModel->setResources(resources);
-    if(pairArray.count() > 0)
-        jobModel->setPairA(QUrl::fromLocalFile(pairArray.at(0).toString()));
-    if(pairArray.count() > 1)
-        jobModel->setPairB(QUrl::fromLocalFile(pairArray.at(1).toString()));
-    jobModel->setMeshingScale(meshingObject["scale"].toDouble());
-    jobModel->setDescriberPreset(
-        JobModel::describerPresetId(featureDetectObject["describerPreset"].toString()));
+            // JSON: meshing parameters
+            QJsonObject meshingObject = stepsObject["meshing"].toObject();
 
-    // // reset watchfolders
-    // QStringList directories = _watcher.directories();
-    // if(!directories.isEmpty())
-    //     _watcher.removePaths(directories);
-    // fun_t f = [&](const QUrl& dir)
-    // {
-    //     _watcher.addPath(dir.toLocalFile());
-    // };
-    // traverseDirectory(jobModel->buildUrl(), f);
-    // traverseDirectory(jobModel->matchUrl(), f);
+            // update job parameters
+            jobModel->setDate(json["date"].toString());
+            jobModel->setUser(json["user"].toString());
+            jobModel->setNote(json["note"].toString());
+            jobModel->setResources(resources);
+            if(pairArray.count() > 0)
+                jobModel->setPairA(QUrl::fromLocalFile(pairArray.at(0).toString()));
+            if(pairArray.count() > 1)
+                jobModel->setPairB(QUrl::fromLocalFile(pairArray.at(1).toString()));
+            jobModel->setMeshingScale(meshingObject["scale"].toDouble());
+            jobModel->setDescriberPreset(
+                JobModel::describerPresetId(featureDetectObject["describerPreset"].toString()));
+        }
+    }
 
+    jobModel->autoSaveON();
     return jobModel;
 }
 
@@ -137,7 +102,6 @@ void JobsIO::loadAllJobs(ProjectModel& projectModel)
             JobsIO::load(&projectModel, QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
         if(!job)
             continue;
-        job->autoSaveON();
         validJobs.append(job);
     }
     projectModel.setJobs(validJobs);

@@ -17,14 +17,13 @@ class ProjectModel : public QObject
     Q_PROPERTY(QObject* currentJob READ currentJob WRITE setCurrentJob NOTIFY currentJobChanged)
 
 public:
-    ProjectModel(QObject* parent);
+    ProjectModel(QObject* parent = nullptr);
     ~ProjectModel() = default;
 
 public slots:
     const QString& name() const;
     const QUrl& url() const;
     void setUrl(const QUrl& url);
-    // jobs
     const QList<QObject*>& jobs() const;
     void setJobs(const QList<QObject*>& name);
     QObject* addJob();
@@ -33,7 +32,8 @@ public slots:
     void setCurrentJob(QObject* jobModel);
 
 public slots:
-    bool save();
+    void select();
+    void remove();
 
 signals:
     void nameChanged();

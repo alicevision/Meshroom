@@ -12,7 +12,8 @@ class ApplicationModel : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QList<QObject*> projects READ projects WRITE setProjects NOTIFY projectsChanged)
-    Q_PROPERTY(QObject* currentProject READ currentProject WRITE setCurrentProject NOTIFY currentProjectChanged)
+    Q_PROPERTY(QObject* currentProject READ currentProject WRITE setCurrentProject NOTIFY
+                   currentProjectChanged)
     Q_PROPERTY(QStringList locations READ locations WRITE setLocations NOTIFY locationsChanged)
     Q_PROPERTY(QList<QObject*> logs READ logs WRITE setLogs NOTIFY logsChanged)
 
@@ -21,18 +22,14 @@ public:
     ~ApplicationModel();
 
 public slots:
-    // projects
     const QList<QObject*>& projects() const;
     void setProjects(const QList<QObject*>& projects);
-    QObject* addNewProject();
-    QObject* addExistingProject(const QUrl& url);
+    QObject* addProject(const QUrl& url);
     void removeProject(QObject* projectModel);
     QObject* currentProject();
     void setCurrentProject(QObject* projectModel);
-    // project locations
     const QStringList& locations() const;
     void setLocations(const QStringList& locations);
-    // logs
     const QList<QObject*>& logs() const;
     void addLog(QObject* log);
     void setLogs(const QList<QObject*>& logs);

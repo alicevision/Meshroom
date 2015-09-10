@@ -14,7 +14,7 @@ TitledPageLayout {
     id: root
 
     background: DefaultBackground {}
-    header: HomeHeader {}
+    header: Item {}
     body: Item {
         anchors.fill: parent
         anchors.leftMargin: 30
@@ -30,47 +30,61 @@ TitledPageLayout {
                 textSize: _style.text.size.xlarge
                 color: _style.text.color.darker
             }
+            MouseArea {
+                Layout.preferredWidth: parent.width
+                Layout.preferredHeight: 30
+                onClicked: fileDialog.open()
+                RowLayout {
+                    anchors.fill: parent
+                    CustomToolButton {
+                        iconSource: "qrc:///images/project.svg"
+                        iconSize: _style.icon.size.small
+                        enabled: false
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                        CustomWrappedText {
+                            anchors.centerIn: parent
+                            width: parent.width
+                            text: "New..."
+                        }
+                    }
+                }
+            }
+            CustomText {
+                text: "Recents projects"
+                textSize: _style.text.size.normal
+                color: _style.text.color.darker
+            }
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.min(10, locationView.count+1) * 30
-                color: _style.window.color.normal
+                Layout.preferredHeight: 100
+                color: _style.window.color.xdarker
                 ListView {
-                    id: locationView
                     anchors.fill: parent
-                    anchors.margins: 2
+                    anchors.margins: 4
+                    spacing: 2
+                    clip: true
+                    model: 0
+                    delegate: UrlDelegate {}
+                }
+            }
+            CustomText {
+                text: "Featured projects"
+                textSize: _style.text.size.normal
+                color: _style.text.color.darker
+            }
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 100
+                color: _style.window.color.xdarker
+                ListView {
+                    anchors.fill: parent
+                    anchors.margins: 4
                     spacing: 2
                     clip: true
                     model: _applicationModel.locations
-                    delegate: Rectangle {
-                        color: _style.window.color.xdarker
-                        width: parent.width
-                        height: 30
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                if(index == 0)
-                                    fileDialog.open();
-                                else
-                                    addProject(modelData);
-                            }
-                            RowLayout {
-                                anchors.fill: parent
-                                CustomToolButton {
-                                    iconSource: (index==0)?"qrc:///images/arrow_right_outline.svg":"qrc:///images/project.svg"
-                                    iconSize: _style.icon.size.small
-                                    enabled: false
-                                }
-                                Item {
-                                    Layout.fillWidth: true
-                                    CustomWrappedText {
-                                        anchors.centerIn: parent
-                                        width: parent.width
-                                        text: modelData
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    delegate: UrlDelegate {}
                 }
             }
             Item { // spacer
@@ -87,7 +101,7 @@ TitledPageLayout {
         selectFolder: true
         selectMultiple: false
         sidebarVisible: false
-        onAccepted: addProject(fileDialog.fileUrl)
+        onAccepted: _applicationModel.addProject(fileDialog.fileUrl)
     }
 
 }

@@ -34,11 +34,11 @@ TitledPageLayout {
         Rectangle {
             id: settings
             color: _style.window.color.darker
-            height: 200
+            height: 180
             Behavior on height { NumberAnimation {}}
             Connections { // use this to preserve connection after manual resize
                 target: root
-                onSettingsExpandedChanged: settings.height = root.settingsExpanded?200:0
+                onSettingsExpandedChanged: settings.height = root.settingsExpanded?180:0
             }
             JobSettingsForm {
                 anchors.fill: parent

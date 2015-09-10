@@ -30,14 +30,7 @@ void SettingsIO::loadRecentProjects(ApplicationModel& applicationModel)
     while(it != recents.end())
     {
         QUrl url(it->toUrl());
-        if(!applicationModel.addExistingProject(url))
-        {
-            // invalid project, remove from settings
-            QSettings settings;
-            QVariantList recents = settings.value("project/recent").toList();
-            recents.removeAll(url);
-            settings.setValue("project/recent", recents);
-        }
+        applicationModel.addProject(url);
         ++it;
     }
 }

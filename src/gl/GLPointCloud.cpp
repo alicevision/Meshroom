@@ -9,7 +9,8 @@ GLPointCloud::GLPointCloud()
     : GLDrawable(*_colorUniform)
     , _pointPositions(QOpenGLBuffer::VertexBuffer)
     , _npoints(0)
-{}
+{
+}
 
 void GLPointCloud::setRawData(const void* pointsBuffer, size_t npoints)
 {

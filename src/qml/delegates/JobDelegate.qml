@@ -19,11 +19,12 @@ Item {
         anchors.fill: parent
         anchors.margins: 2
         hoverEnabled: true
-        onClicked: selectJobPage(projectModel, jobModel)
+        onClicked: jobModel.select()
         Rectangle { // background
             anchors.fill: parent
-            color: mouseContainer.containsMouse ? _style.window.color.xdarker : _style.window.color.darker
-            Behavior on color { ColorAnimation {} }
+            color: _style.window.color.xdarker
+            opacity: (mouseContainer.containsMouse || modelData==_applicationModel.currentProject.currentJob)? 0.5:0
+            Behavior on opacity { NumberAnimation {} }
         }
         Rectangle { // status bar
             anchors.left: parent.left

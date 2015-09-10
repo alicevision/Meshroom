@@ -1,6 +1,7 @@
 #include "JobModel.hpp"
 #include "CameraModel.hpp"
 #include "ResourceModel.hpp"
+#include "ProjectModel.hpp"
 #include "io/JobsIO.hpp"
 #include <QDir>
 #include <QJsonObject>
@@ -27,8 +28,6 @@ void JobModel::setUrl(const QUrl& url)
     if(url == _url)
         return;
     _url = url;
-    if(_url.isValid())
-        refresh();
     emit urlChanged();
 }
 
@@ -298,6 +297,22 @@ void JobModel::stop()
 void JobModel::refresh()
 {
     JobsIO::status(*this, _process);
+}
+
+void JobModel::select()
+{
+    ProjectModel* project = qobject_cast<ProjectModel*>(parent());
+    if(!project)
+        return;
+    project->setCurrentJob(this);
+}
+
+void JobModel::remove()
+{
+    ProjectModel* project = qobject_cast<ProjectModel*>(parent());
+    if(!project)
+        return;
+    project->removeJob(this);
 }
 
 void JobModel::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)

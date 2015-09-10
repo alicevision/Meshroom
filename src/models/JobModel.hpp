@@ -28,7 +28,7 @@ class JobModel : public QObject
     Q_PROPERTY(int status READ status NOTIFY statusChanged)
 
 public:
-    JobModel(QObject* parent);
+    JobModel(QObject* parent = nullptr);
     ~JobModel() = default;
 
 public slots:
@@ -68,6 +68,10 @@ public slots:
     void start();
     void stop();
     void refresh();
+    void select();
+    void remove();
+
+public slots:
     void readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus);
 
 public:

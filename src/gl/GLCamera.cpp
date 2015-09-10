@@ -8,7 +8,7 @@ GLCamera::GLCamera()
     : GLDrawable(*_colorArray)
     , _positionBuffer(QOpenGLBuffer::VertexBuffer)
 {
-    _projectionMatrix.perspective(60.0f, 3.0/2.0, 0.1f, 100.0f);
+    _projectionMatrix.perspective(60.0f, 3.0 / 2.0, 0.1f, 100.0f);
 
     _vao.create();
     _vao.bind();
@@ -45,6 +45,5 @@ void GLCamera::draw()
     _vao.release();
     _program.release();
 }
-
 
 } // namespace

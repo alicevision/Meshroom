@@ -22,7 +22,7 @@ private:
     QOpenGLVertexArrayObject _vao;
     QOpenGLBuffer _positionBuffer;
     QOpenGLBuffer _colorBuffer;
-    //QVector3D _position;
+    // QVector3D _position;
 };
 
 } // namespace

@@ -6,29 +6,30 @@ namespace mockup
 
 GLSLPlainColorShader* GLDrawable::_colorUniform(nullptr);
 GLSLColoredShader* GLDrawable::_colorArray(nullptr);
+GLSLBackgroundShader* GLDrawable::_background(nullptr);
 
 QMatrix4x4 GLDrawable::_cameraMatrix;
 
-void GLDrawable::setShaders(GLSLPlainColorShader *colorUniform, GLSLColoredShader *colorArray)
+void GLDrawable::setShaders(GLSLPlainColorShader* colorUniform
+        , GLSLColoredShader* colorArray
+        , GLSLBackgroundShader* background)
 {
     _colorUniform = colorUniform;
     _colorArray = colorArray;
+    _background = background;
     _cameraMatrix.setToIdentity();
 }
 
 void GLDrawable::deleteShaders()
 {
-    if(_colorUniform)
-    {
-        delete _colorUniform;
-        _colorUniform = nullptr;
-    }
+    delete _colorUniform;
+    _colorUniform = nullptr;
 
-    if(_colorArray)
-    {
-        delete _colorArray;
-        _colorArray = nullptr;
-    }
+    delete _colorArray;
+    _colorArray = nullptr;
+
+    delete _background;
+    _background = nullptr;
 }
 
 void GLDrawable::uploadShaderMatrix()

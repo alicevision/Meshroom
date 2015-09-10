@@ -2,7 +2,6 @@
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
-#include <QOpenGLShaderProgram>
 #include "GLDrawable.hpp"
 
 namespace mockup

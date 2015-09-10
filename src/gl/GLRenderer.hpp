@@ -8,8 +8,9 @@
 namespace mockup
 {
 
-class GLView; // forward declaration
+class GLView; 
 class GLPointCloud;
+class GLSLBackgroundShader;
 
 class GLRenderer : public QObject
 {
@@ -35,6 +36,7 @@ private:
     QMatrix4x4 _cameraMat;
     QSize _viewportSize;
     GLScene _scene; // Simple scene: a list of drawable objects
+    GLSLBackgroundShader* _background; // Keep background drawing outside the scene
 };
 
 } // namespace

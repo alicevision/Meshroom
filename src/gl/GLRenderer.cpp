@@ -11,10 +11,13 @@ namespace mockup
 {
 
 GLRenderer::GLRenderer()
+: _background(nullptr)
 {
     // The shaders have to be created in a valid opengl context
+    _background = new GLSLBackgroundShader();
     GLDrawable::setShaders(new GLSLPlainColorShader(QVector4D(0.8, 0.8, 0.8, 1.0)),
-                           new GLSLColoredShader());
+                           new GLSLColoredShader(),
+                           _background); // NOTE : the background shader is handled like the other shaders
     _scene.append(new GLGizmo());
     _scene.append(new GLGrid());
     updateWorldMatrix();
@@ -26,6 +29,8 @@ GLRenderer::~GLRenderer()
         delete obj;
 
     GLDrawable::deleteShaders();
+    // Background is deleted by GLDrawable::deleteShaders
+    _background = nullptr;
 }
 
 void GLRenderer::setViewportSize(const QSize& size)
@@ -47,6 +52,7 @@ void GLRenderer::setCameraMatrix(const QMatrix4x4& cameraMat)
 void GLRenderer::draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    _background->draw();
     for(auto obj : _scene)
     {
         // Sets position and orientation

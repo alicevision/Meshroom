@@ -1,6 +1,5 @@
 #include "GLView.hpp"
 #include "GLRenderer.hpp"
-#include "models/CameraModel.hpp"
 #include <QtQuick/QQuickWindow>
 #include <QtMath>
 #include <iostream>
@@ -30,11 +29,6 @@ GLView::~GLView()
         delete _renderer;
 }
 
-const QColor& GLView::color() const
-{
-    return _color;
-}
-
 void GLView::setColor(const QColor& color)
 {
     if(color == _color)
@@ -42,11 +36,6 @@ void GLView::setColor(const QColor& color)
     _color = color;
     emit colorChanged();
     refresh();
-}
-
-QObject* GLView::camera() const
-{
-    return _camera;
 }
 
 // NOTE : is this the same as setCurrentCamera

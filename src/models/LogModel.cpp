@@ -10,11 +10,6 @@ LogModel::LogModel(const QtMsgType& type, const QString& message, QObject* paren
     setMessage(message);
 }
 
-const int& LogModel::type() const
-{
-    return _type;
-}
-
 void LogModel::setType(const int& type)
 {
     if(type != _type)
@@ -22,11 +17,6 @@ void LogModel::setType(const int& type)
         _type = type;
         emit typeChanged();
     }
-}
-
-const QString& LogModel::message() const
-{
-    return _message;
 }
 
 void LogModel::setMessage(const QString& message)

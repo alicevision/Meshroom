@@ -19,13 +19,13 @@ public:
     ResourceModel(const QUrl& url, QObject* parent);
 
 public slots:
-    QUrl url() const;
+    const QUrl& url() const { return _url; }
+    const QString& name() const { return _name; }
+    bool isPairImageA() const { return _isPairImageA; }
+    bool isPairImageB() const { return _isPairImageB; }
     void setUrl(const QUrl& url);
-    const QString& name() const;
     void setName(const QString& name);
-    bool isPairImageA() const;
     void setIsPairImageA(const bool b);
-    bool isPairImageB() const;
     void setIsPairImageB(const bool b);
 
 public:

@@ -18,7 +18,6 @@ class JobModel : public QObject
     Q_PROPERTY(QString note READ note WRITE setNote NOTIFY noteChanged)
     Q_PROPERTY(QList<QObject*> resources READ resources WRITE setResources NOTIFY resourcesChanged)
     Q_PROPERTY(QList<QObject*> cameras READ cameras NOTIFY camerasChanged)
-    Q_PROPERTY(QList<QString> steps READ steps WRITE setSteps NOTIFY stepsChanged)
     Q_PROPERTY(QUrl pairA READ pairA WRITE setPairA NOTIFY pairAChanged)
     Q_PROPERTY(QUrl pairB READ pairB WRITE setPairB NOTIFY pairBChanged)
     Q_PROPERTY(int describerPreset READ describerPreset WRITE setDescriberPreset NOTIFY
@@ -32,38 +31,37 @@ public:
     ~JobModel() = default;
 
 public slots:
-    const QUrl& url() const;
+    const QUrl& url() const { return _url; }
+    const QString& date() const { return _date; }
+    const QString& user() const { return _user; }
+    const QString& note() const { return _note; }
+    const QList<QObject*>& cameras() const { return _cameras; }
+    const QList<QObject*>& resources() const { return _resources; }
+    const QUrl& pairA() const { return _pairA; }
+    const QUrl& pairB() const { return _pairB; }
+    const int& describerPreset() const { return _describerPreset; }
+    const int& meshingScale() const { return _meshingScale; }
+    const float& completion() const { return _completion; }
+    const int& status() const { return _status; }
     void setUrl(const QUrl& url);
-    const QString& date() const;
     void setDate(const QString& date);
-    const QString& user() const;
     void setUser(const QString& user);
-    const QString& note() const;
     void setNote(const QString& note);
-    const QList<QObject*>& cameras() const;
-    const QList<QObject*>& resources() const;
     void setResources(const QList<QObject*>& resources);
+    void setPairA(const QUrl& url);
+    void setPairB(const QUrl& url);
+    void setDescriberPreset(const int& threshold);
+    void setMeshingScale(const int& scale);
+    void setCompletion(const float& completion);
+    void setStatus(const int& status);
     void addResources(const QList<QUrl>& urls);
     void removeResources(const QList<QUrl>& urls);
-    const QList<QString>& steps() const;
-    void setSteps(const QList<QString>& steps);
-    const QUrl& pairA() const;
-    void setPairA(const QUrl& url);
-    const QUrl& pairB() const;
-    void setPairB(const QUrl& url);
-    const int& describerPreset() const;
-    void setDescriberPreset(const int& threshold);
-    const int& meshingScale() const;
-    void setMeshingScale(const int& scale);
-    const float& completion() const;
-    void setCompletion(const float& completion);
-    const int& status() const;
-    void setStatus(const int& status);
 
 public slots:
-    QUrl buildUrl() const;
-    QUrl matchUrl() const;
-    void autoSaveON();
+    QUrl buildUrl() const { return QUrl::fromLocalFile(_url.toLocalFile() + "/build"); }
+    QUrl matchUrl() const { return QUrl::fromLocalFile(_url.toLocalFile() + "/build/matches"); }
+
+public slots:
     bool save();
     void start();
     void stop();
@@ -72,6 +70,7 @@ public slots:
     void remove();
 
 public slots:
+    void autoSaveON();
     void readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus);
 
 public:
@@ -88,7 +87,6 @@ signals:
     void noteChanged();
     void camerasChanged();
     void resourcesChanged();
-    void stepsChanged();
     void pairAChanged();
     void pairBChanged();
     void describerPresetChanged();
@@ -103,7 +101,6 @@ private:
     QString _note;
     QList<QObject*> _cameras;
     QList<QObject*> _resources;
-    QList<QString> _steps;
     QUrl _pairA;
     QUrl _pairB;
     int _describerPreset = 1; // HIGH

@@ -15,16 +15,6 @@ ProjectModel::ProjectModel(QObject* parent)
 {
 }
 
-const QString& ProjectModel::name() const
-{
-    return _name;
-}
-
-const QUrl& ProjectModel::url() const
-{
-    return _url;
-}
-
 void ProjectModel::setUrl(const QUrl& url)
 {
     if((_url == url) || url.isEmpty())
@@ -41,11 +31,6 @@ void ProjectModel::setUrl(const QUrl& url)
     emit nameChanged();
 }
 
-const QList<QObject*>& ProjectModel::jobs() const
-{
-    return _jobs;
-}
-
 void ProjectModel::setJobs(const QList<QObject*>& jobs)
 {
     if(jobs == _jobs)
@@ -54,17 +39,16 @@ void ProjectModel::setJobs(const QList<QObject*>& jobs)
     emit jobsChanged();
 }
 
-QObject* ProjectModel::addJob()
+void ProjectModel::addJob()
 {
     QDateTime jobtime = QDateTime::currentDateTime();
     QString dirname = jobtime.toString("yyyyMMdd_HHmmss");
     QUrl url = QUrl::fromLocalFile(_url.toLocalFile() + "/reconstructions/" + dirname);
     JobModel* jobModel = JobsIO::load(this, url);
     if(!jobModel)
-        return nullptr;
+        return;
     _jobs.append(jobModel);
     emit jobsChanged();
-    return jobModel;
 }
 
 void ProjectModel::removeJob(QObject* model)
@@ -81,11 +65,6 @@ void ProjectModel::removeJob(QObject* model)
     setCurrentJob((id < _jobs.count()) ? _jobs.at(id) : _jobs.last());
     emit jobsChanged();
     delete jobModel;
-}
-
-QObject* ProjectModel::currentJob()
-{
-    return _currentJob;
 }
 
 void ProjectModel::setCurrentJob(QObject* jobModel)

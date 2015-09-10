@@ -21,15 +21,15 @@ public:
     ~ProjectModel() = default;
 
 public slots:
-    const QString& name() const;
-    const QUrl& url() const;
+    const QString& name() const { return _name; }
+    const QUrl& url() const { return _url; }
+    const QList<QObject*>& jobs() const { return _jobs; }
+    QObject* currentJob() { return _currentJob; }
     void setUrl(const QUrl& url);
-    const QList<QObject*>& jobs() const;
     void setJobs(const QList<QObject*>& name);
-    QObject* addJob();
-    void removeJob(QObject* model);
-    QObject* currentJob();
     void setCurrentJob(QObject* jobModel);
+    void addJob();
+    void removeJob(QObject* model);
 
 public slots:
     void select();

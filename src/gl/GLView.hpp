@@ -2,13 +2,13 @@
 
 #include <QtQuick/QQuickItem>
 #include <QMatrix4x4>
+#include "models/CameraModel.hpp"
 
 namespace mockup
 {
 
 // forward declarations
 class GLRenderer;
-class CameraModel;
 
 class GLView : public QQuickItem
 {
@@ -21,9 +21,9 @@ public:
     ~GLView();
 
 public slots:
-    const QColor& color() const;
+    const QColor& color() const { return _color; }
+    QObject* camera() const { return _camera; }
     void setColor(const QColor& color);
-    QObject* camera() const;
     void setCamera(QObject* camera);
     void addAlembicScene(const QString& filename);
 
@@ -43,6 +43,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent*);
     void wheelEvent(QWheelEvent* event);
 
+protected:
     // Function to manipulate cameras.
     // might move in a different class, eg CameraManipulator
     void trackBallRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, float dx, float dy);
@@ -57,13 +58,11 @@ private:
     QColor _color;
     CameraModel* _camera = nullptr;
     QString _alembicSceneFile;
-
-    /// FIXME : rename variables to something more meaningful
+    // FIXME : rename variables to something more meaningful
     // Ideally the following variables should go in a manipulator of some sort
-    QPoint _mousePos;      /// Position of the mousePressed event
-    QMatrix4x4 _camMatTmp; /// Position of the camera when the mouse is pressed
+    QPoint _mousePos;      // Position of the mousePressed event
+    QMatrix4x4 _camMatTmp; // Position of the camera when the mouse is pressed
     QVector3D _lookAtTmp;
-
     enum CameraMode
     {
         Idle,

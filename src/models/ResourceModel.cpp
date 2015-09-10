@@ -11,11 +11,6 @@ ResourceModel::ResourceModel(const QUrl& url, QObject* parent)
     setUrl(url);
 }
 
-QUrl ResourceModel::url() const
-{
-    return _url;
-}
-
 void ResourceModel::setUrl(const QUrl& url)
 {
     if(url != _url)
@@ -29,11 +24,6 @@ void ResourceModel::setUrl(const QUrl& url)
     }
 }
 
-const QString& ResourceModel::name() const
-{
-    return _name;
-}
-
 void ResourceModel::setName(const QString& name)
 {
     if(name != _name)
@@ -43,11 +33,6 @@ void ResourceModel::setName(const QString& name)
     }
 }
 
-bool ResourceModel::isPairImageA() const
-{
-    return _isPairImageA;
-}
-
 void ResourceModel::setIsPairImageA(const bool b)
 {
     if(b != _isPairImageA)
@@ -55,11 +40,6 @@ void ResourceModel::setIsPairImageA(const bool b)
         _isPairImageA = b;
         emit isPairImageAChanged();
     }
-}
-
-bool ResourceModel::isPairImageB() const
-{
-    return _isPairImageB;
 }
 
 void ResourceModel::setIsPairImageB(const bool b)

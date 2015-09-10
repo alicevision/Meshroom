@@ -14,11 +14,6 @@
 namespace mockup
 {
 
-JobModel* JobsIO::create(QObject* parent)
-{
-    return new JobModel(parent);
-}
-
 JobModel* JobsIO::load(QObject* parent, const QUrl& url)
 {
     if(!url.isValid())
@@ -28,7 +23,7 @@ JobModel* JobsIO::load(QObject* parent, const QUrl& url)
     }
 
     // create a new JobModel and set its URL attribute
-    JobModel* jobModel = JobsIO::create(parent);
+    JobModel* jobModel = new JobModel(parent);
     jobModel->setUrl(url);
     // TODO: set date
 
@@ -48,14 +43,15 @@ JobModel* JobsIO::load(QObject* parent, const QUrl& url)
         {
             qCritical("Loading job : malformed descriptor file");
         }
-        else {
+        else
+        {
             // JSON: resources
             QJsonObject json = jsondoc.object();
             QJsonArray resourceArray = json["resources"].toArray();
             QObjectList resources;
             for(int i = 0; i < resourceArray.count(); ++i)
-                resources.append(
-                    new ResourceModel(QUrl::fromLocalFile(resourceArray.at(i).toString()), jobModel));
+                resources.append(new ResourceModel(
+                    QUrl::fromLocalFile(resourceArray.at(i).toString()), jobModel));
 
             // JSON: steps
             QJsonObject stepsObject = json["steps"].toObject();

@@ -4,14 +4,9 @@
 namespace mockup
 {
 
-ProjectModel* ProjectsIO::create(QObject* parent)
-{
-    return new ProjectModel(parent);
-}
-
 ProjectModel* ProjectsIO::load(QObject* parent, const QUrl& url)
 {
-    ProjectModel* projectModel = ProjectsIO::create(parent);
+    ProjectModel* projectModel = new ProjectModel(parent);
     projectModel->setUrl(url);
     return projectModel;
 }

@@ -16,9 +16,9 @@ public:
     LogModel(const QtMsgType& type, const QString& message, QObject* parent);
 
 public slots:
-    const int& type() const;
+    const int& type() const { return _type; }
+    const QString& message() const { return _message; }
     void setType(const int& type);
-    const QString& message() const;
     void setMessage(const QString& message);
 
 signals:

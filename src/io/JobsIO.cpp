@@ -151,18 +151,6 @@ bool JobsIO::save(JobModel& jobModel)
         return false;
     }
 
-    if(jobModel.cameras().count() < 2)
-    {
-        qCritical("Saving job: insufficient number of sources");
-        return false;
-    }
-
-    if(!jobModel.pairA().isValid() || !jobModel.pairB().isValid())
-    {
-        qCritical("Saving job: invalid initial pair");
-        return false;
-    }
-
     // create filesystem structure
     QDir dir;
     if(!dir.mkpath(jobModel.url().toLocalFile()))
@@ -247,6 +235,18 @@ bool JobsIO::save(JobModel& jobModel)
 
 void JobsIO::start(JobModel& jobModel, QProcess& process)
 {
+    if(jobModel.cameras().count() < 2)
+    {
+        qCritical("Starting job: insufficient number of sources");
+        return;
+    }
+
+    if(!jobModel.pairA().isValid() || !jobModel.pairB().isValid())
+    {
+        qCritical("Starting job: invalid initial pair");
+        return;
+    }
+
     // set program path
     QString startCommand = std::getenv("MOCKUP_START_COMMAND");
     if(startCommand.isEmpty())

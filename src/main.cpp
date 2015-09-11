@@ -19,7 +19,6 @@ int main(int argc, char* argv[])
     qRegisterMetaType<QtMsgType>("QtMsgType");
     qmlRegisterType<Shortcut>("Popart", 0, 1, "Shortcut");
     qmlRegisterType<GLView>("Popart", 0, 1, "GLView");
-    ;
 
     // set opengl profile
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
@@ -30,8 +29,11 @@ int main(int argc, char* argv[])
     // start the main application
     QQmlApplicationEngine engine;
     ApplicationModel application(engine);
+
+    #ifndef NDEBUG
     InstantCoding instantCoding(engine);
     instantCoding.watch("./src/qml");
+    #endif
 
     return qapp.exec();
 }

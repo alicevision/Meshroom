@@ -14,7 +14,7 @@ TitledPageLayout {
     id : root
     property variant projectModel: null
     property variant jobModel: null
-    property bool settingsExpanded: true
+    property bool settingsExpanded: false
 
     header: JobHeader {
         projectModel: root.projectModel
@@ -34,7 +34,7 @@ TitledPageLayout {
         Rectangle {
             id: settings
             color: _style.window.color.darker
-            height: 180
+            height: 0
             Behavior on height { NumberAnimation {}}
             Connections { // use this to preserve connection after manual resize
                 target: root

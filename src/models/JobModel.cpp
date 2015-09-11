@@ -63,16 +63,30 @@ void JobModel::setPairA(const QUrl& url)
 {
     if(url == _pairA)
         return;
+    // in case we are trying to set the same image as pairB
     if(url.isValid() && url == _pairB)
     {
         qCritical("Set initial pair: please select 2 distinct images");
         return;
     }
     _pairA = url;
+    // in case the url isn't valid, try to find a good candidate
+    if(!_pairA.isValid())
+    {
+        foreach(QObject* r, _resources)
+        {
+            QUrl resourceUrl(((ResourceModel*)r)->url());
+            if(resourceUrl.isValid() && resourceUrl != _pairB)
+            {
+                _pairA = resourceUrl;
+                break;
+            }
+        }
+    }
     emit pairAChanged();
-    // try to add this resource in case its a new one
-    addResources({url});
-    // update resourceModels
+    // in case this URL corresponds to a new resource, add it
+    addResources({_pairA});
+    // update resourceModels state
     foreach(QObject* r, _resources)
     {
         ResourceModel* model = qobject_cast<ResourceModel*>(r);
@@ -86,16 +100,30 @@ void JobModel::setPairB(const QUrl& url)
 {
     if(url == _pairB)
         return;
+    // in case we are trying to set the same image as pairA
     if(url.isValid() && url == _pairA)
     {
         qCritical("Set initial pair: please select 2 distinct images");
         return;
     }
     _pairB = url;
+    // in case the url isn't valid, try to find a good candidate
+    if(!_pairB.isValid())
+    {
+        foreach(QObject* r, _resources)
+        {
+            QUrl resourceUrl(((ResourceModel*)r)->url());
+            if(resourceUrl.isValid() && resourceUrl != _pairA)
+            {
+                _pairB = resourceUrl;
+                break;
+            }
+        }
+    }
     emit pairBChanged();
-    // try to add this resource in case its a new one
-    addResources({url});
-    // update resourceModels
+    // in case this URL corresponds to a new resource, add it
+    addResources({_pairB});
+    // update resourceModels state
     foreach(QObject* r, _resources)
     {
         ResourceModel* model = qobject_cast<ResourceModel*>(r);

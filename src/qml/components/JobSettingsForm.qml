@@ -46,7 +46,7 @@ Item {
             ResourceDropArea {
                 Layout.preferredWidth: 150
                 Layout.preferredHeight: Layout.preferredWidth*2/3
-                title: "A"
+                title: "1"
                 enabled: root.enabled
                 onFilesDropped: root.jobModel.setPairA(files[0])
                 Rectangle {
@@ -70,7 +70,7 @@ Item {
             ResourceDropArea {
                 Layout.preferredWidth: 150
                 Layout.preferredHeight: Layout.preferredWidth*2/3
-                title: "B"
+                title: "2"
                 enabled: root.enabled
                 onFilesDropped: root.jobModel.setPairB(files[0])
                 Rectangle {

@@ -50,7 +50,7 @@ Item {
             Drag.hotSpot.y: tile.height/2
             states: State {
                 when: mouseArea.drag.active
-                ParentChange { target: tile; parent: _mainLoader }
+                ParentChange { target: tile; parent: _mainWindow.contentItem }
                 AnchorChanges { target: tile; anchors.verticalCenter: undefined; anchors.horizontalCenter: undefined }
             }
         }
@@ -89,7 +89,7 @@ Item {
                 }
                 CustomText {
                     anchors.centerIn: parent
-                    text: modelData.isPairImageA ? "A" : "B"
+                    text: modelData.isPairImageA ? "1" : "2"
                     textSize: _style.text.size.xlarge
                     color: "#5BB1F7"
                 }

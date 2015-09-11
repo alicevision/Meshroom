@@ -30,10 +30,10 @@ int main(int argc, char* argv[])
     QQmlApplicationEngine engine;
     ApplicationModel application(engine);
 
-    #ifndef NDEBUG
+#ifndef NDEBUG
     InstantCoding instantCoding(engine);
     instantCoding.watch("./src/qml");
-    #endif
+#endif
 
     return qapp.exec();
 }

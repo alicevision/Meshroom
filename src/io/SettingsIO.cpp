@@ -48,7 +48,7 @@ void SettingsIO::saveRecentProjects(ApplicationModel& applicationModel)
     {
         ProjectModel* project = dynamic_cast<ProjectModel*>(*it);
         if(project)
-            recents.push_front(project->url());
+            recents.append(project->url());
         ++it;
     }
     settings.setValue("project/recent", recents);

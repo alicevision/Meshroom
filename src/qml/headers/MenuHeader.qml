@@ -21,17 +21,17 @@ Rectangle {
             onTriggered: fileDialog.open()
         }
         MenuSeparator {}
-        Menu {
-            id: recentsMenu
-            title: "Recents"
-            enabled: false
-        }
+        // Menu {
+        //     id: recentsMenu
+        //     title: "Recents"
+        //     enabled: false
+        // }
         Menu {
             id: featuredMenu
             title: "Featured"
-            enabled: _applicationModel.locations.length > 0
+            enabled: _applicationModel.featuredProjects.length > 0
             Instantiator {
-                model: _applicationModel.locations
+                model: _applicationModel.featuredProjects
                 MenuItem {
                     text: modelData
                     onTriggered: _applicationModel.addProject("file://"+modelData)

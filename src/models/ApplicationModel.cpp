@@ -4,6 +4,7 @@
 #include "io/ProjectsIO.hpp"
 #include "io/SettingsIO.hpp"
 #include <QtQml/QQmlContext>
+#include <QDir>
 #include <iostream>
 
 namespace mockup
@@ -38,16 +39,19 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     // load user settings
     SettingsIO::loadRecentProjects(*this);
 
-    // load default project locations
-    QStringList locations; // = {"New location..."};
+    // retrieve featured project locations
+    QStringList locations;
     QString externalLocationsStr = std::getenv("MOCKUP_PROJECT_LOCATIONS");
     QStringList externalLocations = externalLocationsStr.split(":");
     foreach(const QString& loc, externalLocations)
     {
-        if(QUrl::fromLocalFile(loc).isValid())
+        QDir dir(loc);
+        if(QUrl::fromLocalFile(loc).isValid() && dir.exists())
+        {
             locations.append(loc);
+        }
     }
-    setLocations(locations);
+    setFeaturedProjects(locations);
 
     // expose this object to QML
     if(engine.rootContext())
@@ -71,12 +75,12 @@ void ApplicationModel::setProjects(const QList<QObject*>& projects)
     emit projectsChanged();
 }
 
-void ApplicationModel::setLocations(const QStringList& locations)
+void ApplicationModel::setFeaturedProjects(const QStringList& locations)
 {
-    if(locations == _locations)
+    if(locations == _featuredProjects)
         return;
-    _locations = locations;
-    emit locationsChanged();
+    _featuredProjects = locations;
+    emit featuredProjectsChanged();
 }
 
 void ApplicationModel::setLogs(const QList<QObject*>& logs)

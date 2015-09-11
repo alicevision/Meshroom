@@ -51,24 +51,24 @@ TitledPageLayout {
                     }
                 }
             }
-            CustomText {
-                text: "Recents projects"
-                textSize: _style.text.size.normal
-                color: _style.text.color.darker
-            }
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 100
-                color: _style.window.color.xdarker
-                ListView {
-                    anchors.fill: parent
-                    anchors.margins: 4
-                    spacing: 2
-                    clip: true
-                    model: 0
-                    delegate: UrlDelegate {}
-                }
-            }
+            // CustomText {
+            //     text: "Recents projects"
+            //     textSize: _style.text.size.normal
+            //     color: _style.text.color.darker
+            // }
+            // Rectangle {
+            //     Layout.fillWidth: true
+            //     Layout.preferredHeight: 100
+            //     color: _style.window.color.xdarker
+            //     ListView {
+            //         anchors.fill: parent
+            //         anchors.margins: 4
+            //         spacing: 2
+            //         clip: true
+            //         model: 0
+            //         delegate: UrlDelegate {}
+            //     }
+            // }
             CustomText {
                 text: "Featured projects"
                 textSize: _style.text.size.normal
@@ -76,14 +76,14 @@ TitledPageLayout {
             }
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 100
+                Layout.preferredHeight: 90
                 color: _style.window.color.xdarker
                 ListView {
                     anchors.fill: parent
                     anchors.margins: 4
                     spacing: 2
                     clip: true
-                    model: _applicationModel.locations
+                    model: _applicationModel.featuredProjects
                     delegate: UrlDelegate {}
                 }
             }

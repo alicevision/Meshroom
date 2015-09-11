@@ -12,8 +12,8 @@ class ApplicationModel : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QList<QObject*> projects READ projects WRITE setProjects NOTIFY projectsChanged)
-    Q_PROPERTY(QStringList locations READ locations WRITE setLocations NOTIFY locationsChanged)
     Q_PROPERTY(QList<QObject*> logs READ logs WRITE setLogs NOTIFY logsChanged)
+    Q_PROPERTY(QStringList featuredProjects READ featuredProjects WRITE setFeaturedProjects NOTIFY featuredProjectsChanged)
     Q_PROPERTY(QObject* currentProject READ currentProject WRITE setCurrentProject NOTIFY
                    currentProjectChanged)
 
@@ -23,12 +23,12 @@ public:
 
 public slots:
     const QList<QObject*>& projects() const { return _projects; }
-    const QStringList& locations() const { return _locations; }
     const QList<QObject*>& logs() const { return _logs; }
+    const QStringList& featuredProjects() const { return _featuredProjects; }
     QObject* currentProject() { return _currentProject; }
     void setProjects(const QList<QObject*>& projects);
-    void setLocations(const QStringList& locations);
     void setLogs(const QList<QObject*>& logs);
+    void setFeaturedProjects(const QStringList& locations);
     void setCurrentProject(QObject* projectModel);
     void addProject(const QUrl& url);
     void addLog(QObject* log);
@@ -39,8 +39,8 @@ public slots:
 
 signals:
     void projectsChanged();
-    void locationsChanged();
     void logsChanged();
+    void featuredProjectsChanged();
     void currentProjectChanged();
 
 private:
@@ -48,9 +48,9 @@ private:
 
 private:
     QList<QObject*> _projects;
-    QObject* _currentProject = nullptr;
     QList<QObject*> _logs;
-    QStringList _locations;
+    QObject* _currentProject = nullptr;
+    QStringList _featuredProjects;
 };
 
 } // namespaces

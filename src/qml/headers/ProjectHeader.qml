@@ -11,8 +11,6 @@ Rectangle {
     id : root
     property variant projectModel: null
 
-    signal homeSelected()
-
     implicitHeight: 30
     color: _style.window.color.darker
     border.color: _style.window.color.xdarker
@@ -25,7 +23,7 @@ Rectangle {
         CustomToolButton {
             iconSource: "qrc:///images/home_outline.svg"
             iconSize: _style.icon.size.small
-            onClicked: homeSelected()
+            onClicked: selectHomePage()
             text: "home"
         }
         CustomToolButton {
@@ -41,21 +39,11 @@ Rectangle {
         Item {
             Layout.fillWidth: true
         }
-        // Item { // separator
-        //     Layout.preferredWidth: 20
-        //     Layout.fillHeight: true
-        //     Rectangle {
-        //         anchors.centerIn: parent
-        //         width : 1
-        //         height: parent.height * 0.7
-        //         color: _style.window.color.lighter
-        //     }
-        // }
         CustomToolButton {
-            iconSource: "qrc:///images/trash_outline.svg"
+            iconSource: "qrc:///images/close.svg"
             iconSize: _style.icon.size.small
-            onClicked: removeProject(currentProjectID())
-            text: "hide"
+            onClicked: removeProject(projectModel)
+            text: "close"
         }
     }
 }

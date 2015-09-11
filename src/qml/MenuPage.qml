@@ -17,12 +17,7 @@ TitledPageLayout {
         width: parent.width
         ListView {
             model: _applicationModel.projects
-            delegate: ProjectDelegate {
-                onProjectSelected: showProjectPage(projectID)
-                onProjectRemoved: removeProject(projectID)
-                onJobSelected: showJobPage(projectID, jobID)
-                onJobAdded: addJob(projectID)
-            }
+            delegate: ProjectDelegate {}
             spacing: 0
             interactive: false
         }

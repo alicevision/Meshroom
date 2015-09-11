@@ -17,27 +17,64 @@ TitledPageLayout {
     header: HomeHeader {}
     body: Item {
         anchors.fill: parent
+        anchors.leftMargin: 30
+        anchors.rightMargin: 30
         ColumnLayout {
-            anchors.centerIn: parent
-            spacing: 0
+            anchors.fill: parent
+            spacing: 10
+            Item { // spacer
+                Layout.fillHeight: true
+            }
             CustomText {
                 text: "Open"
                 textSize: _style.text.size.xlarge
                 color: _style.text.color.darker
             }
-            RowLayout {
-                spacing: 10
-                CustomComboBox {
-                    model: ["new location..."]
-                }
-                RowLayout {
-                    CustomToolButton {
-                        iconSize: _style.icon.size.xlarge
-                        iconSource: 'qrc:///images/add_project.svg'
-                        onClicked: fileDialog.open()
-                        opacity: 0.8
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(10, locationView.count+1) * 30
+                color: _style.window.color.normal
+                ListView {
+                    id: locationView
+                    anchors.fill: parent
+                    anchors.margins: 2
+                    spacing: 2
+                    clip: true
+                    model: _applicationModel.locations
+                    delegate: Rectangle {
+                        color: _style.window.color.xdarker
+                        width: parent.width
+                        height: 30
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if(index == 0)
+                                    fileDialog.open();
+                                else
+                                    addProject(modelData);
+                            }
+                            RowLayout {
+                                anchors.fill: parent
+                                CustomToolButton {
+                                    iconSource: (index==0)?"qrc:///images/arrow_right_outline.svg":"qrc:///images/project.svg"
+                                    iconSize: _style.icon.size.small
+                                    enabled: false
+                                }
+                                Item {
+                                    Layout.fillWidth: true
+                                    CustomWrappedText {
+                                        anchors.centerIn: parent
+                                        width: parent.width
+                                        text: modelData
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+            }
+            Item { // spacer
+                Layout.fillHeight: true
             }
         }
     }

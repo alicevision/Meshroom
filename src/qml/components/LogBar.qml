@@ -94,12 +94,17 @@ Item {
                     delegate: Item {
                         width: parent.width
                         height: root.itemHeight
-                        Item {
+                        RowLayout {
                             anchors.fill: parent
-                            anchors.rightMargin: 10
-                            anchors.leftMargin: 10
+                            anchors.leftMargin: 4
+                            anchors.rightMargin: 4
                             CustomText {
-                                anchors.verticalCenter: parent.verticalCenter
+                                text: index
+                                textSize: _style.text.size.small
+                                color: _style.text.color.darker
+                            }
+                            CustomWrappedText {
+                                Layout.fillWidth: true
                                 text: modelData.message
                                 textSize: _style.text.size.small
                                 color: getLogColor(modelData.type)

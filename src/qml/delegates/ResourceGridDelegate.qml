@@ -10,11 +10,10 @@ Item {
     id: root
     property bool selected: false
     property bool highlighted: false
+    property bool enabled: true
 
     signal itemToggled(int index)
     signal itemDeleted(int index)
-    signal initialPairASetted(string url)
-    signal initialPairBSetted(string url)
 
     function toggleSelectedState() {
         root.selected = !root.selected;
@@ -22,27 +21,6 @@ Item {
     function toggleHighlightedState() {
         root.highlighted = !root.highlighted;
     }
-
-    // Menu {
-    //     id: menu
-    //     title: "Edit"
-    //     MenuItem {
-    //         text: "Remove"
-    //         onTriggered: itemDeleted(index)
-    //     }
-    //     MenuSeparator {}
-    //     Menu {
-    //         title: "Set as..."
-    //         MenuItem {
-    //             text: "initial pair A"
-    //             onTriggered: initialPairASetted(modelData.url)
-    //         }
-    //         MenuItem {
-    //             text: "initial pair B"
-    //             onTriggered: initialPairBSetted(modelData.url)
-    //         }
-    //     }
-    // }
 
     width: GridView.view.cellWidth
     height: GridView.view.cellHeight
@@ -101,18 +79,22 @@ Item {
                     maximumLineCount: (mouseArea.containsMouse) ? 4 : 1
                 }
             }
-            // Rectangle {
-            //     anchors.fill: parent
-            //     visible: (modelData.isPairImageA || modelData.isPairImageB)
-            //     color: "#99000000"
-            //     Behavior on height { NumberAnimation {} }
-            //     CustomText {
-            //         anchors.centerIn: parent
-            //         text: modelData.isPairImageA ? "A" : "B"
-            //         textSize: _style.text.size.xlarge
-            //         color: "#5BB1F7"
-            //     }
-            // }
+            Rectangle { // pair indicator
+                anchors.fill: parent
+                visible: (modelData.isPairImageA || modelData.isPairImageB)
+                color: "#99000000"
+                CustomText {
+                    anchors.centerIn: parent
+                    text: modelData.isPairImageA ? "A" : "B"
+                    textSize: _style.text.size.xlarge
+                    color: "#5BB1F7"
+                }
+            }
+            Rectangle { // state indicator (enabled or not)
+                anchors.fill: parent
+                visible: !root.enabled
+                color: "#99000000"
+            }
         }
     }
 }

@@ -9,6 +9,7 @@ import "../components"
 Item {
 
     id: root
+    property variant jobModel: modelData
 
     implicitWidth: 200
     implicitHeight: 60
@@ -18,7 +19,7 @@ Item {
         anchors.fill: parent
         anchors.margins: 2
         hoverEnabled: true
-        onClicked: jobSelected(projectID, index)
+        onClicked: selectJobPage(projectModel, jobModel)
         Rectangle { // background
             anchors.fill: parent
             color: mouseContainer.containsMouse ? _style.window.color.xdarker : _style.window.color.darker
@@ -32,7 +33,7 @@ Item {
             radius: 2
             height: parent.height * 0.8
             color: {
-                switch(modelData.status) {
+                switch(jobModel.status) {
                     case 6: // PAUSED
                     case 4: // ERROR
                     case 5: // CANCELED
@@ -64,7 +65,7 @@ Item {
                 }
                 Image {
                     anchors.verticalCenter: parent.verticalCenter
-                    source: (modelData.cameras.length > 0) ? modelData.cameras[0].url : ""
+                    source: (jobModel.cameras.length > 0) ? jobModel.cameras[0].url : ""
                     width: parent.height
                     height: width*3/4.0
                     asynchronous: true
@@ -72,13 +73,14 @@ Item {
             }
             ColumnLayout {
                 CustomText {
-                    text: modelData.date
+                    text: jobModel.date
                     textSize: _style.text.size.normal
-                    color: isCurrentJob(projectID, index)?_style.text.color.selected:_style.text.color.normal
+                    color: (_applicationModel.currentProject
+                        && _applicationModel.currentProject.currentJob == jobModel)?_style.text.color.selected:_style.text.color.normal
                 }
                 RowLayout {
                     CustomText {
-                        text: modelData.cameras.length+ " images"
+                        text: jobModel.cameras.length+ " images"
                         textSize: _style.text.size.small
                         color: _style.text.color.darker
                     }
@@ -87,7 +89,7 @@ Item {
                     }
                     CustomText {
                         text: {
-                            switch(modelData.status) {
+                            switch(jobModel.status) {
                                 case 6: // PAUSED
                                     return "PAUSED";
                                 case 4: // ERROR
@@ -100,7 +102,7 @@ Item {
                                 case 1: // READY
                                 case 2: // RUNNING
                                 default:
-                                    return Math.round(modelData.completion*100)+"%"
+                                    return Math.round(jobModel.completion*100)+"%"
                             }
                         }
                         textSize: _style.text.size.small

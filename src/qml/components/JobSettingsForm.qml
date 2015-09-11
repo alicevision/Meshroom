@@ -8,19 +8,20 @@ Item {
 
     id : root
     property variant jobModel: null
-    property int labelWidth: 120
+    property bool enabled: (jobModel.status < 0)
+    property int labelWidth: 100
 
     GridLayout {
         anchors.fill: parent
-        anchors.margins: 20
+        anchors.margins: 10
         columns: 2
-        rowSpacing: 10
         CustomText {
             text: "quality"
         }
         CustomComboBox {
             Layout.fillWidth: true
             Layout.preferredHeight: childrenRect.height
+            enabled: root.enabled
             model: ["NORMAL", "HIGH", "ULTRA"]
             currentIndex: (root.jobModel)? root.jobModel.describerPreset : 1
             onCurrentIndexChanged: if(root.jobModel) root.jobModel.describerPreset = currentIndex;
@@ -31,6 +32,7 @@ Item {
         CustomSlider {
             Layout.fillWidth: true
             Layout.preferredHeight: childrenRect.height
+            enabled: root.enabled
             minimumValue: 1
             maximumValue: 10
             stepSize: 1
@@ -42,9 +44,10 @@ Item {
         }
         RowLayout {
             ResourceDropArea {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.preferredWidth: 150
+                Layout.preferredHeight: Layout.preferredWidth*2/3
                 title: "A"
+                enabled: root.enabled
                 onFilesDropped: root.jobModel.setPairA(files[0])
                 Rectangle {
                     anchors.fill: parent
@@ -57,12 +60,18 @@ Item {
                     source: root.jobModel.pairA
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
+                    Rectangle { // state indicator (enabled or not)
+                        anchors.fill: parent
+                        visible: !root.enabled
+                        color: "#99000000"
+                    }
                 }
             }
             ResourceDropArea {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.preferredWidth: 150
+                Layout.preferredHeight: Layout.preferredWidth*2/3
                 title: "B"
+                enabled: root.enabled
                 onFilesDropped: root.jobModel.setPairB(files[0])
                 Rectangle {
                     anchors.fill: parent
@@ -75,7 +84,15 @@ Item {
                     source: root.jobModel.pairB
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
+                    Rectangle { // state indicator (enabled or not)
+                        anchors.fill: parent
+                        visible: !root.enabled
+                        color: "#99000000"
+                    }
                 }
+            }
+            Item { // spacer
+                Layout.fillWidth: true
             }
         }
         Item { // spacer

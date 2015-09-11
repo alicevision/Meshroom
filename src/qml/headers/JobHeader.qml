@@ -12,11 +12,8 @@ Rectangle {
     property variant projectModel: null
     property variant jobModel: null
 
-    signal homeSelected()
-    signal projectSelected(int projectID)
     signal projectSettingsToggled()
     signal projectSettingsOpened()
-    signal jobRemoved(int projectID, int jobID)
 
     implicitHeight: 30
     color: _style.window.color.darker
@@ -30,7 +27,7 @@ Rectangle {
         CustomToolButton {
             iconSource: "qrc:///images/home_outline.svg"
             iconSize: _style.icon.size.small
-            onClicked: homeSelected()
+            onClicked: selectHomePage()
             text: "home"
         }
         CustomToolButton {
@@ -54,7 +51,7 @@ Rectangle {
                     color: _style.text.color.normal
                 }
             }
-            onClicked: projectSelected(currentProjectID())
+            onClicked: selectProjectPage(projectModel)
         }
         CustomToolButton {
             iconSource: "qrc:///images/arrow_right_outline.svg"
@@ -115,8 +112,6 @@ Rectangle {
                         return "qrc:///images/play.svg";
                 }
             }
-
-            //(root.jobModel.status>=0 )? "qrc:///images/pause.svg" : "qrc:///images/play.svg"
             iconSize: _style.icon.size.small
             onClicked: {
                 if(!root.jobModel.save())
@@ -132,28 +127,6 @@ Rectangle {
             iconSize: _style.icon.size.small
             text: "refresh"
             onClicked: root.jobModel.refresh()
-        }
-        Item { // separator
-            Layout.preferredWidth: 20
-            Layout.fillHeight: true
-            Rectangle {
-                anchors.centerIn: parent
-                width : 1
-                height: parent.height * 0.7
-                color: _style.window.color.lighter
-            }
-        }
-        CustomToolButton {
-            iconSource: "qrc:///images/add_job.svg"
-            iconSize: _style.icon.size.small
-            onClicked: root.projectModel.addJob()
-            text: "duplicate"
-        }
-        CustomToolButton {
-            iconSource: "qrc:///images/trash_outline.svg"
-            iconSize: _style.icon.size.small
-            onClicked: jobRemoved(currentProjectID(), currentJobID())
-            text: "hide"
         }
     }
 }

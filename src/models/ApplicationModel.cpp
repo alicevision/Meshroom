@@ -38,6 +38,17 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     // load user settings
     SettingsIO::loadRecentProjects(*this);
 
+    // load default project locations
+    QStringList locations = {"New location..."};
+    QString externalLocationsStr = std::getenv("MOCKUP_PROJECT_LOCATIONS");
+    QStringList externalLocations = externalLocationsStr.split(":");
+    foreach(const QString& loc, externalLocations)
+    {
+        if(QUrl::fromLocalFile(loc).isValid())
+            locations.append(loc);
+    }
+    setLocations(locations);
+
     // expose this object to QML
     if(engine.rootContext())
         engine.rootContext()->setContextProperty("_applicationModel", this);
@@ -65,25 +76,6 @@ void ApplicationModel::setProjects(const QList<QObject*>& projects)
     emit projectsChanged();
 }
 
-const QList<QObject*>& ApplicationModel::logs() const
-{
-    return _logs;
-}
-
-void ApplicationModel::addLog(QObject* log)
-{
-    _logs.append(log);
-    emit logsChanged();
-}
-
-void ApplicationModel::setLogs(const QList<QObject*>& logs)
-{
-    if(logs == _logs)
-        return;
-    _logs = logs;
-    emit logsChanged();
-}
-
 QObject* ApplicationModel::addNewProject()
 {
     ProjectModel* projectModel = ProjectsIO::create(this);
@@ -108,10 +100,60 @@ void ApplicationModel::removeProject(QObject* model)
     ProjectModel* projectModel = qobject_cast<ProjectModel*>(model);
     if(!projectModel)
         return;
+    int id = _projects.indexOf(projectModel);
+    if(id<0)
+        return;
+    _projects.removeAt(id);
+    setCurrentProject((id < _projects.count()) ? _projects.at(id) :
+        (_projects.count()!=0)?_projects.last():nullptr);
+    emit projectsChanged();
     delete projectModel;
-    if(_projects.removeAll(projectModel) > 0)
-        emit projectsChanged();
     SettingsIO::saveRecentProjects(*this);
+}
+
+QObject* ApplicationModel::currentProject()
+{
+    return _currentProject;
+}
+
+void ApplicationModel::setCurrentProject(QObject* projectModel)
+{
+    if(projectModel == _currentProject)
+        return;
+    _currentProject = projectModel;
+    emit currentProjectChanged();
+}
+
+const QStringList& ApplicationModel::locations() const
+{
+    return _locations;
+}
+
+void ApplicationModel::setLocations(const QStringList& locations)
+{
+    if(locations == _locations)
+        return;
+    _locations = locations;
+    emit locationsChanged();
+}
+
+const QList<QObject*>& ApplicationModel::logs() const
+{
+    return _logs;
+}
+
+void ApplicationModel::addLog(QObject* log)
+{
+    _logs.append(log);
+    emit logsChanged();
+}
+
+void ApplicationModel::setLogs(const QList<QObject*>& logs)
+{
+    if(logs == _logs)
+        return;
+    _logs = logs;
+    emit logsChanged();
 }
 
 void ApplicationModel::onEngineLoaded(QObject* object, const QUrl& url)

@@ -265,6 +265,21 @@ QUrl JobModel::matchUrl() const
     return QUrl::fromLocalFile(dir.absoluteFilePath("build/matches"));
 }
 
+void JobModel::autoSaveON()
+{
+    connect(this, SIGNAL(urlChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(dateChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(userChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(noteChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(camerasChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(resourcesChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(stepsChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(pairAChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(pairBChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(describerPresetChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(meshingScaleChanged()), this, SLOT(save()));
+}
+
 bool JobModel::save()
 {
     return JobsIO::save(*this);

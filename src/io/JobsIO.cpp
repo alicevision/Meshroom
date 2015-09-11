@@ -137,6 +137,7 @@ void JobsIO::loadAllJobs(ProjectModel& projectModel)
             JobsIO::load(&projectModel, QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
         if(!job)
             continue;
+        job->autoSaveON();
         validJobs.append(job);
     }
     projectModel.setJobs(validJobs);
@@ -147,18 +148,6 @@ bool JobsIO::save(JobModel& jobModel)
     if(!jobModel.url().isValid())
     {
         qCritical("Saving job: invalid project URL (malformed or empty URL)");
-        return false;
-    }
-
-    if(jobModel.cameras().count() < 2)
-    {
-        qCritical("Saving job: insufficient number of sources");
-        return false;
-    }
-
-    if(!jobModel.pairA().isValid() || !jobModel.pairB().isValid())
-    {
-        qCritical("Saving job: invalid initial pair");
         return false;
     }
 
@@ -246,6 +235,18 @@ bool JobsIO::save(JobModel& jobModel)
 
 void JobsIO::start(JobModel& jobModel, QProcess& process)
 {
+    if(jobModel.cameras().count() < 2)
+    {
+        qCritical("Starting job: insufficient number of sources");
+        return;
+    }
+
+    if(!jobModel.pairA().isValid() || !jobModel.pairB().isValid())
+    {
+        qCritical("Starting job: invalid initial pair");
+        return;
+    }
+
     // set program path
     QString startCommand = std::getenv("MOCKUP_START_COMMAND");
     if(startCommand.isEmpty())

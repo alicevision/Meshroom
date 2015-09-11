@@ -14,19 +14,13 @@ TitledPageLayout {
     id : root
     property variant projectModel: null
     property variant jobModel: null
-    property int labelWidth: 100
-    property int settingsHeight: 0
-
-    onJobModelChanged: jobModel.refresh()
+    property bool settingsExpanded: true
 
     header: JobHeader {
         projectModel: root.projectModel
         jobModel: root.jobModel
-        onHomeSelected: showHomePage()
-        onProjectSelected: showProjectPage(projectID)
-        onProjectSettingsToggled: root.settingsHeight = (root.settingsHeight<=0)?root.height*0.3:0
-        onProjectSettingsOpened: root.settingsHeight = root.height*0.3
-        onJobRemoved: removeJob(projectID, jobID)
+        onProjectSettingsToggled: root.settingsExpanded = !root.settingsExpanded
+        onProjectSettingsOpened: root.settingsExpanded = true
     }
     body: SplitView {
         Layout.fillWidth: true
@@ -40,10 +34,11 @@ TitledPageLayout {
         Rectangle {
             id: settings
             color: _style.window.color.darker
+            height: 200
             Behavior on height { NumberAnimation {}}
-            Connections {
+            Connections { // use this to preserve connection after manual resize
                 target: root
-                onSettingsHeightChanged: settings.height = root.settingsHeight
+                onSettingsExpandedChanged: settings.height = root.settingsExpanded?200:0
             }
             JobSettingsForm {
                 anchors.fill: parent
@@ -70,13 +65,15 @@ TitledPageLayout {
                         function removeResource() {
                             root.jobModel.removeResources(gallery.getSelectionList());
                         }
+                        title: "drop .JPG files"
+                        enabled: root.jobModel.status < 0
                         onFilesDropped: root.jobModel.addResources(files)
                         ResourceGallery {
                             id: gallery
                             anchors.fill: parent
                             anchors.margins: 20
                             jobModel: root.jobModel
-                            selectable: true
+                            enabled: root.jobModel.status < 0
                             Shortcut {
                                 key: "Backspace"
                                 onActivated: removeResource()

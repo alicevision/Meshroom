@@ -8,16 +8,11 @@ import "../components"
 Item {
 
     id: root
-
+    property variant projectModel: modelData
     property int topItemHeight: 60
     property int subItemHeight: 60
-    property bool expanded: (index == 0)
+    property bool expanded: true//(index == 0)
     property int animationDuration: 300
-    property int projectID: index
-    signal projectSelected(int projectID)
-    signal projectRemoved(int projectID)
-    signal jobSelected(int projectID, int jobID)
-    signal jobAdded(int projectID)
 
     width: ListView.view.width
     height: root.topItemHeight + subItemsContainer.height
@@ -42,7 +37,10 @@ Item {
                 id: projectMouseArea
                 anchors.fill: parent
                 hoverEnabled: true
-                onClicked: projectSelected(index)
+                onClicked: {
+                    root.expanded = true;
+                    selectProjectPage(projectModel);
+                }
                 onDoubleClicked: root.expanded = !root.expanded
                 RowLayout {
                     anchors.fill: parent
@@ -50,9 +48,9 @@ Item {
                     anchors.rightMargin: 10
                     spacing: 5
                     CustomText {
-                        text: modelData.name
+                        text: projectModel.name
                         textSize: _style.text.size.large
-                        color: (isCurrentProject(projectID)&&currentJobID()==-1)?_style.text.color.selected:_style.text.color.normal
+                        color: (projectModel==_applicationModel.currentProject)?_style.text.color.selected:_style.text.color.normal
                     }
                     Item { // spacer
                         Layout.fillWidth: true
@@ -64,14 +62,17 @@ Item {
                             iconSource: "qrc:///images/add_job.svg"
                             iconSize: _style.icon.size.small
                             text: "add job"
-                            onClicked: jobAdded(index)
+                            onClicked: {
+                                root.expanded = true;
+                                addJob(projectModel);
+                            }
                         }
-                        CustomToolButton {
-                            iconSource: "qrc:///images/trash_outline.svg"
-                            iconSize: _style.icon.size.small
-                            text: "hide"
-                            onClicked: projectRemoved(index)
-                        }
+                        // CustomToolButton {
+                        //     iconSource: "qrc:///images/trash_outline.svg"
+                        //     iconSize: _style.icon.size.small
+                        //     text: "hide"
+                        //     onClicked: removeProject(projectModel)
+                        // }
                     }
                     CustomToolButton {
                         iconSource: "qrc:///images/arrow_right_outline.svg"
@@ -88,7 +89,7 @@ Item {
         Item { // sub items
             id: subItemsContainer
             width: parent.width
-            height: root.expanded ? (modelData.jobs.length+0.25) * root.subItemHeight : 0
+            height: root.expanded ? (projectModel.jobs.length+0.25) * root.subItemHeight : 0
             clip: true
             Behavior on height {
                 SequentialAnimation {
@@ -99,7 +100,7 @@ Item {
             ListView {
                 id: jobList
                 anchors.fill: parent
-                model: modelData.jobs
+                model: projectModel.jobs
                 delegate: JobDelegate {
                     width: parent.width
                     height: root.subItemHeight

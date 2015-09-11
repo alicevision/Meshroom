@@ -10,7 +10,7 @@ Item {
 
     property variant jobModel: null
     property real thumbnailSize: 120
-    property bool selectable: false
+    property bool enabled: false
 
     function getSelectionList() {
         var selectionList = [];
@@ -37,14 +37,13 @@ Item {
                 cellHeight: root.thumbnailSize
                 model: root.jobModel ? root.jobModel.resources : 0
                 delegate: ResourceGridDelegate {
+                    enabled: root.enabled
                     onItemToggled: {
-                        if(!root.selectable)
+                        if(!root.enabled)
                             return;
                         toggleSelectedState();
                     }
                     onItemDeleted: root.jobModel.removeResources(root.jobModel.resources[index])
-                    onInitialPairASetted: root.jobModel.setPairA(url)
-                    onInitialPairBSetted: root.jobModel.setPairB(url)
                 }
                 clip: true
             }

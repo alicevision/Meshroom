@@ -71,6 +71,7 @@ public slots:
 
 public slots:
     void autoSaveON();
+    void resolveInvalidInitialPair();
     void readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus);
 
 public:

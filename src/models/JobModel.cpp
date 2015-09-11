@@ -55,6 +55,7 @@ void JobModel::setResources(const QList<QObject*>& resources)
     if(resources == _resources)
         return;
     _resources = resources;
+    resolveInvalidInitialPair();
     setCamerasFromResources();
     emit resourcesChanged();
 }
@@ -63,27 +64,11 @@ void JobModel::setPairA(const QUrl& url)
 {
     if(url == _pairA)
         return;
-    // in case we are trying to set the same image as pairB
-    if(url.isValid() && url == _pairB)
-    {
-        qCritical("Set initial pair: please select 2 distinct images");
-        return;
-    }
+    // register pairA
     _pairA = url;
-    // in case the url isn't valid, try to find a good candidate
-    if(!_pairA.isValid())
-    {
-        foreach(QObject* r, _resources)
-        {
-            QUrl resourceUrl(((ResourceModel*)r)->url());
-            if(resourceUrl.isValid() && resourceUrl != _pairB)
-            {
-                _pairA = resourceUrl;
-                break;
-            }
-        }
-    }
     emit pairAChanged();
+    if(url == _pairB)
+        setPairB(QUrl());
     // in case this URL corresponds to a new resource, add it
     addResources({_pairA});
     // update resourceModels state
@@ -100,27 +85,11 @@ void JobModel::setPairB(const QUrl& url)
 {
     if(url == _pairB)
         return;
-    // in case we are trying to set the same image as pairA
-    if(url.isValid() && url == _pairA)
-    {
-        qCritical("Set initial pair: please select 2 distinct images");
-        return;
-    }
+    // register pairB
     _pairB = url;
-    // in case the url isn't valid, try to find a good candidate
-    if(!_pairB.isValid())
-    {
-        foreach(QObject* r, _resources)
-        {
-            QUrl resourceUrl(((ResourceModel*)r)->url());
-            if(resourceUrl.isValid() && resourceUrl != _pairA)
-            {
-                _pairB = resourceUrl;
-                break;
-            }
-        }
-    }
     emit pairBChanged();
+    if(url == _pairA)
+        setPairA(QUrl());
     // in case this URL corresponds to a new resource, add it
     addResources({_pairB});
     // update resourceModels state
@@ -177,12 +146,15 @@ void JobModel::addResources(const QList<QUrl>& urls)
         if(urls.contains(model->url()))
             newUrls.removeAll(model->url());
     }
+    if(newUrls.isEmpty())
+        return;
     // add these new resources
     for(size_t i = 0; i < newUrls.length(); ++i)
     {
         if(ResourceModel::isValidUrl(newUrls[i]))
             _resources.append(new ResourceModel(newUrls[i], this));
     }
+    resolveInvalidInitialPair();
     setCamerasFromResources();
     emit resourcesChanged();
 }
@@ -255,6 +227,34 @@ void JobModel::autoSaveON()
     connect(this, SIGNAL(pairBChanged()), this, SLOT(save()));
     connect(this, SIGNAL(describerPresetChanged()), this, SLOT(save()));
     connect(this, SIGNAL(meshingScaleChanged()), this, SLOT(save()));
+}
+
+void JobModel::resolveInvalidInitialPair()
+{
+    if(!_pairA.isValid())
+    {
+        foreach(QObject* r, _resources)
+        {
+            QUrl resourceUrl(((ResourceModel*)r)->url());
+            if(resourceUrl.isValid() && resourceUrl != _pairB)
+            {
+                setPairA(resourceUrl);
+                break;
+            }
+        }
+    }
+    if(!_pairB.isValid())
+    {
+        foreach(QObject* r, _resources)
+        {
+            QUrl resourceUrl(((ResourceModel*)r)->url());
+            if(resourceUrl.isValid() && resourceUrl != _pairA)
+            {
+                setPairB(resourceUrl);
+                break;
+            }
+        }
+    }
 }
 
 void JobModel::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)

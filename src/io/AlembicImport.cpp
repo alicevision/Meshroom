@@ -23,8 +23,40 @@ void AlembicImport::visitObject(IObject iObj, GLScene &scene, M44d mat)
         IPointsSchema ms = points.getSchema();
         P3fArraySamplePtr positions = ms.getValue().getPositions();
         auto pointCloud = new GLPointCloud();
-        pointCloud->setRawData(positions->get(), positions->size());
+        pointCloud->setRawPositions(positions->get(), positions->size());
+        
+        // Check if we have a color property
+        ICompoundProperty arbProp = ms.getArbGeomParams();
+        if (arbProp) 
+        {
+            std::size_t numProps = arbProp.getNumProperties();
+            for (std::size_t i = 0; i < numProps; ++i)
+            {
+                const PropertyHeader & propHeader = arbProp.getPropertyHeader(i);
+                if (propHeader.isArray())
+                {    
+                    const std::string & propName = propHeader.getName();
+                    Alembic::Abc::IArrayProperty prop(arbProp, propName);
+
+                    Alembic::AbcCoreAbstract::DataType dtype = prop.getDataType();
+                    std::string interp = prop.getMetaData().get("interpretation");
+
+                    if (interp == "rgb")
+                    {
+                        Alembic::Util::uint8_t extent = dtype.getExtent();
+                        std::cout << "Loading " << propName << " " << interp << " " << extent << std::endl;
+
+                        Alembic::AbcCoreAbstract::ArraySamplePtr samp;
+                        prop.get(samp);
+
+                        pointCloud->setRawColors(samp->getData(), samp->size());
+                        break; // set colors only once
+                    }
+                }
+            }
+        }
         scene.append(pointCloud);
+
     }
     else if (IXform::matches(md))
     {

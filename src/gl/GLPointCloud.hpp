@@ -15,11 +15,13 @@ public:
     ~GLPointCloud() = default;
 
     void draw() override;
-    void setRawData(const void* points, size_t npoints);
+    void setRawPositions(const void* points, size_t npoints);
+    void setRawColors(const void* points, size_t npoints);
 
 private:
     QOpenGLVertexArrayObject _vertexArrayObject;
     QOpenGLBuffer _pointPositions;
+    QOpenGLBuffer _pointColors;
     GLint _npoints;
 };
 

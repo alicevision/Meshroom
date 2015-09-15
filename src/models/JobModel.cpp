@@ -187,6 +187,7 @@ bool JobModel::save()
 void JobModel::start()
 {
     JobsIO::start(*this, _process);
+    setStatus(1);
 }
 
 void JobModel::stop()

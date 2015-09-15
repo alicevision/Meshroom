@@ -1,5 +1,6 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.3
+import QtQuick.Dialogs 1.0
 
 import "styles"
 
@@ -12,6 +13,30 @@ ApplicationWindow {
     visible: true
     style: _style.bggl
     title: "mockup"
+
+    menuBar: MenuBar {
+        Menu {
+            title: "File"
+            MenuItem {
+                text: "New..."
+                onTriggered: fileDialog.open()
+            }
+            Menu {
+                id: openMenu
+                title: "Open..."
+                Instantiator {
+                    model: _applicationModel.featuredProjects
+                    MenuItem {
+                        text: modelData
+                        onTriggered: _applicationModel.addProject("file://"+modelData)
+                    }
+                    onObjectAdded: openMenu.insertItem(index, object)
+                    onObjectRemoved: openMenu.removeItem(object)
+                }
+            }
+            // MenuItem { text: "Quit" }
+        }
+    }
 
     // main application style sheet
     DefaultStyle {
@@ -65,5 +90,16 @@ ApplicationWindow {
                 }
             }
         }
+    }
+
+    // file dialog
+    FileDialog {
+        id: fileDialog
+        title: "Please choose a project directory"
+        folder: "/"
+        selectFolder: true
+        selectMultiple: false
+        sidebarVisible: false
+        onAccepted: _applicationModel.addProject(fileDialog.fileUrl)
     }
 }

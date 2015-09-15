@@ -12,7 +12,7 @@ TitledPageLayout {
     id: root
 
     background: DefaultBackground {}
-    header: MenuHeader {}
+    header: Item {}
     body: CustomScrollView {
         width: parent.width
         ListView {

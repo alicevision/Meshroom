@@ -46,7 +46,7 @@ TitledPageLayout {
                         CustomWrappedText {
                             anchors.centerIn: parent
                             width: parent.width
-                            text: "New..."
+                            text: "New location..."
                         }
                     }
                 }

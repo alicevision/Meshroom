@@ -222,7 +222,7 @@ void JobsIO::start(JobModel& jobModel, QProcess& process)
 
     // run
     process.start();
-    if(!process.waitForStarted())
+    if(!process.waitForFinished())
         qCritical("Unable to start job");
     else
         qInfo("Job started");
@@ -243,7 +243,7 @@ void JobsIO::stop(JobModel& jobModel, QProcess& process)
 
     // run
     process.start();
-    if(!process.waitForStarted())
+    if(!process.waitForFinished())
         qCritical("Unable to stop job");
     else
         qInfo("Job stopped");
@@ -266,7 +266,7 @@ void JobsIO::status(JobModel& jobModel, QProcess& process)
     QObject::connect(&process, SIGNAL(finished(int, QProcess::ExitStatus)), &jobModel,
                      SLOT(readProcessOutput(int, QProcess::ExitStatus)));
     process.start();
-    if(!process.waitForStarted())
+    if(!process.waitForFinished())
         qCritical("Unable to refresh job");
 }
 

@@ -44,7 +44,7 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: 15
                     anchors.rightMargin: 10
-                    spacing: 5
+                    spacing: 10
                     CustomText {
                         text: projectModel.name
                         textSize: _style.text.size.large
@@ -71,14 +71,14 @@ Item {
                             text: "close"
                             onClicked: projectModel.remove()
                         }
-                        CustomToolButton {
-                            iconSource: "qrc:///images/arrow_right_outline.svg"
-                            iconSize: _style.icon.size.small
-                            rotation: root.expanded ? 90 : 0
-                            opacity: 0.4
-                            Behavior on rotation { NumberAnimation {} }
-                            onClicked: root.expanded = !root.expanded
-                        }
+                    }
+                    CustomToolButton {
+                        iconSource: "qrc:///images/arrow_right_outline.svg"
+                        iconSize: _style.icon.size.small
+                        rotation: root.expanded ? 90 : 0
+                        opacity: 0.4
+                        Behavior on rotation { NumberAnimation {} }
+                        onClicked: root.expanded = !root.expanded
                     }
                 }
             }

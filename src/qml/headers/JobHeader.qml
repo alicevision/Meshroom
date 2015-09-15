@@ -105,20 +105,8 @@ Rectangle {
             }
         }
         CustomToolButton {
-            iconSource: {
-                switch(root.jobModel.status) {
-                    case 3: // DONE
-                    case 0: // BLOCKED
-                    case 1: // READY
-                    case 2: // RUNNING
-                        return "qrc:///images/pause.svg";
-                    case 6: // PAUSED
-                    case 4: // ERROR
-                    case 5: // CANCELED
-                    default:
-                        return "qrc:///images/play.svg";
-                }
-            }
+            iconSource: "qrc:///images/play.svg"
+            visible: (root.jobModel.status<0)
             iconSize: _style.icon.size.small
             onClicked: {
                 if(!root.jobModel.save())

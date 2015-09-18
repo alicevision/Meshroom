@@ -1,14 +1,22 @@
 #include "ProjectsIO.hpp"
-#include "models/ProjectModel.hpp"
+#include "models/Project.hpp"
+#include "models/Resource.hpp"
+#include <QDir>
 
 namespace mockup
 {
 
-ProjectModel* ProjectsIO::load(QObject* parent, const QUrl& url)
+void ProjectsIO::populate(Project& project)
 {
-    ProjectModel* projectModel = new ProjectModel(parent);
-    projectModel->setUrl(url);
-    return projectModel;
+    // list sub-directories to retrieve all jobs
+    QDir dir(project.url().toLocalFile());
+    dir.cd("reconstructions");
+    QStringList jobs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for(size_t i = 0; i < jobs.length(); ++i)
+    {
+        Job* job = new Job(QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
+        project.jobs()->addJob(job);
+    }
 }
 
 } // namespace

@@ -1,71 +1,83 @@
 #include "ResourceModel.hpp"
-#include <QFileInfo>
-#include <QDir>
+#include <QQmlEngine>
+#include <QDebug>
 
 namespace mockup
 {
 
-ResourceModel::ResourceModel(const QUrl& url, QObject* parent)
-    : QObject(parent)
+ResourceModel::ResourceModel(QObject* parent)
+    : QAbstractListModel(parent)
 {
-    setUrl(url);
 }
 
-void ResourceModel::setUrl(const QUrl& url)
+int ResourceModel::rowCount(const QModelIndex& parent) const
 {
-    if(url != _url)
+    Q_UNUSED(parent);
+    return _resources.count();
+}
+
+QVariant ResourceModel::data(const QModelIndex& index, int role) const
+{
+    if(index.row() < 0 || index.row() >= _resources.count())
+        return QVariant();
+    Resource* resource = _resources[index.row()];
+    switch(role)
     {
-        if(!url.isValid())
+        case UrlRole:
+            return resource->url();
+        case NameRole:
+            return resource->name();
+        case ModelDataRole:
+            return QVariant::fromValue(resource);
+        default:
+            return QVariant();
+    }
+}
+
+QHash<int, QByteArray> ResourceModel::roleNames() const
+{
+    QHash<int, QByteArray> roles;
+    roles[UrlRole] = "url";
+    roles[NameRole] = "name";
+    roles[ModelDataRole] = "modelData";
+    return roles;
+}
+
+void ResourceModel::addResource(Resource* resource)
+{
+    for(size_t i = 0; i < _resources.count(); ++i)
+    {
+        if(_resources[i]->url() == resource->url())
             return;
-        _url = url;
-        QFileInfo fileInfo(url.toLocalFile());
-        setName(fileInfo.fileName());
-        emit urlChanged();
     }
+
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+
+    // prevent items to be garbage collected in JS
+    QQmlEngine::setObjectOwnership(resource, QQmlEngine::CppOwnership);
+    resource->setParent(this);
+
+    _resources << resource;
+    endInsertRows();
+    emit countChanged(rowCount());
 }
 
-void ResourceModel::setName(const QString& name)
+void ResourceModel::addResource(const QUrl& url)
 {
-    if(name != _name)
-    {
-        _name = name;
-        emit nameChanged();
-    }
+    Resource* r = new Resource(url);
+    addResource(r);
 }
 
-void ResourceModel::setIsPairImageA(const bool b)
+void ResourceModel::removeResource(Resource* resource)
 {
-    if(b != _isPairImageA)
-    {
-        _isPairImageA = b;
-        emit isPairImageAChanged();
-    }
-}
-
-void ResourceModel::setIsPairImageB(const bool b)
-{
-    if(b != _isPairImageB)
-    {
-        _isPairImageB = b;
-        emit isPairImageBChanged();
-    }
-}
-
-// static
-bool ResourceModel::isValidUrl(const QUrl& url)
-{
-    if(!url.isValid())
-        return false;
-    QFileInfo fileInfo(url.toLocalFile());
-    if(fileInfo.isDir())
-        return false;
-    foreach(QString e, validFileExtensions())
-    {
-        QString suffix = fileInfo.suffix().toLower();
-        if(suffix == e.right(suffix.size()))
-            return true;
-    }
-    return false;
+    int id = _resources.indexOf(resource);
+    if(id < 0)
+        return;
+    beginRemoveRows(QModelIndex(), id, id);
+    _resources.removeAt(id);
+    delete resource;
+    endRemoveRows();
+    emit countChanged(rowCount());
 }
 
 } // namespace

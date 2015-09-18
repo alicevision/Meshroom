@@ -1,38 +1,28 @@
 #pragma once
 
-#include <QObject>
 #include <QQmlApplicationEngine>
+#include "ProjectModel.hpp"
+#include "LogModel.hpp"
+#include "ResourceModel.hpp"
 
 namespace mockup
 {
 
-class ProjectModel; // forward declaration
-
 class ApplicationModel : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QList<QObject*> projects READ projects WRITE setProjects NOTIFY projectsChanged)
-    Q_PROPERTY(QList<QObject*> logs READ logs WRITE setLogs NOTIFY logsChanged)
-    Q_PROPERTY(QStringList featuredProjects READ featuredProjects WRITE setFeaturedProjects NOTIFY featuredProjectsChanged)
-    Q_PROPERTY(QObject* currentProject READ currentProject WRITE setCurrentProject NOTIFY
-                   currentProjectChanged)
+    Q_PROPERTY(ProjectModel* projects READ projects NOTIFY projectsChanged)
+    Q_PROPERTY(LogModel* logs READ logs NOTIFY logsChanged)
+    Q_PROPERTY(ResourceModel* featured READ featured NOTIFY featuredChanged)
 
 public:
     ApplicationModel(QQmlApplicationEngine& engine);
     ~ApplicationModel();
 
 public slots:
-    const QList<QObject*>& projects() const { return _projects; }
-    const QList<QObject*>& logs() const { return _logs; }
-    const QStringList& featuredProjects() const { return _featuredProjects; }
-    QObject* currentProject() { return _currentProject; }
-    void setProjects(const QList<QObject*>& projects);
-    void setLogs(const QList<QObject*>& logs);
-    void setFeaturedProjects(const QStringList& locations);
-    void setCurrentProject(QObject* projectModel);
-    void addProject(const QUrl& url);
-    void addLog(QObject* log);
-    void removeProject(QObject* projectModel);
+    ProjectModel* projects() const { return _projects; }
+    LogModel* logs() const { return _logs; }
+    ResourceModel* featured() const { return _featured; }
 
 public slots:
     void onEngineLoaded(QObject* object, const QUrl& url);
@@ -40,17 +30,12 @@ public slots:
 signals:
     void projectsChanged();
     void logsChanged();
-    void featuredProjectsChanged();
-    void currentProjectChanged();
+    void featuredChanged();
 
 private:
-    void exposeToQML();
-
-private:
-    QList<QObject*> _projects;
-    QList<QObject*> _logs;
-    QObject* _currentProject = nullptr;
-    QStringList _featuredProjects;
+    ProjectModel* _projects;
+    LogModel* _logs;
+    ResourceModel* _featured;
 };
 
 } // namespaces

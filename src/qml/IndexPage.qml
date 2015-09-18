@@ -1,7 +1,6 @@
-import QtQuick 2.2
-import QtQuick.Controls 1.3
-import QtQuick.Layouts 1.1
-import QtQuick.Controls.Styles 1.3
+import QtQuick 2.5
+import QtQuick.Controls 1.4
+import QtQuick.Layouts 1.2
 
 import "layouts"
 import "delegates"
@@ -11,13 +10,12 @@ import "components"
 SplittedPageLayout {
 
     id: root
+    property variant currentProject: null
+    property variant currentJob: null
 
     header: Item {}
     bodyA: MenuPage {}
-    bodyB: JobPage {
-        projectModel: _applicationModel.currentProject
-        jobModel: _applicationModel.currentProject.currentJob
-    }
+    bodyB: JobPage {}
     footer: LogBar {
         model: _applicationModel.logs
     }

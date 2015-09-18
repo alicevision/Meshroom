@@ -1,22 +1,18 @@
 #include "ApplicationModel.hpp"
-#include "ProjectModel.hpp"
-#include "LogModel.hpp"
-#include "io/ProjectsIO.hpp"
 #include "io/SettingsIO.hpp"
 #include <QtQml/QQmlContext>
-#include <QDir>
 #include <iostream>
 
 namespace mockup
 {
 
-namespace
-{ // empty namespace
+namespace // empty namespace
+{
 
 static mockup::ApplicationModel* _logger = nullptr;
 void doLog(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
-    if(!_logger)
+    if(!_logger || !_logger->logs())
         return;
     QByteArray localMsg = msg.toLocal8Bit();
     if(QString(context.file).contains(".qml"))
@@ -24,40 +20,27 @@ void doLog(QtMsgType type, const QMessageLogContext& context, const QString& msg
         std::cerr << localMsg.constData() << std::endl;
         return;
     }
-    LogModel* model = new LogModel(type, localMsg.constData(), nullptr);
-    _logger->addLog(model);
+    Log* log = new Log(type, localMsg.constData());
+    _logger->logs()->addLog(log);
 }
 
 } // empty namespace
 
 ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     : QObject(nullptr)
+    , _logs(new LogModel(this))
+    , _projects(new ProjectModel(this))
+    , _featured(new ResourceModel(this))
 {
-    connect(&engine, SIGNAL(objectCreated(QObject*, const QUrl&)), this,
-            SLOT(onEngineLoaded(QObject*, const QUrl&)));
-
-    // load user settings
-    SettingsIO::loadRecentProjects(*this);
-
-    // retrieve featured project locations
-    QStringList locations;
-    QString externalLocationsStr = std::getenv("MOCKUP_PROJECT_LOCATIONS");
-    QStringList externalLocations = externalLocationsStr.split(":");
-    foreach(const QString& loc, externalLocations)
-    {
-        QDir dir(loc);
-        if(QUrl::fromLocalFile(loc).isValid() && dir.exists())
-        {
-            locations.append(loc);
-        }
-    }
-    setFeaturedProjects(locations);
-
+    // initialize recent and featured project lists
+    SettingsIO::loadRecentProjects(_projects);
+    SettingsIO::loadFeaturedProjects(_featured);
     // expose this object to QML
     if(engine.rootContext())
         engine.rootContext()->setContextProperty("_applicationModel", this);
-
-    // load QML UI
+    // load the main QML file
+    connect(&engine, SIGNAL(objectCreated(QObject*, const QUrl&)), this,
+            SLOT(onEngineLoaded(QObject*, const QUrl&)));
     engine.load(QUrl("src/qml/main.qml"));
 }
 
@@ -65,81 +48,6 @@ ApplicationModel::~ApplicationModel()
 {
     _logger = this;
     qInstallMessageHandler(0);
-}
-
-void ApplicationModel::setProjects(const QList<QObject*>& projects)
-{
-    if(projects == _projects)
-        return;
-    _projects = projects;
-    emit projectsChanged();
-}
-
-void ApplicationModel::setFeaturedProjects(const QStringList& locations)
-{
-    if(locations == _featuredProjects)
-        return;
-    _featuredProjects = locations;
-    emit featuredProjectsChanged();
-}
-
-void ApplicationModel::setLogs(const QList<QObject*>& logs)
-{
-    if(logs == _logs)
-        return;
-    _logs = logs;
-    emit logsChanged();
-}
-
-void ApplicationModel::setCurrentProject(QObject* projectModel)
-{
-    if(projectModel == _currentProject)
-        return;
-    _currentProject = projectModel;
-    emit currentProjectChanged();
-}
-
-void ApplicationModel::addProject(const QUrl& url)
-{
-    foreach(QObject* p, _projects)
-    {
-        ProjectModel* projectModel = qobject_cast<ProjectModel*>(p);
-        if(projectModel && projectModel->url() == url)
-        {
-            qWarning("Loading project: project already loaded.");
-            return;
-        }
-    }
-    ProjectModel* projectModel = ProjectsIO::load(this, url);
-    if(!projectModel)
-        return;
-    _projects.append(projectModel);
-    emit projectsChanged();
-    setCurrentProject(projectModel);
-    SettingsIO::saveRecentProjects(*this);
-}
-
-void ApplicationModel::addLog(QObject* log)
-{
-    _logs.append(log);
-    emit logsChanged();
-}
-
-void ApplicationModel::removeProject(QObject* model)
-{
-    ProjectModel* projectModel = qobject_cast<ProjectModel*>(model);
-    if(!projectModel)
-        return;
-    int id = _projects.indexOf(projectModel);
-    if(id < 0)
-        return;
-    _projects.removeAt(id);
-    setCurrentProject((id < _projects.count()) ? _projects.at(id) : (_projects.count() != 0)
-                                                                        ? _projects.last()
-                                                                        : nullptr);
-    emit projectsChanged();
-    delete projectModel;
-    SettingsIO::saveRecentProjects(*this);
 }
 
 void ApplicationModel::onEngineLoaded(QObject* object, const QUrl& url)

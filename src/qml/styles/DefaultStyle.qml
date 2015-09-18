@@ -1,5 +1,5 @@
-import QtQuick 2.2
-import QtQuick.Controls.Styles 1.3
+import QtQuick 2.5
+import QtQuick.Controls.Styles 1.4
 
 QtObject {
     id: root
@@ -42,9 +42,9 @@ QtObject {
     property QtObject window: QtObject {
         property QtObject color: QtObject {
             property color xlighter: Qt.lighter(normal, 1.8);
-            property color lighter: Qt.lighter(normal, 1.3);
+            property color lighter: Qt.lighter(normal, 1.4);
             property color normal: "#393939";
-            property color darker: Qt.darker(normal, 1.3);
+            property color darker: Qt.darker(normal, 1.4);
             property color xdarker: Qt.darker(normal, 1.8);
             property color selected: "#5BB1F7";
         }

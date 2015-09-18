@@ -1,8 +1,7 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.3
-import QtQuick.Dialogs 1.0
-import QtQuick.Controls.Styles 1.3
+import QtQuick 2.5
+import QtQuick.Layouts 1.2
+import QtQuick.Controls 1.4
+import QtQuick.Dialogs 1.2
 
 import "layouts"
 import "headers"
@@ -51,24 +50,6 @@ TitledPageLayout {
                     }
                 }
             }
-            // CustomText {
-            //     text: "Recents projects"
-            //     textSize: _style.text.size.normal
-            //     color: _style.text.color.darker
-            // }
-            // Rectangle {
-            //     Layout.fillWidth: true
-            //     Layout.preferredHeight: 100
-            //     color: _style.window.color.xdarker
-            //     ListView {
-            //         anchors.fill: parent
-            //         anchors.margins: 4
-            //         spacing: 2
-            //         clip: true
-            //         model: 0
-            //         delegate: UrlDelegate {}
-            //     }
-            // }
             CustomText {
                 text: "Featured projects"
                 textSize: _style.text.size.normal
@@ -83,7 +64,7 @@ TitledPageLayout {
                     anchors.margins: 4
                     spacing: 2
                     clip: true
-                    model: _applicationModel.featuredProjects
+                    model: _applicationModel.featured
                     delegate: UrlDelegate {}
                 }
             }
@@ -101,7 +82,7 @@ TitledPageLayout {
         selectFolder: true
         selectMultiple: false
         sidebarVisible: false
-        onAccepted: _applicationModel.addProject(fileDialog.fileUrl)
+        onAccepted: _applicationModel.projects.addProject(fileDialog.fileUrl)
     }
 
 }

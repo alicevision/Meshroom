@@ -3,7 +3,6 @@
 #include "GLGrid.hpp"
 #include "GLPointCloud.hpp"
 #include "GLView.hpp"
-#include "models/CameraModel.hpp"
 #include "io/AlembicImport.hpp"
 #include <iostream>
 
@@ -24,7 +23,6 @@ GLRenderer::~GLRenderer()
 {
     for(auto obj : _scene)
         delete obj;
-
     GLDrawable::deleteShaders();
 }
 
@@ -42,6 +40,7 @@ void GLRenderer::setClearColor(const QColor& color)
 void GLRenderer::setCameraMatrix(const QMatrix4x4& cameraMat)
 {
     _cameraMat = cameraMat;
+    updateWorldMatrix();
 }
 
 void GLRenderer::draw()

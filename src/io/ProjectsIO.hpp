@@ -5,12 +5,12 @@
 namespace mockup
 {
 
-class ProjectModel; // forward declaration
+class Project; // forward declaration
 
 class ProjectsIO
 {
 public:
-    static ProjectModel* load(QObject* parent, const QUrl& url);
+    static void populate(Project& project);
 };
 
 } // namespace

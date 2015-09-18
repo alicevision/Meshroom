@@ -1,24 +1,20 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.3
-import QtQuick.Controls.Styles 1.3
+import QtQuick 2.5
+import QtQuick.Layouts 1.2
+import QtQuick.Controls 1.4
+import QtQuick.Controls.Styles 1.4
+import Popart 0.1 // GLView
 
 import "layouts"
 import "delegates"
 import "headers"
 import "components"
-import Popart 0.1
 
 TitledPageLayout {
 
     id : root
-    property variant projectModel: null
-    property variant jobModel: null
     property bool settingsExpanded: false
 
     header: JobHeader {
-        projectModel: root.projectModel
-        jobModel: root.jobModel
         onProjectSettingsToggled: root.settingsExpanded = !root.settingsExpanded
         onProjectSettingsOpened: root.settingsExpanded = true
     }
@@ -33,16 +29,16 @@ TitledPageLayout {
         }
         Rectangle {
             id: settings
+            enabled: currentJob.status < 0
             color: _style.window.color.darker
             height: 0
             Behavior on height { NumberAnimation {}}
-            Connections { // use this to preserve connection after manual resize
+            Connections { // use this to preserve connection after a manual resize
                 target: root
                 onSettingsExpandedChanged: settings.height = root.settingsExpanded?180:0
             }
             JobSettingsForm {
                 anchors.fill: parent
-                jobModel: root.jobModel
             }
             clip: true
         }
@@ -60,28 +56,18 @@ TitledPageLayout {
                 }
                 Tab {
                     title: "images"
+                    enabled: currentJob.status < 0
                     ResourceDropArea {
                         anchors.fill: parent
-                        function removeResource() {
-                            root.jobModel.removeResources(gallery.getSelectionList());
-                        }
                         title: "drop .JPG files"
-                        enabled: root.jobModel.status < 0
-                        onFilesDropped: root.jobModel.addResources(files)
+                        onFilesDropped: {
+                            for(var i=0; i<files.length; ++i)
+                                currentJob.images.addResource(files[i]);
+                        }
                         ResourceGallery {
                             id: gallery
                             anchors.fill: parent
                             anchors.margins: 20
-                            jobModel: root.jobModel
-                            enabled: root.jobModel.status < 0
-                            Shortcut {
-                                key: "Backspace"
-                                onActivated: removeResource()
-                            }
-                            Shortcut {
-                                key: "Delete"
-                                onActivated: removeResource()
-                            }
                         }
                     }
                 }
@@ -98,7 +84,7 @@ TitledPageLayout {
                     }
                 }
             }
-            Rectangle {
+            Rectangle { // vertical tabs
                 Layout.preferredWidth: 20
                 Layout.fillHeight: true
                 color: _style.window.color.darker

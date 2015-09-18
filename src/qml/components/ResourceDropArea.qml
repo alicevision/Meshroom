@@ -1,17 +1,13 @@
-import QtQuick 2.2
-import QtQuick.Controls 1.3
-import QtQuick.Layouts 1.1
+import QtQuick 2.5
+import QtQuick.Controls 1.4
 
 Item {
-
     id: root
     property string title: ""
-    property bool enabled: true
     signal filesDropped(variant files)
 
     DropArea {
         anchors.fill: parent
-        enabled: root.enabled
         onEntered: dropBackground.color = _style.window.color.selected
         onExited: dropBackground.color = _style.window.color.darker
         onDropped: {

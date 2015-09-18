@@ -1,33 +1,29 @@
 #pragma once
 
 #include <QAbstractListModel>
-#include "models/Resource.hpp"
+#include "models/Step.hpp"
 
 namespace mockup
 {
 
-class ResourceModel : public QAbstractListModel
+class StepModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
 public:
-    enum ResourceRoles
+    enum StepRoles
     {
-        UrlRole = Qt::UserRole + 1,
-        NameRole,
+        NameRole = Qt::UserRole + 1,
+        AttributesRole,
         ModelDataRole
     };
 
 public:
-    ResourceModel(QObject* parent = 0);
+    StepModel(QObject* parent = 0);
+    void addStep(Step* step);
     int rowCount(const QModelIndex& parent = QModelIndex()) const;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
-
-public slots:
-    void addResource(Resource* resource);
-    void addResource(const QUrl& url);
-    void removeResource(Resource* resource);
 
 signals:
     void countChanged(int c);
@@ -36,7 +32,7 @@ protected:
     QHash<int, QByteArray> roleNames() const;
 
 private:
-    QList<Resource*> _resources;
+    QList<Step*> _steps;
 };
 
 } // namespace

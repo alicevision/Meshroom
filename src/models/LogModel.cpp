@@ -1,31 +1,58 @@
 #include "LogModel.hpp"
+#include <QQmlEngine>
 
 namespace mockup
 {
 
-LogModel::LogModel(const QtMsgType& type, const QString& message, QObject* parent)
-    : QObject(parent)
+LogModel::LogModel(QObject* parent)
+    : QAbstractListModel(parent)
 {
-    setType(type);
-    setMessage(message);
 }
 
-void LogModel::setType(const int& type)
+int LogModel::rowCount(const QModelIndex& parent) const
 {
-    if(type != _type)
+    Q_UNUSED(parent);
+    return _logs.count();
+}
+
+QVariant LogModel::data(const QModelIndex& index, int role) const
+{
+    if(index.row() < 0 || index.row() >= _logs.count())
+        return QVariant();
+    Log* log = _logs[index.row()];
+    switch(role)
     {
-        _type = type;
-        emit typeChanged();
+        case TypeRole:
+            return log->type();
+        case MessageRole:
+            return log->message();
+        case ModelDataRole:
+            return QVariant::fromValue(log);
+        default:
+            return QVariant();
     }
 }
 
-void LogModel::setMessage(const QString& message)
+QHash<int, QByteArray> LogModel::roleNames() const
 {
-    if(message != _message)
-    {
-        _message = message;
-        emit messageChanged();
-    }
+    QHash<int, QByteArray> roles;
+    roles[TypeRole] = "type";
+    roles[MessageRole] = "message";
+    roles[ModelDataRole] = "modelData";
+    return roles;
+}
+
+void LogModel::addLog(Log* log)
+{
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+
+    // prevent items to be garbage collected in JS
+    QQmlEngine::setObjectOwnership(log, QQmlEngine::CppOwnership);
+    log->setParent(this);
+
+    _logs << log;
+    endInsertRows();
+    emit countChanged(rowCount());
 }
 
 } // namespace

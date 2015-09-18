@@ -1,6 +1,6 @@
-import QtQuick 2.2
-import QtQuick.Controls 1.3
-import QtQuick.Dialogs 1.0
+import QtQuick 2.5
+import QtQuick.Controls 1.4
+import QtQuick.Dialogs 1.2
 
 import "styles"
 
@@ -12,29 +12,28 @@ ApplicationWindow {
     height: 800
     visible: true
     style: _style.bggl
-    title: "mockup"
 
     menuBar: MenuBar {
         Menu {
             title: "File"
-            MenuItem {
-                text: "New..."
-                onTriggered: fileDialog.open()
-            }
             Menu {
                 id: openMenu
                 title: "Open..."
+                MenuItem {
+                    text: "New location..."
+                    onTriggered: fileDialog.open()
+                }
+                MenuSeparator {}
                 Instantiator {
-                    model: _applicationModel.featuredProjects
+                    model: _applicationModel.featured
                     MenuItem {
-                        text: modelData
-                        onTriggered: _applicationModel.addProject("file://"+modelData)
+                        text: model.url.toString().replace("file://", "")
+                        onTriggered: _applicationModel.projects.addProject(model.url)
                     }
                     onObjectAdded: openMenu.insertItem(index, object)
                     onObjectRemoved: openMenu.removeItem(object)
                 }
             }
-            // MenuItem { text: "Quit" }
         }
     }
 
@@ -48,7 +47,7 @@ ApplicationWindow {
     //     id: _mainLoader
     //     anchors.fill: parent
     //     objectName: "instanCodingLoader"
-    //     source: (_applicationModel.projects.length>0)?"IndexPage.qml":"HomePage.qml"
+    //     source: (_applicationModel.projects.count>0)?"IndexPage.qml":"HomePage.qml"
     // }
 
     StackView {
@@ -57,15 +56,15 @@ ApplicationWindow {
         property Component indexPage: IndexPage {}
         initialItem: HomePage {}
         Component.onCompleted: {
-            if(_applicationModel.projects.length>0)
+            if(_applicationModel.projects.count>0)
                 stack.push({item:stack.indexPage, immediate: true});
         }
         Connections {
-            target: _applicationModel
-            onProjectsChanged: {
-                if(_applicationModel.projects.length>0 && stack.depth==1)
+            target: _applicationModel.projects
+            onCountChanged: {
+                if(_applicationModel.projects.count>0 && stack.depth==1)
                     stack.push({item:stack.indexPage});
-                else if(_applicationModel.projects.length==0 && stack.depth>1)
+                else if(_applicationModel.projects.count==0 && stack.depth>1)
                     stack.pop();
             }
         }
@@ -100,6 +99,6 @@ ApplicationWindow {
         selectFolder: true
         selectMultiple: false
         sidebarVisible: false
-        onAccepted: _applicationModel.addProject(fileDialog.fileUrl)
+        onAccepted: _applicationModel.projects.addProject(fileDialog.fileUrl)
     }
 }

@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     QApplication qapp(argc, argv);
     QCoreApplication::setOrganizationName("PopartEU");
     QCoreApplication::setOrganizationDomain("popart.eu");
-    QCoreApplication::setApplicationName("qmlgui");
+    QCoreApplication::setApplicationName("mockupMVG");
 
     // register types
     qRegisterMetaType<QtMsgType>("QtMsgType");

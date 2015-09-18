@@ -1,51 +1,43 @@
 #pragma once
 
-#include <QObject>
-#include <QUrl>
+#include <QAbstractListModel>
+#include "models/Project.hpp"
 
 namespace mockup
 {
 
-class JobModel; // forward declaration
-
-class ProjectModel : public QObject
+class ProjectModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
-    Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
-    Q_PROPERTY(QList<QObject*> jobs READ jobs WRITE setJobs NOTIFY jobsChanged)
-    Q_PROPERTY(QObject* currentJob READ currentJob WRITE setCurrentJob NOTIFY currentJobChanged)
+    Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
 public:
-    ProjectModel(QObject* parent = nullptr);
-    ~ProjectModel() = default;
+    enum ProjectRoles
+    {
+        NameRole = Qt::UserRole + 1,
+        UrlRole,
+        JobsRole,
+        ModelDataRole
+    };
+
+public:
+    ProjectModel(QObject* parent = 0);
+    int rowCount(const QModelIndex& parent = QModelIndex()) const;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
 
 public slots:
-    const QString& name() const { return _name; }
-    const QUrl& url() const { return _url; }
-    const QList<QObject*>& jobs() const { return _jobs; }
-    QObject* currentJob() { return _currentJob; }
-    void setUrl(const QUrl& url);
-    void setJobs(const QList<QObject*>& name);
-    void setCurrentJob(QObject* jobModel);
-    void addJob();
-    void removeJob(QObject* model);
-
-public slots:
-    void select();
-    void remove();
+    void addProject(Project* project);
+    void addProject(const QUrl& url);
+    void removeProject(Project* project);
 
 signals:
-    void nameChanged();
-    void urlChanged();
-    void jobsChanged();
-    void currentJobChanged();
+    void countChanged(int c);
+
+protected:
+    QHash<int, QByteArray> roleNames() const;
 
 private:
-    QString _name;
-    QUrl _url;
-    QList<QObject*> _jobs;
-    QObject* _currentJob = nullptr;
+    QList<Project*> _projects;
 };
 
 } // namespace

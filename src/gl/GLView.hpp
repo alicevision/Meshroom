@@ -2,7 +2,7 @@
 
 #include <QtQuick/QQuickItem>
 #include <QMatrix4x4>
-#include "models/CameraModel.hpp"
+#include "models/Camera.hpp"
 
 namespace mockup
 {
@@ -14,7 +14,6 @@ class GLView : public QQuickItem
 {
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
-    Q_PROPERTY(QObject* camera READ camera WRITE setCamera NOTIFY cameraChanged)
 
 public:
     GLView();
@@ -22,9 +21,7 @@ public:
 
 public slots:
     const QColor& color() const { return _color; }
-    QObject* camera() const { return _camera; }
     void setColor(const QColor& color);
-    void setCamera(QObject* camera);
     void addAlembicScene(const QString& filename);
 
 private slots:
@@ -35,7 +32,6 @@ private slots:
 
 signals:
     void colorChanged();
-    void cameraChanged();
 
 protected:
     void mouseMoveEvent(QMouseEvent*);
@@ -56,7 +52,7 @@ private:
     GLRenderer* _renderer = nullptr;
     QRect _viewport;
     QColor _color;
-    CameraModel* _camera = nullptr;
+    Camera _camera;
     QString _alembicSceneFile;
     // FIXME : rename variables to something more meaningful
     // Ideally the following variables should go in a manipulator of some sort

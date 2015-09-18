@@ -1,6 +1,6 @@
-import QtQuick 2.2
-import QtQuick.Controls 1.2
-import QtQuick.Layouts 1.1
+import QtQuick 2.5
+import QtQuick.Controls 1.4
+import QtQuick.Layouts 1.2
 
 import "../components"
 
@@ -22,8 +22,10 @@ Item {
     }
 
     function showTitleText() {
-        titleText.text = (root.model.length > 0) ? root.model[root.model.length-1].message : "";
-        titleText.color = (root.model.length > 0) ? getLogColor(root.model[root.model.length-1].type) : "white";
+        if(!root.model)
+            return;
+        titleText.text = (root.model.count > 0) ? root.model.data(root.model.index(root.model.count-1,0), 258) : "";
+        titleText.color = (root.model.count > 0) ? getLogColor(root.model.data(root.model.index(root.model.count-1,0), 257)) : "white";
         if(!root.expanded) titleText.opacity = 1;
         logTimer.restart();
     }
@@ -40,7 +42,7 @@ Item {
     }
 
     width: parent.width
-    height: expanded ? Math.min(5, Math.max(model.length+1, 2)) * root.itemHeight : root.itemHeight
+    height: expanded ? 5 * root.itemHeight : root.itemHeight
     Behavior on height { NumberAnimation {} }
 
     ColumnLayout {
@@ -65,10 +67,6 @@ Item {
                     text: ""
                     textSize: _style.text.size.small
                     Behavior on opacity { NumberAnimation {} }
-                }
-                CustomText {
-                    text: root.model.length
-                    textSize: _style.text.size.xsmall
                 }
                 CustomToolButton {
                     tooltip: "console output"
@@ -99,22 +97,23 @@ Item {
                             anchors.leftMargin: 4
                             anchors.rightMargin: 4
                             CustomText {
-                                text: index
+                                text: "["+index+"]"
                                 textSize: _style.text.size.small
                                 color: _style.text.color.darker
                             }
                             CustomWrappedText {
                                 Layout.fillWidth: true
-                                text: modelData.message
+                                text: message
                                 textSize: _style.text.size.small
-                                color: getLogColor(modelData.type)
+                                color: getLogColor(type)
                             }
                         }
                     }
                     spacing: 0
                     interactive: false
-                    onModelChanged: {
-                        showTitleText();
+                    onCountChanged: {
+                        if(!root.expanded)
+                            showTitleText();
                         logView.positionViewAtIndex(logView.count - 1, ListView.Contain);
                     }
                 }

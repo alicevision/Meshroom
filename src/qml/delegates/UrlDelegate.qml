@@ -1,6 +1,6 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.3
+import QtQuick 2.5
+import QtQuick.Layouts 1.2
+import QtQuick.Controls 1.4
 
 import "../components"
 
@@ -10,7 +10,7 @@ Rectangle {
     height: 30
     MouseArea {
         anchors.fill: parent
-        onClicked: _applicationModel.addProject("file://"+modelData)
+        onClicked: _applicationModel.projects.addProject(model.url)
         RowLayout {
             anchors.fill: parent
             CustomToolButton {
@@ -23,7 +23,7 @@ Rectangle {
                 CustomWrappedText {
                     anchors.centerIn: parent
                     width: parent.width
-                    text: modelData
+                    text: model.url.toString().replace("file://", "")
                 }
             }
         }

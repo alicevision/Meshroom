@@ -1,29 +1,26 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.3
+import QtQuick 2.5
+import QtQuick.Controls 1.4
 
-import "../styles"
 import "../components"
 
 Item {
 
     id: root
     property bool selected: false
-    property bool highlighted: false
-    property bool enabled: true
+    property bool isPairA: false
+    property bool isPairB: false
+    objectName: "resourceDelegate"
 
     signal itemToggled(int index)
-    signal itemDeleted(int index)
-
-    function toggleSelectedState() {
-        root.selected = !root.selected;
-    }
-    function toggleHighlightedState() {
-        root.highlighted = !root.highlighted;
+    signal itemDropped(int index)
+    function refreshInitialPairIndicators() {
+        root.isPairA = currentJob.modelData.isPairA(model.url);
+        root.isPairB = currentJob.modelData.isPairB(model.url);
     }
 
     width: GridView.view.cellWidth
     height: GridView.view.cellHeight
+    Component.onCompleted: refreshInitialPairIndicators()
 
     MouseArea {
         id: mouseArea
@@ -32,14 +29,16 @@ Item {
         drag.target: tile
         cursorShape: Qt.PointingHandCursor
         hoverEnabled: true
-        // acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: {
-            (mouse.button == Qt.LeftButton) ? itemToggled(index) : menu.popup();
+        onClicked: itemToggled(index)
+        onReleased: {
+            if(!tile.Drag.active)
+                return;
+            tile.Drag.drop();
+            itemDropped(index);
         }
-        onReleased: tile.Drag.drop()
         Rectangle {
             id: tile
-            property string url: modelData.url
+            property string url: model.url
             color: root.highlighted ? "#A00" : root.selected ? "#5BB1F7" : "#99111111"
             width: mouseArea.width
             height: mouseArea.height
@@ -57,9 +56,9 @@ Item {
         Image {
             anchors.fill: parent
             anchors.margins: 2
-            sourceSize.width: parent.width
-            sourceSize.height: parent.height
-            source: modelData.url
+            sourceSize.width: 256
+            sourceSize.height: 256
+            source: model.url
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             Rectangle {
@@ -70,7 +69,7 @@ Item {
                 Behavior on height { NumberAnimation {} }
                 Text {
                     width: parent.width
-                    text: modelData.name
+                    text: model.name
                     verticalAlignment: Text.AlignVCenter
                     color: "white"
                     font.pixelSize: 10
@@ -79,9 +78,10 @@ Item {
                     maximumLineCount: (mouseArea.containsMouse) ? 4 : 1
                 }
             }
-            Item { // pair indicator
+            Item {
+                id: pairIndicator
                 anchors.fill: parent
-                visible: (modelData.isPairImageA || modelData.isPairImageB)
+                visible: root.isPairA || root.isPairB
                 Rectangle {
                     anchors.fill: parent
                     color: "black"
@@ -89,7 +89,7 @@ Item {
                 }
                 CustomText {
                     anchors.centerIn: parent
-                    text: modelData.isPairImageA ? "1" : "2"
+                    text: root.isPairA ? "A" : "B"
                     textSize: _style.text.size.xlarge
                     color: "#5BB1F7"
                 }

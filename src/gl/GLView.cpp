@@ -10,12 +10,8 @@ namespace mockup
 GLView::GLView()
     : _renderer(nullptr)
     , _cameraMode(Idle)
-    , _lookAtTmp() // Stores camera->_lookAtTmp locally to avoid recomputing it
+    , _lookAtTmp() // Stores camera._lookAt locally to avoid recomputing it
 {
-    // FIXME: camera location should move away
-    QUrl fakeurl;
-    setCamera(new CameraModel(fakeurl, nullptr));
-
     setKeepMouseGrab(true);
     setAcceptedMouseButtons(Qt::AllButtons);
     setFlag(ItemAcceptsInputMethod, true);
@@ -38,23 +34,6 @@ void GLView::setColor(const QColor& color)
     refresh();
 }
 
-// NOTE : is this the same as setCurrentCamera
-void GLView::setCamera(QObject* camera)
-{
-    if(camera == _camera)
-        return;
-
-    _camera = dynamic_cast<CameraModel*>(camera);
-    if(_camera)
-    {
-        // FIXME: do we need to disconnect the previous camera if any ?
-        connect(_camera, SIGNAL(viewMatrixChanged()), this, SLOT(refresh()), Qt::DirectConnection);
-        _lookAtTmp = _camera->lookAt();
-        emit cameraChanged();
-        refresh();
-    }
-}
-
 void GLView::handleWindowChanged(QQuickWindow* win)
 {
     if(!win)
@@ -68,12 +47,10 @@ void GLView::handleWindowChanged(QQuickWindow* win)
 // when the GL context is current
 void GLView::sync()
 {
-    // First time
-    if(!_renderer)
+    if(!_renderer) // first time
         _renderer = new GLRenderer();
 
     qreal ratio = window()->devicePixelRatio();
-
     QPointF pos(x(), y());
     pos = mapToScene(pos);
     _viewport.setX(qRound(ratio * pos.x()));
@@ -83,10 +60,7 @@ void GLView::sync()
 
     _renderer->setViewportSize(_viewport.size());
     _renderer->setClearColor(_color);
-
-    // camera
-    if(_camera)
-        _renderer->setCameraMatrix(_camera->viewMatrix());
+    _renderer->setCameraMatrix(_camera.viewMatrix());
 
     // Triggers a load when the file name is not null
     if(!_alembicSceneFile.isEmpty())
@@ -126,13 +100,11 @@ void GLView::mousePressEvent(QMouseEvent* event)
 {
     // Dependending on the combination of key and mouse
     // set the correct mode
-    if(!_camera)
-        return;
     if(event->modifiers() == Qt::AltModifier)
     {
         _mousePos = event->pos();
-        _camMatTmp = _camera->viewMatrix();
-        _lookAtTmp = _camera->lookAt();
+        _camMatTmp = _camera.viewMatrix();
+        _lookAtTmp = _camera.lookAt();
         switch(event->buttons())
         {
             case Qt::LeftButton:
@@ -209,30 +181,26 @@ void GLView::translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx
 
 void GLView::wheelEvent(QWheelEvent* event)
 {
-    if(!_camera)
-        return;
-
     const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
     const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
     const int numDegrees = event->delta() / 8;
     const int numSteps = numDegrees / 15;
     const float delta = numSteps * 100;
 
-    float radius = _camera->lookAtRadius();
+    float radius = _camera.lookAtRadius();
     translateLineOfSightCamera(_camMatTmp, radius, delta, 0);
 
-    _camera->setLookAtRadius(radius);
-    _camera->setViewMatrix(_camMatTmp);
+    _camera.setLookAtRadius(radius);
+    _camera.setViewMatrix(_camMatTmp);
 
-    _lookAtTmp = _camera->lookAt();
+    _lookAtTmp = _camera.lookAt();
     _mousePos = event->pos();
+
+    refresh();
 }
 
 void GLView::mouseMoveEvent(QMouseEvent* event)
 {
-    if(!_camera)
-        return;
-
     switch(_cameraMode)
     {
         case Idle:
@@ -244,45 +212,41 @@ void GLView::mouseMoveEvent(QMouseEvent* event)
             if(0) // TODO select between trackball vs turntable
             {
                 trackBallRotateCamera(_camMatTmp, _lookAtTmp, dx, dy);
-
-                _camera->setViewMatrix(_camMatTmp);
+                _camera.setViewMatrix(_camMatTmp);
                 _mousePos = event->pos();
             }
             else // Turntable
             {
                 turnTableRotateCamera(_camMatTmp, _lookAtTmp, dx, dy);
-
-                _camera->setViewMatrix(_camMatTmp);
+                _camera.setViewMatrix(_camMatTmp);
                 _mousePos = event->pos();
             }
+            refresh();
         }
         break;
         case Translate:
         {
             const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
             const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
-
             planeTranslateCamera(_camMatTmp, dx, dy);
-
-            _camera->setViewMatrix(_camMatTmp);
-            _lookAtTmp = _camera->lookAt();
+            _camera.setViewMatrix(_camMatTmp);
+            _lookAtTmp = _camera.lookAt();
             _mousePos = event->pos();
+            refresh();
         }
         break;
         case Zoom:
         {
             const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
             const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
-
-            float radius = _camera->lookAtRadius();
+            float radius = _camera.lookAtRadius();
             translateLineOfSightCamera(_camMatTmp, radius, dx, dy);
-
-            _camera->setLookAtRadius(radius);
-            _camera->setViewMatrix(_camMatTmp);
-            _lookAtTmp = _camera->lookAt();
+            _camera.setLookAtRadius(radius);
+            _camera.setViewMatrix(_camMatTmp);
+            _lookAtTmp = _camera.lookAt();
             _mousePos = event->pos();
+            refresh();
         }
-
         break;
         default:
             break;

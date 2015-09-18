@@ -1,98 +1,85 @@
 #include "ProjectModel.hpp"
-#include "JobModel.hpp"
-#include "ApplicationModel.hpp"
-#include "io/ProjectsIO.hpp"
 #include "io/SettingsIO.hpp"
-#include "io/JobsIO.hpp"
-#include <QDateTime>
-#include <QDir>
+#include <QQmlEngine>
+#include <QDebug>
 
 namespace mockup
 {
 
 ProjectModel::ProjectModel(QObject* parent)
-    : QObject(parent)
+    : QAbstractListModel(parent)
 {
 }
 
-void ProjectModel::setUrl(const QUrl& url)
+int ProjectModel::rowCount(const QModelIndex& parent) const
 {
-    if((_url == url) || url.isEmpty())
-        return;
-    _url = url;
-    _name = url.fileName();
-
-    JobsIO::loadAllJobs(*this);
-    if(_jobs.isEmpty())
-        addJob();
-
-    emit urlChanged();
-    emit nameChanged();
+    Q_UNUSED(parent);
+    return _projects.count();
 }
 
-void ProjectModel::setJobs(const QList<QObject*>& jobs)
+QVariant ProjectModel::data(const QModelIndex& index, int role) const
 {
-    if(jobs == _jobs)
-        return;
-    _jobs = jobs;
-    if(_jobs.isEmpty())
-        addJob();
-    setCurrentJob(_jobs[0]);
-    emit jobsChanged();
+    if(index.row() < 0 || index.row() >= _projects.count())
+        return QVariant();
+    Project* project = _projects[index.row()];
+    switch(role)
+    {
+        case NameRole:
+            return project->name();
+        case UrlRole:
+            return project->url();
+        case JobsRole:
+            return QVariant::fromValue(project->jobs());
+        case ModelDataRole:
+            return QVariant::fromValue(project);
+        default:
+            return QVariant();
+    }
 }
 
-void ProjectModel::addJob()
+QHash<int, QByteArray> ProjectModel::roleNames() const
 {
-    QDateTime jobtime = QDateTime::currentDateTime();
-    QString dirname = jobtime.toString("yyyyMMdd_HHmmss");
-    QUrl url = QUrl::fromLocalFile(_url.toLocalFile() + "/reconstructions/" + dirname);
-    JobModel* jobModel = JobsIO::load(this, url);
-    if(!jobModel)
-        return;
-    _jobs.append(jobModel);
-    emit jobsChanged();
-    setCurrentJob(jobModel);
+    QHash<int, QByteArray> roles;
+    roles[NameRole] = "name";
+    roles[UrlRole] = "url";
+    roles[JobsRole] = "jobs";
+    roles[ModelDataRole] = "modelData";
+    return roles;
 }
 
-void ProjectModel::removeJob(QObject* model)
+void ProjectModel::addProject(Project* project)
 {
-    JobModel* jobModel = qobject_cast<JobModel*>(model);
-    if(!jobModel)
-        return;
-    int id = _jobs.indexOf(jobModel);
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+
+    // prevent items to be garbage collected in JS
+    QQmlEngine::setObjectOwnership(project, QQmlEngine::CppOwnership);
+    project->setParent(this);
+
+    _projects << project;
+    endInsertRows();
+    emit countChanged(rowCount());
+
+    SettingsIO::saveRecentProjects(this);
+}
+
+void ProjectModel::addProject(const QUrl& url)
+{
+    Project* project = new Project(url);
+    addProject(project);
+}
+
+void ProjectModel::removeProject(Project* project)
+{
+    int id = _projects.indexOf(project);
     if(id < 0)
         return;
-    _jobs.removeAt(id);
-    if(_jobs.isEmpty())
-        addJob();
-    setCurrentJob((id < _jobs.count()) ? _jobs.at(id) : _jobs.last());
-    emit jobsChanged();
-    delete jobModel;
-}
+    beginRemoveRows(QModelIndex(), id, id);
+    _projects.removeAt(id);
+    delete project;
+    endRemoveRows();
+    emit countChanged(rowCount());
 
-void ProjectModel::setCurrentJob(QObject* jobModel)
-{
-    select(); // ensure that this project is selected
-    if(jobModel == _currentJob)
-        return;
-    _currentJob = jobModel;
-    emit currentJobChanged();
-}
-
-void ProjectModel::select()
-{
-    ApplicationModel* app = qobject_cast<ApplicationModel*>(parent());
-    if(!app)
-        return;
-    app->setCurrentProject(this);
-}
-
-void ProjectModel::remove()
-{
-    ApplicationModel* app = qobject_cast<ApplicationModel*>(parent());
-    if(!app)
-        return;
-    app->removeProject(this);
+    SettingsIO::saveRecentProjects(this);
 }
 
 } // namespace

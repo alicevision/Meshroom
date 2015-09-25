@@ -24,6 +24,8 @@ QVariant AttributeModel::data(const QModelIndex& index, int role) const
     {
         case NameRole:
             return attribute->name();
+        case KeyRole:
+            return attribute->key();
         case TypeRole:
             return attribute->type();
         case MinRole:
@@ -59,6 +61,7 @@ QHash<int, QByteArray> AttributeModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
     roles[NameRole] = "name";
+    roles[KeyRole] = "key";
     roles[TypeRole] = "type";
     roles[MinRole] = "min";
     roles[MaxRole] = "max";

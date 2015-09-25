@@ -15,6 +15,7 @@ public:
     enum AttributeRoles
     {
         NameRole = Qt::UserRole + 1,
+        KeyRole,
         TypeRole,
         MinRole,
         MaxRole,

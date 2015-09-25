@@ -12,7 +12,7 @@ namespace mockup
 
 namespace // empty
 {
-Attribute* getAttribute(const Job& job, const QString& stepName, const QString& attrName,
+Attribute* getAttribute(const Job& job, const QString& stepName, const QString& attrKey,
                         QModelIndex& outIndex, Step** outStep)
 {
     if(!job.steps())
@@ -28,7 +28,7 @@ Attribute* getAttribute(const Job& job, const QString& stepName, const QString& 
             QModelIndex id = step->attributes()->index(i, 0);
             Attribute* att =
                 step->attributes()->data(id, AttributeModel::ModelDataRole).value<Attribute*>();
-            if(att && att->name() != attrName)
+            if(att && att->key() != attrKey)
                 continue;
             outIndex = id;
             *outStep = step;
@@ -62,7 +62,8 @@ Job::Job(const QUrl& url)
         Step* step = new Step("feature_detection");
         Attribute* att = new Attribute();
         att->setType(2); // combo
-        att->setName("describerPreset");
+        att->setKey("describerPreset");
+        att->setName("quality");
         att->setValue("Normal");
         att->setOptions(QStringList({"Normal", "High", "Ultra"}));
         step->attributes()->addAttribute(att);
@@ -73,7 +74,8 @@ Job::Job(const QUrl& url)
         Step* step = new Step("meshing");
         Attribute* att = new Attribute();
         att->setType(1); // slider
-        att->setName("scale");
+        att->setKey("scale");
+        att->setName("meshing scale");
         att->setValue(2);
         att->setMin(1);
         att->setMax(10);
@@ -87,7 +89,8 @@ Job::Job(const QUrl& url)
         {
             Attribute* att = new Attribute();
             att->setType(3); // pair selector
-            att->setName("initial_pair");
+            att->setKey("initial_pair");
+            att->setName("initial pair");
             att->setValue(QStringList({"", ""}));
             step->attributes()->addAttribute(att);
         }

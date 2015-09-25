@@ -23,7 +23,8 @@ public:
     void setViewportSize(const QSize& size);
     void setCameraMatrix(const QMatrix4x4& cameraMat);
     void setClearColor(const QColor& color);
-    void addAlembicScene(const QString& scene);
+    void addAlembicScene(const QUrl& url);
+    void resetScene();
 
 public slots:
     void draw();

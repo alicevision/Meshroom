@@ -22,7 +22,7 @@ public:
 public slots:
     const QColor& color() const { return _color; }
     void setColor(const QColor& color);
-    void addAlembicScene(const QString& filename);
+    void loadAlembicScene(const QUrl& url);
 
 private slots:
     void handleWindowChanged(QQuickWindow* win);
@@ -53,7 +53,7 @@ private:
     QRect _viewport;
     QColor _color;
     Camera _camera;
-    QString _alembicSceneFile;
+    QUrl _alembicSceneUrl;
     // FIXME : rename variables to something more meaningful
     // Ideally the following variables should go in a manipulator of some sort
     QPoint _mousePos;      // Position of the mousePressed event

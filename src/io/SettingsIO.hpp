@@ -5,7 +5,7 @@
 namespace mockup
 {
 
-class ProjectModel; // forward declaration
+class ProjectModel;  // forward declaration
 class ResourceModel; // forward declaration
 
 class SettingsIO

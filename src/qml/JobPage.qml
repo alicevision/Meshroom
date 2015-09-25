@@ -75,9 +75,11 @@ TitledPageLayout {
                     title: "3D"
                     DropArea {
                         anchors.fill: parent
-                        onDropped: glview.addAlembicScene(drop.urls[0].replace("file://", ""))
+                        onDropped: glview.loadAlembicScene(drop.urls[0])
                         GLView {
                             id: glview
+                            property variant job: currentJob
+                            onJobChanged: glview.loadAlembicScene(Qt.resolvedUrl(currentJob.url+"/job.abc"))
                             anchors.fill: parent
                             color: "#333"
                         }

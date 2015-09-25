@@ -2,7 +2,6 @@
 #include "GLRenderer.hpp"
 #include <QtQuick/QQuickWindow>
 #include <QtMath>
-#include <iostream>
 
 namespace mockup
 {
@@ -63,10 +62,11 @@ void GLView::sync()
     _renderer->setCameraMatrix(_camera.viewMatrix());
 
     // Triggers a load when the file name is not null
-    if(!_alembicSceneFile.isEmpty())
+    if(!_alembicSceneUrl.isEmpty())
     {
-        _renderer->addAlembicScene(_alembicSceneFile);
-        _alembicSceneFile.clear();
+        _renderer->resetScene();
+        _renderer->addAlembicScene(_alembicSceneUrl);
+        _alembicSceneUrl.clear();
     }
 }
 
@@ -88,11 +88,11 @@ void GLView::refresh()
         window()->update();
 }
 
-void GLView::addAlembicScene(const QString& filename)
+void GLView::loadAlembicScene(const QUrl& url)
 {
     // Stores the filename, the load is done later on
     // in the sync function, inside a GL context
-    _alembicSceneFile = filename;
+    _alembicSceneUrl = url;
     refresh();
 }
 

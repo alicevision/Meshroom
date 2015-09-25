@@ -4,7 +4,7 @@
 #include "GLPointCloud.hpp"
 #include "GLView.hpp"
 #include "io/AlembicImport.hpp"
-#include <iostream>
+#include <QFileInfo>
 
 namespace mockup
 {
@@ -66,12 +66,25 @@ void GLRenderer::updateWorldMatrix()
     GLDrawable::setCameraMatrix(worldMat);
 }
 
-void GLRenderer::addAlembicScene(const QString& cloud)
+void GLRenderer::addAlembicScene(const QUrl& url)
 {
+    QFileInfo file(url.toLocalFile());
+    if(file.exists() && file.isFile())
+    {
 #if WITH_ALEMBIC
-    AlembicImport importer(cloud.toStdString().c_str());
+    AlembicImport importer(url.toLocalFile().toLatin1().data());
     importer.populate(_scene);
 #endif
+    }
+}
+
+void GLRenderer::resetScene()
+{
+    for(auto obj : _scene)
+        delete obj;
+    _scene.clear();
+    _scene.append(new GLGizmo());
+    _scene.append(new GLGrid());
 }
 
 } // namespace

@@ -78,8 +78,8 @@ void GLRenderer::addAlembicScene(const QUrl& url)
     if(file.exists() && file.isFile())
     {
 #if WITH_ALEMBIC
-    AlembicImport importer(url.toLocalFile().toLatin1().data());
-    importer.populate(_scene);
+        AlembicImport importer(url.toLocalFile().toLatin1().data());
+        importer.populate(_scene);
 #endif
     }
 }

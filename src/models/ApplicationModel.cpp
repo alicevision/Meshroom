@@ -17,7 +17,9 @@ void doLog(QtMsgType type, const QMessageLogContext& context, const QString& msg
     QByteArray localMsg = msg.toLocal8Bit();
     if(QString(context.file).contains(".qml"))
     {
+#ifndef NDEBUG
         std::cerr << localMsg.constData() << std::endl;
+#endif
         return;
     }
     Log* log = new Log(type, localMsg.constData());

@@ -66,6 +66,9 @@ void JobsIO::load(Job& job)
 
 bool JobsIO::save(Job& job)
 {
+    if(job.status() >= 0) // job already started
+        return false;
+
     // build the JSON object
     QJsonObject jobObj;
     QJsonObject pathsObject;

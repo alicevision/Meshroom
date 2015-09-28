@@ -3,6 +3,7 @@ import QtQuick.Controls 1.4
 import QtQuick.Dialogs 1.2
 
 import "styles"
+import "components"
 
 ApplicationWindow {
 
@@ -42,45 +43,22 @@ ApplicationWindow {
         id: _style
     }
 
-    StackView {
-        id: stack
+    // main loader, needed to enable instant coding
+    Loader {
+        id: _mainLoader
         anchors.fill: parent
-        property Component indexPage: IndexPage {}
-        initialItem: HomePage {}
-        Component.onCompleted: {
-            if(_applicationModel.projects.count>0)
-                stack.push({item:stack.indexPage, immediate: true});
-        }
-        Connections {
-            target: _applicationModel.projects
-            onCountChanged: {
-                if(_applicationModel.projects.count>0 && stack.depth==1)
-                    stack.push({item:stack.indexPage});
-                else if(_applicationModel.projects.count==0 && stack.depth>1)
-                    stack.pop();
-            }
-        }
-        delegate: StackViewDelegate {
-            function transitionFinished(properties) {
-                properties.exitItem.opacity = 1;
-                _mainWindow.style = _style.bggl;
-            }
-            pushTransition: StackViewTransition {
-                ScriptAction { script: _mainWindow.style = _style.bg; }
-                PropertyAnimation {
-                    target: enterItem
-                    property: "opacity"
-                    from: 0
-                    to: 1
-                }
-                PropertyAnimation {
-                    target: exitItem
-                    property: "opacity"
-                    from: 1
-                    to: 0
-                }
-            }
-        }
+        objectName: "instanCodingLoader"
+        source: (_applicationModel.projects.count>0)?"IndexPage.qml":"HomePage.qml"
+    }
+
+    // debug label
+    CustomText {
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.margins: 2
+        text: "debug mode"
+        color: "red"
+        textSize: _style.text.size.small
     }
 
     // file dialog

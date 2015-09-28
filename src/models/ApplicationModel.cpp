@@ -1,5 +1,6 @@
 #include "ApplicationModel.hpp"
 #include "io/SettingsIO.hpp"
+#include <QCoreApplication>
 #include <QtQml/QQmlContext>
 #include <iostream>
 
@@ -43,7 +44,11 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     // load the main QML file
     connect(&engine, SIGNAL(objectCreated(QObject*, const QUrl&)), this,
             SLOT(onEngineLoaded(QObject*, const QUrl&)));
-    engine.load(QUrl("src/qml/main.qml"));
+#ifndef NDEBUG
+    engine.load("src/qml/main_debug.qml");
+#else
+    engine.load(QCoreApplication::applicationDirPath()+"/qml/main.qml");
+#endif
 }
 
 ApplicationModel::~ApplicationModel()

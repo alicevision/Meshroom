@@ -40,3 +40,8 @@ target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
 endif (ALEMBIC_FOUND)
 
 QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick)
+
+# copy qml files if the build succeeds
+add_custom_command(TARGET ${TARGETOBJ} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${PROJECT_SOURCE_DIR}/src/qml ${EXECUTABLE_OUTPUT_PATH}/qml)

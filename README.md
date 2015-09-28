@@ -1,11 +1,11 @@
 
 
-
 DEPENDENCIES
 ------------
 
 - cmake
-- Qt 5.4
+- Qt 5.5
+- Alembic (optional)
 
 
 INSTALL
@@ -13,7 +13,5 @@ INSTALL
 
 You'll need a C++11 compiler.
 
-    export CC=/path/to/clang
-    export CXX=/path/to/clang++
-    ./configure -DCMAKE_PREFIX_PATH=/path/to/qt/5.4/lib/cmake
+    ./configure -DCMAKE_PREFIX_PATH=/path/to/qt/5.5/lib/cmake -DCMAKE_BUILD_TYPE=Release
     make -j

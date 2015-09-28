@@ -102,5 +102,12 @@ Rectangle {
             text: "refresh"
             onClicked: currentJob.modelData.refresh()
         }
+        CustomToolButton {
+            visible: (currentJob.status>=0)
+            iconSource: "qrc:///images/folder_outline.svg"
+            iconSize: _style.icon.size.small
+            onClicked: Qt.openUrlExternally(currentJob.url)
+            text: "open"
+        }
     }
 }

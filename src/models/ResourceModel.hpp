@@ -1,54 +1,42 @@
 #pragma once
 
-#include <QObject>
-#include <QStringList>
-#include <QUrl>
+#include <QAbstractListModel>
+#include "models/Resource.hpp"
 
 namespace mockup
 {
 
-class ResourceModel : public QObject
+class ResourceModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
-    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
-    Q_PROPERTY(bool isPairImageA READ isPairImageA NOTIFY isPairImageAChanged)
-    Q_PROPERTY(bool isPairImageB READ isPairImageB NOTIFY isPairImageBChanged)
+    Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
 public:
-    ResourceModel(const QUrl& url, QObject* parent);
+    enum ResourceRoles
+    {
+        UrlRole = Qt::UserRole + 1,
+        NameRole,
+        ModelDataRole
+    };
+
+public:
+    ResourceModel(QObject* parent = 0);
+    int rowCount(const QModelIndex& parent = QModelIndex()) const;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
 
 public slots:
-    QUrl url() const;
-    void setUrl(const QUrl& url);
-    const QString& name() const;
-    void setName(const QString& name);
-    bool isPairImageA() const;
-    void setIsPairImageA(const bool b);
-    bool isPairImageB() const;
-    void setIsPairImageB(const bool b);
-
-public:
-    static bool isValidUrl(const QUrl& url);
-    static QStringList validFileExtensions()
-    {
-        QStringList extensions;
-        extensions << "*.jpg"
-                   << "*.jpeg";
-        return extensions;
-    }
+    void addResource(Resource* resource);
+    void addResource(const QUrl& url);
+    void removeResource(Resource* resource);
 
 signals:
-    void urlChanged();
-    void nameChanged();
-    void isPairImageAChanged();
-    void isPairImageBChanged();
+    void countChanged(int c);
+
+protected:
+    QHash<int, QByteArray> roleNames() const;
 
 private:
-    QUrl _url;
-    QString _name;
-    bool _isPairImageA = false;
-    bool _isPairImageB = false;
+    QList<Resource*> _resources;
 };
 
 } // namespace

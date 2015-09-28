@@ -1,18 +1,19 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.3
-import Popart 0.1
+import QtQuick 2.5
+import QtQuick.Layouts 1.2
+import QtQuick.Controls 1.4
 
 import "../components"
 
 Item {
 
     id: root
-    property variant projectModel: modelData
     property int topItemHeight: 60
     property int subItemHeight: 60
-    property bool expanded: true//(index == 0)
+    property bool expanded: true
     property int animationDuration: 300
+    property variant projectModel: model
+
+    Component.onCompleted: if(index==0) currentProject = model;
 
     width: ListView.view.width
     height: root.topItemHeight + subItemsContainer.height
@@ -29,28 +30,25 @@ Item {
     Column {
         width: parent.width
         height: parent.height
-
         Item { // top level item
             width: parent.width
             height: root.topItemHeight
             MouseArea {
-                id: projectMouseArea
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
                     root.expanded = true;
-                    selectProjectPage(projectModel);
+                    currentProject = model;
                 }
-                onDoubleClicked: root.expanded = !root.expanded
                 RowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: 15
                     anchors.rightMargin: 10
-                    spacing: 5
+                    spacing: 10
                     CustomText {
-                        text: projectModel.name
+                        text: model.name
                         textSize: _style.text.size.large
-                        color: (projectModel==_applicationModel.currentProject)?_style.text.color.selected:_style.text.color.normal
+                        color: (currentProject==model) ? _style.text.color.selected : _style.text.color.normal
                     }
                     Item { // spacer
                         Layout.fillWidth: true
@@ -64,15 +62,15 @@ Item {
                             text: "add job"
                             onClicked: {
                                 root.expanded = true;
-                                addJob(projectModel);
+                                model.jobs.addJob(model.url);
                             }
                         }
-                        // CustomToolButton {
-                        //     iconSource: "qrc:///images/trash_outline.svg"
-                        //     iconSize: _style.icon.size.small
-                        //     text: "hide"
-                        //     onClicked: removeProject(projectModel)
-                        // }
+                        CustomToolButton {
+                            iconSource: "qrc:///images/close.svg"
+                            iconSize: _style.icon.size.small
+                            text: "close"
+                            onClicked: _applicationModel.projects.removeProject(model.modelData);
+                        }
                     }
                     CustomToolButton {
                         iconSource: "qrc:///images/arrow_right_outline.svg"
@@ -89,7 +87,7 @@ Item {
         Item { // sub items
             id: subItemsContainer
             width: parent.width
-            height: root.expanded ? (projectModel.jobs.length+0.25) * root.subItemHeight : 0
+            height: root.expanded ? (model.jobs.count+0.25) * root.subItemHeight : 0
             clip: true
             Behavior on height {
                 SequentialAnimation {
@@ -100,7 +98,7 @@ Item {
             ListView {
                 id: jobList
                 anchors.fill: parent
-                model: projectModel.jobs
+                model: jobs
                 delegate: JobDelegate {
                     width: parent.width
                     height: root.subItemHeight

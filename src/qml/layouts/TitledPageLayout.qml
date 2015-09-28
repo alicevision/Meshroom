@@ -1,5 +1,5 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.1
+import QtQuick 2.5
+import QtQuick.Layouts 1.2
 
 Item {
     property Component background: Item {}

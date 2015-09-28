@@ -1,0 +1,28 @@
+#pragma once
+
+#include <QObject>
+#include <QUrl>
+#include <QString>
+
+namespace mockup
+{
+
+class Resource : public QObject
+{
+    Q_OBJECT
+
+public:
+    Resource(const QUrl& url);
+
+public:
+    QString name() const { return _url.fileName(); }
+    const QUrl& url() const { return _url; }
+
+public:
+    void serializeToJSON(QJsonArray* array) const;
+
+private:
+    QUrl _url;
+};
+
+} // namespace

@@ -22,7 +22,7 @@ public:
     void populate(GLScene&);
 
 private:
-    void visitObject(IObject, GLScene &, M44d);
+    void visitObject(IObject, GLScene&, M44d);
     IObject _rootEntity;
 };
 

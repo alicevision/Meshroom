@@ -1,6 +1,6 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.3
+import QtQuick 2.5
+import QtQuick.Layouts 1.2
+import QtQuick.Controls 1.4
 
 Item {
     property Component background: Item {}
@@ -39,7 +39,7 @@ Item {
                 color: _style.window.color.xdarker
             }
             Loader {
-                width: parent.width*0.26
+                width: 210
                 sourceComponent: bodyA
             }
             Loader {

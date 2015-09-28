@@ -1,63 +1,54 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.3
+import QtQuick 2.5
+import QtQuick.Layouts 1.2
+import QtQuick.Controls 1.4
 
 import "../components"
 
 Item {
 
     id : root
-    property variant jobModel: null
-    property bool enabled: (jobModel.status < 0)
-    property int labelWidth: 100
 
-    GridLayout {
-        anchors.fill: parent
-        anchors.margins: 10
-        columns: 2
-        CustomText {
-            text: "quality"
+    property Component sliderControl: CustomSlider {
+        onValueChanged: modelData.value = value
+        value: modelData.value
+        minimumValue: modelData.min
+        maximumValue: modelData.max
+        stepSize: modelData.step
+        // tickmarksEnabled: true
+        updateValueWhileDragging: true
+    }
+    property Component textControl: CustomTextField {
+        text: modelData.value
+        onEditingFinished: modelData.value = text
+    }
+    property Component comboControl: CustomComboBox {
+        model: modelData.options
+        onActivated: {
+            modelData.value = textAt(index);
+            currentIndex = index;
         }
-        CustomComboBox {
-            Layout.fillWidth: true
-            Layout.preferredHeight: childrenRect.height
-            enabled: root.enabled
-            model: ["NORMAL", "HIGH", "ULTRA"]
-            currentIndex: (root.jobModel)? root.jobModel.describerPreset : 1
-            onCurrentIndexChanged: if(root.jobModel) root.jobModel.describerPreset = currentIndex;
-        }
-        CustomText {
-            text: "meshing scale"
-        }
-        CustomSlider {
-            Layout.fillWidth: true
-            Layout.preferredHeight: childrenRect.height
-            enabled: root.enabled
-            minimumValue: 1
-            maximumValue: 10
-            stepSize: 1
-            value: root.jobModel.meshingScale
-            onValueChanged: if(root.jobModel) root.jobModel.meshingScale = Math.round(value);
-        }
-        CustomText {
-            text: "initial pair"
-        }
+        Component.onCompleted: currentIndex = find(modelData.value)
+    }
+    property Component pairControl: Item {
+        width: parent.width
+        height: childrenRect.height
         RowLayout {
+            width: parent.width
+            height: childrenRect.height
             ResourceDropArea {
-                Layout.preferredWidth: 150
-                Layout.preferredHeight: Layout.preferredWidth*2/3
+                Layout.preferredWidth: 100
+                Layout.preferredHeight: 100
                 title: "A"
-                enabled: root.enabled
-                onFilesDropped: root.jobModel.setPairA(files[0])
-                Rectangle {
-                    anchors.fill: parent
-                    visible: (root.jobModel.pairA!=null)
-                    opacity: 0.3
-                    color: "black"
+                onFilesDropped: {
+                    var items = modelData.value;
+                    items[0] = files[0].replace("file://", "");
+                    modelData.value = items;
                 }
                 Image {
                     anchors.fill: parent
-                    source: root.jobModel.pairA
+                    sourceSize.width: 256
+                    sourceSize.height: 256
+                    source: (modelData.value.length>0)?modelData.value[0]:""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     Rectangle { // state indicator (enabled or not)
@@ -68,20 +59,19 @@ Item {
                 }
             }
             ResourceDropArea {
-                Layout.preferredWidth: 150
-                Layout.preferredHeight: Layout.preferredWidth*2/3
+                Layout.preferredWidth: 100
+                Layout.preferredHeight: 100
                 title: "B"
-                enabled: root.enabled
-                onFilesDropped: root.jobModel.setPairB(files[0])
-                Rectangle {
-                    anchors.fill: parent
-                    visible: (root.jobModel.pairB!=null)
-                    opacity: 0.3
-                    color: "black"
+                onFilesDropped: {
+                    var items = modelData.value;
+                    items[1] = files[0].replace("file://", "");
+                    modelData.value = items;
                 }
                 Image {
                     anchors.fill: parent
-                    source: root.jobModel.pairB
+                    sourceSize.width: 256
+                    sourceSize.height: 256
+                    source: (modelData.value.length>1)?modelData.value[1]:""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     Rectangle { // state indicator (enabled or not)
@@ -91,12 +81,74 @@ Item {
                     }
                 }
             }
-            Item { // spacer
+            Item {
                 Layout.fillWidth: true
             }
         }
-        Item { // spacer
-            Layout.preferredWidth: labelWidth
+    }
+
+    CustomScrollView {
+        anchors.fill: parent
+        anchors.margins: 10
+        verticalScrollBarPolicy: Qt.ScrollBarAlwaysOn
+        ListView {
+            model: currentJob.steps
+            spacing: 5
+            interactive: false
+            delegate: ColumnLayout {
+                property variant modelData: model
+                width: parent.width
+                height: childrenRect.height
+                // spacing: 20
+                // CustomText {
+                //     width: parent.width
+                //     height: childrenRect.height
+                //     text: modelData.name
+                //     textSize: _style.text.size.large
+                // }
+                ListView {
+                    interactive: false
+                    spacing: 5
+                    Layout.fillWidth: true
+                    height: childrenRect.height
+                    model: modelData.attributes
+                    delegate: Item {
+                        property variant modelData: model
+                        width: parent.width
+                        height: childrenRect.height
+                        RowLayout {
+                            width: parent.width
+                            height: childrenRect.height
+                            Item {
+                                Layout.preferredWidth: 120
+                                Layout.preferredHeight: attributeLoader.height
+                                CustomText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.name
+                                }
+                            }
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: childrenRect.height
+                                Loader {
+                                    id: attributeLoader
+                                    width: parent.width
+                                    height: item.height
+                                    property variant modelData: model
+                                    sourceComponent: {
+                                        switch(modelData.type){
+                                            case 0: return textControl
+                                            case 1: return sliderControl
+                                            case 2: return comboControl
+                                            case 3: return pairControl
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

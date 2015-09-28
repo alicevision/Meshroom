@@ -1,8 +1,7 @@
-import QtQuick 2.2
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.3
-import QtQuick.Dialogs 1.0
-import QtQuick.Controls.Styles 1.3
+import QtQuick 2.5
+import QtQuick.Layouts 1.2
+import QtQuick.Controls 1.4
+import QtQuick.Dialogs 1.2
 
 import "layouts"
 import "headers"
@@ -14,7 +13,7 @@ TitledPageLayout {
     id: root
 
     background: DefaultBackground {}
-    header: HomeHeader {}
+    header: Item {}
     body: Item {
         anchors.fill: parent
         anchors.leftMargin: 30
@@ -30,47 +29,43 @@ TitledPageLayout {
                 textSize: _style.text.size.xlarge
                 color: _style.text.color.darker
             }
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: Math.min(10, locationView.count+1) * 30
-                color: _style.window.color.normal
-                ListView {
-                    id: locationView
+            MouseArea {
+                Layout.preferredWidth: parent.width
+                Layout.preferredHeight: 30
+                onClicked: fileDialog.open()
+                RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 2
-                    spacing: 2
-                    clip: true
-                    model: _applicationModel.locations
-                    delegate: Rectangle {
-                        color: _style.window.color.xdarker
-                        width: parent.width
-                        height: 30
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                if(index == 0)
-                                    fileDialog.open();
-                                else
-                                    addProject(modelData);
-                            }
-                            RowLayout {
-                                anchors.fill: parent
-                                CustomToolButton {
-                                    iconSource: (index==0)?"qrc:///images/arrow_right_outline.svg":"qrc:///images/project.svg"
-                                    iconSize: _style.icon.size.small
-                                    enabled: false
-                                }
-                                Item {
-                                    Layout.fillWidth: true
-                                    CustomWrappedText {
-                                        anchors.centerIn: parent
-                                        width: parent.width
-                                        text: modelData
-                                    }
-                                }
-                            }
+                    CustomToolButton {
+                        iconSource: "qrc:///images/project.svg"
+                        iconSize: _style.icon.size.small
+                        enabled: false
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                        CustomWrappedText {
+                            anchors.centerIn: parent
+                            width: parent.width
+                            text: "New location..."
                         }
                     }
+                }
+            }
+            CustomText {
+                text: "Featured projects"
+                textSize: _style.text.size.normal
+                color: _style.text.color.darker
+            }
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 90
+                color: _style.window.color.xdarker
+                ListView {
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    spacing: 2
+                    clip: true
+                    model: _applicationModel.featured
+                    delegate: UrlDelegate {}
                 }
             }
             Item { // spacer
@@ -87,7 +82,7 @@ TitledPageLayout {
         selectFolder: true
         selectMultiple: false
         sidebarVisible: false
-        onAccepted: addProject(fileDialog.fileUrl)
+        onAccepted: _applicationModel.projects.addProject(fileDialog.fileUrl)
     }
 
 }

@@ -1,59 +1,41 @@
 #pragma once
 
-#include <QObject>
 #include <QQmlApplicationEngine>
+#include "ProjectModel.hpp"
+#include "LogModel.hpp"
+#include "ResourceModel.hpp"
 
 namespace mockup
 {
 
-class ProjectModel; // forward declaration
-
 class ApplicationModel : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QList<QObject*> projects READ projects WRITE setProjects NOTIFY projectsChanged)
-    Q_PROPERTY(QObject* currentProject READ currentProject WRITE setCurrentProject NOTIFY currentProjectChanged)
-    Q_PROPERTY(QStringList locations READ locations WRITE setLocations NOTIFY locationsChanged)
-    Q_PROPERTY(QList<QObject*> logs READ logs WRITE setLogs NOTIFY logsChanged)
+    Q_PROPERTY(ProjectModel* projects READ projects NOTIFY projectsChanged)
+    Q_PROPERTY(LogModel* logs READ logs NOTIFY logsChanged)
+    Q_PROPERTY(ResourceModel* featured READ featured NOTIFY featuredChanged)
 
 public:
     ApplicationModel(QQmlApplicationEngine& engine);
     ~ApplicationModel();
 
 public slots:
-    // projects
-    const QList<QObject*>& projects() const;
-    void setProjects(const QList<QObject*>& projects);
-    QObject* addNewProject();
-    QObject* addExistingProject(const QUrl& url);
-    void removeProject(QObject* projectModel);
-    QObject* currentProject();
-    void setCurrentProject(QObject* projectModel);
-    // project locations
-    const QStringList& locations() const;
-    void setLocations(const QStringList& locations);
-    // logs
-    const QList<QObject*>& logs() const;
-    void addLog(QObject* log);
-    void setLogs(const QList<QObject*>& logs);
+    ProjectModel* projects() const { return _projects; }
+    LogModel* logs() const { return _logs; }
+    ResourceModel* featured() const { return _featured; }
 
 public slots:
     void onEngineLoaded(QObject* object, const QUrl& url);
 
 signals:
     void projectsChanged();
-    void currentProjectChanged();
-    void locationsChanged();
     void logsChanged();
+    void featuredChanged();
 
 private:
-    void exposeToQML();
-
-private:
-    QList<QObject*> _projects;
-    QObject* _currentProject = nullptr;
-    QList<QObject*> _logs;
-    QStringList _locations;
+    ProjectModel* _projects;
+    LogModel* _logs;
+    ResourceModel* _featured;
 };
 
 } // namespaces

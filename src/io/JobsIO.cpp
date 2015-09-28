@@ -1,311 +1,132 @@
 #include "JobsIO.hpp"
-#include "models/JobModel.hpp"
-#include "models/ProjectModel.hpp"
-#include "models/ResourceModel.hpp"
-#include <QCoreApplication>
+#include "models/Job.hpp"
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include <QJsonDocument>
 #include <QFile>
 #include <QDir>
-#include <cstdlib>
-#include <iostream>
 
 namespace mockup
 {
 
-// namespace // empty namespace
-// {
-//
-// typedef std::function<void(const QUrl&)> fun_t;
-// void traverseDirectory(const QUrl& url, fun_t f)
-// {
-//     QDir dir(url.toLocalFile());
-//     if(!dir.exists())
-//         return;
-//     f(url);
-//     QStringList list = dir.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
-//     for(int i = 0; i < list.size(); ++i)
-//         traverseDirectory(QUrl::fromLocalFile(dir.absoluteFilePath(list[i])), f);
-// }
-//
-// } // empty namespace
-
-JobModel* JobsIO::create(QObject* parent)
+void JobsIO::load(Job& job)
 {
-    return new JobModel(parent);
-}
-
-JobModel* JobsIO::load(QObject* parent, const QUrl& url)
-{
-    if(!url.isValid())
+    if(!job.url().isValid())
     {
-        qCritical("Loading job : invalid project URL (malformed or empty URL)");
-        return nullptr;
+        qCritical("Loading job : invalid URL (malformed or empty URL)");
+        return;
     }
 
-    QDir dir(url.toLocalFile());
+    QDir dir(job.url().toLocalFile());
     if(!dir.exists())
-    {
-        qCritical("Loading job : invalid project URL (not found)");
-        return nullptr;
-    }
+        return;
 
-    // load the job descriptor file
+    job.setDate(QDateTime::fromString(job.url().fileName(), "yyyyMMdd_HHmmss"));
+
+    // load the JSON file
     QFile file(dir.filePath("job.json"));
     if(!file.open(QIODevice::ReadOnly))
     {
-        qCritical("Loading job : invalid descriptor file");
-        return nullptr;
+        qCritical("Loading job : unable to open JSON file");
+        return;
     }
 
     // read it and close the file handler
     QByteArray data = file.readAll();
     file.close();
 
-    // parse it as JSON
+    // parse data as JSON
     QJsonParseError parseError;
     QJsonDocument jsondoc(QJsonDocument::fromJson(data, &parseError));
     if(parseError.error != QJsonParseError::NoError)
     {
-        qCritical("Loading job : malformed descriptor file");
-        return nullptr;
+        qCritical("Loading job : malformed JSON file");
+        return;
     }
 
-    // create a new JobModel and set its attributes
-    JobModel* jobModel = JobsIO::create(parent);
-    jobModel->setUrl(url);
-
-    // JSON: resources
     QJsonObject json = jsondoc.object();
+    job.setUser(json["user"].toString());
     QJsonArray resourceArray = json["resources"].toArray();
     QObjectList resources;
     for(int i = 0; i < resourceArray.count(); ++i)
-        resources.append(
-            new ResourceModel(QUrl::fromLocalFile(resourceArray.at(i).toString()), jobModel));
-
-    // JSON: steps
+    {
+        Resource* r = new Resource(QUrl::fromLocalFile(resourceArray.at(i).toString()));
+        job.images()->addResource(r);
+    }
     QJsonObject stepsObject = json["steps"].toObject();
-
-    // JSON: feature detection parameters
-    QJsonObject featureDetectObject = stepsObject["feature_detection"].toObject();
-
-    // JSON: structure from motion parameters
-    QJsonObject sfmObject = stepsObject["sfm"].toObject();
-    QJsonArray pairArray = sfmObject["initial_pair"].toArray();
-
-    // JSON: meshing parameters
-    QJsonObject meshingObject = stepsObject["meshing"].toObject();
-
-    // update job parameters
-    jobModel->setDate(json["date"].toString());
-    jobModel->setUser(json["user"].toString());
-    jobModel->setNote(json["note"].toString());
-    jobModel->setResources(resources);
-    if(pairArray.count() > 0)
-        jobModel->setPairA(QUrl::fromLocalFile(pairArray.at(0).toString()));
-    if(pairArray.count() > 1)
-        jobModel->setPairB(QUrl::fromLocalFile(pairArray.at(1).toString()));
-    jobModel->setMeshingScale(meshingObject["scale"].toDouble());
-    jobModel->setDescriberPreset(
-        JobModel::describerPresetId(featureDetectObject["describerPreset"].toString()));
-
-    // // reset watchfolders
-    // QStringList directories = _watcher.directories();
-    // if(!directories.isEmpty())
-    //     _watcher.removePaths(directories);
-    // fun_t f = [&](const QUrl& dir)
-    // {
-    //     _watcher.addPath(dir.toLocalFile());
-    // };
-    // traverseDirectory(jobModel->buildUrl(), f);
-    // traverseDirectory(jobModel->matchUrl(), f);
-
-    return jobModel;
-}
-
-void JobsIO::loadAllJobs(ProjectModel& projectModel)
-{
-    // list sub-directories to retrieve all jobs
-    QDir dir(projectModel.url().toLocalFile());
-    dir.cd("reconstructions");
-    QStringList jobs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    QList<QObject*> validJobs;
-    for(size_t i = 0; i < jobs.length(); ++i)
+    for(size_t i = 0; i < job.steps()->rowCount(); i++)
     {
-        JobModel* job =
-            JobsIO::load(&projectModel, QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
-        if(!job)
+        QModelIndex id = job.steps()->index(i, 0);
+        Step* step = job.steps()->data(id, StepModel::ModelDataRole).value<Step*>();
+        if(!step)
             continue;
-        job->autoSaveON();
-        validJobs.append(job);
+        step->deserializeFromJSON(stepsObject);
     }
-    projectModel.setJobs(validJobs);
 }
 
-bool JobsIO::save(JobModel& jobModel)
+bool JobsIO::save(Job& job)
 {
-    if(!jobModel.url().isValid())
+    // build the JSON object
+    QJsonObject jobObj;
+    QJsonObject pathsObject;
+    pathsObject["build"] = job.url().toLocalFile() + "/build";
+    pathsObject["match"] = job.url().toLocalFile() + "/build/matches";
+    QJsonArray resourceArray;
+    for(size_t i = 0; i < job.images()->rowCount(); i++)
     {
-        qCritical("Saving job: invalid project URL (malformed or empty URL)");
-        return false;
+        QModelIndex id = job.images()->index(i, 0);
+        Resource* resource =
+            job.images()->data(id, ResourceModel::ModelDataRole).value<Resource*>();
+        if(resource)
+            resource->serializeToJSON(&resourceArray);
     }
+    QJsonObject stepsObject;
+    for(size_t i = 0; i < job.steps()->rowCount(); i++)
+    {
+        QModelIndex id = job.steps()->index(i, 0);
+        Step* step = job.steps()->data(id, StepModel::ModelDataRole).value<Step*>();
+        if(step)
+            step->serializeToJSON(&stepsObject);
+    }
+    jobObj.insert("date", QJsonValue::fromVariant(job.date()));
+    jobObj.insert("user", job.user());
+    jobObj.insert("paths", pathsObject);
+    jobObj.insert("resources", resourceArray);
+    jobObj.insert("steps", stepsObject);
 
     // create filesystem structure
     QDir dir;
-    if(!dir.mkpath(jobModel.url().toLocalFile()))
+    if(!dir.mkpath(job.url().toLocalFile()))
     {
         qCritical("Saving job: unable to create directory structure (job url)");
         return false;
     }
-
-    if(!dir.mkpath(jobModel.buildUrl().toLocalFile()))
+    if(!dir.mkpath(job.url().toLocalFile() + "/build"))
     {
         qCritical("Saving job: unable to create directory structure (build url)");
         return false;
     }
-
-    if(!dir.mkpath(jobModel.matchUrl().toLocalFile()))
+    if(!dir.mkpath(job.url().toLocalFile() + "/build/matches"))
     {
         qCritical("Saving job: unable to create directory structure (match url)");
         return false;
     }
 
-    // open file handler
-    QDir rootdir(jobModel.url().toLocalFile());
-    QFile file(rootdir.filePath("job.json"));
+    // open a file handler
+    QDir rootDir(job.url().toLocalFile());
+    QFile file(rootDir.filePath("job.json"));
     if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
         qCritical("Saving job: unable to write the job descriptor file");
         return false;
     }
 
-    // JSON: paths
-    QJsonObject pathsObject;
-    pathsObject["build"] = jobModel.buildUrl().toLocalFile();
-    pathsObject["match"] = jobModel.matchUrl().toLocalFile();
-
-    // JSON: resources
-    QJsonArray resourceArray;
-    foreach(QObject* r, jobModel.resources())
-    {
-        ResourceModel* resource = qobject_cast<ResourceModel*>(r);
-        if(!resource)
-            continue;
-        resourceArray.append(resource->url().toLocalFile());
-    }
-
-    // JSON: feature detection parameters
-    QJsonObject featureDetectObject;
-    featureDetectObject["describerPreset"] =
-        JobModel::describerPresetString(jobModel.describerPreset());
-
-    // JSON: structure from motion parameters
-    QJsonObject sfmObject;
-    QJsonArray pairArray;
-    pairArray.append(jobModel.pairA().toLocalFile());
-    pairArray.append(jobModel.pairB().toLocalFile());
-    sfmObject["initial_pair"] = pairArray;
-
-    // JSON: meshing parameters
-    QJsonObject meshingObject;
-    meshingObject["scale"] = jobModel.meshingScale();
-
-    // JSON: steps
-    QJsonObject stepsObject;
-    stepsObject["feature_detection"] = featureDetectObject;
-    stepsObject["sfm"] = sfmObject;
-    stepsObject["meshing"] = meshingObject;
-
-    // build document
-    QJsonObject json;
-    json["date"] = jobModel.date();
-    json["user"] = jobModel.user();
-    json["note"] = jobModel.note();
-    json["steps"] = stepsObject;
-    json["paths"] = pathsObject;
-    json["resources"] = resourceArray;
-
-    // write document
-    QJsonDocument jsondoc(json);
-    file.write(jsondoc.toJson());
+    // write & close file
+    QJsonDocument jsonDoc(jobObj);
+    file.write(jsonDoc.toJson());
     file.close();
+
     return true;
-}
-
-void JobsIO::start(JobModel& jobModel, QProcess& process)
-{
-    if(jobModel.cameras().count() < 2)
-    {
-        qCritical("Starting job: insufficient number of sources");
-        return;
-    }
-
-    if(!jobModel.pairA().isValid() || !jobModel.pairB().isValid())
-    {
-        qCritical("Starting job: invalid initial pair");
-        return;
-    }
-
-    // set program path
-    QString startCommand = std::getenv("MOCKUP_START_COMMAND");
-    if(startCommand.isEmpty())
-        startCommand = QCoreApplication::applicationDirPath() + "/scripts/job_start.py";
-    process.setProgram(startCommand);
-
-    // set command arguments
-    QStringList arguments;
-    arguments.append(jobModel.url().toLocalFile() + "/job.json");
-    process.setArguments(arguments);
-
-    // run
-    process.start();
-    if(!process.waitForStarted())
-        qCritical("Unable to start job");
-    else
-        qInfo("Job started");
-}
-
-void JobsIO::stop(JobModel& jobModel, QProcess& process)
-{
-    // set program path
-    QString stopCommand = std::getenv("MOCKUP_STOP_COMMAND");
-    if(stopCommand.isEmpty())
-        stopCommand = QCoreApplication::applicationDirPath() + "/scripts/job_stop.py";
-    process.setProgram(stopCommand);
-
-    // set command arguments
-    QStringList arguments;
-    arguments.append(jobModel.url().toLocalFile() + "/job.json");
-    process.setArguments(arguments);
-
-    // run
-    process.start();
-    if(!process.waitForStarted())
-        qCritical("Unable to stop job");
-    else
-        qInfo("Job stopped");
-}
-
-void JobsIO::status(JobModel& jobModel, QProcess& process)
-{
-    // set program path
-    QString statusCommand = std::getenv("MOCKUP_STATUS_COMMAND");
-    if(statusCommand.isEmpty())
-        statusCommand = QCoreApplication::applicationDirPath() + "/scripts/job_status.py";
-    process.setProgram(statusCommand);
-
-    // set command arguments
-    QStringList arguments;
-    arguments.append(jobModel.url().toLocalFile() + "/job.json");
-    process.setArguments(arguments);
-
-    // run
-    QObject::connect(&process, SIGNAL(finished(int, QProcess::ExitStatus)), &jobModel,
-                     SLOT(readProcessOutput(int, QProcess::ExitStatus)));
-    process.start();
-    if(!process.waitForStarted())
-        qCritical("Unable to refresh job");
 }
 
 } // namespace

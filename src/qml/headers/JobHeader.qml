@@ -1,16 +1,13 @@
-import QtQuick 2.2
-import QtQuick.Controls 1.3
-import QtQuick.Controls.Styles 1.3
-import QtQuick.Layouts 1.1
-import QtQuick.Dialogs 1.0
+import QtQuick 2.5
+import QtQuick.Controls 1.4
+import QtQuick.Controls.Styles 1.4
+import QtQuick.Layouts 1.2
 
 import "../components"
 
 Rectangle {
 
     id : root
-    property variant projectModel: null
-    property variant jobModel: null
 
     signal projectSettingsToggled()
     signal projectSettingsOpened()
@@ -28,6 +25,8 @@ Rectangle {
             iconSource: "qrc:///images/home_outline.svg"
             iconSize: _style.icon.size.small
             onClicked: selectHomePage()
+            enabled: false
+            opacity: 0.6
             text: "home"
         }
         CustomToolButton {
@@ -36,22 +35,9 @@ Rectangle {
             enabled: false
             opacity: 0.5
         }
-        Button {
-            text: projectModel.name
-            style: ButtonStyle {
-                background: Rectangle {
-                    color: control.hovered ? _style.window.color.normal : _style.window.color.darker
-                    Behavior on color { ColorAnimation{} }
-                    border.color: control.hovered ? _style.window.color.xlighter : _style.window.color.lighter
-                    radius: 3
-                }
-                label: CustomText {
-                    text: control.text
-                    textSize: _style.text.size.small
-                    color: _style.text.color.normal
-                }
-            }
-            onClicked: selectProjectPage(projectModel)
+        CustomText {
+            text: currentProject.name
+            textSize: _style.text.size.small
         }
         CustomToolButton {
             iconSource: "qrc:///images/arrow_right_outline.svg"
@@ -60,7 +46,7 @@ Rectangle {
             opacity: 0.5
         }
         CustomText {
-            text: jobModel.date
+            text: currentJob.name
             textSize: _style.text.size.small
         }
         Item { // spacer
@@ -82,10 +68,22 @@ Rectangle {
                 color: _style.window.color.lighter
             }
         }
+        CustomToolButton {
+            iconSource: "qrc:///images/play.svg"
+            visible: (currentJob.status<0)
+            iconSize: _style.icon.size.small
+            onClicked: {
+                if(!currentJob.modelData.save())
+                    projectSettingsOpened();
+                else
+                    currentJob.modelData.start()
+            }
+            // highlighted: true
+            text: "start"
+        }
         ProgressBar {
-            Layout.preferredWidth: (root.jobModel.status >= 0)? 60 : 0
-            Behavior on Layout.preferredWidth { NumberAnimation{}}
-            value: root.jobModel.completion
+            visible: (currentJob.status>=0)
+            value: currentJob.completion
             style: ProgressBarStyle {
                 background: Rectangle {
                     color: _style.window.color.xdarker
@@ -93,40 +91,16 @@ Rectangle {
                     implicitHeight: 18
                 }
                 progress: Rectangle {
-                    color: (root.jobModel.status >= 4)? "red" : _style.window.color.selected
+                    color: (currentJob.status >= 4)? "red" : _style.window.color.selected
                 }
             }
         }
         CustomToolButton {
-            iconSource: {
-                switch(root.jobModel.status) {
-                    case 3: // DONE
-                    case 0: // BLOCKED
-                    case 1: // READY
-                    case 2: // RUNNING
-                        return "qrc:///images/pause.svg";
-                    case 6: // PAUSED
-                    case 4: // ERROR
-                    case 5: // CANCELED
-                    default:
-                        return "qrc:///images/play.svg";
-                }
-            }
-            iconSize: _style.icon.size.small
-            onClicked: {
-                if(!root.jobModel.save())
-                    projectSettingsOpened();
-                else
-                    root.jobModel.start()
-            }
-            // highlighted: true
-            text: "start"
-        }
-        CustomToolButton {
+            visible: (currentJob.status>=0)
             iconSource: "qrc:///images/refresh.svg"
             iconSize: _style.icon.size.small
             text: "refresh"
-            onClicked: root.jobModel.refresh()
+            onClicked: currentJob.modelData.refresh()
         }
     }
 }

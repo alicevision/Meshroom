@@ -1,9 +1,10 @@
 #include "SettingsIO.hpp"
-#include "models/ApplicationModel.hpp"
 #include "models/ProjectModel.hpp"
+#include "models/ResourceModel.hpp"
 #include <QSettings>
 #include <QUrl>
-#include <iostream>
+#include <QDir>
+#include <cstdlib> // std::getenv
 
 namespace mockup
 {
@@ -21,7 +22,7 @@ void SettingsIO::clearRecentProjects()
     settings.setValue("project/recent", empty);
 }
 
-void SettingsIO::loadRecentProjects(ApplicationModel& applicationModel)
+void SettingsIO::loadRecentProjects(ProjectModel* projectModel)
 {
     QSettings settings;
     QVariantList recents = settings.value("project/recent").toList();
@@ -30,35 +31,42 @@ void SettingsIO::loadRecentProjects(ApplicationModel& applicationModel)
     while(it != recents.end())
     {
         QUrl url(it->toUrl());
-        if(!applicationModel.addExistingProject(url))
-        {
-            // invalid project, remove from settings
-            QSettings settings;
-            QVariantList recents = settings.value("project/recent").toList();
-            recents.removeAll(url);
-            settings.setValue("project/recent", recents);
-        }
+        projectModel->addProject(url);
         ++it;
     }
 }
 
-void SettingsIO::saveRecentProjects(ApplicationModel& applicationModel)
+void SettingsIO::saveRecentProjects(ProjectModel* projectModel)
 {
     // clear recent project list
     SettingsIO::clearRecentProjects();
     // rebuild it by iterating over all loaded projects
     QSettings settings;
     QVariantList recents;
-    const QList<QObject*>& projects = applicationModel.projects();
-    QObjectList::const_iterator it = projects.begin();
-    while(it != projects.end())
+    for(size_t i = 0; i < projectModel->rowCount(); ++i)
     {
-        ProjectModel* project = dynamic_cast<ProjectModel*>(*it);
-        if(project)
-            recents.push_front(project->url());
-        ++it;
+        QModelIndex id = projectModel->index(i, 0);
+        Project* p = projectModel->data(id, ProjectModel::ModelDataRole).value<Project*>();
+        if(!p || !p->url().isValid())
+            continue;
+        recents.append(p->url());
     }
     settings.setValue("project/recent", recents);
+}
+
+void SettingsIO::loadFeaturedProjects(ResourceModel* featuredModel)
+{
+    QString externalLocationsStr = std::getenv("MOCKUP_PROJECT_LOCATIONS");
+    QStringList externalLocations = externalLocationsStr.split(":");
+    foreach(const QString& loc, externalLocations)
+    {
+        QDir dir(loc);
+        if(QUrl::fromLocalFile(loc).isValid() && dir.exists())
+        {
+            Resource* r = new Resource(QUrl::fromLocalFile(loc));
+            featuredModel->addResource(r);
+        }
+    }
 }
 
 } // namespace

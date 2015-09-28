@@ -12,13 +12,16 @@ namespace mockup
 class GLDrawable
 {
 public:
-    GLDrawable(QOpenGLShaderProgram &program) : _program(program) {}
+    GLDrawable(QOpenGLShaderProgram& program)
+        : _program(program)
+    {
+    }
     virtual ~GLDrawable() = default;
     virtual void draw() = 0;
 
     // Sets the camera common to all objects
     void uploadShaderMatrix();
-    static void setCameraMatrix(const QMatrix4x4 &);
+    static void setCameraMatrix(const QMatrix4x4&);
 
     /// SHADER stuff
     // FIXME: I don't think this is a good idea to keep
@@ -28,17 +31,16 @@ public:
                            GLSLColoredShader *,
                            GLSLBackgroundShader*);
     static void deleteShaders();
-   
+
     /// Sets the model view matrix of the object
     /// its position and orientation
-    void setModelMatrix(const QMatrix4x4 &mat) {_modelMatrix = mat;}
+    void setModelMatrix(const QMatrix4x4& mat) { _modelMatrix = mat; }
 
 protected:
-    
     // SHADERS
     QOpenGLShaderProgram& _program; // Shader used in the current object
-   
-    // Collection of shader, 
+
+    // Collection of shader,
     // FIXME: should certainly be moved in a dedicated
     // class 
     static GLSLPlainColorShader *_colorUniform;
@@ -47,11 +49,10 @@ protected:
 
     // Camera matrix is here in static because it is used in
     // all static shaders above
-    static QMatrix4x4           _cameraMatrix;
+    static QMatrix4x4 _cameraMatrix;
 
     // Position/orientation matrix of the model
-    QMatrix4x4                  _modelMatrix;
-
+    QMatrix4x4 _modelMatrix;
 };
 
 } // namespace

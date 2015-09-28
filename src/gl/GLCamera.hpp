@@ -18,7 +18,7 @@ public:
     ~GLCamera() = default;
 
     void draw() override;
-    void setProjectionMatrix(const QMatrix4x4 &mat) {_projectionMatrix = mat;}
+    void setProjectionMatrix(const QMatrix4x4& mat) { _projectionMatrix = mat; }
 
 private:
     QOpenGLVertexArrayObject _vao;

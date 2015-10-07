@@ -35,19 +35,21 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     , _projects(new ProjectModel(this))
     , _featured(new ResourceModel(this))
 {
+    // setup a custom logging system
+    _logger = this;
+    qInstallMessageHandler(doLog);
+
     // initialize recent and featured project lists
     SettingsIO::loadRecentProjects(_projects);
     SettingsIO::loadFeaturedProjects(_featured);
-    // expose this object to QML
+
+    // expose this object to QML & load the main QML file
     if(engine.rootContext())
         engine.rootContext()->setContextProperty("_applicationModel", this);
-    // load the main QML file
-    connect(&engine, SIGNAL(objectCreated(QObject*, const QUrl&)), this,
-            SLOT(onEngineLoaded(QObject*, const QUrl&)));
 #ifndef NDEBUG
     engine.load("src/qml/main_debug.qml");
 #else
-    engine.load(QCoreApplication::applicationDirPath()+"/qml/main.qml");
+    engine.load(QCoreApplication::applicationDirPath() + "/qml/main.qml");
 #endif
 }
 
@@ -55,13 +57,6 @@ ApplicationModel::~ApplicationModel()
 {
     _logger = this;
     qInstallMessageHandler(0);
-}
-
-void ApplicationModel::onEngineLoaded(QObject* object, const QUrl& url)
-{
-    // setup a custom logging system
-    _logger = this;
-    qInstallMessageHandler(doLog);
 }
 
 } // namespace

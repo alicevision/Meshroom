@@ -14,6 +14,7 @@ public:
     ~GLSLBackgroundShader() = default;
 
     void draw();
+
 private:
     QOpenGLVertexArrayObject _vao;
 };

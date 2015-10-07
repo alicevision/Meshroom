@@ -4,14 +4,17 @@
 #include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QFileInfo>
 #include <QDebug>
 #include <cstdlib> // std::getenv
+#include <cassert>
 
 namespace mockup
 {
 
-namespace // empty
+namespace // empty namespace
 {
+
 Attribute* getAttribute(const Job& job, const QString& stepName, const QString& attrKey,
                         QModelIndex& outIndex, Step** outStep)
 {
@@ -37,6 +40,7 @@ Attribute* getAttribute(const Job& job, const QString& stepName, const QString& 
     }
     return nullptr;
 }
+
 bool isRegisteredImage(const Job& job, const QUrl& url)
 {
     ResourceModel* images = job.images();
@@ -50,7 +54,8 @@ bool isRegisteredImage(const Job& job, const QUrl& url)
     }
     return false;
 }
-}
+
+} // empty namespace
 
 Job::Job(const QUrl& url)
     : _url(url)
@@ -159,6 +164,10 @@ void Job::start()
 
 void Job::refresh()
 {
+    QFileInfo fileInfo(_url.toLocalFile() + "/job.json");
+    if(!fileInfo.exists())
+        return;
+
     // define program path
     QString statusCommand = std::getenv("MOCKUP_STATUS_COMMAND");
     if(statusCommand.isEmpty())
@@ -166,7 +175,7 @@ void Job::refresh()
 
     // and command arguments
     QStringList arguments;
-    arguments.append(_url.toLocalFile() + "/job.json");
+    arguments.append(fileInfo.absoluteFilePath());
 
     // configure & run
     QProcess process;
@@ -183,17 +192,15 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
 {
     QProcess* process = qobject_cast<QProcess*>(QObject::sender());
     JobModel* model = qobject_cast<JobModel*>(parent());
-    if(!process || !model)
-    {
-        qCritical("Unable to read process response");
-        return;
-    }
+    assert(process);
+    assert(model);
 
     // check exit status
     if(exitStatus != QProcess::NormalExit)
     {
         QString response(process->readAllStandardError());
         qCritical() << response;
+        model->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
         return;
     }
 
@@ -204,6 +211,7 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     if(parseError.error != QJsonParseError::NoError)
     {
         qCritical("Invalid JSON response: parse error");
+        model->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
         return;
     }
 

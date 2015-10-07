@@ -10,9 +10,8 @@ GLSLBackgroundShader* GLDrawable::_background(nullptr);
 
 QMatrix4x4 GLDrawable::_cameraMatrix;
 
-void GLDrawable::setShaders(GLSLPlainColorShader* colorUniform
-        , GLSLColoredShader* colorArray
-        , GLSLBackgroundShader* background)
+void GLDrawable::setShaders(GLSLPlainColorShader* colorUniform, GLSLColoredShader* colorArray,
+                            GLSLBackgroundShader* background)
 {
     _colorUniform = colorUniform;
     _colorArray = colorArray;
@@ -48,6 +47,5 @@ void GLDrawable::setCameraMatrix(const QMatrix4x4& mat)
 {
     _cameraMatrix = mat;
 }
-
 
 } // namespace

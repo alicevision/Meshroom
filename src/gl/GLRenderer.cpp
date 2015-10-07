@@ -10,13 +10,13 @@ namespace mockup
 {
 
 GLRenderer::GLRenderer()
-: _background(nullptr)
+    : _background(nullptr)
 {
     // The shaders have to be created in a valid opengl context
     _background = new GLSLBackgroundShader();
-    GLDrawable::setShaders(new GLSLPlainColorShader(QVector4D(0.8, 0.8, 0.8, 1.0)),
-                           new GLSLColoredShader(),
-                           _background); // NOTE : the background shader is handled like the other shaders
+    GLDrawable::setShaders(
+        new GLSLPlainColorShader(QVector4D(0.8, 0.8, 0.8, 1.0)), new GLSLColoredShader(),
+        _background); // NOTE : the background shader is handled like the other shaders
     _scene.append(new GLGizmo());
     _scene.append(new GLGrid());
     updateWorldMatrix();

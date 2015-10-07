@@ -1,7 +1,8 @@
 #include "GLSLBackgroundShader.hpp"
 #include <QOpenGLBuffer>
 #include <iostream>
-namespace mockup {
+namespace mockup
+{
 
 // TODO : camera ortho
 const GLchar* vertex_shader = R"(#version 330 core
@@ -56,7 +57,7 @@ void GLSLBackgroundShader::draw()
     glDrawArrays(GL_POINTS, 0, 1);
     _vao.release();
     release();
-    glDepthMask(GL_TRUE); // FIXME : this function should restore the previous state of the depth mask
+    glDepthMask(
+        GL_TRUE); // FIXME : this function should restore the previous state of the depth mask
 }
-
 }

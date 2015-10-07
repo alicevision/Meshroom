@@ -27,9 +27,7 @@ public:
     // FIXME: I don't think this is a good idea to keep
     // different shaders as static members of the base class
     // fix would be to think about it and find a solution if needed...
-    static void setShaders(GLSLPlainColorShader *, 
-                           GLSLColoredShader *,
-                           GLSLBackgroundShader*);
+    static void setShaders(GLSLPlainColorShader*, GLSLColoredShader*, GLSLBackgroundShader*);
     static void deleteShaders();
 
     /// Sets the model view matrix of the object
@@ -42,10 +40,10 @@ protected:
 
     // Collection of shader,
     // FIXME: should certainly be moved in a dedicated
-    // class 
-    static GLSLPlainColorShader *_colorUniform;
-    static GLSLColoredShader    *_colorArray;
-    static GLSLBackgroundShader *_background;
+    // class
+    static GLSLPlainColorShader* _colorUniform;
+    static GLSLColoredShader* _colorArray;
+    static GLSLBackgroundShader* _background;
 
     // Camera matrix is here in static because it is used in
     // all static shaders above

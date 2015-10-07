@@ -24,27 +24,28 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
         P3fArraySamplePtr positions = ms.getValue().getPositions();
         auto pointCloud = new GLPointCloud();
         pointCloud->setRawPositions(positions->get(), positions->size());
-        
+
         // Check if we have a color property
         ICompoundProperty arbProp = ms.getArbGeomParams();
-        if (arbProp) 
+        if(arbProp)
         {
             std::size_t numProps = arbProp.getNumProperties();
-            for (std::size_t i = 0; i < numProps; ++i)
+            for(std::size_t i = 0; i < numProps; ++i)
             {
-                const PropertyHeader & propHeader = arbProp.getPropertyHeader(i);
-                if (propHeader.isArray())
-                {    
-                    const std::string & propName = propHeader.getName();
+                const PropertyHeader& propHeader = arbProp.getPropertyHeader(i);
+                if(propHeader.isArray())
+                {
+                    const std::string& propName = propHeader.getName();
                     Alembic::Abc::IArrayProperty prop(arbProp, propName);
 
                     Alembic::AbcCoreAbstract::DataType dtype = prop.getDataType();
                     std::string interp = prop.getMetaData().get("interpretation");
 
-                    if (interp == "rgb")
+                    if(interp == "rgb")
                     {
                         Alembic::Util::uint8_t extent = dtype.getExtent();
-                        std::cout << "Loading " << propName << " " << interp << " " << extent << std::endl;
+                        std::cout << "Loading " << propName << " " << interp << " " << extent
+                                  << std::endl;
 
                         Alembic::AbcCoreAbstract::ArraySamplePtr samp;
                         prop.get(samp);
@@ -56,7 +57,6 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
             }
         }
         scene.append(pointCloud);
-
     }
     else if(IXform::matches(md))
     {

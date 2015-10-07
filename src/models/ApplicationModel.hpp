@@ -24,9 +24,6 @@ public slots:
     LogModel* logs() const { return _logs; }
     ResourceModel* featured() const { return _featured; }
 
-public slots:
-    void onEngineLoaded(QObject* object, const QUrl& url);
-
 signals:
     void projectsChanged();
     void logsChanged();

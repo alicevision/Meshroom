@@ -128,6 +128,9 @@ bool Job::save()
 
 void Job::start()
 {
+    JobModel* model = qobject_cast<JobModel*>(parent());
+    assert(model);
+
     if(_images->rowCount() < 2)
     {
         qCritical("Starting job: insufficient number of sources");
@@ -159,6 +162,8 @@ void Job::start()
         qCritical("Unable to start job");
         return;
     }
+
+    model->setData(_modelIndex, 0, JobModel::StatusRole); // BLOCKED
     qInfo("Job started");
 }
 

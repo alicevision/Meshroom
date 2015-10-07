@@ -78,6 +78,25 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
         CameraSample matrix = cs.getValue();
         QMatrix4x4 projMat;
         newCamera->setProjectionMatrix(projMat);
+
+        // Check if we have an associated image plane
+        ICompoundProperty userProps = cs.getUserProperties();
+        if(userProps)
+        {
+            std::size_t numProps = userProps.getNumProperties();
+            for(std::size_t i = 0; i < numProps; ++i)
+            {
+                const PropertyHeader& propHeader = userProps.getPropertyHeader(i);
+                if (propHeader.getName() == "imagePlane") 
+                {
+                    Alembic::Abc::IStringProperty prop(userProps, "imagePlane");
+                    std::string imagePlaneFile;
+                    prop.get(imagePlaneFile);
+                    newCamera->setImagePlane(imagePlaneFile);
+                    break;
+                }
+            }
+        }
         scene.append(newCamera);
     }
 

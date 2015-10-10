@@ -87,7 +87,7 @@ Item {
         Item { // sub items
             id: subItemsContainer
             width: parent.width
-            height: root.expanded ? (model.jobs.count+0.25) * root.subItemHeight : 0
+            height: root.expanded ? (jobList.count+0.25) * root.subItemHeight : 0
             clip: true
             Behavior on height {
                 SequentialAnimation {
@@ -98,7 +98,8 @@ Item {
             ListView {
                 id: jobList
                 anchors.fill: parent
-                model: jobs
+                model: proxy
+                // model: jobs
                 delegate: JobDelegate {
                     width: parent.width
                     height: root.subItemHeight

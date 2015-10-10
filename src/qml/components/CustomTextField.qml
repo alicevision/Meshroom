@@ -5,10 +5,11 @@ import QtQuick.Controls.Styles 1.4
 TextField {
     id: root
     property color color: enabled ? _style.text.color.normal : _style.text.color.disabled
+    property int textSize: _style.text.size.normal
     style: TextFieldStyle {
         textColor: root.color
         placeholderTextColor : _style.text.color.disabled
-        font.pixelSize: _style.text.size.normal
+        font.pixelSize: root.textSize
         background: Rectangle {
             implicitHeight: 30
             implicitWidth: 200

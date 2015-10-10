@@ -17,6 +17,7 @@ public:
         NameRole = Qt::UserRole + 1,
         UrlRole,
         JobsRole,
+        ProxyRole,
         ModelDataRole
     };
 

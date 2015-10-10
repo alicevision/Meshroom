@@ -30,6 +30,8 @@ QVariant ProjectModel::data(const QModelIndex& index, int role) const
             return project->url();
         case JobsRole:
             return QVariant::fromValue(project->jobs());
+        case ProxyRole:
+            return QVariant::fromValue(project->proxy());
         case ModelDataRole:
             return QVariant::fromValue(project);
         default:
@@ -43,6 +45,7 @@ QHash<int, QByteArray> ProjectModel::roleNames() const
     roles[NameRole] = "name";
     roles[UrlRole] = "url";
     roles[JobsRole] = "jobs";
+    roles[ProxyRole] = "proxy";
     roles[ModelDataRole] = "modelData";
     return roles;
 }

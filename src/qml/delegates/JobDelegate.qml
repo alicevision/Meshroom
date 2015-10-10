@@ -54,9 +54,9 @@ Item {
             }
             ColumnLayout {
                 CustomWrappedText {
+                    Layout.fillWidth: true
                     text: model.name
                     textSize: _style.text.size.normal
-                    width: 120
                     color: (currentJob == model) ? _style.text.color.selected : _style.text.color.normal
                 }
                 RowLayout {

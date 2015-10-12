@@ -17,6 +17,9 @@ void ProjectsIO::populate(Project& project)
         Job* job = new Job(QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
         project.jobs()->addJob(job);
     }
+    // we should have at least one job
+    if(project.jobs()->rowCount() <= 0)
+        project.jobs()->addJob(project.url());
 }
 
 } // namespace

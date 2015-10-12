@@ -53,11 +53,13 @@ Item {
                 }
             }
             ColumnLayout {
-                CustomWrappedText {
+                CustomTextField {
                     Layout.fillWidth: true
                     text: model.name
                     textSize: _style.text.size.normal
                     color: (currentJob == model) ? _style.text.color.selected : _style.text.color.normal
+                    state: "HIDDEN"
+                    onEditingFinished: model.name = text
                 }
                 RowLayout {
                     CustomText {

@@ -70,6 +70,9 @@ bool JobModel::setData(const QModelIndex& index, const QVariant& value, int role
     Job* job = _jobs[index.row()];
     switch(role)
     {
+        case NameRole:
+            job->setName(value.toString());
+            break;
         case CompletionRole:
             job->setCompletion(value.toFloat());
             break;

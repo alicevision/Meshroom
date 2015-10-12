@@ -18,8 +18,8 @@ public:
     Job(const QUrl& url = QUrl());
 
 public:
-    QString name() const { return _url.fileName(); }
     const QUrl& url() const { return _url; }
+    const QString& name() const { return _name; }
     const QDateTime& date() const { return _date; }
     const QString& user() const { return _user; }
     const float& completion() const { return _completion; }
@@ -28,6 +28,7 @@ public:
     StepModel* steps() const { return _steps; }
     ResourceModel* images() const { return _images; }
     void setUrl(const QUrl& url) { _url = url; }
+    void setName(const QString& name) { _name = name; save(); }
     void setDate(const QDateTime& date) { _date = date; }
     void setUser(const QString& user) { _user = user; }
     void setCompletion(const float& completion) { _completion = completion; }
@@ -48,6 +49,7 @@ public slots:
 
 private:
     QUrl _url;
+    QString _name;
     QDateTime _date;
     QString _user;
     float _completion = 0.f;

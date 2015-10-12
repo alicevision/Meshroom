@@ -45,7 +45,10 @@ void JobsIO::load(Job& job)
     }
 
     QJsonObject json = jsondoc.object();
-    job.setUser(json["user"].toString());
+    if(json.contains("user"))
+        job.setUser(json["user"].toString());
+    if(json.contains("name"))
+        job.setName(json["name"].toString());
     QJsonArray resourceArray = json["resources"].toArray();
     QObjectList resources;
     for(int i = 0; i < resourceArray.count(); ++i)
@@ -93,6 +96,7 @@ bool JobsIO::save(Job& job)
     }
     jobObj.insert("date", QJsonValue::fromVariant(job.date()));
     jobObj.insert("user", job.user());
+    jobObj.insert("name", job.name());
     jobObj.insert("paths", pathsObject);
     jobObj.insert("resources", resourceArray);
     jobObj.insert("steps", stepsObject);

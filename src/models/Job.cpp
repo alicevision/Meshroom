@@ -59,6 +59,7 @@ bool isRegisteredImage(const Job& job, const QUrl& url)
 
 Job::Job(const QUrl& url)
     : _url(url)
+    , _name(_url.fileName())
     , _steps(new StepModel(this))
     , _images(new ResourceModel(this))
     , _user(std::getenv("USER"))

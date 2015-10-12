@@ -18,22 +18,22 @@ const GLchar* geometry_shader = R"(#version 330 core
         vec2( 1.0,  1.0),
         vec2( 1.0, -1.0)
     );
- 
+
 void main() {
   for (int i = 0; i < 4; ++i) {
     gl_Position = vec4( data[i], 0.0, 1.0 );
     EmitVertex();
   }
   EndPrimitive();
-}  
-    
+}
+
 )";
 
 const GLchar* fragment_shader = R"(#version 330
         layout (location = 0) out vec4 frag_color;
         void main(void) {
             // FIXME: get a relative position
-            float col = gl_FragCoord.y/1000;
+            float col = (gl_FragCoord.y/1000)*0.15f;
             frag_color = vec4(col, col, col, 1.0);
         })";
 

@@ -39,7 +39,7 @@ Item {
                 color: _style.window.color.xdarker
             }
             Loader {
-                width: 210
+                width: 230
                 sourceComponent: bodyA
             }
             Loader {

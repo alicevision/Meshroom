@@ -59,13 +59,38 @@ Item {
                     textSize: _style.text.size.normal
                     color: (currentJob == model) ? _style.text.color.selected : _style.text.color.normal
                     state: "HIDDEN"
+                    enabled: model.status < 0
                     onEditingFinished: model.name = text
                 }
                 RowLayout {
-                    CustomText {
-                        text: model.images.count+ " images"
-                        textSize: _style.text.size.small
-                        color: _style.text.color.darker
+                    spacing: 6
+                    RowLayout {
+                        spacing: 2
+                        CustomToolButton {
+                            iconSource: "qrc:///images/person.svg"
+                            iconSize: _style.icon.size.xsmall
+                            enabled: false
+                            opacity: 0.5
+                        }
+                        CustomText {
+                            text: model.user
+                            textSize: _style.text.size.small
+                            color: _style.text.color.darker
+                        }
+                    }
+                    RowLayout {
+                        spacing: 2
+                        CustomToolButton {
+                            iconSource: "qrc:///images/image.svg"
+                            iconSize: _style.icon.size.xsmall
+                            enabled: false
+                            opacity: 0.5
+                        }
+                        CustomText {
+                            text: model.images.count
+                            textSize: _style.text.size.small
+                            color: _style.text.color.darker
+                        }
                     }
                     Item {
                         Layout.fillWidth: true

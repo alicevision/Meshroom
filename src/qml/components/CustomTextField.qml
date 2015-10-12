@@ -8,6 +8,8 @@ TextField {
     property color bgcolor: _style.window.color.xdarker
     property int textSize: _style.text.size.normal
 
+    onAccepted: focus = false
+
     state: ""
     states: [
         State {

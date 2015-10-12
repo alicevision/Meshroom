@@ -17,6 +17,12 @@ Rectangle {
         anchors.leftMargin: 5
         anchors.rightMargin: 5
         spacing: 0
+        CustomToolButton {
+            iconSource: "qrc:///images/funnel.svg"
+            iconSize: _style.icon.size.small
+            enabled: false
+            opacity: 0.5
+        }
         CustomTextField {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -26,7 +32,7 @@ Rectangle {
             textSize: _style.text.size.small
             color: _style.text.color.darker
             onEditingFinished: {
-                for(var i=0; i<_applicationModel.projects.count; ++i){
+                for(var i=0; i<_applicationModel.projects.count; ++i) {
                     var project = _applicationModel.projects.data(_applicationModel.projects.index(i, 0), 261);
                     project.setFilterRegexp(text);
                 }

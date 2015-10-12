@@ -12,6 +12,7 @@
         <file>images/disk.svg</file>
         <file>images/folder.svg</file>
         <file>images/folder_outline.svg</file>
+        <file>images/funnel.svg</file>
         <file>images/gear.svg</file>
         <file>images/gear_outline.svg</file>
         <file>images/grid.svg</file>
@@ -27,6 +28,8 @@
         <file>images/project.svg</file>
         <file>images/pause.svg</file>
         <file>images/pause_outline.svg</file>
+        <file>images/person.svg</file>
+        <file>images/person_outline.svg</file>
         <file>images/play.svg</file>
         <file>images/play_outline.svg</file>
         <file>images/project_outline.svg</file>

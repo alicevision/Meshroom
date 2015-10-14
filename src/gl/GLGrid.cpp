@@ -1,7 +1,7 @@
 #include "GLGrid.hpp"
 #include <QVector>
 
-namespace mockup
+namespace meshroom
 {
 
 namespace // empty namespace

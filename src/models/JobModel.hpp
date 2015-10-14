@@ -3,7 +3,7 @@
 #include <QAbstractListModel>
 #include "models/Job.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class JobModel : public QAbstractListModel

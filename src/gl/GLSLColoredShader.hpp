@@ -2,7 +2,7 @@
 
 #include <QOpenGLShaderProgram>
 
-namespace mockup
+namespace meshroom
 {
 
 class GLSLColoredShader : public QOpenGLShaderProgram

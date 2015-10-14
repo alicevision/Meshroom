@@ -23,7 +23,7 @@ const GLchar* fragment_shader = R"(#version 330
 
 } // empty namespace
 
-namespace mockup
+namespace meshroom
 {
 
 GLSLColoredShader::GLSLColoredShader()

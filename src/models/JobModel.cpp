@@ -1,7 +1,7 @@
 #include "JobModel.hpp"
 #include <QQmlEngine>
 
-namespace mockup
+namespace meshroom
 {
 
 JobModel::JobModel(QObject* parent)

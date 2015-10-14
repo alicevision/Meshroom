@@ -5,7 +5,7 @@
 #include "LogModel.hpp"
 #include "ResourceModel.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class ApplicationModel : public QObject

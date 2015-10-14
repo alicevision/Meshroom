@@ -1,7 +1,7 @@
 #include "LogModel.hpp"
 #include <QQmlEngine>
 
-namespace mockup
+namespace meshroom
 {
 
 LogModel::LogModel(QObject* parent)

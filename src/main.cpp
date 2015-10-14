@@ -8,12 +8,12 @@
 
 int main(int argc, char* argv[])
 {
-    using namespace mockup;
+    using namespace meshroom;
 
     QApplication qapp(argc, argv);
     QCoreApplication::setOrganizationName("PopartEU");
     QCoreApplication::setOrganizationDomain("popart.eu");
-    QCoreApplication::setApplicationName("mockupMVG");
+    QCoreApplication::setApplicationName("meshroom");
 
     // register types
     qRegisterMetaType<QtMsgType>("QtMsgType");

@@ -3,7 +3,7 @@
 #include <QList>
 #include "GLDrawable.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 typedef QList<GLDrawable*> GLScene;

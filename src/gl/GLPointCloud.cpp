@@ -2,7 +2,7 @@
 #include "io/AlembicImport.hpp"
 #include <iostream>
 
-namespace mockup
+namespace meshroom
 {
 
 GLPointCloud::GLPointCloud()

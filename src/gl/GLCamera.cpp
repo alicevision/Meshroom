@@ -1,7 +1,7 @@
 #include "GLCamera.hpp"
 #include <QVector>
 #include <QOpenGLBuffer>
-namespace mockup
+namespace meshroom
 {
 
 // GL_LINES

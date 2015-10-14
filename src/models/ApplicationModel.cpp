@@ -4,13 +4,14 @@
 #include <QtQml/QQmlContext>
 #include <iostream>
 
-namespace mockup
+namespace meshroom
 {
 
 namespace // empty namespace
 {
 
-static mockup::ApplicationModel* _logger = nullptr;
+static ApplicationModel* _logger = nullptr;
+
 void doLog(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
     if(!_logger || !_logger->logs())

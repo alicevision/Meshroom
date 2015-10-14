@@ -7,7 +7,7 @@
 // GLCamera Gizmo
 // draw a simple camera
 
-namespace mockup
+namespace meshroom
 {
 
 class GLCamera : public GLDrawable

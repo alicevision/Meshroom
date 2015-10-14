@@ -20,7 +20,7 @@ const GLchar* fragment_shader = R"(#version 330
 
 } // namespace
 
-namespace mockup
+namespace meshroom
 {
 
 GLSLPlainColorShader::GLSLPlainColorShader(const QVector4D& color)

@@ -3,7 +3,7 @@
 #include "models/Resource.hpp"
 #include <QDir>
 
-namespace mockup
+namespace meshroom
 {
 
 void ProjectsIO::populate(Project& project)

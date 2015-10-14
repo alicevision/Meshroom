@@ -1,6 +1,6 @@
 #pragma once
 
-namespace mockup
+namespace meshroom
 {
 
 class Job; // forward declaration

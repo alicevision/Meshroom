@@ -2,7 +2,7 @@
 #include <QJsonArray>
 #include <QVariant>
 
-namespace mockup
+namespace meshroom
 {
 
 Resource::Resource(const QUrl& url)

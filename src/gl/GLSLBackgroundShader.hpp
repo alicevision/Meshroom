@@ -3,7 +3,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 
-namespace mockup
+namespace meshroom
 {
 
 class GLSLBackgroundShader : public QOpenGLShaderProgram

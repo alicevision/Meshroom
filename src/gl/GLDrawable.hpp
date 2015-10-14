@@ -5,7 +5,7 @@
 #include "GLSLPlainColorShader.hpp"
 #include "GLSLBackgroundShader.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 // Allows to have a list of pointers to drawable objects

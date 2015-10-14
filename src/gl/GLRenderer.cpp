@@ -6,7 +6,7 @@
 #include "io/AlembicImport.hpp"
 #include <QFileInfo>
 
-namespace mockup
+namespace meshroom
 {
 
 GLRenderer::GLRenderer()

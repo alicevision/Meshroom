@@ -3,7 +3,7 @@
 #include <QAbstractListModel>
 #include "models/Step.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class StepModel : public QAbstractListModel

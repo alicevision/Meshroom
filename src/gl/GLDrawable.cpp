@@ -1,7 +1,7 @@
 #include "GLDrawable.hpp"
 #include <QOpenGLBuffer>
 
-namespace mockup
+namespace meshroom
 {
 
 GLSLPlainColorShader* GLDrawable::_colorUniform(nullptr);

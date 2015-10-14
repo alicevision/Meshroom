@@ -1,7 +1,7 @@
 #include "StepModel.hpp"
 #include <QQmlEngine>
 
-namespace mockup
+namespace meshroom
 {
 
 StepModel::StepModel(QObject* parent)

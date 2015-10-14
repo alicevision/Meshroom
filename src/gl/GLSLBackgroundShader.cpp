@@ -1,7 +1,7 @@
 #include "GLSLBackgroundShader.hpp"
 #include <QOpenGLBuffer>
 #include <iostream>
-namespace mockup
+namespace meshroom
 {
 
 // TODO : camera ortho

@@ -7,7 +7,7 @@
 #include "StepModel.hpp"
 #include "ResourceModel.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class Job : public QObject

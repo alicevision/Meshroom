@@ -3,7 +3,7 @@
 #include <QAbstractListModel>
 #include "models/Resource.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class ResourceModel : public QAbstractListModel

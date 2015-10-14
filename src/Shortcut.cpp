@@ -2,7 +2,7 @@
 #include <QKeyEvent>
 #include <QCoreApplication>
 
-namespace mockup
+namespace meshroom
 {
 
 Shortcut::Shortcut(QObject* parent)

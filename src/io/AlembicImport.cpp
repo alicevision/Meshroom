@@ -10,7 +10,7 @@ using namespace Alembic::Abc;
 namespace AbcG = Alembic::AbcGeom;
 using namespace AbcG;
 
-namespace mockup
+namespace meshroom
 {
 
 // Top down insertion of 3d objects

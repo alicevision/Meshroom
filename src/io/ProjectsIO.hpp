@@ -2,7 +2,7 @@
 
 #include <QObject>
 
-namespace mockup
+namespace meshroom
 {
 
 class Project; // forward declaration

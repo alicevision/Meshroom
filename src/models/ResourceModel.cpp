@@ -2,7 +2,7 @@
 #include <QQmlEngine>
 #include <QDebug>
 
-namespace mockup
+namespace meshroom
 {
 
 ResourceModel::ResourceModel(QObject* parent)

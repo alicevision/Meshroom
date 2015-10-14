@@ -10,7 +10,7 @@ using namespace Alembic::Abc;
 namespace AbcG = Alembic::AbcGeom;
 using namespace AbcG;
 
-namespace mockup
+namespace meshroom
 {
 
 class AlembicImport // FIXME rename Import->Importer
@@ -26,6 +26,6 @@ private:
     IObject _rootEntity;
 };
 
-} // namespace mockup
+} // namespace
 
 #endif // WITH_ALEMBIC

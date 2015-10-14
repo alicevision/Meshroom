@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QMatrix4x4>
 
-namespace mockup
+namespace meshroom
 {
 
 class Camera : public QObject

@@ -3,7 +3,7 @@
 #include <QAbstractListModel>
 #include "models/Log.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class LogModel : public QAbstractListModel

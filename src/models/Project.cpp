@@ -1,7 +1,7 @@
 #include "Project.hpp"
 #include "io/ProjectsIO.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 Project::Project(const QUrl& url)

@@ -1,6 +1,6 @@
 #include "Log.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 Log::Log(const QtMsgType& type, const QString& message)

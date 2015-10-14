@@ -3,7 +3,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtMath>
 
-namespace mockup
+namespace meshroom
 {
 
 GLView::GLView()

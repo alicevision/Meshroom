@@ -4,7 +4,7 @@
 #include <QUrl>
 #include <QString>
 
-namespace mockup
+namespace meshroom
 {
 
 class Resource : public QObject

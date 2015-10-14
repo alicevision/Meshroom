@@ -1,7 +1,7 @@
 #include "Step.hpp"
 #include <QJsonObject>
 
-namespace mockup
+namespace meshroom
 {
 
 Step::Step(const QString& name)

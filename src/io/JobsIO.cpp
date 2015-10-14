@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QDir>
 
-namespace mockup
+namespace meshroom
 {
 
 void JobsIO::load(Job& job)

@@ -4,7 +4,7 @@
 #include <QMatrix4x4>
 #include "models/Camera.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 // forward declarations

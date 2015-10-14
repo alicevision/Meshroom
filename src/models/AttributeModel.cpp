@@ -1,7 +1,7 @@
 #include "AttributeModel.hpp"
 #include <QQmlEngine>
 
-namespace mockup
+namespace meshroom
 {
 
 AttributeModel::AttributeModel(QObject* parent)

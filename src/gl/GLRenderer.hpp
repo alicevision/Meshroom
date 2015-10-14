@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QColor>
 
-namespace mockup
+namespace meshroom
 {
 
 class GLView;

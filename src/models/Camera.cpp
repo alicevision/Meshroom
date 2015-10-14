@@ -1,7 +1,7 @@
 #include "Camera.hpp"
 #include <QFileInfo>
 
-namespace mockup
+namespace meshroom
 {
 
 Camera::Camera()

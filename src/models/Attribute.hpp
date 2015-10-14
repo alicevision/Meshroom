@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QVariant>
 
-namespace mockup
+namespace meshroom
 {
 
 class Attribute : public QObject

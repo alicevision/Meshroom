@@ -1,7 +1,7 @@
 #include "GLGizmo.hpp"
 #include <QVector>
 
-namespace mockup
+namespace meshroom
 {
 
 // FIXME: rename to GLAxisGizmo ?

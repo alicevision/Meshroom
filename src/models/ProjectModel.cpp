@@ -3,7 +3,7 @@
 #include <QQmlEngine>
 #include <QDebug>
 
-namespace mockup
+namespace meshroom
 {
 
 ProjectModel::ProjectModel(QObject* parent)

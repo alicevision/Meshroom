@@ -5,7 +5,7 @@
 #include <QSortFilterProxyModel>
 #include "JobModel.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class Project : public QObject

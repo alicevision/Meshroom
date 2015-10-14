@@ -7,7 +7,7 @@ file(GLOB_RECURSE TARGET_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
 #
 # Target name
 #
-set(TARGETOBJ mockup)
+set(TARGETOBJ meshroom)
 
 
 #

@@ -3,7 +3,7 @@
 #include <QObject>
 #include "AttributeModel.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class Step : public QObject

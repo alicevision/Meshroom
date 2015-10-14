@@ -7,7 +7,7 @@
 
 class QFileInfo; // forward reference
 
-namespace mockup
+namespace meshroom
 {
 
 class InstantCoding : public QObject

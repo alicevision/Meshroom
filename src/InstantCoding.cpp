@@ -4,7 +4,7 @@
 #include <QFileInfo>
 #include <iostream>
 
-namespace mockup
+namespace meshroom
 {
 
 InstantCoding::InstantCoding(QQmlApplicationEngine& engine)

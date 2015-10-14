@@ -5,7 +5,7 @@
 #include <QOpenGLShaderProgram>
 #include "GLDrawable.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class GLGrid : public GLDrawable

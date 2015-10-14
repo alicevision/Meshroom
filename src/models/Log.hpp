@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QString>
 
-namespace mockup
+namespace meshroom
 {
 
 class Log : public QObject

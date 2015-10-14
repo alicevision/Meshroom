@@ -4,7 +4,7 @@
 #include <QUrl>
 #include <QDebug>
 
-namespace mockup
+namespace meshroom
 {
 
 void Attribute::setValue(const QVariant& value)

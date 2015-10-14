@@ -6,7 +6,7 @@
 #include <QDir>
 #include <cstdlib> // std::getenv
 
-namespace mockup
+namespace meshroom
 {
 
 void SettingsIO::clearAll()
@@ -56,7 +56,7 @@ void SettingsIO::saveRecentProjects(ProjectModel* projectModel)
 
 void SettingsIO::loadFeaturedProjects(ResourceModel* featuredModel)
 {
-    QString externalLocationsStr = std::getenv("MOCKUP_PROJECT_LOCATIONS");
+    QString externalLocationsStr = std::getenv("MESHROOM_PROJECT_LOCATIONS");
     QStringList externalLocations = externalLocationsStr.split(":");
     foreach(const QString& loc, externalLocations)
     {

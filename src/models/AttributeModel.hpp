@@ -3,7 +3,7 @@
 #include <QAbstractListModel>
 #include "models/Attribute.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class AttributeModel : public QAbstractListModel

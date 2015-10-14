@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QKeySequence>
 
-namespace mockup
+namespace meshroom
 {
 
 class Shortcut : public QObject

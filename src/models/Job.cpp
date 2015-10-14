@@ -9,7 +9,7 @@
 #include <cstdlib> // std::getenv
 #include <cassert>
 
-namespace mockup
+namespace meshroom
 {
 
 namespace // empty namespace
@@ -145,7 +145,7 @@ void Job::start()
     }
 
     // define program path
-    QString startCommand = std::getenv("MOCKUP_START_COMMAND");
+    QString startCommand = std::getenv("MESHROOM_START_COMMAND");
     if(startCommand.isEmpty())
         startCommand = QCoreApplication::applicationDirPath() + "/scripts/job_start.py";
 
@@ -175,7 +175,7 @@ void Job::refresh()
         return;
 
     // define program path
-    QString statusCommand = std::getenv("MOCKUP_STATUS_COMMAND");
+    QString statusCommand = std::getenv("MESHROOM_STATUS_COMMAND");
     if(statusCommand.isEmpty())
         statusCommand = QCoreApplication::applicationDirPath() + "/scripts/job_status.py";
 

@@ -4,7 +4,7 @@
 #include <QOpenGLBuffer>
 #include "GLDrawable.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class GLGizmo : public GLDrawable

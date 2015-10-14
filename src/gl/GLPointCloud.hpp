@@ -4,7 +4,7 @@
 #include <QOpenGLVertexArrayObject>
 #include "GLDrawable.hpp"
 
-namespace mockup
+namespace meshroom
 {
 
 class GLPointCloud : public GLDrawable

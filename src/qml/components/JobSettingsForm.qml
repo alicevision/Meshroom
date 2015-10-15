@@ -9,12 +9,12 @@ Item {
     id : root
 
     property Component sliderControl: CustomSlider {
-        onValueChanged: modelData.value = value
-        value: modelData.value
-        minimumValue: modelData.min
+        // minimumValue: modelData.min
+        Component.onCompleted: minimumValue = modelData.min // workaround
         maximumValue: modelData.max
         stepSize: modelData.step
-        // tickmarksEnabled: true
+        value: modelData.value
+        onValueChanged: modelData.value = value
         updateValueWhileDragging: true
     }
     property Component textControl: CustomTextField {

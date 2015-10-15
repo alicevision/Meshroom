@@ -92,14 +92,12 @@ Job::Job(const QUrl& url)
 
     {
         Step* step = new Step("sfm");
-        {
-            Attribute* att = new Attribute();
-            att->setType(3); // pair selector
-            att->setKey("initial_pair");
-            att->setName("initial pair");
-            att->setValue(QStringList({"", ""}));
-            step->attributes()->addAttribute(att);
-        }
+        Attribute* att = new Attribute();
+        att->setType(3); // pair selector
+        att->setKey("initial_pair");
+        att->setName("initial pair");
+        att->setValue(QStringList({"", ""}));
+        step->attributes()->addAttribute(att);
         _steps->addStep(step);
     }
 
@@ -112,6 +110,7 @@ Job::Job(const QUrl& url)
     QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
 
     // job auto-save
+    QObject::connect(this, SIGNAL(dataChanged()), this, SLOT(save()));
     connect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
     for(size_t i = 0; i < _steps->rowCount(); i++)
     {

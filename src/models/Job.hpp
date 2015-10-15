@@ -27,10 +27,10 @@ public:
     const QUrl& thumbnail() const { return _thumbnail; }
     StepModel* steps() const { return _steps; }
     ResourceModel* images() const { return _images; }
-    void setUrl(const QUrl& url) { _url = url; }
-    void setName(const QString& name) { _name = name; save(); }
-    void setDate(const QDateTime& date) { _date = date; }
-    void setUser(const QString& user) { _user = user; }
+    void setUrl(const QUrl& url) { _url = url; emit dataChanged(); }
+    void setName(const QString& name) { _name = name; emit dataChanged(); }
+    void setDate(const QDateTime& date) { _date = date; emit dataChanged(); }
+    void setUser(const QString& user) { _user = user; emit dataChanged(); }
     void setCompletion(const float& completion) { _completion = completion; }
     void setStatus(const int& status) { _status = status; }
     void setThumbnail(const QUrl& thumbnail) { _thumbnail = thumbnail; }
@@ -46,6 +46,9 @@ public slots:
     bool isPairA(const QUrl& url);
     bool isPairB(const QUrl& url);
     bool isPairValid();
+
+signals:
+    void dataChanged();
 
 private:
     QUrl _url;

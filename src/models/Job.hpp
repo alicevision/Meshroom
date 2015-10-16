@@ -27,14 +27,14 @@ public:
     const QUrl& thumbnail() const { return _thumbnail; }
     StepModel* steps() const { return _steps; }
     ResourceModel* images() const { return _images; }
-    void setUrl(const QUrl& url) { _url = url; emit dataChanged(); }
-    void setName(const QString& name) { _name = name; emit dataChanged(); }
-    void setDate(const QDateTime& date) { _date = date; emit dataChanged(); }
-    void setUser(const QString& user) { _user = user; emit dataChanged(); }
-    void setCompletion(const float& completion) { _completion = completion; }
-    void setStatus(const int& status) { _status = status; }
-    void setThumbnail(const QUrl& thumbnail) { _thumbnail = thumbnail; }
-    void setModelIndex(const QModelIndex& id) { _modelIndex = id; }
+    void setUrl(const QUrl& url);
+    void setName(const QString& name);
+    void setDate(const QDateTime& date);
+    void setUser(const QString& user);
+    void setCompletion(const float& completion);
+    void setStatus(const int& status);
+    void setThumbnail(const QUrl& thumbnail);
+    void setModelIndex(const QModelIndex& id);
 
 public slots:
     bool save();

@@ -22,9 +22,7 @@ public:
     QSortFilterProxyModel* proxy() const { return _proxy; }
 
 public slots:
-    void setFilterRegexp(const QString& regexp) {
-        _proxy->setFilterRegExp(QRegExp(regexp));
-    }
+    void setFilterRegexp(const QString& regexp) { _proxy->setFilterRegExp(QRegExp(regexp)); }
 
 private:
     QUrl _url;

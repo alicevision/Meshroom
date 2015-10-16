@@ -17,11 +17,11 @@ public:
     GLCamera();
     ~GLCamera() = default;
 
+public:
     void draw() override;
     void setProjectionMatrix(const QMatrix4x4& mat) { _projectionMatrix = mat; }
-
-    void setImagePlane(const std::string &filename) {_imagePlane=filename;}
-    const std::string & getImagePlane() const {return _imagePlane;}
+    void setImagePlane(const std::string& filename) { _imagePlane = filename; }
+    const std::string& getImagePlane() const { return _imagePlane; }
 
 private:
     QOpenGLVertexArrayObject _vao;

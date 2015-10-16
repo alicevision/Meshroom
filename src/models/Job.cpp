@@ -121,6 +121,58 @@ Job::Job(const QUrl& url)
     }
 }
 
+void Job::setUrl(const QUrl& url)
+{
+    if(_url == url)
+        return;
+    _url = url;
+    emit dataChanged();
+}
+
+void Job::setName(const QString& name)
+{
+    if(_name == name)
+        return;
+    _name = name;
+    emit dataChanged();
+}
+
+void Job::setDate(const QDateTime& date)
+{
+    if(_date == date)
+        return;
+    _date = date;
+    emit dataChanged();
+}
+
+void Job::setUser(const QString& user)
+{
+    if(_user == user)
+        return;
+    _user = user;
+    emit dataChanged();
+}
+
+void Job::setCompletion(const float& completion)
+{
+    _completion = completion;
+}
+
+void Job::setStatus(const int& status)
+{
+    _status = status;
+}
+
+void Job::setThumbnail(const QUrl& thumbnail)
+{
+    _thumbnail = thumbnail;
+}
+
+void Job::setModelIndex(const QModelIndex& id)
+{
+    _modelIndex = id;
+}
+
 bool Job::save()
 {
     return JobsIO::save(*this);

@@ -87,7 +87,7 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
             for(std::size_t i = 0; i < numProps; ++i)
             {
                 const PropertyHeader& propHeader = userProps.getPropertyHeader(i);
-                if (propHeader.getName() == "imagePlane") 
+                if(propHeader.getName() == "imagePlane")
                 {
                     Alembic::Abc::IStringProperty prop(userProps, "imagePlane");
                     std::string imagePlaneFile;

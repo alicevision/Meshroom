@@ -5,9 +5,9 @@ QtObject {
     id: root
     property QtObject text: QtObject {
         property QtObject size: QtObject {
-            property int xsmall: 9;
-            property int small: 10;
-            property int normal: 12;
+            property int xsmall: 10;
+            property int small: 11;
+            property int normal: 13;
             property int large: 16;
             property int xlarge: 24;
         }

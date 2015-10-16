@@ -126,7 +126,7 @@ bool Job::save()
     return JobsIO::save(*this);
 }
 
-void Job::start()
+bool Job::start()
 {
     JobModel* model = qobject_cast<JobModel*>(parent());
     assert(model);
@@ -134,13 +134,13 @@ void Job::start()
     if(_images->rowCount() < 2)
     {
         qCritical("Starting job: insufficient number of sources");
-        return;
+        return false;
     }
 
     if(!isPairValid())
     {
         qCritical("Starting job: invalid initial pair");
-        return;
+        return false;
     }
 
     // define program path
@@ -160,11 +160,12 @@ void Job::start()
     if(!process.waitForFinished())
     {
         qCritical("Unable to start job");
-        return;
+        return false;
     }
 
     model->setData(_modelIndex, 0, JobModel::StatusRole); // BLOCKED
     qInfo("Job started");
+    return true;
 }
 
 void Job::refresh()

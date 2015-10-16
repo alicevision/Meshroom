@@ -38,7 +38,7 @@ public:
 
 public slots:
     bool save();
-    void start();
+    bool start();
     void refresh();
     void readProcessOutput(int exitCode, QProcess::ExitStatus s);
     void selectPair();

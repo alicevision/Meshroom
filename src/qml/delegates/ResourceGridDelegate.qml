@@ -22,6 +22,19 @@ Item {
     height: GridView.view.cellHeight
     Component.onCompleted: refreshInitialPairIndicators()
 
+    Menu {
+        id: contextMenu
+        MenuItem {
+            text: root.selected ? "Unselect":"Select"
+            onTriggered: itemToggled(index)
+        }
+        MenuSeparator {}
+        MenuItem {
+            text: "Open job settings"
+            onTriggered: settingsOpened()
+        }
+    }
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -29,7 +42,14 @@ Item {
         drag.target: tile
         cursorShape: Qt.PointingHandCursor
         hoverEnabled: true
-        onClicked: itemToggled(index)
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: {
+            if(mouse.button == Qt.LeftButton){
+                itemToggled(index);
+                return;
+            }
+            contextMenu.popup();
+        }
         onReleased: {
             if(!tile.Drag.active)
                 return;

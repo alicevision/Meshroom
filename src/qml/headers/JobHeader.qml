@@ -9,9 +9,6 @@ Rectangle {
 
     id : root
 
-    signal projectSettingsToggled()
-    signal projectSettingsOpened()
-
     implicitHeight: 30
     color: _style.window.color.darker
     border.color: _style.window.color.xdarker
@@ -24,7 +21,6 @@ Rectangle {
         CustomToolButton {
             iconSource: "qrc:///images/home_outline.svg"
             iconSize: _style.icon.size.small
-            onClicked: selectHomePage()
             enabled: false
             opacity: 0.6
             text: "home"
@@ -55,7 +51,7 @@ Rectangle {
         CustomToolButton {
             iconSource: "qrc:///images/gear_outline.svg"
             iconSize: _style.icon.size.small
-            onClicked: projectSettingsToggled()
+            onClicked: settingsToggled()
             text: "settings"
         }
         Item { // separator
@@ -73,10 +69,8 @@ Rectangle {
             visible: (currentJob.status<0)
             iconSize: _style.icon.size.small
             onClicked: {
-                if(!currentJob.modelData.save())
-                    projectSettingsOpened();
-                else
-                    currentJob.modelData.start()
+                if(!currentJob.modelData.start())
+                    settingsOpened();
             }
             // highlighted: true
             text: "start"

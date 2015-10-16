@@ -14,10 +14,12 @@ TitledPageLayout {
     id : root
     property bool settingsExpanded: false
 
-    header: JobHeader {
-        onProjectSettingsToggled: root.settingsExpanded = !root.settingsExpanded
-        onProjectSettingsOpened: root.settingsExpanded = true
-    }
+    signal settingsOpened();
+    signal settingsToggled();
+    onSettingsOpened: root.settingsExpanded = true
+    onSettingsToggled: root.settingsExpanded = !root.settingsExpanded
+
+    header: JobHeader {}
     body: SplitView {
         Layout.fillWidth: true
         Layout.fillHeight: true

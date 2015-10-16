@@ -9,7 +9,8 @@ namespace meshroom
 GLView::GLView()
     : _renderer(nullptr)
     , _cameraMode(Idle)
-    , _lookAtTmp() // Stores camera._lookAt locally to avoid recomputing it
+    , _lookAtTmp(_camera.lookAt()) // Stores camera._lookAt locally to avoid recomputing it
+    , _camMatTmp(_camera.viewMatrix())
 {
     setKeepMouseGrab(true);
     setAcceptedMouseButtons(Qt::AllButtons);

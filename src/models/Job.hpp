@@ -46,6 +46,7 @@ public slots:
     bool isPairA(const QUrl& url);
     bool isPairB(const QUrl& url);
     bool isPairValid();
+    bool isValid();
 
 signals:
     void dataChanged();

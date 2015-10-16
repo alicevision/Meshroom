@@ -10,6 +10,7 @@ class JobsIO
 public:
     static void load(Job& job);
     static bool save(Job& job);
+    static bool isValid(Job& job);
 };
 
 } // namespace

@@ -136,4 +136,13 @@ bool JobsIO::save(Job& job)
     return true;
 }
 
+bool JobsIO::isValid(Job& job)
+{
+    QDir dir(job.url().toLocalFile());
+    QFile file(dir.filePath("job.json"));
+    if(!file.exists())
+        return false;
+    return true;
+}
+
 } // namespace

@@ -318,4 +318,9 @@ bool Job::isPairValid()
             QUrl::fromLocalFile(pair[1].toString()).isValid());
 }
 
+bool Job::isValid()
+{
+    return JobsIO::isValid(*this);
+}
+
 } // namespace

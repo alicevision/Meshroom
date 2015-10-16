@@ -1,4 +1,5 @@
 #include "ProjectsIO.hpp"
+#include "JobsIO.hpp"
 #include "models/Project.hpp"
 #include "models/Resource.hpp"
 #include <QDir>
@@ -15,7 +16,8 @@ void ProjectsIO::populate(Project& project)
     for(size_t i = 0; i < jobs.length(); ++i)
     {
         Job* job = new Job(QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
-        project.jobs()->addJob(job);
+        if(JobsIO::isValid(*job))
+            project.jobs()->addJob(job);
     }
     // we should have at least one job
     if(project.jobs()->rowCount() <= 0)

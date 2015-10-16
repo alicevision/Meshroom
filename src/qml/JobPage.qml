@@ -47,7 +47,7 @@ TitledPageLayout {
         RowLayout {
             Layout.minimumHeight: 50
             Layout.fillHeight: true
-            spacing: 0
+            spacing: -1
             TabView {
                 id: view
                 Layout.fillWidth: true

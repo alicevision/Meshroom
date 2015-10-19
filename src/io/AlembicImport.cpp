@@ -26,6 +26,7 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
         pointCloud->setRawPositions(positions->get(), positions->size());
 
         // Check if we have a color property
+        bool colored = false;
         ICompoundProperty arbProp = ms.getArbGeomParams();
         if(arbProp)
         {
@@ -51,10 +52,18 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
                         prop.get(samp);
 
                         pointCloud->setRawColors(samp->getData(), samp->size());
+                        colored = true;
                         break; // set colors only once
                     }
                 }
             }
+        }
+        if(!colored)
+        {
+            float defaultColor[positions->size() * 3];
+            for(auto& f : defaultColor)
+                f = 1.f;
+            pointCloud->setRawColors(defaultColor, positions->size());
         }
         scene.append(pointCloud);
     }

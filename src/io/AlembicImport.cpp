@@ -60,10 +60,11 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
         }
         if(!colored)
         {
-            float defaultColor[positions->size() * 3];
-            for(auto& f : defaultColor)
-                f = 1.f;
+            float* defaultColor = new float[positions->size() * 3];
+            for(int i = 0; i < positions->size() * 3; i++)
+                defaultColor[i] = 1.f;
             pointCloud->setRawColors(defaultColor, positions->size());
+            delete[] defaultColor;
         }
         scene.append(pointCloud);
     }

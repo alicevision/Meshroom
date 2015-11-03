@@ -28,6 +28,13 @@ Item {
             text: root.selected ? "Unselect":"Select"
             onTriggered: itemToggled(index)
         }
+        MenuItem {
+            text: "Open parent directory"
+            onTriggered: {
+                var urlStr = model.url.toString();
+                Qt.openUrlExternally(urlStr.substring(0, urlStr.lastIndexOf('/')));
+            }
+        }
         MenuSeparator {}
         MenuItem {
             text: "Open job settings"

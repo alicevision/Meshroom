@@ -63,8 +63,11 @@ TitledPageLayout {
                         anchors.fill: parent
                         title: "drop .JPG files"
                         onFilesDropped: {
-                            for(var i=0; i<files.length; ++i)
-                                currentJob.images.addResource(files[i]);
+                            for(var i=0; i<files.length; ++i) {
+                                var ext = files[i].split('.').pop().toUpperCase();
+                                if(ext == "JPG" || ext == "JPEG")
+                                    currentJob.images.addResource(files[i]);
+                            }
                         }
                         ResourceGallery {
                             id: gallery

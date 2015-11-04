@@ -1,4 +1,6 @@
 import QtQuick 2.5
+
+import QtQuick 2.5
 import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
 import Popart 0.1 // Shortcuts
@@ -9,6 +11,7 @@ Item {
     id: root
     property real thumbnailSize: 100
     property variant selection: []
+    property int selectionStartItem: -1
 
     function toggleSelection(resourceId) {
         var index = selection.indexOf(resourceId);
@@ -19,6 +22,17 @@ Item {
             selection.splice(index, 1);
             return -1;
         }
+    }
+    function addToSelection(resourceId) {
+        var index = selection.indexOf(resourceId);
+        if(index>=0)
+            return;
+        selection.push(resourceId);
+    }
+    function selectAll(resourceId) {
+        selection = [];
+        for(var i=0; i<grid.count; ++i)
+            selection.push(i);
     }
     function isSelected(resourceId) {
         return (selection.indexOf(resourceId)>=0);
@@ -40,6 +54,12 @@ Item {
                 grid.contentItem.children[i].refreshInitialPairIndicators();
         }
     }
+    function refreshAllSelectionIndicators() {
+        for(var i=0; i<grid.contentItem.children.length; ++i) {
+            if(grid.contentItem.children[i].objectName == "resourceDelegate")
+                grid.contentItem.children[i].refreshSelectionState();
+        }
+    }
 
     GridView {
         id: grid
@@ -55,11 +75,19 @@ Item {
             Component.onCompleted: selected = isSelected(index)
             enabled: root.enabled
             onItemToggled: {
-                if(!root.enabled)
-                    return;
+                selectionStartItem = index;
+                if(doClear)
+                    clearSelection();
                 selected = (toggleSelection(index)<0)?false:true;
             }
-            onItemDropped: refreshAllInitialPairIndicators()
+            onItemDropped: refreshAllInitialPairIndicators();
+            onPerformMultiSelection: {
+                if(selectionStartItem < 0)
+                    selectionStartItem = index;
+                for(var i=Math.min(selectionStartItem, index); i <= Math.max(selectionStartItem, index); i++)
+                    addToSelection(i);
+                refreshAllSelectionIndicators();
+            }
         }
         clip: true
     }
@@ -79,5 +107,12 @@ Item {
     Shortcut {
         key: "Delete"
         onActivated: removeSelectedResources()
+    }
+    Shortcut {
+        key: "Ctrl+A"
+        onActivated: {
+            selectAll();
+            refreshAllSelectionIndicators();
+        }
     }
 }

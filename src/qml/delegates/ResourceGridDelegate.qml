@@ -11,11 +11,16 @@ Item {
     property bool isPairB: false
     objectName: "resourceDelegate"
 
-    signal itemToggled(int index)
+    signal itemToggled(int index, bool doClear)
     signal itemDropped(int index)
+    signal performMultiSelection(int index)
+    
     function refreshInitialPairIndicators() {
         root.isPairA = currentJob.modelData.isPairA(model.url);
         root.isPairB = currentJob.modelData.isPairB(model.url);
+    }
+    function refreshSelectionState() {
+        selected = isSelected(index);
     }
 
     width: GridView.view.cellWidth
@@ -26,7 +31,7 @@ Item {
         id: contextMenu
         MenuItem {
             text: root.selected ? "Unselect":"Select"
-            onTriggered: itemToggled(index)
+            onTriggered: itemToggled(index, false)
         }
         MenuItem {
             text: "Open parent directory"
@@ -52,8 +57,18 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: {
             if(mouse.button == Qt.LeftButton){
-                itemToggled(index);
-                return;
+                if(mouse.modifiers & Qt.ShiftModifier) {
+                    performMultiSelection(index);
+                    return;
+                }
+                if(mouse.modifiers & Qt.ControlModifier) {
+                    itemToggled(index, false);
+                    return;
+                }
+                if(mouse.button == Qt.LeftButton){
+                    itemToggled(index, true);
+                    return;
+                }
             }
             contextMenu.popup();
         }

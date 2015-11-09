@@ -45,7 +45,7 @@ bool isRegisteredImage(const Job& job, const QUrl& url)
 {
     ResourceModel* images = job.images();
     if(!images || images->rowCount() <= 0)
-        return nullptr;
+        return false;
     for(size_t i = 0; i < images->rowCount(); ++i)
     {
         QModelIndex id = images->index(i, 0);

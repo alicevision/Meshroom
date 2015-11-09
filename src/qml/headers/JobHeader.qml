@@ -17,7 +17,7 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: 5
         anchors.rightMargin: 5
-        spacing: 0
+        spacing: 2
         CustomToolButton {
             iconSource: "qrc:///images/home_outline.svg"
             iconSize: _style.icon.size.small
@@ -54,6 +54,13 @@ Rectangle {
             onClicked: settingsToggled()
             text: "settings"
         }
+        CustomToolButton {
+            visible: currentJob.modelData.isValid()
+            iconSource: "qrc:///images/folder_outline.svg"
+            iconSize: _style.icon.size.small
+            text: "open"
+            onClicked: Qt.openUrlExternally(currentJob.url);
+        }
         Item { // separator
             Layout.preferredWidth: 20
             Layout.fillHeight: true
@@ -72,7 +79,6 @@ Rectangle {
                 if(!currentJob.modelData.start())
                     settingsOpened();
             }
-            // highlighted: true
             text: "start"
         }
         ProgressBar {
@@ -95,13 +101,6 @@ Rectangle {
             iconSize: _style.icon.size.small
             text: "refresh"
             onClicked: currentJob.modelData.refresh()
-        }
-        CustomToolButton {
-            visible: (currentJob.status>=0)
-            iconSource: "qrc:///images/folder_outline.svg"
-            iconSize: _style.icon.size.small
-            onClicked: Qt.openUrlExternally(currentJob.url)
-            text: "open"
         }
     }
 }

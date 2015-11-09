@@ -6,8 +6,6 @@ ToolButton {
     id: root
     property string hoverIconSource: ""
     property int iconSize: _style.icon.size.normal
-    property bool highlighted: false
-    onHoveredChanged: z = hovered ? 1 : 0
     style: ButtonStyle {
         panel: Item {
             implicitHeight: root.iconSize
@@ -18,19 +16,6 @@ ToolButton {
                 source: (control.hovered && root.hoverIconSource) ? root.hoverIconSource : control.iconSource
                 smooth: true
                 opacity: control.hovered ? 0.4 : 1
-                // layer.enabled: root.highlighted
-                // layer.effect: ShaderEffect {
-                //     fragmentShader: "#version 330
-                //         uniform lowp sampler2D source; // this item
-                //         uniform lowp float qt_Opacity; // inherited opacity of this item
-                //         varying highp vec2 qt_TexCoord0;
-                //         void main() {
-                //             lowp vec4 p = texture2D(source, qt_TexCoord0);
-                //             // lowp vec3 g = p.xyz * vec3(0.356, 0.694, 0.969);
-                //             lowp vec3 g = p.xyz * vec3(0.01, 0.9, 0.01);
-                //             gl_FragColor = vec4(g.r, g.g, g.b, p.a) * qt_Opacity;
-                //         }"
-                // }
             }
             Rectangle {
                 anchors.centerIn: icon

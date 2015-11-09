@@ -59,9 +59,7 @@ void GLGrid::draw()
 {
     _program.bind();
     _vao.bind();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArrays(GL_LINES, 0, _verticeCount);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDrawArrays(GL_LINES, 0, _verticeCount / 3);
     _vao.release();
     _program.release();
 }

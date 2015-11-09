@@ -1,6 +1,7 @@
 #include "GLCamera.hpp"
 #include <QVector>
 #include <QOpenGLBuffer>
+
 namespace meshroom
 {
 
@@ -51,7 +52,7 @@ void GLCamera::draw()
 {
     _program.bind();
     _vao.bind();
-    glDrawArrays(GL_LINES, 0, _cameraMesh.size());
+    glDrawArrays(GL_LINES, 0, _cameraMesh.size() / 3);
     _vao.release();
     _program.release();
 }

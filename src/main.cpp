@@ -1,7 +1,7 @@
 #include "gl/GLView.hpp"
 #include "models/ApplicationModel.hpp"
-#include "InstantCoding.hpp"
-#include "Shortcut.hpp"
+#include "util/InstantCoding.hpp"
+#include "util/Shortcut.hpp"
 #include <QtWidgets/QApplication>
 #include <QSurfaceFormat>
 #include <QtQml>

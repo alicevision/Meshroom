@@ -23,8 +23,8 @@ public:
 
 public:
     ProjectModel(QObject* parent = 0);
-    int rowCount(const QModelIndex& parent = QModelIndex()) const;
-    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 
 public slots:
     void addProject(Project* project);
@@ -35,7 +35,7 @@ signals:
     void countChanged(int c);
 
 protected:
-    QHash<int, QByteArray> roleNames() const;
+    QHash<int, QByteArray> roleNames() const override;
 
 private:
     QList<Project*> _projects;

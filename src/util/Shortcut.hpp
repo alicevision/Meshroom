@@ -17,7 +17,7 @@ public:
 public:
     QVariant key();
     void setKey(QVariant key);
-    bool eventFilter(QObject* obj, QEvent* e);
+    bool eventFilter(QObject* obj, QEvent* e) override;
 
 signals:
     void keyChanged();

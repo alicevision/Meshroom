@@ -37,6 +37,7 @@ public:
     void setModelIndex(const QModelIndex& id);
 
 public slots:
+    bool load();
     bool save();
     bool start();
     void refresh();
@@ -47,6 +48,10 @@ public slots:
     bool isPairB(const QUrl& url);
     bool isPairValid();
     bool isValid();
+
+private:
+    void serializeToJSON(QJsonObject* obj) const;
+    void deserializeFromJSON(const QJsonObject& obj);
 
 signals:
     void dataChanged();

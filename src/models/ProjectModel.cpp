@@ -50,6 +50,23 @@ QHash<int, QByteArray> ProjectModel::roleNames() const
     return roles;
 }
 
+bool ProjectModel::setData(const QModelIndex& index, const QVariant& value, int role)
+{
+    if(index.row() < 0 || index.row() >= _projects.count())
+        return false;
+    Project* project = _projects[index.row()];
+    switch(role)
+    {
+        case NameRole:
+            project->setName(value.toString());
+            break;
+        default:
+            return false;
+    }
+    emit dataChanged(index, index);
+    return true;
+}
+
 void ProjectModel::addProject(Project* project)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());

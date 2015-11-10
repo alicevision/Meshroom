@@ -45,10 +45,12 @@ Item {
                     anchors.leftMargin: 15
                     anchors.rightMargin: 10
                     spacing: 10
-                    CustomText {
+                    CustomTextField {
                         text: model.name
                         textSize: _style.text.size.large
                         color: (currentProject==model) ? _style.text.color.selected : _style.text.color.normal
+                        state: "HIDDEN"
+                        onEditingFinished: model.name = text
                     }
                     Item { // spacer
                         Layout.fillWidth: true

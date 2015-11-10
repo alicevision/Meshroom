@@ -27,7 +27,7 @@ TextField {
         font.pixelSize: root.textSize
         background: Rectangle {
             implicitHeight: 30
-            implicitWidth: 200
+            implicitWidth: 120
             color: root.bgcolor
         }
     }

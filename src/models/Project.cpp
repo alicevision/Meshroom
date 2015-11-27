@@ -40,7 +40,7 @@ bool Project::load()
     if(!projectFile.open(QIODevice::ReadOnly))
     {
         qInfo() << _name << ": unable to read the project descriptor file"
-                   << projectFile.fileName();
+                << projectFile.fileName();
         return false;
     }
     // read it and close the file handler

@@ -1,7 +1,6 @@
 #include "gl/GLView.hpp"
 #include "models/ApplicationModel.hpp"
 #include "util/InstantCoding.hpp"
-#include "util/Shortcut.hpp"
 #include <QtWidgets/QApplication>
 #include <QSurfaceFormat>
 #include <QtQml>
@@ -16,8 +15,6 @@ int main(int argc, char* argv[])
     QCoreApplication::setApplicationName("meshroom");
 
     // register types
-    qRegisterMetaType<QtMsgType>("QtMsgType");
-    qmlRegisterType<Shortcut>("Popart", 0, 1, "Shortcut");
     qmlRegisterType<GLView>("Popart", 0, 1, "GLView");
 
     // set opengl profile
@@ -28,6 +25,7 @@ int main(int argc, char* argv[])
 
     // start the main application
     QQmlApplicationEngine engine;
+    engine.addImportPath(qApp->applicationDirPath() + "/qml_modules");
     ApplicationModel application(engine);
 
 #ifndef NDEBUG

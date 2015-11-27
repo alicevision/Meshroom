@@ -1,0 +1,3 @@
+module DarkStyle
+
+singleton Style 1.0 Style.qml

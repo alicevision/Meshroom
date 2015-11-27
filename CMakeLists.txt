@@ -13,8 +13,8 @@ set(APPLICATION_VERSION_DEBUG 0)
 # Project Output Paths
 #
 set(ROOT ${PROJECT_SOURCE_DIR})
-set(LIBRARY_OUTPUT_PATH "${ROOT}/dist/lib")
-set(EXECUTABLE_OUTPUT_PATH "${ROOT}/dist/bin")
+# set(LIBRARY_OUTPUT_PATH "${ROOT}/dist/lib")
+# set(EXECUTABLE_OUTPUT_PATH "${ROOT}/dist/bin")
 
 #
 # Project Search Paths
@@ -51,7 +51,20 @@ if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Wc++11-extensions")
 endif()
 
+
+
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+IF("${isSystemDir}" STREQUAL "-1")
+   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+ENDIF("${isSystemDir}" STREQUAL "-1")
+
+
+
 #
 # Add Build Targets
 #
-add_subdirectory(src)
+add_subdirectory(src meshroom)

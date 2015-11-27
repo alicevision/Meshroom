@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
- <g>
-  <title>Layer 1</title>
-  <path stroke-opacity="0.8" stroke="#ffffff" d="m273.899994,132l-16.5,89.099991l-3.399994,18.900009l19.200012,0l64.799988,0l-99.800003,140l16.5,-89.100006l3.300003,-18.899994l-19.199997,0l-64.699997,0l99.799988,-140m28.800018,-68l-159.700012,224l95.800003,0l-29.5,160l159.699997,-224l-95.799988,0l29.5,-160l0,0z" id="svg_1" fill="#ffffff" fill-opacity="0.8"/>
-  <line stroke-opacity="0.8" id="svg_7" y2="488.009255" x2="430" y1="379.990738" x1="430" stroke-width="25" stroke="#ffffff" fill="#ffffff"/>
-  <line id="svg_8" stroke-opacity="0.8" transform="rotate(-90 430.00000000000006,434) " y2="488.00927" x2="430" y1="379.990753" x1="430" stroke-width="25" stroke="#ffffff" fill="#ffffff"/>
- </g>
-</svg>

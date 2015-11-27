@@ -1,0 +1,11 @@
+module DarkStyle.Controls
+
+ApplicationWindow 1.0 ApplicationWindow.qml
+ComboBox 1.0 ComboBox.qml
+DarkStyleGallery 1.0 DarkStyleGallery.qml
+ScrollView 1.0 ScrollView.qml
+Slider 1.0 Slider.qml
+StackView 1.0 StackView.qml
+Text 1.0 Text.qml
+TextField 1.0 TextField.qml
+ToolButton 1.0 ToolButton.qml

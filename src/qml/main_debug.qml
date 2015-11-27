@@ -1,74 +1,60 @@
 import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Dialogs 1.2
-
-import "styles"
-import "components"
+import DarkStyle.Controls 1.0
+import QtQml.Models 2.2
+import Logger 1.0
 
 ApplicationWindow {
 
-    id: _mainWindow
+    id: _appWindow
+    property variant currentProject: null
+    property variant currentJob: null
 
-    width: 800
-    height: 800
-    visible: true
-    style: _style.bggl
+    signal selectProject(int id)
+    signal openProject(int id)
+    signal openProjectLocation()
+    signal openProjectDirectory()
+    signal addProject(string url)
+    signal closeProject()
+    signal openJobDirectory()
+    signal addJob()
+    signal removeEmptyJobs()
+    signal startJob()
+    signal refreshJob()
+    signal showHome()
+    signal showProjectSettings()
+    signal showJobSettings()
+    signal toggleJobSettings()
 
-    menuBar: MenuBar {
-        Menu {
-            title: "File"
-            Menu {
-                id: openMenu
-                title: "Open..."
-                MenuItem {
-                    text: "New location..."
-                    onTriggered: fileDialog.open()
-                }
-                MenuSeparator {}
-                Instantiator {
-                    model: _applicationModel.featured
-                    MenuItem {
-                        text: model.url.toString().replace("file://", "")
-                        onTriggered: _applicationModel.projects.addProject(model.url)
-                    }
-                    onObjectAdded: openMenu.insertItem(index, object)
-                    onObjectRemoved: openMenu.removeItem(object)
-                }
-            }
-        }
+    ApplicationSettings { target: _appWindow }
+    ApplicationConnections { target: _appWindow }
+    ApplicationMenu {}
+    ApplicationDialogs { id: _appDialogs }
+
+    DelegateModel {
+        id: _jobs
+        model: currentProject.proxy
+        delegate: Rectangle { width: parent.width }
+        Component.onCompleted: currentJob = items.get(0).model
+    }
+    DelegateModel {
+        id: _projects
+        model: _applicationModel.projects
+        delegate: Rectangle { width: parent.width }
+        Component.onCompleted: currentProject = items.get(0).model
+    }
+    onCurrentProjectChanged: {
+        currentProject? stack.push({ item: stack.mainPage }) : stack.pop();
     }
 
-    // main application style sheet
-    DefaultStyle {
-        id: _style
-    }
-
-    // main loader, needed to enable instant coding
-    Loader {
-        id: _mainLoader
+    StackView {
+        id: stack
+        property Component homePage: Rectangle { color: "red" }
+        property Component mainPage: Rectangle { color: "green" }
         anchors.fill: parent
-        objectName: "instanCodingLoader"
-        source: (_applicationModel.projects.count>0)?"IndexPage.qml":"HomePage.qml"
+        initialItem: homePage
     }
 
-    // debug label
-    CustomText {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.margins: 2
-        text: "debug mode"
-        color: "red"
-        textSize: _style.text.size.small
+    LogBar {
     }
 
-    // file dialog
-    FileDialog {
-        id: fileDialog
-        title: "Please choose a project directory"
-        folder: "/"
-        selectFolder: true
-        selectMultiple: false
-        sidebarVisible: false
-        onAccepted: _applicationModel.projects.addProject(fileDialog.fileUrl)
-    }
 }

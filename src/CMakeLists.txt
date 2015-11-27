@@ -3,6 +3,7 @@
 # Target srcs
 #
 file(GLOB_RECURSE TARGET_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
+file(GLOB_RECURSE QML_SRCS *.qml)
 
 #
 # Target name
@@ -27,7 +28,6 @@ QT5_ADD_RESOURCES(TARGET_QRCS qml/resources.qrc)
 #
 add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})
 target_link_libraries(${TARGETOBJ}
-                    ${GLEW_LIBRARIES}
                     ${OPENGL_LIBRARIES})
 #
 # Optional alembic importer
@@ -41,7 +41,16 @@ endif (ALEMBIC_FOUND)
 
 QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick)
 
-# copy qml files if the build succeeds
-add_custom_command(TARGET ${TARGETOBJ} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${PROJECT_SOURCE_DIR}/src/qml ${EXECUTABLE_OUTPUT_PATH}/qml)
+#
+# Install settings
+#
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	set(CMAKE_INSTALL_PREFIX ${ROOT}/dist CACHE STRING "Plugin install path" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+install(TARGETS ${TARGETOBJ} DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/qml DESTINATION ${CMAKE_INSTALL_PREFIX} FILES_MATCHING PATTERN "*.qml")
+
+
+add_subdirectory(../dependencies/qml_modules/Logger ../qml_modules/Logger)
+add_subdirectory(../dependencies/qml_modules/GlobalShortcut ../qml_modules/GlobalShortcut)
+add_subdirectory(../dependencies/qml_modules/DarkStyle ../qml_modules/DarkStyle)

@@ -79,7 +79,29 @@ Rectangle {
                 if(!currentJob.modelData.start())
                     settingsOpened();
             }
-            text: "start"
+            text: "start (farm)"
+            CustomText {
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                text: "F"
+                textSize: 8
+            }
+        }
+        CustomToolButton {
+            iconSource: "qrc:///images/play.svg"
+            visible: (currentJob.status<0)
+            iconSize: _style.icon.size.small
+            onClicked: {
+                if(!currentJob.modelData.start(true))
+                    settingsOpened();
+            }
+            text: "start (local)"
+            CustomText {
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                text: "L"
+                textSize: 8
+            }
         }
         ProgressBar {
             visible: (currentJob.status>=0)

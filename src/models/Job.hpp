@@ -39,7 +39,7 @@ public:
 public slots:
     bool load();
     bool save();
-    bool start();
+    bool start(bool local = false);
     void refresh();
     void readProcessOutput(int exitCode, QProcess::ExitStatus s);
     void selectPair();

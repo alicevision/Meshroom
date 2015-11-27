@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <cstdlib> // std::getenv
 #include <cassert>
+#include <iostream>
 
 namespace meshroom
 {
@@ -239,7 +240,7 @@ bool Job::save()
     return true;
 }
 
-bool Job::start()
+bool Job::start(bool local)
 {
     // do not start an incomplete job
     if(_images->rowCount() < 2)
@@ -259,6 +260,7 @@ bool Job::start()
         startCommand = QCoreApplication::applicationDirPath() + "/scripts/job_start.py";
     // and add command arguments
     QStringList arguments;
+    local ? arguments.append("--engine=local") : arguments.append("--engine=tractor") ;
     arguments.append(_url.toLocalFile() + "/job.json");
     // run the process
     QProcess process;

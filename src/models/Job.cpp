@@ -74,6 +74,13 @@ Job::Job(const QUrl& url)
     att->setValue("Normal");
     att->setOptions(QStringList({"Normal", "High", "Ultra"}));
     step->attributes()->addAttribute(att);
+    att = new Attribute();
+    att->setType(2); // combo
+    att->setKey("method");
+    att->setName("method");
+    att->setValue("SIFT");
+    att->setOptions(QStringList({"SIFT", "CCTAG3", "SIFT_CCTAG3"}));
+    step->attributes()->addAttribute(att);
     _steps->addStep(step);
     // create meshing step
     step = new Step("meshing");

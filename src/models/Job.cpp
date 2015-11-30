@@ -468,9 +468,9 @@ void Job::serializeToJSON(QJsonObject* obj) const
 void Job::deserializeFromJSON(const QJsonObject& obj)
 {
     // read global job settings
-    if(!obj.contains("user"))
+    if(obj.contains("user"))
         _user = obj["user"].toString();
-    if(!obj.contains("name"))
+    if(obj.contains("name"))
         _name = obj["name"].toString();
     // read job ressources
     QJsonArray resourceArray = obj["resources"].toArray();

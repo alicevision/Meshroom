@@ -218,13 +218,7 @@ bool Job::save()
     // build the JSON object for this job
     QJsonObject json;
     serializeToJSON(&json);
-    // create the entire filesystem structure
-    QDir dir;
-    if(!dir.mkpath(_url.toLocalFile() + "/build/matches"))
-    {
-        qCritical() << _name << ": unable to create the job directory structure";
-        return false;
-    }
+
     // open a file handler
     QDir jobDirectory(_url.toLocalFile());
     QFile jobFile(jobDirectory.filePath("job.json"));

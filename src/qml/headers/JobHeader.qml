@@ -104,7 +104,7 @@ Rectangle {
             }
         }
         ProgressBar {
-            visible: (currentJob.status>=0)
+            visible: (currentJob.status>=0 && currentJob.status!=3)
             value: currentJob.completion
             style: ProgressBarStyle {
                 background: Rectangle {
@@ -113,9 +113,31 @@ Rectangle {
                     implicitHeight: 18
                 }
                 progress: Rectangle {
-                    color: (currentJob.status >= 4)? "red" : _style.window.color.selected
+                    color: {
+                        switch(currentJob.status) {
+                            case 6: // PAUSED
+                                return "yellow";
+                            case 4: // ERROR
+                                return "red";
+                            case 5: // CANCELED
+                                return "lightred";
+                            case 3: // DONE
+                                return "green"
+                            case 0: // BLOCKED
+                            case 1: // READY
+                            case 2: // RUNNING
+                            default:
+                                return "green"
+                        }
+                    }
                 }
             }
+        }
+        CustomText {
+            visible: (currentJob.status==3)
+            text: "DONE"
+            color: "green"
+            textSize: 12
         }
         CustomToolButton {
             visible: (currentJob.status>=0)

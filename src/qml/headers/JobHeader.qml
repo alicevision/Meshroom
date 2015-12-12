@@ -89,7 +89,7 @@ Rectangle {
         }
         CustomToolButton {
             iconSource: "qrc:///images/play.svg"
-            visible: (currentJob.status<0)
+            // visible: (currentJob.status<0)
             iconSize: _style.icon.size.small
             onClicked: {
                 if(!currentJob.modelData.start(true))

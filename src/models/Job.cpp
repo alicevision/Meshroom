@@ -83,6 +83,7 @@ Job::Job(const QUrl& url)
     att->setOptions(QStringList({"SIFT", "CCTAG3", "SIFT_CCTAG3"}));
     step->attributes()->addAttribute(att);
     _steps->addStep(step);
+
     // create meshing step
     step = new Step("meshing");
     att = new Attribute();
@@ -273,19 +274,42 @@ bool Job::start(bool local)
     if(startCommand.isEmpty())
         startCommand = QCoreApplication::applicationDirPath() + "/scripts/job_start.py";
     // and add command arguments
-    QStringList arguments;
-    local ? arguments.append("--engine=local") : arguments.append("--engine=tractor") ;
-    arguments.append(_url.toLocalFile() + "/job.json");
+
+    QString jobPath = _url.toLocalFile() + "/job.json";
     // run the process
     QProcess process;
-    process.setProgram(startCommand);
-    process.setArguments(arguments);
-    process.start();
-    if(!process.waitForFinished())
+    bool processStatus = false;
+    if(local)
+    {
+      QString terminal = std::getenv("MESHROOM_TERMINAL");
+      if(terminal.isEmpty())
+        terminal = "xterm";
+
+      QStringList arguments;
+      // terminal args
+      arguments << QString("-title") << _name+" - "+QString::fromStdString(std::to_string(_images->rowCount()))+" images\"" << "-hold" << "-e";
+      // command line to execute
+      arguments << startCommand << jobPath << "--engine=local";
+      qint64 * pid = 0;
+      QString workingDirectory;
+      qInfo() << "Start command detached: " << terminal << " " << arguments.join(" ");
+      processStatus = process.startDetached(terminal, arguments, workingDirectory, pid);
+    }
+    else
+    {
+      QStringList arguments;
+      arguments << jobPath;
+      qInfo() << "Start command: " << startCommand << " " << arguments.join(" ");
+      process.start(startCommand, arguments);
+      processStatus = process.waitForFinished();
+    }
+
+    if(!processStatus)
     {
         qCritical() << _name << ": unable to start job";
         return false;
     }
+
     // change the job status
     JobModel* model = qobject_cast<JobModel*>(parent());
     assert(model);

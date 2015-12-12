@@ -428,10 +428,6 @@ void Job::serializeToJSON(QJsonObject* obj) const
 {
     if(!obj)
         return;
-    // build the paths object
-    QJsonObject pathsObject;
-    pathsObject["build"] = _url.toLocalFile() + "/build";
-    pathsObject["match"] = _url.toLocalFile() + "/build/matches";
     // build the resources array
     QJsonArray resourceArray;
     for(size_t i = 0; i < _images->rowCount(); i++)
@@ -454,7 +450,6 @@ void Job::serializeToJSON(QJsonObject* obj) const
     obj->insert("date", QJsonValue::fromVariant(_date));
     obj->insert("user", _user);
     obj->insert("name", _name);
-    obj->insert("paths", pathsObject);
     obj->insert("resources", resourceArray);
     obj->insert("steps", stepsObject);
 }

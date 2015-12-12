@@ -37,7 +37,7 @@ TitledPageLayout {
             Behavior on height { NumberAnimation {}}
             Connections { // use this to preserve connection after a manual resize
                 target: root
-                onSettingsExpandedChanged: settings.height = root.settingsExpanded?180:0
+                onSettingsExpandedChanged: settings.height = root.settingsExpanded?300:0
             }
             JobSettingsForm {
                 anchors.fill: parent

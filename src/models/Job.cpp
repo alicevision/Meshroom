@@ -94,7 +94,15 @@ Job::Job(const QUrl& url)
     att->setMax(10);
     att->setStep(1);
     step->attributes()->addAttribute(att);
+    att = new Attribute();
+    att->setType(2); // combo
+    att->setKey("enabled");
+    att->setName("Meshing");
+    att->setValue("0");
+    att->setOptions(QStringList({"1", "0"}));
+    step->attributes()->addAttribute(att);
     _steps->addStep(step);
+
     // create sfm step
     step = new Step("sfm");
     att = new Attribute();
@@ -104,6 +112,18 @@ Job::Job(const QUrl& url)
     att->setValue(QStringList({"", ""}));
     step->attributes()->addAttribute(att);
     _steps->addStep(step);
+
+    // create sfm step
+    step = new Step("undistort");
+    att = new Attribute();
+    att->setType(2); // combo
+    att->setKey("enabled");
+    att->setName("Undistort");
+    att->setValue("0");
+    att->setOptions(QStringList({"1", "0"}));
+    step->attributes()->addAttribute(att);
+    _steps->addStep(step);
+
     // load job settings
     load();
     // signal/slot connection: initial_pair automatic selection

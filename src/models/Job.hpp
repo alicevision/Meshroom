@@ -27,6 +27,10 @@ public:
     const QUrl& thumbnail() const { return _thumbnail; }
     StepModel* steps() const { return _steps; }
     ResourceModel* images() const { return _images; }
+    QUrl alembicFilepath() const {
+      return _url.toString() + "/" + _name + ".abc";
+    }
+
     void setUrl(const QUrl& url);
     void setName(const QString& name);
     void setDate(const QDateTime& date);

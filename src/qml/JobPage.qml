@@ -84,7 +84,7 @@ TitledPageLayout {
                         GLView {
                             id: glview
                             property variant job: currentJob
-                            onJobChanged: glview.loadAlembicScene(Qt.resolvedUrl(currentJob.url+"/job.abc"))
+                            onJobChanged: glview.loadAlembicScene(currentJob.alembicFilepath)
                             anchors.fill: parent
                             color: "#333"
                         }

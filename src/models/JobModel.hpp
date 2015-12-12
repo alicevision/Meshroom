@@ -23,7 +23,8 @@ public:
         ThumbnailRole,
         StepsRole,
         ImagesRole,
-        ModelDataRole
+        ModelDataRole,
+        AlembicFilepath
     };
 
 public:

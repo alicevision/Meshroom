@@ -42,6 +42,8 @@ QVariant JobModel::data(const QModelIndex& index, int role) const
             return QVariant::fromValue(job->images());
         case ModelDataRole:
             return QVariant::fromValue(job);
+        case AlembicFilepath:
+            return QVariant::fromValue(job->alembicFilepath());
         default:
             return QVariant();
     }
@@ -60,6 +62,7 @@ QHash<int, QByteArray> JobModel::roleNames() const
     roles[StepsRole] = "steps";
     roles[ImagesRole] = "images";
     roles[ModelDataRole] = "modelData";
+    roles[AlembicFilepath] = "alembicFilepath";
     return roles;
 }
 

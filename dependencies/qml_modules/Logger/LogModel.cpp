@@ -9,6 +9,12 @@ LogModel::LogModel(QObject* parent)
     : QAbstractListModel(parent)
 {
     S::getInstance().registerLogger(this);
+    connect(this, SIGNAL(addLog(Log*)), this, SLOT(onAddLog(Log*)), Qt::QueuedConnection);
+}
+
+LogModel::~LogModel()
+{
+    clear();
 }
 
 int LogModel::rowCount(const QModelIndex& parent) const
@@ -44,13 +50,21 @@ QHash<int, QByteArray> LogModel::roleNames() const
     return roles;
 }
 
-void LogModel::addLog(Log* log)
+void LogModel::onAddLog(Log* log)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     QQmlEngine::setObjectOwnership(log, QQmlEngine::CppOwnership);
-    log->setParent(this);
     _logs << log;
     endInsertRows();
+    emit countChanged(rowCount());
+}
+
+void LogModel::clear()
+{
+    beginRemoveRows(QModelIndex(), 0, rowCount() - 1);
+    while(!_logs.isEmpty())
+        delete _logs.takeFirst();
+    endRemoveRows();
     emit countChanged(rowCount());
 }
 

@@ -6,9 +6,9 @@ QtObject {
         property QtObject size: QtObject {
             property int xsmall: 9;
             property int small: 12;
-            property int normal: 16;
-            property int large: 20;
-            property int xlarge: 24;
+            property int normal: 14;
+            property int large: 18;
+            property int xlarge: 22;
         }
         property QtObject color: QtObject {
             property color xlight: Qt.lighter(normal, 3);
@@ -36,11 +36,11 @@ QtObject {
     }
     property QtObject window: QtObject {
         property QtObject color: QtObject {
-            property color xlight: Qt.lighter(normal, 1.8);
+            property color xlight: Qt.lighter(normal, 3.5);
             property color light: Qt.lighter(normal, 1.4);
             property color normal: "#393939";
             property color dark: Qt.darker(normal, 1.4);
-            property color xdark: Qt.darker(normal, 1.8);
+            property color xdark: Qt.darker(normal, 2.5);
             property color selected: "#5BB1F7";
         }
     }

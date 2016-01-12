@@ -1,6 +1,5 @@
 #include "gl/GLView.hpp"
 #include "models/ApplicationModel.hpp"
-#include "util/InstantCoding.hpp"
 #include <QtWidgets/QApplication>
 #include <QSurfaceFormat>
 #include <QtQml>
@@ -27,11 +26,6 @@ int main(int argc, char* argv[])
     QQmlApplicationEngine engine;
     engine.addImportPath(qApp->applicationDirPath() + "/qml_modules");
     ApplicationModel application(engine);
-
-#ifndef NDEBUG
-    InstantCoding instantCoding(engine);
-    instantCoding.watch("./src/qml");
-#endif
 
     return qapp.exec();
 }

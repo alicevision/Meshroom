@@ -108,6 +108,21 @@ void JobModel::addJob(Job* job)
     emit countChanged(rowCount());
 }
 
+QVariantMap JobModel::get(int row)
+{
+    QHash<int, QByteArray> names = roleNames();
+    QHashIterator<int, QByteArray> i(names);
+    QVariantMap result;
+    while(i.hasNext())
+    {
+        i.next();
+        QModelIndex idx = index(row, 0);
+        QVariant data = idx.data(i.key());
+        result[i.value()] = data;
+    }
+    return result;
+}
+
 void JobModel::addJob(const QUrl& projectUrl)
 {
     QDateTime currentTime = QDateTime::currentDateTime();

@@ -2,6 +2,7 @@
 
 #include <QVector>
 #include <QTime>
+#include <iostream>
 #include "LogModel.hpp"
 
 namespace logger
@@ -19,6 +20,7 @@ public:
     void addLog(QtMsgType t, const QMessageLogContext& c, const QString& m)
     {
         QString msg = QTime::currentTime().toString("hh:mm:ss ").append(m);
+        std::cerr << msg.toStdString() << std::endl;
         for(auto model : _logModels)
             model->addLog(new Log(t, msg));
     }

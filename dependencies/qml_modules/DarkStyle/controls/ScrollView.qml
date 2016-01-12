@@ -14,7 +14,6 @@ ScrollView {
             implicitHeight: 10
             Rectangle {
                 color: Style.window.color.xlight
-                opacity: 0.8
                 anchors.fill: parent
                 anchors.margins: 3
             }
@@ -23,6 +22,7 @@ ScrollView {
             implicitWidth: 10
             implicitHeight: 10
             color: Style.window.color.xdark
+            opacity: 0.6
         }
         incrementControl: Item {}
         decrementControl: Item {}

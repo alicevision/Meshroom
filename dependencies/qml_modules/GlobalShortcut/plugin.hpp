@@ -13,9 +13,6 @@ class GlobalShortcutQmlPlugin : public QQmlExtensionPlugin
     Q_PLUGIN_METADATA(IID "globalShortcut.qmlPlugin")
 
 public:
-    void initializeEngine(QQmlEngine* engine, const char* uri) override
-    {
-    }
     void registerTypes(const char* uri) override
     {
         Q_ASSERT(uri == QLatin1String("GlobalShortcut"));

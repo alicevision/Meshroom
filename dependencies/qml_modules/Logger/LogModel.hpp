@@ -21,13 +21,20 @@ public:
 
 public:
     LogModel(QObject* parent = 0);
+    ~LogModel();
+
+public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 
 public slots:
-    void addLog(Log* log);
+    void clear();
+
+private slots:
+    void onAddLog(Log* log);
 
 signals:
+    void addLog(Log* log);
     void countChanged(int c);
 
 protected:

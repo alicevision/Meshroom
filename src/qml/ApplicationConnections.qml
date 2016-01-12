@@ -4,26 +4,66 @@ Connections {
 
     target: null
 
+    // project actions
     onSelectProject: {
-        currentProject = _projects.items.get(id).model
-        currentJob = _jobs.items.get(0).model
+        currentProject = _applicationModel.projects.get(id);
+        selectJob(0);
+        _stack.push({ item: _stack.mainPage, replace:(_stack.depth>1) });
     }
-
-    onOpenProject: {
+    onCloseCurrentProject: {
+        _stack.pop();
+        currentProject = null;
+    }
+    onOpenProjectDialog: {
+        _appDialogs.openProject.open();
+    }
+    onOpenProjectDirectory: {
+        Qt.openUrlExternally(currentProject.url);
+    }
+    onOpenProjectSettings: {
+        _appDialogs.openProjectSettings.open();
+    }
+    onAddProject: {
         _applicationModel.projects.addProject(url);
         selectProject(_applicationModel.projects.count-1);
     }
-
-    onOpenProjectLocation: {
-        _appDialogs.openProject.open();
+    onRemoveProject: {
+        _applicationModel.projects.removeProject(_applicationModel.projects.get(id).modelData);
     }
 
-    onOpenProjectDirectory: {
+    // job actions
+    onSelectJob: {
+        currentJob = currentProject.jobs.get(id);
+    }
+    onAddJob: {
+        currentProject.jobs.addJob(currentProject.url);
+        selectJob(currentProject.jobs.count-1);
+    }
+    onStartJob: {
+        currentJob.modelData.start(locally);
+    }
+    onOpenJobDirectory: {
+        Qt.openUrlExternally(currentJob.url);
+    }
+    onRefreshJobStatus: {
+        currentJob.modelData.refresh();
     }
 
-    onCloseProject: {
-    }
-
+    // onOpenProject: {
+    //     _applicationModel.projects.addProject(url);
+    //     selectProject(_applicationModel.projects.count-1);
+    // }
+    //
+    // onOpenProjectLocation: {
+    //     _appDialogs.openProject.open();
+    // }
+    //
+    // onOpenProjectDirectory: {
+    // }
+    //
+    // onCloseProject: {
+    // }
+    //
     // onOpenJobDirectory: {
     // }
     //

@@ -16,7 +16,7 @@ Item {
                 title: "Open..."
                 MenuItem {
                     text: "New location..."
-                    onTriggered: openProjectLocation()
+                    onTriggered: openProjectDialog()
                 }
                 MenuSeparator {}
                 Menu {
@@ -32,44 +32,50 @@ Item {
             }
             MenuSeparator {}
             MenuItem {
-                text: "Edit project settings"
-                onTriggered: showProjectSettings()
-                enabled: false
+                text: "Edit project name"
+                onTriggered: openProjectSettings()
+                enabled: currentProject != null
             }
             MenuItem {
                 text: "Open project directory"
                 onTriggered: openProjectDirectory()
+                enabled: currentProject != null
             }
-            MenuSeparator {}
             MenuItem {
                 text: "Add new job"
                 onTriggered: addJob()
-            }
-            MenuItem {
-                text: "Remove empty jobs"
-                onTriggered: removeEmptyJobs()
-                enabled: false
+                enabled: currentProject != null
             }
             MenuSeparator {}
             MenuItem {
                 text: "Close"
-                onTriggered: showHome()
+                onTriggered: closeCurrentProject()
+                enabled: currentProject != null
             }
         }
         Menu {
-            title: "Job: "+truncateText(currentJob.name)
+            visible: currentProject != null
+            title: (currentProject && currentJob) ? "Job: "+truncateText(currentJob.name) : ""
             MenuItem {
-                text: "Edit job settings"
-                onTriggered: showJobSettings()
+                text: "Edit job name"
+                onTriggered: openJobSettings()
             }
             MenuItem {
                 text: "Open job directory"
                 onTriggered: openJobDirectory()
+                enabled: currentJob ? currentJob.modelData.isValid() : false
             }
             MenuSeparator {}
-            MenuItem {
-                text: "Run"
-                onTriggered: startJob()
+            Menu {
+                title: "Run..."
+                MenuItem {
+                    text: "On farm"
+                    onTriggered: startJob(false)
+                }
+                MenuItem {
+                    text: "Locally"
+                    onTriggered: startJob(true)
+                }
             }
         }
     }
@@ -78,7 +84,7 @@ Item {
         model: _applicationModel.projects
         MenuItem {
             text: model.url.toString().replace("file://", "")
-            onTriggered: openProject(index)
+            onTriggered: selectProject(index)
         }
         onObjectAdded: recentProjectMenu.insertItem(index, object)
         onObjectRemoved: recentProjectMenu.removeItem(object)

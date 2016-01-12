@@ -50,7 +50,9 @@ endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 install(TARGETS ${TARGETOBJ} DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/qml DESTINATION ${CMAKE_INSTALL_PREFIX} FILES_MATCHING PATTERN "*.qml")
 
-
+#
+# QML modules
+#
 add_subdirectory(../dependencies/qml_modules/Logger ../qml_modules/Logger)
 add_subdirectory(../dependencies/qml_modules/GlobalShortcut ../qml_modules/GlobalShortcut)
 add_subdirectory(../dependencies/qml_modules/DarkStyle ../qml_modules/DarkStyle)

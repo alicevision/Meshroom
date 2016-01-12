@@ -31,6 +31,7 @@ public slots:
     void addProject(Project* project);
     void addProject(const QUrl& url);
     void removeProject(Project* project);
+    QVariantMap get(int row);
 
 signals:
     void countChanged(int c);

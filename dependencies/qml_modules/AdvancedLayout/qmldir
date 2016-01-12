@@ -1,4 +1,0 @@
-module AdvancedLayout
-
-TitledLayout 1.0 TitledLayout.qml
-SplittedLayout 1.0 SplittedLayout.qml

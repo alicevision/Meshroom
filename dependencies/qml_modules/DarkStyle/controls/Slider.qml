@@ -2,6 +2,7 @@ import QtQuick 2.5
 import QtQuick.Controls 1.4
 import QtQuick.Controls.Styles 1.4
 import ".."
+import "."
 
 Slider {
 
@@ -34,7 +35,7 @@ Slider {
                     anchors.top: parent.bottom
                     anchors.right: parent.right
                     text: control.value.toFixed(2)
-                    font.pixelSize: Style.text.size.small
+                    font.pixelSize: Style.text.size.xsmall
                 }
             }
         }

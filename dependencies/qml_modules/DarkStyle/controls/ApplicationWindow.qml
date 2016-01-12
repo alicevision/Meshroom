@@ -6,9 +6,12 @@ import ".."
 ApplicationWindow {
 
     style: ApplicationWindowStyle {
-        background: Rectangle {
-            color: Style.window.color.normal
-        }
+        background: Item {}
     }
+    // style: ApplicationWindowStyle {
+    //     background: Rectangle {
+    //         color: Style.window.color.normal
+    //     }
+    // }
 
 }

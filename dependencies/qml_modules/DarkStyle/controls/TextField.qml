@@ -8,7 +8,7 @@ TextField {
     id: root
 
     property color color: enabled ? Style.text.color.normal : Style.text.color.disabled
-    property color bgcolor: Style.window.color.xdarker
+    property color bgcolor: Style.window.color.xdark
 
     state: ""
     states: [
@@ -16,7 +16,7 @@ TextField {
             name: "HIDDEN"
             PropertyChanges {
                 target: root
-                bgcolor: root.activeFocus ? Style.window.color.xdarker : "transparent"
+                bgcolor: root.activeFocus ? Style.window.color.xdark : "transparent"
             }
         }
     ]

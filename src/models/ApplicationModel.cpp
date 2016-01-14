@@ -20,7 +20,8 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
     if(engine.rootContext())
         engine.rootContext()->setContextProperty("_applicationModel", this);
 
-    engine.load(QCoreApplication::applicationDirPath() + "/qml/main.qml");
+    // engine.load(QCoreApplication::applicationDirPath() + "/qml/main.qml");
+    engine.load(QUrl("src/qml/main.qml"));
 }
 
 } // namespace

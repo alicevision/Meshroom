@@ -12,36 +12,6 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 30
-        // MouseArea {
-        //     Image {
-        //         text: "Open new location..."
-        //         onClicked: openProjectDialog()
-        //         source: "qrc:///images/plus.svg"
-        //     }
-        //
-        // }
-
-        // MouseArea {
-        //     Layout.preferredWidth: 300
-        //     Layout.preferredHeight: 50
-        //     onClicked: openProjectDialog()
-        //     Rectangle {
-        //         anchors.fill: parent
-        //         anchors.margins: 5
-        //         color: Style.window.color.xdark
-        //         RowLayout {
-        //             anchors.centerIn: parent
-        //             Image {
-        //                 sourceSize: Qt.size(25, 25)
-        //                 source: "qrc:///images/plus.svg"
-        //             }
-        //             Text {
-        //                 text: "Open new location..."
-        //             }
-        //         }
-        //     }
-        // }
-
         Button {
             text: "Open new location..."
             iconSource: "qrc:///images/plus.svg"
@@ -53,7 +23,21 @@ Rectangle {
             model: _applicationModel.projects
             cellWidth: 150
             cellHeight: 150
-            // clip: true
+            delegate: ProjectDelegate {
+                width: GridView.view.cellWidth
+                height: GridView.view.cellHeight
+            }
+        }
+        Text {
+            text: "Featured projects"
+            font.pixelSize: Style.text.size.large
+        }
+        GridView {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            model: _applicationModel.projects
+            cellWidth: 150
+            cellHeight: 150
             delegate: ProjectDelegate {
                 width: GridView.view.cellWidth
                 height: GridView.view.cellHeight

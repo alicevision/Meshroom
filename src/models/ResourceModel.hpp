@@ -28,6 +28,7 @@ public slots:
     void addResource(Resource* resource);
     void addResource(const QUrl& url);
     void removeResource(Resource* resource);
+    QVariantMap get(int row);
 
 signals:
     void countChanged(int c);

@@ -15,15 +15,15 @@ ComboBox {
             implicitHeight: 30
             implicitWidth: 300
             color: Style.window.color.xdark
-            Image {
-                source: "qrc:///images/arrow_right_outline.svg"
-                sourceSize: Qt.size(20, 20)
-                transform: Rotation { origin.x: 10; origin.y: 10; angle: 90 }
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.bottomMargin: 5
-                anchors.rightMargin: 5
-            }
+            // Image {
+            //     source: "qrc:///images/arrow_right_outline.svg"
+            //     sourceSize: Qt.size(20, 20)
+            //     transform: Rotation { origin.x: 10; origin.y: 10; angle: 90 }
+            //     anchors.bottom: parent.bottom
+            //     anchors.right: parent.right
+            //     anchors.bottomMargin: 5
+            //     anchors.rightMargin: 5
+            // }
         }
         label: Text {
             anchors.fill: parent

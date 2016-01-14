@@ -80,4 +80,19 @@ void ResourceModel::removeResource(Resource* resource)
     emit countChanged(rowCount());
 }
 
+QVariantMap ResourceModel::get(int row)
+{
+    QHash<int, QByteArray> names = roleNames();
+    QHashIterator<int, QByteArray> i(names);
+    QVariantMap result;
+    while(i.hasNext())
+    {
+        i.next();
+        QModelIndex idx = index(row, 0);
+        QVariant data = idx.data(i.key());
+        result[i.value()] = data;
+    }
+    return result;
+}
+
 } // namespace

@@ -26,7 +26,7 @@ Item {
                 Image {
                     anchors.fill: parent
                     anchors.margins: 4
-                    source: _applicationModel.projects.get(index).jobs.get(0).thumbnail
+                    source: model.jobs.get(0).thumbnail
                     asynchronous: true
                 }
             }

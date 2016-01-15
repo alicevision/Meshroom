@@ -11,7 +11,7 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 30
+        anchors.margins: 20
         Button {
             text: "Open new location..."
             iconSource: "qrc:///images/plus.svg"
@@ -23,24 +23,30 @@ Rectangle {
             model: _applicationModel.projects
             cellWidth: 150
             cellHeight: 150
+            clip: true
             delegate: ProjectDelegate {
                 width: GridView.view.cellWidth
                 height: GridView.view.cellHeight
             }
         }
-        Text {
-            text: "Featured projects"
-            font.pixelSize: Style.text.size.large
+        Item { // spacer
+            Layout.preferredHeight: 20
+            visible: _applicationModel.featured.count > 0
         }
-        GridView {
+        Text {
+            text: "Featured projects:"
+            visible: _applicationModel.featured.count > 0
+        }
+        ListView {
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            model: _applicationModel.projects
-            cellWidth: 150
-            cellHeight: 150
-            delegate: ProjectDelegate {
-                width: GridView.view.cellWidth
-                height: GridView.view.cellHeight
+            Layout.preferredHeight: parent.height*0.25
+            visible: count > 0
+            model: _applicationModel.featured
+            spacing: 1
+            clip: true
+            delegate: FeaturedProjectDelegate {
+                width: parent.width
+                height: 30
             }
         }
     }

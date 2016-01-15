@@ -3,22 +3,22 @@ import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
-import "../../../../../delegates"
 
 Item {
 
     id: root
     property variant visualModel: null
-    property real thumbnailSize: 50
+    property real thumbnailSize: 130
 
-    ListView {
+    GridView {
         anchors.fill: parent
-        property alias cellHeight: root.thumbnailSize
-        spacing: 1
-        model: visualModel.parts.detail
+        anchors.margins: 10
+        cellWidth: root.thumbnailSize
+        cellHeight: root.thumbnailSize
+        model: visualModel.parts.grid
         clip: true
         Component.onCompleted: forceActiveFocus()
-        onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+        onCurrentIndexChanged: positionViewAtIndex(currentIndex, GridView.Contain)
     }
 
     Item {
@@ -38,9 +38,9 @@ Item {
             spacing: 0
             Slider {
                 Layout.fillWidth: true
-                minimumValue: 30
-                maximumValue: 200
-                value: 50
+                minimumValue: 100
+                maximumValue: 500
+                value: 130
                 onValueChanged: root.thumbnailSize = value
             }
             // ToolButton {

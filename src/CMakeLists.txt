@@ -56,3 +56,4 @@ install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/qml DESTINATION ${CMAKE_INSTALL_PREF
 add_subdirectory(../dependencies/qml_modules/Logger ../qml_modules/Logger)
 add_subdirectory(../dependencies/qml_modules/GlobalShortcut ../qml_modules/GlobalShortcut)
 add_subdirectory(../dependencies/qml_modules/DarkStyle ../qml_modules/DarkStyle)
+add_subdirectory(../dependencies/qml_modules/ImageGallery ../qml_modules/ImageGallery)

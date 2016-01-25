@@ -182,14 +182,12 @@ void GLView::translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx
 
 void GLView::wheelEvent(QWheelEvent* event)
 {
-    const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
-    const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
     const int numDegrees = event->delta() / 8;
     const int numSteps = numDegrees / 15;
     const float delta = numSteps * 100;
 
     float radius = _camera.lookAtRadius();
-    translateLineOfSightCamera(_camMatTmp, radius, delta, 0);
+    translateLineOfSightCamera(_camMatTmp, radius, -delta, 0);
 
     _camera.setLookAtRadius(radius);
     _camera.setViewMatrix(_camMatTmp);

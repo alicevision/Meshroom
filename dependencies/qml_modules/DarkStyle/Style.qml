@@ -41,7 +41,13 @@ QtObject {
             property color normal: "#393939";
             property color dark: Qt.darker(normal, 1.4);
             property color xdark: Qt.darker(normal, 2.5);
+            property color disabled: "#444";
             property color selected: "#5BB1F7";
+            property color debug: "#444";
+            property color info: "#666";
+            property color warning: "#DAA520";
+            property color critical: "red";
+            property color fatal: "red";
         }
     }
 }

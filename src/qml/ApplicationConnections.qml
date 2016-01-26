@@ -21,7 +21,7 @@ Connections {
         Qt.openUrlExternally(currentProject.url);
     }
     onOpenProjectSettings: {
-        _appDialogs.openProjectSettings.open();
+        _appDialogs.projectSettingsDialog.open();
     }
     onAddProject: {
         _applicationModel.projects.addProject(url);
@@ -39,55 +39,23 @@ Connections {
         currentProject.jobs.addJob(currentProject.url);
         selectJob(currentProject.jobs.count-1);
     }
-    onStartJob: {
+    onDeleteJob: {
+        _appDialogs.jobDeletionDialog.open();
+    }
+    onOpenJobSubmissionDialog: {
+        _appDialogs.jobSubmissionDialog.open();
+    }
+    onSubmitJob: {
         currentJob.modelData.start(locally);
     }
     onOpenJobDirectory: {
         Qt.openUrlExternally(currentJob.url);
     }
+    onOpenJobSettings: {
+        _appDialogs.jobSettingsDialog.open();
+    }
     onRefreshJobStatus: {
         currentJob.modelData.refresh();
     }
 
-    // onOpenProject: {
-    //     _applicationModel.projects.addProject(url);
-    //     selectProject(_applicationModel.projects.count-1);
-    // }
-    //
-    // onOpenProjectLocation: {
-    //     _appDialogs.openProject.open();
-    // }
-    //
-    // onOpenProjectDirectory: {
-    // }
-    //
-    // onCloseProject: {
-    // }
-    //
-    // onOpenJobDirectory: {
-    // }
-    //
-    // onAddJob: {
-    // }
-    //
-    // onRemoveEmptyJobs: {
-    // }
-    //
-    // onStartJob: {
-    // }
-    //
-    // onRefreshJob: {
-    // }
-    //
-    // onShowHome: {
-    // }
-    //
-    // onShowProjectSettings: {
-    // }
-    //
-    // onShowJobSettings: {
-    // }
-    //
-    // onToggleJobSettings: {
-    // }
 }

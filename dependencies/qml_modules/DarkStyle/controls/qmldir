@@ -6,6 +6,7 @@ ComboBox 1.0 ComboBox.qml
 DropArea 1.0 DropArea.qml
 DarkStyleGallery 1.0 DarkStyleGallery.qml
 ProgressBar 1.0 ProgressBar.qml
+RadioButton 1.0 RadioButton.qml
 ScrollView 1.0 ScrollView.qml
 Slider 1.0 Slider.qml
 StackView 1.0 StackView.qml

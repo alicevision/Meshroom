@@ -27,8 +27,11 @@ ApplicationWindow {
     // job actions
     signal selectJob(int id)
     signal addJob()
-    signal startJob(bool locally)
+    signal deleteJob()
+    signal openJobSubmissionDialog()
+    signal submitJob(bool locally)
     signal openJobDirectory()
+    signal openJobSettings()
     signal refreshJobStatus()
 
     ApplicationSettings { target: _appWindow }

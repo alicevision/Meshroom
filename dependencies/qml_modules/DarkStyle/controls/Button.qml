@@ -36,6 +36,7 @@ Button {
             text: control.text
             font.pixelSize: Style.text.size.small
             color: control.hovered ? Style.text.color.light : Style.text.color.normal
+            horizontalAlignment: Text.AlignHCenter
         }
     }
 

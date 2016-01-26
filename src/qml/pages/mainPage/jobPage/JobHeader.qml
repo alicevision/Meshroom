@@ -12,52 +12,6 @@ Rectangle {
         header.clearOnDestruction();
     }
 
-    Menu {
-        id: projectMenu
-        MenuItem {
-            text: "Edit project name"
-            onTriggered: openProjectSettings()
-        }
-        MenuSeparator {}
-        Menu {
-            id: recentProjectMenu
-            title: "Switch..."
-            enabled: items.length > 0
-        }
-        MenuItem {
-            text: "Close"
-            onTriggered: closeCurrentProject()
-        }
-    }
-    Menu {
-        id: jobMenu
-        MenuItem {
-            text: "Edit job name"
-            onTriggered: openJobSettings()
-        }
-    }
-    Menu {
-        id: runMenu
-        MenuItem {
-            text: "Run locally"
-            onTriggered: startJob(true)
-        }
-        MenuItem {
-            text: "Run on farm"
-            onTriggered: startJob(false)
-        }
-    }
-
-    Instantiator {
-        model: _applicationModel.projects
-        MenuItem {
-            text: model.url.toString().replace("file://", "")
-            onTriggered: selectProject(index)
-        }
-        onObjectAdded: recentProjectMenu.insertItem(index, object)
-        onObjectRemoved: recentProjectMenu.removeItem(object)
-    }
-
     RowLayout {
         anchors.fill: parent
         spacing: 0
@@ -72,7 +26,7 @@ Rectangle {
         }
         Button {
             text: currentProject.name
-            onClicked: projectMenu.popup()
+            // onClicked: projectMenu.popup()
         }
         ToolButton {
             iconSource: "qrc:///images/arrow.svg"
@@ -80,15 +34,9 @@ Rectangle {
         }
         Button {
             text: currentJob.name
-            onClicked: jobMenu.popup()
+            // onClicked: jobMenu.popup()
         }
         Item { Layout.fillWidth: true } // spacer
-        // ToolButton {
-        //     visible: currentJob.modelData.isValid()
-        //     iconSource: "qrc:///images/disk.svg"
-        //     text: "open"
-        //     onClicked: openJobDirectory()
-        // }
         Item { // separator
             Layout.preferredWidth: 10
             Layout.fillHeight: true
@@ -106,7 +54,7 @@ Rectangle {
         }
         ToolButton {
             iconSource: "qrc:///images/play.svg"
-            onClicked: runMenu.popup()
+            onClicked: openJobSubmissionDialog()
         }
         ToolButton {
             visible: (currentJob.status>=0)

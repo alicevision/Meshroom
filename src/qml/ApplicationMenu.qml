@@ -32,7 +32,7 @@ Item {
             }
             MenuSeparator {}
             MenuItem {
-                text: "Edit project name"
+                text: "Edit project settings..."
                 onTriggered: openProjectSettings()
                 enabled: currentProject != null
             }
@@ -41,11 +41,11 @@ Item {
                 onTriggered: openProjectDirectory()
                 enabled: currentProject != null
             }
-            MenuItem {
-                text: "Add new job"
-                onTriggered: addJob()
-                enabled: currentProject != null
-            }
+            // MenuItem {
+            //     text: "Add new job"
+            //     onTriggered: addJob()
+            //     enabled: currentProject != null
+            // }
             MenuSeparator {}
             MenuItem {
                 text: "Close"
@@ -57,7 +57,7 @@ Item {
             visible: currentProject != null
             title: (currentProject && currentJob) ? "Job: "+truncateText(currentJob.name) : ""
             MenuItem {
-                text: "Edit job name"
+                text: "Edit job settings..."
                 onTriggered: openJobSettings()
             }
             MenuItem {
@@ -66,16 +66,17 @@ Item {
                 enabled: currentJob ? currentJob.modelData.isValid() : false
             }
             MenuSeparator {}
-            Menu {
-                title: "Run..."
-                MenuItem {
-                    text: "On farm"
-                    onTriggered: startJob(false)
-                }
-                MenuItem {
-                    text: "Locally"
-                    onTriggered: startJob(true)
-                }
+            MenuItem {
+                text: "Duplicate"
+            }
+            MenuItem {
+                text: "Delete"
+                onTriggered: deleteJob()
+            }
+            MenuSeparator {}
+            MenuItem {
+                text: "Submit..."
+                onTriggered: openJobSubmissionDialog()
             }
         }
     }

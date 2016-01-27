@@ -10,6 +10,12 @@ Step::Step(const QString& name)
 {
 }
 
+Step::Step(const Step& obj)
+    : _name(obj.name())
+    , _attributes(new AttributeModel(*(obj.attributes())))
+{
+}
+
 void Step::serializeToJSON(QJsonObject* stepsObject) const
 {
     if(!stepsObject)

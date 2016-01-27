@@ -12,6 +12,7 @@ class Attribute : public QObject
 
 public:
     Attribute() = default;
+    Attribute(const Attribute& obj);
 
 public:
     QVariant value() const { return _value; }

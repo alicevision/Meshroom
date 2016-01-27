@@ -15,7 +15,7 @@ class Job : public QObject
     Q_OBJECT
 
 public:
-    Job(const QUrl& url = QUrl());
+    Job();
 
 public:
     const QUrl& url() const { return _url; }
@@ -36,20 +36,26 @@ public:
     void setThumbnail(const QUrl& thumbnail);
     void setModelIndex(const QModelIndex& id);
 
+public:
+    bool load(const QUrl& url);
+    bool load(const Job& job);
+    void autoSaveOn();
+    void autoSaveOff();
+
 public slots:
-    bool load();
     bool save();
     bool start();
     void refresh();
     void readProcessOutput(int exitCode, QProcess::ExitStatus s);
     void selectPair();
     void selectThumbnail();
+    bool isStoredOnDisk();
     bool isPairA(const QUrl& url);
     bool isPairB(const QUrl& url);
     bool isPairValid();
-    bool isValid();
 
 private:
+    void createDefaultGraph();
     void serializeToJSON(QJsonObject* obj) const;
     void deserializeFromJSON(const QJsonObject& obj);
 
@@ -58,8 +64,8 @@ signals:
 
 private:
     QUrl _url;
-    QString _name;
     QDateTime _date;
+    QString _name;
     QString _user;
     float _completion = 0.f;
     int _status = -1;

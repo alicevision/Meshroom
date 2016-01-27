@@ -27,7 +27,7 @@ Rectangle {
             Layout.fillHeight: true
             ColumnLayout {
                 width: scrollview.width
-                height: listview.contentHeight// + mouseContainer.height
+                height: listview.contentHeight + mouseContainer.height
                 spacing: 0
                 ListView {
                     id: listview
@@ -38,25 +38,25 @@ Rectangle {
                     spacing: 1
                     interactive: false
                 }
-                // MouseArea {
-                //     id: mouseContainer
-                //     Layout.fillWidth: true
-                //     Layout.preferredHeight: 50
-                //     hoverEnabled: true
-                //     onClicked: addJob()
-                //     Rectangle {
-                //         anchors.fill: parent
-                //         anchors.topMargin: 1
-                //         color: Style.window.color.xdark
-                //         opacity: mouseContainer.containsMouse ? 0.8 : 0.4
-                //         Behavior on opacity { NumberAnimation {} }
-                //         Image {
-                //             anchors.centerIn: parent
-                //             sourceSize: Qt.size(25, 25)
-                //             source: "qrc:///images/plus.svg"
-                //         }
-                //     }
-                // }
+                MouseArea {
+                    id: mouseContainer
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 50
+                    hoverEnabled: true
+                    onClicked: duplicateJob()
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.topMargin: 1
+                        color: Style.window.color.xdark
+                        opacity: mouseContainer.containsMouse ? 0.8 : 0.4
+                        Behavior on opacity { NumberAnimation {} }
+                        Image {
+                            anchors.centerIn: parent
+                            sourceSize: Qt.size(25, 25)
+                            source: "qrc:///images/plus.svg"
+                        }
+                    }
+                }
             }
         }
     }

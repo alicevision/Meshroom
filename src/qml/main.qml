@@ -27,6 +27,7 @@ ApplicationWindow {
     // job actions
     signal selectJob(int id)
     signal addJob()
+    signal duplicateJob()
     signal deleteJob()
     signal openJobSubmissionDialog()
     signal submitJob(bool locally)

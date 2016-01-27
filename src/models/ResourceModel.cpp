@@ -10,6 +10,17 @@ ResourceModel::ResourceModel(QObject* parent)
 {
 }
 
+ResourceModel::ResourceModel(const ResourceModel& obj)
+    : QAbstractListModel(obj.parent())
+{
+    QHash<int, QByteArray> names = roleNames();
+    for(size_t i = 0; i < obj.rowCount(); ++i)
+    {
+        Resource* r = obj.get(i)[names[ModelDataRole]].value<Resource*>();
+        addResource(new Resource(*r));
+    }
+}
+
 int ResourceModel::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
@@ -80,7 +91,7 @@ void ResourceModel::removeResource(Resource* resource)
     emit countChanged(rowCount());
 }
 
-QVariantMap ResourceModel::get(int row)
+QVariantMap ResourceModel::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);

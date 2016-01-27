@@ -92,17 +92,20 @@ void Project::populate()
 {
     QDir dir(_url.toLocalFile());
     dir.cd("reconstructions");
-    // list sub-directories to retrieve all jobs
+    // list sub-directories to retrieve all existing jobs
     QStringList jobs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
     for(size_t i = 0; i < jobs.length(); ++i)
     {
-        Job* job = new Job(QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
-        if(job->isValid())
+        Job* job = new Job();
+        if(job->load(QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i]))))
             _jobs->addJob(job);
     }
     // we should have at least one job
     if(_jobs->rowCount() <= 0)
-        _jobs->addJob(_url);
+    {
+        Job* job = new Job();
+        _jobs->addJob(job);
+    }
 }
 
 void Project::serializeToJSON(QJsonObject* obj) const

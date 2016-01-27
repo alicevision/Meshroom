@@ -2,10 +2,21 @@
 #include <QJsonObject>
 #include <QJSValue>
 #include <QUrl>
-#include <QDebug>
 
 namespace meshroom
 {
+
+Attribute::Attribute(const Attribute& obj)
+    : _value(obj.value())
+    , _key(obj.key())
+    , _name(obj.name())
+    , _type(obj.type())
+    , _min(obj.min())
+    , _max(obj.max())
+    , _step(obj.step())
+    , _options(obj.options())
+{
+}
 
 void Attribute::setValue(const QVariant& value)
 {

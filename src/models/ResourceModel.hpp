@@ -21,6 +21,7 @@ public:
 
 public:
     ResourceModel(QObject* parent = 0);
+    ResourceModel(const ResourceModel& obj);
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 
@@ -28,7 +29,7 @@ public slots:
     void addResource(Resource* resource);
     void addResource(const QUrl& url);
     void removeResource(Resource* resource);
-    QVariantMap get(int row);
+    QVariantMap get(int row) const;
 
 signals:
     void countChanged(int c);

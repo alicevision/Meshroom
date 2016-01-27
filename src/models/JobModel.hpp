@@ -34,8 +34,8 @@ public:
 
 public slots:
     void addJob(Job* job);
-    void addJob(const QUrl& projectUrl);
-    QVariantMap get(int row);
+    void duplicateJob(Job* job);
+    QVariantMap get(int row) const;
 
 signals:
     void countChanged(int c);

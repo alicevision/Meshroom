@@ -63,7 +63,7 @@ Item {
             MenuItem {
                 text: "Open job directory"
                 onTriggered: openJobDirectory()
-                enabled: currentJob ? currentJob.modelData.isValid() : false
+                enabled: currentJob ? currentJob.modelData.isStoredOnDisk() : false
             }
             MenuSeparator {}
             MenuItem {

@@ -9,6 +9,17 @@ StepModel::StepModel(QObject* parent)
 {
 }
 
+StepModel::StepModel(const StepModel& obj)
+    : QAbstractListModel(obj.parent())
+{
+    QHash<int, QByteArray> names = roleNames();
+    for(size_t i = 0; i < obj.rowCount(); ++i)
+    {
+        Step* s = obj.get(i)[names[ModelDataRole]].value<Step*>();
+        addStep(new Step(*s));
+    }
+}
+
 void StepModel::addStep(Step* step)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
@@ -53,6 +64,21 @@ QHash<int, QByteArray> StepModel::roleNames() const
     roles[AttributesRole] = "attributes";
     roles[ModelDataRole] = "modelData";
     return roles;
+}
+
+QVariantMap StepModel::get(int row) const
+{
+    QHash<int, QByteArray> names = roleNames();
+    QHashIterator<int, QByteArray> i(names);
+    QVariantMap result;
+    while(i.hasNext())
+    {
+        i.next();
+        QModelIndex idx = index(row, 0);
+        QVariant data = idx.data(i.key());
+        result[i.value()] = data;
+    }
+    return result;
 }
 
 } // namespace

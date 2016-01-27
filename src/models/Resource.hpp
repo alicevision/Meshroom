@@ -13,6 +13,7 @@ class Resource : public QObject
 
 public:
     Resource(const QUrl& url);
+    Resource(const Resource& obj);
 
 public:
     QString name() const { return _url.fileName(); }

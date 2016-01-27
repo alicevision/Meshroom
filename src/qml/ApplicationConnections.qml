@@ -39,6 +39,10 @@ Connections {
         currentProject.jobs.addJob(currentProject.url);
         selectJob(currentProject.jobs.count-1);
     }
+    onDuplicateJob: {
+        currentProject.jobs.duplicateJob(currentJob.modelData);
+        selectJob(currentProject.jobs.count-1);
+    }
     onDeleteJob: {
         _appDialogs.jobDeletionDialog.open();
     }

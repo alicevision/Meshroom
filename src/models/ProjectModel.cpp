@@ -102,7 +102,7 @@ void ProjectModel::removeProject(Project* project)
     SettingsIO::saveRecentProjects(this);
 }
 
-QVariantMap ProjectModel::get(int row)
+QVariantMap ProjectModel::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);

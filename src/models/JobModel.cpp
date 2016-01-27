@@ -108,7 +108,14 @@ void JobModel::addJob(Job* job)
     emit countChanged(rowCount());
 }
 
-QVariantMap JobModel::get(int row)
+void JobModel::duplicateJob(Job* ref)
+{
+    Job* job = new Job();
+    job->load(*ref);
+    addJob(job);
+}
+
+QVariantMap JobModel::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);
@@ -121,14 +128,6 @@ QVariantMap JobModel::get(int row)
         result[i.value()] = data;
     }
     return result;
-}
-
-void JobModel::addJob(const QUrl& projectUrl)
-{
-    QDateTime currentTime = QDateTime::currentDateTime();
-    Job* job = new Job(QUrl::fromLocalFile(projectUrl.toLocalFile() + "/reconstructions/" +
-                                           currentTime.toString("yyyyMMdd_HHmmss")));
-    addJob(job);
 }
 
 } // namespace

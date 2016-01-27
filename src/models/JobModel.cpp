@@ -115,6 +115,18 @@ void JobModel::duplicateJob(Job* ref)
     addJob(job);
 }
 
+void JobModel::removeJob(Job* job)
+{
+    int id = _jobs.indexOf(job);
+    if(id < 0)
+        return;
+    beginRemoveRows(QModelIndex(), id, id);
+    _jobs.removeAt(id);
+    delete job;
+    endRemoveRows();
+    emit countChanged(rowCount());
+}
+
 QVariantMap JobModel::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();

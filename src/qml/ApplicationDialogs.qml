@@ -206,7 +206,12 @@ Item {
     property variant jobDeletionDialog: Dialog {
         id: jobDeletionDialog
         title: "Delete job "+currentJob.name+"?"
-        onAccepted: close()
+        onAccepted: {
+            currentJob.modelData.erase();
+            currentProject.jobs.removeJob(currentJob.modelData);
+            close();
+        }
+        onRejected: close()
         contentItem: Rectangle {
             color: Style.window.color.warning
             implicitWidth: Math.min(_appWindow.width, 600)

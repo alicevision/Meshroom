@@ -44,7 +44,11 @@ Connections {
         selectJob(currentProject.jobs.count-1);
     }
     onDeleteJob: {
-        _appDialogs.jobDeletionDialog.open();
+        if(currentJob.modelData.isStoredOnDisk()) {
+            _appDialogs.jobDeletionDialog.open();
+            return;
+        }
+        currentProject.jobs.removeJob(currentJob.modelData);
     }
     onOpenJobSubmissionDialog: {
         _appDialogs.jobSubmissionDialog.open();

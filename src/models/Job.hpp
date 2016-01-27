@@ -46,6 +46,7 @@ public slots:
     bool save();
     bool start();
     void refresh();
+    void erase();
     void readProcessOutput(int exitCode, QProcess::ExitStatus s);
     void selectPair();
     void selectThumbnail();

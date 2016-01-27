@@ -35,6 +35,7 @@ public:
 public slots:
     void addJob(Job* job);
     void duplicateJob(Job* job);
+    void removeJob(Job* job);
     QVariantMap get(int row) const;
 
 signals:

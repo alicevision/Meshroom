@@ -297,6 +297,13 @@ void Job::refresh()
         qCritical() << _name << ": unable to update job status";
 }
 
+void Job::erase()
+{
+    QDir dir(_url.toLocalFile());
+    if(dir.exists())
+        dir.removeRecursively();
+}
+
 void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
 {
     QProcess* process = qobject_cast<QProcess*>(QObject::sender());

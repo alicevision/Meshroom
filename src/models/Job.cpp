@@ -67,6 +67,7 @@ Job::Job()
 {
     createDefaultGraph();
     autoSaveOn();
+    QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
     // QUrl::fromLocalFile(ref->url().toLocalFile() + "/reconstructions/" +
     //                                             currentTime.toString("yyyyMMdd_HHmmss"));
 }
@@ -169,11 +170,6 @@ bool Job::load(const Job& job)
 
 void Job::autoSaveOn()
 {
-    // signal/slot connection: initial_pair automatic selection
-    QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectPair()));
-    // signal/lot connection: thumbnail selection
-    QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
-    // signal/slot connection: job auto-save
     QObject::connect(this, SIGNAL(dataChanged()), this, SLOT(save()));
     QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
     for(size_t i = 0; i < _steps->rowCount(); i++)
@@ -188,11 +184,6 @@ void Job::autoSaveOn()
 
 void Job::autoSaveOff()
 {
-    // signal/slot connection: initial_pair automatic selection
-    QObject::disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(selectPair()));
-    // signal/lot connection: thumbnail selection
-    QObject::disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
-    // signal/slot connection: job auto-save
     QObject::disconnect(this, SIGNAL(dataChanged()), this, SLOT(save()));
     QObject::disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
     for(size_t i = 0; i < _steps->rowCount(); i++)
@@ -241,12 +232,6 @@ bool Job::start()
     if(_images->rowCount() < 2)
     {
         qCritical() << _name << ": insufficient number of sources";
-        return false;
-    }
-    // do not start an invalid job
-    if(!isPairValid())
-    {
-        qCritical() << _name << ": invalid initial pair";
         return false;
     }
     // define program path
@@ -345,39 +330,6 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     // case 4: // ERROR
     // case 5: // CANCELED
     // case 6: // PAUSED
-}
-
-void Job::selectPair()
-{
-    QModelIndex id;
-    Step* step = nullptr;
-    Attribute* initialPairAttribute = getAttribute(*this, "sfm", "initial_pair", id, &step);
-    if(!step || !initialPairAttribute)
-        return;
-    // check if the current image pair still belongs to the job
-    QVariantList pair = initialPairAttribute->value().toList();
-    if((pair.count() > 0 && !isRegisteredImage(*this, QUrl::fromLocalFile(pair[0].toString()))) ||
-       (pair.count() > 1 && !isRegisteredImage(*this, QUrl::fromLocalFile(pair[1].toString()))))
-    {
-        pair[0] = "";
-        pair[1] = "";
-        step->attributes()->setData(id, pair, AttributeModel::ValueRole);
-    }
-    // auto select the initial pair
-    if(_images->rowCount() < 2)
-        return;
-    if(pair.count() > 0 && !QUrl::fromLocalFile(pair[0].toString()).isValid())
-    {
-        QModelIndex idA = _images->index(0, 0);
-        pair[0] = _images->data(idA, ResourceModel::UrlRole).toUrl().toLocalFile();
-        step->attributes()->setData(id, pair, AttributeModel::ValueRole);
-    }
-    if(pair.count() > 1 && !QUrl::fromLocalFile(pair[1].toString()).isValid())
-    {
-        QModelIndex idB = _images->index(1, 0);
-        pair[1] = _images->data(idB, ResourceModel::UrlRole).toUrl().toLocalFile();
-        step->attributes()->setData(id, pair, AttributeModel::ValueRole);
-    }
 }
 
 void Job::selectThumbnail()

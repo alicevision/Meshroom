@@ -48,7 +48,6 @@ public slots:
     void refresh();
     void erase();
     void readProcessOutput(int exitCode, QProcess::ExitStatus s);
-    void selectPair();
     void selectThumbnail();
     bool isStoredOnDisk();
     bool isPairA(const QUrl& url);

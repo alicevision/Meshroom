@@ -131,7 +131,11 @@ Item {
     property variant jobSubmissionDialog: Dialog {
         id: jobSubmissionDialog
         title: "Job submission"
-        onAccepted: close()
+        onAccepted: {
+            submitJob(radioGroup.current.text=="Local");
+            close();
+        }
+        onRejected: close()
         contentItem: Rectangle {
             color: Style.window.color.dark
             implicitWidth: Math.min(_appWindow.width, 600)
@@ -193,10 +197,7 @@ Item {
                     Button {
                         Layout.fillWidth: true
                         text: "SUBMIT"
-                        onClicked: {
-                            //submitJob(radioGroup.current.text=="Local");
-                            jobSubmissionDialog.accept();
-                        }
+                        onClicked: jobSubmissionDialog.accept()
                     }
                 }
             }

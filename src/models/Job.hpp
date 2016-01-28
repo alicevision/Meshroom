@@ -10,12 +10,19 @@
 namespace meshroom
 {
 
+class Project; // forward declaration
+class JobModel; // forward declaration
+
 class Job : public QObject
 {
     Q_OBJECT
 
 public:
-    Job();
+    Job(Project* project);
+
+public:
+    JobModel* model() const { return qobject_cast<JobModel*>(parent()); }
+    Project* project() const { return _project; }
 
 public:
     const QUrl& url() const { return _url; }
@@ -50,6 +57,8 @@ public slots:
     void readProcessOutput(int exitCode, QProcess::ExitStatus s);
     void selectThumbnail();
     bool isStoredOnDisk();
+    bool isStartable();
+    bool isStarted();
     bool isPairA(const QUrl& url);
     bool isPairB(const QUrl& url);
     bool isPairValid();
@@ -63,6 +72,7 @@ signals:
     void dataChanged();
 
 private:
+    Project* _project = nullptr;
     QUrl _url;
     QDateTime _date;
     QString _name;

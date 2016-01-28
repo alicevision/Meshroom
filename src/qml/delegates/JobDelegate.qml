@@ -55,77 +55,47 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     text: model.name
-                    // font.pixelSize: Style.text.size.small
+                    font.pixelSize: Style.text.size.small
                     color: isSelected ? Style.text.color.selected : Style.text.color.normal
                     maximumLineCount: 2
                 }
-                // RowLayout {
-                //     spacing: 5
-                //     RowLayout {
-                //         spacing: 2
-                //         ToolButton {
-                //             iconSource: "qrc:///images/disk.svg"
-                //             enabled: false
-                //             opacity: 0.5
-                //         }
-                //         Text {
-                //             text: model.user
-                //             font.pixelSize: Style.text.size.small
-                //             color: Style.text.color.dark
-                //         }
-                //     }
-                //     RowLayout {
-                //         spacing: 2
-                //         ToolButton {
-                //             iconSource: "qrc:///images/disk.svg"
-                //             enabled: false
-                //             opacity: 0.5
-                //         }
-                //         Text {
-                //             text: model.images.count
-                //             font.pixelSize: Style.text.size.small
-                //             color: Style.text.color.dark
-                //         }
-                //     }
-                //     Item {
-                //         Layout.fillWidth: true
-                //     }
-                //     Text {
-                //         text: {
-                //             switch(model.status) {
-                //                 case 6: // PAUSED
-                //                     return "PAUSED";
-                //                 case 4: // ERROR
-                //                     return "ERROR";
-                //                 case 5: // CANCELED
-                //                     return "CANCELED";
-                //                 case 3: // DONE
-                //                     return "DONE"
-                //                 case 0: // BLOCKED
-                //                 case 1: // READY
-                //                 case 2: // RUNNING
-                //                 default:
-                //                     return Math.round(completion*100)+"%"
-                //             }
-                //         }
-                //         font.pixelSize: Style.text.size.small
-                //         color: {
-                //             switch(model.status) {
-                //                 case 6: // PAUSED
-                //                 case 4: // ERROR
-                //                 case 5: // CANCELED
-                //                     return "red";
-                //                 case 0: // BLOCKED
-                //                 case 1: // READY
-                //                 case 2: // RUNNING
-                //                     return "green";
-                //                 case 3: // DONE
-                //                 default:
-                //                     return Style.text.color.dark;
-                //             }
-                //         }
-                //     }
-                // }
+                Text {
+                    text: {
+                        if(model.status < 0)
+                            return "n/a";
+                        switch(model.status) {
+                            case 6: // PAUSED
+                                return "PAUSED";
+                            case 4: // ERROR
+                                return "ERROR";
+                            case 5: // CANCELED
+                                return "CANCELED";
+                            case 3: // DONE
+                                return "DONE"
+                            case 0: // BLOCKED
+                            case 1: // READY
+                            case 2: // RUNNING
+                            default:
+                                return Math.round(model.completion*100)+"%"
+                        }
+                    }
+                    font.pixelSize: Style.text.size.small
+                    color: {
+                        switch(model.status) {
+                            case 6: // PAUSED
+                            case 4: // ERROR
+                            case 5: // CANCELED
+                                return "red";
+                            case 0: // BLOCKED
+                            case 1: // READY
+                            case 2: // RUNNING
+                                return "green";
+                            case 3: // DONE
+                            default:
+                                return Style.text.color.dark;
+                        }
+                    }
+                }
                 Item { Layout.fillHeight: true } // spacer
             }
         }

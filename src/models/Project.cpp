@@ -96,14 +96,14 @@ void Project::populate()
     QStringList jobs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
     for(size_t i = 0; i < jobs.length(); ++i)
     {
-        Job* job = new Job();
+        Job* job = new Job(this);
         if(job->load(QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i]))))
             _jobs->addJob(job);
     }
     // we should have at least one job
     if(_jobs->rowCount() <= 0)
     {
-        Job* job = new Job();
+        Job* job = new Job(this);
         _jobs->addJob(job);
     }
 }

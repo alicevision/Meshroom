@@ -1,5 +1,6 @@
 #include "Job.hpp"
 #include "JobModel.hpp"
+#include "Project.hpp"
 #include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -58,18 +59,22 @@ bool isRegisteredImage(const Job& job, const QUrl& url)
 
 } // empty namespace
 
-Job::Job()
-    : _user(std::getenv("USER"))
+Job::Job(Project* project)
+    : _project(project)
+    , _user(std::getenv("USER"))
     , _date(QDateTime::currentDateTime())
     , _name(_date.toString("yyyyMMdd_HHmmss"))
     , _steps(new StepModel(this))
     , _images(new ResourceModel(this))
 {
+    // compute job url
+    _url = QUrl::fromLocalFile(project->url().toLocalFile()+"/reconstructions/"+_date.toString("yyyyMMdd_HHmmss"));
+    // create the default graph
     createDefaultGraph();
+    // activate auto-save
     autoSaveOn();
+    // activate auto thumbnail selection
     QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
-    // QUrl::fromLocalFile(ref->url().toLocalFile() + "/reconstructions/" +
-    //                                             currentTime.toString("yyyyMMdd_HHmmss"));
 }
 
 void Job::setUrl(const QUrl& url)
@@ -199,16 +204,16 @@ void Job::autoSaveOff()
 bool Job::save()
 {
     // return in case the job is already started
-    if(_status >= 0)
+    if(isStarted())
         return false;
     // build the JSON object for this job
     QJsonObject json;
     serializeToJSON(&json);
-    // create the entire filesystem structure
+    // create the job directory
     QDir dir;
-    if(!dir.mkpath(_url.toLocalFile() + "/build/matches"))
+    if(!dir.mkpath(_url.toLocalFile()))
     {
-        qCritical() << _name << ": unable to create the job directory structure";
+        qCritical() << _name << ": unable to create the job directory";
         return false;
     }
     // open a file handler
@@ -228,42 +233,54 @@ bool Job::save()
 
 bool Job::start()
 {
-    // do not start an incomplete job
-    if(_images->rowCount() < 2)
+    // do not start a job we can't save
+    if(!save())
+        return false;
+    // do not start an invalid job
+    if(!isStartable())
+        return false;
+    // create the build directory
+    QDir dir(_url.toLocalFile());
+    if(!dir.mkpath("build"))
     {
-        qCritical() << _name << ": insufficient number of sources";
+        qCritical() << _name << ": unable to create the job directory";
         return false;
     }
-    // define program path
+    // define the program path
     QString startCommand = std::getenv("MESHROOM_START_COMMAND");
     if(startCommand.isEmpty())
         startCommand = QCoreApplication::applicationDirPath() + "/scripts/job_start.py";
     // and add command arguments
     QStringList arguments;
     arguments.append(_url.toLocalFile() + "/job.json");
-    // run the process
+    // then run the process
     QProcess process;
     process.setProgram(startCommand);
     process.setArguments(arguments);
     process.start();
+    // wait for the end of the process
     if(!process.waitForFinished())
     {
+        // remove the build directory in case of error
         qCritical() << _name << ": unable to start job";
+        dir.cd("build");
+        dir.removeRecursively();
         return false;
     }
-    // change the job status
-    JobModel* model = qobject_cast<JobModel*>(parent());
-    assert(model);
-    model->setData(_modelIndex, 0, JobModel::StatusRole); // BLOCKED
+    // and refresh the job status
     qInfo() << _name << ": job started";
+    refresh();
     return true;
 }
 
 void Job::refresh()
 {
-    QFileInfo fileInfo(_url.toLocalFile() + "/job.json");
-    if(!fileInfo.exists())
+    if(!isStarted())
+    {
+        model()->setData(_modelIndex, -1, JobModel::StatusRole);
         return;
+    }
+    QFileInfo fileInfo(_url.toLocalFile() + "/job.json");
     // define program path
     QString statusCommand = std::getenv("MESHROOM_STATUS_COMMAND");
     if(statusCommand.isEmpty())
@@ -292,15 +309,13 @@ void Job::erase()
 void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
 {
     QProcess* process = qobject_cast<QProcess*>(QObject::sender());
-    JobModel* model = qobject_cast<JobModel*>(parent());
     assert(process);
-    assert(model);
     // check exit status
     if(exitStatus != QProcess::NormalExit)
     {
         QString response(process->readAllStandardError());
         qCritical() << response;
-        model->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
+        model()->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
         return;
     }
     // parse standard output as JSON
@@ -310,7 +325,7 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     if(parseError.error != QJsonParseError::NoError)
     {
         qCritical() << _name << ": invalid response - parse error";
-        model->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
+        model()->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
         return;
     }
     // retrieve & set job completion & status
@@ -320,33 +335,40 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
         qCritical() << _name << ": invalid response - missing values";
         return;
     }
-    model->setData(_modelIndex, json["completion"].toDouble(), JobModel::CompletionRole);
-    model->setData(_modelIndex, json["status"].toInt(), JobModel::StatusRole);
-
-    // case 0: // BLOCKED
-    // case 1: // READY
-    // case 2: // RUNNING
-    // case 3: // DONE
-    // case 4: // ERROR
-    // case 5: // CANCELED
-    // case 6: // PAUSED
+    model()->setData(_modelIndex, json["completion"].toDouble(), JobModel::CompletionRole);
+    model()->setData(_modelIndex, json["status"].toInt(), JobModel::StatusRole);
 }
 
 void Job::selectThumbnail()
 {
-    JobModel* model = qobject_cast<JobModel*>(parent());
-    if(!model)
+    if(!model())
         return;
     QModelIndex image0ID = _images->index(0, 0);
-    model->setData(_modelIndex, _images->data(image0ID, ResourceModel::UrlRole),
+    model()->setData(_modelIndex, _images->data(image0ID, ResourceModel::UrlRole),
                    JobModel::ThumbnailRole);
 }
 
 bool Job::isStoredOnDisk()
 {
-    QDir jobDirectory(_url.toLocalFile());
-    QFile jobFile(jobDirectory.filePath("job.json"));
-    return jobFile.exists();
+    QDir dir(_url.toLocalFile());
+    QFile file(dir.filePath("job.json"));
+    return file.exists();
+}
+
+bool Job::isStartable()
+{
+    if(_images->rowCount() < 2)
+    {
+        qCritical() << _name << ": insufficient number of sources";
+        return false;
+    }
+    return true;
+}
+
+bool Job::isStarted()
+{
+    QDir dir(_url.toLocalFile()+"/build");
+    return (dir.exists() && isStoredOnDisk());
 }
 
 bool Job::isPairA(const QUrl& url)

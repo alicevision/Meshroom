@@ -110,7 +110,7 @@ void JobModel::addJob(Job* job)
 
 void JobModel::duplicateJob(Job* ref)
 {
-    Job* job = new Job();
+    Job* job = new Job(ref->project());
     job->load(*ref);
     addJob(job);
 }

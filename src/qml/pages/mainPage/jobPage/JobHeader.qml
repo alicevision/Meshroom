@@ -53,6 +53,7 @@ Rectangle {
             color: (currentJob.status >= 4)? "red" : Style.window.color.selected
         }
         ToolButton {
+            visible: (currentJob.status<0)
             iconSource: "qrc:///images/play.svg"
             onClicked: openJobSubmissionDialog()
         }

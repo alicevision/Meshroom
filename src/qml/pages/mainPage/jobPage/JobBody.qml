@@ -28,7 +28,6 @@ Item {
             }
             Tab {
                 title: "3D"
-                enabled: currentJob.status >= 0
                 Job3D {
                     anchors.fill: parent
                 }

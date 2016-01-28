@@ -11,9 +11,11 @@ Item {
 
     id: root
     property variant model: null
+    property bool editable: true
 
     DropArea {
         anchors.fill: parent
+        enabled: root.editable
         onFilesDropped: {
             for(var i=0; i<files.length; ++i) {
                 var ext = files[i].split('.').pop().toUpperCase();
@@ -85,6 +87,7 @@ Item {
         DelegateModel {
             id: imageModel
             delegate: ImageDelegate {
+                editable: root.editable
                 onSelectOne: _selector.selectOne(id)
                 onSelectContiguous: _selector.selectContiguous(id)
                 onSelectExtended: _selector.add(id)

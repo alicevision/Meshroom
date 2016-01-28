@@ -8,6 +8,7 @@ Package {
 
     id: root
     property bool selected: false
+    property bool editable: true
     signal selectContiguous(int id)
     signal selectExtended(int id)
     signal selectOne(int id)
@@ -98,16 +99,7 @@ Package {
                 }
             }
             Text {
-                text: "size"
-            }
-            Text {
-                text: "focal length"
-            }
-            Text {
-                text: "model"
-            }
-            Text {
-                text: "manufacturer"
+                text: model.url.toString().replace("file://", "")
             }
         }
     }
@@ -118,6 +110,8 @@ Package {
         height: GridView.view.cellHeight
         clip: true
         Keys.onPressed: {
+            if(!root.editable)
+                return;
             if (event.key == Qt.Key_Backspace || event.key == Qt.Key_Delete) {
                 removeSelected();
                 event.accepted = true;
@@ -166,28 +160,6 @@ Package {
                         maximumLineCount: (gridMouseArea.containsMouse) ? 4 : 1
                     }
                 }
-                // Item {
-                //     id: pairIndicator
-                //     anchors.fill: parent
-                //     visible: root.isPairA || root.isPairB
-                //     Rectangle {
-                //         anchors.fill: parent
-                //         color: "black"
-                //         opacity: 0.5
-                //     }
-                //     Text {
-                //         anchors.centerIn: parent
-                //         text: root.isPairA ? "A" : "B"
-                //         font.pixelSize: Style.text.size.xlarge
-                //         color: Style.text.color.selected
-                //     }
-                // }
-                // Rectangle { // state indicator (enabled or not)
-                //     anchors.fill: parent
-                //     visible: !root.enabled
-                //     color: "black"
-                //     opacity: 0.5
-                // }
             }
         }
     }
@@ -199,6 +171,7 @@ Package {
             onTriggered: root.selected ? unselect(index) : selectExtended(index)
         }
         MenuItem {
+            enabled: root.editable
             text: "Remove"
             onTriggered: removeOne(index)
         }

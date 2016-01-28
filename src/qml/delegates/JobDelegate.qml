@@ -3,6 +3,7 @@ import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
+import Meshroom.Enums 0.1
 
 Item {
 
@@ -61,20 +62,24 @@ Item {
                 }
                 Text {
                     text: {
-                        if(model.status < 0)
-                            return "n/a";
                         switch(model.status) {
-                            case 6: // PAUSED
-                                return "PAUSED";
-                            case 4: // ERROR
-                                return "ERROR";
-                            case 5: // CANCELED
-                                return "CANCELED";
-                            case 3: // DONE
-                                return "DONE"
-                            case 0: // BLOCKED
-                            case 1: // READY
-                            case 2: // RUNNING
+                            case Job.BLOCKED:
+                                return "blocked";
+                            case Job.READY:
+                                return "ready";
+                            case Job.DONE:
+                                return "done";
+                            case Job.ERROR:
+                                return "error";
+                            case Job.CANCELED:
+                                return "canceled";
+                            case Job.PAUSED:
+                                return "paused";
+                            case Job.NOTSTARTED:
+                                return "not started";
+                            case Job.SYSTEMERROR:
+                                return "n/a";
+                            case Job.RUNNING:
                             default:
                                 return Math.round(model.completion*100)+"%"
                         }
@@ -82,17 +87,18 @@ Item {
                     font.pixelSize: Style.text.size.small
                     color: {
                         switch(model.status) {
-                            case 6: // PAUSED
-                            case 4: // ERROR
-                            case 5: // CANCELED
-                                return "red";
-                            case 0: // BLOCKED
-                            case 1: // READY
-                            case 2: // RUNNING
-                                return "green";
-                            case 3: // DONE
+                            case Job.PAUSED:
+                            case Job.ERROR:
+                            case Job.CANCELED:
+                            case Job.SYSTEMERROR:
+                                return Style.text.color.critical;
+                            case Job.BLOCKED:
+                            case Job.READY:
+                            case Job.RUNNING:
+                            case Job.DONE:
+                            case Job.NOTSTARTED:
                             default:
-                                return Style.text.color.dark;
+                                return Style.text.color.info;
                         }
                     }
                 }

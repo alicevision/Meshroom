@@ -18,7 +18,22 @@ class Job : public QObject
     Q_OBJECT
 
 public:
-    Job(Project* project);
+    enum StatusType
+    {
+        BLOCKED = 0,
+        READY = 1,
+        RUNNING = 2,
+        DONE = 3,
+        ERROR = 4,
+        CANCELED = 5,
+        PAUSED = 6,
+        NOTSTARTED = -1,
+        SYSTEMERROR = -2
+    };
+    Q_ENUMS(StatusType)
+
+public:
+    Job(Project* project = nullptr);
 
 public:
     JobModel* model() const { return qobject_cast<JobModel*>(parent()); }
@@ -30,7 +45,7 @@ public:
     const QDateTime& date() const { return _date; }
     const QString& user() const { return _user; }
     const float& completion() const { return _completion; }
-    const int& status() const { return _status; }
+    const StatusType& status() const { return _status; }
     const QUrl& thumbnail() const { return _thumbnail; }
     StepModel* steps() const { return _steps; }
     ResourceModel* images() const { return _images; }
@@ -39,7 +54,7 @@ public:
     void setDate(const QDateTime& date);
     void setUser(const QString& user);
     void setCompletion(const float& completion);
-    void setStatus(const int& status);
+    void setStatus(const StatusType& status);
     void setThumbnail(const QUrl& thumbnail);
     void setModelIndex(const QModelIndex& id);
 
@@ -78,7 +93,7 @@ private:
     QString _name;
     QString _user;
     float _completion = 0.f;
-    int _status = -1;
+    StatusType _status = NOTSTARTED;
     QUrl _thumbnail;
     StepModel* _steps;
     ResourceModel* _images;

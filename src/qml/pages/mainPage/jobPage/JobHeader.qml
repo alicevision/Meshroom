@@ -3,6 +3,7 @@ import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
+import Meshroom.Enums 0.1
 
 Rectangle {
 
@@ -24,17 +25,17 @@ Rectangle {
             iconSource: "qrc:///images/arrow.svg"
             enabled: false
         }
-        Button {
+        Text {
             text: currentProject.name
-            // onClicked: projectMenu.popup()
+            font.pixelSize: Style.text.size.small
         }
         ToolButton {
             iconSource: "qrc:///images/arrow.svg"
             enabled: false
         }
-        Button {
+        Text {
             text: currentJob.name
-            // onClicked: jobMenu.popup()
+            font.pixelSize: Style.text.size.small
         }
         Item { Layout.fillWidth: true } // spacer
         Item { // separator
@@ -48,17 +49,27 @@ Rectangle {
             }
         }
         ProgressBar {
-            visible: currentJob.status>=0
+            visible: currentJob.status >= 0
             value: currentJob.completion
-            color: (currentJob.status >= 4)? "red" : Style.window.color.selected
+            color: {
+                switch(currentJob.status) {
+                    case Job.PAUSED:
+                    case Job.ERROR:
+                    case Job.CANCELED:
+                    case Job.SYSTEMERROR:
+                        return "red";
+                    default:
+                        return Style.window.color.selected;
+                }
+            }
         }
         ToolButton {
-            visible: (currentJob.status<0)
+            visible: currentJob.status < 0
             iconSource: "qrc:///images/play.svg"
             onClicked: openJobSubmissionDialog()
         }
         ToolButton {
-            visible: (currentJob.status>=0)
+            visible: currentJob.status >= 0
             iconSource: "qrc:///images/disk.svg"
             text: "refresh"
             onClicked: refreshJobStatus()

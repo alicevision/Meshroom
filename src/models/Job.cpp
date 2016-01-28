@@ -114,7 +114,7 @@ void Job::setCompletion(const float& completion)
     _completion = completion;
 }
 
-void Job::setStatus(const int& status)
+void Job::setStatus(const StatusType& status)
 {
     _status = status;
 }
@@ -277,7 +277,7 @@ void Job::refresh()
 {
     if(!isStarted())
     {
-        model()->setData(_modelIndex, -1, JobModel::StatusRole);
+        model()->setData(_modelIndex, NOTSTARTED, JobModel::StatusRole);
         return;
     }
     QFileInfo fileInfo(_url.toLocalFile() + "/job.json");
@@ -315,7 +315,7 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     {
         QString response(process->readAllStandardError());
         qCritical() << response;
-        model()->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
+        model()->setData(_modelIndex, ERROR, JobModel::StatusRole); // ERROR
         return;
     }
     // parse standard output as JSON
@@ -325,7 +325,7 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     if(parseError.error != QJsonParseError::NoError)
     {
         qCritical() << _name << ": invalid response - parse error";
-        model()->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
+        model()->setData(_modelIndex, ERROR, JobModel::StatusRole); // ERROR
         return;
     }
     // retrieve & set job completion & status
@@ -336,7 +336,7 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
         return;
     }
     model()->setData(_modelIndex, json["completion"].toDouble(), JobModel::CompletionRole);
-    model()->setData(_modelIndex, json["status"].toInt(), JobModel::StatusRole);
+    model()->setData(_modelIndex, (StatusType)json["status"].toInt(), JobModel::StatusRole);
 }
 
 void Job::selectThumbnail()

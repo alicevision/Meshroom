@@ -1,8 +1,10 @@
 #include "gl/GLView.hpp"
 #include "models/ApplicationModel.hpp"
+#include "models/Job.hpp"
 #include <QtWidgets/QApplication>
 #include <QSurfaceFormat>
 #include <QtQml>
+
 
 int main(int argc, char* argv[])
 {
@@ -14,7 +16,8 @@ int main(int argc, char* argv[])
     QCoreApplication::setApplicationName("meshroom");
 
     // register types
-    qmlRegisterType<GLView>("Popart", 0, 1, "GLView");
+    qmlRegisterType<GLView>("Meshroom.Views", 0, 1, "GLView");
+    qmlRegisterType<Job>("Meshroom.Enums", 0, 1, "Job");
 
     // set opengl profile
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();

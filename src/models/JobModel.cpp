@@ -77,7 +77,7 @@ bool JobModel::setData(const QModelIndex& index, const QVariant& value, int role
             job->setCompletion(value.toFloat());
             break;
         case StatusRole:
-            job->setStatus(value.toInt());
+            job->setStatus((Job::StatusType)value.toInt());
             break;
         case ThumbnailRole:
             job->setThumbnail(value.toUrl());

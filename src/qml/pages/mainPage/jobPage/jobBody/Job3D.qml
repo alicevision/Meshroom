@@ -3,7 +3,7 @@ import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
-import Popart 0.1 // GLView
+import Meshroom.Views 0.1
 
 Item {
 

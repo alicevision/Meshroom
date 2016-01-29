@@ -13,15 +13,18 @@ Connections {
     onCloseCurrentProject: {
         _stack.pop();
         currentProject = null;
+        currentJob = null;
     }
     onOpenProjectDialog: {
-        _appDialogs.openProject.open();
+        var dialog = _appDialogs.openProject.createObject(_appWindow);
+        dialog.open();
     }
     onOpenProjectDirectory: {
         Qt.openUrlExternally(currentProject.url);
     }
     onOpenProjectSettings: {
-        _appDialogs.projectSettingsDialog.open();
+        var dialog = _appDialogs.projectSettingsDialog.createObject(_appWindow);
+        dialog.open();
     }
     onAddProject: {
         _applicationModel.projects.addProject(url);
@@ -45,13 +48,15 @@ Connections {
     }
     onDeleteJob: {
         if(currentJob.modelData.isStoredOnDisk()) {
-            _appDialogs.jobDeletionDialog.open();
+            var dialog = _appDialogs.jobDeletionDialog.createObject(_appWindow);
+            dialog.open();
             return;
         }
         currentProject.jobs.removeJob(currentJob.modelData);
     }
     onOpenJobSubmissionDialog: {
-        _appDialogs.jobSubmissionDialog.open();
+        var dialog = _appDialogs.jobSubmissionDialog.createObject(_appWindow);
+        dialog.open();
     }
     onSubmitJob: {
         currentJob.modelData.start(locally);
@@ -60,10 +65,17 @@ Connections {
         Qt.openUrlExternally(currentJob.url);
     }
     onOpenJobSettings: {
-        _appDialogs.jobSettingsDialog.open();
+        var dialog = _appDialogs.jobSettingsDialog.createObject(_appWindow);
+        dialog.open();
     }
     onRefreshJobStatus: {
         currentJob.modelData.refresh();
     }
 
+    // other actions
+    onOpenImageSelectionDialog: {
+        var dialog = _appDialogs.imageSelectionDialog.createObject(_appWindow);
+        dialog.onImageSelected.connect(callback);
+        dialog.open();
+    }
 }

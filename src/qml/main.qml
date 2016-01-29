@@ -34,6 +34,8 @@ ApplicationWindow {
     signal openJobDirectory()
     signal openJobSettings()
     signal refreshJobStatus()
+    // other actions
+    signal openImageSelectionDialog(var callback)
 
     ApplicationSettings { target: _appWindow }
     ApplicationConnections { target: _appWindow }

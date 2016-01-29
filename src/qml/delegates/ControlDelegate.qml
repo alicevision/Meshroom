@@ -36,16 +36,52 @@ Item {
     property Component pairControl: Item {
         width: parent.width
         height: childrenRect.height
+        function setPairA(url) {
+            var items = modelData.value;
+            items[0] = url.replace("file://", "");
+            modelData.value = items;
+        }
+        function setPairB(url) {
+            var items = modelData.value;
+            items[1] = url.replace("file://", "");
+            modelData.value = items;
+        }
         RowLayout {
             width: parent.width
             height: childrenRect.height
-            DropArea {
-                Layout.preferredWidth: 100
-                Layout.preferredHeight: 100
+            Rectangle {
+                Layout.preferredHeight: 80
+                Layout.preferredWidth: 80*4/3.0
+                color: "black"
+                Image {
+                    anchors.fill: parent
+                    source: modelData.value[0]
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                    ToolButton {
+                        anchors.fill: parent
+                        text: "select"
+                        iconSource: "qrc:///images/disk.svg"
+                        onClicked: openImageSelectionDialog(setPairA)
+                    }
+                }
             }
-            DropArea {
-                Layout.preferredWidth: 100
-                Layout.preferredHeight: 100
+            Rectangle {
+                Layout.preferredHeight: 80
+                Layout.preferredWidth: 80*4/3.0
+                color: "black"
+                Image {
+                    anchors.fill: parent
+                    source: modelData.value[1]
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                    ToolButton {
+                        anchors.fill: parent
+                        text: "select"
+                        iconSource: "qrc:///images/disk.svg"
+                        onClicked: openImageSelectionDialog(setPairB)
+                    }
+                }
             }
             Item {
                 Layout.fillWidth: true

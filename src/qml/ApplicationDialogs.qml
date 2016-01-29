@@ -4,10 +4,11 @@ import QtQuick.Layouts 1.2
 import QtQuick.Dialogs 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
+import "delegates"
 
 Item {
 
-    property variant openProject: FileDialog {
+    property Component openProject: FileDialog {
         title: "Please choose a project directory"
         folder: "/"
         selectFolder: true
@@ -16,7 +17,7 @@ Item {
         onAccepted: addProject(fileUrl)
     }
 
-    property variant projectSettingsDialog: Dialog {
+    property Component projectSettingsDialog: Dialog {
         id: projectSettingsDialog
         title: "Project settings"
         onAccepted: close()
@@ -72,7 +73,7 @@ Item {
         }
     }
 
-    property variant jobSettingsDialog: Dialog {
+    property Component jobSettingsDialog: Dialog {
         id: jobSettingsDialog
         title: "Job settings"
         onAccepted: close()
@@ -128,7 +129,7 @@ Item {
         }
     }
 
-    property variant jobSubmissionDialog: Dialog {
+    property Component jobSubmissionDialog: Dialog {
         id: jobSubmissionDialog
         title: "Job submission"
         onAccepted: {
@@ -204,7 +205,7 @@ Item {
         }
     }
 
-    property variant jobDeletionDialog: Dialog {
+    property Component jobDeletionDialog: Dialog {
         id: jobDeletionDialog
         title: "Delete job "+currentJob.name+"?"
         onAccepted: {
@@ -241,6 +242,45 @@ Item {
                         Layout.fillWidth: true
                         text: "DELETE"
                         onClicked: jobDeletionDialog.accept();
+                    }
+                }
+            }
+        }
+    }
+
+    property Component imageSelectionDialog: Dialog {
+        id: imageSelectionDialog
+        signal imageSelected(string url)
+        title: "Select image"
+        contentItem: Rectangle {
+            color: Style.window.color.dark
+            implicitWidth: Math.min(_appWindow.width, 600)
+            implicitHeight: _appWindow.height*0.5
+            ToolButton {
+                anchors.top: parent.top
+                anchors.right: parent.right
+                iconSource: "qrc:///images/close.svg"
+                onClicked: imageSelectionDialog.reject()
+            }
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+                spacing: 10
+                Text {
+                    font.pixelSize: Style.text.size.large
+                    text: imageSelectionDialog.title
+                }
+                ListView {
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    model: currentJob.images
+                    clip: true
+                    spacing: 1
+                    delegate: ImageDelegate {
+                        onImageSelected: {
+                            imageSelectionDialog.imageSelected(url);
+                            imageSelectionDialog.accept();
+                        }
                     }
                 }
             }

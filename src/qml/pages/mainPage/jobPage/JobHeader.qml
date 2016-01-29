@@ -10,7 +10,6 @@ Rectangle {
     color: Style.window.color.dark
 
     function clearOnDestruction() {
-        header.clearOnDestruction();
     }
 
     RowLayout {

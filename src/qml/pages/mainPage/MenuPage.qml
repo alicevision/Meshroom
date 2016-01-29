@@ -9,7 +9,7 @@ import "../../delegates"
 Rectangle {
 
     function clearOnDestruction() {
-        projectList.model = 0;
+        listview.model = 0;
     }
 
     color: Style.window.color.normal
@@ -54,6 +54,7 @@ Rectangle {
                             anchors.centerIn: parent
                             sourceSize: Qt.size(25, 25)
                             source: "qrc:///images/plus.svg"
+                            asynchronous: true
                         }
                     }
                 }

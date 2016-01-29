@@ -74,8 +74,6 @@ Job::Job(Project* project)
     createDefaultGraph();
     // activate auto-save
     autoSaveOn();
-    // activate auto thumbnail selection
-    QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
 }
 
 void Job::setName(const QString& name)
@@ -92,6 +90,7 @@ void Job::setCompletion(const float& completion)
         return;
     _completion = completion;
     emit completionChanged();
+    emit dataChanged(_modelIndex, _modelIndex);
 }
 
 void Job::setStatus(const StatusType& status)
@@ -100,6 +99,7 @@ void Job::setStatus(const StatusType& status)
         return;
     _status = status;
     emit statusChanged();
+    emit dataChanged(_modelIndex, _modelIndex);
 }
 
 void Job::setThumbnail(const QUrl& thumbnail)
@@ -151,24 +151,27 @@ bool Job::load(const QUrl& url)
 
 bool Job::load(const Job& job)
 {
+    autoSaveOff();
     delete _images;
     delete _steps;
     _images = new ResourceModel(*(job.images()));
     _steps = new StepModel(*(job.steps()));
     _thumbnail = job.thumbnail();
+    autoSaveOn();
     return true;
 }
 
 void Job::autoSaveOn()
 {
-    QObject::connect(this, SIGNAL(nameChanged()), this, SLOT(save()));
-    QObject::connect(this, SIGNAL(thumbnailChanged()), this, SLOT(save()));
-    QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
+    connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
+    connect(this, SIGNAL(nameChanged()), this, SLOT(save()));
+    connect(this, SIGNAL(thumbnailChanged()), this, SLOT(save()));
+    connect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
     for(size_t i = 0; i < _steps->rowCount(); i++)
     {
         QModelIndex id = _steps->index(i, 0);
         Step* step = _steps->data(id, StepModel::ModelDataRole).value<Step*>();
-        QObject::connect(step->attributes(),
+        connect(step->attributes(),
                          SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this,
                          SLOT(save()));
     }
@@ -176,14 +179,15 @@ void Job::autoSaveOn()
 
 void Job::autoSaveOff()
 {
-    QObject::disconnect(this, SIGNAL(nameChanged()), this, SLOT(save()));
-    QObject::disconnect(this, SIGNAL(thumbnailChanged()), this, SLOT(save()));
-    QObject::disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
+    disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
+    disconnect(this, SIGNAL(nameChanged()), this, SLOT(save()));
+    disconnect(this, SIGNAL(thumbnailChanged()), this, SLOT(save()));
+    disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
     for(size_t i = 0; i < _steps->rowCount(); i++)
     {
         QModelIndex id = _steps->index(i, 0);
         Step* step = _steps->data(id, StepModel::ModelDataRole).value<Step*>();
-        QObject::disconnect(step->attributes(),
+        disconnect(step->attributes(),
                             SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this,
                             SLOT(save()));
     }
@@ -265,7 +269,7 @@ void Job::refresh()
 {
     if(!isStarted())
     {
-        model()->setData(_modelIndex, NOTSTARTED, JobModel::StatusRole);
+        setStatus(NOTSTARTED);
         return;
     }
     QFileInfo fileInfo(_url.toLocalFile() + "/job.json");
@@ -284,7 +288,10 @@ void Job::refresh()
     process.setArguments(arguments);
     process.start();
     if(!process.waitForFinished())
+    {
         qCritical() << _name << ": unable to update job status";
+        setStatus(SYSTEMERROR);
+    }
 }
 
 void Job::erase()
@@ -303,7 +310,7 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     {
         QString response(process->readAllStandardError());
         qCritical() << response;
-        model()->setData(_modelIndex, ERROR, JobModel::StatusRole); // ERROR
+        setStatus(SYSTEMERROR);
         return;
     }
     // parse standard output as JSON
@@ -313,7 +320,7 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     if(parseError.error != QJsonParseError::NoError)
     {
         qCritical() << _name << ": invalid response - parse error";
-        model()->setData(_modelIndex, ERROR, JobModel::StatusRole); // ERROR
+        setStatus(SYSTEMERROR);
         return;
     }
     // retrieve & set job completion & status
@@ -321,19 +328,17 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     if(!json.contains("completion") || !json.contains("status"))
     {
         qCritical() << _name << ": invalid response - missing values";
+        setStatus(SYSTEMERROR);
         return;
     }
-    model()->setData(_modelIndex, json["completion"].toDouble(), JobModel::CompletionRole);
-    model()->setData(_modelIndex, (StatusType)json["status"].toInt(), JobModel::StatusRole);
+    setCompletion(json["completion"].toDouble());
+    setStatus((StatusType)json["status"].toInt());
 }
 
 void Job::selectThumbnail()
 {
-    if(!model())
-        return;
     QModelIndex image0ID = _images->index(0, 0);
-    model()->setData(_modelIndex, _images->data(image0ID, ResourceModel::UrlRole),
-                   JobModel::ThumbnailRole);
+    setThumbnail(_images->data(image0ID, ResourceModel::UrlRole).toUrl());
 }
 
 bool Job::isStoredOnDisk()
@@ -465,7 +470,6 @@ void Job::serializeToJSON(QJsonObject* obj) const
 
 void Job::deserializeFromJSON(const QJsonObject& obj)
 {
-    autoSaveOff();
     // read global job settings
     if(obj.contains("user"))
         _user = obj["user"].toString();
@@ -489,7 +493,6 @@ void Job::deserializeFromJSON(const QJsonObject& obj)
             continue;
         step->deserializeFromJSON(stepsObject);
     }
-    autoSaveOn();
 }
 
 } // namespace

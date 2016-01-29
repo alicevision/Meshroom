@@ -96,6 +96,8 @@ void JobModel::addJob(Job* job)
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(job, QQmlEngine::CppOwnership);
     job->setParent(this);
+    connect(job, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
+            this, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)));
 
     _jobs << job;
     endInsertRows();

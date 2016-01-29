@@ -45,7 +45,6 @@ public:
     Job(Project* project = nullptr);
 
 public:
-    JobModel* model() const { return qobject_cast<JobModel*>(parent()); }
     Project* project() const { return _project; }
 
 public:
@@ -94,6 +93,7 @@ signals:
     void completionChanged();
     void statusChanged();
     void thumbnailChanged();
+    void dataChanged(const QModelIndex&, const QModelIndex&);
 
 private:
     Project* _project = nullptr;

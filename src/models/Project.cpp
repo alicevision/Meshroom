@@ -4,6 +4,8 @@
 #include <QDir>
 #include <QDebug>
 
+#define LOGID (QString("[project:%1]").arg(_name)).toStdString().c_str()
+
 namespace meshroom
 {
 
@@ -39,7 +41,7 @@ bool Project::load()
     QFile projectFile(projectDirectory.filePath("project.json"));
     if(!projectFile.open(QIODevice::ReadOnly))
     {
-        qInfo() << _name << ": unable to read the project descriptor file"
+        qInfo() << LOGID << "unable to read the project descriptor file"
                 << projectFile.fileName();
         return false;
     }
@@ -51,7 +53,7 @@ bool Project::load()
     QJsonDocument jsonDocument(QJsonDocument::fromJson(data, &parseError));
     if(parseError.error != QJsonParseError::NoError)
     {
-        qWarning() << _name << ": malformed JSON file" << projectFile.fileName();
+        qWarning() << LOGID << "malformed JSON file" << projectFile.fileName();
         return false;
     }
     // read project attributes
@@ -72,7 +74,7 @@ bool Project::save()
     QFile projectFile(projectDirectory.filePath("project.json"));
     if(!projectFile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        qWarning() << _name << ": unable to write the project descriptor file"
+        qWarning() << LOGID << "unable to write the project descriptor file"
                    << projectFile.fileName();
         return false;
     }

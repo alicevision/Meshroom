@@ -11,6 +11,8 @@
 #include <cstdlib> // std::getenv
 #include <cassert>
 
+#define LOGID (QString("[job:%1]").arg(_name)).toStdString().c_str()
+
 namespace meshroom
 {
 
@@ -121,7 +123,7 @@ bool Job::load(const QUrl& url)
     QDir dir(url.toLocalFile());
     if(!dir.exists())
     {
-        qCritical() << _name << ": malformed or empty URL '" << url.toLocalFile() << "'";
+        qCritical() << LOGID << "malformed or empty URL '" << url.toLocalFile() << "'";
         return false;
     }
     _url = url;
@@ -129,7 +131,7 @@ bool Job::load(const QUrl& url)
     QFile jsonFile(dir.filePath("job.json"));
     if(!jsonFile.open(QIODevice::ReadOnly))
     {
-        qWarning() << _name << ": unable to read the job descriptor file" << jsonFile.fileName();
+        qWarning() << LOGID << "unable to read the job descriptor file" << jsonFile.fileName();
         return false;
     }
     // read it and close the file handler
@@ -140,7 +142,7 @@ bool Job::load(const QUrl& url)
     QJsonDocument jsonDocument(QJsonDocument::fromJson(data, &parseError));
     if(parseError.error != QJsonParseError::NoError)
     {
-        qWarning() << _name << ": malformed JSON file" << jsonFile.fileName();
+        qWarning() << LOGID << "malformed JSON file" << jsonFile.fileName();
         return false;
     }
     // read job attributes
@@ -205,7 +207,7 @@ bool Job::save()
     QDir dir;
     if(!dir.mkpath(_url.toLocalFile()))
     {
-        qCritical() << _name << ": unable to create the job directory";
+        qCritical() << LOGID << "unable to create the job directory";
         return false;
     }
     // open a file handler
@@ -213,7 +215,7 @@ bool Job::save()
     QFile jobFile(jobDirectory.filePath("job.json"));
     if(!jobFile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        qWarning() << _name << ": unable to write the job descriptor file" << jobFile.fileName();
+        qWarning() << LOGID << "unable to write the job descriptor file" << jobFile.fileName();
         return false;
     }
     // write & close the file handler
@@ -235,7 +237,7 @@ bool Job::start()
     QDir dir(_url.toLocalFile());
     if(!dir.mkpath("build"))
     {
-        qCritical() << _name << ": unable to create the job directory";
+        qCritical() << LOGID << "unable to create the job directory";
         return false;
     }
     // define the program path
@@ -254,13 +256,13 @@ bool Job::start()
     if(!process.waitForFinished())
     {
         // remove the build directory in case of error
-        qCritical() << _name << ": unable to start job";
+        qCritical() << LOGID << "unable to start job";
         dir.cd("build");
         dir.removeRecursively();
         return false;
     }
     // and refresh the job status
-    qInfo() << _name << ": job started";
+    qInfo() << LOGID << "job started";
     refresh();
     return true;
 }
@@ -289,7 +291,7 @@ void Job::refresh()
     process.start();
     if(!process.waitForFinished())
     {
-        qCritical() << _name << ": unable to update job status";
+        qCritical() << LOGID << "unable to update job status";
         setStatus(SYSTEMERROR);
     }
 }
@@ -319,7 +321,7 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     QJsonDocument jsondoc(QJsonDocument::fromJson(response.toUtf8(), &parseError));
     if(parseError.error != QJsonParseError::NoError)
     {
-        qCritical() << _name << ": invalid response - parse error";
+        qCritical() << LOGID << "invalid response - parse error";
         setStatus(SYSTEMERROR);
         return;
     }
@@ -327,7 +329,7 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     QJsonObject json = jsondoc.object();
     if(!json.contains("completion") || !json.contains("status"))
     {
-        qCritical() << _name << ": invalid response - missing values";
+        qCritical() << LOGID << "invalid response - missing values";
         setStatus(SYSTEMERROR);
         return;
     }
@@ -352,7 +354,7 @@ bool Job::isStartable()
 {
     if(_images->rowCount() < 2)
     {
-        qCritical() << _name << ": insufficient number of sources";
+        qCritical() << LOGID << "insufficient number of sources";
         return false;
     }
     return true;

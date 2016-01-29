@@ -26,7 +26,7 @@ Rectangle {
             validator: RegExpValidator {}
             font.pixelSize: Style.text.size.small
             color: Style.text.color.dark
-            onTextChanged: currentProject.modelData.setFilterRegexp(text)
+            onTextChanged: currentProject.setFilterRegexp(text)
         }
     }
 

@@ -7,7 +7,7 @@ import Meshroom.Enums 0.1
 
 Item {
 
-    property bool isSelected: (currentJob.modelData == model.modelData)
+    property bool isSelected: (currentJob == model.modelData)
 
     MouseArea {
         id: mouseContainer

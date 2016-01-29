@@ -209,8 +209,8 @@ Item {
         id: jobDeletionDialog
         title: "Delete job "+currentJob.name+"?"
         onAccepted: {
-            currentJob.modelData.erase();
-            currentProject.jobs.removeJob(currentJob.modelData);
+            currentJob.erase();
+            currentProject.jobs.removeJob(currentJob);
             close();
         }
         onRejected: close()

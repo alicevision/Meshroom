@@ -21,7 +21,7 @@ Project::Project(const QUrl& url)
     // populate with project's jobs
     populate();
     // signal/slot connection: project auto-save
-    QObject::connect(this, SIGNAL(dataChanged()), this, SLOT(save()));
+    QObject::connect(this, SIGNAL(nameChanged()), this, SLOT(save()));
 }
 
 void Project::setName(const QString& name)
@@ -29,7 +29,7 @@ void Project::setName(const QString& name)
     if(_name == name)
         return;
     _name = name;
-    emit dataChanged();
+    emit nameChanged();
 }
 
 bool Project::load()

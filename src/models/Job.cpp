@@ -68,6 +68,7 @@ Job::Job(Project* project)
     , _images(new ResourceModel(this))
 {
     // compute job url
+    assert(project);
     _url = QUrl::fromLocalFile(project->url().toLocalFile()+"/reconstructions/"+_date.toString("yyyyMMdd_HHmmss"));
     // create the default graph
     createDefaultGraph();
@@ -77,51 +78,36 @@ Job::Job(Project* project)
     QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
 }
 
-void Job::setUrl(const QUrl& url)
-{
-    if(_url == url)
-        return;
-    _url = url;
-    emit dataChanged();
-}
-
 void Job::setName(const QString& name)
 {
     if(_name == name)
         return;
     _name = name;
-    emit dataChanged();
-}
-
-void Job::setDate(const QDateTime& date)
-{
-    if(_date == date)
-        return;
-    _date = date;
-    emit dataChanged();
-}
-
-void Job::setUser(const QString& user)
-{
-    if(_user == user)
-        return;
-    _user = user;
-    emit dataChanged();
+    emit nameChanged();
 }
 
 void Job::setCompletion(const float& completion)
 {
+    if(_completion == completion)
+        return;
     _completion = completion;
+    emit completionChanged();
 }
 
 void Job::setStatus(const StatusType& status)
 {
+    if(_status == status)
+        return;
     _status = status;
+    emit statusChanged();
 }
 
 void Job::setThumbnail(const QUrl& thumbnail)
 {
+    if(_thumbnail == thumbnail)
+        return;
     _thumbnail = thumbnail;
+    emit thumbnailChanged();
 }
 
 void Job::setModelIndex(const QModelIndex& id)
@@ -175,7 +161,8 @@ bool Job::load(const Job& job)
 
 void Job::autoSaveOn()
 {
-    QObject::connect(this, SIGNAL(dataChanged()), this, SLOT(save()));
+    QObject::connect(this, SIGNAL(nameChanged()), this, SLOT(save()));
+    QObject::connect(this, SIGNAL(thumbnailChanged()), this, SLOT(save()));
     QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
     for(size_t i = 0; i < _steps->rowCount(); i++)
     {
@@ -189,7 +176,8 @@ void Job::autoSaveOn()
 
 void Job::autoSaveOff()
 {
-    QObject::disconnect(this, SIGNAL(dataChanged()), this, SLOT(save()));
+    QObject::disconnect(this, SIGNAL(nameChanged()), this, SLOT(save()));
+    QObject::disconnect(this, SIGNAL(thumbnailChanged()), this, SLOT(save()));
     QObject::disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
     for(size_t i = 0; i < _steps->rowCount(); i++)
     {

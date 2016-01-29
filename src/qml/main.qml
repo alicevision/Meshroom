@@ -7,8 +7,6 @@ import QtQml.Models 2.2
 import Logger 1.0
 import "pages"
 
-import ImageGallery 1.0
-
 ApplicationWindow {
 
     id: _appWindow

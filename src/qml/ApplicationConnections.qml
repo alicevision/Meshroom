@@ -6,7 +6,7 @@ Connections {
 
     // project actions
     onSelectProject: {
-        currentProject = _applicationModel.projects.get(id);
+        currentProject = _applicationModel.projects.get(id).modelData;
         selectJob(0);
         _stack.push({ item: _stack.mainPage, replace:(_stack.depth>1) });
     }
@@ -36,30 +36,30 @@ Connections {
 
     // job actions
     onSelectJob: {
-        currentJob = currentProject.jobs.get(id);
+        currentJob = currentProject.jobs.get(id).modelData;
     }
     onAddJob: {
         currentProject.jobs.addJob(currentProject.url);
         selectJob(currentProject.jobs.count-1);
     }
     onDuplicateJob: {
-        currentProject.jobs.duplicateJob(currentJob.modelData);
+        currentProject.jobs.duplicateJob(currentJob);
         selectJob(currentProject.jobs.count-1);
     }
     onDeleteJob: {
-        if(currentJob.modelData.isStoredOnDisk()) {
+        if(currentJob.isStoredOnDisk()) {
             var dialog = _appDialogs.jobDeletionDialog.createObject(_appWindow);
             dialog.open();
             return;
         }
-        currentProject.jobs.removeJob(currentJob.modelData);
+        currentProject.jobs.removeJob(currentJob);
     }
     onOpenJobSubmissionDialog: {
         var dialog = _appDialogs.jobSubmissionDialog.createObject(_appWindow);
         dialog.open();
     }
     onSubmitJob: {
-        currentJob.modelData.start(locally);
+        currentJob.start(locally);
     }
     onOpenJobDirectory: {
         Qt.openUrlExternally(currentJob.url);
@@ -69,7 +69,7 @@ Connections {
         dialog.open();
     }
     onRefreshJobStatus: {
-        currentJob.modelData.refresh();
+        currentJob.refresh();
     }
 
     // other actions

@@ -16,6 +16,15 @@ class JobModel; // forward declaration
 class Job : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QUrl url READ url CONSTANT)
+    Q_PROPERTY(QDateTime date READ date CONSTANT)
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+    Q_PROPERTY(QString user READ user CONSTANT)
+    Q_PROPERTY(float completion READ completion NOTIFY completionChanged)
+    Q_PROPERTY(StatusType status READ status NOTIFY statusChanged)
+    Q_PROPERTY(QUrl thumbnail READ thumbnail WRITE setThumbnail NOTIFY thumbnailChanged)
+    Q_PROPERTY(StepModel* steps READ steps CONSTANT)
+    Q_PROPERTY(ResourceModel* images READ images CONSTANT)
 
 public:
     enum StatusType
@@ -49,10 +58,7 @@ public:
     const QUrl& thumbnail() const { return _thumbnail; }
     StepModel* steps() const { return _steps; }
     ResourceModel* images() const { return _images; }
-    void setUrl(const QUrl& url);
     void setName(const QString& name);
-    void setDate(const QDateTime& date);
-    void setUser(const QString& user);
     void setCompletion(const float& completion);
     void setStatus(const StatusType& status);
     void setThumbnail(const QUrl& thumbnail);
@@ -84,7 +90,10 @@ private:
     void deserializeFromJSON(const QJsonObject& obj);
 
 signals:
-    void dataChanged();
+    void nameChanged();
+    void completionChanged();
+    void statusChanged();
+    void thumbnailChanged();
 
 private:
     Project* _project = nullptr;

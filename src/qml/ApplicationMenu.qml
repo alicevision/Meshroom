@@ -69,6 +69,7 @@ Item {
             MenuSeparator {}
             MenuItem {
                 text: "Duplicate"
+                onTriggered: duplicateJob()
             }
             MenuItem {
                 text: "Delete"

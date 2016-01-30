@@ -167,7 +167,6 @@ void Job::autoSaveOn()
 {
     connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
     connect(this, SIGNAL(nameChanged()), this, SLOT(save()));
-    connect(this, SIGNAL(thumbnailChanged()), this, SLOT(save()));
     connect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
     for(size_t i = 0; i < _steps->rowCount(); i++)
     {
@@ -183,7 +182,6 @@ void Job::autoSaveOff()
 {
     disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
     disconnect(this, SIGNAL(nameChanged()), this, SLOT(save()));
-    disconnect(this, SIGNAL(thumbnailChanged()), this, SLOT(save()));
     disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
     for(size_t i = 0; i < _steps->rowCount(); i++)
     {
@@ -472,6 +470,7 @@ void Job::serializeToJSON(QJsonObject* obj) const
 
 void Job::deserializeFromJSON(const QJsonObject& obj)
 {
+    autoSaveOff();
     // read global job settings
     if(obj.contains("user"))
         _user = obj["user"].toString();
@@ -495,6 +494,7 @@ void Job::deserializeFromJSON(const QJsonObject& obj)
             continue;
         step->deserializeFromJSON(stepsObject);
     }
+    autoSaveOn();
 }
 
 } // namespace

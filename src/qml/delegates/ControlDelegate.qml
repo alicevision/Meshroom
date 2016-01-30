@@ -56,6 +56,7 @@ Item {
                 Image {
                     anchors.fill: parent
                     source: modelData.value[0]
+                    sourceSize: Qt.size(320, 320)
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     ToolButton {
@@ -63,6 +64,10 @@ Item {
                         text: "select"
                         iconSource: "qrc:///images/disk.svg"
                         onClicked: openImageSelectionDialog(setPairA)
+                    }
+                    BusyIndicator {
+                        anchors.centerIn: parent
+                        running: parent.status === Image.Loading
                     }
                 }
             }
@@ -73,6 +78,7 @@ Item {
                 Image {
                     anchors.fill: parent
                     source: modelData.value[1]
+                    sourceSize: Qt.size(320, 320)
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     ToolButton {
@@ -80,6 +86,10 @@ Item {
                         text: "select"
                         iconSource: "qrc:///images/disk.svg"
                         onClicked: openImageSelectionDialog(setPairB)
+                    }
+                    BusyIndicator {
+                        anchors.centerIn: parent
+                        running: parent.status === Image.Loading
                     }
                 }
             }

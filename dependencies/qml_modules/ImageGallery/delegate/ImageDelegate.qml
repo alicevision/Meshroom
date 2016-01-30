@@ -55,6 +55,11 @@ Package {
                 source: model.url
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
+                sourceSize: Qt.size(320, 320)
+                BusyIndicator {
+                    anchors.centerIn: parent
+                    running: parent.status === Image.Loading
+                }
             }
         }
     }
@@ -96,6 +101,11 @@ Package {
                     source: model.url
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
+                    sourceSize: Qt.size(320, 320)
+                    BusyIndicator {
+                        anchors.centerIn: parent
+                        running: parent.status === Image.Loading
+                    }
                 }
             }
             Text {
@@ -141,11 +151,10 @@ Package {
             Image {
                 anchors.fill: parent
                 anchors.margins: 2
-                sourceSize.width: 320
-                sourceSize.height: 320
                 source: model.url
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
+                sourceSize: Qt.size(320, 320)
                 Rectangle {
                     id: container
                     width: parent.width
@@ -159,6 +168,10 @@ Package {
                         font.pixelSize: Style.text.size.xsmall
                         maximumLineCount: (gridMouseArea.containsMouse) ? 4 : 1
                     }
+                }
+                BusyIndicator {
+                    anchors.centerIn: parent
+                    running: parent.status === Image.Loading
                 }
             }
         }

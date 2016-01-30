@@ -45,9 +45,9 @@ QtObject {
             property color selected: "#5BB1F7";
             property color debug: "#444";
             property color info: "#666";
-            property color warning: "#DAA520";
-            property color critical: "red";
-            property color fatal: "red";
+            property color warning: "#CC3300";
+            property color critical: "#CC0000";
+            property color fatal: "#CC0000";
         }
     }
 }

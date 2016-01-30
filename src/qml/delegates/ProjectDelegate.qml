@@ -27,7 +27,12 @@ Item {
                     anchors.fill: parent
                     anchors.margins: 4
                     source: model.jobs.get(0).thumbnail
+                    sourceSize: Qt.size(320, 320)
                     asynchronous: true
+                    BusyIndicator {
+                        anchors.centerIn: parent
+                        running: parent.status === Image.Loading
+                    }
                 }
             }
             Text {

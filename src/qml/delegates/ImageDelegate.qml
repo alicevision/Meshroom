@@ -6,7 +6,7 @@ import DarkStyle 1.0
 
 Item {
     width: ListView.view ? ListView.view.width : 0
-    height: 30
+    height: 60
     clip: true
     signal imageSelected(string url)
     MouseArea {
@@ -22,8 +22,8 @@ Item {
         anchors.fill: parent
         color: {
             if(mouseArea.containsMouse)
-                return Style.window.color.xlight;
-            return Style.window.color.dark;
+                return Style.window.color.selected
+            return Style.window.color.xdark;
         }
         opacity: 0.2
     }
@@ -37,8 +37,13 @@ Item {
             Image {
                 anchors.fill: parent
                 source: model.url
+                sourceSize: Qt.size(320, 320)
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
+                BusyIndicator {
+                    anchors.centerIn: parent
+                    running: parent.status === Image.Loading
+                }
             }
         }
         Text {

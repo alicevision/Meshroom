@@ -46,9 +46,14 @@ Item {
                 Image {
                     anchors.verticalCenter: parent.verticalCenter
                     source: model.thumbnail
+                    sourceSize: Qt.size(320, 320)
                     width: parent.height
                     height: width*3/4.0
                     asynchronous: true
+                    BusyIndicator {
+                        anchors.centerIn: parent
+                        running: parent.status === Image.Loading
+                    }
                 }
             }
             ColumnLayout {

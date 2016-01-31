@@ -119,6 +119,13 @@ void JobModel::duplicateJob(Job* ref)
 
 void JobModel::removeJob(Job* job)
 {
+    // ensure that we have at least one job
+    if(rowCount() == 1)
+    {
+        Job* newJob = new Job(job->project());
+        addJob(newJob);
+    }
+    // find and remove the job
     int id = _jobs.indexOf(job);
     if(id < 0)
         return;

@@ -7,10 +7,16 @@ import QtQml.Models 2.2
 import Logger 1.0
 import "pages"
 
+import Meshroom.Job 0.1
+import Meshroom.Project 0.1
+
+
 ApplicationWindow {
 
     id: _appWindow
 
+    property variant defaultProject: Project {}
+    property variant defaultJob: Job {}
     property variant currentProject: null
     property variant currentJob: null
 
@@ -26,7 +32,7 @@ ApplicationWindow {
     signal selectJob(int id)
     signal addJob()
     signal duplicateJob()
-    signal deleteJob()
+    signal removeJob()
     signal openJobSubmissionDialog()
     signal submitJob(bool locally)
     signal openJobDirectory()

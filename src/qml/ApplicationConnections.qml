@@ -12,8 +12,8 @@ Connections {
     }
     onCloseCurrentProject: {
         _stack.pop();
-        currentProject = null;
-        currentJob = null;
+        currentProject = defaultProject;
+        currentJob = defaultJob;
     }
     onOpenProjectDialog: {
         var dialog = _appDialogs.openProject.createObject(_appWindow);
@@ -46,13 +46,17 @@ Connections {
         currentProject.jobs.duplicateJob(currentJob);
         selectJob(currentProject.jobs.count-1);
     }
-    onDeleteJob: {
-        if(currentJob.isStoredOnDisk()) {
+    onRemoveJob: {
+        if(currentJob.isStarted()) {
             var dialog = _appDialogs.jobDeletionDialog.createObject(_appWindow);
             dialog.open();
             return;
         }
-        currentProject.jobs.removeJob(currentJob);
+        currentJob.erase();
+        var jobToDelete = currentJob;
+        currentJob = defaultJob;
+        currentProject.jobs.removeJob(jobToDelete);
+        selectJob(currentProject.jobs.count-1);
     }
     onOpenJobSubmissionDialog: {
         var dialog = _appDialogs.jobSubmissionDialog.createObject(_appWindow);

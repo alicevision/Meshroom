@@ -17,7 +17,7 @@ class Project : public QObject
     Q_PROPERTY(QSortFilterProxyModel* proxy READ proxy CONSTANT)
 
 public:
-    Project(const QUrl& url);
+    Project(const QUrl& url = QUrl());
 
 public:
     const QUrl& url() const { return _url; }

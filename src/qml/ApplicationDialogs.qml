@@ -127,8 +127,9 @@ Item {
                     text: "title :"
                 }
                 TextField {
+                    id: title
                     Layout.fillWidth: true
-                    text: "job_001"
+                    text: currentJob.name
                 }
                 Item { Layout.fillHeight: true } // spacer
             }
@@ -143,6 +144,7 @@ Item {
                     Layout.fillWidth: true
                     text: "SUBMIT"
                     onClicked: {
+                        currentJob.name = title.text;
                         submitJob(radioGroup.current.text == "Local");
                         accept();
                     }
@@ -154,20 +156,35 @@ Item {
     property Component jobDeletionDialog: Dialog {
         title: "Delete job "+currentJob.name+"?"
         backgroundColor: Style.window.color.warning
-        content: RowLayout {
-            spacing: 0
-            Button {
+        content: ColumnLayout {
+            Text {
                 Layout.fillWidth: true
-                text: "CANCEL"
-                onClicked: reject()
+                text: "You are about to delete all data associated with this job"
             }
-            Button {
+            Text {
                 Layout.fillWidth: true
-                text: "DELETE"
-                onClicked: {
-                    currentJob.erase();
-                    currentProject.jobs.removeJob(currentJob);
-                    accept();
+                text: "Are you sure?"
+                font.pixelSize: Style.text.size.large
+            }
+            Item { Layout.fillHeight: true } // spacer
+            RowLayout {
+                spacing: 0
+                Button {
+                    Layout.fillWidth: true
+                    text: "CANCEL"
+                    onClicked: reject()
+                }
+                Button {
+                    Layout.fillWidth: true
+                    text: "DELETE"
+                    onClicked: {
+                        currentJob.erase();
+                        var jobToDelete = currentJob;
+                        currentJob = defaultJob;
+                        currentProject.jobs.removeJob(jobToDelete);
+                        selectJob(currentProject.jobs.count-1);
+                        accept();
+                    }
                 }
             }
         }

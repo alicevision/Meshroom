@@ -10,8 +10,8 @@ ResourceModel::ResourceModel(QObject* parent)
 {
 }
 
-ResourceModel::ResourceModel(const ResourceModel& obj)
-    : QAbstractListModel(obj.parent())
+ResourceModel::ResourceModel(QObject* parent, const ResourceModel& obj)
+    : QAbstractListModel(parent)
 {
     QHash<int, QByteArray> names = roleNames();
     for(size_t i = 0; i < obj.rowCount(); ++i)

@@ -70,7 +70,8 @@ Job::Job(Project* project)
     , _images(new ResourceModel(this))
 {
     // compute job url
-    assert(project);
+    if(!project)
+        return;
     _url = QUrl::fromLocalFile(project->url().toLocalFile()+"/reconstructions/"+_date.toString("yyyyMMdd_HHmmss"));
     // create the default graph
     createDefaultGraph();
@@ -110,6 +111,7 @@ void Job::setThumbnail(const QUrl& thumbnail)
         return;
     _thumbnail = thumbnail;
     emit thumbnailChanged();
+    emit dataChanged(_modelIndex, _modelIndex);
 }
 
 void Job::setModelIndex(const QModelIndex& id)
@@ -156,8 +158,8 @@ bool Job::load(const Job& job)
     autoSaveOff();
     delete _images;
     delete _steps;
-    _images = new ResourceModel(*(job.images()));
-    _steps = new StepModel(*(job.steps()));
+    _images = new ResourceModel(this, *(job.images()));
+    _steps = new StepModel(this, *(job.steps()));
     _thumbnail = job.thumbnail();
     autoSaveOn();
     return true;

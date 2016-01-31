@@ -9,8 +9,8 @@ StepModel::StepModel(QObject* parent)
 {
 }
 
-StepModel::StepModel(const StepModel& obj)
-    : QAbstractListModel(obj.parent())
+StepModel::StepModel(QObject* parent, const StepModel& obj)
+    : QAbstractListModel(parent)
 {
     QHash<int, QByteArray> names = roleNames();
     for(size_t i = 0; i < obj.rowCount(); ++i)

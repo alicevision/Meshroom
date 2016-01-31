@@ -21,7 +21,7 @@ public:
 
 public:
     ResourceModel(QObject* parent = 0);
-    ResourceModel(const ResourceModel& obj);
+    ResourceModel(QObject* parent, const ResourceModel& obj);
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 

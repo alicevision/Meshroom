@@ -59,7 +59,6 @@ Item {
             MenuItem {
                 text: "Edit job settings..."
                 onTriggered: openJobSettings()
-                enabled: currentJob ? currentJob.status < 0 : false
             }
             MenuItem {
                 text: "Open job directory"
@@ -73,7 +72,7 @@ Item {
             }
             MenuItem {
                 text: "Delete"
-                onTriggered: deleteJob()
+                onTriggered: removeJob()
             }
             MenuSeparator {}
             MenuItem {

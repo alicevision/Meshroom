@@ -11,9 +11,13 @@ namespace meshroom
 class Project : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QUrl url READ url CONSTANT)
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+    Q_PROPERTY(JobModel* jobs READ jobs CONSTANT)
+    Q_PROPERTY(QSortFilterProxyModel* proxy READ proxy CONSTANT)
 
 public:
-    Project(const QUrl& url);
+    Project(const QUrl& url = QUrl());
 
 public:
     const QUrl& url() const { return _url; }
@@ -33,7 +37,7 @@ private:
     void deserializeFromJSON(const QJsonObject& obj);
 
 signals:
-    void dataChanged();
+    void nameChanged();
 
 private:
     QUrl _url;

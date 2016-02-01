@@ -10,6 +10,11 @@ Resource::Resource(const QUrl& url)
 {
 }
 
+Resource::Resource(const Resource& obj)
+    : _url(obj.url())
+{
+}
+
 void Resource::serializeToJSON(QJsonArray* array) const
 {
     if(!array)

@@ -42,8 +42,6 @@ QVariant JobModel::data(const QModelIndex& index, int role) const
             return QVariant::fromValue(job->images());
         case ModelDataRole:
             return QVariant::fromValue(job);
-        case AlembicFilepath:
-            return QVariant::fromValue(job->alembicFilepath());
         default:
             return QVariant();
     }
@@ -62,7 +60,6 @@ QHash<int, QByteArray> JobModel::roleNames() const
     roles[StepsRole] = "steps";
     roles[ImagesRole] = "images";
     roles[ModelDataRole] = "modelData";
-    roles[AlembicFilepath] = "alembicFilepath";
     return roles;
 }
 
@@ -80,7 +77,7 @@ bool JobModel::setData(const QModelIndex& index, const QVariant& value, int role
             job->setCompletion(value.toFloat());
             break;
         case StatusRole:
-            job->setStatus(value.toInt());
+            job->setStatus((Job::StatusType)value.toInt());
             break;
         case ThumbnailRole:
             job->setThumbnail(value.toUrl());
@@ -99,6 +96,8 @@ void JobModel::addJob(Job* job)
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(job, QQmlEngine::CppOwnership);
     job->setParent(this);
+    connect(job, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
+            this, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)));
 
     _jobs << job;
     endInsertRows();
@@ -111,12 +110,45 @@ void JobModel::addJob(Job* job)
     emit countChanged(rowCount());
 }
 
-void JobModel::addJob(const QUrl& projectUrl)
+void JobModel::duplicateJob(Job* ref)
 {
-    QDateTime currentTime = QDateTime::currentDateTime();
-    Job* job = new Job(QUrl::fromLocalFile(projectUrl.toLocalFile() + "/reconstructions/" +
-                                           currentTime.toString("yyyyMMdd_HHmmss")));
+    Job* job = new Job(ref->project());
+    job->load(*ref);
     addJob(job);
+}
+
+void JobModel::removeJob(Job* job)
+{
+    // ensure that we have at least one job
+    if(rowCount() == 1)
+    {
+        Job* newJob = new Job(job->project());
+        addJob(newJob);
+    }
+    // find and remove the job
+    int id = _jobs.indexOf(job);
+    if(id < 0)
+        return;
+    beginRemoveRows(QModelIndex(), id, id);
+    _jobs.removeAt(id);
+    delete job;
+    endRemoveRows();
+    emit countChanged(rowCount());
+}
+
+QVariantMap JobModel::get(int row) const
+{
+    QHash<int, QByteArray> names = roleNames();
+    QHashIterator<int, QByteArray> i(names);
+    QVariantMap result;
+    while(i.hasNext())
+    {
+        i.next();
+        QModelIndex idx = index(row, 0);
+        QVariant data = idx.data(i.key());
+        result[i.value()] = data;
+    }
+    return result;
 }
 
 } // namespace

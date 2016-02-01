@@ -4,6 +4,8 @@
 #include <QDir>
 #include <QDebug>
 
+#define LOGID (QString("[project:%1]").arg(_name)).toStdString().c_str()
+
 namespace meshroom
 {
 
@@ -21,7 +23,7 @@ Project::Project(const QUrl& url)
     // populate with project's jobs
     populate();
     // signal/slot connection: project auto-save
-    QObject::connect(this, SIGNAL(dataChanged()), this, SLOT(save()));
+    QObject::connect(this, SIGNAL(nameChanged()), this, SLOT(save()));
 }
 
 void Project::setName(const QString& name)
@@ -29,7 +31,7 @@ void Project::setName(const QString& name)
     if(_name == name)
         return;
     _name = name;
-    emit dataChanged();
+    emit nameChanged();
 }
 
 bool Project::load()
@@ -39,7 +41,7 @@ bool Project::load()
     QFile projectFile(projectDirectory.filePath("project.json"));
     if(!projectFile.open(QIODevice::ReadOnly))
     {
-        qInfo() << _name << ": unable to read the project descriptor file"
+        qInfo() << LOGID << "unable to read the project descriptor file"
                 << projectFile.fileName();
         return false;
     }
@@ -51,7 +53,7 @@ bool Project::load()
     QJsonDocument jsonDocument(QJsonDocument::fromJson(data, &parseError));
     if(parseError.error != QJsonParseError::NoError)
     {
-        qWarning() << _name << ": malformed JSON file" << projectFile.fileName();
+        qWarning() << LOGID << "malformed JSON file" << projectFile.fileName();
         return false;
     }
     // read project attributes
@@ -72,7 +74,7 @@ bool Project::save()
     QFile projectFile(projectDirectory.filePath("project.json"));
     if(!projectFile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        qWarning() << _name << ": unable to write the project descriptor file"
+        qWarning() << LOGID << "unable to write the project descriptor file"
                    << projectFile.fileName();
         return false;
     }
@@ -92,17 +94,20 @@ void Project::populate()
 {
     QDir dir(_url.toLocalFile());
     dir.cd("reconstructions");
-    // list sub-directories to retrieve all jobs
+    // list sub-directories to retrieve all existing jobs
     QStringList jobs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
     for(size_t i = 0; i < jobs.length(); ++i)
     {
-        Job* job = new Job(QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i])));
-        if(job->isValid())
+        Job* job = new Job(this);
+        if(job->load(QUrl::fromLocalFile(dir.absoluteFilePath(jobs[i]))))
             _jobs->addJob(job);
     }
     // we should have at least one job
     if(_jobs->rowCount() <= 0)
-        _jobs->addJob(_url);
+    {
+        Job* job = new Job(this);
+        _jobs->addJob(job);
+    }
 }
 
 void Project::serializeToJSON(QJsonObject* obj) const

@@ -27,12 +27,14 @@ public:
 
 public:
     AttributeModel(QObject* parent = 0);
+    AttributeModel(const AttributeModel& obj);
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role) override;
 
 public slots:
     void addAttribute(Attribute* attribute);
+    QVariantMap get(int row) const;
 
 signals:
     void countChanged(int c);

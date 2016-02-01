@@ -1,96 +1,71 @@
 import QtQuick 2.5
 import QtQuick.Controls 1.4
-import QtQuick.Dialogs 1.2
+import QtQuick.Layouts 1.2
+import DarkStyle.Controls 1.0
+import DarkStyle 1.0
+import QtQml.Models 2.2
+import Logger 1.0
+import "pages"
 
-import "styles"
+import Meshroom.Job 0.1
+import Meshroom.Project 0.1
+
 
 ApplicationWindow {
 
-    id: _mainWindow
+    id: _appWindow
 
-    width: 800
-    height: 800
-    visible: true
-    style: _style.bggl
+    property variant defaultProject: Project {}
+    property variant defaultJob: Job {}
+    property variant currentProject: defaultProject
+    property variant currentJob: defaultJob
 
-    menuBar: MenuBar {
-        Menu {
-            title: "File"
-            Menu {
-                id: openMenu
-                title: "Open..."
-                MenuItem {
-                    text: "New location..."
-                    onTriggered: fileDialog.open()
-                }
-                MenuSeparator {}
-                Instantiator {
-                    model: _applicationModel.featured
-                    MenuItem {
-                        text: model.url.toString().replace("file://", "")
-                        onTriggered: _applicationModel.projects.addProject(model.url)
-                    }
-                    onObjectAdded: openMenu.insertItem(index, object)
-                    onObjectRemoved: openMenu.removeItem(object)
-                }
-            }
-        }
-    }
+    // project actions
+    signal selectProject(int id)
+    signal closeCurrentProject()
+    signal openProjectDialog()
+    signal openProjectDirectory()
+    signal openProjectSettings()
+    signal addProject(string url)
+    signal removeProject(int id)
+    // job actions
+    signal selectJob(int id)
+    signal addJob()
+    signal duplicateJob()
+    signal removeJob()
+    signal openJobSubmissionDialog()
+    signal submitJob(bool locally)
+    signal openJobDirectory()
+    signal openJobSettings()
+    signal refreshJobStatus()
+    // other actions
+    signal openImageSelectionDialog(var callback)
 
-    // main application style sheet
-    DefaultStyle {
-        id: _style
-    }
+    ApplicationSettings { target: _appWindow }
+    ApplicationConnections { target: _appWindow }
+    ApplicationMenu {}
+    ApplicationDialogs { id: _appDialogs }
 
-    StackView {
-        id: stack
+    ColumnLayout {
         anchors.fill: parent
-        property Component indexPage: IndexPage {}
-        initialItem: HomePage {}
-        Component.onCompleted: {
-            if(_applicationModel.projects.count>0)
-                stack.push({item:stack.indexPage, immediate: true});
+        spacing: 0
+        StackView {
+            id: _stack
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            property Component homePage: HomePage {}
+            property Component mainPage: MainPage {}
+            initialItem: homePage
+            focus: true
         }
-        Connections {
-            target: _applicationModel.projects
-            onCountChanged: {
-                if(_applicationModel.projects.count>0 && stack.depth==1)
-                    stack.push({item:stack.indexPage});
-                else if(_applicationModel.projects.count==0 && stack.depth>1)
-                    stack.pop();
-            }
-        }
-        delegate: StackViewDelegate {
-            function transitionFinished(properties) {
-                properties.exitItem.opacity = 1;
-                _mainWindow.style = _style.bggl;
-            }
-            pushTransition: StackViewTransition {
-                ScriptAction { script: _mainWindow.style = _style.bg; }
-                PropertyAnimation {
-                    target: enterItem
-                    property: "opacity"
-                    from: 0
-                    to: 1
-                }
-                PropertyAnimation {
-                    target: exitItem
-                    property: "opacity"
-                    from: 1
-                    to: 0
-                }
-            }
+        LogBar {
+            property bool expanded: false
+            Layout.fillWidth: true
+            Layout.preferredHeight: expanded ? parent.height/3 : 30
+            Behavior on Layout.preferredHeight { NumberAnimation {}}
+            color: Style.window.color.xdark
+            onToggle: expanded = !expanded
         }
     }
 
-    // file dialog
-    FileDialog {
-        id: fileDialog
-        title: "Please choose a project directory"
-        folder: "/"
-        selectFolder: true
-        selectMultiple: false
-        sidebarVisible: false
-        onAccepted: _applicationModel.projects.addProject(fileDialog.fileUrl)
-    }
 }

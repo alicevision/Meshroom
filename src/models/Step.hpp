@@ -12,6 +12,7 @@ class Step : public QObject
 
 public:
     Step(const QString& name);
+    Step(const Step& obj);
 
 public:
     const QString& name() const { return _name; }

@@ -1,0 +1,4 @@
+module Logger
+
+LogBar 1.0 LogBar.qml
+plugin loggerQmlPlugin

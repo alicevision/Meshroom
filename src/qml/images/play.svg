@@ -1,9 +1,8 @@
-<?xml version="1.0"?>
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
  <g>
   <title>Layer 1</title>
-  <g fill-opacity="0.8" id="svg_1">
-   <path fill="#ffffff" id="svg_2" d="m128,96l0,320l256,-160l-256,-160l0,0z"/>
+  <g id="svg_12">
+   <path fill="#ffffff" id="svg_13" d="m155.5,130.375v251.25l201,-125.625l-201,-125.625l0,0z"/>
   </g>
  </g>
 </svg>

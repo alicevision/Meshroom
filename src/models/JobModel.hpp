@@ -23,8 +23,7 @@ public:
         ThumbnailRole,
         StepsRole,
         ImagesRole,
-        ModelDataRole,
-        AlembicFilepath
+        ModelDataRole
     };
 
 public:
@@ -35,7 +34,9 @@ public:
 
 public slots:
     void addJob(Job* job);
-    void addJob(const QUrl& projectUrl);
+    void duplicateJob(Job* job);
+    void removeJob(Job* job);
+    QVariantMap get(int row) const;
 
 signals:
     void countChanged(int c);

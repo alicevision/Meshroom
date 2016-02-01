@@ -1,10 +1,9 @@
-<?xml version="1.0"?>
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
  <g>
   <title>Layer 1</title>
-  <g fill-opacity="0.8" id="svg_1">
-   <rect fill="#ffffff" id="svg_2" y="96" x="128" width="79" height="320"/>
-   <rect fill="#ffffff" id="svg_3" y="96" x="305" width="79" height="320"/>
+  <g transform="null" id="svg_10">
+   <rect fill="#ffffff" id="svg_11" height="252.5" width="62.335938" y="129.75" x="155"/>
+   <rect fill="#ffffff" id="svg_12" height="252.5" width="62.335938" y="129.75" x="294.664063"/>
   </g>
  </g>
 </svg>

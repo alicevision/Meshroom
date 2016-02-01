@@ -1,5 +1,6 @@
 #include "Job.hpp"
 #include "JobModel.hpp"
+#include "Project.hpp"
 #include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -10,6 +11,8 @@
 #include <cstdlib> // std::getenv
 #include <cassert>
 #include <iostream>
+
+#define LOGID (QString("[job:%1]").arg(_name)).toStdString().c_str()
 
 namespace meshroom
 {
@@ -59,96 +62,22 @@ bool isRegisteredImage(const Job& job, const QUrl& url)
 
 } // empty namespace
 
-Job::Job(const QUrl& url)
-    : _url(url)
-    , _name(_url.fileName())
+Job::Job(Project* project)
+    : _project(project)
+    , _user(std::getenv("USER"))
+    , _date(QDateTime::currentDateTime())
+    , _name(_date.toString("yyyyMMdd_HHmmss"))
     , _steps(new StepModel(this))
     , _images(new ResourceModel(this))
-    , _user(std::getenv("USER"))
 {
-    // create feature detection step
-    Step* step = new Step("feature_detection");
-    Attribute* att = new Attribute();
-    att->setType(2); // combo
-    att->setKey("describerPreset");
-    att->setName("quality");
-    att->setValue("Normal");
-    att->setOptions(QStringList({"Normal", "High", "Ultra"}));
-    step->attributes()->addAttribute(att);
-    att = new Attribute();
-    att->setType(2); // combo
-    att->setKey("method");
-    att->setName("method");
-    att->setValue("SIFT");
-    att->setOptions(QStringList({"SIFT", "CCTAG3", "SIFT_CCTAG3"}));
-    step->attributes()->addAttribute(att);
-    _steps->addStep(step);
-
-    // create meshing step
-    step = new Step("meshing");
-    att = new Attribute();
-    att->setType(1); // slider
-    att->setKey("scale");
-    att->setName("meshing scale");
-    att->setValue(2);
-    att->setMin(1);
-    att->setMax(10);
-    att->setStep(1);
-    step->attributes()->addAttribute(att);
-    att = new Attribute();
-    att->setType(2); // combo
-    att->setKey("enabled");
-    att->setName("Meshing");
-    att->setValue("0");
-    att->setOptions(QStringList({"1", "0"}));
-    step->attributes()->addAttribute(att);
-    _steps->addStep(step);
-
-    // create sfm step
-    step = new Step("sfm");
-    att = new Attribute();
-    att->setType(3); // pair selector
-    att->setKey("initial_pair");
-    att->setName("initial pair");
-    att->setValue(QStringList({"", ""}));
-    step->attributes()->addAttribute(att);
-    _steps->addStep(step);
-
-    // create sfm step
-    step = new Step("undistort");
-    att = new Attribute();
-    att->setType(2); // combo
-    att->setKey("enabled");
-    att->setName("Undistort");
-    att->setValue("0");
-    att->setOptions(QStringList({"1", "0"}));
-    step->attributes()->addAttribute(att);
-    _steps->addStep(step);
-
-    // load job settings
-    load();
-    // signal/slot connection: initial_pair automatic selection
-    QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectPair()));
-    // signal/lot connection: thumbnail selection
-    QObject::connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
-    // signal/slot connection: job auto-save
-    QObject::connect(this, SIGNAL(dataChanged()), this, SLOT(save()));
-    connect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
-    for(size_t i = 0; i < _steps->rowCount(); i++)
-    {
-        QModelIndex id = _steps->index(i, 0);
-        Step* step = _steps->data(id, StepModel::ModelDataRole).value<Step*>();
-        connect(step->attributes(), SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
-                this, SLOT(save()));
-    }
-}
-
-void Job::setUrl(const QUrl& url)
-{
-    if(_url == url)
+    // compute job url
+    if(!project)
         return;
-    _url = url;
-    emit dataChanged();
+    _url = QUrl::fromLocalFile(project->url().toLocalFile()+"/reconstructions/"+_date.toString("yyyyMMdd_HHmmss"));
+    // create the default graph
+    createDefaultGraph();
+    // activate auto-save
+    autoSaveOn();
 }
 
 void Job::setName(const QString& name)
@@ -156,38 +85,34 @@ void Job::setName(const QString& name)
     if(_name == name)
         return;
     _name = name;
-    emit dataChanged();
-}
-
-void Job::setDate(const QDateTime& date)
-{
-    if(_date == date)
-        return;
-    _date = date;
-    emit dataChanged();
-}
-
-void Job::setUser(const QString& user)
-{
-    if(_user == user)
-        return;
-    _user = user;
-    emit dataChanged();
+    emit nameChanged();
 }
 
 void Job::setCompletion(const float& completion)
 {
+    if(_completion == completion)
+        return;
     _completion = completion;
+    emit completionChanged();
+    emit dataChanged(_modelIndex, _modelIndex);
 }
 
-void Job::setStatus(const int& status)
+void Job::setStatus(const StatusType& status)
 {
+    if(_status == status)
+        return;
     _status = status;
+    emit statusChanged();
+    emit dataChanged(_modelIndex, _modelIndex);
 }
 
 void Job::setThumbnail(const QUrl& thumbnail)
 {
+    if(_thumbnail == thumbnail)
+        return;
     _thumbnail = thumbnail;
+    emit thumbnailChanged();
+    emit dataChanged(_modelIndex, _modelIndex);
 }
 
 void Job::setModelIndex(const QModelIndex& id)
@@ -195,34 +120,32 @@ void Job::setModelIndex(const QModelIndex& id)
     _modelIndex = id;
 }
 
-bool Job::load()
+bool Job::load(const QUrl& url)
 {
     // return in case the job url isn't valid
-    if(!_url.isValid())
+    QDir dir(url.toLocalFile());
+    if(!dir.exists())
     {
-        qCritical() << _name << ": malformed or empty URL '" << _url.toLocalFile() << "'";
+        qCritical() << LOGID << "malformed or empty URL '" << url.toLocalFile() << "'";
         return false;
     }
-    // return silently in case the directory doesn't exist yet
-    QDir jobDirectory(_url.toLocalFile());
-    if(!jobDirectory.exists())
-        return false;
+    _url = url;
     // open a file handler
-    QFile jobFile(jobDirectory.filePath("job.json"));
-    if(!jobFile.open(QIODevice::ReadOnly))
+    QFile jsonFile(dir.filePath("job.json"));
+    if(!jsonFile.open(QIODevice::ReadOnly))
     {
-        qWarning() << _name << ": unable to read the job descriptor file" << jobFile.fileName();
+        qWarning() << LOGID << "unable to read the job descriptor file" << jsonFile.fileName();
         return false;
     }
     // read it and close the file handler
-    QByteArray data = jobFile.readAll();
-    jobFile.close();
+    QByteArray data = jsonFile.readAll();
+    jsonFile.close();
     // parse data as JSON
     QJsonParseError parseError;
     QJsonDocument jsonDocument(QJsonDocument::fromJson(data, &parseError));
     if(parseError.error != QJsonParseError::NoError)
     {
-        qWarning() << _name << ": malformed JSON file" << jobFile.fileName();
+        qWarning() << LOGID << "malformed JSON file" << jsonFile.fileName();
         return false;
     }
     // read job attributes
@@ -231,19 +154,61 @@ bool Job::load()
     return true;
 }
 
+bool Job::load(const Job& job)
+{
+    autoSaveOff();
+    delete _images;
+    delete _steps;
+    _images = new ResourceModel(this, *(job.images()));
+    _steps = new StepModel(this, *(job.steps()));
+    _thumbnail = job.thumbnail();
+    autoSaveOn();
+    return true;
+}
+
+void Job::autoSaveOn()
+{
+    connect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
+    connect(this, SIGNAL(nameChanged()), this, SLOT(save()));
+    connect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
+    for(size_t i = 0; i < _steps->rowCount(); i++)
+    {
+        QModelIndex id = _steps->index(i, 0);
+        Step* step = _steps->data(id, StepModel::ModelDataRole).value<Step*>();
+        connect(step->attributes(),
+                         SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this,
+                         SLOT(save()));
+    }
+}
+
+void Job::autoSaveOff()
+{
+    disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(selectThumbnail()));
+    disconnect(this, SIGNAL(nameChanged()), this, SLOT(save()));
+    disconnect(_images, SIGNAL(countChanged(int)), this, SLOT(save()));
+    for(size_t i = 0; i < _steps->rowCount(); i++)
+    {
+        QModelIndex id = _steps->index(i, 0);
+        Step* step = _steps->data(id, StepModel::ModelDataRole).value<Step*>();
+        disconnect(step->attributes(),
+                            SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this,
+                            SLOT(save()));
+    }
+}
+
 bool Job::save()
 {
     // return in case the job is already started
-    if(_status >= 0)
+    if((int)_status >= 0)
         return false;
     // build the JSON object for this job
     QJsonObject json;
     serializeToJSON(&json);
-    // create the entire filesystem structure
+    // create the job directory
     QDir dir;
     if(!dir.mkpath(_url.toLocalFile()))
     {
-        qCritical() << _name << ": unable to create the job directory structure";
+        qCritical() << LOGID << "unable to create the job directory";
         return false;
     }
     // open a file handler
@@ -251,7 +216,7 @@ bool Job::save()
     QFile jobFile(jobDirectory.filePath("job.json"));
     if(!jobFile.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        qWarning() << _name << ": unable to write the job descriptor file" << jobFile.fileName();
+        qWarning() << LOGID << "unable to write the job descriptor file" << jobFile.fileName();
         return false;
     }
     // write & close the file handler
@@ -263,72 +228,44 @@ bool Job::save()
 
 bool Job::start(bool local)
 {
-    // do not start an incomplete job
-    if(_images->rowCount() < 2)
-    {
-        qCritical() << _name << ": insufficient number of sources";
+    // do not start a job we can't save
+    if(!save())
         return false;
-    }
     // do not start an invalid job
-    if(!isPairValid())
-    {
-        qCritical() << _name << ": invalid initial pair";
+    if(!isStartable())
         return false;
-    }
-    // define program path
+    // define the program path
     QString startCommand = std::getenv("MESHROOM_START_COMMAND");
     if(startCommand.isEmpty())
         startCommand = QCoreApplication::applicationDirPath() + "/scripts/job_start.py";
     // and add command arguments
-
-    QString jobPath = _url.toLocalFile() + "/job.json";
+    QStringList arguments;
+    local ? arguments.append("--engine=local") : arguments.append("--engine=tractor");
+    arguments.append(_url.toLocalFile() + "/job.json");
     // run the process
     QProcess process;
-    bool processStatus = false;
-    if(local)
+    process.setProgram(startCommand);
+    process.setArguments(arguments);
+    process.start();
+    if(!process.waitForFinished())
     {
-      QString terminal = std::getenv("MESHROOM_TERMINAL");
-      if(terminal.isEmpty())
-        terminal = "xterm";
-
-      QStringList arguments;
-      // terminal args
-      arguments << QString("-title") << _name+" - "+QString::fromStdString(std::to_string(_images->rowCount()))+" images\"" << "-hold" << "-e";
-      // command line to execute
-      arguments << startCommand << jobPath << "--engine=local";
-      qint64 * pid = 0;
-      QString workingDirectory;
-      qInfo() << "Start command detached: " << terminal << " " << arguments.join(" ");
-      processStatus = process.startDetached(terminal, arguments, workingDirectory, pid);
-    }
-    else
-    {
-      QStringList arguments;
-      arguments << jobPath;
-      qInfo() << "Start command: " << startCommand << " " << arguments.join(" ");
-      process.start(startCommand, arguments);
-      processStatus = process.waitForFinished();
-    }
-
-    if(!processStatus)
-    {
-        qCritical() << _name << ": unable to start job";
+        qCritical() << LOGID << ": unable to start job";
         return false;
     }
-
-    // change the job status
-    JobModel* model = qobject_cast<JobModel*>(parent());
-    assert(model);
-    model->setData(_modelIndex, 0, JobModel::StatusRole); // BLOCKED
-    qInfo() << _name << ": job started";
+    // and refresh the job status
+    qInfo() << LOGID << "job started";
+    refresh();
     return true;
 }
 
 void Job::refresh()
 {
-    QFileInfo fileInfo(_url.toLocalFile() + "/job.json");
-    if(!fileInfo.exists())
+    if(!isStoredOnDisk())
+    {
+        setStatus(NOTSTARTED);
         return;
+    }
+    QFileInfo fileInfo(_url.toLocalFile() + "/job.json");
     // define program path
     QString statusCommand = std::getenv("MESHROOM_STATUS_COMMAND");
     if(statusCommand.isEmpty())
@@ -344,21 +281,29 @@ void Job::refresh()
     process.setArguments(arguments);
     process.start();
     if(!process.waitForFinished())
-        qCritical() << _name << ": unable to update job status";
+    {
+        qCritical() << LOGID << "unable to update job status";
+        setStatus(SYSTEMERROR);
+    }
+}
+
+void Job::erase()
+{
+    QDir dir(_url.toLocalFile());
+    if(dir.exists())
+        dir.removeRecursively();
 }
 
 void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
 {
     QProcess* process = qobject_cast<QProcess*>(QObject::sender());
-    JobModel* model = qobject_cast<JobModel*>(parent());
     assert(process);
-    assert(model);
     // check exit status
     if(exitStatus != QProcess::NormalExit)
     {
         QString response(process->readAllStandardError());
         qCritical() << response;
-        model->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
+        setStatus(SYSTEMERROR);
         return;
     }
     // parse standard output as JSON
@@ -367,70 +312,43 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     QJsonDocument jsondoc(QJsonDocument::fromJson(response.toUtf8(), &parseError));
     if(parseError.error != QJsonParseError::NoError)
     {
-        qCritical() << _name << ": invalid response - parse error";
-        model->setData(_modelIndex, 4, JobModel::StatusRole); // ERROR
+        qCritical() << LOGID << "invalid response - parse error";
+        setStatus(SYSTEMERROR);
         return;
     }
     // retrieve & set job completion & status
     QJsonObject json = jsondoc.object();
     if(!json.contains("completion") || !json.contains("status"))
     {
-        qCritical() << _name << ": invalid response - missing values";
+        qCritical() << LOGID << "invalid response - missing values";
+        setStatus(SYSTEMERROR);
         return;
     }
-    model->setData(_modelIndex, json["completion"].toDouble(), JobModel::CompletionRole);
-    model->setData(_modelIndex, json["status"].toInt(), JobModel::StatusRole);
-
-    // case 0: // BLOCKED
-    // case 1: // READY
-    // case 2: // RUNNING
-    // case 3: // DONE
-    // case 4: // ERROR
-    // case 5: // CANCELED
-    // case 6: // PAUSED
-}
-
-void Job::selectPair()
-{
-    QModelIndex id;
-    Step* step = nullptr;
-    Attribute* initialPairAttribute = getAttribute(*this, "sfm", "initial_pair", id, &step);
-    if(!step || !initialPairAttribute)
-        return;
-    // check if the current image pair still belongs to the job
-    QVariantList pair = initialPairAttribute->value().toList();
-    if((pair.count() > 0 && !isRegisteredImage(*this, QUrl::fromLocalFile(pair[0].toString()))) ||
-       (pair.count() > 1 && !isRegisteredImage(*this, QUrl::fromLocalFile(pair[1].toString()))))
-    {
-        pair[0] = "";
-        pair[1] = "";
-        step->attributes()->setData(id, pair, AttributeModel::ValueRole);
-    }
-    // auto select the initial pair
-    if(_images->rowCount() < 2)
-        return;
-    if(pair.count() > 0 && !QUrl::fromLocalFile(pair[0].toString()).isValid())
-    {
-        QModelIndex idA = _images->index(0, 0);
-        pair[0] = _images->data(idA, ResourceModel::UrlRole).toUrl().toLocalFile();
-        step->attributes()->setData(id, pair, AttributeModel::ValueRole);
-    }
-    if(pair.count() > 1 && !QUrl::fromLocalFile(pair[1].toString()).isValid())
-    {
-        QModelIndex idB = _images->index(1, 0);
-        pair[1] = _images->data(idB, ResourceModel::UrlRole).toUrl().toLocalFile();
-        step->attributes()->setData(id, pair, AttributeModel::ValueRole);
-    }
+    setCompletion(json["completion"].toDouble());
+    setStatus((StatusType)json["status"].toInt());
 }
 
 void Job::selectThumbnail()
 {
-    JobModel* model = qobject_cast<JobModel*>(parent());
-    if(!model)
-        return;
     QModelIndex image0ID = _images->index(0, 0);
-    model->setData(_modelIndex, _images->data(image0ID, ResourceModel::UrlRole),
-                   JobModel::ThumbnailRole);
+    setThumbnail(_images->data(image0ID, ResourceModel::UrlRole).toUrl());
+}
+
+bool Job::isStoredOnDisk()
+{
+    QDir dir(_url.toLocalFile());
+    QFile file(dir.filePath("job.json"));
+    return file.exists();
+}
+
+bool Job::isStartable()
+{
+    if(_images->rowCount() < 2)
+    {
+        qCritical() << LOGID << "insufficient number of sources";
+        return false;
+    }
+    return true;
 }
 
 bool Job::isPairA(const QUrl& url)
@@ -467,11 +385,39 @@ bool Job::isPairValid()
             QUrl::fromLocalFile(pair[1].toString()).isValid());
 }
 
-bool Job::isValid()
+void Job::createDefaultGraph()
 {
-    QDir jobDirectory(_url.toLocalFile());
-    QFile jobFile(jobDirectory.filePath("job.json"));
-    return jobFile.exists();
+    // create feature detection step
+    Step* step = new Step("feature_detection");
+    Attribute* att = new Attribute();
+    att->setType(2); // combo
+    att->setKey("describerPreset");
+    att->setName("quality");
+    att->setValue("Normal");
+    att->setOptions(QStringList({"Normal", "High", "Ultra"}));
+    step->attributes()->addAttribute(att);
+    _steps->addStep(step);
+    // create meshing step
+    step = new Step("meshing");
+    att = new Attribute();
+    att->setType(1); // slider
+    att->setKey("scale");
+    att->setName("meshing scale");
+    att->setValue(2);
+    att->setMin(1);
+    att->setMax(10);
+    att->setStep(1);
+    step->attributes()->addAttribute(att);
+    _steps->addStep(step);
+    // create sfm step
+    step = new Step("sfm");
+    att = new Attribute();
+    att->setType(3); // pair selector
+    att->setKey("initial_pair");
+    att->setName("initial pair");
+    att->setValue(QStringList({"", ""}));
+    step->attributes()->addAttribute(att);
+    _steps->addStep(step);
 }
 
 void Job::serializeToJSON(QJsonObject* obj) const
@@ -504,8 +450,11 @@ void Job::serializeToJSON(QJsonObject* obj) const
     obj->insert("steps", stepsObject);
 }
 
-void Job::deserializeFromJSON(const QJsonObject& obj)
+void Job::deserializeFromJSON(const QJsonObject& obj
+
+)
 {
+    autoSaveOff();
     // read global job settings
     if(obj.contains("user"))
         _user = obj["user"].toString();
@@ -529,6 +478,7 @@ void Job::deserializeFromJSON(const QJsonObject& obj)
             continue;
         step->deserializeFromJSON(stepsObject);
     }
+    autoSaveOn();
 }
 
 } // namespace

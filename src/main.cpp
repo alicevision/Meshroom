@@ -1,10 +1,11 @@
 #include "gl/GLView.hpp"
 #include "models/ApplicationModel.hpp"
-#include "util/InstantCoding.hpp"
-#include "util/Shortcut.hpp"
+#include "models/Job.hpp"
+#include "models/Project.hpp"
 #include <QtWidgets/QApplication>
 #include <QSurfaceFormat>
 #include <QtQml>
+
 
 int main(int argc, char* argv[])
 {
@@ -16,9 +17,9 @@ int main(int argc, char* argv[])
     QCoreApplication::setApplicationName("meshroom");
 
     // register types
-    qRegisterMetaType<QtMsgType>("QtMsgType");
-    qmlRegisterType<Shortcut>("Popart", 0, 1, "Shortcut");
-    qmlRegisterType<GLView>("Popart", 0, 1, "GLView");
+    qmlRegisterType<GLView>("Meshroom.GL", 0, 1, "GLView");
+    qmlRegisterType<Job>("Meshroom.Job", 0, 1, "Job");
+    qmlRegisterType<Project>("Meshroom.Project", 0, 1, "Project");
 
     // set opengl profile
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
@@ -28,12 +29,8 @@ int main(int argc, char* argv[])
 
     // start the main application
     QQmlApplicationEngine engine;
+    engine.addImportPath(qApp->applicationDirPath() + "/qml_modules");
     ApplicationModel application(engine);
-
-#ifndef NDEBUG
-    InstantCoding instantCoding(engine);
-    instantCoding.watch("./src/qml");
-#endif
 
     return qapp.exec();
 }

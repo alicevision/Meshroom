@@ -9,6 +9,17 @@ AttributeModel::AttributeModel(QObject* parent)
 {
 }
 
+AttributeModel::AttributeModel(const AttributeModel& obj)
+    : QAbstractListModel(obj.parent())
+{
+    QHash<int, QByteArray> names = roleNames();
+    for(size_t i = 0; i < obj.rowCount(); ++i)
+    {
+        Attribute* a = obj.get(i)[names[ModelDataRole]].value<Attribute*>();
+        addAttribute(new Attribute(*a));
+    }
+}
+
 int AttributeModel::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
@@ -83,6 +94,21 @@ void AttributeModel::addAttribute(Attribute* attribute)
     _attributes << attribute;
     endInsertRows();
     emit countChanged(rowCount());
+}
+
+QVariantMap AttributeModel::get(int row) const
+{
+    QHash<int, QByteArray> names = roleNames();
+    QHashIterator<int, QByteArray> i(names);
+    QVariantMap result;
+    while(i.hasNext())
+    {
+        i.next();
+        QModelIndex idx = index(row, 0);
+        QVariant data = idx.data(i.key());
+        result[i.value()] = data;
+    }
+    return result;
 }
 
 } // namespace

@@ -1,5 +1,7 @@
 #include "ResourceModel.hpp"
 #include <QQmlEngine>
+#include <QFileInfo>
+#include <QDir>
 #include <QDebug>
 
 namespace meshroom
@@ -8,6 +10,17 @@ namespace meshroom
 ResourceModel::ResourceModel(QObject* parent)
     : QAbstractListModel(parent)
 {
+}
+
+ResourceModel::ResourceModel(QObject* parent, const ResourceModel& obj)
+    : QAbstractListModel(parent)
+{
+    QHash<int, QByteArray> names = roleNames();
+    for(size_t i = 0; i < obj.rowCount(); ++i)
+    {
+        Resource* r = obj.get(i)[names[ModelDataRole]].value<Resource*>();
+        addResource(new Resource(*r));
+    }
 }
 
 int ResourceModel::rowCount(const QModelIndex& parent) const
@@ -64,6 +77,20 @@ void ResourceModel::addResource(Resource* resource)
 
 void ResourceModel::addResource(const QUrl& url)
 {
+    // in case of a directory
+    QFileInfo fileinfo(url.toLocalFile());
+    if(fileinfo.isDir())
+    {
+        QDir dir(url.toLocalFile());
+        QStringList resources = dir.entryList(QDir::Files | QDir::NoSymLinks);
+        for(size_t i = 0; i < resources.length(); ++i)
+            addResource(QUrl::fromLocalFile(dir.absoluteFilePath(resources[i])));
+        return;
+    }
+    // in case of a file
+    QString extension = fileinfo.suffix().toUpper();
+    if(extension != "JPG" && extension != "JPEG")
+        return;
     Resource* r = new Resource(url);
     addResource(r);
 }
@@ -78,6 +105,21 @@ void ResourceModel::removeResource(Resource* resource)
     delete resource;
     endRemoveRows();
     emit countChanged(rowCount());
+}
+
+QVariantMap ResourceModel::get(int row) const
+{
+    QHash<int, QByteArray> names = roleNames();
+    QHashIterator<int, QByteArray> i(names);
+    QVariantMap result;
+    while(i.hasNext())
+    {
+        i.next();
+        QModelIndex idx = index(row, 0);
+        QVariant data = idx.data(i.key());
+        result[i.value()] = data;
+    }
+    return result;
 }
 
 } // namespace

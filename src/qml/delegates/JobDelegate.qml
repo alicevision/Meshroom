@@ -1,140 +1,115 @@
 import QtQuick 2.5
-import QtQuick.Layouts 1.2
 import QtQuick.Controls 1.4
-
-import "../components"
+import QtQuick.Layouts 1.2
+import DarkStyle.Controls 1.0
+import DarkStyle 1.0
+import Meshroom.Job 0.1
 
 Item {
 
-    id: root
-
-    implicitWidth: 200
-    implicitHeight: 60
-
-    Component.onCompleted: {
-        if(index==0) {
-            currentProject = projectModel;
-            currentJob = model;
-        }
-    }
+    property bool isSelected: (currentJob == model.modelData)
 
     MouseArea {
         id: mouseContainer
         anchors.fill: parent
-        anchors.margins: 2
         hoverEnabled: true
-        onClicked: {
-            currentProject = projectModel;
-            currentJob = model;
-        }
-        Rectangle { // background
+        onClicked: selectJob(index)
+        Rectangle {
             anchors.fill: parent
-            color: _style.window.color.xdarker
-            opacity: mouseContainer.containsMouse ? 0.5 : 0
+            color: Style.window.color.xdark
+            opacity: isSelected ? 0.8 : 0.4
             Behavior on opacity { NumberAnimation {} }
+        }
+        Rectangle {
+            anchors.right: parent.right
+            width: 1
+            height: parent.height
+            color: isSelected ? Style.window.color.selected : Style.window.color.xlight
+            visible: (isSelected || mouseContainer.containsMouse)
         }
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 10
-            anchors.rightMargin: 6
-            spacing: 10
-            Behavior on opacity { NumberAnimation {} }
-            Rectangle { // job thumbnail
+            anchors.leftMargin: 2
+            anchors.rightMargin: 2
+            Rectangle {
                 Layout.fillWidth: false
                 Layout.fillHeight: true
                 Layout.preferredWidth: childrenRect.width
-                color: _style.window.color.xdarker
+                color: Style.window.color.xdark
+                Text {
+                    anchors.centerIn: parent
+                    font.pixelSize: Style.text.size.small
+                    color: Style.text.color.dark
+                    visible: model.thumbnail == ""
+                    text: "N/A"
+                }
                 Image {
                     anchors.verticalCenter: parent.verticalCenter
                     source: model.thumbnail
+                    sourceSize: Qt.size(320, 320)
                     width: parent.height
                     height: width*3/4.0
                     asynchronous: true
+                    BusyIndicator {
+                        anchors.centerIn: parent
+                        running: parent.status === Image.Loading
+                    }
                 }
             }
             ColumnLayout {
-                CustomTextField {
+                Item { Layout.fillHeight: true } // spacer
+                Text {
                     Layout.fillWidth: true
                     text: model.name
-                    textSize: _style.text.size.normal
-                    color: (currentJob == model) ? _style.text.color.selected : _style.text.color.normal
-                    state: "HIDDEN"
-                    enabled: model.status < 0
-                    onEditingFinished: model.name = text
+                    font.pixelSize: Style.text.size.small
+                    color: isSelected ? Style.text.color.selected : Style.text.color.normal
+                    maximumLineCount: 2
                 }
-                RowLayout {
-                    spacing: 6
-                    RowLayout {
-                        spacing: 2
-                        CustomToolButton {
-                            iconSource: "qrc:///images/person.svg"
-                            iconSize: _style.icon.size.xsmall
-                            enabled: false
-                            opacity: 0.5
-                        }
-                        CustomText {
-                            text: model.user
-                            textSize: _style.text.size.small
-                            color: _style.text.color.darker
-                        }
-                    }
-                    RowLayout {
-                        spacing: 2
-                        CustomToolButton {
-                            iconSource: "qrc:///images/image.svg"
-                            iconSize: _style.icon.size.xsmall
-                            enabled: false
-                            opacity: 0.5
-                        }
-                        CustomText {
-                            text: model.images.count
-                            textSize: _style.text.size.small
-                            color: _style.text.color.darker
+                Text {
+                    text: {
+                        switch(model.status) {
+                            case Job.BLOCKED:
+                                return "blocked";
+                            case Job.READY:
+                                return "ready";
+                            case Job.DONE:
+                                return "done";
+                            case Job.ERROR:
+                                return "error";
+                            case Job.CANCELED:
+                                return "canceled";
+                            case Job.PAUSED:
+                                return "paused";
+                            case Job.NOTSTARTED:
+                                return "not started";
+                            case Job.SYSTEMERROR:
+                                return "n/a";
+                            case Job.RUNNING:
+                            default:
+                                return Math.round(model.completion*100)+"%"
                         }
                     }
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                    CustomText {
-                        text: {
-                            switch(model.status) {
-                                case 6: // PAUSED
-                                    return "PAUSED";
-                                case 4: // ERROR
-                                    return "ERROR";
-                                case 5: // CANCELED
-                                    return "CANCELED";
-                                case 3: // DONE
-                                    return "DONE"
-                                case 0: // BLOCKED
-                                case 1: // READY
-                                case 2: // RUNNING
-                                default:
-                                    return Math.round(completion*100)+"%"
-                            }
-                        }
-                        textSize: _style.text.size.small
-                        color: {
-                            switch(model.status) {
-                                case 6: // PAUSED
-                                case 4: // ERROR
-                                case 5: // CANCELED
-                                    return "red";
-                                case 0: // BLOCKED
-                                case 1: // READY
-                                case 2: // RUNNING
-                                    return "green";
-                                case 3: // DONE
-                                default:
-                                    return _style.text.color.darker;
-                            }
+                    font.pixelSize: Style.text.size.small
+                    color: {
+                        switch(model.status) {
+                            case Job.PAUSED:
+                            case Job.ERROR:
+                            case Job.CANCELED:
+                            case Job.SYSTEMERROR:
+                                return Style.text.color.critical;
+                            case Job.BLOCKED:
+                            case Job.READY:
+                            case Job.RUNNING:
+                            case Job.DONE:
+                            case Job.NOTSTARTED:
+                            default:
+                                return Style.text.color.info;
                         }
                     }
                 }
-            }
-            Item {
-                Layout.fillWidth: true
+                Item { Layout.fillHeight: true } // spacer
             }
         }
     }
+
 }

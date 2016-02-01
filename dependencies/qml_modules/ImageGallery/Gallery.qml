@@ -17,11 +17,8 @@ Item {
         anchors.fill: parent
         enabled: root.editable
         onFilesDropped: {
-            for(var i=0; i<files.length; ++i) {
-                var ext = files[i].split('.').pop().toUpperCase();
-                if(ext == "JPG" || ext == "JPEG")
-                    model.addResource(files[i]);
-            }
+            for(var i=0; i<files.length; ++i)
+                model.addResource(files[i]);
         }
     }
 

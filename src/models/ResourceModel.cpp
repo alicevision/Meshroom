@@ -1,5 +1,7 @@
 #include "ResourceModel.hpp"
 #include <QQmlEngine>
+#include <QFileInfo>
+#include <QDir>
 #include <QDebug>
 
 namespace meshroom
@@ -75,6 +77,20 @@ void ResourceModel::addResource(Resource* resource)
 
 void ResourceModel::addResource(const QUrl& url)
 {
+    // in case of a directory
+    QFileInfo fileinfo(url.toLocalFile());
+    if(fileinfo.isDir())
+    {
+        QDir dir = fileinfo.absoluteDir();
+        QStringList resources = dir.entryList(QDir::Files | QDir::NoSymLinks);
+        for(size_t i = 0; i < resources.length(); ++i)
+            addResource(QUrl::fromLocalFile(dir.absoluteFilePath(resources[i])));
+        return;
+    }
+    // in case of a file
+    QString extension = fileinfo.completeSuffix().toUpper();
+    if(extension != "JPG" && extension != "JPEG")
+        return;
     Resource* r = new Resource(url);
     addResource(r);
 }

@@ -8,13 +8,6 @@ Item {
 
     id: root
 
-    Stack.onStatusChanged: {
-        if(Stack.status == Stack.Deactivating) {
-            menupage.clearOnDestruction();
-            jobpage.clearOnDestruction();
-        }
-    }
-
     SplitView {
         anchors.fill: parent
         MenuPage {
@@ -27,11 +20,6 @@ Item {
             Layout.fillWidth: true
         }
         orientation: Qt.Horizontal
-        handleDelegate: Rectangle {
-            width: 2
-            height: 2
-            color: "#111"
-        }
     }
 
 }

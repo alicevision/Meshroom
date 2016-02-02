@@ -29,7 +29,7 @@ Item {
     }
     RowLayout {
         anchors.fill: parent
-        spacing: 0
+        spacing: 10
         Rectangle {
             Layout.fillHeight: true
             Layout.preferredWidth: Math.min(parent.height*4/3.0, parent.width*0.4)
@@ -46,8 +46,21 @@ Item {
                 }
             }
         }
-        Text {
-            text: model.name
+        ColumnLayout {
+            Text {
+                text: model.name
+                font.pixelSize: Style.text.size.small
+            }
+            Text {
+                Layout.fillWidth: true
+                text: model.url.toString().replace("file://", "")
+                font.pixelSize: Style.text.size.xsmall
+                color: Style.text.color.dark
+                maximumLineCount: 2
+            }
+        }
+        Item {
+            Layout.fillWidth: true
         }
     }
 }

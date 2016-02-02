@@ -62,7 +62,7 @@ Item {
                     ToolButton {
                         anchors.fill: parent
                         text: "select"
-                        iconSource: "qrc:///images/disk.svg"
+                        iconSource: "qrc:///images/plus.svg"
                         onClicked: openImageSelectionDialog(setPairA)
                     }
                     BusyIndicator {
@@ -84,7 +84,7 @@ Item {
                     ToolButton {
                         anchors.fill: parent
                         text: "select"
-                        iconSource: "qrc:///images/disk.svg"
+                        iconSource: "qrc:///images/plus.svg"
                         onClicked: openImageSelectionDialog(setPairB)
                     }
                     BusyIndicator {

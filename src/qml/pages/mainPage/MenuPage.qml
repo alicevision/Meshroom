@@ -8,10 +8,6 @@ import "../../delegates"
 
 Rectangle {
 
-    function clearOnDestruction() {
-        listview.model = 0;
-    }
-
     color: Style.window.color.normal
 
     ColumnLayout {

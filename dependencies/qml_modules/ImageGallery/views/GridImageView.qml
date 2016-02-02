@@ -43,9 +43,6 @@ Item {
                 value: 130
                 onValueChanged: root.thumbnailSize = value
             }
-            // ToolButton {
-            //     iconSource: "qrc:///images/disk.svg"
-            // }
         }
     }
 }

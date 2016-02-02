@@ -16,7 +16,7 @@ Item {
             anchors.fill: parent
             color: "#333"
             property variant job: currentJob
-            onJobChanged: glview.loadAlembicScene(Qt.resolvedUrl(currentJob.url+"/job.abc"))
+            onJobChanged: glview.loadAlembicScene(Qt.resolvedUrl(currentJob.url+"/"+currentJob.name+".abc"))
         }
     }
 

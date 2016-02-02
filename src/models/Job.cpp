@@ -86,6 +86,7 @@ void Job::setName(const QString& name)
         return;
     _name = name;
     emit nameChanged();
+    emit dataChanged(_modelIndex, _modelIndex);
 }
 
 void Job::setCompletion(const float& completion)

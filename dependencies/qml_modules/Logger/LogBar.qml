@@ -62,10 +62,10 @@ Rectangle {
                 iconSource: "qrc:///images/expand.svg"
                 onClicked: toggle()
             }
-            // ToolButton {
-            //     iconSource: "qrc:///images/disk.svg"
-            //     onClicked: logmodel.clear()
-            // }
+            ToolButton {
+                iconSource: "qrc:///images/disk.svg"
+                onClicked: logmodel.clear()
+            }
         }
     }
 }

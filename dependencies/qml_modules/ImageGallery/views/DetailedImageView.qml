@@ -8,10 +8,11 @@ Item {
 
     id: root
     property variant visualModel: null
-    property real thumbnailSize: 50
+    property real thumbnailSize: 60
 
     ListView {
         anchors.fill: parent
+        anchors.margins: 12
         property alias cellHeight: root.thumbnailSize
         spacing: 1
         model: visualModel.parts.detail
@@ -37,9 +38,9 @@ Item {
             spacing: 0
             Slider {
                 Layout.fillWidth: true
-                minimumValue: 30
+                minimumValue: 45
                 maximumValue: 200
-                value: 50
+                value: 60
                 onValueChanged: root.thumbnailSize = value
             }
             // ToolButton {

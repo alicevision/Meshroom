@@ -9,6 +9,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         anchors.margins: 5
+        anchors.topMargin: 15
         color: mouseArea.containsMouse ? Style.window.color.selected : Style.window.color.xdark
         Behavior on color { ColorAnimation {} }
         MouseArea {
@@ -41,7 +42,6 @@ Item {
                 text: model.name
                 horizontalAlignment: Text.AlignHCenter
             }
-
         }
         ToolButton {
             anchors.horizontalCenter: parent.right

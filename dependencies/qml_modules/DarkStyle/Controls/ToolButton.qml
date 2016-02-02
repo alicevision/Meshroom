@@ -11,11 +11,11 @@ ToolButton {
         background: Item {
             implicitWidth: 30
             implicitHeight: 30
-            opacity: control.enabled ? 1: 0.4
+            opacity: control.enabled ? 0.8: 0.4
             Rectangle {
                 anchors.fill: parent
                 color: control.checked ? Style.window.color.selected : Style.window.color.light
-                opacity: (control.hovered || control.checked) ? 1 : 0
+                opacity: (control.hovered || control.checked) ? 0.8 : 0
                 Behavior on opacity { NumberAnimation{} }
             }
             Image {

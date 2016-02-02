@@ -15,6 +15,8 @@ Project::Project(const QUrl& url)
     , _jobs(new JobModel(this))
     , _proxy(new QSortFilterProxyModel(this))
 {
+    if(!_url.isValid())
+        return;
     // setup proxy filters
     _proxy->setSourceModel(_jobs);
     _proxy->setFilterRole(JobModel::NameRole);

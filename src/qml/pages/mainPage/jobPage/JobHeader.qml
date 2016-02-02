@@ -9,9 +9,6 @@ Rectangle {
 
     color: Style.window.color.dark
 
-    function clearOnDestruction() {
-    }
-
     RowLayout {
         anchors.fill: parent
         spacing: 0
@@ -69,7 +66,7 @@ Rectangle {
         }
         ToolButton {
             visible: currentJob.status >= 0
-            iconSource: "qrc:///images/disk.svg"
+            iconSource: "qrc:///images/refresh.svg"
             text: "refresh"
             onClicked: refreshJobStatus()
         }

@@ -16,8 +16,10 @@
     <file>images/play.svg</file>
     <file>images/plus.svg</file>
     <file>images/previous.svg</file>
+    <file>images/refresh.svg</file>
     <file>images/shrink.svg</file>
     <file>images/stripes.png</file>
+    <file>images/whitestripes.png</file>
 
     </qresource>
 </RCC>

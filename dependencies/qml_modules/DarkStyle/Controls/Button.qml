@@ -20,7 +20,7 @@ Button {
             Rectangle {
                 anchors.fill: parent
                 color: Style.window.color.light
-                opacity: control.hovered ? 1 : 0
+                opacity: control.hovered ? 0.8 : 0
                 Behavior on opacity { NumberAnimation {} }
             }
             Image {

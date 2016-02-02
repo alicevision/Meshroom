@@ -29,45 +29,54 @@ Item {
         }
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 2
-            anchors.rightMargin: 2
-            Rectangle {
-                Layout.fillWidth: false
-                Layout.fillHeight: true
-                Layout.preferredWidth: childrenRect.width
-                color: Style.window.color.xdark
-                Text {
-                    anchors.centerIn: parent
-                    font.pixelSize: Style.text.size.small
-                    color: Style.text.color.dark
-                    visible: model.thumbnail == ""
-                    text: "N/A"
-                }
-                Image {
-                    anchors.verticalCenter: parent.verticalCenter
-                    source: model.thumbnail
-                    sourceSize: Qt.size(320, 320)
-                    width: parent.height
-                    height: width*3/4.0
-                    asynchronous: true
-                    BusyIndicator {
-                        anchors.centerIn: parent
-                        running: parent.status === Image.Loading
-                    }
-                }
-            }
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            // Rectangle {
+            //     Layout.fillWidth: false
+            //     Layout.fillHeight: true
+            //     Layout.preferredWidth: childrenRect.width
+            //     color: Style.window.color.xdark
+            //     Text {
+            //         anchors.centerIn: parent
+            //         font.pixelSize: Style.text.size.small
+            //         color: Style.text.color.dark
+            //         visible: model.thumbnail == ""
+            //         text: "N/A"
+            //     }
+            //     Image {
+            //         anchors.verticalCenter: parent.verticalCenter
+            //         source: model.thumbnail
+            //         sourceSize: Qt.size(320, 320)
+            //         width: parent.height
+            //         height: width*3/4.0
+            //         asynchronous: true
+            //         BusyIndicator {
+            //             anchors.centerIn: parent
+            //             running: parent.status === Image.Loading
+            //         }
+            //     }
+            // }
             ColumnLayout {
                 Item { Layout.fillHeight: true } // spacer
                 Text {
                     Layout.fillWidth: true
                     text: model.name
                     font.pixelSize: Style.text.size.small
+                    color: Style.text.color.dark
+                    // color: isSelected ? Style.text.color.selected : Style.text.color.normal
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: model.date.toLocaleString()
+                    font.pixelSize: Style.text.size.small
                     color: isSelected ? Style.text.color.selected : Style.text.color.normal
                     maximumLineCount: 2
                 }
-                Text {
-                    text: {
-                        switch(model.status) {
+                RowLayout {
+                    Item { Layout.fillWidth: true } // spacer
+                    Text {
+                        text: {
+                            switch(model.status) {
                             case Job.BLOCKED:
                                 return "blocked";
                             case Job.READY:
@@ -87,11 +96,11 @@ Item {
                             case Job.RUNNING:
                             default:
                                 return Math.round(model.completion*100)+"%"
+                            }
                         }
-                    }
-                    font.pixelSize: Style.text.size.small
-                    color: {
-                        switch(model.status) {
+                        font.pixelSize: Style.text.size.small
+                        color: {
+                            switch(model.status) {
                             case Job.PAUSED:
                             case Job.ERROR:
                             case Job.CANCELED:
@@ -104,6 +113,7 @@ Item {
                             case Job.NOTSTARTED:
                             default:
                                 return Style.text.color.info;
+                            }
                         }
                     }
                 }

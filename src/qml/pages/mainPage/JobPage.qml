@@ -7,10 +7,6 @@ import "jobPage"
 
 Item {
 
-    function clearOnDestruction() {
-        header.clearOnDestruction();
-    }
-
     ColumnLayout {
         anchors.fill: parent
         spacing: 0

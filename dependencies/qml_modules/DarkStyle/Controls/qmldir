@@ -10,6 +10,7 @@ MenuBar 1.0 MenuBar.qml
 ProgressBar 1.0 ProgressBar.qml
 RadioButton 1.0 RadioButton.qml
 ScrollView 1.0 ScrollView.qml
+SplitView 1.0 SplitView.qml
 Slider 1.0 Slider.qml
 StackView 1.0 StackView.qml
 TabView 1.0 TabView.qml

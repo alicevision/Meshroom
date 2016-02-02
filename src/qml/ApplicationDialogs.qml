@@ -27,7 +27,7 @@ Item {
 
     property Component projectSettingsDialog: Dialog {
         title: "Project settings"
-        content: Item {
+        content: ColumnLayout {
             GridLayout {
                 anchors.fill: parent
                 columns: 2
@@ -39,9 +39,9 @@ Item {
                     text: "name :"
                 }
                 TextField {
+                    id: projectNameCombo
                     Layout.fillWidth: true
                     text: currentProject.name
-                    onEditingFinished: currentProject.name = text
                 }
                 Text {
                     Layout.preferredWidth: 60
@@ -56,12 +56,28 @@ Item {
                 }
                 Item { Layout.fillHeight: true } // spacer
             }
+            RowLayout {
+                spacing: 0
+                Button {
+                    Layout.fillWidth: true
+                    text: "CANCEL"
+                    onClicked: reject()
+                }
+                Button {
+                    Layout.fillWidth: true
+                    text: "SAVE"
+                    onClicked: {
+                        currentProject.name = projectNameCombo.text
+                        accept();
+                    }
+                }
+            }
         }
     }
 
     property Component jobSettingsDialog: Dialog {
         title: "Job settings"
-        content: Item {
+        content: ColumnLayout {
             GridLayout {
                 anchors.fill: parent
                 columns: 2
@@ -73,9 +89,9 @@ Item {
                     text: "name :"
                 }
                 TextField {
+                    id: jobNameCombo
                     Layout.fillWidth: true
                     text: currentJob.name
-                    onEditingFinished: currentJob.name = text
                 }
                 Text {
                     Layout.preferredWidth: 60
@@ -89,6 +105,22 @@ Item {
                     enabled: false
                 }
                 Item { Layout.fillHeight: true } // spacer
+            }
+            RowLayout {
+                spacing: 0
+                Button {
+                    Layout.fillWidth: true
+                    text: "CANCEL"
+                    onClicked: reject()
+                }
+                Button {
+                    Layout.fillWidth: true
+                    text: "SAVE"
+                    onClicked: {
+                        currentJob.name = jobNameCombo.text
+                        accept();
+                    }
+                }
             }
         }
     }
@@ -127,7 +159,7 @@ Item {
                     text: "title :"
                 }
                 TextField {
-                    id: title
+                    id: jobNameCombo2
                     Layout.fillWidth: true
                     text: currentJob.name
                 }
@@ -144,7 +176,7 @@ Item {
                     Layout.fillWidth: true
                     text: "SUBMIT"
                     onClicked: {
-                        currentJob.name = title.text;
+                        currentJob.name = jobNameCombo2.text;
                         submitJob(radioGroup.current.text == "Local");
                         accept();
                     }
@@ -159,7 +191,7 @@ Item {
         content: ColumnLayout {
             Text {
                 Layout.fillWidth: true
-                text: "You are about to delete all data associated with this job"
+                text: "You are about to delete all data associated with this job."
             }
             Text {
                 Layout.fillWidth: true
@@ -194,19 +226,52 @@ Item {
         id: imageSelectionDialog
         signal imageSelected(string url)
         title: "Select image"
-        content: Item {
+        contentMinimumWidth: 600
+        contentMinimumHeight: 500
+        content: ColumnLayout {
+            RowLayout {
+                Text {
+                    Layout.fillWidth: true
+                    text: currentJob.images.count + " image(s)"
+                    font.pixelSize: Style.text.size.small
+                    color: Style.text.color.dark
+                }
+                Button {
+                    text: "clear selection"
+                    height: 10
+                    onClicked: {
+                        imageSelectionDialog.imageSelected("");
+                        imageSelectionDialog.accept();
+                    }
+                }
+            }
             ListView {
-                anchors.fill: parent
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 model: currentJob.images
                 clip: true
                 spacing: 1
                 delegate: ImageDelegate {
+                    width: parent.width
                     onImageSelected: {
                         imageSelectionDialog.imageSelected(url);
                         imageSelectionDialog.accept();
                     }
                 }
             }
+        }
+    }
+
+    property Component fullscreenImageDialog: Dialog {
+        id: fullscreenImageDialog
+        property string url: ""
+        title: url.toString().replace("file://","")
+        contentMinimumWidth: 600
+        contentMinimumHeight: 500
+        content: Image {
+            source: fullscreenImageDialog.url
+            fillMode: Image.Tile
+            asynchronous: true
         }
     }
 }

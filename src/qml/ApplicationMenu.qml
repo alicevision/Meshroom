@@ -59,6 +59,7 @@ Item {
             MenuItem {
                 text: "Edit job settings..."
                 onTriggered: openJobSettings()
+                enabled: currentJob.status == -1
             }
             MenuItem {
                 text: "Open job directory"

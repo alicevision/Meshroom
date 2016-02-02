@@ -13,6 +13,8 @@ Item {
     property variant model: null
     property bool editable: true
 
+    Component.onCompleted: forceActiveFocus()
+
     DropArea {
         anchors.fill: parent
         enabled: root.editable
@@ -101,14 +103,14 @@ Item {
             GridImageView { visualModel: imageModel }
         }
         Tab {
-            title: "List"
-            property string iconSource: "qrc:///images/diaporama.svg"
-            ListImageView { visualModel: imageModel }
-        }
-        Tab {
             title: "Detail"
             property string iconSource: "qrc:///images/list.svg"
             DetailedImageView  { visualModel: imageModel }
+        }
+        Tab {
+            title: "List"
+            property string iconSource: "qrc:///images/diaporama.svg"
+            ListImageView { visualModel: imageModel }
         }
     }
 

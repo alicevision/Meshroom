@@ -12,17 +12,23 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 20
+        spacing: 10
         Button {
             text: "Open new location..."
             iconSource: "qrc:///images/plus.svg"
             onClicked: openProjectDialog()
         }
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 1
+            color: Style.window.color.dark
+        }
         GridView {
             Layout.fillWidth: true
             Layout.fillHeight: true
             model: _applicationModel.projects
-            cellWidth: 150
-            cellHeight: 150
+            cellWidth: 140
+            cellHeight: 140
             clip: true
             delegate: ProjectDelegate {
                 width: GridView.view.cellWidth

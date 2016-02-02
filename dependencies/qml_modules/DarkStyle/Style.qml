@@ -16,7 +16,7 @@ QtObject {
             property color normal: "#DDD";
             property color dark: Qt.darker(normal, 2);
             property color xdark: Qt.darker(normal, 3);
-            property color disabled: "#444";
+            property color disabled: "#666";
             property color selected: "#5BB1F7";
             property color debug: "#444";
             property color info: "#666";

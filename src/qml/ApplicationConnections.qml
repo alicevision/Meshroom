@@ -82,4 +82,9 @@ Connections {
         dialog.onImageSelected.connect(callback);
         dialog.open();
     }
+    onOpenFullscreenImageDialog: {
+        var dialog = _appDialogs.fullscreenImageDialog.createObject(_appWindow);
+        dialog.url = url;
+        dialog.open();
+    }
 }

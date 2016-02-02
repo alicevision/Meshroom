@@ -40,6 +40,7 @@ ApplicationWindow {
     signal refreshJobStatus()
     // other actions
     signal openImageSelectionDialog(var callback)
+    signal openFullscreenImageDialog(string url)
 
     ApplicationSettings { target: _appWindow }
     ApplicationConnections { target: _appWindow }

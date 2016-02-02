@@ -7,5 +7,6 @@ Connections {
         target.height = 500;
         target.visible = true;
         target.color = "#111";
+        target.title = "meshroom";
     }
 }

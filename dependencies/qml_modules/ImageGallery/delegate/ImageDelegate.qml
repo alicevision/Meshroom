@@ -59,6 +59,12 @@ Package {
                     anchors.centerIn: parent
                     running: parent.status === Image.Loading
                 }
+                Rectangle {
+                    anchors.fill: parent
+                    visible: !root.editable
+                    color: "black"
+                    opacity: 0.6
+                }
             }
         }
     }
@@ -90,7 +96,7 @@ Package {
         }
         RowLayout {
             anchors.fill: parent
-            spacing: 0
+            spacing: 10
             Rectangle {
                 Layout.fillHeight: true
                 Layout.preferredWidth: Math.min(parent.height*4/3.0, parent.width*0.4)
@@ -105,10 +111,27 @@ Package {
                         anchors.centerIn: parent
                         running: parent.status === Image.Loading
                     }
+                    Rectangle {
+                        anchors.fill: parent
+                        visible: !root.editable
+                        color: "black"
+                        opacity: 0.6
+                    }
                 }
             }
-            Text {
-                text: model.url.toString().replace("file://", "")
+            ColumnLayout {
+                Text {
+                    text: model.name
+                    font.pixelSize: Style.text.size.small
+                }
+                Text {
+                    text: model.url.toString().replace("file://", "")
+                    font.pixelSize: Style.text.size.small
+                    color: Style.text.color.dark
+                }
+            }
+            Item {
+                Layout.fillWidth: true
             }
         }
     }
@@ -155,7 +178,6 @@ Package {
                 asynchronous: true
                 sourceSize: Qt.size(320, 320)
                 Rectangle {
-                    id: container
                     width: parent.width
                     height: childrenRect.height
                     Behavior on height { NumberAnimation {} }
@@ -171,6 +193,12 @@ Package {
                 BusyIndicator {
                     anchors.centerIn: parent
                     running: parent.status === Image.Loading
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    visible: !root.editable
+                    color: "black"
+                    opacity: 0.6
                 }
             }
         }

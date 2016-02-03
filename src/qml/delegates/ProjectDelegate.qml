@@ -24,6 +24,12 @@ Item {
             Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: width*3/4.0
+                Text {
+                    anchors.centerIn: parent
+                    font.pixelSize: Style.text.size.small
+                    color: Style.text.color.dark
+                    text: "no preview"
+                }
                 Image {
                     anchors.fill: parent
                     anchors.margins: 4

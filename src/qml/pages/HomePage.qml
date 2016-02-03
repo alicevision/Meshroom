@@ -26,9 +26,9 @@ Rectangle {
         GridView {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            model: _applicationModel.projects
+            model: _application.projects
             cellWidth: 140
-            cellHeight: 140
+            cellHeight: 150
             clip: true
             delegate: ProjectDelegate {
                 width: GridView.view.cellWidth
@@ -37,17 +37,17 @@ Rectangle {
         }
         Item { // spacer
             Layout.preferredHeight: 20
-            visible: _applicationModel.featured.count > 0
+            visible: _application.featured.count > 0
         }
         Text {
             text: "Featured projects:"
-            visible: _applicationModel.featured.count > 0
+            visible: _application.featured.count > 0
         }
         ListView {
             Layout.fillWidth: true
             Layout.preferredHeight: parent.height*0.25
             visible: count > 0
-            model: _applicationModel.featured
+            model: _application.featured
             spacing: 1
             clip: true
             delegate: FeaturedProjectDelegate {

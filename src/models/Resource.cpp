@@ -1,6 +1,5 @@
 #include "Resource.hpp"
 #include <QJsonArray>
-#include <QVariant>
 
 namespace meshroom
 {

@@ -10,14 +10,29 @@ Item {
     property variant visualModel: null
     property real thumbnailSize: 130
 
-    GridView {
+    ScrollView {
+        id: scrollview
         anchors.fill: parent
-        anchors.margins: 10
-        cellWidth: root.thumbnailSize
-        cellHeight: root.thumbnailSize
-        model: visualModel.parts.grid
-        clip: true
-        onCurrentIndexChanged: positionViewAtIndex(currentIndex, GridView.Contain)
+        ColumnLayout {
+            width: scrollview.width
+            height: gridview.contentHeight + 20
+            spacing: 0
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: gridview.contentHeight + 20 // + gridview margins
+                GridView {
+                    id: gridview
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    cellWidth: root.thumbnailSize
+                    cellHeight: root.thumbnailSize
+                    model: visualModel.parts.grid
+                    interactive: false
+                    clip: true
+                    onCurrentIndexChanged: positionViewAtIndex(currentIndex, GridView.Contain)
+                }
+            }
+        }
     }
 
     Item {

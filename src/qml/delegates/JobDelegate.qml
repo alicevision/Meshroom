@@ -31,44 +31,18 @@ Item {
             anchors.fill: parent
             anchors.leftMargin: 10
             anchors.rightMargin: 10
-            // Rectangle {
-            //     Layout.fillWidth: false
-            //     Layout.fillHeight: true
-            //     Layout.preferredWidth: childrenRect.width
-            //     color: Style.window.color.xdark
-            //     Text {
-            //         anchors.centerIn: parent
-            //         font.pixelSize: Style.text.size.small
-            //         color: Style.text.color.dark
-            //         visible: model.thumbnail == ""
-            //         text: "N/A"
-            //     }
-            //     Image {
-            //         anchors.verticalCenter: parent.verticalCenter
-            //         source: model.thumbnail
-            //         sourceSize: Qt.size(320, 320)
-            //         width: parent.height
-            //         height: width*3/4.0
-            //         asynchronous: true
-            //         BusyIndicator {
-            //             anchors.centerIn: parent
-            //             running: parent.status === Image.Loading
-            //         }
-            //     }
-            // }
             ColumnLayout {
                 Item { Layout.fillHeight: true } // spacer
                 Text {
                     Layout.fillWidth: true
                     text: model.name
-                    font.pixelSize: Style.text.size.small
+                    font.pixelSize: Style.text.size.normal
                     color: Style.text.color.dark
-                    // color: isSelected ? Style.text.color.selected : Style.text.color.normal
                 }
                 Text {
                     Layout.fillWidth: true
                     text: model.date.toLocaleString()
-                    font.pixelSize: Style.text.size.small
+                    font.pixelSize: Style.text.size.xsmall
                     color: isSelected ? Style.text.color.selected : Style.text.color.normal
                     maximumLineCount: 2
                 }
@@ -106,9 +80,10 @@ Item {
                             case Job.CANCELED:
                             case Job.SYSTEMERROR:
                                 return Style.text.color.critical;
-                            case Job.BLOCKED:
                             case Job.READY:
                             case Job.RUNNING:
+                                return Style.text.color.success;
+                            case Job.BLOCKED:
                             case Job.DONE:
                             case Job.NOTSTARTED:
                             default:

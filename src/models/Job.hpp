@@ -10,7 +10,7 @@
 namespace meshroom
 {
 
-class Project; // forward declaration
+class Project;  // forward declaration
 class JobModel; // forward declaration
 
 class Job : public QObject

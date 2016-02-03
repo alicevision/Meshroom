@@ -149,7 +149,7 @@ void GLView::turnTableRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, flo
     QVector3D y(0, 1, 0);
     y.normalize();
 
-    const float sign = cam.row(1).y() > 0 ? 1.f : -1.f;  
+    const float sign = cam.row(1).y() > 0 ? 1.f : -1.f;
 
     QQuaternion ry(1, -y * dx * 0.005 * sign);
     ry.normalize();

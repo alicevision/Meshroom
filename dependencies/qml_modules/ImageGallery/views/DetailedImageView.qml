@@ -10,14 +10,29 @@ Item {
     property variant visualModel: null
     property real thumbnailSize: 60
 
-    ListView {
+    ScrollView {
+        id: scrollview
         anchors.fill: parent
-        anchors.margins: 12
-        property alias cellHeight: root.thumbnailSize
-        spacing: 1
-        model: visualModel.parts.detail
-        clip: true
-        onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+        ColumnLayout {
+            width: scrollview.width
+            height: listview.contentHeight + 20
+            spacing: 0
+            Item {
+                Layout.fillWidth: true
+                Layout.preferredHeight: listview.contentHeight + 20 // + listview margins
+                ListView {
+                    id: listview
+                    property alias cellHeight: root.thumbnailSize
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    model: visualModel.parts.detail
+                    spacing: 1
+                    interactive: false
+                    clip: true
+                    onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+                }
+            }
+        }
     }
 
     Item {
@@ -42,9 +57,6 @@ Item {
                 value: 60
                 onValueChanged: root.thumbnailSize = value
             }
-            // ToolButton {
-            //     iconSource: "qrc:///images/disk.svg"
-            // }
         }
     }
 }

@@ -63,7 +63,7 @@ Rectangle {
                 onClicked: toggle()
             }
             ToolButton {
-                iconSource: "qrc:///images/disk.svg"
+                iconSource: "qrc:///images/trash.svg"
                 onClicked: logmodel.clear()
             }
         }

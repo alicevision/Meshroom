@@ -1,11 +1,10 @@
+#include "Application.hpp"
 #include "gl/GLView.hpp"
-#include "models/ApplicationModel.hpp"
 #include "models/Job.hpp"
 #include "models/Project.hpp"
 #include <QtWidgets/QApplication>
 #include <QSurfaceFormat>
 #include <QtQml>
-
 
 int main(int argc, char* argv[])
 {
@@ -30,7 +29,7 @@ int main(int argc, char* argv[])
     // start the main application
     QQmlApplicationEngine engine;
     engine.addImportPath(qApp->applicationDirPath() + "/qml_modules");
-    ApplicationModel application(engine);
+    Application application(engine);
 
     return qapp.exec();
 }

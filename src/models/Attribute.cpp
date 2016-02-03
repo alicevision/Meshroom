@@ -1,7 +1,6 @@
 #include "Attribute.hpp"
 #include <QJsonObject>
 #include <QJSValue>
-#include <QUrl>
 
 namespace meshroom
 {

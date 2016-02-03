@@ -1,5 +1,4 @@
 #include "Job.hpp"
-#include "JobModel.hpp"
 #include "Project.hpp"
 #include <QCoreApplication>
 #include <QJsonDocument>
@@ -10,7 +9,6 @@
 #include <QDebug>
 #include <cstdlib> // std::getenv
 #include <cassert>
-#include <iostream>
 
 #define LOGID (QString("[job:%1]").arg(_name)).toStdString().c_str()
 
@@ -73,7 +71,8 @@ Job::Job(Project* project)
     // compute job url
     if(!project)
         return;
-    _url = QUrl::fromLocalFile(project->url().toLocalFile()+"/reconstructions/"+_date.toString("yyyyMMdd_HHmmss"));
+    _url = QUrl::fromLocalFile(project->url().toLocalFile() + "/reconstructions/" +
+                               _date.toString("yyyyMMdd_HHmmss"));
     // create the default graph
     createDefaultGraph();
     // activate auto-save
@@ -176,9 +175,8 @@ void Job::autoSaveOn()
     {
         QModelIndex id = _steps->index(i, 0);
         Step* step = _steps->data(id, StepModel::ModelDataRole).value<Step*>();
-        connect(step->attributes(),
-                         SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this,
-                         SLOT(save()));
+        connect(step->attributes(), SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
+                this, SLOT(save()));
     }
 }
 
@@ -191,9 +189,8 @@ void Job::autoSaveOff()
     {
         QModelIndex id = _steps->index(i, 0);
         Step* step = _steps->data(id, StepModel::ModelDataRole).value<Step*>();
-        disconnect(step->attributes(),
-                            SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this,
-                            SLOT(save()));
+        disconnect(step->attributes(), SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
+                   this, SLOT(save()));
     }
 }
 
@@ -453,7 +450,7 @@ void Job::serializeToJSON(QJsonObject* obj) const
 
 void Job::deserializeFromJSON(const QJsonObject& obj
 
-)
+                              )
 {
     autoSaveOff();
     // read global job settings

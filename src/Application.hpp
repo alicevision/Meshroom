@@ -1,21 +1,21 @@
 #pragma once
 
 #include <QQmlApplicationEngine>
-#include "ProjectModel.hpp"
-#include "ResourceModel.hpp"
+#include "models/ProjectModel.hpp"
+#include "models/ResourceModel.hpp"
 
 namespace meshroom
 {
 
-class ApplicationModel : public QObject
+class Application : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(ProjectModel* projects READ projects NOTIFY projectsChanged)
     Q_PROPERTY(ResourceModel* featured READ featured NOTIFY featuredChanged)
 
 public:
-    ApplicationModel(QQmlApplicationEngine& engine);
-    ~ApplicationModel() = default;
+    Application(QQmlApplicationEngine& engine);
+    ~Application() = default;
 
 public slots:
     ProjectModel* projects() const { return _projects; }

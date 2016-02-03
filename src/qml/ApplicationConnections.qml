@@ -6,32 +6,32 @@ Connections {
 
     // project actions
     onSelectProject: {
-        currentProject = _applicationModel.projects.get(id).modelData;
+        currentProject = _application.projects.get(id).modelData;
         selectJob(0);
-        _stack.push({ item: _stack.mainPage, replace:(_stack.depth>1) });
+        _applicationStack.push({ item: _applicationStack.mainPage, replace:(_applicationStack.depth>1) });
     }
     onCloseCurrentProject: {
-        _stack.pop();
+        _applicationStack.pop();
         currentProject = defaultProject;
         currentJob = defaultJob;
     }
     onOpenProjectDialog: {
-        var dialog = _appDialogs.openProject.createObject(_appWindow);
+        var dialog = _applicationDialogs.openProject.createObject(_applicationWindow);
         dialog.open();
     }
     onOpenProjectDirectory: {
         Qt.openUrlExternally(currentProject.url);
     }
     onOpenProjectSettings: {
-        var dialog = _appDialogs.projectSettingsDialog.createObject(_appWindow);
+        var dialog = _applicationDialogs.projectSettingsDialog.createObject(_applicationWindow);
         dialog.open();
     }
     onAddProject: {
-        _applicationModel.projects.addProject(url);
-        selectProject(_applicationModel.projects.count-1);
+        _application.projects.addProject(url);
+        selectProject(_application.projects.count-1);
     }
     onRemoveProject: {
-        _applicationModel.projects.removeProject(_applicationModel.projects.get(id).modelData);
+        _application.projects.removeProject(_application.projects.get(id).modelData);
     }
 
     // job actions
@@ -48,7 +48,7 @@ Connections {
     }
     onRemoveJob: {
         if(currentJob.isStoredOnDisk()) {
-            var dialog = _appDialogs.jobDeletionDialog.createObject(_appWindow);
+            var dialog = _applicationDialogs.jobDeletionDialog.createObject(_applicationWindow);
             dialog.open();
             return;
         }
@@ -59,7 +59,7 @@ Connections {
         selectJob(currentProject.jobs.count-1);
     }
     onOpenJobSubmissionDialog: {
-        var dialog = _appDialogs.jobSubmissionDialog.createObject(_appWindow);
+        var dialog = _applicationDialogs.jobSubmissionDialog.createObject(_applicationWindow);
         dialog.open();
     }
     onSubmitJob: {
@@ -69,7 +69,7 @@ Connections {
         Qt.openUrlExternally(currentJob.url);
     }
     onOpenJobSettings: {
-        var dialog = _appDialogs.jobSettingsDialog.createObject(_appWindow);
+        var dialog = _applicationDialogs.jobSettingsDialog.createObject(_applicationWindow);
         dialog.open();
     }
     onRefreshJobStatus: {
@@ -78,12 +78,12 @@ Connections {
 
     // other actions
     onOpenImageSelectionDialog: {
-        var dialog = _appDialogs.imageSelectionDialog.createObject(_appWindow);
+        var dialog = _applicationDialogs.imageSelectionDialog.createObject(_applicationWindow);
         dialog.onImageSelected.connect(callback);
         dialog.open();
     }
     onOpenFullscreenImageDialog: {
-        var dialog = _appDialogs.fullscreenImageDialog.createObject(_appWindow);
+        var dialog = _applicationDialogs.fullscreenImageDialog.createObject(_applicationWindow);
         dialog.url = url;
         dialog.open();
     }

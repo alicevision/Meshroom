@@ -1,26 +1,31 @@
 import QtQuick 2.5
-import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
-import QtQml.Models 2.2
-import Logger 1.0
-import "pages"
-
 import Meshroom.Job 0.1
 import Meshroom.Project 0.1
+import Logger 1.0
+import "pages"
 
 
 ApplicationWindow {
 
-    id: _appWindow
+    id: _applicationWindow
 
+    // parameters
+    width: 800
+    height: 500
+    visible: true
+    color: "#111"
+    title: "meshroom"
+
+    // properties
     property variant defaultProject: Project {}
     property variant defaultJob: Job {}
     property variant currentProject: defaultProject
     property variant currentJob: defaultJob
 
-    // project actions
+    // actions
     signal selectProject(int id)
     signal closeCurrentProject()
     signal openProjectDialog()
@@ -28,7 +33,6 @@ ApplicationWindow {
     signal openProjectSettings()
     signal addProject(string url)
     signal removeProject(int id)
-    // job actions
     signal selectJob(int id)
     signal addJob()
     signal duplicateJob()
@@ -38,20 +42,22 @@ ApplicationWindow {
     signal openJobDirectory()
     signal openJobSettings()
     signal refreshJobStatus()
-    // other actions
     signal openImageSelectionDialog(var callback)
     signal openFullscreenImageDialog(string url)
 
-    ApplicationSettings { target: _appWindow }
-    ApplicationConnections { target: _appWindow }
-    ApplicationMenu {}
-    ApplicationDialogs { id: _appDialogs }
+    // connections
+    ApplicationConnections { target: _applicationWindow }
 
+    // menus & dialogs
+    ApplicationMenu {}
+    ApplicationDialogs { id: _applicationDialogs }
+
+    // main content
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
         StackView {
-            id: _stack
+            id: _applicationStack
             Layout.fillWidth: true
             Layout.fillHeight: true
             property Component homePage: HomePage {}

@@ -1,4 +1,4 @@
-#include "ApplicationModel.hpp"
+#include "Application.hpp"
 #include "io/SettingsIO.hpp"
 #include <QCoreApplication>
 #include <QtQml/QQmlContext>
@@ -6,7 +6,7 @@
 namespace meshroom
 {
 
-ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
+Application::Application(QQmlApplicationEngine& engine)
     : QObject(nullptr)
     , _projects(new ProjectModel(this))
     , _featured(new ResourceModel(this))
@@ -17,7 +17,7 @@ ApplicationModel::ApplicationModel(QQmlApplicationEngine& engine)
 
     // expose this object to QML & load the main QML file
     if(engine.rootContext())
-        engine.rootContext()->setContextProperty("_applicationModel", this);
+        engine.rootContext()->setContextProperty("_application", this);
 
     engine.load(QCoreApplication::applicationDirPath() + "/qml/main.qml");
 }

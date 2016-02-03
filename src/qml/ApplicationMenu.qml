@@ -5,13 +5,13 @@ import DarkStyle 1.0
 
 Item {
 
+    Component.onCompleted: _applicationWindow.menuBar = mainMenu
+
     function truncateText(txt) {
         if(txt.length > 15)
             txt = txt.substring(0, 13) + "...";
         return txt;
     }
-
-    Component.onCompleted: _appWindow.menuBar = mainMenu
 
     MenuBar {
         id: mainMenu
@@ -84,8 +84,9 @@ Item {
         }
     }
 
+    // instantiators
     Instantiator {
-        model: _applicationModel.projects
+        model: _application.projects
         MenuItem {
             text: model.url.toString().replace("file://", "")
             onTriggered: selectProject(index)
@@ -93,9 +94,8 @@ Item {
         onObjectAdded: recentProjectMenu.insertItem(index, object)
         onObjectRemoved: recentProjectMenu.removeItem(object)
     }
-
     Instantiator {
-        model: _applicationModel.featured
+        model: _application.featured
         MenuItem {
             text: model.url.toString().replace("file://", "")
             onTriggered: addProject(model.url)

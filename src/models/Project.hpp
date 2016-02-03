@@ -25,6 +25,7 @@ public:
     JobModel* jobs() const { return _jobs; }
     QSortFilterProxyModel* proxy() const { return _proxy; }
     void setName(const QString& name);
+    void setModelIndex(const QModelIndex& id);
 
 public slots:
     bool load();
@@ -38,12 +39,14 @@ private:
 
 signals:
     void nameChanged();
+    void dataChanged(const QModelIndex&, const QModelIndex&);
 
 private:
     QUrl _url;
     QString _name;
     JobModel* _jobs;
     QSortFilterProxyModel* _proxy;
+    QPersistentModelIndex _modelIndex;
 };
 
 } // namespace

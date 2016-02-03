@@ -74,11 +74,16 @@ void ProjectModel::addProject(Project* project)
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(project, QQmlEngine::CppOwnership);
     project->setParent(this);
+    connect(project, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
+            this, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)));
 
     _projects << project;
     endInsertRows();
-    emit countChanged(rowCount());
 
+    QModelIndex id = index(rowCount() - 1, 0);
+    project->setModelIndex(id);
+
+    emit countChanged(rowCount());
     SettingsIO::saveRecentProjects(this);
 }
 

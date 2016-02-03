@@ -13,8 +13,6 @@ Item {
     property variant model: null
     property bool editable: true
 
-    Component.onCompleted: forceActiveFocus()
-
     DropArea {
         anchors.fill: parent
         enabled: root.editable

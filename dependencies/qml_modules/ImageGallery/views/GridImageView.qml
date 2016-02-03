@@ -17,7 +17,6 @@ Item {
         cellHeight: root.thumbnailSize
         model: visualModel.parts.grid
         clip: true
-        Component.onCompleted: forceActiveFocus()
         onCurrentIndexChanged: positionViewAtIndex(currentIndex, GridView.Contain)
     }
 

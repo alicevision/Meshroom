@@ -17,7 +17,6 @@ Item {
         spacing: 1
         model: visualModel.parts.detail
         clip: true
-        Component.onCompleted: forceActiveFocus()
         onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
     }
 

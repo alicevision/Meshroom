@@ -23,6 +23,14 @@ Package {
         onRefreshSelectionFlags: root.selected = _selector.isSelected(index)
     }
 
+    function handleKeyEvent(event) {
+        if(!root.editable)
+            return;
+        if (event.key == Qt.Key_Backspace || event.key == Qt.Key_Delete) {
+            removeSelected();
+            event.accepted = true;
+        }
+    }
     function handleMouseEvent(mouse) {
         if(mouse.button == Qt.LeftButton) {
             if(mouse.modifiers & Qt.ShiftModifier) {
@@ -70,25 +78,30 @@ Package {
     }
 
     Item {
+        id: detailedDelegate
         Package.name: 'detail'
         width: ListView.view ? ListView.view.width : 0
         height: ListView.view ? ListView.view.cellHeight : 0
         clip: true
+        Keys.onPressed: handleKeyEvent(event)
         MouseArea {
-            id: detailMouseArea
+            id: detailedMouseArea
             anchors.fill: parent
             anchors.margins: 2
             cursorShape: Qt.PointingHandCursor
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: handleMouseEvent(mouse)
+            onClicked: {
+                detailedDelegate.forceActiveFocus();
+                handleMouseEvent(mouse);
+            }
         }
         Rectangle {
             anchors.fill: parent
             color: {
                 if(root.selected)
                     return Style.window.color.selected;
-                if(detailMouseArea.containsMouse)
+                if(detailedMouseArea.containsMouse)
                     return Style.window.color.xlight;
                 return Style.window.color.dark;
             }
@@ -137,18 +150,12 @@ Package {
     }
 
     Item {
+        id: gridDelegate
         Package.name: 'grid'
         width: GridView.view.cellWidth
         height: GridView.view.cellHeight
         clip: true
-        Keys.onPressed: {
-            if(!root.editable)
-                return;
-            if (event.key == Qt.Key_Backspace || event.key == Qt.Key_Delete) {
-                removeSelected();
-                event.accepted = true;
-            }
-        }
+        Keys.onPressed: handleKeyEvent(event)
         MouseArea {
             id: gridMouseArea
             anchors.fill: parent
@@ -156,7 +163,10 @@ Package {
             cursorShape: Qt.PointingHandCursor
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onClicked: handleMouseEvent(mouse)
+            onClicked: {
+                gridDelegate.forceActiveFocus();
+                handleMouseEvent(mouse);
+            }
             Rectangle {
                 color: {
                     if(root.selected)

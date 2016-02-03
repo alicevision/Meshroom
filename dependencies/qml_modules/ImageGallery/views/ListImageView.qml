@@ -17,7 +17,6 @@ Item {
         orientation: Qt.Horizontal
         highlightRangeMode: ListView.StrictlyEnforceRange
         clip: true
-        Component.onCompleted: forceActiveFocus()
         onCurrentIndexChanged: {
             if(!moving)
                 positionViewAtIndex(currentIndex, ListView.Contain);

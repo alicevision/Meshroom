@@ -132,8 +132,8 @@ void GLView::trackBallRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, flo
     QVector3D y(cam.row(1).x(), cam.row(1).y(), cam.row(1).z());
     y.normalize();
 
-    QQuaternion ry(1, y * dx * 0.01);
-    QQuaternion rx(1, -x * dy * 0.01);
+    QQuaternion ry(1, y * dx * 0.005);
+    QQuaternion rx(1, -x * dy * 0.005);
     rx.normalize();
     ry.normalize();
     cam.translate(lookAt);
@@ -149,9 +149,11 @@ void GLView::turnTableRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, flo
     QVector3D y(0, 1, 0);
     y.normalize();
 
-    QQuaternion ry(1, -y * dx * 0.01);
+    const float sign = cam.row(1).y() > 0 ? 1.f : -1.f;  
+
+    QQuaternion ry(1, -y * dx * 0.005 * sign);
     ry.normalize();
-    QQuaternion rx(1, -x * dy * 0.01);
+    QQuaternion rx(1, -x * dy * 0.005);
     rx.normalize();
 
     cam.translate(lookAt);
@@ -182,14 +184,12 @@ void GLView::translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx
 
 void GLView::wheelEvent(QWheelEvent* event)
 {
-    const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
-    const float dy = _mousePos.y() - event->pos().y(); // or unproject ?
     const int numDegrees = event->delta() / 8;
     const int numSteps = numDegrees / 15;
     const float delta = numSteps * 100;
 
     float radius = _camera.lookAtRadius();
-    translateLineOfSightCamera(_camMatTmp, radius, delta, 0);
+    translateLineOfSightCamera(_camMatTmp, radius, -delta, 0);
 
     _camera.setLookAtRadius(radius);
     _camera.setViewMatrix(_camMatTmp);

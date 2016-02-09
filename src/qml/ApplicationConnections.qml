@@ -39,7 +39,7 @@ Connections {
         currentJob = currentProject.jobs.get(id).modelData;
     }
     onAddJob: {
-        currentProject.jobs.addJob(currentProject.url);
+        currentProject.jobs.addJob();
         selectJob(currentProject.jobs.count-1);
     }
     onDuplicateJob: {

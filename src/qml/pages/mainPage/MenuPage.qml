@@ -39,7 +39,7 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 50
                     hoverEnabled: true
-                    onClicked: duplicateJob()
+                    onClicked: addJob()
                     Rectangle {
                         anchors.fill: parent
                         anchors.topMargin: 1

@@ -68,6 +68,10 @@ Item {
             }
             MenuSeparator {}
             MenuItem {
+                text: "New"
+                onTriggered: addJob()
+            }
+            MenuItem {
                 text: "Duplicate"
                 onTriggered: duplicateJob()
             }

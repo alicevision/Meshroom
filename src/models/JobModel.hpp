@@ -31,9 +31,10 @@ public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role) override;
+    void addJob(Job* job);
 
 public slots:
-    void addJob(Job* job);
+    void addJob();
     void duplicateJob(Job* job);
     void removeJob(Job* job);
     QVariantMap get(int row) const;

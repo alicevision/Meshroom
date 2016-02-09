@@ -1,5 +1,7 @@
 #include "JobModel.hpp"
+#include "Project.hpp"
 #include <QQmlEngine>
+#include <cassert>
 
 namespace meshroom
 {
@@ -110,9 +112,19 @@ void JobModel::addJob(Job* job)
     emit countChanged(rowCount());
 }
 
+void JobModel::addJob()
+{
+    Project* project = qobject_cast<Project*>(parent());
+    assert(project);
+    Job* job = new Job(project);
+    addJob(job);
+}
+
 void JobModel::duplicateJob(Job* ref)
 {
-    Job* job = new Job(ref->project());
+    Project* project = qobject_cast<Project*>(parent());
+    assert(project);
+    Job* job = new Job(project);
     job->load(*ref);
     addJob(job);
 }

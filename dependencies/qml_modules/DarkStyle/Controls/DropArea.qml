@@ -7,6 +7,7 @@ DropArea {
 
     id: root
     property bool hideBackground: false
+    property string title: ""
     signal filesDropped(variant files)
 
     onEntered: background.color = Style.window.color.selected
@@ -26,6 +27,12 @@ DropArea {
             source: "qrc:///images/stripes.png"
             fillMode: Image.Tile
             opacity: 0.3
+        }
+        Text {
+            anchors.centerIn: parent
+            text: root.title
+            font.pixelSize: Style.text.size.large
+            color: Style.text.color.dark
         }
     }
 }

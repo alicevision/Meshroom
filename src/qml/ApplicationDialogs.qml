@@ -262,16 +262,13 @@ Item {
         }
     }
 
-    property Component fullscreenImageDialog: Dialog {
-        id: fullscreenImageDialog
-        property string url: ""
-        title: url.toString().replace("file://","")
-        contentMinimumWidth: 600
-        contentMinimumHeight: 500
-        content: Image {
-            source: fullscreenImageDialog.url
-            fillMode: Image.Tile
-            asynchronous: true
-        }
+    property Component importImageDialog: FileDialog {
+        title: "Please choose one or more images"
+        folder: "/"
+        selectFolder: false
+        selectMultiple: true
+        sidebarVisible: false
+        nameFilters: [ "Image files (*.jpg *.jpeg)" ]
+        onAccepted: importJobImages(fileUrls)
     }
 }

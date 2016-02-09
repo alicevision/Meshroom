@@ -43,7 +43,7 @@ Item {
             MenuSeparator {}
             MenuItem {
                 text: "Close"
-                onTriggered: closeCurrentProject()
+                onTriggered: closeProject()
                 enabled: currentProject != defaultProject
             }
         }
@@ -62,6 +62,12 @@ Item {
             }
             MenuSeparator {}
             MenuItem {
+                text: "Import images..."
+                onTriggered: openImportImageDialog()
+                enabled: (currentJob != defaultJob) ? currentJob.status == -1 : false
+            }
+            MenuSeparator {}
+            MenuItem {
                 text: "Duplicate"
                 onTriggered: duplicateJob()
             }
@@ -73,7 +79,7 @@ Item {
             MenuItem {
                 text: "Submit..."
                 onTriggered: openJobSubmissionDialog()
-                enabled: (currentJob != defaultJob) ? currentJob.status < 0 : false
+                enabled: (currentJob != defaultJob) ? currentJob.status == -1 : false
             }
         }
     }

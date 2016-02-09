@@ -10,14 +10,17 @@ Connections {
         selectJob(0);
         _applicationStack.push({ item: _applicationStack.mainPage, replace:(_applicationStack.depth>1) });
     }
-    onCloseCurrentProject: {
+    onAddProject: {
+        _application.projects.addProject(url);
+        selectProject(_application.projects.count-1);
+    }
+    onRemoveProject: {
+        _application.projects.removeProject(_application.projects.get(id).modelData);
+    }
+    onCloseProject: {
         _applicationStack.pop();
         currentProject = defaultProject;
         currentJob = defaultJob;
-    }
-    onOpenProjectDialog: {
-        var dialog = _applicationDialogs.openProject.createObject(_applicationWindow);
-        dialog.open();
     }
     onOpenProjectDirectory: {
         Qt.openUrlExternally(currentProject.url);
@@ -26,12 +29,9 @@ Connections {
         var dialog = _applicationDialogs.projectSettingsDialog.createObject(_applicationWindow);
         dialog.open();
     }
-    onAddProject: {
-        _application.projects.addProject(url);
-        selectProject(_application.projects.count-1);
-    }
-    onRemoveProject: {
-        _application.projects.removeProject(_application.projects.get(id).modelData);
+    onOpenProjectDialog: {
+        var dialog = _applicationDialogs.openProject.createObject(_applicationWindow);
+        dialog.open();
     }
 
     // job actions
@@ -58,12 +58,15 @@ Connections {
         currentProject.jobs.removeJob(jobToDelete);
         selectJob(currentProject.jobs.count-1);
     }
-    onOpenJobSubmissionDialog: {
-        var dialog = _applicationDialogs.jobSubmissionDialog.createObject(_applicationWindow);
-        dialog.open();
-    }
     onSubmitJob: {
         currentJob.start(locally);
+    }
+    onRefreshJob: {
+        currentJob.refresh();
+    }
+    onImportJobImages: {
+        for(var i=0; i<files.length; ++i)
+        currentJob.images.addResource(files[i]);
     }
     onOpenJobDirectory: {
         Qt.openUrlExternally(currentJob.url);
@@ -72,8 +75,9 @@ Connections {
         var dialog = _applicationDialogs.jobSettingsDialog.createObject(_applicationWindow);
         dialog.open();
     }
-    onRefreshJobStatus: {
-        currentJob.refresh();
+    onOpenJobSubmissionDialog: {
+        var dialog = _applicationDialogs.jobSubmissionDialog.createObject(_applicationWindow);
+        dialog.open();
     }
 
     // other actions
@@ -82,9 +86,8 @@ Connections {
         dialog.onImageSelected.connect(callback);
         dialog.open();
     }
-    onOpenFullscreenImageDialog: {
-        var dialog = _applicationDialogs.fullscreenImageDialog.createObject(_applicationWindow);
-        dialog.url = url;
+    onOpenImportImageDialog: {
+        var dialog = _applicationDialogs.importImageDialog.createObject(_applicationWindow);
         dialog.open();
     }
 }

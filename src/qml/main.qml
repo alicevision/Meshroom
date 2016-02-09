@@ -27,23 +27,24 @@ ApplicationWindow {
 
     // actions
     signal selectProject(int id)
-    signal closeCurrentProject()
-    signal openProjectDialog()
-    signal openProjectDirectory()
-    signal openProjectSettings()
     signal addProject(string url)
     signal removeProject(int id)
+    signal closeProject()
+    signal openProjectDirectory()
+    signal openProjectSettings()
+    signal openProjectDialog()
     signal selectJob(int id)
     signal addJob()
     signal duplicateJob()
     signal removeJob()
-    signal openJobSubmissionDialog()
     signal submitJob(bool locally)
+    signal refreshJob()
+    signal importJobImages(var files)
     signal openJobDirectory()
     signal openJobSettings()
-    signal refreshJobStatus()
+    signal openJobSubmissionDialog()
     signal openImageSelectionDialog(var callback)
-    signal openFullscreenImageDialog(string url)
+    signal openImportImageDialog()
 
     // connections
     ApplicationConnections { target: _applicationWindow }

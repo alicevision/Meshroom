@@ -12,8 +12,10 @@ Item {
     id: root
     property variant model: null
     property bool editable: true
+    property alias title: dropArea.title
 
     DropArea {
+        id: dropArea
         anchors.fill: parent
         enabled: root.editable
         onFilesDropped: {

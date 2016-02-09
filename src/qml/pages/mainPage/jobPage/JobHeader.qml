@@ -15,7 +15,7 @@ Rectangle {
         ToolButton {
             iconSource: "qrc:///images/home.svg"
             text: "home"
-            onClicked: closeCurrentProject()
+            onClicked: closeProject()
         }
         ToolButton {
             iconSource: "qrc:///images/arrow.svg"
@@ -68,7 +68,7 @@ Rectangle {
             visible: currentJob.status >= 0
             iconSource: "qrc:///images/refresh.svg"
             text: "refresh"
-            onClicked: refreshJobStatus()
+            onClicked: refreshJob()
         }
     }
 

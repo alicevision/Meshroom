@@ -7,12 +7,6 @@ Item {
 
     Component.onCompleted: _applicationWindow.menuBar = mainMenu
 
-    function truncateText(txt) {
-        if(txt.length > 15)
-            txt = txt.substring(0, 13) + "...";
-        return txt;
-    }
-
     MenuBar {
         id: mainMenu
         Menu {
@@ -55,7 +49,7 @@ Item {
         }
         Menu {
             visible: currentProject != defaultProject
-            title: "Job: "+truncateText(currentJob.name)
+            title: "Job"
             MenuItem {
                 text: "Edit job settings..."
                 onTriggered: openJobSettings()

@@ -47,7 +47,21 @@ Item {
                     maximumLineCount: 2
                 }
                 RowLayout {
-                    Item { Layout.fillWidth: true } // spacer
+                    RowLayout {
+                        spacing: 2
+                        Image {
+                            source: "qrc:///images/image.svg"
+                            sourceSize.width: 20
+                            sourceSize.height: 20
+                            opacity: 0.4
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: model.images.count
+                            font.pixelSize: Style.text.size.xsmall
+                            color: Style.text.color.dark
+                        }
+                    }
                     Text {
                         text: {
                             switch(model.status) {

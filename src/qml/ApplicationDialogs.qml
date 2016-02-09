@@ -143,13 +143,13 @@ Item {
                     RadioButton {
                         Layout.fillWidth: true
                         text: "Local"
-                        checked: true
                         exclusiveGroup: radioGroup
                     }
                     RadioButton {
                         Layout.fillWidth: true
                         text: "Farm"
                         exclusiveGroup: radioGroup
+                        checked: true
                     }
                 }
                 Text {

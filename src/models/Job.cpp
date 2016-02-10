@@ -212,7 +212,13 @@ bool Job::start(bool local)
         startCommand = QCoreApplication::applicationDirPath() + "/scripts/job_start.py";
     // and add command arguments
     QStringList arguments;
-    local ? arguments.append("--engine=local") : arguments.append("--engine=tractor");
+    if(local)
+    {
+        arguments.append("--engine=local");
+        arguments.append("--console");
+    }
+    else
+        arguments.append("--engine=tractor");
     arguments.append(_url.toLocalFile() + "/job.json");
     // run the process
     QProcess process;
@@ -270,11 +276,11 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
 {
     QProcess* process = qobject_cast<QProcess*>(QObject::sender());
     assert(process);
+
     // check exit status
     if(exitStatus != QProcess::NormalExit)
     {
         QString response(process->readAllStandardError());
-        qCritical() << response;
         setStatus(SYSTEMERROR);
         return;
     }
@@ -359,8 +365,7 @@ bool Job::isPairValid()
     assert(attribute);
     QVariantList pair = attribute->value().toList();
     return (pair[0].toString().isEmpty() && pair[1].toString().isEmpty()) ||
-            (isRegisteredImage(*this, pair[0].toUrl()) &&
-             isRegisteredImage(*this, pair[1].toUrl()));
+           (isRegisteredImage(*this, pair[0].toUrl()) && isRegisteredImage(*this, pair[1].toUrl()));
 }
 
 void Job::createDefaultGraph()

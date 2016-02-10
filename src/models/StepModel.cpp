@@ -57,6 +57,18 @@ QVariant StepModel::data(const QModelIndex& index, int role) const
     }
 }
 
+Step* StepModel::get(const QString& name)
+{
+    QListIterator<Step*> it(_steps);
+    while(it.hasNext())
+    {
+        Step* s = it.next();
+        if(s->name() == name)
+            return s;
+    }
+    return nullptr;
+}
+
 QHash<int, QByteArray> StepModel::roleNames() const
 {
     QHash<int, QByteArray> roles;

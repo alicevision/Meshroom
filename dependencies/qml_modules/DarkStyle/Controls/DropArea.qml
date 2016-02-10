@@ -13,7 +13,7 @@ DropArea {
     onEntered: background.color = Style.window.color.selected
     onExited: background.color = "transparent"
     onDropped: {
-        background.color = Style.window.color.dark;
+        background.color = "transparent";
         (!drag.source) ? filesDropped(drop.urls) : filesDropped([drop.source.url]);
     }
     Rectangle {

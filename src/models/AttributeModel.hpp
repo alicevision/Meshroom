@@ -31,6 +31,7 @@ public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role) override;
+    Attribute* get(const QString& key);
 
 public slots:
     void addAttribute(Attribute* attribute);

@@ -18,32 +18,6 @@ namespace meshroom
 namespace // empty namespace
 {
 
-Attribute* getAttribute(const Job& job, const QString& stepName, const QString& attrKey,
-                        QModelIndex& outIndex, Step** outStep)
-{
-    if(!job.steps())
-        return nullptr;
-    for(size_t i = 0; i < job.steps()->rowCount(); i++)
-    {
-        QModelIndex id = job.steps()->index(i, 0);
-        Step* step = job.steps()->data(id, StepModel::ModelDataRole).value<Step*>();
-        if(step && step->name() != stepName)
-            continue;
-        for(size_t i = 0; i < step->attributes()->rowCount(); i++)
-        {
-            QModelIndex id = step->attributes()->index(i, 0);
-            Attribute* att =
-                step->attributes()->data(id, AttributeModel::ModelDataRole).value<Attribute*>();
-            if(att && att->key() != attrKey)
-                continue;
-            outIndex = id;
-            *outStep = step;
-            return att;
-        }
-    }
-    return nullptr;
-}
-
 bool isRegisteredImage(const Job& job, const QUrl& url)
 {
     ResourceModel* images = job.images();
@@ -346,41 +320,47 @@ bool Job::isStartable()
         qCritical() << LOGID << "insufficient number of sources";
         return false;
     }
+    if(!isPairValid())
+    {
+        qCritical() << LOGID << "invalid initial pair";
+        return false;
+    }
     return true;
 }
 
 bool Job::isPairA(const QUrl& url)
 {
-    QModelIndex id;
-    Step* step = nullptr;
-    Attribute* initialPairAttribute = getAttribute(*this, "sfm", "initial_pair", id, &step);
-    if(!step || !initialPairAttribute)
-        return false;
-    QVariantList pair = initialPairAttribute->value().toList();
+    Step* step = _steps->get("sfm");
+    assert(step);
+    assert(step->attributes());
+    Attribute* attribute = step->attributes()->get("initial_pair");
+    assert(attribute);
+    QVariantList pair = attribute->value().toList();
     return (pair.count() > 0 && pair[0] == url.toLocalFile());
 }
 
 bool Job::isPairB(const QUrl& url)
 {
-    QModelIndex id;
-    Step* step = nullptr;
-    Attribute* initialPairAttribute = getAttribute(*this, "sfm", "initial_pair", id, &step);
-    if(!step || !initialPairAttribute)
-        return false;
-    QVariantList pair = initialPairAttribute->value().toList();
+    Step* step = _steps->get("sfm");
+    assert(step);
+    assert(step->attributes());
+    Attribute* attribute = step->attributes()->get("initial_pair");
+    assert(attribute);
+    QVariantList pair = attribute->value().toList();
     return (pair.count() > 1 && pair[1] == url.toLocalFile());
 }
 
 bool Job::isPairValid()
 {
-    QModelIndex id;
-    Step* step = nullptr;
-    Attribute* initialPairAttribute = getAttribute(*this, "sfm", "initial_pair", id, &step);
-    if(!step || !initialPairAttribute)
-        return false;
-    QVariantList pair = initialPairAttribute->value().toList();
-    return (pair.count() > 1 && QUrl::fromLocalFile(pair[0].toString()).isValid() &&
-            QUrl::fromLocalFile(pair[1].toString()).isValid());
+    Step* step = _steps->get("sfm");
+    assert(step);
+    assert(step->attributes());
+    Attribute* attribute = step->attributes()->get("initial_pair");
+    assert(attribute);
+    QVariantList pair = attribute->value().toList();
+    return (pair[0].toString().isEmpty() && pair[1].toString().isEmpty()) ||
+            (isRegisteredImage(*this, pair[0].toUrl()) &&
+             isRegisteredImage(*this, pair[1].toUrl()));
 }
 
 void Job::createDefaultGraph()

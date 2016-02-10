@@ -68,6 +68,18 @@ bool AttributeModel::setData(const QModelIndex& index, const QVariant& value, in
     return true;
 }
 
+Attribute* AttributeModel::get(const QString& key)
+{
+    QListIterator<Attribute*> it(_attributes);
+    while(it.hasNext())
+    {
+        Attribute* a = it.next();
+        if(a->key() == key)
+            return a;
+    }
+    return nullptr;
+}
+
 QHash<int, QByteArray> AttributeModel::roleNames() const
 {
     QHash<int, QByteArray> roles;

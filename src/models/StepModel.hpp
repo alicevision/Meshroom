@@ -25,6 +25,7 @@ public:
     void addStep(Step* step);
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    Step* get(const QString& name);
 
 public slots:
     QVariantMap get(int row) const;

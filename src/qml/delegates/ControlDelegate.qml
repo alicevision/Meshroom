@@ -49,10 +49,13 @@ Item {
         RowLayout {
             width: parent.width
             height: childrenRect.height
-            Rectangle {
+            DropArea {
                 Layout.preferredHeight: 80
                 Layout.preferredWidth: 80*4/3.0
-                color: "black"
+                onFilesDropped: {
+                    if(files.length>0)
+                        setPairA(files[0])
+                }
                 Image {
                     anchors.fill: parent
                     source: modelData.value[0]
@@ -64,6 +67,7 @@ Item {
                         text: "select"
                         iconSource: "qrc:///images/plus.svg"
                         onClicked: openImageSelectionDialog(setPairA)
+                        visible: enabled
                     }
                     BusyIndicator {
                         anchors.centerIn: parent
@@ -71,10 +75,13 @@ Item {
                     }
                 }
             }
-            Rectangle {
+            DropArea {
                 Layout.preferredHeight: 80
                 Layout.preferredWidth: 80*4/3.0
-                color: "black"
+                onFilesDropped: {
+                    if(files.length>0)
+                        setPairB(files[0])
+                }
                 Image {
                     anchors.fill: parent
                     source: modelData.value[1]
@@ -86,6 +93,7 @@ Item {
                         text: "select"
                         iconSource: "qrc:///images/plus.svg"
                         onClicked: openImageSelectionDialog(setPairB)
+                        visible: enabled
                     }
                     BusyIndicator {
                         anchors.centerIn: parent
@@ -93,9 +101,7 @@ Item {
                     }
                 }
             }
-            Item {
-                Layout.fillWidth: true
-            }
+            Item { Layout.fillWidth: true } // spacer
         }
     }
 

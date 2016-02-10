@@ -17,7 +17,7 @@ ApplicationWindow {
     height: 500
     visible: true
     color: "#111"
-    title: "meshroom"
+    title: Qt.application.name
 
     // properties
     property variant defaultProject: Project {}
@@ -47,7 +47,7 @@ ApplicationWindow {
     signal openImportImageDialog()
 
     // connections
-    ApplicationConnections { target: _applicationWindow }
+    ApplicationConnections {}
 
     // menus & dialogs
     ApplicationMenu {}

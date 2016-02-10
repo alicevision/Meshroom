@@ -14,7 +14,7 @@ Item {
         target: _applicationWindow
         onSelectProject: {
             currentProject = _application.projects.get(id).modelData;
-            selectJob(0);
+            selectJob(currentProject.jobs.count - 1);
             _applicationStack.push({ item: _applicationStack.mainPage, replace:(_applicationStack.depth>1) });
         }
         onAddProject: {

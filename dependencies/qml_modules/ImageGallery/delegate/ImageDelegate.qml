@@ -60,7 +60,7 @@ Package {
             color: "black"
             Image {
                 anchors.fill: parent
-                source: model.url
+                source: model.exists ? model.url : ""
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
                 BusyIndicator {
@@ -116,7 +116,7 @@ Package {
                 color: "black"
                 Image {
                     anchors.fill: parent
-                    source: model.url
+                    source: model.exists ? model.url : ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     sourceSize: Qt.size(320, 320)
@@ -183,7 +183,7 @@ Package {
             Image {
                 anchors.fill: parent
                 anchors.margins: 2
-                source: model.url
+                source: model.exists ? model.url : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 sourceSize: Qt.size(320, 320)
@@ -191,7 +191,7 @@ Package {
                     width: parent.width
                     height: childrenRect.height
                     Behavior on height { NumberAnimation {} }
-                    color: "#66111111"
+                    color: model.exists ? "#66111111" : Style.window.color.critical
                     Text {
                         width: parent.width
                         text: model.name

@@ -40,6 +40,8 @@ QVariant ResourceModel::data(const QModelIndex& index, int role) const
             return resource->url();
         case NameRole:
             return resource->name();
+        case ExistsRole:
+            return resource->exists();
         case ModelDataRole:
             return QVariant::fromValue(resource);
         default:
@@ -52,6 +54,7 @@ QHash<int, QByteArray> ResourceModel::roleNames() const
     QHash<int, QByteArray> roles;
     roles[UrlRole] = "url";
     roles[NameRole] = "name";
+    roles[ExistsRole] = "exists";
     roles[ModelDataRole] = "modelData";
     return roles;
 }

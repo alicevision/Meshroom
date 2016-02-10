@@ -36,7 +36,7 @@ Item {
             color: "black"
             Image {
                 anchors.fill: parent
-                source: model.url
+                source: model.exists ? model.url : ""
                 sourceSize: Qt.size(320, 320)
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true

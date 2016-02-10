@@ -16,6 +16,7 @@ public:
     {
         UrlRole = Qt::UserRole + 1,
         NameRole,
+        ExistsRole,
         ModelDataRole
     };
 

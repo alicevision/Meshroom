@@ -34,12 +34,6 @@ void Project::setName(const QString& name)
         return;
     _name = name;
     emit nameChanged();
-    emit dataChanged(_modelIndex, _modelIndex);
-}
-
-void Project::setModelIndex(const QModelIndex& id)
-{
-    _modelIndex = id;
 }
 
 bool Project::load()

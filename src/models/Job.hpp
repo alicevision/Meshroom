@@ -62,7 +62,6 @@ public:
     void setCompletion(const float& completion);
     void setStatus(const StatusType& status);
     void setThumbnail(const QUrl& thumbnail);
-    void setModelIndex(const QModelIndex& id);
 
 public:
     bool load(const QUrl& url);
@@ -93,7 +92,6 @@ signals:
     void completionChanged();
     void statusChanged();
     void thumbnailChanged();
-    void dataChanged(const QModelIndex&, const QModelIndex&);
 
 private:
     Project* _project = nullptr;
@@ -106,7 +104,6 @@ private:
     QUrl _thumbnail;
     StepModel* _steps;
     ResourceModel* _images;
-    QPersistentModelIndex _modelIndex;
 };
 
 } // namespace

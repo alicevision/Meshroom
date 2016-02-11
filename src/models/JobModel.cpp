@@ -98,14 +98,21 @@ void JobModel::addJob(Job* job)
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(job, QQmlEngine::CppOwnership);
     job->setParent(this);
-    connect(job, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this,
-            SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)));
 
     _jobs << job;
     endInsertRows();
 
+    // model and contained object synchronization
     QModelIndex id = index(rowCount() - 1, 0);
-    job->setModelIndex(id);
+    auto callback = [id, this]() {
+        emit dataChanged(id, id);
+    };
+    connect(job, &Job::nameChanged, this, callback);
+    connect(job, &Job::completionChanged, this, callback);
+    connect(job, &Job::statusChanged, this, callback);
+    connect(job, &Job::thumbnailChanged, this, callback);
+
+
     job->selectThumbnail();
     job->refresh();
 

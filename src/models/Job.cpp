@@ -59,7 +59,6 @@ void Job::setName(const QString& name)
         return;
     _name = name;
     emit nameChanged();
-    emit dataChanged(_modelIndex, _modelIndex);
 }
 
 void Job::setCompletion(const float& completion)
@@ -68,7 +67,6 @@ void Job::setCompletion(const float& completion)
         return;
     _completion = completion;
     emit completionChanged();
-    emit dataChanged(_modelIndex, _modelIndex);
 }
 
 void Job::setStatus(const StatusType& status)
@@ -77,7 +75,6 @@ void Job::setStatus(const StatusType& status)
         return;
     _status = status;
     emit statusChanged();
-    emit dataChanged(_modelIndex, _modelIndex);
 }
 
 void Job::setThumbnail(const QUrl& thumbnail)
@@ -86,12 +83,6 @@ void Job::setThumbnail(const QUrl& thumbnail)
         return;
     _thumbnail = thumbnail;
     emit thumbnailChanged();
-    emit dataChanged(_modelIndex, _modelIndex);
-}
-
-void Job::setModelIndex(const QModelIndex& id)
-{
-    _modelIndex = id;
 }
 
 bool Job::load(const QUrl& url)

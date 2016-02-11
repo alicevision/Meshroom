@@ -16,6 +16,7 @@ Item {
             currentProject = _application.projects.get(id).modelData;
             selectJob(currentProject.jobs.count - 1);
             _applicationStack.push({ item: _applicationStack.mainPage, replace:(_applicationStack.depth>1) });
+            currentProject.refresh();
         }
         onAddProject: {
             _application.projects.addProject(url);

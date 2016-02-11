@@ -3,6 +3,7 @@
 #include <QJsonObject>
 #include <QDir>
 #include <QDebug>
+#include <cassert>
 
 #define LOGID (QString("[project:%1]").arg(_name)).toStdString().c_str()
 
@@ -84,6 +85,17 @@ bool Project::save()
     projectFile.write(jsonDocument.toJson());
     projectFile.close();
     return true;
+}
+
+void Project::refresh()
+{
+    for(size_t i = 0; i < _jobs->rowCount(); ++i)
+    {
+        QModelIndex id = _jobs->index(i, 0);
+        Job* job = _jobs->data(id, JobModel::ModelDataRole).value<Job*>();
+        assert(job);
+        job->refresh();
+    }
 }
 
 void Project::setFilterRegexp(const QString& regexp)

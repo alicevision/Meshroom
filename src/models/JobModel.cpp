@@ -112,9 +112,7 @@ void JobModel::addJob(Job* job)
     connect(job, &Job::statusChanged, this, callback);
     connect(job, &Job::thumbnailChanged, this, callback);
 
-
     job->selectThumbnail();
-    job->refresh();
 
     emit countChanged(rowCount());
 }

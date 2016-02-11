@@ -29,6 +29,7 @@ public:
 public slots:
     bool load();
     bool save();
+    void refresh();
     void setFilterRegexp(const QString& regexp);
 
 private:

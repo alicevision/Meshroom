@@ -8,18 +8,19 @@ Item {
 
     id: root
     property variant visualModel: null
+    property real thumbnailSize: 60
 
-    ListView {
-        id: view
+    ScrollView {
+        id: scrollview
         anchors.fill: parent
-        model: visualModel.parts.list
-        snapMode: ListView.SnapOneItem
-        orientation: Qt.Horizontal
-        highlightRangeMode: ListView.StrictlyEnforceRange
-        clip: true
-        onCurrentIndexChanged: {
-            if(!moving)
-                positionViewAtIndex(currentIndex, ListView.Contain);
+        ListView {
+            id: listview
+            property alias cellHeight: root.thumbnailSize
+            anchors.fill: parent
+            anchors.margins: 10
+            model: visualModel.parts.list
+            spacing: 1
+            clip: true
         }
     }
 
@@ -38,22 +39,13 @@ Item {
             anchors.leftMargin: 4
             anchors.rightMargin: 4
             spacing: 0
-            Item { Layout.fillWidth: true } // spacer
-            ToolButton {
-                iconSource: "qrc:///images/previous.svg"
-                onClicked: view.decrementCurrentIndex()
+            Slider {
+                Layout.fillWidth: true
+                minimumValue: 45
+                maximumValue: 200
+                value: 60
+                onValueChanged: root.thumbnailSize = value
             }
-            ToolButton {
-                iconSource: "qrc:///images/next.svg"
-                onClicked: view.incrementCurrentIndex()
-            }
-            Item { Layout.fillWidth: true } // spacer
-            Text {
-                Layout.preferredWidth: 60
-                text: (view.currentIndex+1)+"/"+view.count
-                font.pixelSize: Style.text.size.small
-            }
-            Item { Layout.fillWidth: true } // spacer
         }
     }
 }

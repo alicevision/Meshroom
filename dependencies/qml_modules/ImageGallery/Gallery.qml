@@ -28,7 +28,7 @@ Item {
         id: _selector
         signal refreshSelectionFlags()
         property variant selection: []
-        property int lastSelected: -1
+        property int lastSelected: 0
         function add(id) {
             lastSelected = id;
             var index = selection.indexOf(id);
@@ -85,7 +85,7 @@ Item {
         focus: true
         DelegateModel {
             id: imageModel
-            delegate: ImageDelegate {
+            delegate: ThumbnailDelegate {
                 editable: root.editable
                 onSelectOne: _selector.selectOne(id)
                 onSelectContiguous: _selector.selectContiguous(id)
@@ -103,21 +103,24 @@ Item {
             GridImageView { visualModel: imageModel }
         }
         Tab {
-            title: "Detail"
+            title: "List"
             property string iconSource: "qrc:///images/list.svg"
-            DetailedImageView  { visualModel: imageModel }
+            ListImageView  { visualModel: imageModel }
         }
         Tab {
             title: "List"
             property string iconSource: "qrc:///images/diaporama.svg"
-            ListImageView { visualModel: imageModel }
+            FullscreenImageView {
+                model: root.model
+                currentIndex: _selector.lastSelected
+            }
         }
     }
 
     Item {
         anchors.top: parent.top
         anchors.right: parent.right
-        width: 30 * listview.count
+        width: listview.contentWidth
         height: 30
         Rectangle {
             anchors.fill: parent

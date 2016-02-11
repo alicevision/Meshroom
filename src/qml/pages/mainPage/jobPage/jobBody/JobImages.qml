@@ -15,6 +15,6 @@ Rectangle {
         anchors.fill: parent
         model: currentJob.images
         editable: currentJob.status == Job.NOTSTARTED
-        title: "drop .JPG files"
+        title: (currentJob.images.count>0)? "" : "drop .JPG files"
     }
 }

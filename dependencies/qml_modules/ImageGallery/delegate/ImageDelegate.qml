@@ -19,12 +19,6 @@ Item {
                 anchors.centerIn: parent
                 running: parent.status === Image.Loading
             }
-            Rectangle {
-                anchors.fill: parent
-                visible: !root.editable
-                color: "black"
-                opacity: 0.6
-            }
         }
     }
 }

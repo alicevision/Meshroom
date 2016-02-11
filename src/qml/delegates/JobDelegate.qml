@@ -47,20 +47,18 @@ Item {
                     maximumLineCount: 2
                 }
                 RowLayout {
-                    RowLayout {
-                        spacing: 2
-                        Image {
-                            source: "qrc:///images/image.svg"
-                            sourceSize.width: 20
-                            sourceSize.height: 20
-                            opacity: 0.4
-                        }
-                        Text {
-                            Layout.fillWidth: true
-                            text: model.images.count
-                            font.pixelSize: Style.text.size.xsmall
-                            color: Style.text.color.dark
-                        }
+                    spacing: 2
+                    Image {
+                        source: "qrc:///images/image.svg"
+                        sourceSize.width: 20
+                        sourceSize.height: 20
+                        opacity: 0.4
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: model.images.count
+                        font.pixelSize: Style.text.size.xsmall
+                        color: Style.text.color.dark
                     }
                     Text {
                         text: {
@@ -104,6 +102,14 @@ Item {
                                 return Style.text.color.info;
                             }
                         }
+                    }
+                    Image {
+                        enabled: false
+                        source: "qrc:///images/locked.svg"
+                        sourceSize.width: 20
+                        sourceSize.height: 20
+                        opacity: 0.4
+                        visible: model.status != Job.NOTSTARTED
                     }
                 }
                 Item { Layout.fillHeight: true } // spacer

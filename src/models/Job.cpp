@@ -12,6 +12,77 @@
 
 #define LOGID (QString("[job:%1]").arg(_name)).toStdString().c_str()
 
+const QString cameraModelTooltip = R"(
+Camera model
+
+Values:
+    - Pinhole: simple camera without a lens
+    - Radial1: lens with radial distortion (1 parameter)
+    - Radial3 (default): lens with radial distortion (3 parameters)
+    - Brown: lens with radial and tangential distortion (3 radial and 2 tangential parameters)
+    - Fisheye: ultra wide-angle lens that produces strong visual distortion intended to create a wide panoramic or hemispherical image
+)";
+const QString densityTooltip = R"(
+Density of features per image
+
+It's important to use an high value if your dataset contains:
+    - weakly textured surfaces (like indoor)
+    - if you have few pictures (<50)
+    - have a poor overlap
+    - wide baseline
+
+Values:
+    - LOW: Useful to get a rapid overview on large (>500 images) datasets with many overlapping images
+    - MEDIUM: To get a fast reconstruction
+    - NORMAL: Good value for most datasets with more than 200 images
+    - HIGH (default): Good value for small datasets (<200 images)
+    - ULTRA: Good value for very small datasets (<50 images) or for larger datasets with challenging conditions
+)";
+const QString featureTypeTooltip = R"(
+Feature type
+
+Values:
+    - SIFT (default): Scale-invariant feature transform is an algorithm in computer vision to detect and describe local features in images.
+    - CCTAG3: CCTAG markers with 3 crowns
+    - SIFT_CCTAG3: Use both CCTag and SIFT.
+)";
+const QString maxMatchesTooltip = R"(
+Maximum matches per image pair
+
+Limit the number of matches per image pair.
+Small values (100) generates fast SfM and coarse 3D reconstruction, high values (2000) generates finer, more accurate 3D reconstructions with high density point clouds at the cost of high computational times.
+)";
+const QString methodTooltip = R"(
+Method
+
+Values:
+    - BRUTEFORCEL2: L2 BruteForce matching
+    - ANNL2 (default): L2 Approximate Nearest Neighbor matching
+    - CASCADEHASHINGL2: L2 Cascade Hashing matching.
+    - FASTCASCADEHASHINGL2: L2 Cascade Hashing with precomputed hashed regions (faster than CASCADEHASHINGL2 but use more memory)
+)";
+const QString guidedMatchingTooltip = R"(
+Guided Matching
+
+Improve matches density by using geometric constrain to deal with repetitive or ambiguous patterns.
+)";
+const QString initialPairTooltip = R"(
+Initial pair
+
+This image pair can be choosed automatically but you can choose it manually to improve the quality by selecting a good pair in the center of interest of the scene.
+The goal is to maximize the overlap between the 2 images (the framing should be quite the same) but with an angle between 10° to 30° regarding the surface you are shooting.
+)";
+const QString minimumTrackLengthTooltip = R"(
+Minimum track length
+
+Minimum number of images associated to a point.
+)";
+const QString scaleTooltip = R"(
+Meshing scale
+
+Input images downscale factor for meshing. 2 is the recommanded value in most cases.
+)";
+
 namespace meshroom
 {
 
@@ -361,35 +432,102 @@ bool Job::isPairValid()
 
 void Job::createDefaultGraph()
 {
-    // create feature detection step
-    Step* step = new Step("feature_detection");
+    // image listing
+    // Step* step = new Step("image_listing");
+    // Attribute* att = new Attribute();
+    // att->setType(2); // combo
+    // att->setKey("cameraModel");
+    // att->setName("camera model");
+    // att->setTooltip(cameraModelTooltip);
+    // att->setValue("Radial3");
+    // att->setOptions(QStringList({"Pinhole", "Radial1", "Radial3", "Brown", "Fisheye"}));
+    // step->attributes()->addAttribute(att);
+    // _steps->addStep(step);
+
+    // feature extraction
+    Step* step = new Step("feature_extraction");
     Attribute* att = new Attribute();
     att->setType(2); // combo
+    // att->setKey("density");
     att->setKey("describerPreset");
-    att->setName("quality");
+    att->setName("density");
+    att->setTooltip(densityTooltip);
     att->setValue("Normal");
     att->setOptions(QStringList({"Normal", "High", "Ultra"}));
+    // att->setValue("NORMAL");
+    // att->setOptions(QStringList({"LOW", "MEDIUM", "NORMAL", "HIGH", "ULTRA"}));
     step->attributes()->addAttribute(att);
+    // att = new Attribute();
+    // att->setType(2); // combo
+    // att->setKey("featureType");
+    // att->setName("feature type");
+    // att->setTooltip(featureTypeTooltip);
+    // att->setValue("SIFT");
+    // att->setOptions(QStringList({"SIFT", "CCTAG3", "SIFT_CCTAG3"}));
+    // step->attributes()->addAttribute(att);
     _steps->addStep(step);
-    // create meshing step
-    step = new Step("meshing");
-    att = new Attribute();
-    att->setType(1); // slider
-    att->setKey("scale");
-    att->setName("meshing scale");
-    att->setValue(2);
-    att->setMin(1);
-    att->setMax(10);
-    att->setStep(1);
-    step->attributes()->addAttribute(att);
-    _steps->addStep(step);
-    // create sfm step
+
+    // matching
+    // step = new Step("matching");
+    // att = new Attribute();
+    // att->setType(1); // slider
+    // att->setKey("maxMatches");
+    // att->setName("max matches per image pair");
+    // att->setTooltip(maxMatchesTooltip);
+    // att->setValue(500);
+    // att->setMin(100);
+    // att->setMax(10000);
+    // att->setStep(1);
+    // step->attributes()->addAttribute(att);
+    // att = new Attribute();
+    // att->setType(2); // combo
+    // att->setKey("method");
+    // att->setName("method");
+    // att->setTooltip(methodTooltip);
+    // att->setValue("ANNL2");
+    // att->setOptions(QStringList({"BRUTEFORCEL2", "ANNL2", "CASCADEHASHINGL2", "FASTCASCADEHASHINGL2"}));
+    // step->attributes()->addAttribute(att);
+    // att = new Attribute();
+    // att->setType(4); // boolean
+    // att->setKey("useGuidedMatching");
+    // att->setName("guided matching");
+    // att->setTooltip(guidedMatchingTooltip);
+    // att->setValue(false);
+    // step->attributes()->addAttribute(att);
+    // _steps->addStep(step);
+
+    // sfm
     step = new Step("sfm");
     att = new Attribute();
     att->setType(3); // pair selector
     att->setKey("initial_pair");
     att->setName("initial pair");
+    att->setTooltip(initialPairTooltip);
     att->setValue(QStringList({"", ""}));
+    step->attributes()->addAttribute(att);
+    // att = new Attribute();
+    // att->setType(1); // slider
+    // att->setKey("minTrackLength");
+    // att->setName("min track length");
+    // att->setTooltip(minimumTrackLengthTooltip);
+    // att->setValue(3);
+    // att->setMin(2);
+    // att->setMax(40);
+    // att->setStep(1);
+    // step->attributes()->addAttribute(att);
+    _steps->addStep(step);
+
+    // meshing
+    step = new Step("meshing");
+    att = new Attribute();
+    att->setType(1); // slider
+    att->setKey("scale");
+    att->setName("meshing scale");
+    att->setTooltip(scaleTooltip);
+    att->setValue(2);
+    att->setMin(0);
+    att->setMax(6);
+    att->setStep(1);
     step->attributes()->addAttribute(att);
     _steps->addStep(step);
 }
@@ -424,9 +562,7 @@ void Job::serializeToJSON(QJsonObject* obj) const
     obj->insert("steps", stepsObject);
 }
 
-void Job::deserializeFromJSON(const QJsonObject& obj
-
-                              )
+void Job::deserializeFromJSON(const QJsonObject& obj)
 {
     autoSaveOff();
     // read global job settings

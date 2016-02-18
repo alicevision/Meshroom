@@ -2,6 +2,7 @@ module DarkStyle.Controls
 
 ApplicationWindow 1.0 ApplicationWindow.qml
 Button 1.0 Button.qml
+CheckBox 1.0 CheckBox.qml
 ComboBox 1.0 ComboBox.qml
 DropArea 1.0 DropArea.qml
 DarkStyleGallery 1.0 DarkStyleGallery.qml

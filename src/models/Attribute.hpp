@@ -18,6 +18,7 @@ public:
     QVariant value() const { return _value; }
     QString key() const { return _key; }
     QString name() const { return _name; }
+    QString tooltip() const { return _tooltip; }
     const int& type() const { return _type; }
     const QVariant& min() const { return _min; }
     const QVariant& max() const { return _max; }
@@ -26,6 +27,7 @@ public:
     void setValue(const QVariant& value);
     void setKey(const QString& key) { _key = key; }
     void setName(const QString& name) { _name = name; }
+    void setTooltip(const QString& tooltip) { _tooltip = tooltip; }
     void setType(const int& type) { _type = type; }
     void setMin(const QVariant& min) { _min = min; }
     void setMax(const QVariant& max) { _max = max; }
@@ -40,6 +42,7 @@ private:
     QVariant _value;
     QString _key;
     QString _name;
+    QString _tooltip;
     int _type;
     QVariant _min;
     QVariant _max;

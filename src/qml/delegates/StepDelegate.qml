@@ -11,14 +11,15 @@ Item {
     property variant modelData: model
 
     width: ListView.view.width
-    height: steptitle.height + paramlist.height
+    height: steptitle.height + paramlist.contentHeight + 20
 
-    Column {
+    ColumnLayout {
         anchors.fill: parent
+        spacing: 0
         Item {
             id: steptitle
-            height: (index == 0) ? 30 : 40
-            width: parent.width
+            Layout.preferredHeight: (index == 0) ? 30 : 40
+            Layout.fillWidth: true
             ColumnLayout {
                 width: parent.width
                 height: parent.height
@@ -41,11 +42,51 @@ Item {
         }
         ListView {
             id: paramlist
-            width: parent.width
-            height: contentItem.height
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             model: modelData.attributes
             interactive: false
-            delegate: ControlDelegate {}
+            delegate: ControlDelegate {
+                onShowTooltip: {
+                    tooltipTxt.text = text;
+                    tooltipContainer.opacity = 1;
+                }
+            }
+            spacing: 10
         }
     }
+    Rectangle {
+        id: tooltipContainer
+        anchors.fill: parent
+        color: Style.window.color.xdark
+        opacity: 0
+        Behavior on opacity { NumberAnimation{} }
+        MouseArea {
+            anchors.fill: parent
+            visible: tooltipContainer.opacity > 0
+            hoverEnabled: true
+            ToolButton {
+                anchors.horizontalCenter: parent.right
+                anchors.verticalCenter: parent.top
+                iconSource: "qrc:///images/close.svg"
+                opacity: (hovered || parent.containsMouse) ? 1 : 0
+                Behavior on opacity { NumberAnimation {}}
+                onClicked: tooltipContainer.opacity = 0
+            }
+            ScrollView {
+                id: scrollview
+                anchors.fill: parent
+                anchors.margins: 2
+                Text {
+                    id: tooltipTxt
+                    width: scrollview.width - 4
+                    text: ""
+                    font.pixelSize: Style.text.size.xsmall
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 100
+                }
+            }
+        }
+    }
+
 }

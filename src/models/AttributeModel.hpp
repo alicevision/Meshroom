@@ -16,6 +16,7 @@ public:
     {
         NameRole = Qt::UserRole + 1,
         KeyRole,
+        TooltipRole,
         TypeRole,
         MinRole,
         MaxRole,

@@ -9,7 +9,8 @@ Item {
     id: root
 
     width: parent.width
-    height: childrenRect.height
+    height: content.height
+    signal showTooltip(string text)
 
     property variant modelData: model
     property Component sliderControl: Slider {
@@ -104,16 +105,21 @@ Item {
             Item { Layout.fillWidth: true } // spacer
         }
     }
+    property Component booleanControl: CheckBox {
+    }
 
     RowLayout {
+        id: content
         width: parent.width
         height: childrenRect.height
         Item {
-            Layout.preferredWidth: 120
+            Layout.preferredWidth: 150
             Layout.preferredHeight: attributeLoader.height
             Text {
+                anchors.fill: parent
                 anchors.verticalCenter: parent.verticalCenter
                 text: modelData.name
+                font.pixelSize: Style.text.size.small
             }
         }
         Item {
@@ -125,14 +131,19 @@ Item {
                 height: item.height
                 property variant modelData: model
                 sourceComponent: {
-                    switch(modelData.type){
+                    switch(modelData.type) {
                         case 0: return textControl
                         case 1: return sliderControl
                         case 2: return comboControl
                         case 3: return pairControl
+                        case 4: return booleanControl
                     }
                 }
             }
+        }
+        ToolButton {
+            iconSource: "qrc:///images/information.svg"
+            onClicked: showTooltip(model.tooltip)
         }
     }
 }

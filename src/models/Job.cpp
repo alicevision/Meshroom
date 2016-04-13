@@ -83,6 +83,18 @@ Meshing scale
 Input images downscale factor for meshing. 2 is the recommanded value in most cases.
 )";
 
+const QString enableMeshingTooltip = R"(
+Enable meshing
+
+Enable generation of meshes.
+)";
+
+const QString undistortTooltip = R"(
+Enable undistort
+
+Export undistorted images from known camera parameter intrinsic
+)";
+
 namespace meshroom
 {
 
@@ -457,14 +469,14 @@ void Job::createDefaultGraph()
     // att->setValue("NORMAL");
     // att->setOptions(QStringList({"LOW", "MEDIUM", "NORMAL", "HIGH", "ULTRA"}));
     step->attributes()->addAttribute(att);
-    // att = new Attribute();
-    // att->setType(2); // combo
-    // att->setKey("featureType");
-    // att->setName("feature type");
-    // att->setTooltip(featureTypeTooltip);
-    // att->setValue("SIFT");
-    // att->setOptions(QStringList({"SIFT", "CCTAG3", "SIFT_CCTAG3"}));
-    // step->attributes()->addAttribute(att);
+    att = new Attribute();
+    att->setType(2); // combo
+    att->setKey("featureType");
+    att->setName("feature type");
+    att->setTooltip(featureTypeTooltip);
+    att->setValue("SIFT");
+    att->setOptions(QStringList({"SIFT", "CCTAG3", "SIFT_CCTAG3"}));
+    step->attributes()->addAttribute(att);
     _steps->addStep(step);
 
     // matching
@@ -520,6 +532,14 @@ void Job::createDefaultGraph()
     // meshing
     step = new Step("meshing");
     att = new Attribute();
+    att->setType(4); // boolean
+    att->setKey("enabled");
+    att->setName("enabled");
+    att->setTooltip(enableMeshingTooltip);
+    step->attributes()->addAttribute(att);
+    att->setValue("true");
+    att->setOptions(QStringList({"true", "false"}));
+    att = new Attribute();
     att->setType(1); // slider
     att->setKey("scale");
     att->setName("meshing scale");
@@ -529,6 +549,18 @@ void Job::createDefaultGraph()
     att->setMax(6);
     att->setStep(1);
     step->attributes()->addAttribute(att);
+    _steps->addStep(step);
+
+    // undistort
+    step = new Step("undistort");
+    att = new Attribute();
+    att->setType(4); // checkbox
+    att->setKey("enabled");
+    att->setName("enabled");
+    att->setTooltip(undistortTooltip);
+    step->attributes()->addAttribute(att);
+    att->setValue("false");
+    att->setOptions(QStringList({"true", "false"}));
     _steps->addStep(step);
 }
 

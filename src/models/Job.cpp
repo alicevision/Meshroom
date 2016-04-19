@@ -171,7 +171,7 @@ bool Job::load(const QUrl& url)
     QFile jsonFile(dir.filePath("job.json"));
     if(!jsonFile.open(QIODevice::ReadOnly))
     {
-        qWarning() << LOGID << "unable to read the job descriptor file" << jsonFile.fileName();
+        qWarning() << LOGID << "no descriptor file";
         return false;
     }
     // read it and close the file handler

@@ -21,6 +21,10 @@ public:
     {
         QString msg = QTime::currentTime().toString("hh:mm:ss ").append(m);
         std::cerr << msg.toStdString() << std::endl;
+#ifdef QT_MESSAGELOGCONTEXT
+        if(QString(c.file).endsWith(".qml"))
+            return;
+#endif
         for(auto model : _logModels)
             model->addLog(new Log(t, msg));
     }

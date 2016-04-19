@@ -97,7 +97,8 @@ bool isRegisteredImage(const Job& job, const QUrl& url)
     for(size_t i = 0; i < images->rowCount(); ++i)
     {
         QModelIndex id = images->index(i, 0);
-        if(url == images->data(id, ResourceModel::UrlRole))
+        QUrl imgUrl = images->data(id, ResourceModel::UrlRole).toUrl();
+        if(url.matches(imgUrl, QUrl::RemoveScheme))
             return true;
     }
     return false;

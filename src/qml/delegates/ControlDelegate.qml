@@ -106,6 +106,8 @@ Item {
         }
     }
     property Component booleanControl: CheckBox {
+        checked: modelData.value
+        pressed: modelData.value = checked
     }
 
     RowLayout {

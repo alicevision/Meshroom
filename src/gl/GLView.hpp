@@ -48,13 +48,11 @@ protected:
     void translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx, float dy);
 
 private:
-    // Delegate opengl rendering
     GLRenderer* _renderer = nullptr;
     QRect _viewport;
     QColor _color;
     Camera _camera;
     QUrl _alembicSceneUrl;
-    // FIXME : rename variables to something more meaningful
     // Ideally the following variables should go in a manipulator of some sort
     QPoint _mousePos;      // Position of the mousePressed event
     QMatrix4x4 _camMatTmp; // Position of the camera when the mouse is pressed

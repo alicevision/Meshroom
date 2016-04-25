@@ -26,7 +26,9 @@ Button {
             Image {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: control.iconSource != ""
-                sourceSize: Qt.size(25, 25)
+                sourceSize: Qt.size(100, 100)
+                width: 25
+                height: 25
                 source: control.iconSource
                 smooth: true
                 opacity: 0.8

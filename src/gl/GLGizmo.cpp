@@ -4,8 +4,6 @@
 namespace meshroom
 {
 
-// FIXME: rename to GLAxisGizmo ?
-
 GLGizmo::GLGizmo()
     : GLDrawable(*_colorArray)
     , _positionBuffer(QOpenGLBuffer::VertexBuffer)

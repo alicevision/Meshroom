@@ -23,7 +23,6 @@ GLCamera::GLCamera()
     : GLDrawable(*_colorArray)
 {
     _projectionMatrix.perspective(60.0f, 3.0 / 2.0, 0.1f, 100.0f);
-
     _vao.create();
     _vao.bind();
 

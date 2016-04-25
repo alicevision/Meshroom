@@ -8,49 +8,28 @@
 namespace meshroom
 {
 
-// Allows to have a list of pointers to drawable objects
 class GLDrawable
 {
 public:
-    GLDrawable(QOpenGLShaderProgram& program)
-        : _program(program)
-    {
-    }
+    GLDrawable(QOpenGLShaderProgram& program);
     virtual ~GLDrawable() = default;
     virtual void draw() = 0;
 
-    // Sets the camera common to all objects
-    void uploadShaderMatrix();
-    static void setCameraMatrix(const QMatrix4x4&);
-
-    /// SHADER stuff
-    // FIXME: I don't think this is a good idea to keep
-    // different shaders as static members of the base class
-    // fix would be to think about it and find a solution if needed...
+public:
     static void setShaders(GLSLPlainColorShader*, GLSLColoredShader*, GLSLBackgroundShader*);
+    static void setCameraMatrix(const QMatrix4x4& mat) { _cameraMatrix = mat; }
     static void deleteShaders();
-
-    /// Sets the model view matrix of the object
-    /// its position and orientation
+    void uploadShaderMatrix();
     void setModelMatrix(const QMatrix4x4& mat) { _modelMatrix = mat; }
 
 protected:
-    // SHADERS
-    QOpenGLShaderProgram& _program; // Shader used in the current object
-
-    // Collection of shader,
-    // FIXME: should certainly be moved in a dedicated
-    // class
+    QOpenGLShaderProgram& _program;
     static GLSLPlainColorShader* _colorUniform;
     static GLSLColoredShader* _colorArray;
     static GLSLBackgroundShader* _background;
-
-    // Camera matrix is here in static because it is used in
-    // all static shaders above
-    static QMatrix4x4 _cameraMatrix;
-
-    // Position/orientation matrix of the model
-    QMatrix4x4 _modelMatrix;
+    static QMatrix4x4 _cameraMatrix; // Camera matrix is here in static because it is used in all
+                                     // static shaders above
+    QMatrix4x4 _modelMatrix;         // Position/orientation matrix of the model
 };
 
 } // namespace

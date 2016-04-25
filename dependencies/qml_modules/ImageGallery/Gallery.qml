@@ -83,6 +83,7 @@ Item {
         id: tabview
         anchors.fill: parent
         focus: true
+        hideTabs: true
         DelegateModel {
             id: imageModel
             delegate: ThumbnailDelegate {

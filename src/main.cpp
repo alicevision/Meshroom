@@ -1,7 +1,6 @@
 #include "Application.hpp"
 #include "gl/GLView.hpp"
-#include "models/Job.hpp"
-#include "models/Project.hpp"
+#include "models/Scene.hpp"
 #include <QtWidgets/QApplication>
 #include <QSurfaceFormat>
 #include <QtQml>
@@ -11,14 +10,13 @@ int main(int argc, char* argv[])
     using namespace meshroom;
 
     QApplication qapp(argc, argv);
-    QCoreApplication::setOrganizationName("PopartEU");
-    QCoreApplication::setOrganizationDomain("popart.eu");
+    QCoreApplication::setOrganizationName("meshroom");
+    QCoreApplication::setOrganizationDomain("meshroom.eu");
     QCoreApplication::setApplicationName("meshroom");
 
     // register types
-    qmlRegisterType<GLView>("Meshroom.GL", 0, 1, "GLView");
-    qmlRegisterType<Job>("Meshroom.Job", 0, 1, "Job");
-    qmlRegisterType<Project>("Meshroom.Project", 0, 1, "Project");
+    qmlRegisterType<GLView>("Meshroom.GL", 1, 0, "GLView");
+    qmlRegisterType<Scene>("Meshroom.Scene", 1, 0, "Scene");
 
     // set opengl profile
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();

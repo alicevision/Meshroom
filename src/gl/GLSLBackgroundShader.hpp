@@ -13,6 +13,7 @@ public:
     GLSLBackgroundShader();
     ~GLSLBackgroundShader() = default;
 
+public:
     void draw();
 
 private:

@@ -19,10 +19,12 @@ Item {
     signal open()
     signal accept()
     signal reject()
+    signal accepted()
+    signal rejected()
 
     onOpen: visible = true
-    onAccept: destroy()
-    onReject: destroy()
+    onAccept: { accepted(); destroy(); }
+    onReject: { rejected(); destroy(); }
 
     implicitWidth: parent.width
     implicitHeight: parent.height

@@ -16,10 +16,9 @@ GLPointCloud::GLPointCloud()
 
 void GLPointCloud::setRawPositions(const void* pointsBuffer, size_t npoints)
 {
-    // Allow only one load
+    // allow only one load
     if(_npoints != 0)
         return;
-
     _vertexArrayObject.bind();
     if(_pointPositions.create())
     {

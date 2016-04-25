@@ -1,97 +1,88 @@
 import QtQuick 2.5
 
 Item {
-
+    Connections {
+        target: _nodes
+        onCountChanged: currentScene.setDirty(true)
+    }
     Connections {
         target: Qt.application
-        onAboutToQuit: {
-            currentJob = defaultJob;
-            currentProject = defaultProject;
-        }
+        onAboutToQuit: currentScene.reset()
     }
-
     Connections {
-        target: _applicationWindow
-        onSelectProject: {
-            currentProject = _application.projects.get(id).modelData;
-            selectJob(currentProject.jobs.count - 1);
-            _applicationStack.push({ item: _applicationStack.mainPage, replace:(_applicationStack.depth>1) });
-            currentProject.refresh();
-        }
-        onAddProject: {
-            _application.projects.addProject(url);
-            selectProject(_application.projects.count-1);
-        }
-        onRemoveProject: {
-            _application.projects.removeProject(_application.projects.get(id).modelData);
-        }
-        onCloseProject: {
-            _applicationStack.pop();
-            currentProject = defaultProject;
-            currentJob = defaultJob;
-        }
-        onOpenProjectDirectory: {
-            Qt.openUrlExternally(currentProject.url);
-        }
-        onOpenProjectSettings: {
-            var dialog = _applicationDialogs.projectSettingsDialog.createObject(_applicationWindow);
-            dialog.open();
-        }
-        onOpenProjectDialog: {
-            var dialog = _applicationDialogs.openProject.createObject(_applicationWindow);
-            dialog.open();
-        }
-        onSelectJob: {
-            currentJob = currentProject.jobs.get(id).modelData;
-        }
-        onAddJob: {
-            currentProject.jobs.addJob();
-            selectJob(currentProject.jobs.count-1);
-        }
-        onDuplicateJob: {
-            currentProject.jobs.duplicateJob(currentJob);
-            selectJob(currentProject.jobs.count-1);
-        }
-        onRemoveJob: {
-            if(currentJob.isStoredOnDisk()) {
-                var dialog = _applicationDialogs.jobDeletionDialog.createObject(_applicationWindow);
+        target: _window
+        onNewScene: {
+            function reset_CB() { currentScene.reset(); }
+            if(currentScene.dirty) {
+                function save_CB() { saveScene(reset_CB); }
+                var dialog = _dialogs.maySaveScene.createObject(_window);
+                dialog.onAccepted.connect(save_CB);
+                dialog.onRejected.connect(reset_CB);
                 dialog.open();
                 return;
             }
-            currentJob.erase();
-            var jobToDelete = currentJob;
-            currentJob = defaultJob;
-            currentProject.jobs.removeJob(jobToDelete);
-            selectJob(currentProject.jobs.count-1);
+            reset_CB();
         }
-        onSubmitJob: {
-            currentJob.start(locally);
+        onOpenScene: {
+            function open_CB() {
+                function _CB() { addScene(dialog.fileUrl); }
+                var dialog = _dialogs.openScene.createObject(_window);
+                dialog.onAccepted.connect(_CB);
+                dialog.open();
+            }
+            if(currentScene.dirty) {
+                function save_CB() { saveScene(open_CB); }
+                var dialog = _dialogs.maySaveScene.createObject(_window);
+                dialog.onAccepted.connect(save_CB);
+                dialog.onRejected.connect(open_CB);
+                dialog.open();
+                return;
+            }
+            open_CB();
         }
-        onRefreshJob: {
-            currentJob.refresh();
+        onSaveScene: {
+            if(!currentScene.url.toString()) {
+                saveAsScene(callback);
+                return;
+            }
+            currentScene.save();
+            if(callback) callback();
         }
-        onImportJobImages: {
-            for(var i=0; i<files.length; ++i)
-            currentJob.images.addResource(files[i]);
-        }
-        onOpenJobDirectory: {
-            Qt.openUrlExternally(currentJob.url);
-        }
-        onOpenJobSettings: {
-            var dialog = _applicationDialogs.jobSettingsDialog.createObject(_applicationWindow);
+        onSaveAsScene: {
+            function _CB() {
+                currentScene.setUrl(dialog.fileUrl);
+                currentScene.save();
+                addScene(dialog.fileUrl);
+                if(callback) callback();
+            }
+            var dialog = _dialogs.saveScene.createObject(_window);
+            dialog.onAccepted.connect(_CB);
             dialog.open();
         }
-        onOpenJobSubmissionDialog: {
-            var dialog = _applicationDialogs.jobSubmissionDialog.createObject(_applicationWindow);
-            dialog.open();
+        onAddScene: {
+            _application.scenes.addScene(url);
+            currentScene = _application.scenes.get(_application.scenes.count-1).modelData;
+            currentScene.load();
         }
-        onOpenImageSelectionDialog: {
-            var dialog = _applicationDialogs.imageSelectionDialog.createObject(_applicationWindow);
-            dialog.onImageSelected.connect(callback);
-            dialog.open();
+        onSelectScene: {
+            function select_CB() {
+                currentScene = _application.scenes.get(id).modelData;
+                currentScene.load();
+            }
+            if(currentScene.dirty) {
+                function save_CB() { saveScene(select_CB); }
+                var dialog = _dialogs.maySaveScene.createObject(_window);
+                dialog.onAccepted.connect(save_CB);
+                dialog.onRejected.connect(select_CB);
+                dialog.open();
+                return;
+            }
+            select_CB();
         }
-        onOpenImportImageDialog: {
-            var dialog = _applicationDialogs.importImageDialog.createObject(_applicationWindow);
+        onAddNode: {
+            function add_CB() { _nodes.addNode(dialog.selection); }
+            var dialog = _dialogs.addNode.createObject(_window);
+            dialog.onAccepted.connect(add_CB);
             dialog.open();
         }
     }

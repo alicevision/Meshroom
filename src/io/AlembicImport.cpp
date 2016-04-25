@@ -133,5 +133,7 @@ void AlembicImport::populate(GLScene& scene)
     M44d xformMat;
     visitObject(_rootEntity, scene, xformMat);
 }
-}
+
+} // namespace
+
 #endif // WITH_ALEMBIC

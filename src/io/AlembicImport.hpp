@@ -19,6 +19,7 @@ public:
     explicit AlembicImport(const char* fileName);
     ~AlembicImport() = default;
 
+public:
     void populate(GLScene&);
 
 private:

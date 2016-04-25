@@ -1,0 +1,5 @@
+module NodeEditor
+
+NodeEditor 1.0 qml/NodeEditor.qml
+NodeDelegate 1.0 qml/NodeDelegate.qml
+plugin nodeEditorQmlPlugin

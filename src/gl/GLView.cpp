@@ -43,8 +43,6 @@ void GLView::handleWindowChanged(QQuickWindow* win)
     win->setClearBeforeRendering(false);
 }
 
-// This function is called from XXXXX
-// when the GL context is current
 void GLView::sync()
 {
     if(!_renderer) // first time

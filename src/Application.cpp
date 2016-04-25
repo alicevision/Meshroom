@@ -8,12 +8,15 @@ namespace meshroom
 
 Application::Application(QQmlApplicationEngine& engine)
     : QObject(nullptr)
-    , _projects(new ProjectModel(this))
-    , _featured(new ResourceModel(this))
+    , _scenes(new SceneModel(this))
+    , _proxy(new QSortFilterProxyModel(this))
 {
-    // initialize recent and featured project lists
-    SettingsIO::loadRecentProjects(_projects);
-    SettingsIO::loadFeaturedProjects(_featured);
+    // setup proxy filters
+    _proxy->setSourceModel(_scenes);
+    _proxy->setFilterRole(SceneModel::NameRole);
+
+    // initialize recent scene lists
+    SettingsIO::loadRecentScenes(_scenes);
 
     // expose this object to QML & load the main QML file
     if(engine.rootContext())

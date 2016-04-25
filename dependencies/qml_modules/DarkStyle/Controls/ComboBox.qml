@@ -38,7 +38,9 @@ ComboBox {
                 }
                 submenuIndicator: Image {
                     y: -12
-                    sourceSize: Qt.size(20, 20)
+                    sourceSize: Qt.size(100, 100)
+                    width: 20
+                    height: 20
                     source: "qrc:///images/arrow.svg"
                     smooth: true
                     opacity: styleData.enabled ? 1 : 0.5

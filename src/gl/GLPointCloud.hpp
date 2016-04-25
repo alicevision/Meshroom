@@ -14,6 +14,7 @@ public:
     GLPointCloud();
     ~GLPointCloud() = default;
 
+public:
     void draw() override;
     void setRawPositions(const void* points, size_t npoints);
     void setRawColors(const void* points, size_t npoints);

@@ -12,7 +12,7 @@ namespace meshroom
 GLRenderer::GLRenderer()
     : _background(nullptr)
 {
-    // The shaders have to be created in a valid opengl context
+    // the shaders have to be created in a valid opengl context
     _background = new GLSLBackgroundShader();
     GLDrawable::setShaders(
         new GLSLPlainColorShader(QVector4D(0.6, 0.6, 0.6, 1.0)), new GLSLColoredShader(),
@@ -27,7 +27,7 @@ GLRenderer::~GLRenderer()
     for(auto obj : _scene)
         delete obj;
     GLDrawable::deleteShaders();
-    // Background is deleted by GLDrawable::deleteShaders
+    // background is deleted by GLDrawable::deleteShaders
     _background = nullptr;
 }
 

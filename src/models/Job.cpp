@@ -439,8 +439,10 @@ bool Job::isPairValid()
     Attribute* attribute = step->attributes()->get("initial_pair");
     assert(attribute);
     QVariantList pair = attribute->value().toList();
-    return (pair[0].toString().isEmpty() && pair[1].toString().isEmpty()) ||
-           (isRegisteredImage(*this, pair[0].toUrl()) && isRegisteredImage(*this, pair[1].toUrl()));
+    QUrl pairA = QUrl::fromLocalFile(pair[0].toString());
+    QUrl pairB = QUrl::fromLocalFile(pair[1].toString());
+    return (pairA.isEmpty() && pairB.toString().isEmpty()) ||
+           (isRegisteredImage(*this, pairA) && isRegisteredImage(*this, pairB));
 }
 
 void Job::createDefaultGraph()

@@ -58,7 +58,7 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
                 }
             }
         }
-        if(!colored)
+        if(!colored || 1) // HACK: Make all points white. CCtags does not have color info.
         {
             float* defaultColor = new float[positions->size() * 3];
             for(int i = 0; i < positions->size() * 3; i++)

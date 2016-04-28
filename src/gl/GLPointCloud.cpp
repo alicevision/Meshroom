@@ -64,6 +64,7 @@ void GLPointCloud::draw()
     {
         _program.bind();
         _vertexArrayObject.bind();
+	glPointSize(10);    // CCTags are too small to be seen.
         glDrawArrays(GL_POINTS, 0, _npoints);
         _vertexArrayObject.release();
         _program.release();

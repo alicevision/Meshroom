@@ -24,6 +24,11 @@ find_package(Qt5Widgets REQUIRED)
 QT5_ADD_RESOURCES(TARGET_QRCS qml/resources.qrc)
 
 #
+# Add definitions
+#
+add_definitions(-DQT_MESSAGELOGCONTEXT)
+
+#
 # Target properties
 #
 add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})

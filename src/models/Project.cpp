@@ -44,7 +44,7 @@ bool Project::load()
     QFile projectFile(projectDirectory.filePath("project.json"));
     if(!projectFile.open(QIODevice::ReadOnly))
     {
-        qInfo() << LOGID << "unable to read the project descriptor file" << projectFile.fileName();
+        qInfo() << LOGID << "no descriptor file";
         return false;
     }
     // read it and close the file handler

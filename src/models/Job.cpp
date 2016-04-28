@@ -109,7 +109,8 @@ bool isRegisteredImage(const Job& job, const QUrl& url)
     for(size_t i = 0; i < images->rowCount(); ++i)
     {
         QModelIndex id = images->index(i, 0);
-        if(url == images->data(id, ResourceModel::UrlRole))
+        QUrl imgUrl = images->data(id, ResourceModel::UrlRole).toUrl();
+        if(url.matches(imgUrl, QUrl::RemoveScheme))
             return true;
     }
     return false;
@@ -182,7 +183,7 @@ bool Job::load(const QUrl& url)
     QFile jsonFile(dir.filePath("job.json"));
     if(!jsonFile.open(QIODevice::ReadOnly))
     {
-        qWarning() << LOGID << "unable to read the job descriptor file" << jsonFile.fileName();
+        qWarning() << LOGID << "no descriptor file";
         return false;
     }
     // read it and close the file handler
@@ -456,8 +457,8 @@ void Job::createDefaultGraph()
     // step->attributes()->addAttribute(att);
     // _steps->addStep(step);
 
-    // feature extraction
-    Step* step = new Step("feature_extraction");
+    // feature detection
+    Step* step = new Step("feature_detection");
     Attribute* att = new Attribute();
     att->setType(2); // combo
     // att->setKey("density");
@@ -471,7 +472,7 @@ void Job::createDefaultGraph()
     step->attributes()->addAttribute(att);
     att = new Attribute();
     att->setType(2); // combo
-    att->setKey("featureType");
+    att->setKey("method");
     att->setName("feature type");
     att->setTooltip(featureTypeTooltip);
     att->setValue("SIFT");

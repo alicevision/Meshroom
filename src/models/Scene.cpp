@@ -40,7 +40,7 @@ void Scene::setUrl(const QUrl& url)
     if(_url == url)
         return;
     _url = url;
-    emit urlChanged();
+    Q_EMIT urlChanged();
 }
 
 void Scene::setName(const QString& name)
@@ -48,7 +48,7 @@ void Scene::setName(const QString& name)
     if(_name == name)
         return;
     _name = name;
-    emit nameChanged();
+    Q_EMIT nameChanged();
 }
 
 void Scene::setDate(const QDateTime& date)
@@ -56,7 +56,7 @@ void Scene::setDate(const QDateTime& date)
     if(_date == date)
         return;
     _date = date;
-    emit dateChanged();
+    Q_EMIT dateChanged();
 }
 
 void Scene::setUser(const QString& user)
@@ -64,7 +64,7 @@ void Scene::setUser(const QString& user)
     if(_user == user)
         return;
     _user = user;
-    emit userChanged();
+    Q_EMIT userChanged();
 }
 
 void Scene::setThumbnail(const QUrl& thumbnail)
@@ -72,7 +72,7 @@ void Scene::setThumbnail(const QUrl& thumbnail)
     if(_thumbnail == thumbnail)
         return;
     _thumbnail = thumbnail;
-    emit thumbnailChanged();
+    Q_EMIT thumbnailChanged();
 }
 
 void Scene::setDirty(const bool& dirty)
@@ -80,7 +80,7 @@ void Scene::setDirty(const bool& dirty)
     if(_dirty == dirty)
         return;
     _dirty = dirty;
-    emit dirtyChanged();
+    Q_EMIT dirtyChanged();
 }
 
 bool Scene::load()

@@ -30,7 +30,7 @@ void GLView::setColor(const QColor& color)
     if(color == _color)
         return;
     _color = color;
-    emit colorChanged();
+    Q_EMIT colorChanged();
     refresh();
 }
 

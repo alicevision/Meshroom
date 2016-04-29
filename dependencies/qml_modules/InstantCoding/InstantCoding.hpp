@@ -21,9 +21,7 @@ public:
 
 public:
     void watch(const QString& path);
-
-public slots:
-    void fileChanged(const QString& path);
+    Q_SLOT void fileChanged(const QString& path);
 
 private:
     void traverseDirectory(const QString& path, InstantCoding::fun_t f);

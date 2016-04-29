@@ -34,12 +34,10 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     Attribute* get(const QString& key);
 
-public slots:
-    void addAttribute(Attribute* attribute);
-    QVariantMap get(int row) const;
-
-signals:
-    void countChanged(int c);
+public:
+    Q_SLOT void addAttribute(Attribute* attribute);
+    Q_SLOT QVariantMap get(int row) const;
+    Q_SIGNAL void countChanged(int c);
 
 protected:
     QHash<int, QByteArray> roleNames() const override;

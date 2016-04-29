@@ -27,6 +27,7 @@ QT5_ADD_RESOURCES(TARGET_QRCS qml/resources.qrc)
 # Add definitions
 #
 add_definitions(-DQT_MESSAGELOGCONTEXT)
+add_definitions(-DQT_NO_KEYWORDS)
 
 #
 # Target properties

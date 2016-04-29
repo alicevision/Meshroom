@@ -66,7 +66,7 @@ bool AttributeModel::setData(const QModelIndex& index, const QVariant& value, in
     if(att->value() == value)
         return false;
     att->setValue(value);
-    emit dataChanged(index, index);
+    Q_EMIT dataChanged(index, index);
     return true;
 }
 
@@ -108,7 +108,7 @@ void AttributeModel::addAttribute(Attribute* attribute)
 
     _attributes << attribute;
     endInsertRows();
-    emit countChanged(rowCount());
+    Q_EMIT countChanged(rowCount());
 }
 
 QVariantMap AttributeModel::get(int row) const

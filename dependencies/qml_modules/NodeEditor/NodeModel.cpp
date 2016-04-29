@@ -30,7 +30,7 @@ void NodeModel::addNode(Node* node)
 
     _nodes << node;
     endInsertRows();
-    emit countChanged(rowCount());
+    Q_EMIT countChanged(rowCount());
 }
 
 int NodeModel::rowCount(const QModelIndex& parent) const

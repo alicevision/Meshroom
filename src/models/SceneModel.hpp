@@ -30,13 +30,11 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role) override;
     void addScene(Scene* scene);
 
-public slots:
-    void addScene(const QUrl& url);
-    void removeScene(Scene* scene);
-    QVariantMap get(int row) const;
-
-signals:
-    void countChanged(int c);
+public:
+    Q_SLOT void addScene(const QUrl& url);
+    Q_SLOT void removeScene(Scene* scene);
+    Q_SLOT QVariantMap get(int row) const;
+    Q_SIGNAL void countChanged(int c);
 
 protected:
     QHash<int, QByteArray> roleNames() const override;

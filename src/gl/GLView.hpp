@@ -19,19 +19,17 @@ public:
     GLView();
     ~GLView();
 
-public slots:
-    const QColor& color() const { return _color; }
-    void setColor(const QColor& color);
-    void loadAlembicScene(const QUrl& url);
+public:
+    Q_SLOT const QColor& color() const { return _color; }
+    Q_SLOT void setColor(const QColor& color);
+    Q_SLOT void loadAlembicScene(const QUrl& url);
+    Q_SIGNAL void colorChanged();
 
-private slots:
-    void handleWindowChanged(QQuickWindow* win);
-    void sync();
-    void paint();
-    void refresh();
-
-signals:
-    void colorChanged();
+private:
+    Q_SLOT void handleWindowChanged(QQuickWindow* win);
+    Q_SLOT void sync();
+    Q_SLOT void paint();
+    Q_SLOT void refresh();
 
 protected:
     void mouseMoveEvent(QMouseEvent*);

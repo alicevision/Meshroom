@@ -26,16 +26,12 @@ public:
 public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    Q_SLOT void clear();
+    Q_SIGNAL void addLog(Log* log);
+    Q_SIGNAL void countChanged(int c);
 
-public slots:
-    void clear();
-
-private slots:
-    void onAddLog(Log* log);
-
-signals:
-    void addLog(Log* log);
-    void countChanged(int c);
+private:
+    Q_SLOT void onAddLog(Log* log);
 
 protected:
     QHash<int, QByteArray> roleNames() const override;

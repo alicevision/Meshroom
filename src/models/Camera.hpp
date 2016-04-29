@@ -13,11 +13,11 @@ class Camera : public QObject
 public:
     Camera();
 
-public slots:
-    const QMatrix4x4& viewMatrix() const { return _viewMatrix; }
-    const float& lookAtRadius() { return _lookAtRadius; }
-    void setViewMatrix(const QMatrix4x4& mat);
-    void setLookAtRadius(float radius);
+public:
+    Q_SLOT const QMatrix4x4& viewMatrix() const { return _viewMatrix; }
+    Q_SLOT const float& lookAtRadius() { return _lookAtRadius; }
+    Q_SLOT void setViewMatrix(const QMatrix4x4& mat);
+    Q_SLOT void setLookAtRadius(float radius);
 
 public:
     QVector3D lookAt() const;

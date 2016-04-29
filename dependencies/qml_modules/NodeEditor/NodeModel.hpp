@@ -27,12 +27,10 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     Node* get(const QString& name);
 
-public slots:
-    void addNode(const QString& name);
-    QVariantMap get(int row) const;
-
-signals:
-    void countChanged(int c);
+public:
+    Q_SLOT void addNode(const QString& name);
+    Q_SLOT QVariantMap get(int row) const;
+    Q_SIGNAL void countChanged(int c);
 
 protected:
     QHash<int, QByteArray> roleNames() const override;

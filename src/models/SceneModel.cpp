@@ -81,7 +81,7 @@ bool SceneModel::setData(const QModelIndex& index, const QVariant& value, int ro
         default:
             return false;
     }
-    emit dataChanged(index, index);
+    Q_EMIT dataChanged(index, index);
     return true;
 }
 
@@ -107,7 +107,7 @@ void SceneModel::addScene(Scene* scene)
     QModelIndex id = index(rowCount() - 1, 0);
     auto callback = [id, this]()
     {
-        emit dataChanged(id, id);
+        Q_EMIT dataChanged(id, id);
     };
     connect(scene, &Scene::urlChanged, this, callback);
     connect(scene, &Scene::nameChanged, this, callback);
@@ -116,7 +116,7 @@ void SceneModel::addScene(Scene* scene)
     connect(scene, &Scene::thumbnailChanged, this, callback);
     connect(scene, &Scene::dirtyChanged, this, callback);
 
-    emit countChanged(rowCount());
+    Q_EMIT countChanged(rowCount());
     SettingsIO::saveRecentScenes(this);
 }
 
@@ -143,7 +143,7 @@ void SceneModel::removeScene(Scene* scene)
     delete scene;
     endRemoveRows();
 
-    emit countChanged(rowCount());
+    Q_EMIT countChanged(rowCount());
     SettingsIO::saveRecentScenes(this);
 }
 

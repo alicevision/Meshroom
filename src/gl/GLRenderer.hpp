@@ -27,8 +27,8 @@ public:
     void addAlembicScene(const QUrl& url);
     void resetScene();
 
-public slots:
-    void draw();
+public:
+    Q_SLOT void draw();
 
 private:
     void updateWorldMatrix();

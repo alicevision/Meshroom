@@ -20,10 +20,10 @@ public:
     void setKey(QVariant key);
     bool eventFilter(QObject* obj, QEvent* e) override;
 
-signals:
-    void keyChanged();
-    void activated();
-    void pressedAndHold();
+public:
+    Q_SIGNAL void keyChanged();
+    Q_SIGNAL void activated();
+    Q_SIGNAL void pressedAndHold();
 
 private:
     QKeySequence _keySequence;

@@ -17,9 +17,9 @@ public:
     Application(QQmlApplicationEngine& engine);
     ~Application() = default;
 
-public slots:
-    SceneModel* scenes() const { return _scenes; }
-    QSortFilterProxyModel* proxy() const { return _proxy; }
+public:
+    Q_SLOT SceneModel* scenes() const { return _scenes; }
+    Q_SLOT QSortFilterProxyModel* proxy() const { return _proxy; }
 
 private:
     SceneModel* _scenes;

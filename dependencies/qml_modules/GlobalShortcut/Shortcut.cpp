@@ -24,7 +24,7 @@ void Shortcut::setKey(QVariant key)
     if(_keySequence != newKey)
     {
         _keySequence = key.value<QKeySequence>();
-        emit keyChanged();
+        Q_EMIT keyChanged();
     }
 }
 
@@ -39,7 +39,7 @@ bool Shortcut::eventFilter(QObject* obj, QEvent* e)
         if(!_keypressAlreadySend && QKeySequence(keyInt) == _keySequence)
         {
             _keypressAlreadySend = true;
-            emit activated();
+            Q_EMIT activated();
         }
     }
     else if(e->type() == QEvent::KeyRelease)

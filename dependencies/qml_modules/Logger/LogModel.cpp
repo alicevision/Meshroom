@@ -56,7 +56,7 @@ void LogModel::onAddLog(Log* log)
     QQmlEngine::setObjectOwnership(log, QQmlEngine::CppOwnership);
     _logs << log;
     endInsertRows();
-    emit countChanged(rowCount());
+    Q_EMIT countChanged(rowCount());
 }
 
 void LogModel::clear()
@@ -65,7 +65,7 @@ void LogModel::clear()
     while(!_logs.isEmpty())
         delete _logs.takeFirst();
     endRemoveRows();
-    emit countChanged(rowCount());
+    Q_EMIT countChanged(rowCount());
 }
 
 } // namespace

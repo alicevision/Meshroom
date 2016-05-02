@@ -25,6 +25,10 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
         auto pointCloud = new GLPointCloud();
         pointCloud->setRawPositions(positions->get(), positions->size());
 
+	for (int i = 0; i < positions->size(); ++i)
+	    printf("Point %d: [ %f, %f, %f ]\n", i, positions->get()[i].x,
+		positions->get()[i].y, positions->get()[i].z); 
+
         // Check if we have a color property
         bool colored = false;
         ICompoundProperty arbProp = ms.getArbGeomParams();

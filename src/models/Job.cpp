@@ -457,8 +457,8 @@ void Job::createDefaultGraph()
     // step->attributes()->addAttribute(att);
     // _steps->addStep(step);
 
-    // feature extraction
-    Step* step = new Step("feature_extraction");
+    // feature detection
+    Step* step = new Step("feature_detection");
     Attribute* att = new Attribute();
     att->setType(2); // combo
     // att->setKey("density");
@@ -472,7 +472,7 @@ void Job::createDefaultGraph()
     step->attributes()->addAttribute(att);
     att = new Attribute();
     att->setType(2); // combo
-    att->setKey("featureType");
+    att->setKey("method");
     att->setName("feature type");
     att->setTooltip(featureTypeTooltip);
     att->setValue("SIFT");

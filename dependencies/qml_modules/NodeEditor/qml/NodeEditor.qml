@@ -10,7 +10,7 @@ Rectangle {
 
     // properties
     property variant nodeModel: _nodes
-    property variant connectionModel: null
+    property variant connectionModel: _connections
 
     // signal/slots
     signal nodeChanged()
@@ -41,9 +41,9 @@ Rectangle {
             return;
         for(var i=0; i<root.connectionModel.count; i++)
         {
-            var sourceNodeId = root.connectionModel.get(i).source_node;
-            var targetNodeId = root.connectionModel.get(i).target_node;
-            var targetSlotId = root.connectionModel.get(i).target_slot;
+            var sourceNodeId = root.connectionModel.get(i).sourceID;
+            var targetNodeId = root.connectionModel.get(i).targetID;
+            var targetSlotId = root.connectionModel.get(i).slotID;
             var sourceNodeItem = repeater.itemAt(sourceNodeId);
             var targetNodeItem = repeater.itemAt(targetNodeId);
             var sourceNode = root.nodeModel.get(sourceNodeId);
@@ -79,7 +79,7 @@ Rectangle {
         {
             var nodeItem = repeater.itemAt(i);
             nodeItem.x = xmargin + i*(nodeItem.width + 20);
-            nodeItem.y = yoffset;// + Math.random() * 60 - 60;
+            nodeItem.y = yoffset; // + Math.random() * 60 - 60;
         }
         canvas.requestPaint();
     }
@@ -90,8 +90,8 @@ Rectangle {
         anchors.fill: parent
         model: root.nodeModel
         delegate: NodeDelegate {
-            width: 80
-            height: 50
+            width: 100
+            height: 60
         }
     }
 

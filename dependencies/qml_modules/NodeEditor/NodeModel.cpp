@@ -48,8 +48,10 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
     {
         case NameRole:
             return node->name();
-        case AttributesRole:
-            return QVariant::fromValue(node->attributes());
+        case InputsRole:
+            return QVariant::fromValue(node->inputs());
+        case OutputsRole:
+            return QVariant::fromValue(node->outputs());
         case ModelDataRole:
             return QVariant::fromValue(node);
         default:
@@ -73,7 +75,8 @@ QHash<int, QByteArray> NodeModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
     roles[NameRole] = "name";
-    roles[AttributesRole] = "attributes";
+    roles[InputsRole] = "inputs";
+    roles[OutputsRole] = "outputs";
     roles[ModelDataRole] = "modelData";
     return roles;
 }

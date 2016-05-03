@@ -11,6 +11,10 @@ Rectangle {
     property variant model: null
 
     Component {
+        id: emptyDelegate
+        Item {}
+    }
+    Component {
         id: labelDelegate
         Text {
             text: modelData.name
@@ -86,14 +90,15 @@ Rectangle {
                 rowSpacing: 5
                 columnSpacing: 5
                 Repeater {
-                    model: root.model ? root.model.attributes.count*2 : 0
+                    model: root.model ? root.model.inputs.count*2 : 0
                     delegate: Loader {
                         Layout.fillWidth: index%2 != 0
-                        property variant modelData: root.model.attributes.get(index/2)
+                        property variant modelData: root.model.inputs.get(index/2)
                         sourceComponent: {
                             if(index % 2 == 0)
                                 return labelDelegate;
                             switch(modelData.type) {
+                                case Attribute.UNKNOWN: return emptyDelegate
                                 case Attribute.TEXTFIELD: return textfieldDelegate
                                 case Attribute.SLIDER: return sliderDelegate
                                 case Attribute.COMBOBOX: return comboboxDelegate

@@ -9,6 +9,8 @@ namespace nodeeditor
 class Node : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(AttributeModel* inputs READ inputs CONSTANT)
+    Q_PROPERTY(AttributeModel* outputs READ outputs CONSTANT)
 
 public:
     Node() = default;
@@ -17,7 +19,8 @@ public:
 
 public:
     const QString& name() const { return _name; }
-    AttributeModel* attributes() const { return _attributes; }
+    AttributeModel* inputs() const { return _inputs; }
+    AttributeModel* outputs() const { return _outputs; }
 
 public:
     void serializeToJSON(QJsonObject* obj) const;
@@ -25,7 +28,8 @@ public:
 
 private:
     QString _name;
-    AttributeModel* _attributes;
+    AttributeModel* _inputs;
+    AttributeModel* _outputs;
 };
 
 } // namespace

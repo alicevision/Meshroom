@@ -39,72 +39,83 @@ Rectangle {
     }
 
     Text {
-        anchors.fill: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        height: 20
         text: model.name
         font.pixelSize: Style.text.size.xsmall
+        color: Style.text.color.dark
         horizontalAlignment: Text.AlignHCenter
     }
 
-    Column {
-        anchors.top: parent.top
-        anchors.topMargin: 10
-        width: parent.width * 0.5
-        height: parent.height
+    RowLayout {
+        anchors.fill: parent
+        anchors.topMargin: 20
+        anchors.bottomMargin: 10
         spacing: 2
-        Repeater {
-            id: inputRepeater
-            clip: true
-            model: root.inputs
-            delegate: RowLayout {
-                height: 15
-                width: parent.width
-                spacing: 0
-                Rectangle {
-                    Layout.preferredHeight: 15
-                    Layout.preferredWidth: 2
-                    color: Style.window.color.xlight
+        ScrollView {
+            id: inputScrollview
+            Layout.fillWidth: true
+            Layout.preferredHeight: parent.height
+            Column {
+                width: inputScrollview.width
+                height: inputRepeater.model.count * (inputRepeater.itemHeight+spacing)
+                spacing: 2
+                Repeater {
+                    id: inputRepeater
+                    property int itemHeight: 15
+                    anchors.fill: parent
+                    model: root.inputs
+                    RowLayout {
+                        width: inputRepeater.width
+                        height: inputRepeater.itemHeight
+                        spacing: 2
+                        Rectangle {
+                            Layout.fillHeight: true
+                            Layout.preferredWidth: 2
+                            color: Style.window.color.xlight
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            text: model.name
+                            font.pixelSize: Style.text.size.xsmall
+                        }
+                    }
                 }
-                Item { Layout.preferredWidth: 2 } // spacer
-                Text {
-                    Layout.fillWidth: true
-                    text: model.name
-                    // color: Style.text.color.dark
-                    font.pixelSize: Style.text.size.xsmall
+            }
+        }
+        ScrollView {
+            id: outputScrollview
+            Layout.fillWidth: true
+            Layout.preferredHeight: parent.height
+            Column {
+                width: outputScrollview.width
+                height: outputRepeater.model.count * (outputRepeater.itemHeight+spacing)
+                spacing: 2
+                Repeater {
+                    id: outputRepeater
+                    property int itemHeight: 15
+                    anchors.fill: parent
+                    model: root.outputs
+                    RowLayout {
+                        width: inputRepeater.width
+                        height: inputRepeater.itemHeight
+                        spacing: 2
+                        Text {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            text: model.name
+                            font.pixelSize: Style.text.size.xsmall
+                            horizontalAlignment: Text.AlignRight
+                        }
+                        Rectangle {
+                            Layout.fillHeight: true
+                            Layout.preferredWidth: 2
+                            color: Style.window.color.xlight
+                        }
+                    }
                 }
             }
         }
     }
-
-    Column {
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.topMargin: 10
-        width: parent.width * 0.5
-        height: parent.height
-        spacing: 2
-        Repeater {
-            id: outputRepeater
-            clip: true
-            model: root.outputs
-            delegate: RowLayout {
-                height: 15
-                width: parent.width
-                spacing: 0
-                Text {
-                    Layout.fillWidth: true
-                    text: model.name
-                    // color: Style.text.color.dark
-                    font.pixelSize: Style.text.size.xsmall
-                    horizontalAlignment: Text.AlignRight
-                }
-                Item { Layout.preferredWidth: 2 } // spacer
-                Rectangle {
-                    Layout.preferredHeight: 15
-                    Layout.preferredWidth: 2
-                    color: Style.window.color.xlight
-                }
-            }
-        }
-    }
-
 }

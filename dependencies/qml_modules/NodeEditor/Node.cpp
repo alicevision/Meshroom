@@ -6,44 +6,27 @@ namespace nodeeditor
 
 Node::Node(const QString& name)
     : _name(name)
-    , _attributes(new AttributeModel(this))
+    , _inputs(new AttributeModel(this))
+    , _outputs(new AttributeModel(this))
 {
+    Attribute* out = new Attribute();
+    out->setName("output");
+    _outputs->addAttribute(out);
 }
 
 Node::Node(const Node& obj)
     : _name(obj.name())
-    , _attributes(new AttributeModel(*(obj.attributes())))
+    , _inputs(new AttributeModel(*(obj.inputs())))
+    , _outputs(new AttributeModel(*(obj.outputs())))
 {
 }
 
-void Node::serializeToJSON(QJsonObject* nodesObject) const
+void Node::serializeToJSON(QJsonObject* obj) const
 {
-    if(!nodesObject)
-        return;
-    QJsonObject nodeObject;
-    for(size_t i = 0; i < _attributes->rowCount(); i++)
-    {
-        QModelIndex id = _attributes->index(i, 0);
-        Attribute* att = _attributes->data(id, AttributeModel::ModelDataRole).value<Attribute*>();
-        att->serializeToJSON(&nodeObject);
-    }
-    if(!nodeObject.empty())
-        nodesObject->insert(_name, nodeObject);
 }
 
-void Node::deserializeFromJSON(const QJsonObject& nodesObject)
+void Node::deserializeFromJSON(const QJsonObject& obj)
 {
-    if(!nodesObject.contains(_name))
-        return;
-    QJsonObject nodeObject = nodesObject[_name].toObject();
-    for(size_t i = 0; i < _attributes->rowCount(); i++)
-    {
-        QModelIndex id = _attributes->index(i, 0);
-        Attribute* att = _attributes->data(id, AttributeModel::ModelDataRole).value<Attribute*>();
-        if(!att)
-            continue;
-        att->deserializeFromJSON(nodeObject);
-    }
 }
 
 } // namespace

@@ -17,7 +17,8 @@ public:
 public:
     enum AttributeType
     {
-        TEXTFIELD = 0,
+        UNKNOWN = 0,
+        TEXTFIELD,
         SLIDER,
         COMBOBOX,
         CHECKBOX
@@ -53,7 +54,7 @@ private:
     QString _key;
     QString _name;
     QString _tooltip;
-    AttributeType _type;
+    AttributeType _type = AttributeType::UNKNOWN;
     QVariant _min;
     QVariant _max;
     QVariant _step;

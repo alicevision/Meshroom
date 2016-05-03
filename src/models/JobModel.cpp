@@ -104,7 +104,8 @@ void JobModel::addJob(Job* job)
 
     // model and contained object synchronization
     QModelIndex id = index(rowCount() - 1, 0);
-    auto callback = [id, this]() {
+    auto callback = [id, this]()
+    {
         emit dataChanged(id, id);
     };
     connect(job, &Job::nameChanged, this, callback);

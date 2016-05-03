@@ -80,7 +80,8 @@ void ProjectModel::addProject(Project* project)
 
     // model and contained object synchronization
     QModelIndex id = index(rowCount() - 1, 0);
-    auto callback = [id, this]() {
+    auto callback = [id, this]()
+    {
         emit dataChanged(id, id);
     };
     connect(project, &Project::nameChanged, this, callback);

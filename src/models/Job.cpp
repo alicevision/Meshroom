@@ -461,15 +461,13 @@ void Job::createDefaultGraph()
     Step* step = new Step("feature_detection");
     Attribute* att = new Attribute();
     att->setType(2); // combo
-    // att->setKey("density");
     att->setKey("describerPreset");
     att->setName("density");
     att->setTooltip(densityTooltip);
     att->setValue("Normal");
     att->setOptions(QStringList({"Normal", "High", "Ultra"}));
-    // att->setValue("NORMAL");
-    // att->setOptions(QStringList({"LOW", "MEDIUM", "NORMAL", "HIGH", "ULTRA"}));
     step->attributes()->addAttribute(att);
+
     att = new Attribute();
     att->setType(2); // combo
     att->setKey("method");
@@ -492,14 +490,17 @@ void Job::createDefaultGraph()
     // att->setMax(10000);
     // att->setStep(1);
     // step->attributes()->addAttribute(att);
+
     // att = new Attribute();
     // att->setType(2); // combo
     // att->setKey("method");
     // att->setName("method");
     // att->setTooltip(methodTooltip);
     // att->setValue("ANNL2");
-    // att->setOptions(QStringList({"BRUTEFORCEL2", "ANNL2", "CASCADEHASHINGL2", "FASTCASCADEHASHINGL2"}));
+    // att->setOptions(QStringList({"BRUTEFORCEL2", "ANNL2", "CASCADEHASHINGL2",
+    // "FASTCASCADEHASHINGL2"}));
     // step->attributes()->addAttribute(att);
+
     // att = new Attribute();
     // att->setType(4); // boolean
     // att->setKey("useGuidedMatching");
@@ -518,6 +519,7 @@ void Job::createDefaultGraph()
     att->setTooltip(initialPairTooltip);
     att->setValue(QStringList({"", ""}));
     step->attributes()->addAttribute(att);
+
     // att = new Attribute();
     // att->setType(1); // slider
     // att->setKey("minTrackLength");
@@ -538,8 +540,8 @@ void Job::createDefaultGraph()
     att->setName("enabled");
     att->setTooltip(enableMeshingTooltip);
     step->attributes()->addAttribute(att);
-    att->setValue("true");
-    att->setOptions(QStringList({"true", "false"}));
+    att->setValue(true);
+
     att = new Attribute();
     att->setType(1); // slider
     att->setKey("scale");
@@ -555,13 +557,12 @@ void Job::createDefaultGraph()
     // undistort
     step = new Step("undistort");
     att = new Attribute();
-    att->setType(4); // checkbox
+    att->setType(4); // boolean
     att->setKey("enabled");
     att->setName("enabled");
     att->setTooltip(undistortTooltip);
     step->attributes()->addAttribute(att);
-    att->setValue("false");
-    att->setOptions(QStringList({"true", "false"}));
+    att->setValue(false);
     _steps->addStep(step);
 }
 

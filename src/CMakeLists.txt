@@ -10,7 +10,6 @@ file(GLOB_RECURSE QML_SRCS *.qml)
 #
 set(TARGETOBJ meshroom)
 
-
 #
 # dependencies
 #
@@ -33,8 +32,8 @@ add_definitions(-DQT_NO_KEYWORDS)
 # Target properties
 #
 add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})
-target_link_libraries(${TARGETOBJ}
-                    ${OPENGL_LIBRARIES})
+target_link_libraries(${TARGETOBJ} ${OPENGL_LIBRARIES})
+
 #
 # Optional alembic importer
 #

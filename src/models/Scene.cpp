@@ -1,4 +1,5 @@
 #include "Scene.hpp"
+#include "Graph.hpp"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -13,6 +14,7 @@ namespace meshroom
 {
 
 Scene::Scene(const QUrl& url)
+    : _graph(new Graph(this))
 {
     // callbacks
     auto setDirty_CB = [this]()

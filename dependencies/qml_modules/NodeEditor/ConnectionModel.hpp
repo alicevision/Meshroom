@@ -27,6 +27,7 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 
 public:
+    Q_SLOT void addConnection(int, int, int);
     Q_SLOT QVariantMap get(int row) const;
     Q_SIGNAL void countChanged(int c);
 

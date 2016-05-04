@@ -2,10 +2,6 @@ import QtQuick 2.5
 
 Item {
     Connections {
-        target: _nodes
-        onCountChanged: currentScene.setDirty(true)
-    }
-    Connections {
         target: Qt.application
         onAboutToQuit: currentScene.reset()
     }
@@ -80,7 +76,7 @@ Item {
             select_CB();
         }
         onAddNode: {
-            function add_CB() { _nodes.addNode(dialog.selection); }
+            function add_CB() { currentScene.graph.addNode(dialog.selection); }
             var dialog = _dialogs.addNode.createObject(_window);
             dialog.onAccepted.connect(add_CB);
             dialog.open();

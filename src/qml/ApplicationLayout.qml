@@ -4,7 +4,6 @@ import QtQuick.Layouts 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
 import Logger 1.0
-import NodeEditor 1.0
 import "content"
 
 ColumnLayout {
@@ -47,7 +46,7 @@ ColumnLayout {
                         }
                     }
                 }
-                NodeEditor {
+                Graph {
                     Layout.fillHeight: true
                     onSelectionChanged: scenesettings.model = node
                 }

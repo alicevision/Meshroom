@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graph.hpp"
 #include <QObject>
 #include <QUrl>
 #include <QDateTime>
@@ -19,6 +20,7 @@ class Scene : public QObject
     Q_PROPERTY(QString user READ user WRITE setUser NOTIFY userChanged)
     Q_PROPERTY(QUrl thumbnail READ thumbnail WRITE setThumbnail NOTIFY thumbnailChanged)
     Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
+    Q_PROPERTY(Graph* graph READ graph CONSTANT)
 
 public:
     enum BuildMode
@@ -38,6 +40,7 @@ public:
     Q_SLOT const QString& user() const { return _user; }
     Q_SLOT const QUrl& thumbnail() const { return _thumbnail; }
     Q_SLOT const bool& dirty() const { return _dirty; }
+    Q_SLOT Graph* graph() const { return _graph; }
     Q_SLOT void setUrl(const QUrl&);
     Q_SLOT void setName(const QString&);
     Q_SLOT void setDate(const QDateTime&);
@@ -67,6 +70,7 @@ private:
     QString _user;
     QUrl _thumbnail;
     bool _dirty;
+    Graph* _graph = nullptr;
 };
 
 } // namespace

@@ -69,6 +69,15 @@ QHash<int, QByteArray> ConnectionModel::roleNames() const
     return roles;
 }
 
+void ConnectionModel::addConnection(int sourceID, int targetID, int slotID)
+{
+    Connection* connection = new Connection();
+    connection->setSourceID(sourceID);
+    connection->setTargetID(targetID);
+    connection->setSlotID(slotID);
+    addConnection(connection);
+}
+
 QVariantMap ConnectionModel::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();

@@ -3,51 +3,58 @@ import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
+import NodeEditor 1.0
 
 Rectangle {
 
     id: root
 
     // properties
-    property variant nodeModel: _nodes
-    property variant connectionModel: _connections
+    property variant nodes: null
+    property variant connections: null
+    property Component nodeModel: NodeModel {}
+    property Component connectionModel: ConnectionModel {}
 
-    // signal/slots
+    // signals
     signal nodeChanged()
     signal selectionChanged(var node)
+
+    // slots
     onNodeChanged: canvas.requestPaint()
-    Component.onCompleted: {
-        if(!root.nodeModel)
-            return;
-        fitLayout();
-    }
 
-    // background
-    color: Style.window.color.dark
-    Image {
-        anchors.fill: parent
-        source: "qrc:///images/stripes.png"
-        fillMode: Image.Tile
-        opacity: 0.3
-        MouseArea {
-            anchors.fill: parent
-            onClicked: selectionChanged(null)
-        }
+    // functions
+    function init() {
+        if(root.nodes) root.nodes.destroy();
+        if(root.connections) root.connections.destroy();
+        root.nodes = root.nodeModel.createObject();
+        root.connections = root.connectionModel.createObject();
     }
-
-    // main functions
-    function drawConnections(context) {
-        if(!root.connectionModel)
+    function fitLayout() {
+        if(!root.nodes)
             return;
-        for(var i=0; i<root.connectionModel.count; i++)
+        var xmargin = 40;
+        var ymargin = 20;
+        var yoffset = 60;
+        for(var i=0; i<root.nodes.count; i++)
         {
-            var sourceNodeId = root.connectionModel.get(i).sourceID;
-            var targetNodeId = root.connectionModel.get(i).targetID;
-            var targetSlotId = root.connectionModel.get(i).slotID;
+            var nodeItem = repeater.itemAt(i);
+            nodeItem.x = xmargin + i*(nodeItem.width + 20);
+            nodeItem.y = yoffset; // + Math.random() * 60 - 60;
+        }
+        canvas.requestPaint();
+    }
+    function drawConnections(context) {
+        if(!root.connections)
+            return;
+        for(var i=0; i<root.connections.count; i++)
+        {
+            var sourceNodeId = root.connections.get(i).sourceID;
+            var targetNodeId = root.connections.get(i).targetID;
+            var targetSlotId = root.connections.get(i).slotID;
             var sourceNodeItem = repeater.itemAt(sourceNodeId);
             var targetNodeItem = repeater.itemAt(targetNodeId);
-            var sourceNode = root.nodeModel.get(sourceNodeId);
-            var targetNode = root.nodeModel.get(targetNodeId);
+            var sourceNode = root.nodes.get(sourceNodeId);
+            var targetNode = root.nodes.get(targetNodeId);
             drawConnection(context, sourceNodeItem.getOutputItem(0), targetNodeItem.getInputItem(targetSlotId));
         }
     }
@@ -69,26 +76,25 @@ Rectangle {
         context.bezierCurveTo(ctrlPtAX, ctrlPtAY, ctrlPtBX, ctrlPtBY, inputPos.x, inputPos.y);
         context.stroke();
     }
-    function fitLayout() {
-        if(!root.nodeModel)
-            return;
-        var xmargin = 40;
-        var ymargin = 20;
-        var yoffset = 60;
-        for(var i=0; i<root.nodeModel.count; i++)
-        {
-            var nodeItem = repeater.itemAt(i);
-            nodeItem.x = xmargin + i*(nodeItem.width + 20);
-            nodeItem.y = yoffset; // + Math.random() * 60 - 60;
+
+    // background
+    color: Style.window.color.dark
+    Image {
+        anchors.fill: parent
+        source: "qrc:///images/stripes.png"
+        fillMode: Image.Tile
+        opacity: 0.3
+        MouseArea {
+            anchors.fill: parent
+            onClicked: selectionChanged(null)
         }
-        canvas.requestPaint();
     }
 
     // draw nodes
     Repeater {
         id: repeater
         anchors.fill: parent
-        model: root.nodeModel
+        model: root.nodes
         delegate: NodeDelegate {
             width: 100
             height: 60
@@ -108,7 +114,7 @@ Rectangle {
     }
 
     Text {
-        visible: !root.nodeModel || root.nodeModel.count == 0
+        visible: !root.nodes || root.nodes.count == 0
         anchors.centerIn: parent
         text: "Add new nodes with [TAB]"
         color: Style.text.color.xdark

@@ -19,9 +19,7 @@ Application::Application(QQmlApplicationEngine& engine)
     SettingsIO::loadRecentScenes(_scenes);
 
     // expose this object to QML & load the main QML file
-    if(engine.rootContext())
-        engine.rootContext()->setContextProperty("_application", this);
-
+    engine.rootContext()->setContextProperty("_application", this);
     engine.load(QCoreApplication::applicationDirPath() + "/qml/main.qml");
 }
 

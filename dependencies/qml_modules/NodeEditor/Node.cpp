@@ -9,6 +9,9 @@ Node::Node(const QString& name)
     , _inputs(new AttributeModel(this))
     , _outputs(new AttributeModel(this))
 {
+    Attribute* in = new Attribute();
+    in->setName("input");
+    _inputs->addAttribute(in);
     Attribute* out = new Attribute();
     out->setName("output");
     _outputs->addAttribute(out);

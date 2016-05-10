@@ -20,6 +20,7 @@ set(ROOT ${PROJECT_SOURCE_DIR})
 list(APPEND CMAKE_PREFIX_PATH "${ROOT}")
 set(CMAKE_MODULE_PATH "${ROOT}/cmake")
 include_directories("${ROOT}/src")
+include_directories("${ROOT}/plugins")
 
 #
 # Clang && macosx
@@ -65,3 +66,4 @@ endif("${isSystemDir}" STREQUAL "-1")
 # Add Build Targets
 #
 add_subdirectory(src meshroom)
+add_subdirectory(plugins)

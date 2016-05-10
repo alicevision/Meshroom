@@ -1,0 +1,37 @@
+
+#
+# Target srcs
+#
+file(GLOB_RECURSE TARGET_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
+
+#
+# Target name
+#
+set(TARGETLIB samplePlugin)
+
+#
+# dependencies
+#
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+find_package(Qt5Core REQUIRED)
+
+#
+# Add definitions
+#
+add_definitions(-DQT_MESSAGELOGCONTEXT)
+add_definitions(-DQT_NO_KEYWORDS)
+add_definitions(-DQT_PLUGIN)
+
+#
+# Target properties
+#
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/..)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+add_library(${TARGETLIB} SHARED ${TARGET_SRCS} ${TARGET_QRCS})
+QT5_USE_MODULES(${TARGETLIB} Core)
+
+#
+# Install settings
+#
+install(TARGETS ${TARGETLIB} DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins)

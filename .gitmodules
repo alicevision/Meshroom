@@ -1,0 +1,3 @@
+[submodule "dependencies/dependency_graph"]
+	path = dependencies/dependency_graph
+	url = https://github.com/poparteu/dependency_graph.git

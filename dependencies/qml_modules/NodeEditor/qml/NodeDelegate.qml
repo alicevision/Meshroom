@@ -17,6 +17,8 @@ Rectangle {
         return outputRepeater.itemAt(id);
     }
 
+    x: 10
+    y: 10
     radius: 10
     color: Style.window.color.dark
     border.color: mouse.containsMouse ? Style.window.color.selected : Style.window.color.light

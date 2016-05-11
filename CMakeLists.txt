@@ -65,5 +65,6 @@ endif("${isSystemDir}" STREQUAL "-1")
 #
 # Add Build Targets
 #
+add_subdirectory(dependencies/dependency_graph dependency_graph)
 add_subdirectory(src meshroom)
 add_subdirectory(plugins)

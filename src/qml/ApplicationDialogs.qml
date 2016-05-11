@@ -50,7 +50,7 @@ Item {
             ComboBox {
                 id: pluginCombo
                 Layout.fillWidth: true
-                model: [ "imageListing", "featureExtraction", "featureMatching" ]
+                model: _application.nodeTypes
             }
             Button {
                 Layout.fillWidth: true

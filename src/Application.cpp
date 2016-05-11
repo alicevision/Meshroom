@@ -20,6 +20,14 @@ Application::Application(QQmlApplicationEngine& engine)
     engine.load(QCoreApplication::applicationDirPath() + "/qml/main.qml");
 }
 
+void Application::setNodeTypes(const QStringList& nodeTypes)
+{
+    if(_nodeTypes == nodeTypes)
+        return;
+    _nodeTypes = nodeTypes;
+    Q_EMIT nodeTypesChanged();
+}
+
 void Application::loadPlugins()
 {
     PluginInterface* plugin = nullptr;
@@ -38,6 +46,7 @@ void Application::loadPlugins()
                                    .arg(plugin->major())
                                    .arg(plugin->minor());
             qInfo() << "plugin loaded:" << fullname << plugin->nodeTypes();
+            _nodeTypes.append(plugin->nodeTypes());
         }
     }
 }

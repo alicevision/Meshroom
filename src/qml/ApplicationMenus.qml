@@ -60,7 +60,7 @@ Item {
         model: _application.scenes
         MenuItem {
             text: model.url.toString().replace("file://", "")
-            onTriggered: selectScene(index)
+            onTriggered: openScene(index)
         }
         onObjectAdded: recentSceneMenu.insertItem(index, object)
         onObjectRemoved: recentSceneMenu.removeItem(object)

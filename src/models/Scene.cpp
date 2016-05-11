@@ -13,8 +13,9 @@
 namespace meshroom
 {
 
-Scene::Scene(const QUrl& url)
-    : _graph(new Graph(this))
+Scene::Scene(QObject* parent, const QUrl& url)
+    : QObject(parent)
+    , _graph(new Graph(this))
 {
     // callbacks
     auto setDirty_CB = [this]()

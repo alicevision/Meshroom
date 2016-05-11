@@ -13,16 +13,8 @@ namespace meshroom
 
 Application::Application(QQmlApplicationEngine& engine)
     : QObject(nullptr)
-    , _scenes(new SceneModel(this))
-    , _proxy(new QSortFilterProxyModel(this))
+    , _scene(new Scene(this))
 {
-    // setup proxy filters
-    _proxy->setSourceModel(_scenes);
-    _proxy->setFilterRole(SceneModel::NameRole);
-
-    // initialize recent scene lists
-    SettingsIO::loadRecentScenes(_scenes);
-
     // expose this object to QML & load the main QML file
     engine.rootContext()->setContextProperty("_application", this);
     engine.load(QCoreApplication::applicationDirPath() + "/qml/main.qml");

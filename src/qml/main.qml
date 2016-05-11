@@ -17,7 +17,9 @@ ApplicationWindow {
     title: Qt.application.name
 
     // properties
-    property variant currentScene: Scene {}
+    property variant currentScene: _application.scene
+    property variant defaultScene: Scene {} // used when application is
+                                            // about to quit
 
     // actions
     signal newScene()

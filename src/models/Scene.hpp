@@ -31,7 +31,8 @@ public:
     Q_ENUMS(BuildMode)
 
 public:
-    Scene(const QUrl& = QUrl());
+    Scene() = default;
+    Scene(QObject* parent, const QUrl& = QUrl());
 
 public:
     Q_SLOT const QUrl& url() const { return _url; }

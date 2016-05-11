@@ -3,7 +3,7 @@ import QtQuick 2.5
 Item {
     Connections {
         target: Qt.application
-        onAboutToQuit: currentScene.reset()
+        onAboutToQuit: currentScene = defaultScene
     }
     Connections {
         target: _window
@@ -24,7 +24,11 @@ Item {
         }
         onOpenScene: {
             function open_CB() {
-                function _CB() { addScene(dialog.fileUrl); }
+                function _CB() {
+                    currentScene.reset();
+                    currentScene.setUrl(dialog.fileUrl);
+                    currentScene.load();
+                }
                 var dialog = _dialogs.openScene.createObject(_window);
                 dialog.onAccepted.connect(_CB);
                 dialog.open();
@@ -51,32 +55,11 @@ Item {
             function _CB() {
                 currentScene.setUrl(dialog.fileUrl);
                 currentScene.save();
-                addScene(dialog.fileUrl);
                 if(callback) callback();
             }
             var dialog = _dialogs.saveScene.createObject(_window);
             dialog.onAccepted.connect(_CB);
             dialog.open();
-        }
-        onAddScene: {
-            _application.scenes.addScene(url);
-            currentScene = _application.scenes.get(_application.scenes.count-1).modelData;
-            currentScene.load();
-        }
-        onSelectScene: {
-            function select_CB() {
-                currentScene = _application.scenes.get(id).modelData;
-                currentScene.load();
-            }
-            if(currentScene.dirty) {
-                function save_CB() { saveScene(select_CB); }
-                var dialog = _dialogs.maySaveScene.createObject(_window);
-                dialog.onAccepted.connect(save_CB);
-                dialog.onRejected.connect(select_CB);
-                dialog.open();
-                return;
-            }
-            select_CB();
         }
         onAddNode: {
             function add_CB() { currentScene.graph.addNode(dialog.selection); }

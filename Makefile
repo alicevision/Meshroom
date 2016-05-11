@@ -13,7 +13,7 @@ all: ./build/Makefile
 
 format:
 	@ find ./src -type f \( -iname \*.?pp \) -exec clang-format -i {} \;
-	@ find ./dependencies -type f \( -iname \*.?pp \) -exec clang-format -i {} \;
+	@ find ./plugins -type f \( -iname \*.?pp \) -exec clang-format -i {} \;
 
 confclean:
 	@- (mkdir -p build && cd build >/dev/null 2>&1 && cmake .. >/dev/null 2>&1)

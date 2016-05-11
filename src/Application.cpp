@@ -41,10 +41,8 @@ void Application::loadPlugins()
         plugin = qobject_cast<PluginInterface*>(obj);
         if(plugin)
         {
-            QString fullname = QString("%1 v%2.%3")
-                                   .arg(plugin->name())
-                                   .arg(plugin->major())
-                                   .arg(plugin->minor());
+            QString fullname =
+                QString("%1 v%2.%3").arg(plugin->name()).arg(plugin->major()).arg(plugin->minor());
             qInfo() << "plugin loaded:" << fullname << plugin->nodeTypes();
             _nodeTypes.append(plugin->nodeTypes());
         }

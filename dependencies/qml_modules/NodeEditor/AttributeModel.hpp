@@ -36,6 +36,7 @@ public:
 
 public:
     Q_SLOT void addAttribute(Attribute* attribute);
+    Q_SLOT void addAttribute(const QJsonObject& descriptor);
     Q_SLOT QVariantMap get(int row) const;
     Q_SIGNAL void countChanged(int c);
 

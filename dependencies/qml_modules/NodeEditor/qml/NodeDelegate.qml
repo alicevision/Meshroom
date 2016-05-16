@@ -19,6 +19,7 @@ Rectangle {
 
     x: 10
     y: 10
+    z: (currentNodeID == index) ? 2 : 1
     radius: 10
     color: Style.window.color.dark
     border.color: mouse.containsMouse ? Style.window.color.selected : Style.window.color.light
@@ -37,7 +38,10 @@ Rectangle {
         drag.maximumY: root.parent.height - root.height
         propagateComposedEvents: true
         hoverEnabled: true
-        onClicked: selectionChanged(model)
+        onClicked: {
+            currentNodeID = index;
+            selectionChanged(model)
+        }
     }
 
     Text {

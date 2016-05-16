@@ -13,7 +13,7 @@ class Node : public QObject
     Q_PROPERTY(AttributeModel* outputs READ outputs CONSTANT)
 
 public:
-    Node() = default;
+    Node();
     Node(const QString& name);
     Node(const Node& obj);
 

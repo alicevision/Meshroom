@@ -7,6 +7,7 @@
 #include <QPluginLoader>
 #include <QDebug>
 #include <QDir>
+#include <QJsonArray>
 
 namespace meshroom
 {
@@ -28,6 +29,14 @@ void Application::setNodeTypes(const QStringList& nodeTypes)
     Q_EMIT nodeTypesChanged();
 }
 
+void Application::setNodeDescriptors(const QVariantMap& nodeDescriptors)
+{
+    if(_nodeDescriptors == nodeDescriptors)
+        return;
+    _nodeDescriptors = nodeDescriptors;
+    Q_EMIT nodeDescriptorsChanged();
+}
+
 void Application::loadPlugins()
 {
     PluginInterface* plugin = nullptr;
@@ -35,16 +44,31 @@ void Application::loadPlugins()
     for(QString filename : dir.entryList(QDir::Files))
     {
         QPluginLoader loader(dir.absoluteFilePath(filename));
+
+        // check metadata, before loading
+        QJsonObject metadata = loader.metaData().value("MetaData").toObject();
+        if(metadata.isEmpty())
+            continue;
+        QString name = metadata.value("name").toString();
+        // load the plugin
         QObject* obj = loader.instance();
         if(!obj)
             continue;
         plugin = qobject_cast<PluginInterface*>(obj);
         if(plugin)
         {
-            QString fullname =
-                QString("%1 v%2.%3").arg(plugin->name()).arg(plugin->major()).arg(plugin->minor());
-            qInfo() << "plugin loaded:" << fullname << plugin->nodeTypes();
-            _nodeTypes.append(plugin->nodeTypes());
+            qInfo() << "plugin loaded:" << name.toUtf8();
+            QJsonArray nodes = metadata.value("nodes").toArray();
+            for(auto n : nodes)
+            {
+                // ...get node type
+                QJsonObject nObj = n.toObject();
+                QString type = nObj.value("type").toString();
+                if(!type.isEmpty())
+                    _nodeTypes.append(type);
+
+                _nodeDescriptors.insert(type, nObj);
+            }
         }
     }
 }

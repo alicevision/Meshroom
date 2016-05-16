@@ -19,7 +19,7 @@ Item {
     Connections {
         target: currentScene.graph
         onNodeAdded: {
-            editor.nodes.addNode(name);
+            editor.nodes.addNode(descriptor);
             currentScene.setDirty(true);
         }
         onConnectionAdded: {

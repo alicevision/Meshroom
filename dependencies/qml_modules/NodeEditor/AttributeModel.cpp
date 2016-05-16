@@ -1,5 +1,6 @@
 #include "AttributeModel.hpp"
 #include <QQmlEngine>
+#include <QDebug>
 
 namespace nodeeditor
 {
@@ -100,15 +101,22 @@ QHash<int, QByteArray> AttributeModel::roleNames() const
 
 void AttributeModel::addAttribute(Attribute* attribute)
 {
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
-
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(attribute, QQmlEngine::CppOwnership);
     attribute->setParent(this);
 
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
     _attributes << attribute;
     endInsertRows();
+
     Q_EMIT countChanged(rowCount());
+}
+
+void AttributeModel::addAttribute(const QJsonObject& descriptor)
+{
+    Attribute* attribute = new Attribute();
+    attribute->deserializeFromJSON(descriptor);
+    addAttribute(attribute);
 }
 
 QVariantMap AttributeModel::get(int row) const

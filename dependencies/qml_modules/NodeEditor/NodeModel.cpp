@@ -1,5 +1,6 @@
 #include "NodeModel.hpp"
 #include <QQmlEngine>
+#include <QDebug>
 
 namespace nodeeditor
 {
@@ -18,19 +19,6 @@ NodeModel::NodeModel(QObject* parent, const NodeModel& obj)
         Node* s = obj.get(i)[names[ModelDataRole]].value<Node*>();
         addNode(new Node(*s));
     }
-}
-
-void NodeModel::addNode(Node* node)
-{
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
-
-    // prevent items to be garbage collected in JS
-    QQmlEngine::setObjectOwnership(node, QQmlEngine::CppOwnership);
-    node->setParent(this);
-
-    _nodes << node;
-    endInsertRows();
-    Q_EMIT countChanged(rowCount());
 }
 
 int NodeModel::rowCount(const QModelIndex& parent) const
@@ -81,10 +69,24 @@ QHash<int, QByteArray> NodeModel::roleNames() const
     return roles;
 }
 
-void NodeModel::addNode(const QString& name)
+void NodeModel::addNode(Node* node)
 {
-    Node* n = new Node(name);
-    addNode(n);
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+
+    // prevent items to be garbage collected in JS
+    QQmlEngine::setObjectOwnership(node, QQmlEngine::CppOwnership);
+    node->setParent(this);
+
+    _nodes << node;
+    endInsertRows();
+    Q_EMIT countChanged(rowCount());
+}
+
+void NodeModel::addNode(const QJsonObject& descriptor)
+{
+    Node* node = new Node();
+    node->deserializeFromJSON(descriptor);
+    addNode(node);
 }
 
 QVariantMap NodeModel::get(int row) const

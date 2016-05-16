@@ -1,0 +1,97 @@
+{
+    "name": "theia",
+    "version": {
+        "major": 0,
+        "minor": 1,
+        "debug": 0
+    },
+    "nodes": [
+        {
+            "type": "ImageListing",
+            "inputs": [
+                {
+                    "name": "files",
+                    "key": "files"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "images",
+                    "key": "images"
+                }
+            ]
+        },
+        {
+            "type": "FeatureExtraction",
+            "inputs": [
+                {
+                    "name": "images",
+                    "key": "images"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "features",
+                    "key": "features"
+                }
+            ]
+        },
+        {
+            "type": "FeatureMatching",
+            "inputs": [
+                {
+                    "name": "features",
+                    "key": "features"
+                },
+                {
+                    "name": "images",
+                    "key": "images"
+                },
+                {
+                    "name": "exifs",
+                    "key": "exifs"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "matches",
+                    "key": "matches"
+                }
+            ]
+        },
+        {
+            "type": "StructureFromMotion",
+            "inputs": [
+                {
+                    "name": "matches",
+                    "key": "matches"
+                },
+                {
+                    "name": "exifs",
+                    "key": "exifs"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "reconstructions",
+                    "key": "reconstructions"
+                }
+            ]
+        },
+        {
+            "type": "PlyExport",
+            "inputs": [
+                {
+                    "name": "reconstructions",
+                    "key": "reconstructions"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "PLYs",
+                    "key": "PLYs"
+                }
+            ]
+        }
+    ]
+}

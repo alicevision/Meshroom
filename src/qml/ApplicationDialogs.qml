@@ -47,18 +47,39 @@ Item {
         title: "New node"
         content: ColumnLayout {
             spacing: 0
-            ComboBox {
-                id: pluginCombo
+            ListView {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
                 model: _application.nodeTypes
+                delegate: Rectangle {
+                    width: parent.width
+                    height: 30
+                    color: mouseArea.containsMouse ? "transparent" : Style.window.color.xdark
+                    border.color: Style.window.color.dark
+                    Behavior on color { ColorAnimation {}}
+                    MouseArea {
+                        id: mouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            selection = modelData;
+                            accept();
+                        }
+                    }
+                    Text {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        text: modelData
+                        color: mouseArea.containsMouse ? Style.text.color.selected : Style.text.color.normal
+                        Behavior on color { ColorAnimation {}}
+                    }
+                }
             }
             Button {
                 Layout.fillWidth: true
-                text: "Add"
-                onClicked: {
-                    selection = pluginCombo.currentText;
-                    accept();
-                }
+                text: "Cancel"
+                onClicked: reject()
             }
         }
     }

@@ -1,6 +1,8 @@
 #include "Attribute.hpp"
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QJSValue>
+#include <QDebug>
 
 namespace nodeeditor
 {
@@ -34,10 +36,29 @@ void Attribute::serializeToJSON(QJsonObject* obj) const
 
 void Attribute::deserializeFromJSON(const QJsonObject& obj)
 {
-    if(!obj.contains(_key))
-        return;
-    QJsonValue attrValue = obj.value(_key);
-    _value = attrValue.toVariant();
+    auto toEnum = [](const QString& type) -> AttributeType
+    {
+        if(type == "TEXTFIELD")
+            return TEXTFIELD;
+        else if(type == "SLIDER")
+            return SLIDER;
+        else if(type == "COMBOBOX")
+            return COMBOBOX;
+        else if(type == "CHECKBOX")
+            return CHECKBOX;
+        return UNKNOWN;
+    };
+
+    _value = obj.value("value").toVariant();
+    _key = obj.value("key").toString();
+    _name = obj.value("name").toString();
+    _tooltip = obj.value("tooltip").toString();
+    _min = obj.value("min").toVariant();
+    _max = obj.value("max").toVariant();
+    _step = obj.value("step").toVariant();
+    _type = toEnum(obj.value("type").toString());
+    for(auto o : obj.value("options").toArray())
+        _options.append(o.toString());
 }
 
 } // namespace

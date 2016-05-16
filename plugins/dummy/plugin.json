@@ -1,0 +1,27 @@
+{
+    "name": "dummy",
+    "version": {
+        "major": 0,
+        "minor": 1,
+        "debug": 0
+    },
+    "nodes": [
+        {
+            "type": "Dummy",
+            "inputs": [
+                {
+                    "name": "dummy attribute",
+                    "key": "dummy",
+                    "value": 0,
+                    "tooltip": "",
+                    "type": "SLIDER",
+                    "min": 0,
+                    "max": 10,
+                    "step": 1,
+                    "options": []
+                }
+            ],
+            "outputs": [{ "key": "output" }]
+        }
+    ]
+}

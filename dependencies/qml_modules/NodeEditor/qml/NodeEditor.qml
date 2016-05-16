@@ -14,6 +14,7 @@ Rectangle {
     property variant connections: null
     property Component nodeModel: NodeModel {}
     property Component connectionModel: ConnectionModel {}
+    property int currentNodeID: 0
 
     // signals
     signal nodeChanged()

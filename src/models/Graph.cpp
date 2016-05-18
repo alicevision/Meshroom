@@ -23,25 +23,31 @@ void Graph::setName(const QString& name)
 
 void Graph::addNode(const QJsonObject& descriptor)
 {
+    // retrieve parent scene & application
     Scene* scene = qobject_cast<Scene*>(parent());
     Q_CHECK_PTR(scene);
     Application* application = qobject_cast<Application*>(scene->parent());
     Q_CHECK_PTR(application);
+
     // get the node type
     QString type = descriptor.value("type").toString();
+
     // looking for the corresponding node descriptor (registered at plugin load time)
     QVariantMap descriptors = application->nodeDescriptors();
     auto it = descriptors.find(type);
     if(it == descriptors.end())
         return;
+
     // merge descriptors
     QJsonObject fullDescriptor = it->toJsonObject();
     for(auto k : descriptor.keys())
         fullDescriptor.insert(k, descriptor.value(k));
+
     // add the node
     // TODO
     // auto node = plugin->createNode(nodeType, nodeName, _graph);
     // _graph.addNode(node);
+
     // reflect changes on the qml side
     Q_EMIT nodeAdded(fullDescriptor);
 }
@@ -51,6 +57,11 @@ void Graph::addConnection(const QJsonObject& descriptor)
     // add the connection
     // TODO
     Q_EMIT connectionAdded(descriptor);
+}
+
+void Graph::clear()
+{
+    Q_EMIT reset();
 }
 
 QJsonObject Graph::serializeToJSON() const

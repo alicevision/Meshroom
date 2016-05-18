@@ -70,8 +70,8 @@ private:
     QString _name;
     QString _user;
     QUrl _thumbnail;
-    bool _dirty;
-    Graph* _graph = nullptr;
+    bool _dirty = false;
+    Graph* _graph = new Graph(this);
 };
 
 } // namespace

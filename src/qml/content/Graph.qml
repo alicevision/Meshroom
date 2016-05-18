@@ -30,6 +30,7 @@ Item {
             var connections = editor.connections.serializeToJSON();
             currentScene.graph.descriptionReceived(nodes, connections);
         }
+        onReset: { editor.init() }
     }
 
     NodeEditor {

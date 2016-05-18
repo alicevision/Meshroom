@@ -1,5 +1,4 @@
 #include "Scene.hpp"
-#include "Graph.hpp"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -15,7 +14,6 @@ namespace meshroom
 
 Scene::Scene(QObject* parent, const QUrl& url)
     : QObject(parent)
-    , _graph(new Graph(this))
 {
     // callbacks
     auto setDirty_CB = [this]()
@@ -94,6 +92,7 @@ bool Scene::load()
         qCritical() << LOGID << "can't open file '" << _url.toLocalFile() << "'";
         return false;
     }
+
     // open a file handler
     QFile file(_url.toLocalFile());
     if(!file.open(QIODevice::ReadOnly))
@@ -101,9 +100,11 @@ bool Scene::load()
         qCritical() << LOGID << "can't open file '" << _url.toLocalFile() << "'";
         return false;
     }
+
     // read data and close the file handler
     QByteArray data = file.readAll();
     file.close();
+
     // parse data as JSON
     QJsonParseError error;
     QJsonDocument document(QJsonDocument::fromJson(data, &error));
@@ -112,8 +113,10 @@ bool Scene::load()
         qCritical() << LOGID << "malformed JSON file '" << _url.toLocalFile() << "'";
         return false;
     }
+
     // deserialize the JSON document
     deserializeFromJSON(document.object());
+
     // reset the dirty flag
     setDirty(false);
     return true;
@@ -127,8 +130,10 @@ bool Scene::save()
         qCritical() << LOGID << "invalid URL '" << _url.toLocalFile() << "'";
         return false;
     }
+
     // build the JSON object
     QJsonObject json = serializeToJSON();
+
     // open a file handler
     QFile file(_url.toLocalFile());
     if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
@@ -136,10 +141,12 @@ bool Scene::save()
         qWarning() << LOGID << "unable to write file '" << _url.toLocalFile() << "'";
         return false;
     }
+
     // write & close the file handler
     QJsonDocument document(json);
     file.write(document.toJson());
     file.close();
+
     // reset the dirty flag
     setDirty(false);
     return true;
@@ -155,6 +162,7 @@ void Scene::erase()
 
 void Scene::reset()
 {
+    _graph->clear();
     setUrl(QUrl());
     setName("untitled");
     setUser(std::getenv("USER"));

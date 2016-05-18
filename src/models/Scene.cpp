@@ -128,8 +128,7 @@ bool Scene::save()
         return false;
     }
     // build the JSON object
-    QJsonObject json;
-    serializeToJSON(&json);
+    QJsonObject json = serializeToJSON();
     // open a file handler
     QFile file(_url.toLocalFile());
     if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
@@ -168,18 +167,19 @@ bool Scene::build(const Scene::BuildMode& mode)
     return true;
 }
 
-void Scene::serializeToJSON(QJsonObject* obj) const
+QJsonObject Scene::serializeToJSON() const
 {
-    if(!obj)
-        return;
-    obj->insert("date", QJsonValue::fromVariant(_date));
-    obj->insert("user", _user);
+    QJsonObject obj;
+    obj.insert("date", QJsonValue::fromVariant(_date));
+    obj.insert("user", _user);
+    obj.insert("graph", _graph->serializeToJSON());
+    return obj;
 }
 
 void Scene::deserializeFromJSON(const QJsonObject& obj)
 {
-    if(obj.contains("user"))
-        _user = obj["user"].toString();
+    _graph->deserializeFromJSON(obj.value("graph").toObject());
+    _user = obj.value("user").toString();
 }
 
 } // namespace

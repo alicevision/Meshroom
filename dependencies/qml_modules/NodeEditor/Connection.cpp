@@ -28,12 +28,20 @@ void Connection::setSlotID(const int& slotID)
     Q_EMIT slotIDChanged();
 }
 
-void Connection::serializeToJSON(QJsonObject* obj) const
+QJsonObject Connection::serializeToJSON() const
 {
+    QJsonObject obj;
+    obj.insert("sourceID", _sourceID);
+    obj.insert("targetID", _targetID);
+    obj.insert("slotID", _slotID);
+    return obj;
 }
 
 void Connection::deserializeFromJSON(const QJsonObject& obj)
 {
+    _sourceID = obj.value("sourceID").toInt();
+    _targetID = obj.value("targetID").toInt();
+    _slotID = obj.value("slotID").toInt();
 }
 
 } // namespace

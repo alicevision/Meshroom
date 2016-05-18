@@ -6,6 +6,8 @@
 namespace meshroom
 {
 
+class Application; // forward declaration
+
 class Graph : public QObject
 {
     Q_OBJECT
@@ -17,16 +19,19 @@ public:
 public:
     Q_SLOT const QString& name() const { return _name; }
     Q_SLOT void setName(const QString&);
-    Q_SLOT void reload();
-    Q_SLOT void addNode(const QString&, const QJsonObject&);
+    Q_SLOT void addNode(const QJsonObject&);
+    Q_SLOT void addConnection(const QJsonObject&);
 
 public:
     Q_SIGNAL void nameChanged();
-    Q_SIGNAL void nodeAdded(const QString& name, const QJsonObject& descriptor);
-    Q_SIGNAL void connectionAdded(int source, int target, int slot);
+    Q_SIGNAL void nodeAdded(const QJsonObject& descriptor);
+    Q_SIGNAL void connectionAdded(const QJsonObject& descriptor);
 
-private:
-    void serializeToJSON(QJsonObject*) const;
+    Q_SIGNAL void descriptionRequested() const;
+    Q_SIGNAL void descriptionReceived(const QJsonArray&, const QJsonArray&);
+
+public:
+    QJsonObject serializeToJSON() const;
     void deserializeFromJSON(const QJsonObject&);
 
 private:

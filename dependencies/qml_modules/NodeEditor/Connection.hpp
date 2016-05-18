@@ -29,7 +29,7 @@ public:
     Q_SIGNAL void slotIDChanged();
 
 public:
-    void serializeToJSON(QJsonObject* obj) const;
+    QJsonObject serializeToJSON() const;
     void deserializeFromJSON(const QJsonObject& obj);
 
 private:

@@ -27,11 +27,11 @@ void Attribute::setValue(const QVariant& value)
         _value = qvariant_cast<QJSValue>(_value).toVariant();
 }
 
-void Attribute::serializeToJSON(QJsonObject* obj) const
+QJsonObject Attribute::serializeToJSON() const
 {
-    if(!obj)
-        return;
-    obj->insert(_key, QJsonValue::fromVariant(_value));
+    QJsonObject obj;
+    obj.insert(_key, QJsonValue::fromVariant(_value));
+    return obj;
 }
 
 void Attribute::deserializeFromJSON(const QJsonObject& obj)

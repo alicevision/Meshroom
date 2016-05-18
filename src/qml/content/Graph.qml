@@ -12,7 +12,6 @@ Item {
 
     Component.onCompleted: {
         editor.init();
-        currentScene.graph.reload();
         editor.fitLayout();
     }
 
@@ -23,8 +22,13 @@ Item {
             currentScene.setDirty(true);
         }
         onConnectionAdded: {
-            editor.connections.addConnection(source, target, slot);
+            editor.connections.addConnection(descriptor);
             currentScene.setDirty(true);
+        }
+        onDescriptionRequested: {
+            var nodes = editor.nodes.serializeToJSON();
+            var connections = editor.connections.serializeToJSON();
+            currentScene.graph.descriptionReceived(nodes, connections);
         }
     }
 

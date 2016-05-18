@@ -1,6 +1,6 @@
 #include "NodeModel.hpp"
 #include <QQmlEngine>
-#include <QDebug>
+#include <QJsonObject>
 
 namespace nodeeditor
 {
@@ -8,17 +8,6 @@ namespace nodeeditor
 NodeModel::NodeModel(QObject* parent)
     : QAbstractListModel(parent)
 {
-}
-
-NodeModel::NodeModel(QObject* parent, const NodeModel& obj)
-    : QAbstractListModel(parent)
-{
-    QHash<int, QByteArray> names = roleNames();
-    for(size_t i = 0; i < obj.rowCount(); ++i)
-    {
-        Node* s = obj.get(i)[names[ModelDataRole]].value<Node*>();
-        addNode(new Node(*s));
-    }
 }
 
 int NodeModel::rowCount(const QModelIndex& parent) const
@@ -40,11 +29,35 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
             return QVariant::fromValue(node->inputs());
         case OutputsRole:
             return QVariant::fromValue(node->outputs());
+        case XRole:
+            return node->x();
+        case YRole:
+            return node->y();
         case ModelDataRole:
             return QVariant::fromValue(node);
         default:
             return QVariant();
     }
+}
+
+bool NodeModel::setData(const QModelIndex& index, const QVariant& value, int role)
+{
+    if(index.row() < 0 || index.row() >= _nodes.count())
+        return false;
+    Node* node = _nodes[index.row()];
+    switch(role)
+    {
+        case XRole:
+            node->setX(value.toInt());
+            break;
+        case YRole:
+            node->setY(value.toInt());
+            break;
+        default:
+            return false;
+    }
+    Q_EMIT dataChanged(index, index);
+    return true;
 }
 
 Node* NodeModel::get(const QString& name)
@@ -65,6 +78,8 @@ QHash<int, QByteArray> NodeModel::roleNames() const
     roles[NameRole] = "name";
     roles[InputsRole] = "inputs";
     roles[OutputsRole] = "outputs";
+    roles[XRole] = "x";
+    roles[YRole] = "y";
     roles[ModelDataRole] = "modelData";
     return roles;
 }
@@ -102,6 +117,20 @@ QVariantMap NodeModel::get(int row) const
         result[i.value()] = data;
     }
     return result;
+}
+
+QJsonArray NodeModel::serializeToJSON() const
+{
+    QJsonArray array;
+    for(auto n : _nodes)
+        array.append(n->serializeToJSON());
+    return array;
+}
+
+void NodeModel::deserializeFromJSON(const QJsonArray& array)
+{
+    for(auto n : array)
+        addNode(n.toObject());
 }
 
 } // namespace

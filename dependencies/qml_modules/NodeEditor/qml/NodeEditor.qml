@@ -29,6 +29,7 @@ Rectangle {
         if(root.connections) root.connections.destroy();
         root.nodes = root.nodeModel.createObject();
         root.connections = root.connectionModel.createObject();
+        canvas.requestPaint();
     }
     function fitLayout() {
         if(!root.nodes)

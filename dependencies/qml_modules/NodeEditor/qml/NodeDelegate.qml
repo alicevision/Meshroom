@@ -24,8 +24,10 @@ Rectangle {
     color: Style.window.color.dark
     border.color: mouse.containsMouse ? Style.window.color.selected : Style.window.color.light
     Behavior on border.color { ColorAnimation {}}
-    onXChanged: nodeChanged()
-    onYChanged: nodeChanged()
+
+    onXChanged: { model.x = x; nodeChanged(); }
+    onYChanged: { model.y = y; nodeChanged(); }
+    Component.onCompleted: { x = model.x; y = model.y; }
 
     MouseArea { // drag
         id: mouse

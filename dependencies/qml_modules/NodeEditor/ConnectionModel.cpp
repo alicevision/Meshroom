@@ -1,5 +1,6 @@
 #include "ConnectionModel.hpp"
 #include <QQmlEngine>
+#include <QJsonObject>
 
 namespace nodeeditor
 {
@@ -7,30 +8,6 @@ namespace nodeeditor
 ConnectionModel::ConnectionModel(QObject* parent)
     : QAbstractListModel(parent)
 {
-}
-
-void ConnectionModel::addConnection(Connection* connection)
-{
-    // prevent items to be garbage collected in JS
-    QQmlEngine::setObjectOwnership(connection, QQmlEngine::CppOwnership);
-    connection->setParent(this);
-
-    // insert the new element
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    _connections << connection;
-    endInsertRows();
-
-    // handle model and contained object synchronization
-    QModelIndex id = index(rowCount() - 1, 0);
-    auto callback = [id, this]()
-    {
-        Q_EMIT dataChanged(id, id);
-    };
-    connect(connection, &Connection::sourceIDChanged, this, callback);
-    connect(connection, &Connection::targetIDChanged, this, callback);
-    connect(connection, &Connection::slotIDChanged, this, callback);
-
-    Q_EMIT countChanged(rowCount());
 }
 
 int ConnectionModel::rowCount(const QModelIndex& parent) const
@@ -69,12 +46,34 @@ QHash<int, QByteArray> ConnectionModel::roleNames() const
     return roles;
 }
 
-void ConnectionModel::addConnection(int sourceID, int targetID, int slotID)
+void ConnectionModel::addConnection(Connection* connection)
+{
+    // prevent items to be garbage collected in JS
+    QQmlEngine::setObjectOwnership(connection, QQmlEngine::CppOwnership);
+    connection->setParent(this);
+
+    // insert the new element
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+    _connections << connection;
+    endInsertRows();
+
+    // handle model and contained object synchronization
+    QModelIndex id = index(rowCount() - 1, 0);
+    auto callback = [id, this]()
+    {
+        Q_EMIT dataChanged(id, id);
+    };
+    connect(connection, &Connection::sourceIDChanged, this, callback);
+    connect(connection, &Connection::targetIDChanged, this, callback);
+    connect(connection, &Connection::slotIDChanged, this, callback);
+
+    Q_EMIT countChanged(rowCount());
+}
+
+void ConnectionModel::addConnection(const QJsonObject& descriptor)
 {
     Connection* connection = new Connection();
-    connection->setSourceID(sourceID);
-    connection->setTargetID(targetID);
-    connection->setSlotID(slotID);
+    connection->deserializeFromJSON(descriptor);
     addConnection(connection);
 }
 
@@ -91,6 +90,20 @@ QVariantMap ConnectionModel::get(int row) const
         result[i.value()] = data;
     }
     return result;
+}
+
+QJsonArray ConnectionModel::serializeToJSON() const
+{
+    QJsonArray array;
+    for(auto c : _connections)
+        array.append(c->serializeToJSON());
+    return array;
+}
+
+void ConnectionModel::deserializeFromJSON(const QJsonArray& array)
+{
+    for(auto c : array)
+        addConnection(c.toObject());
 }
 
 } // namespace

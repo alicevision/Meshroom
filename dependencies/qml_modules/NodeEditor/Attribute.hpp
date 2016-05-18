@@ -46,7 +46,7 @@ public:
     void setOptions(const QStringList& options) { _options = options; }
 
 public:
-    void serializeToJSON(QJsonObject* obj) const;
+    QJsonObject serializeToJSON() const;
     void deserializeFromJSON(const QJsonObject& obj);
 
 private:

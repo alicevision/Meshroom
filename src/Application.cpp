@@ -15,6 +15,7 @@ namespace meshroom
 Application::Application(QQmlApplicationEngine& engine)
     : QObject(nullptr)
     , _scene(new Scene(this))
+    , _engine(engine)
 {
     // expose this object to QML & load the main QML file
     engine.rootContext()->setContextProperty("_application", this);

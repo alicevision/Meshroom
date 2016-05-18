@@ -12,8 +12,8 @@ class Application : public QObject
     Q_OBJECT
     Q_PROPERTY(Scene* scene READ scene CONSTANT)
     Q_PROPERTY(QStringList nodeTypes READ nodeTypes WRITE setNodeTypes NOTIFY nodeTypesChanged)
-    Q_PROPERTY(QVariantMap nodeDescriptors READ nodeDescriptors WRITE setNodeDescriptors
-                   NOTIFY nodeDescriptorsChanged)
+    Q_PROPERTY(QVariantMap nodeDescriptors READ nodeDescriptors WRITE setNodeDescriptors NOTIFY
+                   nodeDescriptorsChanged)
 
 public:
     Application(QQmlApplicationEngine& engine);
@@ -25,16 +25,18 @@ public:
     Q_SLOT QVariantMap nodeDescriptors() const { return _nodeDescriptors; }
     Q_SLOT void setNodeTypes(const QStringList&);
     Q_SLOT void setNodeDescriptors(const QVariantMap&);
+    Q_SLOT void loadPlugins();
     Q_SIGNAL void nodeTypesChanged();
     Q_SIGNAL void nodeDescriptorsChanged();
 
 public:
-    Q_SLOT void loadPlugins();
+    QQmlApplicationEngine& engine() const { return _engine; }
 
 private:
     Scene* _scene;
     QStringList _nodeTypes;
     QVariantMap _nodeDescriptors;
+    QQmlApplicationEngine& _engine;
 };
 
 } // namespaces

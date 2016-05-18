@@ -63,7 +63,7 @@ Item {
         }
         onAddNode: {
             function add_CB() {
-                currentScene.graph.addNode(dialog.selection, _application.nodeDescriptors[dialog.selection]);
+                currentScene.graph.addNode(_application.nodeDescriptors[dialog.selection]);
             }
             var dialog = _dialogs.addNode.createObject(_window);
             dialog.onAccepted.connect(add_CB);

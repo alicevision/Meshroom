@@ -61,7 +61,7 @@ public:
     Q_SIGNAL void dirtyChanged();
 
 private:
-    void serializeToJSON(QJsonObject*) const;
+    QJsonObject serializeToJSON() const;
     void deserializeFromJSON(const QJsonObject&);
 
 private:

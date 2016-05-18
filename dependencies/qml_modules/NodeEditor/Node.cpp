@@ -6,34 +6,39 @@
 namespace nodeeditor
 {
 
-Node::Node()
-    : _name("unknown")
-    , _inputs(new AttributeModel(this))
-    , _outputs(new AttributeModel(this))
+void Node::setX(int x)
 {
+    if(_x == x)
+        return;
+    _x = x;
+    Q_EMIT xChanged();
 }
 
-Node::Node(const QString& name)
-    : _name(name)
-    , _inputs(new AttributeModel(this))
-    , _outputs(new AttributeModel(this))
+void Node::setY(int y)
 {
+    if(_y == y)
+        return;
+    _y = y;
+    Q_EMIT yChanged();
 }
 
-Node::Node(const Node& obj)
-    : _name(obj.name())
-    , _inputs(new AttributeModel(*(obj.inputs())))
-    , _outputs(new AttributeModel(*(obj.outputs())))
+QJsonObject Node::serializeToJSON() const
 {
-}
-
-void Node::serializeToJSON(QJsonObject* obj) const
-{
+    QJsonObject obj;
+    obj.insert("name", _name);
+    obj.insert("type", _type);
+    obj.insert("x", _x);
+    obj.insert("y", _y);
+    return obj;
 }
 
 void Node::deserializeFromJSON(const QJsonObject& obj)
 {
-    _name = obj.value("name").toString();
+    if(obj.contains("name"))
+        _name = obj.value("name").toString();
+    _type = obj.value("type").toString();
+    _x = obj.value("x").toInt();
+    _y = obj.value("y").toInt();
     for(auto o : obj.value("inputs").toArray())
         _inputs->addAttribute(o.toObject());
     for(auto o : obj.value("outputs").toArray())

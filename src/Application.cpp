@@ -7,6 +7,7 @@
 #include <QPluginLoader>
 #include <QDebug>
 #include <QDir>
+#include <QJsonObject>
 #include <QJsonArray>
 
 namespace meshroom
@@ -14,63 +15,39 @@ namespace meshroom
 
 Application::Application(QQmlApplicationEngine& engine)
     : QObject(nullptr)
-    , _scene(new Scene(this))
-    , _engine(engine)
+    , _scene(this)
+    , _plugins(this)
+    , _nodes(this)
 {
     // expose this object to QML & load the main QML file
     engine.rootContext()->setContextProperty("_application", this);
     engine.load(QCoreApplication::applicationDirPath() + "/qml/main.qml");
 }
 
-void Application::setNodeTypes(const QStringList& nodeTypes)
+void Application::load()
 {
-    if(_nodeTypes == nodeTypes)
-        return;
-    _nodeTypes = nodeTypes;
-    Q_EMIT nodeTypesChanged();
-}
-
-void Application::setNodeDescriptors(const QVariantMap& nodeDescriptors)
-{
-    if(_nodeDescriptors == nodeDescriptors)
-        return;
-    _nodeDescriptors = nodeDescriptors;
-    Q_EMIT nodeDescriptorsChanged();
-}
-
-void Application::loadPlugins()
-{
-    PluginInterface* plugin = nullptr;
     QDir dir = QCoreApplication::applicationDirPath() + "/plugins";
     for(QString filename : dir.entryList(QDir::Files))
     {
+        // check plugin metadata, before loading
         QPluginLoader loader(dir.absoluteFilePath(filename));
-
-        // check metadata, before loading
         QJsonObject metadata = loader.metaData().value("MetaData").toObject();
         if(metadata.isEmpty())
             continue;
-        QString name = metadata.value("name").toString();
-        // load the plugin
-        QObject* obj = loader.instance();
-        if(!obj)
-            continue;
-        plugin = qobject_cast<PluginInterface*>(obj);
-        if(plugin)
-        {
-            qInfo() << "plugin loaded:" << name.toUtf8();
-            QJsonArray nodes = metadata.value("nodes").toArray();
-            for(auto n : nodes)
-            {
-                // ...get node type
-                QJsonObject nObj = n.toObject();
-                QString type = nObj.value("type").toString();
-                if(!type.isEmpty())
-                    _nodeTypes.append(type);
+        // TODO check plugin version, node count, etc.
 
-                _nodeDescriptors.insert(type, nObj);
-            }
-        }
+        // load the plugin
+        PluginInterface* instance = qobject_cast<PluginInterface*>(loader.instance());
+        if(!instance)
+            continue;
+
+        // register the plugin
+        Plugin* plugin = new Plugin(this, metadata, instance);
+        _plugins.addPlugin(plugin);
+
+        // register all nodes
+        for(auto n : metadata.value("nodes").toArray())
+            _nodes.addNode(new Node(this, n.toObject(), plugin));
     }
 }
 

@@ -18,11 +18,11 @@ Item {
     Connections {
         target: currentScene.graph
         onNodeAdded: {
-            editor.nodes.addNode(descriptor);
+            editor.nodes.addNode(node);
             currentScene.setDirty(true);
         }
         onConnectionAdded: {
-            editor.connections.addConnection(descriptor);
+            editor.connections.addConnection(node);
             currentScene.setDirty(true);
         }
         onDescriptionRequested: {

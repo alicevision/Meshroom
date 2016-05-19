@@ -33,30 +33,31 @@ void Graph::addNode(const QJsonObject& descriptor)
     QString type = descriptor.value("type").toString();
 
     // looking for the corresponding node descriptor (registered at plugin load time)
-    QVariantMap descriptors = application->nodeDescriptors();
-    auto it = descriptors.find(type);
-    if(it == descriptors.end())
-        return;
+    NodeCollection* nodes = application->nodes();
+    Node* node = nodes->get(type);
+    Q_CHECK_PTR(node);
+    PluginInterface* instance = node->pluginInstance();
+    Q_CHECK_PTR(instance);
 
-    // merge descriptors
-    QJsonObject fullDescriptor = it->toJsonObject();
-    for(auto k : descriptor.keys())
-        fullDescriptor.insert(k, descriptor.value(k));
+    // merge nodes
+    QVariantMap descriptorAsMap = descriptor.toVariantMap();
+    QJsonObject fullnode = node->metadata();
+    for(auto k : descriptorAsMap.keys())
+        fullnode.insert(k, QJsonValue::fromVariant(descriptorAsMap.value(k)));
 
     // add the node
-    // TODO
-    // auto node = plugin->createNode(nodeType, nodeName, _graph);
-    // _graph.addNode(node);
+    // auto dgNode = instance->createNode(type, type.toLower(), _graph);
+    // _graph.addNode(dgNode);
 
     // reflect changes on the qml side
-    Q_EMIT nodeAdded(fullDescriptor);
+    Q_EMIT nodeAdded(fullnode);
 }
 
-void Graph::addConnection(const QJsonObject& descriptor)
+void Graph::addConnection(const QJsonObject& node)
 {
     // add the connection
     // TODO
-    Q_EMIT connectionAdded(descriptor);
+    Q_EMIT connectionAdded(node);
 }
 
 void Graph::clear()

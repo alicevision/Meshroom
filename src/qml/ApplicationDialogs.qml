@@ -43,14 +43,14 @@ Item {
         }
     }
     property Component addNode: Dialog {
-        property string selection: ""
+        property variant selection: ""
         title: "New node"
         content: ColumnLayout {
             spacing: 0
             ListView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                model: _application.nodeTypes
+                model: _application.nodes
                 delegate: Rectangle {
                     width: parent.width
                     height: 30
@@ -62,15 +62,16 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: {
-                            selection = modelData;
+                            selection = modelData.metadata;
                             accept();
                         }
                     }
                     Text {
+                        id: txt
                         anchors.fill: parent
                         anchors.leftMargin: 10
                         anchors.rightMargin: 10
-                        text: modelData
+                        text: modelData.plugin + "/" + modelData.type
                         color: mouseArea.containsMouse ? Style.text.color.selected : Style.text.color.normal
                         Behavior on color { ColorAnimation {}}
                     }

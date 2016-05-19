@@ -25,8 +25,8 @@ public:
 
 public:
     Q_SIGNAL void nameChanged();
-    Q_SIGNAL void nodeAdded(const QJsonObject& descriptor);
-    Q_SIGNAL void connectionAdded(const QJsonObject& descriptor);
+    Q_SIGNAL void nodeAdded(const QJsonObject& node);
+    Q_SIGNAL void connectionAdded(const QJsonObject& node);
     Q_SIGNAL void descriptionRequested() const;
     Q_SIGNAL void descriptionReceived(const QJsonArray&, const QJsonArray&);
     Q_SIGNAL void reset();

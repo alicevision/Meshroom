@@ -7,9 +7,7 @@ Item {
     }
     Connections {
         target: _window
-        Component.onCompleted: {
-            _application.loadPlugins();
-        }
+        Component.onCompleted: _application.load()
         onNewScene: {
             function reset_CB() { currentScene.reset(); }
             if(currentScene.dirty) {
@@ -25,10 +23,10 @@ Item {
         onOpenScene: {
             function open_CB() {
                 function _CB() {
-                    currentScene.reset();
                     currentScene.setUrl(dialog.fileUrl);
                     currentScene.load();
                 }
+                currentScene.reset();
                 var dialog = _dialogs.openScene.createObject(_window);
                 dialog.onAccepted.connect(_CB);
                 dialog.open();
@@ -63,7 +61,7 @@ Item {
         }
         onAddNode: {
             function add_CB() {
-                currentScene.graph.addNode(_application.nodeDescriptors[dialog.selection]);
+                currentScene.graph.addNode(dialog.selection);
             }
             var dialog = _dialogs.addNode.createObject(_window);
             dialog.onAccepted.connect(add_CB);

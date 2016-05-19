@@ -89,7 +89,7 @@ bool Scene::load()
     // check if the file exists
     if(!QFileInfo::exists(_url.toLocalFile()))
     {
-        qCritical() << LOGID << "can't open file '" << _url.toLocalFile() << "'";
+        qCritical() << LOGID << "can't open file " << _url.toLocalFile();
         return false;
     }
 
@@ -97,7 +97,7 @@ bool Scene::load()
     QFile file(_url.toLocalFile());
     if(!file.open(QIODevice::ReadOnly))
     {
-        qCritical() << LOGID << "can't open file '" << _url.toLocalFile() << "'";
+        qCritical() << LOGID << "can't open file " << _url.toLocalFile();
         return false;
     }
 
@@ -110,7 +110,7 @@ bool Scene::load()
     QJsonDocument document(QJsonDocument::fromJson(data, &error));
     if(error.error != QJsonParseError::NoError)
     {
-        qCritical() << LOGID << "malformed JSON file '" << _url.toLocalFile() << "'";
+        qCritical() << LOGID << "malformed JSON file " << _url.toLocalFile();
         return false;
     }
 
@@ -127,7 +127,7 @@ bool Scene::save()
     // check if the URL is valid
     if(!_url.isValid())
     {
-        qCritical() << LOGID << "invalid URL '" << _url.toLocalFile() << "'";
+        qCritical() << LOGID << "invalid URL " << _url.toLocalFile();
         return false;
     }
 
@@ -138,7 +138,7 @@ bool Scene::save()
     QFile file(_url.toLocalFile());
     if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        qWarning() << LOGID << "unable to write file '" << _url.toLocalFile() << "'";
+        qWarning() << LOGID << "unable to write file " << _url.toLocalFile();
         return false;
     }
 

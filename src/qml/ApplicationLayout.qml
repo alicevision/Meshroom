@@ -60,11 +60,15 @@ ColumnLayout {
         }
     }
     LogBar {
-        property bool expanded: false
+        id: logbar
         Layout.fillWidth: true
         Layout.preferredHeight: expanded ? parent.height/3 : 30
-        Behavior on Layout.preferredHeight { NumberAnimation {}}
+        Behavior on Layout.preferredHeight {
+            SequentialAnimation {
+                NumberAnimation {}
+                ScriptAction { script: logbar.view.positionViewAtEnd(); }
+            }
+        }
         color: Style.window.color.xdark
-        onToggle: expanded = !expanded
     }
 }

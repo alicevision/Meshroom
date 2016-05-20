@@ -119,6 +119,18 @@ QVariantMap NodeModel::get(int row) const
     return result;
 }
 
+int NodeModel::getID(const QString& name) const
+{
+    int id = 0;
+    for(auto n : _nodes)
+    {
+        if(n->name() == name)
+            return id;
+        ++id;
+    }
+    return -1;
+}
+
 QJsonArray NodeModel::serializeToJSON() const
 {
     QJsonArray array;

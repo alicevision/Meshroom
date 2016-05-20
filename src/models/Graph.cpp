@@ -5,12 +5,14 @@
 #include <QDebug>
 #include <QEventLoop>
 
+using namespace dg;
 namespace meshroom
 {
 
 Graph::Graph(QObject* parent)
     : QObject(parent)
 {
+    _graph->cache.setRoot("/tmp/");
 }
 
 void Graph::setName(const QString& name)
@@ -31,6 +33,7 @@ void Graph::addNode(const QJsonObject& descriptor)
 
     // get the node type
     QString type = descriptor.value("type").toString();
+    QString name = descriptor.value("name").toString();
 
     // looking for the corresponding node descriptor (registered at plugin load time)
     NodeCollection* nodes = application->nodes();
@@ -46,23 +49,44 @@ void Graph::addNode(const QJsonObject& descriptor)
         fullnode.insert(k, QJsonValue::fromVariant(descriptorAsMap.value(k)));
 
     // add the node
-    // auto dgNode = instance->createNode(type, type.toLower(), _graph);
-    // _graph.addNode(dgNode);
+    _graph->addNode(instance->createNode(type, name));
 
     // reflect changes on the qml side
     Q_EMIT nodeAdded(fullnode);
 }
 
-void Graph::addConnection(const QJsonObject& node)
+void Graph::addConnection(const QJsonObject& connection)
 {
+    // retrieve nodes
+    QString sourceName = connection.value("source").toString();
+    QString targetName = connection.value("target").toString();
+    QString plugName = connection.value("plug").toString();
+
     // add the connection
-    // TODO
-    Q_EMIT connectionAdded(node);
+    auto source = _graph->node(sourceName.toStdString());
+    auto target = _graph->node(targetName.toStdString());
+    if(!source || !target)
+        return;
+    _graph->connect(source->output, target->plug(plugName.toStdString()));
+
+    // reflect changes on the qml side
+    Q_EMIT connectionAdded(connection);
 }
 
 void Graph::clear()
 {
     Q_EMIT reset();
+}
+
+void Graph::compute(const QString& name)
+{
+    qWarning() << "computing " << name;
+    LocalRunner runner;
+    try {
+        runner(_graph, name.toStdString());
+    } catch (std::exception& e) {
+        qCritical() << e.what();
+    }
 }
 
 QJsonObject Graph::serializeToJSON() const

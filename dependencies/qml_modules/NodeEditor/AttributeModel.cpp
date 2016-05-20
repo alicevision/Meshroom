@@ -83,6 +83,18 @@ Attribute* AttributeModel::get(const QString& key)
     return nullptr;
 }
 
+int AttributeModel::getID(const QString& name) const
+{
+    int id = 0;
+    for(auto a : _attributes)
+    {
+        if(a->name() == name)
+            return id;
+        ++id;
+    }
+    return -1;
+}
+
 QHash<int, QByteArray> AttributeModel::roleNames() const
 {
     QHash<int, QByteArray> roles;

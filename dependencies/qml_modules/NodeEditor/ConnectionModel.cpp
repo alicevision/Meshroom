@@ -23,12 +23,12 @@ QVariant ConnectionModel::data(const QModelIndex& index, int role) const
     Connection* connection = _connections[index.row()];
     switch(role)
     {
-        case SourceIDRole:
-            return connection->sourceID();
-        case TargetIDRole:
-            return connection->targetID();
-        case SlotIDRole:
-            return connection->slotID();
+        case SourceRole:
+            return connection->source();
+        case TargetRole:
+            return connection->target();
+        case SlotRole:
+            return connection->plug();
         case ModelDataRole:
             return QVariant::fromValue(connection);
         default:
@@ -39,9 +39,9 @@ QVariant ConnectionModel::data(const QModelIndex& index, int role) const
 QHash<int, QByteArray> ConnectionModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
-    roles[SourceIDRole] = "sourceID";
-    roles[TargetIDRole] = "targetID";
-    roles[SlotIDRole] = "slotID";
+    roles[SourceRole] = "source";
+    roles[TargetRole] = "target";
+    roles[SlotRole] = "plug";
     roles[ModelDataRole] = "modelData";
     return roles;
 }
@@ -63,9 +63,9 @@ void ConnectionModel::addConnection(Connection* connection)
     {
         Q_EMIT dataChanged(id, id);
     };
-    connect(connection, &Connection::sourceIDChanged, this, callback);
-    connect(connection, &Connection::targetIDChanged, this, callback);
-    connect(connection, &Connection::slotIDChanged, this, callback);
+    connect(connection, &Connection::sourceChanged, this, callback);
+    connect(connection, &Connection::targetChanged, this, callback);
+    connect(connection, &Connection::plugChanged, this, callback);
 
     Q_EMIT countChanged(rowCount());
 }

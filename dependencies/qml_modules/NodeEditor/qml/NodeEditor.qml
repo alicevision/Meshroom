@@ -17,11 +17,12 @@ Rectangle {
     property int currentNodeID: 0
 
     // signals
-    signal nodeChanged()
-    signal selectionChanged(var node)
+    signal nodeMoved(var node)
+    signal nodeLeftClicked(var node)
+    signal nodeRightClicked(var node)
 
     // slots
-    onNodeChanged: canvas.requestPaint()
+    onNodeMoved: canvas.requestPaint()
 
     // functions
     function init() {
@@ -31,6 +32,7 @@ Rectangle {
         root.connections = root.connectionModel.createObject();
         canvas.requestPaint();
     }
+
     function fitLayout() {
         if(!root.nodes)
             return;
@@ -45,21 +47,25 @@ Rectangle {
         }
         canvas.requestPaint();
     }
+
     function drawConnections(context) {
         if(!root.connections)
             return;
         for(var i=0; i<root.connections.count; i++)
         {
-            var sourceNodeId = root.connections.get(i).sourceID;
-            var targetNodeId = root.connections.get(i).targetID;
-            var targetSlotId = root.connections.get(i).slotID;
-            var sourceNodeItem = repeater.itemAt(sourceNodeId);
-            var targetNodeItem = repeater.itemAt(targetNodeId);
-            var sourceNode = root.nodes.get(sourceNodeId);
-            var targetNode = root.nodes.get(targetNodeId);
-            drawConnection(context, sourceNodeItem.getOutputItem(0), targetNodeItem.getInputItem(targetSlotId));
+            var connection = root.connections.get(i);
+            var sourceNodeID = root.nodes.getID(connection.source);
+            var targetNodeID = root.nodes.getID(connection.target);
+            var targetInputs = root.nodes.get(targetNodeID).inputs;
+            var targetPlugID = targetInputs.getID(connection.plug);
+            if(sourceNodeID<0 || targetNodeID<0 || targetPlugID<0)
+                continue;
+            var sourceNodeItem = repeater.itemAt(sourceNodeID);
+            var targetNodeItem = repeater.itemAt(targetNodeID);
+            drawConnection(context, sourceNodeItem.getOutputItem(0), targetNodeItem.getInputItem(targetPlugID));
         }
     }
+
     function drawConnection(context, itemA, itemB) {
         var outputPos = repeater.mapFromItem(itemA, itemA.width, itemA.height/2);
         var inputPos  = repeater.mapFromItem(itemB, 0, itemB.height/2);
@@ -115,6 +121,7 @@ Rectangle {
         }
     }
 
+    // help msg
     Text {
         visible: !root.nodes || root.nodes.count == 0
         anchors.centerIn: parent

@@ -12,13 +12,12 @@ class DummyPlugin : public QObject, PluginInterface
     Q_INTERFACES(PluginInterface)
 
 public:
-    dg::Ptr<dg::Node> createNode(const QString& type, const QString& name,
-                                 dg::Graph& graph) override
+    dg::Ptr<dg::Node> createNode(const QString& type, const QString& name) override
     {
         using namespace dg;
         Ptr<Node> node;
         if(type == "DummyType")
-            node = make_ptr<DummyNode>(name.toStdString(), graph);
+            node = make_ptr<DummyNode>(name.toStdString());
         return node;
     }
 };

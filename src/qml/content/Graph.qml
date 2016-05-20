@@ -33,9 +33,26 @@ Item {
         onReset: { editor.init() }
     }
 
+    property Component contextMenu: Menu {
+        signal compute()
+        MenuItem {
+            text: "Compute..."
+            onTriggered: compute()
+        }
+        MenuSeparator {}
+    }
+
     NodeEditor {
         id: editor
         anchors.fill: parent
-        onSelectionChanged: root.selectionChanged(node)
+        onNodeLeftClicked: root.selectionChanged(node)
+        onNodeRightClicked: {
+            function compute_CB() {
+                currentScene.graph.compute(node.name);
+            }
+            var menu = contextMenu.createObject(editor);
+            menu.compute.connect(compute_CB);
+            menu.popup()
+        }
     }
 }

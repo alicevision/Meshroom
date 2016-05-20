@@ -4,44 +4,44 @@
 namespace nodeeditor
 {
 
-void Connection::setSourceID(const int& sourceID)
+void Connection::setSource(const QString& source)
 {
-    if(_sourceID == sourceID)
+    if(_source == source)
         return;
-    _sourceID = sourceID;
-    Q_EMIT sourceIDChanged();
+    _source = source;
+    Q_EMIT sourceChanged();
 }
 
-void Connection::setTargetID(const int& targetID)
+void Connection::setTarget(const QString& target)
 {
-    if(_targetID == targetID)
+    if(_target == target)
         return;
-    _targetID = targetID;
-    Q_EMIT targetIDChanged();
+    _target = target;
+    Q_EMIT targetChanged();
 }
 
-void Connection::setSlotID(const int& slotID)
+void Connection::setSlot(const QString& plug)
 {
-    if(_slotID == slotID)
+    if(_plug == plug)
         return;
-    _slotID = slotID;
-    Q_EMIT slotIDChanged();
+    _plug = plug;
+    Q_EMIT plugChanged();
 }
 
 QJsonObject Connection::serializeToJSON() const
 {
     QJsonObject obj;
-    obj.insert("sourceID", _sourceID);
-    obj.insert("targetID", _targetID);
-    obj.insert("slotID", _slotID);
+    obj.insert("source", _source);
+    obj.insert("target", _target);
+    obj.insert("plug", _plug);
     return obj;
 }
 
 void Connection::deserializeFromJSON(const QJsonObject& obj)
 {
-    _sourceID = obj.value("sourceID").toInt();
-    _targetID = obj.value("targetID").toInt();
-    _slotID = obj.value("slotID").toInt();
+    _source = obj.value("source").toString();
+    _target = obj.value("target").toString();
+    _plug = obj.value("plug").toString();
 }
 
 } // namespace

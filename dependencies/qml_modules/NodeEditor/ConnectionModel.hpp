@@ -15,9 +15,9 @@ class ConnectionModel : public QAbstractListModel
 public:
     enum ConnectionRoles
     {
-        SourceIDRole = Qt::UserRole + 1,
-        TargetIDRole,
-        SlotIDRole,
+        SourceRole = Qt::UserRole + 1,
+        TargetRole,
+        SlotRole,
         ModelDataRole
     };
 
@@ -34,9 +34,9 @@ public:
     Q_SLOT void addConnection(Connection* connection);
     Q_SLOT void addConnection(const QJsonObject& descriptor);
     Q_SLOT QVariantMap get(int row) const;
-    Q_SIGNAL void countChanged(int c);
     Q_SLOT QJsonArray serializeToJSON() const;
     Q_SLOT void deserializeFromJSON(const QJsonArray&);
+    Q_SIGNAL void countChanged(int c);
 
 protected:
     QHash<int, QByteArray> roleNames() const override;

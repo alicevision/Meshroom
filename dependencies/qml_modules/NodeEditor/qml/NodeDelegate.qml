@@ -7,9 +7,18 @@ import DarkStyle 1.0
 Rectangle {
 
     id: root
+    color: Style.window.color.dark
+    border.color: mouse.containsMouse ? Style.window.color.selected : Style.window.color.light
+    z: (currentNodeID == index) ? 2 : 1
+    x: 10
+    y: 10
+    radius: 10
+
+    // properties
     property variant inputs: model.inputs
     property variant outputs: model.outputs
 
+    // functions
     function getInputItem(id) {
         return inputRepeater.itemAt(id);
     }
@@ -17,19 +26,14 @@ Rectangle {
         return outputRepeater.itemAt(id);
     }
 
-    x: 10
-    y: 10
-    z: (currentNodeID == index) ? 2 : 1
-    radius: 10
-    color: Style.window.color.dark
-    border.color: mouse.containsMouse ? Style.window.color.selected : Style.window.color.light
+    // slots & behaviors
+    Component.onCompleted: { x = model.x; y = model.y; }
+    onXChanged: { model.x = x; nodeMoved(model); }
+    onYChanged: { model.y = y; nodeMoved(model); }
     Behavior on border.color { ColorAnimation {}}
 
-    onXChanged: { model.x = x; nodeChanged(); }
-    onYChanged: { model.y = y; nodeChanged(); }
-    Component.onCompleted: { x = model.x; y = model.y; }
-
-    MouseArea { // drag
+    // mouse area
+    MouseArea {
         id: mouse
         anchors.fill: parent
         drag.target: root
@@ -40,12 +44,18 @@ Rectangle {
         drag.maximumY: root.parent.height - root.height
         propagateComposedEvents: true
         hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: {
+            if(mouse.button & Qt.RightButton) {
+                nodeRightClicked(model);
+                return;
+            }
             currentNodeID = index;
-            selectionChanged(model)
+            nodeLeftClicked(model)
         }
     }
 
+    // title
     Text {
         anchors.horizontalCenter: parent.horizontalCenter
         height: 20
@@ -55,6 +65,7 @@ Rectangle {
         horizontalAlignment: Text.AlignHCenter
     }
 
+    // input list
     RowLayout {
         anchors.fill: parent
         anchors.topMargin: 20
@@ -92,6 +103,8 @@ Rectangle {
                 }
             }
         }
+
+        // output list
         ScrollView {
             id: outputScrollview
             Layout.fillWidth: true

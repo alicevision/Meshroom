@@ -38,6 +38,7 @@ public:
     Q_SLOT void addNode(Node* node);
     Q_SLOT void addNode(const QJsonObject& descriptor);
     Q_SLOT QVariantMap get(int row) const;
+    Q_SLOT int getID(const QString&) const;
     Q_SLOT QJsonArray serializeToJSON() const;
     Q_SLOT void deserializeFromJSON(const QJsonArray&);
     Q_SIGNAL void countChanged(int c);

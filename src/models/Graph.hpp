@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <Graph.hpp>
+#include <runners/LocalRunner.hpp>
 
 namespace meshroom
 {
@@ -22,6 +23,7 @@ public:
     Q_SLOT void addNode(const QJsonObject&);
     Q_SLOT void addConnection(const QJsonObject&);
     Q_SLOT void clear();
+    Q_SLOT void compute(const QString&);
 
 public:
     Q_SIGNAL void nameChanged();
@@ -37,7 +39,7 @@ public:
 
 private:
     QString _name = "graph1";
-    dg::Graph _graph;
+    dg::Ptr<dg::Graph> _graph = dg::make_ptr<dg::Graph>();
 };
 
 } // namespace

@@ -23,14 +23,6 @@ class Scene : public QObject
     Q_PROPERTY(Graph* graph READ graph CONSTANT)
 
 public:
-    enum BuildMode
-    {
-        LOCAL = 0,
-        DISTRIBUTED = 1
-    };
-    Q_ENUMS(BuildMode)
-
-public:
     Scene() = default;
     Scene(QObject* parent, const QUrl& = QUrl());
 
@@ -52,7 +44,6 @@ public:
     Q_SLOT bool save();
     Q_SLOT void erase();
     Q_SLOT void reset();
-    Q_SLOT bool build(const BuildMode&);
     Q_SIGNAL void urlChanged();
     Q_SIGNAL void nameChanged();
     Q_SIGNAL void dateChanged();

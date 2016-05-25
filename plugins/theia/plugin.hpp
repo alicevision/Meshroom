@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QtPlugin>
 #include <nodes/FeatureExtraction.hpp>
+#include <nodes/ExifExtraction.hpp>
 #include <nodes/FeatureMatching.hpp>
 #include <nodes/ImageListing.hpp>
 #include <nodes/PlyExport.hpp>
@@ -22,6 +23,8 @@ public:
         Ptr<Node> node;
         if(type == "FeatureExtraction")
             node = make_ptr<FeatureExtraction>(name.toStdString());
+        else if(type == "ExifExtraction")
+            node = make_ptr<ExifExtraction>(name.toStdString());
         else if(type == "FeatureMatching")
             node = make_ptr<FeatureMatching>(name.toStdString());
         else if(type == "ImageListing")

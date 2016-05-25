@@ -37,6 +37,21 @@
             ]
         },
         {
+            "type": "ExifExtraction",
+            "inputs": [
+                {
+                    "name": "images",
+                    "key": "images"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "exifs",
+                    "key": "exifs"
+                }
+            ]
+        },
+        {
             "type": "FeatureMatching",
             "inputs": [
                 {

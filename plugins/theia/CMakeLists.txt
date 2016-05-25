@@ -26,7 +26,6 @@ add_definitions(-DQT_PLUGIN)
 #
 # Target properties
 #
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/..)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${ROOT}/dependencies/dependency_graph/src)
 add_library(${TARGETLIB} SHARED ${TARGET_SRCS} ${TARGET_QRCS})

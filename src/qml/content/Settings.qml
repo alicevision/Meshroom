@@ -22,6 +22,22 @@ Rectangle {
         }
     }
     Component {
+        id: listDelegate
+        ListView {
+            implicitWidth: 100
+            implicitHeight: 50
+            model: modelData.value
+            delegate: Item {
+                width: ListView.view.width
+                height: 20
+                Text {
+                    text: modelData
+                    font.pixelSize: Style.text.size.xsmall
+                }
+            }
+        }
+    }
+    Component {
         id: sliderDelegate
         Slider {
             // minimumValue: modelData.min
@@ -97,6 +113,8 @@ Rectangle {
                         sourceComponent: {
                             if(index % 2 == 0)
                                 return labelDelegate;
+                            if(Array.isArray(modelData.value))
+                                return listDelegate;
                             switch(modelData.type) {
                                 case Attribute.UNKNOWN: return emptyDelegate
                                 case Attribute.TEXTFIELD: return textfieldDelegate

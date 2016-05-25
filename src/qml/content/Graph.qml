@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
 import NodeEditor 1.0
+import Meshroom.Graph 1.0
 
 Item {
 
@@ -30,7 +31,7 @@ Item {
             var connections = editor.connections.serializeToJSON();
             currentScene.graph.descriptionReceived(nodes, connections);
         }
-        onReset: { editor.init() }
+        onCleared: { editor.init() }
     }
 
     property Component contextMenu: Menu {
@@ -48,7 +49,7 @@ Item {
         onNodeLeftClicked: root.selectionChanged(node)
         onNodeRightClicked: {
             function compute_CB() {
-                currentScene.graph.compute(node.name);
+                currentScene.graph.compute(node.name, Graph.LOCAL);
             }
             var menu = contextMenu.createObject(editor);
             menu.compute.connect(compute_CB);

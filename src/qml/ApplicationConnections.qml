@@ -7,7 +7,6 @@ Item {
     }
     Connections {
         target: _window
-        Component.onCompleted: _application.load()
         onNewScene: {
             function reset_CB() { currentScene.reset(); }
             if(currentScene.dirty) {

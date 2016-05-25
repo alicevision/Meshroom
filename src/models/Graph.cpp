@@ -4,6 +4,8 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QEventLoop>
+#include <runners/LocalRunner.hpp>       // dependency_graph
+#include <runners/DistributedRunner.hpp> // dependency_graph
 
 using namespace dg;
 namespace meshroom
@@ -35,24 +37,61 @@ void Graph::addNode(const QJsonObject& descriptor)
     QString type = descriptor.value("type").toString();
     QString name = descriptor.value("name").toString();
 
-    // looking for the corresponding node descriptor (registered at plugin load time)
-    NodeCollection* nodes = application->nodes();
-    Node* node = nodes->get(type);
+    // looking for node metadata (registered at plugin load time)
+    Node* node = application->nodes()->get(type);
     Q_CHECK_PTR(node);
-    PluginInterface* instance = node->pluginInstance();
-    Q_CHECK_PTR(instance);
+    QJsonObject metadata = node->metadata();
 
-    // merge nodes
+    // merge metadata and current descriptor
     QVariantMap descriptorAsMap = descriptor.toVariantMap();
-    QJsonObject fullnode = node->metadata();
     for(auto k : descriptorAsMap.keys())
-        fullnode.insert(k, QJsonValue::fromVariant(descriptorAsMap.value(k)));
+        metadata.insert(k, QJsonValue::fromVariant(descriptorAsMap.value(k)));
 
-    // add the node
-    _graph->addNode(instance->createNode(type, name));
+    try
+    {
+        // add the node
+        auto dgNode = application->node(type, name);
+        if(!dgNode)
+            return;
+        _graph->addNode(dgNode);
+
+        // add all node attributes
+        for(auto a : descriptor.value("inputs").toArray())
+        {
+            QJsonObject attributeObj = a.toObject();
+            QString attributeName = attributeObj.value("name").toString();
+            if(attributeObj.contains("value"))
+            {
+                QJsonValue attribute = attributeObj.value("value");
+                if(attribute.isArray())
+                {
+                    dg::AttributeList dgAttrList;
+                    for(auto v : attribute.toArray())
+                    {
+                        Ptr<dg::Attribute> dgAttr = make_ptr<dg::Attribute>(
+                            Attribute::Type::PATH, v.toString().toStdString());
+                        dgAttrList.emplace_back(dgAttr);
+                    }
+                    if(!dgNode->setAttributes(attributeName.toStdString(), dgAttrList))
+                        qWarning() << "unable to set attribute list"
+                                   << QString("%0::%1").arg(name).arg(attributeName);
+                    continue;
+                }
+                Ptr<dg::Attribute> dgAttr = make_ptr<dg::Attribute>(
+                    Attribute::Type::PATH, attribute.toString().toStdString());
+                if(!dgNode->setAttribute(attributeName.toStdString(), dgAttr))
+                    qWarning() << "unable to set attribute"
+                               << QString("%0::%1").arg(name).arg(attributeName);
+            }
+        }
+    }
+    catch(std::exception& e)
+    {
+        qCritical() << e.what();
+    }
 
     // reflect changes on the qml side
-    Q_EMIT nodeAdded(fullnode);
+    Q_EMIT nodeAdded(metadata);
 }
 
 void Graph::addConnection(const QJsonObject& connection)
@@ -75,16 +114,34 @@ void Graph::addConnection(const QJsonObject& connection)
 
 void Graph::clear()
 {
-    Q_EMIT reset();
+    Q_EMIT cleared();
 }
 
-void Graph::compute(const QString& name)
+void Graph::compute(const QString& name, Graph::BuildMode mode)
 {
-    qWarning() << "computing " << name;
-    LocalRunner runner;
-    try {
-        runner(_graph, name.toStdString());
-    } catch (std::exception& e) {
+    qWarning() << "computing" << name;
+    try
+    {
+        switch(mode)
+        {
+            case LOCAL:
+            {
+                LocalRunner runner;
+                runner(_graph, name.toStdString());
+                break;
+            }
+            case TRACTOR:
+            {
+                DistributedRunner runner;
+                runner(_graph, name.toStdString());
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    catch(std::exception& e)
+    {
         qCritical() << e.what();
     }
 }

@@ -170,11 +170,6 @@ void Scene::reset()
     setDirty(false);
 }
 
-bool Scene::build(const Scene::BuildMode& mode)
-{
-    return true;
-}
-
 QJsonObject Scene::serializeToJSON() const
 {
     QJsonObject obj;

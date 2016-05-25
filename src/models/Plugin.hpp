@@ -19,7 +19,7 @@ public:
 
 public:
     PluginInterface* instance() { return _instance; }
-    
+
 public:
     Q_SLOT QString name() const;
     Q_SLOT QStringList nodeTypes() const;

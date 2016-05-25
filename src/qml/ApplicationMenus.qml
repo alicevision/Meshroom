@@ -48,10 +48,6 @@ Item {
                 shortcut: "Tab"
             }
             MenuSeparator {}
-            MenuItem {
-                text: "Build..."
-                shortcut: "Ctrl+B"
-            }
         }
     }
 

@@ -15,7 +15,9 @@ set(TARGETOBJ meshroom)
 #
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
-include_directories(${ROOT}/dependencies/dependency_graph/src)
+include_directories(${ROOT}/plugins)
+include_directories(${ROOT}/dependencies/dependency_graph/src/)
+include_directories(${ROOT}/src)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

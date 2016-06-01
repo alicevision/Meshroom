@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QString>
-#include <Node.hpp> // dependency_graph
+#include <dglib/Node.hpp>
 
 class PluginInterface
 {

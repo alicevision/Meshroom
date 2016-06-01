@@ -32,14 +32,16 @@ CommandLine::CommandLine()
         {{"s", "scene"}, scene_opt, "path"},
         {{"t", "type"}, type_opt, "type"},
     });
+    _parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
 }
 
 void CommandLine::parse()
 {
+    // qInfo() << "ARGS=" << QCoreApplication::arguments();
     if(!_parser.parse(QCoreApplication::arguments()))
     {
         // warn and ignore unknown options error
-        qCritical() << _parser.errorText();
+        // qCritical() << _parser.errorText();
     }
 
     if(_parser.isSet("v"))

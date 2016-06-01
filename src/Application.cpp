@@ -53,16 +53,13 @@ PluginCollection* Application::loadPlugins()
         if(metadata.isEmpty())
             continue;
         // TODO check plugin version, node count, etc.
-
         // load the plugin
         PluginInterface* instance = qobject_cast<PluginInterface*>(loader.instance());
         if(!instance)
             continue;
-
         // register the plugin
         Plugin* plugin = new Plugin(this, metadata, instance);
         _plugins.addPlugin(plugin);
-
         // register all nodes
         for(auto n : metadata.value("nodes").toArray())
             _nodes.addNode(new Node(this, n.toObject(), plugin));

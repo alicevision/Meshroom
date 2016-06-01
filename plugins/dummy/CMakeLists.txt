@@ -26,10 +26,10 @@ add_definitions(-DQT_PLUGIN)
 #
 # Target properties
 #
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${ROOT}/dependencies/dependency_graph/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..) # Common plugin interface
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${DG_INCLUDE_DIR})
 add_library(${TARGETLIB} SHARED ${TARGET_SRCS} ${TARGET_QRCS})
-target_link_libraries(${TARGETLIB} graph_core)
+target_link_libraries(${TARGETLIB} ${DG_LIBRARY})
 QT5_USE_MODULES(${TARGETLIB} Core)
 
 #

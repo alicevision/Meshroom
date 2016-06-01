@@ -4,8 +4,6 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QEventLoop>
-#include <runners/LocalRunner.hpp>       // dependency_graph
-#include <runners/DistributedRunner.hpp> // dependency_graph
 
 using namespace dg;
 namespace meshroom
@@ -52,14 +50,17 @@ void Graph::addNode(const QJsonObject& descriptor)
         // add the node
         auto dgNode = application->node(type, name);
         if(!dgNode)
+        {
+            qCritical() << "unable to add a" << type << "node to the current graph";
             return;
+        }
         _graph->addNode(dgNode);
 
         // add all node attributes
         for(auto a : descriptor.value("inputs").toArray())
         {
             QJsonObject attributeObj = a.toObject();
-            QString attributeName = attributeObj.value("name").toString();
+            QString attributeKey = attributeObj.value("key").toString();
             if(attributeObj.contains("value"))
             {
                 QJsonValue attribute = attributeObj.value("value");
@@ -72,16 +73,16 @@ void Graph::addNode(const QJsonObject& descriptor)
                             Attribute::Type::PATH, v.toString().toStdString());
                         dgAttrList.emplace_back(dgAttr);
                     }
-                    if(!dgNode->setAttributes(attributeName.toStdString(), dgAttrList))
+                    if(!dgNode->setAttributes(attributeKey.toStdString(), dgAttrList))
                         qWarning() << "unable to set attribute list"
-                                   << QString("%0::%1").arg(name).arg(attributeName);
+                                   << QString("%0::%1").arg(name).arg(attributeKey);
                     continue;
                 }
                 Ptr<dg::Attribute> dgAttr = make_ptr<dg::Attribute>(
                     Attribute::Type::PATH, attribute.toString().toStdString());
-                if(!dgNode->setAttribute(attributeName.toStdString(), dgAttr))
+                if(!dgNode->setAttribute(attributeKey.toStdString(), dgAttr))
                     qWarning() << "unable to set attribute"
-                               << QString("%0::%1").arg(name).arg(attributeName);
+                               << QString("%0::%1").arg(name).arg(attributeKey);
             }
         }
     }
@@ -106,7 +107,8 @@ void Graph::addConnection(const QJsonObject& connection)
     auto target = _graph->node(targetName.toStdString());
     if(!source || !target)
         return;
-    _graph->connect(source->output, target->plug(plugName.toStdString()));
+    if(!_graph->connect(source->output, target->plug(plugName.toStdString())))
+        qCritical() << "unable to connect nodes:" << sourceName << ">" << targetName;
 
     // reflect changes on the qml side
     Q_EMIT connectionAdded(connection);
@@ -132,7 +134,7 @@ void Graph::compute(const QString& name, Graph::BuildMode mode)
             }
             case TRACTOR:
             {
-                DistributedRunner runner;
+                TractorRunner runner;
                 runner(_graph, name.toStdString());
                 break;
             }

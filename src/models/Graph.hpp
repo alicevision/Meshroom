@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QObject>
-#include <Graph.hpp> // dependency_graph
+#include <dglib/dg.hpp>
 
 namespace meshroom
 {

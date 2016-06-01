@@ -2,8 +2,8 @@
 
 #include <QObject>
 #include <QtPlugin>
-#include <nodes/DummyNode.hpp>
 #include "PluginInterface.hpp"
+#include "nodes/DummyNode.hpp"
 
 class DummyPlugin : public QObject, PluginInterface
 {
@@ -15,8 +15,8 @@ public:
     dg::Ptr<dg::Node> createNode(const QString& type, const QString& name) override
     {
         using namespace dg;
-        Ptr<Node> node;
-        if(type == "DummyType")
+        Ptr<Node> node = nullptr;
+        if(type == "Dummy")
             node = make_ptr<DummyNode>(name.toStdString());
         return node;
     }

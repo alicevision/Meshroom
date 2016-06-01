@@ -13,19 +13,20 @@ set(TARGETOBJ meshroom)
 #
 # dependencies
 #
+
+# OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
-include_directories(${ROOT}/plugins)
-include_directories(${ROOT}/dependencies/dependency_graph/src/)
-include_directories(${ROOT}/src)
 
+# Qt
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 QT5_ADD_RESOURCES(TARGET_QRCS qml/resources.qrc)
 
-find_package(Alembic) # optional
+# Alembic (optional)
+find_package(Alembic)
 if(ALEMBIC_FOUND)
     include_directories(${ABC_INCLUDE_DIR})
     add_definitions(-DWITH_ALEMBIC)
@@ -41,8 +42,11 @@ add_definitions(-DQT_NO_KEYWORDS)
 #
 # Target properties
 #
+include_directories(${ROOT}/plugins)
+include_directories(${ROOT}/src)
+include_directories(${DG_INCLUDE_DIR})
 add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})
-target_link_libraries(${TARGETOBJ} ${OPENGL_LIBRARIES} graph_core)
+target_link_libraries(${TARGETOBJ} ${OPENGL_LIBRARIES} ${DG_LIBRARY})
 QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick)
 
 #

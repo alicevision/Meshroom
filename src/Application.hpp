@@ -4,7 +4,7 @@
 #include "models/PluginCollection.hpp"
 #include "models/NodeCollection.hpp"
 #include <QQmlApplicationEngine>
-#include <Node.hpp> // dependency_graph
+#include <dglib/dg.hpp>
 
 namespace meshroom
 {

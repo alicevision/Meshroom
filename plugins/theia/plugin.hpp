@@ -2,13 +2,13 @@
 
 #include <QObject>
 #include <QtPlugin>
-#include <nodes/FeatureExtraction.hpp>
-#include <nodes/ExifExtraction.hpp>
-#include <nodes/FeatureMatching.hpp>
-#include <nodes/ImageListing.hpp>
-#include <nodes/PlyExport.hpp>
-#include <nodes/StructureFromMotion.hpp>
 #include "PluginInterface.hpp"
+#include "nodes/FeatureExtraction.hpp"
+#include "nodes/ExifExtraction.hpp"
+#include "nodes/FeatureMatching.hpp"
+#include "nodes/ImageListing.hpp"
+#include "nodes/PlyExport.hpp"
+#include "nodes/StructureFromMotion.hpp"
 
 class TheiaPlugin : public QObject, PluginInterface
 {
@@ -20,7 +20,7 @@ public:
     dg::Ptr<dg::Node> createNode(const QString& type, const QString& name) override
     {
         using namespace dg;
-        Ptr<Node> node;
+        Ptr<Node> node = nullptr;
         if(type == "FeatureExtraction")
             node = make_ptr<FeatureExtraction>(name.toStdString());
         else if(type == "ExifExtraction")

@@ -37,7 +37,10 @@ int main(int argc, char* argv[])
                 auto dgNode = application.node(commandLine.nodeType(), "");
                 if(!dgNode)
                     return EXIT_FAILURE;
-                dgNode->compute({});
+                std::vector<std::string> arguments;
+                for(auto arg : QCoreApplication::arguments())
+                    arguments.emplace_back(arg.toStdString());
+                dgNode->compute(arguments);
                 return EXIT_SUCCESS;
             }
             case CommandLine::RUN_LOCAL:

@@ -56,4 +56,10 @@ Item {
             menu.popup()
         }
     }
+
+    Text {
+        text: currentScene.graph.cacheUrl.toString().replace("file://", "")
+        color: Style.text.color.dark
+        font.pixelSize: Style.text.size.xsmall
+    }
 }

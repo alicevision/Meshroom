@@ -12,7 +12,7 @@ namespace meshroom
 Graph::Graph(QObject* parent)
     : QObject(parent)
 {
-    _graph->cache.setRoot("/tmp/");
+    setCacheUrl(QUrl::fromLocalFile("/tmp"));
 }
 
 void Graph::setName(const QString& name)
@@ -21,6 +21,15 @@ void Graph::setName(const QString& name)
         return;
     _name = name;
     Q_EMIT nameChanged();
+}
+
+void Graph::setCacheUrl(const QUrl& cacheUrl)
+{
+    if(_cacheUrl == cacheUrl)
+        return;
+    _cacheUrl = cacheUrl;
+    _graph->cache.setRoot(_cacheUrl.toLocalFile().toStdString());
+    Q_EMIT cacheUrlChanged();
 }
 
 void Graph::addNode(const QJsonObject& descriptor)
@@ -160,12 +169,14 @@ QJsonObject Graph::serializeToJSON() const
     Q_EMIT descriptionRequested();
     // FIXME QEventLoop?
     obj.insert("name", _name);
+    obj.insert("cacheUrl", _cacheUrl.toLocalFile());
     return obj;
 }
 
 void Graph::deserializeFromJSON(const QJsonObject& obj)
 {
-    _name = obj.value("name").toString();
+    setName(obj.value("name").toString());
+    setCacheUrl(QUrl::fromLocalFile(obj.value("cacheUrl").toString()));
     for(auto o : obj.value("nodes").toArray())
         addNode(o.toObject());
     for(auto o : obj.value("connections").toArray())

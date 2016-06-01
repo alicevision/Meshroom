@@ -25,12 +25,15 @@ Rectangle {
         id: listDelegate
         ListView {
             implicitWidth: 100
-            implicitHeight: 50
+            implicitHeight: 80
             model: modelData.value
-            delegate: Item {
+            delegate: Rectangle {
                 width: ListView.view.width
                 height: 20
+                color: Style.window.color.dark
                 Text {
+                    anchors.fill: parent
+                    anchors.margins: 2
                     text: modelData
                     font.pixelSize: Style.text.size.xsmall
                 }
@@ -109,6 +112,7 @@ Rectangle {
                     model: root.model ? root.model.inputs.count*2 : 0
                     delegate: Loader {
                         Layout.fillWidth: index%2 != 0
+                        Layout.preferredWidth: index%2 ? parent.width : parent.width*0.3
                         property variant modelData: root.model.inputs.get(index/2)
                         sourceComponent: {
                             if(index % 2 == 0)

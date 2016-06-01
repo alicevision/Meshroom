@@ -27,6 +27,81 @@
                 {
                     "name": "images",
                     "key": "images"
+                },
+                {
+                    "name": "threads",
+                    "key": "numthreads",
+                    "type": "SLIDER",
+                    "value": 8,
+                    "step": 1,
+                    "min": 0,
+                    "max": 24
+                },
+                {
+                    "name": "max features",
+                    "key": "maxnumfeatures",
+                    "type": "SLIDER",
+                    "value": 16384,
+                    "step": 1,
+                    "min": 100,
+                    "max": 50000
+                },
+                {
+                    "name": "num octaves",
+                    "key": "numoctave",
+                    "type": "SLIDER",
+                    "value": -1,
+                    "step": 1,
+                    "min": -1,
+                    "max": 10
+                },
+                {
+                    "name": "num levels",
+                    "key": "numlevels",
+                    "type": "SLIDER",
+                    "value": 3,
+                    "step": 1,
+                    "min": 0,
+                    "max": 10
+                },
+                {
+                    "name": "first octave",
+                    "key": "firstoctave",
+                    "type": "SLIDER",
+                    "value": 0,
+                    "step": 1,
+                    "min": 0,
+                    "max": 10
+                },
+                {
+                    "name": "edge threshold",
+                    "key": "edgethreshold",
+                    "type": "SLIDER",
+                    "value": 5.0,
+                    "step": 0.1,
+                    "min": 0.0,
+                    "max": 10.0
+                },
+                {
+                    "name": "peak threshold",
+                    "key": "peakthreshold",
+                    "type": "SLIDER",
+                    "value": 0.5,
+                    "step": 0.1,
+                    "min": 0.0,
+                    "max": 10.0
+                },
+                {
+                    "name": "root sift",
+                    "key": "rootsift",
+                    "type": "CHECKBOX",
+                    "value": false
+                },
+                {
+                    "name": "upright sift",
+                    "key": "uprightsift",
+                    "type": "CHECKBOX",
+                    "value": false
                 }
             ],
             "outputs": [
@@ -65,6 +140,60 @@
                 {
                     "name": "exifs",
                     "key": "exifs"
+                },
+                {
+                    "name": "threads",
+                    "key": "numthreads",
+                    "type": "SLIDER",
+                    "value": 8,
+                    "step": 1,
+                    "min": 0,
+                    "max": 24
+                },
+                {
+                    "name": "cache capacity",
+                    "key": "cachecapacity",
+                    "type": "SLIDER",
+                    "value": 128,
+                    "step": 64,
+                    "min": 0,
+                    "max": 1024
+                },
+                {
+                    "name": "lowes ratio",
+                    "key": "lowesratio",
+                    "type": "SLIDER",
+                    "value": 0.8,
+                    "step": 0.1,
+                    "min": 0.0,
+                    "max": 5.0
+                },
+                {
+                    "name": "min num feature matches",
+                    "key": "minnumfeaturematches",
+                    "type": "SLIDER",
+                    "value": 30,
+                    "step": 1,
+                    "min": 0,
+                    "max": 1000
+                },
+                {
+                    "name": "out of core",
+                    "key": "matchoutofcore",
+                    "type": "CHECKBOX",
+                    "value": false
+                },
+                {
+                    "name": "keep only symmetric matches",
+                    "key": "keeponlysymmetricmatches",
+                    "type": "CHECKBOX",
+                    "value": true
+                },
+                {
+                    "name": "use lowes ratio",
+                    "key": "uselowesratio",
+                    "type": "CHECKBOX",
+                    "value": true
                 }
             ],
             "outputs": [
@@ -84,6 +213,66 @@
                 {
                     "name": "exifs",
                     "key": "exifs"
+                },
+                {
+                    "name": "threads",
+                    "key": "numthreads",
+                    "type": "SLIDER",
+                    "value": 8,
+                    "step": 1,
+                    "min": 0,
+                    "max": 24
+                },
+                {
+                    "name": "max track length",
+                    "key": "maxtracklength",
+                    "type": "SLIDER",
+                    "value": 20,
+                    "step": 1,
+                    "min": 0,
+                    "max": 500
+                },
+                {
+                    "name": "min num 2 views inliers",
+                    "key": "minnum2viewsinliers",
+                    "type": "SLIDER",
+                    "value": 30,
+                    "step": 1,
+                    "min": 0,
+                    "max": 500
+                },
+                {
+                    "name": "largest only",
+                    "key": "largestonly",
+                    "type": "CHECKBOX",
+                    "value": false
+                },
+                {
+                    "name": "only calibrated views",
+                    "key": "onlycalibratedviews",
+                    "type": "CHECKBOX",
+                    "value": false
+                },
+                {
+                    "name": "reconstruction estimator type",
+                    "key": "reconstructionestimatortype",
+                    "type": "COMBOBOX",
+                    "value": "GLOBAL",
+                    "options": ["GLOBAL", "INCREMENTAL"]
+                },
+                {
+                    "name": "global rotation estimator type",
+                    "key": "globalrotationestimatortype",
+                    "type": "COMBOBOX",
+                    "value": "ROBUST_L1L2",
+                    "options": ["ROBUST_L1L2", "NONLINEAR", "LINEAR"]
+                },
+                {
+                    "name": "global position estimator type",
+                    "key": "globalpositionestimatortype",
+                    "type": "COMBOBOX",
+                    "value": "LEAST_UNSQUARED_DEVIATION",
+                    "options": ["NONLINEAR", "LINEAR_TRIPLET", "LEAST_UNSQUARED_DEVIATION"]
                 }
             ],
             "outputs": [

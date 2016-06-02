@@ -26,7 +26,7 @@ public:
     ~CommandLine() = default;
 
 public:
-    void parse();
+    void parse(int& argc, char** argv);
     const MODE& mode() const { return _mode; }
     QString nodeType() const { return _parser.value("type"); }
     QString nodeName() const { return _parser.value("name"); }

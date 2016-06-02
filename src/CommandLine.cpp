@@ -35,14 +35,15 @@ CommandLine::CommandLine()
     _parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
 }
 
-void CommandLine::parse()
+void CommandLine::parse(int& argc, char** argv)
 {
-    // qInfo() << "ARGS=" << QCoreApplication::arguments();
-    if(!_parser.parse(QCoreApplication::arguments()))
-    {
-        // warn and ignore unknown options error
-        // qCritical() << _parser.errorText();
-    }
+    // options as string list
+    QStringList arguments;
+    for(auto i = 0; i < argc; ++i)
+        arguments.append(argv[i]);
+
+    // command line parsing (ignore unknown options error)
+    _parser.parse(arguments);
 
     if(_parser.isSet("v"))
     {

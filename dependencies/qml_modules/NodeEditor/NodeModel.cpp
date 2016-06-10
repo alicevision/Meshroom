@@ -29,6 +29,8 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
             return QVariant::fromValue(node->inputs());
         case OutputsRole:
             return QVariant::fromValue(node->outputs());
+        case StatusRole:
+            return node->status();
         case XRole:
             return node->x();
         case YRole:
@@ -47,6 +49,9 @@ bool NodeModel::setData(const QModelIndex& index, const QVariant& value, int rol
     Node* node = _nodes[index.row()];
     switch(role)
     {
+        case StatusRole:
+            node->setStatus((Node::Status)value.toInt());
+            break;
         case XRole:
             node->setX(value.toInt());
             break;
@@ -78,6 +83,7 @@ QHash<int, QByteArray> NodeModel::roleNames() const
     roles[NameRole] = "name";
     roles[InputsRole] = "inputs";
     roles[OutputsRole] = "outputs";
+    roles[StatusRole] = "status";
     roles[XRole] = "x";
     roles[YRole] = "y";
     roles[ModelDataRole] = "modelData";
@@ -86,14 +92,25 @@ QHash<int, QByteArray> NodeModel::roleNames() const
 
 void NodeModel::addNode(Node* node)
 {
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
-
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(node, QQmlEngine::CppOwnership);
     node->setParent(this);
 
+    // insert the new element
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
     _nodes << node;
     endInsertRows();
+
+    // handle model and contained object synchronization
+    QModelIndex id = index(rowCount() - 1, 0);
+    auto callback = [id, this]()
+    {
+        Q_EMIT dataChanged(id, id);
+    };
+    connect(node, &Node::statusChanged, this, callback);
+    connect(node, &Node::xChanged, this, callback);
+    connect(node, &Node::yChanged, this, callback);
+
     Q_EMIT countChanged(rowCount());
 }
 

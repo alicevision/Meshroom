@@ -3,22 +3,36 @@ import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
+import NodeEditor 1.0
 
 Rectangle {
 
     id: root
-    color: Style.window.color.dark
-    border.color: mouse.containsMouse ? Style.window.color.selected : Style.window.color.light
-    z: (currentNodeID == index) ? 2 : 1
+    radius: 10
     x: 10
     y: 10
-    radius: 10
+    z: currentNodeID == index ? 2 : 1
+    color: Style.window.color.dark
+    border.color: getColor()
 
     // properties
     property variant inputs: model.inputs
     property variant outputs: model.outputs
 
     // functions
+    function getColor() {
+        if(mouseArea.containsMouse)
+            return Style.window.color.selected;
+        switch(model.status)
+        {
+            case Node.READY: return Style.window.color.light;
+            case Node.WAITING: return Style.window.color.xlight;
+            case Node.RUNNING: return Style.window.color.selected;
+            case Node.ERROR: return Style.window.color.critical;
+            case Node.DONE: return Style.window.color.success;
+        }
+        return Style.window.color.light;
+    }
     function getInputItem(id) {
         return inputRepeater.itemAt(id);
     }
@@ -30,11 +44,11 @@ Rectangle {
     Component.onCompleted: { x = model.x; y = model.y; }
     onXChanged: { model.x = x; nodeMoved(model); }
     onYChanged: { model.y = y; nodeMoved(model); }
-    Behavior on border.color { ColorAnimation {}}
+    Behavior on border.color { ColorAnimation {} }
 
     // mouse area
     MouseArea {
-        id: mouse
+        id: mouseArea
         anchors.fill: parent
         drag.target: root
         drag.axis: Drag.XAndYAxis

@@ -182,7 +182,7 @@ QJsonObject Scene::serializeToJSON() const
 void Scene::deserializeFromJSON(const QJsonObject& obj)
 {
     _graph->deserializeFromJSON(obj.value("graph").toObject());
-    _user = obj.value("user").toString();
+    setUser(obj.value("user").toString());
 }
 
 } // namespace

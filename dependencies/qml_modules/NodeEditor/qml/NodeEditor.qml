@@ -22,7 +22,7 @@ Rectangle {
     signal nodeRightClicked(var node)
 
     // slots
-    onNodeMoved: canvas.requestPaint()
+    onNodeMoved: refresh()
 
     // functions
     function init() {
@@ -30,6 +30,10 @@ Rectangle {
         if(root.connections) root.connections.destroy();
         root.nodes = root.nodeModel.createObject();
         root.connections = root.connectionModel.createObject();
+        refresh();
+    }
+
+    function refresh() {
         canvas.requestPaint();
     }
 
@@ -45,7 +49,7 @@ Rectangle {
             nodeItem.x = xmargin + i*(nodeItem.width + 20);
             nodeItem.y = yoffset; // + Math.random() * 60 - 60;
         }
-        canvas.requestPaint();
+        refresh();
     }
 
     function drawConnections(context) {

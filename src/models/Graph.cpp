@@ -1,9 +1,9 @@
 #include "Graph.hpp"
 #include "Application.hpp"
+#include "WorkerThread.hpp"
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDebug>
-#include <QEventLoop>
 
 using namespace dg;
 namespace meshroom
@@ -13,6 +13,18 @@ Graph::Graph(QObject* parent)
     : QObject(parent)
 {
     setCacheUrl(QUrl::fromLocalFile("/tmp"));
+}
+
+Graph::~Graph()
+{
+    abort();
+}
+
+const bool Graph::running() const
+{
+    if(!_worker)
+        return false;
+    return _worker->isRunning();
 }
 
 void Graph::setName(const QString& name)
@@ -130,31 +142,28 @@ void Graph::clear()
 
 void Graph::compute(const QString& name, Graph::BuildMode mode)
 {
-    qWarning() << "computing" << name;
-    try
-    {
-        switch(mode)
-        {
-            case LOCAL:
-            {
-                LocalRunner runner;
-                runner(_graph, name.toStdString());
-                break;
-            }
-            case TRACTOR:
-            {
-                TractorRunner runner;
-                runner(_graph, name.toStdString());
-                break;
-            }
-            default:
-                break;
-        }
-    }
-    catch(std::exception& e)
-    {
-        qCritical() << e.what();
-    }
+    if(_worker && _worker->isRunning())
+        return;
+    Q_EMIT statusCleared();
+    delete _worker;
+    _worker = new WorkerThread(this, name, mode, _graph);
+    connect(_worker, &WorkerThread::nodeVisitStarted, this, &Graph::nodeVisitStarted);
+    connect(_worker, &WorkerThread::nodeVisitCompleted, this, &Graph::nodeVisitCompleted);
+    connect(_worker, &WorkerThread::nodeComputeStarted, this, &Graph::nodeComputeStarted);
+    connect(_worker, &WorkerThread::nodeComputeCompleted, this, &Graph::nodeComputeCompleted);
+    connect(_worker, &WorkerThread::nodeComputeFailed, this, &Graph::nodeComputeFailed);
+    connect(_worker, &WorkerThread::finished, this, &Graph::runningChanged);
+    _worker->start();
+    Q_EMIT runningChanged();
+}
+
+void Graph::abort()
+{
+    if(!running())
+        return;
+    _worker->terminate();
+    _worker->wait();
+    Q_EMIT runningChanged();
 }
 
 QJsonObject Graph::serializeToJSON() const

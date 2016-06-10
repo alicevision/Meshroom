@@ -18,6 +18,7 @@ public:
         NameRole = Qt::UserRole + 1,
         InputsRole,
         OutputsRole,
+        StatusRole,
         XRole,
         YRole,
         ModelDataRole

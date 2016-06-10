@@ -34,6 +34,17 @@ Rectangle {
             visible: currentScene.dirty
             onClicked: saveScene(null)
         }
+        RowLayout {
+            ProgressBar {
+                indeterminate: true
+            }
+            ToolButton {
+                iconSource: "qrc:///images/pause.svg"
+                text: "STOP"
+                onClicked: currentScene.graph.abort()
+            }
+            visible: currentScene.graph.running
+        }
     }
 
 }

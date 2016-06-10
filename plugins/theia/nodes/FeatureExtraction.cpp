@@ -42,8 +42,7 @@ void FeatureExtraction::compute(const vector<string>& arguments) const
     QCommandLineParser parser;
     parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
     parser.addOptions({
-        {{"i", "input"}, "image file", "file"},
-        {{"o", "output"}, "exif file", "file"},
+        {{"i", "input"}, "image file", "file"}, {{"o", "output"}, "exif file", "file"},
     });
 
     // command line parsing

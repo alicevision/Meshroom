@@ -69,7 +69,8 @@ void FeatureMatching::compute(const vector<string>& arguments) const
 
     // command line parsing
     parser.parse(QCoreApplication::arguments());
-    if(!parser.isSet("image") || !parser.isSet("feature") || !parser.isSet("exif") || !parser.isSet("o"))
+    if(!parser.isSet("image") || !parser.isSet("feature") || !parser.isSet("exif") ||
+       !parser.isSet("o"))
     {
         qCritical() << "missing command line value";
         return;

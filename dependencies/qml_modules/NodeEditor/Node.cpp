@@ -6,6 +6,14 @@
 namespace nodeeditor
 {
 
+void Node::setStatus(Status status)
+{
+    if(_status == status)
+    return;
+    _status = status;
+    Q_EMIT statusChanged();
+}
+
 void Node::setX(int x)
 {
     if(_x == x)

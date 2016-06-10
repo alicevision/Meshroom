@@ -19,6 +19,7 @@ public:
     void registerTypes(const char* uri) override
     {
         Q_ASSERT(uri == QLatin1String("NodeEditor"));
+        qmlRegisterType<Node>(uri, 1, 0, "Node");
         qmlRegisterType<NodeModel>(uri, 1, 0, "NodeModel");
         qmlRegisterType<ConnectionModel>(uri, 1, 0, "ConnectionModel");
         qmlRegisterUncreatableType<Attribute>(uri, 1, 0, "Attribute",

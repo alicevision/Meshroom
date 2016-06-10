@@ -22,6 +22,26 @@ Item {
             editor.nodes.addNode(node);
             currentScene.setDirty(true);
         }
+        onNodeVisitStarted: {
+            var nodeID = editor.nodes.getID(node);
+            var nodeObj = editor.nodes.get(nodeID);
+            nodeObj.modelData.status = Node.WAITING;
+        }
+        onNodeComputeStarted: {
+            var nodeID = editor.nodes.getID(node);
+            var nodeObj = editor.nodes.get(nodeID);
+            nodeObj.modelData.status = Node.RUNNING;
+        }
+        onNodeComputeCompleted: {
+            var nodeID = editor.nodes.getID(node);
+            var nodeObj = editor.nodes.get(nodeID);
+            nodeObj.modelData.status = Node.DONE;
+        }
+        onNodeComputeFailed: {
+            var nodeID = editor.nodes.getID(node);
+            var nodeObj = editor.nodes.get(nodeID);
+            nodeObj.modelData.status = Node.ERROR;
+        }
         onConnectionAdded: {
             editor.connections.addConnection(node);
             currentScene.setDirty(true);
@@ -30,6 +50,10 @@ Item {
             var nodes = editor.nodes.serializeToJSON();
             var connections = editor.connections.serializeToJSON();
             currentScene.graph.descriptionReceived(nodes, connections);
+        }
+        onStatusCleared: {
+            for(var i = 0; i < editor.nodes.count ; i++)
+                editor.nodes.get(i).modelData.status = Node.READY;
         }
         onCleared: { editor.init() }
     }

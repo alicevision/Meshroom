@@ -47,6 +47,7 @@ void CommandLine::parse(int& argc, char** argv)
 
     if(_parser.isSet("v"))
     {
+        QCoreApplication qapp(argc, argv);
         qInfo() << qPrintable(QCoreApplication::applicationName())
                 << qPrintable(QCoreApplication::applicationVersion());
         _mode = QUIT_SUCCESS;
@@ -55,6 +56,7 @@ void CommandLine::parse(int& argc, char** argv)
 
     if(_parser.isSet("h"))
     {
+        QCoreApplication qapp(argc, argv);
         _parser.showHelp();
         _mode = QUIT_SUCCESS;
         return;

@@ -7,15 +7,15 @@ int main(int argc, char* argv[])
 {
     using namespace meshroom;
 
-    // command line parsing
-    CommandLine commandLine;
-    commandLine.parse(argc, argv);
-
     // application settings
     QCoreApplication::setOrganizationName("meshroom");
     QCoreApplication::setOrganizationDomain("meshroom.eu");
     QCoreApplication::setApplicationName("meshroom");
     QCoreApplication::setApplicationVersion("0.1.0");
+
+    // command line parsing
+    CommandLine commandLine;
+    commandLine.parse(argc, argv);
 
     try
     {

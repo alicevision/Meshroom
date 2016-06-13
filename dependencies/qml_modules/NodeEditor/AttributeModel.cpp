@@ -61,11 +61,14 @@ QVariant AttributeModel::data(const QModelIndex& index, int role) const
 
 bool AttributeModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
+    qDebug() << "-1-";
     if(index.row() < 0 || index.row() >= _attributes.count() || role != ValueRole)
         return false;
+    qDebug() << "-2-";
     Attribute* att = _attributes[index.row()];
     if(att->value() == value)
         return false;
+    qDebug() << "-3-";
     att->setValue(value);
     Q_EMIT dataChanged(index, index);
     return true;
@@ -117,9 +120,18 @@ void AttributeModel::addAttribute(Attribute* attribute)
     QQmlEngine::setObjectOwnership(attribute, QQmlEngine::CppOwnership);
     attribute->setParent(this);
 
+    // insert the new element
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     _attributes << attribute;
     endInsertRows();
+
+    // handle model and contained object synchronization
+    QModelIndex id = index(rowCount() - 1, 0);
+    auto callback = [id, this]()
+    {
+        Q_EMIT dataChanged(id, id);
+    };
+    connect(attribute, &Attribute::valueChanged, this, callback);
 
     Q_EMIT countChanged(rowCount());
 }

@@ -7,8 +7,12 @@ import DarkStyle 1.0
 Package {
 
     id: root
+
+    // properties
     property bool selected: false
     property bool editable: true
+
+    // signals
     signal selectContiguous(int id)
     signal selectExtended(int id)
     signal selectOne(int id)
@@ -17,12 +21,14 @@ Package {
     signal removeSelected()
     signal removeOne(int id)
 
+    // connections / slots
     Component.onCompleted: selected = _selector.isSelected(index)
     Connections {
         target: _selector
         onRefreshSelectionFlags: root.selected = _selector.isSelected(index)
     }
 
+    // functions
     function handleKeyEvent(event) {
         if(!root.editable)
             return;
@@ -50,6 +56,7 @@ Package {
         contextMenu.popup();
     }
 
+    // list style delegate
     Item {
         id: listDelegate
         Package.name: 'list'
@@ -89,7 +96,7 @@ Package {
                 color: "black"
                 Image {
                     anchors.fill: parent
-                    source: model.exists ? model.url : ""
+                    source: modelData
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     sourceSize: Qt.size(120, 120)
@@ -101,11 +108,11 @@ Package {
             }
             ColumnLayout {
                 Text {
-                    text: model.name
+                    text: modelData
                     font.pixelSize: Style.text.size.small
                 }
                 Text {
-                    text: model.url.toString().replace("file://", "")
+                    text: "-"
                     font.pixelSize: Style.text.size.small
                     color: Style.text.color.dark
                 }
@@ -116,11 +123,12 @@ Package {
         }
     }
 
+    // grid style delegate
     Item {
         id: gridDelegate
         Package.name: 'grid'
-        width: GridView.view.cellWidth
-        height: GridView.view.cellHeight
+        width: GridView.view ? GridView.view.cellWidth : 0
+        height: GridView.view ? GridView.view.cellHeight : 0
         clip: true
         Keys.onPressed: handleKeyEvent(event)
         MouseArea {
@@ -150,7 +158,7 @@ Package {
             Image {
                 anchors.fill: parent
                 anchors.margins: 2
-                source: model.exists ? model.url : ""
+                source: modelData
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 sourceSize: Qt.size(120, 120)
@@ -158,10 +166,10 @@ Package {
                     width: parent.width
                     height: childrenRect.height
                     Behavior on height { NumberAnimation {} }
-                    color: model.exists ? "#66111111" : Style.window.color.critical
+                    color: "#66111111"
                     Text {
                         width: parent.width
-                        text: model.name
+                        text: modelData
                         color: Style.text.color.xlight
                         font.pixelSize: Style.text.size.xsmall
                         maximumLineCount: (gridMouseArea.containsMouse) ? 4 : 1
@@ -175,6 +183,7 @@ Package {
         }
     }
 
+    // context menu
     Menu {
         id: contextMenu
         MenuItem {

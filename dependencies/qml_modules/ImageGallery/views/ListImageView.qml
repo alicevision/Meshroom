@@ -7,9 +7,12 @@ import DarkStyle 1.0
 Item {
 
     id: root
+
+    // properties
     property variant visualModel: null
     property real thumbnailSize: 60
 
+    // scroll & listview
     ScrollView {
         id: scrollview
         anchors.fill: parent
@@ -17,17 +20,17 @@ Item {
             id: listview
             property alias cellHeight: root.thumbnailSize
             anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: 2
             model: visualModel.parts.list
-            spacing: 1
+            spacing: 4
             clip: true
         }
     }
 
+    // bottom menu
     Item {
-        anchors.right: parent.right
         anchors.bottom: parent.bottom
-        width: 200
+        width: parent.width
         height: 30
         Rectangle {
             anchors.fill: parent
@@ -41,9 +44,9 @@ Item {
             spacing: 0
             Slider {
                 Layout.fillWidth: true
-                minimumValue: 45
-                maximumValue: 200
-                value: 60
+                minimumValue: 30
+                maximumValue: 100
+                value: 50
                 onValueChanged: root.thumbnailSize = value
             }
         }

@@ -10,20 +10,18 @@ import "views"
 Item {
 
     id: root
+
+    // properties
     property variant model: null
     property bool editable: true
+    property bool closeable: false
     property alias title: dropArea.title
 
-    DropArea {
-        id: dropArea
-        anchors.fill: parent
-        enabled: root.editable
-        onFilesDropped: {
-            for(var i=0; i<files.length; ++i)
-                model.addResource(files[i]);
-        }
-    }
+    // signal / slots
+    signal closed()
+    signal itemAdded(var item)
 
+    // selection functions
     QtObject {
         id: _selector
         signal refreshSelectionFlags()
@@ -79,65 +77,79 @@ Item {
         }
     }
 
-    TabView {
-        id: tabview
+    // drop area in background
+    DropArea {
+        id: dropArea
         anchors.fill: parent
-        focus: true
-        hideTabs: true
-        DelegateModel {
-            id: imageModel
-            delegate: ThumbnailDelegate {
-                editable: root.editable
-                onSelectOne: _selector.selectOne(id)
-                onSelectContiguous: _selector.selectContiguous(id)
-                onSelectExtended: _selector.add(id)
-                onUnselect: _selector.unselect(id)
-                onUnselectAll: _selector.clear()
-                onRemoveSelected: _selector.remove()
-                onRemoveOne: _selector.removeOne(id)
-            }
-            model: root.model
-        }
-        Tab {
-            title: "Grid"
-            property string iconSource: "qrc:///images/grid.svg"
-            GridImageView { visualModel: imageModel }
-        }
-        Tab {
-            title: "List"
-            property string iconSource: "qrc:///images/list.svg"
-            ListImageView  { visualModel: imageModel }
-        }
-        Tab {
-            title: "List"
-            property string iconSource: "qrc:///images/diaporama.svg"
-            FullscreenImageView {
-                model: root.model
-                currentIndex: _selector.lastSelected
-            }
+        enabled: root.editable
+        onFilesDropped: {
+            for(var i=0; i<files.length; ++i)
+                root.itemAdded(files[i]);
         }
     }
 
-    Item {
-        anchors.top: parent.top
-        anchors.right: parent.right
-        width: listview.contentWidth
-        height: 30
-        Rectangle {
-            anchors.fill: parent
-            opacity: 0.6
-            color: Style.window.color.xdark
+    ColumnLayout {
+        anchors.fill: parent
+        Item { // top menu
+            Layout.fillWidth: true
+            Layout.preferredHeight: 30
+            Rectangle {
+                anchors.fill: parent
+                opacity: 0.6
+                color: Style.window.color.xdark
+            }
+            RowLayout {
+                anchors.fill: parent
+                ListView {
+                    id: listview
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    model: tabview.count
+                    spacing: 0
+                    interactive: false
+                    orientation: Qt.Horizontal
+                    delegate: Button {
+                        iconSource: tabview.getTab(index).iconSource
+                        onClicked: tabview.currentIndex = index
+                    }
+                }
+                Item { Layout.fillWidth: true } // spacer
+                ToolButton {
+                    visible: root.closeable
+                    iconSource: "qrc:///images/close.svg"
+                    onClicked: closed()
+                }
+            }
         }
-        ListView {
-            id: listview
-            anchors.fill: parent
-            model: tabview.count
-            spacing: 0
-            interactive: false
-            orientation: Qt.Horizontal
-            delegate: Button {
-                iconSource: tabview.getTab(index).iconSource
-                onClicked: tabview.currentIndex = index
+        TabView { // tab view
+            id: tabview
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            focus: true
+            tabsVisible: false
+            DelegateModel {
+                id: imageModel
+                delegate: ThumbnailDelegate {
+                    editable: root.editable
+                    onSelectOne: _selector.selectOne(id)
+                    onSelectContiguous: _selector.selectContiguous(id)
+                    onSelectExtended: _selector.add(id)
+                    onUnselect: _selector.unselect(id)
+                    onUnselectAll: _selector.clear()
+                    onRemoveSelected: _selector.remove()
+                    onRemoveOne: _selector.removeOne(id)
+                }
+                model: root.model
+            }
+            Tab {
+                title: "Grid"
+                property string iconSource: "qrc:///images/grid.svg"
+                GridImageView { visualModel: imageModel }
+            }
+            Tab {
+                title: "List"
+                property string iconSource: "qrc:///images/list.svg"
+                ListImageView  { visualModel: imageModel }
             }
         }
     }

@@ -7,16 +7,19 @@ import DarkStyle 1.0
 Item {
 
     id: root
+
+    // properties
     property variant visualModel: null
     property real thumbnailSize: 130
 
+    // scroll & gridview
     ScrollView {
         id: scrollview
         anchors.fill: parent
         GridView {
             id: gridview
             anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: 2
             cellWidth: root.thumbnailSize
             cellHeight: root.thumbnailSize
             model: visualModel.parts.grid
@@ -24,10 +27,10 @@ Item {
         }
     }
 
+    // bottom menu
     Item {
-        anchors.right: parent.right
         anchors.bottom: parent.bottom
-        width: 200
+        width: parent.width
         height: 30
         Rectangle {
             anchors.fill: parent
@@ -41,9 +44,9 @@ Item {
             spacing: 0
             Slider {
                 Layout.fillWidth: true
-                minimumValue: 100
-                maximumValue: 500
-                value: 130
+                minimumValue: 50
+                maximumValue: 150
+                value: 60
                 onValueChanged: root.thumbnailSize = value
             }
         }

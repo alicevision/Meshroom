@@ -25,7 +25,7 @@ ColumnLayout {
                 Item { // views
                     height: parent.height * 0.6
                     Rectangle { // tab background
-                        height: 20
+                        height: 30
                         width: parent.width
                         color: Style.window.color.xdark
                     }

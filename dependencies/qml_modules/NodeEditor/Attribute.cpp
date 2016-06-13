@@ -25,6 +25,7 @@ void Attribute::setValue(const QVariant& value)
     _value = value;
     if(_value.userType() == qMetaTypeId<QJSValue>())
         _value = qvariant_cast<QJSValue>(_value).toVariant();
+    Q_EMIT valueChanged();
 }
 
 QJsonObject Attribute::serializeToJSON() const
@@ -46,6 +47,8 @@ void Attribute::deserializeFromJSON(const QJsonObject& obj)
             return COMBOBOX;
         else if(type == "CHECKBOX")
             return CHECKBOX;
+        else if(type == "IMAGELIST")
+            return IMAGELIST;
         return UNKNOWN;
     };
 

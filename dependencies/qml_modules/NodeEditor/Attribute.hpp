@@ -9,6 +9,15 @@ namespace nodeeditor
 class Attribute : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged)
+    Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(QString key READ key CONSTANT)
+    Q_PROPERTY(QString tooltip READ tooltip CONSTANT)
+    Q_PROPERTY(AttributeType type READ type CONSTANT)
+    Q_PROPERTY(QVariant min READ min CONSTANT)
+    Q_PROPERTY(QVariant max READ max CONSTANT)
+    Q_PROPERTY(QVariant step READ step CONSTANT)
+    Q_PROPERTY(QStringList options READ options CONSTANT)
 
 public:
     Attribute() = default;
@@ -21,7 +30,8 @@ public:
         TEXTFIELD,
         SLIDER,
         COMBOBOX,
-        CHECKBOX
+        CHECKBOX,
+        IMAGELIST
     };
     Q_ENUMS(AttributeType)
 
@@ -48,6 +58,9 @@ public:
 public:
     QJsonObject serializeToJSON() const;
     void deserializeFromJSON(const QJsonObject& obj);
+
+public:
+    Q_SIGNAL void valueChanged();
 
 private:
     QVariant _value;

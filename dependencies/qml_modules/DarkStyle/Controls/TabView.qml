@@ -7,15 +7,13 @@ import "."
 TabView {
 
     id: root
-    property bool hideTabs: false
 
     style: TabViewStyle {
         frameOverlap: 0
         tabOverlap: 0
         tab: Rectangle {
-            visible: !root.hideTabs
             implicitWidth: Math.max(text.width + 4, 50)
-            implicitHeight: 20
+            implicitHeight: 30
             color: Style.window.color.xdark
             opacity: styleData.selected ? 1 : 0.6
             Text {

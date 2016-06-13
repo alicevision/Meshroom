@@ -5,7 +5,6 @@ Button 1.0 Button.qml
 CheckBox 1.0 CheckBox.qml
 ComboBox 1.0 ComboBox.qml
 DropArea 1.0 DropArea.qml
-DarkStyleGallery 1.0 DarkStyleGallery.qml
 Menu 1.0 Menu.qml
 MenuBar 1.0 MenuBar.qml
 ProgressBar 1.0 ProgressBar.qml

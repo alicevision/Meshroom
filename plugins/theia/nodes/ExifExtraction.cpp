@@ -49,29 +49,21 @@ void ExifExtraction::compute(const vector<string>& arguments) const
     // command line parsing
     parser.parse(QCoreApplication::arguments());
     if(!parser.isSet("input") || !parser.isSet("output"))
-    {
-        qCritical() << "missing command line value";
-        return;
-    }
+        throw logic_error("missing command line value");
+
     string input = parser.value("input").toStdString();
     string output = parser.value("output").toStdString();
 
     // open a file handler
     ofstream ofs(output);
     if(!ofs.is_open())
-    {
-        qCritical() << " | ERROR (export)";
-        return;
-    }
+        throw logic_error("failed to export exif file");
 
     // extract EXIF meta data
     theia::ExifReader reader;
     theia::CameraIntrinsicsPrior intrinsics;
     if(!reader.ExtractEXIFMetadata(input, &intrinsics))
-    {
-        qCritical() << " | ERROR (extraction)";
-        return;
-    }
+        throw logic_error("failed to extract exif metadata");
 
     // for images with a focal length that was not extracted
     if(!intrinsics.focal_length.is_set)

@@ -58,10 +58,7 @@ void StructureFromMotion::compute(const vector<string>& arguments) const
     // command line parsing
     parser.parse(QCoreApplication::arguments());
     if(!parser.isSet("input") || !parser.isSet("output"))
-    {
-        qCritical() << "missing command line value";
-        return;
-    }
+        throw logic_error("missing command line value");
 
     auto toSTDStringVector = [](const QStringList& qlist) -> vector<string>
     {
@@ -82,30 +79,6 @@ void StructureFromMotion::compute(const vector<string>& arguments) const
     // string reconstructionestimatortype = "GLOBAL";
     // string globalrotationestimatortype = "ROBUST_L1L2";
     // string reconstructionestimatortype = "LEAST_UNSQUARED_DEVIATION";
-
-    // // parse node arguments
-    // for(int i = 0; i < arguments.size(); ++i)
-    // {
-    //     const string& option = arguments[i];
-    //     if(matches(option, "--input", "-i"))
-    //         getArgs(arguments, ++i, input);
-    //     else if(matches(option, "--exifs", "-ex"))
-    //         getArgs(arguments, ++i, exifs);
-    //     else if(matches(option, "--output", "-o"))
-    //         getArgs(arguments, ++i, output);
-    //     else if(matches(option, "--threads", "-th"))
-    //         getArgs(arguments, ++i, numthreads);
-    //     else if(matches(option, "--largestonly", "-lo"))
-    //         getArgs(arguments, ++i, largestonly);
-    //     else if(matches(option, "--onlycalibratedviews", "-ocv"))
-    //         getArgs(arguments, ++i, onlycalibratedviews);
-    //     else if(matches(option, "--maxtracklength", "-mtl"))
-    //         getArgs(arguments, ++i, maxtracklength);
-    //     else if(matches(option, "--minnum2viewsinliers", "-m2v"))
-    //         getArgs(arguments, ++i, minnum2viewsinliers);
-    // }
-    // if(input.empty() || output.empty())
-    //     throw logic_error("missing command line value");
 
     // set up the reconstruction builder
     theia::ReconstructionBuilderOptions options;
@@ -143,10 +116,7 @@ void StructureFromMotion::compute(const vector<string>& arguments) const
         theia::GetFilenameFromFilepath(img, true, &filename);
         auto it = intrinsicsmap.find(filename);
         if(it == intrinsicsmap.end())
-        {
-            qCritical() << " | ERROR (intrinsics not found)";
-            return;
-        }
+            throw logic_error("failed to read exif data");
         intrinsics.emplace_back(it->second);
     }
     // -----------------------
@@ -155,39 +125,27 @@ void StructureFromMotion::compute(const vector<string>& arguments) const
     for(int i = 0; i < images.size(); i++)
     {
         if(!builder.AddImageWithCameraIntrinsicsPrior(images[i], intrinsics[i]))
-        {
-            qCritical() << " | ERROR (adding image)";
-            continue;
-        }
+            throw logic_error("failed to configure the reconstruction builder (AddImageWithCameraIntrinsicsPrior)");
     }
 
     // add the matches to the builder
     for(const auto& match : matches)
     {
         if(!builder.AddTwoViewMatch(match.image1, match.image2, match))
-        {
-            qCritical() << " | ERROR (adding view)";
-            continue;
-        }
+            throw logic_error("failed to configure the reconstruction builder (AddTwoViewMatch)");
     }
 
     // reconstruct
     vector<theia::Reconstruction*> reconstructions;
     if(!builder.BuildReconstruction(&reconstructions))
-    {
-        qCritical() << " | ERROR (building reconstruction)";
-        return;
-    }
+        throw logic_error("failed to build reconstruction");
 
     // colorize
+    // FIXME do not use this hard-coded path
     theia::ColorizeReconstruction("/tmp/", 4, reconstructions[0]);
 
     // export
+    // FIXME write all reconstruction files
     if(!theia::WriteReconstruction(*reconstructions[0], output))
-    {
-        qCritical() << " | ERROR (export)";
-        return;
-    }
-    if(reconstructions.size() > 1)
-        qWarning() << " | exported 1 reconstruction (" << reconstructions.size() << " available)";
+        throw logic_error("failed to export sfm file");
 }

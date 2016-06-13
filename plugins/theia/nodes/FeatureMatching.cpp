@@ -71,10 +71,7 @@ void FeatureMatching::compute(const vector<string>& arguments) const
     parser.parse(QCoreApplication::arguments());
     if(!parser.isSet("image") || !parser.isSet("feature") || !parser.isSet("exif") ||
        !parser.isSet("o"))
-    {
-        qCritical() << "missing command line value";
-        return;
-    }
+       throw logic_error("missing command line value");
 
     auto toSTDStringVector = [](const QStringList& qlist) -> vector<string>
     {
@@ -96,36 +93,6 @@ void FeatureMatching::compute(const vector<string>& arguments) const
     float lowesratio = 0.8;
     int minnumfeaturematches = 30;
 
-    // // parse node arguments
-    // for(int i = 0; i < arguments.size(); ++i)
-    // {
-    //     const string& option = arguments[i];
-    //     if(matches(option, "--images", "-img"))
-    //         getArgs(arguments, ++i, images);
-    //     else if(matches(option, "--features", "-feat"))
-    //         getArgs(arguments, ++i, features);
-    //     else if(matches(option, "--exifs", "-ex"))
-    //         getArgs(arguments, ++i, exifs);
-    //     else if(matches(option, "--output", "-o"))
-    //         getArgs(arguments, ++i, output);
-    //     else if(matches(option, "--threads", "-th"))
-    //         getArgs(arguments, ++i, numthreads);
-    //     else if(matches(option, "--outofcore", "-ooc"))
-    //         getArgs(arguments, ++i, matchoutofcore);
-    //     else if(matches(option, "--cachecapacity", "-cc"))
-    //         getArgs(arguments, ++i, cachecapacity);
-    //     else if(matches(option, "--keeponlysymetric", "-kos"))
-    //         getArgs(arguments, ++i, keeponlysymmetricmatches);
-    //     else if(matches(option, "--uselowesratio", "-ulr"))
-    //         getArgs(arguments, ++i, uselowesratio);
-    //     else if(matches(option, "--lowesratio", "-lr"))
-    //         getArgs(arguments, ++i, lowesratio);
-    //     else if(matches(option, "--minfeatures", "-mf"))
-    //         getArgs(arguments, ++i, minnumfeaturematches);
-    // }
-    // if(features.empty() || images.empty() || output.empty())
-    //     throw logic_error("missing command line value");
-
     // set up the feature matcher
     theia::FeatureMatcherOptions options;
     options.num_threads = numthreads;
@@ -144,10 +111,7 @@ void FeatureMatching::compute(const vector<string>& arguments) const
         vector<theia::Keypoint> keypts;
         vector<Eigen::VectorXf> descs;
         if(!theia::ReadKeypointsAndDescriptors(features[i], &keypts, &descs))
-        {
-            qCritical() << " | ERROR (reading features)";
-            return;
-        }
+            throw logic_error("failed to read feature data");
         keypoints.emplace_back(keypts);
         descriptors.emplace_back(descs);
     }
@@ -165,10 +129,7 @@ void FeatureMatching::compute(const vector<string>& arguments) const
         theia::GetFilenameFromFilepath(img, true, &filename);
         auto it = intrinsicsmap.find(filename);
         if(it == intrinsicsmap.end())
-        {
-            qCritical() << " | ERROR (intrinsics not found)";
-            return;
-        }
+            throw logic_error("failed to read exif data");
         intrinsics.emplace_back(it->second);
     }
 
@@ -188,8 +149,5 @@ void FeatureMatching::compute(const vector<string>& arguments) const
 
     // export
     if(!theia::WriteMatchesAndGeometry(output, images, intrinsics, matches))
-    {
-        qCritical() << " | ERROR (export)";
-        return;
-    }
+        throw logic_error("failed to export match file");
 }

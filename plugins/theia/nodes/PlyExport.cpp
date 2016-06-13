@@ -48,26 +48,19 @@ void PlyExport::compute(const vector<string>& arguments) const
     // command line parsing
     parser.parse(QCoreApplication::arguments());
     if(!parser.isSet("input") || !parser.isSet("output"))
-    {
-        qCritical() << "missing command line value";
-        return;
-    }
+        throw logic_error("missing command line value");
+
     string input = parser.value("input").toStdString();
     string output = parser.value("output").toStdString();
 
     // read all reconstruction files
     theia::Reconstruction reconstruction;
     if(!theia::ReadReconstruction(input, &reconstruction))
-    {
-        qCritical() << " | ERROR (reading reconstruction)";
-        return;
-    }
+        throw logic_error("failed to read the reconstruction file");
 
     // write as PLY files
     int minnumobservationsperpoint = 0;
     if(!theia::WritePlyFile(output, reconstruction, minnumobservationsperpoint))
-    {
-        qCritical() << " | ERROR (writing ply file)";
-        return;
-    }
+        throw logic_error("failed to export .ply file");
+
 }

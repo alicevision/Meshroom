@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDebug>
+#include <QDir>
 
 using namespace dg;
 namespace meshroom
@@ -39,6 +40,11 @@ void Graph::setCacheUrl(const QUrl& cacheUrl)
 {
     if(_cacheUrl == cacheUrl)
         return;
+    // if the folder does not exist, create it
+    QDir dir(cacheUrl.toLocalFile());
+    if(!dir.exists())
+        dir.mkpath(".");
+    // save the path and set it as graph root
     _cacheUrl = cacheUrl;
     _graph->cache.setRoot(_cacheUrl.toLocalFile().toStdString());
     Q_EMIT cacheUrlChanged();

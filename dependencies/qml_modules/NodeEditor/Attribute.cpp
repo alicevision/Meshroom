@@ -30,8 +30,33 @@ void Attribute::setValue(const QVariant& value)
 
 QJsonObject Attribute::serializeToJSON() const
 {
+    auto toString = [](const AttributeType& type) -> QString
+    {
+        switch(type)
+        {
+            case TEXTFIELD: return "TEXTFIELD";
+            case SLIDER: return "SLIDER";
+            case COMBOBOX: return "COMBOBOX";
+            case CHECKBOX: return "CHECKBOX";
+            case IMAGELIST: return "IMAGELIST";
+            default: return "UNKNOWN";
+        }
+    };
+
     QJsonObject obj;
-    obj.insert(_key, QJsonValue::fromVariant(_value));
+    obj.insert("key", _key);
+    obj.insert("name", _name);
+    obj.insert("type", toString(_type));
+    if(!_value.isNull())
+        obj.insert("value", QJsonValue::fromVariant(_value));
+    if(!_min.isNull())
+        obj.insert("min", QJsonValue::fromVariant(_min));
+    if(!_max.isNull())
+        obj.insert("max", QJsonValue::fromVariant(_max));
+    if(!_step.isNull())
+        obj.insert("step", QJsonValue::fromVariant(_step));
+    if(!_options.isEmpty())
+        obj.insert("options", QJsonValue::fromVariant(_options));
     return obj;
 }
 

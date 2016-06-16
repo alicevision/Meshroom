@@ -1,5 +1,6 @@
 #include "AttributeModel.hpp"
 #include <QQmlEngine>
+#include <QJsonObject>
 #include <QDebug>
 
 namespace nodeeditor
@@ -61,14 +62,11 @@ QVariant AttributeModel::data(const QModelIndex& index, int role) const
 
 bool AttributeModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-    qDebug() << "-1-";
     if(index.row() < 0 || index.row() >= _attributes.count() || role != ValueRole)
         return false;
-    qDebug() << "-2-";
     Attribute* att = _attributes[index.row()];
     if(att->value() == value)
         return false;
-    qDebug() << "-3-";
     att->setValue(value);
     Q_EMIT dataChanged(index, index);
     return true;
@@ -156,6 +154,20 @@ QVariantMap AttributeModel::get(int row) const
         result[i.value()] = data;
     }
     return result;
+}
+
+QJsonArray AttributeModel::serializeToJSON() const
+{
+    QJsonArray array;
+    for(auto a : _attributes)
+        array.append(a->serializeToJSON());
+    return array;
+}
+
+void AttributeModel::deserializeFromJSON(const QJsonArray& array)
+{
+    for(auto a : array)
+        addAttribute(a.toObject());
 }
 
 } // namespace

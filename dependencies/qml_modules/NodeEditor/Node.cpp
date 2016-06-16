@@ -37,6 +37,8 @@ QJsonObject Node::serializeToJSON() const
     obj.insert("type", _type);
     obj.insert("x", _x);
     obj.insert("y", _y);
+    obj.insert("inputs", _inputs->serializeToJSON());
+    obj.insert("outputs", _outputs->serializeToJSON());
     return obj;
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QAbstractListModel>
+#include <QJsonArray>
 #include "Attribute.hpp"
 
 namespace nodeeditor
@@ -39,6 +40,8 @@ public:
     Q_SLOT void addAttribute(const QJsonObject& descriptor);
     Q_SLOT QVariantMap get(int row) const;
     Q_SLOT int getID(const QString&) const;
+    Q_SLOT QJsonArray serializeToJSON() const;
+    Q_SLOT void deserializeFromJSON(const QJsonArray&);
     Q_SIGNAL void countChanged(int c);
 
 protected:

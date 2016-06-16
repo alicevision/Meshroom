@@ -22,7 +22,12 @@ Item {
             editor.nodes.addNode(node);
             currentScene.setDirty(true);
         }
-        onNodeVisitStarted: {
+        onNodeInitialized: {
+            var nodeID = editor.nodes.getID(node);
+            var nodeObj = editor.nodes.get(nodeID);
+            nodeObj.modelData.status = Node.READY;
+        }
+        onNodeVisited: {
             var nodeID = editor.nodes.getID(node);
             var nodeObj = editor.nodes.get(nodeID);
             nodeObj.modelData.status = Node.WAITING;
@@ -51,18 +56,19 @@ Item {
             var connections = editor.connections.serializeToJSON();
             currentScene.graph.descriptionReceived(nodes, connections);
         }
-        onStatusCleared: {
-            for(var i = 0; i < editor.nodes.count ; i++)
-                editor.nodes.get(i).modelData.status = Node.READY;
-        }
         onCleared: { editor.init() }
     }
 
     property Component contextMenu: Menu {
-        signal compute()
+        signal computeLocally()
+        signal computeOnFarm()
         MenuItem {
-            text: "Compute..."
-            onTriggered: compute()
+            text: "Compute locally..."
+            onTriggered: computeLocally()
+        }
+        MenuItem {
+            text: "Compute on farm..."
+            onTriggered: computeOnFarm()
         }
         MenuSeparator {}
     }
@@ -72,11 +78,15 @@ Item {
         anchors.fill: parent
         onNodeLeftClicked: root.selectionChanged(node)
         onNodeRightClicked: {
-            function compute_CB() {
+            function computeLocally_CB() {
                 currentScene.graph.compute(node.name, Graph.LOCAL);
             }
+            function computeOnFarm_CB() {
+                currentScene.graph.compute(node.name, Graph.TRACTOR);
+            }
             var menu = contextMenu.createObject(editor);
-            menu.compute.connect(compute_CB);
+            menu.computeLocally.connect(computeLocally_CB);
+            menu.computeOnFarm.connect(computeOnFarm_CB);
             menu.popup()
         }
     }

@@ -67,13 +67,14 @@ void FeatureExtraction::compute(const vector<string>& arguments) const
     options.descriptor_extractor_type = theia::DescriptorExtractorType::SIFT;
     options.num_threads = numthreads;
     options.max_num_features = maxnumfeatures;
-    options.sift_parameters.num_octaves = numoctaves;
-    options.sift_parameters.num_levels = numlevels;
-    options.sift_parameters.first_octave = firstoctave;
-    options.sift_parameters.edge_threshold = edgethreshold;
-    options.sift_parameters.peak_threshold = peakthreshold;
-    options.sift_parameters.root_sift = rootsift;
-    options.sift_parameters.upright_sift = uprightsift;
+    options.feature_density = theia::FeatureDensity::DENSE;
+    // options.sift_parameters.num_octaves = numoctaves;
+    // options.sift_parameters.num_levels = numlevels;
+    // options.sift_parameters.first_octave = firstoctave;
+    // options.sift_parameters.edge_threshold = edgethreshold;
+    // options.sift_parameters.peak_threshold = peakthreshold;
+    // options.sift_parameters.root_sift = rootsift;
+    // options.sift_parameters.upright_sift = uprightsift;
 
     // extract features
     theia::FeatureExtractor extractor(options);

@@ -46,15 +46,14 @@ public:
     Q_SIGNAL void cacheUrlChanged();
     Q_SIGNAL void runningChanged();
     Q_SIGNAL void nodeAdded(const QJsonObject& node);
-    Q_SIGNAL void nodeVisitStarted(const QString& node);
-    Q_SIGNAL void nodeVisitCompleted(const QString& node);
+    Q_SIGNAL void nodeInitialized(const QString& node);
+    Q_SIGNAL void nodeVisited(const QString& node);
     Q_SIGNAL void nodeComputeStarted(const QString& node);
     Q_SIGNAL void nodeComputeCompleted(const QString& node);
     Q_SIGNAL void nodeComputeFailed(const QString& node);
     Q_SIGNAL void connectionAdded(const QJsonObject& node);
     Q_SIGNAL void descriptionRequested() const;
     Q_SIGNAL void descriptionReceived(const QJsonArray&, const QJsonArray&);
-    Q_SIGNAL void statusCleared();
     Q_SIGNAL void cleared();
 
 public:

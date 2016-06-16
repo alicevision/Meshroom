@@ -88,10 +88,10 @@ void FeatureMatching::compute(const vector<string>& arguments) const
     size_t numthreads = 8;
     bool matchoutofcore = false; // false: all in memory
     int cachecapacity = 128;
-    bool keeponlysymmetricmatches = true;
-    bool uselowesratio = true;
-    float lowesratio = 0.8;
-    int minnumfeaturematches = 30;
+    bool keeponlysymmetricmatches = true; // default: true
+    bool uselowesratio = true; // default: true
+    float lowesratio = 0.8; // default:0.8
+    int minnumfeaturematches = 0; // default: 30
 
     // set up the feature matcher
     theia::FeatureMatcherOptions options;

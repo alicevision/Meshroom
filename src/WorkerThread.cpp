@@ -19,48 +19,47 @@ void WorkerThread::run()
     qWarning() << "computing" << _nodeName;
     try
     {
+        Runner* runner = nullptr;
         switch(_mode)
         {
             case Graph::LOCAL:
-            {
-                LocalRunner runner;
-                auto visitStarted = [&](const std::string& node)
-                {
-                    Q_EMIT nodeVisitStarted(QString::fromStdString(node));
-                };
-                auto visitCompleted = [&](const std::string& node)
-                {
-                    Q_EMIT nodeVisitCompleted(QString::fromStdString(node));
-                };
-                auto computeStarted = [&](const std::string& node)
-                {
-                    Q_EMIT nodeComputeStarted(QString::fromStdString(node));
-                };
-                auto computeCompleted = [&](const std::string& node)
-                {
-                    Q_EMIT nodeComputeCompleted(QString::fromStdString(node));
-                };
-                auto computeFailed = [&](const std::string& node)
-                {
-                    Q_EMIT nodeComputeFailed(QString::fromStdString(node));
-                };
-                runner.registerOnVisitBeginCB(visitStarted);
-                runner.registerOnVisitEndCB(visitCompleted);
-                runner.registerOnComputeBeginCB(computeStarted);
-                runner.registerOnComputeEndCB(computeCompleted);
-                runner.registerOnErrorCB(computeFailed);
-                runner(_graph, _nodeName.toStdString());
+                runner = new LocalRunner();
                 break;
-            }
             case Graph::TRACTOR:
-            {
-                TractorRunner runner;
-                runner(_graph, _nodeName.toStdString());
+                runner = new TractorRunner();
                 break;
-            }
             default:
                 break;
         }
+
+        auto initialized = [&](const std::string& node)
+        {
+            Q_EMIT nodeInitialized(QString::fromStdString(node));
+        };
+        auto visited = [&](const std::string& node)
+        {
+            Q_EMIT nodeVisited(QString::fromStdString(node));
+        };
+        auto computeStarted = [&](const std::string& node)
+        {
+            Q_EMIT nodeComputeStarted(QString::fromStdString(node));
+        };
+        auto computeCompleted = [&](const std::string& node)
+        {
+            Q_EMIT nodeComputeCompleted(QString::fromStdString(node));
+        };
+        auto computeFailed = [&](const std::string& node)
+        {
+            Q_EMIT nodeComputeFailed(QString::fromStdString(node));
+        };
+        runner->registerOnInitCB(initialized);
+        runner->registerOnVisitCB(visited);
+        runner->registerOnComputeBeginCB(computeStarted);
+        runner->registerOnComputeEndCB(computeCompleted);
+        runner->registerOnErrorCB(computeFailed);
+        
+        runner->operator()(_graph, _nodeName.toStdString());
+        delete runner;
     }
     catch(std::exception& e)
     {

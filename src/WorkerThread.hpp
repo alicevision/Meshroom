@@ -19,8 +19,8 @@ public:
     void run() override;
 
 public:
-    Q_SIGNAL void nodeVisitStarted(const QString& s);
-    Q_SIGNAL void nodeVisitCompleted(const QString& s);
+    Q_SIGNAL void nodeInitialized(const QString& s);
+    Q_SIGNAL void nodeVisited(const QString& s);
     Q_SIGNAL void nodeComputeStarted(const QString& s);
     Q_SIGNAL void nodeComputeCompleted(const QString& s);
     Q_SIGNAL void nodeComputeFailed(const QString& s);

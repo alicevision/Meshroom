@@ -71,11 +71,11 @@ void StructureFromMotion::compute(const vector<string>& arguments) const
     string input = parser.value("input").toStdString();
     string output = parser.value("output").toStdString();
     vector<string> exifs = toSTDStringVector(parser.values("exif"));
-    size_t numthreads = 4;
+    size_t numthreads = 8;
     bool largestonly = false;
     bool onlycalibratedviews = false;
-    int maxtracklength = 20;
-    int minnum2viewsinliers = -1; // default 30
+    int maxtracklength = 10; // default: 20
+    int minnum2viewsinliers = 15; // default: 30
     // string reconstructionestimatortype = "GLOBAL";
     // string globalrotationestimatortype = "ROBUST_L1L2";
     // string reconstructionestimatortype = "LEAST_UNSQUARED_DEVIATION";
@@ -88,11 +88,11 @@ void StructureFromMotion::compute(const vector<string>& arguments) const
     options.max_track_length = maxtracklength;
     options.reconstruction_estimator_options.min_num_two_view_inliers = minnum2viewsinliers;
     options.reconstruction_estimator_options.reconstruction_estimator_type =
-        theia::ReconstructionEstimatorType::GLOBAL;
+        theia::ReconstructionEstimatorType::INCREMENTAL;
     options.reconstruction_estimator_options.global_rotation_estimator_type =
         theia::GlobalRotationEstimatorType::ROBUST_L1L2;
     options.reconstruction_estimator_options.global_position_estimator_type =
-        theia::GlobalPositionEstimatorType::LEAST_UNSQUARED_DEVIATION; // default NONLINEAR
+        theia::GlobalPositionEstimatorType::NONLINEAR;
 
     theia::ReconstructionBuilder builder(options);
 
@@ -148,4 +148,5 @@ void StructureFromMotion::compute(const vector<string>& arguments) const
     // FIXME write all reconstruction files
     if(!theia::WriteReconstruction(*reconstructions[0], output))
         throw logic_error("failed to export sfm file");
+    qWarning() << "reconstructions: " << reconstructions.size();
 }

@@ -150,11 +150,10 @@ void Graph::compute(const QString& name, Graph::BuildMode mode)
 {
     if(_worker && _worker->isRunning())
         return;
-    Q_EMIT statusCleared();
     delete _worker;
     _worker = new WorkerThread(this, name, mode, _graph);
-    connect(_worker, &WorkerThread::nodeVisitStarted, this, &Graph::nodeVisitStarted);
-    connect(_worker, &WorkerThread::nodeVisitCompleted, this, &Graph::nodeVisitCompleted);
+    connect(_worker, &WorkerThread::nodeInitialized, this, &Graph::nodeInitialized);
+    connect(_worker, &WorkerThread::nodeVisited, this, &Graph::nodeVisited);
     connect(_worker, &WorkerThread::nodeComputeStarted, this, &Graph::nodeComputeStarted);
     connect(_worker, &WorkerThread::nodeComputeCompleted, this, &Graph::nodeComputeCompleted);
     connect(_worker, &WorkerThread::nodeComputeFailed, this, &Graph::nodeComputeFailed);

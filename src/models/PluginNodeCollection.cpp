@@ -1,25 +1,25 @@
-#include "NodeCollection.hpp"
+#include "PluginNodeCollection.hpp"
 #include <QQmlEngine>
 
 namespace meshroom
 {
 
-NodeCollection::NodeCollection(QObject* parent)
+PluginNodeCollection::PluginNodeCollection(QObject* parent)
     : QAbstractListModel(parent)
 {
 }
 
-int NodeCollection::rowCount(const QModelIndex& parent) const
+int PluginNodeCollection::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
     return _nodes.count();
 }
 
-QVariant NodeCollection::data(const QModelIndex& index, int role) const
+QVariant PluginNodeCollection::data(const QModelIndex& index, int role) const
 {
     if(index.row() < 0 || index.row() >= _nodes.count())
         return QVariant();
-    Node* node = _nodes[index.row()];
+    PluginNode* node = _nodes[index.row()];
     switch(role)
     {
         case TypeRole:
@@ -35,19 +35,19 @@ QVariant NodeCollection::data(const QModelIndex& index, int role) const
     }
 }
 
-Node* NodeCollection::get(const QString& type)
+PluginNode* PluginNodeCollection::get(const QString& type)
 {
-    QListIterator<Node*> it(_nodes);
+    QListIterator<PluginNode*> it(_nodes);
     while(it.hasNext())
     {
-        Node* n = it.next();
+        PluginNode* n = it.next();
         if(n->type() == type)
             return n;
     }
     return nullptr;
 }
 
-QHash<int, QByteArray> NodeCollection::roleNames() const
+QHash<int, QByteArray> PluginNodeCollection::roleNames() const
 {
     QHash<int, QByteArray> roles;
     roles[TypeRole] = "type";
@@ -57,7 +57,7 @@ QHash<int, QByteArray> NodeCollection::roleNames() const
     return roles;
 }
 
-void NodeCollection::addNode(Node* node)
+void PluginNodeCollection::add(PluginNode* node)
 {
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(node, QQmlEngine::CppOwnership);

@@ -1,22 +1,22 @@
-#include "ConnectionModel.hpp"
+#include "ConnectionCollection.hpp"
 #include <QQmlEngine>
 #include <QJsonObject>
 
 namespace nodeeditor
 {
 
-ConnectionModel::ConnectionModel(QObject* parent)
+ConnectionCollection::ConnectionCollection(QObject* parent)
     : QAbstractListModel(parent)
 {
 }
 
-int ConnectionModel::rowCount(const QModelIndex& parent) const
+int ConnectionCollection::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
     return _connections.count();
 }
 
-QVariant ConnectionModel::data(const QModelIndex& index, int role) const
+QVariant ConnectionCollection::data(const QModelIndex& index, int role) const
 {
     if(index.row() < 0 || index.row() >= _connections.count())
         return QVariant();
@@ -36,7 +36,7 @@ QVariant ConnectionModel::data(const QModelIndex& index, int role) const
     }
 }
 
-QHash<int, QByteArray> ConnectionModel::roleNames() const
+QHash<int, QByteArray> ConnectionCollection::roleNames() const
 {
     QHash<int, QByteArray> roles;
     roles[SourceRole] = "source";
@@ -46,7 +46,7 @@ QHash<int, QByteArray> ConnectionModel::roleNames() const
     return roles;
 }
 
-void ConnectionModel::addConnection(Connection* connection)
+void ConnectionCollection::addConnection(Connection* connection)
 {
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(connection, QQmlEngine::CppOwnership);
@@ -70,14 +70,14 @@ void ConnectionModel::addConnection(Connection* connection)
     Q_EMIT countChanged(rowCount());
 }
 
-void ConnectionModel::addConnection(const QJsonObject& descriptor)
+void ConnectionCollection::addConnection(const QJsonObject& descriptor)
 {
     Connection* connection = new Connection();
     connection->deserializeFromJSON(descriptor);
     addConnection(connection);
 }
 
-QVariantMap ConnectionModel::get(int row) const
+QVariantMap ConnectionCollection::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);
@@ -92,7 +92,7 @@ QVariantMap ConnectionModel::get(int row) const
     return result;
 }
 
-QJsonArray ConnectionModel::serializeToJSON() const
+QJsonArray ConnectionCollection::serializeToJSON() const
 {
     QJsonArray array;
     for(auto c : _connections)
@@ -100,7 +100,7 @@ QJsonArray ConnectionModel::serializeToJSON() const
     return array;
 }
 
-void ConnectionModel::deserializeFromJSON(const QJsonArray& array)
+void ConnectionCollection::deserializeFromJSON(const QJsonArray& array)
 {
     for(auto c : array)
         addConnection(c.toObject());

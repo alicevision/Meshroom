@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QDebug>
 #include <QDir>
+#include <QMetaMethod>
 
 using namespace dg;
 namespace meshroom
@@ -12,28 +13,34 @@ namespace meshroom
 
 Graph::Graph(QObject* parent)
     : QObject(parent)
+    , _graph(dg::make_ptr<dg::Graph>())
 {
     setCacheUrl(QUrl::fromLocalFile("/tmp"));
 }
 
 Graph::~Graph()
 {
-    abort();
+    stopWorker();
 }
 
-const bool Graph::running() const
+void Graph::setObject(QObject* obj)
+{
+    if(!obj)
+        return;
+    _qmlObject = obj;
+    QObject::connect(this, SIGNAL(nodeAdded(const QJsonObject&)), _qmlObject,
+                     SLOT(addNode(const QJsonObject&)));
+    QObject::connect(this, SIGNAL(connectionAdded(const QJsonObject&)), _qmlObject,
+                     SLOT(addConnection(const QJsonObject&)));
+    QObject::connect(this, SIGNAL(nodeStatusChanged(const QString&, const QString&)), _qmlObject,
+                     SLOT(updateNodeStatus(const QString&, const QString&)));
+}
+
+const bool Graph::isRunning() const
 {
     if(!_worker)
         return false;
     return _worker->isRunning();
-}
-
-void Graph::setName(const QString& name)
-{
-    if(_name == name)
-        return;
-    _name = name;
-    Q_EMIT nameChanged();
 }
 
 void Graph::setCacheUrl(const QUrl& cacheUrl)
@@ -63,8 +70,12 @@ void Graph::addNode(const QJsonObject& descriptor)
     QString name = descriptor.value("name").toString();
 
     // looking for node metadata (registered at plugin load time)
-    Node* node = application->nodes()->get(type);
-    Q_CHECK_PTR(node);
+    PluginNode* node = application->pluginNodes()->get(type);
+    if(!node)
+    {
+        qWarning() << "unknown node type" << type;
+        return;
+    }
     QJsonObject metadata = node->metadata();
 
     // merge metadata and current descriptor
@@ -143,53 +154,54 @@ void Graph::addConnection(const QJsonObject& connection)
 
 void Graph::clear()
 {
+    // TODO clear _graph
     Q_EMIT cleared();
 }
 
-void Graph::compute(const QString& name, Graph::BuildMode mode)
+void Graph::startWorker(const QString& name, Graph::BuildMode mode)
 {
     if(_worker && _worker->isRunning())
         return;
     delete _worker;
     _worker = new WorkerThread(this, name, mode, _graph);
-    connect(_worker, &WorkerThread::nodeInitialized, this, &Graph::nodeInitialized);
-    connect(_worker, &WorkerThread::nodeVisited, this, &Graph::nodeVisited);
-    connect(_worker, &WorkerThread::nodeComputeStarted, this, &Graph::nodeComputeStarted);
-    connect(_worker, &WorkerThread::nodeComputeCompleted, this, &Graph::nodeComputeCompleted);
-    connect(_worker, &WorkerThread::nodeComputeFailed, this, &Graph::nodeComputeFailed);
-    connect(_worker, &WorkerThread::finished, this, &Graph::runningChanged);
+    connect(_worker, &WorkerThread::nodeStatusChanged, this, &Graph::nodeStatusChanged);
+    connect(_worker, &WorkerThread::finished, this, &Graph::isRunningChanged);
     _worker->start();
-    Q_EMIT runningChanged();
+    Q_EMIT isRunningChanged();
 }
 
-void Graph::abort()
+void Graph::stopWorker()
 {
-    if(!running())
+    if(!isRunning())
         return;
     _worker->terminate();
     _worker->wait();
-    Q_EMIT runningChanged();
+    Q_EMIT isRunningChanged();
 }
 
 QJsonObject Graph::serializeToJSON() const
 {
     QJsonObject obj;
-    auto _CB = [&](const QJsonArray& nodes, const QJsonArray& connections)
+    if(!_qmlObject)
     {
-        obj.insert("nodes", nodes);
-        obj.insert("connections", connections);
-    };
-    connect(this, &Graph::descriptionReceived, this, _CB);
-    Q_EMIT descriptionRequested();
-    // FIXME QEventLoop?
-    obj.insert("name", _name);
+        qCritical() << "can't serialize Graph: qml object not registered";
+        return obj;
+    }
+    const QMetaObject* metaObject = _qmlObject->metaObject();
+    int methodIndex = metaObject->indexOfSlot("serializeToJSON()");
+    if(methodIndex == -1)
+    {
+        qCritical() << "can't serialize Graph: invalid object";
+        return obj;
+    }
+    QMetaMethod method = metaObject->method(methodIndex);
+    method.invoke(_qmlObject, Qt::DirectConnection, Q_RETURN_ARG(QJsonObject, obj));
     obj.insert("cacheUrl", _cacheUrl.toLocalFile());
     return obj;
 }
 
 void Graph::deserializeFromJSON(const QJsonObject& obj)
 {
-    setName(obj.value("name").toString());
     setCacheUrl(QUrl::fromLocalFile(obj.value("cacheUrl").toString()));
     for(auto o : obj.value("nodes").toArray())
         addNode(o.toObject());

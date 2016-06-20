@@ -74,7 +74,7 @@ void StructureFromMotion::compute(const vector<string>& arguments) const
     size_t numthreads = 8;
     bool largestonly = false;
     bool onlycalibratedviews = false;
-    int maxtracklength = 10; // default: 20
+    int maxtracklength = 10;      // default: 20
     int minnum2viewsinliers = 15; // default: 30
     // string reconstructionestimatortype = "GLOBAL";
     // string globalrotationestimatortype = "ROBUST_L1L2";
@@ -125,7 +125,8 @@ void StructureFromMotion::compute(const vector<string>& arguments) const
     for(int i = 0; i < images.size(); i++)
     {
         if(!builder.AddImageWithCameraIntrinsicsPrior(images[i], intrinsics[i]))
-            throw logic_error("failed to configure the reconstruction builder (AddImageWithCameraIntrinsicsPrior)");
+            throw logic_error("failed to configure the reconstruction builder "
+                              "(AddImageWithCameraIntrinsicsPrior)");
     }
 
     // add the matches to the builder

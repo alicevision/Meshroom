@@ -29,9 +29,9 @@ public:
 public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex&, int role = Qt::DisplayRole) const override;
+    void add(Plugin*);
 
 public:
-    Q_SLOT void addPlugin(Plugin*);
     Q_SIGNAL void countChanged(int);
 
 protected:

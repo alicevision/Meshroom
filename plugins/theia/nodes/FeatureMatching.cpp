@@ -71,7 +71,7 @@ void FeatureMatching::compute(const vector<string>& arguments) const
     parser.parse(QCoreApplication::arguments());
     if(!parser.isSet("image") || !parser.isSet("feature") || !parser.isSet("exif") ||
        !parser.isSet("o"))
-       throw logic_error("missing command line value");
+        throw logic_error("missing command line value");
 
     auto toSTDStringVector = [](const QStringList& qlist) -> vector<string>
     {
@@ -89,9 +89,9 @@ void FeatureMatching::compute(const vector<string>& arguments) const
     bool matchoutofcore = false; // false: all in memory
     int cachecapacity = 128;
     bool keeponlysymmetricmatches = true; // default: true
-    bool uselowesratio = true; // default: true
-    float lowesratio = 0.8; // default:0.8
-    int minnumfeaturematches = 0; // default: 30
+    bool uselowesratio = true;            // default: true
+    float lowesratio = 0.8;               // default:0.8
+    int minnumfeaturematches = 0;         // default: 30
 
     // set up the feature matcher
     theia::FeatureMatcherOptions options;

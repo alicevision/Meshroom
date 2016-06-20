@@ -45,7 +45,7 @@ QHash<int, QByteArray> PluginCollection::roleNames() const
     return roles;
 }
 
-void PluginCollection::addPlugin(Plugin* plugin)
+void PluginCollection::add(Plugin* plugin)
 {
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(plugin, QQmlEngine::CppOwnership);

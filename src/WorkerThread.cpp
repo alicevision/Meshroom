@@ -34,30 +34,30 @@ void WorkerThread::run()
 
         auto initialized = [&](const std::string& node)
         {
-            Q_EMIT nodeInitialized(QString::fromStdString(node));
+            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "READY");
         };
         auto visited = [&](const std::string& node)
         {
-            Q_EMIT nodeVisited(QString::fromStdString(node));
+            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "WAITING");
         };
         auto computeStarted = [&](const std::string& node)
         {
-            Q_EMIT nodeComputeStarted(QString::fromStdString(node));
+            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "RUNNING");
         };
         auto computeCompleted = [&](const std::string& node)
         {
-            Q_EMIT nodeComputeCompleted(QString::fromStdString(node));
+            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "DONE");
         };
         auto computeFailed = [&](const std::string& node)
         {
-            Q_EMIT nodeComputeFailed(QString::fromStdString(node));
+            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "ERROR");
         };
         runner->registerOnInitCB(initialized);
         runner->registerOnVisitCB(visited);
         runner->registerOnComputeBeginCB(computeStarted);
         runner->registerOnComputeEndCB(computeCompleted);
         runner->registerOnErrorCB(computeFailed);
-        
+
         runner->operator()(_graph, _nodeName.toStdString());
         delete runner;
     }

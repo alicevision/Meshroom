@@ -16,7 +16,7 @@ Application::Application()
     : QObject(nullptr)
     , _scene(this)
     , _plugins(this)
-    , _nodes(this)
+    , _pluginNodes(this)
 {
 }
 
@@ -24,7 +24,7 @@ Application::Application(QQmlApplicationEngine& engine)
     : QObject(nullptr)
     , _scene(this)
     , _plugins(this)
-    , _nodes(this)
+    , _pluginNodes(this)
 {
     // qml modules path
     engine.addImportPath(qApp->applicationDirPath() + "/qml_modules");
@@ -59,10 +59,10 @@ PluginCollection* Application::loadPlugins()
             continue;
         // register the plugin
         Plugin* plugin = new Plugin(this, metadata, instance);
-        _plugins.addPlugin(plugin);
+        _plugins.add(plugin);
         // register all nodes
         for(auto n : metadata.value("nodes").toArray())
-            _nodes.addNode(new Node(this, n.toObject(), plugin));
+            _pluginNodes.add(new PluginNode(this, n.toObject(), plugin));
     }
     return &_plugins;
 }
@@ -77,7 +77,7 @@ Scene* Application::loadScene(const QUrl& url)
 
 dg::Ptr<dg::Node> Application::node(const QString& type, const QString& name)
 {
-    Node* node = _nodes.get(type);
+    PluginNode* node = _pluginNodes.get(type);
     if(!node)
     {
         qCritical() << "unknown node type:" << type;

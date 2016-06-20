@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QObject>
-#include "AttributeModel.hpp"
+#include "AttributeCollection.hpp"
 
 namespace nodeeditor
 {
@@ -11,8 +11,8 @@ class Node : public QObject
     Q_OBJECT
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QString type READ type CONSTANT)
-    Q_PROPERTY(AttributeModel* inputs READ inputs CONSTANT)
-    Q_PROPERTY(AttributeModel* outputs READ outputs CONSTANT)
+    Q_PROPERTY(AttributeCollection* inputs READ inputs CONSTANT)
+    Q_PROPERTY(AttributeCollection* outputs READ outputs CONSTANT)
     Q_PROPERTY(Status status READ status WRITE setStatus NOTIFY statusChanged)
     Q_PROPERTY(int x READ x WRITE setX NOTIFY xChanged)
     Q_PROPERTY(int y READ y WRITE setY NOTIFY yChanged)
@@ -36,8 +36,8 @@ public:
 public:
     const QString& name() const { return _name; }
     const QString& type() const { return _type; }
-    AttributeModel* inputs() const { return _inputs; }
-    AttributeModel* outputs() const { return _outputs; }
+    AttributeCollection* inputs() const { return _inputs; }
+    AttributeCollection* outputs() const { return _outputs; }
     Status status() const { return _status; }
     int x() const { return _x; }
     int y() const { return _y; }
@@ -57,8 +57,8 @@ public:
 private:
     QString _name = "unknown";
     QString _type = "Unknown";
-    AttributeModel* _inputs = new AttributeModel(this);
-    AttributeModel* _outputs = new AttributeModel(this);
+    AttributeCollection* _inputs = new AttributeCollection(this);
+    AttributeCollection* _outputs = new AttributeCollection(this);
     Status _status = READY;
     int _x = 10;
     int _y = 10;

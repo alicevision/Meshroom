@@ -41,9 +41,9 @@ Rectangle {
             ToolButton {
                 iconSource: "qrc:///images/pause.svg"
                 text: "STOP"
-                onClicked: currentScene.graph.abort()
+                onClicked: currentScene.graph.stopWorker()
             }
-            visible: currentScene.graph.running
+            visible: currentScene.graph.isRunning
         }
     }
 

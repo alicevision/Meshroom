@@ -50,7 +50,7 @@ Item {
             ListView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                model: _application.nodes
+                model: _application.pluginNodes
                 delegate: Rectangle {
                     width: parent.width
                     height: 30

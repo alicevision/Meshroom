@@ -1,4 +1,4 @@
-#include "AttributeModel.hpp"
+#include "AttributeCollection.hpp"
 #include <QQmlEngine>
 #include <QJsonObject>
 #include <QDebug>
@@ -6,12 +6,12 @@
 namespace nodeeditor
 {
 
-AttributeModel::AttributeModel(QObject* parent)
+AttributeCollection::AttributeCollection(QObject* parent)
     : QAbstractListModel(parent)
 {
 }
 
-AttributeModel::AttributeModel(const AttributeModel& obj)
+AttributeCollection::AttributeCollection(const AttributeCollection& obj)
     : QAbstractListModel(obj.parent())
 {
     QHash<int, QByteArray> names = roleNames();
@@ -22,13 +22,13 @@ AttributeModel::AttributeModel(const AttributeModel& obj)
     }
 }
 
-int AttributeModel::rowCount(const QModelIndex& parent) const
+int AttributeCollection::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
     return _attributes.count();
 }
 
-QVariant AttributeModel::data(const QModelIndex& index, int role) const
+QVariant AttributeCollection::data(const QModelIndex& index, int role) const
 {
     if(index.row() < 0 || index.row() >= _attributes.count())
         return QVariant();
@@ -60,7 +60,7 @@ QVariant AttributeModel::data(const QModelIndex& index, int role) const
     }
 }
 
-bool AttributeModel::setData(const QModelIndex& index, const QVariant& value, int role)
+bool AttributeCollection::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     if(index.row() < 0 || index.row() >= _attributes.count() || role != ValueRole)
         return false;
@@ -72,7 +72,7 @@ bool AttributeModel::setData(const QModelIndex& index, const QVariant& value, in
     return true;
 }
 
-Attribute* AttributeModel::get(const QString& key)
+Attribute* AttributeCollection::get(const QString& key)
 {
     QListIterator<Attribute*> it(_attributes);
     while(it.hasNext())
@@ -84,7 +84,7 @@ Attribute* AttributeModel::get(const QString& key)
     return nullptr;
 }
 
-int AttributeModel::getID(const QString& name) const
+int AttributeCollection::getID(const QString& name) const
 {
     int id = 0;
     for(auto a : _attributes)
@@ -96,7 +96,7 @@ int AttributeModel::getID(const QString& name) const
     return -1;
 }
 
-QHash<int, QByteArray> AttributeModel::roleNames() const
+QHash<int, QByteArray> AttributeCollection::roleNames() const
 {
     QHash<int, QByteArray> roles;
     roles[NameRole] = "name";
@@ -112,7 +112,7 @@ QHash<int, QByteArray> AttributeModel::roleNames() const
     return roles;
 }
 
-void AttributeModel::addAttribute(Attribute* attribute)
+void AttributeCollection::addAttribute(Attribute* attribute)
 {
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(attribute, QQmlEngine::CppOwnership);
@@ -134,14 +134,14 @@ void AttributeModel::addAttribute(Attribute* attribute)
     Q_EMIT countChanged(rowCount());
 }
 
-void AttributeModel::addAttribute(const QJsonObject& descriptor)
+void AttributeCollection::addAttribute(const QJsonObject& descriptor)
 {
     Attribute* attribute = new Attribute();
     attribute->deserializeFromJSON(descriptor);
     addAttribute(attribute);
 }
 
-QVariantMap AttributeModel::get(int row) const
+QVariantMap AttributeCollection::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);
@@ -156,7 +156,7 @@ QVariantMap AttributeModel::get(int row) const
     return result;
 }
 
-QJsonArray AttributeModel::serializeToJSON() const
+QJsonArray AttributeCollection::serializeToJSON() const
 {
     QJsonArray array;
     for(auto a : _attributes)
@@ -164,7 +164,7 @@ QJsonArray AttributeModel::serializeToJSON() const
     return array;
 }
 
-void AttributeModel::deserializeFromJSON(const QJsonArray& array)
+void AttributeCollection::deserializeFromJSON(const QJsonArray& array)
 {
     for(auto a : array)
         addAttribute(a.toObject());

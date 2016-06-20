@@ -1,22 +1,22 @@
-#include "NodeModel.hpp"
+#include "NodeCollection.hpp"
 #include <QQmlEngine>
 #include <QJsonObject>
 
 namespace nodeeditor
 {
 
-NodeModel::NodeModel(QObject* parent)
+NodeCollection::NodeCollection(QObject* parent)
     : QAbstractListModel(parent)
 {
 }
 
-int NodeModel::rowCount(const QModelIndex& parent) const
+int NodeCollection::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
     return _nodes.count();
 }
 
-QVariant NodeModel::data(const QModelIndex& index, int role) const
+QVariant NodeCollection::data(const QModelIndex& index, int role) const
 {
     if(index.row() < 0 || index.row() >= _nodes.count())
         return QVariant();
@@ -42,7 +42,7 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
     }
 }
 
-bool NodeModel::setData(const QModelIndex& index, const QVariant& value, int role)
+bool NodeCollection::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     if(index.row() < 0 || index.row() >= _nodes.count())
         return false;
@@ -65,7 +65,7 @@ bool NodeModel::setData(const QModelIndex& index, const QVariant& value, int rol
     return true;
 }
 
-Node* NodeModel::get(const QString& name)
+Node* NodeCollection::get(const QString& name)
 {
     QListIterator<Node*> it(_nodes);
     while(it.hasNext())
@@ -77,7 +77,7 @@ Node* NodeModel::get(const QString& name)
     return nullptr;
 }
 
-QHash<int, QByteArray> NodeModel::roleNames() const
+QHash<int, QByteArray> NodeCollection::roleNames() const
 {
     QHash<int, QByteArray> roles;
     roles[NameRole] = "name";
@@ -90,7 +90,7 @@ QHash<int, QByteArray> NodeModel::roleNames() const
     return roles;
 }
 
-void NodeModel::addNode(Node* node)
+void NodeCollection::addNode(Node* node)
 {
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(node, QQmlEngine::CppOwnership);
@@ -114,14 +114,14 @@ void NodeModel::addNode(Node* node)
     Q_EMIT countChanged(rowCount());
 }
 
-void NodeModel::addNode(const QJsonObject& descriptor)
+void NodeCollection::addNode(const QJsonObject& descriptor)
 {
     Node* node = new Node();
     node->deserializeFromJSON(descriptor);
     addNode(node);
 }
 
-QVariantMap NodeModel::get(int row) const
+QVariantMap NodeCollection::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);
@@ -136,7 +136,7 @@ QVariantMap NodeModel::get(int row) const
     return result;
 }
 
-int NodeModel::getID(const QString& name) const
+int NodeCollection::getID(const QString& name) const
 {
     int id = 0;
     for(auto n : _nodes)
@@ -148,7 +148,7 @@ int NodeModel::getID(const QString& name) const
     return -1;
 }
 
-QJsonArray NodeModel::serializeToJSON() const
+QJsonArray NodeCollection::serializeToJSON() const
 {
     QJsonArray array;
     for(auto n : _nodes)
@@ -156,7 +156,7 @@ QJsonArray NodeModel::serializeToJSON() const
     return array;
 }
 
-void NodeModel::deserializeFromJSON(const QJsonArray& array)
+void NodeCollection::deserializeFromJSON(const QJsonArray& array)
 {
     for(auto n : array)
         addNode(n.toObject());

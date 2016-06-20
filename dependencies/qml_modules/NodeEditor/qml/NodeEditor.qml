@@ -10,10 +10,7 @@ Rectangle {
     id: root
 
     // properties
-    property variant nodes: null
-    property variant connections: null
-    property Component nodeModel: NodeModel {}
-    property Component connectionModel: ConnectionModel {}
+    property variant graph: Graph {}
     property int currentNodeID: 0
 
     // signals
@@ -24,26 +21,17 @@ Rectangle {
     // slots
     onNodeMoved: refresh()
 
-    // functions
-    function init() {
-        if(root.nodes) root.nodes.destroy();
-        if(root.connections) root.connections.destroy();
-        root.nodes = root.nodeModel.createObject();
-        root.connections = root.connectionModel.createObject();
-        refresh();
-    }
-
     function refresh() {
         canvas.requestPaint();
     }
 
     function fitLayout() {
-        if(!root.nodes)
+        if(!root.graph.nodes)
             return;
         var xmargin = 40;
         var ymargin = 20;
         var yoffset = 60;
-        for(var i=0; i<root.nodes.count; i++)
+        for(var i=0; i<root.graph.nodes.count; i++)
         {
             var nodeItem = repeater.itemAt(i);
             nodeItem.x = xmargin + i*(nodeItem.width + 20);
@@ -53,14 +41,14 @@ Rectangle {
     }
 
     function drawConnections(context) {
-        if(!root.connections)
+        if(!root.graph.connections)
             return;
-        for(var i=0; i<root.connections.count; i++)
+        for(var i=0; i<root.graph.connections.count; i++)
         {
-            var connection = root.connections.get(i);
-            var sourceNodeID = root.nodes.getID(connection.source);
-            var targetNodeID = root.nodes.getID(connection.target);
-            var targetInputs = root.nodes.get(targetNodeID).inputs;
+            var connection = root.graph.connections.get(i);
+            var sourceNodeID = root.graph.nodes.getID(connection.source);
+            var targetNodeID = root.graph.nodes.getID(connection.target);
+            var targetInputs = root.graph.nodes.get(targetNodeID).inputs;
             var targetPlugID = targetInputs.getID(connection.plug);
             if(sourceNodeID<0 || targetNodeID<0 || targetPlugID<0)
                 continue;
@@ -106,7 +94,7 @@ Rectangle {
     Repeater {
         id: repeater
         anchors.fill: parent
-        model: root.nodes
+        model: root.graph.nodes
         delegate: NodeDelegate {
             width: 100
             height: 60
@@ -127,7 +115,7 @@ Rectangle {
 
     // help msg
     Text {
-        visible: !root.nodes || root.nodes.count == 0
+        visible: !root.graph.nodes || root.graph.nodes.count == 0
         anchors.centerIn: parent
         text: "Add new nodes with [TAB]"
         color: Style.text.color.xdark

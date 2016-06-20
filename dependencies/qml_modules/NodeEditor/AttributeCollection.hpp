@@ -7,7 +7,7 @@
 namespace nodeeditor
 {
 
-class AttributeModel : public QAbstractListModel
+class AttributeCollection : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
@@ -28,8 +28,8 @@ public:
     };
 
 public:
-    AttributeModel(QObject* parent = 0);
-    AttributeModel(const AttributeModel& obj);
+    AttributeCollection(QObject* parent = 0);
+    AttributeCollection(const AttributeCollection& obj);
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role) override;

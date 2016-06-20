@@ -7,7 +7,7 @@
 namespace meshroom
 {
 
-class Node : public QObject
+class PluginNode : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString type READ type CONSTANT)
@@ -16,7 +16,7 @@ class Node : public QObject
     Q_PROPERTY(QJsonObject metadata READ metadata CONSTANT)
 
 public:
-    Node(QObject* parent, const QJsonObject& metadata, Plugin* plugin);
+    PluginNode(QObject* parent, const QJsonObject& metadata, Plugin* plugin);
 
 public:
     PluginInterface* pluginInstance() const { return _plugin->instance(); }

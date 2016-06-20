@@ -2,7 +2,7 @@
 
 #include "models/Scene.hpp"
 #include "models/PluginCollection.hpp"
-#include "models/NodeCollection.hpp"
+#include "models/PluginNodeCollection.hpp"
 #include <QQmlApplicationEngine>
 #include <dglib/dg.hpp>
 
@@ -14,7 +14,7 @@ class Application : public QObject
     Q_OBJECT
     Q_PROPERTY(Scene* scene READ scene CONSTANT)
     Q_PROPERTY(PluginCollection* plugins READ plugins CONSTANT)
-    Q_PROPERTY(NodeCollection* nodes READ nodes CONSTANT)
+    Q_PROPERTY(PluginNodeCollection* pluginNodes READ pluginNodes CONSTANT)
 
 public:
     Application();
@@ -28,13 +28,13 @@ public:
 public:
     Q_SLOT PluginCollection* plugins() { return &_plugins; }
     Q_SLOT Scene* scene() { return &_scene; }
-    Q_SLOT NodeCollection* nodes() { return &_nodes; }
+    Q_SLOT PluginNodeCollection* pluginNodes() { return &_pluginNodes; }
     dg::Ptr<dg::Node> node(const QString& type, const QString& name);
 
 private:
     Scene _scene;
     PluginCollection _plugins;
-    NodeCollection _nodes;
+    PluginNodeCollection _pluginNodes;
 };
 
 } // namespaces

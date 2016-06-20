@@ -2,9 +2,7 @@
 
 #include <QtQml>
 #include <QQmlExtensionPlugin>
-#include "NodeModel.hpp"
-#include "ConnectionModel.hpp"
-#include "AttributeModel.hpp"
+#include "Graph.hpp"
 
 namespace nodeeditor
 {
@@ -19,9 +17,9 @@ public:
     void registerTypes(const char* uri) override
     {
         Q_ASSERT(uri == QLatin1String("NodeEditor"));
-        qmlRegisterType<Node>(uri, 1, 0, "Node");
-        qmlRegisterType<NodeModel>(uri, 1, 0, "NodeModel");
-        qmlRegisterType<ConnectionModel>(uri, 1, 0, "ConnectionModel");
+        qmlRegisterType<Graph>(uri, 1, 0, "Graph");
+        qmlRegisterUncreatableType<Node>(uri, 1, 0, "Node",
+                                              "type registration failed (nodeeditor::Node)");
         qmlRegisterUncreatableType<Attribute>(uri, 1, 0, "Attribute",
                                               "type registration failed (nodeeditor::Attribute)");
     }

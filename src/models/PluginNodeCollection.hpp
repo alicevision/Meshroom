@@ -2,18 +2,18 @@
 
 #include <QAbstractListModel>
 #include <QJsonArray>
-#include "Node.hpp"
+#include "PluginNode.hpp"
 
 namespace meshroom
 {
 
-class NodeCollection : public QAbstractListModel
+class PluginNodeCollection : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
 public:
-    enum NodeRoles
+    enum PluginNodeRoles
     {
         TypeRole = Qt::UserRole + 1,
         PluginRole,
@@ -22,24 +22,24 @@ public:
     };
 
 public:
-    NodeCollection(QObject* parent = 0);
-    NodeCollection(const NodeCollection& obj) = delete;
-    NodeCollection& operator=(NodeCollection const&) = delete;
+    PluginNodeCollection(QObject* parent = 0);
+    PluginNodeCollection(const PluginNodeCollection& obj) = delete;
+    PluginNodeCollection& operator=(PluginNodeCollection const&) = delete;
 
 public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex&, int role = Qt::DisplayRole) const override;
-    Node* get(const QString& type);
+    PluginNode* get(const QString& type);
+    void add(PluginNode*);
 
 public:
-    Q_SLOT void addNode(Node*);
     Q_SIGNAL void countChanged(int);
 
 protected:
     QHash<int, QByteArray> roleNames() const override;
 
 private:
-    QList<Node*> _nodes;
+    QList<PluginNode*> _nodes;
 };
 
 } // namespace

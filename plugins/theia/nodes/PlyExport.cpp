@@ -62,5 +62,4 @@ void PlyExport::compute(const vector<string>& arguments) const
     int minnumobservationsperpoint = 0;
     if(!theia::WritePlyFile(output, reconstruction, minnumobservationsperpoint))
         throw logic_error("failed to export .ply file");
-
 }

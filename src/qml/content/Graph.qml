@@ -35,6 +35,7 @@ Item {
         onNodeLeftClicked: root.selectionChanged(node)
         onNodeRightClicked: {
             function compute_CB(mode) {
+                editor.graph.clearNodeStatuses();
                 currentScene.graph.startWorker(node.name, mode);
             }
             var menu = contextMenu.createObject(editor);

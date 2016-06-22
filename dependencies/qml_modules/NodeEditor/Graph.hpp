@@ -26,6 +26,7 @@ public:
     Q_SLOT void clear() const;
     Q_SLOT void addNode(const QJsonObject&) const;
     Q_SLOT void addConnection(const QJsonObject&) const;
+    Q_SLOT void clearNodeStatuses() const;
     Q_SLOT void updateNodeStatus(const QString&, const QString&) const;
 
 public:

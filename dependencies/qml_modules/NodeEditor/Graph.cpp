@@ -24,6 +24,15 @@ void Graph::addConnection(const QJsonObject& descriptor) const
     _connections->addConnection(descriptor);
 }
 
+void Graph::clearNodeStatuses() const
+{
+    for(size_t i = 0; i < _nodes->rowCount(); ++i)
+    {
+        QModelIndex id = _nodes->index(i, 0);
+        _nodes->setData(id, Node::READY, NodeCollection::StatusRole);
+    }
+}
+
 void Graph::updateNodeStatus(const QString& nodeName, const QString& status) const
 {
     auto toEnum = [](const QString& status) -> Node::Status

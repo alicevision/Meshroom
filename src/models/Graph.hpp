@@ -38,6 +38,7 @@ public:
     Q_SLOT void clear();
     Q_SLOT void addNode(const QJsonObject&);
     Q_SLOT void addConnection(const QJsonObject&);
+    Q_SLOT void setAttribute(const QString& nodeName, const QJsonObject& descriptor);
     Q_SLOT void startWorker(const QString&, BuildMode mode);
     Q_SLOT void stopWorker();
 

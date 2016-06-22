@@ -57,6 +57,12 @@ void Graph::setCacheUrl(const QUrl& cacheUrl)
     Q_EMIT cacheUrlChanged();
 }
 
+void Graph::clear()
+{
+    // TODO clear _graph
+    Q_EMIT cleared();
+}
+
 void Graph::addNode(const QJsonObject& descriptor)
 {
     // retrieve parent scene & application
@@ -76,9 +82,9 @@ void Graph::addNode(const QJsonObject& descriptor)
         qWarning() << "unknown node type" << type;
         return;
     }
-    QJsonObject metadata = node->metadata();
 
     // merge metadata and current descriptor
+    QJsonObject metadata = node->metadata();
     QVariantMap descriptorAsMap = descriptor.toVariantMap();
     for(auto k : descriptorAsMap.keys())
         metadata.insert(k, QJsonValue::fromVariant(descriptorAsMap.value(k)));
@@ -94,35 +100,9 @@ void Graph::addNode(const QJsonObject& descriptor)
         }
         _graph->addNode(dgNode);
 
-        // add all node attributes
+        // add node attributes
         for(auto a : descriptor.value("inputs").toArray())
-        {
-            QJsonObject attributeObj = a.toObject();
-            QString attributeKey = attributeObj.value("key").toString();
-            if(attributeObj.contains("value"))
-            {
-                QJsonValue attribute = attributeObj.value("value");
-                if(attribute.isArray())
-                {
-                    dg::AttributeList dgAttrList;
-                    for(auto v : attribute.toArray())
-                    {
-                        Ptr<dg::Attribute> dgAttr = make_ptr<dg::Attribute>(
-                            Attribute::Type::PATH, v.toString().toStdString());
-                        dgAttrList.emplace_back(dgAttr);
-                    }
-                    if(!dgNode->setAttributes(attributeKey.toStdString(), dgAttrList))
-                        qWarning() << "unable to set attribute list"
-                                   << QString("%0::%1").arg(name).arg(attributeKey);
-                    continue;
-                }
-                Ptr<dg::Attribute> dgAttr = make_ptr<dg::Attribute>(
-                    Attribute::Type::PATH, attribute.toString().toStdString());
-                if(!dgNode->setAttribute(attributeKey.toStdString(), dgAttr))
-                    qWarning() << "unable to set attribute"
-                               << QString("%0::%1").arg(name).arg(attributeKey);
-            }
-        }
+            setAttribute(name, a.toObject());
     }
     catch(std::exception& e)
     {
@@ -152,10 +132,54 @@ void Graph::addConnection(const QJsonObject& connection)
     Q_EMIT connectionAdded(connection);
 }
 
-void Graph::clear()
+void Graph::setAttribute(const QString& nodeName, const QJsonObject& descriptor)
 {
-    // TODO clear _graph
-    Q_EMIT cleared();
+    auto dgnode = _graph->node(nodeName.toStdString());
+    if(!dgnode)
+    {
+        qCritical() << "unable to set attribute: node" << nodeName << "not found";
+        return;
+    }
+    QString attributeKey = descriptor.value("key").toString();
+    if(descriptor.contains("value"))
+    {
+        QJsonValue attribute = descriptor.value("value");
+        if(attribute.isArray())
+        {
+            dg::AttributeList dgattrList;
+            for(auto v : attribute.toArray())
+            {
+                auto dgattr =
+                    make_ptr<dg::Attribute>(Attribute::Type::PATH, v.toString().toStdString());
+                dgattrList.emplace_back(dgattr);
+            }
+            if(!dgnode->setAttributes(attributeKey.toStdString(), dgattrList))
+                qWarning() << "unable to set attribute list"
+                           << QString("%0::%1").arg(nodeName).arg(attributeKey);
+            return;
+        }
+        dg::Ptr<dg::Attribute> dgattribute;
+        switch(attribute.type())
+        {
+            case QJsonValue::Bool:
+                dgattribute = make_ptr<dg::Attribute>(Attribute::Type::BOOL,
+                                                      attribute.toString().toStdString());
+                break;
+            case QJsonValue::Double:
+                dgattribute =
+                    make_ptr<dg::Attribute>(Attribute::Type::FLOAT, (float)attribute.toDouble());
+                break;
+            case QJsonValue::String:
+                dgattribute = make_ptr<dg::Attribute>(Attribute::Type::PATH,
+                                                      attribute.toString().toStdString());
+                break;
+            default:
+                break;
+        }
+        if(!dgnode->setAttribute(attributeKey.toStdString(), dgattribute))
+            qCritical() << "unable to set attribute"
+                        << QString("%0::%1").arg(nodeName).arg(attributeKey);
+    }
 }
 
 void Graph::startWorker(const QString& name, Graph::BuildMode mode)

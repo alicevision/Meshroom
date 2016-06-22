@@ -32,10 +32,6 @@ void WorkerThread::run()
                 break;
         }
 
-        auto initialized = [&](const std::string& node)
-        {
-            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "READY");
-        };
         auto visited = [&](const std::string& node)
         {
             Q_EMIT nodeStatusChanged(QString::fromStdString(node), "WAITING");
@@ -52,7 +48,6 @@ void WorkerThread::run()
         {
             Q_EMIT nodeStatusChanged(QString::fromStdString(node), "ERROR");
         };
-        runner->registerOnInitCB(initialized);
         runner->registerOnVisitCB(visited);
         runner->registerOnComputeBeginCB(computeStarted);
         runner->registerOnComputeEndCB(computeCompleted);

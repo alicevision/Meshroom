@@ -24,8 +24,19 @@ Rectangle {
         Item {}
     }
     Component {
-        id: listDelegate
+        id: imageListDelegate
         RowLayout {
+            Image {
+                Layout.preferredWidth: 30
+                Layout.preferredHeight: 20
+                source: modelData ? modelData.value[0] : ""
+                sourceSize: Qt.size(120, 120)
+                asynchronous: true
+                BusyIndicator {
+                    anchors.centerIn: parent
+                    running: parent.status === Image.Loading
+                }
+            }
             Text {
                 text: modelData ? modelData.value.length + " items" : "0 item"
                 font.pixelSize: Style.text.size.xsmall
@@ -36,6 +47,7 @@ Rectangle {
                 onClicked: stackView.push({
                     item: galleryTab,
                     properties: {
+                        node: nodeName,
                         attribute: modelData,
                         model: modelData.value
                     }
@@ -60,14 +72,20 @@ Rectangle {
                 value = modelData.value;
             }
             updateValueWhileDragging: true
-            onValueChanged: modelData.value = value
+            onValueChanged: {
+                modelData.value = value;
+                currentScene.graph.setAttribute(nodeName, modelData);
+            }
         }
     }
     Component {
         id: textfieldDelegate
         TextField {
             text: modelData.value
-            onEditingFinished: modelData.value = text
+            onEditingFinished: {
+                modelData.value = text;
+                currentScene.graph.setAttribute(nodeName, modelData);
+            }
         }
     }
     Component {
@@ -75,14 +93,20 @@ Rectangle {
         ComboBox {
             Component.onCompleted: currentIndex = find(modelData.value)
             model: modelData.options
-            onActivated: modelData.value = textAt(index)
+            onActivated: {
+                modelData.value = textAt(index);
+                currentScene.graph.setAttribute(nodeName, modelData);
+            }
         }
     }
     Component {
         id: checkboxDelegate
         CheckBox {
             Component.onCompleted: checked = modelData.value
-            onClicked: modelData.value = checked
+            onClicked: {
+                modelData.value = checked;
+                currentScene.graph.setAttribute(nodeName, modelData);
+            }
         }
     }
 
@@ -102,8 +126,11 @@ Rectangle {
                     delegate: Loader {
                         Layout.fillWidth: index%2 != 0
                         Layout.preferredWidth: index%2 ? parent.width : parent.width*0.3
-                        property variant modelData: root.model.inputs.get(index/2).modelData
+                        property variant modelData: null
+                        property string nodeName: ""
                         sourceComponent: {
+                            modelData = root.model.inputs.get(index/2).modelData;
+                            nodeName = root.model.name;
                             if(index % 2 == 0)
                                 return labelDelegate;
                             switch(modelData.type) {
@@ -112,7 +139,7 @@ Rectangle {
                                 case Attribute.SLIDER: return sliderDelegate
                                 case Attribute.COMBOBOX: return comboboxDelegate
                                 case Attribute.CHECKBOX: return checkboxDelegate
-                                case Attribute.IMAGELIST: return listDelegate
+                                case Attribute.IMAGELIST: return imageListDelegate
                             }
                         }
                     }
@@ -123,14 +150,16 @@ Rectangle {
     Component {
         id: galleryTab
         Gallery {
+            property variant node: null
             property variant attribute: null
             closeable: true
             onClosed: stackView.pop()
             onItemAdded: {
                 var values = attribute.value;
-                values.push(item);
+                values.push(item.replace("file://",""));
                 attribute.value = values;
                 model = attribute.value;
+                currentScene.graph.setAttribute(node, attribute);
             }
         }
     }

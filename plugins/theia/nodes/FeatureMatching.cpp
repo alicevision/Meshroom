@@ -11,7 +11,14 @@ FeatureMatching::FeatureMatching(string nodeName)
 {
     inputs = {make_ptr<Plug>(Attribute::Type::PATH, "features", *this),
               make_ptr<Plug>(Attribute::Type::PATH, "images", *this),
-              make_ptr<Plug>(Attribute::Type::PATH, "exifs", *this)};
+              make_ptr<Plug>(Attribute::Type::PATH, "exifs", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "numThreads", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "cacheCapacity", *this),
+              make_ptr<Plug>(Attribute::Type::FLOAT, "lowesRatio", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "minNumFeatureMatches", *this),
+              make_ptr<Plug>(Attribute::Type::BOOL, "matchOutOfCore", *this),
+              make_ptr<Plug>(Attribute::Type::BOOL, "keepOnlySymmetricMatches", *this),
+              make_ptr<Plug>(Attribute::Type::BOOL, "useLowesRatio", *this)};
     output = make_ptr<Plug>(Attribute::Type::PATH, "matches", *this);
 }
 

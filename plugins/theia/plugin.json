@@ -30,7 +30,7 @@
                 },
                 {
                     "name": "threads",
-                    "key": "numthreads",
+                    "key": "numThreads",
                     "type": "SLIDER",
                     "value": 8,
                     "step": 1,
@@ -39,7 +39,7 @@
                 },
                 {
                     "name": "max features",
-                    "key": "maxnumfeatures",
+                    "key": "maxNumFeatures",
                     "type": "SLIDER",
                     "value": 16384,
                     "step": 1,
@@ -48,7 +48,7 @@
                 },
                 {
                     "name": "num octaves",
-                    "key": "numoctave",
+                    "key": "numOctave",
                     "type": "SLIDER",
                     "value": -1,
                     "step": 1,
@@ -57,7 +57,7 @@
                 },
                 {
                     "name": "num levels",
-                    "key": "numlevels",
+                    "key": "numLevels",
                     "type": "SLIDER",
                     "value": 3,
                     "step": 1,
@@ -66,7 +66,7 @@
                 },
                 {
                     "name": "first octave",
-                    "key": "firstoctave",
+                    "key": "firstOctave",
                     "type": "SLIDER",
                     "value": 0,
                     "step": 1,
@@ -75,7 +75,7 @@
                 },
                 {
                     "name": "edge threshold",
-                    "key": "edgethreshold",
+                    "key": "edgeThreshold",
                     "type": "SLIDER",
                     "value": 5.0,
                     "step": 0.1,
@@ -84,7 +84,7 @@
                 },
                 {
                     "name": "peak threshold",
-                    "key": "peakthreshold",
+                    "key": "peakThreshold",
                     "type": "SLIDER",
                     "value": 0.5,
                     "step": 0.1,
@@ -93,13 +93,13 @@
                 },
                 {
                     "name": "root sift",
-                    "key": "rootsift",
+                    "key": "rootSift",
                     "type": "CHECKBOX",
                     "value": false
                 },
                 {
                     "name": "upright sift",
-                    "key": "uprightsift",
+                    "key": "uprightSift",
                     "type": "CHECKBOX",
                     "value": false
                 }
@@ -143,7 +143,7 @@
                 },
                 {
                     "name": "threads",
-                    "key": "numthreads",
+                    "key": "numThreads",
                     "type": "SLIDER",
                     "value": 8,
                     "step": 1,
@@ -152,7 +152,7 @@
                 },
                 {
                     "name": "cache capacity",
-                    "key": "cachecapacity",
+                    "key": "cacheCapacity",
                     "type": "SLIDER",
                     "value": 128,
                     "step": 64,
@@ -161,7 +161,7 @@
                 },
                 {
                     "name": "lowes ratio",
-                    "key": "lowesratio",
+                    "key": "lowesRatio",
                     "type": "SLIDER",
                     "value": 0.8,
                     "step": 0.1,
@@ -170,7 +170,7 @@
                 },
                 {
                     "name": "min num feature matches",
-                    "key": "minnumfeaturematches",
+                    "key": "minNumFeatureMatches",
                     "type": "SLIDER",
                     "value": 30,
                     "step": 1,
@@ -179,19 +179,19 @@
                 },
                 {
                     "name": "out of core",
-                    "key": "matchoutofcore",
+                    "key": "matchOutOfCore",
                     "type": "CHECKBOX",
                     "value": false
                 },
                 {
                     "name": "keep only symmetric matches",
-                    "key": "keeponlysymmetricmatches",
+                    "key": "keepOnlySymmetricMatches",
                     "type": "CHECKBOX",
                     "value": true
                 },
                 {
                     "name": "use lowes ratio",
-                    "key": "uselowesratio",
+                    "key": "useLowesRatio",
                     "type": "CHECKBOX",
                     "value": true
                 }
@@ -216,7 +216,7 @@
                 },
                 {
                     "name": "threads",
-                    "key": "numthreads",
+                    "key": "numThreads",
                     "type": "SLIDER",
                     "value": 8,
                     "step": 1,
@@ -225,7 +225,7 @@
                 },
                 {
                     "name": "max track length",
-                    "key": "maxtracklength",
+                    "key": "maxTrackLength",
                     "type": "SLIDER",
                     "value": 20,
                     "step": 1,
@@ -234,7 +234,7 @@
                 },
                 {
                     "name": "min num 2 views inliers",
-                    "key": "minnum2viewsinliers",
+                    "key": "minNum2ViewsInliers",
                     "type": "SLIDER",
                     "value": 30,
                     "step": 1,
@@ -243,33 +243,33 @@
                 },
                 {
                     "name": "largest only",
-                    "key": "largestonly",
+                    "key": "largestOnly",
                     "type": "CHECKBOX",
                     "value": false
                 },
                 {
                     "name": "only calibrated views",
-                    "key": "onlycalibratedviews",
+                    "key": "onlyCalibratedViews",
                     "type": "CHECKBOX",
                     "value": false
                 },
                 {
                     "name": "reconstruction estimator type",
-                    "key": "reconstructionestimatortype",
+                    "key": "reconstructionEstimatorType",
                     "type": "COMBOBOX",
                     "value": "GLOBAL",
                     "options": ["GLOBAL", "INCREMENTAL"]
                 },
                 {
                     "name": "global rotation estimator type",
-                    "key": "globalrotationestimatortype",
+                    "key": "globalRotationEstimatorType",
                     "type": "COMBOBOX",
                     "value": "ROBUST_L1L2",
                     "options": ["ROBUST_L1L2", "NONLINEAR", "LINEAR"]
                 },
                 {
                     "name": "global position estimator type",
-                    "key": "globalpositionestimatortype",
+                    "key": "globalPositionEstimatorType",
                     "type": "COMBOBOX",
                     "value": "LEAST_UNSQUARED_DEVIATION",
                     "options": ["NONLINEAR", "LINEAR_TRIPLET", "LEAST_UNSQUARED_DEVIATION"]

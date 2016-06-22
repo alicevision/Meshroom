@@ -10,7 +10,15 @@ StructureFromMotion::StructureFromMotion(string nodeName)
     : Node(nodeName)
 {
     inputs = {make_ptr<Plug>(Attribute::Type::PATH, "matches", *this),
-              make_ptr<Plug>(Attribute::Type::PATH, "exifs", *this)};
+              make_ptr<Plug>(Attribute::Type::PATH, "exifs", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "numThreads", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "maxTrackLength", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "minNum2ViewsInliers", *this),
+              make_ptr<Plug>(Attribute::Type::BOOL, "largestOnly", *this),
+              make_ptr<Plug>(Attribute::Type::BOOL, "onlyCalibratedViews", *this),
+              make_ptr<Plug>(Attribute::Type::STRING, "reconstructionEstimatorType", *this),
+              make_ptr<Plug>(Attribute::Type::STRING, "globalRotationEstimatorType", *this),
+              make_ptr<Plug>(Attribute::Type::STRING, "globalPositionEstimatorType", *this)};
     output = make_ptr<Plug>(Attribute::Type::PATH, "reconstruction", *this);
 }
 

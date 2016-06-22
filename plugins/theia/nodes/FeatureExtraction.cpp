@@ -9,7 +9,16 @@ using namespace dg;
 FeatureExtraction::FeatureExtraction(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "images", *this)};
+    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "images", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "numThreads", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "maxNumFeatures", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "numOctave", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "numLevels", *this),
+              make_ptr<Plug>(Attribute::Type::INT, "firstOctave", *this),
+              make_ptr<Plug>(Attribute::Type::FLOAT, "edgeThreshold", *this),
+              make_ptr<Plug>(Attribute::Type::FLOAT, "peakThreshold", *this),
+              make_ptr<Plug>(Attribute::Type::BOOL, "rootSift", *this),
+              make_ptr<Plug>(Attribute::Type::BOOL, "uprightSift", *this)};
     output = make_ptr<Plug>(Attribute::Type::PATH, "features", *this);
 }
 

@@ -564,7 +564,7 @@ void Job::createDefaultGraph()
     att->setName("enabled");
     att->setTooltip(undistortTooltip);
     step->attributes()->addAttribute(att);
-    att->setValue(false);
+    att->setValue(true);
     _steps->addStep(step);
 }
 

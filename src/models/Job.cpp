@@ -95,6 +95,18 @@ Enable undistort
 Export undistorted images from known camera parameter intrinsic
 )";
 
+const QString exportFbxTooltip = R"(
+Export FBX
+
+Export an Autodesk FBX file of the reconstruction.
+)";
+
+const QString exportAbcTooltip = R"(
+Export ABC
+
+Export Alembic file of the reconstruction.
+)";
+
 namespace meshroom
 {
 
@@ -532,6 +544,24 @@ void Job::createDefaultGraph()
     att->setMax(40);
     att->setStep(1);
     step->attributes()->addAttribute(att);
+
+    // export alembic
+    att = new Attribute();
+    att->setType(4); // boolean
+    att->setKey("exportAbc");
+    att->setName("exportAbc");
+    att->setTooltip(exportAbcTooltip);
+    step->attributes()->addAttribute(att);
+    att->setValue(true);
+
+    // export fbx
+    att = new Attribute();
+    att->setType(4); // boolean
+    att->setKey("exportFbx");
+    att->setName("exportFbx");
+    att->setTooltip(exportFbxTooltip);
+    step->attributes()->addAttribute(att);
+    att->setValue(true);
     _steps->addStep(step);
 
     // meshing
@@ -558,17 +588,6 @@ void Job::createDefaultGraph()
 
     // undistort
     step = new Step("undistort");
-    att = new Attribute();
-    att->setType(4); // boolean
-    att->setKey("enabled");
-    att->setName("enabled");
-    att->setTooltip(undistortTooltip);
-    step->attributes()->addAttribute(att);
-    att->setValue(false);
-    _steps->addStep(step);
-
-    // export fbx
-    step = new Step("exportFbx");
     att = new Attribute();
     att->setType(4); // boolean
     att->setKey("enabled");

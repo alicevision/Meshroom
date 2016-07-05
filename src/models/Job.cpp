@@ -447,21 +447,21 @@ bool Job::isPairValid()
 
 void Job::createDefaultGraph()
 {
-    // image listing
-    // Step* step = new Step("image_listing");
-    // Attribute* att = new Attribute();
-    // att->setType(2); // combo
-    // att->setKey("cameraModel");
-    // att->setName("camera model");
-    // att->setTooltip(cameraModelTooltip);
-    // att->setValue("Radial3");
-    // att->setOptions(QStringList({"Pinhole", "Radial1", "Radial3", "Brown", "Fisheye"}));
-    // step->attributes()->addAttribute(att);
-    // _steps->addStep(step);
+    // Intrinsics analysis
+    Step* step = new Step("intrinsics_analysis");
+    Attribute* att = new Attribute();
+    att->setType(2); // combo
+    att->setKey("cameraModel");
+    att->setName("camera model");
+    att->setTooltip(cameraModelTooltip);
+    att->setValue("radial3");
+    att->setOptions(QStringList({"pinhole", "radial1", "radial3", "brown", "fisheye4"}));
+    step->attributes()->addAttribute(att);
+    _steps->addStep(step);
 
     // feature detection
-    Step* step = new Step("feature_detection");
-    Attribute* att = new Attribute();
+    step = new Step("feature_detection");
+    att = new Attribute();
     att->setType(2); // combo
     att->setKey("describerPreset");
     att->setName("density");
@@ -481,36 +481,36 @@ void Job::createDefaultGraph()
     _steps->addStep(step);
 
     // matching
-    // step = new Step("matching");
-    // att = new Attribute();
-    // att->setType(1); // slider
-    // att->setKey("maxMatches");
-    // att->setName("max matches per image pair");
-    // att->setTooltip(maxMatchesTooltip);
-    // att->setValue(500);
-    // att->setMin(100);
-    // att->setMax(10000);
-    // att->setStep(1);
-    // step->attributes()->addAttribute(att);
+    step = new Step("matching");
+    att = new Attribute();
+    att->setType(1); // slider
+    att->setKey("maxMatches");
+    att->setName("max matches per image pair");
+    att->setTooltip(maxMatchesTooltip);
+    att->setValue(500);
+    att->setMin(100);
+    att->setMax(10000);
+    att->setStep(1);
+    step->attributes()->addAttribute(att);
 
-    // att = new Attribute();
-    // att->setType(2); // combo
-    // att->setKey("method");
-    // att->setName("method");
-    // att->setTooltip(methodTooltip);
-    // att->setValue("ANNL2");
-    // att->setOptions(QStringList({"BRUTEFORCEL2", "ANNL2", "CASCADEHASHINGL2",
-    // "FASTCASCADEHASHINGL2"}));
-    // step->attributes()->addAttribute(att);
+    att = new Attribute();
+    att->setType(2); // combo
+    att->setKey("method");
+    att->setName("method");
+    att->setTooltip(methodTooltip);
+    att->setValue("ANNL2");
+    att->setOptions(QStringList({"BRUTEFORCEL2", "ANNL2", "CASCADEHASHINGL2",
+    "FASTCASCADEHASHINGL2"}));
+    step->attributes()->addAttribute(att);
 
-    // att = new Attribute();
-    // att->setType(4); // boolean
-    // att->setKey("useGuidedMatching");
-    // att->setName("guided matching");
-    // att->setTooltip(guidedMatchingTooltip);
-    // att->setValue(false);
-    // step->attributes()->addAttribute(att);
-    // _steps->addStep(step);
+    att = new Attribute();
+    att->setType(4); // boolean
+    att->setKey("useGuidedMatching");
+    att->setName("guided matching");
+    att->setTooltip(guidedMatchingTooltip);
+    att->setValue(false);
+    step->attributes()->addAttribute(att);
+    _steps->addStep(step);
 
     // sfm
     step = new Step("sfm");
@@ -522,16 +522,16 @@ void Job::createDefaultGraph()
     att->setValue(QStringList({"", ""}));
     step->attributes()->addAttribute(att);
 
-    // att = new Attribute();
-    // att->setType(1); // slider
-    // att->setKey("minTrackLength");
-    // att->setName("min track length");
-    // att->setTooltip(minimumTrackLengthTooltip);
-    // att->setValue(3);
-    // att->setMin(2);
-    // att->setMax(40);
-    // att->setStep(1);
-    // step->attributes()->addAttribute(att);
+    att = new Attribute();
+    att->setType(1); // slider
+    att->setKey("minTrackLength");
+    att->setName("min track length");
+    att->setTooltip(minimumTrackLengthTooltip);
+    att->setValue(3);
+    att->setMin(2);
+    att->setMax(40);
+    att->setStep(1);
+    step->attributes()->addAttribute(att);
     _steps->addStep(step);
 
     // meshing
@@ -558,6 +558,17 @@ void Job::createDefaultGraph()
 
     // undistort
     step = new Step("undistort");
+    att = new Attribute();
+    att->setType(4); // boolean
+    att->setKey("enabled");
+    att->setName("enabled");
+    att->setTooltip(undistortTooltip);
+    step->attributes()->addAttribute(att);
+    att->setValue(false);
+    _steps->addStep(step);
+
+    // export fbx
+    step = new Step("exportFbx");
     att = new Attribute();
     att->setType(4); // boolean
     att->setKey("enabled");

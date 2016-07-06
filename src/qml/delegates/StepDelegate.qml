@@ -35,7 +35,7 @@ Item {
                     text: modelData.name
                     font.pixelSize: Style.text.size.small
                     color: Style.text.color.dark
-                    horizontalAlignment: Text.AlignRight
+                    horizontalAlignment: Text.AlignLeft
                 }
                 Item { Layout.fillHeight: true } // spacer
             }

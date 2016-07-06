@@ -26,6 +26,7 @@ public:
     void setClearColor(const QColor& color);
     void addAlembicScene(const QUrl& url);
     void resetScene();
+    void setShowCameras(bool v);
 
 public slots:
     void draw();

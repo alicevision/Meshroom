@@ -19,5 +19,10 @@ Item {
             onJobChanged: glview.loadAlembicScene(Qt.resolvedUrl(currentJob.url+"/"+currentJob.name+".abc"))
         }
     }
-
+    Connections {
+        target: _applicationWindow
+        onShowCameras: {
+            glview.showCameras = checked
+        }
+    }
 }

@@ -58,7 +58,8 @@ Item {
             MenuItem {
                 text: "Open job directory"
                 onTriggered: openJobDirectory()
-                enabled: (currentJob != defaultJob) ? currentJob.isStoredOnDisk() : false
+                shortcut: "Ctrl+J"
+                enabled: (currentJob != defaultJob) ? currentJob.status != -1 : false
             }
             MenuSeparator {}
             MenuItem {

@@ -13,7 +13,7 @@ class GLDrawable
 {
 public:
     GLDrawable(QOpenGLShaderProgram& program)
-        : _program(program)
+        : _program(program), visible(true)
     {
     }
     virtual ~GLDrawable() = default;
@@ -33,6 +33,8 @@ public:
     /// Sets the model view matrix of the object
     /// its position and orientation
     void setModelMatrix(const QMatrix4x4& mat) { _modelMatrix = mat; }
+
+    bool visible;
 
 protected:
     // SHADERS

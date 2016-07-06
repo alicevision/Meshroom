@@ -86,6 +86,30 @@ Item {
                 enabled: (currentJob != defaultJob) ? currentJob.status == -1 : false
             }
         }
+        Menu {
+            id: renderMenu
+            visible: false
+            title: "Rendering"
+            MenuItem {
+                text: "Show cameras"
+                onToggled: showCameras(checked)
+                checkable: true
+                checked: true
+            }
+            MenuItem {
+                text: "Show gridlines"
+                onToggled: showGrid(checked)
+                checkable: true
+                checked: true
+            }
+        }
+    }
+
+    Connections {
+        target: _applicationWindow
+        onJobPageTabChanged: {
+            renderMenu.visible = (index == 2) // 3d tab
+        }
     }
 
     // instantiators

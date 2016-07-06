@@ -45,6 +45,9 @@ ApplicationWindow {
     signal openJobSubmissionDialog()
     signal openImageSelectionDialog(var callback)
     signal openImportImageDialog()
+    signal showCameras(bool checked)
+    signal showGrid(bool checked)
+    signal jobPageTabChanged(int index)
 
     // connections
     ApplicationConnections {}

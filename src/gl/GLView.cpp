@@ -11,10 +11,14 @@ GLView::GLView()
     , _cameraMode(Idle)
     , _lookAtTmp(_camera.lookAt()) // Stores camera._lookAt locally to avoid recomputing it
     , _camMatTmp(_camera.viewMatrix())
+    , _showCameras(true)
+    , _showGrid(true)
 {
     setKeepMouseGrab(true);
     setAcceptedMouseButtons(Qt::AllButtons);
     setFlag(ItemAcceptsInputMethod, true);
+    connect(this, SIGNAL(windowChanged(QQuickWindow*)), this,
+            SLOT(handleWindowChanged(QQuickWindow*)));
     connect(this, SIGNAL(windowChanged(QQuickWindow*)), this,
             SLOT(handleWindowChanged(QQuickWindow*)));
 }
@@ -23,6 +27,36 @@ GLView::~GLView()
 {
     if(_renderer)
         delete _renderer;
+}
+
+bool GLView::showCameras() const
+{
+    return _showCameras;
+}
+
+void GLView::setShowCameras(bool v)
+{
+    if (v != _showCameras) {
+        _showCameras = v;
+        if (_renderer)
+            _renderer->setShowCameras(v);
+        emit showCamerasChanged();
+    }
+}
+
+bool GLView::showGrid() const
+{
+    return _showGrid;
+}
+
+void GLView::setShowGrid(bool v)
+{
+    if (v != _showGrid) {
+        _showGrid = v;
+        if (_renderer)
+            _renderer->setShowGrid(v);
+        emit showGridChanged();
+    }
 }
 
 void GLView::setColor(const QColor& color)

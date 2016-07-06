@@ -96,6 +96,12 @@ Item {
                 checkable: true
                 checked: true
             }
+            MenuItem {
+                text: "Show gridlines"
+                onToggled: showGrid(checked)
+                checkable: true
+                checked: true
+            }
         }
     }
 

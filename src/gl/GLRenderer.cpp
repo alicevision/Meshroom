@@ -58,6 +58,15 @@ void GLRenderer::setShowCameras(bool v)
     }
 }
 
+void GLRenderer::setShowGrid(bool v)
+{
+    for(auto obj : _scene)
+    {
+        if (dynamic_cast<GLGrid*>(obj) != NULL)
+            obj->visible = v;
+    }
+}
+
 void GLRenderer::draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

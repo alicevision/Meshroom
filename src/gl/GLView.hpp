@@ -16,6 +16,7 @@ class GLView : public QQuickItem
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
     Q_PROPERTY(bool showCameras READ showCameras WRITE setShowCameras NOTIFY showCamerasChanged)
+    Q_PROPERTY(bool showGrid READ showGrid WRITE setShowGrid NOTIFY showGridChanged)
 
 public:
     GLView();
@@ -23,6 +24,8 @@ public:
 
     bool showCameras() const;
     void setShowCameras(bool v);
+    bool showGrid() const;
+    void setShowGrid(bool v);
 
 public slots:
     const QColor& color() const { return _color; }
@@ -38,6 +41,7 @@ private slots:
 signals:
     void colorChanged();
     void showCamerasChanged();
+    void showGridChanged();
 
 protected:
     void mouseMoveEvent(QMouseEvent*);
@@ -72,7 +76,7 @@ private:
         Translate,
         Zoom
     } _cameraMode;
-    bool _showCameras;
+    bool _showCameras, _showGrid;
 };
 
 } // namespace

@@ -24,5 +24,8 @@ Item {
         onShowCameras: {
             glview.showCameras = checked
         }
+        onShowGrid: {
+            glview.showGrid = checked
+        }
     }
 }

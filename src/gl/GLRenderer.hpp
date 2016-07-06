@@ -27,6 +27,7 @@ public:
     void addAlembicScene(const QUrl& url);
     void resetScene();
     void setShowCameras(bool v);
+    void setShowGrid(bool v);
 
 public slots:
     void draw();

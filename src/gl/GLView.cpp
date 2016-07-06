@@ -12,6 +12,7 @@ GLView::GLView()
     , _lookAtTmp(_camera.lookAt()) // Stores camera._lookAt locally to avoid recomputing it
     , _camMatTmp(_camera.viewMatrix())
     , _showCameras(true)
+    , _showGrid(true)
 {
     setKeepMouseGrab(true);
     setAcceptedMouseButtons(Qt::AllButtons);
@@ -40,6 +41,21 @@ void GLView::setShowCameras(bool v)
         if (_renderer)
             _renderer->setShowCameras(v);
         emit showCamerasChanged();
+    }
+}
+
+bool GLView::showGrid() const
+{
+    return _showGrid;
+}
+
+void GLView::setShowGrid(bool v)
+{
+    if (v != _showGrid) {
+        _showGrid = v;
+        if (_renderer)
+            _renderer->setShowGrid(v);
+        emit showGridChanged();
     }
 }
 

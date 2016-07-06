@@ -3,6 +3,7 @@
 #include "GLGrid.hpp"
 #include "GLPointCloud.hpp"
 #include "GLView.hpp"
+#include "GLCamera.hpp"
 #include "io/AlembicImport.hpp"
 #include <QFileInfo>
 
@@ -48,6 +49,15 @@ void GLRenderer::setCameraMatrix(const QMatrix4x4& cameraMat)
     updateWorldMatrix();
 }
 
+void GLRenderer::setShowCameras(bool v)
+{
+    for(auto obj : _scene)
+    {
+        if (dynamic_cast<GLCamera*>(obj) != NULL)
+            obj->visible = v;
+    }
+}
+
 void GLRenderer::draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -56,7 +66,8 @@ void GLRenderer::draw()
     {
         // Sets position and orientation
         obj->uploadShaderMatrix();
-        obj->draw();
+        if (obj->visible)
+            obj->draw();
     }
 }
 

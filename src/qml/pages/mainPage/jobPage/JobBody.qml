@@ -32,6 +32,9 @@ Item {
                     anchors.fill: parent
                 }
             }
+            onCurrentIndexChanged: {
+                jobPageTabChanged(currentIndex)
+            }
         }
         Rectangle { // vertical tabs
             Layout.preferredWidth: 20

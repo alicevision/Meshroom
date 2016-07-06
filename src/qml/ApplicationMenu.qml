@@ -69,19 +69,23 @@ Item {
             MenuSeparator {}
             MenuItem {
                 text: "New"
+                shortcut: "Ctrl+N"
                 onTriggered: addJob()
             }
             MenuItem {
                 text: "Duplicate"
+                shortcut: "Ctrl+D"
                 onTriggered: duplicateJob()
             }
             MenuItem {
                 text: "Delete"
+                shortcut: "Del"
                 onTriggered: removeJob()
             }
             MenuSeparator {}
             MenuItem {
                 text: "Submit..."
+                shortcut: "Ctrl+S"
                 onTriggered: openJobSubmissionDialog()
                 enabled: (currentJob != defaultJob) ? currentJob.status == -1 : false
             }

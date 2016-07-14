@@ -80,7 +80,7 @@ Item {
             }
             MenuItem {
                 text: "Delete"
-                shortcut: "Del"
+                shortcut: "Ctrl+Del"
                 onTriggered: removeJob()
             }
             MenuSeparator {}

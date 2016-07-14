@@ -572,7 +572,7 @@ void Job::createDefaultGraph()
     att->setName("enabled");
     att->setTooltip(enableMeshingTooltip);
     step->attributes()->addAttribute(att);
-    att->setValue(true);
+    att->setValue(false);
 
     att = new Attribute();
     att->setType(1); // slider

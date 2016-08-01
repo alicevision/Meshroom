@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtQuick/QQuickItem>
+#include <QQuickPaintedItem>
 #include <QMatrix4x4>
 #include "models/Camera.hpp"
 #include <iostream>
@@ -11,7 +11,7 @@ namespace meshroom
 // forward declarations
 class GLRenderer;
 
-class GLView : public QQuickItem
+class GLView : public QQuickPaintedItem
 {
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
@@ -26,6 +26,7 @@ public:
     void setShowCameras(bool v);
     bool showGrid() const;
     void setShowGrid(bool v);
+    void paint(QPainter*) override;
 
 public slots:
     const QColor& color() const { return _color; }
@@ -44,18 +45,24 @@ signals:
     void showGridChanged();
 
 protected:
-    void mouseMoveEvent(QMouseEvent*);
     void mousePressEvent(QMouseEvent*);
+    void mouseMoveEvent(QMouseEvent*);
     void mouseReleaseEvent(QMouseEvent*);
     void wheelEvent(QWheelEvent* event);
 
-protected:
-    // Function to manipulate cameras.
-    // might move in a different class, eg CameraManipulator
+private:
+    // Function to manipulate cameras. Might move in a different class, eg CameraManipulator
+    void handleCameraMousePressEvent(QMouseEvent*);
+    void handleCameraMouseMoveEvent(QMouseEvent*);
     void trackBallRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, float dx, float dy);
     void turnTableRotateCamera(QMatrix4x4& cam, const QVector3D& lookAt, float dx, float dy);
     void planeTranslateCamera(QMatrix4x4& cam, float dx, float dy);
     void translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx, float dy);
+    
+    // Functions to manipulate the selection.
+    void handleSelectionMousePressEvent(QMouseEvent*);
+    void handleSelectionMouseMoveEvent(QMouseEvent*);
+    
 
 private:
     // Delegate opengl rendering
@@ -69,6 +76,7 @@ private:
     QPoint _mousePos;      // Position of the mousePressed event
     QMatrix4x4 _camMatTmp; // Position of the camera when the mouse is pressed
     QVector3D _lookAtTmp;
+    QRect _selectedArea;   // The selected region.
     enum CameraMode
     {
         Idle,

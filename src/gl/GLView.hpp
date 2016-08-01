@@ -35,7 +35,7 @@ public slots:
 private slots:
     void handleWindowChanged(QQuickWindow* win);
     void sync();
-    void paint();
+    void drawgl();
     void refresh();
 
 signals:

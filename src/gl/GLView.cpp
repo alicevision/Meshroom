@@ -72,7 +72,7 @@ void GLView::handleWindowChanged(QQuickWindow* win)
 {
     if(!win)
         return;
-    connect(win, SIGNAL(beforeRendering()), this, SLOT(paint()), Qt::DirectConnection);
+    connect(win, SIGNAL(beforeRendering()), this, SLOT(drawgl()), Qt::DirectConnection);
     connect(win, SIGNAL(beforeSynchronizing()), this, SLOT(sync()), Qt::DirectConnection);
     win->setClearBeforeRendering(false);
 }
@@ -105,7 +105,7 @@ void GLView::sync()
     }
 }
 
-void GLView::paint()
+void GLView::drawgl()
 {
     glEnable(GL_SCISSOR_TEST);
     glViewport(_viewport.x(), _viewport.y(), _viewport.width(), _viewport.height());

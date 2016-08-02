@@ -5,15 +5,15 @@
 namespace meshroom
 {
 
-GLPointCloud::GLPointCloud()
+// When isSelection is true, we're drawing the points as selection: larger size
+GLPointCloud::GLPointCloud(bool isSelection)
     : GLDrawable(*_colorArray)
+    , _isSelection(isSelection)
     , _pointPositions(QOpenGLBuffer::VertexBuffer)
-    , _selectedPositions(QOpenGLBuffer::VertexBuffer)
     , _pointColors(QOpenGLBuffer::VertexBuffer)
     , _npoints(0)
 {
     _vertexArrayObject.create();
-    _selectionVAO.create();
 }
 
 void GLPointCloud::setRawPositions(const void* pointsBuffer, size_t npoints)
@@ -68,34 +68,11 @@ void GLPointCloud::setRawColors(const void* pointsBuffer, size_t npoints)
     _vertexArrayObject.release();
 }
 
-void GLPointCloud::selectPoints(const QRectF& selection, const QRectF& viewport)
+void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const QRectF& selection, const QRectF& viewport)
 {
-  std::vector<QVector3D> selectedPositions;
-  
   for (const auto& p: _rawPositions)
   if (pointSelected(p, selection, viewport))
     selectedPositions.push_back(p);
-
-  _nselected = (GLint)selectedPositions.size();
-  
-  // VAO setup needs to be done only once.
-  if (!_selectedPositions.isCreated()) {
-    _selectedPositions.create();
-    _selectedPositions.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-
-    _selectionVAO.bind();
-    _selectedPositions.bind();
-    _program.enableAttributeArray("in_position");
-    _program.setAttributeBuffer("in_position", GL_FLOAT, 0, 3);
-    // Static color for selected points
-    _program.disableAttributeArray("in_color");
-    _program.setAttributeValue("in_color", 1, 0.2, 0.8);
-    _selectionVAO.release();
-  }
-
-  _selectedPositions.bind();
-  _selectedPositions.allocate(selectedPositions.data(), selectedPositions.size()*3*sizeof(float));
-  _selectedPositions.release();
 }
 
 // NOTE: _cameraMatrix is static and is actually the MVP matrix used for rendering
@@ -108,23 +85,22 @@ bool GLPointCloud::pointSelected(const QVector3D& point, const QRectF& selection
 void GLPointCloud::draw()
 {
   _program.bind();
+
+
+  const bool depthTestEnabled = glIsEnabled(GL_DEPTH_TEST); 
+  
+  if (_isSelection)
+    glDisable(GL_DEPTH_TEST);
   
   if (_npoints) {
     _vertexArrayObject.bind();
-    glPointSize(1.0f);
+    glPointSize(_isSelection ? 6.0f : 1.0f);
     glDrawArrays(GL_POINTS, 0, _npoints);
     _vertexArrayObject.release();
   }
   
-  // We're overdrawing, so need to disable depth test.
-  if (_nselected) {
-    glDisable(GL_DEPTH_TEST);
-    _selectionVAO.bind();
-    glPointSize(2.0f);
-    glDrawArrays(GL_POINTS, 0, _nselected);
-    _selectionVAO.release();
+  if (_isSelection && depthTestEnabled)
     glEnable(GL_DEPTH_TEST);
-  }
   
   _program.release();
 }

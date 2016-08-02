@@ -13,19 +13,20 @@ class GLPointCloud : public GLDrawable
 {
 
 public:
-    GLPointCloud();
+    GLPointCloud(bool isSelection = false);
     ~GLPointCloud() = default;
 
     void draw() override;
     void setRawPositions(const void* points, size_t npoints);
     void setRawColors(const void* points, size_t npoints);
-    void selectPoints(const QRectF& selection, const QRectF& viewport);
+    void selectPoints(std::vector<QVector3D>& selectedPositions, const QRectF& selection, const QRectF& viewport);
 
 private:
-    QOpenGLVertexArrayObject _vertexArrayObject, _selectionVAO;
-    QOpenGLBuffer _pointPositions, _selectedPositions;
+    const bool _isSelection;
+    QOpenGLVertexArrayObject _vertexArrayObject;
+    QOpenGLBuffer _pointPositions;
     QOpenGLBuffer _pointColors;
-    GLint _npoints, _nselected;
+    GLint _npoints;
     std::vector<QVector3D> _rawPositions;
     
     bool pointSelected(const QVector3D& point, const QRectF& selection, const QRectF& viewport);

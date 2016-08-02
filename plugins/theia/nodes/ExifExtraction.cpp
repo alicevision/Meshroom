@@ -10,24 +10,25 @@ using namespace dg;
 ExifExtraction::ExifExtraction(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "images", *this)};
-    output = make_ptr<Plug>(Attribute::Type::PATH, "exifs", *this);
+    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "images", *this)};
+    output = make_ptr<Plug>(Attribute::Type::STRING, "exifs", *this);
 }
 
 vector<Command> ExifExtraction::prepare(Cache& cache, bool& blocking)
 {
     vector<Command> commands;
     auto p = plug("images");
-    for(auto& input : cache.slots(p))
+    for(auto& input : cache.attributes(p))
     {
-        size_t hash = cache.reserve(*this, {input});
-        if(!cache.exists(hash))
+        size_t key = cache.key(*this, {input});
+        auto attribute = cache.addAttribute(output, key);
+        if(!cache.exists(attribute))
         {
             Command c({
-                "-m", "compute",                  // mode
-                "-t", type(),                     // type
-                "-i", cache.location(input->key), // input
-                "-o", cache.location(hash)        // output
+                "-m", "compute",                // mode
+                "-t", type(),                   // type
+                "-i", cache.location(input),    // input
+                "-o", cache.location(attribute) // output
             });
             commands.emplace_back(c);
         }

@@ -149,8 +149,7 @@ void Graph::setAttribute(const QString& nodeName, const QJsonObject& descriptor)
             dg::AttributeList dgattrList;
             for(auto v : attribute.toArray())
             {
-                auto dgattr =
-                    make_ptr<dg::Attribute>(Attribute::Type::PATH, v.toString().toStdString());
+                auto dgattr = make_ptr<dg::Attribute>(v.toString().toStdString());
                 dgattrList.emplace_back(dgattr);
             }
             if(!dgnode->setAttributes(attributeKey.toStdString(), dgattrList))
@@ -162,16 +161,13 @@ void Graph::setAttribute(const QString& nodeName, const QJsonObject& descriptor)
         switch(attribute.type())
         {
             case QJsonValue::Bool:
-                dgattribute = make_ptr<dg::Attribute>(Attribute::Type::BOOL,
-                                                      attribute.toString().toStdString());
+                dgattribute = make_ptr<dg::Attribute>(attribute.toString().toStdString());
                 break;
             case QJsonValue::Double:
-                dgattribute =
-                    make_ptr<dg::Attribute>(Attribute::Type::FLOAT, (float)attribute.toDouble());
+                dgattribute = make_ptr<dg::Attribute>((float)attribute.toDouble());
                 break;
             case QJsonValue::String:
-                dgattribute = make_ptr<dg::Attribute>(Attribute::Type::PATH,
-                                                      attribute.toString().toStdString());
+                dgattribute = make_ptr<dg::Attribute>(attribute.toString().toStdString());
                 break;
             default:
                 break;

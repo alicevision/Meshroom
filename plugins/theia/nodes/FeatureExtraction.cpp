@@ -9,7 +9,7 @@ using namespace dg;
 FeatureExtraction::FeatureExtraction(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "images", *this),
+    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "images", *this),
               make_ptr<Plug>(Attribute::Type::INT, "numThreads", *this),
               make_ptr<Plug>(Attribute::Type::INT, "maxNumFeatures", *this),
               make_ptr<Plug>(Attribute::Type::INT, "numOctave", *this),
@@ -19,23 +19,24 @@ FeatureExtraction::FeatureExtraction(string nodeName)
               make_ptr<Plug>(Attribute::Type::FLOAT, "peakThreshold", *this),
               make_ptr<Plug>(Attribute::Type::BOOL, "rootSift", *this),
               make_ptr<Plug>(Attribute::Type::BOOL, "uprightSift", *this)};
-    output = make_ptr<Plug>(Attribute::Type::PATH, "features", *this);
+    output = make_ptr<Plug>(Attribute::Type::STRING, "features", *this);
 }
 
 vector<Command> FeatureExtraction::prepare(Cache& cache, bool& blocking)
 {
     vector<Command> commands;
     auto p = plug("images");
-    for(auto& input : cache.slots(p))
+    for(auto& input : cache.attributes(p))
     {
-        size_t hash = cache.reserve(*this, {input});
-        if(!cache.exists(hash))
+        size_t key = cache.key(*this, {input});
+        auto attribute = cache.addAttribute(output, key);
+        if(!cache.exists(attribute))
         {
             Command c({
-                "-m", "compute",                  // mode
-                "-t", type(),                     // type
-                "-i", cache.location(input->key), // input
-                "-o", cache.location(hash)        // output
+                "-m", "compute",                // mode
+                "-t", type(),                   // type
+                "-i", cache.location(input),    // input
+                "-o", cache.location(attribute) // output
             });
             commands.emplace_back(c);
         }

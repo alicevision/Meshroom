@@ -9,24 +9,25 @@ using namespace dg;
 PlyExport::PlyExport(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "reconstructions", *this)};
-    output = make_ptr<Plug>(Attribute::Type::PATH, "output", *this);
+    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "reconstructions", *this)};
+    output = make_ptr<Plug>(Attribute::Type::STRING, "output", *this);
 }
 
 vector<Command> PlyExport::prepare(Cache& cache, bool& blocking)
 {
     vector<Command> commands;
     auto p = plug("reconstructions");
-    for(auto& input : cache.slots(p))
+    for(auto& input : cache.attributes(p))
     {
-        size_t hash = cache.reserve(*this, {input});
-        if(!cache.exists(hash))
+        size_t key = cache.key(*this, {input});
+        auto attribute = cache.addAttribute(output, key);
+        if(!cache.exists(attribute))
         {
             Command c({
-                "-m", "compute",                  // mode
-                "-t", type(),                     // type
-                "-i", cache.location(input->key), // input
-                "-o", cache.location(hash)        // output
+                "-m", "compute",                // mode
+                "-t", type(),                   // type
+                "-i", cache.location(input),    // input
+                "-o", cache.location(attribute) // output
             });
             commands.emplace_back(c);
         }

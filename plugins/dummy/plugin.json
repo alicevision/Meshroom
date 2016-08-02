@@ -24,7 +24,12 @@
                     "type": "TEXTFIELD"
                 }
             ],
-            "outputs": [{ "key": "output" }]
+            "outputs": [
+                {
+                    "name": "output",
+                    "key": "output"
+                }
+            ]
         }
     ]
 }

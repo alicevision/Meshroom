@@ -6,9 +6,9 @@ using namespace dg;
 DummyNode::DummyNode(string nodeName)
     : Node(nodeName)
 {
-    output = make_ptr<Plug>(Attribute::Type::PATH, "output", *this);
-    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "input1", *this),
-              make_ptr<Plug>(Attribute::Type::PATH, "input2", *this)};
+    output = make_ptr<Plug>(Attribute::Type::STRING, "output", *this);
+    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "input1", *this),
+              make_ptr<Plug>(Attribute::Type::STRING, "input2", *this)};
 }
 
 std::vector<Command> DummyNode::prepare(Cache& cache, bool& blocking)
@@ -16,14 +16,16 @@ std::vector<Command> DummyNode::prepare(Cache& cache, bool& blocking)
     vector<Command> commands;
     auto p1 = plug("input1");
     auto p2 = plug("input2");
-    for(auto& input1 : cache.slots(p1))
+
+    for(auto& input1 : cache.attributes(p1))
     {
-        for(auto& input2 : cache.slots(p2))
+        for(auto& input2 : cache.attributes(p2))
         {
-            size_t hash = cache.reserve(*this, {input1, input2});
-            if(!cache.exists(hash))
+            size_t key = cache.key(*this, {input1, input2});
+            auto attribute = cache.addAttribute(output, key);
+            if(!cache.exists(attribute))
             {
-                Command c({cache.location(hash)}, "/usr/bin/touch");
+                Command c({cache.location(attribute)}, "/usr/bin/touch");
                 commands.emplace_back(c);
             }
         }

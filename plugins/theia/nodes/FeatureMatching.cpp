@@ -9,9 +9,9 @@ using namespace dg;
 FeatureMatching::FeatureMatching(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "features", *this),
-              make_ptr<Plug>(Attribute::Type::PATH, "images", *this),
-              make_ptr<Plug>(Attribute::Type::PATH, "exifs", *this),
+    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "features", *this),
+              make_ptr<Plug>(Attribute::Type::STRING, "images", *this),
+              make_ptr<Plug>(Attribute::Type::STRING, "exifs", *this),
               make_ptr<Plug>(Attribute::Type::INT, "numThreads", *this),
               make_ptr<Plug>(Attribute::Type::INT, "cacheCapacity", *this),
               make_ptr<Plug>(Attribute::Type::FLOAT, "lowesRatio", *this),
@@ -19,7 +19,7 @@ FeatureMatching::FeatureMatching(string nodeName)
               make_ptr<Plug>(Attribute::Type::BOOL, "matchOutOfCore", *this),
               make_ptr<Plug>(Attribute::Type::BOOL, "keepOnlySymmetricMatches", *this),
               make_ptr<Plug>(Attribute::Type::BOOL, "useLowesRatio", *this)};
-    output = make_ptr<Plug>(Attribute::Type::PATH, "matches", *this);
+    output = make_ptr<Plug>(Attribute::Type::STRING, "matches", *this);
 }
 
 vector<Command> FeatureMatching::prepare(Cache& cache, bool& blocking)
@@ -30,29 +30,30 @@ vector<Command> FeatureMatching::prepare(Cache& cache, bool& blocking)
     auto p3 = plug("exifs");
 
     // one output
-    size_t hash = cache.reserve(*this, cache.slots(p1));
+    size_t key = cache.key(*this, cache.attributes(p1));
+    auto attribute = cache.addAttribute(output, key);
 
-    if(!cache.exists(hash))
+    if(!cache.exists(attribute))
     {
         vector<string> options = {
-            "-m", "compute",           // mode
-            "-t", type(),              // type
-            "-o", cache.location(hash) // output
+            "-m", "compute",                // mode
+            "-t", type(),                   // type
+            "-o", cache.location(attribute) // output
         };
-        for(auto& input : cache.slots(p1))
+        for(auto& input : cache.attributes(p1))
         {
             options.emplace_back("-feat");
-            options.emplace_back(cache.location(input->key));
+            options.emplace_back(cache.location(input));
         }
-        for(auto& input : cache.slots(p2))
+        for(auto& input : cache.attributes(p2))
         {
             options.emplace_back("-img");
-            options.emplace_back(cache.location(input->key));
+            options.emplace_back(cache.location(input));
         }
-        for(auto& input : cache.slots(p3))
+        for(auto& input : cache.attributes(p3))
         {
             options.emplace_back("-ex");
-            options.emplace_back(cache.location(input->key));
+            options.emplace_back(cache.location(input));
         }
         Command c(options);
         commands.emplace_back(c);

@@ -8,9 +8,9 @@ using namespace dg;
 VocTree::VocTree(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "features", *this),
-              make_ptr<Plug>(Attribute::Type::PATH, "images", *this)};
-    output = make_ptr<Plug>(Attribute::Type::PATH, "selection", *this);
+    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "features", *this),
+              make_ptr<Plug>(Attribute::Type::STRING, "images", *this)};
+    output = make_ptr<Plug>(Attribute::Type::STRING, "selection", *this);
 }
 
 std::vector<Command> VocTree::prepare(Cache& cache, bool& blocking)
@@ -19,16 +19,17 @@ std::vector<Command> VocTree::prepare(Cache& cache, bool& blocking)
     auto p = plug("features");
 
     // compute a hash depending on all inputs
-    size_t hash = cache.reserve(*this, cache.slots(p));
+    size_t key = cache.key(*this, cache.attributes(p));
+    auto attribute = cache.addAttribute(output, key);
 
     // check if this file exists
-    if(!cache.exists(hash))
+    if(!cache.exists(attribute))
     {
         // the file does not exists, so we add commands to build it
-        for(auto& input : cache.slots(p))
+        for(auto& input : cache.attributes(p))
         {
-            Command c({"-m", "compute", "-t", type(), "-f", to_string(input->key), "-o",
-                       cache.location(hash)});
+            Command c({"-m", "compute", "-t", type(), "-f", cache.location(input), "-o",
+                       cache.location(attribute)});
             commands.emplace_back(c);
         }
         // set the precompute flag
@@ -37,12 +38,12 @@ std::vector<Command> VocTree::prepare(Cache& cache, bool& blocking)
     else
     {
         // open and process the file
-        ifstream infile(cache.location(hash));
+        ifstream infile(cache.location(attribute));
         if(infile.is_open())
         {
             size_t key;
             while(infile >> key)
-                cache.reserve(*this, key);
+                cache.addAttribute(output, key);
         }
     }
 

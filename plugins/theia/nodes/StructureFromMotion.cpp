@@ -9,8 +9,8 @@ using namespace dg;
 StructureFromMotion::StructureFromMotion(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "matches", *this),
-              make_ptr<Plug>(Attribute::Type::PATH, "exifs", *this),
+    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "matches", *this),
+              make_ptr<Plug>(Attribute::Type::STRING, "exifs", *this),
               make_ptr<Plug>(Attribute::Type::INT, "numThreads", *this),
               make_ptr<Plug>(Attribute::Type::INT, "maxTrackLength", *this),
               make_ptr<Plug>(Attribute::Type::INT, "minNum2ViewsInliers", *this),
@@ -19,7 +19,7 @@ StructureFromMotion::StructureFromMotion(string nodeName)
               make_ptr<Plug>(Attribute::Type::STRING, "reconstructionEstimatorType", *this),
               make_ptr<Plug>(Attribute::Type::STRING, "globalRotationEstimatorType", *this),
               make_ptr<Plug>(Attribute::Type::STRING, "globalPositionEstimatorType", *this)};
-    output = make_ptr<Plug>(Attribute::Type::PATH, "reconstruction", *this);
+    output = make_ptr<Plug>(Attribute::Type::STRING, "reconstruction", *this);
 }
 
 vector<Command> StructureFromMotion::prepare(Cache& cache, bool& blocking)
@@ -27,21 +27,22 @@ vector<Command> StructureFromMotion::prepare(Cache& cache, bool& blocking)
     vector<Command> commands;
     auto p1 = plug("matches");
     auto p2 = plug("exifs");
-    for(auto& input : cache.slots(p1))
+    for(auto& input : cache.attributes(p1))
     {
-        size_t hash = cache.reserve(*this, {input});
-        if(!cache.exists(hash))
+        size_t key = cache.key(*this, {input});
+        auto attribute = cache.addAttribute(output, key);
+        if(!cache.exists(attribute))
         {
             vector<string> options = {
-                "-m", "compute",                  // mode
-                "-t", type(),                     // type
-                "-i", cache.location(input->key), // input
-                "-o", cache.location(hash)        // output
+                "-m", "compute",                // mode
+                "-t", type(),                   // type
+                "-i", cache.location(input),    // input
+                "-o", cache.location(attribute) // output
             };
-            for(auto& exif : cache.slots(p2))
+            for(auto& exif : cache.attributes(p2))
             {
                 options.emplace_back("-ex");
-                options.emplace_back(cache.location(exif->key));
+                options.emplace_back(cache.location(exif));
             }
             Command c(options);
             commands.emplace_back(c);

@@ -25,14 +25,6 @@ find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 QT5_ADD_RESOURCES(TARGET_QRCS qml/resources.qrc)
 
-# Alembic (optional)
-find_package(Alembic)
-if(ALEMBIC_FOUND)
-    include_directories(${ABC_INCLUDE_DIR})
-    add_definitions(-DWITH_ALEMBIC)
-    target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
-endif(ALEMBIC_FOUND)
-
 #
 # Add definitions
 #
@@ -48,6 +40,14 @@ include_directories(${DG_INCLUDE_DIR})
 add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})
 target_link_libraries(${TARGETOBJ} ${OPENGL_LIBRARIES} ${DG_LIBRARY})
 QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick)
+
+# Alembic (optional)
+find_package(Alembic)
+if(ALEMBIC_FOUND)
+    include_directories(${ABC_INCLUDE_DIR})
+    add_definitions(-DWITH_ALEMBIC)
+    target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
+endif(ALEMBIC_FOUND)
 
 #
 # Install settings

@@ -7,8 +7,8 @@ using namespace dg;
 ImageListing::ImageListing(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::PATH, "files", *this)};
-    output = make_ptr<Plug>(Attribute::Type::PATH, "images", *this);
+    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "files", *this)};
+    output = make_ptr<Plug>(Attribute::Type::STRING, "images", *this);
 }
 
 vector<Command> ImageListing::prepare(Cache& cache, bool& blocking)
@@ -25,17 +25,19 @@ vector<Command> ImageListing::prepare(Cache& cache, bool& blocking)
 
     vector<Command> commands;
     auto p = plug("files");
-    for(auto& input : cache.slots(p))
+
+    AttributeList list;
+    for(auto& input : cache.attributes(p))
     {
-        auto path = cache.location(input->key);
+        auto path = cache.location(input);
         if(file_extension(path) == "JPG")
-            cache.reserve(*this, input->key);
+            list.emplace_back(input);
     }
+    cache.setAttributes(output, list);
     return commands;
 }
 
 void ImageListing::compute(const vector<string>& arguments) const
 {
-    // nothing to do
-    qDebug() << "[ImageListing]";
+    // never reached
 }

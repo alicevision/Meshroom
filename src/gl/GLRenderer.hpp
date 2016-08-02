@@ -22,7 +22,7 @@ public:
     ~GLRenderer();
 
 public:
-    void setViewportSize(const QSize& size);
+    void setViewport(const QRect& viewport);
     void setCameraMatrix(const QMatrix4x4& cameraMat);
     void setClearColor(const QColor& color);
     void addAlembicScene(const QUrl& url);
@@ -30,7 +30,7 @@ public:
     void setShowCameras(bool v);
     void setShowGrid(bool v);
     
-    void addPointsToSelection(const QRectF& selection, const QRectF& viewport);
+    void addPointsToSelection(const QRectF& selection);
     void clearSelection();
     const std::vector<QVector3D>& getSelection() const { return _selection; }
 
@@ -42,7 +42,7 @@ private:
 
 private:
     QMatrix4x4 _cameraMat;
-    QSize _viewportSize;
+    QRect _viewport;
     GLScene _scene;                     // Simple scene: a list of drawable objects
     GLSLBackgroundShader* _background;  // Keep background drawing outside the scene
     std::vector<QVector3D> _selection;  // Selected points

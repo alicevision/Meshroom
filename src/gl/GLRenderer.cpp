@@ -30,9 +30,9 @@ GLRenderer::~GLRenderer()
     _background = nullptr;
 }
 
-void GLRenderer::setViewportSize(const QSize& size)
+void GLRenderer::setViewport(const QRect& viewport)
 {
-    _viewportSize = size;
+    _viewport = viewport;
     updateWorldMatrix();
 }
 
@@ -83,7 +83,7 @@ void GLRenderer::updateWorldMatrix()
     // projection
     QMatrix4x4 projMat;
     // TODO: get perspective matrix from current camera
-    projMat.perspective(60.0f, _viewportSize.width() / (float)_viewportSize.height(), 0.1f, 100.0f);
+    projMat.perspective(60.0f, _viewport.width() / (float)_viewport.height(), 0.1f, 100.0f);
     // world
     QMatrix4x4 worldMat = projMat * _cameraMat;
     // update shaders
@@ -109,11 +109,11 @@ void GLRenderer::resetScene()
     _scene.emplace_back(new GLGrid());
 }
 
-void GLRenderer::addPointsToSelection(const QRectF& selection, const QRectF& viewport)
+void GLRenderer::addPointsToSelection(const QRectF& selection)
 {
   for (auto& obj: _scene)
   if (auto p = dynamic_cast<GLPointCloud*>(obj.get()))
-    p->selectPoints(_selection, selection, viewport);
+    p->selectPoints(_selection, selection, _viewport);
 }
 
 void GLRenderer::clearSelection()

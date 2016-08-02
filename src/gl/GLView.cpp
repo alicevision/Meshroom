@@ -105,7 +105,7 @@ void GLView::sync()
     _viewport.setWidth(qRound(ratio * width()));
     _viewport.setHeight(qRound(ratio * height()));
 
-    _renderer->setViewportSize(_viewport.size());
+    _renderer->setViewport(_viewport);
     _renderer->setClearColor(_color);
     _renderer->setCameraMatrix(_camera.viewMatrix());
 

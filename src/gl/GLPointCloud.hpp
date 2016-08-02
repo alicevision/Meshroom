@@ -26,7 +26,6 @@ private:
     QOpenGLVertexArrayObject _vertexArrayObject;
     QOpenGLBuffer _pointPositions;
     QOpenGLBuffer _pointColors;
-    GLint _npoints;
     std::vector<QVector3D> _rawPositions;
     
     bool pointSelected(const QVector3D& point, const QRectF& selection, const QRectF& viewport);

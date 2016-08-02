@@ -18,15 +18,13 @@ GLRenderer::GLRenderer()
     GLDrawable::setShaders(
         new GLSLPlainColorShader(QVector4D(0.6, 0.6, 0.6, 1.0)), new GLSLColoredShader(),
         _background); // NOTE : the background shader is handled like the other shaders
-    _scene.append(new GLGizmo());
-    _scene.append(new GLGrid());
+    _scene.emplace_back(new GLGizmo());
+    _scene.emplace_back(new GLGrid());
     updateWorldMatrix();
 }
 
 GLRenderer::~GLRenderer()
 {
-    for(auto obj : _scene)
-        delete obj;
     GLDrawable::deleteShaders();
     // Background is deleted by GLDrawable::deleteShaders
     _background = nullptr;
@@ -51,18 +49,18 @@ void GLRenderer::setCameraMatrix(const QMatrix4x4& cameraMat)
 
 void GLRenderer::setShowCameras(bool v)
 {
-    for(auto obj : _scene)
+    for(auto& obj : _scene)
     {
-        if (dynamic_cast<GLCamera*>(obj) != NULL)
+        if (dynamic_cast<GLCamera*>(obj.get()) != NULL)
             obj->visible = v;
     }
 }
 
 void GLRenderer::setShowGrid(bool v)
 {
-    for(auto obj : _scene)
+    for(auto& obj : _scene)
     {
-        if (dynamic_cast<GLGrid*>(obj) != NULL)
+        if (dynamic_cast<GLGrid*>(obj.get()) != NULL)
             obj->visible = v;
     }
 }
@@ -71,7 +69,7 @@ void GLRenderer::draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     _background->draw();
-    for(auto obj : _scene)
+    for(auto& obj : _scene)
     {
         // Sets position and orientation
         obj->uploadShaderMatrix();
@@ -106,17 +104,15 @@ void GLRenderer::addAlembicScene(const QUrl& url)
 
 void GLRenderer::resetScene()
 {
-    for(auto obj : _scene)
-        delete obj;
     _scene.clear();
-    _scene.append(new GLGizmo());
-    _scene.append(new GLGrid());
+    _scene.emplace_back(new GLGizmo());
+    _scene.emplace_back(new GLGrid());
 }
 
 void GLRenderer::addPointsToSelection(const QRectF& selection, const QRectF& viewport)
 {
-  for (auto obj: _scene)
-  if (auto p = dynamic_cast<GLPointCloud*>(obj))
+  for (auto& obj: _scene)
+  if (auto p = dynamic_cast<GLPointCloud*>(obj.get()))
     p->selectPoints(_selection, selection, viewport);
 }
 

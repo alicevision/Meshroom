@@ -22,7 +22,7 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
         IPoints points(iObj, kWrapExisting);
         IPointsSchema ms = points.getSchema();
         P3fArraySamplePtr positions = ms.getValue().getPositions();
-        auto pointCloud = new GLPointCloud();
+        std::unique_ptr<GLPointCloud> pointCloud(new GLPointCloud());
         pointCloud->setRawPositions(positions->get(), positions->size());
 
         // Check if we have a color property
@@ -66,7 +66,7 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
             pointCloud->setRawColors(defaultColor, positions->size());
             delete[] defaultColor;
         }
-        scene.append(pointCloud);
+        scene.push_back(std::move(pointCloud));
     }
     else if(IXform::matches(md))
     {
@@ -80,7 +80,7 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
         ICamera camera(iObj, kWrapExisting);
         ICameraSchema cs = camera.getSchema();
 
-        auto newCamera = new GLCamera();
+        std::unique_ptr<GLCamera> newCamera(new GLCamera());
         QMatrix4x4 modelMat(mat[0][0], mat[1][0], mat[2][0], mat[3][0], mat[0][1], mat[1][1],
                             mat[2][1], mat[3][1], mat[0][2], mat[1][2], mat[2][2], mat[3][2],
                             mat[0][3], mat[1][3], mat[2][3], mat[3][3]);
@@ -107,7 +107,7 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
                 }
             }
         }
-        scene.append(newCamera);
+        scene.push_back(std::move(newCamera));
     }
 
     // Recurse

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QList>
+#include <memory>
 #include "GLDrawable.hpp"
 
 namespace meshroom
 {
 
-typedef QList<GLDrawable*> GLScene;
+typedef std::vector<std::unique_ptr<GLDrawable>> GLScene;
 
 } // namespace

@@ -4,6 +4,7 @@
 #include "GLScene.hpp"
 #include <QObject>
 #include <QColor>
+#include <QVector3D>
 
 namespace meshroom
 {
@@ -28,6 +29,10 @@ public:
     void resetScene();
     void setShowCameras(bool v);
     void setShowGrid(bool v);
+    
+    void addPointsToSelection(const QRectF& selection, const QRectF& viewport);
+    void clearSelection();
+    const std::vector<QVector3D>& getSelection() const { return _selection; }
 
 public slots:
     void draw();
@@ -38,8 +43,9 @@ private:
 private:
     QMatrix4x4 _cameraMat;
     QSize _viewportSize;
-    GLScene _scene;                    // Simple scene: a list of drawable objects
-    GLSLBackgroundShader* _background; // Keep background drawing outside the scene
+    GLScene _scene;                     // Simple scene: a list of drawable objects
+    GLSLBackgroundShader* _background;  // Keep background drawing outside the scene
+    std::vector<QVector3D> _selection;  // Selected points
 };
 
 } // namespace

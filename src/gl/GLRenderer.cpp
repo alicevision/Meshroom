@@ -113,4 +113,17 @@ void GLRenderer::resetScene()
     _scene.append(new GLGrid());
 }
 
+void GLRenderer::addPointsToSelection(const QRectF& selection, const QRectF& viewport)
+{
+  for (auto obj: _scene)
+  if (auto p = dynamic_cast<GLPointCloud*>(obj))
+    p->selectPoints(_selection, selection, viewport);
+}
+
+void GLRenderer::clearSelection()
+{
+  _selection.clear();
+}
+
+
 } // namespace

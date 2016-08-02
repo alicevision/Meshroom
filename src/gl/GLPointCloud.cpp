@@ -69,16 +69,22 @@ void GLPointCloud::setRawColors(const void* pointsBuffer, size_t npoints)
 
 void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const QRectF& selection, const QRectF& viewport)
 {
+  QRectF vselection = selection.intersected(viewport);
   for (const auto& p: _rawPositions)
-  if (pointSelected(p, selection, viewport))
+  if (pointSelected(p, vselection, viewport))
     selectedPositions.push_back(p);
+  qDebug() << "#SELECTED" << selectedPositions.size();
 }
 
 // NOTE: _cameraMatrix is static and is actually the MVP matrix used for rendering
 bool GLPointCloud::pointSelected(const QVector3D& point, const QRectF& selection, const QRectF& viewport)
 {
-  // UGLY HACK; WIP
-  return ((size_t)(&point) >> 8) & 1;
+  auto projected = _cameraMatrix.map(QVector4D(point[0], point[1], point[2], 1));
+  auto ndc = QVector2D(projected.x() / projected.w(), projected.y() / projected.w());
+  QPointF wpoint(
+    viewport.width()/2*(ndc[0]+1) + viewport.x(),
+    viewport.height()/2*(-ndc[1]+1) + viewport.y());  // invert y [ndc is opposite way of win]
+  return selection.contains(wpoint);
 }
 
 void GLPointCloud::draw()

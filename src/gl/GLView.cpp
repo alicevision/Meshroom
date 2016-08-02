@@ -65,11 +65,11 @@ void GLView::setShowGrid(bool v)
 // Paint selection rectangle/line based on mouse data.
 void GLView::paint(QPainter* painter)
 {
-  if (_selectedArea.isEmpty())
+  if (_selectedAreaTmp.isEmpty())
     return;
 
   painter->setBrush(QBrush(QColor(192, 192, 128, 192)));
-  painter->drawRect(_selectedArea);
+  painter->drawRect(_selectedAreaTmp);
 }
 
 void GLView::setColor(const QColor& color)
@@ -108,6 +108,12 @@ void GLView::sync()
     _renderer->setViewport(_viewport);
     _renderer->setClearColor(_color);
     _renderer->setCameraMatrix(_camera.viewMatrix());
+    
+    if (!_selectedArea.isEmpty()) {
+      qDebug() << _selectedArea;
+      _renderer->addPointsToSelection(_selectedArea);
+      _selectedArea = QRect();
+    }
 
     // Triggers a load when the file name is not null
     if(!_alembicSceneUrl.isEmpty())
@@ -165,7 +171,8 @@ void GLView::mouseMoveEvent(QMouseEvent* event)
 void GLView::mouseReleaseEvent(QMouseEvent* event)
 {
   _cameraMode = Idle;
-  _selectedArea = QRect();
+  if (event->modifiers() == Qt::ControlModifier)
+    handleSelectionMouseReleaseEvent(event);
   refresh();
 }
 
@@ -325,10 +332,17 @@ void GLView::handleSelectionMousePressEvent(QMouseEvent* event)
   _mousePos = event->pos();
 }
 
+void GLView::handleSelectionMouseReleaseEvent(QMouseEvent* event)
+{
+  _selectedArea = _selectedAreaTmp;
+  _selectedAreaTmp = QRect();
+  refresh();
+}
+
 void GLView::handleSelectionMouseMoveEvent(QMouseEvent* event)
 {
-  _selectedArea = QRect(_mousePos, event->pos());
-  if (_selectedArea.isValid())
+  _selectedAreaTmp = QRect(_mousePos, event->pos());
+  if (_selectedAreaTmp.isValid())
     refresh();
 }
 

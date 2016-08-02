@@ -2,6 +2,7 @@
 
 #include <QOpenGLFunctions_3_2_Core>
 #include "GLScene.hpp"
+#include "GLPointCloud.hpp"
 #include <QObject>
 #include <QColor>
 #include <QVector3D>
@@ -44,6 +45,7 @@ private:
     QMatrix4x4 _cameraMat;
     QRect _viewport;
     GLScene _scene;                     // Simple scene: a list of drawable objects
+    std::unique_ptr<GLPointCloud> _selectionPC;
     GLSLBackgroundShader* _background;  // Keep background drawing outside the scene
     std::vector<QVector3D> _selection;  // Selected points
 };

@@ -20,6 +20,7 @@ GLRenderer::GLRenderer()
         _background); // NOTE : the background shader is handled like the other shaders
     _scene.emplace_back(new GLGizmo());
     _scene.emplace_back(new GLGrid());
+    _selectionPC = std::unique_ptr<GLPointCloud>(new GLPointCloud(true));
     updateWorldMatrix();
 }
 
@@ -76,6 +77,7 @@ void GLRenderer::draw()
         if (obj->visible)
             obj->draw();
     }
+    _selectionPC->draw();
 }
 
 void GLRenderer::updateWorldMatrix()
@@ -114,6 +116,7 @@ void GLRenderer::addPointsToSelection(const QRectF& selection)
   for (auto& obj: _scene)
   if (auto p = dynamic_cast<GLPointCloud*>(obj.get()))
     p->selectPoints(_selection, selection, _viewport);
+  _selectionPC->setRawPositions(_selection.data(), _selection.size());
 }
 
 void GLRenderer::clearSelection()

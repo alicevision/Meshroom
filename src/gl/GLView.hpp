@@ -61,6 +61,7 @@ private:
     
     // Functions to manipulate the selection.
     void handleSelectionMousePressEvent(QMouseEvent*);
+    void handleSelectionMouseReleaseEvent(QMouseEvent*);
     void handleSelectionMouseMoveEvent(QMouseEvent*);
     
 
@@ -76,7 +77,8 @@ private:
     QPoint _mousePos;      // Position of the mousePressed event
     QMatrix4x4 _camMatTmp; // Position of the camera when the mouse is pressed
     QVector3D _lookAtTmp;
-    QRect _selectedArea;   // The selected region.
+    QRect _selectedAreaTmp;   // The selected region during dragging; for drawing
+    QRect _selectedArea;      // For sync with renderer
     enum CameraMode
     {
         Idle,

@@ -77,14 +77,18 @@ void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const
 }
 
 // NOTE: _cameraMatrix is static and is actually the MVP matrix used for rendering
+// NOTE: viewport is defined WRT the window, but mouse coordinates have (0,0) at widget
+// origin, which is what we need. Therefore no need to add viewport.x/y when computing
+// the window coordinate.
 bool GLPointCloud::pointSelected(const QVector3D& point, const QRectF& selection, const QRectF& viewport)
 {
   auto projected = _cameraMatrix.map(QVector4D(point[0], point[1], point[2], 1));
-  auto ndc = QVector2D(projected.x() / projected.w(), projected.y() / projected.w());
+  auto ndc = QVector3D(projected) / projected.w();
   QPointF wpoint(
-    viewport.width()/2*(ndc[0]+1) + viewport.x(),
-    viewport.height()/2*(-ndc[1]+1) + viewport.y());  // invert y [ndc is opposite way of win]
-  return selection.contains(wpoint);
+    viewport.width()/2*(ndc[0]+1),
+    viewport.height()/2*(-ndc[1]+1));  // invert y [ndc is opposite way of win]
+  // Must cull z < znear; not visible therefore not part of the selection.
+  return selection.contains(wpoint) && projected.z() >= 0.1f; // XXX: hard-coded znear; see GLRenderer::updateWorldMatrix
 }
 
 void GLPointCloud::draw()

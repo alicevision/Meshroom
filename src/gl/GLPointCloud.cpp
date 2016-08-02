@@ -95,18 +95,15 @@ void GLPointCloud::draw()
 {
   _program.bind();
 
-
   const bool depthTestEnabled = glIsEnabled(GL_DEPTH_TEST); 
-  
-  if (_isSelection)
-    glDisable(GL_DEPTH_TEST);
+  glDisable(GL_DEPTH_TEST);
   
   _vertexArrayObject.bind();
   glPointSize(_isSelection ? 6.0f : 1.0f);
   glDrawArrays(GL_POINTS, 0, (GLint)_rawPositions.size());
   _vertexArrayObject.release();
   
-  if (_isSelection && depthTestEnabled)
+  if (depthTestEnabled)
     glEnable(GL_DEPTH_TEST);
   
   _program.release();

@@ -69,7 +69,11 @@ void GLRenderer::setShowGrid(bool v)
 void GLRenderer::draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     _background->draw();
+
+    // Draw selection first, so that it's overdrawn with real point cloud points.
+    _selectionPC->draw();
     for(auto& obj : _scene)
     {
         // Sets position and orientation
@@ -77,7 +81,6 @@ void GLRenderer::draw()
         if (obj->visible)
             obj->draw();
     }
-    _selectionPC->draw();
 }
 
 void GLRenderer::updateWorldMatrix()

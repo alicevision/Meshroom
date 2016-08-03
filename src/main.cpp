@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
             case CommandLine::OPEN_GUI:
             {
                 // GUI application
+                QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
                 QGuiApplication qapp(argc, argv);
                 // using a QML engine
                 QQmlApplicationEngine engine;

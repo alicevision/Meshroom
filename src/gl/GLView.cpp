@@ -3,6 +3,8 @@
 #include <QtQuick/QQuickWindow>
 #include <QtMath>
 
+#include <iostream>
+
 namespace meshroom
 {
 
@@ -11,6 +13,8 @@ GLView::GLView()
     , _cameraMode(Idle)
     , _lookAtTmp(_camera.lookAt()) // Stores camera._lookAt locally to avoid recomputing it
     , _camMatTmp(_camera.viewMatrix())
+    , _visibilityThreshold(.0)
+    , _visibilityHasChanged(false)
 {
     setKeepMouseGrab(true);
     setAcceptedMouseButtons(Qt::AllButtons);
@@ -31,6 +35,14 @@ void GLView::setColor(const QColor& color)
         return;
     _color = color;
     emit colorChanged();
+    refresh();
+}
+
+void GLView::setVisibilityThreshold(float value)
+{
+//    std::cout << "GLView::setVisibilityThreshold " << value << std::endl;
+    _visibilityThreshold = value;
+    _visibilityHasChanged = true;
     refresh();
 }
 
@@ -61,6 +73,11 @@ void GLView::sync()
     _renderer->setViewportSize(_viewport.size());
     _renderer->setClearColor(_color);
     _renderer->setCameraMatrix(_camera.viewMatrix());
+    if(_visibilityHasChanged)
+    {
+      _renderer->setVisibilityThreshold(_visibilityThreshold);
+      _visibilityHasChanged = false;
+    }
 
     // Triggers a load when the file name is not null
     if(!_alembicSceneUrl.isEmpty())

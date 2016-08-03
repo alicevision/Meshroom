@@ -22,6 +22,7 @@ public:
 public slots:
     const QColor& color() const { return _color; }
     void setColor(const QColor& color);
+    void setVisibilityThreshold(float value);
     void loadAlembicScene(const QUrl& url);
 
 private slots:
@@ -66,6 +67,8 @@ private:
         Translate,
         Zoom
     } _cameraMode;
+    float _visibilityThreshold;
+    bool _visibilityHasChanged;
 };
 
 } // namespace

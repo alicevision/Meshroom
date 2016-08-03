@@ -17,6 +17,11 @@ Item {
             color: "#333"
             property variant job: currentJob
             onJobChanged: glview.loadAlembicScene(Qt.resolvedUrl(currentJob.url+"/"+currentJob.name+".abc"))
+            Slider {
+                onValueChanged: {
+                    glview.setVisibilityThreshold(value)
+                }
+            }
         }
     }
 

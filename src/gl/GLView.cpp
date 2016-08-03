@@ -1,10 +1,11 @@
-#include "GLView.hpp"
-#include "GLRenderer.hpp"
 #include <QtQuick/QQuickWindow>
 #include <QtMath>
 #include <qt5/QtCore/qnamespace.h>
 #include <QPainter>
 #include <QBrush>
+#include <Eigen/Dense>
+#include "GLView.hpp"
+#include "GLRenderer.hpp"
 
 namespace meshroom
 {
@@ -350,6 +351,43 @@ void GLView::handleSelectionMouseMoveEvent(QMouseEvent* event)
   _selectedAreaTmp = QRect(_mousePos, event->pos());
   if (_selectedAreaTmp.isValid())
     refresh();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void GLView::definePlane()
+{
+  using namespace Eigen;
+  
+  if (_selectedPoints->size() < 3) {
+    qWarning() << "definePlane: must select at least three points";
+    return;
+  }
+  
+  MatrixX3f mat(_selectedPoints->size(), 3);
+  for (size_t i = 0; i < _selectedPoints->size(); ++i) {
+    const auto& p = (*_selectedPoints)[i];
+    mat.row(i) = Vector3f(p[0], p[1], p[2]).transpose();
+  }
+  
+  // See http://math.stackexchange.com/questions/99299/best-fitting-plane-given-a-set-of-points
+  
+  // Translate to origin.
+  auto origin = mat.colwise().sum() / mat.rows();
+  mat.rowwise() -= origin;
+  _planeOrigin = QVector3D(origin(0), origin(1), origin(2));
+  
+  // Calculate SVD. Need only left singular vectors. Singular values are sorted in decreasing order.
+  JacobiSVD<MatrixX3f> svd(mat, ComputeThinU);
+  const auto& U = svd.matrixU();
+  if (U.rows() != 3 || U.cols() != 3) {
+    qWarning() << "SVD failed; invalid result size.";
+    _planeNormal = QVector3D(0, 0, 1);
+  }
+  else {
+    const auto& minsv = U.col(2);
+    _planeNormal = QVector3D(minsv(0), minsv(1), minsv(2));
+  }
 }
 
 } // namespace

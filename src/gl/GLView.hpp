@@ -32,6 +32,7 @@ public slots:
     const QColor& color() const { return _color; }
     void setColor(const QColor& color);
     void loadAlembicScene(const QUrl& url);
+    void definePlane();
 
 private slots:
     void handleWindowChanged(QQuickWindow* win);
@@ -82,6 +83,10 @@ private:
     QRect _selectedAreaTmp;
     QRect _selectedArea;
     bool _clearSelection;
+    
+    const std::vector<QVector3D>* _selectedPoints;  // owned by the renderer!
+    QVector3D _planeNormal;
+    QVector3D _planeOrigin;
     
     enum CameraMode
     {

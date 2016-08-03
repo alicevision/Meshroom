@@ -159,7 +159,7 @@ void GLView::mousePressEvent(QMouseEvent* event)
   // set the correct mode
   if(event->modifiers() == Qt::AltModifier)
     handleCameraMousePressEvent(event);
-  else if (event->modifiers() == Qt::ControlModifier)
+  else if (event->modifiers() == Qt::ControlModifier && event->buttons() == Qt::LeftButton)
     handleSelectionMousePressEvent(event);
 }
 

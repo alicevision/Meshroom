@@ -18,9 +18,12 @@ GLRenderer::GLRenderer()
     GLDrawable::setShaders(
         new GLSLPlainColorShader(QVector4D(0.6, 0.6, 0.6, 1.0)), new GLSLColoredShader(),
         _background); // NOTE : the background shader is handled like the other shaders
+    
+    // Must be initialized after shaders.
     _scene.emplace_back(new GLGizmo());
     _scene.emplace_back(new GLGrid());
-    _selectionPC = std::unique_ptr<GLPointCloud>(new GLPointCloud(true));
+    _selectionPC.reset(new GLPointCloud(true));
+    _aligner.reset(new GLAligner());
     updateWorldMatrix();
 }
 
@@ -81,6 +84,9 @@ void GLRenderer::draw()
         if (obj->visible)
             obj->draw();
     }
+    
+    // TODO: enable alpha blending
+    _aligner->draw();
 }
 
 void GLRenderer::updateWorldMatrix()
@@ -128,5 +134,14 @@ void GLRenderer::clearSelection()
   _selectionPC->setRawPositions(_selection.data(), _selection.size());
 }
 
+void GLRenderer::setPlane(const QVector3D& normal, const QVector3D& origin)
+{
+  _aligner->setPlane(normal, origin);
+}
+
+void GLRenderer::clearPlane()
+{
+  _aligner->clearPlane();
+}
 
 } // namespace

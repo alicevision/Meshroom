@@ -128,6 +128,15 @@ void GLView::sync()
       _clearSelection = false;
     }
     _selectedPoints = &_renderer->getSelection();
+    
+    if (_planeDefined) {
+      _renderer->setPlane(_planeNormal, _planeOrigin);
+      _planeDefined = false;
+    }
+    if (_clearPlane) {
+      _renderer->clearPlane();
+      _clearPlane = false;
+    }
 }
 
 void GLView::drawgl()
@@ -353,6 +362,22 @@ void GLView::handleSelectionMouseMoveEvent(QMouseEvent* event)
   _selectedAreaTmp = QRect(_mousePos, event->pos());
   if (_selectedAreaTmp.isValid())
     refresh();
+}
+
+void GLView::keyPressEvent(QKeyEvent* event)
+{
+  switch (event->key())
+  {
+  case Qt::Key_P:
+    if (event->modifiers() == Qt::NoModifier) {
+      definePlane();
+      _planeDefined = true;
+    }
+    else if (event->modifiers() == Qt::ShiftModifier) {
+      _clearPlane = true;
+    }
+    break;
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////

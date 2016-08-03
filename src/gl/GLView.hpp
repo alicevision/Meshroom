@@ -50,6 +50,8 @@ protected:
     void mouseMoveEvent(QMouseEvent*) override;
     void mouseReleaseEvent(QMouseEvent*) override;
     void wheelEvent(QWheelEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+
 
 private:
     // Function to manipulate cameras. Might move in a different class, eg CameraManipulator
@@ -82,11 +84,13 @@ private:
     // Point selection handling.
     QRect _selectedAreaTmp;
     QRect _selectedArea;
-    bool _clearSelection;
+    bool _clearSelection = false;
     
     const std::vector<QVector3D>* _selectedPoints;  // owned by the renderer!
     QVector3D _planeNormal;
     QVector3D _planeOrigin;
+    bool _planeDefined = false;
+    bool _clearPlane = false;
     
     enum CameraMode
     {

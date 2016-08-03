@@ -42,6 +42,18 @@ void GLRenderer::setClearColor(const QColor& color)
     glClearColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
 }
 
+void GLRenderer::setVisibilityThreshold(float t)
+{
+//    std::cout << "threshold in GLRenderer::setVisibilityThreshold " << t << std::endl;
+    for(auto obj : _scene)
+    {
+        if(GLPointCloud * pc = dynamic_cast<GLPointCloud*> (obj))
+        {
+            pc->setVisibilityThreshold(t);
+        }
+    }
+}
+
 void GLRenderer::setCameraMatrix(const QMatrix4x4& cameraMat)
 {
     _cameraMat = cameraMat;

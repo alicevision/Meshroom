@@ -16,7 +16,6 @@ WorkerThread::WorkerThread(QObject* parent, const QString& nodeName, Graph::Buil
 
 void WorkerThread::run()
 {
-    qWarning() << "computing" << _nodeName;
     try
     {
         Runner* runner = nullptr;
@@ -28,10 +27,7 @@ void WorkerThread::run()
             case Graph::TRACTOR:
                 runner = new TractorRunner();
                 break;
-            default:
-                break;
         }
-
         auto visited = [&](const std::string& node)
         {
             Q_EMIT nodeStatusChanged(QString::fromStdString(node), "WAITING");
@@ -52,7 +48,6 @@ void WorkerThread::run()
         runner->registerOnComputeBeginCB(computeStarted);
         runner->registerOnComputeEndCB(computeCompleted);
         runner->registerOnErrorCB(computeFailed);
-
         runner->operator()(_graph, _nodeName.toStdString());
         delete runner;
     }

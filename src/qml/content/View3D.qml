@@ -10,6 +10,10 @@ Item {
     DropArea {
         anchors.fill: parent
         hideBackground: true
+        Connections {
+            target: _window
+            onLoadAlembic: glview.loadAlembicScene(Qt.resolvedUrl(file))
+        }
         onDropped: glview.loadAlembicScene(drop.urls[0])
         GLView {
             id: glview

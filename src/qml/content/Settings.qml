@@ -16,7 +16,16 @@ Rectangle {
     clip: true
 
     // signal / slots
-    onModelChanged: stackView.pop()
+    onModelChanged: {
+        stackView.pop();
+        var outputs = root.model.outputs;
+        if(outputs.count > 0) {
+            for(var i=0; i < outputs.count; ++i) {
+                if(outputs.get(i).type == Attribute.OBJECT3D)
+                    loadAlembic(currentScene.graph.evalAttribute(root.model.name, outputs.get(i).name));
+            }
+        }
+    }
 
     // attribute delegates
     Component {
@@ -140,6 +149,7 @@ Rectangle {
                                 case Attribute.COMBOBOX: return comboboxDelegate
                                 case Attribute.CHECKBOX: return checkboxDelegate
                                 case Attribute.IMAGELIST: return imageListDelegate
+                                case Attribute.OBJECT3D: return emptyDelegate
                             }
                         }
                     }

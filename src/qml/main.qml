@@ -29,6 +29,7 @@ ApplicationWindow {
     signal addScene(string url)
     signal selectScene(int id)
     signal addNode()
+    signal loadAlembic(var file)
 
     // main content
     ApplicationConnections {}

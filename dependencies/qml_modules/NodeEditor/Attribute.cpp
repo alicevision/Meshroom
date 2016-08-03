@@ -39,6 +39,7 @@ QJsonObject Attribute::serializeToJSON() const
             case COMBOBOX: return "COMBOBOX";
             case CHECKBOX: return "CHECKBOX";
             case IMAGELIST: return "IMAGELIST";
+            case OBJECT3D: return "OBJECT3D";
             default: return "UNKNOWN";
         }
     };
@@ -74,6 +75,8 @@ void Attribute::deserializeFromJSON(const QJsonObject& obj)
             return CHECKBOX;
         else if(type == "IMAGELIST")
             return IMAGELIST;
+        else if(type == "OBJECT3D")
+            return OBJECT3D;
         return UNKNOWN;
     };
 

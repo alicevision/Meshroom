@@ -42,6 +42,8 @@ public:
     Q_SLOT void startWorker(const QString&, BuildMode mode);
     Q_SLOT void stopWorker();
 
+    Q_SLOT QVariant evalAttribute(const QString& nodeName, const QString& plug);
+
 public:
     Q_SIGNAL void cacheUrlChanged();
     Q_SIGNAL void isRunningChanged();

@@ -31,7 +31,8 @@ public:
         SLIDER,
         COMBOBOX,
         CHECKBOX,
-        IMAGELIST
+        IMAGELIST,
+        OBJECT3D
     };
     Q_ENUMS(AttributeType)
 

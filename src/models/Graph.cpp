@@ -99,8 +99,7 @@ void Graph::addNode(const QJsonObject& descriptor)
             return;
         }
         _graph->addNode(dgNode);
-
-        // add node attributes
+        // set node attributes
         for(auto a : descriptor.value("inputs").toArray())
             setAttribute(name, a.toObject());
     }
@@ -124,9 +123,21 @@ void Graph::addConnection(const QJsonObject& connection)
     auto source = _graph->node(sourceName.toStdString());
     auto target = _graph->node(targetName.toStdString());
     if(!source || !target)
+    {
+        qCritical() << "unable to connect nodes: invalid connection";
         return;
-    if(!_graph->connect(source->output, target->plug(plugName.toStdString())))
+    }
+    auto plug = target->plug(plugName.toStdString());
+    if(!plug)
+    {
+        qCritical() << "unable to connect nodes: plug" << plugName << "not found";
+        return;
+    }
+    if(!_graph->connect(source->output, plug))
+    {
         qCritical() << "unable to connect nodes:" << sourceName << ">" << targetName;
+        return;
+    }
 
     // reflect changes on the qml side
     Q_EMIT connectionAdded(connection);
@@ -197,6 +208,18 @@ void Graph::stopWorker()
     _worker->terminate();
     _worker->wait();
     Q_EMIT isRunningChanged();
+}
+
+QVariant Graph::evalAttribute(const QString& nodeName, const QString& plugName)
+{
+    auto node = _graph->node(nodeName.toStdString());
+    if(!node)
+        return QVariant();
+    auto plug = node->plug(plugName.toStdString());
+    if(!plug)
+        return QVariant();
+    auto attribute = _graph->cache.attribute(plug);
+    return QString::fromStdString(toString(attribute));
 }
 
 QJsonObject Graph::serializeToJSON() const

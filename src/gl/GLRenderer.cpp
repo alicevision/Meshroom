@@ -125,6 +125,7 @@ void GLRenderer::addPointsToSelection(const QRectF& selection)
 void GLRenderer::clearSelection()
 {
   _selection.clear();
+  _selectionPC->setRawPositions(_selection.data(), _selection.size());
 }
 
 

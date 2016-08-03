@@ -77,8 +77,12 @@ private:
     QPoint _mousePos;      // Position of the mousePressed event
     QMatrix4x4 _camMatTmp; // Position of the camera when the mouse is pressed
     QVector3D _lookAtTmp;
-    QRect _selectedAreaTmp;   // The selected region during dragging; for drawing
-    QRect _selectedArea;      // For sync with renderer
+    
+    // Point selection handling.
+    QRect _selectedAreaTmp;
+    QRect _selectedArea;
+    bool _clearSelection;
+    
     enum CameraMode
     {
         Idle,

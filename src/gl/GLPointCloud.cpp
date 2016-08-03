@@ -73,7 +73,6 @@ void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const
   for (const auto& p: _rawPositions)
   if (pointSelected(p, vselection, viewport))
     selectedPositions.push_back(p);
-  qDebug() << "#SELECTED" << selectedPositions.size();
 }
 
 // NOTE: _cameraMatrix is static and is actually the MVP matrix used for rendering

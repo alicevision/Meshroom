@@ -110,9 +110,12 @@ void GLView::sync()
     _renderer->setCameraMatrix(_camera.viewMatrix());
     
     if (!_selectedArea.isEmpty()) {
-      qDebug() << _selectedArea;
       _renderer->addPointsToSelection(_selectedArea);
       _selectedArea = QRect();
+    }
+    else if (_clearSelection) {
+      _renderer->clearSelection();
+      _clearSelection = false;
     }
 
     // Triggers a load when the file name is not null
@@ -152,8 +155,8 @@ void GLView::loadAlembicScene(const QUrl& url)
 
 void GLView::mousePressEvent(QMouseEvent* event)
 {
-    // Dependending on the combination of key and mouse
-    // set the correct mode
+  // Dependending on the combination of key and mouse
+  // set the correct mode
   if(event->modifiers() == Qt::AltModifier)
     handleCameraMousePressEvent(event);
   else if (event->modifiers() == Qt::ControlModifier)
@@ -330,12 +333,15 @@ void GLView::translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx
 void GLView::handleSelectionMousePressEvent(QMouseEvent* event)
 {
   _mousePos = event->pos();
+  _selectedAreaTmp = QRect();
 }
 
 void GLView::handleSelectionMouseReleaseEvent(QMouseEvent* event)
 {
   _selectedArea = _selectedAreaTmp;
   _selectedAreaTmp = QRect();
+  if (_selectedArea.isEmpty())
+    _clearSelection = true;
   refresh();
 }
 

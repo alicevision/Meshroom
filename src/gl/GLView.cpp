@@ -110,6 +110,15 @@ void GLView::sync()
     _renderer->setClearColor(_color);
     _renderer->setCameraMatrix(_camera.viewMatrix());
     
+    // Triggers a load when the file name is not null
+    if(!_alembicSceneUrl.isEmpty())
+    {
+        _renderer->resetScene();
+        _renderer->addAlembicScene(_alembicSceneUrl);
+        _alembicSceneUrl.clear();
+        return;
+    }
+
     if (!_selectedArea.isEmpty()) {
       _renderer->addPointsToSelection(_selectedArea);
       _selectedArea = QRect();
@@ -118,14 +127,7 @@ void GLView::sync()
       _renderer->clearSelection();
       _clearSelection = false;
     }
-
-    // Triggers a load when the file name is not null
-    if(!_alembicSceneUrl.isEmpty())
-    {
-        _renderer->resetScene();
-        _renderer->addAlembicScene(_alembicSceneUrl);
-        _alembicSceneUrl.clear();
-    }
+    _selectedPoints = &_renderer->getSelection();
 }
 
 void GLView::drawgl()

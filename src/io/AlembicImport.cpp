@@ -13,6 +13,17 @@ using namespace AbcG;
 namespace meshroom
 {
 
+template<class ABCSCHEMA>
+inline ICompoundProperty getAbcUserProperties(ABCSCHEMA& schema)
+{
+  ICompoundProperty userProps = schema.getUserProperties();
+  if(userProps && userProps.getNumProperties() != 0)
+    return userProps;
+
+  // Maya always use ArbGeomParams instead of user properties.
+  return schema.getArbGeomParams();
+}
+
 // Top down insertion of 3d objects
 void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
 {
@@ -65,6 +76,32 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
                 defaultColor[i] = 1.f;
             pointCloud->setRawColors(defaultColor, positions->size());
             delete[] defaultColor;
+        }
+        // get the visibility
+        ICompoundProperty userProps = getAbcUserProperties(ms);
+        if(userProps && userProps.getPropertyHeader("mvg_visibilitySize") &&
+                userProps.getPropertyHeader("mvg_visibilityIds"))
+        {
+            IUInt32ArrayProperty propVisibilitySize(userProps, "mvg_visibilitySize");
+            UInt32ArraySamplePtr sampleVisibilitySize;
+            propVisibilitySize.get(sampleVisibilitySize);
+
+            if(positions->size() != sampleVisibilitySize->size())
+            {
+                std::cerr << "ABC Error: number of observations per 3D point should be identical to the number of 2D features." << std::endl;
+                std::cerr << "Number of observations per 3D point size is " << sampleVisibilitySize->size() << std::endl;
+                std::cerr << "Number of 3D points is " << positions->size() << std::endl;
+                throw std::runtime_error("Failed loading the alembic file, visibility size is not the same as the number of points.");
+            }
+            std::vector<std::size_t> vec_visibility(sampleVisibilitySize->size(), 0);
+            for(std::size_t point3d_i = 0; point3d_i < positions->size(); ++point3d_i)
+            {
+                vec_visibility[point3d_i] = (*sampleVisibilitySize)[point3d_i];
+            }
+            
+            assert(vec_visibility.size() == sampleVisibilitySize->size());
+            
+            pointCloud->setRawVisibility(vec_visibility, vec_visibility.size());
         }
         scene.append(pointCloud);
     }

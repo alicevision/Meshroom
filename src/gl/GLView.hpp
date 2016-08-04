@@ -33,6 +33,7 @@ public slots:
     void setColor(const QColor& color);
     void loadAlembicScene(const QUrl& url);
     void definePlane();
+    void clearPlane();
 
 private slots:
     void handleWindowChanged(QQuickWindow* win);
@@ -50,7 +51,6 @@ protected:
     void mouseMoveEvent(QMouseEvent*) override;
     void mouseReleaseEvent(QMouseEvent*) override;
     void wheelEvent(QWheelEvent* event) override;
-    void keyPressEvent(QKeyEvent* event) override;
 
 
 private:

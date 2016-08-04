@@ -363,22 +363,6 @@ void GLView::handleSelectionMouseMoveEvent(QMouseEvent* event)
     refresh();
 }
 
-void GLView::keyPressEvent(QKeyEvent* event)
-{
-  switch (event->key())
-  {
-  case Qt::Key_P:
-    if (event->modifiers() == Qt::NoModifier) {
-      definePlane();
-      _planeDefined = true;
-    }
-    else if (event->modifiers() == Qt::ShiftModifier) {
-      _clearPlane = true;
-    }
-    break;
-  }
-}
-
 /////////////////////////////////////////////////////////////////////////////
 
 void GLView::definePlane()
@@ -414,6 +398,13 @@ void GLView::definePlane()
     const auto& minsv = U.col(2);
     _planeNormal = QVector3D(minsv(0), minsv(1), minsv(2));
   }
+  
+  _planeDefined = true;
+}
+
+void GLView::clearPlane()
+{
+  _clearPlane = true;
 }
 
 } // namespace

@@ -2,7 +2,6 @@
 #include "GLRenderer.hpp"
 #include <QtQuick/QQuickWindow>
 #include <QtMath>
-#include <qt5/QtCore/qnamespace.h>
 #include <QPainter>
 #include <QBrush>
 

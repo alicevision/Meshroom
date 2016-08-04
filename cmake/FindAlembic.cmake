@@ -75,7 +75,7 @@ FIND_PATH(ABC_HDF5_LIBS_PATH NAMES libhdf5.so libhdf5.a
        )
 FIND_LIBRARY(ABC_HDF5 hdf5 PATHS ${ABC_HDF5_LIBS_PATH})
 FIND_LIBRARY(ABC_HDF5_HL hdf5_hl PATHS ${ABC_HDF5_LIBS_PATH})
-SET(ABC_HDF5_LIBS ${ABC_HDF5} ${ABC_HDF5_HL})
+SET(ABC_HDF5_LIBS  ${ABC_HDF5_HL} ${ABC_HDF5})
 
 ################################################################################
 # ALEMBIC include and library dir
@@ -145,12 +145,12 @@ else()
     SET(ABC_CORE_LIBS ${ABC_LIBRARY} 
                       ${ABC_GEOM} 
                       ${ABC} 
+                      ${ABC_COREFACTORY} 
                       ${ABC_COREHDF5} 
+                      ${ABC_COREOGAWA} 
                       ${ABC_COREABSTRACT} 
                       ${ABC_UTIL} 
-                      ${ABC_COREFACTORY} 
                       ${ABC_OGAWA} 
-                      ${ABC_COREOGAWA} 
                       ${ABC_COLLECTION})
 endif()
 

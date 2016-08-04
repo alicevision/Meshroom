@@ -44,7 +44,7 @@ find_package(Alembic)
 if (ALEMBIC_FOUND)
 include_directories(${ABC_INCLUDE_DIR})
 add_definitions(-DWITH_ALEMBIC)
-target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
+target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES} -lz)
 endif (ALEMBIC_FOUND)
 
 QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick)

@@ -1,9 +1,10 @@
-#include "GLView.hpp"
-#include "GLRenderer.hpp"
 #include <QtQuick/QQuickWindow>
 #include <QtMath>
 #include <QPainter>
 #include <QBrush>
+#include <Eigen/Dense>
+#include "GLView.hpp"
+#include "GLRenderer.hpp"
 
 namespace meshroom
 {
@@ -108,18 +109,32 @@ void GLView::sync()
     _renderer->setClearColor(_color);
     _renderer->setCameraMatrix(_camera.viewMatrix());
     
-    if (!_selectedArea.isEmpty()) {
-      qDebug() << _selectedArea;
-      _renderer->addPointsToSelection(_selectedArea);
-      _selectedArea = QRect();
-    }
-
     // Triggers a load when the file name is not null
     if(!_alembicSceneUrl.isEmpty())
     {
         _renderer->resetScene();
         _renderer->addAlembicScene(_alembicSceneUrl);
         _alembicSceneUrl.clear();
+        return;
+    }
+
+    if (!_selectedArea.isEmpty()) {
+      _renderer->addPointsToSelection(_selectedArea);
+      _selectedArea = QRect();
+    }
+    else if (_clearSelection) {
+      _renderer->clearSelection();
+      _clearSelection = false;
+    }
+    _selectedPoints = &_renderer->getSelection();
+    
+    if (_planeDefined) {
+      _renderer->setPlane(_planeNormal, _planeOrigin);
+      _planeDefined = false;
+    }
+    if (_clearPlane) {
+      _renderer->clearPlane();
+      _clearPlane = false;
     }
 }
 
@@ -151,11 +166,11 @@ void GLView::loadAlembicScene(const QUrl& url)
 
 void GLView::mousePressEvent(QMouseEvent* event)
 {
-    // Dependending on the combination of key and mouse
-    // set the correct mode
+  // Dependending on the combination of key and mouse
+  // set the correct mode
   if(event->modifiers() == Qt::AltModifier)
     handleCameraMousePressEvent(event);
-  else if (event->modifiers() == Qt::ControlModifier)
+  else if (event->modifiers() == Qt::ControlModifier && event->buttons() == Qt::LeftButton)
     handleSelectionMousePressEvent(event);
 }
 
@@ -329,12 +344,15 @@ void GLView::translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx
 void GLView::handleSelectionMousePressEvent(QMouseEvent* event)
 {
   _mousePos = event->pos();
+  _selectedAreaTmp = QRect();
 }
 
 void GLView::handleSelectionMouseReleaseEvent(QMouseEvent* event)
 {
   _selectedArea = _selectedAreaTmp;
   _selectedAreaTmp = QRect();
+  if (_selectedArea.isEmpty())
+    _clearSelection = true;
   refresh();
 }
 
@@ -343,6 +361,59 @@ void GLView::handleSelectionMouseMoveEvent(QMouseEvent* event)
   _selectedAreaTmp = QRect(_mousePos, event->pos());
   if (_selectedAreaTmp.isValid())
     refresh();
+}
+
+void GLView::keyPressEvent(QKeyEvent* event)
+{
+  switch (event->key())
+  {
+  case Qt::Key_P:
+    if (event->modifiers() == Qt::NoModifier) {
+      definePlane();
+      _planeDefined = true;
+    }
+    else if (event->modifiers() == Qt::ShiftModifier) {
+      _clearPlane = true;
+    }
+    break;
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void GLView::definePlane()
+{
+  using namespace Eigen;
+  
+  if (_selectedPoints->size() < 3) {
+    qWarning() << "definePlane: must select at least three points";
+    return;
+  }
+  
+  MatrixX3f mat(_selectedPoints->size(), 3);
+  for (size_t i = 0; i < _selectedPoints->size(); ++i) {
+    const auto& p = (*_selectedPoints)[i];
+    mat.row(i) = Vector3f(p[0], p[1], p[2]).transpose();
+  }
+  
+  // See http://math.stackexchange.com/questions/99299/best-fitting-plane-given-a-set-of-points
+  
+  // Translate to origin.
+  auto origin = mat.colwise().sum() / mat.rows();
+  mat.rowwise() -= origin;
+  _planeOrigin = QVector3D(origin(0), origin(1), origin(2));
+  
+  // Calculate SVD. Need only left singular vectors. Singular values are sorted in decreasing order.
+  JacobiSVD<MatrixX3f> svd(mat, ComputeThinU);
+  const auto& U = svd.matrixU();
+  if (U.rows() != 3 || U.cols() != 3) {
+    qWarning() << "SVD failed; invalid result size.";
+    _planeNormal = QVector3D(0, 0, 1);
+  }
+  else {
+    const auto& minsv = U.col(2);
+    _planeNormal = QVector3D(minsv(0), minsv(1), minsv(2));
+  }
 }
 
 } // namespace

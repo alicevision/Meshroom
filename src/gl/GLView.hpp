@@ -32,6 +32,7 @@ public slots:
     const QColor& color() const { return _color; }
     void setColor(const QColor& color);
     void loadAlembicScene(const QUrl& url);
+    void definePlane();
 
 private slots:
     void handleWindowChanged(QQuickWindow* win);
@@ -49,6 +50,8 @@ protected:
     void mouseMoveEvent(QMouseEvent*) override;
     void mouseReleaseEvent(QMouseEvent*) override;
     void wheelEvent(QWheelEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+
 
 private:
     // Function to manipulate cameras. Might move in a different class, eg CameraManipulator
@@ -77,8 +80,18 @@ private:
     QPoint _mousePos;      // Position of the mousePressed event
     QMatrix4x4 _camMatTmp; // Position of the camera when the mouse is pressed
     QVector3D _lookAtTmp;
-    QRect _selectedAreaTmp;   // The selected region during dragging; for drawing
-    QRect _selectedArea;      // For sync with renderer
+    
+    // Point selection handling.
+    QRect _selectedAreaTmp;
+    QRect _selectedArea;
+    bool _clearSelection = false;
+    
+    const std::vector<QVector3D>* _selectedPoints;  // owned by the renderer!
+    QVector3D _planeNormal;
+    QVector3D _planeOrigin;
+    bool _planeDefined = false;
+    bool _clearPlane = false;
+    
     enum CameraMode
     {
         Idle,

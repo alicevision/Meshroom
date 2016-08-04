@@ -69,11 +69,9 @@ void GLPointCloud::setRawColors(const void* pointsBuffer, size_t npoints)
 
 void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const QRectF& selection, const QRectF& viewport)
 {
-  QRectF vselection = selection.intersected(viewport);
   for (const auto& p: _rawPositions)
-  if (pointSelected(p, vselection, viewport))
+  if (pointSelected(p, selection, viewport))
     selectedPositions.push_back(p);
-  qDebug() << "#SELECTED" << selectedPositions.size();
 }
 
 // NOTE: _cameraMatrix is static and is actually the MVP matrix used for rendering

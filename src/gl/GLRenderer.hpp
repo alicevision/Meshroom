@@ -1,11 +1,12 @@
 #pragma once
 
 #include <QOpenGLFunctions_3_2_Core>
-#include "GLScene.hpp"
-#include "GLPointCloud.hpp"
 #include <QObject>
 #include <QColor>
 #include <QVector3D>
+#include "GLScene.hpp"
+#include "GLPointCloud.hpp"
+#include "GLAligner.hpp"
 
 namespace meshroom
 {
@@ -34,6 +35,10 @@ public:
     void addPointsToSelection(const QRectF& selection);
     void clearSelection();
     const std::vector<QVector3D>& getSelection() const { return _selection; }
+    
+    void setPlane(const QVector3D& normal, const QVector3D& origin);
+    void clearPlane();
+    
 
 public slots:
     void draw();
@@ -46,6 +51,7 @@ private:
     QRect _viewport;
     GLScene _scene;                     // Simple scene: a list of drawable objects
     std::unique_ptr<GLPointCloud> _selectionPC;
+    std::unique_ptr<GLAligner> _aligner;
     GLSLBackgroundShader* _background;  // Keep background drawing outside the scene
     std::vector<QVector3D> _selection;  // Selected points
 };

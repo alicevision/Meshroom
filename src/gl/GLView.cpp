@@ -386,7 +386,7 @@ void GLView::definePlane()
   // See http://math.stackexchange.com/questions/99299/best-fitting-plane-given-a-set-of-points
   
   // Translate to origin.
-  auto origin = mat.rowwise().sum() / mat.cols();
+  Vector3f origin = mat.rowwise().sum() / mat.cols();
   mat.colwise() -= origin;
   _planeOrigin = QVector3D(origin(0), origin(1), origin(2));
   
@@ -402,7 +402,6 @@ void GLView::definePlane()
     _planeNormal = QVector3D(minsv(0), minsv(1), minsv(2));
   }
 
-  qDebug() << "normal: " << _planeNormal << "; origin: " << _planeOrigin;
   _planeDefined = true;
   refresh();
 }

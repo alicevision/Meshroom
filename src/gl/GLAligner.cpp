@@ -10,8 +10,6 @@ GLAligner::GLAligner()
     , _planeDefined(false)
     , _distanceDefined(false)
 {
-  _normal.normalize();
-  
   _vao.create();
   _positionBuffer.create();
 
@@ -47,7 +45,7 @@ void GLAligner::draw()
 
 void GLAligner::setPlane(const QVector3D& normal, const QVector3D& origin)
 {
-  _normal = normal;
+  _normal = normal.normalized();
   _origin = origin;
   build(0.5, 4);
   _planeDefined = true;
@@ -85,8 +83,6 @@ void GLAligner::build(float size, int division)
   };
   
   _positions.clear();
-  
-  qDebug() << size << division;
   
   // Plane
   for (int i = -division; i < division; ++i)

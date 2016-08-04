@@ -393,15 +393,9 @@ void GLView::definePlane()
   // Calculate SVD. Need only left singular vectors. Singular values are sorted in decreasing order.
   JacobiSVD<MatrixXf> svd(mat, ComputeThinU);
   const auto& U = svd.matrixU();
-  if (U.rows() != 3 || U.cols() != 3) {
-    qWarning() << "SVD failed; invalid result size:" << U.rows() << U.cols();
-    _planeNormal = QVector3D(0, 0, 1);
-  }
-  else {
-    const auto& minsv = U.col(2);
-    _planeNormal = QVector3D(minsv(0), minsv(1), minsv(2));
-  }
-
+  Q_ASSERT(U.rows() == 3 && U.cols() == 3);
+  const auto& minsv = U.col(2);
+  _planeNormal = QVector3D(minsv(0), minsv(1), minsv(2));
   _planeDefined = true;
   refresh();
 }
@@ -409,7 +403,17 @@ void GLView::definePlane()
 void GLView::clearPlane()
 {
   _clearPlane = true;
+  _planeNormal = QVector3D();
   refresh();
+}
+
+void GLView::flipPlaneNormal()
+{
+  if (!_planeNormal.isNull()) {
+    _planeNormal = -_planeNormal;
+    _planeDefined = true;
+    refresh();
+  }
 }
 
 } // namespace

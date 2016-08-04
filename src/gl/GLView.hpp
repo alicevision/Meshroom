@@ -34,6 +34,7 @@ public slots:
     void loadAlembicScene(const QUrl& url);
     void definePlane();
     void clearPlane();
+    void flipPlaneNormal();
 
 private slots:
     void handleWindowChanged(QQuickWindow* win);

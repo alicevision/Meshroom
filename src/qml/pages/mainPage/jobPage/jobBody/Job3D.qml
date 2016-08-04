@@ -10,13 +10,18 @@ Item {
         id: menu
 
         MenuItem {
-            text: "Define plane"
+            text: "Define ground plane"
             onTriggered: glview.definePlane()
+        }
+        MenuItem {
+            text: "Flip plane normal"
+            onTriggered: glview.flipPlaneNormal()
         }
         MenuItem {
             text: "Clear plane"
             onTriggered: glview.clearPlane()
         }
+        MenuSeparator {}
     }
 
     DropArea {

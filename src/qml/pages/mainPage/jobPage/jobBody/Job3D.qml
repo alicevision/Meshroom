@@ -6,6 +6,18 @@ import DarkStyle 1.0
 import Meshroom.GL 0.1
 
 Item {
+    Menu {
+        id: menu
+
+        MenuItem {
+            text: "Define plane"
+            onTriggered: glview.definePlane()
+        }
+        MenuItem {
+            text: "Clear plane"
+            onTriggered: glview.clearPlane()
+        }
+    }
 
     DropArea {
         anchors.fill: parent
@@ -17,6 +29,7 @@ Item {
             color: "#333"
             property variant job: currentJob
             onJobChanged: glview.loadAlembicScene(Qt.resolvedUrl(currentJob.url+"/"+currentJob.name+".abc"))
+            onOpenPopup: menu.popup()
         }
     }
     Connections {

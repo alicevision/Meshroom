@@ -18,6 +18,7 @@ GLAligner::GLAligner()
   _positionBuffer.bind();
   _program.enableAttributeArray("in_position");
   _program.setAttributeBuffer("in_position", GL_FLOAT, 0, 3);
+  _program.setAttributeValue("color", 1.0f, 1.0f, 0.5f, 1.0f);
   _vao.release();
   _positionBuffer.release();
 }
@@ -26,8 +27,6 @@ void GLAligner::draw()
 {
     _program.bind();
     _vao.bind();
-    
-    _program.setAttributeValue("color", 1.0f, 1.0f, 0.5f, 1.0f);
     
     glLineWidth(3.0);
 
@@ -112,7 +111,7 @@ void GLAligner::build(float size, int division)
   _positions.push_back(QVector3D());
   
   _positionBuffer.bind();
-  _positionBuffer.allocate(_positions.data(), _positions.size()*sizeof(float));
+  _positionBuffer.allocate(_positions.data(), _positions.size()*sizeof(QVector3D));
   _positionBuffer.release();
 }
 

@@ -20,7 +20,7 @@ GLPointCloud::GLPointCloud()
     , _pointVisibility()
     , _npoints(0)
     , _visibilityThreshold(0) 
-    , _maxVisibility(5)
+    , _maxVisibility(0)
 {
     _vertexArrayObject.create();
 }
@@ -98,24 +98,13 @@ void GLPointCloud::setRawColors(const void* pointsBuffer, size_t npoints)
 void GLPointCloud::setRawVisibility(const std::vector<std::size_t>& vec_visibility, 
                                     std::size_t npoints)
 {
-    //@todo copy points into _pointVisibility
+    assert(vec_visibility.size() == npoints);
     
     if(npoints == 0)
     {
         std::cout << "[GLPointCloud::setRawVisibility] no points!" << std::endl;
         return;
     }
-    
-
-    //@todo set _maxVisibility
-
-//    _pointVisibility.resize(npoints, 0);
-//    for(std::size_t i = 0; i < npoints; ++i)
-//    {
-//        _pointVisibility[i] = i % 100;
-//        if(_pointVisibility[i] > _maxVisibility)
-//            _maxVisibility = _pointVisibility[i];
-//    }
     _pointVisibility = vec_visibility;
     
     _maxVisibility = *std::max_element(_pointVisibility.begin(), _pointVisibility.end());
@@ -157,7 +146,7 @@ void GLPointCloud::setVisibilityThreshold(float threshold)
     std::cout << "GLPointCloud::_visibilityThreshold = " << _visibilityThreshold << std::endl;
     //@todo recompute colors accordingly
     
-    if(_visibilityThreshold > 2)
+    if(_visibilityThreshold > 2 && !_pointVisibility.empty())
     {
       std::vector<float> colors(_npoints * 3, 1.0);
       // for each point

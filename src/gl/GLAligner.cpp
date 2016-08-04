@@ -11,12 +11,11 @@ GLAligner::GLAligner()
     , _distanceDefined(false)
 {
   _normal.normalize();
-  build(2, 50);
   
   _vao.create();
-  _vao.bind();
-
   _positionBuffer.create();
+
+  _vao.bind();
   _positionBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
   _positionBuffer.bind();
   _program.enableAttributeArray("in_position");
@@ -30,8 +29,7 @@ void GLAligner::draw()
     _program.bind();
     _vao.bind();
     
-    uploadShaderMatrix();
-    _program.setAttributeValue("color", 1.0f, 1.0f, 0.5f, 0.5f);
+    _program.setAttributeValue("color", 1.0f, 1.0f, 0.5f, 1.0f);
     
     glLineWidth(3.0);
 
@@ -40,9 +38,8 @@ void GLAligner::draw()
       glDrawArrays(GL_LINES, _planeVertexCount, 2);
     }
     
-    if (_distanceDefined) {
+    if (_distanceDefined)
       glDrawArrays(GL_LINES, _planeVertexCount+2, 2);
-    }
     
     _vao.release();
     _program.release();
@@ -52,7 +49,8 @@ void GLAligner::setPlane(const QVector3D& normal, const QVector3D& origin)
 {
   _normal = normal;
   _origin = origin;
-  build(2, 25);
+  build(0.5, 4);
+  _planeDefined = true;
 }
 
 
@@ -74,10 +72,10 @@ void GLAligner::clearDistanceLine()
   _distanceDefined = false;
 }
 
-void GLAligner::build(float size, size_t division)
+void GLAligner::build(float size, int division)
 {
   const QVector3D U = QVector3D(-_normal[2], 0, _normal[0]).normalized();
-  const QVector3D V = QVector3D::crossProduct(U, _normal);
+  const QVector3D V = QVector3D::crossProduct(U, _normal).normalized();
   
   const auto point = [=](int i, int j)
   {
@@ -87,6 +85,8 @@ void GLAligner::build(float size, size_t division)
   };
   
   _positions.clear();
+  
+  qDebug() << size << division;
   
   // Plane
   for (int i = -division; i < division; ++i)
@@ -115,7 +115,9 @@ void GLAligner::build(float size, size_t division)
   _positions.push_back(QVector3D());
   _positions.push_back(QVector3D());
   
+  _positionBuffer.bind();
   _positionBuffer.allocate(_positions.data(), _positions.size()*sizeof(float));
+  _positionBuffer.release();
 }
 
 

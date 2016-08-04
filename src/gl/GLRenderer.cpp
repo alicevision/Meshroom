@@ -76,7 +76,9 @@ void GLRenderer::draw()
     _background->draw();
 
     // Draw selection first, so that it's overdrawn with real point cloud points.
+    _selectionPC->uploadShaderMatrix();
     _selectionPC->draw();
+    
     for(auto& obj : _scene)
     {
         // Sets position and orientation
@@ -86,6 +88,7 @@ void GLRenderer::draw()
     }
     
     // TODO: enable alpha blending
+    _aligner->uploadShaderMatrix();
     _aligner->draw();
 }
 

@@ -23,7 +23,7 @@ public:
   void clearDistanceLine();
 
 private:
-  void build(float size, size_t division);
+  void build(float size, int division);
   
   QVector3D _normal;
   QVector3D _origin;

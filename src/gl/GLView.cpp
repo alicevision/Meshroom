@@ -184,9 +184,12 @@ void GLView::mouseMoveEvent(QMouseEvent* event)
 
 void GLView::mouseReleaseEvent(QMouseEvent* event)
 {
-  _cameraMode = Idle;
-  if (event->modifiers() == Qt::ControlModifier)
+  if (event->modifiers() == Qt::AltModifier)
+    _cameraMode = Idle;
+  else if (event->modifiers() == Qt::ControlModifier)
     handleSelectionMouseReleaseEvent(event);
+  else if (event->modifiers() == Qt::NoModifier && event->button() == Qt::RightButton)
+    emit openPopup();
   refresh();
 }
 

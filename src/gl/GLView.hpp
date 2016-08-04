@@ -42,6 +42,7 @@ private slots:
     void refresh();
 
 signals:
+    void openPopup();
     void colorChanged();
     void showCamerasChanged();
     void showGridChanged();

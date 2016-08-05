@@ -17,8 +17,13 @@ class GLView : public QQuickPaintedItem
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
     Q_PROPERTY(bool showCameras READ showCameras WRITE setShowCameras NOTIFY showCamerasChanged)
     Q_PROPERTY(bool showGrid READ showGrid WRITE setShowGrid NOTIFY showGridChanged)
+    Q_PROPERTY(SelectionMode selectionMode MEMBER _selectionMode NOTIFY selectionModeChanged)
 
 public:
+  
+    enum SelectionMode { LINE, RECTANGLE };
+    Q_ENUM(SelectionMode)
+  
     GLView();
     ~GLView();
 
@@ -47,6 +52,7 @@ signals:
     void colorChanged();
     void showCamerasChanged();
     void showGridChanged();
+    void selectionModeChanged();
 
 protected:
     void mousePressEvent(QMouseEvent*) override;
@@ -77,13 +83,15 @@ private:
     QColor _color;
     Camera _camera;
     QUrl _alembicSceneUrl;
+    
     // FIXME : rename variables to something more meaningful
     // Ideally the following variables should go in a manipulator of some sort
     QPoint _mousePos;      // Position of the mousePressed event
     QMatrix4x4 _camMatTmp; // Position of the camera when the mouse is pressed
     QVector3D _lookAtTmp;
     
-    // Point selection handling.
+    // Selection handling.
+    SelectionMode _selectionMode = RECTANGLE;
     QRect _selectedAreaTmp;
     QRect _selectedArea;
     bool _clearSelection = false;
@@ -91,6 +99,7 @@ private:
     const std::vector<QVector3D>* _selectedPoints;  // owned by the renderer!
     QVector3D _planeNormal;
     QVector3D _planeOrigin;
+    float _scale = 1.0;
     bool _planeDefined = false;
     bool _clearPlane = false;
     

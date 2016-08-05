@@ -9,6 +9,25 @@ Item {
     Menu {
         id: menu
 
+        ExclusiveGroup { id: selectionModeGroup }
+
+        MenuItem {
+            text: "Select plane"
+            exclusiveGroup: selectionModeGroup
+            checkable: true
+            checked: true
+            onCheckedChanged: if (checked) glview.selectionMode = GLView.RECTANGLE
+        }
+
+        MenuItem {
+            text: "Select line"
+            exclusiveGroup: selectionModeGroup
+            checkable: true
+            onCheckedChanged: if (checked) glview.selectionMode = GLView.LINE
+        }
+
+        MenuSeparator {}
+
         MenuItem {
             text: "Define ground plane"
             onTriggered: glview.definePlane()
@@ -21,7 +40,15 @@ Item {
             text: "Clear plane"
             onTriggered: glview.clearPlane()
         }
+
         MenuSeparator {}
+
+        MenuItem {
+            text: "Define scale"
+        }
+        MenuItem {
+            text: "Reset scale"
+        }
     }
 
     DropArea {

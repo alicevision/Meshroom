@@ -1,3 +1,5 @@
+#include <float.h>
+#include <math.h>
 #include "GLPointCloud.hpp"
 
 namespace meshroom
@@ -72,10 +74,31 @@ void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const
     selectedPositions.push_back(p);
 }
 
-// NOTE: _cameraMatrix is static and is actually the MVP matrix used for rendering
-// NOTE: viewport is defined WRT the window, but mouse coordinates have (0,0) at widget
-// origin, which is what we need. Therefore no need to add viewport.x/y when computing
-// the window coordinate.
+// Select two points nearest to p0 and p1 in screen space and nearest to the viewer.
+void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const QPointF& p0, const QPointF& p1, const QRectF& viewport)
+{
+  QVector3D selected[2];
+  float distance[2] = { FLT_MAX, FLT_MAX };
+  
+  const auto update = [&](const QVector3D& p, const QPointF& target, int i) {
+    float d = screenDistance(p, target, viewport);
+    if (d < distance[i]) {
+      distance[i] = d;
+      selected[i] = p;
+    }
+  };
+  
+  for (const auto& p: _rawPositions) {
+    update(p, p0, 0);
+    update(p, p1, 1);
+  }
+  
+  if (selected[0] != selected[1]) {
+    selectedPositions.push_back(selected[0]);
+    selectedPositions.push_back(selected[1]);
+  }
+}
+
 bool GLPointCloud::pointSelected(const QVector3D& point, const QRectF& selection, const QRectF& viewport)
 {
   // Must cull z < znear; not visible therefore not part of the selection.
@@ -83,6 +106,19 @@ bool GLPointCloud::pointSelected(const QVector3D& point, const QRectF& selection
   return selection.contains(QPointF(wpoint.x(), wpoint.y())) && wpoint.z() >= 0.1f; // XXX: hard-coded znear; see GLRenderer::updateWorldMatrix
 }
 
+// Not quite correct name as it also accounts for z and chooses the one nearest to the viewer.
+float GLPointCloud::screenDistance(const QVector3D& point, const QPointF& target, const QRectF& viewport)
+{
+  auto wpoint = toWindow(point, viewport);
+  if (wpoint.z() < 0.1)                 // XXX: hard-coded znear; force large distance
+    wpoint.setZ(sqrt(FLT_MAX/64));      // avoid overflow during distance computation
+  return QVector3D(target.x(), target.y(), 0).distanceToPoint(wpoint);
+}
+
+// NOTE: _cameraMatrix is static and is actually the MVP matrix used for rendering
+// NOTE: viewport is defined WRT the window, but mouse coordinates have (0,0) at widget
+// origin, which is what we need. Therefore no need to add viewport.x/y when computing
+// the window coordinate.
 // Return: x,y are window coordinates, z is in NDC
 QVector3D GLPointCloud::toWindow(const QVector3D& point, const QRectF& viewport)
 {

@@ -39,6 +39,9 @@ public:
     void setPlane(const QVector3D& normal, const QVector3D& origin);
     void clearPlane();
     
+    void setDistanceLine(const QPointF& p0, const QPointF& p1);
+    void clearDistanceLine();
+    
 
 public slots:
     void draw();

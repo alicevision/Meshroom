@@ -1,6 +1,4 @@
 #include "GLPointCloud.hpp"
-#include "io/AlembicImport.hpp"
-#include <iostream>
 
 namespace meshroom
 {

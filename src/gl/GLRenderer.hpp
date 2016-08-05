@@ -22,8 +22,13 @@ public:
 
 public:
     void setViewportSize(const QSize& size);
-    void setCameraMatrix(const QMatrix4x4& cameraMat);
     void setClearColor(const QColor& color);
+    void setCameraMatrix(const QMatrix4x4& cameraMat);
+    void setPointSize(const float& size);
+    void setGridVisibility(const bool& visible);
+    void setGizmoVisibility(const bool& visible);
+    void setCameraVisibility(const bool& visible);
+    void setCameraScale(const float& scale);
     void addAlembicScene(const QUrl& url);
     void resetScene();
 

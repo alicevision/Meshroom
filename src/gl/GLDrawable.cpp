@@ -35,7 +35,7 @@ void GLDrawable::deleteShaders()
 
 void GLDrawable::uploadShaderMatrix()
 {
-    QMatrix4x4 mat(_cameraMatrix * _modelMatrix);
+    QMatrix4x4 mat(_cameraMatrix * _modelMatrix * _transformMatrix);
     // FIXME : subclass QGLProgram so we just have to update the current program
     // instead of updating all programs
     if(_colorUniform)

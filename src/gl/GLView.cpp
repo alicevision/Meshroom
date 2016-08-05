@@ -25,12 +25,63 @@ GLView::~GLView()
         delete _renderer;
 }
 
-void GLView::setColor(const QColor& color)
+void GLView::setPointSize(const float& size)
 {
-    if(color == _color)
+    if(size == _pointSize)
         return;
-    _color = color;
-    Q_EMIT colorChanged();
+    _pointSize = size;
+    Q_EMIT pointSizeChanged();
+    _syncPointSize = true;
+    refresh();
+}
+
+void GLView::setAlembicScene(const QUrl& url)
+{
+    if(url == _alembicScene)
+        return;
+    _alembicScene = url;
+    Q_EMIT alembicSceneChanged();
+    _syncAlembicScene = true;
+    refresh();
+}
+
+void GLView::setGridVisibility(const bool& visible)
+{
+    if(visible == _gridVisibility)
+        return;
+    _gridVisibility = visible;
+    Q_EMIT gridVisibilityChanged();
+    _syncGridVisibility = true;
+    refresh();
+}
+
+void GLView::setGizmoVisibility(const bool& visible)
+{
+    if(visible == _gizmoVisibility)
+        return;
+    _gizmoVisibility = visible;
+    Q_EMIT gizmoVisibilityChanged();
+    _syncGizmoVisibility = true;
+    refresh();
+}
+
+void GLView::setCameraVisibility(const bool& visible)
+{
+    if(visible == _cameraVisibility)
+        return;
+    _cameraVisibility = visible;
+    Q_EMIT cameraVisibilityChanged();
+    _syncCameraVisibility = true;
+    refresh();
+}
+
+void GLView::setCameraScale(const float& scale)
+{
+    if(scale == _cameraScale)
+        return;
+    _cameraScale = scale;
+    Q_EMIT cameraScaleChanged();
+    _syncCameraScale = true;
     refresh();
 }
 
@@ -55,17 +106,43 @@ void GLView::sync()
     _viewport.setY(qRound(ratio * (window()->height() - (pos.y() + height()))));
     _viewport.setWidth(qRound(ratio * width()));
     _viewport.setHeight(qRound(ratio * height()));
-
     _renderer->setViewportSize(_viewport.size());
-    _renderer->setClearColor(_color);
-    _renderer->setCameraMatrix(_camera.viewMatrix());
 
-    // Triggers a load when the file name is not null
-    if(!_alembicSceneUrl.isEmpty())
+    if(_syncCameraMatrix)
+    {
+        _renderer->setCameraMatrix(_camera.viewMatrix());
+        _syncCameraMatrix = false;
+    }
+    if(_syncPointSize)
+    {
+        _renderer->setPointSize(_pointSize);
+        _syncPointSize = false;
+    }
+    if(_syncAlembicScene)
     {
         _renderer->resetScene();
-        _renderer->addAlembicScene(_alembicSceneUrl);
-        _alembicSceneUrl.clear();
+        _renderer->addAlembicScene(_alembicScene);
+        _syncAlembicScene = false;
+    }
+    if(_syncGridVisibility)
+    {
+        _renderer->setGridVisibility(_gridVisibility);
+        _syncGridVisibility = false;
+    }
+    if(_syncGizmoVisibility)
+    {
+        _renderer->setGizmoVisibility(_gizmoVisibility);
+        _syncGizmoVisibility = false;
+    }
+    if(_syncCameraVisibility)
+    {
+        _renderer->setCameraVisibility(_cameraVisibility);
+        _syncCameraVisibility = false;
+    }
+    if(_syncCameraScale)
+    {
+        _renderer->setCameraScale(_cameraScale);
+        _syncCameraScale = false;
     }
 }
 
@@ -85,14 +162,6 @@ void GLView::refresh()
 {
     if(window())
         window()->update();
-}
-
-void GLView::loadAlembicScene(const QUrl& url)
-{
-    // Stores the filename, the load is done later on
-    // in the sync function, inside a GL context
-    _alembicSceneUrl = url;
-    refresh();
 }
 
 void GLView::mousePressEvent(QMouseEvent* event)
@@ -188,13 +257,12 @@ void GLView::wheelEvent(QWheelEvent* event)
 
     float radius = _camera.lookAtRadius();
     translateLineOfSightCamera(_camMatTmp, radius, -delta, 0);
-
     _camera.setLookAtRadius(radius);
     _camera.setViewMatrix(_camMatTmp);
-
     _lookAtTmp = _camera.lookAt();
     _mousePos = event->pos();
 
+    _syncCameraMatrix = true;
     refresh();
 }
 
@@ -203,7 +271,7 @@ void GLView::mouseMoveEvent(QMouseEvent* event)
     switch(_cameraMode)
     {
         case Idle:
-            break;
+            return;
         case Rotate:
         {
             const float dx = _mousePos.x() - event->pos().x(); // TODO divide by canvas size
@@ -220,7 +288,6 @@ void GLView::mouseMoveEvent(QMouseEvent* event)
                 _camera.setViewMatrix(_camMatTmp);
                 _mousePos = event->pos();
             }
-            refresh();
         }
         break;
         case Translate:
@@ -231,7 +298,6 @@ void GLView::mouseMoveEvent(QMouseEvent* event)
             _camera.setViewMatrix(_camMatTmp);
             _lookAtTmp = _camera.lookAt();
             _mousePos = event->pos();
-            refresh();
         }
         break;
         case Zoom:
@@ -244,12 +310,14 @@ void GLView::mouseMoveEvent(QMouseEvent* event)
             _camera.setViewMatrix(_camMatTmp);
             _lookAtTmp = _camera.lookAt();
             _mousePos = event->pos();
-            refresh();
         }
         break;
         default:
             break;
     }
+
+    _syncCameraMatrix = true;
+    refresh();
 }
 
 void GLView::mouseReleaseEvent(QMouseEvent* event)

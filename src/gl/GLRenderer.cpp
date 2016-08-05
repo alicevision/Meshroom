@@ -2,6 +2,7 @@
 #include "GLGizmo.hpp"
 #include "GLGrid.hpp"
 #include "GLPointCloud.hpp"
+#include "GLCamera.hpp"
 #include "GLView.hpp"
 #include "io/AlembicImport.hpp"
 #include <QFileInfo>
@@ -48,6 +49,51 @@ void GLRenderer::setCameraMatrix(const QMatrix4x4& cameraMat)
     updateWorldMatrix();
 }
 
+void GLRenderer::setPointSize(const float& size)
+{
+    glPointSize(size);
+}
+
+void GLRenderer::setGridVisibility(const bool& visible)
+{
+    for(auto obj : _scene)
+    {
+        if(dynamic_cast<GLGrid*>(obj) != nullptr)
+            obj->setVisibility(visible);
+    }
+}
+
+void GLRenderer::setGizmoVisibility(const bool& visible)
+{
+    for(auto obj : _scene)
+    {
+        if(dynamic_cast<GLGizmo*>(obj) != nullptr)
+        obj->setVisibility(visible);
+    }
+}
+
+void GLRenderer::setCameraVisibility(const bool& visible)
+{
+    for(auto obj : _scene)
+    {
+        if(dynamic_cast<GLCamera*>(obj) != nullptr)
+            obj->setVisibility(visible);
+    }
+}
+
+void GLRenderer::setCameraScale(const float& scale)
+{
+    for(auto obj : _scene)
+    {
+        if(dynamic_cast<GLCamera*>(obj) != nullptr)
+        {
+            QMatrix4x4 transformMat;
+            transformMat.scale(scale);
+            obj->setTransformMatrix(transformMat);
+        }
+    }
+}
+
 void GLRenderer::draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -56,7 +102,8 @@ void GLRenderer::draw()
     {
         // Sets position and orientation
         obj->uploadShaderMatrix();
-        obj->draw();
+        if(obj->visible())
+            obj->draw();
     }
 }
 

@@ -45,9 +45,6 @@ void AlembicImport::visitObject(IObject iObj, GLScene& scene, M44d mat)
                     if(interp == "rgb")
                     {
                         Alembic::Util::uint8_t extent = dtype.getExtent();
-                        std::cout << "Loading " << propName << " " << interp << " " << extent
-                                  << std::endl;
-
                         Alembic::AbcCoreAbstract::ArraySamplePtr samp;
                         prop.get(samp);
 

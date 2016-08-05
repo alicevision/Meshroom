@@ -21,6 +21,9 @@ public:
     static void deleteShaders();
     void uploadShaderMatrix();
     void setModelMatrix(const QMatrix4x4& mat) { _modelMatrix = mat; }
+    void setTransformMatrix(const QMatrix4x4& mat) { _transformMatrix = mat; }
+    void setVisibility(const bool& visibility) { _visible = visibility; }
+    bool visible() const { return _visible; }
 
 protected:
     QOpenGLShaderProgram& _program;
@@ -30,6 +33,8 @@ protected:
     static QMatrix4x4 _cameraMatrix; // Camera matrix is here in static because it is used in all
                                      // static shaders above
     QMatrix4x4 _modelMatrix;         // Position/orientation matrix of the model
+    QMatrix4x4 _transformMatrix;     // Ex: Display scale
+    bool _visible = true;
 };
 
 } // namespace

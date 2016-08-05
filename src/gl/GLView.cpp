@@ -94,9 +94,10 @@ void GLView::paint(QPainter* painter)
     if (!selectedArea.isEmpty())
       painter->drawRect(selectedArea);
   }
-  else {
+  else if (!_selectedP0.isNull() && !_selectedP1.isNull()) {
     painter->drawLine(_selectedP0, _selectedP1);
   }
+  
 }
 
 void GLView::setColor(const QColor& color)
@@ -151,9 +152,7 @@ void GLView::sync()
         _renderer->addPointsToSelection(_selectedArea);
       }
       else {
-        _selectedP0 = _selectedArea.topLeft();
-        _selectedP1 = _selectedArea.bottomRight();
-        _renderer->addPointsToSelection(_selectedP0, _selectedP1);
+        _renderer->addPointsToSelection(_selectedArea.topLeft(), _selectedArea.bottomRight());
       }
       _selectedArea = QRect();
       _selectedPoints = &_renderer->getSelection();
@@ -398,17 +397,15 @@ void GLView::translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx
 
 void GLView::handleSelectionMousePressEvent(QMouseEvent* event)
 {
-  _mousePos = event->pos();
-  _selectedArea = QRect();
-  _selectedP0 = _selectedP1 = _mousePos;
+  _mousePos = _selectedP0 = _selectedP1 = event->pos();
 }
 
 void GLView::handleSelectionMouseReleaseEvent(QMouseEvent* event)
 {
+  if (_selectedP0 == _selectedP1)
+    _clearSelection = true;
   _selectedArea = getSelectionRect();
   _selectedP0 = _selectedP1 = QPoint();
-  if (_selectedArea.isEmpty())
-    _clearSelection = true;
   refresh();
 }
 
@@ -473,12 +470,15 @@ void GLView::defineScale(float scale)
   _scale = scale;
   _scaleDefined = true;
   refresh();
+  if (scale != _scale)
+    emit scaleChanged();
 }
 
 void GLView::resetScale()
 {
   _scale = 1.0f;
   _clearScale = true;
+  emit scaleChanged();
   refresh();
 }
 

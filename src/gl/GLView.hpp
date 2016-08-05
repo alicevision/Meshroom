@@ -18,6 +18,7 @@ class GLView : public QQuickPaintedItem
     Q_PROPERTY(bool showCameras READ showCameras WRITE setShowCameras NOTIFY showCamerasChanged)
     Q_PROPERTY(bool showGrid READ showGrid WRITE setShowGrid NOTIFY showGridChanged)
     Q_PROPERTY(SelectionMode selectionMode MEMBER _selectionMode NOTIFY selectionModeChanged)
+    Q_PROPERTY(float scale READ getScale WRITE defineScale NOTIFY scaleChanged)
 
 public:
   
@@ -32,9 +33,10 @@ public:
     bool showGrid() const;
     void setShowGrid(bool v);
     void paint(QPainter*) override;
+    float getScale() const { return _scale; }
+    const QColor& color() const { return _color; }
 
 public slots:
-    const QColor& color() const { return _color; }
     void setColor(const QColor& color);
     void loadAlembicScene(const QUrl& url);
     void definePlane();
@@ -55,6 +57,7 @@ signals:
     void showCamerasChanged();
     void showGridChanged();
     void selectionModeChanged();
+    void scaleChanged();
 
 protected:
     void mousePressEvent(QMouseEvent*) override;
@@ -103,6 +106,7 @@ private:
 
     QVector3D _planeNormal;
     QVector3D _planeOrigin;
+    QVector3D _distanceLine[2];
     float _scale = 1.0;
     bool _planeDefined = false;
     bool _clearPlane = false;

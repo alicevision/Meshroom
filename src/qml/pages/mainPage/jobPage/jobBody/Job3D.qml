@@ -1,6 +1,7 @@
 import QtQuick 2.5
 import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.2
+import QtQuick.Dialogs 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle 1.0
 import Meshroom.GL 0.1
@@ -46,13 +47,30 @@ Item {
 
         MenuItem {
             text: "Define scale"
-            enabled: glview.selectionMode == GLView.LINE
-            onTriggered: glview.defineScale(0.5)
+            onTriggered: dialog.open()
         }
         MenuItem {
             text: "Reset scale"
-            enabled: glview.selectionMode == GLView.LINE
             onTriggered: glview.resetScale()
+        }
+    }
+
+    Dialog {
+        id: dialog
+        Row {
+            anchors.fill: parent
+            spacing: 2
+            Label { text: "Scale factor" }
+            TextInput {
+                id: scaleFactor
+                text: "1.0"
+            }
+        }
+        onVisibleChanged: if (visible) scaleFactor.text = glview.scale
+        onAccepted: {
+            var scale = parseFloat(scaleFactor.text);
+            if (!isNaN(scale)) glview.defineScale(scale);
+            else console.log("Scale must be a number");
         }
     }
 

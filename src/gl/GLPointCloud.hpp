@@ -23,6 +23,8 @@ public:
     void selectPoints(std::vector<QVector3D>& selectedPositions, const QPointF& p0, const QPointF& p1, const QRectF& viewport);
 
 private:
+    static const float INF_COORD;
+    
     const bool _isSelection;
     QOpenGLVertexArrayObject _vertexArrayObject;
     QOpenGLBuffer _pointPositions;

@@ -5,6 +5,9 @@
 namespace meshroom
 {
 
+// Selected to avoid overflow during distance computations.
+const float GLPointCloud::INF_COORD = sqrt(FLT_MAX/64);
+
 // When isSelection is true, we're drawing the points as selection: larger size
 GLPointCloud::GLPointCloud(bool isSelection)
     : GLDrawable(*_colorArray)
@@ -75,27 +78,33 @@ void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const
 }
 
 // Select two points nearest to p0 and p1 in screen space and nearest to the viewer.
+// This will update existing data in selectedPositions.
 void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const QPointF& p0, const QPointF& p1, const QRectF& viewport)
 {
-  QVector3D selected[2];
-  float distance[2] = { FLT_MAX, FLT_MAX };
+  float distance[2];
   
-  const auto update = [&](const QVector3D& p, const QPointF& target, int i) {
+  const auto update = [&](int i, const QVector3D& p, const QPointF& target) {
     float d = screenDistance(p, target, viewport);
     if (d < distance[i]) {
       distance[i] = d;
-      selected[i] = p;
+      selectedPositions[i] = p;
     }
   };
   
-  for (const auto& p: _rawPositions) {
-    update(p, p0, 0);
-    update(p, p1, 1);
+  if (selectedPositions.size() != 2) {
+    selectedPositions.resize(2);
+    selectedPositions[0] = QVector3D(INF_COORD, INF_COORD, INF_COORD);
+    selectedPositions[1] = selectedPositions[0];
+    distance[0] = distance[1] = INF_COORD;
+  }
+  else {
+    distance[0] = screenDistance(selectedPositions[0], p0, viewport);
+    distance[1] = screenDistance(selectedPositions[1], p1, viewport);
   }
   
-  if (selected[0] != selected[1]) {
-    selectedPositions.push_back(selected[0]);
-    selectedPositions.push_back(selected[1]);
+  for (const auto& p: _rawPositions) {
+    update(0, p, p0);
+    update(1, p, p1);
   }
 }
 
@@ -111,7 +120,7 @@ float GLPointCloud::screenDistance(const QVector3D& point, const QPointF& target
 {
   auto wpoint = toWindow(point, viewport);
   if (wpoint.z() < 0.1)                 // XXX: hard-coded znear; force large distance
-    wpoint.setZ(sqrt(FLT_MAX/64));      // avoid overflow during distance computation
+    wpoint.setZ(INF_COORD);
   return QVector3D(target.x(), target.y(), 0).distanceToPoint(wpoint);
 }
 

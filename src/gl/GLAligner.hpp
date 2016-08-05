@@ -32,9 +32,6 @@ private:
   QOpenGLVertexArrayObject _vao;
   QOpenGLBuffer _positionBuffer;
   std::vector<QVector3D> _planePositions, _linePositions;
-  
-  bool _planeDefined;
-  bool _distanceDefined;
 };
 
 } // namespace

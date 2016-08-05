@@ -7,8 +7,6 @@ namespace meshroom
 GLAligner::GLAligner()
     : GLDrawable(*_colorUniform)
     , _positionBuffer(QOpenGLBuffer::VertexBuffer)
-    , _planeDefined(false)
-    , _distanceDefined(false)
 {
   _vao.create();
   _positionBuffer.create();
@@ -30,12 +28,12 @@ void GLAligner::draw()
     
     glLineWidth(3.0);
 
-    if (_planeDefined) {
+    if (!_planePositions.empty()) {
       glDrawArrays(GL_TRIANGLES, 0, _planePositions.size()-2);
       glDrawArrays(GL_LINES, _planePositions.size()-2, 2);
     }
     
-    if (_distanceDefined)
+    if (!_linePositions.empty())
       glDrawArrays(GL_LINES, 0, _linePositions.size());
     
     _vao.release();
@@ -59,7 +57,6 @@ void GLAligner::setPlane(const QVector3D& normal, const QVector3D& origin)
   _origin = origin;
   buildPlane(0.5, 4);
   setBuffer();
-  _planeDefined = true;
 }
 
 
@@ -69,17 +66,16 @@ void GLAligner::setDistanceLine(const QVector3D& p0, const QVector3D& p1)
   _linePositions.push_back(p0);
   _linePositions.push_back(p1);
   setBuffer();
-  _distanceDefined = true;
 }
 
 void GLAligner::clearPlane()
 {
-  _planeDefined = false;
+  _planePositions.clear();
 }
 
 void GLAligner::clearDistanceLine()
 {
-  _distanceDefined = false;
+  _linePositions.clear();
 }
 
 void GLAligner::buildPlane(float size, int division)

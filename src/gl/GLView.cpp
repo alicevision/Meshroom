@@ -147,10 +147,14 @@ void GLView::sync()
     
     // Selection.
     if (!_selectedArea.isEmpty()) {
-      if (_selectionMode == RECTANGLE)
+      if (_selectionMode == RECTANGLE) {
         _renderer->addPointsToSelection(_selectedArea);
-      else
-        _renderer->setDistanceLine(_selectedArea.topLeft(), _selectedArea.bottomRight());
+      }
+      else {
+        _selectedP0 = _selectedArea.topLeft();
+        _selectedP1 = _selectedArea.bottomRight();
+        _renderer->addPointsToSelection(_selectedP0, _selectedP1);
+      }
       _selectedArea = QRect();
       _selectedPoints = &_renderer->getSelection();
       return;
@@ -175,7 +179,7 @@ void GLView::sync()
     
     // Scale.
     if (_scaleDefined) {
-      _renderer->setDistanceLine(_selectedArea.topLeft(), _selectedArea.bottomRight());
+      _renderer->setDistanceLine(_selectedP0, _selectedP1);
       _scaleDefined = false;
       return;
     }

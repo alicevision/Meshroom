@@ -33,6 +33,7 @@ public:
     void setShowGrid(bool v);
     
     void addPointsToSelection(const QRectF& selection);
+    void addPointsToSelection(const QPointF& p0, const QPointF& p1);
     void clearSelection();
     const std::vector<QVector3D>& getSelection() const { return _selection; }
     

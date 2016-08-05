@@ -23,15 +23,15 @@ public:
   void clearDistanceLine();
 
 private:
-  void build(float size, int division);
+  void buildPlane(float size, int division);
+  void setBuffer();
   
   QVector3D _normal;
   QVector3D _origin;
   
   QOpenGLVertexArrayObject _vao;
   QOpenGLBuffer _positionBuffer;
-  std::vector<QVector3D> _positions;
-  size_t _planeVertexCount;
+  std::vector<QVector3D> _planePositions, _linePositions;
   
   bool _planeDefined;
   bool _distanceDefined;

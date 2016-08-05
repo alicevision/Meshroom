@@ -131,6 +131,18 @@ void GLRenderer::addPointsToSelection(const QRectF& selection)
   _selectionPC->setRawPositions(_selection.data(), _selection.size());
 }
 
+void GLRenderer::addPointsToSelection(const QPointF& p0, const QPointF& p1)
+{
+  std::vector<QVector3D> selection;
+  for (auto& obj: _scene)
+  if (auto p = dynamic_cast<GLPointCloud*>(obj.get()))
+    p->selectPoints(selection, p0, p1, _viewport);
+  
+  _selection.push_back(selection[0]);
+  _selection.push_back(selection[1]);
+  _selectionPC->setRawPositions(_selection.data(), _selection.size());
+}
+
 void GLRenderer::clearSelection()
 {
   _selection.clear();
@@ -149,13 +161,10 @@ void GLRenderer::clearPlane()
 
 void GLRenderer::setDistanceLine(const QPointF& p0, const QPointF& p1)
 {
-  _selection.clear();
-  for (auto& obj: _scene)
-  if (auto p = dynamic_cast<GLPointCloud*>(obj.get()))
-    p->selectPoints(_selection, p0, p1, _viewport);
-  
-  _selectionPC->setRawPositions(_selection.data(), _selection.size());
-  _aligner->setDistanceLine(_selection[0], _selection[1]);
+  if (_selection.size() == 2) {
+    _selectionPC->setRawPositions(_selection.data(), _selection.size());
+    _aligner->setDistanceLine(_selection[0], _selection[1]);
+  }
 }
 
 void GLRenderer::clearDistanceLine()

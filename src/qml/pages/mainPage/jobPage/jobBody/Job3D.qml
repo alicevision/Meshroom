@@ -20,34 +20,34 @@ Item {
         }
 
         MenuItem {
-            text: "Define ground plane"
-            enabled: glview.selectionMode == GLView.RECTANGLE
-            onTriggered: glview.definePlane()
-        }
-        MenuItem {
-            text: "Flip plane normal"
-            enabled: glview.selectionMode == GLView.RECTANGLE
-            onTriggered: glview.flipPlaneNormal()
-        }
-        MenuItem {
-            text: "Clear plane"
-            enabled: glview.selectionMode == GLView.RECTANGLE
-            onTriggered: glview.clearPlane()
-        }
-
-        MenuSeparator {}
-
-        MenuItem {
             text: "Select line"
             exclusiveGroup: selectionModeGroup
             checkable: true
             onCheckedChanged: if (checked) glview.selectionMode = GLView.LINE
         }
 
+        MenuSeparator {}
+
+        MenuItem {
+            text: "Define ground plane"
+            onTriggered: glview.definePlane()
+        }
+        MenuItem {
+            text: "Flip plane normal"
+            onTriggered: glview.flipPlaneNormal()
+        }
+        MenuItem {
+            text: "Clear plane"
+            onTriggered: glview.clearPlane()
+        }
+
+        MenuSeparator {}
+
+
         MenuItem {
             text: "Define scale"
             enabled: glview.selectionMode == GLView.LINE
-            onTriggered: glView.defineScale(0.5)
+            onTriggered: glview.defineScale(0.5)
         }
         MenuItem {
             text: "Reset scale"

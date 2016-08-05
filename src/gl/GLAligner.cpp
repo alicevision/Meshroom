@@ -31,31 +31,44 @@ void GLAligner::draw()
     glLineWidth(3.0);
 
     if (_planeDefined) {
-      glDrawArrays(GL_TRIANGLES, 0, _planeVertexCount);
-      glDrawArrays(GL_LINES, _planeVertexCount, 2);
+      glDrawArrays(GL_TRIANGLES, 0, _planePositions.size()-2);
+      glDrawArrays(GL_LINES, _planePositions.size()-2, 2);
     }
     
     if (_distanceDefined)
-      glDrawArrays(GL_LINES, _planeVertexCount+2, 2);
+      glDrawArrays(GL_LINES, 0, _linePositions.size());
     
     _vao.release();
     _program.release();
+}
+
+void GLAligner::setBuffer()
+{
+  _positionBuffer.bind();
+  _positionBuffer.allocate((_planePositions.size()+_linePositions.size())*sizeof(QVector3D));
+  if (!_planePositions.empty())
+    _positionBuffer.write(0, _planePositions.data(), _planePositions.size()*sizeof(QVector3D));
+  if (!_linePositions.empty())
+    _positionBuffer.write(_planePositions.size()*sizeof(QVector3D), _linePositions.data(), _linePositions.size()*sizeof(QVector3D));
+  _positionBuffer.release();
 }
 
 void GLAligner::setPlane(const QVector3D& normal, const QVector3D& origin)
 {
   _normal = normal.normalized();
   _origin = origin;
-  build(0.5, 4);
+  buildPlane(0.5, 4);
+  setBuffer();
   _planeDefined = true;
 }
 
 
 void GLAligner::setDistanceLine(const QVector3D& p0, const QVector3D& p1)
 {
-  _positions[_planeVertexCount+2] = p0;
-  _positions[_planeVertexCount+3] = p1;
-  _positionBuffer.allocate(_positions.data(), _positions.size()*sizeof(float));
+  _linePositions.clear();
+  _linePositions.push_back(p0);
+  _linePositions.push_back(p1);
+  setBuffer();
   _distanceDefined = true;
 }
 
@@ -69,7 +82,7 @@ void GLAligner::clearDistanceLine()
   _distanceDefined = false;
 }
 
-void GLAligner::build(float size, int division)
+void GLAligner::buildPlane(float size, int division)
 {
   const QVector3D U = QVector3D(-_normal[2], 0, _normal[0]).normalized();
   const QVector3D V = QVector3D::crossProduct(U, _normal).normalized();
@@ -81,7 +94,7 @@ void GLAligner::build(float size, int division)
     return _origin + u*U + v*V;
   };
   
-  _positions.clear();
+  _planePositions.clear();
   
   // Plane
   for (int i = -division; i < division; ++i)
@@ -92,27 +105,18 @@ void GLAligner::build(float size, int division)
     auto p2 = point(i+1, j+1);
     auto p3 = point(i, j+1);
     
-    _positions.push_back(p0);
-    _positions.push_back(p1);
-    _positions.push_back(p2);
+    _planePositions.push_back(p0);
+    _planePositions.push_back(p1);
+    _planePositions.push_back(p2);
 
-    _positions.push_back(p0);
-    _positions.push_back(p2);
-    _positions.push_back(p3);
+    _planePositions.push_back(p0);
+    _planePositions.push_back(p2);
+    _planePositions.push_back(p3);
   }
-  _planeVertexCount = _positions.size();
   
   // Normal; length 0.25
-  _positions.push_back(_origin);
-  _positions.push_back(_origin + _normal*0.25f);
-  
-  // Distance line
-  _positions.push_back(QVector3D());
-  _positions.push_back(QVector3D());
-  
-  _positionBuffer.bind();
-  _positionBuffer.allocate(_positions.data(), _positions.size()*sizeof(QVector3D));
-  _positionBuffer.release();
+  _planePositions.push_back(_origin);
+  _planePositions.push_back(_origin + _normal*0.25f);
 }
 
 

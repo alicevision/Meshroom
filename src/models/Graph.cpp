@@ -33,7 +33,11 @@ void Graph::setObject(QObject* obj)
     QObject::connect(this, SIGNAL(connectionAdded(const QJsonObject&)), _qmlObject,
                      SLOT(addConnection(const QJsonObject&)));
     QObject::connect(this, SIGNAL(nodeStatusChanged(const QString&, const QString&)), _qmlObject,
-                     SLOT(updateNodeStatus(const QString&, const QString&)));
+                     SLOT(setNodeStatus(const QString&, const QString&)));
+    QObject::connect(this, SIGNAL(cleared()), _qmlObject, SLOT(clear()));
+    QObject::connect(
+        this, SIGNAL(nodeAttributeChanged(const QString&, const QString&, const QVariant&)),
+        _qmlObject, SLOT(setNodeAttribute(const QString&, const QString&, const QVariant&)));
 }
 
 const bool Graph::isRunning() const
@@ -59,7 +63,7 @@ void Graph::setCacheUrl(const QUrl& cacheUrl)
 
 void Graph::clear()
 {
-    // TODO clear _graph
+    _graph->clear();
     Q_EMIT cleared();
 }
 
@@ -89,23 +93,21 @@ void Graph::addNode(const QJsonObject& descriptor)
     for(auto k : descriptorAsMap.keys())
         metadata.insert(k, QJsonValue::fromVariant(descriptorAsMap.value(k)));
 
-    try
+    // add the node
+    auto dgNode = application->node(type, name);
+    if(!dgNode)
     {
-        // add the node
-        auto dgNode = application->node(type, name);
-        if(!dgNode)
-        {
-            qCritical() << "unable to add a" << type << "node to the current graph";
-            return;
-        }
-        _graph->addNode(dgNode);
-        // set node attributes
-        for(auto a : descriptor.value("inputs").toArray())
-            setAttribute(name, a.toObject());
+        qCritical() << "unable to add a" << type << "node to the current graph";
+        return;
     }
-    catch(std::exception& e)
+    _graph->addNode(dgNode);
+
+    // set node attributes
+    for(auto a : descriptor.value("inputs").toArray())
     {
-        qCritical() << e.what();
+        QString key = a.toObject().value("key").toString();
+        QVariant value = a.toObject().value("value").toVariant();
+        setNodeAttribute(name, key, value);
     }
 
     // reflect changes on the qml side
@@ -117,9 +119,6 @@ void Graph::addConnection(const QJsonObject& connection)
     // retrieve nodes
     QString sourceName = connection.value("source").toString();
     QString targetName = connection.value("target").toString();
-    QString plugName = connection.value("plug").toString();
-
-    // add the connection
     auto source = _graph->node(sourceName.toStdString());
     auto target = _graph->node(targetName.toStdString());
     if(!source || !target)
@@ -127,12 +126,17 @@ void Graph::addConnection(const QJsonObject& connection)
         qCritical() << "unable to connect nodes: invalid connection";
         return;
     }
+
+    // retrieve plug
+    QString plugName = connection.value("plug").toString();
     auto plug = target->plug(plugName.toStdString());
     if(!plug)
     {
         qCritical() << "unable to connect nodes: plug" << plugName << "not found";
         return;
     }
+
+    // connect
     if(!_graph->connect(source->output, plug))
     {
         qCritical() << "unable to connect nodes:" << sourceName << ">" << targetName;
@@ -143,50 +147,65 @@ void Graph::addConnection(const QJsonObject& connection)
     Q_EMIT connectionAdded(connection);
 }
 
-void Graph::setAttribute(const QString& nodeName, const QJsonObject& descriptor)
+void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
+                             const QVariant& value)
 {
-    auto dgnode = _graph->node(nodeName.toStdString());
-    if(!dgnode)
+    auto makeDGAttribute = [&](const QVariant& attribute) -> dg::Ptr<dg::Attribute>
     {
-        qCritical() << "unable to set attribute: node" << nodeName << "not found";
-        return;
-    }
-    QString attributeKey = descriptor.value("key").toString();
-    if(descriptor.contains("value"))
-    {
-        QJsonValue attribute = descriptor.value("value");
-        if(attribute.isArray())
-        {
-            dg::AttributeList dgattrList;
-            for(auto v : attribute.toArray())
-            {
-                auto dgattr = make_ptr<dg::Attribute>(v.toString().toStdString());
-                dgattrList.emplace_back(dgattr);
-            }
-            if(!dgnode->setAttributes(attributeKey.toStdString(), dgattrList))
-                qWarning() << "unable to set attribute list"
-                           << QString("%0::%1").arg(nodeName).arg(attributeKey);
-            return;
-        }
-        dg::Ptr<dg::Attribute> dgattribute;
         switch(attribute.type())
         {
-            case QJsonValue::Bool:
-                dgattribute = make_ptr<dg::Attribute>(attribute.toString().toStdString());
-                break;
-            case QJsonValue::Double:
-                dgattribute = make_ptr<dg::Attribute>((float)attribute.toDouble());
-                break;
-            case QJsonValue::String:
-                dgattribute = make_ptr<dg::Attribute>(attribute.toString().toStdString());
-                break;
+            case QVariant::Bool:
+                return make_ptr<dg::Attribute>(attribute.toBool());
+            case QVariant::Double:
+                return make_ptr<dg::Attribute>((float)attribute.toDouble());
+            case QVariant::String:
+                return make_ptr<dg::Attribute>(attribute.toString().toStdString());
             default:
                 break;
         }
-        if(!dgnode->setAttribute(attributeKey.toStdString(), dgattribute))
-            qCritical() << "unable to set attribute"
-                        << QString("%0::%1").arg(nodeName).arg(attributeKey);
+        qCritical() << "invalid attribute value type" << value.typeName();
+        return nullptr;
+    };
+
+    QVariant variant = value;
+    if(!variant.isValid())
+        return;
+    if(variant.userType() == qMetaTypeId<QJSValue>())
+        variant = qvariant_cast<QJSValue>(variant).toVariant();
+
+    // set attribute : DG side
+    auto dgNode = _graph->node(nodeName.toStdString());
+    Q_CHECK_PTR(dgNode);
+    if(variant.type() == QVariant::List)
+    {
+        dg::AttributeList attributeList;
+        for(auto v : variant.toList())
+            attributeList.emplace_back(makeDGAttribute(v));
+        if(!dgNode->setAttributes(plugName.toStdString(), attributeList))
+            qCritical() << "unable to set DG attribute list"
+                        << QString("%0::%1").arg(nodeName).arg(plugName);
     }
+    else
+    {
+        if(!dgNode->setAttribute(plugName.toStdString(), makeDGAttribute(variant)))
+            qCritical() << "unable to set DG attribute"
+                        << QString("%0::%1").arg(nodeName).arg(plugName);
+    }
+
+    // set attribute : QML side
+    Q_EMIT nodeAttributeChanged(nodeName, plugName, variant);
+}
+
+QVariant Graph::getNodeAttribute(const QString& nodeName, const QString& plugName)
+{
+    auto node = _graph->node(nodeName.toStdString());
+    if(!node)
+        return QVariant();
+    auto plug = node->plug(plugName.toStdString());
+    if(!plug)
+        return QVariant();
+    auto attribute = _graph->cache.attribute(plug);
+    return QString::fromStdString(toString(attribute));
 }
 
 void Graph::startWorker(const QString& name, Graph::BuildMode mode)
@@ -210,26 +229,10 @@ void Graph::stopWorker()
     Q_EMIT isRunningChanged();
 }
 
-QVariant Graph::evalAttribute(const QString& nodeName, const QString& plugName)
-{
-    auto node = _graph->node(nodeName.toStdString());
-    if(!node)
-        return QVariant();
-    auto plug = node->plug(plugName.toStdString());
-    if(!plug)
-        return QVariant();
-    auto attribute = _graph->cache.attribute(plug);
-    return QString::fromStdString(toString(attribute));
-}
-
 QJsonObject Graph::serializeToJSON() const
 {
+    Q_CHECK_PTR(_qmlObject);
     QJsonObject obj;
-    if(!_qmlObject)
-    {
-        qCritical() << "can't serialize Graph: qml object not registered";
-        return obj;
-    }
     const QMetaObject* metaObject = _qmlObject->metaObject();
     int methodIndex = metaObject->indexOfSlot("serializeToJSON()");
     if(methodIndex == -1)

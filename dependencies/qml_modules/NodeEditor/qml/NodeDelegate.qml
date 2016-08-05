@@ -91,7 +91,7 @@ Rectangle {
             Layout.preferredHeight: parent.height
             Column {
                 width: inputScrollview.width
-                height: inputRepeater.model.count * (inputRepeater.itemHeight+spacing)
+                height: inputRepeater.model ? inputRepeater.model.count * (inputRepeater.itemHeight+spacing) : 0
                 spacing: 2
                 Repeater {
                     id: inputRepeater
@@ -125,7 +125,7 @@ Rectangle {
             Layout.preferredHeight: parent.height
             Column {
                 width: outputScrollview.width
-                height: outputRepeater.model.count * (outputRepeater.itemHeight+spacing)
+                height: outputRepeater.model ? outputRepeater.model.count * (outputRepeater.itemHeight+spacing) : 0
                 spacing: 2
                 Repeater {
                     id: outputRepeater

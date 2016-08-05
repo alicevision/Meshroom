@@ -18,11 +18,13 @@ Rectangle {
     // signal / slots
     onModelChanged: {
         stackView.pop();
+        if(!root.model)
+            return;
         var outputs = root.model.outputs;
         if(outputs.count > 0) {
             for(var i=0; i < outputs.count; ++i) {
                 if(outputs.get(i).type == Attribute.OBJECT3D)
-                    loadAlembic(currentScene.graph.evalAttribute(root.model.name, outputs.get(i).name));
+                    loadAlembic(currentScene.graph.getNodeAttribute(root.model.name, outputs.get(i).name));
             }
         }
     }
@@ -35,19 +37,8 @@ Rectangle {
     Component {
         id: imageListDelegate
         RowLayout {
-            Image {
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: 20
-                source: modelData ? modelData.value[0] : ""
-                sourceSize: Qt.size(120, 120)
-                asynchronous: true
-                BusyIndicator {
-                    anchors.centerIn: parent
-                    running: parent.status === Image.Loading
-                }
-            }
             Text {
-                text: modelData ? modelData.value.length + " items" : "0 item"
+                text: (modelData && Array.isArray(modelData.value)) ? modelData.value.length + " items" : "0 item"
                 font.pixelSize: Style.text.size.xsmall
             }
             Item { Layout.fillWidth: true } // spacer
@@ -66,9 +57,13 @@ Rectangle {
     }
     Component {
         id: labelDelegate
-        Text {
-            text: modelData.name
-            font.pixelSize: Style.text.size.xsmall
+        Item {
+            implicitHeight: 32
+            Text {
+                anchors.fill: parent
+                text: modelData.name
+                font.pixelSize: Style.text.size.xsmall
+            }
         }
     }
     Component {
@@ -81,20 +76,14 @@ Rectangle {
                 value = modelData.value;
             }
             updateValueWhileDragging: true
-            onValueChanged: {
-                modelData.value = value;
-                currentScene.graph.setAttribute(nodeName, modelData);
-            }
+            onValueChanged: currentScene.graph.setNodeAttribute(nodeName, modelData.key, value)
         }
     }
     Component {
         id: textfieldDelegate
         TextField {
-            text: modelData.value
-            onEditingFinished: {
-                modelData.value = text;
-                currentScene.graph.setAttribute(nodeName, modelData);
-            }
+            text: (modelData && modelData.value) ? modelData.value : ""
+            onEditingFinished: currentScene.graph.setNodeAttribute(nodeName, modelData.key, text)
         }
     }
     Component {
@@ -102,20 +91,14 @@ Rectangle {
         ComboBox {
             Component.onCompleted: currentIndex = find(modelData.value)
             model: modelData.options
-            onActivated: {
-                modelData.value = textAt(index);
-                currentScene.graph.setAttribute(nodeName, modelData);
-            }
+            onActivated: currentScene.graph.setNodeAttribute(nodeName, modelData.key, textAt(index))
         }
     }
     Component {
         id: checkboxDelegate
         CheckBox {
             Component.onCompleted: checked = modelData.value
-            onClicked: {
-                modelData.value = checked;
-                currentScene.graph.setAttribute(nodeName, modelData);
-            }
+            onClicked: currentScene.graph.setNodeAttribute(nodeName, modelData.key, checked)
         }
     }
 
@@ -128,10 +111,10 @@ Rectangle {
             GridLayout {
                 width: scrollView.width - 10
                 columns: 2
-                rowSpacing: 10
+                rowSpacing: 0
                 columnSpacing: 5
                 Repeater {
-                    model: root.model ? root.model.inputs.count*2 : 0
+                    model: (root.model && root.model.inputs) ? root.model.inputs.count*2 : 0
                     delegate: Loader {
                         Layout.fillWidth: index%2 != 0
                         Layout.preferredWidth: index%2 ? parent.width : parent.width*0.3
@@ -140,6 +123,8 @@ Rectangle {
                         sourceComponent: {
                             modelData = root.model.inputs.get(index/2).modelData;
                             nodeName = root.model.name;
+                            if(modelData.type == Attribute.UNKNOWN)
+                                return emptyDelegate
                             if(index % 2 == 0)
                                 return labelDelegate;
                             switch(modelData.type) {
@@ -166,10 +151,18 @@ Rectangle {
             onClosed: stackView.pop()
             onItemAdded: {
                 var values = attribute.value;
-                values.push(item.replace("file://",""));
-                attribute.value = values;
-                model = attribute.value;
-                currentScene.graph.setAttribute(node, attribute);
+                values.push(item.replace("file://", ""));
+                currentScene.graph.setNodeAttribute(node, attribute.key, values);
+                model = attribute.value; // force model update
+            }
+            onItemRemoved: {
+                var values = attribute.value;
+                var index = values.indexOf(item.replace("file://",""));
+                if (index < 0)
+                    return;
+                values.splice(index, 1);
+                currentScene.graph.setNodeAttribute(node, attribute.key, values);
+                model = attribute.value; // force model update
             }
         }
     }

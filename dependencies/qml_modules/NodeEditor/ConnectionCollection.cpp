@@ -77,6 +77,15 @@ void ConnectionCollection::addConnection(const QJsonObject& descriptor)
     addConnection(connection);
 }
 
+void ConnectionCollection::clear()
+{
+    beginRemoveRows(QModelIndex(), 0, rowCount() - 1);
+    while(!_connections.isEmpty())
+        delete _connections.takeFirst();
+    endRemoveRows();
+    Q_EMIT countChanged(rowCount());
+}
+
 QVariantMap ConnectionCollection::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();

@@ -23,11 +23,12 @@ public:
     ConnectionCollection* connections() const { return _connections; }
 
 public:
-    Q_SLOT void clear() const;
+    Q_SLOT void clear();
     Q_SLOT void addNode(const QJsonObject&) const;
     Q_SLOT void addConnection(const QJsonObject&) const;
     Q_SLOT void clearNodeStatuses() const;
-    Q_SLOT void updateNodeStatus(const QString&, const QString&) const;
+    Q_SLOT void setNodeStatus(const QString&, const QString&) const;
+    Q_SLOT void setNodeAttribute(const QString&, const QString&, const QVariant&) const;
 
 public:
     Q_SLOT QJsonObject serializeToJSON() const;

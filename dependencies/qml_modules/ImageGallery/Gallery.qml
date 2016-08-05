@@ -20,6 +20,7 @@ Item {
     // signal / slots
     signal closed()
     signal itemAdded(var item)
+    signal itemRemoved(var item)
 
     // selection functions
     QtObject {
@@ -73,7 +74,7 @@ Item {
             clear();
         }
         function removeOne(id) {
-            model.removeResource(model.get(id).modelData);
+            root.itemRemoved(model[id]);
         }
     }
 

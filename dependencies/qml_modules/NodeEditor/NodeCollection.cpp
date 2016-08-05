@@ -121,6 +121,15 @@ void NodeCollection::addNode(const QJsonObject& descriptor)
     addNode(node);
 }
 
+void NodeCollection::clear()
+{
+    beginRemoveRows(QModelIndex(), 0, rowCount() - 1);
+    while(!_nodes.isEmpty())
+        delete _nodes.takeFirst();
+    endRemoveRows();
+    Q_EMIT countChanged(rowCount());
+}
+
 QVariantMap NodeCollection::get(int row) const
 {
     QHash<int, QByteArray> names = roleNames();

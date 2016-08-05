@@ -20,6 +20,14 @@ Rectangle {
 
     // slots
     onNodeMoved: refresh()
+    Connections {
+        target: root.graph.nodes
+        onCountChanged: refresh()
+    }
+    Connections {
+        target: root.graph.connections
+        onCountChanged: refresh()
+    }
 
     function refresh() {
         canvas.requestPaint();

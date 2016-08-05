@@ -10,8 +10,10 @@ Graph::Graph(QObject* parent)
 {
 }
 
-void Graph::clear() const
+void Graph::clear()
 {
+    _nodes->clear();
+    _connections->clear();
 }
 
 void Graph::addNode(const QJsonObject& descriptor) const
@@ -33,7 +35,7 @@ void Graph::clearNodeStatuses() const
     }
 }
 
-void Graph::updateNodeStatus(const QString& nodeName, const QString& status) const
+void Graph::setNodeStatus(const QString& nodeName, const QString& status) const
 {
     auto toEnum = [](const QString& status) -> Node::Status
     {
@@ -54,6 +56,21 @@ void Graph::updateNodeStatus(const QString& nodeName, const QString& status) con
     if(!node)
         return;
     node->setStatus(toEnum(status));
+}
+
+void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName, const QVariant& value) const
+{
+    Node* node = _nodes->get(nodeName);
+    if(!node)
+        return;
+    Attribute* att = node->inputs()->get(plugName);
+    if(!att)
+    {
+        att = node->outputs()->get(plugName);
+        if(!att)
+            return;
+    }
+    att->setValue(value);
 }
 
 QJsonObject Graph::serializeToJSON() const

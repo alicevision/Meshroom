@@ -30,19 +30,16 @@ public:
 
 public:
     Q_SLOT const QUrl& cacheUrl() const { return _cacheUrl; }
-    Q_SLOT const bool isRunning() const;
     Q_SLOT void setCacheUrl(const QUrl&);
+    Q_SLOT const bool isRunning() const;
     Q_SLOT void setObject(QObject*);
-
-public:
     Q_SLOT void clear();
     Q_SLOT void addNode(const QJsonObject&);
     Q_SLOT void addConnection(const QJsonObject&);
-    Q_SLOT void setAttribute(const QString& nodeName, const QJsonObject& descriptor);
+    Q_SLOT void setNodeAttribute(const QString&, const QString&, const QVariant&);
+    Q_SLOT QVariant getNodeAttribute(const QString&, const QString&);
     Q_SLOT void startWorker(const QString&, BuildMode mode);
     Q_SLOT void stopWorker();
-
-    Q_SLOT QVariant evalAttribute(const QString& nodeName, const QString& plug);
 
 public:
     Q_SIGNAL void cacheUrlChanged();
@@ -51,6 +48,7 @@ public:
     Q_SIGNAL void nodeAdded(const QJsonObject& node);
     Q_SIGNAL void connectionAdded(const QJsonObject& node);
     Q_SIGNAL void nodeStatusChanged(const QString&, const QString&);
+    Q_SIGNAL void nodeAttributeChanged(const QString&, const QString&, const QVariant&);
 
 public:
     QJsonObject serializeToJSON() const;

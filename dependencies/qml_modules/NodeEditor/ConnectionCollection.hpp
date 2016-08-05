@@ -33,6 +33,7 @@ public:
 public:
     Q_SLOT void addConnection(Connection* connection);
     Q_SLOT void addConnection(const QJsonObject& descriptor);
+    Q_SLOT void clear();
     Q_SLOT QVariantMap get(int row) const;
     Q_SLOT QJsonArray serializeToJSON() const;
     Q_SLOT void deserializeFromJSON(const QJsonArray&);

@@ -29,6 +29,7 @@ private:
     std::vector<QVector3D> _rawPositions;
     
     bool pointSelected(const QVector3D& point, const QRectF& selection, const QRectF& viewport);
+    inline QVector3D toWindow(const QVector3D& point, const QRectF& viewport);
 };
 
 } // namespace

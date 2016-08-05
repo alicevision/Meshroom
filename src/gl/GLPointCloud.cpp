@@ -80,13 +80,20 @@ void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const
 // the window coordinate.
 bool GLPointCloud::pointSelected(const QVector3D& point, const QRectF& selection, const QRectF& viewport)
 {
+  // Must cull z < znear; not visible therefore not part of the selection.
+  auto wpoint = toWindow(point, viewport);
+  return selection.contains(QPointF(wpoint.x(), wpoint.y())) && wpoint.z() >= 0.1f; // XXX: hard-coded znear; see GLRenderer::updateWorldMatrix
+}
+
+// Return: x,y are window coordinates, z is in NDC
+QVector3D GLPointCloud::toWindow(const QVector3D& point, const QRectF& viewport)
+{
   auto projected = _cameraMatrix.map(QVector4D(point[0], point[1], point[2], 1));
   auto ndc = QVector3D(projected) / projected.w();
-  QPointF wpoint(
+  return QVector3D(
     viewport.width()/2*(ndc[0]+1),
-    viewport.height()/2*(-ndc[1]+1));  // invert y [ndc is opposite way of win]
-  // Must cull z < znear; not visible therefore not part of the selection.
-  return selection.contains(wpoint) && projected.z() >= 0.1f; // XXX: hard-coded znear; see GLRenderer::updateWorldMatrix
+    viewport.height()/2*(-ndc[1]+1),  // invert y [ndc is opposite way of win]
+    ndc.z());
 }
 
 void GLPointCloud::draw()

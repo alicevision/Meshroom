@@ -8,15 +8,18 @@ import "."
 CheckBox {
     style: CheckBoxStyle {
         indicator: Rectangle {
-                implicitWidth: 16
-                implicitHeight: 16
-                color: Style.window.color.xdark
-                Rectangle {
-                    anchors.fill: parent
-                    visible: control.checked
-                    color: Style.window.color.selected
-                    anchors.margins: 2
-                }
+            implicitWidth: 16
+            implicitHeight: 16
+            color: Style.window.color.xdark
+            Rectangle {
+                anchors.fill: parent
+                visible: control.checked
+                color: Style.window.color.selected
+                anchors.margins: 2
+            }
+        }
+        label: Text {
+            text: control.text
         }
     }
 }

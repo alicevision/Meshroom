@@ -1,0 +1,168 @@
+{
+    "name": "openmvg",
+    "version": {
+        "major": 0,
+        "minor": 1,
+        "debug": 0
+    },
+    "nodes": [
+        {
+            "type": "AlembicExport",
+            "inputs": [
+                {
+                    "name": "sfmdata2",
+                    "key": "sfmdata2",
+                    "type": "TEXTFIELD"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "abc",
+                    "key": "abc"
+                }
+            ]
+        },
+        {
+            "type": "ImageListing",
+            "inputs": [
+                {
+                    "name": "files",
+                    "key": "files",
+                    "type": "IMAGELIST"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "images",
+                    "key": "images"
+                }
+            ]
+        },
+        {
+            "type": "ExifExtraction",
+            "inputs": [
+                {
+                    "name": "images",
+                    "key": "images",
+                    "type": "IMAGELIST"
+                },
+                {
+                    "name": "sensorWidthDatabase",
+                    "key": "sensorWidthDatabase",
+                    "type": "TEXTFIELD"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "sfmdata",
+                    "key": "sfmdata"
+                }
+            ]
+        },
+        {
+            "type": "FeatureExtraction",
+            "inputs": [
+                {
+                    "name": "sfmdata",
+                    "key": "sfmdata",
+                    "type": "UNKNOWN"
+                },
+                {
+                    "name": "describerMethod",
+                    "key": "describerMethod",
+                    "type": "COMBOBOX",
+                    "value": "SIFT",
+                    "options": ["SIFT", "SIFT_FLOAT", "AKAZE_FLOAT", "AKAZE_MLDB"]
+                },
+                {
+                    "name": "describerPreset",
+                    "key": "describerPreset",
+                    "type": "COMBOBOX",
+                    "value": "NORMAL",
+                    "options": ["LOW", "MEDIUM", "NORMAL", "HIGH", "ULTRA"]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "features",
+                    "key": "features"
+                }
+            ]
+        },
+        {
+            "type": "FeatureMatching",
+            "inputs": [
+                {
+                    "name": "sfmdata",
+                    "key": "sfmdata",
+                    "type": "UNKNOWN"
+                },
+                {
+                    "name": "features",
+                    "key": "features"
+                },
+                {
+                    "name": "pairlist",
+                    "key": "pairlist"
+                },
+                {
+                    "name": "method",
+                    "key": "method",
+                    "type": "COMBOBOX",
+                    "value": "ANNL2",
+                    "options": ["BRUTEFORCEL2", "ANNL2", "CASCADEHASHINGL2", "FASTCASCADEHASHINGL2"]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "matches",
+                    "key": "matches"
+                }
+            ]
+        },
+        {
+            "type": "StructureFromMotion",
+            "inputs": [
+                {
+                    "name": "sfmdata",
+                    "key": "sfmdata"
+                },
+                {
+                    "name": "matches",
+                    "key": "matches"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "sfmdata2",
+                    "key": "sfmdata2"
+                }
+            ]
+        },
+        {
+            "type": "Voctree",
+            "inputs": [
+                {
+                    "name": "sfmdata",
+                    "key": "sfmdata"
+                },
+                {
+                    "name": "treeFile",
+                    "key": "treeFile",
+                    "type": "TEXTFIELD"
+                },
+                {
+                    "name": "weightFile",
+                    "key": "weightFile",
+                    "type": "TEXTFIELD"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "pairlist",
+                    "key": "pairlist"
+                }
+            ]
+        }
+    ]
+}

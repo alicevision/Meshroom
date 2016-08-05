@@ -40,6 +40,8 @@ public slots:
     void definePlane();
     void clearPlane();
     void flipPlaneNormal();
+    void defineScale(float scale);
+    void resetScale();
 
 private slots:
     void handleWindowChanged(QQuickWindow* win);
@@ -104,6 +106,8 @@ private:
     float _scale = 1.0;
     bool _planeDefined = false;
     bool _clearPlane = false;
+    bool _scaleDefined = false;
+    bool _clearScale = false;
     
     enum CameraMode
     {

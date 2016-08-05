@@ -144,24 +144,45 @@ void GLView::sync()
         _alembicSceneUrl.clear();
         return;
     }
-
+    
+    // Selection.
     if (!_selectedArea.isEmpty()) {
-      _renderer->addPointsToSelection(_selectedArea);
+      if (_selectionMode == RECTANGLE)
+        _renderer->addPointsToSelection(_selectedArea);
+      else
+        _renderer->setDistanceLine(_selectedArea.topLeft(), _selectedArea.bottomRight());
       _selectedArea = QRect();
+      _selectedPoints = &_renderer->getSelection();
+      return;
     }
-    else if (_clearSelection) {
+    if (_clearSelection) {
       _renderer->clearSelection();
       _clearSelection = false;
+      return;
     }
-    _selectedPoints = &_renderer->getSelection();
     
+    // Plane.
     if (_planeDefined) {
       _renderer->setPlane(_planeNormal, _planeOrigin);
       _planeDefined = false;
+      return;
     }
     if (_clearPlane) {
       _renderer->clearPlane();
       _clearPlane = false;
+      return;
+    }
+    
+    // Scale.
+    if (_scaleDefined) {
+      _renderer->setDistanceLine(_selectedArea.topLeft(), _selectedArea.bottomRight());
+      _scaleDefined = false;
+      return;
+    }
+    if (_clearScale) {
+      _renderer->clearDistanceLine();
+      _clearScale = false;
+      return;
     }
 }
 
@@ -441,6 +462,20 @@ void GLView::flipPlaneNormal()
     _planeDefined = true;
     refresh();
   }
+}
+
+void GLView::defineScale(float scale)
+{
+  _scale = scale;
+  _scaleDefined = true;
+  refresh();
+}
+
+void GLView::resetScale()
+{
+  _scale = 1.0f;
+  _clearScale = true;
+  refresh();
 }
 
 } // namespace

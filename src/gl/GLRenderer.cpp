@@ -149,14 +149,13 @@ void GLRenderer::clearPlane()
 
 void GLRenderer::setDistanceLine(const QPointF& p0, const QPointF& p1)
 {
-  std::vector<QVector3D> selection;
-  
+  _selection.clear();
   for (auto& obj: _scene)
   if (auto p = dynamic_cast<GLPointCloud*>(obj.get()))
-    p->selectPoints(selection, p0, p1, _viewport);
+    p->selectPoints(_selection, p0, p1, _viewport);
   
   _selectionPC->setRawPositions(_selection.data(), _selection.size());
-  _aligner->setDistanceLine(selection[0], selection[1]);
+  _aligner->setDistanceLine(_selection[0], _selection[1]);
 }
 
 void GLRenderer::clearDistanceLine()

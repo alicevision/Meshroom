@@ -93,11 +93,12 @@ private:
     
     // Selection handling.
     SelectionMode _selectionMode = RECTANGLE;
-    QRect _selectedAreaTmp;
+    QPoint _selectedP0, _selectedP1;
     QRect _selectedArea;
     bool _clearSelection = false;
-    
     const std::vector<QVector3D>* _selectedPoints;  // owned by the renderer!
+    QRect getSelectionRect() const;
+
     QVector3D _planeNormal;
     QVector3D _planeOrigin;
     float _scale = 1.0;

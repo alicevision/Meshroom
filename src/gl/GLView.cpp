@@ -1,5 +1,4 @@
-#include <QtQuick/QQuickWindow>
-#include <QtMath>
+#include <QQuickWindow>
 #include <QPainter>
 #include <QBrush>
 #include <Eigen/Dense>
@@ -62,6 +61,17 @@ void GLView::setShowGrid(bool v)
     }
 }
 
+QRect GLView::getSelectionRect() const
+{
+  QRect rect;
+  if (_selectedP0.x() > _selectedP1.x() || (_selectedP0.x() == _selectedP1.x() && _selectedP0.y() > _selectedP1.y()))
+    rect = QRect(_selectedP1, _selectedP0);
+  else
+    rect = QRect(_selectedP0, _selectedP1);
+  // When p0==p1, we get a 1x1 rectangle, but we want an empty one.
+  return rect.adjusted(0, 0, -1, -1);
+}
+
 // Paint selection rectangle/line based on mouse data.
 void GLView::paint(QPainter* painter)
 {
@@ -77,10 +87,16 @@ void GLView::paint(QPainter* painter)
       QString("SCALE: %1").arg(_scale, 0, 'g', 3)
   );
   
-  if (_selectedAreaTmp.isEmpty())
-    return;
   painter->setBrush(QBrush(QColor(192, 192, 128, 192)));
-  painter->drawRect(_selectedAreaTmp);
+  
+  if (_selectionMode == RECTANGLE) {
+    auto selectedArea = getSelectionRect();
+    if (!selectedArea.isEmpty())
+      painter->drawRect(selectedArea);
+  }
+  else {
+    painter->drawLine(_selectedP0, _selectedP1);
+  }
 }
 
 void GLView::setColor(const QColor& color)
@@ -358,13 +374,14 @@ void GLView::translateLineOfSightCamera(QMatrix4x4& cam, float& radius, float dx
 void GLView::handleSelectionMousePressEvent(QMouseEvent* event)
 {
   _mousePos = event->pos();
-  _selectedAreaTmp = QRect();
+  _selectedArea = QRect();
+  _selectedP0 = _selectedP1 = _mousePos;
 }
 
 void GLView::handleSelectionMouseReleaseEvent(QMouseEvent* event)
 {
-  _selectedArea = _selectedAreaTmp;
-  _selectedAreaTmp = QRect();
+  _selectedArea = getSelectionRect();
+  _selectedP0 = _selectedP1 = QPoint();
   if (_selectedArea.isEmpty())
     _clearSelection = true;
   refresh();
@@ -372,9 +389,8 @@ void GLView::handleSelectionMouseReleaseEvent(QMouseEvent* event)
 
 void GLView::handleSelectionMouseMoveEvent(QMouseEvent* event)
 {
-  _selectedAreaTmp = QRect(_mousePos, event->pos());
-  if (_selectedAreaTmp.isValid())
-    refresh();
+  _selectedP1 = event->pos();
+  refresh();
 }
 
 /////////////////////////////////////////////////////////////////////////////

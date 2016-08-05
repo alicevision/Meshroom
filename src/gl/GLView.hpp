@@ -2,8 +2,8 @@
 
 #include <QQuickPaintedItem>
 #include <QMatrix4x4>
+#include <QFont>
 #include "models/Camera.hpp"
-#include <iostream>
 
 namespace meshroom
 {
@@ -83,6 +83,7 @@ private:
     QColor _color;
     Camera _camera;
     QUrl _alembicSceneUrl;
+    QFont _font;
     
     // FIXME : rename variables to something more meaningful
     // Ideally the following variables should go in a manipulator of some sort
@@ -109,7 +110,8 @@ private:
         Rotate,
         Translate,
         Zoom
-    } _cameraMode;
+    } _cameraMode = Idle;
+    
     bool _showCameras, _showGrid;
 };
 

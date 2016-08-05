@@ -11,9 +11,9 @@ namespace meshroom
 
 GLView::GLView()
     : _renderer(nullptr)
-    , _cameraMode(Idle)
-    , _lookAtTmp(_camera.lookAt()) // Stores camera._lookAt locally to avoid recomputing it
+    , _font(QFont("Helvetica", 10))
     , _camMatTmp(_camera.viewMatrix())
+    , _lookAtTmp(_camera.lookAt()) // Stores camera._lookAt locally to avoid recomputing it
     , _showCameras(true)
     , _showGrid(true)
 {
@@ -65,9 +65,20 @@ void GLView::setShowGrid(bool v)
 // Paint selection rectangle/line based on mouse data.
 void GLView::paint(QPainter* painter)
 {
+  painter->setPen(QColor(255, 255, 255));
+  painter->setFont(_font);
+  painter->drawText(2, 12,
+      QString("UP VECTOR: [%1 %2 %3]")
+        .arg(_planeNormal[0], 0, 'g', 3)
+        .arg(_planeNormal[1], 0, 'g', 3)
+        .arg(_planeNormal[2], 0, 'g', 3)
+  );
+  painter->drawText(2, 24,
+      QString("SCALE: %1").arg(_scale, 0, 'g', 3)
+  );
+  
   if (_selectedAreaTmp.isEmpty())
     return;
-
   painter->setBrush(QBrush(QColor(192, 192, 128, 192)));
   painter->drawRect(_selectedAreaTmp);
 }

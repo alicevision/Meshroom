@@ -34,7 +34,7 @@ void GLAligner::draw()
     }
     
     if (!_linePositions.empty())
-      glDrawArrays(GL_LINES, 0, _linePositions.size());
+      glDrawArrays(GL_LINES, _planePositions.size(), _linePositions.size());
     
     _vao.release();
     _program.release();

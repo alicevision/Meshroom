@@ -178,7 +178,7 @@ void GLView::sync()
     
     // Scale.
     if (_scaleDefined) {
-      _renderer->setDistanceLine(_selectedP0, _selectedP1);
+      _renderer->setDistanceLine(_selectedArea.topLeft(), _selectedArea.bottomRight());
       _scaleDefined = false;
       return;
     }

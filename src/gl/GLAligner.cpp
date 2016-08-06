@@ -5,7 +5,7 @@ namespace meshroom
 {
 
 GLAligner::GLAligner()
-    : GLDrawable(*_colorUniform)
+    : GLDrawable(*_colorArray)
     , _positionBuffer(QOpenGLBuffer::VertexBuffer)
 {
   _vao.create();
@@ -16,7 +16,7 @@ GLAligner::GLAligner()
   _positionBuffer.bind();
   _program.enableAttributeArray("in_position");
   _program.setAttributeBuffer("in_position", GL_FLOAT, 0, 3);
-  _program.setAttributeValue("color", 1.0f, 1.0f, 0.5f, 1.0f);
+  _program.disableAttributeArray("in_color");
   _vao.release();
   _positionBuffer.release();
 }
@@ -29,12 +29,16 @@ void GLAligner::draw()
     glLineWidth(3.0);
 
     if (!_planePositions.empty()) {
+      _program.setAttributeValue("in_color", 0.75f, 0.75f, 0.25f, 1.0f);
       glDrawArrays(GL_TRIANGLES, 0, _planePositions.size()-2);
+      _program.setAttributeValue("in_color", 0.5f, 0.5f, 1.0f, 1.0f);
       glDrawArrays(GL_LINES, _planePositions.size()-2, 2);
     }
     
-    if (!_linePositions.empty())
+    if (!_linePositions.empty()) {
+      _program.setAttributeValue("in_color", 0.75f, 0.75f, 0.25f, 1.0f);
       glDrawArrays(GL_LINES, _planePositions.size(), _linePositions.size());
+    }
     
     _vao.release();
     _program.release();

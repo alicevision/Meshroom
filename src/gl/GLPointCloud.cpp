@@ -39,7 +39,6 @@ GLPointCloud::GLPointCloud(bool isSelection)
     }
     else {
       _program.disableAttributeArray("in_color");
-      _program.setAttributeValue("in_color", 1.0f, 0.2f, 0.8f);
     }
     
     _vertexArrayObject.release();
@@ -47,6 +46,35 @@ GLPointCloud::GLPointCloud(bool isSelection)
     // Must be unbound after VAO.
     _pointPositions.release();
     _pointColors.release();
+}
+
+void GLPointCloud::draw()
+{
+  _program.bind();
+
+  const bool depthTestEnabled = glIsEnabled(GL_DEPTH_TEST); 
+  glDisable(GL_DEPTH_TEST);
+  
+  _vertexArrayObject.bind();
+  
+  if (_isSelection) {
+    glPointSize(6.0f);
+    _program.setAttributeValue("in_color", 1.0f, 0.2f, 0.8f);
+  }
+  else {
+    glPointSize(1.0f);
+    // Colors taken from array attribute
+  }
+  
+  glPointSize(_isSelection ? 6.0f : 1.0f);
+  
+  glDrawArrays(GL_POINTS, 0, (GLint)_rawPositions.size());
+  _vertexArrayObject.release();
+  
+  if (depthTestEnabled)
+    glEnable(GL_DEPTH_TEST);
+  
+  _program.release();
 }
 
 void GLPointCloud::setRawPositions(const void* pointsBuffer, size_t npoints)
@@ -137,24 +165,6 @@ QVector3D GLPointCloud::toWindow(const QVector3D& point, const QRectF& viewport)
     viewport.width()/2*(ndc[0]+1),
     viewport.height()/2*(-ndc[1]+1),  // invert y [ndc is opposite way of win]
     ndc.z());
-}
-
-void GLPointCloud::draw()
-{
-  _program.bind();
-
-  const bool depthTestEnabled = glIsEnabled(GL_DEPTH_TEST); 
-  glDisable(GL_DEPTH_TEST);
-  
-  _vertexArrayObject.bind();
-  glPointSize(_isSelection ? 6.0f : 1.0f);
-  glDrawArrays(GL_POINTS, 0, (GLint)_rawPositions.size());
-  _vertexArrayObject.release();
-  
-  if (depthTestEnabled)
-    glEnable(GL_DEPTH_TEST);
-  
-  _program.release();
 }
 
 } // namespace

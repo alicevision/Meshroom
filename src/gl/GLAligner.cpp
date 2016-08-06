@@ -26,6 +26,7 @@ void GLAligner::draw()
     _program.bind();
     _vao.bind();
     
+    glDisable(GL_LINE_SMOOTH);
     glLineWidth(3.0);
 
     if (!_planePositions.empty()) {

@@ -79,8 +79,12 @@ void GLView::paint(QPainter* painter)
         .arg(_planeNormal[1], 0, 'g', 3)
         .arg(_planeNormal[2], 0, 'g', 3)
   );
+  
+  float d = _distanceLine[0].distanceToPoint(_distanceLine[1]);
   painter->drawText(2, 24,
-      QString("SCALE: %1").arg(_scale, 0, 'g', 3)
+      QString("DISTANCE: %1; SCALE: %2")
+        .arg(_scale, 0, 'g', 3)
+        .arg(_scale / d, 0, 'g', 3)
   );
   
   painter->setBrush(QBrush(QColor(192, 192, 128, 192)));
@@ -150,8 +154,8 @@ void GLView::sync()
       else {
         _renderer->addPointsToSelection(_selectedArea.topLeft(), _selectedArea.bottomRight());
       }
-      _selectedArea = QRect();
       _selectedPoints = &_renderer->getSelection();
+      _selectedArea = QRect();
       return;
     }
     if (_clearSelection) {
@@ -463,6 +467,11 @@ void GLView::flipPlaneNormal()
 
 void GLView::defineScale(float scale)
 {
+  if (_selectedPoints->size() != 2)
+    return;
+  
+  _distanceLine[0] = (*_selectedPoints)[0];
+  _distanceLine[1] = (*_selectedPoints)[1];
   _scale = scale;
   _scaleDefined = true;
   refresh();

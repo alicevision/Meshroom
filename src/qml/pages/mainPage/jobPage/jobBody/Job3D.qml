@@ -60,7 +60,7 @@ Item {
         Row {
             anchors.fill: parent
             spacing: 2
-            Label { text: "Scale factor" }
+            Label { text: "Distance " }
             TextInput {
                 id: scaleFactor
                 text: "1.0"

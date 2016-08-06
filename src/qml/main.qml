@@ -5,6 +5,7 @@ import DarkStyle 1.0
 import Meshroom.Job 0.1
 import Meshroom.Project 0.1
 import Logger 1.0
+import QtQuick.Window 2.2
 import "pages"
 
 
@@ -13,8 +14,8 @@ ApplicationWindow {
     id: _applicationWindow
 
     // parameters
-    width: 800
-    height: 500
+    width: Screen.width/2
+    height: Screen.height/2
     visible: true
     color: "#111"
     title: Qt.application.name

@@ -63,13 +63,9 @@ void GLView::setShowGrid(bool v)
 
 QRect GLView::getSelectionRect() const
 {
-  QRect rect;
-  if (_selectedP0.x() > _selectedP1.x() || (_selectedP0.x() == _selectedP1.x() && _selectedP0.y() > _selectedP1.y()))
-    rect = QRect(_selectedP1, _selectedP0);
-  else
-    rect = QRect(_selectedP0, _selectedP1);
-  // When p0==p1, we get a 1x1 rectangle, but we want an empty one.
-  return rect.adjusted(0, 0, -1, -1);
+  QPoint tl(std::min(_selectedP0.x(), _selectedP1.x()), std::min(_selectedP0.y(), _selectedP1.y()));
+  QPoint br(std::max(_selectedP0.x(), _selectedP1.x()), std::max(_selectedP0.y(), _selectedP1.y()));
+  return QRect(tl, br).adjusted(0, 0, -1, -1);  // When p0==p1, we get a 1x1 rectangle, but we want an empty one.
 }
 
 // Paint selection rectangle/line based on mouse data.

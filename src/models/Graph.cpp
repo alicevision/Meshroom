@@ -224,8 +224,7 @@ void Graph::stopWorker()
 {
     if(!isRunning())
         return;
-    _worker->terminate();
-    _worker->wait();
+    _worker->kill();
     Q_EMIT isRunningChanged();
 }
 

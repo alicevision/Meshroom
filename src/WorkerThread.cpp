@@ -28,26 +28,40 @@ void WorkerThread::run()
                 runner = new TractorRunner();
                 break;
         }
-        auto visited = [&](const std::string& node)
-        {
-            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "WAITING");
-        };
-        auto computeStarted = [&](const std::string& node)
-        {
-            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "RUNNING");
-        };
-        auto computeCompleted = [&](const std::string& node)
-        {
-            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "DONE");
-        };
-        auto computeFailed = [&](const std::string& node)
-        {
-            Q_EMIT nodeStatusChanged(QString::fromStdString(node), "ERROR");
-        };
-        runner->registerOnVisitCB(visited);
-        runner->registerOnComputeBeginCB(computeStarted);
-        runner->registerOnComputeEndCB(computeCompleted);
-        runner->registerOnErrorCB(computeFailed);
+        connect(this, &WorkerThread::processKilled, this, [&]()
+                {
+                    runner->kill();
+                });
+        runner->registerCB(
+            [&](const dg::Node& node, dg::Runner::NodeStatus status, const std::string& msg)
+            {
+                QString nodeName = QString::fromStdString(node.name);
+                switch(status)
+                {
+                    case dg::Runner::NodeStatus::READY:
+                        Q_EMIT nodeStatusChanged(nodeName, "READY");
+                        break;
+                    case dg::Runner::NodeStatus::WAITING:
+                        Q_EMIT nodeStatusChanged(nodeName, "WAITING");
+                        break;
+                    case dg::Runner::NodeStatus::RUNNING:
+                        Q_EMIT nodeStatusChanged(nodeName, "RUNNING");
+                        break;
+                    case dg::Runner::NodeStatus::ERROR:
+                        Q_EMIT nodeStatusChanged(nodeName, "ERROR");
+                        break;
+                    case dg::Runner::NodeStatus::DONE:
+                        Q_EMIT nodeStatusChanged(nodeName, "DONE");
+                        break;
+                }
+                if(!msg.empty())
+                {
+                    if(status == dg::Runner::NodeStatus::ERROR)
+                        qCritical() << QString::fromStdString(msg);
+                    else
+                        qInfo() << QString::fromStdString(msg);
+                }
+            });
         runner->operator()(_graph, _nodeName.toStdString());
         delete runner;
     }
@@ -55,6 +69,13 @@ void WorkerThread::run()
     {
         qCritical() << e.what();
     }
+}
+
+void WorkerThread::kill()
+{
+    Q_EMIT processKilled();
+    terminate();
+    wait();
 }
 
 } // namespace

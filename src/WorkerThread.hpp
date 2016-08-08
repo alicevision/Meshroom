@@ -17,9 +17,11 @@ public:
 
 public:
     void run() override;
+    void kill();
 
 public:
     Q_SIGNAL void nodeStatusChanged(const QString& nodeName, const QString& status);
+    Q_SIGNAL void processKilled();
 
 private:
     QString _nodeName;

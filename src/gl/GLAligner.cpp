@@ -1,4 +1,5 @@
 #include <vector>
+#include <Eigen/Dense>
 #include "GLAligner.hpp"
 
 namespace meshroom
@@ -103,9 +104,20 @@ void GLAligner::clearDistanceLine()
 
 void GLAligner::buildPlane(float size, int division)
 {
-  const QVector3D U = QVector3D(-_normal[2], 0, _normal[0]).normalized();
-  const QVector3D V = QVector3D::crossProduct(U, _normal).normalized();
+  using Eigen::Quaternionf;
+  using Eigen::Vector3f;
   
+  // Perform the same xform as main_Align. normal is the Y axis.
+  QVector3D U, V;
+  {
+    Vector3f normal; normal << _normal[0], _normal[1], _normal[2];
+    auto q = Quaternionf::FromTwoVectors(normal, Vector3f(0, 1, 0));
+    auto m = q.toRotationMatrix().inverse();  // we want to transform original axes to the new system for rendering
+    auto u = m * Vector3f(1, 0, 0);
+    auto v = m * Vector3f(0, 0, 1);
+    U = QVector3D(u(0), u(1), u(2));
+    V = QVector3D(v(0), v(1), v(2));
+  }
   
   const auto point = [=](int i, int j)
   {

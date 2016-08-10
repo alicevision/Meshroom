@@ -1,5 +1,4 @@
 #include <vector>
-#include <qt/QtGui/qcolor.h>
 #include "GLAligner.hpp"
 
 namespace meshroom

@@ -30,8 +30,9 @@ private:
   QVector3D _origin;
   
   QOpenGLVertexArrayObject _vao;
-  QOpenGLBuffer _positionBuffer;
-  std::vector<QVector3D> _planePositions, _linePositions;
+  QOpenGLBuffer _positionBuffer, _colorBuffer;
+  std::vector<QVector3D> _planePositions, _planeColors;
+  std::vector<QVector3D> _linePositions, _lineColors;
 };
 
 } // namespace

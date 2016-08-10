@@ -1,4 +1,5 @@
 #include <vector>
+#include <qt/QtGui/qcolor.h>
 #include "GLAligner.hpp"
 
 namespace meshroom
@@ -7,18 +8,29 @@ namespace meshroom
 GLAligner::GLAligner()
     : GLDrawable(*_colorArray)
     , _positionBuffer(QOpenGLBuffer::VertexBuffer)
+    , _colorBuffer(QOpenGLBuffer::VertexBuffer)
 {
   _vao.create();
+  
   _positionBuffer.create();
-
-  _vao.bind();
   _positionBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
+  
+  _colorBuffer.create();
+  _colorBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
+  
+  _vao.bind();
+  
   _positionBuffer.bind();
   _program.enableAttributeArray("in_position");
   _program.setAttributeBuffer("in_position", GL_FLOAT, 0, 3);
-  _program.disableAttributeArray("in_color");
+  
+  _colorBuffer.bind();
+  _program.enableAttributeArray("in_color");
+  _program.setAttributeBuffer("in_color", GL_FLOAT, 0, 3);
+  
   _vao.release();
   _positionBuffer.release();
+  _colorBuffer.release();
 }
 
 void GLAligner::draw()
@@ -30,16 +42,12 @@ void GLAligner::draw()
     glLineWidth(3.0);
 
     if (!_planePositions.empty()) {
-      _program.setAttributeValue("in_color", 0.75f, 0.75f, 0.25f, 1.0f);
-      glDrawArrays(GL_TRIANGLES, 0, _planePositions.size()-2);
-      _program.setAttributeValue("in_color", 0.5f, 0.5f, 1.0f, 1.0f);
-      glDrawArrays(GL_LINES, _planePositions.size()-2, 2);
+      glDrawArrays(GL_TRIANGLES, 0, _planePositions.size()-6);
+      glDrawArrays(GL_LINES, _planePositions.size()-6, 6);
     }
     
-    if (!_linePositions.empty()) {
-      _program.setAttributeValue("in_color", 0.75f, 0.75f, 0.25f, 1.0f);
+    if (!_linePositions.empty())
       glDrawArrays(GL_LINES, _planePositions.size(), _linePositions.size());
-    }
     
     _vao.release();
     _program.release();
@@ -54,6 +62,14 @@ void GLAligner::setBuffer()
   if (!_linePositions.empty())
     _positionBuffer.write(_planePositions.size()*sizeof(QVector3D), _linePositions.data(), _linePositions.size()*sizeof(QVector3D));
   _positionBuffer.release();
+  
+  _colorBuffer.bind();
+  _colorBuffer.allocate((_planePositions.size()+_linePositions.size())*sizeof(QVector3D));
+  if (!_planePositions.empty())
+    _colorBuffer.write(0, _planeColors.data(), _planePositions.size()*sizeof(QVector3D));
+  if (!_linePositions.empty())
+    _colorBuffer.write(_planePositions.size()*sizeof(QVector3D), _lineColors.data(), _linePositions.size()*sizeof(QVector3D));
+  _colorBuffer.release();
 }
 
 void GLAligner::setPlane(const QVector3D& normal, const QVector3D& origin)
@@ -64,29 +80,33 @@ void GLAligner::setPlane(const QVector3D& normal, const QVector3D& origin)
   setBuffer();
 }
 
+static const QVector3D MARKER_COLOR = QVector3D(224, 255, 0) / 255.f;
 
 void GLAligner::setDistanceLine(const QVector3D& p0, const QVector3D& p1)
 {
   _linePositions.clear();
-  _linePositions.push_back(p0);
-  _linePositions.push_back(p1);
+  _linePositions.push_back(p0); _lineColors.push_back(MARKER_COLOR);
+  _linePositions.push_back(p1); _lineColors.push_back(MARKER_COLOR);
   setBuffer();
 }
 
 void GLAligner::clearPlane()
 {
   _planePositions.clear();
+  _planeColors.clear();
 }
 
 void GLAligner::clearDistanceLine()
 {
   _linePositions.clear();
+  _lineColors.clear();
 }
 
 void GLAligner::buildPlane(float size, int division)
 {
   const QVector3D U = QVector3D(-_normal[2], 0, _normal[0]).normalized();
   const QVector3D V = QVector3D::crossProduct(U, _normal).normalized();
+  
   
   const auto point = [=](int i, int j)
   {
@@ -96,6 +116,7 @@ void GLAligner::buildPlane(float size, int division)
   };
   
   _planePositions.clear();
+  _planeColors.clear();
   
   // Plane
   for (int i = -division; i < division; ++i)
@@ -115,9 +136,19 @@ void GLAligner::buildPlane(float size, int division)
     _planePositions.push_back(p3);
   }
   
-  // Normal; length 0.25
-  _planePositions.push_back(_origin);
-  _planePositions.push_back(_origin + _normal*0.25f);
+  _planeColors.resize(_planePositions.size(), MARKER_COLOR);
+  
+  // Axes: length 0.25; note XZ are arbitrary; must compute proper transformation
+  // X
+  _planePositions.push_back(_origin); _planeColors.push_back(QVector3D(1, 0, 0));
+  _planePositions.push_back(_origin + U*0.25f); _planeColors.push_back(QVector3D(1, 0, 0));
+  // Y
+  _planePositions.push_back(_origin); _planeColors.push_back(QVector3D(0, 1, 0));
+  _planePositions.push_back(_origin + _normal*0.25f); _planeColors.push_back(QVector3D(0, 1, 0));
+  // Z
+  _planePositions.push_back(_origin); _planeColors.push_back(QVector3D(0, 0, 1));
+  _planePositions.push_back(_origin + V*0.25f); _planeColors.push_back(QVector3D(0, 0, 1));
+  
 }
 
 

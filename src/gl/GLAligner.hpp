@@ -17,11 +17,10 @@ public:
   ~GLAligner() = default;
 
   void draw() override;
-  void setPlane(const QVector3D& normal, const QVector3D& origin);
+  void setPlane(const QVector3D& normal, const QVector3D& origin, float yrotDegrees);
   void clearPlane();
   void setDistanceLine(const QVector3D& p0, const QVector3D& p1);
   void clearDistanceLine();
-  void setYRotation(float degrees);
 
 private:
   void buildPlane(float size, int division);

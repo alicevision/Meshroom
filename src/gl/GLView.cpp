@@ -166,7 +166,7 @@ void GLView::sync()
     
     // Plane.
     if (_planeDefined) {
-      _renderer->setPlane(_planeNormal, _planeOrigin);
+      _renderer->setPlane(_planeNormal, _planeOrigin, _yrotDegrees);
       _planeDefined = false;
       return;
     }
@@ -175,6 +175,7 @@ void GLView::sync()
       _clearPlane = false;
       return;
     }
+    
     
     // Scale.
     if (_scaleDefined) {

@@ -72,10 +72,11 @@ void GLAligner::setBuffer()
   _colorBuffer.release();
 }
 
-void GLAligner::setPlane(const QVector3D& normal, const QVector3D& origin)
+void GLAligner::setPlane(const QVector3D& normal, const QVector3D& origin, float yrotDegrees)
 {
   _normal = normal.normalized();
   _origin = origin;
+  _yrotDegrees = yrotDegrees;
   buildPlane(0.5, 4);
   setBuffer();
 }
@@ -100,13 +101,6 @@ void GLAligner::clearDistanceLine()
 {
   _linePositions.clear();
   _lineColors.clear();
-}
-
-void GLAligner::setYRotation(float degrees)
-{
-  _yrotDegrees = degrees;
-  buildPlane(0.5, 4);
-  setBuffer();
 }
 
 void GLAligner::buildPlane(float size, int division)

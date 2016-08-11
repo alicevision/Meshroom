@@ -149,9 +149,9 @@ void GLRenderer::clearSelection()
   _selectionPC->setRawPositions(_selection.data(), _selection.size());
 }
 
-void GLRenderer::setPlane(const QVector3D& normal, const QVector3D& origin)
+void GLRenderer::setPlane(const QVector3D& normal, const QVector3D& origin, float yrotDegrees)
 {
-  _aligner->setPlane(normal, origin);
+  _aligner->setPlane(normal, origin, yrotDegrees);
 }
 
 void GLRenderer::clearPlane()
@@ -170,11 +170,6 @@ void GLRenderer::setDistanceLine(const QPointF& p0, const QPointF& p1)
 void GLRenderer::clearDistanceLine()
 {
   _aligner->clearDistanceLine();
-}
-
-void GLRenderer::setYRotation(float degrees)
-{
-  _aligner->setYRotation(degrees);
 }
 
 } // namespace

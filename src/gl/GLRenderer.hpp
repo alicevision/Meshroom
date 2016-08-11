@@ -37,14 +37,12 @@ public:
     void clearSelection();
     const std::vector<QVector3D>& getSelection() const { return _selection; }
     
-    void setPlane(const QVector3D& normal, const QVector3D& origin);
+    void setPlane(const QVector3D& normal, const QVector3D& origin, float yrotDegrees);
     void clearPlane();
     
     void setDistanceLine(const QPointF& p0, const QPointF& p1);
     void clearDistanceLine();
     
-    void setYRotation(float degrees);
-
 public slots:
     void draw();
 

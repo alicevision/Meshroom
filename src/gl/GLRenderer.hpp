@@ -43,6 +43,7 @@ public:
     void setDistanceLine(const QPointF& p0, const QPointF& p1);
     void clearDistanceLine();
     
+    void setYRotation(float degrees);
 
 public slots:
     void draw();

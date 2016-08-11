@@ -21,6 +21,7 @@ public:
   void clearPlane();
   void setDistanceLine(const QVector3D& p0, const QVector3D& p1);
   void clearDistanceLine();
+  void setYRotation(float degrees);
 
 private:
   void buildPlane(float size, int division);
@@ -28,6 +29,7 @@ private:
   
   QVector3D _normal;
   QVector3D _origin;
+  float _yrotDegrees = 0;
   
   QOpenGLVertexArrayObject _vao;
   QOpenGLBuffer _positionBuffer, _colorBuffer;

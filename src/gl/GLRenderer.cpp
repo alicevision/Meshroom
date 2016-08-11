@@ -172,4 +172,9 @@ void GLRenderer::clearDistanceLine()
   _aligner->clearDistanceLine();
 }
 
+void GLRenderer::setYRotation(float degrees)
+{
+  _aligner->setYRotation(degrees);
+}
+
 } // namespace

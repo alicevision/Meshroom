@@ -102,6 +102,13 @@ void GLAligner::clearDistanceLine()
   _lineColors.clear();
 }
 
+void GLAligner::setYRotation(float degrees)
+{
+  _yrotDegrees = degrees;
+  buildPlane(0.5, 4);
+  setBuffer();
+}
+
 void GLAligner::buildPlane(float size, int division)
 {
   using Eigen::Quaternionf;
@@ -111,10 +118,11 @@ void GLAligner::buildPlane(float size, int division)
   QVector3D U, V;
   {
     Vector3f normal; normal << _normal[0], _normal[1], _normal[2];
-    auto q = Quaternionf::FromTwoVectors(normal, Vector3f(0, 1, 0));
-    auto m = q.toRotationMatrix().inverse();  // we want to transform original axes to the new system for rendering
-    auto u = m * Vector3f(1, 0, 0);
-    auto v = m * Vector3f(0, 0, 1);
+    auto q = Quaternionf::FromTwoVectors(normal, Vector3f::UnitY());
+    auto r = Eigen::AngleAxisf(_yrotDegrees*M_PI/180, Vector3f::UnitY());
+    auto m = (r * q.toRotationMatrix()).inverse();  // Need inverse of the xform for rendering
+    auto u = m * Vector3f::UnitX();
+    auto v = m * Vector3f::UnitZ();
     U = QVector3D(u(0), u(1), u(2));
     V = QVector3D(v(0), v(1), v(2));
   }

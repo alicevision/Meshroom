@@ -107,7 +107,8 @@ private:
     QVector3D _planeNormal;
     QVector3D _planeOrigin;
     QVector3D _distanceLine[2];
-    float _scale = 1.0;
+    float _scale = 1.0f;
+    float _yrotDegrees = 0.0f;
     bool _planeDefined = false;
     bool _clearPlane = false;
     bool _scaleDefined = false;

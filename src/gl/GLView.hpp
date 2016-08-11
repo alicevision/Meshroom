@@ -19,6 +19,7 @@ class GLView : public QQuickPaintedItem
     Q_PROPERTY(bool showGrid READ showGrid WRITE setShowGrid NOTIFY showGridChanged)
     Q_PROPERTY(SelectionMode selectionMode MEMBER _selectionMode NOTIFY selectionModeChanged)
     Q_PROPERTY(float scale READ getScale WRITE defineScale NOTIFY scaleChanged)
+    Q_PROPERTY(float yrot READ getYRot WRITE defineYRot NOTIFY yrotChanged)
 
 public:
   
@@ -35,6 +36,7 @@ public:
     void paint(QPainter*) override;
     float getScale() const { return _scale; }
     const QColor& color() const { return _color; }
+    float getYRot() const { return _yrotDegrees; }
 
 public slots:
     void setColor(const QColor& color);
@@ -42,6 +44,7 @@ public slots:
     void definePlane();
     void clearPlane();
     void flipPlaneNormal();
+    void defineYRot(float degrees);
     void defineScale(float scale);
     void resetScale();
 
@@ -58,6 +61,7 @@ signals:
     void showGridChanged();
     void selectionModeChanged();
     void scaleChanged();
+    void yrotChanged();
 
 protected:
     void mousePressEvent(QMouseEvent*) override;

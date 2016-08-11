@@ -74,10 +74,11 @@ void GLView::paint(QPainter* painter)
   painter->setPen(QColor(255, 255, 255));
   painter->setFont(_font);
   painter->drawText(2, 12,
-      QString("UP VECTOR: [%1 %2 %3]")
+      QString("UP VECTOR: [%1 %2 %3]; ROTATION: %4")
         .arg(_planeNormal[0], 0, 'g', 3)
         .arg(_planeNormal[1], 0, 'g', 3)
         .arg(_planeNormal[2], 0, 'g', 3)
+        .arg(_yrotDegrees, 0, 'g', 3)
   );
   
   float d = _distanceLine[0].distanceToPoint(_distanceLine[1]);
@@ -463,6 +464,16 @@ void GLView::flipPlaneNormal()
     _planeNormal = -_planeNormal;
     _planeDefined = true;
     refresh();
+  }
+}
+
+void GLView::defineYRot(float degrees)
+{
+  if (!_planeNormal.isNull()) {
+    _yrotDegrees = degrees;
+    _planeDefined = true;
+    refresh();
+    emit yrotChanged();
   }
 }
 

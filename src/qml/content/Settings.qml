@@ -20,6 +20,7 @@ Rectangle {
         stackView.pop();
         if(!root.model)
             return;
+        loadAlembic("");
         var outputs = root.model.outputs;
         if(outputs.count > 0) {
             for(var i=0; i < outputs.count; ++i) {

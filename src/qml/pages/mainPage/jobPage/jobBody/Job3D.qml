@@ -38,6 +38,11 @@ Item {
             onTriggered: glview.flipPlaneNormal()
         }
         MenuItem {
+            text: "Define ground orientation"
+            onTriggered: orientationDialog.open()
+        }
+
+        MenuItem {
             text: "Clear plane"
             onTriggered: glview.clearPlane()
         }
@@ -47,7 +52,7 @@ Item {
 
         MenuItem {
             text: "Define scale"
-            onTriggered: dialog.open()
+            onTriggered: distanceDialog.open()
         }
         MenuItem {
             text: "Reset scale"
@@ -56,7 +61,7 @@ Item {
     }
 
     Dialog {
-        id: dialog
+        id: distanceDialog
         Row {
             anchors.fill: parent
             spacing: 2
@@ -71,6 +76,25 @@ Item {
             var scale = parseFloat(scaleFactor.text);
             if (!isNaN(scale)) glview.defineScale(scale);
             else console.log("Scale must be a number");
+        }
+    }
+
+    Dialog {
+        id: orientationDialog
+        Row {
+            anchors.fill: parent
+            spacing: 2
+            Label { text: "Rotation (deg)" }
+            TextInput {
+                id: yrot
+                text: "0.0"
+            }
+        }
+        onVisibleChanged: if (visible) yrot.text = glview.yrot
+        onAccepted: {
+            var deg = parseFloat(yrot.text);
+            if (!isNaN(deg)) glview.yrot = deg;
+            else console.log("Rotation must be a number");
         }
     }
 

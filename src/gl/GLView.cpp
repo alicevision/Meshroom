@@ -225,6 +225,8 @@ void GLView::mousePressEvent(QMouseEvent* event)
     handleCameraMousePressEvent(event);
   else if (event->modifiers() == Qt::ControlModifier && event->buttons() == Qt::LeftButton)
     handleSelectionMousePressEvent(event);
+  else if (event->modifiers() == Qt::ShiftModifier && event->buttons() == Qt::LeftButton)
+    handleYRotMousePressEvent(event);
 }
 
 void GLView::mouseMoveEvent(QMouseEvent* event)
@@ -233,6 +235,8 @@ void GLView::mouseMoveEvent(QMouseEvent* event)
     handleCameraMouseMoveEvent(event);
   else if (event->modifiers() == Qt::ControlModifier)
     handleSelectionMouseMoveEvent(event);
+  else if (event->modifiers() == Qt::ShiftModifier)
+    handleYRotMouseMoveEvent(event);
 }
 
 void GLView::mouseReleaseEvent(QMouseEvent* event)
@@ -415,6 +419,19 @@ void GLView::handleSelectionMouseMoveEvent(QMouseEvent* event)
 {
   _selectedP1 = event->pos();
   refresh();
+}
+
+void GLView::handleYRotMousePressEvent(QMouseEvent* event)
+{
+  _mousePos = event->pos();
+}
+
+void GLView::handleYRotMouseMoveEvent(QMouseEvent* event)
+{
+  int d = event->pos().x() - _mousePos.x();
+  if (d < -359) d = -359;
+  if (d > 359) d = 359;
+  defineYRot(d);
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -84,6 +84,9 @@ private:
     void handleSelectionMouseReleaseEvent(QMouseEvent*);
     void handleSelectionMouseMoveEvent(QMouseEvent*);
     
+    // Functions to manipulate the rotation.
+    void handleYRotMousePressEvent(QMouseEvent*);
+    void handleYRotMouseMoveEvent(QMouseEvent*);
 
 private:
     // Delegate opengl rendering

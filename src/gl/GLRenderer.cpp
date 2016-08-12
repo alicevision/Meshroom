@@ -68,7 +68,7 @@ void GLRenderer::setGizmoVisibility(const bool& visible)
     for(auto obj : _scene)
     {
         if(dynamic_cast<GLGizmo*>(obj) != nullptr)
-        obj->setVisibility(visible);
+            obj->setVisibility(visible);
     }
 }
 

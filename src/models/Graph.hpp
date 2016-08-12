@@ -19,8 +19,9 @@ class Graph : public QObject
 public:
     enum BuildMode
     {
-        LOCAL = 0,
-        TRACTOR = 1
+        COMPUTE_LOCAL = 0,
+        COMPUTE_TRACTOR = 1,
+        PREPARE = 2,
     };
     Q_ENUMS(BuildMode)
 
@@ -38,7 +39,7 @@ public:
     Q_SLOT void addConnection(const QJsonObject&);
     Q_SLOT void setNodeAttribute(const QString&, const QString&, const QVariant&);
     Q_SLOT QVariant getNodeAttribute(const QString&, const QString&);
-    Q_SLOT void startWorker(const QString&, BuildMode mode);
+    Q_SLOT void startWorker(BuildMode, const QString& = "");
     Q_SLOT void stopWorker();
 
 public:

@@ -60,10 +60,10 @@ int main(int argc, char* argv[])
                 // load the scene
                 auto scene = application.loadScene(commandLine.sceneURL());
                 // process the whole graph starting from the specified node, using the right mode
-                scene->graph()->startWorker(commandLine.nodeName(),
-                                            (commandLine.mode() == CommandLine::RUN_LOCAL)
-                                                ? Graph::BuildMode::LOCAL
-                                                : Graph::BuildMode::TRACTOR);
+                scene->graph()->startWorker((commandLine.mode() == CommandLine::RUN_LOCAL)
+                                                ? Graph::BuildMode::COMPUTE_LOCAL
+                                                : Graph::BuildMode::COMPUTE_TRACTOR,
+                                            commandLine.nodeName());
             }
             case CommandLine::QUIT_SUCCESS:
                 return EXIT_SUCCESS;

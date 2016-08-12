@@ -24,7 +24,7 @@ public:
     Q_SIGNAL void processKilled();
 
 private:
-    QString _nodeName;
+    QString _node;
     Graph::BuildMode _mode;
     dg::Ptr<dg::Graph> _graph;
 };

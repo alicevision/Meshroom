@@ -18,11 +18,15 @@ Item {
         signal compute(var mode)
         MenuItem {
             text: "Compute locally..."
-            onTriggered: compute(MG.Graph.LOCAL)
+            onTriggered: compute(MG.Graph.COMPUTE_LOCAL)
         }
         MenuItem {
             text: "Compute on farm..."
-            onTriggered: compute(MG.Graph.TRACTOR)
+            onTriggered: compute(MG.Graph.COMPUTE_TRACTOR)
+        }
+        MenuItem {
+            text: "Refresh status..."
+            onTriggered: compute(MG.Graph.PREPARE)
         }
         MenuSeparator {}
     }
@@ -36,7 +40,7 @@ Item {
         onNodeRightClicked: {
             function compute_CB(mode) {
                 editor.graph.clearNodeStatuses();
-                currentScene.graph.startWorker(node.name, mode);
+                currentScene.graph.startWorker(mode, node.name);
             }
             var menu = contextMenu.createObject(editor);
             menu.compute.connect(compute_CB);

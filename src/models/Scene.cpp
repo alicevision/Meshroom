@@ -119,6 +119,10 @@ bool Scene::load()
 
     // reset the dirty flag
     setDirty(false);
+
+    // refresh node statuses
+    _graph->startWorker(Graph::BuildMode::PREPARE);
+
     return true;
 }
 

@@ -208,7 +208,7 @@ QVariant Graph::getNodeAttribute(const QString& nodeName, const QString& plugNam
     return QString::fromStdString(toString(attribute));
 }
 
-void Graph::startWorker(const QString& name, Graph::BuildMode mode)
+void Graph::startWorker(BuildMode mode, const QString& name)
 {
     if(_worker && _worker->isRunning())
         return;

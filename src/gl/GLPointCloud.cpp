@@ -154,7 +154,7 @@ float GLPointCloud::screenDistance(const QVector3D& point, const QPointF& target
 {
   auto clip = _cameraMatrix.map(QVector4D(point, 1));
   auto wpoint = toWindow(clip, viewport);
-  QVector3D wvector(wpoint.x(), wpoint.y(), zrange(clip.z()/clip.w()) ? INF_COORD : 0);
+  QVector3D wvector(wpoint.x(), wpoint.y(), zrange(clip.z()/clip.w()) ? 0 : INF_COORD);
   return QVector3D(target.x(), target.y(), 0).distanceToPoint(wvector);
 }
 

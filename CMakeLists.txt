@@ -26,34 +26,6 @@ set(CMAKE_MODULE_PATH "${ROOT}/cmake")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# #
-# # Clang && macosx
-# #
-# if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND APPLE)
-# 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-# endif()
-#
-# #
-# # C++11
-# #
-# if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"))
-# 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-# endif()
-#
-# #
-# # Clang && debug adds address sanitizer
-# #
-# if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND NOT APPLE)
-# 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
-# endif()
-#
-# #
-# # Disabling some warnings
-# #
-# if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND APPLE)
-#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Wc++11-extensions")
-# endif()
-
 #
 # RPATH handling
 #

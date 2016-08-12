@@ -5,7 +5,6 @@ import QtQuick.Dialogs 1.2
 import DarkStyle.Controls 1.0
 import DarkStyle.Dialogs 1.0
 import DarkStyle 1.0
-import "delegates"
 
 Item {
 

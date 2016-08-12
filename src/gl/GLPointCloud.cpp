@@ -136,20 +136,26 @@ void GLPointCloud::selectPoints(std::vector<QVector3D>& selectedPositions, const
   }
 }
 
+// Projection maps znear to -1 and zfar to +1.
+static inline bool zrange(float z)
+{
+  return z >= -1 && z <= 1;
+}
+
 bool GLPointCloud::pointSelected(const QVector3D& point, const QRectF& selection, const QRectF& viewport)
 {
-  // Must cull z < znear; not visible therefore not part of the selection.
-  auto wpoint = toWindow(point, viewport);
-  return selection.contains(QPointF(wpoint.x(), wpoint.y())) && wpoint.z() >= 0.1f; // XXX: hard-coded znear; see GLRenderer::updateWorldMatrix
+  // Must cull z < znear; not visible therefore not part of the selection. znear is mapped to -1
+  auto clip = _cameraMatrix.map(QVector4D(point, 1));
+  return zrange(clip.z()/clip.w()) && selection.contains(toWindow(clip, viewport));
 }
 
 // Not quite correct name as it also accounts for z and chooses the one nearest to the viewer.
 float GLPointCloud::screenDistance(const QVector3D& point, const QPointF& target, const QRectF& viewport)
 {
-  auto wpoint = toWindow(point, viewport);
-  if (wpoint.z() < 0.1)                 // XXX: hard-coded znear; force large distance
-    wpoint.setZ(INF_COORD);
-  return QVector3D(target.x(), target.y(), 0).distanceToPoint(wpoint);
+  auto clip = _cameraMatrix.map(QVector4D(point, 1));
+  auto wpoint = toWindow(clip, viewport);
+  QVector3D wvector(wpoint.x(), wpoint.y(), zrange(clip.z()/clip.w()) ? INF_COORD : 0);
+  return QVector3D(target.x(), target.y(), 0).distanceToPoint(wvector);
 }
 
 // NOTE: _cameraMatrix is static and is actually the MVP matrix used for rendering
@@ -157,14 +163,12 @@ float GLPointCloud::screenDistance(const QVector3D& point, const QPointF& target
 // origin, which is what we need. Therefore no need to add viewport.x/y when computing
 // the window coordinate.
 // Return: x,y are window coordinates, z is in NDC
-QVector3D GLPointCloud::toWindow(const QVector3D& point, const QRectF& viewport)
+QPointF GLPointCloud::toWindow(const QVector4D& clip, const QRectF& viewport)
 {
-  auto projected = _cameraMatrix.map(QVector4D(point[0], point[1], point[2], 1));
-  auto ndc = QVector3D(projected) / projected.w();
-  return QVector3D(
+  auto ndc = clip / clip.w();
+  return QPointF(
     viewport.width()/2*(ndc[0]+1),
-    viewport.height()/2*(-ndc[1]+1),  // invert y [ndc is opposite way of win]
-    ndc.z());
+    viewport.height()/2*(-ndc[1]+1)); // invert y [ndc is opposite way of win]
 }
 
 } // namespace

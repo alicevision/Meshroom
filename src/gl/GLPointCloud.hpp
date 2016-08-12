@@ -33,7 +33,7 @@ private:
     
     bool pointSelected(const QVector3D& point, const QRectF& selection, const QRectF& viewport);
     inline float screenDistance(const QVector3D& point, const QPointF& target, const QRectF& viewport);
-    inline QVector3D toWindow(const QVector3D& point, const QRectF& viewport);
+    inline QPointF toWindow(const QVector4D& clip, const QRectF& viewport);
 };
 
 } // namespace

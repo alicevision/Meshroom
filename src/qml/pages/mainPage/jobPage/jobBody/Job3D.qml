@@ -58,6 +58,13 @@ Item {
             text: "Reset scale"
             onTriggered: glview.resetScale()
         }
+
+        MenuSeparator {}
+
+        MenuItem {
+            text: "Get parameters"
+            onTriggered: cmdlineDialog.open()
+        }
     }
 
     Dialog {
@@ -95,6 +102,17 @@ Item {
             var deg = parseFloat(yrot.text);
             if (!isNaN(deg)) glview.yrot = deg;
             else console.log("Rotation must be a number");
+        }
+    }
+
+    Dialog {
+        id: cmdlineDialog
+        TextInput {
+            id: cmdparams
+        }
+        onVisibleChanged: {
+            var n = glview.planeNormal;
+            cmdparams.text = '\'%1,%2,%3;%4;%5\''.arg(n.x).arg(n.y).arg(n.z).arg(glview.yrot).arg(glview.scale);
         }
     }
 

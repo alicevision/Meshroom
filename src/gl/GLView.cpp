@@ -465,6 +465,7 @@ void GLView::definePlane()
   const auto& minsv = U.col(2);
   _planeNormal = QVector3D(minsv(0), minsv(1), minsv(2));
   _planeDefined = true;
+  emit planeNormalChanged();
   refresh();
 }
 

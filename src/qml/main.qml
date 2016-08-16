@@ -1,9 +1,12 @@
-import QtQuick 2.5
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 1.4
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
+import QtQuick 2.7
+import QtQuick.Layouts 1.3
+import QtQuick.Controls 1.4 // using SplitView
+import QtQuick.Controls.Styles 1.4 // using SplitView
+import QtQuick.Controls 2.0
 import Meshroom.Scene 1.0
+import Logger 1.0
+
+import "content"
 
 ApplicationWindow {
 
@@ -13,8 +16,6 @@ ApplicationWindow {
     width: 800
     height: 500
     visible: true
-    color: "#111"
-    title: Qt.application.name
 
     // properties
     property variant currentScene: _application.scene
@@ -31,10 +32,59 @@ ApplicationWindow {
     signal addNode()
     signal loadAlembic(var file)
 
-    // main content
+    // connections, menus and dialogs
     ApplicationConnections {}
     ApplicationMenus {}
     ApplicationDialogs { id: _dialogs }
-    ApplicationLayout { anchors.fill: parent }
 
+    // header
+    header: Header {}
+
+    // main content
+
+    property Component scrollViewHandle: Rectangle {
+        width: 1; height: 1
+        color: (styleData.hovered || styleData.resizing) ? "#5BB1F7" : "#333"
+    }
+
+    SplitView {
+        anchors.fill: parent
+        orientation: Qt.Horizontal
+        handleDelegate: scrollViewHandle
+        SplitView {
+            width: parent.width * 0.75
+            height: parent.height
+            Layout.minimumWidth: 30
+            orientation: Qt.Vertical
+            handleDelegate: scrollViewHandle
+            ColumnLayout {
+                spacing: 0
+                width: parent.width
+                height: parent.height * 0.55
+                TabBar {
+                    id: bar
+                    TabButton { text: "2D" }
+                    TabButton { text: "3D" }
+                }
+                StackLayout {
+                    currentIndex: bar.currentIndex
+                    onCurrentIndexChanged: children[currentIndex].focus = true
+                    View2D {}
+                    View3D {}
+                }
+            }
+            Graph {
+                Layout.minimumHeight: 30
+                onSelectionChanged: settings.model = node
+            }
+        }
+        Settings {
+            id: settings
+            Layout.minimumWidth: 30
+        }
+    }
+
+
+    // footer
+    footer: LogBar {}
 }

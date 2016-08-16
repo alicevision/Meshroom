@@ -1,8 +1,6 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
+import QtQuick 2.7
+import QtQuick.Controls 2.0
+import QtQuick.Layouts 1.3
 
 Item {
 
@@ -12,19 +10,16 @@ Item {
     property variant visualModel: null
     property real thumbnailSize: 130
 
-    // scroll & gridview
-    ScrollView {
-        id: scrollview
+    // gridview
+    GridView {
+        id: gridview
         anchors.fill: parent
-        GridView {
-            id: gridview
-            anchors.fill: parent
-            anchors.margins: 2
-            cellWidth: root.thumbnailSize
-            cellHeight: root.thumbnailSize
-            model: visualModel.parts.grid
-            clip: true
-        }
+        anchors.margins: 2
+        ScrollBar.vertical: ScrollBar {}
+        cellWidth: root.thumbnailSize
+        cellHeight: root.thumbnailSize
+        model: visualModel.parts.grid
+        clip: true
     }
 
     // bottom menu
@@ -34,8 +29,7 @@ Item {
         height: 30
         Rectangle {
             anchors.fill: parent
-            opacity: 0.6
-            color: Style.window.color.xdark
+            color: Qt.rgba(0, 0, 0, 0.3)
         }
         RowLayout {
             anchors.fill: parent
@@ -44,10 +38,10 @@ Item {
             spacing: 0
             Slider {
                 Layout.fillWidth: true
-                minimumValue: 50
-                maximumValue: 150
+                from: 50
+                to: 150
                 value: 60
-                onValueChanged: root.thumbnailSize = value
+                onPositionChanged: root.thumbnailSize = from+(to-from)*position
             }
         }
     }

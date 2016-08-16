@@ -1,8 +1,6 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
+import QtQuick 2.7
+import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.2
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
 import NodeEditor 1.0
 
 Rectangle {
@@ -12,27 +10,27 @@ Rectangle {
     x: 10
     y: 10
     z: currentNodeID == index ? 2 : 1
-    color: Style.window.color.dark
-    border.color: getColor()
+    color: Qt.rgba(0, 0, 0, 0.4)
+
+    border.color: {
+        if(mouseArea.containsMouse)
+            return "#5BB1F7";
+        // switch(model.status)
+        // {
+        //     case Node.READY: return Style.window.color.light;
+        //     case Node.WAITING: return Style.window.color.xlight;
+        //     case Node.RUNNING: return Style.window.color.selected;
+        //     case Node.ERROR: return Style.window.color.critical;
+        //     case Node.DONE: return Style.window.color.success;
+        // }
+        return Qt.rgba(1, 1, 1, 0.1);
+    }
 
     // properties
     property variant inputs: model.inputs
     property variant outputs: model.outputs
 
     // functions
-    function getColor() {
-        if(mouseArea.containsMouse)
-            return Style.window.color.selected;
-        switch(model.status)
-        {
-            case Node.READY: return Style.window.color.light;
-            case Node.WAITING: return Style.window.color.xlight;
-            case Node.RUNNING: return Style.window.color.selected;
-            case Node.ERROR: return Style.window.color.critical;
-            case Node.DONE: return Style.window.color.success;
-        }
-        return Style.window.color.light;
-    }
     function getInputItem(id) {
         return inputRepeater.itemAt(id);
     }
@@ -67,90 +65,88 @@ Rectangle {
             currentNodeID = index;
             nodeLeftClicked(model)
         }
-    }
 
-    // title
-    Text {
-        anchors.horizontalCenter: parent.horizontalCenter
-        height: 20
-        text: model.name
-        font.pixelSize: Style.text.size.xsmall
-        color: Style.text.color.dark
-        horizontalAlignment: Text.AlignHCenter
-    }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.topMargin: 4
+            anchors.bottomMargin: 4
+            spacing: 4
 
-    // input list
-    RowLayout {
-        anchors.fill: parent
-        anchors.topMargin: 20
-        anchors.bottomMargin: 10
-        spacing: 2
-        ScrollView {
-            id: inputScrollview
-            Layout.fillWidth: true
-            Layout.preferredHeight: parent.height
-            Column {
-                width: inputScrollview.width
-                height: inputRepeater.model ? inputRepeater.model.count * (inputRepeater.itemHeight+spacing) : 0
-                spacing: 2
-                Repeater {
-                    id: inputRepeater
-                    property int itemHeight: 15
+            // node title
+            Label {
+                Layout.fillWidth: true
+                text: model.name
+                horizontalAlignment: Text.AlignHCenter
+                state: "xsmall"
+            }
+
+            // node attributes
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                RowLayout {
                     anchors.fill: parent
-                    model: root.inputs
-                    RowLayout {
-                        width: inputRepeater.width
-                        height: inputRepeater.itemHeight
+                    spacing: 2
+
+                    // input attributes
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
                         spacing: 2
-                        Rectangle {
-                            Layout.fillHeight: true
-                            Layout.preferredWidth: 2
-                            color: Style.window.color.xlight
+                        Repeater {
+                            id: inputRepeater
+                            model: root.inputs
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.maximumHeight: 15
+                                spacing: 2
+                                Rectangle {
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: 1
+                                    color: Qt.rgba(1, 1, 1, 0.5)
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: model.name
+                                    horizontalAlignment: Text.AlignLeft
+                                    state: "xsmall"
+                                }
+                            }
                         }
-                        Text {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            text: model.name
-                            font.pixelSize: Style.text.size.xsmall
-                        }
+                        Item { Layout.fillHeight: true } // spacer
                     }
+
+                    // output attributes
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: 2
+                        Repeater {
+                            id: outputRepeater
+                            model: root.outputs
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.maximumHeight: 15
+                                spacing: 2
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: model.name
+                                    horizontalAlignment: Text.AlignRight
+                                    state: "xsmall"
+                                }
+                                Rectangle {
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: 1
+                                    color: Qt.rgba(1, 1, 1, 0.5)
+                                }
+                            }
+                        }
+                        Item { Layout.fillHeight: true } // spacer
+                    }
+
                 }
             }
         }
-
-        // output list
-        ScrollView {
-            id: outputScrollview
-            Layout.fillWidth: true
-            Layout.preferredHeight: parent.height
-            Column {
-                width: outputScrollview.width
-                height: outputRepeater.model ? outputRepeater.model.count * (outputRepeater.itemHeight+spacing) : 0
-                spacing: 2
-                Repeater {
-                    id: outputRepeater
-                    property int itemHeight: 15
-                    anchors.fill: parent
-                    model: root.outputs
-                    RowLayout {
-                        width: inputRepeater.width
-                        height: inputRepeater.itemHeight
-                        spacing: 2
-                        Text {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            text: model.name
-                            font.pixelSize: Style.text.size.xsmall
-                            horizontalAlignment: Text.AlignRight
-                        }
-                        Rectangle {
-                            Layout.fillHeight: true
-                            Layout.preferredWidth: 2
-                            color: Style.window.color.xlight
-                        }
-                    }
-                }
-            }
-        }
     }
+
 }

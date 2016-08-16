@@ -4,7 +4,7 @@ DEPENDENCIES
 ------------
 
 - cmake
-- Qt >= 5.6
+- Qt >= 5.7
 - Alembic (optional)
 
 

@@ -1,4 +1,4 @@
-import QtQuick 2.5
+import QtQuick 2.7
 
 Item {
     Connections {
@@ -11,7 +11,7 @@ Item {
             function reset_CB() { currentScene.reset(); }
             if(currentScene.dirty) {
                 function save_CB() { saveScene(reset_CB); }
-                var dialog = _dialogs.maySaveScene.createObject(_window);
+                var dialog = _dialogs.maySaveScene.createObject(parent);
                 dialog.onAccepted.connect(save_CB);
                 dialog.onRejected.connect(reset_CB);
                 dialog.open();
@@ -26,13 +26,13 @@ Item {
                     currentScene.load();
                 }
                 currentScene.reset();
-                var dialog = _dialogs.openScene.createObject(_window);
+                var dialog = _dialogs.openScene.createObject(parent);
                 dialog.onAccepted.connect(_CB);
                 dialog.open();
             }
             if(currentScene.dirty) {
                 function save_CB() { saveScene(open_CB); }
-                var dialog = _dialogs.maySaveScene.createObject(_window);
+                var dialog = _dialogs.maySaveScene.createObject(parent);
                 dialog.onAccepted.connect(save_CB);
                 dialog.onRejected.connect(open_CB);
                 dialog.open();
@@ -54,15 +54,16 @@ Item {
                 currentScene.save();
                 if(callback) callback();
             }
-            var dialog = _dialogs.saveScene.createObject(_window);
+            var dialog = _dialogs.saveScene.createObject(parent);
             dialog.onAccepted.connect(_CB);
             dialog.open();
         }
         onAddNode: {
-            function add_CB() {
-                currentScene.graph.addNode(dialog.selection);
+            function add_CB(selection) {
+                currentScene.graph.addNode(selection);
+                currentScene.dirty = true;
             }
-            var dialog = _dialogs.addNode.createObject(_window);
+            var dialog = _dialogs.addNode.createObject(parent);
             dialog.onAccepted.connect(add_CB);
             dialog.open();
         }

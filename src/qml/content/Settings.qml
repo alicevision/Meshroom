@@ -1,18 +1,15 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
+import QtQuick 2.7
+import QtQuick.Controls 2.0
+import QtQuick.Layouts 1.3
 import NodeEditor 1.0
 import ImageGallery 1.0
 
-Rectangle {
+Item {
 
     id : root
 
     // properties
     property variant model: null
-    color: Style.window.color.normal
     clip: true
 
     // signal / slots
@@ -38,45 +35,36 @@ Rectangle {
     Component {
         id: imageListDelegate
         RowLayout {
-            Text {
+            Label {
                 text: (modelData && Array.isArray(modelData.value)) ? modelData.value.length + " items" : "0 item"
-                font.pixelSize: Style.text.size.xsmall
             }
             Item { Layout.fillWidth: true } // spacer
             ToolButton {
-                iconSource: "qrc:///images/arrow.svg"
-                onClicked: stackView.push({
-                    item: galleryTab,
-                    properties: {
-                        node: nodeName,
-                        attribute: modelData,
-                        model: modelData.value
-                    }
+                // iconSource: "qrc:///images/arrow.svg"
+                onClicked: stackView.push(galleryTab, {
+                    node: nodeName,
+                    attribute: modelData,
+                    model: modelData.value
                 })
             }
         }
     }
     Component {
         id: labelDelegate
-        Item {
-            implicitHeight: 32
-            Text {
-                anchors.fill: parent
-                text: modelData.name
-                font.pixelSize: Style.text.size.xsmall
-            }
+        Label {
+            text: modelData.name
+            state: "xsmall"
         }
     }
     Component {
         id: sliderDelegate
         Slider {
             Component.onCompleted: {
-                minimumValue = modelData.min;
-                maximumValue = modelData.max;
+                from = modelData.min;
+                to = modelData.max;
                 stepSize = modelData.step;
                 value = modelData.value;
             }
-            updateValueWhileDragging: true
             onValueChanged: currentScene.graph.setNodeAttribute(nodeName, modelData.key, value)
         }
     }
@@ -106,21 +94,26 @@ Rectangle {
     // stack view components
     Component {
         id: mainPropertiesTab
-        ScrollView {
-            id: scrollView
-            flickableItem.anchors.margins: 5
+        Flickable {
+            id: flickable
+            ScrollBar.vertical: ScrollBar {}
+            contentWidth: stackView.width
+            contentHeight: grid.height
             GridLayout {
-                width: scrollView.width - 10
+                id: grid
+                width: flickable.width - 10
                 columns: 2
                 rowSpacing: 0
-                columnSpacing: 5
+                columnSpacing: 2
                 Repeater {
                     model: (root.model && root.model.inputs) ? root.model.inputs.count*2 : 0
                     delegate: Loader {
                         Layout.fillWidth: index%2 != 0
                         Layout.preferredWidth: index%2 ? parent.width : parent.width*0.3
+                        Layout.margins: 5
                         property variant modelData: null
                         property string nodeName: ""
+                        clip: true
                         sourceComponent: {
                             modelData = root.model.inputs.get(index/2).modelData;
                             nodeName = root.model.name;

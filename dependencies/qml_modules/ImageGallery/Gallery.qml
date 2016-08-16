@@ -1,9 +1,7 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
+import QtQuick 2.7
+import QtQuick.Controls 2.0
+import QtQuick.Layouts 1.3
 import QtQml.Models 2.2
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
 import "delegate"
 import "views"
 
@@ -15,7 +13,7 @@ Item {
     property variant model: null
     property bool editable: true
     property bool closeable: false
-    property alias title: dropArea.title
+    // property alias title: dropArea.title
 
     // signal / slots
     signal closed()
@@ -83,74 +81,43 @@ Item {
         id: dropArea
         anchors.fill: parent
         enabled: root.editable
-        onFilesDropped: {
-            for(var i=0; i<files.length; ++i)
-                root.itemAdded(files[i]);
+        // onFilesDropped: {
+        //     for(var i=0; i<files.length; ++i)
+        //         root.itemAdded(files[i]);
+        // }
+    }
+
+    // visual model
+    DelegateModel {
+        id: imageModel
+        delegate: ThumbnailDelegate {
+            editable: root.editable
+            onSelectOne: _selector.selectOne(id)
+            onSelectContiguous: _selector.selectContiguous(id)
+            onSelectExtended: _selector.add(id)
+            onUnselect: _selector.unselect(id)
+            onUnselectAll: _selector.clear()
+            onRemoveSelected: _selector.remove()
+            onRemoveOne: _selector.removeOne(id)
         }
+        model: root.model
     }
 
     ColumnLayout {
         anchors.fill: parent
-        Item { // top menu
-            Layout.fillWidth: true
-            Layout.preferredHeight: 30
-            Rectangle {
-                anchors.fill: parent
-                opacity: 0.6
-                color: Style.window.color.xdark
+        ColumnLayout {
+            spacing: 0
+            TabBar {
+                id: bar
+                Layout.fillWidth: true
+                TabButton { text: "Grid" }
+                TabButton { text: "List" }
             }
-            RowLayout {
-                anchors.fill: parent
-                ListView {
-                    id: listview
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    model: tabview.count
-                    spacing: 0
-                    interactive: false
-                    orientation: Qt.Horizontal
-                    delegate: Button {
-                        iconSource: tabview.getTab(index).iconSource
-                        onClicked: tabview.currentIndex = index
-                    }
-                }
-                Item { Layout.fillWidth: true } // spacer
-                ToolButton {
-                    visible: root.closeable
-                    iconSource: "qrc:///images/close.svg"
-                    onClicked: closed()
-                }
-            }
-        }
-        TabView { // tab view
-            id: tabview
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            focus: true
-            tabsVisible: false
-            DelegateModel {
-                id: imageModel
-                delegate: ThumbnailDelegate {
-                    editable: root.editable
-                    onSelectOne: _selector.selectOne(id)
-                    onSelectContiguous: _selector.selectContiguous(id)
-                    onSelectExtended: _selector.add(id)
-                    onUnselect: _selector.unselect(id)
-                    onUnselectAll: _selector.clear()
-                    onRemoveSelected: _selector.remove()
-                    onRemoveOne: _selector.removeOne(id)
-                }
-                model: root.model
-            }
-            Tab {
-                title: "Grid"
-                property string iconSource: "qrc:///images/grid.svg"
+            StackLayout {
+                currentIndex: bar.currentIndex
+                onCurrentIndexChanged: children[currentIndex].focus = true
                 GridImageView { visualModel: imageModel }
-            }
-            Tab {
-                title: "List"
-                property string iconSource: "qrc:///images/list.svg"
-                ListImageView  { visualModel: imageModel }
+                ListImageView { visualModel: imageModel }
             }
         }
     }

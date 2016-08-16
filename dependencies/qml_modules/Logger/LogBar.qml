@@ -1,79 +1,65 @@
-import QtQuick 2.5
-import QtQuick.Layouts 1.2
-import QtQuick.Controls 1.4
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
+import QtQuick 2.7
+import QtQuick.Layouts 1.3
+import QtQuick.Controls 2.0
 import Logger 1.0
 
-Rectangle {
+Item {
 
     id: root
-    color: "transparent"
+    implicitHeight: 30
+    implicitWidth: parent ? parent.width : 200
+    height: expanded ? 150 : 30
+    // Behavior on height {
+    //     SequentialAnimation {
+    //         NumberAnimation {}
+    //         ScriptAction { script: listView.positionViewAtEnd() }
+    //     }
+    // }
 
     // properties
     property bool expanded: false
-    property alias view: logview
-
-    // signals & slots
-    signal toggle()
-    onToggle: expanded = !expanded
 
     RowLayout {
         anchors.fill: parent
-        ScrollView {
+        spacing: 0
+        ListView {
+            id: listView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            ListView {
-                id: logview
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                model: LogModel { id: logmodel }
-                delegate: Item {
-                    width: parent.width
-                    height: 30
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 5
-                        Text {
-                            text: "#"+index
-                            font.pixelSize: Style.text.size.xsmall
-                            color: Style.text.color.dark
-                        }
-                        Text {
-                            text: model.message
-                            font.pixelSize: Style.text.size.xsmall
-                            color: {
-                                switch(model.type) {
-                                    case Log.DEBUG:
-                                        return Style.text.color.debug;
-                                    case Log.WARNING:
-                                        return Style.text.color.warning;
-                                    case Log.CRITICAL:
-                                    case Log.FATAL:
-                                        return Style.text.color.critical;
-                                    case Log.INFO:
-                                    default:
-                                        return Style.text.color.info;
-                                }
-                            }
-                        }
-                        Item { Layout.fillWidth: true } // spacer
+            ScrollBar.vertical: ScrollBar {}
+            clip: true
+            model: LogModel {}
+            snapMode: ListView.SnapToItem
+            delegate: Item {
+                width: ListView.view.width
+                height: 30
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 5
+                    Label {
+                        text: "#"+index
+                        state: "xsmall"
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        text: model.message
+                        state: "xsmall"
                     }
                 }
-                onCountChanged: {
-                    positionViewAtEnd();
-                    currentIndex = count - 1;
-                }
+            }
+            onCountChanged: {
+                positionViewAtEnd();
+                currentIndex = count - 1;
             }
         }
         ColumnLayout {
             ToolButton {
-                iconSource: "qrc:///images/expand.svg"
-                onClicked: toggle()
+                // iconSource: "qrc:///images/expand.svg"
+                onClicked: root.expanded = !root.expanded
             }
             ToolButton {
-                iconSource: "qrc:///images/trash.svg"
-                onClicked: logmodel.clear()
+                // iconSource: "qrc:///images/trash.svg"
+                onClicked: listView.model.clear()
                 visible: root.expanded
             }
         }

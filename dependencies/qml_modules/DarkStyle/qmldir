@@ -1,3 +1,3 @@
-module DarkStyle
+module TestStyle
 
-singleton Style 1.0 Style.qml
+singleton Globals 1.0 Globals.qml

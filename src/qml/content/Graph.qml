@@ -1,8 +1,6 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
+import QtQuick 2.7
+import QtQuick.Controls 2.0
+import QtQuick.Layouts 1.3
 import NodeEditor 1.0
 import Meshroom.Graph 1.0 as MG
 
@@ -28,7 +26,6 @@ Item {
             text: "Refresh status..."
             onTriggered: compute(MG.Graph.PREPARE)
         }
-        MenuSeparator {}
     }
 
     // node editor
@@ -43,14 +40,15 @@ Item {
                 currentScene.graph.startWorker(mode, node.name);
             }
             var menu = contextMenu.createObject(editor);
+            menu.x = node.x+10;
+            menu.y = node.y+10;
             menu.compute.connect(compute_CB);
-            menu.popup()
+            menu.open()
         }
     }
 
-    Text {
+    Label {
         text: currentScene.graph.cacheUrl.toString().replace("file://", "")
-        color: Style.text.color.dark
-        font.pixelSize: Style.text.size.xsmall
+        state: "xsmall"
     }
 }

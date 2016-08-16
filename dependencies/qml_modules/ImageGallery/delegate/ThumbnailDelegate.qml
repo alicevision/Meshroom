@@ -1,8 +1,6 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
+import QtQuick 2.7
+import QtQuick.Controls 2.0
+import QtQuick.Layouts 1.3
 
 Package {
 
@@ -80,10 +78,10 @@ Package {
             anchors.fill: parent
             color: {
                 if(root.selected)
-                    return Style.window.color.selected;
+                    return "#5BB1F7";
                 if(listMouseArea.containsMouse)
-                    return Style.window.color.light;
-                return Style.window.color.dark;
+                    return Qt.rgba(1, 1, 1, 0.3);
+                return Qt.rgba(0, 0, 0, 0.1);
             }
             opacity: 0.3
         }
@@ -107,14 +105,9 @@ Package {
                 }
             }
             ColumnLayout {
-                Text {
+                Label {
                     text: modelData
-                    font.pixelSize: Style.text.size.small
-                }
-                Text {
-                    text: "-"
-                    font.pixelSize: Style.text.size.small
-                    color: Style.text.color.dark
+                    state: "xsmall"
                 }
             }
             Item {
@@ -145,10 +138,10 @@ Package {
             Rectangle {
                 color: {
                     if(root.selected)
-                        return Style.window.color.selected;
+                        return "#5BB1F7";
                     if(gridMouseArea.containsMouse)
-                        return Style.window.color.xlight;
-                    return Style.window.color.dark;
+                        return Qt.rgba(1, 1, 1, 0.3);
+                    return Qt.rgba(0, 0, 0, 0.1);
                 }
                 width: gridMouseArea.width
                 height: gridMouseArea.height
@@ -167,11 +160,10 @@ Package {
                     height: childrenRect.height
                     Behavior on height { NumberAnimation {} }
                     color: "#66111111"
-                    Text {
+                    Label {
                         width: parent.width
                         text: modelData
-                        color: Style.text.color.xlight
-                        font.pixelSize: Style.text.size.xsmall
+                        state: "xsmall"
                         maximumLineCount: (gridMouseArea.containsMouse) ? 4 : 1
                     }
                 }
@@ -195,7 +187,6 @@ Package {
             text: "Remove"
             onTriggered: removeOne(index)
         }
-        MenuSeparator {}
         MenuItem {
             text: "Open parent directory"
             onTriggered: {

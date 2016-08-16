@@ -1,35 +1,33 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
+import QtQuick 2.7
+import QtQuick.Layouts 1.3
+import QtQuick.Controls 2.0
 
-Rectangle {
+Item {
 
-    color: Style.window.color.xdark
+    implicitHeight: 30
+    implicitWidth: parent ? parent.width : 200
 
     RowLayout {
         anchors.fill: parent
+        anchors.leftMargin: 10
         spacing: 0
-        Item { Layout.preferredWidth: 10 } // spacer
-        Text {
+        Label {
             text: currentScene.name
-            font.pixelSize: Style.text.size.small
+            state: "small"
         }
-        Text {
+        Label {
             text: ".meshroom"
-            color: Style.text.color.dark
-            font.pixelSize: Style.text.size.small
+            state: "small"
+            enabled: false
         }
-        Text {
+        Label {
             text: "*"
-            color: Style.text.color.dark
-            font.pixelSize: Style.text.size.small
             visible: currentScene.dirty
+            state: "small"
         }
         Item { Layout.fillWidth: true } // spacer
         ToolButton {
-            iconSource: "qrc:///images/disk.svg"
+            // iconSource: "qrc:///images/disk.svg"
             text: "SAVE"
             visible: currentScene.dirty
             onClicked: saveScene(null)
@@ -39,7 +37,7 @@ Rectangle {
                 indeterminate: true
             }
             ToolButton {
-                iconSource: "qrc:///images/pause.svg"
+                // iconSource: "qrc:///images/pause.svg"
                 text: "STOP"
                 onClicked: currentScene.graph.stopWorker()
             }

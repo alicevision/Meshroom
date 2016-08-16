@@ -1,11 +1,9 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
+import QtQuick 2.7
+import QtQuick.Controls 2.0
+import QtQuick.Layouts 1.3
 import NodeEditor 1.0
 
-Rectangle {
+Item {
 
     id: root
 
@@ -86,15 +84,18 @@ Rectangle {
     }
 
     // background
-    color: Style.window.color.dark
-    Image {
+    Rectangle {
         anchors.fill: parent
-        source: "qrc:///images/stripes.png"
-        fillMode: Image.Tile
-        opacity: 0.3
-        MouseArea {
+        color: Qt.rgba(0.5, 0.5, 0.5, 0.1)
+        Image {
             anchors.fill: parent
-            onClicked: selectionChanged(null)
+            source: "qrc:///images/stripes.png"
+            fillMode: Image.Tile
+            opacity: 0.5
+            MouseArea {
+                anchors.fill: parent
+                onClicked: selectionChanged(null)
+            }
         }
     }
 
@@ -105,7 +106,7 @@ Rectangle {
         model: root.graph.nodes
         delegate: NodeDelegate {
             width: 100
-            height: 60
+            height: 80
         }
     }
 
@@ -122,10 +123,9 @@ Rectangle {
     }
 
     // help msg
-    Text {
-        visible: !root.graph.nodes || root.graph.nodes.count == 0
+    Label {
         anchors.centerIn: parent
+        visible: !root.graph.nodes || root.graph.nodes.count == 0
         text: "Add new nodes with [TAB]"
-        color: Style.text.color.xdark
     }
 }

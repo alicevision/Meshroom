@@ -1,10 +1,7 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
+import QtQuick 2.7
+import QtQuick.Layouts 1.3
+import QtQuick.Controls 2.0
 import QtQuick.Dialogs 1.2
-import DarkStyle.Controls 1.0
-import DarkStyle.Dialogs 1.0
-import DarkStyle 1.0
 
 Item {
 
@@ -26,60 +23,54 @@ Item {
         sidebarVisible: false
         nameFilters: [ "Meshroom file (*.meshroom)" ]
     }
-    property Component maySaveScene: Dialog {
-        title: "Save?"
-        content: RowLayout {
-            Button {
-                Layout.fillWidth: true
-                text: "No"
-                onClicked: reject()
+    property Component maySaveScene: Popup {
+        signal accepted()
+        signal rejected()
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            Label {
+                text: "Do you want to save changes?"
             }
-            Button {
-                Layout.fillWidth: true
-                text: "Yes"
-                onClicked: accept()
+            RowLayout {
+                Button {
+                    Layout.fillWidth: true
+                    text: "Yes"
+                    onClicked: { accepted(); close(); }
+                }
+                Button {
+                    Layout.fillWidth: true
+                    text: "No"
+                    onClicked: { rejected(); close(); }
+                }
+                Button {
+                    Layout.fillWidth: true
+                    text: "Cancel"
+                    onClicked: { close(); }
+                }
             }
         }
     }
-    property Component addNode: Dialog {
-        property variant selection: ""
-        title: "New node"
-        content: ColumnLayout {
+    property Component addNode: Popup {
+        signal accepted(var selection)
+        signal rejected()
+        ColumnLayout {
+            anchors.fill: parent
             spacing: 0
             ListView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 model: _application.pluginNodes
-                delegate: Rectangle {
+                delegate: Button {
                     width: parent.width
-                    height: 30
-                    color: mouseArea.containsMouse ? "transparent" : Style.window.color.xdark
-                    border.color: Style.window.color.dark
-                    Behavior on color { ColorAnimation {}}
-                    MouseArea {
-                        id: mouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: {
-                            selection = modelData.metadata;
-                            accept();
-                        }
-                    }
-                    Text {
-                        id: txt
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        text: modelData.plugin + "/" + modelData.type
-                        color: mouseArea.containsMouse ? Style.text.color.selected : Style.text.color.normal
-                        Behavior on color { ColorAnimation {}}
-                    }
+                    text: modelData.plugin + "/" + modelData.type
+                    onClicked: { accepted(modelData.metadata); close(); }
                 }
             }
             Button {
                 Layout.fillWidth: true
                 text: "Cancel"
-                onClicked: reject()
+                onClicked: { rejected(); close(); }
             }
         }
     }

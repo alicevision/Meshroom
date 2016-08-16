@@ -39,7 +39,7 @@ include_directories(${ROOT}/src)
 include_directories(${DG_INCLUDE_DIR})
 add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})
 target_link_libraries(${TARGETOBJ} ${OPENGL_LIBRARIES} ${DG_LIBRARY})
-QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick)
+QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick QuickControls2)
 
 # Alembic (optional)
 find_package(Alembic)

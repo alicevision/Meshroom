@@ -1,144 +1,143 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4
-import QtQuick.Layouts 1.2
-import DarkStyle.Controls 1.0
-import DarkStyle 1.0
-import Meshroom.GL 1.0
+import QtQuick 2.7
+import QtQuick.Scene3D 2.0
 
-Item {
+import Qt3D.Core 2.0
+import Qt3D.Render 2.0
+import Qt3D.Input 2.0
+import Qt3D.Extras 2.0
+import Qt3D.Logic 2.0
 
-    DropArea {
-        anchors.fill: parent
-        hideBackground: true
-        Connections {
-            target: _window
-            onLoadAlembic: glview.setAlembicScene(Qt.resolvedUrl(file))
+Scene3D {
+    id: scene3d
+
+    anchors.fill: parent
+    focus: true
+    aspects: ["input", "logic"]
+    cameraAspectRatioMode: Scene3D.AutomaticAspectRatio
+
+    Entity {
+        id: sceneRoot
+        Camera {
+            id: camera
+            property vector3d frontNormalized: position.minus(viewCenter).normalized()
+            projectionType: CameraLens.PerspectiveProjection
+            fieldOfView: 45
+            nearPlane : 0.1
+            farPlane : 1000.0
+            position: Qt.vector3d( 0.0, 0.0, 40.0 )
+            upVector: Qt.vector3d( 0.0, 1.0, 0.0 )
+            viewCenter: Qt.vector3d( 0.0, 0.0, 0.0 )
         }
-        onDropped: glview.setAlembicScene(drop.urls[0])
-        GLView {
-            id: glview
-            anchors.fill: parent
-            MouseArea {
-                id: mouseArea
-                anchors.fill: parent
-                onClicked: viewSettings.state = "closed"
-                propagateComposedEvents: true
-            }
-            Rectangle {
-                id: viewSettings
-                onFocusChanged: console.log(focus)
-                width: parent.width*0.3
-                height: parent.height
-                color: "transparent"
-                state: "closed"
-                states: [
-                    State {
-                        name: "opened"
-                        PropertyChanges {
-                            target: viewSettings
-                            x: parent.width-width
-                            color: Style.window.color.xdark
-                        }
-                        PropertyChanges {
-                            target: viewScroll
-                            opacity: 1
-                        }
-                        PropertyChanges {
-                            target: mouseArea
-                            enabled: true
-                        }
-                    },
-                    State {
-                        name: "closed"
-                        PropertyChanges {
-                            target: viewSettings
-                            x: parent.width-viewSettingsButton.width
-                            color: "transparent"
-                        }
-                        PropertyChanges {
-                            target: viewScroll
-                            opacity: 0
-                        }
-                        PropertyChanges {
-                            target: mouseArea
-                            enabled: false
-                        }
-                    }
-                ]
-                transitions: [
-                    Transition {
-                        NumberAnimation { properties: "x,y,opacity" }
-                        ColorAnimation { properties: "color" }
-                    }
-                ]
-                ScrollView {
-                    id: viewScroll
-                    anchors.fill: parent
-                    anchors.margins: 5
-                    ColumnLayout {
-                        width: viewScroll.width
-                        Text {
-                            text: "show"
-                        }
-                        CheckBox {
-                            text: "grid"
-                            checked: glview.gridVisibility
-                            onClicked: glview.setGridVisibility(checked)
-                        }
-                        CheckBox {
-                            text: "axis"
-                            checked: glview.gizmoVisibility
-                            onClicked: glview.setGizmoVisibility(checked)
-                        }
-                        CheckBox {
-                            text: "cameras"
-                            checked: glview.cameraVisibility
-                            onClicked: glview.setCameraVisibility(checked)
-                        }
-                        Rectangle { // spacer
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 1
-                            color: Style.window.color.dark
-                        }
-                        Text {
-                            text: "point size"
-                        }
-                        Slider {
-                            Layout.fillWidth: true
-                            onValueChanged: glview.setPointSize(value)
-                            minimumValue: 0.1
-                            maximumValue: 10
-                            value: 1
-                            stepSize: 0.1
-                        }
-                        Rectangle { // spacer
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 1
-                            color: Style.window.color.dark
-                        }
-                        Text {
-                            text: "camera scale"
-                        }
-                        Slider {
-                            Layout.fillWidth: true
-                            onValueChanged: glview.setCameraScale(value)
-                            minimumValue: 0.1
-                            maximumValue: 5
-                            value: 1
-                            stepSize: 0.1
-                        }
-                    }
-                }
-                ToolButton {
-                    id: viewSettingsButton
-                    anchors.left: parent.left
-                    anchors.bottom: parent.bottom
-                    iconSource: "qrc:///images/disk.svg"
-                    onClicked: viewSettings.state = (viewSettings.state == "opened") ? "closed" : "opened"
-                }
-            }
 
-
+        components: [
+            RenderSettings {
+                activeFrameGraph: ForwardRenderer {
+                    clearColor: Qt.rgba(0, 0, 0, 0.2)
+                    camera: camera
+                }
+            },
+            InputSettings {}
+        ]
+        MouseDevice { id:mouse1 }
+        MouseHandler {
+            sourceDevice: mouse1
+            onWheel: {
+                var d = wheel.angleDelta.y * 0.1
+                camera.fieldOfView = camera.fieldOfView+d
+                console.log("camera.fieldOfView = %1".arg(camera.fieldOfView))
+            }
+        }
+        KeyboardDevice { id: keyboard1 }
+		KeyboardHandler {
+			id: input
+			sourceDevice: keyboard1
+			focus: true
+			onPressed: {
+				switch (event.key) {
+					case Qt.Key_W: {
+						movement.w = camera.frontNormalized
+						break
+					}
+					case Qt.Key_S: {
+						movement.s = camera.frontNormalized
+						break
+					}
+					case Qt.Key_A: {
+						movement.a = camera.frontNormalized.crossProduct(camera.upVector).normalized()
+						break
+					}
+					case Qt.Key_D: {
+						movement.d = camera.frontNormalized.crossProduct(camera.upVector).normalized()
+						break
+					}
+					case Qt.Key_Shift: {
+						movement.acc = .2
+						break
+					}
+				}
+			}
+			onReleased: {
+				switch (event.key) {
+					case Qt.Key_W: {
+						movement.w = movement.zero
+						break
+					}
+					case Qt.Key_S: {
+						movement.s = movement.zero
+						break
+					}
+					case Qt.Key_A: {
+						movement.a = movement.zero
+						break
+					}
+					case Qt.Key_D: {
+						movement.d = movement.zero
+						break
+					}
+					case Qt.Key_Shift: {
+						movement.acc = 1.
+						break
+					}
+				}
+			}
+		}
+        FrameAction {
+			id: movement
+			readonly property real scale: 1e1
+			property real acc: 1.
+			property vector3d w: Qt.vector3d(0,0,0)
+			property vector3d s: Qt.vector3d(0,0,0)
+			property vector3d a: Qt.vector3d(0,0,0)
+			property vector3d d: Qt.vector3d(0,0,0)
+			property vector3d velocity: w.minus(s).plus(a).minus(d)
+			readonly property vector3d zero: Qt.vector3d(0,0,0)
+			onTriggered: {
+				if (velocity !== zero) {
+					camera.translate(velocity.times(acc * scale * dt))
+					console.log("camera.viewCenter = %1".arg(camera.viewCenter))
+				}
+			}
+		}
+        PhongMaterial {
+            id: material
+        }
+        SphereMesh {
+            id: sphereMesh
+            radius: 3
+        }
+        Transform {
+            id: sphereTransform
+            property real userAngle: 0.0
+            matrix: {
+                var m = Qt.matrix4x4();
+                m.rotate(userAngle, Qt.vector3d(0, 1, 0))
+                // m.translate(Qt.vector3d(20, 0, 0));
+                return m;
+            }
+        }
+        Entity {
+            id: sphereEntity
+            components: [ sphereMesh, material, sphereTransform ]
         }
     }
 

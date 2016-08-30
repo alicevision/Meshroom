@@ -19,14 +19,13 @@ set(TARGETOBJ qt3DAlembicEntityQmlPlugin)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Core REQUIRED)
-find_package(Qt5Widgets REQUIRED)
 find_package(Qt53DCore REQUIRED)
 find_package(Qt53DRender REQUIRED)
 find_package(Qt53DExtras REQUIRED)
 
 # Alembic
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register")
-find_package(Alembic)
+find_package(Alembic REQUIRED)
 include_directories(${ABC_INCLUDE_DIR})
 
 #
@@ -34,7 +33,7 @@ include_directories(${ABC_INCLUDE_DIR})
 #
 add_library(${TARGETOBJ} SHARED ${TARGET_SRCS})
 target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
-QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick 3DCore 3DRender 3DExtras)
+QT5_USE_MODULES(${TARGETOBJ} Core Qml Quick 3DCore 3DRender 3DExtras)
 
 #
 # Install settings

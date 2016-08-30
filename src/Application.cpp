@@ -1,6 +1,5 @@
 #include "Application.hpp"
 #include "PluginInterface.hpp"
-#include "gl/GLView.hpp"
 #include <QtQml>
 #include <QCoreApplication>
 #include <QPluginLoader>

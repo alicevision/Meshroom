@@ -22,8 +22,9 @@ include_directories(${OPENGL_INCLUDE_DIR})
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Core REQUIRED)
-find_package(Qt5Widgets REQUIRED)
-QT5_ADD_RESOURCES(TARGET_QRCS qml/resources.qrc)
+find_package(Qt5Qml REQUIRED)
+find_package(Qt5Quick REQUIRED)
+find_package(Qt5QuickControls2 REQUIRED)
 
 #
 # Add definitions
@@ -39,15 +40,8 @@ include_directories(${ROOT}/src)
 include_directories(${DG_INCLUDE_DIR})
 add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})
 target_link_libraries(${TARGETOBJ} ${OPENGL_LIBRARIES} ${DG_LIBRARY})
-QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick QuickControls2)
-
-# # Alembic (optional)
-# find_package(Alembic)
-# if(ALEMBIC_FOUND)
-#     include_directories(${ABC_INCLUDE_DIR})
-#     add_definitions(-DWITH_ALEMBIC)
-#     target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
-# endif(ALEMBIC_FOUND)
+QT5_ADD_RESOURCES(TARGET_QRCS qml/resources.qrc)
+QT5_USE_MODULES(${TARGETOBJ} Core Qml Quick QuickControls2)
 
 #
 # Install settings

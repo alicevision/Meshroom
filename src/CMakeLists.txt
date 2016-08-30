@@ -41,13 +41,13 @@ add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})
 target_link_libraries(${TARGETOBJ} ${OPENGL_LIBRARIES} ${DG_LIBRARY})
 QT5_USE_MODULES(${TARGETOBJ} Widgets Qml Quick QuickControls2)
 
-# Alembic (optional)
-find_package(Alembic)
-if(ALEMBIC_FOUND)
-    include_directories(${ABC_INCLUDE_DIR})
-    add_definitions(-DWITH_ALEMBIC)
-    target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
-endif(ALEMBIC_FOUND)
+# # Alembic (optional)
+# find_package(Alembic)
+# if(ALEMBIC_FOUND)
+#     include_directories(${ABC_INCLUDE_DIR})
+#     add_definitions(-DWITH_ALEMBIC)
+#     target_link_libraries(${TARGETOBJ} ${ABC_LIBRARIES})
+# endif(ALEMBIC_FOUND)
 
 #
 # Install settings
@@ -66,3 +66,4 @@ add_subdirectory(../dependencies/qml_modules/GlobalShortcut ../qml_modules/Globa
 add_subdirectory(../dependencies/qml_modules/DarkStyle ../qml_modules/DarkStyle)
 add_subdirectory(../dependencies/qml_modules/ImageGallery ../qml_modules/ImageGallery)
 add_subdirectory(../dependencies/qml_modules/NodeEditor ../qml_modules/NodeEditor)
+add_subdirectory(../dependencies/qml_modules/Qt3DAlembicEntity ../qml_modules/Qt3DAlembicEntity)

@@ -29,12 +29,11 @@ Application::Application(QQmlApplicationEngine& engine)
     // qml modules path
     engine.addImportPath(qApp->applicationDirPath() + "/qml_modules");
     // register types
-    qmlRegisterType<GLView>("Meshroom.GL", 1, 0, "GLView");
     qmlRegisterType<Scene>("Meshroom.Scene", 1, 0, "Scene");
     qmlRegisterType<Graph>("Meshroom.Graph", 1, 0, "Graph");
     // set opengl profile
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
-    fmt.setVersion(3, 2);
+    fmt.setVersion(4, 3);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(fmt);
     // expose this object to QML & load the main QML file

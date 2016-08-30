@@ -69,8 +69,8 @@ ApplicationWindow {
                 StackLayout {
                     currentIndex: bar.currentIndex
                     onCurrentIndexChanged: children[currentIndex].focus = true
-                    View2D {}
-                    View3D {}
+                    View2D { anchors.fill: parent }
+                    View3D { anchors.fill: parent }
                 }
             }
             Graph {

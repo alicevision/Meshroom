@@ -1,0 +1,3 @@
+module AlembicEntity
+
+plugin alembicEntityQmlPlugin

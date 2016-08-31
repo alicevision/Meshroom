@@ -1,0 +1,6 @@
+
+# install qml files
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		DESTINATION ${CMAKE_INSTALL_PREFIX}
+		PATTERN "CMakeLists.txt" EXCLUDE
+		PATTERN "resources.qrc" EXCLUDE)

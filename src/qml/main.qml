@@ -6,8 +6,6 @@ import QtQuick.Controls 2.0
 import Meshroom.Scene 1.0
 import Logger 1.0
 
-import "content"
-
 ApplicationWindow {
 
     id: _window
@@ -41,7 +39,6 @@ ApplicationWindow {
     header: Header {}
 
     // main content
-
     property Component scrollViewHandle: Rectangle {
         width: 1; height: 1
         color: (styleData.hovered || styleData.resizing) ? "#5BB1F7" : "#333"

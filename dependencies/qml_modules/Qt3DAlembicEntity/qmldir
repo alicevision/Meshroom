@@ -1,3 +1,0 @@
-module Qt3DAlembicEntity
-
-plugin qt3DAlembicEntityQmlPlugin

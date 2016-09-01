@@ -6,6 +6,7 @@
 #include <QSurfaceFormat>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QQuickStyle>
 #include <QDebug>
 
 namespace meshroom
@@ -25,8 +26,10 @@ Application::Application(QQmlApplicationEngine& engine)
     , _plugins(this)
     , _pluginNodes(this)
 {
-    // qml modules path
+    // add qml modules path
     engine.addImportPath(qApp->applicationDirPath() + "/plugins/qml");
+    // set qt quick style
+    QQuickStyle::setStyle(qApp->applicationDirPath() + "/plugins/qml/DarkStyle");
     // register types
     qmlRegisterType<Scene>("Meshroom.Scene", 1, 0, "Scene");
     qmlRegisterType<Graph>("Meshroom.Graph", 1, 0, "Graph");
@@ -37,7 +40,8 @@ Application::Application(QQmlApplicationEngine& engine)
     QSurfaceFormat::setDefaultFormat(fmt);
     // expose this object to QML & load the main QML file
     engine.rootContext()->setContextProperty("_application", this);
-    engine.load(QCoreApplication::applicationDirPath() + "/qml/main.qml");
+    engine.load(qApp->applicationDirPath() + "/qml/main.qml");
+
 }
 
 PluginCollection* Application::loadPlugins()

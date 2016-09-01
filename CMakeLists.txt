@@ -44,6 +44,7 @@ add_subdirectory(plugins/qml/controls/NodeEditor)
 add_subdirectory(plugins/qml/debug/InstantCoding)
 add_subdirectory(plugins/qml/debug/Logger)
 add_subdirectory(plugins/qml/qt3d/AlembicEntity)
+add_subdirectory(plugins/qml/qt3d/MayaCameraController)
 add_subdirectory(plugins/qml/stylesheets/DarkStyle)
 
 subdirlist(SUBDIRS ${PROJECT_SOURCE_DIR}/plugins/cpp)

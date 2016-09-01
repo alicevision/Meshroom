@@ -8,6 +8,7 @@ import Qt3D.Input 2.0
 import Qt3D.Extras 2.0
 import Qt3D.Logic 2.0
 import AlembicEntity 1.0
+import MayaCameraController 1.0
 
 Item {
 
@@ -24,11 +25,9 @@ Item {
     Scene3D {
         anchors.fill: parent
         focus: true
-        cameraAspectRatioMode: Scene3D.AutomaticAspectRatio // vs.UserAspectRatio
+        cameraAspectRatioMode: Scene3D.AutomaticAspectRatio // vs. UserAspectRatio
         aspects: ["logic", "input"]
-
         Entity {
-            id: sceneRoot
             Camera {
                 id: mainCamera
                 projectionType: CameraLens.PerspectiveProjection
@@ -40,6 +39,7 @@ Item {
                 viewCenter: Qt.vector3d(0.0, 0.0, 0.0)
                 aspectRatio: width/height
             }
+            MayaCameraController { camera: mainCamera }
             components: [
                 RenderSettings {
                     activeFrameGraph: Viewport {
@@ -71,6 +71,7 @@ Item {
     }
 
     Slider {
+        focusPolicy: Qt.NoFocus
         from: 0.1
         to: 2
         stepSize: 0.01

@@ -66,8 +66,14 @@ ApplicationWindow {
                 StackLayout {
                     currentIndex: bar.currentIndex
                     onCurrentIndexChanged: children[currentIndex].focus = true
-                    View2D { anchors.fill: parent }
-                    View3D { anchors.fill: parent }
+                    FocusScope {
+                        anchors.fill: parent
+                        View2D { anchors.fill: parent }
+                    }
+                    FocusScope {
+                        anchors.fill: parent
+                        View3D { anchors.fill: parent }
+                    }
                 }
             }
             Graph {
@@ -80,7 +86,6 @@ ApplicationWindow {
             Layout.minimumWidth: 30
         }
     }
-
 
     // footer
     footer: LogBar {}

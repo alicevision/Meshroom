@@ -88,5 +88,8 @@ ApplicationWindow {
     }
 
     // footer
-    footer: LogBar {}
+    footer: LogBar {
+        expandIcon: expanded ? "qrc:///images/shrink.svg" : "qrc:///images/expand.svg"
+        trashIcon: "qrc:///images/trash.svg"
+    }
 }

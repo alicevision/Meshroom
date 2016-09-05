@@ -40,7 +40,10 @@ Item {
             }
             Item { Layout.fillWidth: true } // spacer
             ToolButton {
-                // iconSource: "qrc:///images/arrow.svg"
+                Component.onCompleted: {
+                    if(typeof icon == "undefined") return;
+                        icon = "qrc:///images/arrow.svg"
+                }
                 onClicked: stackView.push(galleryTab, {
                     node: nodeName,
                     attribute: modelData,

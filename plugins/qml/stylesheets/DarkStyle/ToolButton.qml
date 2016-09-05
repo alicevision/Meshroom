@@ -6,6 +6,8 @@ import "."
 T.ToolButton {
 
     id: control
+    property url icon: ""
+
     implicitWidth: 30
     implicitHeight: 30
     text: qsTr("ToolButton")
@@ -15,11 +17,19 @@ T.ToolButton {
     contentItem: Rectangle {
         color: "transparent"
         border.color: control.enabled ? Globals.window.color.xlight : Globals.window.color.disabled
+        visible: control.icon == ""
     }
     background: Rectangle {
-        color: control.hovered ? Globals.window.color.selected : Globals.window.color.dark
+        color: control.hovered ? Globals.window.color.selected : "transparent"
         opacity: 0.8
         Behavior on color { ColorAnimation {} }
+        Image {
+            anchors.fill: parent
+            visible: control.icon != ""
+            source: control.icon
+            sourceSize: Qt.size(40, 40)
+            asynchronous: true
+        }
     }
 
 }

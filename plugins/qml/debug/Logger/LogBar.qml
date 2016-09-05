@@ -9,6 +9,7 @@ Item {
     implicitHeight: 30
     implicitWidth: parent ? parent.width : 200
     height: expanded ? 150 : 30
+
     // Behavior on height {
     //     SequentialAnimation {
     //         NumberAnimation {}
@@ -18,6 +19,17 @@ Item {
 
     // properties
     property bool expanded: false
+    property url expandIcon: ""
+    property url trashIcon: ""
+
+    onExpandIconChanged: {
+        if(typeof expandButton.icon == "undefined") return;
+            expandButton.icon = root.expandIcon;
+    }
+    onTrashIconChanged: {
+        if(typeof trashButton.icon == "undefined") return;
+            trashButton.icon = root.trashIcon;
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -54,11 +66,11 @@ Item {
         }
         ColumnLayout {
             ToolButton {
-                // iconSource: "qrc:///images/expand.svg"
+                id: expandButton
                 onClicked: root.expanded = !root.expanded
             }
             ToolButton {
-                // iconSource: "qrc:///images/trash.svg"
+                id: trashButton
                 onClicked: listView.model.clear()
                 visible: root.expanded
             }

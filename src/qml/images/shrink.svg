@@ -1,11 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="512px" height="512px" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
-<g>
-	<polygon points="448,92.3 366.1,174.1 416,224 288,224 288,96 337.9,145.9 419.7,64 	"/>
-	<polygon points="448,419.7 366.1,337.9 416,288 288,288 288,416 337.9,366.1 419.7,448 	"/>
-	<polygon points="64,419.7 145.9,337.9 96,288 224,288 224,416 174.1,366.1 92.3,448 	"/>
-	<polygon points="64,92.3 145.9,174.1 96,224 224,224 224,96 174.1,145.9 92.3,64 	"/>
-</g>
+<?xml version="1.0"?>
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <g>
+  <title>Layer 1</title>
+  <g stroke="null" id="svg_1">
+   <polygon fill="#ffffff" stroke="null" id="svg_2" points="409,125.55155944824219 343.7359313964844,190.73594665527344 383.5,230.5 281.5,230.5 281.5,128.5 321.2640686035156,168.26405334472656 386.4484558105469,103 "/>
+   <polygon fill="#ffffff" stroke="null" id="svg_3" points="409,386.4484558105469 343.7359313964844,321.2640686035156 383.5,281.5 281.5,281.5 281.5,383.5 321.2640686035156,343.7359313964844 386.4484558105469,409 "/>
+   <polygon fill="#ffffff" stroke="null" id="svg_4" points="103,386.4484558105469 168.26405334472656,321.2640686035156 128.5,281.5 230.5,281.5 230.5,383.5 190.73594665527344,343.7359313964844 125.55155944824219,409 "/>
+   <polygon fill="#ffffff" stroke="null" id="svg_5" points="103,125.55155944824219 168.26405334472656,190.73594665527344 128.5,230.5 230.5,230.5 230.5,128.5 190.73594665527344,168.26405334472656 125.55155944824219,103 "/>
+  </g>
+ </g>
 </svg>

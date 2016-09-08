@@ -23,6 +23,7 @@ Item {
     }
 
     Scene3D {
+        id: scene3D
         anchors.fill: parent
         focus: true
         cameraAspectRatioMode: Scene3D.AutomaticAspectRatio // vs. UserAspectRatio
@@ -39,8 +40,19 @@ Item {
                 upVector: Qt.vector3d(0.0, 1.0, 0.0)
                 viewCenter: Qt.vector3d(0.0, 0.0, 0.0)
                 aspectRatio: width/height
+                Behavior on position { Vector3dAnimation{} }
+                Behavior on upVector { Vector3dAnimation{} }
+                Behavior on viewCenter { Vector3dAnimation{} }
             }
-            MayaCameraController { camera: mainCamera }
+            MayaCameraController {
+                camera: mainCamera
+                onLeftClicked: closeSettingsPanel()
+                onRightClicked: {
+                    contextMenu.x = mouse.x;
+                    contextMenu.y = mouse.y;
+                    contextMenu.open();
+                }
+            }
             components: [
                 RenderSettings {
                     activeFrameGraph: Viewport {
@@ -170,7 +182,8 @@ Item {
         					boundingVolumePositionAttribute: gizmoPosition
         				}
         			},
-                    PerVertexColorMaterial {}
+                    PerVertexColorMaterial {},
+                    Transform { id: gizmoTransform }
                 ]
     		}
 
@@ -178,13 +191,115 @@ Item {
         }
     }
 
-    Slider {
-        focusPolicy: Qt.NoFocus
-        from: 0.1
-        to: 2
-        stepSize: 0.01
-        value: 0.5
-        onPositionChanged: abcEntity.particleSize = (from + (to-from) * visualPosition)*0.01
+    function resetCameraPosition() {
+        mainCamera.position = Qt.vector3d(28.0, 21.0, 28.0);
+        mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
+        mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
+    }
+    function openSettingsPanel() {
+        settings.Layout.minimumWidth = parent.width*0.4
+    }
+    function closeSettingsPanel() {
+        settings.Layout.minimumWidth = 0
+    }
+
+    Menu {
+        id: contextMenu
+        MenuItem {
+            text: "Reset camera position"
+            onTriggered: resetCameraPosition()
+        }
+        Rectangle { // spacer
+            width: parent.width; height: 1
+            color: Qt.rgba(0, 0, 0, 1)
+        }
+        MenuItem {
+            text: "Properties..."
+            onTriggered: openSettingsPanel()
+        }
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+        Item { // overlay panel
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+        }
+        Rectangle { // settings panel
+            id: settings
+            color: Qt.rgba(0, 0, 0, 0.6)
+            clip: true
+            Layout.fillHeight: true
+            Behavior on Layout.minimumWidth { NumberAnimation {} }
+            Flickable {
+                anchors.fill: parent
+                ScrollBar.vertical: ScrollBar {}
+                contentWidth: parent.width
+                contentHeight: 300
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    Label {
+                        text: "show"
+                        state: "small"
+                    }
+                    GridLayout {
+                        CheckBox {
+                            text: "grid"
+                            checked: true
+                            onClicked: gridEntity.parent = checked ? rootEntity : null
+                            focusPolicy: Qt.NoFocus
+                        }
+                        CheckBox {
+                            text: "axis"
+                            checked: true
+                            onClicked: gizmoEntity.parent = checked ? rootEntity : null
+                            focusPolicy: Qt.NoFocus
+                        }
+                    }
+                    Rectangle { // spacer
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: Qt.rgba(0, 0, 0, 1)
+                    }
+                    Label {
+                        text: "point size"
+                        state: "small"
+                    }
+                    Slider {
+                        from: 0.1
+                        to: 20
+                        stepSize: 0.01
+                        value: 0.5
+                        onPositionChanged: abcEntity.particleSize = (from + (to-from) * visualPosition)*0.01
+                        focusPolicy: Qt.NoFocus
+                    }
+                    Rectangle { // spacer
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: Qt.rgba(0, 0, 0, 1)
+                    }
+                    Label {
+                        text: "locator scale"
+                        state: "small"
+                    }
+                    Slider {
+                        from: 0.01
+                        to: 10
+                        stepSize: 0.01
+                        value: 1
+                        onPositionChanged: {
+                            var value = (from + (to-from) * visualPosition);
+                            abcEntity.locatorScale = value;
+                            gizmoTransform.scale = value;
+                        }
+                        focusPolicy: Qt.NoFocus
+                    }
+                    Item { Layout.fillHeight: true } // spacer
+                }
+            }
+        }
     }
 
 }

@@ -1,3 +1,4 @@
+import QtQuick 2.7
 import Qt3D.Core 2.0
 import Qt3D.Render 2.0
 import Qt3D.Input 2.0
@@ -13,8 +14,27 @@ Entity {
     property real tiltSpeed: -500.0
     property real panSpeed: 500.0
 
+    signal leftClicked(var mouse);
+    signal rightClicked(var mouse);
+
     KeyboardDevice { id: keyboardSourceDevice }
     MouseDevice { id: mouseSourceDevice; sensitivity: 0.1 }
+
+    MouseHandler {
+        sourceDevice: mouseSourceDevice
+        onReleased: {
+            if(mouse.modifiers & Qt.AltModifier)
+                return;
+            switch(mouse.button) {
+                case Qt.LeftButton:
+                    leftClicked(mouse)
+                    break;
+                case Qt.RightButton:
+                    rightClicked(mouse)
+                    break;
+            }
+        }
+    }
 
     LogicalDevice {
         id: cameraControlDevice

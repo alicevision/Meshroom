@@ -4,6 +4,7 @@
 #include <QUrl>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreFactory/All.h>
+#include <Qt3DCore/QTransform>
 #include <Qt3DRender/QParameter>
 #include <Qt3DRender/QMaterial>
 
@@ -38,6 +39,7 @@ public:
     Q_SIGNAL void urlChanged();
     Q_SIGNAL void particleSizeChanged();
     Q_SIGNAL void locatorScaleChanged();
+    Q_SIGNAL void objectPicked(Qt3DCore::QTransform* transform);
 
 private:
     QUrl _url;

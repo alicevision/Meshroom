@@ -2,6 +2,7 @@
 #include <Qt3DRender/QGeometryRenderer>
 #include <Qt3DRender/QAttribute>
 #include <Qt3DRender/QBuffer>
+#include <Qt3DRender/QObjectPicker>
 #include <Qt3DCore/QTransform>
 
 namespace abcentity
@@ -74,8 +75,12 @@ CameraLocatorEntity::CameraLocatorEntity(Qt3DCore::QNode* parent)
     camera->setPosition(QVector3D(0.0f, 3.5f, 25.0f));
     */
 
+    // object picker
+    auto picker = new QObjectPicker;
+
     // add components
     addComponent(customMeshRenderer);
+    addComponent(picker);
 }
 
 void CameraLocatorEntity::setTransform(const Alembic::Abc::M44d& mat)

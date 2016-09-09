@@ -1,11 +1,12 @@
 #include "AlembicEntity.hpp"
 #include "CameraLocatorEntity.hpp"
 #include "PointCloudEntity.hpp"
-#include <Qt3DCore/QTransform>
 #include <Qt3DRender/QEffect>
 #include <Qt3DRender/QTechnique>
 #include <Qt3DRender/QRenderPass>
 #include <Qt3DRender/QShaderProgram>
+#include <Qt3DRender/QObjectPicker>
+#include <Qt3DRender/QPickEvent>
 #include <Qt3DExtras/QPerVertexColorMaterial>
 
 namespace abcentity
@@ -131,6 +132,7 @@ void AlembicEntity::loadAbcArchive()
     if(!_url.isValid())
         return;
 
+    using namespace Qt3DRender;
     using namespace Alembic::Abc;
     using namespace Alembic::AbcGeom;
 
@@ -154,6 +156,25 @@ void AlembicEntity::loadAbcArchive()
     // visit the abc tree
     M44d xformMat;
     visitAbcObject(archive.getTop(), xformMat);
+
+    auto onPicked = [&](QPickEvent* pick)
+    {
+        auto picker = (QObjectPicker*)sender();
+        for(auto e: picker->entities())
+        {
+            for(auto c: e->components())
+            {
+                if(c->isEnabled() && c->inherits("Qt3DCore::QTransform"))
+                {
+                    Q_EMIT objectPicked(qobject_cast<Qt3DCore::QTransform*>(c));
+                    break;
+                }
+            }
+        }
+    };
+
+    for(auto picker : findChildren<QObjectPicker*>())
+        QObject::connect(picker, &QObjectPicker::clicked, this, onPicked);
 }
 
 // private

@@ -40,9 +40,6 @@ Item {
                 upVector: Qt.vector3d(0.0, 1.0, 0.0)
                 viewCenter: Qt.vector3d(0.0, 0.0, 0.0)
                 aspectRatio: width/height
-                Behavior on position { Vector3dAnimation{} }
-                Behavior on upVector { Vector3dAnimation{} }
-                Behavior on viewCenter { Vector3dAnimation{} }
             }
             MayaCameraController {
                 camera: mainCamera
@@ -79,6 +76,14 @@ Item {
             AlembicEntity {
                 id: abcEntity
                 particleSize: 0.1
+                onObjectPicked: {
+                    mainCamera.position = transform.translation;
+                    mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
+                    mainCamera.viewCenter = transform.translation.plus(Qt.vector3d(0, 0, -1));
+                    mainCamera.roll(transform.rotationZ);
+                    mainCamera.pan(transform.rotationY);
+                    mainCamera.tilt(transform.rotationX);
+                }
             }
 
             // Grid

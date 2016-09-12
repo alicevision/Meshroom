@@ -13,6 +13,7 @@ Entity {
     property real translateSpeed: 100.0
     property real tiltSpeed: 500.0
     property real panSpeed: 500.0
+    property bool moving: false
 
     signal leftClicked(var mouse);
     signal rightClicked(var mouse);
@@ -68,6 +69,7 @@ Entity {
             },
             Action {
                 id: actionAlt
+                onActiveChanged: root.moving = active
                 inputs: [
                     ActionInput {
                         sourceDevice: keyboardSourceDevice

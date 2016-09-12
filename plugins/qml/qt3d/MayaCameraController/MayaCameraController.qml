@@ -11,7 +11,7 @@ Entity {
     id: root
     property Camera camera
     property real translateSpeed: 100.0
-    property real tiltSpeed: -500.0
+    property real tiltSpeed: 500.0
     property real panSpeed: 500.0
 
     signal leftClicked(var mouse);
@@ -105,18 +105,23 @@ Entity {
                     return;
                 if(actionLMB.active) { // rotate
                     var rx = -axisMX.value;
-                    var ry = axisMY.value;
-                    root.camera.panAboutViewCenter(root.panSpeed * rx * dt)
+                    var ry = -axisMY.value;
+                    root.camera.panAboutViewCenter(root.panSpeed * rx * dt, Qt.vector3d(0,1,0))
                     root.camera.tiltAboutViewCenter(root.tiltSpeed * ry * dt)
+                    return;
                 }
                 if(actionMMB.active) { // translate
-                    var tx = axisMX.value * root.translateSpeed;
-                    var ty = axisMY.value * root.translateSpeed;
+                    var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
+                    var tx = axisMX.value * root.translateSpeed * d;
+                    var ty = axisMY.value * root.translateSpeed * d;
                     root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt))
+                    return;
                 }
                 if(actionRMB.active) { // zoom
-                    var tz = axisMX.value * root.translateSpeed;
-                    root.camera.translate(Qt.vector3d(0, 0, tz).times(dt))
+                    var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.05;
+                    var tz = axisMX.value * root.translateSpeed * d;
+                    root.camera.translate(Qt.vector3d(0, 0, tz).times(dt), Camera.DontTranslateViewCenter)
+                    return;
                 }
             }
         }

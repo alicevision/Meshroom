@@ -196,6 +196,10 @@ Item {
         }
     }
 
+    function resetCameraCenter() {
+        mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
+        mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
+    }
     function resetCameraPosition() {
         mainCamera.position = Qt.vector3d(28.0, 21.0, 28.0);
         mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
@@ -210,6 +214,10 @@ Item {
 
     Menu {
         id: contextMenu
+        MenuItem {
+            text: "Reset camera center"
+            onTriggered: resetCameraCenter()
+        }
         MenuItem {
             text: "Reset camera position"
             onTriggered: resetCameraPosition()

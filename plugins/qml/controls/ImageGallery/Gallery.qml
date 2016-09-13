@@ -8,12 +8,13 @@ import "views"
 Item {
 
     id: root
+    implicitWidth: 200
+    implicitHeight: 200
 
     // properties
     property variant model: null
     property bool editable: true
     property bool closeable: false
-    // property alias title: dropArea.title
 
     // signal / slots
     signal closed()
@@ -78,13 +79,12 @@ Item {
 
     // drop area in background
     DropArea {
-        id: dropArea
         anchors.fill: parent
         enabled: root.editable
-        // onFilesDropped: {
-        //     for(var i=0; i<files.length; ++i)
-        //         root.itemAdded(files[i]);
-        // }
+        onDropped: {
+            for(var i=0; i<drop.urls.length; ++i)
+                root.itemAdded(drop.urls[i]);
+        }
     }
 
     // visual model

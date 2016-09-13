@@ -14,7 +14,6 @@ Item {
 
     // signal / slots
     onModelChanged: {
-        stackView.pop();
         if(!root.model)
             return;
         loadAlembic("");
@@ -34,21 +33,21 @@ Item {
     }
     Component {
         id: imageListDelegate
-        RowLayout {
-            Label {
-                text: (modelData && Array.isArray(modelData.value)) ? modelData.value.length + " items" : "0 item"
+        Gallery {
+            model: modelData.value
+            closeable: false
+            onItemAdded: {
+                var values = (!modelData.value) ? [] : modelData.value;
+                values.push(item.replace("file://", ""));
+                currentScene.graph.setNodeAttribute(nodeName, modelData.key, values);
             }
-            Item { Layout.fillWidth: true } // spacer
-            ToolButton {
-                Component.onCompleted: {
-                    if(typeof icon == "undefined") return;
-                        icon = "qrc:///images/arrow.svg"
-                }
-                onClicked: stackView.push(galleryTab, {
-                    node: nodeName,
-                    attribute: modelData,
-                    model: modelData.value
-                })
+            onItemRemoved: {
+                var values = (!modelData.value) ? [] : modelData.value;
+                var index = values.indexOf(item.replace("file://",""));
+                if(index < 0)
+                    return;
+                values.splice(index, 1);
+                currentScene.graph.setNodeAttribute(nodeName, modelData.key, values);
             }
         }
     }
@@ -57,6 +56,7 @@ Item {
         Label {
             text: modelData.name
             state: "xsmall"
+            enabled: false
         }
     }
     Component {
@@ -94,80 +94,43 @@ Item {
         }
     }
 
-    // stack view components
-    Component {
-        id: mainPropertiesTab
-        Flickable {
-            id: flickable
-            ScrollBar.vertical: ScrollBar {}
-            contentWidth: stackView.width
-            contentHeight: grid.height
-            GridLayout {
-                id: grid
-                width: flickable.width - 10
-                columns: 2
-                rowSpacing: 0
-                columnSpacing: 2
-                Repeater {
-                    model: (root.model && root.model.inputs) ? root.model.inputs.count*2 : 0
-                    delegate: Loader {
-                        Layout.fillWidth: index%2 != 0
-                        Layout.preferredWidth: index%2 ? parent.width : parent.width*0.3
-                        Layout.margins: 5
-                        property variant modelData: null
-                        property string nodeName: ""
-                        clip: true
-                        sourceComponent: {
-                            modelData = root.model.inputs.get(index/2).modelData;
-                            nodeName = root.model.name;
-                            if(modelData.type == Attribute.UNKNOWN)
-                                return emptyDelegate
-                            if(index % 2 == 0)
-                                return labelDelegate;
-                            switch(modelData.type) {
-                                case Attribute.UNKNOWN: return emptyDelegate
-                                case Attribute.TEXTFIELD: return textfieldDelegate
-                                case Attribute.SLIDER: return sliderDelegate
-                                case Attribute.COMBOBOX: return comboboxDelegate
-                                case Attribute.CHECKBOX: return checkboxDelegate
-                                case Attribute.IMAGELIST: return imageListDelegate
-                                case Attribute.OBJECT3D: return emptyDelegate
-                            }
+
+    Flickable {
+        id: flickable
+        anchors.fill: parent
+        ScrollBar.vertical: ScrollBar {}
+        contentWidth: width
+        contentHeight: layout.height
+        ColumnLayout {
+            id: layout
+            width: flickable.width - 10
+            spacing: 0
+            Repeater {
+                model: (root.model && root.model.inputs) ? root.model.inputs.count*2 : 0
+                delegate: Loader {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 2
+                    Layout.rightMargin: 2
+                    Layout.topMargin: (index%2==0 && index!=0) ? 15 : 0
+                    property variant modelData: null
+                    property string nodeName: ""
+                    sourceComponent: {
+                        modelData = root.model.inputs.get(index/2).modelData;
+                        nodeName = root.model.name;
+                        if(index % 2 == 0)
+                            return labelDelegate;
+                        switch(modelData.type) {
+                            case Attribute.UNKNOWN: return emptyDelegate
+                            case Attribute.TEXTFIELD: return textfieldDelegate
+                            case Attribute.SLIDER: return sliderDelegate
+                            case Attribute.COMBOBOX: return comboboxDelegate
+                            case Attribute.CHECKBOX: return checkboxDelegate
+                            case Attribute.IMAGELIST: return imageListDelegate
+                            case Attribute.OBJECT3D: return emptyDelegate
                         }
                     }
                 }
             }
         }
-    }
-    Component {
-        id: galleryTab
-        Gallery {
-            property variant node: null
-            property variant attribute: null
-            closeable: true
-            onClosed: stackView.pop()
-            onItemAdded: {
-                var values = attribute.value;
-                values.push(item.replace("file://", ""));
-                currentScene.graph.setNodeAttribute(node, attribute.key, values);
-                model = attribute.value; // force model update
-            }
-            onItemRemoved: {
-                var values = attribute.value;
-                var index = values.indexOf(item.replace("file://",""));
-                if (index < 0)
-                    return;
-                values.splice(index, 1);
-                currentScene.graph.setNodeAttribute(node, attribute.key, values);
-                model = attribute.value; // force model update
-            }
-        }
-    }
-
-    // stack view
-    StackView {
-        id: stackView
-        anchors.fill: parent
-        initialItem: mainPropertiesTab
     }
 }

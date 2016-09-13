@@ -33,45 +33,47 @@ Item {
                 text: "Do you want to save changes?"
             }
             RowLayout {
+                Item { Layout.fillWidth: true }
                 Button {
-                    Layout.fillWidth: true
                     text: "Yes"
                     onClicked: { accepted(); close(); }
                 }
                 Button {
-                    Layout.fillWidth: true
                     text: "No"
                     onClicked: { rejected(); close(); }
                 }
                 Button {
-                    Layout.fillWidth: true
                     text: "Cancel"
                     onClicked: { close(); }
                 }
             }
         }
+        ToolButton {
+            anchors.horizontalCenter: parent.right
+            anchors.verticalCenter: parent.top
+            icon: "qrc:///images/close.svg"
+            onClicked: { close(); }
+        }
     }
     property Component addNode: Popup {
         signal accepted(var selection)
         signal rejected()
-        ColumnLayout {
+        ListView {
             anchors.fill: parent
-            spacing: 0
-            ListView {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                model: _application.pluginNodes
-                delegate: Button {
-                    width: parent.width
-                    text: modelData.plugin + "/" + modelData.type
-                    onClicked: { accepted(modelData.metadata); close(); }
-                }
+            model: _application.pluginNodes
+            ScrollBar.vertical: ScrollBar { active: true }
+            delegate: Button {
+                width: parent.width
+                text: modelData.plugin + "/" + modelData.type
+                onClicked: { accepted(modelData.metadata); close(); }
             }
-            Button {
-                Layout.fillWidth: true
-                text: "Cancel"
-                onClicked: { rejected(); close(); }
-            }
+            clip: true
+        }
+        ToolButton {
+            anchors.horizontalCenter: parent.right
+            anchors.verticalCenter: parent.top
+            icon: "qrc:///images/close.svg"
+            onClicked: { rejected(); close(); }
         }
     }
 }

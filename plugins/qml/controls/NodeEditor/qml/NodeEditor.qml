@@ -83,26 +83,34 @@ Item {
         context.stroke();
     }
 
-    // draw nodes
-    Repeater {
-        id: repeater
+    Flickable {
         anchors.fill: parent
-        model: root.graph.nodes
-        delegate: NodeDelegate {
-            width: 100
-            height: 80
+        ScrollBar.vertical: ScrollBar {}
+        ScrollBar.horizontal: ScrollBar {}
+        clip: true
+        contentWidth: canvas.width
+        contentHeight: canvas.height
+        // draw connections
+        Canvas {
+            id: canvas
+            width: 1000
+            height: 1000
+            onPaint: {
+                if(!context)
+                    getContext("2d");
+                context.clearRect(0, 0, width, height);
+                drawConnections(context);
+            }
         }
-    }
-
-    // draw connections
-    Canvas {
-        id: canvas
-        anchors.fill: parent
-        onPaint: {
-            if(!context)
-                getContext("2d");
-            context.clearRect(0, 0, width, height);
-            drawConnections(context);
+        // draw nodes
+        Repeater {
+            id: repeater
+            anchors.fill: parent
+            model: root.graph.nodes
+            delegate: NodeDelegate {
+                width: 100
+                height: 80
+            }
         }
     }
 

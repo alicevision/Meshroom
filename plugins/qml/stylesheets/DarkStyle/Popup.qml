@@ -7,8 +7,8 @@ T.Popup {
 
     id: control
 
-    implicitWidth: parent ? parent.width * 0.8 : 200
-    implicitHeight: parent ? parent.height * 0.8 : 200
+    implicitWidth: parent ? parent.width * 0.5 : 200
+    implicitHeight: parent ? parent.height * 0.5 : 200
     x: parent ? (parent.width - width) * 0.5 : 0
     y: parent ? (parent.height - height) * 0.5 : 0
     modal: true

@@ -10,20 +10,20 @@ Rectangle {
     x: 10
     y: 10
     z: currentNodeID == index ? 2 : 1
-    color: Qt.rgba(0, 0, 0, 0.4)
+    color: Qt.rgba(0.1, 0.1, 0.1, 0.8)
 
     border.color: {
         if(mouseArea.containsMouse)
             return "#5BB1F7";
-        // switch(model.status)
-        // {
-        //     case Node.READY: return Style.window.color.light;
-        //     case Node.WAITING: return Style.window.color.xlight;
-        //     case Node.RUNNING: return Style.window.color.selected;
-        //     case Node.ERROR: return Style.window.color.critical;
-        //     case Node.DONE: return Style.window.color.success;
-        // }
-        return Qt.rgba(1, 1, 1, 0.1);
+        switch(model.status)
+        {
+            case Node.READY: break;
+            case Node.WAITING: return "grey";
+            case Node.RUNNING: return "lightgrey";
+            case Node.ERROR: return "red";
+            case Node.DONE: return "green";
+        }
+        return Qt.rgba(1, 1, 1, 0.2);
     }
 
     // properties

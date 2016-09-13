@@ -7,8 +7,6 @@ Rectangle {
 
     id: root
     radius: 10
-    x: 10
-    y: 10
     z: currentNodeID == index ? 2 : 1
     color: Qt.rgba(0.1, 0.1, 0.1, 0.8)
 

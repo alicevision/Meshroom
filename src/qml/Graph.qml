@@ -31,17 +31,19 @@ Item {
     // background
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(0.5, 0.5, 0.5, 0.1)
+        color: Qt.rgba(0.3, 0.3, 0.3, 0.1)
         Image {
             anchors.fill: parent
             source: "qrc:///images/stripes.png"
             fillMode: Image.Tile
             opacity: 0.5
-            MouseArea {
-                anchors.fill: parent
-                onClicked: selectionChanged(null)
-            }
         }
+    }
+
+    // mouse area
+    MouseArea {
+        anchors.fill: parent
+        onClicked: selectionChanged(null)
     }
 
     // node editor

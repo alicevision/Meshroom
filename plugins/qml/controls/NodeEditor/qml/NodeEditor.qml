@@ -11,6 +11,12 @@ Item {
     property variant graph: Graph {}
     property int currentNodeID: 0
 
+    QtObject {
+        id: _private
+        property bool selectionEnabled: false
+        property variant selection: []
+    }
+
     // signals
     signal nodeMoved(var node)
     signal nodeLeftClicked(var node)
@@ -49,6 +55,7 @@ Item {
     function drawConnections(context) {
         if(!root.graph.connections)
             return;
+        _private.selection = []
         for(var i=0; i<root.graph.connections.count; i++)
         {
             var connection = root.graph.connections.get(i);
@@ -60,13 +67,14 @@ Item {
                 continue;
             var sourceNodeItem = repeater.itemAt(sourceNodeID);
             var targetNodeItem = repeater.itemAt(targetNodeID);
-            drawConnection(context, sourceNodeItem.getOutputItem(0), targetNodeItem.getInputItem(targetPlugID));
+            drawConnection(context, sourceNodeItem.getOutputItem(0), targetNodeItem.getInputItem(targetPlugID), connection.modelData);
         }
     }
 
-    function drawConnection(context, itemA, itemB) {
+    function drawConnection(context, itemA, itemB, connectionObj) {
         var outputPos = repeater.mapFromItem(itemA, itemA.width, itemA.height/2);
         var inputPos  = repeater.mapFromItem(itemB, 0, itemB.height/2);
+
         // calculate control points
         var curveScale = 0.7;
         var ctrlPtDist = Math.abs(inputPos.x - outputPos.x) * curveScale;
@@ -74,13 +82,35 @@ Item {
         var ctrlPtAY = outputPos.y;
         var ctrlPtBX = inputPos.x - ctrlPtDist;
         var ctrlPtBY = inputPos.y;
-        // draw bezier curve
+
+        // transparent mouse sensitive area
+        var thickness = 8;
+        context.strokeStyle = Qt.rgba(0, 0, 0, 0);
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(outputPos.x, outputPos.y-thickness);
+        context.bezierCurveTo(ctrlPtAX, ctrlPtAY-thickness, ctrlPtBX, ctrlPtBY-thickness, inputPos.x, inputPos.y-thickness);
+        context.lineTo(inputPos.x, inputPos.y+thickness);
+        context.bezierCurveTo(ctrlPtBX, ctrlPtBY+thickness, ctrlPtAX, ctrlPtAY+thickness, outputPos.x, outputPos.y+thickness);
+        context.closePath();
+        context.stroke();
+
+        // handle selection & stroke color
         context.strokeStyle = Qt.rgba(0.5, 0.5, 0.5, 1);
-        context.lineWidth = 1;
+        if(_private.selectionEnabled && context.isPointInPath(mouseArea.mouseX, mouseArea.mouseY)) {
+            context.strokeStyle = Qt.rgba(0.35, 0.69, 0.96, 1)
+            // add to selection
+            var index = _private.selection.indexOf(connectionObj);
+            if(index<0)
+                _private.selection.push(connectionObj);
+        }
+
+        // colored bezier curve
         context.beginPath();
         context.moveTo(outputPos.x, outputPos.y);
         context.bezierCurveTo(ctrlPtAX, ctrlPtAY, ctrlPtBX, ctrlPtBY, inputPos.x, inputPos.y);
         context.stroke();
+        context.closePath();
     }
 
     Flickable {
@@ -94,7 +124,7 @@ Item {
         Canvas {
             id: canvas
             width: 1000
-            height: 1000
+            height: 600
             onPaint: {
                 if(!context)
                     getContext("2d");
@@ -111,6 +141,22 @@ Item {
                 width: 100
                 height: 80
             }
+        }
+        // mouse area
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: selectionChanged(null)
+            onPositionChanged: {
+                _private.selectionEnabled = (mouse.modifiers & Qt.ShiftModifier);
+                refresh();
+            }
+            // onPressed: {
+            //     console.log("selection:")
+            //     for(var i = 0; i<_private.selection.length; ++i)
+            //         console.log("-", _private.selection[i].source, ">", _private.selection[i].target, "::", _private.selection[i].plug)
+            // }
         }
     }
 

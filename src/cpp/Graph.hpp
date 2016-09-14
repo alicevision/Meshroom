@@ -30,28 +30,26 @@ public:
     ~Graph();
 
 public:
-    Q_SLOT const QUrl& cacheUrl() const { return _cacheUrl; }
-    Q_SLOT void setCacheUrl(const QUrl&);
-    Q_SLOT const bool isRunning() const;
-    Q_SLOT void setObject(QObject*);
+    // graph editing
     Q_SLOT void clear();
     Q_SLOT void addNode(const QJsonObject&);
     Q_SLOT void addConnection(const QJsonObject&);
     Q_SLOT void setNodeAttribute(const QString&, const QString&, const QVariant&);
     Q_SLOT QVariant getNodeAttribute(const QString&, const QString&);
+    Q_SLOT const QUrl& cacheUrl() const { return _cacheUrl; }
+    Q_SLOT void setCacheUrl(const QUrl&);
+
+    // worker
     Q_SLOT void startWorker(BuildMode, const QString& = "");
     Q_SLOT void stopWorker();
+    Q_SLOT const bool isRunning() const;
 
 public:
     Q_SIGNAL void cacheUrlChanged();
     Q_SIGNAL void isRunningChanged();
-    Q_SIGNAL void cleared();
-    Q_SIGNAL void nodeAdded(const QJsonObject& node);
-    Q_SIGNAL void connectionAdded(const QJsonObject& node);
-    Q_SIGNAL void nodeStatusChanged(const QString&, const QString&);
-    Q_SIGNAL void nodeAttributeChanged(const QString&, const QString&, const QVariant&);
 
 public:
+    void registerQmlObject(QObject* obj) { _qmlEditor = obj; }
     QJsonObject serializeToJSON() const;
     void deserializeFromJSON(const QJsonObject&);
 
@@ -59,7 +57,19 @@ private:
     QUrl _cacheUrl;
     dg::Ptr<dg::Graph> _graph = nullptr;
     WorkerThread* _worker = nullptr;
-    QObject* _qmlObject = nullptr;
+    QObject* _qmlEditor = nullptr;
 };
+
+#define GET_METHOD_OR_RETURN(prototype, returnArg)                                                 \
+    if(!_qmlEditor)                                                                                \
+        return returnArg;                                                                          \
+    const QMetaObject* metaObject = _qmlEditor->metaObject();                                      \
+    int methodIndex = metaObject->indexOfSlot(QMetaObject::normalizedSignature(#prototype));       \
+    if(methodIndex == -1)                                                                          \
+    {                                                                                              \
+        qCritical() << "can't invoke function" << #prototype;                                      \
+        return returnArg;                                                                          \
+    }                                                                                              \
+    QMetaMethod method = metaObject->method(methodIndex);
 
 } // namespace

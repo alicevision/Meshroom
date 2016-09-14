@@ -8,6 +8,7 @@ namespace nodeeditor
 Graph::Graph(QObject* parent)
     : QObject(parent)
 {
+    setObjectName("nodeeditor.qmlPlugin.editor");
 }
 
 void Graph::clear()

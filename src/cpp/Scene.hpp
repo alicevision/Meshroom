@@ -62,7 +62,7 @@ private:
     QString _user;
     QUrl _thumbnail;
     bool _dirty = false;
-    Graph* _graph = new Graph(this);
+    Graph* _graph = nullptr;
 };
 
 } // namespace

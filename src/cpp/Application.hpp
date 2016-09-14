@@ -24,12 +24,12 @@ public:
 public:
     Q_SLOT PluginCollection* loadPlugins();
     Q_SLOT Scene* loadScene(const QUrl& url);
+    dg::Ptr<dg::Node> createNode(const QString& type, const QString& name);
 
 public:
-    Q_SLOT PluginCollection* plugins() { return &_plugins; }
-    Q_SLOT Scene* scene() { return &_scene; }
-    Q_SLOT PluginNodeCollection* pluginNodes() { return &_pluginNodes; }
-    dg::Ptr<dg::Node> node(const QString& type, const QString& name);
+    PluginCollection* plugins() { return &_plugins; }
+    Scene* scene() { return &_scene; }
+    PluginNodeCollection* pluginNodes() { return &_pluginNodes; }
 
 private:
     Scene _scene;

@@ -14,6 +14,7 @@ Item {
     // components
     property Component contextMenu: Menu {
         signal compute(var mode)
+        signal remove()
         MenuItem {
             text: "Compute locally..."
             onTriggered: compute(MG.Graph.COMPUTE_LOCAL)
@@ -25,6 +26,14 @@ Item {
         MenuItem {
             text: "Refresh status..."
             onTriggered: compute(MG.Graph.PREPARE)
+        }
+        Rectangle { // spacer
+            width: parent.width; height: 1
+            color: Qt.rgba(1, 1, 1, 0.1)
+        }
+        MenuItem {
+            text: "Delete node"
+            onTriggered: remove()
         }
     }
 
@@ -50,12 +59,14 @@ Item {
     NodeEditor {
         id: editor
         anchors.fill: parent
-        Component.onCompleted: currentScene.graph.setObject(editor.graph)
         onNodeLeftClicked: root.selectionChanged(node)
         onNodeRightClicked: {
             function compute_CB(mode) {
                 editor.graph.clearNodeStatuses();
                 currentScene.graph.startWorker(mode, node.name);
+            }
+            function remove_CB(mode) {
+                // todo
             }
             var menu = contextMenu.createObject(editor);
             menu.x = node.x+10;

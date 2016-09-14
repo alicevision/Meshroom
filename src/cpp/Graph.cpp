@@ -23,48 +23,14 @@ Graph::~Graph()
     stopWorker();
 }
 
-void Graph::setObject(QObject* obj)
-{
-    if(!obj)
-        return;
-    _qmlObject = obj;
-    QObject::connect(this, SIGNAL(nodeAdded(const QJsonObject&)), _qmlObject,
-                     SLOT(addNode(const QJsonObject&)));
-    QObject::connect(this, SIGNAL(connectionAdded(const QJsonObject&)), _qmlObject,
-                     SLOT(addConnection(const QJsonObject&)));
-    QObject::connect(this, SIGNAL(nodeStatusChanged(const QString&, const QString&)), _qmlObject,
-                     SLOT(setNodeStatus(const QString&, const QString&)));
-    QObject::connect(this, SIGNAL(cleared()), _qmlObject, SLOT(clear()));
-    QObject::connect(
-        this, SIGNAL(nodeAttributeChanged(const QString&, const QString&, const QVariant&)),
-        _qmlObject, SLOT(setNodeAttribute(const QString&, const QString&, const QVariant&)));
-}
-
-const bool Graph::isRunning() const
-{
-    if(!_worker)
-        return false;
-    return _worker->isRunning();
-}
-
-void Graph::setCacheUrl(const QUrl& cacheUrl)
-{
-    if(_cacheUrl == cacheUrl)
-        return;
-    // if the folder does not exist, create it
-    QDir dir(cacheUrl.toLocalFile());
-    if(!dir.exists())
-        dir.mkpath(".");
-    // save the path and set it as graph root
-    _cacheUrl = cacheUrl;
-    _graph->cache.setRoot(_cacheUrl.toLocalFile().toStdString());
-    Q_EMIT cacheUrlChanged();
-}
-
 void Graph::clear()
 {
+    // clear
     _graph->clear();
-    Q_EMIT cleared();
+
+    // reflect changes on the qml side
+    GET_METHOD_OR_RETURN(clear(), void());
+    method.invoke(_qmlEditor, Qt::DirectConnection);
 }
 
 void Graph::addNode(const QJsonObject& descriptor)
@@ -75,11 +41,8 @@ void Graph::addNode(const QJsonObject& descriptor)
     Application* application = qobject_cast<Application*>(scene->parent());
     Q_CHECK_PTR(application);
 
-    // get the node type
-    QString type = descriptor.value("type").toString();
-    QString name = descriptor.value("name").toString();
-
     // looking for node metadata (registered at plugin load time)
+    QString type = descriptor.value("type").toString();
     PluginNode* node = application->pluginNodes()->get(type);
     if(!node)
     {
@@ -93,14 +56,28 @@ void Graph::addNode(const QJsonObject& descriptor)
     for(auto k : descriptorAsMap.keys())
         metadata.insert(k, QJsonValue::fromVariant(descriptorAsMap.value(k)));
 
-    // add the node
-    auto dgNode = application->node(type, name);
+    // compute node name
+    QString name = descriptor.value("name").toString();
+    if(name.isEmpty())
+    {
+        metadata.insert("name", type.toLower());
+        name = descriptor.value("name").toString();
+    }
+
+    // create a new node
+    auto dgNode = application->createNode(type, name);
     if(!dgNode)
+    {
+        qCritical() << "unable to create a new" << type << "node";
+        return;
+    }
+
+    // add this new node to the graph
+    if(!_graph->addNode(dgNode))
     {
         qCritical() << "unable to add a" << type << "node to the current graph";
         return;
     }
-    _graph->addNode(dgNode);
 
     // set node attributes
     for(auto a : descriptor.value("inputs").toArray())
@@ -111,7 +88,8 @@ void Graph::addNode(const QJsonObject& descriptor)
     }
 
     // reflect changes on the qml side
-    Q_EMIT nodeAdded(metadata);
+    GET_METHOD_OR_RETURN(addNode(QJsonObject), void());
+    method.invoke(_qmlEditor, Qt::DirectConnection, Q_ARG(QJsonObject, metadata));
 }
 
 void Graph::addConnection(const QJsonObject& connection)
@@ -144,7 +122,8 @@ void Graph::addConnection(const QJsonObject& connection)
     }
 
     // reflect changes on the qml side
-    Q_EMIT connectionAdded(connection);
+    GET_METHOD_OR_RETURN(addConnection(QJsonObject), void());
+    method.invoke(_qmlEditor, Qt::DirectConnection, Q_ARG(QJsonObject, connection));
 }
 
 void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
@@ -192,8 +171,10 @@ void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
                         << QString("%0::%1").arg(nodeName).arg(plugName);
     }
 
-    // set attribute : QML side
-    Q_EMIT nodeAttributeChanged(nodeName, plugName, variant);
+    // reflect changes on the qml side
+    GET_METHOD_OR_RETURN(setNodeAttribute(QString, QString, QVariant), void());
+    method.invoke(_qmlEditor, Qt::DirectConnection, Q_ARG(QString, nodeName),
+                  Q_ARG(QString, plugName), Q_ARG(QVariant, variant));
 }
 
 QVariant Graph::getNodeAttribute(const QString& nodeName, const QString& plugName)
@@ -205,17 +186,45 @@ QVariant Graph::getNodeAttribute(const QString& nodeName, const QString& plugNam
     if(!plug)
         return QVariant();
     auto attribute = _graph->cache.attribute(plug);
-    return QString::fromStdString(toString(attribute));
+    return QString::fromStdString(toString(attribute)); // FIXME
+}
+
+void Graph::setCacheUrl(const QUrl& cacheUrl)
+{
+    if(_cacheUrl == cacheUrl)
+        return;
+
+    // if the folder does not exist, create it
+    QDir dir(cacheUrl.toLocalFile());
+    if(!dir.exists())
+        dir.mkpath(".");
+
+    // save the path and set it as graph root
+    _cacheUrl = cacheUrl;
+    _graph->cache.setRoot(_cacheUrl.toLocalFile().toStdString());
+    Q_EMIT cacheUrlChanged();
 }
 
 void Graph::startWorker(BuildMode mode, const QString& name)
 {
     if(_worker && _worker->isRunning())
         return;
+
+    // create worker
     delete _worker;
     _worker = new WorkerThread(this, name, mode, _graph);
-    connect(_worker, &WorkerThread::nodeStatusChanged, this, &Graph::nodeStatusChanged);
+
+    // worker connections
+    auto updateNodeStatuses = [&](const QString& nodeName, const QString& status)
+    {
+        GET_METHOD_OR_RETURN(setNodeStatus(QString, QString), void());
+        method.invoke(_qmlEditor, Qt::DirectConnection, Q_ARG(QString, nodeName),
+                      Q_ARG(QString, status));
+    };
+    connect(_worker, &WorkerThread::nodeStatusChanged, this, updateNodeStatuses);
     connect(_worker, &WorkerThread::finished, this, &Graph::isRunningChanged);
+
+    // start worker
     _worker->start();
     Q_EMIT isRunningChanged();
 }
@@ -228,20 +237,22 @@ void Graph::stopWorker()
     Q_EMIT isRunningChanged();
 }
 
+const bool Graph::isRunning() const
+{
+    if(!_worker)
+        return false;
+    return _worker->isRunning();
+}
+
 QJsonObject Graph::serializeToJSON() const
 {
-    Q_CHECK_PTR(_qmlObject);
+    Q_CHECK_PTR(_qmlEditor);
+
     QJsonObject obj;
-    const QMetaObject* metaObject = _qmlObject->metaObject();
-    int methodIndex = metaObject->indexOfSlot("serializeToJSON()");
-    if(methodIndex == -1)
-    {
-        qCritical() << "can't serialize Graph: invalid object";
-        return obj;
-    }
-    QMetaMethod method = metaObject->method(methodIndex);
-    method.invoke(_qmlObject, Qt::DirectConnection, Q_RETURN_ARG(QJsonObject, obj));
+    GET_METHOD_OR_RETURN(serializeToJSON(), obj);
+    method.invoke(_qmlEditor, Qt::DirectConnection, Q_RETURN_ARG(QJsonObject, obj));
     obj.insert("cacheUrl", _cacheUrl.toLocalFile());
+
     return obj;
 }
 

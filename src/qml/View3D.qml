@@ -227,7 +227,7 @@ Item {
         }
         Rectangle { // spacer
             width: parent.width; height: 1
-            color: Qt.rgba(0, 0, 0, 1)
+            color: Qt.rgba(1, 1, 1, 0.1)
         }
         MenuItem {
             text: "Properties..."

@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
                 Application application;
                 application.loadPlugins();
                 // create the specified dg Node
-                auto dgNode = application.node(commandLine.nodeType(), "");
+                auto dgNode = application.createNode(commandLine.nodeType(), "");
                 if(!dgNode)
                     return EXIT_FAILURE;
                 // compute the node

@@ -1,7 +1,6 @@
 #include "Graph.hpp"
 #include <QDebug>
 
-
 namespace nodeeditor
 {
 
@@ -59,7 +58,8 @@ void Graph::setNodeStatus(const QString& nodeName, const QString& status) const
     node->setStatus(toEnum(status));
 }
 
-void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName, const QVariant& value) const
+void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
+                             const QVariant& value) const
 {
     Node* node = _nodes->get(nodeName);
     if(!node)

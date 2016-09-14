@@ -160,9 +160,9 @@ void AlembicEntity::loadAbcArchive()
     auto onPicked = [&](QPickEvent* pick)
     {
         auto picker = (QObjectPicker*)sender();
-        for(auto e: picker->entities())
+        for(auto e : picker->entities())
         {
-            for(auto c: e->components())
+            for(auto c : e->components())
             {
                 if(c->isEnabled() && c->inherits("Qt3DCore::QTransform"))
                 {

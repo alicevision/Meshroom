@@ -34,13 +34,20 @@ QJsonObject Attribute::serializeToJSON() const
     {
         switch(type)
         {
-            case TEXTFIELD: return "TEXTFIELD";
-            case SLIDER: return "SLIDER";
-            case COMBOBOX: return "COMBOBOX";
-            case CHECKBOX: return "CHECKBOX";
-            case IMAGELIST: return "IMAGELIST";
-            case OBJECT3D: return "OBJECT3D";
-            default: return "UNKNOWN";
+            case TEXTFIELD:
+                return "TEXTFIELD";
+            case SLIDER:
+                return "SLIDER";
+            case COMBOBOX:
+                return "COMBOBOX";
+            case CHECKBOX:
+                return "CHECKBOX";
+            case IMAGELIST:
+                return "IMAGELIST";
+            case OBJECT3D:
+                return "OBJECT3D";
+            default:
+                return "UNKNOWN";
         }
     };
 

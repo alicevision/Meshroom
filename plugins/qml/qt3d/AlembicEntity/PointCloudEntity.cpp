@@ -19,7 +19,7 @@ void PointCloudEntity::setData(const Alembic::Abc::IObject& iObj)
     using namespace Alembic::AbcGeom;
 
     // create a new geometry renderer
-    QGeometryRenderer *customMeshRenderer = new QGeometryRenderer;
+    QGeometryRenderer* customMeshRenderer = new QGeometryRenderer;
     QGeometry* customGeometry = new QGeometry;
 
     // read position data
@@ -29,10 +29,10 @@ void PointCloudEntity::setData(const Alembic::Abc::IObject& iObj)
     size_t npoints = positions->size();
 
     // vertices buffer
-    QByteArray positionData((const char *)positions->get(), npoints * 3 * sizeof(float));
+    QByteArray positionData((const char*)positions->get(), npoints * 3 * sizeof(float));
     QBuffer* vertexDataBuffer = new QBuffer(QBuffer::VertexBuffer);
     vertexDataBuffer->setData(positionData);
-    QAttribute *positionAttribute = new QAttribute;
+    QAttribute* positionAttribute = new QAttribute;
     positionAttribute->setAttributeType(QAttribute::VertexAttribute);
     positionAttribute->setBuffer(vertexDataBuffer);
     positionAttribute->setDataType(QAttribute::Float);
@@ -66,7 +66,8 @@ void PointCloudEntity::setData(const Alembic::Abc::IObject& iObj)
                     Alembic::Util::uint8_t extent = dType.getExtent();
                     Alembic::AbcCoreAbstract::ArraySamplePtr samp;
                     prop.get(samp);
-                    QByteArray colorData((const char *)samp->getData(), samp->size() * 3 * sizeof(float));
+                    QByteArray colorData((const char*)samp->getData(),
+                                         samp->size() * 3 * sizeof(float));
                     colorDataBuffer->setData(colorData);
                     break; // set colors only once
                 }
@@ -80,12 +81,12 @@ void PointCloudEntity::setData(const Alembic::Abc::IObject& iObj)
         float* colors = new float[positions->size() * 3];
         for(int i = 0; i < positions->size() * 3; i++)
             colors[i] = 0.8f;
-        QByteArray colorData((const char *)colors, npoints * 3 * sizeof(float));
+        QByteArray colorData((const char*)colors, npoints * 3 * sizeof(float));
         colorDataBuffer->setData(colorData);
     }
 
     // colors buffer
-    QAttribute *colorAttribute = new QAttribute;
+    QAttribute* colorAttribute = new QAttribute;
     colorAttribute->setAttributeType(QAttribute::VertexAttribute);
     colorAttribute->setBuffer(colorDataBuffer);
     colorAttribute->setDataType(QAttribute::Float);
@@ -110,10 +111,10 @@ void PointCloudEntity::setData(const Alembic::Abc::IObject& iObj)
 
 void PointCloudEntity::setTransform(const Alembic::Abc::M44d& mat)
 {
-    Qt3DCore::QTransform *transform = new Qt3DCore::QTransform;
-    QMatrix4x4 qmat(mat[0][0], mat[1][0], mat[2][0], mat[3][0], mat[0][1], mat[1][1],
-                        mat[2][1], mat[3][1], mat[0][2], mat[1][2], mat[2][2], mat[3][2],
-                        mat[0][3], mat[1][3], mat[2][3], mat[3][3]);
+    Qt3DCore::QTransform* transform = new Qt3DCore::QTransform;
+    QMatrix4x4 qmat(mat[0][0], mat[1][0], mat[2][0], mat[3][0], mat[0][1], mat[1][1], mat[2][1],
+                    mat[3][1], mat[0][2], mat[1][2], mat[2][2], mat[3][2], mat[0][3], mat[1][3],
+                    mat[2][3], mat[3][3]);
     transform->setMatrix(qmat);
     addComponent(transform);
 }

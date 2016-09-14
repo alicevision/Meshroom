@@ -19,7 +19,7 @@ public:
         Q_ASSERT(uri == QLatin1String("NodeEditor"));
         qmlRegisterType<Graph>(uri, 1, 0, "Graph");
         qmlRegisterUncreatableType<Node>(uri, 1, 0, "Node",
-                                              "type registration failed (nodeeditor::Node)");
+                                         "type registration failed (nodeeditor::Node)");
         qmlRegisterUncreatableType<Attribute>(uri, 1, 0, "Attribute",
                                               "type registration failed (nodeeditor::Attribute)");
     }

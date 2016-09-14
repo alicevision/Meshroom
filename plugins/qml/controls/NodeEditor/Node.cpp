@@ -9,7 +9,7 @@ namespace nodeeditor
 void Node::setStatus(Status status)
 {
     if(_status == status)
-    return;
+        return;
     _status = status;
     Q_EMIT statusChanged();
 }

@@ -79,7 +79,7 @@ PluginCollection* Application::loadPlugins()
         // register the plugin
         Plugin* plugin = new Plugin(this, metadata, instance);
         _plugins.add(plugin);
-        
+
         // register all nodes
         for(auto n : metadata.value("nodes").toArray())
             _pluginNodes.add(new PluginNode(this, n.toObject(), plugin));

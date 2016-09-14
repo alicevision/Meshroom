@@ -15,8 +15,10 @@ class AlembicEntity : public Qt3DCore::QEntity
 {
     Q_OBJECT
     Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
-    Q_PROPERTY(float particleSize READ particleSize WRITE setParticleSize NOTIFY particleSizeChanged)
-    Q_PROPERTY(float locatorScale READ locatorScale WRITE setLocatorScale NOTIFY locatorScaleChanged)
+    Q_PROPERTY(
+        float particleSize READ particleSize WRITE setParticleSize NOTIFY particleSizeChanged)
+    Q_PROPERTY(
+        float locatorScale READ locatorScale WRITE setLocatorScale NOTIFY locatorScaleChanged)
 
 public:
     AlembicEntity(Qt3DCore::QNode* = nullptr);

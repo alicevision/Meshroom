@@ -2,36 +2,32 @@
 
 #include <QAbstractListModel>
 #include <QJsonArray>
-#include "Attribute.hpp"
+#include "Edge.hpp"
 
 namespace nodeeditor
 {
 
-class AttributeCollection : public QAbstractListModel
+class Node;
+
+class EdgeCollection : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
 public:
-    enum AttributeRoles
+    enum EdgeRoles
     {
-        NameRole = Qt::UserRole + 1,
-        KeyRole,
-        TooltipRole,
-        TypeRole,
-        MinRole,
-        MaxRole,
-        StepRole,
-        OptionsRole,
-        ValueRole,
+        SourceRole = Qt::UserRole + 1,
+        TargetRole,
+        PlugRole,
         ModelDataRole
     };
-    Q_ENUMS(AttributeRoles)
+    Q_ENUMS(EdgeRoles)
 
 public:
-    AttributeCollection(QObject* parent = 0);
-    AttributeCollection(const AttributeCollection& obj) = delete;
-    AttributeCollection& operator=(AttributeCollection const&) = delete;
+    EdgeCollection(QObject* parent = 0);
+    EdgeCollection(const EdgeCollection& obj) = delete;
+    EdgeCollection& operator=(EdgeCollection const&) = delete;
 
 public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
@@ -39,11 +35,12 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role) override;
 
 public:
-    Q_SLOT bool add(Attribute*);
-    Q_SLOT bool remove(Attribute*);
+    Q_SLOT bool add(Edge*);
+    Q_SLOT bool remove(Edge*);
+    Q_SLOT void removeNodeEdges(Node* node);
     Q_SLOT void clear();
-    Q_SLOT int rowIndex(Attribute*) const;
-    Q_SLOT int rowIndex(const QString&) const;
+    Q_SLOT int rowIndex(Edge*) const;
+    Q_SLOT int rowIndex(const QString&, const QString&, const QString&) const;
     Q_SLOT QVariantMap toVMap(int) const;
     Q_SLOT QJsonArray serializeToJSON() const;
     Q_SLOT void deserializeFromJSON(const QJsonArray&);
@@ -53,7 +50,7 @@ protected:
     QHash<int, QByteArray> roleNames() const override;
 
 private:
-    QList<Attribute*> _attributes;
+    QList<Edge*> _edges;
 };
 
 } // namespace

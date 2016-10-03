@@ -6,10 +6,13 @@ import NodeEditor 1.0
 Rectangle {
 
     id: root
+    property variant nodeModel : modelData
+    property variant inputs: model.inputs
+    property variant outputs: model.outputs
+
     radius: 10
     z: currentNodeID == index ? 2 : 1
     color: Qt.rgba(0.1, 0.1, 0.1, 0.8)
-
     border.color: {
         if(mouseArea.containsMouse)
             return "#5BB1F7";
@@ -24,22 +27,14 @@ Rectangle {
         return Qt.rgba(1, 1, 1, 0.2);
     }
 
-    // properties
-    property variant inputs: model.inputs
-    property variant outputs: model.outputs
-
     // functions
-    function getInputItem(id) {
-        return inputRepeater.itemAt(id);
-    }
-    function getOutputItem(id) {
-        return outputRepeater.itemAt(id);
-    }
+    function getInputItem(id) { return inputRepeater.itemAt(id) }
+    function getOutputItem(id) { return outputRepeater.itemAt(id) }
 
     // slots & behaviors
     Component.onCompleted: { x = model.x; y = model.y; }
-    onXChanged: { model.x = x; nodeMoved(model); }
-    onYChanged: { model.y = y; nodeMoved(model); }
+    onXChanged: { model.x = x; nodeMoved(model.modelData); }
+    onYChanged: { model.y = y; nodeMoved(model.modelData); }
     Behavior on border.color { ColorAnimation {} }
 
     // mouse area
@@ -57,11 +52,11 @@ Rectangle {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: {
             if(mouse.button & Qt.RightButton) {
-                nodeRightClicked(model);
+                nodeRightClicked(model.modelData);
                 return;
             }
             currentNodeID = index;
-            nodeLeftClicked(model)
+            nodeLeftClicked(model.modelData)
         }
 
         ColumnLayout {
@@ -85,63 +80,22 @@ Rectangle {
                 RowLayout {
                     anchors.fill: parent
                     spacing: 2
-
-                    // input attributes
                     ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        spacing: 2
                         Repeater {
                             id: inputRepeater
                             model: root.inputs
-                            RowLayout {
-                                Layout.fillWidth: true
-                                Layout.maximumHeight: 15
-                                spacing: 2
-                                Rectangle {
-                                    Layout.fillHeight: true
-                                    Layout.preferredWidth: 1
-                                    color: Qt.rgba(1, 1, 1, 0.5)
-                                }
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: model.name
-                                    horizontalAlignment: Text.AlignLeft
-                                    state: "xsmall"
-                                }
-                            }
+                            AttributeDelegate { isInput: true }
                         }
                         Item { Layout.fillHeight: true } // spacer
                     }
-
-                    // output attributes
                     ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        spacing: 2
                         Repeater {
                             id: outputRepeater
                             model: root.outputs
-                            RowLayout {
-                                Layout.fillWidth: true
-                                Layout.maximumHeight: 15
-                                spacing: 2
-                                Label {
-                                    Layout.fillWidth: true
-                                    text: model.name
-                                    horizontalAlignment: Text.AlignRight
-                                    state: "xsmall"
-                                }
-                                Rectangle {
-                                    Layout.fillHeight: true
-                                    Layout.preferredWidth: 1
-                                    color: Qt.rgba(1, 1, 1, 0.5)
-                                }
-                            }
+                            AttributeDelegate { isInput: false }
                         }
                         Item { Layout.fillHeight: true } // spacer
                     }
-
                 }
             }
         }

@@ -13,7 +13,6 @@ namespace meshroom
 
 Graph::Graph(QObject* parent)
     : QObject(parent)
-    , _graph(dg::make_ptr<dg::Graph>())
 {
     setCacheUrl(QUrl::fromLocalFile("/tmp"));
 }
@@ -26,14 +25,16 @@ Graph::~Graph()
 void Graph::clear()
 {
     // clear
-    _graph->clear();
+    _dgGraph.clear();
 
     // reflect changes on the qml side
     GET_METHOD_OR_RETURN(clear(), void());
-    method.invoke(_qmlEditor, Qt::DirectConnection);
+    method.invoke(_editor, Qt::DirectConnection);
+
+    Q_EMIT structureChanged();
 }
 
-void Graph::addNode(const QJsonObject& descriptor)
+bool Graph::addNode(const QJsonObject& descriptor)
 {
     // retrieve parent scene & application
     Scene* scene = qobject_cast<Scene*>(parent());
@@ -43,11 +44,12 @@ void Graph::addNode(const QJsonObject& descriptor)
 
     // looking for node metadata (registered at plugin load time)
     QString type = descriptor.value("type").toString();
+    QString name = descriptor.value("name").toString();
     PluginNode* node = application->pluginNodes()->get(type);
     if(!node)
     {
         qWarning() << "unknown node type" << type;
-        return;
+        return false;
     }
 
     // merge metadata and current descriptor
@@ -56,28 +58,24 @@ void Graph::addNode(const QJsonObject& descriptor)
     for(auto k : descriptorAsMap.keys())
         metadata.insert(k, QJsonValue::fromVariant(descriptorAsMap.value(k)));
 
-    // compute node name
-    QString name = descriptor.value("name").toString();
-    if(name.isEmpty())
-    {
-        metadata.insert("name", type.toLower());
-        name = descriptor.value("name").toString();
-    }
-
     // create a new node
     auto dgNode = application->createNode(type, name);
     if(!dgNode)
     {
         qCritical() << "unable to create a new" << type << "node";
-        return;
+        return false;
     }
 
     // add this new node to the graph
-    if(!_graph->addNode(dgNode))
+    if(!_dgGraph.addNode(dgNode))
     {
         qCritical() << "unable to add a" << type << "node to the current graph";
-        return;
+        return false;
     }
+
+    // retrieve auto-generated name
+    name = QString::fromStdString(dgNode->name);
+    metadata.insert("name", name);
 
     // set node attributes
     for(auto a : descriptor.value("inputs").toArray())
@@ -88,42 +86,100 @@ void Graph::addNode(const QJsonObject& descriptor)
     }
 
     // reflect changes on the qml side
-    GET_METHOD_OR_RETURN(addNode(QJsonObject), void());
-    method.invoke(_qmlEditor, Qt::DirectConnection, Q_ARG(QJsonObject, metadata));
+    bool result = false;
+    GET_METHOD_OR_RETURN(addNode(QJsonObject), false);
+    method.invoke(_editor, Qt::DirectConnection, Q_RETURN_ARG(bool, result),
+                  Q_ARG(QJsonObject, metadata));
+
+    if(result)
+        Q_EMIT structureChanged();
+
+    return result;
 }
 
-void Graph::addConnection(const QJsonObject& connection)
+bool Graph::addEdge(const QJsonObject& edge)
 {
-    // retrieve nodes
-    QString sourceName = connection.value("source").toString();
-    QString targetName = connection.value("target").toString();
-    auto source = _graph->node(sourceName.toStdString());
-    auto target = _graph->node(targetName.toStdString());
+    // retrieve dg nodes
+    QString sourceName = edge.value("source").toString();
+    QString targetName = edge.value("target").toString();
+    auto source = _dgGraph.node(sourceName.toStdString());
+    auto target = _dgGraph.node(targetName.toStdString());
     if(!source || !target)
     {
-        qCritical() << "unable to connect nodes: invalid connection";
-        return;
+        qCritical() << "unable to connect nodes: invalid edge";
+        return false;
     }
 
-    // retrieve plug
-    QString plugName = connection.value("plug").toString();
+    // retrieve dg plug
+    QString plugName = edge.value("plug").toString();
     auto plug = target->plug(plugName.toStdString());
     if(!plug)
     {
         qCritical() << "unable to connect nodes: plug" << plugName << "not found";
-        return;
+        return false;
     }
 
-    // connect
-    if(!_graph->connect(source->output, plug))
+    // connect dg nodes
+    if(!_dgGraph.connect(source->output, plug))
     {
         qCritical() << "unable to connect nodes:" << sourceName << ">" << targetName;
-        return;
+        return false;
     }
 
     // reflect changes on the qml side
-    GET_METHOD_OR_RETURN(addConnection(QJsonObject), void());
-    method.invoke(_qmlEditor, Qt::DirectConnection, Q_ARG(QJsonObject, connection));
+    bool result = false;
+    GET_METHOD_OR_RETURN(addEdge(QJsonObject), false);
+    method.invoke(_editor, Qt::DirectConnection, Q_RETURN_ARG(bool, result),
+                  Q_ARG(QJsonObject, edge));
+
+    if(result)
+        Q_EMIT structureChanged();
+
+    return result;
+}
+
+bool Graph::removeNode(const QJsonObject& descriptor)
+{
+    // remove the dg node
+    QString nodeName = descriptor.value("name").toString();
+    auto dgnode = _dgGraph.node(nodeName.toStdString());
+    if(!_dgGraph.removeNode(dgnode))
+        return false;
+
+    // reflect changes on the qml side
+    bool result = false;
+    GET_METHOD_OR_RETURN(removeNode(QJsonObject), false);
+    method.invoke(_editor, Qt::DirectConnection, Q_RETURN_ARG(bool, result),
+                  Q_ARG(QJsonObject, descriptor));
+
+    if(result)
+        Q_EMIT structureChanged();
+
+    return result;
+}
+
+bool Graph::removeEdge(const QJsonObject& descriptor)
+{
+    // remove the dg connection
+    QString src = descriptor.value("source").toString();
+    QString target = descriptor.value("target").toString();
+    QString plug = descriptor.value("plug").toString();
+    auto dgsrc = _dgGraph.node(src.toStdString());
+    auto dgtarget = _dgGraph.node(target.toStdString());
+    if(!dgsrc || !dgtarget ||
+       !_dgGraph.disconnect(dgsrc->output, dgtarget->plug(plug.toStdString())))
+        return false;
+
+    // reflect changes on the qml side
+    bool result = false;
+    GET_METHOD_OR_RETURN(removeEdge(QJsonObject), false);
+    method.invoke(_editor, Qt::DirectConnection, Q_RETURN_ARG(bool, result),
+                  Q_ARG(QJsonObject, descriptor));
+
+    if(result)
+        Q_EMIT structureChanged();
+
+    return result;
 }
 
 void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
@@ -153,8 +209,13 @@ void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
         variant = qvariant_cast<QJSValue>(variant).toVariant();
 
     // set attribute : DG side
-    auto dgNode = _graph->node(nodeName.toStdString());
-    Q_CHECK_PTR(dgNode);
+    auto dgNode = _dgGraph.node(nodeName.toStdString());
+    if(!dgNode)
+    {
+        qCritical() << "unable to find node" << nodeName;
+        return;
+    }
+
     if(variant.type() == QVariant::List)
     {
         dg::AttributeList attributeList;
@@ -173,19 +234,21 @@ void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
 
     // reflect changes on the qml side
     GET_METHOD_OR_RETURN(setNodeAttribute(QString, QString, QVariant), void());
-    method.invoke(_qmlEditor, Qt::DirectConnection, Q_ARG(QString, nodeName),
-                  Q_ARG(QString, plugName), Q_ARG(QVariant, variant));
+    method.invoke(_editor, Qt::DirectConnection, Q_ARG(QString, nodeName), Q_ARG(QString, plugName),
+                  Q_ARG(QVariant, variant));
+
+    Q_EMIT structureChanged();
 }
 
 QVariant Graph::getNodeAttribute(const QString& nodeName, const QString& plugName)
 {
-    auto node = _graph->node(nodeName.toStdString());
+    auto node = _dgGraph.node(nodeName.toStdString());
     if(!node)
         return QVariant();
     auto plug = node->plug(plugName.toStdString());
     if(!plug)
         return QVariant();
-    auto attribute = _graph->cache.attribute(plug);
+    auto attribute = _dgGraph.cache.attribute(plug);
     return QString::fromStdString(toString(attribute)); // FIXME
 }
 
@@ -201,7 +264,8 @@ void Graph::setCacheUrl(const QUrl& cacheUrl)
 
     // save the path and set it as graph root
     _cacheUrl = cacheUrl;
-    _graph->cache.setRoot(_cacheUrl.toLocalFile().toStdString());
+    _dgGraph.cache.setRoot(_cacheUrl.toLocalFile().toStdString());
+
     Q_EMIT cacheUrlChanged();
 }
 
@@ -212,13 +276,13 @@ void Graph::startWorker(BuildMode mode, const QString& name)
 
     // create worker
     delete _worker;
-    _worker = new WorkerThread(this, name, mode, _graph);
+    _worker = new WorkerThread(this, name, mode, _dgGraph);
 
     // worker connections
     auto updateNodeStatuses = [&](const QString& nodeName, const QString& status)
     {
         GET_METHOD_OR_RETURN(setNodeStatus(QString, QString), void());
-        method.invoke(_qmlEditor, Qt::DirectConnection, Q_ARG(QString, nodeName),
+        method.invoke(_editor, Qt::DirectConnection, Q_ARG(QString, nodeName),
                       Q_ARG(QString, status));
     };
     connect(_worker, &WorkerThread::nodeStatusChanged, this, updateNodeStatuses);
@@ -226,6 +290,7 @@ void Graph::startWorker(BuildMode mode, const QString& name)
 
     // start worker
     _worker->start();
+
     Q_EMIT isRunningChanged();
 }
 
@@ -246,13 +311,11 @@ const bool Graph::isRunning() const
 
 QJsonObject Graph::serializeToJSON() const
 {
-    Q_CHECK_PTR(_qmlEditor);
-
+    Q_CHECK_PTR(_editor);
     QJsonObject obj;
     GET_METHOD_OR_RETURN(serializeToJSON(), obj);
-    method.invoke(_qmlEditor, Qt::DirectConnection, Q_RETURN_ARG(QJsonObject, obj));
+    method.invoke(_editor, Qt::DirectConnection, Q_RETURN_ARG(QJsonObject, obj));
     obj.insert("cacheUrl", _cacheUrl.toLocalFile());
-
     return obj;
 }
 
@@ -261,8 +324,8 @@ void Graph::deserializeFromJSON(const QJsonObject& obj)
     setCacheUrl(QUrl::fromLocalFile(obj.value("cacheUrl").toString()));
     for(auto o : obj.value("nodes").toArray())
         addNode(o.toObject());
-    for(auto o : obj.value("connections").toArray())
-        addConnection(o.toObject());
+    for(auto o : obj.value("edges").toArray())
+        addEdge(o.toObject());
 }
 
 } // namespace

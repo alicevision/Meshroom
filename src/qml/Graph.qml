@@ -59,19 +59,22 @@ Item {
     NodeEditor {
         id: editor
         anchors.fill: parent
+        onEdgeAdded: currentScene.graph.addEdge(descriptor)
+        onEdgeRemoved: currentScene.graph.removeEdge(edge.serializeToJSON())
         onNodeLeftClicked: root.selectionChanged(node)
         onNodeRightClicked: {
             function compute_CB(mode) {
                 editor.graph.clearNodeStatuses();
                 currentScene.graph.startWorker(mode, node.name);
             }
-            function remove_CB(mode) {
-                // todo
+            function remove_CB() {
+                currentScene.graph.removeNode(node.serializeToJSON());
             }
             var menu = contextMenu.createObject(editor);
             menu.x = node.x+10;
             menu.y = node.y+10;
             menu.compute.connect(compute_CB);
+            menu.remove.connect(remove_CB);
             menu.open()
         }
     }

@@ -31,6 +31,8 @@ Scene::Scene(QObject* parent, const QUrl& url)
     connect(this, &Scene::urlChanged, this, setName_CB);
     connect(this, &Scene::nameChanged, this, setDirty_CB);
     connect(this, &Scene::thumbnailChanged, this, setDirty_CB);
+    connect(_graph, &Graph::cacheUrlChanged, this, setDirty_CB);
+    connect(_graph, &Graph::structureChanged, this, setDirty_CB);
 
     // initialization
     reset();

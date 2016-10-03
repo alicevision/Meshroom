@@ -1,5 +1,4 @@
 #include "Attribute.hpp"
-#include <QJsonObject>
 #include <QJsonArray>
 #include <QJSValue>
 #include <QDebug>

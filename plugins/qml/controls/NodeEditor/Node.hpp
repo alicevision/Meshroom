@@ -46,8 +46,8 @@ public:
     void setY(int);
 
 public:
-    QJsonObject serializeToJSON() const;
-    void deserializeFromJSON(const QJsonObject& obj);
+    Q_SLOT QJsonObject serializeToJSON() const;
+    Q_SLOT void deserializeFromJSON(const QJsonObject& obj);
 
 public:
     Q_SIGNAL void statusChanged();

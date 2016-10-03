@@ -20,7 +20,7 @@ Item {
         var outputs = root.model.outputs;
         if(outputs.count > 0) {
             for(var i=0; i < outputs.count; ++i) {
-                if(outputs.get(i).type == Attribute.OBJECT3D)
+                if(outputs.data(outputs.index(i,0), AttributeCollection.TypeRole) == Attribute.OBJECT3D)
                     loadAlembic(currentScene.graph.getNodeAttribute(root.model.name, outputs.get(i).name));
             }
         }
@@ -115,7 +115,8 @@ Item {
                     property variant modelData: null
                     property string nodeName: ""
                     sourceComponent: {
-                        modelData = root.model.inputs.get(index/2).modelData;
+                        var inputs = root.model.inputs;
+                        modelData = inputs.data(inputs.index(index/2,0), AttributeCollection.ModelDataRole);
                         nodeName = root.model.name;
                         if(index % 2 == 0)
                             return labelDelegate;

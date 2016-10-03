@@ -23,6 +23,7 @@ public:
         YRole,
         ModelDataRole
     };
+    Q_ENUMS(NodeRoles)
 
 public:
     NodeCollection(QObject* parent = 0);
@@ -33,17 +34,17 @@ public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role) override;
-    Node* get(const QString& name);
 
 public:
-    Q_SLOT void addNode(Node* node);
-    Q_SLOT void addNode(const QJsonObject& descriptor);
+    Q_SLOT bool add(Node*);
+    Q_SLOT bool remove(Node*);
     Q_SLOT void clear();
-    Q_SLOT QVariantMap get(int row) const;
-    Q_SLOT int getID(const QString&) const;
+    Q_SLOT int rowIndex(Node*) const;
+    Q_SLOT int rowIndex(const QString&) const;
+    Q_SLOT QVariantMap toVMap(int) const;
     Q_SLOT QJsonArray serializeToJSON() const;
     Q_SLOT void deserializeFromJSON(const QJsonArray&);
-    Q_SIGNAL void countChanged(int c);
+    Q_SIGNAL void countChanged(int);
 
 protected:
     QHash<int, QByteArray> roleNames() const override;

@@ -18,10 +18,15 @@ public:
     {
         Q_ASSERT(uri == QLatin1String("NodeEditor"));
         qmlRegisterType<Graph>(uri, 1, 0, "Graph");
-        qmlRegisterUncreatableType<Node>(uri, 1, 0, "Node",
-                                         "type registration failed (nodeeditor::Node)");
+        qmlRegisterUncreatableType<NodeCollection>(uri, 1, 0, "NodeCollection",
+                                                   "type registration failed (NodeCollection)");
+        qmlRegisterUncreatableType<EdgeCollection>(uri, 1, 0, "EdgeCollection",
+                                                   "type registration failed (EdgeCollection)");
+        qmlRegisterUncreatableType<AttributeCollection>(
+            uri, 1, 0, "AttributeCollection", "type registration failed (AttributeCollection)");
         qmlRegisterUncreatableType<Attribute>(uri, 1, 0, "Attribute",
-                                              "type registration failed (nodeeditor::Attribute)");
+                                              "type registration failed (Attribute)");
+        qmlRegisterUncreatableType<Node>(uri, 1, 0, "Node", "type registration failed (Node)");
     }
 };
 

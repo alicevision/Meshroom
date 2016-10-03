@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QVariant>
+#include <QJsonObject>
 
 namespace nodeeditor
 {
@@ -57,8 +58,8 @@ public:
     void setOptions(const QStringList& options) { _options = options; }
 
 public:
-    QJsonObject serializeToJSON() const;
-    void deserializeFromJSON(const QJsonObject& obj);
+    Q_SLOT QJsonObject serializeToJSON() const;
+    Q_SLOT void deserializeFromJSON(const QJsonObject& obj);
 
 public:
     Q_SIGNAL void valueChanged();

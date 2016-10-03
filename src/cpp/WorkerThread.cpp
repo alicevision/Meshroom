@@ -6,11 +6,11 @@ namespace meshroom
 {
 
 WorkerThread::WorkerThread(QObject* parent, const QString& node, Graph::BuildMode mode,
-                           Ptr<dg::Graph> graph)
+                           dg::Graph& graph)
     : QThread(parent)
     , _node(node)
     , _mode(mode)
-    , _graph(graph)
+    , _dgGraph(graph)
 {
 }
 
@@ -34,7 +34,7 @@ void WorkerThread::run()
     // in case the node name is empty, operate on graph leaves
     if(_node.isEmpty())
     {
-        NodeList leaves = _graph->leaves();
+        NodeList leaves = _dgGraph.leaves();
         if(leaves.empty())
             return;
         _node = QString::fromStdString(leaves[0]->name); // FIXME first leaf
@@ -84,7 +84,7 @@ void WorkerThread::run()
         // dg callback
         runner->registerCB(status_callback);
         // run
-        runner->operator()(_graph, _node.toStdString());
+        runner->operator()(_dgGraph, _node.toStdString());
         delete runner;
     }
     catch(std::exception& e)

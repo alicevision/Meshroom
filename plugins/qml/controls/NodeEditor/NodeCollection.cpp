@@ -1,6 +1,7 @@
 #include "NodeCollection.hpp"
 #include <QQmlEngine>
 #include <QJsonObject>
+#include <QDebug>
 
 namespace nodeeditor
 {
@@ -65,32 +66,7 @@ bool NodeCollection::setData(const QModelIndex& index, const QVariant& value, in
     return true;
 }
 
-Node* NodeCollection::get(const QString& name)
-{
-    QListIterator<Node*> it(_nodes);
-    while(it.hasNext())
-    {
-        Node* s = it.next();
-        if(s->name() == name)
-            return s;
-    }
-    return nullptr;
-}
-
-QHash<int, QByteArray> NodeCollection::roleNames() const
-{
-    QHash<int, QByteArray> roles;
-    roles[NameRole] = "name";
-    roles[InputsRole] = "inputs";
-    roles[OutputsRole] = "outputs";
-    roles[StatusRole] = "status";
-    roles[XRole] = "x";
-    roles[YRole] = "y";
-    roles[ModelDataRole] = "modelData";
-    return roles;
-}
-
-void NodeCollection::addNode(Node* node)
+bool NodeCollection::add(Node* node)
 {
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(node, QQmlEngine::CppOwnership);
@@ -112,13 +88,19 @@ void NodeCollection::addNode(Node* node)
     connect(node, &Node::yChanged, this, callback);
 
     Q_EMIT countChanged(rowCount());
+    return true;
 }
 
-void NodeCollection::addNode(const QJsonObject& descriptor)
+bool NodeCollection::remove(Node* node)
 {
-    Node* node = new Node();
-    node->deserializeFromJSON(descriptor);
-    addNode(node);
+    int id = rowIndex(node);
+    if(id < 0)
+        return false;
+    beginRemoveRows(QModelIndex(), id, id);
+    delete _nodes.takeAt(id);
+    endRemoveRows();
+    Q_EMIT countChanged(rowCount());
+    return true;
 }
 
 void NodeCollection::clear()
@@ -130,7 +112,24 @@ void NodeCollection::clear()
     Q_EMIT countChanged(rowCount());
 }
 
-QVariantMap NodeCollection::get(int row) const
+int NodeCollection::rowIndex(Node* node) const
+{
+    return _nodes.indexOf(node);
+}
+
+int NodeCollection::rowIndex(const QString& name) const
+{
+    int id = 0;
+    for(auto n : _nodes)
+    {
+        if(n->name() == name)
+            return id;
+        ++id;
+    }
+    return -1;
+}
+
+QVariantMap NodeCollection::toVMap(int row) const
 {
     QHash<int, QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);
@@ -145,18 +144,6 @@ QVariantMap NodeCollection::get(int row) const
     return result;
 }
 
-int NodeCollection::getID(const QString& name) const
-{
-    int id = 0;
-    for(auto n : _nodes)
-    {
-        if(n->name() == name)
-            return id;
-        ++id;
-    }
-    return -1;
-}
-
 QJsonArray NodeCollection::serializeToJSON() const
 {
     QJsonArray array;
@@ -168,7 +155,24 @@ QJsonArray NodeCollection::serializeToJSON() const
 void NodeCollection::deserializeFromJSON(const QJsonArray& array)
 {
     for(auto n : array)
-        addNode(n.toObject());
+    {
+        Node* node = new Node;
+        node->deserializeFromJSON(n.toObject());
+        add(node);
+    }
+}
+
+QHash<int, QByteArray> NodeCollection::roleNames() const
+{
+    QHash<int, QByteArray> roles;
+    roles[NameRole] = "name";
+    roles[InputsRole] = "inputs";
+    roles[OutputsRole] = "outputs";
+    roles[StatusRole] = "status";
+    roles[XRole] = "x";
+    roles[YRole] = "y";
+    roles[ModelDataRole] = "modelData";
+    return roles;
 }
 
 } // namespace

@@ -32,8 +32,10 @@ public:
 public:
     // graph editing
     Q_SLOT void clear();
-    Q_SLOT void addNode(const QJsonObject&);
-    Q_SLOT void addConnection(const QJsonObject&);
+    Q_SLOT bool addNode(const QJsonObject&);
+    Q_SLOT bool addEdge(const QJsonObject&);
+    Q_SLOT bool removeNode(const QJsonObject&);
+    Q_SLOT bool removeEdge(const QJsonObject&);
     Q_SLOT void setNodeAttribute(const QString&, const QString&, const QVariant&);
     Q_SLOT QVariant getNodeAttribute(const QString&, const QString&);
     Q_SLOT const QUrl& cacheUrl() const { return _cacheUrl; }
@@ -46,24 +48,25 @@ public:
 
 public:
     Q_SIGNAL void cacheUrlChanged();
+    Q_SIGNAL void structureChanged();
     Q_SIGNAL void isRunningChanged();
 
 public:
-    void registerQmlObject(QObject* obj) { _qmlEditor = obj; }
+    void registerQmlObject(QObject* obj) { _editor = obj; }
     QJsonObject serializeToJSON() const;
     void deserializeFromJSON(const QJsonObject&);
 
 private:
     QUrl _cacheUrl;
-    dg::Ptr<dg::Graph> _graph = nullptr;
+    dg::Graph _dgGraph;
     WorkerThread* _worker = nullptr;
-    QObject* _qmlEditor = nullptr;
+    QObject* _editor = nullptr;
 };
 
 #define GET_METHOD_OR_RETURN(prototype, returnArg)                                                 \
-    if(!_qmlEditor)                                                                                \
+    if(!_editor)                                                                                   \
         return returnArg;                                                                          \
-    const QMetaObject* metaObject = _qmlEditor->metaObject();                                      \
+    const QMetaObject* metaObject = _editor->metaObject();                                         \
     int methodIndex = metaObject->indexOfSlot(QMetaObject::normalizedSignature(#prototype));       \
     if(methodIndex == -1)                                                                          \
     {                                                                                              \

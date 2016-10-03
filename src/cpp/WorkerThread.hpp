@@ -13,7 +13,7 @@ class WorkerThread : public QThread
     Q_OBJECT
 
 public:
-    WorkerThread(QObject*, const QString&, Graph::BuildMode, dg::Ptr<dg::Graph>);
+    WorkerThread(QObject*, const QString&, Graph::BuildMode, dg::Graph&);
 
 public:
     void run() override;
@@ -26,7 +26,7 @@ public:
 private:
     QString _node;
     Graph::BuildMode _mode;
-    dg::Ptr<dg::Graph> _graph;
+    dg::Graph& _dgGraph;
 };
 
 } // namespace

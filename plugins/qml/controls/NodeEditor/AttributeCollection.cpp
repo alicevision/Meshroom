@@ -11,17 +11,6 @@ AttributeCollection::AttributeCollection(QObject* parent)
 {
 }
 
-AttributeCollection::AttributeCollection(const AttributeCollection& obj)
-    : QAbstractListModel(obj.parent())
-{
-    QHash<int, QByteArray> names = roleNames();
-    for(size_t i = 0; i < obj.rowCount(); ++i)
-    {
-        Attribute* a = obj.get(i)[names[ModelDataRole]].value<Attribute*>();
-        addAttribute(new Attribute(*a));
-    }
-}
-
 int AttributeCollection::rowCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent);
@@ -72,47 +61,7 @@ bool AttributeCollection::setData(const QModelIndex& index, const QVariant& valu
     return true;
 }
 
-Attribute* AttributeCollection::get(const QString& key)
-{
-    QListIterator<Attribute*> it(_attributes);
-    while(it.hasNext())
-    {
-        Attribute* a = it.next();
-        if(a->key() == key)
-            return a;
-    }
-    return nullptr;
-}
-
-int AttributeCollection::getID(const QString& name) const
-{
-    int id = 0;
-    for(auto a : _attributes)
-    {
-        if(a->name() == name)
-            return id;
-        ++id;
-    }
-    return -1;
-}
-
-QHash<int, QByteArray> AttributeCollection::roleNames() const
-{
-    QHash<int, QByteArray> roles;
-    roles[NameRole] = "name";
-    roles[TooltipRole] = "tooltip";
-    roles[KeyRole] = "key";
-    roles[TypeRole] = "type";
-    roles[MinRole] = "min";
-    roles[MaxRole] = "max";
-    roles[StepRole] = "step";
-    roles[OptionsRole] = "options";
-    roles[ValueRole] = "value";
-    roles[ModelDataRole] = "modelData";
-    return roles;
-}
-
-void AttributeCollection::addAttribute(Attribute* attribute)
+bool AttributeCollection::add(Attribute* attribute)
 {
     // prevent items to be garbage collected in JS
     QQmlEngine::setObjectOwnership(attribute, QQmlEngine::CppOwnership);
@@ -132,16 +81,48 @@ void AttributeCollection::addAttribute(Attribute* attribute)
     connect(attribute, &Attribute::valueChanged, this, callback);
 
     Q_EMIT countChanged(rowCount());
+    return true;
 }
 
-void AttributeCollection::addAttribute(const QJsonObject& descriptor)
+bool AttributeCollection::remove(Attribute* attribute)
 {
-    Attribute* attribute = new Attribute();
-    attribute->deserializeFromJSON(descriptor);
-    addAttribute(attribute);
+    int id = rowIndex(attribute);
+    if(id < 0)
+        return false;
+    beginRemoveRows(QModelIndex(), id, id);
+    delete _attributes.takeAt(id);
+    endRemoveRows();
+    Q_EMIT countChanged(rowCount());
+    return true;
 }
 
-QVariantMap AttributeCollection::get(int row) const
+void AttributeCollection::clear()
+{
+    beginRemoveRows(QModelIndex(), 0, rowCount() - 1);
+    while(!_attributes.isEmpty())
+        delete _attributes.takeFirst();
+    endRemoveRows();
+    Q_EMIT countChanged(rowCount());
+}
+
+int AttributeCollection::rowIndex(Attribute* attribute) const
+{
+    return _attributes.indexOf(attribute);
+}
+
+int AttributeCollection::rowIndex(const QString& name) const
+{
+    int id = 0;
+    for(auto a : _attributes)
+    {
+        if(a->name() == name)
+            return id;
+        ++id;
+    }
+    return -1;
+}
+
+QVariantMap AttributeCollection::toVMap(int row) const
 {
     QHash<int, QByteArray> names = roleNames();
     QHashIterator<int, QByteArray> i(names);
@@ -167,7 +148,27 @@ QJsonArray AttributeCollection::serializeToJSON() const
 void AttributeCollection::deserializeFromJSON(const QJsonArray& array)
 {
     for(auto a : array)
-        addAttribute(a.toObject());
+    {
+        Attribute* attribute = new Attribute;
+        attribute->deserializeFromJSON(a.toObject());
+        add(attribute);
+    }
+}
+
+QHash<int, QByteArray> AttributeCollection::roleNames() const
+{
+    QHash<int, QByteArray> roles;
+    roles[NameRole] = "name";
+    roles[TooltipRole] = "tooltip";
+    roles[KeyRole] = "key";
+    roles[TypeRole] = "type";
+    roles[MinRole] = "min";
+    roles[MaxRole] = "max";
+    roles[StepRole] = "step";
+    roles[OptionsRole] = "options";
+    roles[ValueRole] = "value";
+    roles[ModelDataRole] = "modelData";
+    return roles;
 }
 
 } // namespace

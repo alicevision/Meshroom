@@ -18,7 +18,8 @@ public:
         MessageRole,
         ModelDataRole
     };
-
+    Q_ENUMS(LogRoles)
+    
 public:
     LogModel(QObject* parent = 0);
     ~LogModel();

@@ -21,22 +21,30 @@ Scene::Scene(QObject* parent, const QUrl& url)
     {
         setDirty(true);
     };
-    auto setName_CB = [this]()
+    auto setDefault_CB = [this]()
     {
-        if(!_url.isEmpty())
+        if(!_url.isValid())
+            return;
+        // compute default name
+        if(_name.isEmpty() || _name == "untitled")
             setName(_url.fileName().replace(".meshroom", ""));
+        // compute default cacheUrl
+        if(!_graph->cacheUrl().isValid())
+        {
+            QDir baseDir = QFileInfo(_url.toLocalFile()).absoluteDir();
+            _graph->setCacheUrl(QUrl::fromLocalFile(baseDir.absoluteFilePath(_name)));
+        }
     };
 
     // connections
-    connect(this, &Scene::urlChanged, this, setName_CB);
+    connect(this, &Scene::urlChanged, this, setDefault_CB);
     connect(this, &Scene::nameChanged, this, setDirty_CB);
     connect(this, &Scene::thumbnailChanged, this, setDirty_CB);
     connect(_graph, &Graph::cacheUrlChanged, this, setDirty_CB);
     connect(_graph, &Graph::structureChanged, this, setDirty_CB);
 
-    // initialization
-    reset();
-    setUrl(url);
+    // load
+    load(url);
 }
 
 void Scene::setUrl(const QUrl& url)
@@ -87,14 +95,23 @@ void Scene::setDirty(const bool& dirty)
     Q_EMIT dirtyChanged();
 }
 
-bool Scene::load()
+bool Scene::load(const QUrl& url)
 {
+    // reset
+    reset();
+
+    if(url.isEmpty())
+        return false;
+
     // check if the file exists
-    if(!QFileInfo::exists(_url.toLocalFile()))
+    if(!QFileInfo::exists(url.toLocalFile()))
     {
-        qCritical() << LOGID << "can't open file " << _url.toLocalFile();
+        qCritical() << LOGID << "can't open file " << url.toLocalFile();
         return false;
     }
+
+    // set url
+    setUrl(url);
 
     // open a file handler
     QFile file(_url.toLocalFile());
@@ -159,6 +176,19 @@ bool Scene::save()
     return true;
 }
 
+bool Scene::saveAs(const QUrl& url)
+{
+    // check if the URL is valid
+    if(!url.isValid())
+    {
+        qCritical() << LOGID << "invalid URL " << url.toLocalFile();
+        return false;
+    }
+
+    setUrl(url);
+    return save();
+}
+
 void Scene::erase()
 {
     QFileInfo file(_url.toLocalFile());
@@ -170,6 +200,7 @@ void Scene::erase()
 void Scene::reset()
 {
     _graph->clear();
+    _graph->setCacheUrl(QUrl());
     setUrl(QUrl());
     setName("untitled");
     setUser(std::getenv("USER"));

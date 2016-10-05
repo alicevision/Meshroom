@@ -39,7 +39,7 @@ MenuBar {
         }
         MenuItem {
             text: "Save as..."
-            onTriggered: saveAsScene(null)
+            onTriggered: saveSceneAs(null)
             shortcut: "Ctrl+Shift+S"
         }
     }

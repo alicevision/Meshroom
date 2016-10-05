@@ -14,10 +14,10 @@ class SceneModel; // forward declaration
 class Scene : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
-    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
-    Q_PROPERTY(QDateTime date READ date WRITE setDate NOTIFY dateChanged)
-    Q_PROPERTY(QString user READ user WRITE setUser NOTIFY userChanged)
+    Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
+    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QDateTime date READ date NOTIFY dateChanged)
+    Q_PROPERTY(QString user READ user NOTIFY userChanged)
     Q_PROPERTY(QUrl thumbnail READ thumbnail WRITE setThumbnail NOTIFY thumbnailChanged)
     Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
     Q_PROPERTY(Graph* graph READ graph CONSTANT)
@@ -34,14 +34,11 @@ public:
     Q_SLOT const QUrl& thumbnail() const { return _thumbnail; }
     Q_SLOT const bool& dirty() const { return _dirty; }
     Q_SLOT Graph* graph() const { return _graph; }
-    Q_SLOT void setUrl(const QUrl&);
-    Q_SLOT void setName(const QString&);
-    Q_SLOT void setDate(const QDateTime&);
-    Q_SLOT void setUser(const QString&);
     Q_SLOT void setThumbnail(const QUrl&);
     Q_SLOT void setDirty(const bool&);
-    Q_SLOT bool load();
+    Q_SLOT bool load(const QUrl&);
     Q_SLOT bool save();
+    Q_SLOT bool saveAs(const QUrl&);
     Q_SLOT void erase();
     Q_SLOT void reset();
     Q_SIGNAL void urlChanged();
@@ -50,6 +47,12 @@ public:
     Q_SIGNAL void userChanged();
     Q_SIGNAL void thumbnailChanged();
     Q_SIGNAL void dirtyChanged();
+
+private:
+    void setUrl(const QUrl&);
+    void setName(const QString&);
+    void setDate(const QDateTime&);
+    void setUser(const QString&);
 
 private:
     QJsonObject serializeToJSON() const;

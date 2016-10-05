@@ -89,9 +89,7 @@ PluginCollection* Application::loadPlugins()
 
 Scene* Application::loadScene(const QUrl& url)
 {
-    _scene.reset();
-    _scene.setUrl(url);
-    _scene.load();
+    _scene.load(url);
     return &_scene;
 }
 

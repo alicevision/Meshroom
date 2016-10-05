@@ -38,7 +38,7 @@ public:
     Q_SLOT bool removeEdge(const QJsonObject&);
     Q_SLOT void setNodeAttribute(const QString&, const QString&, const QVariant&);
     Q_SLOT QVariant getNodeAttribute(const QString&, const QString&);
-    Q_SLOT const QUrl& cacheUrl() const { return _cacheUrl; }
+    Q_SLOT QUrl cacheUrl() const;
     Q_SLOT void setCacheUrl(const QUrl&);
 
     // worker
@@ -57,7 +57,6 @@ public:
     void deserializeFromJSON(const QJsonObject&);
 
 private:
-    QUrl _cacheUrl;
     dg::Graph _dgGraph;
     WorkerThread* _worker = nullptr;
     QObject* _editor = nullptr;

@@ -14,7 +14,6 @@ namespace meshroom
 Graph::Graph(QObject* parent)
     : QObject(parent)
 {
-    setCacheUrl(QUrl::fromLocalFile("/tmp"));
 }
 
 Graph::~Graph()
@@ -252,19 +251,18 @@ QVariant Graph::getNodeAttribute(const QString& nodeName, const QString& plugNam
     return QString::fromStdString(toString(attribute)); // FIXME
 }
 
-void Graph::setCacheUrl(const QUrl& cacheUrl)
+QUrl Graph::cacheUrl() const
 {
-    if(_cacheUrl == cacheUrl)
+    return QUrl::fromLocalFile(QString::fromStdString(_dgGraph.cache.root()));
+}
+
+void Graph::setCacheUrl(const QUrl& url)
+{
+    if(url == cacheUrl())
         return;
 
-    // if the folder does not exist, create it
-    QDir dir(cacheUrl.toLocalFile());
-    if(!dir.exists())
-        dir.mkpath(".");
-
-    // save the path and set it as graph root
-    _cacheUrl = cacheUrl;
-    _dgGraph.cache.setRoot(_cacheUrl.toLocalFile().toStdString());
+    // set graph root
+    _dgGraph.cache.setRoot(url.toLocalFile().toStdString());
 
     Q_EMIT cacheUrlChanged();
 }
@@ -273,6 +271,17 @@ void Graph::startWorker(BuildMode mode, const QString& name)
 {
     if(_worker && _worker->isRunning())
         return;
+
+    if(!cacheUrl().isValid())
+    {
+        qCritical() << "invalid cache url";
+        return;
+    }
+
+    // if the cache folder does not exist, create it
+    QDir dir(cacheUrl().toLocalFile());
+    if(!dir.exists())
+        dir.mkpath(".");
 
     // create worker
     delete _worker;
@@ -315,13 +324,14 @@ QJsonObject Graph::serializeToJSON() const
     QJsonObject obj;
     GET_METHOD_OR_RETURN(serializeToJSON(), obj);
     method.invoke(_editor, Qt::DirectConnection, Q_RETURN_ARG(QJsonObject, obj));
-    obj.insert("cacheUrl", _cacheUrl.toLocalFile());
+    obj.insert("cacheUrl", cacheUrl().toLocalFile());
     return obj;
 }
 
 void Graph::deserializeFromJSON(const QJsonObject& obj)
 {
-    setCacheUrl(QUrl::fromLocalFile(obj.value("cacheUrl").toString()));
+    if(obj.contains("cacheUrl"))
+        setCacheUrl(QUrl::fromLocalFile(obj.value("cacheUrl").toString()));
     for(auto o : obj.value("nodes").toArray())
         addNode(o.toObject());
     for(auto o : obj.value("edges").toArray())

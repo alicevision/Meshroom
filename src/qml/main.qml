@@ -24,7 +24,7 @@ ApplicationWindow {
     signal newScene()
     signal openScene()
     signal saveScene(var callback)
-    signal saveAsScene(var callback)
+    signal saveSceneAs(var callback)
     signal addScene(string url)
     signal selectScene(int id)
     signal addNode()

@@ -21,11 +21,7 @@ Item {
         }
         onOpenScene: {
             function open_CB() {
-                function _CB() {
-                    currentScene.setUrl(dialog.fileUrl);
-                    currentScene.load();
-                }
-                currentScene.reset();
+                function _CB() { currentScene.load(dialog.fileUrl); }
                 var dialog = _dialogs.openScene.createObject(parent);
                 dialog.onAccepted.connect(_CB);
                 dialog.open();
@@ -42,16 +38,15 @@ Item {
         }
         onSaveScene: {
             if(!currentScene.url.toString()) {
-                saveAsScene(callback);
+                saveSceneAs(callback);
                 return;
             }
             currentScene.save();
             if(callback) callback();
         }
-        onSaveAsScene: {
+        onSaveSceneAs: {
             function _CB() {
-                currentScene.setUrl(dialog.fileUrl);
-                currentScene.save();
+                currentScene.saveAs(dialog.fileUrl);
                 if(callback) callback();
             }
             var dialog = _dialogs.saveScene.createObject(parent);

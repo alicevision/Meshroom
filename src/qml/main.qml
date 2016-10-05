@@ -1,10 +1,9 @@
 import QtQuick 2.7
 import QtQuick.Layouts 1.3
-import QtQuick.Controls 1.4 // using SplitView
-import QtQuick.Controls.Styles 1.4 // using SplitView
 import QtQuick.Controls 2.0
 import Meshroom.Scene 1.0
 import Logger 1.0
+import "controls"
 
 ApplicationWindow {
 
@@ -17,6 +16,7 @@ ApplicationWindow {
 
     // properties
     property variant currentScene: _application.scene
+    property variant currentNode: null
     property variant defaultScene: Scene {} // used when application is
                                             // about to quit
 
@@ -38,26 +38,17 @@ ApplicationWindow {
     // header
     header: Header {}
 
-    // main content
-    property Component scrollViewHandle: Rectangle {
-        width: 1; height: 1
-        color: (styleData.hovered || styleData.resizing) ? "#5BB1F7" : "#333"
-    }
-
     SplitView {
         anchors.fill: parent
         orientation: Qt.Horizontal
-        handleDelegate: scrollViewHandle
-        SplitView {
-            width: parent.width * 0.75
-            height: parent.height
-            Layout.minimumWidth: 30
+        initialOffset: 0.75
+        minimumSize: 30
+        first: SplitView {
             orientation: Qt.Vertical
-            handleDelegate: scrollViewHandle
-            ColumnLayout {
+            initialOffset: 0.5
+            minimumSize: 31
+            first: ColumnLayout {
                 spacing: 0
-                width: parent.width
-                height: parent.height * 0.55
                 TabBar {
                     id: bar
                     TabButton { text: "2D" }
@@ -76,15 +67,9 @@ ApplicationWindow {
                     }
                 }
             }
-            Graph {
-                Layout.minimumHeight: 30
-                onSelectionChanged: settings.model = node
-            }
+            second: Graph { onSelectionChanged: currentNode = node }
         }
-        Settings {
-            id: settings
-            Layout.minimumWidth: 30
-        }
+        second: Settings { model: currentNode }
     }
 
     // footer
@@ -92,4 +77,5 @@ ApplicationWindow {
         expandIcon: expanded ? "qrc:///images/shrink.svg" : "qrc:///images/expand.svg"
         trashIcon: "qrc:///images/trash.svg"
     }
+
 }

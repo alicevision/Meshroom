@@ -16,6 +16,7 @@ public:
     enum NodeRoles
     {
         NameRole = Qt::UserRole + 1,
+        TypeRole,
         InputsRole,
         OutputsRole,
         StatusRole,

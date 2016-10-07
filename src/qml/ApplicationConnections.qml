@@ -36,6 +36,9 @@ Item {
             }
             open_CB();
         }
+        onImportScene: {
+            currentScene["import"](url);
+        }
         onSaveScene: {
             if(!currentScene.url.toString()) {
                 saveSceneAs(callback);

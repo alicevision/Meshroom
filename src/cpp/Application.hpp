@@ -3,6 +3,7 @@
 #include "Scene.hpp"
 #include "PluginCollection.hpp"
 #include "PluginNodeCollection.hpp"
+#include "TemplateCollection.hpp"
 #include <QQmlApplicationEngine>
 #include <dglib/dg.hpp>
 
@@ -15,6 +16,7 @@ class Application : public QObject
     Q_PROPERTY(Scene* scene READ scene CONSTANT)
     Q_PROPERTY(PluginCollection* plugins READ plugins CONSTANT)
     Q_PROPERTY(PluginNodeCollection* pluginNodes READ pluginNodes CONSTANT)
+    Q_PROPERTY(TemplateCollection* templates READ templates CONSTANT)
 
 public:
     Application();
@@ -27,14 +29,16 @@ public:
     dg::Ptr<dg::Node> createNode(const QString& type, const QString& name);
 
 public:
-    PluginCollection* plugins() { return &_plugins; }
     Scene* scene() { return &_scene; }
+    PluginCollection* plugins() { return &_plugins; }
     PluginNodeCollection* pluginNodes() { return &_pluginNodes; }
+    TemplateCollection* templates() { return &_templates; }
 
 private:
     Scene _scene;
     PluginCollection _plugins;
     PluginNodeCollection _pluginNodes;
+    TemplateCollection _templates;
 };
 
 } // namespaces

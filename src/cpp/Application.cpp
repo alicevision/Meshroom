@@ -7,6 +7,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QQuickStyle>
+#include <QDirIterator>
 #include <QDebug>
 
 namespace meshroom
@@ -42,8 +43,15 @@ Application::Application(QQmlApplicationEngine& engine)
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(fmt);
 
-    // expose this object to QML & load the main QML file
+    // fill the template list
+    QDirIterator it(qApp->applicationDirPath() + "/templates", QDir::Files);
+    while(it.hasNext())
+        _templates.add(new Template(this, QUrl::fromLocalFile(it.next())));
+
+    // expose this object to QML
     engine.rootContext()->setContextProperty("_application", this);
+
+    // load the main QML file
     engine.load(qApp->applicationDirPath() + "/qml/main.qml");
 
     // retrieve QML objects

@@ -1,55 +1,56 @@
 import QtQuick 2.7
-import QtQuick.Controls 1.4 // using MenuBar
+import QtQuick.Controls 1.4 as QQC14
+import QtQuick.Controls 2.0
 
-MenuBar {
+QQC14.MenuBar {
     id: mainMenu
-    Menu {
+    QQC14.Menu {
         title: "File"
-        MenuItem {
+        QQC14.MenuItem {
             text: "New..."
             onTriggered: newScene()
             shortcut: "Ctrl+N"
         }
-        MenuSeparator {}
-        MenuItem {
+        QQC14.MenuSeparator {}
+        QQC14.MenuItem {
             text: "Open..."
             onTriggered: openScene()
             shortcut: "Ctrl+O"
         }
-        Menu {
-            id: recentSceneMenu
-            title: "Open recent..."
-            enabled: items.length > 0
-            Instantiator {
-                model: _application.scenes
-                MenuItem {
-                    text: model.url.toString().replace("file://", "")
-                    onTriggered: openScene(index)
-                }
-                onObjectAdded: recentSceneMenu.insertItem(index, object)
-                onObjectRemoved: recentSceneMenu.removeItem(object)
-            }
-        }
-        MenuSeparator {}
-        MenuItem {
+        QQC14.MenuSeparator {}
+        QQC14.MenuItem {
             text: "Save"
             onTriggered: saveScene(null)
             enabled: currentScene.dirty
             shortcut: "Ctrl+S"
         }
-        MenuItem {
+        QQC14.MenuItem {
             text: "Save as..."
             onTriggered: saveSceneAs(null)
             shortcut: "Ctrl+Shift+S"
         }
     }
-    Menu {
+    QQC14.Menu {
         title: "Edit"
-        MenuItem {
+        QQC14.MenuItem {
             text: "Add node..."
             onTriggered: addNode()
             shortcut: "Tab"
         }
-        MenuSeparator {}
+        QQC14.MenuSeparator {}
+        QQC14.Menu {
+            id: templateMenu
+            title: "Import template"
+            enabled: items.length > 0
+            Instantiator {
+                model: _application.templates
+                QQC14.MenuItem {
+                    text: modelData.name
+                    onTriggered: importScene(modelData.url)
+                }
+                onObjectAdded: templateMenu.insertItem(index, object)
+                onObjectRemoved: templateMenu.removeItem(object)
+            }
+        }
     }
 }

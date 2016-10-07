@@ -48,8 +48,11 @@ public:
 
 public:
     Q_SIGNAL void cacheUrlChanged();
-    Q_SIGNAL void structureChanged();
+    Q_SIGNAL void dataChanged();
     Q_SIGNAL void isRunningChanged();
+
+private:
+    Q_SIGNAL void nodeRenamed(const QString&, const QString&);
 
 public:
     void registerQmlObject(QObject* obj) { _editor = obj; }

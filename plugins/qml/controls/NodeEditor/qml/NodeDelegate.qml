@@ -68,7 +68,7 @@ Rectangle {
             // node title
             Label {
                 Layout.fillWidth: true
-                text: model.name
+                text: model.type
                 horizontalAlignment: Text.AlignHCenter
                 state: "xsmall"
             }

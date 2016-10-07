@@ -41,7 +41,7 @@ Scene::Scene(QObject* parent, const QUrl& url)
     connect(this, &Scene::nameChanged, this, setDirty_CB);
     connect(this, &Scene::thumbnailChanged, this, setDirty_CB);
     connect(_graph, &Graph::cacheUrlChanged, this, setDirty_CB);
-    connect(_graph, &Graph::structureChanged, this, setDirty_CB);
+    connect(_graph, &Graph::dataChanged, this, setDirty_CB);
 
     // load
     load(url);
@@ -142,6 +142,39 @@ bool Scene::load(const QUrl& url)
 
     // refresh node statuses
     _graph->startWorker(Graph::BuildMode::PREPARE);
+
+    return true;
+}
+
+bool Scene::import(const QUrl& url)
+{
+    if(url.isEmpty())
+        return false;
+
+    // open a file handler
+    QFile file(url.toLocalFile());
+    if(!file.open(QIODevice::ReadOnly))
+    {
+        qCritical() << LOGID << "can't import file " << url.toLocalFile();
+        return false;
+    }
+
+    // read data and close the file handler
+    QByteArray data = file.readAll();
+    file.close();
+
+    // parse data as JSON
+    QJsonParseError error;
+    QJsonDocument document(QJsonDocument::fromJson(data, &error));
+    if(error.error != QJsonParseError::NoError)
+    {
+        qCritical() << LOGID << "malformed JSON file " << _url.toLocalFile();
+        return false;
+    }
+
+    // read graph data
+    QJsonObject obj = document.object();
+    _graph->deserializeFromJSON(obj.value("graph").toObject());
 
     return true;
 }

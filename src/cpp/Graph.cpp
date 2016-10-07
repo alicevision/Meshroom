@@ -30,7 +30,7 @@ void Graph::clear()
     GET_METHOD_OR_RETURN(clear(), void());
     method.invoke(_editor, Qt::DirectConnection);
 
-    Q_EMIT structureChanged();
+    Q_EMIT dataChanged();
 }
 
 bool Graph::addNode(const QJsonObject& descriptor)
@@ -65,11 +65,18 @@ bool Graph::addNode(const QJsonObject& descriptor)
         return false;
     }
 
-    // add this new node to the graph
+    // try to add the node to the graph
     if(!_dgGraph.addNode(dgNode))
     {
-        qCritical() << "unable to add a" << type << "node to the current graph";
-        return false;
+        // retry with an auto-generated name
+        dgNode->name.clear();
+        if(!_dgGraph.addNode(dgNode))
+        {
+            qCritical() << "unable to add a" << type << "node to the current graph";
+            return false;
+        }
+        // warn about this change
+        Q_EMIT nodeRenamed(name, QString::fromStdString(dgNode->name));
     }
 
     // retrieve auto-generated name
@@ -91,7 +98,7 @@ bool Graph::addNode(const QJsonObject& descriptor)
                   Q_ARG(QJsonObject, metadata));
 
     if(result)
-        Q_EMIT structureChanged();
+        Q_EMIT dataChanged();
 
     return result;
 }
@@ -132,7 +139,7 @@ bool Graph::addEdge(const QJsonObject& edge)
                   Q_ARG(QJsonObject, edge));
 
     if(result)
-        Q_EMIT structureChanged();
+        Q_EMIT dataChanged();
 
     return result;
 }
@@ -152,7 +159,7 @@ bool Graph::removeNode(const QJsonObject& descriptor)
                   Q_ARG(QJsonObject, descriptor));
 
     if(result)
-        Q_EMIT structureChanged();
+        Q_EMIT dataChanged();
 
     return result;
 }
@@ -176,7 +183,7 @@ bool Graph::removeEdge(const QJsonObject& descriptor)
                   Q_ARG(QJsonObject, descriptor));
 
     if(result)
-        Q_EMIT structureChanged();
+        Q_EMIT dataChanged();
 
     return result;
 }
@@ -236,7 +243,7 @@ void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
     method.invoke(_editor, Qt::DirectConnection, Q_ARG(QString, nodeName), Q_ARG(QString, plugName),
                   Q_ARG(QVariant, variant));
 
-    Q_EMIT structureChanged();
+    Q_EMIT dataChanged();
 }
 
 QVariant Graph::getNodeAttribute(const QString& nodeName, const QString& plugName)
@@ -330,12 +337,41 @@ QJsonObject Graph::serializeToJSON() const
 
 void Graph::deserializeFromJSON(const QJsonObject& obj)
 {
-    if(obj.contains("cacheUrl"))
+    QJsonObject descriptor = obj;
+
+    // in case a node already exists, its name is automatically changed when added to the graph
+    QMap<QString, QString> renamedNodes;
+
+    // callback used when a node changes name
+    auto onNodeRenamed = [&](const QString& oldname, const QString& newname)
+    {
+        renamedNodes.insert(oldname, newname);
+    };
+    connect(this, &Graph::nodeRenamed, this, onNodeRenamed);
+
+    // lambda used to update edge's data with new source and target names
+    auto changeSourceAndTargetNames = [&](QJsonObject& edge)
+    {
+        // replace source name
+        auto it = renamedNodes.find(edge.value("source").toString());
+        if(it != renamedNodes.end())
+            edge.insert("source", it.value());
+        // replace target name
+        it = renamedNodes.find(edge.value("target").toString());
+        if(it != renamedNodes.end())
+            edge.insert("target", it.value());
+    };
+
+    if(descriptor.contains("cacheUrl"))
         setCacheUrl(QUrl::fromLocalFile(obj.value("cacheUrl").toString()));
-    for(auto o : obj.value("nodes").toArray())
+    for(auto o : descriptor.value("nodes").toArray())
         addNode(o.toObject());
-    for(auto o : obj.value("edges").toArray())
-        addEdge(o.toObject());
+    for(auto o : descriptor.value("edges").toArray())
+    {
+        auto edge = o.toObject();
+        changeSourceAndTargetNames(edge);
+        addEdge(edge);
+    }
 }
 
 } // namespace

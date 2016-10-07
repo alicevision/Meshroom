@@ -37,6 +37,7 @@ public:
     Q_SLOT void setThumbnail(const QUrl&);
     Q_SLOT void setDirty(const bool&);
     Q_SLOT bool load(const QUrl&);
+    Q_SLOT bool import(const QUrl&);
     Q_SLOT bool save();
     Q_SLOT bool saveAs(const QUrl&);
     Q_SLOT void erase();

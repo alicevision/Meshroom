@@ -1,0 +1,229 @@
+{
+    "graph": {
+        "edges": [
+            {
+                "plug": "images",
+                "source": "imageListing1",
+                "target": "exifExtraction1"
+            },
+            {
+                "plug": "sfmdata",
+                "source": "exifExtraction1",
+                "target": "featureExtraction1"
+            },
+            {
+                "plug": "sfmdata",
+                "source": "exifExtraction1",
+                "target": "featureMatching1"
+            },
+            {
+                "plug": "features",
+                "source": "featureExtraction1",
+                "target": "featureMatching1"
+            },
+            {
+                "plug": "sfmdata",
+                "source": "exifExtraction1",
+                "target": "structureFromMotion1"
+            },
+            {
+                "plug": "matches",
+                "source": "featureMatching1",
+                "target": "structureFromMotion1"
+            },
+            {
+                "plug": "sfmdata2",
+                "source": "structureFromMotion1",
+                "target": "alembicExport1"
+            },
+            {
+                "plug": "sfmdata",
+                "source": "exifExtraction1",
+                "target": "voctree1"
+            },
+            {
+                "plug": "pairlist",
+                "source": "voctree1",
+                "target": "featureMatching1"
+            }
+        ],
+        "nodes": [
+            {
+                "inputs": [
+                    {
+                        "key": "files",
+                        "name": "files",
+                        "type": "IMAGELIST"
+                    }
+                ],
+                "name": "imageListing1",
+                "outputs": [
+                    {
+                        "key": "images",
+                        "name": "images",
+                        "type": "UNKNOWN"
+                    }
+                ],
+                "type": "ImageListing",
+                "x": 11,
+                "y": 59
+            },
+            {
+                "inputs": [
+                    {
+                        "key": "sfmdata",
+                        "name": "sfmdata",
+                        "type": "UNKNOWN"
+                    }
+                ],
+                "name": "featureExtraction1",
+                "outputs": [
+                    {
+                        "key": "features",
+                        "name": "features",
+                        "type": "UNKNOWN"
+                    }
+                ],
+                "type": "FeatureExtraction",
+                "x": 245,
+                "y": 19
+            },
+            {
+                "inputs": [
+                    {
+                        "key": "images",
+                        "name": "images",
+                        "type": "IMAGELIST"
+                    },
+                    {
+                        "key": "sensorWidthDatabase",
+                        "name": "sensorWidthDatabase",
+                        "type": "TEXTFIELD"
+                    }
+                ],
+                "name": "exifExtraction1",
+                "outputs": [
+                    {
+                        "key": "sfmdata",
+                        "name": "sfmdata",
+                        "type": "UNKNOWN"
+                    }
+                ],
+                "type": "ExifExtraction",
+                "x": 122,
+                "y": 59
+            },
+            {
+                "inputs": [
+                    {
+                        "key": "sfmdata",
+                        "name": "sfmdata",
+                        "type": "UNKNOWN"
+                    },
+                    {
+                        "key": "features",
+                        "name": "features",
+                        "type": "UNKNOWN"
+                    },
+                    {
+                        "key": "pairlist",
+                        "name": "pairlist",
+                        "type": "UNKNOWN"
+                    },
+                    {
+                        "key": "method",
+                        "name": "method",
+                        "type": "UNKNOWN",
+                        "value": "ANNL2"
+                    }
+                ],
+                "name": "featureMatching1",
+                "outputs": [
+                    {
+                        "key": "matches",
+                        "name": "matches",
+                        "type": "UNKNOWN"
+                    }
+                ],
+                "type": "FeatureMatching",
+                "x": 358,
+                "y": 59
+            },
+            {
+                "inputs": [
+                    {
+                        "key": "sfmdata",
+                        "name": "sfmdata",
+                        "type": "UNKNOWN"
+                    },
+                    {
+                        "key": "matches",
+                        "name": "matches",
+                        "type": "UNKNOWN"
+                    }
+                ],
+                "name": "structureFromMotion1",
+                "outputs": [
+                    {
+                        "key": "sfmdata2",
+                        "name": "sfmdata2",
+                        "type": "UNKNOWN"
+                    }
+                ],
+                "type": "StructureFromMotion",
+                "x": 477,
+                "y": 104
+            },
+            {
+                "inputs": [
+                    {
+                        "key": "sfmdata2",
+                        "name": "sfmdata2",
+                        "type": "UNKNOWN"
+                    }
+                ],
+                "name": "alembicExport1",
+                "outputs": [
+                    {
+                        "key": "abc",
+                        "name": "abc",
+                        "type": "OBJECT3D"
+                    }
+                ],
+                "type": "AlembicExport",
+                "x": 582,
+                "y": 104
+            },
+            {
+                "inputs": [
+                    {
+                        "key": "sfmdata",
+                        "name": "sfmdata",
+                        "type": "UNKNOWN"
+                    },
+                    {
+                        "key": "treeFile",
+                        "name": "treeFile",
+                        "type": "TEXTFIELD"
+                    },
+                    {
+                        "key": "weightFile",
+                        "name": "weightFile",
+                        "type": "TEXTFIELD"
+                    }
+                ],
+                "name": "voctree1",
+                "outputs": [
+                    {
+                        "key": "pairlist",
+                        "name": "pairlist",
+                        "type": "UNKNOWN"
+                    }
+                ],
+                "type": "Voctree",
+                "x": 243,
+                "y": 123
+            }
+        ]
+    }
+}

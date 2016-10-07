@@ -23,6 +23,7 @@ ApplicationWindow {
     // actions
     signal newScene()
     signal openScene()
+    signal importScene(string url)
     signal saveScene(var callback)
     signal saveSceneAs(var callback)
     signal addScene(string url)

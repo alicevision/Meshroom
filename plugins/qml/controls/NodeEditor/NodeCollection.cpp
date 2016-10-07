@@ -26,6 +26,8 @@ QVariant NodeCollection::data(const QModelIndex& index, int role) const
     {
         case NameRole:
             return node->name();
+        case TypeRole:
+            return node->type();
         case InputsRole:
             return QVariant::fromValue(node->inputs());
         case OutputsRole:
@@ -166,6 +168,7 @@ QHash<int, QByteArray> NodeCollection::roleNames() const
 {
     QHash<int, QByteArray> roles;
     roles[NameRole] = "name";
+    roles[TypeRole] = "type";
     roles[InputsRole] = "inputs";
     roles[OutputsRole] = "outputs";
     roles[StatusRole] = "status";

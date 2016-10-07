@@ -9,12 +9,13 @@ Item {
     implicitHeight: 30
     implicitWidth: parent ? parent.width : 200
     height: expanded ? 150 : 30
-    Behavior on height {
-        SequentialAnimation {
-            NumberAnimation {}
-            ScriptAction { script: listView.positionViewAtEnd() }
-        }
-    }
+
+    // Behavior on height {
+    //     SequentialAnimation {
+    //         NumberAnimation {}
+    //         ScriptAction { script: listView.positionViewAtEnd() }
+    //     }
+    // }
 
     // properties
     property bool expanded: false

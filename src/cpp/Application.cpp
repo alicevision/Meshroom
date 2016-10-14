@@ -102,10 +102,9 @@ PluginCollection* Application::loadPlugins()
     return &_plugins;
 }
 
-Scene* Application::loadScene(const QUrl& url)
+bool Application::loadScene(const QUrl& url)
 {
-    _scene.load(url);
-    return &_scene;
+    return _scene.load(url);
 }
 
 dg::Ptr<dg::Node> Application::createNode(const QString& type, const QString& name)

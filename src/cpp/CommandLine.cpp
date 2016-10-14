@@ -1,23 +1,33 @@
 #include "CommandLine.hpp"
 #include <QDebug>
 
-namespace
+namespace // empty namespace
 {
-const char* mode_opt = R"(Execution mode:
-    - e, edit (default, GUI mode)
-    - c, compute
-    - rl, run-local
-    - rt, run-tractor)";
 
-const char* name_opt = R"(Node name:
-    Available with -mode=rl or -mode=rt.)";
+const char* application_opt = R"(
+Examples:
 
-const char* scene_opt = R"(Scene file:
-    Available with -mode=rl or -mode=rt.)";
+    meshroom
+    meshroom --help
+    meshroom --version
 
-const char* type_opt = R"(Node type:
-    Available with -mode=c.)";
-}
+    compute mode:
+        meshroom --compute NodeType --help
+        meshroom --compute NodeType -- --nodeArg1 --nodeArg2
+
+    compute-graph mode:
+        meshroom --compute-graph scene.meshroom --help
+        meshroom --compute-graph scene.meshroom --local
+        meshroom --compute-graph scene.meshroom --tractor
+        meshroom --compute-graph scene.meshroom --node nodeName --tractor)";
+
+const char* compute_opt = R"(Compute a particular node.)";
+const char* computegraph_opt = R"(Compute the whole graph.)";
+const char* local_opt = R"([-g mode] Run locally. (default))";
+const char* tractor_opt = R"([-g mode] Run through Tractor.)";
+const char* node_opt = R"([-g mode] Start the graph traversal from this particular node.)";
+
+} // empty namespace
 
 namespace meshroom
 {
@@ -27,77 +37,68 @@ CommandLine::CommandLine()
     _parser.addHelpOption();
     _parser.addVersionOption();
     _parser.addOptions({
-        {{"m", "mode"}, mode_opt, "mode", "edit"},
-        {{"n", "name"}, name_opt, "name"},
-        {{"s", "scene"}, scene_opt, "path"},
-        {{"t", "type"}, type_opt, "type"},
+        {{"c", "compute"}, compute_opt, "node-type"},
+        {{"g", "compute-graph"}, computegraph_opt, "meshroom-file"},
     });
     _parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
+    _parser.setApplicationDescription(application_opt);
 }
 
 void CommandLine::parse(int& argc, char** argv)
 {
-    // options as string list
+    // to qList
     QStringList arguments;
     for(auto i = 0; i < argc; ++i)
         arguments.append(argv[i]);
 
-    // command line parsing (ignore unknown options error)
+    // parse (no builtin options / error handling)
     _parser.parse(arguments);
 
-    if(_parser.isSet("v"))
+    // add mode-specific options
+    if(_parser.isSet("c"))
     {
-        QCoreApplication qapp(argc, argv);
-        qInfo() << qPrintable(QCoreApplication::applicationName())
-                << qPrintable(QCoreApplication::applicationVersion());
-        _mode = QUIT_SUCCESS;
-        return;
+        _mode = COMPUTE_NODE;
+        _parser.addPositionalArgument("node-options",
+                                      "[-c mode] Options needed to compute the specified node.",
+                                      "-- [node-options...]");
+    }
+    else if(_parser.isSet("g"))
+    {
+        _mode = COMPUTE_GRAPH;
+        _parser.addOptions({
+            {{"l", "local"}, local_opt},
+            {{"t", "tractor"}, tractor_opt},
+            {{"n", "node"}, node_opt, "node-name"},
+        });
+    }
+    else
+    {
+        _mode = OPEN_GUI;
     }
 
-    if(_parser.isSet("h"))
-    {
-        QCoreApplication qapp(argc, argv);
-        _parser.showHelp();
-        _mode = QUIT_SUCCESS;
-        return;
-    }
+    // parse (with builtin options & error handling)
+    QCoreApplication qapp(argc, argv);
+    _parser.process(qapp);
+}
 
-    auto toEnum = [](const QString& mode) -> MODE
-    {
-        if(mode == "edit" || mode == "e")
-            return OPEN_GUI;
-        if(mode == "compute" || mode == "c")
-            return COMPUTE_NODE;
-        if(mode == "run-local" || mode == "rl")
-            return RUN_LOCAL;
-        if(mode == "run-tractor" || mode == "rt")
-            return RUN_TRACTOR;
-        qCritical() << "unknown mode. Exit";
-        return QUIT_FAILURE;
-    };
+std::vector<std::string> CommandLine::positionalArguments() const
+{
+    std::vector<std::string> arguments;
+    for(auto arg : _parser.positionalArguments())
+        arguments.emplace_back(arg.toStdString());
+    return arguments;
+}
 
-    auto checkOptionValidity = [&](const QString& mode)
-    {
-        if(_parser.isSet(mode))
-            return;
-        qCritical() << "missing commandline argument" << qPrintable(QString("--%1").arg(mode));
-        _mode = QUIT_FAILURE;
-    };
+QUrl CommandLine::sceneURL() const
+{
+    return QUrl::fromLocalFile(_parser.value("compute-graph"));
+}
 
-    _mode = toEnum(_parser.value("m"));
-    switch(_mode)
-    {
-        case COMPUTE_NODE:
-            checkOptionValidity("type");
-            break;
-        case RUN_LOCAL:
-        case RUN_TRACTOR:
-            checkOptionValidity("name");
-            checkOptionValidity("scene");
-            break;
-        default:
-            break;
-    }
+Graph::BuildMode CommandLine::buildMode() const
+{
+    if(_parser.isSet("tractor"))
+        return Graph::BuildMode::COMPUTE_TRACTOR;
+    return Graph::BuildMode::COMPUTE_LOCAL;
 }
 
 } // namespace

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graph.hpp"
 #include <QCommandLineParser>
 #include <QUrl>
 
@@ -13,10 +14,7 @@ public:
     {
         OPEN_GUI = 0,
         COMPUTE_NODE,
-        RUN_LOCAL,
-        RUN_TRACTOR,
-        QUIT_FAILURE,
-        QUIT_SUCCESS
+        COMPUTE_GRAPH
     };
 
 public:
@@ -28,9 +26,11 @@ public:
 public:
     void parse(int& argc, char** argv);
     const MODE& mode() const { return _mode; }
-    QString nodeType() const { return _parser.value("type"); }
-    QString nodeName() const { return _parser.value("name"); }
-    QUrl sceneURL() const { return QUrl::fromLocalFile(_parser.value("scene")); }
+    QString nodeType() const { return _parser.value("compute"); }
+    QString nodeName() const { return _parser.value("node"); }
+    QUrl sceneURL() const;
+    Graph::BuildMode buildMode() const;
+    std::vector<std::string> positionalArguments() const;
 
 private:
     QCommandLineParser _parser;

@@ -1,6 +1,6 @@
 #include "Application.hpp"
 #include "CommandLine.hpp"
-#include <QtWidgets/QApplication>
+#include <QGuiApplication>
 #include <QDebug>
 
 int main(int argc, char* argv[])
@@ -26,7 +26,6 @@ int main(int argc, char* argv[])
                 // GUI application
                 QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
                 QGuiApplication qapp(argc, argv);
-                // using a QML engine
                 QQmlApplicationEngine engine;
                 Application application(engine);
                 application.loadPlugins();
@@ -44,31 +43,21 @@ int main(int argc, char* argv[])
                 if(!dgNode)
                     return EXIT_FAILURE;
                 // compute the node
-                std::vector<std::string> arguments;
-                for(auto arg : QCoreApplication::arguments())
-                    arguments.emplace_back(arg.toStdString());
-                dgNode->compute(arguments);
+                dgNode->compute(commandLine.positionalArguments());
                 return EXIT_SUCCESS;
             }
-            case CommandLine::RUN_LOCAL:
-            case CommandLine::RUN_TRACTOR:
+            case CommandLine::COMPUTE_GRAPH:
             {
                 // non-GUI application
                 QCoreApplication qapp(argc, argv);
                 Application application;
                 application.loadPlugins();
                 // load the scene
-                auto scene = application.loadScene(commandLine.sceneURL());
+                if(!application.loadScene(commandLine.sceneURL()))
+                    return EXIT_FAILURE;
                 // process the whole graph starting from the specified node, using the right mode
-                scene->graph()->startWorker((commandLine.mode() == CommandLine::RUN_LOCAL)
-                                                ? Graph::BuildMode::COMPUTE_LOCAL
-                                                : Graph::BuildMode::COMPUTE_TRACTOR,
-                                            commandLine.nodeName());
+                application.scene()->graph()->startWorker(commandLine.buildMode(), commandLine.nodeName());
             }
-            case CommandLine::QUIT_SUCCESS:
-                return EXIT_SUCCESS;
-            case CommandLine::QUIT_FAILURE:
-                return EXIT_FAILURE;
         }
     }
     catch(std::exception& e)

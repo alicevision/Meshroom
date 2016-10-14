@@ -25,7 +25,7 @@ public:
 
 public:
     Q_SLOT PluginCollection* loadPlugins();
-    Q_SLOT Scene* loadScene(const QUrl& url);
+    Q_SLOT bool loadScene(const QUrl& url);
     dg::Ptr<dg::Node> createNode(const QString& type, const QString& name);
 
 public:

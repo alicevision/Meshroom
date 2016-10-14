@@ -1,11 +1,11 @@
 #include "Application.hpp"
 #include "PluginInterface.hpp"
+#include <QLocale>
 #include <QtQml>
 #include <QCoreApplication>
 #include <QPluginLoader>
 #include <QSurfaceFormat>
 #include <QJsonObject>
-#include <QJsonArray>
 #include <QQuickStyle>
 #include <QDirIterator>
 #include <QDebug>
@@ -19,6 +19,9 @@ Application::Application()
     , _plugins(this)
     , _pluginNodes(this)
 {
+    // set global/Qt locale
+    std::locale::global(std::locale::classic());
+    QLocale::setDefault(QLocale::c());
 }
 
 Application::Application(QQmlApplicationEngine& engine)
@@ -27,6 +30,10 @@ Application::Application(QQmlApplicationEngine& engine)
     , _plugins(this)
     , _pluginNodes(this)
 {
+    // set global/Qt locale
+    std::locale::global(std::locale::classic());
+    QLocale::setDefault(QLocale::c());
+
     // add qml modules path
     engine.addImportPath(qApp->applicationDirPath() + "/plugins/qml");
 

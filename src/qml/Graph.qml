@@ -2,7 +2,7 @@ import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import NodeEditor 1.0
-import Meshroom.Graph 1.0 as MG
+import Meshroom.Worker 1.0
 
 Item {
 
@@ -17,15 +17,15 @@ Item {
         signal remove()
         MenuItem {
             text: "Compute locally..."
-            onTriggered: compute(MG.Graph.COMPUTE_LOCAL)
+            onTriggered: compute(Worker.COMPUTE_LOCAL)
         }
         MenuItem {
             text: "Compute on farm..."
-            onTriggered: compute(MG.Graph.COMPUTE_TRACTOR)
+            onTriggered: compute(Worker.COMPUTE_TRACTOR)
         }
         MenuItem {
             text: "Refresh status..."
-            onTriggered: compute(MG.Graph.PREPARE)
+            onTriggered: compute(Worker.PREPARE)
         }
         Rectangle { // spacer
             width: parent.width; height: 1
@@ -64,8 +64,7 @@ Item {
         onNodeLeftClicked: root.selectionChanged(node)
         onNodeRightClicked: {
             function compute_CB(mode) {
-                editor.graph.clearNodeStatuses();
-                currentScene.graph.startWorker(mode, node.name);
+                currentScene.graph.startWorkerThread(mode, node.name);
             }
             function remove_CB() {
                 currentScene.graph.removeNode(node.serializeToJSON());

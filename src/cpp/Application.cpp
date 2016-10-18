@@ -1,5 +1,6 @@
 #include "Application.hpp"
 #include "PluginInterface.hpp"
+#include "Worker.hpp"
 #include <QLocale>
 #include <QtQml>
 #include <QCoreApplication>
@@ -43,6 +44,8 @@ Application::Application(QQmlApplicationEngine& engine)
     // register types
     qmlRegisterType<Scene>("Meshroom.Scene", 1, 0, "Scene");
     qmlRegisterType<Graph>("Meshroom.Graph", 1, 0, "Graph");
+    qmlRegisterUncreatableType<Worker>("Meshroom.Worker", 1, 0, "Worker",
+                                       "type registration failed (Worker)");
 
     // set opengl profile
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();

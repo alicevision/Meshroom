@@ -2,10 +2,7 @@
 #include "Application.hpp"
 #include "WorkerThread.hpp"
 #include <QJsonObject>
-#include <QJsonArray>
 #include <QDebug>
-#include <QDir>
-#include <QMetaMethod>
 
 using namespace dg;
 namespace meshroom
@@ -18,13 +15,13 @@ Graph::Graph(QObject* parent)
 
 Graph::~Graph()
 {
-    stopWorker();
+    stopWorkerThread();
 }
 
 void Graph::clear()
 {
     // clear
-    _dgGraph.clear();
+    _dggraph.clear();
 
     // reflect changes on the qml side
     GET_METHOD_OR_RETURN(clear(), void());
@@ -66,11 +63,11 @@ bool Graph::addNode(const QJsonObject& descriptor)
     }
 
     // try to add the node to the graph
-    if(!_dgGraph.addNode(dgNode))
+    if(!_dggraph.addNode(dgNode))
     {
         // retry with an auto-generated name
         dgNode->name.clear();
-        if(!_dgGraph.addNode(dgNode))
+        if(!_dggraph.addNode(dgNode))
         {
             qCritical() << "unable to add a" << type << "node to the current graph";
             return false;
@@ -108,8 +105,8 @@ bool Graph::addEdge(const QJsonObject& edge)
     // retrieve dg nodes
     QString sourceName = edge.value("source").toString();
     QString targetName = edge.value("target").toString();
-    auto source = _dgGraph.node(sourceName.toStdString());
-    auto target = _dgGraph.node(targetName.toStdString());
+    auto source = _dggraph.node(sourceName.toStdString());
+    auto target = _dggraph.node(targetName.toStdString());
     if(!source || !target)
     {
         qCritical() << "unable to connect nodes: invalid edge";
@@ -126,7 +123,7 @@ bool Graph::addEdge(const QJsonObject& edge)
     }
 
     // connect dg nodes
-    if(!_dgGraph.connect(source->output, plug))
+    if(!_dggraph.connect(source->output, plug))
     {
         qCritical() << "unable to connect nodes:" << sourceName << ">" << targetName;
         return false;
@@ -148,8 +145,8 @@ bool Graph::removeNode(const QJsonObject& descriptor)
 {
     // remove the dg node
     QString nodeName = descriptor.value("name").toString();
-    auto dgnode = _dgGraph.node(nodeName.toStdString());
-    if(!_dgGraph.removeNode(dgnode))
+    auto dgnode = _dggraph.node(nodeName.toStdString());
+    if(!_dggraph.removeNode(dgnode))
         return false;
 
     // reflect changes on the qml side
@@ -170,10 +167,10 @@ bool Graph::removeEdge(const QJsonObject& descriptor)
     QString src = descriptor.value("source").toString();
     QString target = descriptor.value("target").toString();
     QString plug = descriptor.value("plug").toString();
-    auto dgsrc = _dgGraph.node(src.toStdString());
-    auto dgtarget = _dgGraph.node(target.toStdString());
+    auto dgsrc = _dggraph.node(src.toStdString());
+    auto dgtarget = _dggraph.node(target.toStdString());
     if(!dgsrc || !dgtarget ||
-       !_dgGraph.disconnect(dgsrc->output, dgtarget->plug(plug.toStdString())))
+       !_dggraph.disconnect(dgsrc->output, dgtarget->plug(plug.toStdString())))
         return false;
 
     // reflect changes on the qml side
@@ -215,7 +212,7 @@ void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
         variant = qvariant_cast<QJSValue>(variant).toVariant();
 
     // set attribute : DG side
-    auto dgNode = _dgGraph.node(nodeName.toStdString());
+    auto dgNode = _dggraph.node(nodeName.toStdString());
     if(!dgNode)
     {
         qCritical() << "unable to find node" << nodeName;
@@ -248,19 +245,19 @@ void Graph::setNodeAttribute(const QString& nodeName, const QString& plugName,
 
 QVariant Graph::getNodeAttribute(const QString& nodeName, const QString& plugName)
 {
-    auto node = _dgGraph.node(nodeName.toStdString());
+    auto node = _dggraph.node(nodeName.toStdString());
     if(!node)
         return QVariant();
     auto plug = node->plug(plugName.toStdString());
     if(!plug)
         return QVariant();
-    auto attribute = _dgGraph.cache.attribute(plug);
+    auto attribute = _dggraph.cache.attribute(plug);
     return QString::fromStdString(toString(attribute)); // FIXME
 }
 
 QUrl Graph::cacheUrl() const
 {
-    return QUrl::fromLocalFile(QString::fromStdString(_dgGraph.cache.root()));
+    return QUrl::fromLocalFile(QString::fromStdString(_dggraph.cache.root()));
 }
 
 void Graph::setCacheUrl(const QUrl& url)
@@ -269,30 +266,28 @@ void Graph::setCacheUrl(const QUrl& url)
         return;
 
     // set graph root
-    _dgGraph.cache.setRoot(url.toLocalFile().toStdString());
+    _dggraph.cache.setRoot(url.toLocalFile().toStdString());
 
     Q_EMIT cacheUrlChanged();
 }
 
-void Graph::startWorker(BuildMode mode, const QString& name)
+void Graph::startWorkerThread(Worker::Mode mode, const QString& node)
 {
-    if(_worker && _worker->isRunning())
+    if(isWorkerThreadRunning())
         return;
 
-    if(!cacheUrl().isValid())
-    {
-        qCritical() << "invalid cache url";
-        return;
-    }
-
-    // if the cache folder does not exist, create it
-    QDir dir(cacheUrl().toLocalFile());
-    if(!dir.exists())
-        dir.mkpath(".");
+    // clear node statuses
+    GET_METHOD_OR_RETURN(clearNodeStatuses(), void());
+    method.invoke(_editor, Qt::DirectConnection);
 
     // create worker
-    delete _worker;
-    _worker = new WorkerThread(this, name, mode, _dgGraph);
+    Worker* worker = new Worker(this);
+    worker->setMode(mode);
+    worker->setNode(node);
+
+    // create thread
+    delete _thread;
+    _thread = new WorkerThread(this, worker);
 
     // worker connections
     auto updateNodeStatuses = [&](const QString& nodeName, const QString& status)
@@ -301,28 +296,31 @@ void Graph::startWorker(BuildMode mode, const QString& name)
         method.invoke(_editor, Qt::DirectConnection, Q_ARG(QString, nodeName),
                       Q_ARG(QString, status));
     };
-    connect(_worker, &WorkerThread::nodeStatusChanged, this, updateNodeStatuses);
-    connect(_worker, &WorkerThread::finished, this, &Graph::isRunningChanged);
+    connect(worker, &Worker::nodeStatusChanged, this, updateNodeStatuses);
 
-    // start worker
-    _worker->start();
+    // thread connections
+    connect(_thread, &WorkerThread::finished, this, &Graph::isRunningChanged);
+
+    // start thread
+    _thread->start();
 
     Q_EMIT isRunningChanged();
 }
 
-void Graph::stopWorker()
+void Graph::stopWorkerThread()
 {
-    if(!isRunning())
+    if(!isWorkerThreadRunning())
         return;
-    _worker->kill();
+    _thread->kill();
+    _thread->wait();
     Q_EMIT isRunningChanged();
 }
 
-const bool Graph::isRunning() const
+bool Graph::isWorkerThreadRunning() const
 {
-    if(!_worker)
+    if(!_thread)
         return false;
-    return _worker->isRunning();
+    return _thread->isRunning();
 }
 
 QJsonObject Graph::serializeToJSON() const

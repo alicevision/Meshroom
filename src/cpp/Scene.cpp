@@ -7,7 +7,7 @@
 #include <QDebug>
 #include <cstdlib> // std::getenv
 
-#define LOGID (QString("[scene:%1]").arg(_name)).toStdString().c_str()
+#define LOGID qPrintable(QString("[scene:%1]").arg(_name))
 
 namespace meshroom
 {
@@ -103,23 +103,16 @@ bool Scene::load(const QUrl& url)
     if(url.isEmpty())
         return false;
 
-    // check if the file exists
-    if(!QFileInfo::exists(url.toLocalFile()))
+    // open a file handler
+    QFile file(url.toLocalFile());
+    if(!file.open(QIODevice::ReadOnly))
     {
-        qCritical() << LOGID << "can't open file " << url.toLocalFile();
+        qCritical() << "can't open scene file" << url.toLocalFile();
         return false;
     }
 
     // set url
     setUrl(url);
-
-    // open a file handler
-    QFile file(_url.toLocalFile());
-    if(!file.open(QIODevice::ReadOnly))
-    {
-        qCritical() << LOGID << "can't open file " << _url.toLocalFile();
-        return false;
-    }
 
     // read data and close the file handler
     QByteArray data = file.readAll();
@@ -130,7 +123,7 @@ bool Scene::load(const QUrl& url)
     QJsonDocument document(QJsonDocument::fromJson(data, &error));
     if(error.error != QJsonParseError::NoError)
     {
-        qCritical() << LOGID << "malformed JSON file " << _url.toLocalFile();
+        qCritical() << LOGID << "malformed JSON file" << _url.toLocalFile();
         return false;
     }
 
@@ -139,9 +132,6 @@ bool Scene::load(const QUrl& url)
 
     // reset the dirty flag
     setDirty(false);
-
-    // refresh node statuses
-    _graph->startWorker(Graph::BuildMode::PREPARE);
 
     return true;
 }
@@ -155,7 +145,7 @@ bool Scene::import(const QUrl& url)
     QFile file(url.toLocalFile());
     if(!file.open(QIODevice::ReadOnly))
     {
-        qCritical() << LOGID << "can't import file " << url.toLocalFile();
+        qCritical() << LOGID << "can't import file" << url.toLocalFile();
         return false;
     }
 
@@ -168,7 +158,7 @@ bool Scene::import(const QUrl& url)
     QJsonDocument document(QJsonDocument::fromJson(data, &error));
     if(error.error != QJsonParseError::NoError)
     {
-        qCritical() << LOGID << "malformed JSON file " << _url.toLocalFile();
+        qCritical() << LOGID << "malformed JSON file" << _url.toLocalFile();
         return false;
     }
 
@@ -184,7 +174,7 @@ bool Scene::save()
     // check if the URL is valid
     if(!_url.isValid())
     {
-        qCritical() << LOGID << "invalid URL " << _url.toLocalFile();
+        qCritical() << LOGID << "invalid URL" << _url.toLocalFile();
         return false;
     }
 
@@ -195,7 +185,7 @@ bool Scene::save()
     QFile file(_url.toLocalFile());
     if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        qWarning() << LOGID << "unable to write file " << _url.toLocalFile();
+        qWarning() << LOGID << "unable to write file" << _url.toLocalFile();
         return false;
     }
 
@@ -214,7 +204,7 @@ bool Scene::saveAs(const QUrl& url)
     // check if the URL is valid
     if(!url.isValid())
     {
-        qCritical() << LOGID << "invalid URL " << url.toLocalFile();
+        qCritical() << LOGID << "invalid URL" << url.toLocalFile();
         return false;
     }
 

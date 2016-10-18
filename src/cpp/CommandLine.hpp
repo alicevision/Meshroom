@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graph.hpp"
+#include "Worker.hpp"
 #include <QCommandLineParser>
 #include <QUrl>
 
@@ -29,7 +29,7 @@ public:
     QString nodeType() const { return _parser.value("compute"); }
     QString nodeName() const { return _parser.value("node"); }
     QUrl sceneURL() const;
-    Graph::BuildMode buildMode() const;
+    Worker::Mode buildMode() const;
     std::vector<std::string> positionalArguments() const;
 
 private:

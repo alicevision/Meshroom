@@ -94,11 +94,11 @@ QUrl CommandLine::sceneURL() const
     return QUrl::fromLocalFile(_parser.value("compute-graph"));
 }
 
-Graph::BuildMode CommandLine::buildMode() const
+Worker::Mode CommandLine::buildMode() const
 {
     if(_parser.isSet("tractor"))
-        return Graph::BuildMode::COMPUTE_TRACTOR;
-    return Graph::BuildMode::COMPUTE_LOCAL;
+        return Worker::Mode::COMPUTE_TRACTOR;
+    return Worker::Mode::COMPUTE_LOCAL;
 }
 
 } // namespace

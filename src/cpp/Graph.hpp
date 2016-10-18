@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Worker.hpp"
 #include <QObject>
 #include <QUrl>
 #include <dglib/dg.hpp>
@@ -14,16 +15,7 @@ class Graph : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QUrl cacheUrl READ cacheUrl WRITE setCacheUrl NOTIFY cacheUrlChanged)
-    Q_PROPERTY(bool isRunning READ isRunning NOTIFY isRunningChanged)
-
-public:
-    enum BuildMode
-    {
-        COMPUTE_LOCAL = 0,
-        COMPUTE_TRACTOR = 1,
-        PREPARE = 2,
-    };
-    Q_ENUMS(BuildMode)
+    Q_PROPERTY(bool isRunning READ isWorkerThreadRunning NOTIFY isRunningChanged)
 
 public:
     Graph(QObject* parent = nullptr);
@@ -40,11 +32,10 @@ public:
     Q_SLOT QVariant getNodeAttribute(const QString&, const QString&);
     Q_SLOT QUrl cacheUrl() const;
     Q_SLOT void setCacheUrl(const QUrl&);
-
     // worker
-    Q_SLOT void startWorker(BuildMode, const QString& = "");
-    Q_SLOT void stopWorker();
-    Q_SLOT const bool isRunning() const;
+    Q_SLOT void startWorkerThread(meshroom::Worker::Mode, const QString&);
+    Q_SLOT void stopWorkerThread();
+    Q_SLOT bool isWorkerThreadRunning() const;
 
 public:
     Q_SIGNAL void cacheUrlChanged();
@@ -55,13 +46,14 @@ private:
     Q_SIGNAL void nodeRenamed(const QString&, const QString&);
 
 public:
+    dg::Graph& dggraph() { return _dggraph; }
     void registerQmlObject(QObject* obj) { _editor = obj; }
     QJsonObject serializeToJSON() const;
     void deserializeFromJSON(const QJsonObject&);
 
 private:
-    dg::Graph _dgGraph;
-    WorkerThread* _worker = nullptr;
+    dg::Graph _dggraph;
+    WorkerThread* _thread = nullptr;
     QObject* _editor = nullptr;
 };
 

@@ -25,15 +25,6 @@ Item {
             visible: currentScene.dirty
         }
         Item { Layout.fillWidth: true } // spacer
-        // ToolButton {
-        //     Component.onCompleted: {
-        //         if(typeof icon == "undefined") return;
-        //             icon = "qrc:///images/disk.svg"
-        //     }
-        //     text: "SAVE"
-        //     visible: currentScene.dirty
-        //     onClicked: saveScene(null)
-        // }
         RowLayout {
             ProgressBar {
                 implicitWidth: 100
@@ -47,7 +38,7 @@ Item {
                         icon = "qrc:///images/pause.svg"
                 }
                 text: "STOP"
-                onClicked: currentScene.graph.stopWorker()
+                onClicked: currentScene.graph.stopWorkerThread()
             }
             visible: currentScene.graph.isRunning
         }

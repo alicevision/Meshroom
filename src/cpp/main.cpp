@@ -56,7 +56,10 @@ int main(int argc, char* argv[])
                 if(!application.loadScene(commandLine.sceneURL()))
                     return EXIT_FAILURE;
                 // process the whole graph starting from the specified node, using the right mode
-                application.scene()->graph()->startWorker(commandLine.buildMode(), commandLine.nodeName());
+                Worker worker(application.scene()->graph());
+                worker.setMode(commandLine.buildMode());
+                worker.setNode(commandLine.nodeName());
+                worker.compute();
             }
         }
     }

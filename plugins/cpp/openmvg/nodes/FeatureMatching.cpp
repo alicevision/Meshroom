@@ -1,4 +1,5 @@
 #include "FeatureMatching.hpp"
+#include "PluginToolBox.hpp"
 #include <QCommandLineParser>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -44,14 +45,14 @@ vector<Command> FeatureMatching::prepare(Cache& cache, bool& blocking)
         // build the command line in case this output does not exists
         if(!cache.exists(aOut))
         {
-            Command c(
-                {
-                    "-i", cache.location(aSfm),     // input sfm_data file
-                    "-o", cache.root() + "matches", // output match directory
-                    "-n", "ANNL2",                  // input method
-                    "-l", cache.location(aList),    // input pairList file
-                },
-                "openMVG_main_ComputeMatches");
+            Command c({
+                "--compute", type(),            // meshroom compute mode
+                "--",                           // node options:
+                "-i", cache.location(aSfm),     // input sfm_data file
+                "-o", cache.root() + "matches", // output match directory
+                "-n", "ANNL2",                  // input method
+                "-l", cache.location(aList),    // input pairList file
+            });
             commands.emplace_back(c);
         }
     }
@@ -62,5 +63,5 @@ vector<Command> FeatureMatching::prepare(Cache& cache, bool& blocking)
 
 void FeatureMatching::compute(const vector<string>& arguments) const
 {
-    // never reached
+    PluginToolBox::executeProcess("openMVG_main_ComputeMatches", arguments);
 }

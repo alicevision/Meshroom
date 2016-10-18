@@ -1,4 +1,5 @@
 #include "Voctree.hpp"
+#include "PluginToolBox.hpp"
 #include <QDebug>
 
 using namespace std;
@@ -44,14 +45,14 @@ vector<Command> Voctree::prepare(Cache& cache, bool& blocking)
         // build the command line in case this output does not exists
         if(!cache.exists(attribute))
         {
-            Command c(
-                {
-                    "-l", cache.root() + "matches", // input match directory
-                    "-t", cache.location(aTree),    // input .tree file
-                    "-w", cache.location(aWeight),  // input .weights file
-                    "-o", cache.location(attribute) // output pairlist.txt
-                },
-                "openMVG_main_generatePairList");
+            Command c({
+                "--compute", type(),            // meshroom compute mode
+                "--",                           // node options:
+                "-l", cache.root() + "matches", // input match directory
+                "-t", cache.location(aTree),    // input .tree file
+                "-w", cache.location(aWeight),  // input .weights file
+                "-o", cache.location(attribute) // output pairlist.txt
+            });
             commands.emplace_back(c);
         }
     }
@@ -62,5 +63,5 @@ vector<Command> Voctree::prepare(Cache& cache, bool& blocking)
 
 void Voctree::compute(const vector<string>& arguments) const
 {
-    // never reached
+    PluginToolBox::executeProcess("openMVG_main_generatePairList", arguments);
 }

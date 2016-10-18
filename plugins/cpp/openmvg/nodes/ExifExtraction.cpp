@@ -1,4 +1,5 @@
 #include "ExifExtraction.hpp"
+#include "PluginToolBox.hpp"
 #include <QCommandLineParser>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -56,13 +57,13 @@ vector<Command> ExifExtraction::prepare(Cache& cache, bool& blocking)
     // build the command line in case this output does not exists
     if(!cache.exists(attribute))
     {
-        Command c(
-            {
-                "-j", jsonPath,            // input tmp json file
-                "-d", cache.location(aDb), // input sensors database
-                "-o", cache.root()         // output directory
-            },
-            "openMVG_main_SfMInit_ImageListing");
+        Command c({
+            "--compute", type(),       // meshroom compute mode
+            "--",                      // node options:
+            "-j", jsonPath,            // input tmp json file
+            "-d", cache.location(aDb), // input sensors database
+            "-o", cache.root()         // output directory
+        });
         commands.emplace_back(c);
     }
     return commands;
@@ -70,5 +71,5 @@ vector<Command> ExifExtraction::prepare(Cache& cache, bool& blocking)
 
 void ExifExtraction::compute(const vector<string>& arguments) const
 {
-    // never reached
+    PluginToolBox::executeProcess("openMVG_main_SfMInit_ImageListing", arguments);
 }

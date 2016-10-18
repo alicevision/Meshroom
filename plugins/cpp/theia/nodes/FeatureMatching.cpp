@@ -36,8 +36,8 @@ vector<Command> FeatureMatching::prepare(Cache& cache, bool& blocking)
     if(!cache.exists(attribute))
     {
         vector<string> options = {
-            "-m", "compute",                // mode
-            "-t", type(),                   // type
+            "--compute", type(),            // meshroom compute mode
+            "--",                           // node options:
             "-o", cache.location(attribute) // output
         };
         for(auto& input : cache.attributes(p1))

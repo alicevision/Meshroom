@@ -1,4 +1,5 @@
 #include "StructureFromMotion.hpp"
+#include "PluginToolBox.hpp"
 #include <QCommandLineParser>
 #include <QDebug>
 
@@ -32,13 +33,13 @@ vector<Command> StructureFromMotion::prepare(Cache& cache, bool& blocking)
         // build the command line in case this output does not exists
         if(!cache.exists(aOut))
         {
-            Command c(
-                {
-                    "-i", cache.location(aSfm),     // input sfm_data file
-                    "-m", cache.root() + "matches", // input match directory
-                    "-o", cache.root() + "sfm"      // output sfm directory
-                },
-                "openMVG_main_IncrementalSfM");
+            Command c({
+                "--compute", type(),            // meshroom compute mode
+                "--",                           // node options:
+                "-i", cache.location(aSfm),     // input sfm_data file
+                "-m", cache.root() + "matches", // input match directory
+                "-o", cache.root() + "sfm"      // output sfm directory
+            });
             commands.emplace_back(c);
         }
     }
@@ -48,5 +49,5 @@ vector<Command> StructureFromMotion::prepare(Cache& cache, bool& blocking)
 
 void StructureFromMotion::compute(const vector<string>& arguments) const
 {
-    // never reached
+    PluginToolBox::executeProcess("openMVG_main_IncrementalSfM", arguments);
 }

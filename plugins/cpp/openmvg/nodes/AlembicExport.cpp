@@ -1,4 +1,5 @@
 #include "AlembicExport.hpp"
+#include "PluginToolBox.hpp"
 #include <QDebug>
 
 using namespace std;
@@ -30,16 +31,16 @@ vector<Command> AlembicExport::prepare(Cache& cache, bool& blocking)
         // build the command line in case this output does not exists
         if(!cache.exists(aOut))
         {
-            Command c(
-                {
-                    "-i", cache.location(aSfm), // input sfm_data file
-                    "-o", cache.location(aOut), // output .abc file
-                    "--INTRINSICS",             //
-                    "--EXTRINSICS",             //
-                    "--STRUCTURE",              //
-                    "--OBSERVATIONS"            //
-                },
-                "openMVG_main_ConvertSfM_DataFormat");
+            Command c({
+                "--compute", type(),        // meshroom compute mode
+                "--",                       // node options:
+                "-i", cache.location(aSfm), // input sfm_data file
+                "-o", cache.location(aOut), // output .abc file
+                "--INTRINSICS",             //
+                "--EXTRINSICS",             //
+                "--STRUCTURE",              //
+                "--OBSERVATIONS"            //
+            });
             commands.emplace_back(c);
         }
     }
@@ -49,5 +50,5 @@ vector<Command> AlembicExport::prepare(Cache& cache, bool& blocking)
 
 void AlembicExport::compute(const vector<string>& arguments) const
 {
-    // never reached
+    PluginToolBox::executeProcess("openMVG_main_ConvertSfM_DataFormat", arguments);
 }

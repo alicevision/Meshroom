@@ -24,8 +24,8 @@ vector<Command> PlyExport::prepare(Cache& cache, bool& blocking)
         if(!cache.exists(attribute))
         {
             Command c({
-                "-m", "compute",                // mode
-                "-t", type(),                   // type
+                "--compute", type(),            // meshroom compute mode
+                "--",                           // node options:
                 "-i", cache.location(input),    // input
                 "-o", cache.location(attribute) // output
             });

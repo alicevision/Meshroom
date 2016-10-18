@@ -28,8 +28,12 @@ std::vector<Command> VocTree::prepare(Cache& cache, bool& blocking)
         // the file does not exists, so we add commands to build it
         for(auto& input : cache.attributes(p))
         {
-            Command c({"-m", "compute", "-t", type(), "-f", cache.location(input), "-o",
-                       cache.location(attribute)});
+            Command c({
+                "--compute", type(),            // meshroom compute mode
+                "--",                           // node options:
+                "-f", cache.location(input),    //
+                "-o", cache.location(attribute) //
+            });
             commands.emplace_back(c);
         }
         // set the precompute flag

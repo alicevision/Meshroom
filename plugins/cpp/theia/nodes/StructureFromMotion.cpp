@@ -34,8 +34,8 @@ vector<Command> StructureFromMotion::prepare(Cache& cache, bool& blocking)
         if(!cache.exists(attribute))
         {
             vector<string> options = {
-                "-m", "compute",                // mode
-                "-t", type(),                   // type
+                "--compute", type(),            // meshroom compute mode
+                "--",                           // node options:
                 "-i", cache.location(input),    // input
                 "-o", cache.location(attribute) // output
             };

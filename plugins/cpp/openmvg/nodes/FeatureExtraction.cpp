@@ -1,4 +1,5 @@
 #include "FeatureExtraction.hpp"
+#include "PluginToolBox.hpp"
 #include <QCommandLineParser>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -66,12 +67,12 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, bool& blocking)
         // build the command line in case one feat/desc file does not exists
         if(createCmd)
         {
-            Command c(
-                {
-                    "-i", cache.location(aSfm),    // input sfm_data file
-                    "-o", cache.root() + "matches" // output match directory
-                },
-                "openMVG_main_ComputeFeatures");
+            Command c({
+                "--compute", type(),           // meshroom compute mode
+                "--",                          // node options:
+                "-i", cache.location(aSfm),    // input sfm_data file
+                "-o", cache.root() + "matches" // output match directory
+            });
             commands.emplace_back(c);
         }
     }
@@ -82,5 +83,5 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, bool& blocking)
 
 void FeatureExtraction::compute(const vector<string>& arguments) const
 {
-    // never reached
+    PluginToolBox::executeProcess("openMVG_main_ComputeFeatures", arguments);
 }

@@ -33,8 +33,8 @@ Rectangle {
 
     // slots & behaviors
     Component.onCompleted: { x = model.x; y = model.y; }
-    onXChanged: { model.x = x; nodeMoved(model.modelData); }
-    onYChanged: { model.y = y; nodeMoved(model.modelData); }
+    onXChanged: { model.x = x; nodeMoved(root, model.modelData); }
+    onYChanged: { model.y = y; nodeMoved(root, model.modelData); }
     Behavior on border.color { ColorAnimation {} }
 
     // mouse area
@@ -43,20 +43,16 @@ Rectangle {
         anchors.fill: parent
         drag.target: root
         drag.axis: Drag.XAndYAxis
-        drag.minimumX: 0
-        drag.maximumX: root.parent.width - root.width
-        drag.minimumY: 0
-        drag.maximumY: root.parent.height - root.height
         propagateComposedEvents: true
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: {
             if(mouse.button & Qt.RightButton) {
-                nodeRightClicked(model.modelData);
+                nodeRightClicked(root, model.modelData);
                 return;
             }
             currentNodeID = index;
-            nodeLeftClicked(model.modelData)
+            nodeLeftClicked(root, model.modelData)
         }
 
         ColumnLayout {

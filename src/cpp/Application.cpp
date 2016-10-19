@@ -10,6 +10,7 @@
 #include <QQuickStyle>
 #include <QDirIterator>
 #include <QDebug>
+#include <signal.h>
 
 namespace meshroom
 {
@@ -23,18 +24,20 @@ Application::Application()
     // set global/Qt locale
     std::locale::global(std::locale::classic());
     QLocale::setDefault(QLocale::c());
+
+    // watch unix signals
+    auto handler = [](int sig)
+    {
+        qCritical().noquote() << "Quit.";
+        QCoreApplication::quit();
+    };
+    signal(SIGINT, handler);
+    signal(SIGTERM, handler);
 }
 
 Application::Application(QQmlApplicationEngine& engine)
-    : QObject(nullptr)
-    , _scene(this)
-    , _plugins(this)
-    , _pluginNodes(this)
+    : Application() // delegating constructor
 {
-    // set global/Qt locale
-    std::locale::global(std::locale::classic());
-    QLocale::setDefault(QLocale::c());
-
     // add qml modules path
     engine.addImportPath(qApp->applicationDirPath() + "/plugins/qml");
 

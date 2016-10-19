@@ -23,22 +23,6 @@
             ]
         },
         {
-            "type": "ImageListing",
-            "inputs": [
-                {
-                    "name": "files",
-                    "key": "files",
-                    "type": "IMAGELIST"
-                }
-            ],
-            "outputs": [
-                {
-                    "name": "images",
-                    "key": "images"
-                }
-            ]
-        },
-        {
             "type": "ExifExtraction",
             "inputs": [
                 {
@@ -117,6 +101,52 @@
                 {
                     "name": "matches",
                     "key": "matches"
+                }
+            ]
+        },
+        {
+            "type": "ImageListing",
+            "inputs": [
+                {
+                    "name": "files",
+                    "key": "files",
+                    "type": "IMAGELIST"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "images",
+                    "key": "images"
+                }
+            ]
+        },
+        {
+            "type": "Localization",
+            "inputs": [
+                {
+                    "name": "sfmdata",
+                    "key": "sfmdata",
+                    "type": "TEXTFIELD"
+                },
+                {
+                    "name": "images",
+                    "key": "images",
+                    "type": "IMAGELIST"
+                },
+                {
+                    "name": "residualError",
+                    "key": "residualError",
+                    "type": "SLIDER",
+                    "min": 0,
+                    "max": 1,
+                    "value": 0,
+                    "step": 0.1
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "poses",
+                    "key": "poses"
                 }
             ]
         },

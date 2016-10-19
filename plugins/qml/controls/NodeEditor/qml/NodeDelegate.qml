@@ -6,14 +6,31 @@ import NodeEditor 1.0
 Rectangle {
 
     id: root
+
+    // dynamic properties
     property variant nodeModel : modelData
     property variant inputs: model.inputs
     property variant outputs: model.outputs
+    QtObject {
+        id: _p
+        property int attributeHeight: 15
+        property int attributeSpacing: 2
+    }
 
-    radius: 10
+    // properties
     z: currentNodeID == index ? 2 : 1
+    radius: 10
+    implicitWidth: 100
+    implicitHeight: Math.max(inputs.count, outputs.count)
+                    * (_p.attributeHeight + _p.attributeSpacing)
+                    + title.height + radius
     color: Qt.rgba(0.1, 0.1, 0.1, 0.8)
-    border.color: {
+    border.color: getColor()
+
+    // functions
+    function getInputItem(id) { return inputRepeater.itemAt(id) }
+    function getOutputItem(id) { return outputRepeater.itemAt(id) }
+    function getColor() {
         if(mouseArea.containsMouse)
             return "#5BB1F7";
         switch(model.status)
@@ -26,10 +43,6 @@ Rectangle {
         }
         return Qt.rgba(1, 1, 1, 0.2);
     }
-
-    // functions
-    function getInputItem(id) { return inputRepeater.itemAt(id) }
-    function getOutputItem(id) { return outputRepeater.itemAt(id) }
 
     // slots & behaviors
     Component.onCompleted: { x = model.x; y = model.y; }
@@ -63,10 +76,12 @@ Rectangle {
 
             // node title
             Label {
+                id: title
                 Layout.fillWidth: true
                 text: model.type
                 horizontalAlignment: Text.AlignHCenter
                 state: "xsmall"
+                color: root.border.color
             }
 
             // node attributes
@@ -75,12 +90,15 @@ Rectangle {
                 Layout.fillHeight: true
                 RowLayout {
                     anchors.fill: parent
-                    spacing: 2
+                    spacing: _p.attributeSpacing
                     ColumnLayout {
                         Repeater {
                             id: inputRepeater
                             model: root.inputs
-                            AttributeDelegate { isInput: true }
+                            AttributeDelegate {
+                                Layout.maximumHeight: _p.attributeHeight
+                                isInput: true
+                            }
                         }
                         Item { Layout.fillHeight: true } // spacer
                     }
@@ -88,7 +106,10 @@ Rectangle {
                         Repeater {
                             id: outputRepeater
                             model: root.outputs
-                            AttributeDelegate { isInput: false }
+                            AttributeDelegate {
+                                Layout.maximumHeight: _p.attributeHeight
+                                isInput: false
+                            }
                         }
                         Item { Layout.fillHeight: true } // spacer
                     }

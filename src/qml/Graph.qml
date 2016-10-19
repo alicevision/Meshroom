@@ -69,9 +69,8 @@ Item {
             function remove_CB() {
                 currentScene.graph.removeNode(node.serializeToJSON());
             }
-            var menu = contextMenu.createObject(editor);
-            menu.x = node.x+10;
-            menu.y = node.y+10;
+            var menu = contextMenu.createObject(item);
+            var p = item.mapToItem(root, item.x, item.y);
             menu.compute.connect(compute_CB);
             menu.remove.connect(remove_CB);
             menu.open()

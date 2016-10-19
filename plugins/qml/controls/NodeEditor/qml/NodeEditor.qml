@@ -26,7 +26,6 @@ Item {
     signal nodeRightClicked(var item, var node)
     signal edgeAdded(var descriptor)
     signal edgeRemoved(var edge)
-
     signal newEdgeStarted(var node, var plug, var pos)
     signal newEdgeMoved(var node, var plug, var pos)
     signal newEdgeFinished(var node, var plug, var pos)
@@ -222,10 +221,7 @@ Item {
             Repeater {
                 id: repeater
                 model: root.graph.nodes
-                delegate: NodeDelegate {
-                    width: 100
-                    height: 80
-                }
+                delegate: NodeDelegate {}
             }
         }
     }

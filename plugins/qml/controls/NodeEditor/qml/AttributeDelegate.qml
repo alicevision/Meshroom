@@ -7,7 +7,6 @@ RowLayout {
 
     property bool isInput: true
 
-    Layout.maximumHeight: 15
     spacing: 2
 
     Label {

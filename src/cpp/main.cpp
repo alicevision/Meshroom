@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 
     // command line parsing
     CommandLine commandLine;
-    commandLine.parse(argc, argv);
+    commandLine.build(argc, argv);
 
     try
     {
@@ -26,6 +26,7 @@ int main(int argc, char* argv[])
                 // GUI application
                 QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
                 QGuiApplication qapp(argc, argv);
+                commandLine.parse(qapp);
                 QQmlApplicationEngine engine;
                 Application application(engine);
                 application.loadPlugins();
@@ -36,6 +37,7 @@ int main(int argc, char* argv[])
             {
                 // non-GUI application
                 QCoreApplication qapp(argc, argv);
+                commandLine.parse(qapp);
                 Application application;
                 application.loadPlugins();
                 // create the specified dg Node
@@ -50,6 +52,7 @@ int main(int argc, char* argv[])
             {
                 // non-GUI application
                 QCoreApplication qapp(argc, argv);
+                commandLine.parse(qapp);
                 Application application;
                 application.loadPlugins();
                 // load the scene

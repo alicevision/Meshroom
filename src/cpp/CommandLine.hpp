@@ -24,7 +24,8 @@ public:
     ~CommandLine() = default;
 
 public:
-    void parse(int& argc, char** argv);
+    void build(int& argc, char** argv);
+    void parse(const QCoreApplication& qapp);
     const MODE& mode() const { return _mode; }
     QString nodeType() const { return _parser.value("compute"); }
     QString nodeName() const { return _parser.value("node"); }

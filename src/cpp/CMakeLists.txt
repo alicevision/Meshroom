@@ -27,6 +27,10 @@ add_definitions(-DQT_NO_KEYWORDS)
 add_definitions(-DQT_MESSAGELOGCONTEXT)
 QT5_ADD_RESOURCES(TARGET_QRCS ${PROJECT_SOURCE_DIR}/src/qml/resources.qrc)
 
+# Debug flags
+# Enable QML debugging
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DQT_QML_DEBUG")
+
 # Target properties
 include_directories(${PROJECT_SOURCE_DIR}/plugins/cpp)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

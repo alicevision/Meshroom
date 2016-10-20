@@ -1,6 +1,6 @@
 #include "Graph.hpp"
 #include <QJSValue>
-#include <QJSonDocument>
+#include <QJsonDocument>
 #include <QDebug>
 
 namespace nodeeditor

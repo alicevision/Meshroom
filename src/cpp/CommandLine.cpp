@@ -44,7 +44,7 @@ CommandLine::CommandLine()
     _parser.setApplicationDescription(application_opt);
 }
 
-void CommandLine::parse(int& argc, char** argv)
+void CommandLine::build(int& argc, char** argv)
 {
     // to qList
     QStringList arguments;
@@ -75,9 +75,10 @@ void CommandLine::parse(int& argc, char** argv)
     {
         _mode = OPEN_GUI;
     }
+}
 
-    // parse (with builtin options & error handling)
-    QCoreApplication qapp(argc, argv);
+void CommandLine::parse(const QCoreApplication& qapp)
+{
     _parser.process(qapp);
 }
 

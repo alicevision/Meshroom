@@ -29,7 +29,7 @@ void Worker::compute()
         dir.mkpath(".");
 
     // in case the node name is empty, operate on graph leaves
-    auto& dggraph = _graph->dggraph();
+    auto& dggraph = _graph->coreGraph();
     if(_node.isEmpty())
     {
         NodeList leaves = dggraph.leaves();
@@ -55,38 +55,9 @@ void Worker::compute()
             break;
     }
 
-    // callback, called several times by the runner
-    auto status_callback = [&](const Node& node, Runner::NodeStatus status, const std::string& msg)
-    {
-        QString nodeName = QString::fromStdString(node.name);
-        switch(status)
-        {
-            case Runner::NodeStatus::READY:
-                Q_EMIT nodeStatusChanged(nodeName, "READY");
-                break;
-            case Runner::NodeStatus::WAITING:
-                Q_EMIT nodeStatusChanged(nodeName, "WAITING");
-                break;
-            case Runner::NodeStatus::RUNNING:
-                Q_EMIT nodeStatusChanged(nodeName, "RUNNING");
-                break;
-            case Runner::NodeStatus::ERROR:
-                Q_EMIT nodeStatusChanged(nodeName, "ERROR");
-                break;
-            case Runner::NodeStatus::DONE:
-                Q_EMIT nodeStatusChanged(nodeName, "DONE");
-                break;
-        }
-        if(msg.empty())
-            return;
-        QDebug output = (status == Runner::NodeStatus::ERROR) ? qCritical() : qInfo();
-        output << QString::fromStdString(msg);
-    };
-
-    // run
     try
     {
-        _runner->registerCB(status_callback);
+        _runner->onStatusChanged = onStatusChanged;
         _runner->operator()(dggraph, _node.toStdString());
     }
     catch(std::exception& e)

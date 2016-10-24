@@ -11,6 +11,11 @@ WorkerThread::WorkerThread(QObject* parent, Worker* worker)
 {
 }
 
+WorkerThread::~WorkerThread()
+{
+    delete _worker;
+}
+
 void WorkerThread::run()
 {
     // start worker

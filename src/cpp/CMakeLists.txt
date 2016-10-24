@@ -9,6 +9,10 @@ set(TARGETOBJ ${PROJECT_NAME})
 # DGlib dependency
 include_directories(${DG_INCLUDE_DIR})
 
+# graph editor headers
+include_directories(${NODEEDITOR_INCLUDE_DIR})
+list(APPEND TARGET_SRCS ${NODEEDITOR_HEADERS})
+
 # OpenGL dependency
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})

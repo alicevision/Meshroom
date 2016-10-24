@@ -37,26 +37,28 @@ Item {
             model: modelData.value
             closeable: false
             onItemAdded: {
-                var values = (!modelData.value) ? [] : modelData.value;
+                var values = modelData.value ? modelData.value : []
+                if(!Array.isArray(values))
+                    values = [modelData.value]
                 values.push(item.replace("file://", ""));
-                currentScene.graph.setNodeAttribute(nodeName, modelData.key, values);
+                var o = modelData.serializeToJSON()
+                o['node'] = nodeName; // add a reference to the node
+                o['value'] = values; // change value
+                currentScene.graph.setAttribute(o)
             }
             onItemRemoved: {
-                var values = (!modelData.value) ? [] : modelData.value;
+                var values = modelData.value ? modelData.value : []
+                if(!Array.isArray(values))
+                    values = [modelData.value]
                 var index = values.indexOf(item.replace("file://",""));
                 if(index < 0)
                     return;
                 values.splice(index, 1);
-                currentScene.graph.setNodeAttribute(nodeName, modelData.key, values);
+                var o = modelData.serializeToJSON()
+                o['node'] = nodeName; // add a reference to the node
+                o['value'] = values; // change value
+                currentScene.graph.setAttribute(o)
             }
-        }
-    }
-    Component {
-        id: labelDelegate
-        Label {
-            text: modelData.name
-            state: "xsmall"
-            enabled: false
         }
     }
     Component {
@@ -68,14 +70,24 @@ Item {
                 stepSize = modelData.step;
                 value = modelData.value;
             }
-            onValueChanged: currentScene.graph.setNodeAttribute(nodeName, modelData.key, value)
+            onValueChanged: {
+                var o = modelData.serializeToJSON()
+                o['node'] = nodeName; // add a reference to the node
+                o['value'] = value; // change value
+                currentScene.graph.setAttribute(o)
+            }
         }
     }
     Component {
         id: textfieldDelegate
         TextField {
             text: (modelData && modelData.value) ? modelData.value : ""
-            onEditingFinished: currentScene.graph.setNodeAttribute(nodeName, modelData.key, text)
+            onEditingFinished: {
+                var o = modelData.serializeToJSON()
+                o['node'] = nodeName; // add a reference to the node
+                o['value'] = text; // change value
+                currentScene.graph.setAttribute(o)
+            }
         }
     }
     Component {
@@ -83,52 +95,56 @@ Item {
         ComboBox {
             Component.onCompleted: currentIndex = find(modelData.value)
             model: modelData.options
-            onActivated: currentScene.graph.setNodeAttribute(nodeName, modelData.key, textAt(index))
+            onActivated: {
+                var o = modelData.serializeToJSON()
+                o['node'] = nodeName; // add a reference to the node
+                o['value'] = textAt(index); // change value
+                currentScene.graph.setAttribute(o)
+            }
         }
     }
     Component {
         id: checkboxDelegate
         CheckBox {
             Component.onCompleted: checked = modelData.value
-            onClicked: currentScene.graph.setNodeAttribute(nodeName, modelData.key, checked)
+            onClicked: {
+                var o = modelData.serializeToJSON()
+                o['node'] = nodeName; // add a reference to the node
+                o['value'] = checked; // change value
+                currentScene.graph.setAttribute(o)
+            }
         }
     }
 
 
-    Flickable {
-        id: flickable
+    ListView {
         anchors.fill: parent
         ScrollBar.vertical: ScrollBar {}
-        contentWidth: width
-        contentHeight: layout.height
-        ColumnLayout {
-            id: layout
-            width: flickable.width - 10
-            spacing: 0
-            Repeater {
-                model: (root.model && root.model.inputs) ? root.model.inputs.count*2 : 0
-                delegate: Loader {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 2
-                    Layout.rightMargin: 2
-                    Layout.topMargin: (index%2==0 && index!=0) ? 15 : 0
-                    property variant modelData: null
-                    property string nodeName: ""
-                    sourceComponent: {
-                        var inputs = root.model.inputs;
-                        modelData = inputs.data(inputs.index(index/2,0), AttributeCollection.ModelDataRole);
-                        nodeName = root.model.name;
-                        if(index % 2 == 0)
-                            return labelDelegate;
-                        switch(modelData.type) {
-                            case Attribute.UNKNOWN: return emptyDelegate
-                            case Attribute.TEXTFIELD: return textfieldDelegate
-                            case Attribute.SLIDER: return sliderDelegate
-                            case Attribute.COMBOBOX: return comboboxDelegate
-                            case Attribute.CHECKBOX: return checkboxDelegate
-                            case Attribute.IMAGELIST: return imageListDelegate
-                            case Attribute.OBJECT3D: return emptyDelegate
-                        }
+        model: (root.model && root.model.inputs) ? root.model.inputs : 0
+        spacing: 20
+        delegate: ColumnLayout {
+            width: ListView.view.width
+            Label {
+                Layout.fillWidth: true
+                text: model.name
+                enabled: false
+                state: "small"
+            }
+            Loader {
+                Layout.fillWidth: true
+                property variant modelData: null
+                property string nodeName: ""
+                sourceComponent: {
+                    modelData = model.modelData;
+                    nodeName = root.model.name;
+                    switch(model.type) {
+                        case Attribute.UNKNOWN: return emptyDelegate
+                        case Attribute.TEXTFIELD: return textfieldDelegate
+                        case Attribute.SLIDER: return sliderDelegate
+                        case Attribute.COMBOBOX: return comboboxDelegate
+                        case Attribute.CHECKBOX: return checkboxDelegate
+                        case Attribute.IMAGELIST: return imageListDelegate
+                        case Attribute.OBJECT3D: return emptyDelegate
                     }
                 }
             }

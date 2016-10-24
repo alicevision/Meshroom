@@ -13,6 +13,7 @@ class WorkerThread : public QThread
 
 public:
     WorkerThread(QObject*, Worker*);
+    ~WorkerThread();
 
 public:
     void run() override;

@@ -66,18 +66,6 @@ Application::Application(QQmlApplicationEngine& engine)
 
     // load the main QML file
     engine.load(qApp->applicationDirPath() + "/qml/main.qml");
-
-    // retrieve QML objects
-    QList<QObject*> objects = engine.rootObjects();
-    for(auto obj : objects)
-    {
-        QObject* editor = obj->findChild<QObject*>("nodeeditor.qmlPlugin.editor");
-        if(editor != nullptr)
-        {
-            _scene.graph()->registerQmlObject(editor);
-            break;
-        }
-    }
 }
 
 PluginCollection* Application::loadPlugins()

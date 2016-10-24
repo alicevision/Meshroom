@@ -23,7 +23,7 @@ class Scene : public QObject
     Q_PROPERTY(Graph* graph READ graph CONSTANT)
 
 public:
-    Scene() = default;
+    Scene();
     Scene(QObject* parent, const QUrl& = QUrl());
 
 public:

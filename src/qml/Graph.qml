@@ -59,8 +59,8 @@ Item {
     NodeEditor {
         id: editor
         anchors.fill: parent
-        onEdgeAdded: currentScene.graph.addEdge(descriptor)
-        onEdgeRemoved: currentScene.graph.removeEdge(edge.serializeToJSON())
+        graph: currentScene.graph
+        onWorkspaceClicked: root.selectionChanged(null)
         onNodeLeftClicked: root.selectionChanged(node)
         onNodeRightClicked: {
             function compute_CB(mode) {

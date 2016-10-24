@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QJsonObject>
 #include "AttributeCollection.hpp"
 
 namespace nodeeditor
@@ -46,8 +47,8 @@ public:
     void setY(int);
 
 public:
-    Q_SLOT QJsonObject serializeToJSON() const;
-    Q_SLOT void deserializeFromJSON(const QJsonObject& obj);
+    Q_INVOKABLE QJsonObject serializeToJSON() const;
+    Q_INVOKABLE void deserializeFromJSON(const QJsonObject& obj);
 
 public:
     Q_SIGNAL void statusChanged();
@@ -63,5 +64,65 @@ private:
     int _x = 10;
     int _y = 10;
 };
+
+inline void Node::setStatus(Status status)
+{
+    if(_status == status)
+        return;
+    _status = status;
+    Q_EMIT statusChanged();
+}
+
+inline void Node::setX(int x)
+{
+    if(_x == x)
+        return;
+    _x = x;
+    Q_EMIT xChanged();
+}
+
+inline void Node::setY(int y)
+{
+    if(_y == y)
+        return;
+    _y = y;
+    Q_EMIT yChanged();
+}
+
+inline QJsonObject Node::serializeToJSON() const
+{
+    QJsonObject obj;
+    obj.insert("name", _name);
+    obj.insert("type", _type);
+    obj.insert("x", _x);
+    obj.insert("y", _y);
+    obj.insert("inputs", _inputs->serializeToJSON());
+    obj.insert("outputs", _outputs->serializeToJSON());
+    return obj;
+}
+
+inline void Node::deserializeFromJSON(const QJsonObject& obj)
+{
+    if(obj.contains("name"))
+        _name = obj.value("name").toString();
+    if(obj.contains("type"))
+        _type = obj.value("type").toString();
+    if(obj.contains("x"))
+        _x = obj.value("x").toInt();
+    if(obj.contains("y"))
+        _y = obj.value("y").toInt();
+    for(auto o : obj.value("inputs").toArray())
+    {
+        Attribute* a = new Attribute;
+        a->deserializeFromJSON(o.toObject());
+        _inputs->add(a);
+    }
+    for(auto o : obj.value("outputs").toArray())
+    {
+        Attribute* a = new Attribute;
+        a->deserializeFromJSON(o.toObject());
+        _outputs->add(a);
+    }
+}
 
 } // namespace

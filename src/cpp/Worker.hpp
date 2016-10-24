@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QDebug>
 #include <dglib/dg.hpp>
 
 namespace meshroom
@@ -31,7 +32,7 @@ public:
     void setMode(const Mode& m) { _mode = m; }
 
 public:
-    Q_SIGNAL void nodeStatusChanged(const QString& nodeName, const QString& status);
+    dg::Runner::callback_t onStatusChanged = {};
 
 private:
     QString _node;

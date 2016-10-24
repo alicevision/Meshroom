@@ -10,7 +10,7 @@ namespace nodeeditor
 class Attribute : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged)
+    Q_PROPERTY(QVariant value READ value NOTIFY valueChanged)
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QString key READ key CONSTANT)
     Q_PROPERTY(QString tooltip READ tooltip CONSTANT)
@@ -75,5 +75,107 @@ private:
     QVariant _step;
     QStringList _options;
 };
+
+inline Attribute::Attribute(const Attribute& obj)
+    : _value(obj.value())
+    , _key(obj.key())
+    , _name(obj.name())
+    , _tooltip(obj.tooltip())
+    , _type(obj.type())
+    , _min(obj.min())
+    , _max(obj.max())
+    , _step(obj.step())
+    , _options(obj.options())
+{
+}
+
+inline void Attribute::setValue(const QVariant& value)
+{
+    _value = value;
+    Q_EMIT valueChanged();
+}
+
+inline QJsonObject Attribute::serializeToJSON() const
+{
+    auto toString = [](const AttributeType& type) -> QString
+    {
+        switch(type)
+        {
+            case TEXTFIELD:
+                return "TEXTFIELD";
+            case SLIDER:
+                return "SLIDER";
+            case COMBOBOX:
+                return "COMBOBOX";
+            case CHECKBOX:
+                return "CHECKBOX";
+            case IMAGELIST:
+                return "IMAGELIST";
+            case OBJECT3D:
+                return "OBJECT3D";
+            default:
+                return "UNKNOWN";
+        }
+    };
+
+    QJsonObject obj;
+    obj.insert("key", _key);
+    obj.insert("name", _name);
+    obj.insert("type", toString(_type));
+    if(!_value.isNull())
+        obj.insert("value", QJsonValue::fromVariant(_value));
+    if(!_min.isNull())
+        obj.insert("min", QJsonValue::fromVariant(_min));
+    if(!_max.isNull())
+        obj.insert("max", QJsonValue::fromVariant(_max));
+    if(!_step.isNull())
+        obj.insert("step", QJsonValue::fromVariant(_step));
+    if(!_options.isEmpty())
+        obj.insert("options", QJsonValue::fromVariant(_options));
+    return obj;
+}
+
+inline void Attribute::deserializeFromJSON(const QJsonObject& obj)
+{
+    auto toEnum = [](const QString& type) -> AttributeType
+    {
+        if(type == "TEXTFIELD")
+            return TEXTFIELD;
+        else if(type == "SLIDER")
+            return SLIDER;
+        else if(type == "COMBOBOX")
+            return COMBOBOX;
+        else if(type == "CHECKBOX")
+            return CHECKBOX;
+        else if(type == "IMAGELIST")
+            return IMAGELIST;
+        else if(type == "OBJECT3D")
+            return OBJECT3D;
+        return UNKNOWN;
+    };
+
+    if(obj.contains("value"))
+        _value = obj.value("value").toVariant();
+    if(obj.contains("key"))
+        _key = obj.value("key").toString();
+    if(obj.contains("name"))
+        _name = obj.value("name").toString();
+    if(obj.contains("tooltip"))
+        _tooltip = obj.value("tooltip").toString();
+    if(obj.contains("min"))
+        _min = obj.value("min").toVariant();
+    if(obj.contains("max"))
+        _max = obj.value("max").toVariant();
+    if(obj.contains("step"))
+        _step = obj.value("step").toVariant();
+    if(obj.contains("type"))
+        _type = toEnum(obj.value("type").toString());
+    if(obj.contains("options"))
+    {
+        _options.clear();
+        for(auto o : obj.value("options").toArray())
+            _options.append(o.toString());
+    }
+}
 
 } // namespace

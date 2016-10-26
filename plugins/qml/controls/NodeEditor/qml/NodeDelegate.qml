@@ -32,8 +32,8 @@ Rectangle {
     border.color: getColor()
 
     // functions
-    function getInputItem(id) { return inputRepeater.itemAt(id) }
-    function getOutputItem(id) { return outputRepeater.itemAt(id) }
+    function getInputAnchor(id) { return inputRepeater.itemAt(id).edgeAnchor }
+    function getOutputAnchor(id) { return outputRepeater.itemAt(id).edgeAnchor }
     function getColor() {
         if(mouseArea.containsMouse)
             return "#5BB1F7";

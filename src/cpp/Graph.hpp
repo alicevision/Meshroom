@@ -2,7 +2,7 @@
 
 #include "WorkerThread.hpp"
 #include "Worker.hpp"
-#include <NodeEditor/AbstractGraph.hpp>
+#include <nodeEditor/AbstractGraph.hpp>
 #include <dglib/dg.hpp>
 
 namespace meshroom

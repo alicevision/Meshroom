@@ -2,8 +2,8 @@
 
 #include <QtQml>
 #include <QQmlExtensionPlugin>
-#include "AbstractGraph.hpp"
-#include "AttributeCollection.hpp"
+#include "nodeEditor/AbstractGraph.hpp"
+#include "nodeEditor/AttributeCollection.hpp"
 #include "EdgeItem.hpp"
 
 #define FAIL_MSG(TYPE) "type registration failed (" #TYPE ")"

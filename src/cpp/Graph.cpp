@@ -1,8 +1,8 @@
 #include "Graph.hpp"
 #include "Application.hpp"
 #include "WorkerThread.hpp"
-#include <NodeEditor/Node.hpp>
-#include <NodeEditor/Edge.hpp>
+#include <nodeEditor/Node.hpp>
+#include <nodeEditor/Edge.hpp>
 #include <QJsonObject>
 #include <QDebug>
 

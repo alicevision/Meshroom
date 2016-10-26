@@ -51,12 +51,10 @@ Item {
                     property int targetId: root.graph.nodes.rowIndex(modelData.target)
                     property int sourceAttrID: 0
                     property int targetAttrID: targetNode.inputs.rowIndex(modelData.plug)
-
                     sourceNode: nodeRepeater.itemAt(sourceId)
-                    sourceAttr: sourceNode.getOutputItem(sourceAttrID).edgeAnchor
+                    sourceAttr: sourceNode.getOutputAnchor(sourceAttrID)
                     targetNode: nodeRepeater.itemAt(targetId)
-                    targetAttr: targetNode.getInputItem(targetAttrID).edgeAnchor
-
+                    targetAttr: targetNode.getInputAnchor(targetAttrID)
                     scaleFactor: parent.scale
                     color: containsMouse ? "#5BB1F7" : "#CCC"
                 }

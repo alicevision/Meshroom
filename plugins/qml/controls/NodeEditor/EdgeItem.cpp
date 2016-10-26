@@ -1,12 +1,11 @@
 #include "EdgeItem.hpp"
-
 #include <QtQuick/qsgnode.h>
 #include <QtQuick/qsgflatcolormaterial.h>
 #include <bitset>
-#include <cmath>
 
 namespace nodeeditor
 {
+
 EdgeItem::EdgeItem(QQuickItem* parent)
     : QQuickItem(parent)
 {
@@ -169,4 +168,32 @@ void EdgeItem::updateBounds()
     // setPosition(b.topLeft());
     // setSize(b.size());
 }
+
+void EdgeItem::updateMemberItem(QQuickItem*& member, QQuickItem* newItem)
+{
+    if(member == newItem)
+        return;
+
+    if(member)
+        member->disconnect(this);
+    member = newItem;
+
+    if(!member)
+        return;
+
+    const auto triggerUpdate = [this]()
+    {
+        _updateType = Path;
+        update();
+    };
+
+    connect(member, &QQuickItem::xChanged, this, triggerUpdate);
+    connect(member, &QQuickItem::yChanged, this, triggerUpdate);
+    connect(member, &QQuickItem::destroyed, this, [&member]()
+            {
+                member = nullptr;
+            });
+    triggerUpdate();
 }
+
+} // namespace

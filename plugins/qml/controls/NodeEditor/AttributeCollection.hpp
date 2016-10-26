@@ -2,6 +2,7 @@
 
 #include <QAbstractListModel>
 #include <QJsonArray>
+#include <QQmlEngine>
 #include "Attribute.hpp"
 
 namespace nodeeditor

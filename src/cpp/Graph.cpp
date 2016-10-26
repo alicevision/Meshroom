@@ -26,6 +26,7 @@ Graph::Graph(QObject* parent)
     _graph.onCleared = [&]()
     {
         _nodes->clear();
+        _edges->clear();
         Q_EMIT dataChanged();
     };
     _graph.onNodeAdded = [&](Ptr<Node> n)

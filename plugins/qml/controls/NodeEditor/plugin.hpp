@@ -4,6 +4,7 @@
 #include <QQmlExtensionPlugin>
 #include "AbstractGraph.hpp"
 #include "AttributeCollection.hpp"
+#include "EdgeItem.hpp"
 
 #define FAIL_MSG(TYPE) "type registration failed (" #TYPE ")"
 
@@ -24,6 +25,7 @@ public:
         qmlRegisterUncreatableType<Attribute>(uri, 1, 0, "Attribute", FAIL_MSG(Attribute));
         qmlRegisterUncreatableType<AttributeCollection>(uri, 1, 0, "AttributeCollection",
                                                         FAIL_MSG(AttributeCollection));
+        qmlRegisterType<EdgeItem>(uri, 1, 0, "EdgeItem");
     }
 };
 

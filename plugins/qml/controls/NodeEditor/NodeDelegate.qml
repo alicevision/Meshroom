@@ -8,6 +8,7 @@ Rectangle {
     id: root
 
     // dynamic properties
+    property variant node: modelData
     property variant inputs: model.inputs
     property variant outputs: model.outputs
     QtObject {
@@ -101,6 +102,7 @@ Rectangle {
                             AttributeDelegate {
                                 Layout.maximumHeight: _p.attributeHeight
                                 isInput: true
+                                node: root.node
                             }
                         }
                         Item { Layout.fillHeight: true } // spacer
@@ -113,6 +115,7 @@ Rectangle {
                             AttributeDelegate {
                                 Layout.maximumHeight: _p.attributeHeight
                                 isInput: false
+                                node: root.node
                             }
                         }
                         Item { Layout.fillHeight: true } // spacer

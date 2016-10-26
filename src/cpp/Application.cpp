@@ -53,6 +53,7 @@ Application::Application(QQmlApplicationEngine& engine)
     // set opengl profile
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
     fmt.setVersion(4, 3);
+    fmt.setSamples(8);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(fmt);
 

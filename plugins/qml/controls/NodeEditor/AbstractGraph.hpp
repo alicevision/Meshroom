@@ -11,6 +11,7 @@ class AbstractGraph : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(NodeCollection* nodes MEMBER _nodes CONSTANT)
+    Q_PROPERTY(EdgeCollection* edges MEMBER _edges CONSTANT)
 
 public:
     AbstractGraph(QObject* parent = nullptr);

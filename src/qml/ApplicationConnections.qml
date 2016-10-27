@@ -65,5 +65,9 @@ Item {
             dialog.onAccepted.connect(add_CB);
             dialog.open();
         }
+        onEditSettings: {
+            var dialog = _dialogs.sceneSettings.createObject(parent);
+            dialog.open();
+        }
     }
 }

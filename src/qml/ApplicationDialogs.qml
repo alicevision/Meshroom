@@ -2,6 +2,7 @@ import QtQuick 2.7
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.0
 import QtQuick.Dialogs 1.2
+import "controls"
 
 Item {
 
@@ -46,6 +47,37 @@ Item {
                     text: "Cancel"
                     onClicked: { close(); }
                 }
+            }
+        }
+        ToolButton {
+            anchors.horizontalCenter: parent.right
+            anchors.verticalCenter: parent.top
+            icon: "qrc:///images/close.svg"
+            onClicked: { close(); }
+        }
+    }
+    property Component sceneSettings: Popup {
+        Flickable {
+            anchors.fill: parent
+            anchors.margins: 10
+            ScrollBar.vertical: ScrollBar {}
+            flickableDirection: Flickable.AutoFlickIfNeeded
+            contentWidth: parent.width - anchors.margins*2
+            contentHeight: 100
+            clip: true
+            ColumnLayout {
+                anchors.fill: parent
+                Label {
+                    text: "cache folder"
+                    state: "small"
+                }
+                PathField {
+                    Layout.fillWidth: true
+                    selectFolder: true
+                    text: currentScene.graph.cacheUrl.toString().replace("file://", "")
+                    onEditingFinished: currentScene.graph.setCacheUrl("file://"+text)
+                }
+                Item { Layout.fillHeight: true }
             }
         }
         ToolButton {

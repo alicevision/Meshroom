@@ -37,7 +37,6 @@ QQC14.MenuBar {
             onTriggered: addNode()
             shortcut: "Tab"
         }
-        QQC14.MenuSeparator {}
         QQC14.Menu {
             id: templateMenu
             title: "Import template"
@@ -51,6 +50,11 @@ QQC14.MenuBar {
                 onObjectAdded: templateMenu.insertItem(index, object)
                 onObjectRemoved: templateMenu.removeItem(object)
             }
+        }
+        QQC14.MenuSeparator {}
+        QQC14.MenuItem {
+            text: "Settings..."
+            onTriggered: editSettings()
         }
     }
 }

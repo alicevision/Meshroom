@@ -30,6 +30,7 @@ ApplicationWindow {
     signal selectScene(int id)
     signal addNode()
     signal loadAlembic(var file)
+    signal editSettings()
 
     // connections, menus and dialogs
     ApplicationConnections {}

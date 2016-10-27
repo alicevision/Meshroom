@@ -61,6 +61,7 @@ RowLayout {
             MouseArea {
                 id: dragArea
                 anchors.fill: parent
+                anchors.margins: drag.active ? -50 : 0
                 hoverEnabled: true
                 drag.target: parent
                 drag.threshold: 0

@@ -11,8 +11,10 @@ Item {
 
     // signals
     signal workspaceClicked()
-    signal nodeLeftClicked(var item, var node)
-    signal nodeRightClicked(var item, var node)
+    signal nodeLeftClicked(var item, var node, var pos)
+    signal nodeRightClicked(var item, var node, var pos)
+    signal edgeLeftClicked(var item, var edge, var pos)
+    signal edgeRightClicked(var item, var edge, var pos)
 
     MouseArea {
         id: mouseArea
@@ -47,6 +49,7 @@ Item {
                 id: edgeRepeater
                 model: root.graph.edges
                 delegate: EdgeItem {
+                    id: edgeItem
                     property int sourceId: root.graph.nodes.rowIndex(modelData.source)
                     property int targetId: root.graph.nodes.rowIndex(modelData.target)
                     property int sourceAttrID: 0
@@ -57,6 +60,16 @@ Item {
                     targetAttr: targetNode.getInputAnchor(targetAttrID)
                     scaleFactor: parent.scale
                     color: containsMouse ? "#5BB1F7" : "#CCC"
+                    onReleased: {
+                        switch(mouse.button) {
+                            case Qt.LeftButton:
+                                root.edgeLeftClicked(edgeItem, modelData, Qt.point(mouse.x, mouse.y))
+                                break;
+                            case Qt.RightButton:
+                                root.edgeRightClicked(edgeItem, modelData, Qt.point(mouse.x, mouse.y))
+                                break;
+                        }
+                    }
                 }
             }
         }

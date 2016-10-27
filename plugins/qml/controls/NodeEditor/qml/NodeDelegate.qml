@@ -68,11 +68,11 @@ Rectangle {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: {
             if(mouse.button & Qt.RightButton) {
-                nodeRightClicked(root, model.modelData);
+                nodeRightClicked(root, model.modelData, Qt.point(mouse.x, mouse.y));
                 return;
             }
             selectedNodeID = index;
-            nodeLeftClicked(root, model.modelData)
+            nodeLeftClicked(root, model.modelData, Qt.point(mouse.x, mouse.y))
         }
         ColumnLayout {
             anchors.fill: parent

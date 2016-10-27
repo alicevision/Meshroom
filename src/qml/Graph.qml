@@ -11,8 +11,8 @@ Item {
     // signal / slots
     signal selectionChanged(var node)
 
-    // components
-    property Component contextMenu: Menu {
+    // context menus
+    property Component nodeContextMenu: Menu {
         signal compute(var mode)
         signal remove()
         MenuItem {
@@ -36,6 +36,13 @@ Item {
             onTriggered: remove()
         }
     }
+    property Component edgeContextMenu: Menu {
+        signal remove()
+        MenuItem {
+            text: "Delete edge"
+            onTriggered: remove()
+        }
+    }
 
     // background
     Rectangle {
@@ -51,6 +58,7 @@ Item {
 
     // mouse area
     MouseArea {
+        id: mouseArea
         anchors.fill: parent
         onClicked: selectionChanged(null)
     }
@@ -63,16 +71,25 @@ Item {
         onWorkspaceClicked: root.selectionChanged(null)
         onNodeLeftClicked: root.selectionChanged(node)
         onNodeRightClicked: {
-            function compute_CB(mode) {
+            var menu = nodeContextMenu.createObject(item);
+            menu.compute.connect(function compute_CB(mode) {
                 currentScene.graph.startWorkerThread(mode, node.name);
-            }
-            function remove_CB() {
+            });
+            menu.remove.connect(function remove_CB() {
                 currentScene.graph.removeNode(node.serializeToJSON());
-            }
-            var menu = contextMenu.createObject(item);
+            });
+            menu.x = pos.x;
+            menu.y = pos.y;
+            menu.open()
+        }
+        onEdgeRightClicked: {
+            var menu = edgeContextMenu.createObject(item);
             var p = item.mapToItem(root, item.x, item.y);
-            menu.compute.connect(compute_CB);
-            menu.remove.connect(remove_CB);
+            menu.remove.connect(function remove_CB() {
+                currentScene.graph.removeEdge(edge.serializeToJSON());
+            });
+            menu.x = pos.x;
+            menu.y = pos.y;
             menu.open()
         }
     }

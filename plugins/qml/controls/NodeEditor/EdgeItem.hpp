@@ -7,6 +7,25 @@
 namespace nodeeditor
 {
 
+// MouseEvent class
+// needed cause QQuickMouseEvent is private, we can't use it
+class MouseEvent : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(int x MEMBER _x CONSTANT)
+    Q_PROPERTY(int y MEMBER _y CONSTANT)
+    Q_PROPERTY(int button MEMBER _button CONSTANT)
+public:
+    MouseEvent(QMouseEvent* e)
+        : _x(e->x())
+        , _y(e->y())
+        , _button(e->button())
+    {}
+    int _x;
+    int _y;
+    Qt::MouseButton _button;
+};
+
 class EdgeItem : public QQuickItem
 {
     Q_OBJECT
@@ -135,9 +154,9 @@ protected:
     Q_SIGNAL void targetAttrChanged();
     Q_SIGNAL void thicknessChanged();
     Q_SIGNAL void hullThicknessChanged();
-    Q_SIGNAL void pressed();
-    Q_SIGNAL void released();
-    Q_SIGNAL void doubleClicked();
+    Q_SIGNAL void pressed(MouseEvent* mouse);
+    Q_SIGNAL void released(MouseEvent* mouse);
+    Q_SIGNAL void doubleClicked(MouseEvent* mouse);
 
 protected:
     void hoverEnterEvent(QHoverEvent* event) override;

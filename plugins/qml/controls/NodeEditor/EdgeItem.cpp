@@ -42,19 +42,25 @@ void EdgeItem::hoverEnterEvent(QHoverEvent*)
     update();
 }
 
-void EdgeItem::mousePressEvent(QMouseEvent*)
+void EdgeItem::mousePressEvent(QMouseEvent* event)
 {
-    Q_EMIT pressed();
+    auto e = new MouseEvent(event);
+    Q_EMIT pressed(e);
+    e->deleteLater();
 }
 
-void EdgeItem::mouseReleaseEvent(QMouseEvent*)
+void EdgeItem::mouseReleaseEvent(QMouseEvent* event)
 {
-    Q_EMIT released();
+    auto e = new MouseEvent(event);
+    Q_EMIT released(e);
+    e->deleteLater();
 }
 
-void EdgeItem::mouseDoubleClickEvent(QMouseEvent*)
+void EdgeItem::mouseDoubleClickEvent(QMouseEvent* event)
 {
-    Q_EMIT doubleClicked();
+    auto e = new MouseEvent(event);
+    Q_EMIT doubleClicked(e);
+    e->deleteLater();
 }
 
 QSGNode* EdgeItem::updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData*)

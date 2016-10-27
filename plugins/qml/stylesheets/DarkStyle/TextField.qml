@@ -13,6 +13,8 @@ T.TextField {
     selectionColor: Globals.window.color.dark
     selectedTextColor: Globals.text.color.selected
     verticalAlignment: TextInput.AlignVCenter
+    leftPadding: 4
+    rightPadding: 4
 
     Text {
         id: placeholder
@@ -28,11 +30,19 @@ T.TextField {
         elide: Text.ElideRight
         visible: !control.length && !control.preeditText && (!control.activeFocus || control.horizontalAlignment !== Qt.AlignHCenter)
     }
-    background: Rectangle {
-        y: control.height - height - control.bottomPadding / 2
+    background: Item {
         implicitWidth: 120
-        height: control.activeFocus ? 2 : 1
-        color: Globals.window.color.selected
+        Rectangle {
+            anchors.fill: parent
+            color: "black"
+            opacity: 0.3
+        }
+        Rectangle {
+            y: control.height - height - control.bottomPadding / 2
+            height: control.activeFocus ? 2 : 1
+            width: parent.width
+            color: Globals.window.color.selected
+        }
     }
 
 }

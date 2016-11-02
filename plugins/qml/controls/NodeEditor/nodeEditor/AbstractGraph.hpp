@@ -29,9 +29,13 @@ protected:
     virtual Q_INVOKABLE QJsonObject serializeToJSON() const = 0;
     virtual Q_INVOKABLE void deserializeFromJSON(const QJsonObject&) = 0;
 
+public:
+    NodeCollection* nodes() { return _nodes; }
+    EdgeCollection* edges() { return _edges; }
+
 protected:
     NodeCollection* _nodes = new NodeCollection(this);
-    EdgeCollection* _edges = new EdgeCollection(this);
+    EdgeCollection* _edges = new EdgeCollection(*_nodes, this);
 };
 
 inline AbstractGraph::AbstractGraph(QObject* parent)

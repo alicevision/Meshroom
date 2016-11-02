@@ -7,6 +7,8 @@
 namespace nodeeditor
 {
 
+class AttributeCollection;
+
 class Attribute : public QObject
 {
     Q_OBJECT
@@ -19,6 +21,8 @@ class Attribute : public QObject
     Q_PROPERTY(QVariant max READ max CONSTANT)
     Q_PROPERTY(QVariant step READ step CONSTANT)
     Q_PROPERTY(QStringList options READ options CONSTANT)
+    Q_PROPERTY(QObjectList connections MEMBER _connections NOTIFY connectionsChanged)
+    Q_PROPERTY(bool isConnected READ isConnected NOTIFY connectionsChanged)
 
 public:
     Attribute() = default;
@@ -47,6 +51,7 @@ public:
     const QVariant& max() const { return _max; }
     const QVariant& step() const { return _step; }
     const QStringList& options() const { return _options; }
+    bool isConnected() const { return !_connections.isEmpty(); }
     void setValue(const QVariant& value);
     void setKey(const QString& key) { _key = key; }
     void setName(const QString& name) { _name = name; }
@@ -63,6 +68,12 @@ public:
 
 public:
     Q_SIGNAL void valueChanged();
+    Q_SIGNAL void connectionsChanged();
+
+private:
+    friend class EdgeCollection;
+    void addConnection(Attribute*);
+    void removeConnection(Attribute*);
 
 private:
     QVariant _value;
@@ -74,6 +85,7 @@ private:
     QVariant _max;
     QVariant _step;
     QStringList _options;
+    QObjectList _connections;
 };
 
 inline Attribute::Attribute(const Attribute& obj)
@@ -176,6 +188,18 @@ inline void Attribute::deserializeFromJSON(const QJsonObject& obj)
         for(auto o : obj.value("options").toArray())
             _options.append(o.toString());
     }
+}
+
+inline void Attribute::addConnection(Attribute* a)
+{
+    _connections.append(a);
+    Q_EMIT connectionsChanged();
+}
+
+inline void Attribute::removeConnection(Attribute* a)
+{
+    _connections.removeOne(a);
+    Q_EMIT connectionsChanged();
 }
 
 } // namespace

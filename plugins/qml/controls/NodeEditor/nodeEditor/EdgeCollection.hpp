@@ -25,7 +25,7 @@ public:
     Q_ENUMS(EdgeRoles)
 
 public:
-    EdgeCollection(QObject* parent = 0);
+    EdgeCollection(NodeCollection&, QObject* parent = 0);
     EdgeCollection(const EdgeCollection& obj) = delete;
     EdgeCollection& operator=(EdgeCollection const&) = delete;
 
@@ -50,10 +50,12 @@ protected:
 
 private:
     QList<Edge*> _edges;
+    NodeCollection& _nodes;
 };
 
-inline EdgeCollection::EdgeCollection(QObject* parent)
+inline EdgeCollection::EdgeCollection(NodeCollection& nodes, QObject* parent)
     : QAbstractListModel(parent)
+    , _nodes(nodes)
 {
 }
 
@@ -112,6 +114,9 @@ inline bool EdgeCollection::add(Edge* edge)
     QQmlEngine::setObjectOwnership(edge, QQmlEngine::CppOwnership);
     edge->setParent(parent());
 
+    edge->sourceAttribute()->addConnection(edge->targetAttribute());
+    edge->targetAttribute()->addConnection(edge->sourceAttribute());
+
     // insert the new element
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     _edges << edge;
@@ -136,6 +141,10 @@ inline bool EdgeCollection::remove(Edge* edge)
     int id = rowIndex(edge);
     if(id < 0)
         return false;
+
+    edge->sourceAttribute()->removeConnection(edge->targetAttribute());
+    edge->targetAttribute()->removeConnection(edge->sourceAttribute());
+
     beginRemoveRows(QModelIndex(), id, id);
     delete _edges.takeAt(id);
     endRemoveRows();
@@ -148,20 +157,13 @@ inline bool EdgeCollection::remove(const QJsonObject& o)
     int id = rowIndex(o);
     if(id < 0)
         return false;
-    beginRemoveRows(QModelIndex(), id, id);
-    delete _edges.takeAt(id);
-    endRemoveRows();
-    Q_EMIT countChanged(rowCount());
-    return true;
+    return remove(_edges.at(id));
 }
 
 inline void EdgeCollection::clear()
 {
-    beginRemoveRows(QModelIndex(), 0, rowCount() - 1);
     while(!_edges.isEmpty())
-        delete _edges.takeFirst();
-    endRemoveRows();
-    Q_EMIT countChanged(rowCount());
+        remove(_edges.first());
 }
 
 inline int EdgeCollection::rowIndex(Edge* edge) const
@@ -195,7 +197,7 @@ inline void EdgeCollection::deserializeFromJSON(const QJsonArray& array)
 {
     for(auto c : array)
     {
-        Edge* edge = new Edge;
+        Edge* edge = new Edge(_nodes);
         edge->deserializeFromJSON(c.toObject());
         add(edge);
     }

@@ -34,27 +34,28 @@ Item {
     Component {
         id: imageListDelegate
         Gallery {
-            model: modelData.value
+            model: attribute.isConnected ? connectedAttribute.value : attribute.value
+            enabled: !attribute.isConnected
             closeable: false
             onItemAdded: {
-                var values = modelData.value ? modelData.value : []
+                var values = attribute.value ? attribute.value : []
                 if(!Array.isArray(values))
-                    values = [modelData.value]
+                    values = [attribute.value]
                 values.push(item.replace("file://", ""));
-                var o = modelData.serializeToJSON()
+                var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = values; // change value
                 currentScene.graph.setAttribute(o)
             }
             onItemRemoved: {
-                var values = modelData.value ? modelData.value : []
+                var values = attribute.value ? attribute.value : []
                 if(!Array.isArray(values))
-                    values = [modelData.value]
+                    values = [attribute.value]
                 var index = values.indexOf(item.replace("file://",""));
                 if(index < 0)
                     return;
                 values.splice(index, 1);
-                var o = modelData.serializeToJSON()
+                var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = values; // change value
                 currentScene.graph.setAttribute(o)
@@ -64,14 +65,15 @@ Item {
     Component {
         id: sliderDelegate
         Slider {
+            enabled: !attribute.isConnected
             Component.onCompleted: {
-                from = modelData.min;
-                to = modelData.max;
-                stepSize = modelData.step;
-                value = modelData.value;
+                from = attribute.min;
+                to = attribute.max;
+                stepSize = attribute.step;
+                value = attribute.isConnected ? connectedAttribute.value : attribute.value
             }
             onValueChanged: {
-                var o = modelData.serializeToJSON()
+                var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = value; // change value
                 currentScene.graph.setAttribute(o)
@@ -81,9 +83,10 @@ Item {
     Component {
         id: textfieldDelegate
         TextField {
-            text: (modelData && modelData.value) ? modelData.value : ""
+            enabled: !attribute.isConnected
+            text: attribute.isConnected ? connectedAttribute.value : attribute.value
             onEditingFinished: {
-                var o = modelData.serializeToJSON()
+                var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = text; // change value
                 currentScene.graph.setAttribute(o)
@@ -93,10 +96,11 @@ Item {
     Component {
         id: comboboxDelegate
         ComboBox {
-            Component.onCompleted: currentIndex = find(modelData.value)
-            model: modelData.options
+            enabled: !attribute.isConnected
+            model: attribute.options
+            Component.onCompleted: currentIndex = find(attribute.isConnected ? connectedAttribute.value : attribute.value)
             onActivated: {
-                var o = modelData.serializeToJSON()
+                var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = textAt(index); // change value
                 currentScene.graph.setAttribute(o)
@@ -106,9 +110,10 @@ Item {
     Component {
         id: checkboxDelegate
         CheckBox {
-            Component.onCompleted: checked = modelData.value
+            enabled: !attribute.isConnected
+            Component.onCompleted: checked = attribute.isConnected ? connectedAttribute.value : attribute.value
             onClicked: {
-                var o = modelData.serializeToJSON()
+                var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = checked; // change value
                 currentScene.graph.setAttribute(o)
@@ -132,12 +137,14 @@ Item {
             }
             Loader {
                 Layout.fillWidth: true
-                property variant modelData: null
                 property string nodeName: ""
+                property variant attribute: null
+                property variant connectedAttribute: null
                 sourceComponent: {
-                    modelData = model.modelData;
                     nodeName = root.model.name;
-                    switch(model.type) {
+                    attribute = model.modelData;
+                    connectedAttribute = attribute.isConnected ? attribute.connections[0] : null;
+                    switch(attribute.type) {
                         case Attribute.UNKNOWN: return emptyDelegate
                         case Attribute.TEXTFIELD: return textfieldDelegate
                         case Attribute.SLIDER: return sliderDelegate

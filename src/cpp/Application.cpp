@@ -45,12 +45,13 @@ Application::Application(QQmlApplicationEngine& engine)
     QQuickStyle::setStyle(qApp->applicationDirPath() + "/plugins/qml/DarkStyle");
 
     // register types
+    qRegisterMetaType<QObjectList>("QObjectList");
     qmlRegisterType<Scene>("Meshroom.Scene", 1, 0, "Scene");
     qmlRegisterType<Graph>("Meshroom.Graph", 1, 0, "Graph");
     qmlRegisterUncreatableType<Worker>("Meshroom.Worker", 1, 0, "Worker",
                                        "type registration failed (Worker)");
 
-    // set opengl profile
+    // set surface format
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
     fmt.setSamples(8);
     QSurfaceFormat::setDefaultFormat(fmt);

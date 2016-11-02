@@ -25,8 +25,8 @@ Graph::Graph(QObject* parent)
     // callbacks
     _graph.onCleared = [&]()
     {
-        _nodes->clear();
         _edges->clear();
+        _nodes->clear();
         Q_EMIT dataChanged();
     };
     _graph.onNodeAdded = [&](Ptr<Node> n)
@@ -59,7 +59,7 @@ Graph::Graph(QObject* parent)
         o.insert("target", QString::fromStdString(target->owner.name));
         o.insert("plug", QString::fromStdString(target->name));
         // create a new Edge using this descriptor
-        auto edge = new nodeeditor::Edge;
+        auto edge = new nodeeditor::Edge(*_nodes);
         edge->deserializeFromJSON(o);
         _edges->add(edge);
         Q_EMIT dataChanged();

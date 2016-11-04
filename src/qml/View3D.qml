@@ -9,17 +9,22 @@ import Qt3D.Extras 2.0
 import Qt3D.Logic 2.0
 import AlembicEntity 1.0
 import MayaCameraController 1.0
+import "controls"
 
 Item {
 
     Connections {
         target: _window
-        onLoadAlembic: abcEntity.url = Qt.resolvedUrl(file)
-    }
-
-    DropArea {
-        anchors.fill: parent
-        onDropped: abcEntity.url = drop.urls[0]
+        onDisplayIn3DView: {
+            sourceName.text = attribute.name
+            if(!attribute.value) {
+                sourceListView.model = 0;
+                abcEntity.url = "";
+                return;
+            }
+            sourceListView.model = Array.isArray(attribute.value) ? attribute.value : [attribute.value]
+            abcEntity.url = Qt.resolvedUrl(sourceListView.model[0])
+        }
     }
 
     Scene3D {
@@ -28,6 +33,16 @@ Item {
         focus: true
         cameraAspectRatioMode: Scene3D.AutomaticAspectRatio // vs. UserAspectRatio
         aspects: ["logic", "input"]
+
+
+        Keys.onPressed: {
+            if (event.key == Qt.Key_F) {
+                resetCameraCenter();
+                resetCameraPosition();
+                event.accepted = true;
+            }
+        }
+
         Entity {
             id: rootEntity
             Camera {
@@ -44,7 +59,10 @@ Item {
             MayaCameraController {
                 id: cameraController
                 camera: mainCamera
-                onLeftClicked: closeSettingsPanel()
+                onLeftClicked: {
+                    panel.close()
+                    scene3D.focus = true;
+                }
                 onRightClicked: {
                     contextMenu.x = mouse.x;
                     contextMenu.y = mouse.y;
@@ -194,8 +212,6 @@ Item {
                     Transform { id: gizmoTransform }
                 ]
     		}
-
-
         }
     }
 
@@ -208,82 +224,70 @@ Item {
         mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
         mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
     }
-    function openSettingsPanel() {
-        settings.Layout.minimumWidth = parent.width*0.4
-    }
-    function closeSettingsPanel() {
-        settings.Layout.minimumWidth = 0
-    }
 
     Menu {
         id: contextMenu
         MenuItem {
-            text: "Reset camera center"
-            onTriggered: resetCameraCenter()
-        }
-        MenuItem {
-            text: "Reset camera position"
-            onTriggered: resetCameraPosition()
-        }
-        Rectangle { // spacer
-            width: parent.width; height: 1
-            color: Qt.rgba(1, 1, 1, 0.1)
-        }
-        MenuItem {
-            text: "Properties..."
-            onTriggered: openSettingsPanel()
+            text: "Reset camera position [F]"
+            onTriggered: {
+                resetCameraCenter();
+                resetCameraPosition();
+            }
         }
     }
 
-    RowLayout {
+    SidePanel {
+        id: panel
         anchors.fill: parent
-        spacing: 0
-        Item { // overlay panel
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-        }
-        Rectangle { // settings panel
-            id: settings
-            color: Qt.rgba(0, 0, 0, 0.6)
-            clip: true
-            Layout.fillHeight: true
-            Behavior on Layout.minimumWidth { NumberAnimation {} }
-            Flickable {
+        icons: [ "qrc:///images/gear.svg", "qrc:///images/output.svg"]
+        Flickable {
+            anchors.fill: parent
+            ScrollBar.vertical: ScrollBar {}
+            contentWidth: parent.width
+            contentHeight: 300
+            ColumnLayout {
                 anchors.fill: parent
-                ScrollBar.vertical: ScrollBar {}
-                contentWidth: parent.width
-                contentHeight: 300
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 10
+                anchors.margins: 10
+                Label {
+                    Layout.fillWidth: true
+                    text: "SETTINGS"
+                    state: "small"
+                }
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columns: 2
                     Label {
-                        text: "show"
-                        state: "small"
-                    }
-                    GridLayout {
-                        CheckBox {
-                            text: "grid"
-                            checked: true
-                            onClicked: gridEntity.parent = checked ? rootEntity : null
-                            focusPolicy: Qt.NoFocus
-                        }
-                        CheckBox {
-                            text: "axis"
-                            checked: true
-                            onClicked: gizmoEntity.parent = checked ? rootEntity : null
-                            focusPolicy: Qt.NoFocus
-                        }
-                    }
-                    Rectangle { // spacer
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                        color: Qt.rgba(0, 0, 0, 1)
+                        text: "show grid"
+                        state: "xsmall"
+                    }
+                    CheckBox {
+                        Layout.fillWidth: true
+                        text: "grid"
+                        checked: true
+                        onClicked: gridEntity.parent = checked ? rootEntity : null
+                        focusPolicy: Qt.NoFocus
                     }
                     Label {
+                        Layout.fillWidth: true
+                        text: "show axis"
+                        state: "xsmall"
+                    }
+                    CheckBox {
+                        Layout.fillWidth: true
+                        text: "axis"
+                        checked: true
+                        onClicked: gizmoEntity.parent = checked ? rootEntity : null
+                        focusPolicy: Qt.NoFocus
+                    }
+                    Label {
+                        Layout.fillWidth: true
                         text: "point size"
-                        state: "small"
+                        state: "xsmall"
                     }
                     Slider {
+                        Layout.fillWidth: true
                         from: 0.1
                         to: 20
                         stepSize: 0.01
@@ -291,16 +295,13 @@ Item {
                         onPositionChanged: abcEntity.particleSize = (from + (to-from) * visualPosition)*0.01
                         focusPolicy: Qt.NoFocus
                     }
-                    Rectangle { // spacer
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 1
-                        color: Qt.rgba(0, 0, 0, 1)
-                    }
                     Label {
+                        Layout.fillWidth: true
                         text: "locator scale"
-                        state: "small"
+                        state: "xsmall"
                     }
                     Slider {
+                        Layout.fillWidth: true
                         from: 0.01
                         to: 10
                         stepSize: 0.01
@@ -313,6 +314,36 @@ Item {
                         focusPolicy: Qt.NoFocus
                     }
                     Item { Layout.fillHeight: true } // spacer
+                }
+            }
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            RowLayout {
+                Label {
+                    Layout.fillWidth: true
+                    text: "INPUTS"
+                    state: "small"
+                }
+                Label {
+                    id: sourceName
+                    horizontalAlignment: Text.AlignRight
+                    enabled: false
+                    state: "small"
+                    text: ""
+                }
+            }
+            ListView {
+                id: sourceListView
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 1
+                delegate: Button {
+                    width: ListView.view.width
+                    height: 30
+                    text: modelData
+                    onClicked: abcEntity.url = Qt.resolvedUrl(modelData)
                 }
             }
         }

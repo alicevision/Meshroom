@@ -18,7 +18,8 @@
             "outputs": [
                 {
                     "name": "abc",
-                    "key": "abc"
+                    "key": "abc",
+                    "type": "OBJECT3D"
                 }
             ]
         },
@@ -39,7 +40,8 @@
             "outputs": [
                 {
                     "name": "sfmdata",
-                    "key": "sfmdata"
+                    "key": "sfmdata",
+                    "type": "UNKNOWN"
                 }
             ]
         },
@@ -69,7 +71,8 @@
             "outputs": [
                 {
                     "name": "features",
-                    "key": "features"
+                    "key": "features",
+                    "type": "UNKNOWN"
                 }
             ]
         },
@@ -83,11 +86,13 @@
                 },
                 {
                     "name": "features",
-                    "key": "features"
+                    "key": "features",
+                    "type": "UNKNOWN"
                 },
                 {
                     "name": "pairlist",
-                    "key": "pairlist"
+                    "key": "pairlist",
+                    "type": "TEXTFIELD"
                 },
                 {
                     "name": "method",
@@ -100,7 +105,8 @@
             "outputs": [
                 {
                     "name": "matches",
-                    "key": "matches"
+                    "key": "matches",
+                    "type": "UNKNOWN"
                 }
             ]
         },
@@ -116,7 +122,8 @@
             "outputs": [
                 {
                     "name": "images",
-                    "key": "images"
+                    "key": "images",
+                    "type": "IMAGELIST"
                 }
             ]
         },
@@ -146,7 +153,8 @@
             "outputs": [
                 {
                     "name": "poses",
-                    "key": "poses"
+                    "key": "poses",
+                    "type": "UNKNOWN"
                 }
             ]
         },
@@ -155,17 +163,20 @@
             "inputs": [
                 {
                     "name": "sfmdata",
-                    "key": "sfmdata"
+                    "key": "sfmdata",
+                    "type": "TEXTFIELD"
                 },
                 {
                     "name": "matches",
-                    "key": "matches"
+                    "key": "matches",
+                    "type": "UNKNOWN"
                 }
             ],
             "outputs": [
                 {
                     "name": "sfmdata2",
-                    "key": "sfmdata2"
+                    "key": "sfmdata2",
+                    "type": "TEXTFIELD"
                 }
             ]
         },
@@ -174,7 +185,8 @@
             "inputs": [
                 {
                     "name": "sfmdata",
-                    "key": "sfmdata"
+                    "key": "sfmdata",
+                    "type": "TEXTFIELD"
                 },
                 {
                     "name": "treeFile",
@@ -190,7 +202,8 @@
             "outputs": [
                 {
                     "name": "pairlist",
-                    "key": "pairlist"
+                    "key": "pairlist",
+                    "type": "UNKNOWN"
                 }
             ]
         }

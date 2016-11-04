@@ -13,8 +13,17 @@ Item {
 
     // context menus
     property Component nodeContextMenu: Menu {
+        signal display()
         signal compute(var mode)
         signal remove()
+        MenuItem {
+            text: "Show"
+            onTriggered: display()
+        }
+        Rectangle { // spacer
+            width: parent.width; height: 1
+            color: Qt.rgba(1, 1, 1, 0.1)
+        }
         MenuItem {
             text: "Compute locally..."
             onTriggered: compute(Worker.COMPUTE_LOCAL)
@@ -24,7 +33,7 @@ Item {
             onTriggered: compute(Worker.COMPUTE_TRACTOR)
         }
         MenuItem {
-            text: "Refresh status..."
+            text: "Refresh node status..."
             onTriggered: compute(Worker.PREPARE)
         }
         Rectangle { // spacer
@@ -72,6 +81,9 @@ Item {
         onNodeLeftClicked: root.selectionChanged(node)
         onNodeRightClicked: {
             var menu = nodeContextMenu.createObject(item);
+            menu.display.connect(function display_CB() {
+                displayAttribute(node.outputs.data(node.outputs.index(0,0), AttributeCollection.ModelDataRole))
+            });
             menu.compute.connect(function compute_CB(mode) {
                 currentScene.graph.startWorkerThread(mode, node.name);
             });
@@ -95,6 +107,9 @@ Item {
     }
 
     Label {
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        enabled: false
         text: currentScene.graph.cacheUrl.toString().replace("file://", "")
         state: "xsmall"
     }

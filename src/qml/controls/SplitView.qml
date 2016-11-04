@@ -19,6 +19,7 @@ Item {
         Loader {
             anchors.fill: parent
             sourceComponent: first
+            focus: true
             clip: true
         }
     }

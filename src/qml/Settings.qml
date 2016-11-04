@@ -12,20 +12,6 @@ Item {
     property variant model: null
     clip: true
 
-    // signal / slots
-    onModelChanged: {
-        if(!root.model)
-            return;
-        loadAlembic("");
-        var outputs = root.model.outputs;
-        if(outputs.count > 0) {
-            for(var i=0; i < outputs.count; ++i) {
-                if(outputs.data(outputs.index(i,0), AttributeCollection.TypeRole) == Attribute.OBJECT3D)
-                    loadAlembic(currentScene.graph.getNodeAttribute(root.model.name, outputs.get(i).name));
-            }
-        }
-    }
-
     // attribute delegates
     Component {
         id: emptyDelegate
@@ -133,6 +119,7 @@ Item {
                 Layout.fillWidth: true
                 text: model.name
                 enabled: false
+                horizontalAlignment: Text.AlignRight
                 state: "small"
             }
             Loader {

@@ -11,6 +11,14 @@ Item {
     // signal / slots
     signal selectionChanged(var node)
 
+    // slots
+    Keys.onPressed: {
+        if(event.key == Qt.Key_F) {
+            editor.fit();
+            event.accepted = true;
+        }
+    }
+
     // context menus
     property Component nodeContextMenu: Menu {
         signal display()

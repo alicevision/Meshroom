@@ -74,6 +74,10 @@ Rectangle {
             selectedNodeID = index;
             nodeLeftClicked(root, model.modelData, Qt.point(mouse.x, mouse.y))
         }
+        onPositionChanged: {
+            if(drag.active)
+                nodeMoved(root, model.modelData, Qt.point(mouse.x, mouse.y))
+        }
         ColumnLayout {
             anchors.fill: parent
             anchors.topMargin: 4

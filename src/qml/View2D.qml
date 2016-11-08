@@ -3,13 +3,17 @@ import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import "controls"
 
-Rectangle {
+Frame {
 
     id: root
 
-    // properties
-    color: Qt.rgba(0, 0, 0, 0.2)
-    clip: true
+    // slots
+    Keys.onPressed: {
+        if(event.key == Qt.Key_F) {
+            root.fit();
+            event.accepted = true;
+        }
+    }
 
     // connections
     Connections {
@@ -35,7 +39,7 @@ Rectangle {
         image.y = Math.max((root.height-image.height*image.scale)*0.5, 0)
     }
 
-    // menu
+    // context menu
     property Component contextMenu: Menu {
         MenuItem {
             text: "Fit"
@@ -47,7 +51,13 @@ Rectangle {
         }
     }
 
-    Rectangle { // placeholder
+    // background
+    background: Rectangle {
+        color: Qt.rgba(0, 0, 0, 0.2)
+    }
+
+    // placeholder, visible when image isn't ready
+    Rectangle {
         anchors.centerIn: parent
         width: Math.min(parent.width, parent.height*1.5) * 0.95 // 5% margin
         height: Math.min(parent.height, parent.width*1.5) * 0.95 // 5% margin
@@ -56,6 +66,7 @@ Rectangle {
         visible: image.status != Image.Ready
     }
 
+    // image
     Image {
         id: image
         transformOrigin: Item.TopLeft
@@ -65,12 +76,20 @@ Rectangle {
         onWidthChanged: if(status==Image.Ready) fit()
     }
 
+    // busy indicator
+    BusyIndicator {
+        anchors.centerIn: parent
+        running: image.status === Image.Loading
+    }
+
+    // mouse area
     MouseArea {
         anchors.fill: parent
         drag.target: image
         property double factor: 1.5
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: {
+            root.forceActiveFocus();
             panel.close();
             if(mouse.button & Qt.RightButton) {
                 var menu = contextMenu.createObject(root);
@@ -90,11 +109,7 @@ Rectangle {
         }
     }
 
-    BusyIndicator {
-        anchors.centerIn: parent
-        running: image.status === Image.Loading
-    }
-
+    // overlay panel
     SidePanel {
         id: panel
         anchors.fill: parent
@@ -107,10 +122,9 @@ Rectangle {
             contentHeight: 300
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 10
                 Label {
                     Layout.fillWidth: true
-                    text: "SETTINGS"
+                    text: "VIEW SETTINGS"
                     state: "small"
                 }
                 GridLayout {
@@ -139,7 +153,7 @@ Rectangle {
             RowLayout {
                 Label {
                     Layout.fillWidth: true
-                    text: "INPUTS"
+                    text: "VIEW INPUTS"
                     state: "small"
                 }
                 Label {
@@ -165,6 +179,7 @@ Rectangle {
         }
     }
 
+    // zoom label
     Label {
         anchors.bottom: parent.bottom
         anchors.left: parent.left

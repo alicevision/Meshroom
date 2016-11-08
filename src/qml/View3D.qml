@@ -11,8 +11,22 @@ import AlembicEntity 1.0
 import MayaCameraController 1.0
 import "controls"
 
-Item {
+Frame {
 
+    id: root
+
+    // functions
+    function resetCameraCenter() {
+        mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
+        mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
+    }
+    function resetCameraPosition() {
+        mainCamera.position = Qt.vector3d(28.0, 21.0, 28.0);
+        mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
+        mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
+    }
+
+    // connections
     Connections {
         target: _window
         onDisplayIn3DView: {
@@ -30,11 +44,10 @@ Item {
     Scene3D {
         id: scene3D
         anchors.fill: parent
-        focus: true
         cameraAspectRatioMode: Scene3D.AutomaticAspectRatio // vs. UserAspectRatio
+        hoverEnabled: false // if true, will trigger positionChanged events in attached MouseHandler
         aspects: ["logic", "input"]
-
-
+        focus: true
         Keys.onPressed: {
             if (event.key == Qt.Key_F) {
                 resetCameraCenter();
@@ -42,7 +55,6 @@ Item {
                 event.accepted = true;
             }
         }
-
         Entity {
             id: rootEntity
             Camera {
@@ -59,14 +71,20 @@ Item {
             MayaCameraController {
                 id: cameraController
                 camera: mainCamera
-                onLeftClicked: {
-                    panel.close()
-                    scene3D.focus = true;
-                }
-                onRightClicked: {
-                    contextMenu.x = mouse.x;
-                    contextMenu.y = mouse.y;
-                    contextMenu.open();
+                onMousePressed: scene3D.forceActiveFocus()
+                onMouseReleased: {
+                    if(moving)
+                        return;
+                    switch(mouse.button) {
+                        case Qt.LeftButton:
+                            panel.close()
+                            break;
+                        case Qt.RightButton:
+                            contextMenu.x = mouse.x;
+                            contextMenu.y = mouse.y;
+                            contextMenu.open();
+                            break;
+                    }
                 }
             }
             components: [
@@ -215,16 +233,7 @@ Item {
         }
     }
 
-    function resetCameraCenter() {
-        mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
-        mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
-    }
-    function resetCameraPosition() {
-        mainCamera.position = Qt.vector3d(28.0, 21.0, 28.0);
-        mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
-        mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
-    }
-
+    // menus
     Menu {
         id: contextMenu
         MenuItem {
@@ -236,6 +245,7 @@ Item {
         }
     }
 
+    // overlay panel
     SidePanel {
         id: panel
         anchors.fill: parent
@@ -250,7 +260,7 @@ Item {
                 anchors.margins: 10
                 Label {
                     Layout.fillWidth: true
-                    text: "SETTINGS"
+                    text: "VIEW SETTINGS"
                     state: "small"
                 }
                 GridLayout {
@@ -323,7 +333,7 @@ Item {
             RowLayout {
                 Label {
                     Layout.fillWidth: true
-                    text: "INPUTS"
+                    text: "VIEW INPUTS"
                     state: "small"
                 }
                 Label {
@@ -348,5 +358,4 @@ Item {
             }
         }
     }
-
 }

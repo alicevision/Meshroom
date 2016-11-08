@@ -4,11 +4,11 @@ import QtQuick.Layouts 1.3
 import NodeEditor 1.0
 import Meshroom.Worker 1.0
 
-Item {
+Frame {
 
     id: root
 
-    // signal / slots
+    // signals
     signal selectionChanged(var node)
 
     // slots
@@ -62,8 +62,7 @@ Item {
     }
 
     // background
-    Rectangle {
-        anchors.fill: parent
+    background: Rectangle {
         color: Qt.rgba(0.3, 0.3, 0.3, 0.1)
         Image {
             anchors.fill: parent
@@ -73,21 +72,28 @@ Item {
         }
     }
 
-    // mouse area
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        onClicked: selectionChanged(null)
-    }
-
-    // node editor
+    // main content
     NodeEditor {
         id: editor
         anchors.fill: parent
+        focus: true
         graph: currentScene.graph
-        onWorkspaceClicked: root.selectionChanged(null)
-        onNodeLeftClicked: root.selectionChanged(node)
+        onWorkspaceMoved: {
+            root.forceActiveFocus()
+        }
+        onWorkspaceClicked: {
+            root.forceActiveFocus()
+            root.selectionChanged(null)
+        }
+        onNodeMoved: {
+            root.forceActiveFocus()
+        }
+        onNodeLeftClicked: {
+            root.forceActiveFocus()
+            root.selectionChanged(node)
+        }
         onNodeRightClicked: {
+            root.forceActiveFocus()
             var menu = nodeContextMenu.createObject(item);
             menu.display.connect(function display_CB() {
                 displayAttribute(node.outputs.data(node.outputs.index(0,0), AttributeCollection.ModelDataRole))
@@ -102,7 +108,11 @@ Item {
             menu.y = pos.y;
             menu.open()
         }
+        onEdgeLeftClicked: {
+            root.forceActiveFocus()
+        }
         onEdgeRightClicked: {
+            root.forceActiveFocus()
             var menu = edgeContextMenu.createObject(item);
             var p = item.mapToItem(root, item.x, item.y);
             menu.remove.connect(function remove_CB() {
@@ -113,7 +123,6 @@ Item {
             menu.open()
         }
     }
-
     Label {
         anchors.bottom: parent.bottom
         anchors.right: parent.right

@@ -91,8 +91,7 @@ ApplicationWindow {
                     Label {
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
-                        text: "no suitable view available '-("
-                        state: "small"
+                        text: "no suitable view available"
                         enabled: false
                     }
                 }

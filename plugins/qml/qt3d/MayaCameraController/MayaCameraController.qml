@@ -15,26 +15,16 @@ Entity {
     property real panSpeed: 500.0
     property bool moving: false
 
-    signal leftClicked(var mouse);
-    signal rightClicked(var mouse);
+    signal mousePressed(var mouse);
+    signal mouseReleased(var mouse);
 
     KeyboardDevice { id: keyboardSourceDevice }
     MouseDevice { id: mouseSourceDevice; sensitivity: 0.1 }
 
     MouseHandler {
         sourceDevice: mouseSourceDevice
-        onReleased: {
-            if(mouse.modifiers & Qt.AltModifier)
-                return;
-            switch(mouse.button) {
-                case Qt.LeftButton:
-                    leftClicked(mouse)
-                    break;
-                case Qt.RightButton:
-                    rightClicked(mouse)
-                    break;
-            }
-        }
+        onPressAndHold: mousePressed(mouse) // onPressed not called?
+        onReleased: mouseReleased(mouse)
     }
 
     LogicalDevice {

@@ -33,6 +33,12 @@ public:
     Q_SLOT QUrl cacheUrl() const;
     Q_SLOT void setCacheUrl(const QUrl&);
 
+    bool _addNode(const QJsonObject& desc);
+    bool _addNode(const QJsonObject& desc, QJsonObject& updatedDesc);
+    bool _addEdge(const QJsonObject&);
+    bool _removeNode(const QJsonObject&);
+    bool _removeEdge(const QJsonObject&);
+
 public:
     // worker
     Q_SLOT void startWorkerThread(meshroom::Worker::Mode, const QString&);

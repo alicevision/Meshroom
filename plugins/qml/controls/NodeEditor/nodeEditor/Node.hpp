@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QJsonObject>
+#include <QPoint>
 #include "AttributeCollection.hpp"
 
 namespace nodeeditor
@@ -15,8 +16,7 @@ class Node : public QObject
     Q_PROPERTY(AttributeCollection* inputs READ inputs CONSTANT)
     Q_PROPERTY(AttributeCollection* outputs READ outputs CONSTANT)
     Q_PROPERTY(Status status READ status WRITE setStatus NOTIFY statusChanged)
-    Q_PROPERTY(int x READ x WRITE setX NOTIFY xChanged)
-    Q_PROPERTY(int y READ y WRITE setY NOTIFY yChanged)
+    Q_PROPERTY(QPoint position READ position WRITE setPosition NOTIFY positionChanged)
 
 public:
     enum Status
@@ -40,11 +40,17 @@ public:
     AttributeCollection* inputs() const { return _inputs; }
     AttributeCollection* outputs() const { return _outputs; }
     Status status() const { return _status; }
-    int x() const { return _x; }
-    int y() const { return _y; }
     void setStatus(Status);
-    void setX(int);
-    void setY(int);
+    QPoint position() const { return _position; }
+
+    void setPosition(const QPoint& value)
+    {
+        if(_position == value)
+            return;
+        QPoint oldPos = _position;
+        _position = value;
+        Q_EMIT positionChanged(oldPos);
+    }
 
 public:
     Q_INVOKABLE QJsonObject serializeToJSON() const;
@@ -52,8 +58,8 @@ public:
 
 public:
     Q_SIGNAL void statusChanged();
-    Q_SIGNAL void xChanged();
-    Q_SIGNAL void yChanged();
+    Q_SIGNAL void positionChanged(QPoint oldPos);
+    Q_SIGNAL void requestPositionUpdate(QPoint position);
 
 private:
     QString _name = "unknown";
@@ -63,6 +69,7 @@ private:
     Status _status = READY;
     int _x = 10;
     int _y = 10;
+    QPoint _position;
 };
 
 inline void Node::setStatus(Status status)
@@ -73,29 +80,13 @@ inline void Node::setStatus(Status status)
     Q_EMIT statusChanged();
 }
 
-inline void Node::setX(int x)
-{
-    if(_x == x)
-        return;
-    _x = x;
-    Q_EMIT xChanged();
-}
-
-inline void Node::setY(int y)
-{
-    if(_y == y)
-        return;
-    _y = y;
-    Q_EMIT yChanged();
-}
-
 inline QJsonObject Node::serializeToJSON() const
 {
     QJsonObject obj;
     obj.insert("name", _name);
     obj.insert("type", _type);
-    obj.insert("x", _x);
-    obj.insert("y", _y);
+    obj.insert("x", _position.x());
+    obj.insert("y", _position.y());
     obj.insert("inputs", _inputs->serializeToJSON());
     obj.insert("outputs", _outputs->serializeToJSON());
     return obj;
@@ -107,10 +98,8 @@ inline void Node::deserializeFromJSON(const QJsonObject& obj)
         _name = obj.value("name").toString();
     if(obj.contains("type"))
         _type = obj.value("type").toString();
-    if(obj.contains("x"))
-        _x = obj.value("x").toInt();
-    if(obj.contains("y"))
-        _y = obj.value("y").toInt();
+    if(obj.contains("x") && obj.contains("y"))
+        _position = QPoint(obj.value("x").toInt(), obj.value("y").toInt());
     for(auto o : obj.value("inputs").toArray())
     {
         Attribute* a = new Attribute;

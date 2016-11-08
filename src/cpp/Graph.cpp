@@ -5,10 +5,136 @@
 #include <nodeEditor/Edge.hpp>
 #include <QJsonObject>
 #include <QDebug>
+#include <QPoint>
 
 using namespace dg;
 namespace meshroom
 {
+
+class AddNodeCmd : public MeshroomCmd
+{
+public:
+    AddNodeCmd(Graph* graph, const QJsonObject& desc)
+        : _graph(graph)
+        , _desc(desc)
+    {
+    }
+
+    bool redoImpl() override
+    {
+        bool success = _graph->_addNode(_desc, _updatedDesc);
+        if(success)
+        {
+            setText(QString("Create %1").arg(_updatedDesc.value("name").toString()));
+        }
+        return success;
+    }
+
+    bool undoImpl() override { return _graph->_removeNode(_updatedDesc); }
+
+private:
+    Graph* _graph;
+    QJsonObject _desc;
+    QJsonObject _updatedDesc;
+};
+
+class MoveNodeCmd : public MeshroomCmd
+{
+public:
+    MoveNodeCmd(Graph* graph, const QJsonObject& nodeDesc, QPoint& newPos)
+        : _graph(graph)
+        , _nodeDesc(nodeDesc)
+        , _newPos(newPos)
+    {
+        _oldPos = _graph->nodes()
+                      ->data(getNodeModelIndex(), nodeeditor::NodeCollection::PositionRole)
+                      .toPoint();
+    }
+
+    QModelIndex getNodeModelIndex()
+    {
+        return _graph->nodes()->index(
+            _graph->nodes()->rowIndex(_nodeDesc.value("name").toString()));
+    }
+
+    bool redoImpl() override
+    {
+        setText(QString("Move %1").arg(_nodeDesc.value("name").toString()));
+        return _graph->nodes()->setData(getNodeModelIndex(), _newPos,
+                                        nodeeditor::NodeCollection::PositionRole);
+    }
+
+    bool undoImpl() override
+    {
+        return _graph->nodes()->setData(getNodeModelIndex(), _oldPos,
+                                        nodeeditor::NodeCollection::PositionRole);
+    }
+
+private:
+    Graph* _graph;
+    QJsonObject _nodeDesc;
+    QPoint _oldPos;
+    QPoint _newPos;
+};
+
+class RemoveNodeCmd : public MeshroomCmd
+{
+public:
+    RemoveNodeCmd(Graph* graph, const QJsonObject& desc)
+        : _graph(graph)
+        , _desc(desc)
+    {
+        setText(QString("Remove %1").arg(_desc.value("name").toString()));
+    }
+
+    bool redoImpl() override { return _graph->_removeNode(_desc); }
+
+    bool undoImpl() override { return _graph->_addNode(_desc); }
+
+private:
+    Graph* _graph;
+    QJsonObject _desc;
+};
+
+class AddEdgeCmd : public MeshroomCmd
+{
+public:
+    AddEdgeCmd(Graph* graph, const QJsonObject& desc)
+        : _graph(graph)
+        , _desc(desc)
+        , _updatedDesc(desc)
+    {
+        setText(QString("Add Edge"));
+    }
+
+    bool redoImpl() override { return _graph->_addEdge(_desc); }
+
+    bool undoImpl() override { return _graph->_removeEdge(_updatedDesc); }
+
+protected:
+    Graph* _graph;
+    QJsonObject _desc;
+    QJsonObject _updatedDesc;
+};
+
+class RemoveEdgeCmd : public MeshroomCmd
+{
+public:
+    RemoveEdgeCmd(Graph* graph, const QJsonObject& desc)
+        : _graph(graph)
+        , _desc(desc)
+    {
+        setText(QString("Remove Edge"));
+    }
+
+    bool redoImpl() override { return _graph->_removeEdge(_desc); }
+
+    bool undoImpl() override { return _graph->_addEdge(_desc); }
+
+protected:
+    Graph* _graph;
+    QJsonObject _desc;
+};
 
 Graph::Graph(QObject* parent)
     : nodeeditor::AbstractGraph(parent)
@@ -153,7 +279,13 @@ void Graph::clear()
     _graph.clear();
 }
 
-bool Graph::addNode(const QJsonObject& o)
+bool Graph::_addNode(const QJsonObject& o)
+{
+    QJsonObject updated;
+    return _addNode(o, updated);
+}
+
+bool Graph::_addNode(const QJsonObject& o, QJsonObject& updatedDesc)
 {
     Q_CHECK_PTR(_application);
     // create a new core node
@@ -169,9 +301,13 @@ bool Graph::addNode(const QJsonObject& o)
     if(!_graph.addNode(coreNode))
         return false;
     // warn in case the name changed
+    QJsonObject returnNode(o);
     QString realname = QString::fromStdString(coreNode->name);
     if(realname != nodename)
+    {
+        returnNode.insert("name", realname);
         Q_EMIT nodeNameChanged(nodename, realname);
+    }
     // set node attributes
     for(auto a : o.value("inputs").toArray())
     {
@@ -181,12 +317,27 @@ bool Graph::addNode(const QJsonObject& o)
     }
     // set additional (gui related) node attributes
     auto modelIndex = _nodes->index(_nodes->rowIndex(realname));
-    _nodes->setData(modelIndex, o.value("x").toInt(), nodeeditor::NodeCollection::XRole);
-    _nodes->setData(modelIndex, o.value("y").toInt(), nodeeditor::NodeCollection::YRole);
+    QPoint pos(o.value("x").toInt(), o.value("y").toInt());
+    _nodes->setData(modelIndex, pos, nodeeditor::NodeCollection::PositionRole);
+    //_nodes->setData(modelIndex, o.value("y").toInt(), nodeeditor::NodeCollection::YRole);
+    auto* node = _nodes->data(modelIndex, nodeeditor::NodeCollection::ModelDataRole)
+                     .value<nodeeditor::Node*>();
+    updatedDesc = node->serializeToJSON();
+    connect(node, &nodeeditor::Node::requestPositionUpdate, this,
+            [this, updatedDesc](QPoint newPos)
+            {
+                _application->tryAndPushCommand(new MoveNodeCmd(this, updatedDesc, newPos));
+            });
     return true;
 }
 
-bool Graph::addEdge(const QJsonObject& o)
+bool Graph::addNode(const QJsonObject& o)
+{
+    _application->tryAndPushCommand(new AddNodeCmd(this, o));
+    return true;
+}
+
+bool Graph::_addEdge(const QJsonObject& o)
 {
     if(!o.contains("source") || !o.contains("target") || !o.contains("plug"))
         return false;
@@ -212,7 +363,13 @@ bool Graph::addEdge(const QJsonObject& o)
     return _graph.connect(coreSourceNode->output, corePlug);
 }
 
-bool Graph::removeNode(const QJsonObject& o)
+bool Graph::addEdge(const QJsonObject& o)
+{
+    _application->tryAndPushCommand(new AddEdgeCmd(this, o));
+    return true;
+}
+
+bool Graph::_removeNode(const QJsonObject& o)
 {
     if(!o.contains("name"))
         return false;
@@ -225,7 +382,13 @@ bool Graph::removeNode(const QJsonObject& o)
     return _graph.removeNode(coreNode);
 }
 
-bool Graph::removeEdge(const QJsonObject& o)
+bool Graph::removeNode(const QJsonObject& o)
+{
+    _application->tryAndPushCommand(new RemoveNodeCmd(this, o));
+    return true;
+}
+
+bool Graph::_removeEdge(const QJsonObject& o)
 {
     if(!o.contains("source") || !o.contains("target") || !o.contains("plug"))
         return false;
@@ -239,6 +402,12 @@ bool Graph::removeEdge(const QJsonObject& o)
         return false;
     // disconnect the nodes
     return _graph.disconnect(coreSourceNode->output, coreTargetNode->plug(plug.toStdString()));
+}
+
+bool Graph::removeEdge(const QJsonObject& o)
+{
+    _application->tryAndPushCommand(new RemoveEdgeCmd(this, o));
+    return true;
 }
 
 bool Graph::setAttribute(const QJsonObject& o)
@@ -308,6 +477,7 @@ QJsonObject Graph::serializeToJSON() const
 
 void Graph::deserializeFromJSON(const QJsonObject& obj)
 {
+    _application->undoStack()->beginMacro("Import Template");
     // callback used when a node changes name
     QMap<QString, QString> renamedNodes;
     auto onNodeNameChanged = [&](const QString& oldname, const QString& newname)
@@ -340,6 +510,7 @@ void Graph::deserializeFromJSON(const QJsonObject& obj)
         addEdge(edge);
     }
     disconnect(connection);
+    _application->undoStack()->endMacro();
 }
 
 QUrl Graph::cacheUrl() const

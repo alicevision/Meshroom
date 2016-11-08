@@ -33,6 +33,16 @@ QQC14.MenuBar {
     QQC14.Menu {
         title: "Edit"
         QQC14.MenuItem {
+            text: "Undo"
+            onTriggered: _application.undoStack.undo()
+            shortcut: "Ctrl+Z"
+        }
+        QQC14.MenuItem {
+            text: "Redo"
+            onTriggered: _application.undoStack.redo()
+            shortcut: "Ctrl+Shift+Z"
+        }
+        QQC14.MenuItem {
             text: "Add node..."
             onTriggered: addNode()
             shortcut: "Tab"

@@ -20,6 +20,7 @@ Application::Application()
     , _scene(this)
     , _plugins(this)
     , _pluginNodes(this)
+    , _undoStack(new QUndoStack(this))
 {
     // set global/Qt locale
     std::locale::global(std::locale::classic());
@@ -112,6 +113,19 @@ dg::Ptr<dg::Node> Application::createNode(const QString& type, const QString& na
     PluginInterface* instance = node->pluginInstance();
     Q_CHECK_PTR(instance);
     return instance->createNode(type, name);
+}
+
+bool Application::tryAndPushCommand(MeshroomCmd* command)
+{
+    bool success = command->redoImpl();
+    if(success)
+    {
+        command->setEnabled(false);
+        _undoStack->push(command);
+        command->setEnabled(true);
+    }
+    else
+        delete command;
 }
 
 } // namespace

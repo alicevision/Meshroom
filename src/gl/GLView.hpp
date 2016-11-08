@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QObject>
 #include <QQuickPaintedItem>
 #include <QMatrix4x4>
 #include <QFont>
@@ -25,7 +26,7 @@ class GLView : public QQuickPaintedItem
 public:
   
     enum SelectionMode { LINE, RECTANGLE };
-    Q_ENUM(SelectionMode)
+    Q_ENUMS(SelectionMode)
   
     GLView();
     ~GLView();

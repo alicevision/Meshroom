@@ -3,6 +3,7 @@
 #include <QJsonObject>
 #include <QDir>
 #include <QDebug>
+#include <QtGlobal>
 #include <cassert>
 
 #define LOGID (QString("[project:%1]").arg(_name)).toStdString().c_str()

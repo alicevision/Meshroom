@@ -5,30 +5,20 @@ import QtQuick.Controls 2.0
 Item {
 
     id: root
+
+    // properties
+    default property alias content: panel.children // will reparent children
     property real maxWidthRatio: 0.4
     property variant icons: []
     property color backgroundColor: Qt.rgba(0, 0, 0, 0.5)
 
-    function open() {
-        panel.Layout.minimumWidth = parent.width * maxWidthRatio
-    }
-    function close() {
-        panel.Layout.minimumWidth = 0
-    }
-    function toggle() {
-        isOpened() ? close() : open()
-    }
-    function isOpened() {
-        return (panel.Layout.minimumWidth != 0);
-    }
+    // functions
+    function open() { panel.Layout.minimumWidth = parent.width * maxWidthRatio }
+    function close() { panel.Layout.minimumWidth = 0 }
+    function toggle() { isOpened() ? close() : open() }
+    function isOpened() { return (panel.Layout.minimumWidth != 0); }
 
-    Component.onCompleted: {
-        while(root.children.length > 1) {
-            root.children[1].visible = false;
-            root.children[1].parent = panel;
-        }
-    }
-
+    // main content
     RowLayout {
         anchors.fill: parent
         spacing: -1
@@ -42,6 +32,7 @@ Item {
             clip: true
             Layout.fillHeight: true
             Behavior on Layout.minimumWidth { NumberAnimation {}}
+            // root children will be parented here
         }
         Rectangle {
             Layout.preferredWidth: 30

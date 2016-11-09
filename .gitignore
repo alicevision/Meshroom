@@ -19,6 +19,7 @@
 *.exe
 *.out
 *.app
+*.sh
 
 # Build directories
 dist/
@@ -26,3 +27,6 @@ build/
 
 # OS specific files
 .DS_Store
+
+# user specific files
+*.user

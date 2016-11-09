@@ -85,11 +85,15 @@ Frame {
     // mouse area
     MouseArea {
         anchors.fill: parent
-        drag.target: image
         property double factor: 1.5
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: {
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        onPressed: {
             root.forceActiveFocus();
+            if(mouse.button & Qt.MiddleButton)
+                drag.target = image // start drag
+        }
+        onReleased: {
+            drag.target = undefined // stop drag
             panel.close();
             if(mouse.button & Qt.RightButton) {
                 var menu = contextMenu.createObject(root);

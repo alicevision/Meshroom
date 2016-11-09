@@ -42,9 +42,9 @@ Item {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
-        drag.target: draggable
         property double factor: 1.5
         hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
             if(Math.min(draggable.width*draggable.scale*zoomFactor, draggable.height*draggable.scale*zoomFactor) < 10)
@@ -55,7 +55,12 @@ Item {
             draggable.scale *= zoomFactor
             workspaceMoved()
         }
-        onClicked: {
+        onPressed: {
+            if(mouse.button & Qt.MiddleButton)
+                drag.target = draggable // start drag
+        }
+        onReleased: {
+            drag.target = undefined // stop drag
             root.selectedNodeID = -1
             workspaceClicked()
         }

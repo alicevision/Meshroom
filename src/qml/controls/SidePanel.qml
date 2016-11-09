@@ -53,7 +53,9 @@ Item {
                         for(var i=0; i < panel.children.length; ++i)
                             panel.children[i].visible = false;
                         panel.children[index].visible = true;
-                        root.open()
+                        var indexChanged = (ListView.view.currentIndex != index)
+                        ListView.view.currentIndex = index
+                        indexChanged ? root.open() : root.toggle()
                     }
                 }
             }

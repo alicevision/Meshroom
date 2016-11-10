@@ -42,6 +42,7 @@ QQC14.MenuBar {
             onTriggered: _application.undoStack.redo()
             shortcut: "Ctrl+Shift+Z"
         }
+        QQC14.MenuSeparator {}
         QQC14.MenuItem {
             text: "Add node..."
             onTriggered: addNode()

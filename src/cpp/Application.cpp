@@ -1,6 +1,7 @@
 #include "Application.hpp"
 #include "PluginInterface.hpp"
 #include "Worker.hpp"
+#include "Commands.hpp"
 #include <QLocale>
 #include <QtQml>
 #include <QCoreApplication>
@@ -115,17 +116,18 @@ dg::Ptr<dg::Node> Application::createNode(const QString& type, const QString& na
     return instance->createNode(type, name);
 }
 
-bool Application::tryAndPushCommand(MeshroomCmd* command)
+bool Application::tryAndPushCommand(UndoCommand* command)
 {
-    bool success = command->redoImpl();
-    if(success)
+    if(command->redoImpl())
     {
         command->setEnabled(false);
         _undoStack->push(command);
         command->setEnabled(true);
+        return true;
     }
-    else
-        delete command;
+    delete command;
+    command = nullptr;
+    return false;
 }
 
 } // namespace

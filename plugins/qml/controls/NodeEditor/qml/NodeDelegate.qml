@@ -78,15 +78,10 @@ Rectangle {
             selectedNodeID = index;
             nodeLeftClicked(root, model.modelData, Qt.point(mouse.x, mouse.y))
         }
-        drag.onActiveChanged: {
-            if(!drag.active)
-            {
-                // TODO: call graph directly
-                // Request position update in model
-                node.requestPositionUpdate(Qt.point(root.x, root.y))
-            }
+        onReleased: {
+            if(drag.active)
+                nodeItemMoved(root, model.modelData, Qt.point(mouse.x, mouse.y))
         }
-
         ColumnLayout {
             anchors.fill: parent
             anchors.topMargin: 4

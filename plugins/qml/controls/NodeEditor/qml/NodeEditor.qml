@@ -11,10 +11,18 @@ Item {
 
     // signals
     signal workspaceClicked()
+    signal nodeItemMoved(var item, var node, var pos)
     signal nodeLeftClicked(var item, var node, var pos)
     signal nodeRightClicked(var item, var node, var pos)
     signal edgeLeftClicked(var item, var edge, var pos)
     signal edgeRightClicked(var item, var edge, var pos)
+
+    onNodeItemMoved: {
+        var o = node.serializeToJSON()
+        o['x'] = Math.round(item.x);
+        o['y'] = Math.round(item.y);
+        root.graph.moveNode(o)
+    }
 
     MouseArea {
         id: mouseArea

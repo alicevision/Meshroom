@@ -39,18 +39,11 @@ public:
     const QString& type() const { return _type; }
     AttributeCollection* inputs() const { return _inputs; }
     AttributeCollection* outputs() const { return _outputs; }
+    Attribute* attribute(const QString&) const;
     Status status() const { return _status; }
     void setStatus(Status);
     QPoint position() const { return _position; }
-
-    void setPosition(const QPoint& value)
-    {
-        if(_position == value)
-            return;
-        QPoint oldPos = _position;
-        _position = value;
-        Q_EMIT positionChanged(oldPos);
-    }
+    void setPosition(const QPoint& value);
 
 public:
     Q_INVOKABLE QJsonObject serializeToJSON() const;
@@ -67,10 +60,26 @@ private:
     AttributeCollection* _inputs = new AttributeCollection(this);
     AttributeCollection* _outputs = new AttributeCollection(this);
     Status _status = READY;
-    int _x = 10;
-    int _y = 10;
     QPoint _position;
 };
+
+inline Attribute* Node::attribute(const QString& key) const
+{
+    auto getAttrFromCollection = [&](
+        nodeeditor::AttributeCollection* collection) -> nodeeditor::Attribute*
+    {
+        int id = collection->rowIndex(key);
+        if(id < 0)
+            return nullptr;
+        auto modelIndex = collection->index(id);
+        return collection->data(modelIndex, nodeeditor::AttributeCollection::ModelDataRole)
+            .value<nodeeditor::Attribute*>();
+    };
+    Attribute* attribute = getAttrFromCollection(_inputs);
+    if(attribute)
+        return attribute;
+    return getAttrFromCollection(_outputs);
+}
 
 inline void Node::setStatus(Status status)
 {
@@ -78,6 +87,14 @@ inline void Node::setStatus(Status status)
         return;
     _status = status;
     Q_EMIT statusChanged();
+}
+
+inline void Node::setPosition(const QPoint& value)
+{
+    if(_position == value)
+        return;
+    _position = value;
+    Q_EMIT positionChanged(value);
 }
 
 inline QJsonObject Node::serializeToJSON() const

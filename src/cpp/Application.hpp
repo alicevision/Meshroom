@@ -11,29 +11,7 @@
 namespace meshroom
 {
 
-class MeshroomCmd : public QUndoCommand
-{
-public:
-    virtual bool redoImpl() = 0;
-    virtual bool undoImpl() = 0;
-
-    void setEnabled(bool enabled) { _enabled = enabled; }
-
-    void redo() override
-    {
-        if(_enabled)
-            redoImpl();
-    }
-
-    void undo() override
-    {
-        if(_enabled)
-            undoImpl();
-    }
-
-private:
-    bool _enabled = true;
-};
+class UndoCommand; // forward declaration
 
 class Application : public QObject
 {
@@ -53,6 +31,7 @@ public:
     Q_SLOT PluginCollection* loadPlugins();
     Q_SLOT bool loadScene(const QUrl& url);
     dg::Ptr<dg::Node> createNode(const QString& type, const QString& name);
+    bool tryAndPushCommand(UndoCommand* command);
 
 public:
     Scene* scene() { return &_scene; }
@@ -60,7 +39,6 @@ public:
     PluginNodeCollection* pluginNodes() { return &_pluginNodes; }
     TemplateCollection* templates() { return &_templates; }
     QUndoStack* undoStack() { return _undoStack; }
-    bool tryAndPushCommand(MeshroomCmd* command);
 
 private:
     Scene _scene;

@@ -130,6 +130,7 @@ inline bool NodeCollection::add(Node* node)
         Q_EMIT dataChanged(id, id);
     };
     connect(node, &Node::statusChanged, this, callback);
+    connect(node, &Node::positionChanged, this, callback);
 
     Q_EMIT countChanged(rowCount());
     return true;

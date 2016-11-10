@@ -14,7 +14,8 @@ namespace meshroom
 
 Scene::Scene()
     : _graph(new Graph)
-{}
+{
+}
 
 Scene::Scene(QObject* parent, const QUrl& url)
     : QObject(parent)

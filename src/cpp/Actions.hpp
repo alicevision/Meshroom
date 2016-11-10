@@ -33,8 +33,7 @@ struct EditAttributeAction
         if(!value.isValid())
         {
             qCritical() << "unable to edit attribute"
-                        << QString("%0::%1").arg(nodename).arg(plugname)
-                        << "- invalid value";
+                        << QString("%0::%1").arg(nodename).arg(plugname) << "- invalid value";
             return false;
         }
         // retrieve the node
@@ -43,8 +42,7 @@ struct EditAttributeAction
         if(!coreNode)
         {
             qCritical() << "unable to edit attribute"
-                        << QString("%0::%1").arg(nodename).arg(plugname)
-                        << "- node not found";
+                        << QString("%0::%1").arg(nodename).arg(plugname) << "- node not found";
             return false;
         }
         // edit the attribute value

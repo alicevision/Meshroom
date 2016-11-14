@@ -30,12 +30,8 @@ struct EditAttributeAction
         QString nodename = descriptor.value("node").toString(); // added dynamically
         QString plugname = descriptor.value("key").toString();
         QVariant value = descriptor.value("value").toVariant();
-        if(!value.isValid())
-        {
-            qCritical() << "unable to edit attribute"
-                        << QString("%0::%1").arg(nodename).arg(plugname) << "- invalid value";
+        if(!value.isValid()) // may happen, in case of a connected attribute
             return false;
-        }
         // retrieve the node
         auto& coreGraph = graph->coreGraph();
         auto coreNode = coreGraph.node(nodename.toStdString());

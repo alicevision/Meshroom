@@ -187,57 +187,7 @@ bool Graph::moveNode(const QJsonObject& o)
 
 bool Graph::setAttribute(const QJsonObject& o)
 {
-    auto makeCoreAttribute = [&](const QVariant& attribute) -> dg::Ptr<dg::Attribute>
-    {
-        switch(attribute.type())
-        {
-            case QVariant::Bool:
-                return make_ptr<dg::Attribute>(attribute.toBool());
-            case QVariant::Double:
-                return make_ptr<dg::Attribute>((float)attribute.toDouble());
-            case QVariant::Int:
-                return make_ptr<dg::Attribute>(attribute.toInt());
-            case QVariant::String:
-                return make_ptr<dg::Attribute>(attribute.toString().toStdString());
-            default:
-                break;
-        }
-        qCritical() << "invalid attribute value type" << attribute.typeName();
-        return nullptr;
-    };
-    // read attribute description
-    QString nodename = o.value("node").toString(); // added dynamically
-    QString plugname = o.value("key").toString();
-    QVariant value = o.value("value").toVariant();
-    if(!value.isValid())
-        return false;
-    // retrieve the node
-    auto coreNode = _graph.node(nodename.toStdString());
-    if(!coreNode)
-    {
-        qCritical() << "unable to find node" << nodename;
-        return false;
-    }
-    // in case of an attribute list
-    if(value.type() == QVariant::List)
-    {
-        dg::AttributeList attributelist;
-        for(auto v : value.toList())
-            attributelist.emplace_back(makeCoreAttribute(v));
-        if(!coreNode->setAttributes(plugname.toStdString(), attributelist))
-        {
-            qCritical() << "unable to set attribute"
-                        << QString("%0::%1").arg(nodename).arg(plugname);
-            return false;
-        }
-        return true;
-    }
-    // in case of a single attribute
-    if(!coreNode->setAttribute(plugname.toStdString(), makeCoreAttribute(value)))
-    {
-        qCritical() << "unable to set attribute" << QString("%0::%1").arg(nodename).arg(plugname);
-        return false;
-    }
+    _application->tryAndPushCommand(new EditAttributeCmd(this, o));
     return true;
 }
 

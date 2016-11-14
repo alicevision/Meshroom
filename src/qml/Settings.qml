@@ -38,23 +38,31 @@ Item {
             enabled: !attribute.isConnected
             closeable: false
             onItemAdded: {
+                if(attribute.isConnected)
+                    return;
                 var values = attribute.value ? attribute.value : []
                 if(!Array.isArray(values))
                     values = [attribute.value]
-                values.push(item.replace("file://", ""));
+                for(var i=0; i<urls.length; ++i)
+                    values.push(urls[i].replace("file://", ""));
                 var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = values; // change value
                 currentScene.graph.setAttribute(o)
+
             }
             onItemRemoved: {
+                if(attribute.isConnected)
+                    return;
                 var values = attribute.value ? attribute.value : []
                 if(!Array.isArray(values))
                     values = [attribute.value]
-                var index = values.indexOf(item.replace("file://",""));
-                if(index < 0)
-                    return;
-                values.splice(index, 1);
+                for(var i=0; i<urls.length; ++i) {
+                    var index = values.indexOf(urls[i].replace("file://",""));
+                    if(index < 0)
+                        return;
+                    values.splice(index, 1);
+                }
                 var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = values; // change value
@@ -65,18 +73,27 @@ Item {
     Component {
         id: sliderDelegate
         Slider {
+            id: slider
             enabled: !attribute.isConnected
-            Component.onCompleted: {
-                from = attribute.min;
-                to = attribute.max;
-                stepSize = attribute.step;
-                value = attribute.isConnected ? connectedAttribute.value : attribute.value
-            }
-            onValueChanged: {
+            from: attribute.min
+            to: attribute.max
+            stepSize: attribute.step
+            value: attribute.isConnected ? connectedAttribute.value : attribute.value
+            onPressedChanged: {
+                if(pressed || value == attribute.value || attribute.isConnected)
+                    return
                 var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = value; // change value
                 currentScene.graph.setAttribute(o)
+            }
+            ToolTip {
+                parent: slider.handle
+                visible: slider.pressed
+                text: {
+                    var value = (slider.from + (slider.to-slider.from) * slider.position);
+                    return value.toFixed(2)
+                }
             }
         }
     }
@@ -84,8 +101,15 @@ Item {
         id: textfieldDelegate
         TextField {
             enabled: !attribute.isConnected
-            text: attribute.isConnected ? connectedAttribute.value : attribute.value
+            text: {
+                var v = attribute.isConnected ? connectedAttribute.value : attribute.value
+                return Array.isArray(v) ? "[Array]" : v;
+            }
+            selectByMouse: true
             onEditingFinished: {
+                focus = false
+                if(attribute.isConnected || text == attribute.value)
+                    return
                 var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = text; // change value
@@ -98,8 +122,14 @@ Item {
         ComboBox {
             enabled: !attribute.isConnected
             model: attribute.options
-            Component.onCompleted: currentIndex = find(attribute.isConnected ? connectedAttribute.value : attribute.value)
+            Component.onCompleted: {
+                currentIndex = Qt.binding(function() {
+                    return find(attribute.isConnected ? connectedAttribute.value : attribute.value)
+                })
+            }
             onActivated: {
+                if(attribute.isConnected)
+                    return;
                 var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = textAt(index); // change value
@@ -113,6 +143,8 @@ Item {
             enabled: !attribute.isConnected
             Component.onCompleted: checked = attribute.isConnected ? connectedAttribute.value : attribute.value
             onClicked: {
+                if(attribute.isConnected)
+                    return;
                 var o = attribute.serializeToJSON()
                 o['node'] = nodeName; // add a reference to the node
                 o['value'] = checked; // change value

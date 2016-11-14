@@ -18,8 +18,8 @@ Item {
 
     // signal / slots
     signal closed()
-    signal itemAdded(var item)
-    signal itemRemoved(var item)
+    signal itemAdded(var urls)
+    signal itemRemoved(var urls)
 
     // selection functions
     QtObject {
@@ -66,14 +66,14 @@ Item {
             refreshSelectionFlags();
         }
         function remove() {
-            // sort numerically and descending, then remove
-            selection.sort(function(a,b){return b - a});
+            var list = []
             for(var i=0; i<selection.length; ++i)
-                removeOne(selection[i]);
+                list.push(model[selection[i]])
+            root.itemRemoved(list);
             clear();
         }
         function removeOne(id) {
-            root.itemRemoved(model[id]);
+            root.itemRemoved([model[id]]);
         }
     }
 
@@ -81,10 +81,7 @@ Item {
     DropArea {
         anchors.fill: parent
         enabled: root.editable
-        onDropped: {
-            for(var i=0; i<drop.urls.length; ++i)
-                root.itemAdded(drop.urls[i]);
-        }
+        onDropped: root.itemAdded(drop.urls);
     }
 
     // visual model

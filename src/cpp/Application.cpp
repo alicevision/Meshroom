@@ -18,7 +18,6 @@ namespace meshroom
 
 Application::Application()
     : QObject(nullptr)
-    , _undoStack(new QUndoStack(this))
     , _plugins(this)
     , _pluginNodes(this)
     , _scene(this)
@@ -114,20 +113,6 @@ dg::Ptr<dg::Node> Application::createNode(const QString& type, const QString& na
     PluginInterface* instance = node->pluginInstance();
     Q_CHECK_PTR(instance);
     return instance->createNode(type, name);
-}
-
-bool Application::tryAndPushCommand(UndoCommand* command)
-{
-    if(command->redoImpl())
-    {
-        command->setEnabled(false);
-        _undoStack->push(command);
-        command->setEnabled(true);
-        return true;
-    }
-    delete command;
-    command = nullptr;
-    return false;
 }
 
 } // namespace

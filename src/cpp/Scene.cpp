@@ -1,4 +1,5 @@
 #include "Scene.hpp"
+#include "Commands.hpp"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -13,19 +14,17 @@ namespace meshroom
 {
 
 Scene::Scene()
-    : _graph(new Graph)
+    : _undoStack(new UndoStack(this))
+    , _graph(new Graph)
 {
 }
 
 Scene::Scene(QObject* parent, const QUrl& url)
     : QObject(parent)
+    , _undoStack(new UndoStack(this))
     , _graph(new Graph(this))
 {
     // callbacks
-    auto setDirty_CB = [this]()
-    {
-        setDirty(true);
-    };
     auto setDefault_CB = [this]()
     {
         if(!_url.isValid())
@@ -43,10 +42,6 @@ Scene::Scene(QObject* parent, const QUrl& url)
 
     // connections
     connect(this, &Scene::urlChanged, this, setDefault_CB);
-    connect(this, &Scene::nameChanged, this, setDirty_CB);
-    connect(this, &Scene::thumbnailChanged, this, setDirty_CB);
-    connect(_graph, &Graph::cacheUrlChanged, this, setDirty_CB);
-    connect(_graph, &Graph::dataChanged, this, setDirty_CB);
 
     // load
     load(url);
@@ -92,14 +87,6 @@ void Scene::setThumbnail(const QUrl& thumbnail)
     Q_EMIT thumbnailChanged();
 }
 
-void Scene::setDirty(const bool& dirty)
-{
-    if(_dirty == dirty)
-        return;
-    _dirty = dirty;
-    Q_EMIT dirtyChanged();
-}
-
 bool Scene::load(const QUrl& url)
 {
     // reset
@@ -135,8 +122,8 @@ bool Scene::load(const QUrl& url)
     // deserialize the JSON document
     deserializeFromJSON(document.object());
 
-    // reset the dirty flag
-    setDirty(false);
+    // mark the undo stack as clean
+    _undoStack->setClean();
 
     return true;
 }
@@ -199,8 +186,9 @@ bool Scene::save()
     file.write(document.toJson());
     file.close();
 
-    // reset the dirty flag
-    setDirty(false);
+    // mark the undo stack as clean
+    _undoStack->setClean();
+
     return true;
 }
 
@@ -233,7 +221,6 @@ void Scene::reset()
     setName("untitled");
     setUser(std::getenv("USER"));
     setDate(QDateTime::currentDateTime());
-    setDirty(false);
 }
 
 QJsonObject Scene::serializeToJSON() const

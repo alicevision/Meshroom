@@ -9,7 +9,7 @@ Item {
         target: _window
         onNewScene: {
             function reset_CB() { currentScene.reset(); }
-            if(currentScene.dirty) {
+            if(!currentScene.undoStack.isClean) {
                 function save_CB() { saveScene(reset_CB); }
                 var dialog = _dialogs.maySaveScene.createObject(parent);
                 dialog.onAccepted.connect(save_CB);
@@ -26,7 +26,7 @@ Item {
                 dialog.onAccepted.connect(_CB);
                 dialog.open();
             }
-            if(currentScene.dirty) {
+            if(!currentScene.undoStack.isClean) {
                 function save_CB() { saveScene(open_CB); }
                 var dialog = _dialogs.maySaveScene.createObject(parent);
                 dialog.onAccepted.connect(save_CB);
@@ -59,7 +59,6 @@ Item {
         onAddNode: {
             function add_CB(selection) {
                 currentScene.graph.addNode(selection);
-                currentScene.dirty = true;
             }
             var dialog = _dialogs.addNode.createObject(parent);
             dialog.onAccepted.connect(add_CB);

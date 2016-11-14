@@ -16,7 +16,7 @@ Graph::Graph(QObject* parent)
     : nodeeditor::AbstractGraph(parent)
 {
     // retrieve parent scene
-    QObject* scene = this->parent();
+    Scene* scene = qobject_cast<Scene*>(parent);
     if(!scene)
         return;
 
@@ -25,10 +25,10 @@ Graph::Graph(QObject* parent)
     Q_CHECK_PTR(_application);
 
     // callbacks
-    _graph.onCleared = [&]()
+    _graph.onCleared = [&, scene]()
     {
-        Q_CHECK_PTR(_application->undoStack());
-        _application->undoStack()->clear();
+        Q_CHECK_PTR(scene->undoStack());
+        scene->undoStack()->clear();
         _edges->clear();
         _nodes->clear();
         Q_EMIT dataChanged();
@@ -161,39 +161,45 @@ void Graph::clear()
 
 bool Graph::addNode(const QJsonObject& o)
 {
-    _application->tryAndPushCommand(new AddNodeCmd(this, o));
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new AddNodeCmd(this, o));
     return true;
 }
 
 bool Graph::addEdge(const QJsonObject& o)
 {
-    _application->tryAndPushCommand(new AddEdgeCmd(this, o));
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new AddEdgeCmd(this, o));
     return true;
 }
 
 bool Graph::removeNode(const QJsonObject& o)
 {
     _lastCmd = new RemoveNodeCmd(this, o);
-    _application->tryAndPushCommand(_lastCmd);
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(_lastCmd);
     _lastCmd = nullptr;
     return true;
 }
 
 bool Graph::removeEdge(const QJsonObject& o)
 {
-    _application->tryAndPushCommand(new RemoveEdgeCmd(this, o));
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new RemoveEdgeCmd(this, o));
     return true;
 }
 
 bool Graph::moveNode(const QJsonObject& o)
 {
-    _application->tryAndPushCommand(new MoveNodeCmd(this, o));
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new MoveNodeCmd(this, o));
     return true;
 }
 
 bool Graph::setAttribute(const QJsonObject& o)
 {
-    _application->tryAndPushCommand(new EditAttributeCmd(this, o));
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new EditAttributeCmd(this, o));
     return true;
 }
 
@@ -208,7 +214,8 @@ QJsonObject Graph::serializeToJSON() const
 
 void Graph::deserializeFromJSON(const QJsonObject& obj)
 {
-    _application->undoStack()->beginMacro("Import Template");
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->beginMacro("Import Template");
     // callback used when a node changes name
     QMap<QString, QString> renamedNodes;
     auto onNodeNameChanged = [&](const QString& oldname, const QString& newname)
@@ -241,7 +248,7 @@ void Graph::deserializeFromJSON(const QJsonObject& obj)
         addEdge(edge);
     }
     disconnect(connection);
-    _application->undoStack()->endMacro();
+    scene->undoStack()->endMacro();
 }
 
 QUrl Graph::cacheUrl() const

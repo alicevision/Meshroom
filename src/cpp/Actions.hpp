@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Application.hpp"
+
 namespace meshroom
 {
 

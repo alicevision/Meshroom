@@ -22,7 +22,7 @@ Item {
         }
         Label {
             text: "*"
-            visible: currentScene.dirty
+            visible: !currentScene.undoStack.isClean
         }
         Item { Layout.fillWidth: true } // spacer
         RowLayout {

@@ -27,6 +27,8 @@ Graph::Graph(QObject* parent)
     // callbacks
     _graph.onCleared = [&]()
     {
+        Q_CHECK_PTR(_application->undoStack());
+        _application->undoStack()->clear();
         _edges->clear();
         _nodes->clear();
         Q_EMIT dataChanged();

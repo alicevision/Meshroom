@@ -41,11 +41,11 @@ public:
     QUndoStack* undoStack() { return _undoStack; }
 
 private:
-    Scene _scene;
+    QUndoStack* _undoStack;
     PluginCollection _plugins;
     PluginNodeCollection _pluginNodes;
     TemplateCollection _templates;
-    QUndoStack* _undoStack;
+    Scene _scene;
 };
 
 } // namespaces

@@ -18,10 +18,10 @@ namespace meshroom
 
 Application::Application()
     : QObject(nullptr)
-    , _scene(this)
+    , _undoStack(new QUndoStack(this))
     , _plugins(this)
     , _pluginNodes(this)
-    , _undoStack(new QUndoStack(this))
+    , _scene(this)
 {
     // set global/Qt locale
     std::locale::global(std::locale::classic());

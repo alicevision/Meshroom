@@ -9,6 +9,8 @@ namespace meshroom
 class UndoCommand : public QUndoCommand
 {
 public:
+    UndoCommand(QUndoCommand* parent = nullptr)
+        : QUndoCommand(parent){};
     virtual ~UndoCommand() = default;
     virtual bool redoImpl() = 0;
     virtual bool undoImpl() = 0;
@@ -37,14 +39,12 @@ class AddNodeCmd : public UndoCommand
 public:
     AddNodeCmd(Graph* graph, const QJsonObject& desc)
         : _graph(graph)
-        , _desc(desc)
-    {
-    }
+        , _desc(desc){};
     bool redoImpl() override
     {
         if(!AddNodeAction::process(_graph, _desc, _updatedDesc))
             return false;
-        setText(QString("Create %1").arg(_updatedDesc.value("name").toString()));
+        setText(QString("Add node %1").arg(_updatedDesc.value("name").toString()));
         return true;
     }
     bool undoImpl() override { return RemoveNodeAction::process(_graph, _updatedDesc); }
@@ -92,7 +92,9 @@ public:
     bool undoImpl() override
     {
         QJsonObject o;
-        return AddNodeAction::process(_graph, _desc, o);
+        bool b = AddNodeAction::process(_graph, _desc, o);
+        QUndoCommand::undo(); // call child commands (AddEdgeCmd(s))
+        return b;
     }
 
 private:
@@ -119,8 +121,9 @@ protected:
 class RemoveEdgeCmd : public UndoCommand
 {
 public:
-    RemoveEdgeCmd(Graph* graph, const QJsonObject& desc)
-        : _graph(graph)
+    RemoveEdgeCmd(Graph* graph, const QJsonObject& desc, QUndoCommand* parent = nullptr)
+        : UndoCommand(parent)
+        , _graph(graph)
         , _desc(desc)
     {
         setText(QString("Remove edge"));

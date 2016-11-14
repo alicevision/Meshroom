@@ -77,6 +77,8 @@ Graph::Graph(QObject* parent)
         o.insert("plug", QString::fromStdString(target->name));
         // remove edge
         _edges->remove(o);
+        // add a child command
+        new RemoveEdgeCmd(this, o, _lastCmd);
         Q_EMIT dataChanged();
     };
     _graph.cache.onAttributeChanged = [&](Ptr<Plug> plug, AttributeList attr)
@@ -171,7 +173,9 @@ bool Graph::addEdge(const QJsonObject& o)
 
 bool Graph::removeNode(const QJsonObject& o)
 {
-    _application->tryAndPushCommand(new RemoveNodeCmd(this, o));
+    _lastCmd = new RemoveNodeCmd(this, o);
+    _application->tryAndPushCommand(_lastCmd);
+    _lastCmd = nullptr;
     return true;
 }
 

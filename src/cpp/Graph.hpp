@@ -9,6 +9,7 @@ namespace meshroom
 {
 
 class Application; // forward declaration
+class UndoCommand; // forward declaration
 
 class Graph : public nodeeditor::AbstractGraph
 {
@@ -52,6 +53,7 @@ private:
     dg::Graph _graph;
     WorkerThread* _thread = nullptr;
     Application* _application = nullptr;
+    UndoCommand* _lastCmd = nullptr; // used in callbacks to register child commands
 };
 
 } // namespace

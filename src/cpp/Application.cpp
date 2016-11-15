@@ -1,6 +1,7 @@
 #include "Application.hpp"
 #include "PluginInterface.hpp"
 #include "Worker.hpp"
+#include "Commands.hpp"
 #include <QLocale>
 #include <QtQml>
 #include <QCoreApplication>
@@ -17,9 +18,9 @@ namespace meshroom
 
 Application::Application()
     : QObject(nullptr)
-    , _scene(this)
     , _plugins(this)
     , _pluginNodes(this)
+    , _scene(this)
 {
     // set global/Qt locale
     std::locale::global(std::locale::classic());

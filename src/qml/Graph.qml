@@ -85,7 +85,7 @@ Frame {
             root.forceActiveFocus()
             root.selectionChanged(null)
         }
-        onNodeMoved: {
+        onNodeItemMoved: {
             root.forceActiveFocus()
         }
         onNodeLeftClicked: {

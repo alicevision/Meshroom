@@ -23,6 +23,7 @@ protected:
     virtual Q_INVOKABLE bool addEdge(const QJsonObject&) = 0;
     virtual Q_INVOKABLE bool removeNode(const QJsonObject&) = 0;
     virtual Q_INVOKABLE bool removeEdge(const QJsonObject&) = 0;
+    virtual Q_INVOKABLE bool moveNode(const QJsonObject&) = 0;
     virtual Q_INVOKABLE bool setAttribute(const QJsonObject&) = 0;
 
 protected:
@@ -32,6 +33,7 @@ protected:
 public:
     NodeCollection* nodes() { return _nodes; }
     EdgeCollection* edges() { return _edges; }
+    Node* node(const QString&);
 
 protected:
     NodeCollection* _nodes = new NodeCollection(this);
@@ -41,6 +43,12 @@ protected:
 inline AbstractGraph::AbstractGraph(QObject* parent)
     : QObject(parent)
 {
+}
+
+inline Node* AbstractGraph::node(const QString& nodename)
+{
+    auto id = _nodes->index(_nodes->rowIndex(nodename));
+    return _nodes->data(id, NodeCollection::ModelDataRole).value<Node*>();
 }
 
 } // namespace

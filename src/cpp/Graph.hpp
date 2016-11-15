@@ -9,6 +9,7 @@ namespace meshroom
 {
 
 class Application; // forward declaration
+class UndoCommand; // forward declaration
 
 class Graph : public nodeeditor::AbstractGraph
 {
@@ -19,11 +20,14 @@ class Graph : public nodeeditor::AbstractGraph
 public:
     Graph(QObject* parent = nullptr);
     ~Graph();
+
+public:
     Q_INVOKABLE void clear() override;
     Q_INVOKABLE bool addNode(const QJsonObject&) override;
     Q_INVOKABLE bool addEdge(const QJsonObject&) override;
     Q_INVOKABLE bool removeNode(const QJsonObject&) override;
     Q_INVOKABLE bool removeEdge(const QJsonObject&) override;
+    Q_INVOKABLE bool moveNode(const QJsonObject&) override;
     Q_INVOKABLE bool setAttribute(const QJsonObject&) override;
     Q_INVOKABLE QJsonObject serializeToJSON() const override;
     Q_INVOKABLE void deserializeFromJSON(const QJsonObject&) override;
@@ -49,6 +53,7 @@ private:
     dg::Graph _graph;
     WorkerThread* _thread = nullptr;
     Application* _application = nullptr;
+    UndoCommand* _lastCmd = nullptr; // used in callbacks to register child commands
 };
 
 } // namespace

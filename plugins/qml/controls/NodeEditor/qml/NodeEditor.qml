@@ -12,7 +12,7 @@ Item {
     // signals
     signal workspaceMoved()
     signal workspaceClicked()
-    signal nodeMoved(var item, var node, var pos)
+    signal nodeItemMoved(var item, var node, var pos)
     signal nodeLeftClicked(var item, var node, var pos)
     signal nodeRightClicked(var item, var node, var pos)
     signal edgeLeftClicked(var item, var edge, var pos)
@@ -37,6 +37,13 @@ Item {
         // recenter
         draggable.x = bbox.x*draggable.scale*-1 + (root.width-bbox.width*draggable.scale)*0.5
         draggable.y = bbox.y*draggable.scale*-1 + (root.height-bbox.height*draggable.scale)*0.5
+    }
+
+    onNodeItemMoved: {
+        var o = node.serializeToJSON()
+        o['x'] = Math.round(item.x);
+        o['y'] = Math.round(item.y);
+        root.graph.moveNode(o)
     }
 
     MouseArea {

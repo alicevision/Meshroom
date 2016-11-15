@@ -25,6 +25,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Qml REQUIRED)
+find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Quick REQUIRED)
 find_package(Qt5QuickControls2 REQUIRED)
 add_definitions(-DQT_NO_KEYWORDS)
@@ -40,7 +41,7 @@ include_directories(${PROJECT_SOURCE_DIR}/plugins/cpp)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(${TARGETOBJ} ${TARGET_SRCS} ${TARGET_QRCS})
 target_link_libraries(${TARGETOBJ} ${OPENGL_LIBRARIES} ${DG_LIBRARY})
-QT5_USE_MODULES(${TARGETOBJ} Core Qml Quick QuickControls2)
+QT5_USE_MODULES(${TARGETOBJ} Core Qml Quick QuickControls2 Widgets)
 
 # Install settings
 install(TARGETS ${TARGETOBJ}

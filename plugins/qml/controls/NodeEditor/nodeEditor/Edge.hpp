@@ -20,9 +20,9 @@ public:
     Edge& operator=(Edge const&) = delete;
 
 public:
-    Q_SLOT QString source() const { return _sourceNode? _sourceNode->name() : ""; }
-    Q_SLOT QString target() const { return _targetNode? _targetNode->name() : ""; }
-    Q_SLOT QString plug() const { return _targetAttribute? _targetAttribute->key() : ""; }
+    Q_SLOT QString source() const { return _sourceNode ? _sourceNode->name() : ""; }
+    Q_SLOT QString target() const { return _targetNode ? _targetNode->name() : ""; }
+    Q_SLOT QString plug() const { return _targetAttribute ? _targetAttribute->key() : ""; }
     Q_SLOT Attribute* sourceAttribute() const { return _sourceAttribute; }
     Q_SLOT Attribute* targetAttribute() const { return _targetAttribute; }
     Q_SLOT void setSource(const QString&);
@@ -67,7 +67,8 @@ inline void Edge::setSource(const QString& source)
     auto getAttrPtr = [&]() -> Attribute*
     {
         auto id = _sourceNode->outputs()->index(0);
-        QVariant v = _sourceNode->outputs()->data(id, nodeeditor::AttributeCollection::ModelDataRole);
+        QVariant v =
+            _sourceNode->outputs()->data(id, nodeeditor::AttributeCollection::ModelDataRole);
         auto attr = v.value<nodeeditor::Attribute*>();
         Q_CHECK_PTR(attr);
         return attr;
@@ -106,7 +107,8 @@ inline void Edge::setPlug(const QString& plug)
     auto getAttrPtr = [&](const QString& a) -> Attribute*
     {
         auto id = _targetNode->inputs()->index(_targetNode->inputs()->rowIndex(a));
-        QVariant v = _targetNode->inputs()->data(id, nodeeditor::AttributeCollection::ModelDataRole);
+        QVariant v =
+            _targetNode->inputs()->data(id, nodeeditor::AttributeCollection::ModelDataRole);
         auto attr = v.value<nodeeditor::Attribute*>();
         Q_CHECK_PTR(attr);
         return attr;

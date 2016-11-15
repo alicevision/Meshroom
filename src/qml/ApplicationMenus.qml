@@ -21,7 +21,7 @@ QQC14.MenuBar {
         QQC14.MenuItem {
             text: "Save"
             onTriggered: saveScene(null)
-            enabled: currentScene.dirty
+            enabled: !currentScene.undoStack.isClean
             shortcut: "Ctrl+S"
         }
         QQC14.MenuItem {
@@ -32,6 +32,17 @@ QQC14.MenuBar {
     }
     QQC14.Menu {
         title: "Edit"
+        QQC14.MenuItem {
+            text: "Undo"
+            onTriggered: currentScene.undoStack.undo()
+            shortcut: "Ctrl+Z"
+        }
+        QQC14.MenuItem {
+            text: "Redo"
+            onTriggered: currentScene.undoStack.redo()
+            shortcut: "Ctrl+Shift+Z"
+        }
+        QQC14.MenuSeparator {}
         QQC14.MenuItem {
             text: "Add node..."
             onTriggered: addNode()

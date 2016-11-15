@@ -51,11 +51,14 @@ Rectangle {
     // slots & behaviors
     Connections {
         target: model.modelData
-        onXChanged: if(Math.round(root.x) !== model.x) root.x = model.x;
-        onYChanged: if(Math.round(root.y) !== model.y) root.y = model.y;
+        onPositionChanged: {
+            if(Math.round(root.x) !== node.position.x)
+                root.x = node.position.x
+            if(Math.round(root.y) !== node.position.y)
+                root.y = node.position.y
+        }
     }
-    onXChanged: model.x = root.x
-    onYChanged: model.y = root.y
+
     Behavior on border.color { ColorAnimation {} }
 
     // mouse area
@@ -64,6 +67,7 @@ Rectangle {
         anchors.fill: parent
         drag.target: root
         drag.axis: Drag.XAndYAxis
+        drag.threshold: 0
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: {
@@ -74,9 +78,9 @@ Rectangle {
             selectedNodeID = index;
             nodeLeftClicked(root, model.modelData, Qt.point(mouse.x, mouse.y))
         }
-        onPositionChanged: {
+        onReleased: {
             if(drag.active)
-                nodeMoved(root, model.modelData, Qt.point(mouse.x, mouse.y))
+                nodeItemMoved(root, model.modelData, Qt.point(mouse.x, mouse.y))
         }
         ColumnLayout {
             anchors.fill: parent

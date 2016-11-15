@@ -1,10 +1,12 @@
 #include "Graph.hpp"
 #include "Application.hpp"
 #include "WorkerThread.hpp"
+#include "Commands.hpp"
 #include <nodeEditor/Node.hpp>
 #include <nodeEditor/Edge.hpp>
 #include <QJsonObject>
 #include <QDebug>
+#include <QPoint>
 
 using namespace dg;
 namespace meshroom
@@ -14,7 +16,7 @@ Graph::Graph(QObject* parent)
     : nodeeditor::AbstractGraph(parent)
 {
     // retrieve parent scene
-    QObject* scene = this->parent();
+    Scene* scene = qobject_cast<Scene*>(parent);
     if(!scene)
         return;
 
@@ -23,8 +25,10 @@ Graph::Graph(QObject* parent)
     Q_CHECK_PTR(_application);
 
     // callbacks
-    _graph.onCleared = [&]()
+    _graph.onCleared = [&, scene]()
     {
+        Q_CHECK_PTR(scene->undoStack());
+        scene->undoStack()->clear();
         _edges->clear();
         _nodes->clear();
         Q_EMIT dataChanged();
@@ -73,6 +77,8 @@ Graph::Graph(QObject* parent)
         o.insert("plug", QString::fromStdString(target->name));
         // remove edge
         _edges->remove(o);
+        // add a child command
+        new RemoveEdgeCmd(this, o, _lastCmd);
         Q_EMIT dataChanged();
     };
     _graph.cache.onAttributeChanged = [&](Ptr<Plug> plug, AttributeList attr)
@@ -155,145 +161,45 @@ void Graph::clear()
 
 bool Graph::addNode(const QJsonObject& o)
 {
-    Q_CHECK_PTR(_application);
-    // create a new core node
-    QString nodetype = o.value("type").toString();
-    QString nodename = o.value("name").toString();
-    auto coreNode = _application->createNode(nodetype, nodename);
-    if(!coreNode)
-    {
-        qCritical() << "unable to create a new" << nodetype << "node";
-        return false;
-    }
-    // add the node to the graph
-    if(!_graph.addNode(coreNode))
-        return false;
-    // warn in case the name changed
-    QString realname = QString::fromStdString(coreNode->name);
-    if(realname != nodename)
-        Q_EMIT nodeNameChanged(nodename, realname);
-    // set node attributes
-    for(auto a : o.value("inputs").toArray())
-    {
-        QJsonObject attr = a.toObject();
-        attr.insert("node", realname); // add a reference to the node
-        setAttribute(attr);
-    }
-    // set additional (gui related) node attributes
-    auto modelIndex = _nodes->index(_nodes->rowIndex(realname));
-    _nodes->setData(modelIndex, o.value("x").toInt(), nodeeditor::NodeCollection::XRole);
-    _nodes->setData(modelIndex, o.value("y").toInt(), nodeeditor::NodeCollection::YRole);
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new AddNodeCmd(this, o));
     return true;
 }
 
 bool Graph::addEdge(const QJsonObject& o)
 {
-    if(!o.contains("source") || !o.contains("target") || !o.contains("plug"))
-        return false;
-    // retrieve source and target nodes
-    QString sourcename = o.value("source").toString();
-    QString targetname = o.value("target").toString();
-    auto coreSourceNode = _graph.node(sourcename.toStdString());
-    auto coreTargetNode = _graph.node(targetname.toStdString());
-    if(!coreSourceNode || !coreTargetNode)
-    {
-        qCritical() << "unable to connect nodes: invalid edge";
-        return false;
-    }
-    // retrieve target plug
-    QString plugname = o.value("plug").toString();
-    auto corePlug = coreTargetNode->plug(plugname.toStdString());
-    if(!corePlug)
-    {
-        qCritical() << "unable to connect nodes: plug" << plugname << "not found";
-        return false;
-    }
-    // connect the nodes
-    return _graph.connect(coreSourceNode->output, corePlug);
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new AddEdgeCmd(this, o));
+    return true;
 }
 
 bool Graph::removeNode(const QJsonObject& o)
 {
-    if(!o.contains("name"))
-        return false;
-    // retrieve the node to delete
-    QString nodename = o.value("name").toString();
-    auto coreNode = _graph.node(nodename.toStdString());
-    if(!coreNode)
-        return false;
-    // delete the node
-    return _graph.removeNode(coreNode);
+    _lastCmd = new RemoveNodeCmd(this, o);
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(_lastCmd);
+    _lastCmd = nullptr;
+    return true;
 }
 
 bool Graph::removeEdge(const QJsonObject& o)
 {
-    if(!o.contains("source") || !o.contains("target") || !o.contains("plug"))
-        return false;
-    // retrieve source and target nodes
-    QString source = o.value("source").toString();
-    QString target = o.value("target").toString();
-    QString plug = o.value("plug").toString();
-    auto coreSourceNode = _graph.node(source.toStdString());
-    auto coreTargetNode = _graph.node(target.toStdString());
-    if(!coreSourceNode || !coreTargetNode)
-        return false;
-    // disconnect the nodes
-    return _graph.disconnect(coreSourceNode->output, coreTargetNode->plug(plug.toStdString()));
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new RemoveEdgeCmd(this, o));
+    return true;
+}
+
+bool Graph::moveNode(const QJsonObject& o)
+{
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new MoveNodeCmd(this, o));
+    return true;
 }
 
 bool Graph::setAttribute(const QJsonObject& o)
 {
-    auto makeCoreAttribute = [&](const QVariant& attribute) -> dg::Ptr<dg::Attribute>
-    {
-        switch(attribute.type())
-        {
-            case QVariant::Bool:
-                return make_ptr<dg::Attribute>(attribute.toBool());
-            case QVariant::Double:
-                return make_ptr<dg::Attribute>((float)attribute.toDouble());
-            case QVariant::Int:
-                return make_ptr<dg::Attribute>(attribute.toInt());
-            case QVariant::String:
-                return make_ptr<dg::Attribute>(attribute.toString().toStdString());
-            default:
-                break;
-        }
-        qCritical() << "invalid attribute value type" << attribute.typeName();
-        return nullptr;
-    };
-    // read attribute description
-    QString nodename = o.value("node").toString(); // added dynamically
-    QString plugname = o.value("key").toString();
-    QVariant value = o.value("value").toVariant();
-    if(!value.isValid())
-        return false;
-    // retrieve the node
-    auto coreNode = _graph.node(nodename.toStdString());
-    if(!coreNode)
-    {
-        qCritical() << "unable to find node" << nodename;
-        return false;
-    }
-    // in case of an attribute list
-    if(value.type() == QVariant::List)
-    {
-        dg::AttributeList attributelist;
-        for(auto v : value.toList())
-            attributelist.emplace_back(makeCoreAttribute(v));
-        if(!coreNode->setAttributes(plugname.toStdString(), attributelist))
-        {
-            qCritical() << "unable to set attribute"
-                        << QString("%0::%1").arg(nodename).arg(plugname);
-            return false;
-        }
-        return true;
-    }
-    // in case of a single attribute
-    if(!coreNode->setAttribute(plugname.toStdString(), makeCoreAttribute(value)))
-    {
-        qCritical() << "unable to set attribute" << QString("%0::%1").arg(nodename).arg(plugname);
-        return false;
-    }
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->tryAndPush(new EditAttributeCmd(this, o));
     return true;
 }
 
@@ -308,6 +214,8 @@ QJsonObject Graph::serializeToJSON() const
 
 void Graph::deserializeFromJSON(const QJsonObject& obj)
 {
+    Scene* scene = qobject_cast<Scene*>(parent());
+    scene->undoStack()->beginMacro("Import Template");
     // callback used when a node changes name
     QMap<QString, QString> renamedNodes;
     auto onNodeNameChanged = [&](const QString& oldname, const QString& newname)
@@ -340,6 +248,7 @@ void Graph::deserializeFromJSON(const QJsonObject& obj)
         addEdge(edge);
     }
     disconnect(connection);
+    scene->undoStack()->endMacro();
 }
 
 QUrl Graph::cacheUrl() const

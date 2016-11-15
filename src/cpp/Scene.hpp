@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graph.hpp"
+#include "UndoStack.hpp"
 #include <QObject>
 #include <QUrl>
 #include <QDateTime>
@@ -19,7 +20,7 @@ class Scene : public QObject
     Q_PROPERTY(QDateTime date READ date NOTIFY dateChanged)
     Q_PROPERTY(QString user READ user NOTIFY userChanged)
     Q_PROPERTY(QUrl thumbnail READ thumbnail WRITE setThumbnail NOTIFY thumbnailChanged)
-    Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
+    Q_PROPERTY(UndoStack* undoStack READ undoStack CONSTANT)
     Q_PROPERTY(Graph* graph READ graph CONSTANT)
 
 public:
@@ -32,10 +33,9 @@ public:
     Q_SLOT const QDateTime& date() const { return _date; }
     Q_SLOT const QString& user() const { return _user; }
     Q_SLOT const QUrl& thumbnail() const { return _thumbnail; }
-    Q_SLOT const bool& dirty() const { return _dirty; }
     Q_SLOT Graph* graph() const { return _graph; }
+    Q_SLOT UndoStack* undoStack() { return _undoStack; }
     Q_SLOT void setThumbnail(const QUrl&);
-    Q_SLOT void setDirty(const bool&);
     Q_SLOT bool load(const QUrl&);
     Q_SLOT bool import(const QUrl&);
     Q_SLOT bool save();
@@ -47,7 +47,6 @@ public:
     Q_SIGNAL void dateChanged();
     Q_SIGNAL void userChanged();
     Q_SIGNAL void thumbnailChanged();
-    Q_SIGNAL void dirtyChanged();
 
 private:
     void setUrl(const QUrl&);
@@ -65,7 +64,7 @@ private:
     QString _name;
     QString _user;
     QUrl _thumbnail;
-    bool _dirty = false;
+    UndoStack* _undoStack = nullptr;
     Graph* _graph = nullptr;
 };
 

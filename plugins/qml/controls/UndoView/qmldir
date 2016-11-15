@@ -1,0 +1,4 @@
+module UndoView
+
+UndoView 1.0 qml/UndoView.qml
+plugin undoViewQmlPlugin

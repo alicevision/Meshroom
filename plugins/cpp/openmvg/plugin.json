@@ -12,7 +12,9 @@
                 {
                     "name": "sfmdata2",
                     "key": "sfmdata2",
-                    "type": "TEXTFIELD"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 }
             ],
             "outputs": [
@@ -29,12 +31,16 @@
                 {
                     "name": "images",
                     "key": "images",
-                    "type": "IMAGELIST"
+                    "type": "IMAGELIST",
+                    "value": [],
+                    "tooltip": ""
                 },
                 {
                     "name": "sensorWidthDatabase",
                     "key": "sensorWidthDatabase",
-                    "type": "TEXTFIELD"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 }
             ],
             "outputs": [
@@ -51,21 +57,25 @@
                 {
                     "name": "sfmdata",
                     "key": "sfmdata",
-                    "type": "UNKNOWN"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 },
                 {
                     "name": "describerMethod",
                     "key": "describerMethod",
                     "type": "COMBOBOX",
                     "value": "SIFT",
-                    "options": ["SIFT", "SIFT_FLOAT", "AKAZE_FLOAT", "AKAZE_MLDB"]
+                    "options": ["SIFT", "SIFT_FLOAT", "AKAZE_FLOAT", "AKAZE_MLDB"],
+                    "tooltip": ""
                 },
                 {
                     "name": "describerPreset",
                     "key": "describerPreset",
                     "type": "COMBOBOX",
                     "value": "NORMAL",
-                    "options": ["LOW", "MEDIUM", "NORMAL", "HIGH", "ULTRA"]
+                    "options": ["LOW", "MEDIUM", "NORMAL", "HIGH", "ULTRA"],
+                    "tooltip": ""
                 }
             ],
             "outputs": [
@@ -82,24 +92,31 @@
                 {
                     "name": "sfmdata",
                     "key": "sfmdata",
-                    "type": "UNKNOWN"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 },
                 {
                     "name": "features",
                     "key": "features",
-                    "type": "UNKNOWN"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 },
                 {
                     "name": "pairlist",
                     "key": "pairlist",
-                    "type": "TEXTFIELD"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 },
                 {
                     "name": "method",
                     "key": "method",
                     "type": "COMBOBOX",
                     "value": "ANNL2",
-                    "options": ["BRUTEFORCEL2", "ANNL2", "CASCADEHASHINGL2", "FASTCASCADEHASHINGL2"]
+                    "options": ["BRUTEFORCEL2", "ANNL2", "CASCADEHASHINGL2", "FASTCASCADEHASHINGL2"],
+                    "tooltip": ""
                 }
             ],
             "outputs": [
@@ -116,7 +133,9 @@
                 {
                     "name": "files",
                     "key": "files",
-                    "type": "IMAGELIST"
+                    "type": "IMAGELIST",
+                    "value": [],
+                    "tooltip": ""
                 }
             ],
             "outputs": [
@@ -133,12 +152,16 @@
                 {
                     "name": "sfmdata",
                     "key": "sfmdata",
-                    "type": "TEXTFIELD"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 },
                 {
                     "name": "images",
                     "key": "images",
-                    "type": "IMAGELIST"
+                    "type": "IMAGELIST",
+                    "value": [],
+                    "tooltip": ""
                 },
                 {
                     "name": "residualError",
@@ -147,7 +170,8 @@
                     "min": 0,
                     "max": 1,
                     "value": 0,
-                    "step": 0.1
+                    "step": 0.1,
+                    "tooltip": ""
                 }
             ],
             "outputs": [
@@ -164,12 +188,16 @@
                 {
                     "name": "sfmdata",
                     "key": "sfmdata",
-                    "type": "TEXTFIELD"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 },
                 {
                     "name": "matches",
                     "key": "matches",
-                    "type": "UNKNOWN"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 }
             ],
             "outputs": [
@@ -186,17 +214,23 @@
                 {
                     "name": "sfmdata",
                     "key": "sfmdata",
-                    "type": "TEXTFIELD"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 },
                 {
                     "name": "treeFile",
                     "key": "treeFile",
-                    "type": "TEXTFIELD"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 },
                 {
                     "name": "weightFile",
                     "key": "weightFile",
-                    "type": "TEXTFIELD"
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
                 }
             ],
             "outputs": [

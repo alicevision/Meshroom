@@ -10,6 +10,8 @@
 namespace meshroom
 {
 
+class UndoCommand; // forward declaration
+
 class Application : public QObject
 {
     Q_OBJECT
@@ -35,10 +37,10 @@ public:
     TemplateCollection* templates() { return &_templates; }
 
 private:
-    Scene _scene;
     PluginCollection _plugins;
     PluginNodeCollection _pluginNodes;
     TemplateCollection _templates;
+    Scene _scene;
 };
 
 } // namespaces

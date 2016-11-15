@@ -22,8 +22,7 @@ public:
         InputsRole,
         OutputsRole,
         StatusRole,
-        XRole,
-        YRole,
+        PositionRole,
         ModelDataRole
     };
     Q_ENUMS(NodeRoles)
@@ -84,10 +83,8 @@ inline QVariant NodeCollection::data(const QModelIndex& index, int role) const
             return QVariant::fromValue(node->outputs());
         case StatusRole:
             return node->status();
-        case XRole:
-            return node->x();
-        case YRole:
-            return node->y();
+        case PositionRole:
+            return node->position();
         case ModelDataRole:
             return QVariant::fromValue(node);
         default:
@@ -105,11 +102,8 @@ inline bool NodeCollection::setData(const QModelIndex& index, const QVariant& va
         case StatusRole:
             node->setStatus((Node::Status)value.toInt());
             break;
-        case XRole:
-            node->setX(value.toInt());
-            break;
-        case YRole:
-            node->setY(value.toInt());
+        case PositionRole:
+            node->setPosition(value.toPoint());
             break;
         default:
             return false;
@@ -136,8 +130,7 @@ inline bool NodeCollection::add(Node* node)
         Q_EMIT dataChanged(id, id);
     };
     connect(node, &Node::statusChanged, this, callback);
-    connect(node, &Node::xChanged, this, callback);
-    connect(node, &Node::yChanged, this, callback);
+    connect(node, &Node::positionChanged, this, callback);
 
     Q_EMIT countChanged(rowCount());
     return true;
@@ -217,8 +210,7 @@ inline QHash<int, QByteArray> NodeCollection::roleNames() const
     roles[InputsRole] = "inputs";
     roles[OutputsRole] = "outputs";
     roles[StatusRole] = "status";
-    roles[XRole] = "x";
-    roles[YRole] = "y";
+    roles[PositionRole] = "position";
     roles[ModelDataRole] = "modelData";
     return roles;
 }

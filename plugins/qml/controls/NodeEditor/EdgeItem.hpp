@@ -15,12 +15,14 @@ class MouseEvent : public QObject
     Q_PROPERTY(int x MEMBER _x CONSTANT)
     Q_PROPERTY(int y MEMBER _y CONSTANT)
     Q_PROPERTY(int button MEMBER _button CONSTANT)
+
 public:
     MouseEvent(QMouseEvent* e)
         : _x(e->x())
         , _y(e->y())
-        , _button(e->button())
-    {}
+        , _button(e->button()){};
+
+public:
     int _x;
     int _y;
     Qt::MouseButton _button;

@@ -20,10 +20,15 @@ T.Button {
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
-    background: Rectangle {
-        color: control.hovered ? Globals.window.color.selected : Globals.window.color.dark
-        opacity: 0.8
-        Behavior on color { ColorAnimation {} }
+    background: Item {
+        implicitWidth: 120
+        Rectangle {
+            y: control.height - height - control.bottomPadding / 2
+            height: 1
+            width: parent.width
+            color: Globals.window.color.selected
+            opacity: control.hovered ? 1 : 0
+            Behavior on opacity { NumberAnimation {} }
+        }
     }
-
 }

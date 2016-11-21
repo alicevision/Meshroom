@@ -11,7 +11,7 @@ Item {
             function reset_CB() { currentScene.reset(); }
             if(!currentScene.undoStack.isClean) {
                 function save_CB() { saveScene(reset_CB); }
-                var dialog = _dialogs.maySaveScene.createObject(parent);
+                var dialog = _dialogs.maySaveScene.createObject(_window.contentItem);
                 dialog.onAccepted.connect(save_CB);
                 dialog.onRejected.connect(reset_CB);
                 dialog.open();
@@ -22,19 +22,27 @@ Item {
         onOpenScene: {
             function open_CB() {
                 function _CB() { currentScene.load(dialog.fileUrl); }
-                var dialog = _dialogs.openScene.createObject(parent);
+                var dialog = _dialogs.openScene.createObject(_window.contentItem);
                 dialog.onAccepted.connect(_CB);
                 dialog.open();
             }
             if(!currentScene.undoStack.isClean) {
                 function save_CB() { saveScene(open_CB); }
-                var dialog = _dialogs.maySaveScene.createObject(parent);
+                var dialog = _dialogs.maySaveScene.createObject(_window.contentItem);
                 dialog.onAccepted.connect(save_CB);
                 dialog.onRejected.connect(open_CB);
                 dialog.open();
                 return;
             }
             open_CB();
+        }
+        onImportTemplate: {
+            function import_CB(selection) {
+                importScene(selection);
+            }
+            var dialog = _dialogs.importTemplate.createObject(_window.contentItem);
+            dialog.onAccepted.connect(import_CB);
+            dialog.open();
         }
         onImportScene: {
             currentScene["import"](url);
@@ -52,7 +60,7 @@ Item {
                 currentScene.saveAs(dialog.fileUrl);
                 if(callback) callback();
             }
-            var dialog = _dialogs.saveScene.createObject(parent);
+            var dialog = _dialogs.saveScene.createObject(_window.contentItem);
             dialog.onAccepted.connect(_CB);
             dialog.open();
         }
@@ -60,12 +68,12 @@ Item {
             function add_CB(selection) {
                 currentScene.graph.addNode(selection);
             }
-            var dialog = _dialogs.addNode.createObject(parent);
+            var dialog = _dialogs.addNode.createObject(_window.contentItem);
             dialog.onAccepted.connect(add_CB);
             dialog.open();
         }
         onEditSettings: {
-            var dialog = _dialogs.sceneSettings.createObject(parent);
+            var dialog = _dialogs.sceneSettings.createObject(_window.contentItem);
             dialog.open();
         }
     }

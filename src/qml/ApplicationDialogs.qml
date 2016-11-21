@@ -87,16 +87,39 @@ Item {
             onClicked: { close(); }
         }
     }
+    property Component importTemplate: Popup {
+        signal accepted(var url)
+        signal rejected()
+        ListView {
+            anchors.fill: parent
+            anchors.margins: 10
+            model: _application.templates
+            ScrollBar.vertical: ScrollBar { active: true }
+            delegate: Button {
+                width: parent.width
+                text: modelData.name
+                onClicked: { accepted(modelData.url); close(); }
+            }
+            clip: true
+        }
+        ToolButton {
+            anchors.horizontalCenter: parent.right
+            anchors.verticalCenter: parent.top
+            icon: "qrc:///images/close.svg"
+            onClicked: { rejected(); close(); }
+        }
+    }
     property Component addNode: Popup {
         signal accepted(var selection)
         signal rejected()
         ListView {
             anchors.fill: parent
+            anchors.margins: 10
             model: _application.pluginNodes
             ScrollBar.vertical: ScrollBar { active: true }
             delegate: Button {
                 width: parent.width
-                text: modelData.plugin + "/" + modelData.type
+                text: modelData.plugin + "." + modelData.type
                 onClicked: { accepted(modelData.metadata); close(); }
             }
             clip: true

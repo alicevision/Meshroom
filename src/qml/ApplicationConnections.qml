@@ -36,6 +36,23 @@ Item {
             }
             open_CB();
         }
+        onOpenRecentScene: {
+            function open_CB() {
+                function _CB(url) { currentScene.load(url); }
+                var dialog = _dialogs.openRecentScene.createObject(_window.contentItem);
+                dialog.onAccepted.connect(_CB);
+                dialog.open();
+            }
+            if(!currentScene.undoStack.isClean) {
+                function save_CB() { saveScene(open_CB); }
+                var dialog = _dialogs.maySaveScene.createObject(_window.contentItem);
+                dialog.onAccepted.connect(save_CB);
+                dialog.onRejected.connect(open_CB);
+                dialog.open();
+                return;
+            }
+            open_CB();
+        }
         onImportTemplate: {
             function import_CB(selection) {
                 importScene(selection);

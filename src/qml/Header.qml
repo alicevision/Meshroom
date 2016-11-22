@@ -25,6 +25,11 @@ ToolBar {
                         onTriggered: openScene()
                         MenuItemShortcut { shortcut: "Ctrl+O" }
                     }
+                    MenuItem {
+                        text: "Open recent..."
+                        onTriggered: openRecentScene()
+                        enabled: _application.settings.recentFiles.length != 0
+                    }
                     Rectangle { // separator
                         height: 1
                         width: parent.width

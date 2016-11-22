@@ -24,6 +24,7 @@ ApplicationWindow {
     // actions
     signal newScene()
     signal openScene()
+    signal openRecentScene()
     signal importTemplate()
     signal importScene(string url)
     signal saveScene(var callback)

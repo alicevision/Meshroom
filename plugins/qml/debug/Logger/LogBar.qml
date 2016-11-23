@@ -36,11 +36,11 @@ Item {
     // slots
     onExpandIconChanged: {
         if(typeof expandButton.icon == "undefined") return;
-            expandButton.icon = root.expandIcon;
+        expandButton.icon = root.expandIcon;
     }
     onTrashIconChanged: {
         if(typeof trashButton.icon == "undefined") return;
-            trashButton.icon = root.trashIcon;
+        trashButton.icon = root.trashIcon;
     }
 
     RowLayout {
@@ -73,6 +73,7 @@ Item {
                 ListView {
                     id: listView
                     anchors.fill: parent
+                    clip: true
                     ScrollBar.vertical: ScrollBar {}
                     model: LogModel {
                         onCountChanged: {

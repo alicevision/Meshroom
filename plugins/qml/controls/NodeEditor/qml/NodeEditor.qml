@@ -49,7 +49,7 @@ Item {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
-        property double factor: 1.5
+        property double factor: 1.1
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onWheel: {

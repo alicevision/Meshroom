@@ -12,11 +12,13 @@ Item {
     property variant icons: []
     property color backgroundColor: Qt.rgba(0, 0, 0, 0.5)
 
+    onVisibleChanged: close()
+
     // functions
-    function open() { panel.Layout.minimumWidth = parent.width * maxWidthRatio }
-    function close() { panel.Layout.minimumWidth = 0 }
+    function open() { panel.Layout.preferredWidth = parent.width * maxWidthRatio }
+    function close() { panel.Layout.preferredWidth = 0 }
     function toggle() { isOpened() ? close() : open() }
-    function isOpened() { return (panel.Layout.minimumWidth != 0); }
+    function isOpened() { return (panel.Layout.preferredWidth != 0); }
 
     // main content
     RowLayout {
@@ -31,7 +33,7 @@ Item {
             color: root.backgroundColor
             clip: true
             Layout.fillHeight: true
-            Behavior on Layout.minimumWidth { NumberAnimation {}}
+            Behavior on Layout.preferredWidth { NumberAnimation {}}
             // root children will be parented here
         }
         Rectangle {

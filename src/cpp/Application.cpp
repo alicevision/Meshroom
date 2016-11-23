@@ -55,6 +55,8 @@ Application::Application(QQmlApplicationEngine& engine)
     // set surface format
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
     fmt.setSamples(8);
+    fmt.setVersion(4, 3);
+    fmt.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(fmt);
 
     // fill the template list

@@ -10,49 +10,57 @@ using namespace dg;
 Localization::Localization(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "sfmdata", *this),
-              make_ptr<Plug>(Attribute::Type::STRING, "images", *this),
-              make_ptr<Plug>(Attribute::Type::FLOAT, "residualError", *this)};
-    output = make_ptr<Plug>(Attribute::Type::STRING, "poses", *this);
+    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this),
+              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "images", *this),
+              make_ptr<Plug>(type_index(typeid(float)), "residualError", *this)};
+    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "poses", *this);
 }
 
-vector<Command> Localization::prepare(Cache& cache, bool& blocking)
+vector<Command> Localization::prepare(Cache& cache, Environment& environment, bool& blocking)
 {
     vector<Command> commands;
 
-    Ptr<Attribute> aSfmData = cache.attribute(plug("sfmdata"));
-    Ptr<Attribute> aResidualError = cache.attribute(plug("residualError"));
+    auto cacheDir = environment.local(Environment::Key::CACHE_DIRECTORY) + "/localization/";
+    auto matchDir = environment.local(Environment::Key::CACHE_DIRECTORY) + "/matches/";
 
-    if(!aSfmData || !cache.exists(aSfmData))
-        throw invalid_argument("Localization: sfm_data file not found");
+    // check the 'sfmdata' value
+    Ptr<Attribute> aSfmData = cache.getFirst(plug("sfmdata"));
+    if(!aSfmData)
+        throw invalid_argument("Localization: missing sfmdata attribute");
+    auto sfmRef = aSfmData->get<FileSystemRef>();
 
-    AttributeList list;
-    for(auto& aImage : cache.attributes(plug("images")))
+    // check the 'residualError' value
+    Ptr<Attribute> aResidualError = cache.getFirst(plug("residualError"));
+    if(!aResidualError)
+        throw invalid_argument("Localization: missing residualError attribute");
+
+    AttributeList attributes;
+    for(auto& aImg : cache.get(plug("images")))
     {
-        // compute a unique key
-        size_t key = cache.key(*this, {aSfmData, aImage});
-        // compute output paths
-        string outdir = cache.root() + "localization/" + to_string(key);
-        string outfile = outdir + "/found_pose_centers.ply";
-        // add a new output attribute
-        auto attribute = make_ptr<Attribute>(outfile);
-        list.emplace_back(attribute);
+        auto imgRef = aImg->get<FileSystemRef>();
+
+        // register a new output attribute
+        auto uid = UID(type(), {aSfmData, aImg});
+        auto outDir = cacheDir + to_string(uid);
+        FileSystemRef outRef(outDir, "found_pose_centers", ".ply");
+        attributes.emplace_back(make_ptr<Attribute>(outRef));
+
         // add a new comand
-        if(!cache.exists(attribute))
+        if(!outRef.exists())
         {
             Command c({
-                "--compute", type(),            // meshroom compute mode
-                "--",                           // node options:
-                "-i", cache.location(aSfmData), // - sfmdata file
-                "-q", cache.location(aImage),   // - image file
-                "-r", toString(aResidualError), // - residual error
-                "-m", cache.root() + "matches", // - matches dir
-                "-o", outdir                    // - output dir
+                "--compute", type(),              // meshroom compute mode
+                "--",                             // node options:
+                "-i", sfmRef.toString(),          // - sfmdata file
+                "-q", imgRef.toString(),          // - image file
+                "-r", aResidualError->toString(), // - residual error
+                "-m", matchDir,                   // - matches dir
+                "-o", outDir                      // - output dir
             });
             commands.emplace_back(c);
         }
     }
-    cache.setAttributes(output, list);
+    cache.set(output, attributes);
 
     return commands;
 }

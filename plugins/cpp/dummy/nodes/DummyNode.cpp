@@ -6,26 +6,28 @@ using namespace dg;
 DummyNode::DummyNode(string nodeName)
     : Node(nodeName)
 {
-    output = make_ptr<Plug>(Attribute::Type::STRING, "output", *this);
-    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "input1", *this),
-              make_ptr<Plug>(Attribute::Type::STRING, "input2", *this)};
+    output = make_ptr<Plug>(type_index(typeid(string)), "output", *this);
+    inputs = {make_ptr<Plug>(type_index(typeid(string)), "input1", *this),
+              make_ptr<Plug>(type_index(typeid(string)), "input2", *this)};
 }
 
-std::vector<Command> DummyNode::prepare(Cache& cache, bool& blocking)
+std::vector<Command> DummyNode::prepare(Cache& cache, Environment& environment, bool& blocking)
 {
     vector<Command> commands;
     auto p1 = plug("input1");
     auto p2 = plug("input2");
 
-    for(auto& input1 : cache.attributes(p1))
+    for(auto& input1 : cache.get(p1))
     {
-        for(auto& input2 : cache.attributes(p2))
+        for(auto& input2 : cache.get(p2))
         {
-            size_t key = cache.key(*this, {input1, input2});
-            auto attribute = cache.addAttribute(output, key);
-            if(!cache.exists(attribute))
+            auto uid = UID(type(), {input1, input2});
+            auto outdirectory = environment.local(Environment::Key::CACHE_DIRECTORY);
+            auto outfile = FileSystemRef(outdirectory, uid, ".cache");
+            cache.push(output, {make_ptr<Attribute>(outfile)});
+            if(!outfile.exists())
             {
-                Command c({cache.location(attribute)}, "/usr/bin/touch");
+                Command c({outfile.toString()}, "/usr/bin/touch");
                 commands.emplace_back(c);
             }
         }

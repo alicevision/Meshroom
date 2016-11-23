@@ -8,56 +8,54 @@ using namespace dg;
 Voctree::Voctree(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "sfmdata", *this),
-              make_ptr<Plug>(Attribute::Type::STRING, "treeFile", *this),
-              make_ptr<Plug>(Attribute::Type::STRING, "weightFile", *this)};
-    output = make_ptr<Plug>(Attribute::Type::STRING, "pairlist", *this);
+    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this),
+              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "treeFile", *this),
+              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "weightFile", *this)};
+    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "pairlist", *this);
 }
 
-vector<Command> Voctree::prepare(Cache& cache, bool& blocking)
+vector<Command> Voctree::prepare(Cache& cache, Environment& environment, bool& blocking)
 {
     vector<Command> commands;
 
+    auto outDir = environment.local(Environment::Key::CACHE_DIRECTORY);
+
     // check the 'treeFile' value
-    auto pTree = plug("treeFile");
-    auto aTree = cache.attribute(pTree);
-    if(!aTree || !cache.exists(aTree))
-        throw invalid_argument("Voctree: unable to read the .tree file");
+    auto aTree = cache.getFirst(plug("treeFile"));
+    if(!aTree)
+        throw invalid_argument("Voctree: missing treeFile attribute");
+    auto treeRef = aTree->get<FileSystemRef>();
 
     // check the 'weightFile' value
-    auto pWeight = plug("weightFile");
-    auto aWeight = cache.attribute(pWeight);
-    if(!aWeight || !cache.exists(aWeight))
-        throw invalid_argument("Voctree: unable to read the .weights file");
+    auto aWeight = cache.getFirst(plug("weightFile"));
+    if(!aWeight)
+        throw invalid_argument("Voctree: missing weightFile attribute");
+    auto weightRef = aWeight->get<FileSystemRef>();
 
-    auto pSfm = plug("sfmdata");
-    AttributeList list;
-    for(auto& aSfm : cache.attributes(pSfm))
+    AttributeList attributes;
+    for(auto& aSfm : cache.get(plug("sfmdata")))
     {
-        // check the 'sfmdata' value
-        if(!cache.exists(aSfm))
-            throw invalid_argument("Voctree: sfm_data file not found");
+        auto sfmRef = aSfm->get<FileSystemRef>();
 
         // register a new output attribute
-        auto attribute = make_ptr<Attribute>(cache.root() + "pairList.txt");
-        list.emplace_back(attribute);
+        FileSystemRef outRef(outDir, "pairList", ".txt");
+        attributes.emplace_back(make_ptr<Attribute>(outRef));
 
         // build the command line in case this output does not exists
-        if(!cache.exists(attribute))
+        if(!outRef.exists())
         {
             Command c({
-                "--compute", type(),            // meshroom compute mode
-                "--",                           // node options:
-                "-l", cache.root() + "matches", // input match directory
-                "-t", cache.location(aTree),    // input .tree file
-                "-w", cache.location(aWeight),  // input .weights file
-                "-o", cache.location(attribute) // output pairlist.txt
+                "--compute", type(),        // meshroom compute mode
+                "--",                       // node options:
+                "-l", outDir + "/matches",  // input match directory
+                "-t", treeRef.toString(),   // input .tree file
+                "-w", weightRef.toString(), // input .weights file
+                "-o", outRef.toString()     // output pairlist.txt
             });
             commands.emplace_back(c);
         }
     }
-    cache.setAttributes(output, list);
-
+    cache.set(output, attributes);
     return commands;
 }
 

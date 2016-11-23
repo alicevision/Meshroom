@@ -13,15 +13,17 @@ using namespace dg;
 FeatureExtraction::FeatureExtraction(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "sfmdata", *this),
-              make_ptr<Plug>(Attribute::Type::STRING, "describerMethod", *this),
-              make_ptr<Plug>(Attribute::Type::STRING, "describerPreset", *this)};
-    output = make_ptr<Plug>(Attribute::Type::STRING, "features", *this);
+    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this),
+              make_ptr<Plug>(type_index(typeid(string)), "describerMethod", *this),
+              make_ptr<Plug>(type_index(typeid(string)), "describerPreset", *this)};
+    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "features", *this);
 }
 
-vector<Command> FeatureExtraction::prepare(Cache& cache, bool& blocking)
+vector<Command> FeatureExtraction::prepare(Cache& cache, Environment& environment, bool& blocking)
 {
     vector<Command> commands;
+
+    auto outDir = environment.local(Environment::Key::CACHE_DIRECTORY) + "/matches";
 
     auto getJSON = [&](const string& path) -> QJsonObject
     {
@@ -41,26 +43,28 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, bool& blocking)
         return document.object();
     };
 
-    auto pSfm = plug("sfmdata");
-    AttributeList list;
-    for(auto& aSfm : cache.attributes(pSfm))
+    AttributeList outlist;
+    for(auto& aSfm : cache.get(plug("sfmdata")))
     {
         // check the 'sfmdata' value
-        if(!cache.exists(aSfm))
-            throw invalid_argument("FeatureExtraction: sfm_data file not found");
+        auto sfmref = aSfm->get<FileSystemRef>();
+        if(!sfmref.exists())
+        {
+            blocking = true;
+            return commands;
+        }
 
         // read the sfm_data json file and retrieve all feat/desc filenames
         bool createCmd = false;
-        QJsonObject json = getJSON(cache.location(aSfm));
+        QJsonObject json = getJSON(sfmref.toString());
         for(auto view : json.value("views").toArray())
         {
             int key = view.toObject().value("key").toInt();
-            string basename = cache.root() + "matches/" + to_string(key);
-            auto aFeat = make_ptr<Attribute>(basename + ".feat");
-            auto aDesc = make_ptr<Attribute>(basename + ".desc");
-            list.emplace_back(aFeat);
-            list.emplace_back(aDesc);
-            if(!cache.exists(aFeat) || !cache.exists(aDesc))
+            FileSystemRef featref(outDir, to_string(key), ".feat");
+            FileSystemRef descref(outDir, to_string(key), ".feat");
+            outlist.emplace_back(make_ptr<Attribute>(featref));
+            outlist.emplace_back(make_ptr<Attribute>(descref));
+            if(!featref.exists() || !descref.exists())
                 createCmd = true;
         }
 
@@ -68,15 +72,15 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, bool& blocking)
         if(createCmd)
         {
             Command c({
-                "--compute", type(),           // meshroom compute mode
-                "--",                          // node options:
-                "-i", cache.location(aSfm),    // input sfm_data file
-                "-o", cache.root() + "matches" // output match directory
+                "--compute", type(),     // meshroom compute mode
+                "--",                    // node options:
+                "-i", sfmref.toString(), // input sfm_data file
+                "-o", outDir             // output match directory
             });
             commands.emplace_back(c);
         }
     }
-    cache.setAttributes(output, list);
+    cache.set(output, outlist);
 
     return commands;
 }

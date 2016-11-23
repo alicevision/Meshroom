@@ -21,8 +21,8 @@ Graph::Graph(QObject* parent)
         return;
 
     // retrieve parent application
-    _application = qobject_cast<Application*>(scene->parent());
-    Q_CHECK_PTR(_application);
+    auto application = qobject_cast<Application*>(scene->parent());
+    Q_CHECK_PTR(application);
 
     // callbacks
     _graph.onCleared = [&, scene]()
@@ -31,15 +31,14 @@ Graph::Graph(QObject* parent)
         scene->undoStack()->clear();
         _edges->clear();
         _nodes->clear();
-        Q_EMIT dataChanged();
     };
-    _graph.onNodeAdded = [&](Ptr<Node> n)
+    _graph.onNodeAdded = [&, application](Ptr<Node> n)
     {
         QString nodetype = QString::fromStdString(n->type());
         QString nodename = QString::fromStdString(n->name);
         // retrieve node descriptor
-        Q_CHECK_PTR(_application->pluginNodes());
-        PluginNode* pluginnode = _application->pluginNodes()->get(nodetype);
+        Q_CHECK_PTR(application->pluginNodes());
+        PluginNode* pluginnode = application->pluginNodes()->get(nodetype);
         Q_CHECK_PTR(pluginnode);
         QJsonObject nodemetadata = pluginnode->metadata();
         // update descriptor with new name
@@ -48,12 +47,10 @@ Graph::Graph(QObject* parent)
         auto node = new nodeeditor::Node;
         node->deserializeFromJSON(nodemetadata);
         _nodes->add(node);
-        Q_EMIT dataChanged();
     };
     _graph.onNodeRemoved = [&](const std::string& nodename)
     {
         _nodes->remove(QString::fromStdString(nodename));
-        Q_EMIT dataChanged();
     };
     _graph.onEdgeAdded = [&](Ptr<Plug> src, Ptr<Plug> target)
     {
@@ -66,7 +63,6 @@ Graph::Graph(QObject* parent)
         auto edge = new nodeeditor::Edge(*_nodes);
         edge->deserializeFromJSON(o);
         _edges->add(edge);
-        Q_EMIT dataChanged();
     };
     _graph.onEdgeRemoved = [&](Ptr<Plug> src, Ptr<Plug> target)
     {
@@ -79,26 +75,20 @@ Graph::Graph(QObject* parent)
         _edges->remove(o);
         // add a child command
         new RemoveEdgeCmd(this, o, _lastCmd);
-        Q_EMIT dataChanged();
     };
-    _graph.cache.onAttributeChanged = [&](Ptr<Plug> plug, AttributeList attr)
+    _cache.onAttributeChanged = [&](Ptr<Plug> plug, AttributeList attr)
     {
         QString nodename = QString::fromStdString(plug->owner.name);
         QString plugname = QString::fromStdString(plug->name);
         auto attributeToQVariant = [&](Ptr<Attribute> attribute) -> QVariant
         {
-            switch(attribute->_type)
-            {
-                case Attribute::Type::BOOL:
-                    return QVariant(attribute->_bool);
-                case Attribute::Type::INT:
-                    return QVariant(attribute->_int);
-                case Attribute::Type::FLOAT:
-                    return QVariant(attribute->_float);
-                case Attribute::Type::STRING:
-                    return QVariant(QString::fromStdString(toString(attribute)));
-            }
-            return QVariant();
+            if(attribute->variant.is<bool>())
+                return QVariant(attribute->get<bool>());
+            if(attribute->variant.is<int>())
+                return QVariant(attribute->get<int>());
+            if(attribute->variant.is<float>())
+                return QVariant(attribute->get<float>());
+            return QVariant(QString::fromStdString(attribute->toString()));
         };
         auto attributeListToQVariant = [&](AttributeList attributes) -> QVariant
         {
@@ -134,7 +124,6 @@ Graph::Graph(QObject* parent)
         if(att)
         {
             att->setValue(QJsonValue::fromVariant(attributeListToQVariant(attr)));
-            Q_EMIT dataChanged();
             return;
         }
         // in case of an output
@@ -142,7 +131,6 @@ Graph::Graph(QObject* parent)
         if(att)
         {
             att->setValue(QJsonValue::fromVariant(attributeListToQVariant(attr)));
-            Q_EMIT dataChanged();
             return;
         }
         qCritical() << "unable to update attribute value, attribute" << plugname << "not found";
@@ -253,7 +241,7 @@ void Graph::deserializeFromJSON(const QJsonObject& obj)
 
 QUrl Graph::cacheUrl() const
 {
-    QString path = QString::fromStdString(_graph.cache.root());
+    QString path = QString::fromStdString(_environment.local(Environment::Key::CACHE_DIRECTORY));
     return QUrl::fromLocalFile(path);
 }
 
@@ -261,7 +249,7 @@ void Graph::setCacheUrl(const QUrl& url)
 {
     if(url == cacheUrl())
         return;
-    _graph.cache.setRoot(url.toLocalFile().toStdString());
+    _environment.push(Environment::Key::CACHE_DIRECTORY, url.toLocalFile().toStdString());
     Q_EMIT cacheUrlChanged();
 }
 

@@ -28,8 +28,12 @@ void Worker::compute()
     if(!dir.exists())
         dir.mkpath(".");
 
-    // in case the node name is empty, operate on graph leaves
+    // get dg graph & cache
     auto& dggraph = _graph->coreGraph();
+    auto& dgcache = _graph->coreCache();
+    auto& dgenvironment = _graph->coreEnvironment();
+
+    // in case the node name is empty, operate on graph leaves
     if(_node.isEmpty())
     {
         NodeList leaves = dggraph.leaves();
@@ -58,7 +62,7 @@ void Worker::compute()
     try
     {
         _runner->onStatusChanged = onStatusChanged;
-        _runner->operator()(dggraph, _node.toStdString());
+        _runner->operator()(dggraph, dgcache, dgenvironment, _node.toStdString());
     }
     catch(std::exception& e)
     {

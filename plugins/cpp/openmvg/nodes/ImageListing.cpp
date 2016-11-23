@@ -7,33 +7,22 @@ using namespace dg;
 ImageListing::ImageListing(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "files", *this)};
-    output = make_ptr<Plug>(Attribute::Type::STRING, "images", *this);
+    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "files", *this)};
+    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "images", *this);
 }
 
-vector<Command> ImageListing::prepare(Cache& cache, bool& blocking)
+vector<Command> ImageListing::prepare(Cache& cache, Environment& environment, bool& blocking)
 {
-    auto file_extension = [](const string& path) -> string
+    AttributeList outputs;
+    for(auto& aFile : cache.get(plug("files")))
     {
-        auto ext = path.substr(path.find_last_of(".") + 1);
-        for_each(ext.begin(), ext.end(), [](char& in)
-                 {
-                     in = ::toupper(in);
-                 });
-        return ext;
-    };
-
-    vector<Command> commands;
-    auto pFiles = plug("files");
-    AttributeList list;
-    for(auto& aFiles : cache.attributes(pFiles))
-    {
-        auto path = cache.location(aFiles);
-        if(file_extension(path) == "JPG")
-            list.emplace_back(aFiles);
+        FileSystemRef file(aFile->toString());
+        if(file.extension() == "JPG")
+            outputs.emplace_back(aFile);
     }
-    cache.setAttributes(output, list);
-    return commands;
+    cache.set(output, outputs);
+
+    return vector<Command>(); // nothing to compute
 }
 
 void ImageListing::compute(const vector<string>& arguments) const

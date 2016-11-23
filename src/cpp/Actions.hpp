@@ -11,22 +11,34 @@ struct EditAttributeAction
     {
         Q_CHECK_PTR(graph);
         using namespace dg;
-        auto makeCoreAttribute = [&](const QVariant& attribute) -> dg::Ptr<dg::Attribute>
+        auto toCoreAttributeList = [&](const QVariant& attribute) -> dg::AttributeList
         {
-            switch(attribute.type())
+            dg::AttributeList attributelist;
+            QVariantList variantlist = (attribute.type() == QVariant::List)
+                                           ? attribute.toList()
+                                           : QVariantList({attribute});
+            for(auto v : variantlist)
             {
-                case QVariant::Bool:
-                    return make_ptr<dg::Attribute>(attribute.toBool());
-                case QVariant::Double:
-                    return make_ptr<dg::Attribute>((float)attribute.toDouble());
-                case QVariant::Int:
-                    return make_ptr<dg::Attribute>(attribute.toInt());
-                case QVariant::String:
-                    return make_ptr<dg::Attribute>(attribute.toString().toStdString());
-                default:
-                    break;
+                switch(v.type())
+                {
+                    case QVariant::Bool:
+                        attributelist.emplace_back(make_ptr<dg::Attribute>(v.toBool()));
+                        break;
+                    case QVariant::Double:
+                        attributelist.emplace_back(make_ptr<dg::Attribute>((float)v.toDouble()));
+                        break;
+                    case QVariant::Int:
+                        attributelist.emplace_back(make_ptr<dg::Attribute>(v.toInt()));
+                        break;
+                    case QVariant::String:
+                        attributelist.emplace_back(
+                            make_ptr<dg::Attribute>(dg::FileSystemRef(v.toString().toStdString())));
+                        break;
+                    default:
+                        break;
+                }
             }
-            return nullptr;
+            return attributelist;
         };
         // read attribute description
         QString nodename = descriptor.value("node").toString(); // added dynamically
@@ -43,22 +55,17 @@ struct EditAttributeAction
                         << QString("%0::%1").arg(nodename).arg(plugname) << "- node not found";
             return false;
         }
-        // edit the attribute value
-        dg::AttributeList attributelist;
-        if(value.type() == QVariant::List)
-        {
-            for(auto v : value.toList())
-                attributelist.emplace_back(makeCoreAttribute(v));
-        }
-        else
-            attributelist.emplace_back(makeCoreAttribute(value));
-        if(!coreNode->setAttributes(plugname.toStdString(), attributelist))
+        // retrieve the plug
+        auto corePlug = coreNode->plug(plugname.toStdString());
+        if(!corePlug)
         {
             qCritical() << "unable to edit attribute"
-                        << QString("%0::%1").arg(nodename).arg(plugname)
-                        << "- invalid attribute name or value type";
+                        << QString("%0::%1").arg(nodename).arg(plugname) << "- plug not found";
             return false;
         }
+        // edit the attribute value
+        auto& coreCache = graph->coreCache();
+        coreCache.set(corePlug, toCoreAttributeList(value));
         return true;
     }
 };

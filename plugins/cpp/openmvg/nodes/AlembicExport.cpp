@@ -8,43 +8,42 @@ using namespace dg;
 AlembicExport::AlembicExport(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "sfmdata2", *this)};
-    output = make_ptr<Plug>(Attribute::Type::STRING, "abc", *this);
+    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata2", *this)};
+    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "abc", *this);
 }
 
-vector<Command> AlembicExport::prepare(Cache& cache, bool& blocking)
+vector<Command> AlembicExport::prepare(Cache& cache, Environment& environment, bool& blocking)
 {
     vector<Command> commands;
 
-    AttributeList list;
-    auto pSfm = plug("sfmdata2");
-    for(auto& aSfm : cache.attributes(pSfm))
+    auto outDir = environment.local(Environment::Key::CACHE_DIRECTORY);
+
+    AttributeList attributes;
+    for(auto& aSfm : cache.get(plug("sfmdata2")))
     {
-        // check the 'sfmdata2' value
-        if(!cache.exists(aSfm))
-            throw invalid_argument("AlembicExport: sfm_data file not found");
+        auto sfmRef = aSfm->get<FileSystemRef>();
 
         // register a new output attribute
-        auto aOut = make_ptr<Attribute>(cache.root() + "result.abc");
-        list.emplace_back(aOut);
+        FileSystemRef outRef(outDir, "result", ".abc");
+        attributes.emplace_back(make_ptr<Attribute>(outRef));
 
         // build the command line in case this output does not exists
-        if(!cache.exists(aOut))
+        if(!outRef.exists())
         {
             Command c({
-                "--compute", type(),        // meshroom compute mode
-                "--",                       // node options:
-                "-i", cache.location(aSfm), // input sfm_data file
-                "-o", cache.location(aOut), // output .abc file
-                "--INTRINSICS",             //
-                "--EXTRINSICS",             //
-                "--STRUCTURE",              //
-                "--OBSERVATIONS"            //
+                "--compute", type(),     // meshroom compute mode
+                "--",                    // node options:
+                "-i", sfmRef.toString(), // input sfm_data file
+                "-o", outRef.toString(), // output .abc file
+                "--INTRINSICS",          //
+                "--EXTRINSICS",          //
+                "--STRUCTURE",           //
+                "--OBSERVATIONS"         //
             });
             commands.emplace_back(c);
         }
     }
-    cache.setAttributes(output, list);
+    cache.set(output, attributes);
     return commands;
 }
 

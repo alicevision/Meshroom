@@ -9,41 +9,42 @@ using namespace dg;
 StructureFromMotion::StructureFromMotion(string nodeName)
     : Node(nodeName)
 {
-    inputs = {make_ptr<Plug>(Attribute::Type::STRING, "sfmdata", *this),
-              make_ptr<Plug>(Attribute::Type::STRING, "matches", *this)};
-    output = make_ptr<Plug>(Attribute::Type::STRING, "sfmdata2", *this);
+    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this),
+              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "matches", *this)};
+    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata2", *this);
 }
 
-vector<Command> StructureFromMotion::prepare(Cache& cache, bool& blocking)
+vector<Command> StructureFromMotion::prepare(Cache& cache, Environment& environment, bool& blocking)
 {
     vector<Command> commands;
 
-    auto pSfm = plug("sfmdata");
-    AttributeList list;
-    for(auto& aSfm : cache.attributes(pSfm))
+    auto cacheDir = environment.local(Environment::Key::CACHE_DIRECTORY);
+    auto matchDir = cacheDir + "/matches";
+    auto outDir = cacheDir + "/sfm";
+
+    AttributeList attributes;
+    for(auto& aSfm : cache.get(plug("sfmdata")))
     {
-        // check the 'sfmdata' value
-        if(!cache.exists(aSfm))
-            throw invalid_argument("StructureFromMotion: sfm_data file not found");
+        auto sfmRef = aSfm->get<FileSystemRef>();
 
         // register a new output attribute
-        auto aOut = make_ptr<Attribute>(cache.root() + "sfm/sfm_data.json");
-        list.emplace_back(aOut);
+        FileSystemRef outRef(outDir, "sfm_data", ".json");
+        attributes.emplace_back(make_ptr<Attribute>(outRef));
 
         // build the command line in case this output does not exists
-        if(!cache.exists(aOut))
+        if(!outRef.exists())
         {
             Command c({
-                "--compute", type(),            // meshroom compute mode
-                "--",                           // node options:
-                "-i", cache.location(aSfm),     // input sfm_data file
-                "-m", cache.root() + "matches", // input match directory
-                "-o", cache.root() + "sfm"      // output sfm directory
+                "--compute", type(),     // meshroom compute mode
+                "--",                    // node options:
+                "-i", sfmRef.toString(), // input sfm_data file
+                "-m", matchDir,          // input match directory
+                "-o", outDir             // output sfm directory
             });
             commands.emplace_back(c);
         }
     }
-    cache.setAttributes(output, list);
+    cache.set(output, attributes);
     return commands;
 }
 

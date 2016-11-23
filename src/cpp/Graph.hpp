@@ -34,6 +34,8 @@ public:
 
 public:
     dg::Graph& coreGraph() { return _graph; }
+    dg::Cache& coreCache() { return _cache; }
+    dg::Environment& coreEnvironment() { return _environment; }
     Q_SLOT QUrl cacheUrl() const;
     Q_SLOT void setCacheUrl(const QUrl&);
 
@@ -44,15 +46,15 @@ public:
     Q_SLOT bool isWorkerThreadRunning() const;
 
 public:
-    Q_SIGNAL void dataChanged();
     Q_SIGNAL void nodeNameChanged(const QString&, const QString&);
     Q_SIGNAL void cacheUrlChanged();
     Q_SIGNAL void isRunningChanged();
 
 private:
     dg::Graph _graph;
+    dg::Cache _cache;
+    dg::Environment _environment;
     WorkerThread* _thread = nullptr;
-    Application* _application = nullptr;
     UndoCommand* _lastCmd = nullptr; // used in callbacks to register child commands
 };
 

@@ -22,7 +22,17 @@ Item {
         Gallery {
             model: attribute.isConnected ? connectedAttribute.value : attribute.value
             enabled: !attribute.isConnected
-            closeable: false
+            gridIcon: "qrc:///images/grid.svg"
+            listIcon: "qrc:///images/list.svg"
+            background: Rectangle {
+                color: "#5BB1F7"
+                Image {
+                    anchors.fill: parent
+                    source: "qrc:///images/stripes.png"
+                    fillMode: Image.Tile
+                    opacity: 0.5
+                }
+            }
             onItemAdded: {
                 if(attribute.isConnected)
                     return;

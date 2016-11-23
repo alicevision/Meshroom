@@ -8,7 +8,6 @@ Package {
 
     // properties
     property bool selected: false
-    property bool editable: true
 
     // signals
     signal selectContiguous(int id)
@@ -28,14 +27,12 @@ Package {
 
     // functions
     function handleKeyEvent(event) {
-        if(!root.editable)
-            return;
         if (event.key == Qt.Key_Backspace || event.key == Qt.Key_Delete) {
             removeSelected();
             event.accepted = true;
         }
     }
-    function handleMouseEvent(mouse) {
+    function handleMouseEvent(mouse, callerDelegate) {
         if(mouse.button == Qt.LeftButton) {
             if(mouse.modifiers & Qt.ShiftModifier) {
                 selectContiguous(index);
@@ -45,13 +42,14 @@ Package {
                 root.selected ? unselect(index) : selectExtended(index);
                 return;
             }
-            if(mouse.button == Qt.LeftButton) {
-                root.selected ? unselect(index) : selectOne(index);
-                return;
-            }
+            selectOne(index);
+            return;
         }
         selectOne(index);
-        contextMenu.popup();
+        contextMenu.parent = callerDelegate;
+        contextMenu.x = mouse.x;
+        contextMenu.y = mouse.y;
+        contextMenu.open();
     }
 
     // list style delegate
@@ -71,7 +69,7 @@ Package {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: {
                 listDelegate.forceActiveFocus();
-                handleMouseEvent(mouse);
+                handleMouseEvent(mouse, listDelegate);
             }
         }
         Rectangle {
@@ -83,7 +81,6 @@ Package {
                     return Qt.rgba(1, 1, 1, 0.3);
                 return Qt.rgba(0, 0, 0, 0.1);
             }
-            opacity: 0.3
         }
         RowLayout {
             anchors.fill: parent
@@ -104,11 +101,10 @@ Package {
                     }
                 }
             }
-            ColumnLayout {
-                Label {
-                    text: modelData
-                    state: "xsmall"
-                }
+            Label {
+                Layout.fillWidth: true
+                text: modelData
+                state: "xsmall"
             }
             Item {
                 Layout.fillWidth: true
@@ -133,7 +129,7 @@ Package {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: {
                 gridDelegate.forceActiveFocus();
-                handleMouseEvent(mouse);
+                handleMouseEvent(mouse, gridDelegate);
             }
             Rectangle {
                 color: {
@@ -179,20 +175,12 @@ Package {
     Menu {
         id: contextMenu
         MenuItem {
-            text: root.selected ? "Unselect" : "Select"
-            onTriggered: root.selected ? unselect(index) : selectExtended(index)
-        }
-        MenuItem {
-            enabled: root.editable
             text: "Remove"
             onTriggered: removeOne(index)
         }
         MenuItem {
             text: "Open parent directory"
-            onTriggered: {
-                var urlStr = model.url.toString();
-                Qt.openUrlExternally(urlStr.substring(0, urlStr.lastIndexOf('/')));
-            }
+            onTriggered: Qt.openUrlExternally(modelData.substring(0, modelData.lastIndexOf('/')))
         }
     }
 

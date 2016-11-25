@@ -103,6 +103,8 @@ Frame {
             }
         }
         onWheel: {
+            if(panel.isOpened())
+                return;
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
             if(Math.min(image.width*image.scale*zoomFactor, image.height*image.scale*zoomFactor) < 10)
                 return
@@ -172,7 +174,9 @@ Frame {
                 id: sourceListView
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                ScrollBar.vertical: ScrollBar {}
                 spacing: 1
+                clip: true
                 delegate: Button {
                     width: ListView.view.width
                     height: 30
@@ -188,7 +192,7 @@ Frame {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.margins: 4
-        text: image.scale.toFixed(1) + " x"
+        text: image.scale.toFixed(1) + "x"
         state: "xsmall"
     }
 }

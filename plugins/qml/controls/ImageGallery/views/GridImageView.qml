@@ -8,7 +8,7 @@ Item {
 
     // properties
     property variant visualModel: null
-    property real thumbnailSize: 130
+    property real thumbnailSize: 60
 
     // gridview
     GridView {
@@ -20,29 +20,5 @@ Item {
         cellHeight: root.thumbnailSize
         model: visualModel.parts.grid
         clip: true
-    }
-
-    // bottom menu
-    Item {
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: 30
-        Rectangle {
-            anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.3)
-        }
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 4
-            anchors.rightMargin: 4
-            spacing: 0
-            Slider {
-                Layout.fillWidth: true
-                from: 50
-                to: 150
-                value: 60
-                onPositionChanged: root.thumbnailSize = from+(to-from)*position
-            }
-        }
     }
 }

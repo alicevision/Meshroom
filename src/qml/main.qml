@@ -24,6 +24,8 @@ ApplicationWindow {
     // actions
     signal newScene()
     signal openScene()
+    signal openRecentScene()
+    signal importTemplate()
     signal importScene(string url)
     signal saveScene(var callback)
     signal saveSceneAs(var callback)
@@ -37,7 +39,6 @@ ApplicationWindow {
 
     // connections, menus and dialogs
     ApplicationConnections {}
-    ApplicationMenus {}
     ApplicationDialogs { id: _dialogs }
 
     // header

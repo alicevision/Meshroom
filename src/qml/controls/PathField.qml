@@ -31,6 +31,7 @@ RowLayout {
     TextField {
         id: textField
         Layout.fillWidth: true
+        selectByMouse: true
         onEditingFinished: root.editingFinished()
     }
     ToolButton {

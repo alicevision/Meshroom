@@ -114,14 +114,14 @@ Frame {
                 id: abcEntity
                 particleSize: 0.1
                 onObjectPicked: {
-                    if(cameraController.moving)
-                        return;
-                    mainCamera.position = transform.translation;
-                    mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
-                    mainCamera.viewCenter = transform.translation.plus(Qt.vector3d(0, 0, -1));
-                    mainCamera.roll(transform.rotationZ);
-                    mainCamera.pan(transform.rotationY);
-                    mainCamera.tilt(transform.rotationX);
+                    // if(cameraController.moving)
+                    //     return;
+                    // mainCamera.position = transform.translation;
+                    // mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
+                    // mainCamera.viewCenter = transform.translation.plus(Qt.vector3d(0, 0, -1));
+                    // mainCamera.roll(transform.rotationZ);
+                    // mainCamera.pan(transform.rotationY);
+                    // mainCamera.tilt(transform.rotationX);
                 }
             }
 

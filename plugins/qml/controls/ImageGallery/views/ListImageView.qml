@@ -21,29 +21,4 @@ Item {
         spacing: 4
         clip: true
     }
-
-    // bottom menu
-    Item {
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: 30
-        Rectangle {
-            anchors.fill: parent
-            opacity: 0.6
-            color: Qt.rgba(0, 0, 0, 0.3)
-        }
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 4
-            anchors.rightMargin: 4
-            spacing: 0
-            Slider {
-                Layout.fillWidth: true
-                from: 30
-                to: 100
-                value: 50
-                onPositionChanged: root.thumbnailSize = from+(to-from)*position
-            }
-        }
-    }
 }

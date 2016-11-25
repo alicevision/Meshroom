@@ -7,7 +7,7 @@ import "controls"
 Item {
 
     property Component openScene: FileDialog {
-        title: "Please select a meshroom file"
+        title: "Open file"
         folder: "/"
         selectExisting: true
         selectFolder: false
@@ -16,7 +16,7 @@ Item {
         nameFilters: [ "Meshroom file (*.meshroom)" ]
     }
     property Component saveScene: FileDialog {
-        title: "Please select a meshroom file"
+        title: "Save file"
         folder: "/"
         selectExisting: false
         selectFolder: false
@@ -24,17 +24,61 @@ Item {
         sidebarVisible: false
         nameFilters: [ "Meshroom file (*.meshroom)" ]
     }
-    property Component maySaveScene: Popup {
-        signal accepted()
+    property Component openRecentScene: Popup {
+        signal accepted(var url)
         signal rejected()
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 10
             Label {
+                text: "Recent files"
+                enabled: false
+            }
+            ListView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                model: _application.settings.recentFiles
+                ScrollBar.vertical: ScrollBar { active: true }
+                delegate: Button {
+                    width: parent.width
+                    text: modelData.toString().replace("file://", "")
+                    onClicked: { accepted(modelData); close(); }
+                }
+                clip: true
+            }
+            Button {
+                Layout.alignment: Qt.AlignRight
+                text: "Clear"
+                onClicked: {
+                    _application.settings.clearRecentFiles()
+                    rejected(); close();
+                }
+            }
+        }
+        ToolButton {
+            anchors.horizontalCenter: parent.right
+            anchors.verticalCenter: parent.top
+            icon: "qrc:///images/close.svg"
+            onClicked: { rejected(); close(); }
+        }
+    }
+    property Component maySaveScene: Popup {
+        signal accepted()
+        signal rejected()
+        implicitWidth: 250
+        implicitHeight: 100
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 10
+            Label {
+                Layout.fillWidth: true
+                maximumLineCount:3
+                elide: Text.ElideLeft
+                wrapMode: Text.WordWrap
                 text: "Do you want to save changes?"
             }
             RowLayout {
-                Item { Layout.fillWidth: true }
+                Layout.alignment: Qt.AlignRight
                 Button {
                     text: "Yes"
                     onClicked: { accepted(); close(); }
@@ -87,16 +131,39 @@ Item {
             onClicked: { close(); }
         }
     }
+    property Component importTemplate: Popup {
+        signal accepted(var url)
+        signal rejected()
+        ListView {
+            anchors.fill: parent
+            anchors.margins: 10
+            model: _application.templates
+            ScrollBar.vertical: ScrollBar { active: true }
+            delegate: Button {
+                width: parent.width
+                text: modelData.name
+                onClicked: { accepted(modelData.url); close(); }
+            }
+            clip: true
+        }
+        ToolButton {
+            anchors.horizontalCenter: parent.right
+            anchors.verticalCenter: parent.top
+            icon: "qrc:///images/close.svg"
+            onClicked: { rejected(); close(); }
+        }
+    }
     property Component addNode: Popup {
         signal accepted(var selection)
         signal rejected()
         ListView {
             anchors.fill: parent
+            anchors.margins: 10
             model: _application.pluginNodes
             ScrollBar.vertical: ScrollBar { active: true }
             delegate: Button {
                 width: parent.width
-                text: modelData.plugin + "/" + modelData.type
+                text: modelData.plugin + "." + modelData.type
                 onClicked: { accepted(modelData.metadata); close(); }
             }
             clip: true

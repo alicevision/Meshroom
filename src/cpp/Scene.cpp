@@ -122,6 +122,11 @@ bool Scene::load(const QUrl& url)
     // deserialize the JSON document
     deserializeFromJSON(document.object());
 
+    // add to recent-file list
+    Application* application = qobject_cast<Application*>(parent());
+    if(application)
+        application->settings()->addRecentFile(url);
+
     // mark the undo stack as clean
     _undoStack->setClean();
 

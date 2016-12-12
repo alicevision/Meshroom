@@ -219,6 +219,13 @@
                     "tooltip": ""
                 },
                 {
+                    "name": "features",
+                    "key": "features",
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
+                },
+                {
                     "name": "treeFile",
                     "key": "treeFile",
                     "type": "TEXTFIELD",

@@ -16,7 +16,7 @@ vector<Command> AlembicExport::prepare(Cache& cache, Environment& environment, b
 {
     vector<Command> commands;
 
-    auto outDir = environment.local(Environment::Key::CACHE_DIRECTORY);
+    auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY);
 
     AttributeList attributes;
     for(auto& aSfm : cache.get(plug("sfmdata2")))
@@ -30,16 +30,18 @@ vector<Command> AlembicExport::prepare(Cache& cache, Environment& environment, b
         // build the command line in case this output does not exists
         if(!outRef.exists())
         {
-            Command c({
-                "--compute", type(),     // meshroom compute mode
-                "--",                    // node options:
-                "-i", sfmRef.toString(), // input sfm_data file
-                "-o", outRef.toString(), // output .abc file
-                "--INTRINSICS",          //
-                "--EXTRINSICS",          //
-                "--STRUCTURE",           //
-                "--OBSERVATIONS"         //
-            });
+            Command c(
+                {
+                    "--compute", type(),     // meshroom compute mode
+                    "--",                    // node options:
+                    "-i", sfmRef.toString(), // input sfm_data file
+                    "-o", outRef.toString(), // output .abc file
+                    "--INTRINSICS",          //
+                    "--EXTRINSICS",          //
+                    "--STRUCTURE",           //
+                    "--OBSERVATIONS"         //
+                },
+                environment);
             commands.emplace_back(c);
         }
     }

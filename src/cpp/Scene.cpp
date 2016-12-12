@@ -24,6 +24,10 @@ Scene::Scene(QObject* parent, const QUrl& url)
     , _undoStack(new UndoStack(this))
     , _graph(new Graph(this))
 {
+    auto executable = dg::Environment::system("MESHROOM_COMMAND_EXECUTABLE");
+    if(!executable.empty())
+        _graph->coreEnvironment().push(dg::Environment::Key::COMMAND_EXECUTABLE, executable);
+
     // callbacks
     auto setDefault_CB = [this]()
     {
@@ -52,6 +56,8 @@ void Scene::setUrl(const QUrl& url)
     if(_url == url)
         return;
     _url = url;
+    _graph->coreEnvironment().push(dg::Environment::Key::SCENE_FILE,
+                                   _url.toLocalFile().toStdString());
     Q_EMIT urlChanged();
 }
 

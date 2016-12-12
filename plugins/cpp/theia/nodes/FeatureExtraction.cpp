@@ -32,12 +32,14 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, bool& blocking)
         auto attribute = cache.addAttribute(output, key);
         if(!cache.exists(attribute))
         {
-            Command c({
-                "--compute", type(),            // meshroom compute mode
-                "--",                           // node options:
-                "-i", cache.location(input),    // input
-                "-o", cache.location(attribute) // output
-            });
+            Command c(
+                {
+                    "--compute", type(),            // meshroom compute mode
+                    "--",                           // node options:
+                    "-i", cache.location(input),    // input
+                    "-o", cache.location(attribute) // output
+                },
+                environment);
             commands.emplace_back(c);
         }
     }

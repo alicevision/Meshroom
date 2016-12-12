@@ -241,7 +241,7 @@ void Graph::deserializeFromJSON(const QJsonObject& obj)
 
 QUrl Graph::cacheUrl() const
 {
-    QString path = QString::fromStdString(_environment.local(Environment::Key::CACHE_DIRECTORY));
+    QString path = QString::fromStdString(_environment.get(Environment::Key::CACHE_DIRECTORY));
     return QUrl::fromLocalFile(path);
 }
 

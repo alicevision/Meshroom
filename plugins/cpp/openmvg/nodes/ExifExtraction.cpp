@@ -41,7 +41,7 @@ vector<Command> ExifExtraction::prepare(Cache& cache, Environment& environment, 
     json.insert("resources", QJsonValue::fromVariant(imageList));
 
     // read environment and retrieve the cache directory
-    auto outDir = environment.local(Environment::Key::CACHE_DIRECTORY);
+    auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY);
 
     // save this json object in a file
     string jsonPath = outDir + "/image_list.json";
@@ -59,13 +59,15 @@ vector<Command> ExifExtraction::prepare(Cache& cache, Environment& environment, 
     // build the command line in case this output does not exists
     if(!outRef.exists())
     {
-        Command c({
-            "--compute", type(),     // meshroom compute mode
-            "--",                    // node options:
-            "-j", jsonPath,          // input tmp json file
-            "-d", dbFile.toString(), // input sensors database
-            "-o", outDir             // output directory
-        });
+        Command c(
+            {
+                "--compute", type(),     // meshroom compute mode
+                "--",                    // node options:
+                "-j", jsonPath,          // input tmp json file
+                "-d", dbFile.toString(), // input sensors database
+                "-o", outDir             // output directory
+            },
+            environment);
         commands.emplace_back(c);
     }
     return commands;

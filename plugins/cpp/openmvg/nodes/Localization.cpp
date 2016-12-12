@@ -20,8 +20,8 @@ vector<Command> Localization::prepare(Cache& cache, Environment& environment, bo
 {
     vector<Command> commands;
 
-    auto cacheDir = environment.local(Environment::Key::CACHE_DIRECTORY) + "/localization/";
-    auto matchDir = environment.local(Environment::Key::CACHE_DIRECTORY) + "/matches/";
+    auto cacheDir = environment.get(Environment::Key::CACHE_DIRECTORY) + "/localization/";
+    auto matchDir = environment.get(Environment::Key::CACHE_DIRECTORY) + "/matches/";
 
     // check the 'sfmdata' value
     Ptr<Attribute> aSfmData = cache.getFirst(plug("sfmdata"));
@@ -48,15 +48,17 @@ vector<Command> Localization::prepare(Cache& cache, Environment& environment, bo
         // add a new comand
         if(!outRef.exists())
         {
-            Command c({
-                "--compute", type(),              // meshroom compute mode
-                "--",                             // node options:
-                "-i", sfmRef.toString(),          // - sfmdata file
-                "-q", imgRef.toString(),          // - image file
-                "-r", aResidualError->toString(), // - residual error
-                "-m", matchDir,                   // - matches dir
-                "-o", outDir                      // - output dir
-            });
+            Command c(
+                {
+                    "--compute", type(),              // meshroom compute mode
+                    "--",                             // node options:
+                    "-i", sfmRef.toString(),          // - sfmdata file
+                    "-q", imgRef.toString(),          // - image file
+                    "-r", aResidualError->toString(), // - residual error
+                    "-m", matchDir,                   // - matches dir
+                    "-o", outDir                      // - output dir
+                },
+                environment);
             commands.emplace_back(c);
         }
     }

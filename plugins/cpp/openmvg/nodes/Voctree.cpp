@@ -9,6 +9,7 @@ Voctree::Voctree(string nodeName)
     : Node(nodeName)
 {
     inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this),
+              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "features", *this),
               make_ptr<Plug>(type_index(typeid(FileSystemRef)), "treeFile", *this),
               make_ptr<Plug>(type_index(typeid(FileSystemRef)), "weightFile", *this)};
     output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "pairlist", *this);
@@ -18,7 +19,7 @@ vector<Command> Voctree::prepare(Cache& cache, Environment& environment, bool& b
 {
     vector<Command> commands;
 
-    auto outDir = environment.local(Environment::Key::CACHE_DIRECTORY);
+    auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY);
 
     // check the 'treeFile' value
     auto aTree = cache.getFirst(plug("treeFile"));
@@ -44,14 +45,16 @@ vector<Command> Voctree::prepare(Cache& cache, Environment& environment, bool& b
         // build the command line in case this output does not exists
         if(!outRef.exists())
         {
-            Command c({
-                "--compute", type(),        // meshroom compute mode
-                "--",                       // node options:
-                "-l", outDir + "/matches",  // input match directory
-                "-t", treeRef.toString(),   // input .tree file
-                "-w", weightRef.toString(), // input .weights file
-                "-o", outRef.toString()     // output pairlist.txt
-            });
+            Command c(
+                {
+                    "--compute", type(),        // meshroom compute mode
+                    "--",                       // node options:
+                    "-l", outDir + "/matches",  // input match directory
+                    "-t", treeRef.toString(),   // input .tree file
+                    "-w", weightRef.toString(), // input .weights file
+                    "-o", outRef.toString()     // output pairlist.txt
+                },
+                environment);
             commands.emplace_back(c);
         }
     }

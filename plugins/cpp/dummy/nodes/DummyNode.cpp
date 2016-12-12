@@ -22,12 +22,12 @@ std::vector<Command> DummyNode::prepare(Cache& cache, Environment& environment, 
         for(auto& input2 : cache.get(p2))
         {
             auto uid = UID(type(), {input1, input2});
-            auto outdirectory = environment.local(Environment::Key::CACHE_DIRECTORY);
+            auto outdirectory = environment.get(Environment::Key::CACHE_DIRECTORY);
             auto outfile = FileSystemRef(outdirectory, uid, ".cache");
             cache.push(output, {make_ptr<Attribute>(outfile)});
             if(!outfile.exists())
             {
-                Command c({outfile.toString()}, "/usr/bin/touch");
+                Command c({outfile.toString()}, environment);
                 commands.emplace_back(c);
             }
         }

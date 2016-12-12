@@ -24,7 +24,7 @@ vector<Command> FeatureMatching::prepare(Cache& cache, Environment& environment,
 {
     vector<Command> commands;
 
-    auto outDir = environment.local(Environment::Key::CACHE_DIRECTORY) + "/matches";
+    auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY) + "/matches";
 
     // check the 'pairlist' value
     auto aPairList = cache.getFirst(plug("pairlist"));
@@ -44,14 +44,16 @@ vector<Command> FeatureMatching::prepare(Cache& cache, Environment& environment,
         // build the command line in case this output does not exists
         if(!outRef.exists())
         {
-            Command c({
-                "--compute", type(),      // meshroom compute mode
-                "--",                     // node options:
-                "-i", sfmRef.toString(),  // input sfm_data file
-                "-l", pairRef.toString(), // input pairList file
-                "-n", "ANNL2",            // input method
-                "-o", outDir,             // output match directory
-            });
+            Command c(
+                {
+                    "--compute", type(),      // meshroom compute mode
+                    "--",                     // node options:
+                    "-i", sfmRef.toString(),  // input sfm_data file
+                    "-l", pairRef.toString(), // input pairList file
+                    "-n", "ANNL2",            // input method
+                    "-o", outDir,             // output match directory
+                },
+                environment);
             commands.emplace_back(c);
         }
     }

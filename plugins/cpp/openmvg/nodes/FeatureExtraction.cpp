@@ -23,7 +23,7 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, Environment& environmen
 {
     vector<Command> commands;
 
-    auto outDir = environment.local(Environment::Key::CACHE_DIRECTORY) + "/matches";
+    auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY) + "/matches";
 
     auto getJSON = [&](const string& path) -> QJsonObject
     {
@@ -71,12 +71,15 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, Environment& environmen
         // build the command line in case one feat/desc file does not exists
         if(createCmd)
         {
-            Command c({
-                "--compute", type(),     // meshroom compute mode
-                "--",                    // node options:
-                "-i", sfmref.toString(), // input sfm_data file
-                "-o", outDir             // output match directory
-            });
+            Command c(
+                {
+                    "--compute", type(),     // meshroom compute mode
+                    "--",                    // node options:
+                    "-i", sfmref.toString(), // input sfm_data file
+                    "-o", outDir,            // output match directory
+                    "-j", "0"                // number of jobs (0 for automatic mode)
+                },
+                environment);
             commands.emplace_back(c);
         }
     }

@@ -18,7 +18,7 @@ vector<Command> StructureFromMotion::prepare(Cache& cache, Environment& environm
 {
     vector<Command> commands;
 
-    auto cacheDir = environment.local(Environment::Key::CACHE_DIRECTORY);
+    auto cacheDir = environment.get(Environment::Key::CACHE_DIRECTORY);
     auto matchDir = cacheDir + "/matches";
     auto outDir = cacheDir + "/sfm";
 
@@ -34,13 +34,15 @@ vector<Command> StructureFromMotion::prepare(Cache& cache, Environment& environm
         // build the command line in case this output does not exists
         if(!outRef.exists())
         {
-            Command c({
-                "--compute", type(),     // meshroom compute mode
-                "--",                    // node options:
-                "-i", sfmRef.toString(), // input sfm_data file
-                "-m", matchDir,          // input match directory
-                "-o", outDir             // output sfm directory
-            });
+            Command c(
+                {
+                    "--compute", type(),     // meshroom compute mode
+                    "--",                    // node options:
+                    "-i", sfmRef.toString(), // input sfm_data file
+                    "-m", matchDir,          // input match directory
+                    "-o", outDir             // output sfm directory
+                },
+                environment);
             commands.emplace_back(c);
         }
     }

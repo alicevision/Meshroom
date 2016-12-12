@@ -55,7 +55,7 @@ vector<Command> FeatureMatching::prepare(Cache& cache, bool& blocking)
             options.emplace_back("-ex");
             options.emplace_back(cache.location(input));
         }
-        Command c(options);
+        Command c(options, environment);
         commands.emplace_back(c);
     }
     return commands;

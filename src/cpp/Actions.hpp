@@ -113,11 +113,8 @@ struct AddNodeAction
         QString realname = QString::fromStdString(coreNode->name);
         updatedDescriptor = descriptor;
         updatedDescriptor.insert("name", realname);
-
-        // TODO
-        // if(realname != nodename)
-        //     Q_EMIT nodeNameChanged(nodename, realname);
-
+        if(realname != nodename)
+            Q_EMIT graph->nodeNameChanged(nodename, realname);
         // set node attributes
         for(auto a : descriptor.value("inputs").toArray())
         {
@@ -125,7 +122,6 @@ struct AddNodeAction
             attributeDescriptor.insert("node", realname); // add a reference to the node
             EditAttributeAction::process(graph, attributeDescriptor);
         }
-
         // move the node
         MoveNodeAction::process(graph, updatedDescriptor);
         return true;

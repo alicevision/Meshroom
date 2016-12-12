@@ -34,6 +34,7 @@ Application::Application()
     };
     signal(SIGINT, handler);
     signal(SIGTERM, handler);
+    signal(SIGKILL, handler);
 }
 
 Application::Application(QQmlApplicationEngine& engine)

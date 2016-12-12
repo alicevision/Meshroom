@@ -48,6 +48,7 @@ public:
         return true;
     }
     bool undoImpl() override { return RemoveNodeAction::process(_graph, _updatedDesc); }
+
 private:
     Graph* _graph;
     QJsonObject _desc;
@@ -73,6 +74,7 @@ public:
     }
     bool redoImpl() override { return MoveNodeAction::process(_graph, _newdesc); }
     bool undoImpl() override { return MoveNodeAction::process(_graph, _olddesc); }
+
 private:
     Graph* _graph;
     QJsonObject _newdesc;
@@ -113,6 +115,7 @@ public:
     }
     bool redoImpl() override { return AddEdgeAction::process(_graph, _desc); }
     bool undoImpl() override { return RemoveEdgeAction::process(_graph, _desc); }
+
 protected:
     Graph* _graph;
     QJsonObject _desc;
@@ -130,6 +133,7 @@ public:
     }
     bool redoImpl() override { return RemoveEdgeAction::process(_graph, _desc); }
     bool undoImpl() override { return AddEdgeAction::process(_graph, _desc); }
+
 protected:
     Graph* _graph;
     QJsonObject _desc;
@@ -159,6 +163,7 @@ public:
     }
     bool redoImpl() override { return EditAttributeAction::process(_graph, _newdesc); }
     bool undoImpl() override { return EditAttributeAction::process(_graph, _olddesc); }
+
 protected:
     Graph* _graph;
     QJsonObject _newdesc;

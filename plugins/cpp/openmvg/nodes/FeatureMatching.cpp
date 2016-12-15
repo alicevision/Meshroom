@@ -24,19 +24,22 @@ vector<Command> FeatureMatching::prepare(Cache& cache, Environment& environment,
 {
     vector<Command> commands;
 
+    // out directory
     auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY) + "/matches";
 
-    // check the 'pairlist' value
+    // pairlist file
     auto aPairList = cache.getFirst(plug("pairlist"));
     if(!aPairList)
-        throw invalid_argument("FeatureExtraction: missing pairList attribute");
-    auto pairRef = aPairList->get<FileSystemRef>();
+        throw invalid_argument("FeatureExtraction: missing pairlist attribute");
+
+    // nearest matching method
+    auto aMethod = cache.getFirst(plug("method"));
+    if(!aMethod)
+        throw invalid_argument("FeatureExtraction: missing method attribute");
 
     AttributeList attributes;
     for(auto& aSfm : cache.get(plug("sfmdata")))
     {
-        auto sfmRef = aSfm->get<FileSystemRef>();
-
         // register a new output attribute
         FileSystemRef outRef(outDir, "matches", ".f.bin");
         attributes.emplace_back(make_ptr<Attribute>(outRef));
@@ -46,12 +49,12 @@ vector<Command> FeatureMatching::prepare(Cache& cache, Environment& environment,
         {
             Command c(
                 {
-                    "--compute", type(),      // meshroom compute mode
-                    "--",                     // node options:
-                    "-i", sfmRef.toString(),  // input sfm_data file
-                    "-l", pairRef.toString(), // input pairList file
-                    "-n", "ANNL2",            // input method
-                    "-o", outDir,             // output match directory
+                    "--compute", type(),         // meshroom compute mode
+                    "--",                        // node options:
+                    "-i", aSfm->toString(),      // input sfm_data file
+                    "-l", aPairList->toString(), // input pairList file
+                    "-n", aMethod->toString(),   // nearest matching method
+                    "-o", outDir,                // output match directory
                 },
                 environment);
             commands.emplace_back(c);

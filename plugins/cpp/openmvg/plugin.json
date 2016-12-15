@@ -73,7 +73,7 @@
                     "name": "describerPreset",
                     "key": "describerPreset",
                     "type": "COMBOBOX",
-                    "value": "NORMAL",
+                    "value": "HIGH",
                     "options": ["LOW", "MEDIUM", "NORMAL", "HIGH", "ULTRA"],
                     "tooltip": ""
                 }

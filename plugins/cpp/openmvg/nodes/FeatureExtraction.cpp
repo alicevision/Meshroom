@@ -23,7 +23,18 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, Environment& environmen
 {
     vector<Command> commands;
 
+    // out directory
     auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY) + "/matches";
+
+    // describer method
+    auto aDM = cache.getFirst(plug("describerMethod"));
+    if(!aDM)
+        throw invalid_argument("FeatureExtraction: missing describerMethod attribute");
+
+    // describer preset
+    auto aDP = cache.getFirst(plug("describerPreset"));
+    if(!aDP)
+        throw invalid_argument("FeatureExtraction: missing describerPreset attribute");
 
     auto getJSON = [&](const string& path) -> QJsonObject
     {
@@ -46,7 +57,7 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, Environment& environmen
     AttributeList outlist;
     for(auto& aSfm : cache.get(plug("sfmdata")))
     {
-        // check the 'sfmdata' value
+        // sfmdata file
         auto sfmref = aSfm->get<FileSystemRef>();
         if(!sfmref.exists())
         {
@@ -77,6 +88,8 @@ vector<Command> FeatureExtraction::prepare(Cache& cache, Environment& environmen
                     "--",                    // node options:
                     "-i", sfmref.toString(), // input sfm_data file
                     "-o", outDir,            // output match directory
+                    "-p", aDP->toString(),   // describer preset
+                    "-m", aDM->toString(),   // describer method
                     "-j", "0"                // number of jobs (0 for automatic mode)
                 },
                 environment);

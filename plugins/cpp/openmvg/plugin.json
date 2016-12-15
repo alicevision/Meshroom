@@ -7,7 +7,7 @@
     },
     "nodes": [
         {
-            "type": "AlembicExport",
+            "type": "openmvg.AlembicExport",
             "inputs": [
                 {
                     "name": "sfmdata2",
@@ -26,7 +26,7 @@
             ]
         },
         {
-            "type": "ExifExtraction",
+            "type": "openmvg.ExifExtraction",
             "inputs": [
                 {
                     "name": "images",
@@ -52,7 +52,7 @@
             ]
         },
         {
-            "type": "FeatureExtraction",
+            "type": "openmvg.FeatureExtraction",
             "inputs": [
                 {
                     "name": "sfmdata",
@@ -87,7 +87,7 @@
             ]
         },
         {
-            "type": "FeatureMatching",
+            "type": "openmvg.FeatureMatching",
             "inputs": [
                 {
                     "name": "sfmdata",
@@ -128,7 +128,7 @@
             ]
         },
         {
-            "type": "ImageListing",
+            "type": "openmvg.ImageListing",
             "inputs": [
                 {
                     "name": "files",
@@ -147,7 +147,7 @@
             ]
         },
         {
-            "type": "Localization",
+            "type": "openmvg.Localization",
             "inputs": [
                 {
                     "name": "sfmdata",
@@ -183,7 +183,7 @@
             ]
         },
         {
-            "type": "StructureFromMotion",
+            "type": "openmvg.StructureFromMotion",
             "inputs": [
                 {
                     "name": "sfmdata",
@@ -209,7 +209,7 @@
             ]
         },
         {
-            "type": "Voctree",
+            "type": "openmvg.Voctree",
             "inputs": [
                 {
                     "name": "sfmdata",

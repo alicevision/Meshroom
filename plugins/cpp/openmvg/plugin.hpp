@@ -23,21 +23,21 @@ public:
     {
         using namespace dg;
         Ptr<Node> node = nullptr;
-        if(type == "AlembicExport")
+        if(type == "openmvg.AlembicExport")
             node = make_ptr<AlembicExport>(name.toStdString());
-        if(type == "ExifExtraction")
+        if(type == "openmvg.ExifExtraction")
             node = make_ptr<ExifExtraction>(name.toStdString());
-        if(type == "FeatureExtraction")
+        if(type == "openmvg.FeatureExtraction")
             node = make_ptr<FeatureExtraction>(name.toStdString());
-        if(type == "FeatureMatching")
+        if(type == "openmvg.FeatureMatching")
             node = make_ptr<FeatureMatching>(name.toStdString());
-        if(type == "ImageListing")
+        if(type == "openmvg.ImageListing")
             node = make_ptr<ImageListing>(name.toStdString());
-        if(type == "Localization")
+        if(type == "openmvg.Localization")
             node = make_ptr<Localization>(name.toStdString());
-        if(type == "StructureFromMotion")
+        if(type == "openmvg.StructureFromMotion")
             node = make_ptr<StructureFromMotion>(name.toStdString());
-        if(type == "Voctree")
+        if(type == "openmvg.Voctree")
             node = make_ptr<Voctree>(name.toStdString());
         return node;
     }

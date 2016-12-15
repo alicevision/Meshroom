@@ -163,7 +163,7 @@ Item {
             ScrollBar.vertical: ScrollBar { active: true }
             delegate: Button {
                 width: parent.width
-                text: modelData.plugin + "." + modelData.type
+                text: modelData.type
                 onClicked: { accepted(modelData.metadata); close(); }
             }
             clip: true

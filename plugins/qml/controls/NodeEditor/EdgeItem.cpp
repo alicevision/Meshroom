@@ -44,6 +44,11 @@ void EdgeItem::hoverEnterEvent(QHoverEvent*)
 
 void EdgeItem::mousePressEvent(QMouseEvent* event)
 {
+    if(!_acceptedButtons.testFlag(event->button()))
+    {
+        event->setAccepted(false);
+        return;
+    }
     auto e = new MouseEvent(event);
     Q_EMIT pressed(e);
     e->deleteLater();
@@ -58,6 +63,11 @@ void EdgeItem::mouseReleaseEvent(QMouseEvent* event)
 
 void EdgeItem::mouseDoubleClickEvent(QMouseEvent* event)
 {
+    if(!_acceptedButtons.testFlag(event->button()))
+    {
+        event->setAccepted(false);
+        return;
+    }
     auto e = new MouseEvent(event);
     Q_EMIT doubleClicked(e);
     e->deleteLater();

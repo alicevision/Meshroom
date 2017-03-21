@@ -42,6 +42,8 @@ class EdgeItem : public QQuickItem
     Q_PROPERTY(
         qreal hullThickness READ hullThickness WRITE setHullThickness NOTIFY hullThicknessChanged)
     Q_PROPERTY(bool containsMouse READ containsMouse NOTIFY containsMouseChanged)
+    Q_PROPERTY(Qt::MouseButtons acceptedButtons READ acceptedButtons WRITE setAcceptedButtons
+               NOTIFY acceptedButtonsChanged)
 
     enum UpdateType
     {
@@ -105,6 +107,15 @@ public:
         update();
     }
 
+    Qt::MouseButtons acceptedButtons() const { return _acceptedButtons; }
+    void setAcceptedButtons(Qt::MouseButtons buttons)
+    {
+        if(_acceptedButtons == buttons)
+            return;
+        _acceptedButtons = buttons;
+        Q_EMIT acceptedButtonsChanged();
+    }
+
     QQuickItem* sourceNode() const { return _sourceNode; }
     void setSourceNode(QQuickItem* node)
     {
@@ -156,6 +167,7 @@ protected:
     Q_SIGNAL void targetAttrChanged();
     Q_SIGNAL void thicknessChanged();
     Q_SIGNAL void hullThicknessChanged();
+    Q_SIGNAL void acceptedButtonsChanged();
     Q_SIGNAL void pressed(MouseEvent* mouse);
     Q_SIGNAL void released(MouseEvent* mouse);
     Q_SIGNAL void doubleClicked(MouseEvent* mouse);
@@ -182,6 +194,7 @@ private:
     qreal _hullThickness = 3.0;
     qreal _scaleFactor = 1.0;
     bool _containsMouse = false;
+    Qt::MouseButtons _acceptedButtons = Qt::LeftButton | Qt::RightButton;
     UpdateType _updateType = EdgeItem::None;
 };
 

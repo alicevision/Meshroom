@@ -115,13 +115,33 @@ struct AddNodeAction
         updatedDescriptor.insert("name", realname);
         if(realname != nodename)
             Q_EMIT graph->nodeNameChanged(nodename, realname);
-        // set node attributes
-        for(auto a : descriptor.value("inputs").toArray())
+
+        // get plugin node definition for this nodetype
+        PluginNode* pluginNode = application->pluginNodes()->get(nodetype);
+        auto typeInputs = pluginNode->metadata().value("inputs").toArray();
+        auto nodeInputs = descriptor.contains("inputs") ? descriptor.value("inputs").toArray()
+                                                        : QJsonArray();
+
+        // initialize input attributes based on node definition
+        for(auto a : typeInputs)
         {
-            QJsonObject attributeDescriptor = a.toObject();
-            attributeDescriptor.insert("node", realname); // add a reference to the node
-            EditAttributeAction::process(graph, attributeDescriptor);
+            // create an attribute descriptor from type input
+            QJsonObject attrDesc = a.toObject();
+            // add a reference to the node
+            attrDesc.insert("node", realname);
+            // look for this attribute in the added node descriptor
+            const auto& attr = std::find_if(nodeInputs.begin(), nodeInputs.end(),
+                         [&attrDesc](const QJsonValue& obj) {
+                            return obj.toObject().value("key").toString() == attrDesc.value("key").toString();
+            });
+            // update descriptor's 'value' with the added node attribute's 'value' if any
+            if(attr != nodeInputs.end() && attr->toObject().contains("value"))
+            {
+                attrDesc.insert("value", attr->toObject().value("value"));
+            }
+            EditAttributeAction::process(graph, attrDesc);
         }
+
         // move the node
         MoveNodeAction::process(graph, updatedDescriptor);
         return true;

@@ -160,6 +160,9 @@ public:
         Q_CHECK_PTR(attribute);
         _olddesc = attribute->serializeToJSON();
         _olddesc.insert("node", nodename);
+        // ensure value is serialized, even if it's the default one
+        if(attribute->hasDefaultValue())
+            _olddesc.insert("value", QJsonValue::fromVariant(attribute->value()));
     }
     bool redoImpl() override { return EditAttributeAction::process(_graph, _newdesc); }
     bool undoImpl() override { return EditAttributeAction::process(_graph, _olddesc); }

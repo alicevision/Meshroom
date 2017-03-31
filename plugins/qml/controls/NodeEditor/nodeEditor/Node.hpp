@@ -104,8 +104,10 @@ inline QJsonObject Node::serializeToJSON() const
     obj.insert("type", _type);
     obj.insert("x", _position.x());
     obj.insert("y", _position.y());
-    obj.insert("inputs", _inputs->serializeToJSON());
-    obj.insert("outputs", _outputs->serializeToJSON());
+    QJsonArray inputs = _inputs->serializeToJSON();
+    if(!inputs.empty())
+        obj.insert("inputs", inputs);
+    // Don't serialize outputs (will be re-computed from inputs)
     return obj;
 }
 

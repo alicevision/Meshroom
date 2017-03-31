@@ -174,7 +174,11 @@ inline QJsonArray AttributeCollection::serializeToJSON() const
 {
     QJsonArray array;
     for(auto a : _attributes)
-        array.append(a->serializeToJSON());
+    {
+        // Only serialize non-connected attributes with non-default values
+        if(!a->isConnected() && !a->hasDefaultValue())
+            array.append(a->serializeToJSON());
+    }
     return array;
 }
 

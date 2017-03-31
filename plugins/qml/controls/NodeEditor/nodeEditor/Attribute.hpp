@@ -13,6 +13,7 @@ class Attribute : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QVariant value READ value NOTIFY valueChanged)
+    Q_PROPERTY(QVariant defaultValue MEMBER _defaultValue CONSTANT)
     Q_PROPERTY(QString name READ name CONSTANT)
     Q_PROPERTY(QString key READ key CONSTANT)
     Q_PROPERTY(QString tooltip READ tooltip CONSTANT)
@@ -61,6 +62,8 @@ public:
     void setMax(const QVariant& max) { _max = max; }
     void setStep(const QVariant& step) { _step = step; }
     void setOptions(const QStringList& options) { _options = options; }
+    /// Return whether the current value is equal to the default value
+    bool hasDefaultValue() const;
 
 public:
     Q_SLOT QJsonObject serializeToJSON() const;
@@ -77,6 +80,7 @@ private:
 
 private:
     QVariant _value;
+    QVariant _defaultValue;
     QString _key;
     QString _name;
     QString _tooltip;
@@ -103,52 +107,37 @@ inline Attribute::Attribute(const Attribute& obj)
 
 inline void Attribute::setValue(const QVariant& value)
 {
+    if(_value == value)
+        return;
     _value = value;
     Q_EMIT valueChanged();
 }
+inline bool Attribute::hasDefaultValue() const
+{
+    return _value == _defaultValue;
+}
+
 
 inline QJsonObject Attribute::serializeToJSON() const
 {
-    auto toString = [](const AttributeType& type) -> QString
-    {
-        switch(type)
-        {
-            case TEXTFIELD:
-                return "TEXTFIELD";
-            case SLIDER:
-                return "SLIDER";
-            case COMBOBOX:
-                return "COMBOBOX";
-            case CHECKBOX:
-                return "CHECKBOX";
-            case IMAGELIST:
-                return "IMAGELIST";
-            case OBJECT3D:
-                return "OBJECT3D";
-            default:
-                return "UNKNOWN";
-        }
-    };
-
+    // Serialize only the data:
+    //  - related to identification (key)
+    //  - not contained in the node definition (non-default value)
     QJsonObject obj;
     obj.insert("key", _key);
-    obj.insert("name", _name);
-    obj.insert("type", toString(_type));
-    if(!_value.isNull())
+    if(!hasDefaultValue())
         obj.insert("value", QJsonValue::fromVariant(_value));
-    if(!_min.isNull())
-        obj.insert("min", QJsonValue::fromVariant(_min));
-    if(!_max.isNull())
-        obj.insert("max", QJsonValue::fromVariant(_max));
-    if(!_step.isNull())
-        obj.insert("step", QJsonValue::fromVariant(_step));
-    if(!_options.isEmpty())
-        obj.insert("options", QJsonValue::fromVariant(_options));
     return obj;
 }
 
 inline void Attribute::deserializeFromJSON(const QJsonObject& obj)
 {
+    // Deserialization of an attribute should come from the deserialization
+    // of a plugin node definition, hence contain the 'type' key.
+    Q_ASSERT_X(obj.contains("type"),
+               "deserializeFromJSON",
+               "Missing 'type' key. Can only deserialize an attribute from a node definition");
+
     auto toEnum = [](const QString& type) -> AttributeType
     {
         if(type == "TEXTFIELD")
@@ -166,8 +155,14 @@ inline void Attribute::deserializeFromJSON(const QJsonObject& obj)
         return UNKNOWN;
     };
 
+    _type = toEnum(obj.value("type").toString());
+
     if(obj.contains("value"))
-        _value = obj.value("value").toVariant();
+    {
+        // Store value as default and initial value
+        _defaultValue = obj.value("value").toVariant();
+        _value = _defaultValue;
+    }
     if(obj.contains("key"))
         _key = obj.value("key").toString();
     if(obj.contains("name"))
@@ -180,8 +175,7 @@ inline void Attribute::deserializeFromJSON(const QJsonObject& obj)
         _max = obj.value("max").toVariant();
     if(obj.contains("step"))
         _step = obj.value("step").toVariant();
-    if(obj.contains("type"))
-        _type = toEnum(obj.value("type").toString());
+
     if(obj.contains("options"))
     {
         _options.clear();

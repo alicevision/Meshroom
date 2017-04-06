@@ -24,6 +24,7 @@ public:
     const QVariant& max() const { return _max; }
     const QVariant& step() const { return _step; }
     const QStringList& options() const { return _options; }
+    bool enabled() const { return _enabled; }
     void setValue(const QVariant& value);
     void setKey(const QString& key) { _key = key; }
     void setName(const QString& name) { _name = name; }
@@ -33,6 +34,7 @@ public:
     void setMax(const QVariant& max) { _max = max; }
     void setStep(const QVariant& step) { _step = step; }
     void setOptions(const QStringList& options) { _options = options; }
+    void setEnabled(bool enabled) { _enabled = enabled; }
 
 public:
     void serializeToJSON(QJsonObject* obj) const;
@@ -43,11 +45,12 @@ private:
     QString _key;
     QString _name;
     QString _tooltip;
-    int _type;
+    int _type = 0;
     QVariant _min;
     QVariant _max;
     QVariant _step;
     QStringList _options;
+    bool _enabled = true;
 };
 
 } // namespace

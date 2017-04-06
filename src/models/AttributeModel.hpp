@@ -23,7 +23,8 @@ public:
         StepRole,
         OptionsRole,
         ValueRole,
-        ModelDataRole
+        ModelDataRole,
+        EnabledRole
     };
 
 public:

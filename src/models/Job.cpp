@@ -92,7 +92,7 @@ Enable generation of meshes.
 const QString undistortTooltip = R"(
 Enable undistort
 
-Export undistorted images from known camera parameter intrinsic
+Export undistorted images from known camera parameter intrinsic for MayaMVG
 )";
 
 namespace meshroom
@@ -299,6 +299,7 @@ bool Job::start(bool local)
     QProcess process;
     process.setProgram(startCommand);
     process.setArguments(arguments);
+    qInfo() << "Start Process: " << startCommand << " " << arguments;
     process.start();
     if(!process.waitForFinished())
     {
@@ -332,6 +333,7 @@ void Job::refresh()
                      SLOT(readProcessOutput(int, QProcess::ExitStatus)));
     process.setProgram(statusCommand);
     process.setArguments(arguments);
+    qInfo() << "Refresh Status: " << statusCommand << " " << arguments;
     process.start();
     if(!process.waitForFinished())
     {
@@ -365,7 +367,8 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     QJsonDocument jsondoc(QJsonDocument::fromJson(response.toUtf8(), &parseError));
     if(parseError.error != QJsonParseError::NoError)
     {
-        qCritical() << LOGID << "invalid response - parse error";
+        qCritical() << LOGID << "Invalid response - parse error";
+        qCritical() << "Response:\n" << response.toUtf8();
         setStatus(SYSTEMERROR);
         return;
     }
@@ -373,7 +376,8 @@ void Job::readProcessOutput(int exitCode, QProcess::ExitStatus exitStatus)
     QJsonObject json = jsondoc.object();
     if(!json.contains("completion") || !json.contains("status"))
     {
-        qCritical() << LOGID << "invalid response - missing values";
+        qCritical() << LOGID << "Invalid response - missing values";
+        qCritical() << "Response:\n" << response.toUtf8();
         setStatus(SYSTEMERROR);
         return;
     }
@@ -464,7 +468,7 @@ void Job::createDefaultGraph()
     Attribute* att = new Attribute();
     att->setType(2); // combo
     att->setKey("describerPreset");
-    att->setName("density");
+    att->setName("Density");
     att->setTooltip(densityTooltip);
     att->setValue("Normal");
     att->setOptions(QStringList({"Normal", "High", "Ultra"}));
@@ -473,10 +477,11 @@ void Job::createDefaultGraph()
     att = new Attribute();
     att->setType(2); // combo
     att->setKey("method");
-    att->setName("feature type");
+    att->setName("Feature Type");
     att->setTooltip(featureTypeTooltip);
     att->setValue("SIFT");
     att->setOptions(QStringList({"SIFT", "CCTAG3", "SIFT_CCTAG3"}));
+    att->setEnabled(false);
     step->attributes()->addAttribute(att);
     _steps->addStep(step);
 
@@ -517,7 +522,7 @@ void Job::createDefaultGraph()
     att = new Attribute();
     att->setType(3); // pair selector
     att->setKey("initial_pair");
-    att->setName("initial pair");
+    att->setName("Initial Pair");
     att->setTooltip(initialPairTooltip);
     att->setValue(QStringList({"", ""}));
     step->attributes()->addAttribute(att);
@@ -539,20 +544,23 @@ void Job::createDefaultGraph()
     att = new Attribute();
     att->setType(4); // boolean
     att->setKey("enabled");
-    att->setName("enabled");
+    att->setName("Meshing");
     att->setTooltip(enableMeshingTooltip);
     step->attributes()->addAttribute(att);
     att->setValue(true);
 
     att = new Attribute();
-    att->setType(1); // slider
+    att->setType(2); // combo
+    att->setOptions(QStringList({"1", "2", "4", "8", "16"}));
+    att->setValue("2");
+    //att->setType(1); // slider
     att->setKey("scale");
-    att->setName("meshing scale");
+    att->setName("Meshing Scale");
     att->setTooltip(scaleTooltip);
-    att->setValue(2);
-    att->setMin(0);
-    att->setMax(6);
-    att->setStep(1);
+    //att->setValue(2);
+    //att->setMin(0);
+    //att->setMax(6);
+    //att->setStep(1);
     step->attributes()->addAttribute(att);
     _steps->addStep(step);
 
@@ -561,10 +569,11 @@ void Job::createDefaultGraph()
     att = new Attribute();
     att->setType(4); // boolean
     att->setKey("enabled");
-    att->setName("enabled");
+    att->setName("Undistort Export");
     att->setTooltip(undistortTooltip);
     step->attributes()->addAttribute(att);
-    att->setValue(true);
+    att->setValue(false);
+    att->setEnabled(false);
     _steps->addStep(step);
 }
 

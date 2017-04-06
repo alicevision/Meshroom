@@ -53,6 +53,8 @@ QVariant AttributeModel::data(const QModelIndex& index, int role) const
             return attribute->value();
         case ModelDataRole:
             return QVariant::fromValue(attribute);
+        case EnabledRole:
+            return attribute->enabled();
         default:
             return QVariant();
     }
@@ -95,6 +97,7 @@ QHash<int, QByteArray> AttributeModel::roleNames() const
     roles[OptionsRole] = "options";
     roles[ValueRole] = "value";
     roles[ModelDataRole] = "modelData";
+    roles[EnabledRole] = "enabled";
     return roles;
 }
 

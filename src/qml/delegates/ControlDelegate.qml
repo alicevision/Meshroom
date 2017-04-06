@@ -21,10 +21,12 @@ Item {
         value: modelData.value
         onValueChanged: modelData.value = value
         updateValueWhileDragging: true
+        enabled: modelData.enabled
     }
     property Component textControl: TextField {
         text: modelData.value
         onEditingFinished: modelData.value = text
+        enabled: modelData.enabled
     }
     property Component comboControl: ComboBox {
         model: modelData.options
@@ -33,10 +35,12 @@ Item {
             currentIndex = index;
         }
         Component.onCompleted: currentIndex = find(modelData.value)
+        enabled: modelData.enabled
     }
     property Component pairControl: Item {
         width: parent.width
         height: childrenRect.height
+        enabled: modelData.enabled
         function setPairA(url) {
             var items = modelData.value;
             items[0] = url.replace("file://", "");
@@ -108,6 +112,7 @@ Item {
     property Component booleanControl: CheckBox {
         checked: modelData.value
         onClicked: modelData.value = checked
+        enabled: modelData.enabled
     }
 
     RowLayout {

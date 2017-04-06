@@ -3,10 +3,11 @@
 #include <QString>
 #include <QDebug>
 #include <QProcess>
+#include <iostream>
 
 struct PluginToolBox
 {
-    static void executeProcess(const QString& processName,
+    static int executeProcess(const QString& processName,
                                const std::vector<std::string>& arguments)
     {
         // arguments to qlist
@@ -44,7 +45,13 @@ struct PluginToolBox
         process.start();
         if(!process.waitForFinished(-1))
         {
-            qCritical() << "Localization::compute ERROR" << process.errorString();
+            qCritical() << "ERROR: " << process.errorString();
         }
+        if(process.exitCode() != 0)
+        {
+            QString errorMessage = QString("%1 (exit code: %2)").arg(process.errorString()).arg(process.exitCode());
+            throw std::runtime_error(errorMessage.toStdString());
+        }
+        return process.exitCode();
     }
 };

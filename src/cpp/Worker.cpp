@@ -33,14 +33,18 @@ void Worker::compute()
     auto& dgcache = _graph->coreCache();
     auto& dgenvironment = _graph->coreEnvironment();
 
+    std::vector<std::string> nodes;
     // in case the node name is empty, operate on graph leaves
     if(_node.isEmpty())
     {
-        NodeList leaves = dggraph.leaves();
-        if(leaves.empty())
-            return;
-        _node = QString::fromStdString(leaves[0]->name); // FIXME first leaf
+        for(auto node : dggraph.leaves())
+            nodes.push_back(node->name);
     }
+    else
+        nodes.emplace_back(_node.toStdString());
+
+    if(nodes.empty())
+        return;
 
     // instantiate a runner, depending on build mode
     switch(_mode)
@@ -62,7 +66,8 @@ void Worker::compute()
     try
     {
         _runner->onStatusChanged = onStatusChanged;
-        _runner->operator()(dggraph, dgcache, dgenvironment, _node.toStdString());
+        for(auto& node : nodes)
+            _runner->operator()(dggraph, dgcache, dgenvironment, node);
     }
     catch(std::exception& e)
     {

@@ -11,6 +11,8 @@ Rectangle {
     property variant node: modelData
     property variant inputs: modelData.inputs
     property variant outputs: modelData.outputs
+    property bool isActiveNode: false
+
     QtObject {
         id: _p
         property int attributeHeight: 15
@@ -136,6 +138,13 @@ Rectangle {
                 }
             }
         }
+        Rectangle {
+            anchors.right: parent.right
+            width: 8
+            height: width
+            radius: width/2
+            visible: isActiveNode
+            smooth: true
+        }
     }
-
 }

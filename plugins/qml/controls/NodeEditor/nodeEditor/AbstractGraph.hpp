@@ -12,10 +12,13 @@ class AbstractGraph : public QObject
     Q_OBJECT
     Q_PROPERTY(NodeCollection* nodes MEMBER _nodes CONSTANT)
     Q_PROPERTY(EdgeCollection* edges MEMBER _edges CONSTANT)
+    Q_PROPERTY(Node* activeNode MEMBER _activeNode NOTIFY activeNodeChanged)
 
 public:
     AbstractGraph(QObject* parent = nullptr);
     virtual ~AbstractGraph() = default;
+
+    Q_SIGNAL void activeNodeChanged();
 
 protected:
     virtual Q_INVOKABLE void clear() = 0;
@@ -38,6 +41,7 @@ public:
 protected:
     NodeCollection* _nodes = new NodeCollection(this);
     EdgeCollection* _edges = new EdgeCollection(*_nodes, this);
+    Node* _activeNode = nullptr;
 };
 
 inline AbstractGraph::AbstractGraph(QObject* parent)

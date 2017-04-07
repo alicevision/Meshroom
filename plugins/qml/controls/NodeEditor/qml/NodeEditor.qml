@@ -84,7 +84,9 @@ Item {
             Repeater {
                 id: nodeRepeater
                 model: root.graph ? root.graph.nodes : 0
-                delegate: NodeDelegate {}
+                delegate: NodeDelegate {
+                    isActiveNode: root.graph.activeNode == modelData
+                }
             }
             Repeater {
                 id: edgeRepeater

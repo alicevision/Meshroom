@@ -62,6 +62,7 @@ Graph::Graph(QObject* parent)
         auto edge = new nodeeditor::Edge(*_nodes);
         edge->deserializeFromJSON(o);
         _edges->add(edge);
+        _nodesStatusDirty = true;
     };
     _graph.onEdgeRemoved = [&](Ptr<Plug> src, Ptr<Plug> target)
     {
@@ -72,6 +73,7 @@ Graph::Graph(QObject* parent)
         o.insert("plug", QString::fromStdString(target->name));
         // remove edge
         _edges->remove(o);
+        _nodesStatusDirty = true;
         // add a child command
         new RemoveEdgeCmd(this, o, _lastCmd);
     };
@@ -123,6 +125,7 @@ Graph::Graph(QObject* parent)
         if(att)
         {
             att->setValue(QJsonValue::fromVariant(attributeListToQVariant(attr)));
+            _nodesStatusDirty = true;
             return;
         }
         // in case of an output
@@ -456,6 +459,18 @@ void Graph::setCacheUrl(const QUrl& url)
         return;
     _environment.push(Environment::Key::CACHE_DIRECTORY, url.toLocalFile().toStdString());
     Q_EMIT cacheUrlChanged();
+}
+
+void Graph::refreshStatus()
+{
+    // Update nodes status from graph leaves
+    // if marked as dirty (i.e a plug has been changed)
+    // TODO: make this less global and allow partial update
+    if(_nodesStatusDirty)
+    {
+        _nodesStatusDirty = false;
+        startWorkerThread(Worker::PREPARE, "");
+    }
 }
 
 void Graph::startWorkerThread(Worker::Mode mode, const QString& node)

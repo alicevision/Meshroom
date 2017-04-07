@@ -49,6 +49,7 @@ public:
     QString name() const { return _name; }
     Q_SLOT QUrl cacheUrl() const;
     Q_SLOT void setCacheUrl(const QUrl&);
+    void refreshStatus();
 
 public:
     // worker
@@ -70,6 +71,7 @@ private:
     WorkerThread* _thread = nullptr;
     UndoCommand* _lastCmd = nullptr; // used in callbacks to register child commands
     UndoStack* _undoStack = nullptr;
+    bool _nodesStatusDirty = false;
 };
 
 } // namespace

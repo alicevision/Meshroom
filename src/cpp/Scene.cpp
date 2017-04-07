@@ -25,6 +25,11 @@ Scene::Scene(QObject* parent, const QUrl& url)
     , _undoStack(new UndoStack(this))
 {
 
+    connect(_undoStack, &UndoStack::indexChanged, [this](){
+        if(_graph)
+            _graph->refreshStatus();
+    });
+
     // callbacks
     auto setDefault_CB = [this]()
     {
@@ -291,6 +296,7 @@ void Scene::setGraph(Graph *graph)
     if(graph == _graph)
         return;
     _graph = graph;
+    _graph->refreshStatus();
     Q_EMIT graphChanged();
 }
 

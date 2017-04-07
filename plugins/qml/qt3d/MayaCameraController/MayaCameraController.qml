@@ -23,7 +23,7 @@ Entity {
 
     MouseHandler {
         sourceDevice: mouseSourceDevice
-        onPressAndHold: mousePressed(mouse) // onPressed not called?
+        onPressed: mousePressed(mouse) // onPressed not called?
         onReleased: mouseReleased(mouse)
     }
 

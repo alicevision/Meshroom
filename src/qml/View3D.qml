@@ -138,7 +138,7 @@ Frame {
         						vertexBaseType: Attribute.Float
         						vertexSize: 3
         						count: 0
-        						name: defaultPositionAttributeName()
+                                name: defaultPositionAttributeName
         						buffer: Buffer {
         							type: Buffer.VertexBuffer
         							data: {
@@ -192,7 +192,7 @@ Frame {
         						vertexBaseType: Attribute.Float
         						vertexSize: 3
         						count: 6
-        						name: defaultPositionAttributeName()
+                                name: defaultPositionAttributeName
         						buffer: Buffer {
         							type: Buffer.VertexBuffer
         							data: Float32Array([
@@ -210,7 +210,7 @@ Frame {
         						vertexBaseType: Attribute.Float
         						vertexSize: 3
         						count: 6
-        						name: defaultColorAttributeName()
+                                name: defaultColorAttributeName
         						buffer: Buffer {
         							type: Buffer.VertexBuffer
         							data: Float32Array([

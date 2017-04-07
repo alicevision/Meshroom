@@ -7,7 +7,7 @@ namespace meshroom
 UndoStack::UndoStack(QObject* parent)
     : QUndoStack(parent)
 {
-    connect(this, &QUndoStack::cleanChanged, this, &UndoStack::dirtyChanged);
+    connect(this, &QUndoStack::cleanChanged, this, &UndoStack::isCleanChanged);
 }
 
 bool UndoStack::tryAndPush(UndoCommand* command)

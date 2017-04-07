@@ -52,6 +52,7 @@ Item {
         property double factor: 1.1
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        drag.threshold: 0
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
             if(Math.min(draggable.width*draggable.scale*zoomFactor, draggable.height*draggable.scale*zoomFactor) < 10)
@@ -87,7 +88,7 @@ Item {
             }
             Repeater {
                 id: edgeRepeater
-                model: root.graph.edges
+                model: nodeRepeater.model ? root.graph.edges : 0
                 delegate: EdgeItem {
                     id: edgeItem
                     property int sourceId: root.graph.nodes.rowIndex(modelData.source)
@@ -99,6 +100,7 @@ Item {
                     targetNode: nodeRepeater.itemAt(targetId)
                     targetAttr: targetNode.getInputAnchor(targetAttrID)
                     scaleFactor: parent.scale
+                    thickness: 1
                     color: containsMouse ? "#5BB1F7" : "#CCC"
                     onReleased: {
                         switch(mouse.button) {

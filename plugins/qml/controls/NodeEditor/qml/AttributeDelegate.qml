@@ -97,6 +97,7 @@ RowLayout {
             targetNode: draggable
             targetAttr: draggableEdgeAnchor
             visible: dragArea.drag.active
+            thickness: 1
         }
     }
     Label {

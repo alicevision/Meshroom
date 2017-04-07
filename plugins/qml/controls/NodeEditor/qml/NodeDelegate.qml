@@ -9,12 +9,17 @@ Rectangle {
 
     // dynamic properties
     property variant node: modelData
-    property variant inputs: model.inputs
-    property variant outputs: model.outputs
+    property variant inputs: modelData.inputs
+    property variant outputs: modelData.outputs
     QtObject {
         id: _p
         property int attributeHeight: 15
         property int attributeSpacing: 2
+    }
+
+    Component.onCompleted: {
+        x = modelData.position.x
+        y = modelData.position.y
     }
 
     // properties
@@ -50,7 +55,7 @@ Rectangle {
 
     // slots & behaviors
     Connections {
-        target: model.modelData
+        target: modelData
         onPositionChanged: {
             if(Math.round(root.x) !== node.position.x)
                 root.x = node.position.x

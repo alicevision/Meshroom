@@ -129,8 +129,6 @@ void AlembicEntity::createMaterials()
 // private
 void AlembicEntity::loadAbcArchive()
 {
-    if(!_url.isValid())
-        return;
 
     using namespace Qt3DRender;
     using namespace Alembic::Abc;
@@ -145,6 +143,9 @@ void AlembicEntity::loadAbcArchive()
     }
     for(auto& component : components())
         removeComponent(component);
+
+    if(!_url.isValid())
+        return;
 
     // load the abc archive
     Alembic::AbcCoreFactory::IFactory factory;

@@ -118,8 +118,8 @@ Item {
                 PathField {
                     Layout.fillWidth: true
                     selectFolder: true
-                    text: currentScene.graph.cacheUrl.toString().replace("file://", "")
-                    onEditingFinished: currentScene.graph.setCacheUrl("file://"+text)
+                    text: currentScene.cacheUrl.toString().replace("file://", "")
+                    onEditingFinished: currentScene.setCacheUrl("file://"+text)
                 }
                 Item { Layout.fillHeight: true }
             }

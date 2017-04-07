@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QUndoCommand>
-#include "Actions.hpp"
+#include "Scene.hpp"
 
 namespace meshroom
 {
@@ -10,7 +10,7 @@ class UndoCommand : public QUndoCommand
 {
 public:
     UndoCommand(QUndoCommand* parent = nullptr)
-        : QUndoCommand(parent){};
+        : QUndoCommand(parent){}
     virtual ~UndoCommand() = default;
     virtual bool redoImpl() = 0;
     virtual bool undoImpl() = 0;
@@ -34,116 +34,135 @@ private:
     bool _enabled = true;
 };
 
-class AddNodeCmd : public UndoCommand
+
+class GraphCmd : public UndoCommand
 {
 public:
-    AddNodeCmd(Graph* graph, const QJsonObject& desc)
-        : _graph(graph)
-        , _desc(desc){};
+    GraphCmd(Graph* graph, QUndoCommand* parent=nullptr)
+        : UndoCommand(parent)
+    {
+        _scene = qobject_cast<Scene*>(graph->parent());
+        Q_CHECK_PTR(_scene);
+        Q_ASSERT(_scene->graphs()->contains(graph));
+        _graphIdx = _scene->graphs()->indexOf(graph);
+    }
+
+    Graph* getGraph() const {
+        return _scene->graphs()->at(_graphIdx);
+    }
+
+private:
+    Scene* _scene = nullptr;
+    int _graphIdx;
+};
+
+class AddNodeCmd : public GraphCmd
+{
+public:
+    AddNodeCmd(Graph* graph, const QJsonObject& desc, QUndoCommand* parent=nullptr)
+        : GraphCmd(graph, parent)
+        , _desc(desc)
+    {}
+
     bool redoImpl() override
     {
-        if(!AddNodeAction::process(_graph, _desc, _updatedDesc))
+        if(!getGraph()->doAddNode(_desc, _updatedDesc))
             return false;
         setText(QString("Add node %1").arg(_updatedDesc.value("name").toString()));
         return true;
     }
-    bool undoImpl() override { return RemoveNodeAction::process(_graph, _updatedDesc); }
+    bool undoImpl() override {
+        return getGraph()->doRemoveNode(_updatedDesc);
+    }
 
 private:
-    Graph* _graph;
     QJsonObject _desc;
     QJsonObject _updatedDesc;
 };
 
-class MoveNodeCmd : public UndoCommand
+class MoveNodeCmd : public GraphCmd
 {
 public:
-    MoveNodeCmd(Graph* graph, const QJsonObject& desc)
-        : _graph(graph)
+    MoveNodeCmd(Graph* graph, const QJsonObject& desc, QUndoCommand* parent=nullptr)
+        : GraphCmd(graph, parent)
         , _newdesc(desc)
     {
         QString nodename = desc.value("name").toString();
         setText(QString("Move %1").arg(nodename));
-        Q_CHECK_PTR(graph);
-        auto guiNodes = _graph->nodes();
+        auto guiNodes = getGraph()->nodes();
         auto modelIndex = guiNodes->index(guiNodes->rowIndex(nodename));
         auto* node = guiNodes->data(modelIndex, nodeeditor::NodeCollection::ModelDataRole)
                          .value<nodeeditor::Node*>();
         Q_CHECK_PTR(node);
         _olddesc = node->serializeToJSON();
     }
-    bool redoImpl() override { return MoveNodeAction::process(_graph, _newdesc); }
-    bool undoImpl() override { return MoveNodeAction::process(_graph, _olddesc); }
+    bool redoImpl() override { return getGraph()->doMoveNode(_newdesc); }
+    bool undoImpl() override { return getGraph()->doMoveNode(_olddesc); }
 
 private:
-    Graph* _graph;
     QJsonObject _newdesc;
     QJsonObject _olddesc;
 };
 
-class RemoveNodeCmd : public UndoCommand
+class RemoveNodeCmd : public GraphCmd
 {
 public:
-    RemoveNodeCmd(Graph* graph, const QJsonObject& desc)
-        : _graph(graph)
+    RemoveNodeCmd(Graph* graph, const QJsonObject& desc, QUndoCommand* parent=nullptr)
+        : GraphCmd(graph, parent)
         , _desc(desc)
     {
         setText(QString("Remove %1").arg(_desc.value("name").toString()));
     }
-    bool redoImpl() override { return RemoveNodeAction::process(_graph, _desc); }
+    bool redoImpl() override { return getGraph()->doRemoveNode(_desc); }
     bool undoImpl() override
     {
         QJsonObject o;
-        bool b = AddNodeAction::process(_graph, _desc, o);
+        bool b = getGraph()->doAddNode(_desc, o);
         QUndoCommand::undo(); // call child commands (AddEdgeCmd(s))
         return b;
     }
 
 private:
-    Graph* _graph;
     QJsonObject _desc;
 };
 
-class AddEdgeCmd : public UndoCommand
+class AddEdgeCmd : public GraphCmd
 {
 public:
-    AddEdgeCmd(Graph* graph, const QJsonObject& desc)
-        : _graph(graph)
+    AddEdgeCmd(Graph* graph, const QJsonObject& desc, QUndoCommand* parent=nullptr)
+        : GraphCmd(graph, parent)
         , _desc(desc)
     {
         setText(QString("Add edge"));
     }
-    bool redoImpl() override { return AddEdgeAction::process(_graph, _desc); }
-    bool undoImpl() override { return RemoveEdgeAction::process(_graph, _desc); }
+    bool redoImpl() override { return getGraph()->doAddEdge(_desc); }
+    bool undoImpl() override { return getGraph()->doRemoveEdge(_desc); }
 
 protected:
-    Graph* _graph;
     QJsonObject _desc;
 };
 
-class RemoveEdgeCmd : public UndoCommand
+class RemoveEdgeCmd : public GraphCmd
 {
 public:
     RemoveEdgeCmd(Graph* graph, const QJsonObject& desc, QUndoCommand* parent = nullptr)
-        : UndoCommand(parent)
-        , _graph(graph)
+        : GraphCmd(graph, parent)
         , _desc(desc)
     {
         setText(QString("Remove edge"));
     }
-    bool redoImpl() override { return RemoveEdgeAction::process(_graph, _desc); }
-    bool undoImpl() override { return AddEdgeAction::process(_graph, _desc); }
+    bool redoImpl() override { return getGraph()->doRemoveEdge(_desc); }
+    bool undoImpl() override { return getGraph()->doAddEdge(_desc); }
 
 protected:
-    Graph* _graph;
     QJsonObject _desc;
 };
 
-class EditAttributeCmd : public UndoCommand
+class EditAttributeCmd : public GraphCmd
 {
 public:
-    EditAttributeCmd(Graph* graph, const QJsonObject& desc)
-        : _graph(graph)
+    EditAttributeCmd(Graph* graph, const QJsonObject& desc, QUndoCommand* parent=nullptr)
+        : GraphCmd(graph, parent)
         , _newdesc(desc)
     {
         // read node & attribute names
@@ -153,8 +172,7 @@ public:
         // set command text
         setText(QString("Edit attribute %1.%2").arg(nodename).arg(attributename));
         // store the current attribute description
-        Q_CHECK_PTR(graph);
-        auto* node = graph->node(nodename);
+        auto* node = getGraph()->node(nodename);
         Q_CHECK_PTR(node);
         auto* attribute = node->attribute(attributekey);
         Q_CHECK_PTR(attribute);
@@ -164,13 +182,70 @@ public:
         if(attribute->hasDefaultValue())
             _olddesc.insert("value", QJsonValue::fromVariant(attribute->value()));
     }
-    bool redoImpl() override { return EditAttributeAction::process(_graph, _newdesc); }
-    bool undoImpl() override { return EditAttributeAction::process(_graph, _olddesc); }
+    bool redoImpl() override { return getGraph()->doSetAttribute(_newdesc); }
+    bool undoImpl() override { return getGraph()->doSetAttribute(_olddesc); }
 
 protected:
-    Graph* _graph;
     QJsonObject _newdesc;
     QJsonObject _olddesc;
 };
+
+class AddGraphCmd : public UndoCommand
+{
+public:
+    AddGraphCmd(Scene* scene, const QJsonObject& graphdesc=QJsonObject(), int idx=-1, QUndoCommand* parent=nullptr)
+        : UndoCommand(parent)
+        , _scene(scene)
+        , _idx(idx)
+        , _graphdesc(graphdesc)
+    {
+        setText(QString("Add Graph"));
+    }
+    bool redoImpl() override {
+        _graph = _scene->createAndAddGraph(false, _graphdesc, _idx);
+        _idx = _scene->graphs()->indexOf(_graph);
+        return true;
+    }
+    bool undoImpl() override {
+        _scene->doDeleteGraph(_scene->graphs()->at(_idx));
+        return true;
+    }
+
+protected:
+    Scene* _scene;
+    int _idx;
+    Graph* _graph;
+    QJsonObject _graphdesc;
+};
+
+class DeleteGraphCmd : public UndoCommand
+{
+public:
+    DeleteGraphCmd(Scene* scene, int idx, QUndoCommand* parent=nullptr)
+        : UndoCommand(parent)
+        , _scene(scene)
+        , _idx(idx)
+    {
+        Graph* g = scene->graphs()->at(idx);
+        _wasCurrent = scene->graph() == g;
+        setText(QString("Delete Graph: %1").arg(g->name()));
+        _graphdesc = g->serializeToJSON();
+    }
+    bool redoImpl() override {
+        _scene->doDeleteGraph(_scene->graphs()->at(_idx));
+        return true;
+    }
+    bool undoImpl() override {
+        _scene->createAndAddGraph(false, _graphdesc, _idx);
+        return true;
+    }
+
+protected:
+    Scene* _scene;
+    int _idx;
+    bool _wasCurrent;
+    QJsonObject _graphdesc;
+};
+
 
 } // namespace

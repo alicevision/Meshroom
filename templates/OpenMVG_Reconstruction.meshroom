@@ -1,289 +1,103 @@
 {
-    "date": "2016-12-15T18:07:27",
-    "graph": {
-        "cacheUrl": "",
-        "edges": [
-            {
-                "plug": "images",
-                "source": "imageListing1",
-                "target": "exifExtraction1"
-            },
-            {
-                "plug": "sfmdata",
-                "source": "exifExtraction1",
-                "target": "featureExtraction1"
-            },
-            {
-                "plug": "features",
-                "source": "featureExtraction1",
-                "target": "featureMatching1"
-            },
-            {
-                "plug": "matches",
-                "source": "featureMatching1",
-                "target": "structureFromMotion1"
-            },
-            {
-                "plug": "sfmdata2",
-                "source": "structureFromMotion1",
-                "target": "alembicExport1"
-            },
-            {
-                "plug": "pairlist",
-                "source": "voctree1",
-                "target": "featureMatching1"
-            },
-            {
-                "plug": "features",
-                "source": "featureExtraction1",
-                "target": "voctree1"
-            },
-            {
-                "plug": "sfmdata",
-                "source": "exifExtraction1",
-                "target": "voctree1"
-            },
-            {
-                "plug": "sfmdata",
-                "source": "exifExtraction1",
-                "target": "featureMatching1"
-            },
-            {
-                "plug": "sfmdata",
-                "source": "exifExtraction1",
-                "target": "structureFromMotion1"
-            }
-        ],
-        "nodes": [
-            {
-                "inputs": [
-                    {
-                        "key": "files",
-                        "name": "files",
-                        "type": "IMAGELIST",
-                        "value": [
-                        ]
-                    }
-                ],
-                "name": "imageListing1",
-                "outputs": [
-                    {
-                        "key": "images",
-                        "name": "images",
-                        "type": "IMAGELIST"
-                    }
-                ],
-                "type": "openmvg.ImageListing",
-                "x": 22,
-                "y": 39
-            },
-            {
-                "inputs": [
-                    {
-                        "key": "sfmdata",
-                        "name": "sfmdata",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    },
-                    {
-                        "key": "describerMethod",
-                        "name": "describerMethod",
-                        "options": [
-                            "SIFT",
-                            "SIFT_FLOAT",
-                            "AKAZE_FLOAT",
-                            "AKAZE_MLDB"
-                        ],
-                        "type": "COMBOBOX",
-                        "value": "SIFT"
-                    },
-                    {
-                        "key": "describerPreset",
-                        "name": "describerPreset",
-                        "options": [
-                            "LOW",
-                            "MEDIUM",
-                            "NORMAL",
-                            "HIGH",
-                            "ULTRA"
-                        ],
-                        "type": "COMBOBOX",
-                        "value": "HIGH"
-                    }
-                ],
-                "name": "featureExtraction1",
-                "outputs": [
-                    {
-                        "key": "features",
-                        "name": "features",
-                        "type": "UNKNOWN"
-                    }
-                ],
-                "type": "openmvg.FeatureExtraction",
-                "x": 253,
-                "y": 41
-            },
-            {
-                "inputs": [
-                    {
-                        "key": "images",
-                        "name": "images",
-                        "type": "IMAGELIST",
-                        "value": [
-                        ]
-                    },
-                    {
-                        "key": "sensorWidthDatabase",
-                        "name": "sensorWidthDatabase",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    }
-                ],
-                "name": "exifExtraction1",
-                "outputs": [
-                    {
-                        "key": "sfmdata",
-                        "name": "sfmdata",
-                        "type": "UNKNOWN"
-                    }
-                ],
-                "type": "openmvg.ExifExtraction",
-                "x": 136,
-                "y": 38
-            },
-            {
-                "inputs": [
-                    {
-                        "key": "sfmdata",
-                        "name": "sfmdata",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    },
-                    {
-                        "key": "features",
-                        "name": "features",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    },
-                    {
-                        "key": "pairlist",
-                        "name": "pairlist",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    },
-                    {
-                        "key": "method",
-                        "name": "method",
-                        "options": [
-                            "BRUTEFORCEL2",
-                            "ANNL2",
-                            "CASCADEHASHINGL2",
-                            "FASTCASCADEHASHINGL2"
-                        ],
-                        "type": "COMBOBOX",
-                        "value": "FASTCASCADEHASHINGL2"
-                    }
-                ],
-                "name": "featureMatching1",
-                "outputs": [
-                    {
-                        "key": "matches",
-                        "name": "matches",
-                        "type": "UNKNOWN"
-                    }
-                ],
-                "type": "openmvg.FeatureMatching",
-                "x": 517,
-                "y": 28
-            },
-            {
-                "inputs": [
-                    {
-                        "key": "sfmdata",
-                        "name": "sfmdata",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    },
-                    {
-                        "key": "matches",
-                        "name": "matches",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    }
-                ],
-                "name": "structureFromMotion1",
-                "outputs": [
-                    {
-                        "key": "sfmdata2",
-                        "name": "sfmdata2",
-                        "type": "TEXTFIELD"
-                    }
-                ],
-                "type": "openmvg.StructureFromMotion",
-                "x": 637,
-                "y": 13
-            },
-            {
-                "inputs": [
-                    {
-                        "key": "sfmdata2",
-                        "name": "sfmdata2",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    }
-                ],
-                "name": "alembicExport1",
-                "outputs": [
-                    {
-                        "key": "abc",
-                        "name": "abc",
-                        "type": "OBJECT3D"
-                    }
-                ],
-                "type": "openmvg.AlembicExport",
-                "x": 749,
-                "y": 16
-            },
-            {
-                "inputs": [
-                    {
-                        "key": "sfmdata",
-                        "name": "sfmdata",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    },
-                    {
-                        "key": "features",
-                        "name": "features",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    },
-                    {
-                        "key": "treeFile",
-                        "name": "treeFile",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    },
-                    {
-                        "key": "weightFile",
-                        "name": "weightFile",
-                        "type": "TEXTFIELD",
-                        "value": ""
-                    }
-                ],
-                "name": "voctree1",
-                "outputs": [
-                    {
-                        "key": "pairlist",
-                        "name": "pairlist",
-                        "type": "UNKNOWN"
-                    }
-                ],
-                "type": "openmvg.Voctree",
-                "x": 384,
-                "y": 95
-            }
-        ]
-    },
-    "user": "nro"
+    "edges": [
+        {
+            "plug": "images",
+            "source": "imageListing1",
+            "target": "exifExtraction1"
+        },
+        {
+            "plug": "sfmdata",
+            "source": "exifExtraction1",
+            "target": "featureExtraction1"
+        },
+        {
+            "plug": "features",
+            "source": "featureExtraction1",
+            "target": "featureMatching1"
+        },
+        {
+            "plug": "matches",
+            "source": "featureMatching1",
+            "target": "structureFromMotion1"
+        },
+        {
+            "plug": "sfmdata2",
+            "source": "structureFromMotion1",
+            "target": "alembicExport1"
+        },
+        {
+            "plug": "pairlist",
+            "source": "voctree1",
+            "target": "featureMatching1"
+        },
+        {
+            "plug": "features",
+            "source": "featureExtraction1",
+            "target": "voctree1"
+        },
+        {
+            "plug": "sfmdata",
+            "source": "exifExtraction1",
+            "target": "voctree1"
+        },
+        {
+            "plug": "sfmdata",
+            "source": "exifExtraction1",
+            "target": "featureMatching1"
+        },
+        {
+            "plug": "sfmdata",
+            "source": "exifExtraction1",
+            "target": "structureFromMotion1"
+        },
+        {
+            "plug": "features",
+            "source": "featureExtraction1",
+            "target": "structureFromMotion1"
+        }
+    ],
+    "nodes": [
+        {
+            "name": "imageListing1",
+            "type": "openmvg.ImageListing",
+            "x": 22,
+            "y": 39
+        },
+        {
+            "name": "featureExtraction1",
+            "type": "openmvg.FeatureExtraction",
+            "x": 253,
+            "y": 41
+        },
+        {
+            "name": "exifExtraction1",
+            "type": "openmvg.ExifExtraction",
+            "x": 136,
+            "y": 38
+        },
+        {
+            "name": "featureMatching1",
+            "type": "openmvg.FeatureMatching",
+            "x": 522,
+            "y": 72
+        },
+        {
+            "name": "structureFromMotion1",
+            "type": "openmvg.StructureFromMotion",
+            "x": 636,
+            "y": 39
+        },
+        {
+            "name": "alembicExport1",
+            "type": "openmvg.AlembicExport",
+            "x": 761,
+            "y": 42
+        },
+        {
+            "name": "voctree1",
+            "type": "openmvg.Voctree",
+            "x": 384,
+            "y": 95
+        }
+    ]
 }

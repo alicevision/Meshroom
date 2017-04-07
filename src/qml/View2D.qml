@@ -6,6 +6,7 @@ import "controls"
 Frame {
 
     id: root
+    clip: true
 
     // slots
     Keys.onPressed: {

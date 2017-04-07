@@ -30,12 +30,13 @@ Frame {
     Connections {
         target: _window
         onDisplayIn3DView: {
-            sourceName.text = attribute.name
-            if(!attribute.value) {
+            if(!attribute || !attribute.value) {
+                sourceName.text = ""
                 sourceListView.model = 0;
                 abcEntity.url = "";
                 return;
             }
+            sourceName.text = attribute.name
             sourceListView.model = Array.isArray(attribute.value) ? attribute.value : [attribute.value]
             abcEntity.url = Qt.resolvedUrl(sourceListView.model[0])
         }

@@ -18,7 +18,7 @@ T.Button {
         color: control.enabled ? Globals.text.color.normal : Globals.text.color.disabled
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
+        elide: Text.ElideMiddle
     }
     background: Item {
         implicitWidth: 120

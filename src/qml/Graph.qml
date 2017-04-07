@@ -7,6 +7,7 @@ import Meshroom.Worker 1.0
 Frame {
 
     id: root
+    clip: true
 
     // signals
     signal selectionChanged(var node)
@@ -96,7 +97,7 @@ Frame {
             root.forceActiveFocus()
             var menu = nodeContextMenu.createObject(root);
             menu.display.connect(function display_CB() {
-                displayAttribute(node.outputs.data(node.outputs.index(0,0), AttributeCollection.ModelDataRole))
+                graph.activeNode = node
             });
             menu.compute.connect(function compute_CB(mode) {
                 currentScene.graph.startWorkerThread(mode, node.name);

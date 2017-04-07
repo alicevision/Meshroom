@@ -94,7 +94,7 @@ Frame {
         }
         onNodeRightClicked: {
             root.forceActiveFocus()
-            var menu = nodeContextMenu.createObject(item);
+            var menu = nodeContextMenu.createObject(root);
             menu.display.connect(function display_CB() {
                 displayAttribute(node.outputs.data(node.outputs.index(0,0), AttributeCollection.ModelDataRole))
             });
@@ -104,8 +104,9 @@ Frame {
             menu.remove.connect(function remove_CB() {
                 currentScene.graph.removeNode(node.serializeToJSON());
             });
-            menu.x = pos.x;
-            menu.y = pos.y;
+            var mappedPos = root.mapFromItem(item, pos.x, pos.y);
+            menu.x = mappedPos.x;
+            menu.y = mappedPos.y;
             menu.open()
         }
         onEdgeLeftClicked: {
@@ -113,13 +114,14 @@ Frame {
         }
         onEdgeRightClicked: {
             root.forceActiveFocus()
-            var menu = edgeContextMenu.createObject(item);
+            var menu = edgeContextMenu.createObject(root);
             var p = item.mapToItem(root, item.x, item.y);
             menu.remove.connect(function remove_CB() {
                 currentScene.graph.removeEdge(edge.serializeToJSON());
             });
-            menu.x = pos.x;
-            menu.y = pos.y;
+            var mappedPos = root.mapFromItem(item, pos.x, pos.y);
+            menu.x = mappedPos.x;
+            menu.y = mappedPos.y;
             menu.open()
         }
     }

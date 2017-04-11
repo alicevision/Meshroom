@@ -24,12 +24,33 @@ RowLayout {
         color: Qt.rgba(1, 1, 1, 0.5)
         DropArea {
             id: dropArea
-            property variant node: root.node
             property variant plug: modelData
+            property bool acceptableDrop: false
             anchors.centerIn: parent
             width: 10
             height: 10
-            onDropped: drop.accept()
+
+            onEntered: {
+                // Filter out inacceptable drops
+                if( drag.source.objectName != draggable.objectName  // not an attribute connector
+                   || root.node === drag.source.node                // same node
+                   || root.isInput === drag.source.isInput )        // same type (in/out) of attribute
+                {
+                    drag.accepted = false;
+                }
+                acceptableDrop = drag.accepted
+            }
+
+            onExited: acceptableDrop = false;
+
+            onDropped: {
+                acceptableDrop = false;
+                var obj = {};
+                obj["source"] = drag.source.node.name;
+                obj["target"] = root.node.name;
+                obj["plug"] = plug.name;
+                currentScene.graph.addEdge(obj)
+            }
 
             Rectangle {
                 anchors.centerIn: parent
@@ -38,13 +59,16 @@ RowLayout {
                 radius: 5
                 color: "#5BB1F7"
                 border.color: "white"
-                opacity: dropArea.containsDrag && isInput ? 1 : 0
+                opacity: dropArea.containsDrag && dropArea.acceptableDrop ? 1 : 0
                 Behavior on opacity { NumberAnimation {}}
             }
         }
 
         Rectangle {
             id: draggable
+            objectName: "attributeConnector"
+            property alias isInput: root.isInput
+            property alias node: root.node
             anchors.centerIn: dragArea.pressed ? undefined : parent
             width: 10
             height: 10
@@ -65,21 +89,7 @@ RowLayout {
                 hoverEnabled: true
                 drag.target: parent
                 drag.threshold: 0
-                onReleased: {
-                    if(drag.active && parent.Drag.target)
-                    {
-                        var targetNode = parent.Drag.target.node;
-                        var targetPlug = parent.Drag.target.plug;
-                        var result = parent.Drag.drop();
-                        if(result != Qt.IgnoreAction) {
-                            var obj = {}
-                            obj["source"] = root.node.name;
-                            obj["target"] = targetNode.name;
-                            obj["plug"] = targetPlug.name;
-                            currentScene.graph.addEdge(obj)
-                        }
-                    }
-                }
+                onReleased: parent.Drag.drop()
             }
             Item {
                 id: draggableEdgeAnchor

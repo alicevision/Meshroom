@@ -81,16 +81,19 @@ Item {
             transformOrigin: Item.TopLeft
             width: 1000
             height: 1000
+
             Repeater {
                 id: nodeRepeater
+                property bool loaded: count === model.count
                 model: root.graph ? root.graph.nodes : 0
                 delegate: NodeDelegate {
                     isActiveNode: root.graph.activeNode == modelData
                 }
             }
+
             Repeater {
                 id: edgeRepeater
-                model: nodeRepeater.model ? root.graph.edges : 0
+                model: nodeRepeater.loaded ? root.graph.edges : 0
                 delegate: EdgeItem {
                     id: edgeItem
                     property int sourceId: root.graph.nodes.rowIndex(modelData.source)
@@ -116,6 +119,7 @@ Item {
                     }
                 }
             }
+
         }
     }
 }

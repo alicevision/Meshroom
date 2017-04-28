@@ -15,6 +15,7 @@ LogModel::LogModel(QObject* parent)
 LogModel::~LogModel()
 {
     clear();
+    S::getInstance().unregisterLogger(this);
 }
 
 int LogModel::rowCount(const QModelIndex& parent) const

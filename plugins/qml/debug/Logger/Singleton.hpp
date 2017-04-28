@@ -12,6 +12,8 @@ class S
 {
 public:
     void registerLogger(LogModel* model) { _logModels.append(model); }
+    void unregisterLogger(LogModel* model) { _logModels.removeAll(model); }
+
     static S& getInstance()
     {
         static S instance;

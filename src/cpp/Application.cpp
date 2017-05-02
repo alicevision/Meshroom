@@ -2,6 +2,7 @@
 #include "PluginInterface.hpp"
 #include "Worker.hpp"
 #include "Commands.hpp"
+#include "InstantCoding.hpp"
 #include <QLocale>
 #include <QtQml>
 #include <QCoreApplication>
@@ -40,11 +41,15 @@ Application::Application()
 Application::Application(QQmlApplicationEngine& engine)
     : Application() // delegating constructor
 {
+    auto rootdir = qApp->applicationDirPath() + "/";
+
     // add qml modules path
-    engine.addImportPath(qApp->applicationDirPath() + "/plugins/qml");
+    auto qmlPluginsDir = rootdir + "plugins/qml";
+    engine.addImportPath(qmlPluginsDir);
+    engine.addImportPath("qrc:///");
 
     // set qt quick style
-    QQuickStyle::setStyle(qApp->applicationDirPath() + "/plugins/qml/DarkStyle");
+    QQuickStyle::setStyle(rootdir + "plugins/qml/DarkStyle");
 
     // register types
     qRegisterMetaType<QObjectList>("QObjectList");
@@ -67,7 +72,34 @@ Application::Application(QQmlApplicationEngine& engine)
     engine.rootContext()->setContextProperty("_application", this);
 
     // load the main QML file
-    engine.load(qApp->applicationDirPath() + "/qml/main.qml");
+    QString qmlfile("qml/main.qml");
+    auto baseUrl = QUrl::fromLocalFile(rootdir);
+
+    QString qmlICKey("MESHROOM_DEV_QMLIC");
+    auto env = QProcessEnvironment::systemEnvironment();
+    bool enableIC = false;
+
+    if(env.contains(qmlICKey))
+    {
+        auto qmlIC = env.value(qmlICKey);
+        if( qmlIC == "1")
+            enableIC = true;
+        else if(QDir(qmlIC).exists())
+        {
+            baseUrl = QUrl::fromLocalFile(qmlIC + "/");
+            enableIC = true;
+        }
+    }
+    engine.setBaseUrl(baseUrl);
+
+    if(enableIC)
+    {
+        qDebug().noquote() << "QMLIC:" << baseUrl.toLocalFile();
+        // setup qml instant coding
+        auto instantCoding = new instantcoding::InstantCoding(this, engine, qmlfile);
+        instantCoding->start();
+    }
+    engine.load(qmlfile);
 }
 
 PluginCollection* Application::loadPlugins()

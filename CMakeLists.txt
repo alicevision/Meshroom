@@ -35,6 +35,9 @@ macro(subdirlist result curdir)
     set(${result} ${dirlist})
 endmacro()
 
+# expose FontAwesome .qrc file
+set(FONTAWESOME_QRC ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/fontawesome/fontawesome.qrc)
+
 # add subdirectories
 add_subdirectory(dependencies/dependency_graph/src/dglib dglib)
 add_subdirectory(plugins/qml/controls/ImageGallery)

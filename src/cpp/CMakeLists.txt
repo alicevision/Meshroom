@@ -30,7 +30,7 @@ find_package(Qt5Quick REQUIRED)
 find_package(Qt5QuickControls2 REQUIRED)
 add_definitions(-DQT_NO_KEYWORDS)
 add_definitions(-DQT_MESSAGELOGCONTEXT)
-QT5_ADD_RESOURCES(TARGET_QRCS ${PROJECT_SOURCE_DIR}/src/qml/resources.qrc)
+QT5_ADD_RESOURCES(TARGET_QRCS ${PROJECT_SOURCE_DIR}/src/qml/resources.qrc ${FONTAWESOME_QRC})
 
 # Debug flags
 # Enable QML debugging

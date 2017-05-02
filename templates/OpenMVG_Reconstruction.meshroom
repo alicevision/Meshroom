@@ -2,99 +2,99 @@
     "edges": [
         {
             "plug": "images",
-            "source": "imageListing1",
-            "target": "exifExtraction1"
+            "source": "openmvg.imageListing1",
+            "target": "openmvg.exifExtraction1"
         },
         {
             "plug": "sfmdata",
-            "source": "exifExtraction1",
-            "target": "featureExtraction1"
+            "source": "openmvg.exifExtraction1",
+            "target": "openmvg.featureExtraction1"
         },
         {
             "plug": "features",
-            "source": "featureExtraction1",
-            "target": "featureMatching1"
+            "source": "openmvg.featureExtraction1",
+            "target": "openmvg.featureMatching1"
         },
         {
             "plug": "matches",
-            "source": "featureMatching1",
-            "target": "structureFromMotion1"
+            "source": "openmvg.featureMatching1",
+            "target": "openmvg.structureFromMotion1"
         },
         {
             "plug": "sfmdata2",
-            "source": "structureFromMotion1",
-            "target": "alembicExport1"
+            "source": "openmvg.structureFromMotion1",
+            "target": "openmvg.alembicExport1"
         },
         {
             "plug": "pairlist",
-            "source": "voctree1",
-            "target": "featureMatching1"
+            "source": "openmvg.voctree1",
+            "target": "openmvg.featureMatching1"
         },
         {
             "plug": "features",
-            "source": "featureExtraction1",
-            "target": "voctree1"
+            "source": "openmvg.featureExtraction1",
+            "target": "openmvg.voctree1"
         },
         {
             "plug": "sfmdata",
-            "source": "exifExtraction1",
-            "target": "voctree1"
+            "source": "openmvg.exifExtraction1",
+            "target": "openmvg.voctree1"
         },
         {
             "plug": "sfmdata",
-            "source": "exifExtraction1",
-            "target": "featureMatching1"
+            "source": "openmvg.exifExtraction1",
+            "target": "openmvg.featureMatching1"
         },
         {
             "plug": "sfmdata",
-            "source": "exifExtraction1",
-            "target": "structureFromMotion1"
+            "source": "openmvg.exifExtraction1",
+            "target": "openmvg.structureFromMotion1"
         },
         {
             "plug": "features",
-            "source": "featureExtraction1",
-            "target": "structureFromMotion1"
+            "source": "openmvg.featureExtraction1",
+            "target": "openmvg.structureFromMotion1"
         }
     ],
     "nodes": [
         {
-            "name": "imageListing1",
+            "name": "openmvg.imageListing1",
             "type": "openmvg.ImageListing",
             "x": 22,
             "y": 39
         },
         {
-            "name": "featureExtraction1",
+            "name": "openmvg.featureExtraction1",
             "type": "openmvg.FeatureExtraction",
             "x": 253,
             "y": 41
         },
         {
-            "name": "exifExtraction1",
+            "name": "openmvg.exifExtraction1",
             "type": "openmvg.ExifExtraction",
             "x": 136,
             "y": 38
         },
         {
-            "name": "featureMatching1",
+            "name": "openmvg.featureMatching1",
             "type": "openmvg.FeatureMatching",
             "x": 522,
             "y": 72
         },
         {
-            "name": "structureFromMotion1",
+            "name": "openmvg.structureFromMotion1",
             "type": "openmvg.StructureFromMotion",
             "x": 636,
             "y": 39
         },
         {
-            "name": "alembicExport1",
+            "name": "openmvg.alembicExport1",
             "type": "openmvg.AlembicExport",
             "x": 761,
             "y": 42
         },
         {
-            "name": "voctree1",
+            "name": "openmvg.voctree1",
             "type": "openmvg.Voctree",
             "x": 384,
             "y": 95

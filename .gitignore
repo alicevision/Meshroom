@@ -3,6 +3,7 @@
 *.lo
 *.o
 *.obj
+*.qmlc
 
 # Compiled Dynamic libraries
 *.so

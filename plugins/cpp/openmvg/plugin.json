@@ -262,6 +262,47 @@
                     "type": "UNKNOWN"
                 }
             ]
+        },
+        {
+            "type": "openmvg.ExportForMeshing",
+            "inputs": [
+                {
+                    "name": "sfmdata",
+                    "key": "sfmdata",
+                    "type": "TEXTFIELD"
+                },
+                {
+                    "name": "scale",
+                    "key": "scale",
+                    "type": "COMBOBOX",
+                    "value": "2",
+                    "options": ["1", "2", "4", "8"]
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "output",
+                    "key": "output",
+                    "type": "TEXTFIELD"
+                }
+            ]
+        },
+        {
+            "type": "openmvg.Meshing",
+            "inputs": [
+                {
+                    "name": "input",
+                    "key": "input",
+                    "type": "TEXTFIELD"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "meshes",
+                    "key": "meshes",
+                    "type": "OBJECT3D"
+                }
+            ]
         }
     ]
 }

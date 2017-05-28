@@ -11,6 +11,8 @@
 #include "nodes/Localization.hpp"
 #include "nodes/StructureFromMotion.hpp"
 #include "nodes/Voctree.hpp"
+#include "nodes/ExportForMeshing.hpp"
+#include "nodes/Meshing.hpp"
 
 class OpenMVGPlugin : public QObject, PluginInterface
 {
@@ -39,6 +41,10 @@ public:
             node = make_ptr<StructureFromMotion>(name.toStdString());
         if(type == "openmvg.Voctree")
             node = make_ptr<Voctree>(name.toStdString());
+        if(type == "openmvg.ExportForMeshing")
+            node = make_ptr<ExportForMeshing>(name.toStdString());
+        if(type == "openmvg.Meshing")
+            node = make_ptr<Meshing>(name.toStdString());
         return node;
     }
 };

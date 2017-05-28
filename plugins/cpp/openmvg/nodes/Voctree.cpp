@@ -1,68 +1,36 @@
 #include "Voctree.hpp"
-#include "PluginToolBox.hpp"
-#include <QDebug>
+#include <QFileInfo>
 
-using namespace std;
 using namespace dg;
 
-Voctree::Voctree(string nodeName)
-    : Node(nodeName)
+Voctree::Voctree(std::string nodeName)
+    : BaseNode(nodeName, "openMVG_main_generatePairList")
 {
-    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this),
-              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "features", *this),
-              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "treeFile", *this),
-              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "weightFile", *this)};
-    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "pairlist", *this);
+    registerInput<FileSystemRef>("sfmdata");
+    registerInput<FileSystemRef>("features");
+    registerInput<FileSystemRef>("treeFile");
+    registerInput<FileSystemRef>("weightFile");
+
+    registerOutput<FileSystemRef>("pairlist");
 }
 
-vector<Command> Voctree::prepare(Cache& cache, Environment& environment, bool& blocking)
+void Voctree::prepare(const std::string &cacheDir,
+                      const std::map<std::string, AttributeList>& in,
+                      AttributeList& out,
+                      std::vector<std::vector<std::string>>& commandsArgs)
 {
-    vector<Command> commands;
+    FileSystemRef outRef(cacheDir, "pairList", ".txt");
+    out.emplace_back(make_ptr<Attribute>(outRef));
 
-    auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY);
+    // Get feature/descriptors folder using first feature attribute
+    auto feature = in.at("features")[0]->get<FileSystemRef>();
+    auto descDir = QFileInfo(feature.toString().c_str()).dir().path().toStdString();
 
-    // check the 'treeFile' value
-    auto aTree = cache.getFirst(plug("treeFile"));
-    if(!aTree)
-        throw invalid_argument("Voctree: missing treeFile attribute");
-    auto treeRef = aTree->get<FileSystemRef>();
-
-    // check the 'weightFile' value
-    auto aWeight = cache.getFirst(plug("weightFile"));
-    if(!aWeight)
-        throw invalid_argument("Voctree: missing weightFile attribute");
-    auto weightRef = aWeight->get<FileSystemRef>();
-
-    AttributeList attributes;
-    for(auto& aSfm : cache.get(plug("sfmdata")))
-    {
-        auto sfmRef = aSfm->get<FileSystemRef>();
-
-        // register a new output attribute
-        FileSystemRef outRef(outDir, "pairList", ".txt");
-        attributes.emplace_back(make_ptr<Attribute>(outRef));
-
-        // build the command line in case this output does not exists
-        if(!outRef.exists())
-        {
-            Command c(
-                {
-                    "--compute", type(),        // meshroom compute mode
-                    "--",                       // node options:
-                    "-l", outDir + "/matches",  // input match directory
-                    "-t", treeRef.toString(),   // input .tree file
-                    "-w", weightRef.toString(), // input .weights file
-                    "-o", outRef.toString()     // output pairlist.txt
-                },
-                environment);
-            commands.emplace_back(c);
-        }
-    }
-    cache.set(output, attributes);
-    return commands;
+   commandsArgs.push_back({
+                          "-l", descDir,                            // input descriptors directory
+                          "-t", in.at("treeFile")[0]->toString(),   // input .tree file
+                          "-w", in.at("weightFile")[0]->toString(), // input .weights file
+                          "-o", outRef.toString()                   // output pairlist.txt
+                          });
 }
 
-void Voctree::compute(const vector<string>& arguments) const
-{
-    PluginToolBox::executeProcess("openMVG_main_generatePairList", arguments);
-}

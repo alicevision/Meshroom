@@ -3,6 +3,9 @@
 #include <QString>
 #include <QDebug>
 #include <QProcess>
+#include <QFile>
+#include <QJsonObject>
+#include <QJsonParseError>
 #include <iostream>
 
 struct PluginToolBox
@@ -54,4 +57,23 @@ struct PluginToolBox
         }
         return process.exitCode();
     }
+
+    static QJsonObject loadJSON(const std::string& path)
+    {
+        // open a file handler
+        QString filename = QString::fromStdString(path);
+        QFile file(filename);
+        if(!file.open(QIODevice::ReadOnly))
+            throw std::invalid_argument("Can't open JSON file : " + path);
+        // read data and close the file handler
+        QByteArray data = file.readAll();
+        file.close();
+        // parse data as JSON
+        QJsonParseError error;
+        QJsonDocument document(QJsonDocument::fromJson(data, &error));
+        if(error.error != QJsonParseError::NoError)
+            throw std::invalid_argument("Malformed JSON file");
+        return document.object();
+    }
+
 };

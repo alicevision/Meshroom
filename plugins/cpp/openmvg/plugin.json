@@ -74,7 +74,7 @@
                     "key": "describerMethod",
                     "type": "COMBOBOX",
                     "value": "SIFT",
-                    "options": ["SIFT", "SIFT_FLOAT", "AKAZE_FLOAT", "AKAZE_MLDB"],
+                    "options": ["SIFT", "SIFT,CCTAG3", "SIFT_FLOAT", "AKAZE_FLOAT", "AKAZE_MLDB"],
                     "tooltip": ""
                 },
                 {

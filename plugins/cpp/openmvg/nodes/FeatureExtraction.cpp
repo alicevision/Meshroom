@@ -1,107 +1,56 @@
 #include "FeatureExtraction.hpp"
 #include "PluginToolBox.hpp"
-#include <QCommandLineParser>
-#include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include <QFile>
 #include <QDebug>
 
-using namespace std;
-using namespace dg;
 
-FeatureExtraction::FeatureExtraction(string nodeName)
-    : Node(nodeName)
+FeatureExtraction::FeatureExtraction(std::string nodeName)
+    : BaseNode(nodeName, "openMVG_main_ComputeFeatures")
 {
-    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this),
-              make_ptr<Plug>(type_index(typeid(string)), "describerMethod", *this),
-              make_ptr<Plug>(type_index(typeid(string)), "describerPreset", *this)};
-    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "features", *this);
+    registerInput<FileSystemRef>("sfmdata");
+    // feature/desc files contains the describer type in their name
+    registerInput<std::string>("describerMethod", false);
+    registerInput<std::string>("describerPreset");
+
+    registerOutput<FileSystemRef>("features");
 }
 
-vector<Command> FeatureExtraction::prepare(Cache& cache, Environment& environment, bool& blocking)
+void FeatureExtraction::prepare(const std::string& cacheDir,
+                                const std::map<std::string, AttributeList>& in,
+                                AttributeList& out,
+                                std::vector<std::vector<std::string>>& commandsArgs)
 {
-    vector<Command> commands;
+    // TODO: get all describer methods
+    auto& aSfmData = in.at("sfmdata")[0];
+    auto& aDM = in.at("describerMethod")[0];
+    auto& aDP = in.at("describerPreset")[0];
 
-    // out directory
-    auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY) + "/matches";
+    if(!aSfmData->get<FileSystemRef>().exists())
+        return;
 
-    // describer method
-    auto aDM = cache.getFirst(plug("describerMethod"));
-    if(!aDM)
-        throw invalid_argument("FeatureExtraction: missing describerMethod attribute");
-
-    // describer preset
-    auto aDP = cache.getFirst(plug("describerPreset"));
-    if(!aDP)
-        throw invalid_argument("FeatureExtraction: missing describerPreset attribute");
-
-    auto getJSON = [&](const string& path) -> QJsonObject
+    QStringList descTypes = QString::fromStdString(aDM->toString()).split(",");
+    // read the sfm_data json file and retrieve all feat/desc filenames
+    QJsonObject json = PluginToolBox::loadJSON(aSfmData->toString());
+    for(auto view : json.value("views").toArray())
     {
-        // open a file handler
-        QString filename = QString::fromStdString(path);
-        QFile file(filename);
-        if(!file.open(QIODevice::ReadOnly))
-            throw invalid_argument("FeatureExtraction: can't open file");
-        // read data and close the file handler
-        QByteArray data = file.readAll();
-        file.close();
-        // parse data as JSON
-        QJsonParseError error;
-        QJsonDocument document(QJsonDocument::fromJson(data, &error));
-        if(error.error != QJsonParseError::NoError)
-            throw invalid_argument("FeatureExtraction: malformed JSON file");
-        return document.object();
-    };
-
-    AttributeList outlist;
-    for(auto& aSfm : cache.get(plug("sfmdata")))
-    {
-        // sfmdata file
-        auto sfmref = aSfm->get<FileSystemRef>();
-        if(!sfmref.exists())
+        int key = view.toObject().value("key").toInt();
+        for(auto& descType : descTypes)
         {
-            blocking = true;
-            return commands;
-        }
-
-        // read the sfm_data json file and retrieve all feat/desc filenames
-        bool createCmd = false;
-        QJsonObject json = getJSON(sfmref.toString());
-        for(auto view : json.value("views").toArray())
-        {
-            int key = view.toObject().value("key").toInt();
-            FileSystemRef featref(outDir, to_string(key), ".feat");
-            FileSystemRef descref(outDir, to_string(key), ".feat");
-            outlist.emplace_back(make_ptr<Attribute>(featref));
-            outlist.emplace_back(make_ptr<Attribute>(descref));
-            if(!featref.exists() || !descref.exists())
-                createCmd = true;
-        }
-
-        // build the command line in case one feat/desc file does not exists
-        if(createCmd)
-        {
-            Command c(
-                {
-                    "--compute", type(),     // meshroom compute mode
-                    "--",                    // node options:
-                    "-i", sfmref.toString(), // input sfm_data file
-                    "-o", outDir,            // output match directory
-                    "-p", aDP->toString(),   // describer preset
-                    "-m", aDM->toString(),   // describer method
-                    "-j", "0"                // number of jobs (0 for automatic mode)
-                },
-                environment);
-            commands.emplace_back(c);
+            std::string baseName = std::to_string(key) + "." + descType.toStdString();
+            FileSystemRef featref(cacheDir, baseName, ".feat");
+            FileSystemRef descref(cacheDir, baseName, ".desc");
+            out.emplace_back(make_ptr<Attribute>(featref));
+            out.emplace_back(make_ptr<Attribute>(descref));
         }
     }
-    cache.set(output, outlist);
 
-    return commands;
-}
-
-void FeatureExtraction::compute(const vector<string>& arguments) const
-{
-    PluginToolBox::executeProcess("openMVG_main_ComputeFeatures", arguments);
+    // build the command line in case one feat/desc file does not exists
+    commandsArgs.push_back({
+                            "-i", aSfmData->toString(), // input sfm_data file
+                            "-o", cacheDir,             // output match directory
+                            "-p", aDP->toString(),      // describer preset
+                            "-m", aDM->toString(),      // describer method
+                            "-j", "0"                   // number of jobs (0 for automatic mode)
+                           });
 }

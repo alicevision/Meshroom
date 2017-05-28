@@ -1,31 +1,27 @@
 #include "ImageListing.hpp"
 #include <QDebug>
 
-using namespace std;
 using namespace dg;
 
-ImageListing::ImageListing(string nodeName)
-    : Node(nodeName)
+const std::vector<std::string> ImageListing::IMAGES_EXT = {"JPG", "JPEG", "PNG"};
+
+ImageListing::ImageListing(std::string nodeName)
+    : BaseNode(nodeName, "")
 {
-    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "files", *this)};
-    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "images", *this);
+    registerInput<FileSystemRef>("files");
+
+    registerOutput<FileSystemRef>("images");
 }
 
-vector<Command> ImageListing::prepare(Cache& cache, Environment& environment, bool& blocking)
+void ImageListing::prepare(const std::string& cacheDir,
+                           const std::map<std::string, AttributeList>& in,
+                           AttributeList& out,
+                           std::vector<std::vector<std::string>>& commandsArgs)
 {
-    AttributeList outputs;
-    for(auto& aFile : cache.get(plug("files")))
+    for(auto& aFile : in.at("files"))
     {
-        FileSystemRef file(aFile->toString());
-        if(file.extension() == "JPG")
-            outputs.emplace_back(aFile);
+        FileSystemRef file(aFile->get<FileSystemRef>());
+        if(std::find(IMAGES_EXT.begin(), IMAGES_EXT.end(), file.extension()) != IMAGES_EXT.end())
+            out.emplace_back(aFile);
     }
-    cache.set(output, outputs);
-
-    return vector<Command>(); // nothing to compute
-}
-
-void ImageListing::compute(const vector<string>& arguments) const
-{
-    // never reached
 }

@@ -201,6 +201,13 @@
                     "tooltip": ""
                 },
                 {
+                    "name": "features",
+                    "key": "features",
+                    "type": "TEXTFIELD",
+                    "value": "",
+                    "tooltip": ""
+                },
+                {
                     "name": "matches",
                     "key": "matches",
                     "type": "TEXTFIELD",

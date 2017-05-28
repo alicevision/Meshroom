@@ -1,56 +1,38 @@
 #include "StructureFromMotion.hpp"
-#include "PluginToolBox.hpp"
-#include <QCommandLineParser>
 #include <QDebug>
+#include <QFileInfo>
 
-using namespace std;
 using namespace dg;
 
-StructureFromMotion::StructureFromMotion(string nodeName)
-    : Node(nodeName)
+StructureFromMotion::StructureFromMotion(std::string nodeName)
+    : BaseNode(nodeName, "openMVG_main_IncrementalSfM")
 {
-    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this),
-              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "matches", *this)};
-    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata2", *this);
+    registerInput<FileSystemRef>("sfmdata");
+    registerInput<FileSystemRef>("features");
+    registerInput<FileSystemRef>("matches");
+
+    registerOutput<FileSystemRef>("sfmdata2");
 }
 
-vector<Command> StructureFromMotion::prepare(Cache& cache, Environment& environment, bool& blocking)
+void StructureFromMotion::prepare(const std::string& cacheDir,
+                                  const std::map<std::string, AttributeList>& in,
+                                  AttributeList& out,
+                                  std::vector<std::vector<std::string>>& commandsArgs)
 {
-    vector<Command> commands;
+    auto& aSfm = in.at("sfmdata")[0];
+    auto& aFeat = in.at("features")[0];
+    auto& aMatch = in.at("matches")[0];
 
-    auto cacheDir = environment.get(Environment::Key::CACHE_DIRECTORY);
-    auto matchDir = cacheDir + "/matches";
-    auto outDir = cacheDir + "/sfm";
+    FileSystemRef outRef(cacheDir, "sfm_data", ".json");
+    out.emplace_back(make_ptr<Attribute>(outRef));
 
-    AttributeList attributes;
-    for(auto& aSfm : cache.get(plug("sfmdata")))
-    {
-        auto sfmRef = aSfm->get<FileSystemRef>();
+    auto matchDir = QFileInfo(aMatch->toString().c_str()).dir().path().toStdString();
+    auto featDir = QFileInfo(aFeat->toString().c_str()).dir().path().toStdString();
 
-        // register a new output attribute
-        FileSystemRef outRef(outDir, "sfm_data", ".json");
-        attributes.emplace_back(make_ptr<Attribute>(outRef));
-
-        // build the command line in case this output does not exists
-        if(!outRef.exists())
-        {
-            Command c(
-                {
-                    "--compute", type(),     // meshroom compute mode
-                    "--",                    // node options:
-                    "-i", sfmRef.toString(), // input sfm_data file
-                    "-m", matchDir,          // input match directory
-                    "-o", outDir             // output sfm directory
-                },
-                environment);
-            commands.emplace_back(c);
-        }
-    }
-    cache.set(output, attributes);
-    return commands;
-}
-
-void StructureFromMotion::compute(const vector<string>& arguments) const
-{
-    PluginToolBox::executeProcess("openMVG_main_IncrementalSfM", arguments);
+    commandsArgs.push_back({
+                           "-i", aSfm->toString(),  // input sfm_data file
+                           "-F", featDir,           // input feat directory
+                           "-m", matchDir,          // input match directory
+                           "-o", cacheDir           // output sfm directory
+                           });
 }

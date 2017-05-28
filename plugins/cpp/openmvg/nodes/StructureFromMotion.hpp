@@ -1,15 +1,19 @@
 #pragma once
 
-#include <dglib/dg.hpp>
+#include "BaseNode.hpp"
 
-class StructureFromMotion : public dg::Node
+using namespace dg;
+
+class StructureFromMotion : public BaseNode
 {
 public:
     StructureFromMotion(std::string nodeName);
     ~StructureFromMotion() = default;
 
 public:
-    std::vector<dg::Command> prepare(dg::Cache&, dg::Environment&, bool&) override;
-    void compute(const std::vector<std::string>& args) const override;
+    void prepare(const std::string& cacheDir,
+                 const std::map<std::string, AttributeList>& in,
+                 AttributeList& out,
+                 std::vector<std::vector<std::string>>& commandsArgs) override;
     std::string type() const override { return "openmvg.StructureFromMotion"; }
 };

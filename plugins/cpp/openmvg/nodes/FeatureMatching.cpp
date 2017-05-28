@@ -1,71 +1,55 @@
 #include "FeatureMatching.hpp"
-#include "PluginToolBox.hpp"
-#include <QCommandLineParser>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QFile>
-#include <QDebug>
+#include <QFileInfo>
 
-using namespace std;
 using namespace dg;
 
-FeatureMatching::FeatureMatching(string nodeName)
-    : Node(nodeName)
+FeatureMatching::FeatureMatching(std::string nodeName)
+    : BaseNode(nodeName, "openMVG_main_ComputeMatches")
 {
-    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this),
-              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "features", *this),
-              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "pairlist", *this),
-              make_ptr<Plug>(type_index(typeid(string)), "method", *this)};
-    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "matches", *this);
+    registerInput<FileSystemRef>("sfmdata");
+    registerInput<FileSystemRef>("features");
+    registerInput<FileSystemRef>("pairlist");
+    registerInput<std::string>("method");
+
+    registerOutput<FileSystemRef>("matches");
 }
 
-vector<Command> FeatureMatching::prepare(Cache& cache, Environment& environment, bool& blocking)
+void FeatureMatching::prepare(const std::string& cacheDir,
+                                const std::map<std::string, AttributeList>& in,
+                                AttributeList& out,
+                                std::vector<std::vector<std::string>>& commandsArgs)
 {
-    vector<Command> commands;
+    auto& aFeatures = in.at("features");
 
-    // out directory
-    auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY) + "/matches";
+    auto featureFile = aFeatures[0]->get<FileSystemRef>();
+    auto featDir = QFileInfo(featureFile.toString().c_str()).dir().path().toStdString();
 
-    // pairlist file
-    auto aPairList = cache.getFirst(plug("pairlist"));
-    if(!aPairList)
-        throw invalid_argument("FeatureExtraction: missing pairlist attribute");
-
-    // nearest matching method
-    auto aMethod = cache.getFirst(plug("method"));
-    if(!aMethod)
-        throw invalid_argument("FeatureExtraction: missing method attribute");
-
-    AttributeList attributes;
-    for(auto& aSfm : cache.get(plug("sfmdata")))
+    QSet<QString> types;
+    // Get features describers types based on filenames
+    for(auto& feat : aFeatures)
     {
-        // register a new output attribute
-        FileSystemRef outRef(outDir, "matches", ".f.bin");
-        attributes.emplace_back(make_ptr<Attribute>(outRef));
-
-        // build the command line in case this output does not exists
-        if(!outRef.exists())
-        {
-            Command c(
-                {
-                    "--compute", type(),         // meshroom compute mode
-                    "--",                        // node options:
-                    "-i", aSfm->toString(),      // input sfm_data file
-                    "-l", aPairList->toString(), // input pairList file
-                    "-n", aMethod->toString(),   // nearest matching method
-                    "-o", outDir,                // output match directory
-                },
-                environment);
-            commands.emplace_back(c);
-        }
+        QString f = QString::fromStdString(feat->toString());
+        // aFeatures also contains .desc files, skip them
+        if(!f.contains(".feat"))
+            continue;
+        auto t = f.replace(".feat", "").split(".").back();
+        // If the type is already registered, it means that all types are known
+        if(types.contains(t))
+            break;
+        types.insert(t);
     }
-    cache.set(output, attributes);
+    QString descTypes = types.toList().join(",");
 
-    return commands;
-}
+    // register a new output attribute
+    FileSystemRef outRef(cacheDir, "matches", ".f.bin");
+    out.emplace_back(make_ptr<Attribute>(outRef));
 
-void FeatureMatching::compute(const vector<string>& arguments) const
-{
-    PluginToolBox::executeProcess("openMVG_main_ComputeMatches", arguments);
+    commandsArgs.push_back({
+                            "-i", in.at("sfmdata")[0]->toString(),  // input sfm_data file
+                            "-m", descTypes.toStdString(),
+                            "-l", in.at("pairlist")[0]->toString(), // input pairList file
+                            "-n", in.at("method")[0]->toString(),   // nearest matching method
+                            "-F", featDir,                          // features directory
+                            "-o", cacheDir,                         // output match directory
+                           });
 }

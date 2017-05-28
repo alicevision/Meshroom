@@ -1,15 +1,18 @@
 #pragma once
 
+#include "BaseNode.hpp"
 #include <dglib/dg.hpp>
 
-class FeatureMatching : public dg::Node
+class FeatureMatching : public BaseNode
 {
 public:
     FeatureMatching(std::string nodeName);
     ~FeatureMatching() = default;
 
 public:
-    std::vector<dg::Command> prepare(dg::Cache&, dg::Environment&, bool&) override;
-    void compute(const std::vector<std::string>& args) const override;
+    void prepare(const std::string& cacheDir,
+                 const std::map<std::string, AttributeList>& in,
+                 AttributeList& out,
+                 std::vector<std::vector<std::string>>& commandsArgs) override;
     std::string type() const override { return "openmvg.FeatureMatching"; }
 };

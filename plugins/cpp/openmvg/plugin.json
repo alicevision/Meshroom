@@ -122,8 +122,8 @@
                     "name": "method",
                     "key": "method",
                     "type": "COMBOBOX",
-                    "value": "ANNL2",
-                    "options": ["BRUTEFORCEL2", "ANNL2", "CASCADEHASHINGL2", "FASTCASCADEHASHINGL2"],
+                    "value": "ANN_L2",
+                    "options": ["BRUTE_FORCE_L2", "ANN_L2", "CASCADE_HASHING_L2", "FAST_CASCADE_HASHING_L2"],
                     "tooltip": ""
                 }
             ],

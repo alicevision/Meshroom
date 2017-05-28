@@ -1,38 +1,31 @@
 #include "ExifExtraction.hpp"
-#include "PluginToolBox.hpp"
-#include <QCommandLineParser>
+
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QFile>
-#include <QDebug>
-#include <fstream>
 
-using namespace std;
 using namespace dg;
 
-ExifExtraction::ExifExtraction(string nodeName)
-    : Node(nodeName)
+ExifExtraction::ExifExtraction(std::string nodeName)
+    : BaseNode(nodeName, "openMVG_main_SfMInit_ImageListing")
 {
-    inputs = {make_ptr<Plug>(type_index(typeid(FileSystemRef)), "images", *this),
-              make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sensorWidthDatabase", *this)};
-    output = make_ptr<Plug>(type_index(typeid(FileSystemRef)), "sfmdata", *this);
+    registerInput<FileSystemRef>("images");
+    registerInput<FileSystemRef>("sensorWidthDatabase");
+    registerInput<FileSystemRef>("cameraModel");
+
+    registerOutput<FileSystemRef>("sfmdata");
 }
 
-vector<Command> ExifExtraction::prepare(Cache& cache, Environment& environment, bool& blocking)
+void ExifExtraction::prepare(const std::string &cacheDir,
+                             const std::map<std::string, AttributeList> &in,
+                             AttributeList &out,
+                             std::vector<std::vector<std::string>> &commandsArgs)
 {
-    vector<Command> commands;
+    auto& aImgs = in.at("images");
+    auto& aDbFile = in.at("sensorWidthDatabase")[0];
+    auto& aCamModel = in.at("cameraModel")[0];
 
-    // check the 'sensorWidthDatabase' value
-    auto aDb = cache.getFirst(plug("sensorWidthDatabase"));
-    if(!aDb)
-        throw invalid_argument("ExifExtraction: missing sensorWidthDatabase value");
-    auto dbFile = aDb->get<FileSystemRef>();
-
-    // check the 'images' value
-    auto aImgs = cache.get(plug("images"));
-    if(aImgs.empty())
-        throw invalid_argument("ExifExtraction: empty image list");
-
+    // -- Save image list in a json file
     // create a json object containing a list of all images
     QJsonObject json;
     QStringList imageList;
@@ -40,40 +33,29 @@ vector<Command> ExifExtraction::prepare(Cache& cache, Environment& environment, 
         imageList.append(QString::fromStdString(input->toString()));
     json.insert("resources", QJsonValue::fromVariant(imageList));
 
-    // read environment and retrieve the cache directory
-    auto outDir = environment.get(Environment::Key::CACHE_DIRECTORY);
-
-    // save this json object in a file
-    string jsonPath = outDir + "/image_list.json";
+    FileSystemRef imageListFile(cacheDir, "image_list", ".json");
+    const std::string jsonPath = imageListFile.toString();
     QFile jsonFile(QString::fromStdString(jsonPath));
     if(!jsonFile.open(QIODevice::WriteOnly | QIODevice::Text))
-        throw invalid_argument("ExifExtraction: unable to write imagelist file");
+        throw std::invalid_argument("ExifExtraction: unable to write imagelist file");
     QJsonDocument document(json);
     jsonFile.write(document.toJson());
     jsonFile.close();
 
-    // register a new output attribute
-    FileSystemRef outRef(outDir, "sfm_data", ".json");
-    cache.set(output, {make_ptr<Attribute>(outRef)});
+    FileSystemRef outRef(cacheDir, "sfm_data", ".json");
+    out.emplace_back(make_ptr<Attribute>(outRef));
 
-    // build the command line in case this output does not exists
-    if(!outRef.exists())
+    std::vector<std::string> args = {
+        "-j", jsonPath,            // input tmp json file
+        "-d", aDbFile->toString(), // input sensors database
+        "-o", cacheDir             // output directory
+    };
+    if(aCamModel->toString() != "AUTO")
     {
-        Command c(
-            {
-                "--compute", type(),     // meshroom compute mode
-                "--",                    // node options:
-                "-j", jsonPath,          // input tmp json file
-                "-d", dbFile.toString(), // input sensors database
-                "-o", outDir             // output directory
-            },
-            environment);
-        commands.emplace_back(c);
+        // Turn cameramodel to lowercase
+        std::string cameraModel = aCamModel->toString();
+        std::transform(cameraModel.begin(), cameraModel.end(), cameraModel.begin(), ::towlower);
+        args.insert(args.end(), {"-c", cameraModel });
     }
-    return commands;
-}
-
-void ExifExtraction::compute(const vector<string>& arguments) const
-{
-    PluginToolBox::executeProcess("openMVG_main_SfMInit_ImageListing", arguments);
+    commandsArgs.push_back(args);
 }

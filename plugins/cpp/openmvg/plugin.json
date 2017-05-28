@@ -41,6 +41,14 @@
                     "type": "TEXTFIELD",
                     "value": "",
                     "tooltip": ""
+                },
+                {
+                    "name": "cameraModel",
+                    "key": "cameraModel",
+                    "type": "COMBOBOX",
+                    "value": "AUTO",
+                    "options": ["AUTO","PINHOLE", "RADIAL1", "RADIAL3", "FISHEYE4"],
+                    "tooltip": ""
                 }
             ],
             "outputs": [

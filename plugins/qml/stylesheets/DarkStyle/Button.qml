@@ -15,6 +15,7 @@ T.Button {
     contentItem: Text {
         text: control.text
         font.pixelSize: Globals.text.size.small
+        font.family: control.font.family
         color: control.enabled ? Globals.text.color.normal : Globals.text.color.disabled
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter

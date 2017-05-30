@@ -7,29 +7,40 @@ T.ToolButton {
 
     id: control
     property url icon: ""
-
-    implicitWidth: 30
-    implicitHeight: 30
+    implicitWidth: 24
+    implicitHeight: 24
     text: qsTr("ToolButton")
     hoverEnabled: true
-    padding: 2
 
-    contentItem: Rectangle {
-        color: "transparent"
-        border.color: control.enabled ? Globals.window.color.xlight : Globals.window.color.disabled
-        visible: control.icon == ""
+    contentItem: Item {
+        Label {
+            anchors.centerIn: parent
+            text: control.text
+            font: control.font
+            visible: control.icon == ""
+        }
     }
+
     background: Rectangle {
-        color: control.hovered ? Globals.window.color.selected : "transparent"
+        color: {
+            if(control.checked)
+                return Globals.window.color.checked;
+            if(control.hovered)
+                return Qt.darker(Globals.window.color.checked, 1.5)
+            return "transparent";
+        }
         opacity: 0.8
-        Behavior on color { ColorAnimation {} }
         Image {
             anchors.fill: parent
             visible: control.icon != ""
             source: control.icon
-            sourceSize: Qt.size(40, 40)
+            sourceSize: Qt.size(control.width, control.height)
             asynchronous: true
         }
+        MouseArea {
+            anchors.fill: parent
+            enabled: false
+            cursorShape: Qt.PointingHandCursor
+        }
     }
-
 }

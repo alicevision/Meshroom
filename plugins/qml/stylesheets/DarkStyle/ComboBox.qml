@@ -1,6 +1,7 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Templates 2.0 as T
+import QtQuick.Layouts 1.1
 
 import "."
 
@@ -10,25 +11,30 @@ T.ComboBox {
     implicitWidth: 200
     implicitHeight: 30
     spacing: 10
-    padding: 2
+    padding: 6
 
     background: Rectangle {
         color: Globals.window.color.dark
     }
     delegate: MenuItem {
         width: control.width
-        text: modelData
+        text: control.textRole ? modelData[control.textRole] : modelData
         highlighted: control.highlightedIndex === index
     }
-    contentItem: Text {
-        leftPadding: control.leftPadding
-        rightPadding: control.rightPadding
-        text: control.displayText
-        font: control.font
-        color: control.enabled ? Globals.text.color.normal : Globals.text.color.disabled
-        horizontalAlignment: Text.AlignLeft
-        verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
+    contentItem: RowLayout {
+        anchors.leftMargin: control.leftPadding
+        anchors.rightMargin: control.rightPadding
+        Label {
+            id: text
+            Layout.fillWidth: true
+            text: control.displayText
+            font: control.font
+            horizontalAlignment: Text.AlignLeft
+        }
+        Text {
+            text: "▾"
+            color: text.color
+        }
     }
     popup: T.Popup {
         width: control.width

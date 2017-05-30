@@ -8,13 +8,13 @@ T.TextField {
     id: control
     implicitWidth: 200
     implicitHeight: 30
-    text: qsTr("TextField")
     color: Globals.text.color.normal
     selectionColor: Globals.window.color.dark
     selectedTextColor: Globals.text.color.selected
     verticalAlignment: TextInput.AlignVCenter
     leftPadding: 4
     rightPadding: 4
+    selectByMouse: true
 
     Text {
         id: placeholder

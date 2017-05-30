@@ -7,6 +7,7 @@ import QtQuick.Dialogs 1.2
 import Meshroom.Scene 1.0
 import Logger 1.0
 import NodeEditor 1.0
+import FontAwesome 1.0
 import "controls"
 
 Controls1.ApplicationWindow {
@@ -62,31 +63,6 @@ Controls1.ApplicationWindow {
         }
         t += "Meshroom";
         return t;
-    }
-
-    toolBar: ToolBar {
-        width: _window.width
-        RowLayout {
-            anchors.fill: parent
-            Item { Layout.fillWidth: true } // spacer
-            RowLayout {
-                ProgressBar {
-                    implicitWidth: 100
-                    implicitHeight: 20
-                    indeterminate: true
-                    value: 1
-                }
-                ToolButton {
-                    Component.onCompleted: {
-                        if(typeof icon == "undefined") return;
-                        icon = "qrc:///images/pause.svg"
-                    }
-                    text: "STOP"
-                    onClicked: currentScene.graph.stopWorkerThread()
-                }
-                visible: currentScene.graph.isRunning
-            }
-        }
     }
 
     CustomSplitView {

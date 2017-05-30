@@ -153,7 +153,9 @@ Controls1.ApplicationWindow {
         Settings {
             Layout.fillHeight: true
             implicitWidth: _window.width * 0.2
-            model: currentNode
+            graph: currentScene.graph
+            node: currentNode
+        }
         }
     }
     // footer

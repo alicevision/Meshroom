@@ -1,4 +1,5 @@
 module NodeEditor
 
 NodeEditor 1.0 qml/NodeEditor.qml
+EditAttributeDelegate 1.0 qml/EditAttributeDelegate.qml
 plugin nodeEditorQmlPlugin

@@ -38,6 +38,7 @@ public:
     EdgeCollection* edges() { return _edges; }
     Node* node(const QString&);
 
+    Q_INVOKABLE QVariant nodeByName(const QString&);
 protected:
     NodeCollection* _nodes = new NodeCollection(this);
     EdgeCollection* _edges = new EdgeCollection(*_nodes, this);
@@ -49,10 +50,15 @@ inline AbstractGraph::AbstractGraph(QObject* parent)
 {
 }
 
-inline Node* AbstractGraph::node(const QString& nodename)
+inline QVariant AbstractGraph::nodeByName(const QString& nodeName)
 {
-    auto id = _nodes->index(_nodes->rowIndex(nodename));
-    return _nodes->data(id, NodeCollection::ModelDataRole).value<Node*>();
+    auto id = _nodes->index(_nodes->rowIndex(nodeName));
+    return _nodes->data(id, NodeCollection::ModelDataRole);
+}
+
+inline Node* AbstractGraph::node(const QString& nodeName)
+{
+    return nodeByName(nodeName).value<Node*>();
 }
 
 } // namespace

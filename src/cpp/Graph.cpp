@@ -525,6 +525,8 @@ void Graph::stopWorkerThread()
         return;
     _thread->kill();
     _thread->wait();
+    _nodesStatusDirty = true;
+    refreshStatus();
     Q_EMIT isRunningChanged();
 }
 

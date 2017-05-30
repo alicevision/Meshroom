@@ -15,16 +15,22 @@ Entity {
     property real panSpeed: 500.0
     property bool moving: false
 
-    signal mousePressed(var mouse);
-    signal mouseReleased(var mouse);
+    signal mousePressed(var mouse)
+    signal mouseReleased(var mouse)
+    signal mouseWheeled(var wheel)
 
     KeyboardDevice { id: keyboardSourceDevice }
     MouseDevice { id: mouseSourceDevice; sensitivity: 0.1 }
 
     MouseHandler {
         sourceDevice: mouseSourceDevice
-        onPressed: mousePressed(mouse) // onPressed not called?
+        onPressed: mousePressed(mouse)
         onReleased: mouseReleased(mouse)
+        onWheel: {
+            var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.05;
+            var tz = (wheel.angleDelta.y / 120) * d;
+            root.camera.translate(Qt.vector3d(0, 0, tz), Camera.DontTranslateViewCenter)
+        }
     }
 
     LogicalDevice {

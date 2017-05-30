@@ -16,11 +16,13 @@ Item {
     property Item background: null
     property url gridIcon: ""
     property url listIcon: ""
+    property int thumbnailSize: 250
+    property bool readOnly: false
 
     // signal / slots
     signal closed()
     signal itemAdded(var urls)
-    signal itemRemoved(var urls)
+    signal itemRemoved(var urls, var indexes)
 
     // selection functions
     QtObject {
@@ -74,6 +76,7 @@ Item {
     DropArea {
         id: dropArea
         anchors.fill: parent
+        enabled: !root.readOnly
         onDropped: root.itemAdded(drop.urls);
         opacity: containsDrag ? 1 : 0
         Behavior on opacity { NumberAnimation {} }
@@ -104,15 +107,23 @@ Item {
                 _selector.refreshSelectionFlags()
             }
             onRemoveSelected: {
+                if(root.readOnly)
+                    return;
                 var list = []
+                var indexes = []
                 for(var i=0; i<_selector.selection.length; ++i)
+                {
                     list.push(root.model[_selector.selection[i]])
-                root.itemRemoved(list);
+                    indexes.push(_selector.selection[i])
+                }
+                root.itemRemoved(list, indexes);
                 _selector.clearSelection();
                 _selector.refreshSelectionFlags()
             }
             onRemoveOne: {
-                root.itemRemoved([root.model[id]])
+                if(root.readOnly)
+                    return;
+                root.itemRemoved([root.model[id]], [id])
                 _selector.clearSelection();
                 _selector.refreshSelectionFlags()
             }
@@ -134,10 +145,12 @@ Item {
             GridImageView {
                 id: gridImageView
                 visualModel: imageModel
+                thumbnailSize: root.thumbnailSize
             }
             ListImageView {
                 id: listImageView
                 visualModel: imageModel
+                thumbnailSize: root.thumbnailSize
             }
         }
 
@@ -155,6 +168,7 @@ Item {
                 ToolButton {
                     Layout.preferredHeight: 20
                     Layout.preferredWidth: 20
+                    text: "G"
                     onClicked: stack.currentIndex = 0
                     Component.onCompleted: {
                         if(typeof icon == "undefined") return;
@@ -164,6 +178,7 @@ Item {
                 ToolButton {
                     Layout.preferredHeight: 20
                     Layout.preferredWidth: 20
+                    text: "L"
                     onClicked: stack.currentIndex = 1
                     Component.onCompleted: {
                         if(typeof icon == "undefined") return;
@@ -196,7 +211,7 @@ Item {
             }
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
             var thumbSize = gridImageView.thumbnailSize*zoomFactor;
-            if(thumbSize <= 20 || thumbSize > 150)
+            if(thumbSize <= 20 || thumbSize > 400)
                 return;
             gridImageView.thumbnailSize = thumbSize;
             listImageView.thumbnailSize = thumbSize;

@@ -8,6 +8,7 @@ Package {
 
     // properties
     property bool selected: false
+    property int sourceSize: 400
 
     // signals
     signal selectContiguous(int id)
@@ -94,7 +95,7 @@ Package {
                     source: modelData
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
-                    sourceSize: Qt.size(120, 120)
+                    sourceSize: Qt.size(root.size, root.size)
                     BusyIndicator {
                         anchors.centerIn: parent
                         running: parent.status === Image.Loading
@@ -103,7 +104,7 @@ Package {
             }
             Label {
                 Layout.fillWidth: true
-                text: modelData
+                text: modelData.replace("file://", "")
                 state: "xsmall"
             }
             Item {
@@ -150,7 +151,7 @@ Package {
                 source: modelData
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                sourceSize: Qt.size(120, 120)
+                sourceSize: Qt.size(root.size, root.size)
                 Rectangle {
                     width: parent.width
                     height: childrenRect.height
@@ -158,9 +159,10 @@ Package {
                     color: "#66111111"
                     Label {
                         width: parent.width
-                        text: modelData
+                        text: modelData.replace("file://", "")
                         state: "xsmall"
                         maximumLineCount: (gridMouseArea.containsMouse) ? 4 : 1
+                        elide: Text.ElideMiddle
                     }
                 }
                 BusyIndicator {

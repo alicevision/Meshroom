@@ -222,19 +222,19 @@ Frame {
             Entity {
                 id: gridEntity
                 components: [
-        			GeometryRenderer {
-        				primitiveType: GeometryRenderer.Lines
-        				geometry: Geometry {
-        					Attribute {
-        						id: gridPosition
-        						attributeType: Attribute.VertexAttribute
-        						vertexBaseType: Attribute.Float
-        						vertexSize: 3
-        						count: 0
+                    GeometryRenderer {
+                        primitiveType: GeometryRenderer.Lines
+                        geometry: Geometry {
+                            Attribute {
+                                id: gridPosition
+                                attributeType: Attribute.VertexAttribute
+                                vertexBaseType: Attribute.Float
+                                vertexSize: 3
+                                count: 0
                                 name: defaultPositionAttributeName
-        						buffer: Buffer {
-        							type: Buffer.VertexBuffer
-        							data: {
+                                buffer: Buffer {
+                                    type: Buffer.VertexBuffer
+                                    data: {
                                         function buildGrid(first, last, offset, attribute) {
                                             var vertexCount = (((last-first)/offset)+1)*4;
                                             var f32 = new Float32Array(vertexCount*3);
@@ -261,34 +261,34 @@ Frame {
                                         }
                                         return buildGrid(-12, 12, 1, gridPosition);
                                     }
-        						}
-        					}
-        					boundingVolumePositionAttribute: gridPosition
-        				}
-        			},
+                                }
+                            }
+                            boundingVolumePositionAttribute: gridPosition
+                        }
+                    },
                     PhongMaterial {
                         ambient: Qt.rgba(0.4, 0.4, 0.4, 1)
                     }
                 ]
-    		}
+            }
 
             // Gizmo
             Entity {
                 id: gizmoEntity
                 components: [
-        			GeometryRenderer {
-        				primitiveType: GeometryRenderer.Lines
-        				geometry: Geometry {
-        					Attribute {
-        						id: gizmoPosition
-        						attributeType: Attribute.VertexAttribute
-        						vertexBaseType: Attribute.Float
-        						vertexSize: 3
-        						count: 6
+                    GeometryRenderer {
+                        primitiveType: GeometryRenderer.Lines
+                        geometry: Geometry {
+                            Attribute {
+                                id: gizmoPosition
+                                attributeType: Attribute.VertexAttribute
+                                vertexBaseType: Attribute.Float
+                                vertexSize: 3
+                                count: 6
                                 name: defaultPositionAttributeName
-        						buffer: Buffer {
-        							type: Buffer.VertexBuffer
-        							data: Float32Array([
+                                buffer: Buffer {
+                                    type: Buffer.VertexBuffer
+                                    data: Float32Array([
                                         0.0, 0.001, 0.0,
                                         1.0, 0.001, 0.0,
                                         0.0, 0.001, 0.0,
@@ -296,17 +296,17 @@ Frame {
                                         0.0, 0.001, 0.0,
                                         0.0, 0.001, 1.0
                                         ])
-        						}
-        					}
-        					Attribute {
-        						attributeType: Attribute.VertexAttribute
-        						vertexBaseType: Attribute.Float
-        						vertexSize: 3
-        						count: 6
+                                }
+                            }
+                            Attribute {
+                                attributeType: Attribute.VertexAttribute
+                                vertexBaseType: Attribute.Float
+                                vertexSize: 3
+                                count: 6
                                 name: defaultColorAttributeName
-        						buffer: Buffer {
-        							type: Buffer.VertexBuffer
-        							data: Float32Array([
+                                buffer: Buffer {
+                                    type: Buffer.VertexBuffer
+                                    data: Float32Array([
                                         1.0, 0.0, 0.0,
                                         1.0, 0.0, 0.0,
                                         0.0, 1.0, 0.0,
@@ -314,15 +314,15 @@ Frame {
                                         0.0, 0.0, 1.0,
                                         0.0, 0.0, 1.0
                                         ])
-        						}
-        					}
-        					boundingVolumePositionAttribute: gizmoPosition
-        				}
-        			},
+                                }
+                            }
+                            boundingVolumePositionAttribute: gizmoPosition
+                        }
+                    },
                     PerVertexColorMaterial {},
                     Transform { id: gizmoTransform }
                 ]
-    		}
+            }
         }
     }
 

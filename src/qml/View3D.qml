@@ -26,19 +26,64 @@ Frame {
         mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
     }
 
+    function findChildrenByProperty(node, propertyName, container)
+    {
+        if(!node || !node.childNodes)
+            return;
+        for(var i=0; i < node.childNodes.length; ++i)
+        {
+            var childNode = node.childNodes[i];
+            if(!childNode)
+                continue;
+            if(childNode[propertyName] !== undefined)
+                container.push(childNode);
+            else
+                findChildrenByProperty(childNode, propertyName, container)
+        }
+    }
+
+    function unmirrorTextures(rootEntity)
+    {
+        var materials = [];
+        findChildrenByProperty(rootEntity, "diffuse", materials);
+
+        var textures = [];
+        materials.forEach(function(mat){
+            findChildrenByProperty(mat["diffuse"], "mirrored", textures)
+        })
+
+        //console.log(textures)
+        textures.forEach(function(tex){
+            //console.log("Unmirroring: " + tex.source)
+            tex.mirrored = false
+        })
+    }
+
+    function loadModel(url)
+    {
+        abcEntity.url = modelLoader.source = "";
+        if(!url.trim())
+            return;
+        if(url.split(".").pop() == "abc")
+            abcEntity.url = Qt.resolvedUrl(url)
+        else
+            modelLoader.source = Qt.resolvedUrl(url)
+    }
+
     // connections
     Connections {
         target: _window
         onDisplayIn3DView: {
-            if(!attribute || !attribute.value) {
-                sourceName.text = ""
-                sourceListView.model = 0;
-                abcEntity.url = "";
-                return;
+            sourceName.text = ""
+            sourceListView.model = 0;
+            var source = "";
+            if(attribute && attribute.value)
+            {
+                sourceName.text = attribute.name
+                sourceListView.model = Array.isArray(attribute.value) ? attribute.value : [attribute.value]
+                source = sourceListView.model[0];
             }
-            sourceName.text = attribute.name
-            sourceListView.model = Array.isArray(attribute.value) ? attribute.value : [attribute.value]
-            abcEntity.url = Qt.resolvedUrl(sourceListView.model[0])
+            loadModel(source);
         }
     }
 
@@ -56,6 +101,7 @@ Frame {
                 event.accepted = true;
             }
         }
+
         Entity {
             id: rootEntity
             Camera {
@@ -68,7 +114,12 @@ Frame {
                 upVector: Qt.vector3d(0.0, 1.0, 0.0)
                 viewCenter: Qt.vector3d(0.0, 0.0, 0.0)
                 aspectRatio: width/height
+
+                Behavior on viewCenter {
+                    Vector3dAnimation { duration: 250 }
+                }
             }
+
             MayaCameraController {
                 id: cameraController
                 camera: mainCamera
@@ -90,6 +141,9 @@ Frame {
             }
             components: [
                 RenderSettings {
+                    // To avoid performance drop, only pick triangles when not moving the camera
+                    pickingSettings.pickMethod: cameraController.moving ? PickingSettings.BoundingVolumePicking : PickingSettings.TrianglePicking
+
                     activeFrameGraph: Viewport {
                         normalizedRect: Qt.rect(0.0, 0.0, 1.0, 1.0)
                         RenderSurfaceSelector {
@@ -111,6 +165,7 @@ Frame {
                     enabled: true
                 }
             ]
+
             AlembicEntity {
                 id: abcEntity
                 particleSize: 0.1
@@ -123,6 +178,43 @@ Frame {
                     // mainCamera.roll(transform.rotationZ);
                     // mainCamera.pan(transform.rotationY);
                     // mainCamera.tilt(transform.rotationX);
+                }
+            }
+            Entity {
+                id: modelLoader
+                property alias source: scene.source
+                components: [scene, transform, picker]
+                ObjectPicker {
+                    id: picker
+                    hoverEnabled: false
+                    onPressed: {
+                        if(Qt.LeftButton & pick.buttons)
+                        {
+                            if(!doubleClickTimer.running)
+                                doubleClickTimer.start()
+                            else
+                                mainCamera.viewCenter = pick.worldIntersection
+                        }
+                    }
+
+                    Timer {
+                        id: doubleClickTimer
+                        running: false
+                        interval: 400
+                    }
+
+                }
+
+                Transform {
+                    id: transform
+
+                }
+                SceneLoader {
+                    id: scene
+                    onStatusChanged: {
+                        if(scene.status == SceneLoader.Ready)
+                            unmirrorTextures(parent);
+                    }
                 }
             }
 
@@ -354,7 +446,7 @@ Frame {
                     width: ListView.view.width
                     height: 30
                     text: modelData
-                    onClicked: abcEntity.url = Qt.resolvedUrl(modelData)
+                    onClicked: loadModel(Qt.resolvedUrl(modelData))
                 }
             }
         }

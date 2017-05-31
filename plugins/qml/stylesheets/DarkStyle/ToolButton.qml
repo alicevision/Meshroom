@@ -7,8 +7,8 @@ T.ToolButton {
 
     id: control
     property url icon: ""
-    implicitWidth: 24
-    implicitHeight: 24
+    implicitWidth: 30
+    implicitHeight: 30
     text: qsTr("ToolButton")
     hoverEnabled: true
 
@@ -32,6 +32,7 @@ T.ToolButton {
         opacity: 0.8
         Image {
             anchors.fill: parent
+            anchors.margins: 1
             visible: control.icon != ""
             source: control.icon
             sourceSize: Qt.size(control.width, control.height)

@@ -49,6 +49,7 @@ Frame {
 
         var textures = [];
         materials.forEach(function(mat){
+            mat["diffuse"].magnificationFilter = Texture.Linear;
             findChildrenByProperty(mat["diffuse"], "mirrored", textures)
         })
 

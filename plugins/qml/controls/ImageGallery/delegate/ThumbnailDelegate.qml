@@ -8,7 +8,7 @@ Package {
 
     // properties
     property bool selected: false
-    property int sourceSize: 400
+    property int sourceSize: 300
 
     // signals
     signal selectContiguous(int id)

@@ -44,6 +44,7 @@ MenuBar {
     }
     Menu {
         title: "Edit"
+        enabled: !!currentScene.url.toString().trim()
 
         MenuItem {
             text: "Undo"

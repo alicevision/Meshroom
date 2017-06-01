@@ -131,7 +131,7 @@ Item {
                             Layout.columnSpan: 2
                             Layout.alignment: Qt.AlignHCenter
 
-                            text: FontAwesome.plusCircle + (addToCurrentScene.checked ? " Create " : " Create and Open ")
+                            text: FontAwesome.plusCircle + (addToCurrentScene.checked ? " Create  " : " Create and Open  ")
                             font.family: FontAwesome.fontFamily
                             enabled: graphNameTF.text.trim() != ""
                             onClicked: {

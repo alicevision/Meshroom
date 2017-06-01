@@ -51,7 +51,7 @@ RowLayout {
         columnSpacing: 14
 
         Label {
-            text: FontAwesome.wrench + "  Parameters"
+            text: FontAwesome.wrench + "  Parameters "
             font.family: FontAwesome.fontFamily
             Layout.columnSpan: 2
             Layout.bottomMargin: 30

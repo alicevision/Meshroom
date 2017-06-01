@@ -27,7 +27,8 @@
             "outputs": [
                 {
                     "name": "output",
-                    "key": "output"
+                    "key": "output",
+                    "type": "UNKNOWN"
                 }
             ]
         }

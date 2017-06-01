@@ -1,6 +1,6 @@
 #include "Application.hpp"
 #include "CommandLine.hpp"
-#include <QGuiApplication>
+#include <QApplication>
 #include <QDebug>
 
 int main(int argc, char* argv[])
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
             {
                 // GUI application
                 QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-                QGuiApplication qapp(argc, argv);
+                QApplication qapp(argc, argv); // QApplication for Qt Lab Platforms
                 commandLine.parse(qapp);
                 QQmlApplicationEngine engine;
                 Application application(engine);

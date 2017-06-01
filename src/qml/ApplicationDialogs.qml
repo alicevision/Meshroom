@@ -2,6 +2,7 @@ import QtQuick 2.7
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.0
 import QtQuick.Dialogs 1.2
+import Qt.labs.platform 1.0 as Platform
 import "controls"
 
 Item {
@@ -15,13 +16,11 @@ Item {
         sidebarVisible: false
         nameFilters: [ "Meshroom file (*.meshroom)" ]
     }
-    property Component saveScene: FileDialog {
+    property Component saveScene: Platform.FileDialog {
         title: "Save file"
         folder: "/"
-        selectExisting: false
-        selectFolder: false
-        selectMultiple: false
-        sidebarVisible: false
+        fileMode: Platform.FileDialog.SaveFile
+        defaultSuffix: ".meshroom"
         nameFilters: [ "Meshroom file (*.meshroom)" ]
     }
     property Component openRecentScene: Popup {

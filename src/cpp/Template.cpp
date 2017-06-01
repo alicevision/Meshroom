@@ -8,7 +8,7 @@ namespace meshroom
 Template::Template(QObject* parent, const QUrl& url)
     : QObject(parent)
     , _url(url)
-    , _name(QFileInfo(url.toLocalFile()).fileName())
+    , _name(QFileInfo(url.toLocalFile()).baseName())
 {
 }
 

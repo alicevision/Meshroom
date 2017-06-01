@@ -7,6 +7,8 @@ Item {
     id: root
     property variant scene
 
+    signal addGraphRequest()
+
     clip: true
 
     ColumnLayout {
@@ -95,7 +97,7 @@ Item {
         Button {
             Layout.alignment: Qt.AlignRight
             text: "+"
-            onClicked: scene.addGraph(true)
+            onClicked: addGraphRequest()
         }
     }
 }

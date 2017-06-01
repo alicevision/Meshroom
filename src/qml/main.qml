@@ -52,6 +52,7 @@ Controls1.ApplicationWindow {
     }
 
     menuBar: ApplicationMenu {}
+
     title: {
         var t = "";
         if(currentScene.name)
@@ -75,8 +76,9 @@ Controls1.ApplicationWindow {
             Layout.fillHeight: true
             Layout.minimumWidth: 20
             implicitWidth: 180
-
             scene: currentScene
+
+            onAddGraphRequest: homePageOverlay.show("NEW")
         }
 
         CustomSplitView {
@@ -141,14 +143,12 @@ Controls1.ApplicationWindow {
                     }
                 }
             }
-
             Graph {
                 Layout.fillWidth: true
                 Layout.minimumHeight: 10
                 implicitHeight: _window.height * 0.4
                 onSelectionChanged: currentNode = node
             }
-
         }
         Settings {
             Layout.fillHeight: true
@@ -156,8 +156,46 @@ Controls1.ApplicationWindow {
             graph: currentScene.graph
             node: currentNode
         }
+    }
+
+    // Overlay for HomePage
+    MouseArea {
+        id: homePageOverlay
+        anchors.fill: parent
+        hoverEnabled: true
+        onDoubleClicked: display = false
+        property bool display: false
+        visible: display || !currentScene.url.toString()
+
+        function show(state)
+        {
+            display = true;
+            if(state)
+                homePage.state = state
+        }
+
+        Connections {
+            target: _application.scene
+            onGraphChanged: homePageOverlay.display = false
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: Qt.darker("#EE171719", 1.5)
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: 20
+                color: "#171719"
+                border.color: "#444"
+                MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
+                HomePage {
+                    id: homePage
+                    anchors.fill: parent
+                }
+            }
         }
     }
+
     // footer
     statusBar: LogBar {
         expandIcon: expanded ? "qrc:///images/shrink.svg" : "qrc:///images/expand.svg"

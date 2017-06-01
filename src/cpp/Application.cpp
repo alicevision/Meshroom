@@ -22,6 +22,7 @@ Application::Application()
     , _plugins(this)
     , _pluginNodes(this)
     , _scene(this)
+    , _templateScene(new Scene(this))
 {
     // set global/Qt locale
     std::locale::global(std::locale::classic());
@@ -57,16 +58,12 @@ Application::Application(QQmlApplicationEngine& engine)
     qmlRegisterType<Graph>("Meshroom.Graph", 1, 0, "Graph");
     qmlRegisterUncreatableType<Worker>("Meshroom.Worker", 1, 0, "Worker",
                                        "type registration failed (Worker)");
-
+    qmlRegisterUncreatableType<TemplateCollection>("Meshroom.TemplateCollection", 1, 0, "TemplateCollection",
+                                                   "type registration failed (TemplateCollection)");
     // set surface format
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
     fmt.setSamples(8);
     QSurfaceFormat::setDefaultFormat(fmt);
-
-    // fill the template list
-    QDirIterator it(qApp->applicationDirPath() + "/templates", QDir::Files);
-    while(it.hasNext())
-        _templates.add(new Template(this, QUrl::fromLocalFile(it.next())));
 
     // expose this object to QML
     engine.rootContext()->setContextProperty("_application", this);
@@ -92,13 +89,21 @@ Application::Application(QQmlApplicationEngine& engine)
     }
     engine.setBaseUrl(baseUrl);
 
+    // fill the template list
+    auto templateDir = (enableIC ? baseUrl.toLocalFile() + "../" : rootdir) + "templates/";
+    QDirIterator it(templateDir, QStringList{"*.meshroom"}, QDir::Files);
+    while(it.hasNext())
+        _templates.add(new Template(this, QUrl::fromLocalFile(it.next())));
+
     if(enableIC)
     {
         qDebug().noquote() << "QMLIC:" << baseUrl.toLocalFile();
         // setup qml instant coding
         auto instantCoding = new instantcoding::InstantCoding(this, engine, qmlfile);
+        instantCoding->addFilesFromDirectory(templateDir);
         instantCoding->start();
     }
+
     engine.load(qmlfile);
 }
 
@@ -126,6 +131,7 @@ PluginCollection* Application::loadPlugins()
         // register all nodes
         for(auto n : metadata.value("nodes").toArray())
             _pluginNodes.add(new PluginNode(this, n.toObject(), plugin));
+
     }
     return &_plugins;
 }
@@ -146,6 +152,35 @@ dg::Ptr<dg::Node> Application::createNode(const QString& type, const QString& na
     PluginInterface* instance = node->pluginInstance();
     Q_CHECK_PTR(instance);
     return instance->createNode(type, name);
+}
+
+void Application::openTemplate(Template* t)
+{
+    if(t == nullptr)
+    {
+        setTemplateScene(nullptr);
+        return;
+    }
+
+    Scene* s = new Scene(this);
+    s->setAutoRefresh(false);
+    s->import(t->url());
+    setTemplateScene(s);
+}
+
+void Application::createTemplateScene(const QString& graphName, const QUrl& filename)
+{
+    _templateScene->graph()->setProperty("name", graphName);
+    _templateScene->saveAs(filename);
+    setTemplateScene(nullptr);
+    loadScene(filename);
+}
+
+void Application::createTemplateGraph(const QString& graphName)
+{
+    _templateScene->graph()->setProperty("name", graphName);
+    _scene.createAndAddGraph(true, _templateScene->graph()->serializeToJSON());
+    setTemplateScene(nullptr);
 }
 
 } // namespace

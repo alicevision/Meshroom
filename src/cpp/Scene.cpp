@@ -26,7 +26,7 @@ Scene::Scene(QObject* parent, const QUrl& url)
 {
 
     connect(_undoStack, &UndoStack::indexChanged, [this](){
-        if(_graph)
+        if(_graph && _autoRefresh)
             _graph->refreshStatus();
     });
 

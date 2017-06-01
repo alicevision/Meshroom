@@ -16,6 +16,9 @@ class UndoStack : public QUndoStack
 public:
     UndoStack(QObject* parent);
 
+    inline Q_INVOKABLE void beginMacro(const QString& name) { QUndoStack::beginMacro(name); }
+    inline Q_INVOKABLE void endMacro() { QUndoStack::endMacro(); }
+
 public:
     bool tryAndPush(UndoCommand*);
     Q_SIGNAL void isCleanChanged();

@@ -19,6 +19,7 @@ public:
         DescriptionRole,
         ModelDataRole
     };
+    Q_ENUMS(TemplateRoles)
 
 public:
     TemplateCollection(QObject* parent = 0);

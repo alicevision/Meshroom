@@ -72,6 +72,12 @@ public:
     /// Remove the given grah from the Scene and delete it
     void doDeleteGraph(Graph* graph);
 
+    /// Whether graphs should update their status when attributes values change
+    void setAutoRefresh(bool value)
+    {
+        _autoRefresh = value;
+    }
+
 private:
     void setUrl(const QUrl&);
     void setName(const QString&);
@@ -93,6 +99,7 @@ private:
     UndoStack* _undoStack = nullptr;
     QQmlObjectListModel<Graph> _graphs;
     Graph* _graph = nullptr;
+    bool _autoRefresh = true;
 };
 
 } // namespace

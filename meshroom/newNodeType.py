@@ -63,12 +63,12 @@ def convertToLabel(name):
 
 
 outputNodeStr = '''
-import processGraph as pg
+from processGraph import desc
 
-class __COMMANDNAME__(pg.CommandLineNodeDesc):
+class __COMMANDNAME__(desc.CommandLineNode):
     internalFolder = '{nodeType}/{uid0}/'
     cmdLineExpr = '{nodeType} {allParams}'
-'''.replace('__COMMANDNAME__', 'args.node')
+'''.replace('__COMMANDNAME__', args.node)
 
 
 print(inputCmdLineDoc)
@@ -121,7 +121,7 @@ for inputArg in inputArgs:
     inputArgLower = ' '.join(inputArg).lower()
     isFile = 'path' in inputArgLower or 'folder' in inputArgLower or 'file' in inputArgLower
     outputNodeStr += '''
-    {name} = pg.{attributeType}(
+    {name} = desc.{attributeType}(
             label='{label}',
             description='{description}',
             value={value},

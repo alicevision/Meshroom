@@ -306,8 +306,10 @@ class Node:
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             self._cmdVars[name + 'Value'] = str(v)
-            self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + ' ' + \
-                                                      self._cmdVars[name]
+
+            if v is not None and v is not '':
+                self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
+                                                          ' ' + self._cmdVars[name]
 
     def internalFolder(self):
         return self.nodeDesc.internalFolder.format(nodeType=self.nodeType(), **self._cmdVars)

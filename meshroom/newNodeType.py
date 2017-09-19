@@ -8,18 +8,19 @@ import sys
 
 
 def trim(s):
-    '''
+    """
     All repetition of any kind of space is replaced by a single space
     and remove trailing space at beginning or end.
-    '''
+    """
     # regex to replace all space groups by a single space
     # use split() to remove trailing space at beginning/end
     return re.sub('\s+', ' ', s).strip()
 
+
 def quotesForStrings(valueStr):
-    '''
+    """
     Return the input string with quotes if it cannot be cast into another builtin type.
-    '''
+    """
     v = valueStr
     try:
         int(valueStr)
@@ -51,6 +52,7 @@ if sys.stdin.isatty():
     exit(-1)
 
 inputCmdLineDoc = ''.join([line for line in sys.stdin])
+
 
 def convertToLabel(name):
     camelCaseToLabel = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', name)

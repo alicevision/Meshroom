@@ -16,14 +16,17 @@ from pprint import pprint
 from meshroom import processGraph as pg
 
 # Replace default encoder to support Enums
-DefaultJSONEncoder = json.JSONEncoder # store the original one
-class MyJSONEncoder(DefaultJSONEncoder): # declare a new one with Enum support
+DefaultJSONEncoder = json.JSONEncoder  # store the original one
+
+
+class MyJSONEncoder(DefaultJSONEncoder):  # declare a new one with Enum support
     def default(self, obj):
         if isinstance(obj, Enum):
             return obj.name
-        return DefaultJSONEncoder.default(self, obj) # use the default one for all other types
-json.JSONEncoder = MyJSONEncoder # replace the default implementation with our new one
+        return DefaultJSONEncoder.default(self, obj)  # use the default one for all other types
 
+
+json.JSONEncoder = MyJSONEncoder  # replace the default implementation with our new one
 
 try:
     unicode = unicode
@@ -47,28 +50,30 @@ def hash(v):
 
 
 class Attribute:
-    '''
-    '''
+    """
+    """
+
     def __init__(self, name, node, attributeDesc):
         self.attrName = name
         self.node = node
         self._value = attributeDesc.__dict__.get('value', None)
         self.attributeDesc = attributeDesc
 
-    def aboluteName(self):
+    def absoluteName(self):
         return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self.attrName)
 
     def name(self):
-        '''
+        """
         Name inside the Graph.
-        '''
+        """
         return '{}.{}'.format(self.node.name, self.attrName)
 
     def uid(self):
-        '''
-        '''
+        """
+        """
         if self.attributeDesc.isOutput:
-            # only dependent of the linked node uid, so it is independant of the cache folder which may be used in the filepath.
+            # only dependent of the linked node uid, so it is independent
+            # from the cache folder which may be used in the filepath.
             return self.node.uid()
         if self.isLink():
             return self.node.graph.edges[self].uid()
@@ -77,9 +82,9 @@ class Attribute:
         return hash(self._value)
 
     def isLink(self):
-        '''
+        """
         If the attribute is a link to another attribute.
-        '''
+        """
         if self.attributeDesc.isOutput:
             return False
         else:
@@ -91,11 +96,11 @@ class Attribute:
         return self.node.graph.edges[self]
 
     def _applyExpr(self):
-        '''
+        """
         For string parameters with an expression (when loaded from file),
         this function convert the expression into a real edge in the graph
         and clear the string value.
-        '''
+        """
         v = self._value
         if isinstance(v, basestring) and len(v) > 2 and v[0] == '{' and v[-1] == '}':
             # value is a link to another attribute
@@ -114,8 +119,8 @@ class Attribute:
 
 
 class Status(Enum):
-    '''
-    '''
+    """
+    """
     NONE = 1
     SUBMITTED_EXTERN = 2
     SUBMITTED_LOCAL = 3
@@ -125,28 +130,32 @@ class Status(Enum):
 
 
 class Statistics:
-    '''
-    '''
+    """
+    """
+
     def __init__(self):
-        self.duration = 0 # computation time set at the end of the execution
+        self.duration = 0  # computation time set at the end of the execution
         self.cpuUsage = []
         self.nbCores = 0
         self.cpuFreq = 0
-        self.ramUsage = [] # store cpuUsage every minute
-        self.ramAvailable = 0 # GB
+        self.ramUsage = []  # store cpuUsage every minute
+        self.ramAvailable = 0  # GB
         self.vramUsage = []
-        self.vramAvailable = 0 # GB
+        self.vramAvailable = 0  # GB
         self.swapUsage = []
         self.swapAvailable = 0
+
     def toDict(self):
         return self.__dict__
+
     def fromDict(self, d):
         self.__dict__ = d
 
 
 class StatusData:
-    '''
-    '''
+    """
+    """
+
     def __init__(self, nodeName, nodeType):
         self.status = Status.NONE
         self.nodeName = nodeName
@@ -165,10 +174,10 @@ class StatusData:
         self.graph = d['graph']
 
 
-bytesPerGiga = 1024.*1024.*1024.
+bytesPerGiga = 1024. * 1024. * 1024.
+
 
 class StatisticsThread(threading.Thread):
- 
     def __init__(self, node):
         threading.Thread.__init__(self)
         self.node = node
@@ -203,11 +212,11 @@ class StatisticsThread(threading.Thread):
             if time.time() - self.lastTime > 10:
                 self.updateStats()
             time.sleep(1)
- 
+
 
 class Node:
-    '''
-    '''
+    """
+    """
     name = None
     graph = None
 
@@ -256,7 +265,8 @@ class Node:
         return self.nodeUid
 
     def _updateUid(self):
-        hashInputParams = [(attr.attrName, attr.uid()) for attr in self.attributes.values() if not attr.attributeDesc.isOutput]
+        hashInputParams = [(attr.attrName, attr.uid()) for attr in self.attributes.values() if
+                           not attr.attributeDesc.isOutput]
         hashInputParams.sort()
         self.nodeUid = hash(tuple([b for a, b in hashInputParams]))
         return self.nodeUid
@@ -268,8 +278,8 @@ class Node:
         attributes = {k: v.getExportValue() for k, v in self.attributes.items()}
         return {
             'nodeType': self.nodeType(),
-            'attributes': {k: v for k, v in attributes.items() if v is not None}, # filter empty values
-            }
+            'attributes': {k: v for k, v in attributes.items() if v is not None},  # filter empty values
+        }
 
     def updateInternals(self):
         self._updateUid()
@@ -285,17 +295,18 @@ class Node:
                 attr._value = attr.attributeDesc.value.format(
                     cache=pg.cacheFolder,
                     nodeType=self.nodeType(),
-                    **self._cmdVars) # self._cmdVars only contains uids at this step
+                    **self._cmdVars)  # self._cmdVars only contains uids at this step
 
         for name, attr in self.attributes.items():
             linkAttr = attr.getLinkParam()
             v = attr._value
             if linkAttr:
-                v = linkAttr._value 
+                v = linkAttr._value
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             self._cmdVars[name + 'Value'] = str(v)
-            self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + ' ' + self._cmdVars[name]
+            self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + ' ' + \
+                                                      self._cmdVars[name]
 
     def internalFolder(self):
         return self.nodeDesc.internalFolder.format(nodeType=self.nodeType(), **self._cmdVars)
@@ -310,9 +321,9 @@ class Node:
         return os.path.join(pg.cacheFolder, self.internalFolder(), 'log')
 
     def updateStatusFromCache(self):
-        '''
+        """
         Need up-to-date UIDs.
-        '''
+        """
         statusFile = self.statusFile()
         if not os.path.exists(statusFile):
             self.status.status = Status.NONE
@@ -322,9 +333,9 @@ class Node:
         self.status.fromDict(statusData)
 
     def saveStatusFile(self):
-        '''
+        """
         Need up-to-date UIDs.
-        '''
+        """
         data = self.status.toDict()
         statusFilepath = self.statusFile()
         folder = os.path.dirname(statusFilepath)
@@ -337,7 +348,8 @@ class Node:
 
     def upgradeStatusTo(self, newStatus):
         if int(newStatus.value) <= int(self.status.status.value):
-            print('WARNING: downgrade status on node "{}" from {} to {}'.format(self.name, self.status.status.name, newStatus))
+            print('WARNING: downgrade status on node "{}" from {} to {}'.format(self.name, self.status.status.name,
+                                                                                newStatus))
         self.status.status = newStatus
         self.saveStatusFile()
 
@@ -346,7 +358,7 @@ class Node:
 
     def beginSequence(self):
         self.upgradeStatusTo(pg.Status.SUBMITTED_LOCAL)
-        
+
     def process(self):
         self.upgradeStatusTo(pg.Status.RUNNING)
         statThread = StatisticsThread(self)
@@ -364,13 +376,15 @@ class Node:
         statThread.join()
 
         self.upgradeStatusTo(pg.Status.SUCCESS)
-        
+
     def endSequence(self):
         pass
+
 
 WHITE = 0
 GRAY = 1
 BLACK = 2
+
 
 class Visitor:
     # def initializeVertex(self, s, g):
@@ -380,8 +394,9 @@ class Visitor:
     #     '''is invoked on the source vertex once before the start of the search.'''
     #     pass
     def discoverVertex(self, u, g):
-        '''is invoked when a vertex is encountered for the first time.'''
+        """ is invoked when a vertex is encountered for the first time. """
         pass
+
     # def examineEdge(self, e, g):
     #     '''is invoked on every out-edge of each vertex after it is discovered.'''
     #     pass
@@ -398,12 +413,13 @@ class Visitor:
     #     '''is invoked on the non-tree edges in the graph as well as on each tree edge after its target vertex is finished.'''
     #     pass
     def finishVertex(self, u, g):
-        '''is invoked on a vertex after all of its out edges have been added to the search tree and all of the adjacent vertices have been discovered (but before their out-edges have been examined).'''
+        """ is invoked on a vertex after all of its out edges have been added to the search tree and all of the
+        adjacent vertices have been discovered (but before their out-edges have been examined). """
         pass
 
 
 class Graph:
-    '''
+    """
     _________________      _________________      _________________
     |               |      |               |      |               |
     |     Node A    |      |     Node B    |      |     Node C    |
@@ -416,19 +432,20 @@ class Graph:
         nodes = {'A': <nodeA>, 'B': <nodeB>, 'C': <nodeC>}
         edges = {B.input: A.output, C.input: B.output,}
 
+    """
 
-    '''
     def __init__(self, name):
         self.name = name
         self.nodes = {}
-        self.edges = {} # key/input <- value/output, it is organized this way because key/input can have only one connection.
+        self.edges = {}  # key/input <- value/output, it is organized this way because key/input can have only one connection.
 
     def addNode(self, node, uniqueName=None):
         if node.graph is not None and node.graph != self:
-            raise RuntimeError('Node "{}" cannot be part of the Graph "{}", as it is already part of the other graph "{}".'.format(
-                node.nodeType(), self.name, node.graph.name))
+            raise RuntimeError(
+                'Node "{}" cannot be part of the Graph "{}", as it is already part of the other graph "{}".'.format(
+                    node.nodeType(), self.name, node.graph.name))
         if uniqueName:
-            assert(uniqueName not in self.nodes)
+            assert uniqueName not in self.nodes
             node.name = uniqueName
         else:
             node.name = self._createUniqueNodeName(node.nodeType())
@@ -437,8 +454,15 @@ class Graph:
 
         return node
 
-    def addNewNode(self, nodeName, **kwargs):
-        return self.addNode(Node(nodeDesc=nodeName, **kwargs))
+    def addNewNode(self, nodeType, **kwargs):
+        """
+
+        :param nodeType:
+        :param kwargs:
+        :return:
+        :rtype: Node
+        """
+        return self.addNode(Node(nodeDesc=nodeType, **kwargs))
 
     def _createUniqueNodeName(self, inputName):
         i = 1
@@ -449,13 +473,13 @@ class Graph:
             i += 1
 
     def getLeaves(self):
-        nodesWithOuput = set([outputAttr.node for outputAttr in self.edges.values()])
-        return set(self.nodes.values()) - nodesWithOuput
+        nodesWithOutput = set([outputAttr.node for outputAttr in self.edges.values()])
+        return set(self.nodes.values()) - nodesWithOutput
 
     def addEdge(self, outputAttr, inputAttr):
-        assert(isinstance(outputAttr, Attribute))
-        assert(isinstance(inputAttr, Attribute))
-        if(outputAttr.node.graph != self or inputAttr.node.graph != self):
+        assert isinstance(outputAttr, Attribute)
+        assert isinstance(inputAttr, Attribute)
+        if outputAttr.node.graph != self or inputAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
         if inputAttr in self.edges:
             raise RuntimeError('Input attribute "{}" is already connected.'.format(inputAttr.fullName()))
@@ -477,32 +501,32 @@ class Graph:
         return nodeEdges
 
     def dfs(self, visitor, startNodes=None):
-        nodeChildrens = self._getNodeEdges()
+        nodeChildren = self._getNodeEdges()
         colors = {}
         for u in self.nodes.values():
             colors[u] = WHITE
         time = 0
         if startNodes:
             for startNode in startNodes:
-                self.dfsVisit(startNode, visitor, colors, nodeChildrens)
+                self.dfsVisit(startNode, visitor, colors, nodeChildren)
         else:
             leaves = self.getLeaves()
             for u in leaves:
                 if colors[u] == WHITE:
-                    self.dfsVisit(u, visitor, colors, nodeChildrens)
+                    self.dfsVisit(u, visitor, colors, nodeChildren)
 
-    def dfsVisit(self, u, visitor, colors, nodeChildrens):
+    def dfsVisit(self, u, visitor, colors, nodeChildren):
         colors[u] = GRAY
         visitor.discoverVertex(u, self)
         # d_time[u] = time = time + 1
-        for v in nodeChildrens[u]:
+        for v in nodeChildren[u]:
             if colors[v] == WHITE:
                 # (u,v) is a tree edge
-                self.dfsVisit(v, visitor, colors, nodeChildrens) # TODO: avoid recursion
+                self.dfsVisit(v, visitor, colors, nodeChildren)  # TODO: avoid recursion
             elif colors[v] == GRAY:
-                pass # (u,v) is a back edge
+                pass  # (u,v) is a back edge
             elif colors[v] == BLACK:
-                pass # (u,v) is a cross or forward edge
+                pass  # (u,v) is a cross or forward edge
         colors[u] = BLACK
         visitor.finishVertex(u, self)
 
@@ -516,6 +540,7 @@ class Graph:
     def dfsNodesToProcess(self, startNodes=None):
         nodes = []
         visitor = Visitor()
+
         def finishVertex(vertex, graph):
             if vertex.status.status in (Status.SUBMITTED_EXTERN,
                                         Status.SUBMITTED_LOCAL):
@@ -524,6 +549,7 @@ class Graph:
                 print('WARNING: node "{}" is already running.'.format(vertex.name))
             if vertex.status.status is not Status.SUCCESS:
                 nodes.append(vertex)
+
         visitor.finishVertex = finishVertex
         self.dfs(visitor=visitor, startNodes=startNodes)
         return nodes
@@ -536,8 +562,8 @@ class Graph:
         return {k: node.toDict() for k, node in self.nodes.items()}
 
     def save(self, filepath):
-        '''
-        '''
+        """
+        """
         data = self.toDict()
         pprint(data)
         with open(filepath, 'w') as jsonFile:
@@ -558,9 +584,8 @@ class Graph:
 
 
 def loadGraph(filepath):
-    '''
-    '''
-    graphData = None
+    """
+    """
     with open(filepath) as jsonFile:
         graphData = json.load(jsonFile)
     if not isinstance(graphData, dict):
@@ -577,8 +602,8 @@ def loadGraph(filepath):
 
 
 def execute(graph, startNodes=None, force=False):
-    '''
-    '''
+    """
+    """
     if force:
         nodes = graph.dfsNodesOnFinish(startNodes=startNodes)
     else:
@@ -597,4 +622,3 @@ def execute(graph, startNodes=None, force=False):
 
     for node in nodes:
         node.endSequence()
-

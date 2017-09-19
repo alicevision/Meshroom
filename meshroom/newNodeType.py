@@ -110,7 +110,9 @@ print('='*80)
 
 for inputArg in inputArgs:
     shortName = inputArg[0]
-    longName = longName = inputArg[1]
+    longName = inputArg[1]
+    if longName == 'help':
+        continue # skip help argument
     arg = inputArg[2]
     value = inputArg[3]
     description = trim(''.join(inputArg[4:]))

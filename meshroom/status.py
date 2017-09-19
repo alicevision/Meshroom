@@ -3,7 +3,7 @@ import argparse
 import os
 from pprint import pprint
 
-from meshroom import processGraph as pg
+from meshroom.processGraph import graph as pg
 
 parser = argparse.ArgumentParser(description='Query the status of nodes in a Graph of processes.')
 parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,

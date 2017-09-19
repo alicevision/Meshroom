@@ -357,13 +357,13 @@ class Node:
         self.saveStatusFile()
 
     def submit(self):
-        self.upgradeStatusTo(pg.Status.SUBMITTED_EXTERN)
+        self.upgradeStatusTo(Status.SUBMITTED_EXTERN)
 
     def beginSequence(self):
-        self.upgradeStatusTo(pg.Status.SUBMITTED_LOCAL)
+        self.upgradeStatusTo(Status.SUBMITTED_LOCAL)
 
     def process(self):
-        self.upgradeStatusTo(pg.Status.RUNNING)
+        self.upgradeStatusTo(Status.RUNNING)
         statThread = StatisticsThread(self)
         statThread.start()
         try:
@@ -377,15 +377,15 @@ class Node:
                 logContent = ''
                 with open(self.logFile(), 'r') as logF:
                     logContent = ''.join(logF.readlines())
-                self.upgradeStatusTo(pg.Status.ERROR)
+                self.upgradeStatusTo(Status.ERROR)
                 raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(self.name, logContent))
         except:
-            self.upgradeStatusTo(pg.Status.ERROR)
+            self.upgradeStatusTo(Status.ERROR)
             raise
         statThread.running = False
         statThread.join()
 
-        self.upgradeStatusTo(pg.Status.SUCCESS)
+        self.upgradeStatusTo(Status.SUCCESS)
 
     def endSequence(self):
         pass

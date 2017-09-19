@@ -6,7 +6,6 @@ import tempfile
 from contextlib import contextmanager
 
 from . import desc
-from .graph import *  # TODO: remove this
 
 cacheFolder = os.path.join(tempfile.gettempdir(), 'processGraphCache')
 nodesDesc = {}

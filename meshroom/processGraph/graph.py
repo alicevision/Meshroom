@@ -284,7 +284,9 @@ class Node:
     def updateInternals(self):
         self._updateUid()
 
-        self._cmdVars = {}
+        self._cmdVars = {
+            'cache': pg.cacheFolder,
+            }
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             assAttr = [(a.attrName, a.uid()) for a in associatedAttributes]
             assAttr.sort()
@@ -293,7 +295,6 @@ class Node:
         for name, attr in self.attributes.items():
             if attr.attributeDesc.isOutput:
                 attr._value = attr.attributeDesc.value.format(
-                    cache=pg.cacheFolder,
                     nodeType=self.nodeType(),
                     **self._cmdVars)  # self._cmdVars only contains uids at this step
 

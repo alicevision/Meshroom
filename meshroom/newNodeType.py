@@ -66,8 +66,8 @@ outputNodeStr = '''
 from processGraph import desc
 
 class __COMMANDNAME__(desc.CommandLineNode):
-    internalFolder = '{nodeType}/{uid0}/'
-    cmdLineExpr = '{nodeType} {allParams}'
+    internalFolder = '{cache}/{nodeType}/{uid0}/'
+    commandLine = '{nodeType} {allParams}'
 '''.replace('__COMMANDNAME__', args.node)
 
 

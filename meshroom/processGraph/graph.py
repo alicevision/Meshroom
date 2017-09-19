@@ -367,11 +367,18 @@ class Node:
         statThread = StatisticsThread(self)
         statThread.start()
         try:
+            returnCode = 1
             with open(self.logFile(), 'w') as logF:
                 cmd = self.commandLine()
-                print(' =====> commandLine: ', cmd)
+                print('\n =====> commandLine:\n', cmd, '\n')
                 print(' - logFile: ', self.logFile())
-                subprocess.call(cmd, stdout=logF, stderr=logF, shell=True)
+                returnCode = subprocess.call(cmd, stdout=logF, stderr=logF, shell=True)
+            if returnCode != 0:
+                logContent = ''
+                with open(self.logFile(), 'r') as logF:
+                    logContent = ''.join(logF.readlines())
+                self.upgradeStatusTo(pg.Status.ERROR)
+                raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(self.name, logContent))
         except:
             self.upgradeStatusTo(pg.Status.ERROR)
             raise

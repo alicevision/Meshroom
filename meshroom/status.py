@@ -39,7 +39,7 @@ else:
     if args.graph:
         startNodes = [graph.nodes[args.graph]]
     nodes = graph.dfsNodesOnFinish(startNodes=startNodes)
-    for n in nodes:
+    for node in nodes:
         print('{}: {}'.format(node.name, node.status.status.name))
     if args.verbose:
         pprint([n.status.toDict() for n in nodes])

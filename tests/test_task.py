@@ -1,5 +1,3 @@
-from nose.tools import *
-
 from meshroom import processGraph as pg
 
 
@@ -15,9 +13,9 @@ def test_depth():
         (tB.output, tC.input)
         )
 
-    assert_equal(tA.getDepth(), 1)
-    assert_equal(tB.getDepth(), 2)
-    assert_equal(tC.getDepth(), 3)
+    assert tA.getDepth() == 1
+    assert tB.getDepth() == 2
+    assert tC.getDepth() == 3
 
 
 if __name__ == '__main__':

@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-import processGraph as pg
-
-import os
-import sys
-
 import argparse
 
+from meshroom import processGraph as pg
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
 parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,

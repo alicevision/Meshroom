@@ -1,5 +1,6 @@
-import processGraph as pg
 from nose.tools import *
+
+from meshroom import processGraph as pg
 
 
 def test_depth():

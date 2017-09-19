@@ -1,12 +1,18 @@
 from __future__ import print_function
 
-import processGraph as pg
-
-from collections import defaultdict
-import psutil
-import inspect
-from pprint import pprint
+import hashlib
 import json
+import os
+import psutil
+import subprocess
+import threading
+import time
+import uuid
+from collections import defaultdict
+from enum import Enum  # available by default in python3. For python2: "pip install enum34"
+from pprint import pprint
+
+from meshroom import processGraph as pg
 
 # Replace default encoder to support Enums
 DefaultJSONEncoder = json.JSONEncoder # store the original one
@@ -16,16 +22,6 @@ class MyJSONEncoder(DefaultJSONEncoder): # declare a new one with Enum support
             return obj.name
         return DefaultJSONEncoder.default(self, obj) # use the default one for all other types
 json.JSONEncoder = MyJSONEncoder # replace the default implementation with our new one
-
-import time
-import os
-import uuid
-
-import threading
-import subprocess
-import hashlib
-
-from enum import Enum # available by default in python3. For python2: "pip install enum34"
 
 
 try:
@@ -213,7 +209,6 @@ class Node:
     '''
     name = None
     graph = None
-    
 
     def __init__(self, nodeDesc, **kwargs):
         self.nodeDesc = pg.nodesDesc[nodeDesc]()

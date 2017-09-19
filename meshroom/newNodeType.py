@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
-import processGraph as pg
-
-import os
-import sys
-import re
 import argparse
+import os
+import re
+import sys
 
 
 def trim(s):

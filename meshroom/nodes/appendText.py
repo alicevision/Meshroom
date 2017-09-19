@@ -1,4 +1,4 @@
-from processGraph import desc
+from meshroom.processGraph import desc
 
 class AppendText(desc.CommandLineNode):
     commandLine = 'cat {inputValue} > {outputValue} && echo {inputTextValue} >> {outputValue}'

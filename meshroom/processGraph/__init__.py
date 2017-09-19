@@ -1,12 +1,9 @@
-from .Graph import *
-from . import desc
-
-import os
-import sys
-import re
-import inspect
 import importlib
-import json
+import inspect
+import re
+
+from . import desc
+from .graph import *  # TODO: remove this
 
 cacheFolder = '/tmp/processGraphCache'
 nodesDesc = {}

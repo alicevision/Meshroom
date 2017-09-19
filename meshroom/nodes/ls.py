@@ -1,4 +1,4 @@
-from processGraph import desc
+from meshroom.processGraph import desc
 
 
 class Ls(desc.CommandLineNode):

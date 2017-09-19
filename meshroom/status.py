@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
-import processGraph as pg
-
-import os
-import sys
-
 import argparse
+import os
 from pprint import pprint
 
-    
+from meshroom import processGraph as pg
+
 parser = argparse.ArgumentParser(description='Query the status of nodes in a Graph of processes.')
 parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,
                     help='Filepath to a graph file.')

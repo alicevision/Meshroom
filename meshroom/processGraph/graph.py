@@ -423,9 +423,9 @@ class Graph:
         self.edges = {} # key/input <- value/output, it is organized this way because key/input can have only one connection.
 
     def addNode(self, node, uniqueName=None):
-        if node.graph != None and node.graph != self:
+        if node.graph is not None and node.graph != self:
             raise RuntimeError('Node "{}" cannot be part of the Graph "{}", as it is already part of the other graph "{}".'.format(
-                self.node.nodeType(), self.name, node.graph.name))
+                node.nodeType(), self.name, node.graph.name))
         if uniqueName:
             assert(uniqueName not in self.nodes)
             node.name = uniqueName
@@ -436,8 +436,8 @@ class Graph:
 
         return node
 
-    def addNewNode(self, nodeName, *args, **kwargs):
-        return self.addNode(Node(nodeDesc=nodeName, *args, **kwargs))
+    def addNewNode(self, nodeName, **kwargs):
+        return self.addNode(Node(nodeDesc=nodeName, **kwargs))
 
     def _createUniqueNodeName(self, inputName):
         i = 1

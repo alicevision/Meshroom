@@ -28,7 +28,10 @@ def quotesForStrings(valueStr):
         try:
             float(valueStr)
         except ValueError:
-            v = "'{}'".format(valueStr)
+            if "'" in valueStr:
+                v = "'''{}'''".format(valueStr)
+            else:
+                v = "'{}'".format(valueStr)
     return v
 
 def convertToLabel(name):
@@ -119,15 +122,15 @@ for inputArg in inputArgs:
 
     inputArgLower = ' '.join(inputArg).lower()
     isFile = 'path' in inputArgLower or 'folder' in inputArgLower or 'file' in inputArgLower
-    outputNodeStr += '''
+    outputNodeStr += """
     {name} = desc.{attributeType}(
             label='{label}',
-            description='{description}',
+            description='''{description}''',
             value={value},
             shortName='{shortName}',
             arg='{arg}',
             uid=[0],
-            )'''.format(
+            )""".format(
                 name=longName,
                 attributeType='FileAttribute' if isFile else 'ParamAttribute',
                 label=convertToLabel(longName),

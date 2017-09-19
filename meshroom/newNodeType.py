@@ -91,15 +91,14 @@ elif args.parser == 'cmdLineLib':
     args_re = re.compile(
         '^'
         '\[' # '['
-        '\s*'
         '-(?P<argShortName>\w+)' # argument short name
         '\|'
         '--(?P<argLongName>\w+)' # argument long name
+        '(?:\s+(?P<arg>\w+)?)?' # potential arg
         '\]' # ']'
-        '()' # no arg
         '()' # no default value
-        '\s+(?P<descriptionFirst>.*?)\n' # end of the line
-        '(?P<descriptionNext>(?:\s+[^\[\s].+?\n)*)' # next documentation lines
+        '(?P<descriptionFirst>.*?)?\n' # end of the line
+        '(?P<descriptionNext>(?:[^\[\w].+?\n)*)' # next documentation lines
         , re.MULTILINE)
 elif args.parser == 'basic':
     args_re = re.compile('()--(?P<argLongName>\w+)()()()()')

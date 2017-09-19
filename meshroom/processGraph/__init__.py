@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 from . import desc
 
-cacheFolder = os.path.join(tempfile.gettempdir(), 'processGraphCache')
+cacheFolder = os.path.join(tempfile.gettempdir(), 'MeshroomCache')
 nodesDesc = {}
 
 

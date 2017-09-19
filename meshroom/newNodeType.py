@@ -31,6 +31,12 @@ def quotesForStrings(valueStr):
             v = "'{}'".format(valueStr)
     return v
 
+def convertToLabel(name):
+    camelCaseToLabel = re.sub('()([A-Z][a-z]*?)', r'\1 \2', name)
+    snakeToLabel = ' '.join(word.capitalize() for word in camelCaseToLabel.split('_'))
+    snakeToLabel = ' '.join(word.capitalize() for word in snakeToLabel.split(' '))
+    return snakeToLabel
+
 
 parser = argparse.ArgumentParser(description='Create a new Node Type')
 parser.add_argument('node', metavar='NodeName', type=str,
@@ -52,15 +58,6 @@ if sys.stdin.isatty():
     exit(-1)
 
 inputCmdLineDoc = ''.join([line for line in sys.stdin])
-
-
-def convertToLabel(name):
-    camelCaseToLabel = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', name)
-    snakeToLabel = ' '.join(word.capitalize() for word in camelCaseToLabel.split('_'))
-    snakeToLabel = ' '.join(word.capitalize() for word in snakeToLabel.split(' '))
-    # print name, camelCaseToLabel, snakeToLabel
-    return snakeToLabel
-
 
 outputNodeStr = '''
 from processGraph import desc

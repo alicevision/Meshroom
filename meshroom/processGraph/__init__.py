@@ -1,11 +1,12 @@
 import importlib
 import inspect
 import re
+import tempfile
 
 from . import desc
 from .graph import *  # TODO: remove this
 
-cacheFolder = '/tmp/processGraphCache'
+cacheFolder = os.path.join(tempfile.gettempdir(), 'processGraphCache')
 nodesDesc = {}
 
 

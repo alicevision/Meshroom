@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import psutil
+import shutil
 import subprocess
 import threading
 import time
@@ -332,7 +333,7 @@ class Node:
         statusFilepathWriting = statusFilepath + '.writing.' + str(uuid.uuid4())
         with open(statusFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
-        os.rename(statusFilepathWriting, statusFilepath)
+        shutil.move(statusFilepathWriting, statusFilepath)
 
     def upgradeStatusTo(self, newStatus):
         if int(newStatus.value) <= int(self.status.status.value):

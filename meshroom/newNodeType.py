@@ -121,6 +121,7 @@ for inputArg in inputArgs:
 
     inputArgLower = ' '.join(inputArg).lower()
     isFile = 'path' in inputArgLower or 'folder' in inputArgLower or 'file' in inputArgLower
+    isOutput = 'output' in inputArgLower
     outputNodeStr += """
     {name} = desc.{attributeType}(
             label='{label}',
@@ -129,6 +130,7 @@ for inputArg in inputArgs:
             shortName='{shortName}',
             arg='{arg}',
             uid=[0],
+            isOutput={isOutput},
             )""".format(
                 name=longName,
                 attributeType='FileAttribute' if isFile else 'ParamAttribute',
@@ -137,6 +139,7 @@ for inputArg in inputArgs:
                 value=quotesForStrings(value),
                 shortName=shortName,
                 arg=arg,
+                isOutput=isOutput,
                 )
 
 outputFilepath = os.path.join(args.output, args.node + '.py')

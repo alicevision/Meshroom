@@ -622,9 +622,6 @@ def execute(graph, startNodes=None, force=False):
     print('execute: ', str([n.name for n in nodes]))
 
     for node in nodes:
-        node.updateInternals()
-
-    for node in nodes:
         node.beginSequence()
 
     for node in nodes:

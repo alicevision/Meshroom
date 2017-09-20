@@ -355,6 +355,9 @@ class Node:
                                                                                 newStatus))
         self.status.status = newStatus
         self.saveStatusFile()
+    
+    def isAlreadySubmitted(self):
+        return self.status.status in (Status.SUBMITTED_EXTERN, Status.SUBMITTED_LOCAL, Status.RUNNING)
 
     def submit(self):
         self.upgradeStatusTo(Status.SUBMITTED_EXTERN)
@@ -610,6 +613,12 @@ def loadGraph(filepath):
     graph._applyExpr()
     return graph
 
+def getAlreadySubmittedNodes(nodes):
+    out = []
+    for node in nodes:
+        if node.isAlreadySubmitted():
+            out.append(node)
+    return out
 
 def execute(graph, startNodes=None, force=False):
     """
@@ -618,6 +627,18 @@ def execute(graph, startNodes=None, force=False):
         nodes = graph.dfsNodesOnFinish(startNodes=startNodes)
     else:
         nodes = graph.dfsNodesToProcess(startNodes=startNodes)
+        nodesInConflict = getAlreadySubmittedNodes(nodes)
+
+        if nodesInConflict:
+            nodesStatus = set([node.status.status.name for node in nodesInConflict])
+            nodes = [node.name for node in nodesInConflict]
+            raise RuntimeError(
+                'Graph execution error.\n'
+                'Some nodes are already submitted with status: {}\n'
+                'Nodes: {}'.format(
+                ', '.join(nodesStatus),
+                ', '.join(nodes),
+                ))
 
     print('execute: ', str([n.name for n in nodes]))
 

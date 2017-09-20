@@ -27,6 +27,9 @@ graph.update()
 if args.node:
     # Execute the node
     node = graph.nodes[args.node]
+    if node.isAlreadySubmitted():
+        print('Error: Node is already submitted with status "{}"'.format(node.status.status.name))
+        exit(-1)
     if args.force or node.status.status != pg.Status.SUCCESS:
         node.process()
 else:

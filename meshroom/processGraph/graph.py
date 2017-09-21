@@ -188,7 +188,7 @@ class StatisticsThread(threading.Thread):
         self.statistics.duration = 0
         self.statistics.cpuUsage = []
         self.statistics.nbCores = psutil.cpu_count(logical=False)
-        self.statistics.cpuFreq = psutil.cpu_freq()[2]
+        self.statistics.cpuFreq = float(psutil.cpu_freq()[2]) / 1024.0  # convert MHz to GHz
         self.statistics.ramUsage = []
         self.statistics.ramAvailable = psutil.virtual_memory().total / bytesPerGiga
         self.statistics.swapUsage = []

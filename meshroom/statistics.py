@@ -6,6 +6,32 @@ from collections import Iterable
 
 from meshroom.processGraph import graph as pg
 
+
+def addPlot(allData, title, fileObj):
+    import matplotlib.pyplot as plt, mpld3
+    import numpy as np
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, axisbg='#EEEEEE')
+    ax.grid(color='white', linestyle='solid')
+
+    # if multiple values per time
+    if allData and isinstance(allData[0], Iterable):
+        # transpose the list of list
+        allData = list(map(list, zip(*allData)))
+    else:
+        allData = [allData]
+
+    for data in allData:
+        y = data
+        x = np.arange(len(y))
+        ax.plot(x, y)
+    plt.ylim(0, 100)
+    plt.title(title)
+
+    mpld3.save_html(fig, fileObj)
+
+
 parser = argparse.ArgumentParser(description='Query the status of nodes in a Graph of processes.')
 parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,
                     help='Filepath to a graph file.')
@@ -45,31 +71,10 @@ for node in nodes:
     print('{}: {}'.format(node.name, node.statistics.toDict()))
 
 if args.exportHtml:
-    import matplotlib.pyplot as plt, mpld3
-    import numpy as np
-
     with open(args.exportHtml, 'w') as fileObj:
         for node in nodes:
-            plt.title(node.name)
             s = node.statistics
-            for k in ('cpuUsage', 'ramUsage', 'swapUsage', 'vramUsage'):
-                allData = s.__dict__[k]
-                fig = plt.figure()
-                ax = fig.add_subplot(111, axisbg='#EEEEEE')
-                ax.grid(color='white', linestyle='solid')
-
-                # if multiple values per time
-                if allData and isinstance(allData[0], Iterable):
-                    # transpose the list of list
-                    allData = list(map(list, zip(*allData)))
-                else:
-                    allData = [allData]
-
-                for data in allData:
-                    y = data
-                    x = np.arange(len(y))
-                    ax.plot(x, y)
-                plt.ylim(0, 100)
-                plt.title(k)
-
-                mpld3.save_html(fig, fileObj)
+            addPlot(s.cpuUsage, 'CPU Usage - {nbCores} x {freq:.2f} GHz'.format(nbCores=s.nbCores, freq=s.cpuFreq), fileObj)
+            addPlot(s.ramUsage, 'RAM Usage - {:.2f} GB'.format(s.ramAvailable), fileObj)
+            addPlot(s.swapUsage, 'SWAP Usage - {:.2f} GB'.format(s.swapAvailable), fileObj)
+            addPlot(s.vramUsage, 'VRAM Usage - {:.2f} GB'.format(s.vramAvailable), fileObj)

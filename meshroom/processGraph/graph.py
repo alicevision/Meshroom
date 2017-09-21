@@ -409,7 +409,8 @@ class Node:
             self.upgradeStatusTo(Status.ERROR)
             raise
         statThread.running = False
-        statThread.join()
+        # Don't need to join, the thread will finish a bit later.
+        # statThread.join()
 
         self.upgradeStatusTo(Status.SUCCESS)
 

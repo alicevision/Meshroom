@@ -160,17 +160,15 @@ class StatusData:
         self.status = Status.NONE
         self.nodeName = nodeName
         self.nodeType = nodeType
-        self.statistics = Statistics()
         self.graph = ''
 
     def toDict(self):
-        return {k: (v.toDict() if getattr(v, "toDict", None) else v) for k, v in self.__dict__.items()}
+        return self.__dict__
 
     def fromDict(self, d):
         self.status = Status._member_map_[d['status']]
         self.nodeName = d['nodeName']
         self.nodeType = d['nodeType']
-        self.statistics.fromDict(d['statistics'])
         self.graph = d['graph']
 
 
@@ -182,7 +180,7 @@ class StatisticsThread(threading.Thread):
         threading.Thread.__init__(self)
         self.node = node
         self.running = True
-        self.statistics = self.node.status.statistics
+        self.statistics = self.node.statistics
         self.initStats()
 
     def initStats(self):
@@ -205,7 +203,7 @@ class StatisticsThread(threading.Thread):
         self.statistics.ramUsage.append(psutil.virtual_memory().percent)
         self.statistics.swapUsage.append(psutil.swap_memory().percent)
         self.statistics.vramUsage.append(0)
-        self.node.saveStatusFile()
+        self.node.saveStatistics()
 
     def run(self):
         while self.running:
@@ -228,6 +226,7 @@ class Node:
         for k, v in kwargs.items():
             self.attributes[k]._value = v
         self.status = StatusData(self.name, self.nodeType())
+        self.statistics = Statistics()
 
     def __getattr__(self, k):
         try:
@@ -320,6 +319,9 @@ class Node:
     def statusFile(self):
         return os.path.join(pg.cacheFolder, self.internalFolder(), 'status')
 
+    def statisticsFile(self):
+        return os.path.join(pg.cacheFolder, self.internalFolder(), 'statistics')
+
     def logFile(self):
         return os.path.join(pg.cacheFolder, self.internalFolder(), 'log')
 
@@ -348,6 +350,27 @@ class Node:
         with open(statusFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
         shutil.move(statusFilepathWriting, statusFilepath)
+
+    def updateStatisticsFromCache(self):
+        """
+        """
+        statisticsFile = self.statisticsFile()
+        if not os.path.exists(statisticsFile):
+            return
+        with open(statisticsFile, 'r') as jsonFile:
+            statisticsData = json.load(jsonFile)
+        self.statistics.fromDict(statisticsData)
+
+    def saveStatistics(self):
+        data = self.statistics.toDict()
+        statisticsFilepath = self.statisticsFile()
+        folder = os.path.dirname(statisticsFilepath)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        statisticsFilepathWriting = statisticsFilepath + '.writing.' + str(uuid.uuid4())
+        with open(statisticsFilepathWriting, 'w') as jsonFile:
+            json.dump(data, jsonFile, indent=4)
+        shutil.move(statisticsFilepathWriting, statisticsFilepath)
 
     def upgradeStatusTo(self, newStatus):
         if int(newStatus.value) <= int(self.status.status.value):
@@ -590,6 +613,10 @@ class Graph:
     def updateStatusFromCache(self):
         for node in self.nodes.values():
             node.updateStatusFromCache()
+
+    def updateStatisticsFromCache(self):
+        for node in self.nodes.values():
+            node.updateStatisticsFromCache()
 
     def update(self):
         self.updateInternals()

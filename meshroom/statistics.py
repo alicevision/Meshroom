@@ -2,34 +2,30 @@
 import argparse
 import os
 from pprint import pprint
-from collections import Iterable
+from collections import Iterable, defaultdict
 
 from meshroom.processGraph import graph as pg
 
 
-def addPlot(allData, title, fileObj):
+def addPlots(curves, title, fileObj):
+    if not curves:
+        return
+
     import matplotlib.pyplot as plt, mpld3
-    import numpy as np
 
     fig = plt.figure()
     ax = fig.add_subplot(111, axisbg='#EEEEEE')
     ax.grid(color='white', linestyle='solid')
 
-    # if multiple values per time
-    if allData and isinstance(allData[0], Iterable):
-        # transpose the list of list
-        allData = list(map(list, zip(*allData)))
-    else:
-        allData = [allData]
-
-    for data in allData:
-        y = data
-        x = np.arange(len(y))
-        ax.plot(x, y)
-    plt.ylim(0, 100)
+    for curveName, curve in curves:
+        if not isinstance(curve[0], pg.basestring):
+            ax.plot(curve, label=curveName)
+            ax.legend()
+    # plt.ylim(0, 100)
     plt.title(title)
 
     mpld3.save_html(fig, fileObj)
+    plt.close(fig)
 
 
 parser = argparse.ArgumentParser(description='Query the status of nodes in a Graph of processes.')
@@ -73,8 +69,13 @@ for node in nodes:
 if args.exportHtml:
     with open(args.exportHtml, 'w') as fileObj:
         for node in nodes:
-            s = node.statistics
-            addPlot(s.cpuUsage, 'CPU Usage - {nbCores} x {freq:.2f} GHz'.format(nbCores=s.nbCores, freq=s.cpuFreq), fileObj)
-            addPlot(s.ramUsage, 'RAM Usage - {:.2f} GB'.format(s.ramAvailable), fileObj)
-            addPlot(s.swapUsage, 'SWAP Usage - {:.2f} GB'.format(s.swapAvailable), fileObj)
-            addPlot(s.vramUsage, 'VRAM Usage - {:.2f} GB'.format(s.vramAvailable), fileObj)
+            for curves in (node.statistics.computer.curves, node.statistics.process.curves):
+                exportCurves = defaultdict(list)
+                for name, curve in curves.items():
+                    s = name.split('.')
+                    figName = s[0]
+                    curveName = ''.join(s[1:])
+                    exportCurves[figName].append((curveName, curve))
+
+                for name, curves in exportCurves.items():
+                    addPlots(curves, name, fileObj)

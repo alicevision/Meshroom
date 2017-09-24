@@ -6,13 +6,13 @@ import os
 import psutil
 import shutil
 import subprocess
-import threading
 import time
 import uuid
 from collections import defaultdict
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 from pprint import pprint
 
+from . import stats
 from meshroom import processGraph as pg
 
 # Replace default encoder to support Enums
@@ -129,29 +129,6 @@ class Status(Enum):
     SUCCESS = 6
 
 
-class Statistics:
-    """
-    """
-
-    def __init__(self):
-        self.duration = 0  # computation time set at the end of the execution
-        self.cpuUsage = []
-        self.nbCores = 0
-        self.cpuFreq = 0
-        self.ramUsage = []  # store cpuUsage every minute
-        self.ramAvailable = 0  # GB
-        self.vramUsage = []
-        self.vramAvailable = 0  # GB
-        self.swapUsage = []
-        self.swapAvailable = 0
-
-    def toDict(self):
-        return self.__dict__
-
-    def fromDict(self, d):
-        self.__dict__ = d
-
-
 class StatusData:
     """
     """
@@ -161,55 +138,19 @@ class StatusData:
         self.nodeName = nodeName
         self.nodeType = nodeType
         self.graph = ''
+        self.commandLine = None
+        self.env = None
 
     def toDict(self):
         return self.__dict__
 
     def fromDict(self, d):
         self.status = Status._member_map_[d['status']]
-        self.nodeName = d['nodeName']
-        self.nodeType = d['nodeType']
-        self.graph = d['graph']
-
-
-bytesPerGiga = 1024. * 1024. * 1024.
-
-
-class StatisticsThread(threading.Thread):
-    def __init__(self, node):
-        threading.Thread.__init__(self)
-        self.node = node
-        self.running = True
-        self.statistics = self.node.statistics
-        self.initStats()
-
-    def initStats(self):
-        self.lastTime = time.time()
-        self.statistics.duration = 0
-        self.statistics.cpuUsage = []
-        self.statistics.nbCores = psutil.cpu_count(logical=False)
-        self.statistics.cpuFreq = float(psutil.cpu_freq()[2]) / 1024.0  # convert MHz to GHz
-        self.statistics.ramUsage = []
-        self.statistics.ramAvailable = psutil.virtual_memory().total / bytesPerGiga
-        self.statistics.swapUsage = []
-        self.statistics.swapAvailable = psutil.swap_memory().total / bytesPerGiga
-        self.statistics.vramUsage = []
-        self.statistics.vramAvailable = 0
-        self.updateStats()
-
-    def updateStats(self):
-        self.lastTime = time.time()
-        self.statistics.cpuUsage.append(psutil.cpu_percent(interval=0.1, percpu=True))
-        self.statistics.ramUsage.append(psutil.virtual_memory().percent)
-        self.statistics.swapUsage.append(psutil.swap_memory().percent)
-        self.statistics.vramUsage.append(0)
-        self.node.saveStatistics()
-
-    def run(self):
-        while self.running:
-            if time.time() - self.lastTime > 10:
-                self.updateStats()
-            time.sleep(1)
+        self.nodeName = d.get('nodeName', '')
+        self.nodeType = d.get('nodeType', '')
+        self.graph = d.get('graph', '')
+        self.commandLine = d.get('commandLine', '')
+        self.env = d.get('env', '')
 
 
 class Node:
@@ -226,7 +167,7 @@ class Node:
         for k, v in kwargs.items():
             self.attributes[k]._value = v
         self.status = StatusData(self.name, self.nodeType())
-        self.statistics = Statistics()
+        self.statistics = stats.Statistics()
 
     def __getattr__(self, k):
         try:
@@ -390,16 +331,27 @@ class Node:
 
     def process(self):
         self.upgradeStatusTo(Status.RUNNING)
-        statThread = StatisticsThread(self)
+        statThread = stats.StatisticsThread(self)
         statThread.start()
         try:
-            returnCode = 1
             with open(self.logFile(), 'w') as logF:
                 cmd = self.commandLine()
                 print('\n =====> commandLine:\n', cmd, '\n')
                 print(' - logFile: ', self.logFile())
-                returnCode = subprocess.call(cmd, stdout=logF, stderr=logF, shell=True)
-            if returnCode != 0:
+                self.proc = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
+
+                # store process static info into the status file
+                self.status.commandLine = cmd
+                self.status.env = self.proc.environ()
+                # self.status.createTime = self.proc.create_time()
+
+                statThread.proc = self.proc
+                stdout, stderr = self.proc.communicate()
+                self.proc.wait()
+                
+                self.status.returnCode = self.proc.returncode
+
+            if self.proc.returncode != 0:
                 logContent = ''
                 with open(self.logFile(), 'r') as logF:
                     logContent = ''.join(logF.readlines())

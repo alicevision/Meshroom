@@ -20,7 +20,7 @@ def addPlots(curves, title, fileObj):
     for curveName, curve in curves:
         if not isinstance(curve[0], pg.basestring):
             ax.plot(curve, label=curveName)
-            ax.legend()
+    ax.legend()
     # plt.ylim(0, 100)
     plt.title(title)
 

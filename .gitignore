@@ -37,3 +37,4 @@ __pycache__
 .idea
 .cache
 
+*.qmlc

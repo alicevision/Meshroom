@@ -26,7 +26,7 @@ graph.update()
 
 if args.node:
     # Execute the node
-    node = graph.nodes[args.node]
+    node = graph.node(args.node)
     if node.isAlreadySubmitted():
         print('Error: Node is already submitted with status "{}"'.format(node.status.status.name))
         exit(-1)
@@ -35,6 +35,6 @@ if args.node:
 else:
     startNodes = None
     if args.graph:
-        startNodes = [graph.nodes[args.graph]]
+        startNodes = [graph.nodes(args.graph)]
     pg.execute(graph, startNodes=startNodes, force=args.force)
 

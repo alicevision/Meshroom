@@ -56,11 +56,11 @@ if args.node:
     if args.node not in graph.nodes:
         print('ERROR: node "{}" does not exist in file "{}".'.format(args.node, args.graphFile))
         exit(-1)
-    nodes = [graph.nodes[args.node]]
+    nodes = [graph.nodes(args.node)]
 else:
     startNodes = None
     if args.graph:
-        startNodes = [graph.nodes[args.graph]]
+        startNodes = [graph.nodes(args.graph)]
     nodes = graph.dfsNodesOnFinish(startNodes=startNodes)
 
 for node in nodes:

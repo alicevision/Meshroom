@@ -26,10 +26,10 @@ graph = pg.loadGraph(args.graphFile)
 graph.update()
 
 if args.node:
-    if args.node not in graph.nodes:
+    node = graph.node(args.node)
+    if node is None:
         print('ERROR: node "{}" does not exist in file "{}".'.format(args.node, args.graphFile))
         exit(-1)
-    node = graph.nodes[args.node]
     print('{}: {}'.format(node.name, node.status.status.name))
     if args.verbose:
         print('statusFile: ', node.statusFile())
@@ -37,7 +37,7 @@ if args.node:
 else:
     startNodes = None
     if args.graph:
-        startNodes = [graph.nodes[args.graph]]
+        startNodes = [graph.nodes(args.graph)]
     nodes = graph.dfsNodesOnFinish(startNodes=startNodes)
     for node in nodes:
         print('{}: {}'.format(node.name, node.status.status.name))

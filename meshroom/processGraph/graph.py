@@ -5,8 +5,6 @@ import json
 import os
 import psutil
 import shutil
-import subprocess
-import time
 import uuid
 from collections import defaultdict
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
@@ -14,6 +12,7 @@ from pprint import pprint
 
 from . import stats
 from meshroom import processGraph as pg
+from meshroom.types import BaseObject, Model, Slot, Signal, Property
 
 # Replace default encoder to support Enums
 DefaultJSONEncoder = json.JSONEncoder  # store the original one
@@ -49,24 +48,40 @@ def hash(v):
     return hashObject.hexdigest()
 
 
-class Attribute:
+class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, node, attributeDesc):
-        self.attrName = name
-        self.node = node
-        self._value = attributeDesc.__dict__.get('value', None)
+    def __init__(self, name, node, attributeDesc, parent = None):
+        super(Attribute, self).__init__(parent)
+        self._name = name
+        self.node = node  # type: Node
         self.attributeDesc = attributeDesc
+        self._value = getattr(attributeDesc, 'value', None)
+        self._label = getattr(attributeDesc, 'label', None)
 
     def absoluteName(self):
-        return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self.attrName)
+        return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self._name)
 
-    def name(self):
-        """
-        Name inside the Graph.
-        """
-        return '{}.{}'.format(self.node.name, self.attrName)
+    def fullName(self):
+        """ Name inside the Graph: nodeName.name """
+        return '{}.{}'.format(self.node.name, self._name)
+
+    def getName(self):
+        """ Attribute name """
+        return self._name
+
+    def getLabel(self):
+        return self._label
+
+    def getValue(self):
+        return self._value
+
+    def setValue(self, value):
+        if self._value == value:
+            return
+        self._value = value
+        self.valueChanged.emit()
 
     def uid(self):
         """
@@ -107,15 +122,20 @@ class Attribute:
             g = self.node.graph
             link = v[1:-1]
             linkNode, linkAttr = link.split('.')
-            g.addEdge(g.nodes[linkNode].attributes[linkAttr], self)
+            g.addEdge(g.node(linkNode).attribute(linkAttr), self)
             self._value = ""
 
     def getExportValue(self):
         value = self._value
         # print('getExportValue: ', self.name(), value, self.isLink())
         if self.isLink():
-            value = '{' + self.node.graph.edges[self].name() + '}'
+            value = '{' + self.node.graph.edges[self].fullName() + '}'
         return value
+
+    name = Property(str, getName, constant=True)
+    label = Property(str, getLabel, constant=True)
+    valueChanged = Signal()
+    value = Property("QVariant", getValue, setValue, notify=valueChanged)
 
 
 class Status(Enum):
@@ -153,19 +173,20 @@ class StatusData:
         self.env = d.get('env', '')
 
 
-class Node:
+class Node(BaseObject):
     """
     """
-    name = None
-    graph = None
 
-    def __init__(self, nodeDesc, **kwargs):
+    def __init__(self, nodeDesc, parent=None, **kwargs):
+        super(Node, self).__init__(parent)
+        self._name = None  # type: str
+        self.graph = None  # type: Graph
         self.nodeDesc = pg.nodesDesc[nodeDesc]()
-        self.attributes = {}
+        self._attributes = Model(parent=self)
         self.attributesPerUid = defaultdict(set)
         self._initFromDesc()
         for k, v in kwargs.items():
-            self.attributes[k]._value = v
+            self.attribute(k)._value = v
         self.status = StatusData(self.name, self.nodeType())
         self.statistics = stats.Statistics()
 
@@ -176,26 +197,36 @@ class Node:
             return object.__getattr__(self, k)
         except AttributeError:
             try:
-                return self.attributes[k]
+                return self.attribute(k)
             except KeyError:
                 raise AttributeError(k)
+
+    def getName(self):
+        return self._name
+
+    @Slot(str, result=Attribute)
+    def attribute(self, name):
+        return self._attributes.get(name)
+
+    def getAttributes(self):
+        return self._attributes
 
     def _initFromDesc(self):
         # Init from class members
         for name, desc in self.nodeDesc.__class__.__dict__.items():
             if issubclass(desc.__class__, pg.desc.Attribute):
-                self.attributes[name] = Attribute(name, self, desc)
+                self._attributes.add(Attribute(name, self, desc))
         # Init from instance members
         for name, desc in self.nodeDesc.__dict__.items():
             if issubclass(desc.__class__, pg.desc.Attribute):
-                self.attributes[name] = Attribute(name, self, desc)
+                self._attributes.add(Attribute(name, self, desc))
         # List attributes per uid
-        for name, attr in self.attributes.items():
+        for attr in self._attributes:
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)
 
     def _applyExpr(self):
-        for attr in self.attributes.values():
+        for attr in self._attributes:
             attr._applyExpr()
 
     def nodeType(self):
@@ -205,7 +236,7 @@ class Node:
         return self.nodeUid
 
     def _updateUid(self):
-        hashInputParams = [(attr.attrName, attr.uid()) for attr in self.attributes.values() if
+        hashInputParams = [(attr.getName(), attr.uid()) for attr in self._attributes if
                            not attr.attributeDesc.isOutput]
         hashInputParams.sort()
         self.nodeUid = hash(tuple([b for a, b in hashInputParams]))
@@ -215,7 +246,7 @@ class Node:
         return self.graph.getDepth(self)
 
     def toDict(self):
-        attributes = {k: v.getExportValue() for k, v in self.attributes.items()}
+        attributes = {k: v.getExportValue() for k, v in self._attributes.objects.items()}
         return {
             'nodeType': self.nodeType(),
             'attributes': {k: v for k, v in attributes.items() if v is not None},  # filter empty values
@@ -228,17 +259,17 @@ class Node:
             'cache': pg.cacheFolder,
             }
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
-            assAttr = [(a.attrName, a.uid()) for a in associatedAttributes]
+            assAttr = [(a.getName(), a.uid()) for a in associatedAttributes]
             assAttr.sort()
             self._cmdVars['uid{}'.format(uidIndex)] = hash(tuple([b for a, b in assAttr]))
 
-        for name, attr in self.attributes.items():
+        for attr in self._attributes:
             if attr.attributeDesc.isOutput:
                 attr._value = attr.attributeDesc.value.format(
                     nodeType=self.nodeType(),
                     **self._cmdVars)  # self._cmdVars only contains uids at this step
 
-        for name, attr in self.attributes.items():
+        for name, attr in self._attributes.objects.items():
             linkAttr = attr.getLinkParam()
             v = attr._value
             if linkAttr:
@@ -315,7 +346,7 @@ class Node:
 
     def upgradeStatusTo(self, newStatus):
         if int(newStatus.value) <= int(self.status.status.value):
-            print('WARNING: downgrade status on node "{}" from {} to {}'.format(self.name, self.status.status.name,
+            print('WARNING: downgrade status on node "{}" from {} to {}'.format(self._name, self.status.status.name,
                                                                                 newStatus))
         self.status.status = newStatus
         self.saveStatusFile()
@@ -369,6 +400,12 @@ class Node:
     def endSequence(self):
         pass
 
+    def getStatus(self):
+        return self.status
+
+    name = Property(str, getName, constant=True)
+    attributes = Property(BaseObject, getAttributes, constant=True)
+
 
 WHITE = 0
 GRAY = 1
@@ -407,7 +444,7 @@ class Visitor:
         pass
 
 
-class Graph:
+class Graph(BaseObject):
     """
     _________________      _________________      _________________
     |               |      |               |      |               |
@@ -423,10 +460,31 @@ class Graph:
 
     """
 
-    def __init__(self, name):
+    def __init__(self, name, parent=None):
+        super(Graph, self).__init__(parent)
         self.name = name
-        self.nodes = {}
         self.edges = {}  # key/input <- value/output, it is organized this way because key/input can have only one connection.
+        self._nodes = Model(parent=self)
+
+    def clear(self):
+        self._nodes.clear()
+        self.edges = {}
+
+    @Slot(str)
+    def load(self, filepath):
+        self.clear()
+        with open(filepath) as jsonFile:
+            graphData = json.load(jsonFile)
+        if not isinstance(graphData, dict):
+            raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
+
+        self.name = os.path.splitext(os.path.basename(filepath))[0]
+        for nodeName, nodeData in graphData.items():
+            if not isinstance(nodeData, dict):
+                raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
+            n = Node(nodeData['nodeType'], parent=self, **nodeData['attributes'])
+            self.addNode(n, uniqueName=nodeName)
+        self._applyExpr()
 
     def addNode(self, node, uniqueName=None):
         if node.graph is not None and node.graph != self:
@@ -434,15 +492,23 @@ class Graph:
                 'Node "{}" cannot be part of the Graph "{}", as it is already part of the other graph "{}".'.format(
                     node.nodeType(), self.name, node.graph.name))
         if uniqueName:
-            assert uniqueName not in self.nodes
-            node.name = uniqueName
+            assert uniqueName not in self._nodes.objects
+            node._name = uniqueName
         else:
-            node.name = self._createUniqueNodeName(node.nodeType())
+            node._name = self._createUniqueNodeName(node.nodeType())
         node.graph = self
-        self.nodes[node.name] = node
+        self._nodes.add(node)
 
         return node
 
+    def removeNode(self, nodeName):
+        node = self.node(nodeName)
+        self._nodes.pop(nodeName)
+        for attr in node._attributes:
+            if attr in self.edges:
+                self.edges.pop(attr)
+
+    @Slot(str, result=Node)
     def addNewNode(self, nodeType, **kwargs):
         """
 
@@ -451,19 +517,22 @@ class Graph:
         :return:
         :rtype: Node
         """
-        return self.addNode(Node(nodeDesc=nodeType, **kwargs))
+        return self.addNode(Node(nodeDesc=nodeType, parent=self, **kwargs))
 
     def _createUniqueNodeName(self, inputName):
         i = 1
         while i:
             newName = "{name}_{index}".format(name=inputName, index=i)
-            if newName not in self.nodes:
+            if newName not in self._nodes.objects:
                 return newName
             i += 1
 
+    def node(self, nodeName):
+        return self._nodes.get(nodeName)
+
     def getLeaves(self):
         nodesWithOutput = set([outputAttr.node for outputAttr in self.edges.values()])
-        return set(self.nodes.values()) - nodesWithOutput
+        return set(self._nodes) - nodesWithOutput
 
     def addEdge(self, outputAttr, inputAttr):
         assert isinstance(outputAttr, Attribute)
@@ -492,7 +561,7 @@ class Graph:
     def dfs(self, visitor, startNodes=None):
         nodeChildren = self._getNodeEdges()
         colors = {}
-        for u in self.nodes.values():
+        for u in self._nodes:
             colors[u] = WHITE
         time = 0
         if startNodes:
@@ -544,12 +613,17 @@ class Graph:
         return nodes
 
     def _applyExpr(self):
-        for node in self.nodes.values():
+        for node in self._nodes:
             node._applyExpr()
 
     def toDict(self):
-        return {k: node.toDict() for k, node in self.nodes.items()}
+        return {k: node.toDict() for k, node in self._nodes.objects.items()}
 
+    @Slot(result=str)
+    def asString(self):
+        return str(self.toDict())
+
+    @Slot(str)
     def save(self, filepath):
         """
         """
@@ -564,34 +638,31 @@ class Graph:
             node.updateInternals()
 
     def updateStatusFromCache(self):
-        for node in self.nodes.values():
+        for node in self._nodes:
             node.updateStatusFromCache()
 
     def updateStatisticsFromCache(self):
-        for node in self.nodes.values():
+        for node in self._nodes:
             node.updateStatisticsFromCache()
 
     def update(self):
         self.updateInternals()
         self.updateStatusFromCache()
 
+    @property
+    def nodes(self):
+        return self._nodes
+
+    nodes = Property(BaseObject, nodes.fget, constant=True)
+
 
 def loadGraph(filepath):
     """
     """
-    with open(filepath) as jsonFile:
-        graphData = json.load(jsonFile)
-    if not isinstance(graphData, dict):
-        raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
-
-    graph = Graph(os.path.splitext(os.path.basename(filepath))[0])
-    for nodeName, nodeData in graphData.items():
-        if not isinstance(nodeData, dict):
-            raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
-        n = Node(nodeData['nodeType'], **nodeData['attributes'])
-        graph.addNode(n, uniqueName=nodeName)
-    graph._applyExpr()
+    graph = Graph("")
+    graph.load(filepath)
     return graph
+
 
 def getAlreadySubmittedNodes(nodes):
     out = []
@@ -599,6 +670,7 @@ def getAlreadySubmittedNodes(nodes):
         if node.isAlreadySubmitted():
             out.append(node)
     return out
+
 
 def execute(graph, startNodes=None, force=False):
     """

@@ -2,8 +2,8 @@ import pytest
 
 from PySide2.QtCore import QObject, Property
 
-from meshroom.types.core import CoreModel
-from meshroom.types.qt import QObjectListModel, QTypedObjectListModel
+from meshroom.common.core import CoreModel
+from meshroom.common.qt import QObjectListModel, QTypedObjectListModel
 
 
 class DummyNode(QObject):

@@ -12,7 +12,7 @@ from pprint import pprint
 
 from . import stats
 from meshroom import processGraph as pg
-from meshroom.types import BaseObject, Model, Slot, Signal, Property
+from meshroom.common import BaseObject, Model, Slot, Signal, Property
 
 # Replace default encoder to support Enums
 DefaultJSONEncoder = json.JSONEncoder  # store the original one

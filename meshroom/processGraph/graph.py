@@ -263,17 +263,14 @@ class Node(BaseObject):
             assAttr.sort()
             self._cmdVars['uid{}'.format(uidIndex)] = hash(tuple([b for a, b in assAttr]))
 
-        for attr in self._attributes:
-            if attr.attributeDesc.isOutput:
-                attr._value = attr.attributeDesc.value.format(
-                    nodeType=self.nodeType(),
-                    **self._cmdVars)  # self._cmdVars only contains uids at this step
-
+        # Evaluate input params
         for name, attr in self._attributes.objects.items():
+            if attr.attributeDesc.isOutput:
+                continue # skip outputs
             linkAttr = attr.getLinkParam()
-            v = attr._value
             if linkAttr:
-                v = linkAttr._value
+                attr._value = linkAttr._value
+            v = attr._value
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             self._cmdVars[name + 'Value'] = str(v)
@@ -281,6 +278,13 @@ class Node(BaseObject):
             if v is not None and v is not '':
                 self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
                                                           ' ' + self._cmdVars[name]
+
+        # Evaluate output params
+        for name, attr in self._attributes.objects.items():
+            if attr.attributeDesc.isOutput:
+                attr._value = attr.attributeDesc.value.format(
+                    nodeType=self.nodeType(),
+                    **self._cmdVars)
 
     def internalFolder(self):
         return self.nodeDesc.internalFolder.format(nodeType=self.nodeType(), **self._cmdVars)

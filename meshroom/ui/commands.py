@@ -1,8 +1,9 @@
-from PySide2 import QtWidgets
+from PySide2.QtWidgets import QUndoCommand, QUndoStack
+from PySide2.QtCore import Property, Signal
 from meshroom.processGraph.graph import Node
 
 
-class UndoCommand(QtWidgets.QUndoCommand):
+class UndoCommand(QUndoCommand):
     def __init__(self, parent=None):
         super(UndoCommand, self).__init__(parent)
         self._enabled = True
@@ -27,9 +28,15 @@ class UndoCommand(QtWidgets.QUndoCommand):
         pass
 
 
-class UndoStack(QtWidgets.QUndoStack):
+class UndoStack(QUndoStack):
     def __init__(self, parent=None):
         super(UndoStack, self).__init__(parent)
+        # connect QUndoStack signal to UndoStack's ones
+        self.cleanChanged.connect(self._cleanChanged)
+        self.canUndoChanged.connect(self._canUndoChanged)
+        self.canRedoChanged.connect(self._canRedoChanged)
+        self.undoTextChanged.connect(self._undoTextChanged)
+        self.redoTextChanged.connect(self._redoTextChanged)
 
     def tryAndPush(self, command: UndoCommand):
         if command.redoImpl():
@@ -39,6 +46,19 @@ class UndoStack(QtWidgets.QUndoStack):
             return True
         else:
             return False
+
+    # Redeclare QUndoStack signal since original ones can not be used for properties notifying
+    _cleanChanged = Signal()
+    _canUndoChanged = Signal()
+    _canRedoChanged = Signal()
+    _undoTextChanged = Signal()
+    _redoTextChanged = Signal()
+
+    clean = Property(bool, QUndoStack.isClean, notify=_cleanChanged)
+    canUndo = Property(bool, QUndoStack.canUndo, notify=_canRedoChanged)
+    canRedo = Property(bool, QUndoStack.canRedo, notify=_canUndoChanged)
+    undoText = Property(str, QUndoStack.undoText, notify=_undoTextChanged)
+    redoText = Property(str, QUndoStack.redoText, notify=_redoTextChanged)
 
 
 class GraphCommand(UndoCommand):

@@ -42,9 +42,12 @@ ApplicationWindow {
             }
 
             Item {width: 4; height: 1}
+
             Button {
                 text: "Undo"
                 activeFocusOnPress: true
+                enabled: _reconstruction.undoStack.canUndo
+                tooltip:  'Undo "' +_reconstruction.undoStack.undoText +'"'
                 onClicked: {
                     _reconstruction.undoStack.undo()
                 }
@@ -52,6 +55,8 @@ ApplicationWindow {
             Button {
                 text: "Redo"
                 activeFocusOnPress: true
+                enabled: _reconstruction.undoStack.canRedo
+                tooltip:  'Redo "' +_reconstruction.undoStack.redoText +'"'
                 onClicked: {
                     _reconstruction.undoStack.redo()
                 }

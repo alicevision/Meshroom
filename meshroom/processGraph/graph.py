@@ -687,13 +687,13 @@ def execute(graph, startNodes=None, force=False):
 
         if nodesInConflict:
             nodesStatus = set([node.status.status.name for node in nodesInConflict])
-            nodes = [node.name for node in nodesInConflict]
-            raise RuntimeError(
-                'Graph execution error.\n'
-                'Some nodes are already submitted with status: {}\n'
+            nodesName = [node.name for node in nodesInConflict]
+            #raise RuntimeError(
+            print(
+                'WARNING: Some nodes are already submitted with status: {}\n'
                 'Nodes: {}'.format(
                 ', '.join(nodesStatus),
-                ', '.join(nodes),
+                ', '.join(nodesName),
                 ))
 
     print('execute: ', str([n.name for n in nodes]))

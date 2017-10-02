@@ -269,7 +269,8 @@ class Node(BaseObject):
         self.nodeUid = hash(tuple([b for a, b in hashInputParams]))
         return self.nodeUid
 
-    def getDepth(self):
+    @property
+    def depth(self):
         return self.graph.getDepth(self)
 
     def toDict(self):
@@ -322,7 +323,9 @@ class Node(BaseObject):
                 self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
                                                           ' ' + self._cmdVars[name]
 
+        self.internalFolderChanged.emit()
 
+    @property
     def internalFolder(self):
         return self.nodeDesc.internalFolder.format(nodeType=self.nodeType(), **self._cmdVars)
 
@@ -330,13 +333,13 @@ class Node(BaseObject):
         return self.nodeDesc.commandLine.format(nodeType=self.nodeType(), **self._cmdVars)
 
     def statusFile(self):
-        return os.path.join(pg.cacheFolder, self.internalFolder(), 'status')
+        return os.path.join(pg.cacheFolder, self.internalFolder, 'status')
 
     def statisticsFile(self):
-        return os.path.join(pg.cacheFolder, self.internalFolder(), 'statistics')
+        return os.path.join(pg.cacheFolder, self.internalFolder, 'statistics')
 
     def logFile(self):
-        return os.path.join(pg.cacheFolder, self.internalFolder(), 'log')
+        return os.path.join(pg.cacheFolder, self.internalFolder, 'log')
 
     def updateStatusFromCache(self):
         """
@@ -446,7 +449,10 @@ class Node(BaseObject):
 
     name = Property(str, getName, constant=True)
     attributes = Property(BaseObject, getAttributes, constant=True)
-
+    internalFolderChanged = Signal()
+    internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
+    depthChanged = Signal()
+    depth = Property(int, depth.fget, notify=depthChanged)
 
 WHITE = 0
 GRAY = 1

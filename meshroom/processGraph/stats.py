@@ -94,9 +94,11 @@ class ProcStatistics:
         ]
 
     def __init__(self):
+        self.iterIndex = 0
+        self.lastIterIndexWithFiles = -1
         self.duration = 0  # computation time set at the end of the execution
         self.curves = defaultdict(list)
-        self.openFiles = set()
+        self.openFiles = {}
 
     def _addKV(self, k, v):
         if isinstance(v, tuple):
@@ -115,26 +117,35 @@ class ProcStatistics:
         data = proc.as_dict(self.dynamicKeys)
         for k, v in data.items():
             self._addKV(k, v)
-        for f in proc.open_files():
-            # self.openFiles.add((f.path, f.mode))
-            self.openFiles.add(f.path)
+
+        files = [f.path for f in proc.open_files()]
+        if self.lastIterIndexWithFiles != -1:
+            if set(files) != set(self.openFiles[self.lastIterIndexWithFiles]):
+                self.openFiles[self.iterIndex] = files
+                self.lastIterIndexWithFiles = self.iterIndex
+        elif files:
+            self.openFiles[self.iterIndex] = files
+            self.lastIterIndexWithFiles = self.iterIndex
+        self.iterIndex += 1
 
     def toDict(self):
         return {
             'duration': self.duration,
             'curves': self.curves,
-            'openFiles': list(self.openFiles),
+            'openFiles': self.openFiles,
         }
 
     def fromDict(self, d):
         self.duration = d.get('duration', 0)
         self.curves = d.get('curves', defaultdict(list))
-        self.openFiles = d.get('openFiles', set())
+        self.openFiles = d.get('openFiles', {})
 
 
 class Statistics:
     """
     """
+    fileVersion = 1.0
+
     def __init__(self):
         self.computer = ComputerStatistics()
         self.process = ProcStatistics()
@@ -153,12 +164,20 @@ class Statistics:
 
     def toDict(self):
         return {
+            'fileVersion': self.fileVersion,
             'computer': self.computer.toDict(),
             'process': self.process.toDict(),
             'times': self.times,
             }
 
     def fromDict(self, d):
+        version = d.get('fileVersion', 1.0)
+        if version != self.fileVersion:
+            logging.info('Cannot load statistics, version was {} and we only support {}.'.format(version, fileVersion))
+            self.computer = {}
+            self.process = {}
+            self.times = []
+            return
         self.computer.fromDict(d.get('computer', {}))
         self.process.fromDict(d.get('process', {}))
         self.times = d.get('times', [])

@@ -78,7 +78,7 @@ class ProcStatistics:
         'username',
         ]
     dynamicKeys = [
-        'memory_full_info',
+        # 'memory_full_info',
         # 'connections',
         'cpu_percent',
         # 'open_files',
@@ -116,7 +116,8 @@ class ProcStatistics:
         for k, v in data.items():
             self._addKV(k, v)
         for f in proc.open_files():
-            self.openFiles.add((f.path, f.mode))
+            # self.openFiles.add((f.path, f.mode))
+            self.openFiles.add(f.path)
 
     def toDict(self):
         return {

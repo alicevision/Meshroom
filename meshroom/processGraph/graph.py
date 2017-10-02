@@ -387,7 +387,7 @@ class Node(BaseObject):
 
                 # store process static info into the status file
                 self.status.commandLine = cmd
-                self.status.env = self.proc.environ()
+                # self.status.env = self.proc.environ()
                 # self.status.createTime = self.proc.create_time()
 
                 statThread.proc = self.proc

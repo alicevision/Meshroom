@@ -90,7 +90,9 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self.append(obj)
 
     def pop(self, key):
-        self.remove(self.get(key))
+        obj = self.get(key)
+        self.remove(obj)
+        return obj
 
     ############
     # List API #

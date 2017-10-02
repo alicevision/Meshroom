@@ -5,7 +5,7 @@ class CameraInit(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'openMVG_main_SfMInit_ImageListing {allParams}'
 
-    imageDirectory = desc.ParamAttribute(
+    imageDirectory = desc.FileAttribute(
             label='Image Directory',
             description='''''',
             value='',
@@ -23,7 +23,7 @@ class CameraInit(desc.CommandLineNode):
             uid=[0],
             isOutput=False,
             )
-    sensorWidthDatabase = desc.ParamAttribute(
+    sensorWidthDatabase = desc.FileAttribute(
             label='Sensor Width Database',
             description='''''',
             value='',
@@ -32,22 +32,20 @@ class CameraInit(desc.CommandLineNode):
             uid=[0],
             isOutput=False,
             )
-    outputDirectory = desc.ParamAttribute(
+    outputDirectory = desc.FileAttribute(
             label='Output Directory',
             description='''''',
             value='{cache}/{nodeType}/{uid0}/',
             shortName='o',
             arg='',
-            uid=[0],
             isOutput=True,
             )
-    outputSfm = desc.ParamAttribute( # not command line
+    outputSfm = desc.FileAttribute( # not command line
             label='Output SfM',
             description='''''',
             value='{cache}/{nodeType}/{uid0}/sfm_data.json',
             shortName='o',
             arg='',
-            uid=[0],
             isOutput=True,
             group='',
             )

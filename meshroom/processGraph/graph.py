@@ -281,10 +281,20 @@ class Node(BaseObject):
 
         # Evaluate output params
         for name, attr in self._attributes.objects.items():
-            if attr.attributeDesc.isOutput:
-                attr._value = attr.attributeDesc.value.format(
-                    nodeType=self.nodeType(),
-                    **self._cmdVars)
+            if not attr.attributeDesc.isOutput:
+                continue # skip inputs
+            attr._value = attr.attributeDesc.value.format(
+                nodeType=self.nodeType(),
+                **self._cmdVars)
+            v = attr._value
+
+            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+            self._cmdVars[name + 'Value'] = str(v)
+
+            if v is not None and v is not '':
+                self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
+                                                          ' ' + self._cmdVars[name]
+
 
     def internalFolder(self):
         return self.nodeDesc.internalFolder.format(nodeType=self.nodeType(), **self._cmdVars)

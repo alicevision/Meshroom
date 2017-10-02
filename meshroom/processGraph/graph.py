@@ -91,7 +91,7 @@ class Attribute(BaseObject):
             # from the cache folder which may be used in the filepath.
             return self.node.uid()
         if self.isLink():
-            return self.node.graph.edges[self].uid()
+            return self.getLinkParam().uid()
         if isinstance(self._value, basestring):
             return hash(str(self._value))
         return hash(self._value)
@@ -103,12 +103,12 @@ class Attribute(BaseObject):
         if self.attributeDesc.isOutput:
             return False
         else:
-            return self in self.node.graph.edges
+            return self in self.node.graph.edges.keys()
 
     def getLinkParam(self):
         if not self.isLink():
             return None
-        return self.node.graph.edges[self]
+        return self.node.graph.edge(self).src
 
     def _applyExpr(self):
         """
@@ -129,13 +129,31 @@ class Attribute(BaseObject):
         value = self._value
         # print('getExportValue: ', self.name(), value, self.isLink())
         if self.isLink():
-            value = '{' + self.node.graph.edges[self].fullName() + '}'
+            value = '{' + self.getLinkParam().fullName() + '}'
         return value
 
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     valueChanged = Signal()
     value = Property("QVariant", getValue, setValue, notify=valueChanged)
+
+class Edge(BaseObject):
+
+    def __init__(self, dst, src, parent=None):
+        super(Edge, self).__init__(parent)
+        self._dst = dst
+        self._src = src
+
+    @property
+    def src(self):
+        return self._src
+
+    @property
+    def dst(self):
+        return self._dst
+
+    src = Property(Attribute, src.fget, constant=True)
+    dst = Property(Attribute, dst.fget, constant=True)
 
 
 class Status(Enum):
@@ -477,12 +495,12 @@ class Graph(BaseObject):
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
         self.name = name
-        self.edges = {}  # key/input <- value/output, it is organized this way because key/input can have only one connection.
         self._nodes = Model(parent=self)
+        self._edges = Model(keyAttrName="dst", parent=self)  # use dst attribute as unique key since it can only have one input connection
 
     def clear(self):
         self._nodes.clear()
-        self.edges = {}
+        self._edges.clear()
 
     @Slot(str)
     def load(self, filepath):
@@ -515,12 +533,26 @@ class Graph(BaseObject):
 
         return node
 
+    def outEdges(self, attribute):
+        """ Return the list of edges starting from the given attribute """
+        # type: (Attribute,) -> [Edge]
+        return [edge for edge in self.edges if edge.src == attribute]
+
     def removeNode(self, nodeName):
         node = self.node(nodeName)
         self._nodes.pop(nodeName)
+
+        edges = {}
         for attr in node._attributes:
-            if attr in self.edges:
-                self.edges.pop(attr)
+            for edge in self.outEdges(attr):
+                self.edges.remove(edge)
+                edges[edge.dst.fullName()] = edge.src.fullName()
+            if attr in self.edges.keys():
+                edge = self.edges.pop(attr)
+                edges[edge.dst.fullName()] = edge.src.fullName()
+
+        self.updateInternals()
+        return edges
 
     @Slot(str, result=Node)
     def addNewNode(self, nodeType, **kwargs):
@@ -544,8 +576,11 @@ class Graph(BaseObject):
     def node(self, nodeName):
         return self._nodes.get(nodeName)
 
+    def edge(self, dstAttributeName):
+        return self._edges.get(dstAttributeName)
+
     def getLeaves(self):
-        nodesWithOutput = set([outputAttr.node for outputAttr in self.edges.values()])
+        nodesWithOutput = set([edge.src.node for edge in self.edges])
         return set(self._nodes) - nodesWithOutput
 
     def addEdge(self, outputAttr, inputAttr):
@@ -553,9 +588,10 @@ class Graph(BaseObject):
         assert isinstance(inputAttr, Attribute)
         if outputAttr.node.graph != self or inputAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
-        if inputAttr in self.edges:
+        if inputAttr in self.edges.keys():
             raise RuntimeError('Input attribute "{}" is already connected.'.format(inputAttr.fullName()))
-        self.edges[inputAttr] = outputAttr
+        self.edges.add(Edge(inputAttr, outputAttr))
+        inputAttr.valueChanged.emit()
 
     def addEdges(self, *edges):
         for edge in edges:
@@ -567,8 +603,8 @@ class Graph(BaseObject):
     def _getNodeEdges(self):
         nodeEdges = defaultdict(set)
 
-        for attrInput, attrOutput in self.edges.items():
-            nodeEdges[attrInput.node].add(attrOutput.node)
+        for edge in self.edges:
+            nodeEdges[edge.dst.node].add(edge.src.node)
 
         return nodeEdges
 
@@ -667,7 +703,12 @@ class Graph(BaseObject):
     def nodes(self):
         return self._nodes
 
+    @property
+    def edges(self):
+        return self._edges
+
     nodes = Property(BaseObject, nodes.fget, constant=True)
+    edges = Property(BaseObject, edges.fget, constant=True)
 
 
 def loadGraph(filepath):

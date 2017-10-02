@@ -15,12 +15,6 @@ parser.add_argument("--force", help="Force recompute",
 
 args = parser.parse_args()
 
-# graph = pg.Graph('bashTest')
-# ls = graph.addNewNode('Ls', input='/tmp')
-# appendText = graph.addNewNode('AppendText', inputText='plop')
-# graph.addEdge(ls.output, appendText.input)
-## graph.save(args.graphFile)
-
 graph = pg.loadGraph(args.graphFile)
 graph.update()
 

@@ -89,9 +89,10 @@ class RemoveNodeCommand(GraphCommand):
         self.nodeDesc = node.toDict()
         self.nodeName = node.getName()
         self.setText("Remove Node {}".format(self.nodeName))
+        self.edges = {}
 
     def redoImpl(self):
-        self.graph.removeNode(self.nodeName)
+        self.edges = self.graph.removeNode(self.nodeName)
         return True
 
     def undoImpl(self):
@@ -99,6 +100,15 @@ class RemoveNodeCommand(GraphCommand):
                                        parent=self.graph, **self.nodeDesc["attributes"]
                                        ), self.nodeName)
         assert (node.getName() == self.nodeName)
+
+        # recreate edges deleted on node removal
+        for key, value in self.edges.items():
+            iNode, iAttr = key.split(".")
+            oNode, oAttr = value.split(".")
+            self.graph.addEdge(self.graph.node(oNode).attribute(oAttr),
+                               self.graph.node(iNode).attribute(iAttr))
+
+        node.updateInternals()
 
 
 class SetAttributeCommand(GraphCommand):

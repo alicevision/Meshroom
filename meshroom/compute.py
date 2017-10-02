@@ -29,6 +29,6 @@ if args.node:
 else:
     startNodes = None
     if args.graph:
-        startNodes = [graph.nodes(args.graph)]
+        startNodes = [graph.node(args.graph)]
     pg.execute(graph, startNodes=startNodes, force=args.force)
 

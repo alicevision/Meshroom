@@ -12,12 +12,13 @@ class PrepareDenseScene(desc.CommandLineNode):
             arg='',
             isOutput=True,
             )
-    mvsConfig = desc.FileAttribute(
+    mvsConfig = desc.FileAttribute( # not a command line arg
             label='MVS Configuration file',
             description='',
             value='{cache}/{nodeType}/{uid0}/_tmp_scale{scaleValue}/mvs.ini',
             shortName='',
             arg='',
+            group='',
             isOutput=True,
             )
 

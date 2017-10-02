@@ -12,6 +12,9 @@ class CoreModel:
         """ Enables iteration over the list of objects. """
         return iter(self._objects.values())
 
+    def keys(self):
+        return self._objects.keys()
+
     @property
     def objects(self):
         return self._objects

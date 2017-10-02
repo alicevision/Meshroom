@@ -53,14 +53,14 @@ graph.updateStatisticsFromCache()
 
 nodes = []
 if args.node:
-    if args.node not in graph.nodes:
+    if args.node not in graph.nodes.keys():
         print('ERROR: node "{}" does not exist in file "{}".'.format(args.node, args.graphFile))
         exit(-1)
-    nodes = [graph.nodes(args.node)]
+    nodes = [graph.node(args.node)]
 else:
     startNodes = None
     if args.graph:
-        startNodes = [graph.nodes(args.graph)]
+        startNodes = [graph.node(args.graph)]
     nodes = graph.dfsNodesOnFinish(startNodes=startNodes)
 
 for node in nodes:

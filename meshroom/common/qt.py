@@ -27,6 +27,9 @@ class QObjectListModel(QtCore.QAbstractListModel):
         """ Enables iteration over the list of objects. """
         return iter(self._objects)
 
+    def keys(self):
+        return self._objectByKey.keys()
+
     def __len__(self):
         return self.size()
 

@@ -41,9 +41,17 @@ class CoreModel:
 
 
 class CoreSignal:
-    """ Fake signal that doesn't do anything """
-    def emit(self):
+    """ Simple signal/callback implementation """
+    def __init__(self):
+        self._callbacks = set()
+
+    def emit(self, *args):
+        # TODO: check if we really need this in non-UI mode
+        # [cb(*args) for cb in self._callbacks]
         pass
+
+    def connect(self, func):
+        self._callbacks.add(func)
 
 
 def CoreSlot(*args, **kwargs):

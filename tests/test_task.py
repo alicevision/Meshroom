@@ -1,8 +1,8 @@
-from meshroom import processGraph as pg
+from meshroom.processGraph.graph import Graph
 
 
 def test_depth():
-    graph = pg.Graph('Tests tasks depth')
+    graph = Graph('Tests tasks depth')
 
     tA = graph.addNewNode('Ls', input='/tmp')
     tB = graph.addNewNode('AppendText', inputText='echo B')

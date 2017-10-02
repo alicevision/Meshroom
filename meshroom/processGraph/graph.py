@@ -59,6 +59,7 @@ class Attribute(BaseObject):
         self.attributeDesc = attributeDesc
         self._value = getattr(attributeDesc, 'value', None)
         self._label = getattr(attributeDesc, 'label', None)
+        self._isOutput = getattr(attributeDesc, 'isOutput', False)
 
     def absoluteName(self):
         return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self._name)
@@ -84,6 +85,10 @@ class Attribute(BaseObject):
             return
         self._value = value
         self.valueChanged.emit()
+
+    @property
+    def isOutput(self):
+        return self._isOutput
 
     def uid(self):
         """
@@ -138,6 +143,8 @@ class Attribute(BaseObject):
     label = Property(str, getLabel, constant=True)
     valueChanged = Signal()
     value = Property("QVariant", value.fget, value.fset, notify=valueChanged)
+    isOutput = Property(bool, isOutput.fget, constant=True)
+
 
 class Edge(BaseObject):
 

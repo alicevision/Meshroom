@@ -117,11 +117,14 @@ class SetAttributeCommand(GraphCommand):
         self.nodeName = attribute.node.getName()
         self.attrName = attribute.getName()
         self.value = value
-        self.oldValue = attribute.getValue()
+        self.oldValue = attribute.value
+        self.setText("Set Attribute '{}'".format(attribute.fullName()))
 
     def redoImpl(self):
-        self.graph.node(self.nodeName).attribute(self.attrName).setValue(self.value)
+        if self.value == self.oldValue:
+            return False
+        self.graph.node(self.nodeName).attribute(self.attrName).value = self.value
         return True
 
     def undoImpl(self):
-        self.graph.node(self.nodeName).attribute(self.attrName).setValue(self.oldValue)
+        self.graph.node(self.nodeName).attribute(self.attrName).value = self.oldValue

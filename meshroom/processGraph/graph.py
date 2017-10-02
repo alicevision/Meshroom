@@ -74,10 +74,12 @@ class Attribute(BaseObject):
     def getLabel(self):
         return self._label
 
-    def getValue(self):
+    @property
+    def value(self):
         return self._value
 
-    def setValue(self, value):
+    @value.setter
+    def value(self, value):
         if self._value == value:
             return
         self._value = value
@@ -135,7 +137,7 @@ class Attribute(BaseObject):
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     valueChanged = Signal()
-    value = Property("QVariant", getValue, setValue, notify=valueChanged)
+    value = Property("QVariant", value.fget, value.fset, notify=valueChanged)
 
 class Edge(BaseObject):
 
@@ -301,7 +303,7 @@ class Node(BaseObject):
         for name, attr in self._attributes.objects.items():
             if not attr.attributeDesc.isOutput:
                 continue # skip inputs
-            attr._value = attr.attributeDesc.value.format(
+            attr.value = attr.attributeDesc.value.format(
                 nodeType=self.nodeType(),
                 **self._cmdVars)
             v = attr._value

@@ -546,6 +546,10 @@ class Graph(BaseObject):
         node.graph = self
         self._nodes.add(node)
 
+        # Trigger internal update when an attribute is modified
+        for attr in node.attributes:  # type: Attribute
+            attr.valueChanged.connect(self.updateInternals)
+
         return node
 
     def outEdges(self, attribute):

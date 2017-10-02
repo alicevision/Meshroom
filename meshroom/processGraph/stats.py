@@ -183,5 +183,5 @@ class StatisticsThread(threading.Thread):
     def run(self):
         while self.running:
             self.updateStats()
-            time.sleep(10)
+            time.sleep(60)
 

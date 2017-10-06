@@ -1,5 +1,5 @@
 
-class Attribute:
+class Attribute(object):
     """
     """
     isOutput = False
@@ -26,7 +26,7 @@ class ParamAttribute(Attribute):
         super(ParamAttribute, self).__init__(**kwargs)
 
 
-class Node:
+class Node(object):
     """
     """
     internalFolder = '{nodeType}/{uid0}/'

@@ -21,10 +21,12 @@ class UndoCommand(QUndoCommand):
             return
         self.undoImpl()
 
-    def redoImpl(self) -> bool:
+    def redoImpl(self):
+        # type: () -> bool
         pass
 
-    def undoImpl(self) -> bool:
+    def undoImpl(self):
+        # type: () -> bool
         pass
 
 
@@ -38,7 +40,8 @@ class UndoStack(QUndoStack):
         self.undoTextChanged.connect(self._undoTextChanged)
         self.redoTextChanged.connect(self._redoTextChanged)
 
-    def tryAndPush(self, command: UndoCommand):
+    def tryAndPush(self, command):
+        # type: (UndoCommand) -> bool
         if command.redoImpl():
             command.setEnabled(False)
             self.push(command)  # takes ownership

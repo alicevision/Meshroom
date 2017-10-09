@@ -1,4 +1,4 @@
-from meshroom.processGraph import desc
+from meshroom.core import desc
 
 class Meshing(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'

@@ -1,6 +1,6 @@
 from PySide2 import QtCore
 
-from meshroom.processGraph import graph
+from meshroom.core import graph
 from meshroom.ui import commands
 
 

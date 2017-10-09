@@ -63,7 +63,7 @@ if sys.stdin.isatty():
 inputCmdLineDoc = ''.join([line for line in sys.stdin])
 
 outputNodeStr = '''
-from meshroom.processGraph import desc
+from meshroom.core import desc
 
 class __COMMANDNAME__(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'

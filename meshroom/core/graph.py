@@ -11,7 +11,7 @@ from enum import Enum  # available by default in python3. For python2: "pip inst
 from pprint import pprint
 
 from . import stats
-from meshroom import processGraph as pg
+from meshroom import core as pg
 from meshroom.common import BaseObject, Model, Slot, Signal, Property
 
 # Replace default encoder to support Enums

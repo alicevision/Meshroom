@@ -1,4 +1,4 @@
-from meshroom.processGraph.graph import Graph
+from meshroom.core.graph import Graph
 
 
 def test_depth():

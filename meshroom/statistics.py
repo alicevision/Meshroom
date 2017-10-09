@@ -4,7 +4,7 @@ import os
 from pprint import pprint
 from collections import Iterable, defaultdict
 
-from meshroom.processGraph import graph as pg
+from meshroom.core import graph as pg
 
 
 def addPlots(curves, title, fileObj):

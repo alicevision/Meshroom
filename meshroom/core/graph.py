@@ -124,7 +124,11 @@ class Attribute(BaseObject):
         and clear the string value.
         """
         v = self._value
-        if isinstance(v, basestring) and len(v) > 2 and v[0] == '{' and v[-1] == '}':
+        if isinstance(v, Attribute):
+            g = self.node.graph
+            g.addEdge(v, self)
+            self._value = ""
+        elif isinstance(v, basestring) and len(v) > 2 and v[0] == '{' and v[-1] == '}':
             # value is a link to another attribute
             g = self.node.graph
             link = v[1:-1]
@@ -582,7 +586,9 @@ class Graph(BaseObject):
         :return:
         :rtype: Node
         """
-        return self.addNode(Node(nodeDesc=nodeType, parent=self, **kwargs))
+        node = self.addNode(Node(nodeDesc=nodeType, parent=self, **kwargs))
+        node._applyExpr()
+        return node
 
     def _createUniqueNodeName(self, inputName):
         i = 1

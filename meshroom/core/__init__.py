@@ -1,3 +1,4 @@
+from __future__ import print_function
 import importlib
 import inspect
 import os
@@ -24,10 +25,9 @@ def add_to_path(p):
         sys.path = old_path
 
 
-def loadNodesDesc(folder, packageName='nodes'):
+def loadNodes(folder, packageName):
     """
     """
-    global nodesDesc
 
     nodeTypes = []
     errors = []
@@ -54,16 +54,24 @@ def loadNodesDesc(folder, packageName='nodes'):
             except Exception as e:
                 errors.append('  * Errors while loading "{}".\n    File: {}\n    {}'.format(pluginName, pluginFile, str(e)))
 
-        nodesDesc = dict([(m.__name__, m) for m in nodeTypes])
-        print('Plugins loaded: ', ', '.join(nodesDesc.keys()))
-        if errors:
-            print('== Error while loading the following plugins: ==')
-            print('\n'.join(errors))
-            print('================================================')
-
+    if errors:
+        print('== Error while loading the following plugins: ==')
+        print('\n'.join(errors))
+        print('================================================')
     return nodeTypes
 
 
+def loadAllNodes(folder):
+    global nodesDesc
+    for f in os.listdir(folder):
+        if os.path.isdir(os.path.join(folder, f)):
+            nodeTypes = loadNodes(folder, f)
+
+            nodes = dict([(m.__name__, m) for m in nodeTypes])
+            print('Plugins loaded: ', ', '.join(nodes.keys()))
+            nodesDesc.update(nodes)
+
+
 # Load plugins
-# TODO: seems "risky" at module level, should be in a registerNodes function in meshroom package
-loadNodesDesc(folder=os.path.dirname(os.path.dirname(__file__)))
+meshroomFolder = os.path.dirname(os.path.dirname(__file__))
+loadAllNodes(folder=os.path.join(meshroomFolder, 'nodes'))

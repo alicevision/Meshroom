@@ -1,13 +1,15 @@
+import meshroom
+
 Model = None
 Slot = None
 Signal = None
 Property = None
 BaseObject = None
 
-if 1:  # TODO: switch types according to something
+if meshroom.backend == meshroom.Backend.PYSIDE:
     # PySide types
     from .qt import Model, Slot, Signal, Property, BaseObject
-else:
+elif meshroom.backend == meshroom.Backend.STANDALONE:
     # Core types
     from .core import Model, Slot, Signal, Property, BaseObject
 

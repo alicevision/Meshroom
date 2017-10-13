@@ -13,9 +13,9 @@ def test_depth():
         (tB.output, tC.input)
         )
 
-    assert tA.getDepth() == 1
-    assert tB.getDepth() == 2
-    assert tC.getDepth() == 3
+    assert tA.depth == 1
+    assert tB.depth == 2
+    assert tC.depth == 3
 
 
 if __name__ == '__main__':

@@ -104,13 +104,14 @@ class RemoveNodeCommand(GraphCommand):
                                        parent=self.graph, **self.nodeDesc["attributes"]
                                        ), self.nodeName)
         assert (node.getName() == self.nodeName)
-
         # recreate edges deleted on node removal
+        # edges having this node as destination could be retrieved from node description
+        # but we're missing edges starting from this node
         for key, value in self.edges.items():
-            iNode, iAttr = key.split(".")
-            oNode, oAttr = value.split(".")
-            self.graph.addEdge(self.graph.node(oNode).attribute(oAttr),
-                               self.graph.node(iNode).attribute(iAttr))
+            dstNode, dstAttr = key.split(".")
+            srcNode, srcAttr = value.split(".")
+            self.graph.addEdge(self.graph.node(srcNode).attribute(srcAttr),
+                               self.graph.node(dstNode).attribute(dstAttr))
 
         node.updateInternals()
 

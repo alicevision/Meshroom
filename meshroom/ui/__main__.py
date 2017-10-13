@@ -23,6 +23,9 @@ if __name__ == "__main__":
     r = Reconstruction()
     engine.rootContext().setContextProperty("_reconstruction", r)
 
+    # Request any potential computation to stop on exit
+    app.aboutToQuit.connect(r.stopExecution)
+
     engine.load(os.path.normpath(url))
     app.exec_()
 

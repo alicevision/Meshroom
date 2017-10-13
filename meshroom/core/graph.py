@@ -446,10 +446,10 @@ class Node(BaseObject):
             self.upgradeStatusTo(Status.ERROR)
             raise
         finally:
-            statThread.running = False
-            # Don't need to join, the thread will finish a bit later.
-            # statThread.join()
             self._subprocess = None
+            # ask and wait for the stats thread to terminate
+            statThread.stopRequest()
+            statThread.join()
 
         self.upgradeStatusTo(Status.SUCCESS)
 

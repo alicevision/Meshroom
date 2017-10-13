@@ -19,6 +19,14 @@ class Reconstruction(QObject):
     def removeNode(self, node):
         self._undoStack.tryAndPush(commands.RemoveNodeCommand(self._graph, node))
 
+    @Slot(graph.Attribute, graph.Attribute)
+    def addEdge(self, src, dst):
+        self._undoStack.tryAndPush(commands.AddEdgeCommand(self._graph, src, dst))
+
+    @Slot(graph.Edge)
+    def removeEdge(self, edge):
+        self._undoStack.tryAndPush(commands.RemoveEdgeCommand(self._graph, edge))
+
     @Slot(graph.Attribute, "QVariant")
     def setAttribute(self, attribute, value):
         self._undoStack.tryAndPush(commands.SetAttributeCommand(self._graph, attribute, value))

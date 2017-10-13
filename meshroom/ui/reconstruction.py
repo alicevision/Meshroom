@@ -1,3 +1,5 @@
+from threading import Thread
+
 from PySide2.QtCore import QObject, Slot, Property, Signal
 
 from meshroom.core import graph
@@ -10,6 +12,7 @@ class Reconstruction(QObject):
         super(Reconstruction, self).__init__(parent)
         self._graph = graph.Graph("")
         self._undoStack = commands.UndoStack(self)
+        self._computeThread = Thread()
 
     @Slot(str)
     def addNode(self, nodeType):
@@ -37,6 +40,29 @@ class Reconstruction(QObject):
         self._graph.update()
         self._undoStack.clear()
 
+    @Slot(graph.Node)
+    def execute(self, node=None):
+        if self.computing:
+            return
+        nodes = [node] if node else self._graph.getLeaves()
+        self._computeThread = Thread(target=self._execute, args=(nodes,))
+        self._computeThread.start()
+
+    def _execute(self, nodes):
+        self.computingChanged.emit()
+        graph.execute(self._graph, nodes)
+        self.computingChanged.emit()
+
+    @Slot()
+    def stopExecution(self):
+        if not self.computing:
+            return
+        self._graph.stopExecution()
+        self._computeThread.join()
+        self.computingChanged.emit()
+
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graph = Property(graph.Graph, lambda self: self._graph, constant=True)
     nodes = Property(QObject, lambda self: self._graph.nodes, constant=True)
+    computingChanged = Signal()
+    computing = Property(bool, lambda self: self._computeThread.is_alive(), notify=computingChanged)

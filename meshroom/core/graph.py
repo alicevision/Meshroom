@@ -151,10 +151,10 @@ class Attribute(BaseObject):
 
 class Edge(BaseObject):
 
-    def __init__(self, dst, src, parent=None):
+    def __init__(self, src, dst, parent=None):
         super(Edge, self).__init__(parent)
-        self._dst = dst
         self._src = src
+        self._dst = dst
 
     @property
     def src(self):
@@ -629,7 +629,7 @@ class Graph(BaseObject):
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
         if dstAttr in self.edges.keys():
             raise RuntimeError('Destination attribute "{}" is already connected.'.format(dstAttr.fullName()))
-        edge = Edge(dstAttr, srcAttr)
+        edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()

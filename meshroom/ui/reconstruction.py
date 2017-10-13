@@ -34,6 +34,8 @@ class Reconstruction(QObject):
     @Slot(str)
     def load(self, filepath):
         self._graph.load(filepath)
+        self._graph.update()
+        self._undoStack.clear()
 
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graph = Property(graph.Graph, lambda self: self._graph, constant=True)

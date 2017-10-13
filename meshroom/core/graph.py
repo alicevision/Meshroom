@@ -351,11 +351,12 @@ class Node(BaseObject):
         """
         statusFile = self.statusFile()
         if not os.path.exists(statusFile):
-            self.status.status = Status.NONE
+            self.upgradeStatusTo(Status.NONE)
             return
         with open(statusFile, 'r') as jsonFile:
             statusData = json.load(jsonFile)
         self.status.fromDict(statusData)
+        self.statusChanged.emit()
 
     def saveStatusFile(self):
         """
@@ -397,6 +398,7 @@ class Node(BaseObject):
             print('WARNING: downgrade status on node "{}" from {} to {}'.format(self._name, self.status.status.name,
                                                                                 newStatus))
         self.status.status = newStatus
+        self.statusChanged.emit()
         self.saveStatusFile()
     
     def isAlreadySubmitted(self):
@@ -457,12 +459,19 @@ class Node(BaseObject):
     def getStatus(self):
         return self.status
 
+    @property
+    def statusName(self):
+        return self.status.status.name
+
     name = Property(str, getName, constant=True)
     attributes = Property(BaseObject, getAttributes, constant=True)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     depthChanged = Signal()
     depth = Property(int, depth.fget, notify=depthChanged)
+    statusChanged = Signal()
+    statusName = Property(str, statusName.fget, notify=statusChanged)
+
 
 WHITE = 0
 GRAY = 1

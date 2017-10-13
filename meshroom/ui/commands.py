@@ -79,6 +79,7 @@ class AddNodeCommand(GraphCommand):
     def redoImpl(self):
         self.node = self.graph.addNewNode(self.nodeType)
         self.setText("Add Node {}".format(self.node.getName()))
+        self.node._applyExpr()
         return True
 
     def undoImpl(self):

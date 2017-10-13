@@ -132,3 +132,38 @@ class SetAttributeCommand(GraphCommand):
 
     def undoImpl(self):
         self.graph.node(self.nodeName).attribute(self.attrName).value = self.oldValue
+
+
+class AddEdgeCommand(GraphCommand):
+    def __init__(self, graph, src, dst, parent=None):
+        super(AddEdgeCommand, self).__init__(graph, parent)
+        self.srcNode, self.srcAttr = src.fullName().split(".")
+        self.dstNode, self.dstAttr = dst.fullName().split(".")
+        self.setText("Connect '{}'->'{}'".format(src.fullName(), dst.fullName()))
+
+    def redoImpl(self):
+        try:
+            self.graph.addEdge(self.graph.node(self.srcNode).attribute(self.srcAttr),
+                               self.graph.node(self.dstNode).attribute(self.dstAttr))
+        except RuntimeError:
+            return False
+        return True
+
+    def undoImpl(self):
+        self.graph.removeEdge(self.graph.node(self.dstNode).attribute(self.dstAttr))
+
+
+class RemoveEdgeCommand(GraphCommand):
+    def __init__(self, graph, edge, parent=None):
+        super(RemoveEdgeCommand, self).__init__(graph, parent)
+        self.srcNode, self.srcAttr = edge.src.fullName().split(".")
+        self.dstNode, self.dstAttr = edge.dst.fullName().split(".")
+        self.setText("Disconnect '{}'->'{}'".format(edge.src.fullName(), edge.dst.fullName()))
+
+    def redoImpl(self):
+        self.graph.removeEdge(self.graph.node(self.dstNode).attribute(self.dstAttr))
+        return True
+
+    def undoImpl(self):
+        self.graph.addEdge(self.graph.node(self.srcNode).attribute(self.srcAttr),
+                           self.graph.node(self.dstNode).attribute(self.dstAttr))

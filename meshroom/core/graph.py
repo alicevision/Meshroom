@@ -97,12 +97,13 @@ class Attribute(BaseObject):
             # only dependent of the linked node uid, so it is independent
             # from the cache folder which may be used in the filepath.
             return self.node.uid()
-        if self.isLink():
+        if self.isLink:
             return self.getLinkParam().uid()
         if isinstance(self._value, basestring):
             return hash(str(self._value))
         return hash(self._value)
 
+    @property
     def isLink(self):
         """
         If the attribute is a link to another attribute.
@@ -113,7 +114,7 @@ class Attribute(BaseObject):
             return self in self.node.graph.edges.keys()
 
     def getLinkParam(self):
-        if not self.isLink():
+        if not self.isLink:
             return None
         return self.node.graph.edge(self).src
 
@@ -135,7 +136,7 @@ class Attribute(BaseObject):
     def getExportValue(self):
         value = self._value
         # print('getExportValue: ', self.name(), value, self.isLink())
-        if self.isLink():
+        if self.isLink:
             value = '{' + self.getLinkParam().fullName() + '}'
         return value
 
@@ -144,6 +145,8 @@ class Attribute(BaseObject):
     valueChanged = Signal()
     value = Property("QVariant", value.fget, value.fset, notify=valueChanged)
     isOutput = Property(bool, isOutput.fget, constant=True)
+    isLinkChanged = Signal()
+    isLink = Property(bool, isLink.fget, notify=isLinkChanged)
 
 
 class Edge(BaseObject):
@@ -602,19 +605,30 @@ class Graph(BaseObject):
         nodesWithOutput = set([edge.src.node for edge in self.edges])
         return set(self._nodes) - nodesWithOutput
 
-    def addEdge(self, outputAttr, inputAttr):
-        assert isinstance(outputAttr, Attribute)
-        assert isinstance(inputAttr, Attribute)
-        if outputAttr.node.graph != self or inputAttr.node.graph != self:
+    def addEdge(self, srcAttr, dstAttr):
+        assert isinstance(srcAttr, Attribute)
+        assert isinstance(dstAttr, Attribute)
+        if srcAttr.node.graph != self or dstAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
-        if inputAttr in self.edges.keys():
-            raise RuntimeError('Input attribute "{}" is already connected.'.format(inputAttr.fullName()))
-        self.edges.add(Edge(inputAttr, outputAttr))
-        inputAttr.valueChanged.emit()
+        if dstAttr in self.edges.keys():
+            raise RuntimeError('Destination attribute "{}" is already connected.'.format(dstAttr.fullName()))
+        edge = Edge(dstAttr, srcAttr)
+        self.edges.add(edge)
+        dstAttr.valueChanged.emit()
+        dstAttr.isLinkChanged.emit()
+        return edge
 
     def addEdges(self, *edges):
         for edge in edges:
             self.addEdge(*edge)
+
+    def removeEdge(self, dstAttr):
+        if dstAttr not in self.edges.keys():
+            raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.fullName()))
+        edge = self.edges.pop(dstAttr)
+        dstAttr.valueChanged.emit()
+        dstAttr.isLinkChanged.emit()
+        return edge
 
     def getDepth(self, node):
         return len(self.dfsNodesOnFinish([node]))

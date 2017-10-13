@@ -7,6 +7,7 @@ from PySide2.QtQml import QQmlApplicationEngine
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
 
+from meshroom.ui import components
 
 
 if __name__ == "__main__":
@@ -17,6 +18,8 @@ if __name__ == "__main__":
     engine = QmlInstantEngine()
     engine.addFilesFromDirectory(qmlDir)
     engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
+    components.registerTypes()
+
     r = Reconstruction()
     engine.rootContext().setContextProperty("_reconstruction", r)
 

@@ -40,7 +40,7 @@ def photogrammetryPipeline(imageDirectory):
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
 parser.add_argument('--input', metavar='FOLDER', type=str, required=True,
                     help='Input folder or json file.')
-parser.add_argument('--output', metavar='FOLDER', type=str, required=True,
+parser.add_argument('--output', metavar='FOLDER', type=str, required=False,
                     help='Results.')
 parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
                     default=None,
@@ -53,10 +53,14 @@ parser.add_argument('--save', metavar='FOLDER', type=str, required=False,
 
 args = parser.parse_args()
 
+if not args.output and not args.save:
+    print('Nothing to do. You need to set --output or --save.')
+    exit(1)
+
 graph = photogrammetryPipeline(imageDirectory=args.input)
 
 if args.save:
-    pg.saveGraph(graph, args.save)
+    graph.save(args.save)
 
 if args.output:
     meshroom.core.cacheFolder = args.cache

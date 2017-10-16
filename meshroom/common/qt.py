@@ -84,7 +84,12 @@ class QObjectListModel(QtCore.QAbstractListModel):
 
     @QtCore.Slot(str, result=QtCore.QObject)
     def get(self, key):
-        return self._objectByKey.get(key, None)
+        """
+        Raises a KeyError if key is not in the map.
+        :param key:
+        :return:
+        """
+        return self._objectByKey[key]
 
     def add(self, obj):
         self.append(obj)

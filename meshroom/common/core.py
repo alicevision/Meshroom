@@ -19,8 +19,14 @@ class CoreModel:
     def objects(self):
         return self._objects
 
+    # TODO: operator[]
     def get(self, key):
-        return self._objects.get(key, None)
+        """
+        Raises a KeyError if key is not in the map.
+        :param key:
+        :return:
+        """
+        return self._objects[key]
 
     def add(self, obj):
         key = getattr(obj, self._keyAttrName, None)

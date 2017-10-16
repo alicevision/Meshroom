@@ -191,8 +191,8 @@ class StatisticsThread(threading.Thread):
         threading.Thread.__init__(self)
         self.node = node
         self.proc = None
-        self.running = True
         self.statistics = self.node.statistics
+        self._stopFlag = threading.Event()
 
     def updateStats(self):
         self.lastTime = time.time()
@@ -200,7 +200,14 @@ class StatisticsThread(threading.Thread):
             self.node.saveStatistics()
 
     def run(self):
-        while self.running:
+        while True:
             self.updateStats()
-            time.sleep(60)
+            if self._stopFlag.wait(60):
+                # stopFlag has been set
+                # update stats one last time and exit main loop
+                self.updateStats()
+                return
 
+    def stopRequest(self):
+        """ Request the thread to exit as soon as possible. """
+        self._stopFlag.set()

@@ -99,12 +99,13 @@ class Attribute(BaseObject):
             # only dependent of the linked node uid, so it is independent
             # from the cache folder which may be used in the filepath.
             return self.node.uid()
-        if self.isLink():
+        if self.isLink:
             return self.getLinkParam().uid()
         if isinstance(self._value, basestring):
             return hash(str(self._value))
         return hash(self._value)
 
+    @property
     def isLink(self):
         """
         If the attribute is a link to another attribute.
@@ -115,7 +116,7 @@ class Attribute(BaseObject):
             return self in self.node.graph.edges.keys()
 
     def getLinkParam(self):
-        if not self.isLink():
+        if not self.isLink:
             return None
         return self.node.graph.edge(self).src
 
@@ -141,7 +142,7 @@ class Attribute(BaseObject):
     def getExportValue(self):
         value = self._value
         # print('getExportValue: ', self.name(), value, self.isLink())
-        if self.isLink():
+        if self.isLink:
             value = '{' + self.getLinkParam().fullName() + '}'
         return value
 
@@ -150,6 +151,8 @@ class Attribute(BaseObject):
     valueChanged = Signal()
     value = Property("QVariant", value.fget, value.fset, notify=valueChanged)
     isOutput = Property(bool, isOutput.fget, constant=True)
+    isLinkChanged = Signal()
+    isLink = Property(bool, isLink.fget, notify=isLinkChanged)
 
 
 class Edge(BaseObject):
@@ -223,6 +226,7 @@ class Node(BaseObject):
             self.attribute(k)._value = v
         self.status = StatusData(self.name, self.nodeType())
         self.statistics = stats.Statistics()
+        self._subprocess = None
 
     def __getattr__(self, k):
         try:
@@ -354,11 +358,12 @@ class Node(BaseObject):
         """
         statusFile = self.statusFile()
         if not os.path.exists(statusFile):
-            self.status.status = Status.NONE
+            self.upgradeStatusTo(Status.NONE)
             return
         with open(statusFile, 'r') as jsonFile:
             statusData = json.load(jsonFile)
         self.status.fromDict(statusData)
+        self.statusChanged.emit()
 
     def saveStatusFile(self):
         """
@@ -400,6 +405,7 @@ class Node(BaseObject):
             print('WARNING: downgrade status on node "{}" from {} to {}'.format(self._name, self.status.status.name,
                                                                                 newStatus))
         self.status.status = newStatus
+        self.statusChanged.emit()
         self.saveStatusFile()
     
     def isAlreadySubmitted(self):
@@ -411,6 +417,10 @@ class Node(BaseObject):
     def beginSequence(self):
         self.upgradeStatusTo(Status.SUBMITTED_LOCAL)
 
+    def stopProcess(self):
+        if self._subprocess:
+            self._subprocess.terminate()
+
     def process(self):
         self.upgradeStatusTo(Status.RUNNING)
         statThread = stats.StatisticsThread(self)
@@ -421,20 +431,20 @@ class Node(BaseObject):
                 cmd = self.commandLine()
                 print(' - commandLine:', cmd)
                 print(' - logFile:', self.logFile())
-                self.proc = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
+                self._subprocess = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
 
                 # store process static info into the status file
                 self.status.commandLine = cmd
                 # self.status.env = self.proc.environ()
                 # self.status.createTime = self.proc.create_time()
 
-                statThread.proc = self.proc
-                stdout, stderr = self.proc.communicate()
-                self.proc.wait()
+                statThread.proc = self._subprocess
+                stdout, stderr = self._subprocess.communicate()
+                self._subprocess.wait()
                 
-                self.status.returnCode = self.proc.returncode
+                self.status.returnCode = self._subprocess.returncode
 
-            if self.proc.returncode != 0:
+            if self._subprocess.returncode != 0:
                 logContent = ''
                 with open(self.logFile(), 'r') as logF:
                     logContent = ''.join(logF.readlines())
@@ -443,11 +453,13 @@ class Node(BaseObject):
         except:
             self.upgradeStatusTo(Status.ERROR)
             raise
-        elapsedTime = time.time() - startTime
-        print(' - elapsed time:', elapsedTime)
-        statThread.running = False
-        # Don't need to join, the thread will finish a bit later.
-        # statThread.join()
+        finally:
+	    elapsedTime = time.time() - startTime
+	    print(' - elapsed time:', elapsedTime)
+            self._subprocess = None
+            # ask and wait for the stats thread to terminate
+            statThread.stopRequest()
+            statThread.join()
 
         self.upgradeStatusTo(Status.SUCCESS)
 
@@ -457,12 +469,19 @@ class Node(BaseObject):
     def getStatus(self):
         return self.status
 
+    @property
+    def statusName(self):
+        return self.status.status.name
+
     name = Property(str, getName, constant=True)
     attributes = Property(BaseObject, getAttributes, constant=True)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     depthChanged = Signal()
     depth = Property(int, depth.fget, notify=depthChanged)
+    statusChanged = Signal()
+    statusName = Property(str, statusName.fget, notify=statusChanged)
+
 
 WHITE = 0
 GRAY = 1
@@ -555,6 +574,7 @@ class Graph(BaseObject):
             node._name = self._createUniqueNodeName(node.nodeType())
         node.graph = self
         self._nodes.add(node)
+        self.stopExecutionRequested.connect(node.stopProcess)
 
         # Trigger internal update when an attribute is modified
         for attr in node.attributes:  # type: Attribute
@@ -629,19 +649,30 @@ class Graph(BaseObject):
         nodesWithOutput = set([edge.src.node for edge in self.edges])
         return set(self._nodes) - nodesWithOutput
 
-    def addEdge(self, outputAttr, inputAttr):
-        assert isinstance(outputAttr, Attribute)
-        assert isinstance(inputAttr, Attribute)
-        if outputAttr.node.graph != self or inputAttr.node.graph != self:
+    def addEdge(self, srcAttr, dstAttr):
+        assert isinstance(srcAttr, Attribute)
+        assert isinstance(dstAttr, Attribute)
+        if srcAttr.node.graph != self or dstAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
-        if inputAttr in self.edges.keys():
-            raise RuntimeError('Input attribute "{}" is already connected.'.format(inputAttr.fullName()))
-        self.edges.add(Edge(outputAttr, inputAttr))
-        inputAttr.valueChanged.emit()
+        if dstAttr in self.edges.keys():
+            raise RuntimeError('Destination attribute "{}" is already connected.'.format(dstAttr.fullName()))
+        edge = Edge(srcAttr, dstAttr)
+        self.edges.add(edge)
+        dstAttr.valueChanged.emit()
+        dstAttr.isLinkChanged.emit()
+        return edge
 
     def addEdges(self, *edges):
         for edge in edges:
             self.addEdge(*edge)
+
+    def removeEdge(self, dstAttr):
+        if dstAttr not in self.edges.keys():
+            raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.fullName()))
+        edge = self.edges.pop(dstAttr)
+        dstAttr.valueChanged.emit()
+        dstAttr.isLinkChanged.emit()
+        return edge
 
     def getDepth(self, node):
         # TODO: would be better to use bfs instead of recursive function
@@ -753,6 +784,10 @@ class Graph(BaseObject):
         self.updateInternals()
         self.updateStatusFromCache()
 
+    def stopExecution(self):
+        """ Request graph execution to be stopped """
+        self.stopExecutionRequested.emit()
+
     @property
     def nodes(self):
         return self._nodes
@@ -764,6 +799,7 @@ class Graph(BaseObject):
     nodes = Property(BaseObject, nodes.fget, constant=True)
     edges = Property(BaseObject, edges.fget, constant=True)
 
+    stopExecutionRequested = Signal()
 
 def loadGraph(filepath):
     """

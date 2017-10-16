@@ -623,7 +623,12 @@ class Graph(BaseObject):
             self.addEdge(*edge)
 
     def getDepth(self, node):
-        return len(self.dfsNodesOnFinish([node]))
+        # TODO: would be better to use bfs instead of recursive function
+        inputEdges = self.getInputEdges(node)
+        if not inputEdges:
+            return 0
+        inputDepths = [e.src.node.depth for e in inputEdges]
+        return min(inputDepths) + 1
 
     def _getNodeEdges(self):
         nodeEdges = defaultdict(set)

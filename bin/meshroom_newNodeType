@@ -5,7 +5,7 @@ import argparse
 import os
 import re
 import sys
-
+from pprint import pprint
 
 def trim(s):
     """
@@ -40,35 +40,63 @@ def convertToLabel(name):
     snakeToLabel = ' '.join(word.capitalize() for word in snakeToLabel.split(' '))
     return snakeToLabel
 
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+def is_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
 
 parser = argparse.ArgumentParser(description='Create a new Node Type')
-parser.add_argument('node', metavar='NodeName', type=str,
+parser.add_argument('node', metavar='NODE_NAME', type=str,
                     help='New node name')
+parser.add_argument('bin', metavar='CMDLINE', type=str,
+                    default=None,
+                    help='Output plugin folder')
 parser.add_argument('--output', metavar='DIR', type=str,
                     default=os.path.dirname(__file__),
                     help='Output plugin folder')
 parser.add_argument('--parser', metavar='PARSER', type=str,
                     default='boost',
                     help='Select the parser adapted for your command line: {boost,cmdLineLib,basic}.')
-parser.add_argument("--force", help="Allows to ovewrite the output plugin file.",
+parser.add_argument("--force", help="Allows to overwrite the output plugin file.",
                     action="store_true")
 
 args = parser.parse_args()
 
-if sys.stdin.isatty():
+inputCmdLineDoc = None
+soft = "{nodeType}"
+if args.bin:
+    soft = args.bin
+    import subprocess
+    proc = subprocess.Popen(args=[args.bin, '--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    inputCmdLineDoc = stdout if stdout else stderr
+elif sys.stdin.isatty():
+    inputCmdLineDoc = ''.join([line for line in sys.stdin])
+
+if not inputCmdLineDoc:
     print('No input documentation.')
-    print('Usage: YOUR_COMMAND --help | {cmd} YourCommand'.format(cmd=os.path.splitext(__file__)[0]))
+    print('Usage: YOUR_COMMAND --help | {cmd}'.format(cmd=os.path.splitext(__file__)[0]))
     exit(-1)
 
-inputCmdLineDoc = ''.join([line for line in sys.stdin])
 
-outputNodeStr = '''
+outputNodeStr = '''import sys
 from meshroom.core import desc
+
 
 class __COMMANDNAME__(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = '{nodeType} {allParams}'
-'''.replace('__COMMANDNAME__', args.node)
+    commandLine = '__SOFT__ {allParams}'
+'''.replace('__COMMANDNAME__', args.node).replace('__SOFT__', soft)
 
 
 print(inputCmdLineDoc)
@@ -76,25 +104,25 @@ print(inputCmdLineDoc)
 args_re = None
 if args.parser == 'boost':
     args_re = re.compile(
-        '^\s+' # space(s)
-        '\[?\s*' # potential '['
-        '(?:-(?P<argShortName>\w+)\|?)?' # potential argument short name
-        '\s*\[?' # potential '['
-        '\s*--(?P<argLongName>\w+)' # argument long name
+        '^\s+'  # space(s)
+        '(?:-(?P<argShortName>\w+)\|?)?'  # potential argument short name
+        '\s*\[?'  # potential '['
+        '\s*--(?P<argLongName>\w+)'  # argument long name
         '(?:\s*\])?' # potential ']'
-        '(?:\s+(?P<arg>\w+)?)?' # potential arg
-        '(?:\s+\(\=(?P<defaultValue>\w+)\))?' # potential default value
-        '\s+(?P<descriptionFirst>.*?)\n' # end of the line
-        '(?P<descriptionNext>(?:\s+[^-\s].+?\n)*)' # next documentation lines
-        , re.MULTILINE)
+        '(?:\s+(?P<arg>\w+)?)?'  # potential arg
+        '(?:\s+\(\=(?P<defaultValue>.+)\))?'  # potential default value
+        '\s+(?P<descriptionFirst>.*?)\n'  # end of the line
+        '(?P<descriptionNext>(?:\s+[^-\s].+?\n)*)'  # next documentation lines
+        '',
+        re.MULTILINE)
 elif args.parser == 'cmdLineLib':
     args_re = re.compile(
         '^'
         '\[' # '['
-        '-(?P<argShortName>\w+)' # argument short name
+        '-(?P<argShortName>\w+)'  # argument short name
         '\|'
-        '--(?P<argLongName>\w+)' # argument long name
-        '(?:\s+(?P<arg>\w+)?)?' # potential arg
+        '--(?P<argLongName>\w+)'  # argument long name
+        '(?:\s+(?P<arg>\w+)?)?'  # potential arg
         '\]' # ']'
         '()' # no default value
         '(?P<descriptionFirst>.*?)?\n' # end of the line
@@ -106,41 +134,131 @@ else:
     print('Error: Unknown input parser "{}"'.format(args.parser))
     exit(-1)
 
+choiceValues_re = re.compile('\* (?P<value>\w+):')
+choiceValues2_re = re.compile('\((?P<value>.+?)\)')
+
 inputArgs = args_re.findall(inputCmdLineDoc)
 
 print('='*80)
+pprint(inputArgs)
 
 for inputArg in inputArgs:
     shortName = inputArg[0]
     longName = inputArg[1]
     if longName == 'help':
-        continue # skip help argument
+        continue  # skip help argument
+
     arg = inputArg[2]
     value = inputArg[3]
     description = trim(''.join(inputArg[4:]))
+    values = choiceValues_re.findall(description)
+    if not values:
+        possibleLists = choiceValues2_re.findall(description)
+        for possibleList in possibleLists:
+            candidate = possibleList.split(',')
+            if len(candidate) > 1:
+                values = [trim(v) for v in candidate]
 
     inputArgLower = ' '.join(inputArg).lower()
+    isBool = (arg == '' and value == '')
     isFile = 'path' in inputArgLower or 'folder' in inputArgLower or 'file' in inputArgLower
+    isChoice = bool(values)
     isOutput = 'output' in inputArgLower
-    outputNodeStr += """
-    {name} = desc.{attributeType}(
+    isInt = is_int(value)
+    isFloat = is_float(value)
+
+    if isBool:
+        outputNodeStr += """
+    {name} = desc.BoolParam(
             label='{label}',
             description='''{description}''',
             value={value},
-            shortName='{shortName}',
-            arg='{arg}',
+            uid=[0],
+            )""".format(
+                name=longName,
+                label=convertToLabel(longName),
+                description=description,
+                value=quotesForStrings(value),
+                arg=arg,
+                )
+    elif isFile:
+        outputNodeStr += """
+    {name} = desc.File(
+            label='{label}',
+            description='''{description}''',
+            value={value},
             uid=[0],
             isOutput={isOutput},
             )""".format(
                 name=longName,
-                attributeType='FileAttribute' if isFile else 'ParamAttribute',
                 label=convertToLabel(longName),
                 description=description,
                 value=quotesForStrings(value),
-                shortName=shortName,
                 arg=arg,
                 isOutput=isOutput,
                 )
+    elif isChoice:
+        outputNodeStr += """
+    {name} = desc.ChoiceParam(
+            label='{label}',
+            description='''{description}''',
+            value={value},
+            values={values},
+            exclusive={exclusive},
+            uid=[0],
+            )""".format(
+                name=longName,
+                label=convertToLabel(longName),
+                description=description,
+                value=quotesForStrings(value),
+                values=values,
+                exclusive=True,
+                )
+    elif isInt:
+        outputNodeStr += """
+    {name} = desc.IntParam(
+            label='{label}',
+            description='''{description}''',
+            value={value},
+            range={range},
+            uid=[0],
+            )""".format(
+                name=longName,
+                label=convertToLabel(longName),
+                description=description,
+                value=value,
+                range='(-sys.maxsize, sys.maxsize, 1)',
+                )
+    elif isFloat:
+        outputNodeStr += """
+    {name} = desc.FloatParam(
+            label='{label}',
+            description='''{description}''',
+            value={value},
+            range={range},
+            uid=[0],
+            )""".format(
+                name=longName,
+                label=convertToLabel(longName),
+                description=description,
+                value=value,
+                range='''(-float('inf'), float('inf'), 0.01)''',
+                )
+    else:
+        outputNodeStr += """
+    {name} = desc.StringParam(
+            label='{label}',
+            description='''{description}''',
+            value={value},
+            uid=[0],
+            )""".format(
+                name=longName,
+                label=convertToLabel(longName),
+                description=description,
+                value=quotesForStrings(value),
+                range=range,
+                )
+
 
 outputFilepath = os.path.join(args.output, args.node + '.py')
 

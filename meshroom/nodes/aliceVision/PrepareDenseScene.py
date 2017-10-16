@@ -1,42 +1,46 @@
+import sys
 from meshroom.core import desc
+
 
 class PrepareDenseScene(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'openMVG_main_openMVG2CMPMVS2 {allParams}'
+    commandLine = 'aliceVision_prepareDenseScene {allParams}'
 
-    outdir = desc.FileAttribute(
-            label='Outdir',
-            description='''path Invalid command line parameter.''',
-            value='{cache}/{nodeType}/{uid0}/',
-            shortName='o',
-            arg='',
-            isOutput=True,
+    input = desc.File(
+            label='Input',
+            description='''SfMData file.''',
+            value='',
+            uid=[0],
+            isOutput=False,
             )
-    mvsConfig = desc.FileAttribute( # not a command line arg
+    mvsConfig = desc.File(
             label='MVS Configuration file',
             description='',
             value='{cache}/{nodeType}/{uid0}/_tmp_scale{scaleValue}/mvs.ini',
-            shortName='',
-            arg='',
-            group='',
+            uid=[0],
             isOutput=True,
+            group='',  # not a command line arg
             )
 
-    sfmdata = desc.FileAttribute(
-            label='Sfmdata',
-            description='''filename, the SfM_Data file to convert''',
-            value='',
-            shortName='i',
-            arg='',
-            uid=[0],
-            isOutput=False,
+    output = desc.File(
+            label='Output',
+            description='''Output directory.''',
+            value='{cache}/{nodeType}/{uid0}/',
+            uid=[],
+            isOutput=True,
             )
-    scale = desc.ParamAttribute(
+    scale = desc.IntParam(
             label='Scale',
-            description='''downscale image factor''',
+            description='''Image downscale factor.''',
             value=2,
-            shortName='s',
-            arg='',
+            range=(-sys.maxsize, sys.maxsize, 1),
             uid=[0],
-            isOutput=False,
+            )
+    verboseLevel = desc.ChoiceParam(
+            label='Verbose Level',
+            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[0],
             )

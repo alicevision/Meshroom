@@ -4,12 +4,10 @@ class Texturing(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'CMPMVS {mvsConfigValue} --texturing'
 
-    mvsConfig = desc.FileAttribute(
+    mvsConfig = desc.File(
             label='MVS Configuration file',
             description='',
             value='',
-            shortName='',
-            arg='',
             uid=[0],
             isOutput=False,
             )

@@ -1,70 +1,64 @@
-
+import sys
 from meshroom.core import desc
+
 
 class FeatureExtraction(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'openMVG_main_ComputeFeatures {allParams}'
+    commandLine = 'aliceVision_featureExtraction {allParams}'
 
-    input_file = desc.FileAttribute(
-            label='Input File',
-            description='''a SfM_Data file''',
+    input = desc.File(
+            label='Input',
+            description='''SfMData file.''',
             value='',
-            shortName='i',
-            arg='',
             uid=[0],
             isOutput=False,
             )
-    outdir = desc.FileAttribute(
-            label='Outdir',
-            description='''output path for the features and descriptors files (*.feat, *.desc) [Optional]''',
+    output = desc.File(
+            label='Output',
+            description='''Output path for the features and descriptors files (*.feat, *.desc). Optional parameters:''',
             value='{cache}/{nodeType}/{uid0}/',
-            shortName='o',
-            arg='path',
-            uid=[0],
+            uid=[],
             isOutput=True,
             )
-    force = desc.ParamAttribute(
-            label='Force',
-            description='''Force to recompute data''',
-            value='',
-            shortName='f',
-            arg='',
+    describerTypes = desc.StringParam(
+            label='Describer Types',
+            description='''Describer types to use to describe an image:''',
+            value='SIFT',
             uid=[0],
-            isOutput=False,
             )
-    describerMethods = desc.ParamAttribute(
-            label='Describer Methods',
-            description='''(methods to use to describe an image): SIFT (default), SIFT_FLOAT to use SIFT stored as float, AKAZE: AKAZE with floating point descriptors, AKAZE_MLDB: AKAZE with binary descriptors''',
-            value='',
-            shortName='m',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    upright = desc.ParamAttribute(
-            label='Upright',
-            description='''Use Upright feature 0 or 1''',
-            value='',
-            shortName='u',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    describerPreset = desc.ParamAttribute(
+    describerPreset = desc.ChoiceParam(
             label='Describer Preset',
-            description='''(used to control the Image_describer configuration): LOW, MEDIUM, NORMAL (default), HIGH, ULTRA: !!Can take long time!!''',
-            value='',
-            shortName='p',
-            arg='',
+            description='''Control the ImageDescriber configuration (low, medium, normal, high, ultra). Configuration 'ultra' can take long time !''',
+            value='NORMAL',
+            values=['low', 'medium', 'normal', 'high', 'ultra'],
+            exclusive=True,
             uid=[0],
-            isOutput=False,
             )
-    jobs = desc.ParamAttribute(
-            label='Jobs',
-            description='''Specifies the number of jobs to run simultaneously. Use -j 0 for automatic mode. Unrecognized option --help''',
+    upright = desc.StringParam(
+            label='Upright',
+            description='''Upright feature.''',
             value='',
-            shortName='j',
-            arg='',
             uid=[0],
-            isOutput=False,
+            )
+    rangeStart = desc.IntParam(
+            label='Range Start',
+            description='''Range image index start.''',
+            value=-1,
+            range=(-sys.maxsize, sys.maxsize, 1),
+            uid=[0],
+            )
+    rangeSize = desc.IntParam(
+            label='Range Size',
+            description='''Range size. Log parameters:''',
+            value=1,
+            range=(-sys.maxsize, sys.maxsize, 1),
+            uid=[0],
+            )
+    verboseLevel = desc.ChoiceParam(
+            label='Verbose Level',
+            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[0],
             )

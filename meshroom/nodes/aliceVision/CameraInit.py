@@ -1,114 +1,88 @@
-
+import sys
 from meshroom.core import desc
+
 
 class CameraInit(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'openMVG_main_SfMInit_ImageListing {allParams}'
+    commandLine = 'aliceVision_cameraInit {allParams}'
 
-    imageDirectory = desc.FileAttribute(
+    imageDirectory = desc.File(
             label='Image Directory',
-            description='''''',
+            description='''Input images folder.''',
             value='',
-            shortName='i',
-            arg='',
             uid=[0],
             isOutput=False,
             )
-    jsonFile = desc.FileAttribute(
+    jsonFile = desc.File(
             label='Json File',
             description='''Input file with all the user options. It can be used to provide a list of images instead of a directory.''',
             value='',
-            shortName='j',
-            arg='',
             uid=[0],
             isOutput=False,
             )
-    sensorWidthDatabase = desc.FileAttribute(
-            label='Sensor Width Database',
-            description='''''',
+    sensorDatabase = desc.File(
+            label='Sensor Database',
+            description='''Camera sensor width database path.''',
             value='',
-            shortName='d',
-            arg='',
             uid=[0],
             isOutput=False,
             )
-    outputDirectory = desc.FileAttribute(
-            label='Output Directory',
-            description='''''',
+    output = desc.File(
+            label='Output',
+            description='''Output directory for the new SfMData file Optional parameters:''',
             value='{cache}/{nodeType}/{uid0}/',
-            shortName='o',
-            arg='',
+            uid=[],
             isOutput=True,
             )
-    outputSfm = desc.FileAttribute( # not command line
+    outputSfm = desc.File(
             label='Output SfM',
             description='''''',
             value='{cache}/{nodeType}/{uid0}/sfm_data.json',
-            shortName='o',
-            arg='',
+            uid=[],
             isOutput=True,
-            group='',
+            group='',  # not a command line argument
             )
-    focal = desc.ParamAttribute(
-            label='Focal',
-            description='''(pixels)''',
-            value='',
-            shortName='f',
-            arg='',
+    defaultFocalLengthPix = desc.IntParam(
+            label='Default Focal Length Pix',
+            description='''Focal length in pixels.''',
+            value=-1,
+            range=(-sys.maxsize, sys.maxsize, 1),
             uid=[0],
-            isOutput=False,
             )
-    sensorWidth = desc.ParamAttribute(
-            label='Sensor Width',
-            description='''(mm)''',
-            value='',
-            shortName='s',
-            arg='',
+    defaultSensorWidth = desc.IntParam(
+            label='Default Sensor Width',
+            description='''Sensor width in mm.''',
+            value=-1,
+            range=(-sys.maxsize, sys.maxsize, 1),
             uid=[0],
-            isOutput=False,
             )
-    intrinsics = desc.ParamAttribute(
-            label='Intrinsics',
-            description='''Kmatrix: "f;0;ppx;0;f;ppy;0;0;1"''',
+    defaultIntrinsics = desc.StringParam(
+            label='Default Intrinsics',
+            description='''Intrinsics Kmatrix "f;0;ppx;0;f;ppy;0;0;1".''',
             value='',
-            shortName='k',
-            arg='',
             uid=[0],
-            isOutput=False,
             )
-    camera_model = desc.ParamAttribute(
-            label='Camera Model',
-            description='''Camera model type (pinhole, radial1, radial3, brown or fisheye4)''',
+    defaultCameraModel = desc.ChoiceParam(
+            label='Default Camera Model',
+            description='''Camera model type (pinhole, radial1, radial3, brown, fisheye4).''',
             value='',
-            shortName='c',
-            arg='',
+            values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4'],
+            exclusive=True,
             uid=[0],
-            isOutput=False,
             )
-    group_camera_model = desc.FileAttribute(
+    groupCameraModel = desc.ChoiceParam(
             label='Group Camera Model',
-            description='''0-> each view have its own camera intrinsic parameters, 1-> (default) view share camera intrinsic parameters based on metadata, if no metadata each view has its own camera intrinsic parameters 2-> view share camera intrinsic parameters based on metadata, if no metadata they are grouped by folder''',
-            value='',
-            shortName='g',
-            arg='',
+            description='''* 0: each view have its own camera intrinsic parameters * 1: view share camera intrinsic parameters based on metadata, if no metadata each view has its own camera intrinsic parameters * 2: view share camera intrinsic parameters based on metadata, if no metadata they are grouped by folder Log parameters:''',
+            value=1,
+            values=[0, 1, 2],
+            exclusive=True,
             uid=[0],
-            isOutput=False,
             )
-    use_UID = desc.ParamAttribute(
-            label='Use  U I D',
-            description='''Generate a UID (unique identifier) for each view. By default, the key is the image index.''',
-            value='',
-            shortName='u',
-            arg='',
+    verboseLevel = desc.ChoiceParam(
+            label='Verbose Level',
+            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
             uid=[0],
-            isOutput=False,
-            )
-    storeMetadata = desc.ParamAttribute(
-            label='Store Metadata',
-            description='''Store image metadata in the sfm data Unrecognized option --help''',
-            value='',
-            shortName='m',
-            arg='',
-            uid=[0],
-            isOutput=False,
             )

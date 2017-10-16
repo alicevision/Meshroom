@@ -1,187 +1,156 @@
-
+import sys
 from meshroom.core import desc
+
 
 class FeatureMatching(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'openMVG_main_ComputeMatches {allParams}'
+    commandLine = 'aliceVision_featureMatching {allParams}'
 
-    input_file = desc.FileAttribute(
-            label='Input File',
-            description='''a SfM_Data file''',
+    input = desc.File(
+            label='Input',
+            description='''SfMData file.''',
             value='',
-            shortName='i',
-            arg='',
             uid=[0],
             isOutput=False,
             )
-    out_dir = desc.FileAttribute(
-            label='Out Dir',
-            description='''path to directory in which computed matches will be stored [Optional]''',
+    output = desc.File(
+            label='Output',
+            description='''Path to a directory in which computed matches will be stored. Optional parameters:''',
             value='{cache}/{nodeType}/{uid0}/',
-            shortName='o',
-            arg='path',
-            uid=[0],
+            uid=[],
             isOutput=True,
             )
-    describerMethods = desc.ParamAttribute(
-            label='Describer Methods',
-            description='''(methods to use to describe an image): SIFT (default), SIFT_FLOAT to use SIFT stored as float, AKAZE: AKAZE with floating point descriptors, AKAZE_MLDB: AKAZE with binary descriptors use the found model to improve the pairwise correspondences.''',
-            value='',
-            shortName='m',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    featuresDir = desc.FileAttribute(
-            label='Features Dir',
-            description='''Path to directory containing the extracted features (default: $out_dir)''',
-            value='',
-            shortName='F',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    save_putative_matches = desc.ParamAttribute(
-            label='Save Putative Matches',
-            description='''Save putative matches''',
-            value='',
-            shortName='p',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    ratio = desc.ParamAttribute(
-            label='Ratio',
-            description='''Distance ratio to discard non meaningful matches 0.8: (default).''',
-            value='',
-            shortName='r',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    geometric_model = desc.ParamAttribute(
+    geometricModel = desc.ChoiceParam(
             label='Geometric Model',
-            description='''(pairwise correspondences filtering thanks to robust model estimation): f: (default) fundamental matrix, e: essential matrix, h: homography matrix.''',
+            description='''Pairwise correspondences filtering thanks to robust model estimation: * f: fundamental matrix * e: essential matrix * h: homography matrix''',
+            value='f',
+            values=['f', 'e', 'h'],
+            exclusive=True,
+            uid=[0],
+            )
+    describerTypes = desc.StringParam(
+            label='Describer Types',
+            description='''Describer types to use to describe an image:''',
+            value='SIFT',
+            uid=[0],
+            )
+    featuresDirectory = desc.File(
+            label='Features Directory',
+            description='''Path to a directory containing the extracted features.''',
             value='',
-            shortName='g',
-            arg='',
             uid=[0],
             isOutput=False,
             )
-    video_mode_matching = desc.ParamAttribute(
-            label='Video Mode Matching',
-            description='''(sequence matching with an overlap of X images) X: with match 0 with (1->X), ...] 2: will match 0 with (1,2), 1 with (2,3), ... 3: will match 0 with (1,2,3), 1 with (2,3,4), ...''',
+    imagePairsList = desc.File(
+            label='Image Pairs List',
+            description='''Path to a file which contains the list of image pairs to match.''',
             value='',
-            shortName='v',
-            arg='',
             uid=[0],
             isOutput=False,
             )
-    pair_list = desc.FileAttribute(
-            label='Pair List',
-            description='''filepath A file which contains the list of matches to perform.''',
-            value='',
-            shortName='l',
-            arg='',
+    photometricMatchingMethod = desc.ChoiceParam(
+            label='Photometric Matching Method',
+            description='''For Scalar based regions descriptor: * BRUTE_FORCE_L2: L2 BruteForce matching * ANN_L2: L2 Approximate Nearest Neighbor matching * CASCADE_HASHING_L2: L2 Cascade Hashing matching * FAST_CASCADE_HASHING_L2: L2 Cascade Hashing with precomputed hashed regions (faster than CASCADE_HASHING_L2 but use more memory) For Binary based descriptor: * BRUTE_FORCE_HAMMING: BruteForce Hamming matching''',
+            value='ANN_L2',
+            values=['BRUTE_FORCE_L2', 'ANN_L2', 'CASCADE_HASHING_L2', 'FAST_CASCADE_HASHING_L2', 'BRUTE_FORCE_HAMMING'],
+            exclusive=True,
             uid=[0],
-            isOutput=False,
             )
-    range_start = desc.ParamAttribute(
-            label='Range Start',
-            description='''range image index start To compute only the matches for specified range. This allows to compute different matches on different computers in parallel.''',
-            value='',
-            shortName='s',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    range_size = desc.ParamAttribute(
-            label='Range Size',
-            description='''range size To compute only the matches for specified range. This allows to compute different matches on different computers in parallel.''',
-            value='',
-            shortName='d',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    nearest_matching_method = desc.ParamAttribute(
-            label='Nearest Matching Method',
-            description='''For Scalar based regions descriptor: BRUTE_FORCE_L2: L2 BruteForce matching, ANN_L2: L2 Approximate Nearest Neighbor matching (default), CASCADE_HASHING_L2: L2 Cascade Hashing matching. FAST_CASCADE_HASHING_L2: L2 Cascade Hashing with precomputed hashed regions (faster than CASCADE_HASHING_L2 but use more memory). For Binary based descriptor: BRUTE_FORCE_HAMMING: BruteForce Hamming matching.''',
-            value='',
-            shortName='n',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    geometricEstimator = desc.ParamAttribute(
+    geometricEstimator = desc.ChoiceParam(
             label='Geometric Estimator',
-            description='''Geometric estimator acransac: A-Contrario Ransac (default), loransac: LO-Ransac (only available for fundamental matrix)''',
-            value='',
-            shortName='G',
-            arg='',
+            description='''Geometric estimator: * acransac: A-Contrario Ransac * loransac: LO-Ransac (only available for fundamental matrix)''',
+            value='acransac',
+            values=['acransac', 'loransac'],
+            exclusive=True,
             uid=[0],
-            isOutput=False,
             )
-    guided_matching = desc.ParamAttribute(
+    savePutativeMatches = desc.StringParam(
+            label='Save Putative Matches',
+            description='''putative matches.''',
+            value='',
+            uid=[0],
+            )
+    guidedMatching = desc.StringParam(
             label='Guided Matching',
-            description='''use the found model to improve the pairwise correspondences.''',
+            description='''the found model to improve the pairwise correspondences.''',
             value='',
-            shortName='M',
-            arg='',
             uid=[0],
-            isOutput=False,
             )
-    max_iteration = desc.ParamAttribute(
-            label='Max Iteration',
-            description='''number of maximum iterations allowed in ransac step.''',
-            value='',
-            shortName='I',
-            arg='',
-            uid=[0],
-            isOutput=False,
-            )
-    match_file_per_image = desc.FileAttribute(
+    matchFilePerImage = desc.File(
             label='Match File Per Image',
-            description='''Save matches in a separate file per image''',
+            description='''matches in a separate file per image.''',
             value='',
-            shortName='x',
-            arg='',
             uid=[0],
             isOutput=False,
             )
-    max_matches = desc.ParamAttribute(
-            label='Max Matches',
-            description='''''',
-            value='',
-            shortName='u',
-            arg='',
+    distanceRatio = desc.FloatParam(
+            label='Distance Ratio',
+            description='''Distance ratio to discard non meaningful matches.''',
+            value=0.800000012,
+            range=(-float('inf'), float('inf'), 0.01),
             uid=[0],
-            isOutput=False,
             )
-    use_grid_sort = desc.ParamAttribute(
+    videoModeMatching = desc.ChoiceParam(
+            label='Video Mode Matching',
+            description='''sequence matching with an overlap of X images: * 0: will match 0 with (1->X), ... * 2: will match 0 with (1,2), 1 with (2,3), ... * 3: will match 0 with (1,2,3), 1 with (2,3,4), ...''',
+            value=0,
+            values=['0', '2', '3'],
+            exclusive=True,
+            uid=[0],
+            )
+    maxIteration = desc.IntParam(
+            label='Max Iteration',
+            description='''Maximum number of iterations allowed in ransac step.''',
+            value=2048,
+            range=(-sys.maxsize, sys.maxsize, 1),
+            uid=[0],
+            )
+    useGridSort = desc.StringParam(
             label='Use Grid Sort',
-            description='''Use matching grid sort''',
+            description='''matching grid sort.''',
             value='',
-            shortName='y',
-            arg='',
             uid=[0],
-            isOutput=False,
             )
-    export_debug_files = desc.FileAttribute(
+    exportDebugFiles = desc.File(
             label='Export Debug Files',
-            description='''Export debug files (svg, dot)''',
+            description='''debug files (svg, dot).''',
             value='',
-            shortName='e',
-            arg='',
             uid=[0],
             isOutput=False,
             )
-    fileExtension = desc.FileAttribute(
+    fileExtension = desc.File(
             label='File Extension',
-            description='''File extension to store matches: bin (default), txt Unrecognized option --help''',
-            value='',
-            shortName='t',
-            arg='',
+            description='''File extension to store matches (bin or txt).''',
+            value='bin',
             uid=[0],
             isOutput=False,
+            )
+    maxMatches = desc.IntParam(
+            label='Max Matches',
+            description='''Maximum number pf matches to keep.''',
+            value=0,
+            range=(-sys.maxsize, sys.maxsize, 1),
+            uid=[0],
+            )
+    rangeStart = desc.IntParam(
+            label='Range Start',
+            description='''Range image index start.''',
+            value=-1,
+            range=(-sys.maxsize, sys.maxsize, 1),
+            uid=[0],
+            )
+    rangeSize = desc.IntParam(
+            label='Range Size',
+            description='''Range size. Log parameters:''',
+            value=0,
+            range=(-sys.maxsize, sys.maxsize, 1),
+            uid=[0],
+            )
+    verboseLevel = desc.ChoiceParam(
+            label='Verbose Level',
+            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[0],
             )

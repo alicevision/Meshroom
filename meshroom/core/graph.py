@@ -54,7 +54,7 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, node, attributeDesc, parent = None):
+    def __init__(self, name, node, attributeDesc, parent=None):
         super(Attribute, self).__init__(parent)
         self._name = name
         self.node = node  # type: Node
@@ -454,8 +454,8 @@ class Node(BaseObject):
             self.upgradeStatusTo(Status.ERROR)
             raise
         finally:
-	    elapsedTime = time.time() - startTime
-	    print(' - elapsed time:', elapsedTime)
+            elapsedTime = time.time() - startTime
+            print(' - elapsed time:', elapsedTime)
             self._subprocess = None
             # ask and wait for the stats thread to terminate
             statThread.stopRequest()

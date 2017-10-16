@@ -214,6 +214,7 @@ class Node(BaseObject):
         self._name = None  # type: str
         self.graph = None  # type: Graph
         self.nodeDesc = pg.nodesDesc[nodeDesc]()
+        self._cmdVars = {}
         self._attributes = Model(parent=self)
         self.attributesPerUid = defaultdict(set)
         self._initFromDesc()

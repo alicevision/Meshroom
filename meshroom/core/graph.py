@@ -680,7 +680,7 @@ class Graph(BaseObject):
         if not inputEdges:
             return 0
         inputDepths = [e.src.node.depth for e in inputEdges]
-        return min(inputDepths) + 1
+        return max(inputDepths) + 1
 
     def getInputEdges(self, node):
         return set([edge for edge in self.edges if edge.dst.node is node])

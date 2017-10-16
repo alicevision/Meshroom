@@ -554,6 +554,7 @@ class Graph(BaseObject):
         for attr in node.attributes:  # type: Attribute
             attr.valueChanged.connect(self.updateInternals)
 
+        node._applyExpr()
         return node
 
     def outEdges(self, attribute):
@@ -587,7 +588,6 @@ class Graph(BaseObject):
         :rtype: Node
         """
         node = self.addNode(Node(nodeDesc=nodeType, parent=self, **kwargs))
-        node._applyExpr()
         return node
 
     def _createUniqueNodeName(self, inputName):

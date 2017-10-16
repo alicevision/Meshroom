@@ -34,6 +34,13 @@ class ImageMatching(desc.CommandLineNode):
             uid=[],
             isOutput=True,
             )
+    minNbImages = desc.IntParam(
+            label='Minimal Number of Images',
+            description='''Minimal number of images to use the vocabulary tree. If we have less features than this threshold, we will compute all matching combinations.''',
+            value=200,
+            range=(0, 500, 1),
+            uid=[0],
+            )
     maxDescriptors = desc.IntParam(
             label='Max Descriptors',
             description='''Limit the number of descriptors you load per image. Zero means no limit.''',

@@ -61,7 +61,9 @@ if args.save:
 if args.output:
     meshroom.core.cacheFolder = args.cache
     graph.update()
-    toNodes = graph.findNodes(args.toNode)
+    toNodes = None
+    if args.toNode:
+        toNodes = graph.findNodes(args.toNode)
 
     pg.execute(graph, toNodes=toNodes)
 

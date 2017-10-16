@@ -27,6 +27,8 @@ if args.node:
     if args.force or node.status.status != pg.Status.SUCCESS:
         node.process()
 else:
-    toNodes = graph.findNodes(args.toNode)
+    toNodes = None
+    if args.toNode:
+        toNodes = graph.findNodes(args.toNode)
     pg.execute(graph, toNodes=toNodes, force=args.force)
 

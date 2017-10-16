@@ -7,9 +7,9 @@ parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
 parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,
                     help='Filepath to a graph file.')
 parser.add_argument('--node', metavar='NODE_NAME', type=str,
-                    help='Process the node alone.')
-parser.add_argument('--graph', metavar='NODE_NAME', type=str,
-                    help='Process the node and all previous nodes needed.')
+                    help='Process the node. It will generate an error if the dependencies are not already computed.')
+parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
+                    help='Process the node with its dependencies.')
 parser.add_argument("--force", help="Force recompute",
                     action="store_true")
 
@@ -27,8 +27,6 @@ if args.node:
     if args.force or node.status.status != pg.Status.SUCCESS:
         node.process()
 else:
-    startNodes = None
-    if args.graph:
-        startNodes = [graph.node(args.graph)]
-    pg.execute(graph, startNodes=startNodes, force=args.force)
+    toNodes = graph.findNodes(args.toNode)
+    pg.execute(graph, toNodes=toNodes, force=args.force)
 

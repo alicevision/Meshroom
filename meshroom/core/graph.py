@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import psutil
+import re
 import shutil
 import time
 import uuid
@@ -606,6 +607,21 @@ class Graph(BaseObject):
     def node(self, nodeName):
         return self._nodes.get(nodeName)
 
+    def findNodeCandidates(self, nodeNameExpr):
+        pattern = re.compile(nodeNameExpr)
+        return [v for k, v in self._nodes.objects.items() if pattern.match(k)]
+
+    def findNodes(self, nodesExpr):
+        out = []
+        for nodeName in nodesExpr:
+            candidates = self.findNodeCandidates('^' + nodeName)
+            if not candidates:
+                raise KeyError('No node candidate for "{}"'.format(nodeName))
+            elif len(candidates) > 1:
+                raise KeyError('Multiple node candidates for "{}": {}'.format(nodeName, str([c.name for c in candidates])))
+            out.append(candidates[0])
+        return out
+
     def edge(self, dstAttributeName):
         return self._edges.get(dstAttributeName)
 
@@ -635,7 +651,10 @@ class Graph(BaseObject):
         inputDepths = [e.src.node.depth for e in inputEdges]
         return min(inputDepths) + 1
 
-    def _getNodeEdges(self):
+    def getInputEdges(self, node):
+        return set([edge for edge in self.edges if edge.dst.node is node])
+
+    def _getInputEdgesPerNode(self):
         nodeEdges = defaultdict(set)
 
         for edge in self.edges:
@@ -644,7 +663,7 @@ class Graph(BaseObject):
         return nodeEdges
 
     def dfs(self, visitor, startNodes=None):
-        nodeChildren = self._getNodeEdges()
+        nodeChildren = self._getInputEdgesPerNode()
         colors = {}
         for u in self._nodes:
             colors[u] = WHITE
@@ -762,13 +781,13 @@ def getAlreadySubmittedNodes(nodes):
     return out
 
 
-def execute(graph, startNodes=None, force=False):
+def execute(graph, toNodes=None, force=False):
     """
     """
     if force:
-        nodes = graph.dfsNodesOnFinish(startNodes=startNodes)
+        nodes = graph.dfsNodesOnFinish(startNodes=toNodes)
     else:
-        nodes = graph.dfsNodesToProcess(startNodes=startNodes)
+        nodes = graph.dfsNodesToProcess(startNodes=toNodes)
         nodesInConflict = getAlreadySubmittedNodes(nodes)
 
         if nodesInConflict:

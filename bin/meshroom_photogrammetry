@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+import argparse
+import os
+
+import meshroom.core
+from meshroom.core import graph as pg
+
+
+def photogrammetryPipeline(imageDirectory):
+    graph = pg.Graph('pipeline')
+    cameraInit = graph.addNewNode('CameraInit',
+                                  sensorDatabase=os.environ.get('ALICEVISION_SENSOR_DB', 'sensor_width_camera_database.txt'))
+    if imageDirectory:
+        cameraInit.imageDirectory.value = imageDirectory
+    featureExtraction = graph.addNewNode('FeatureExtraction',
+                                         input=cameraInit.outputSfm)
+    # TODO: imageMatching
+    featureMatching = graph.addNewNode('FeatureMatching',
+                                       input=cameraInit.outputSfm,
+                                       featuresDirectory=featureExtraction.output)
+    structureFromMotion = graph.addNewNode('StructureFromMotion',
+                                           input=cameraInit.outputSfm,
+                                           featuresDirectory=featureExtraction.output,
+                                           matchesDirectory=featureMatching.output)
+    prepareDenseScene = graph.addNewNode('PrepareDenseScene',
+                                         input=structureFromMotion.output)
+    camPairs = graph.addNewNode('CamPairs',
+                                mvsConfig=prepareDenseScene.mvsConfig)
+    depthMap = graph.addNewNode('DepthMap',
+                                mvsConfig=camPairs.mvsConfig)
+    depthMapFilter = graph.addNewNode('DepthMapFilter',
+                                      mvsConfig=depthMap.mvsConfig)
+    meshing = graph.addNewNode('Meshing',
+                               mvsConfig=depthMapFilter.mvsConfig)
+    texturing = graph.addNewNode('Texturing',
+                                 mvsConfig=meshing.mvsConfig)
+    return graph
+
+
+parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
+parser.add_argument('--input', metavar='FOLDER', type=str, required=True,
+                    help='Input folder or json file.')
+parser.add_argument('--output', metavar='FOLDER', type=str, required=True,
+                    help='Results.')
+parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
+                    default=None,
+                    help='Process the node(s) with its dependencies.')
+parser.add_argument('--cache', metavar='FOLDER', type=str,
+                    default=meshroom.core.cacheFolder,
+                    help='Cache folder')
+parser.add_argument('--save', metavar='FOLDER', type=str, required=False,
+                    help='Save the workflow to a meshroom files.')
+
+args = parser.parse_args()
+
+graph = photogrammetryPipeline(imageDirectory=args.input)
+
+if args.save:
+    pg.saveGraph(graph, args.save)
+
+if args.output:
+    meshroom.core.cacheFolder = args.cache
+    graph.update()
+    toNodes = graph.findNodes(args.toNode)
+
+    pg.execute(graph, toNodes=toNodes)
+

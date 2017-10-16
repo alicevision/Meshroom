@@ -13,6 +13,13 @@ class ImageMatching(desc.CommandLineNode):
             uid=[0],
             isOutput=False,
             )
+    featuresDirectory = desc.File(
+            label='Features Directory',
+            description='''Directory containing the extracted features and descriptors. By default, it is the directory containing the SfMData.''',
+            value='',
+            uid=[0],
+            isOutput=False,
+            )
     tree = desc.File(
             label='Tree',
             description='''Input name for the vocabulary tree file.''',
@@ -22,8 +29,8 @@ class ImageMatching(desc.CommandLineNode):
             )
     output = desc.File(
             label='Output',
-            description='''Filepath to the output file with the list of selected image pairs. Optional parameters:''',
-            value='{cache}/{nodeType}/{uid0}/',
+            description='''Filepath to the output file with the list of selected image pairs.''',
+            value='{cache}/{nodeType}/{uid0}/imageMatches.txt',
             uid=[],
             isOutput=True,
             )

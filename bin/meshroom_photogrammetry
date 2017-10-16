@@ -28,7 +28,7 @@ if not args.output and not args.save:
 
 graph = multiview.photogrammetryPipeline()
 if args.input:
-    cameraInit = graph.findNodeCandidates("CameraInit")
+    cameraInit = graph.findNode("CameraInit")
     cameraInit.imageDirectory.value = args.input
 
 if args.save:

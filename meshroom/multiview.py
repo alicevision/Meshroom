@@ -6,16 +6,19 @@ from .core.graph import Graph
 def photogrammetryPipeline():
     # type: () -> Graph
     graph = Graph('pipeline')
-
     cameraInit = graph.addNewNode('CameraInit',
-                                  sensorDatabase=os.environ.get('ALICEVISION_SENSOR_DB', 'sensor_width_camera_database.txt'))
-
+                                  sensorDatabase=os.environ.get('ALICEVISION_SENSOR_DB', None))
     featureExtraction = graph.addNewNode('FeatureExtraction',
                                          input=cameraInit.outputSfm)
-    # TODO: imageMatching
+    imageMatching = graph.addNewNode('ImageMatching',
+                                         input=cameraInit.outputSfm,
+                                         featuresDirectory=featureExtraction.output,
+                                         tree=os.environ.get('ALICEVISION_VOCTREE', None),
+                                         )
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=cameraInit.outputSfm,
-                                       featuresDirectory=featureExtraction.output)
+                                       featuresDirectory=featureExtraction.output,
+                                       imagePairsList=imageMatching.output)
     structureFromMotion = graph.addNewNode('StructureFromMotion',
                                            input=cameraInit.outputSfm,
                                            featuresDirectory=featureExtraction.output,
@@ -33,3 +36,5 @@ def photogrammetryPipeline():
     texturing = graph.addNewNode('Texturing',
                                  mvsConfig=meshing.mvsConfig)
     return graph
+
+

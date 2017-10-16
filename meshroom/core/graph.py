@@ -631,16 +631,16 @@ class Graph(BaseObject):
         pattern = re.compile(nodeNameExpr)
         return [v for k, v in self._nodes.objects.items() if pattern.match(k)]
 
+    def findNode(self, nodeExpr):
+        candidates = self.findNodeCandidates('^' + nodeExpr)
+        if not candidates:
+            raise KeyError('No node candidate for "{}"'.format(nodeExpr))
+        elif len(candidates) > 1:
+            raise KeyError('Multiple node candidates for "{}": {}'.format(nodeExpr, str([c.name for c in candidates])))
+        return candidates[0]
+
     def findNodes(self, nodesExpr):
-        out = []
-        for nodeName in nodesExpr:
-            candidates = self.findNodeCandidates('^' + nodeName)
-            if not candidates:
-                raise KeyError('No node candidate for "{}"'.format(nodeName))
-            elif len(candidates) > 1:
-                raise KeyError('Multiple node candidates for "{}": {}'.format(nodeName, str([c.name for c in candidates])))
-            out.append(candidates[0])
-        return out
+        return [self.findNode(nodeName) for nodeName in nodesExpr]
 
     def edge(self, dstAttributeName):
         return self._edges.get(dstAttributeName)

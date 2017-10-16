@@ -5,6 +5,7 @@ import json
 import os
 import psutil
 import shutil
+import time
 import uuid
 from collections import defaultdict
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
@@ -412,11 +413,12 @@ class Node(BaseObject):
         self.upgradeStatusTo(Status.RUNNING)
         statThread = stats.StatisticsThread(self)
         statThread.start()
+        startTime = time.time()
         try:
             with open(self.logFile(), 'w') as logF:
                 cmd = self.commandLine()
-                print('\n =====> commandLine:\n', cmd, '\n')
-                print(' - logFile: ', self.logFile())
+                print(' - commandLine:', cmd)
+                print(' - logFile:', self.logFile())
                 self.proc = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
 
                 # store process static info into the status file
@@ -439,6 +441,8 @@ class Node(BaseObject):
         except:
             self.upgradeStatusTo(Status.ERROR)
             raise
+        elapsedTime = time.time() - startTime
+        print(' - elapsed time:', elapsedTime)
         statThread.running = False
         # Don't need to join, the thread will finish a bit later.
         # statThread.join()
@@ -777,12 +781,13 @@ def execute(graph, startNodes=None, force=False):
                 ', '.join(nodesName),
                 ))
 
-    print('execute: ', str([n.name for n in nodes]))
+    print('Nodes to execute: ', str([n.name for n in nodes]))
 
     for node in nodes:
         node.beginSequence()
 
-    for node in nodes:
+    for i, node in enumerate(nodes):
+        print('\n[{i}/{N}] {nodeName}'.format(i=i+1, N=len(nodes), nodeName=node.nodeType()))
         node.process()
 
     for node in nodes:

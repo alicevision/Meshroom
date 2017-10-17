@@ -589,20 +589,25 @@ class Graph(BaseObject):
         return [edge for edge in self.edges if edge.src == attribute]
 
     def removeNode(self, nodeName):
+        """
+        Remove the node identified by 'nodeName' from the graph
+        and return in and out edges removed by this operation in two dicts {dstAttr.fullName(), srcAttr.fullName()}
+        """
         node = self.node(nodeName)
         self._nodes.pop(nodeName)
 
-        edges = {}
+        inEdges = {}
+        outEdges = {}
         for attr in node._attributes:
             for edge in self.outEdges(attr):
                 self.edges.remove(edge)
-                edges[edge.dst.fullName()] = edge.src.fullName()
+                outEdges[edge.dst.fullName()] = edge.src.fullName()
             if attr in self.edges.keys():
                 edge = self.edges.pop(attr)
-                edges[edge.dst.fullName()] = edge.src.fullName()
+                inEdges[edge.dst.fullName()] = edge.src.fullName()
 
         self.updateInternals()
-        return edges
+        return inEdges, outEdges
 
     @Slot(str, result=Node)
     def addNewNode(self, nodeType, **kwargs):

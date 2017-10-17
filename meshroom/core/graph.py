@@ -11,6 +11,7 @@ import uuid
 from collections import defaultdict
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 from pprint import pprint
+import logging
 
 from . import stats
 from meshroom import core as pg
@@ -445,19 +446,18 @@ class Node(BaseObject):
                 self.status.returnCode = self._subprocess.returncode
 
             if self._subprocess.returncode != 0:
-                logContent = ''
                 with open(self.logFile(), 'r') as logF:
                     logContent = ''.join(logF.readlines())
                 self.upgradeStatusTo(Status.ERROR)
                 raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(self.name, logContent))
-        except:
+        except Exception:
             self.upgradeStatusTo(Status.ERROR)
             raise
         finally:
-	    elapsedTime = time.time() - startTime
-	    print(' - elapsed time:', elapsedTime)
+            elapsedTime = time.time() - startTime
+            print(' - elapsed time:', elapsedTime)
             self._subprocess = None
-            # ask and wait for the stats thread to terminate
+            # ask and wait for the stats thread to stop
             statThread.stopRequest()
             statThread.join()
 
@@ -793,6 +793,14 @@ class Graph(BaseObject):
         """ Request graph execution to be stopped """
         self.stopExecutionRequested.emit()
 
+    def submittedNodes(self):
+        """ Return the list of submitted nodes inside this Graph """
+        return [node for node in self.nodes if node.isAlreadySubmitted()]
+
+    def clearSubmittedNodes(self):
+        """ Reset the status of already submitted nodes to Status.NONE """
+        [node.upgradeStatusTo(Status.NONE) for node in self.submittedNodes()]
+
     @property
     def nodes(self):
         return self._nodes
@@ -848,8 +856,13 @@ def execute(graph, toNodes=None, force=False):
         node.beginSequence()
 
     for i, node in enumerate(nodes):
-        print('\n[{i}/{N}] {nodeName}'.format(i=i+1, N=len(nodes), nodeName=node.nodeType()))
-        node.process()
+        try:
+            print('\n[{i}/{N}] {nodeName}'.format(i=i + 1, N=len(nodes), nodeName=node.nodeType))
+            node.process()
+        except Exception as e:
+            logging.error("Error on node computation: {}".format(e))
+            graph.clearSubmittedNodes()
+            return
 
     for node in nodes:
         node.endSequence()

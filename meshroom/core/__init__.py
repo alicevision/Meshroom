@@ -64,7 +64,7 @@ def loadNodes(folder, packageName):
 def loadAllNodes(folder):
     global nodesDesc
     for f in os.listdir(folder):
-        if os.path.isdir(os.path.join(folder, f)):
+        if os.path.isdir(os.path.join(folder, f)) and not f.startswith('__'):
             nodeTypes = loadNodes(folder, f)
 
             nodes = dict([(m.__name__, m) for m in nodeTypes])

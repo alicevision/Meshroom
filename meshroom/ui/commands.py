@@ -90,24 +90,23 @@ class AddNodeCommand(GraphCommand):
 class RemoveNodeCommand(GraphCommand):
     def __init__(self, graph, node, parent=None):
         super(RemoveNodeCommand, self).__init__(graph, parent)
-        self.nodeDesc = node.toDict()
+        self.nodeDict = node.toDict()
         self.nodeName = node.getName()
         self.setText("Remove Node {}".format(self.nodeName))
-        self.edges = {}
+        self.outEdges = {}
 
     def redoImpl(self):
-        self.edges = self.graph.removeNode(self.nodeName)
+        # only keep outEdges since inEdges are serialized in nodeDict
+        inEdges, self.outEdges = self.graph.removeNode(self.nodeName)
         return True
 
     def undoImpl(self):
-        node = self.graph.addNode(Node(nodeDesc=self.nodeDesc["nodeType"],
-                                       parent=self.graph, **self.nodeDesc["attributes"]
+        node = self.graph.addNode(Node(nodeDesc=self.nodeDict["nodeType"],
+                                       parent=self.graph, **self.nodeDict["attributes"]
                                        ), self.nodeName)
         assert (node.getName() == self.nodeName)
-        # recreate edges deleted on node removal
-        # edges having this node as destination could be retrieved from node description
-        # but we're missing edges starting from this node
-        for key, value in self.edges.items():
+        # recreate out edges deleted on node removal
+        for key, value in self.outEdges.items():
             dstNode, dstAttr = key.split(".")
             srcNode, srcAttr = value.split(".")
             self.graph.addEdge(self.graph.node(srcNode).attribute(srcAttr),

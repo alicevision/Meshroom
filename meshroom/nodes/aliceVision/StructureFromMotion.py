@@ -83,10 +83,12 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
             isOutput=False,
             )
-    refineIntrinsics = desc.StringParam(
+    refineIntrinsics = desc.ChoiceParam(
             label='Refine Intrinsics',
             description='''intrinsic parameters. Log parameters:''',
-            value='',
+            value=0,
+            values=[0, 1],
+            exclusive=True,
             uid=[0],
             )
     verboseLevel = desc.ChoiceParam(

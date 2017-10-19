@@ -639,6 +639,14 @@ class Graph(BaseObject):
     def node(self, nodeName):
         return self._nodes.get(nodeName)
 
+    def attribute(self, fullName):
+        # type: (str) -> Attribute
+        """
+        Return the attribute identified by the unique name 'fullName'.
+        """
+        node, attribute = fullName.split('.', 1)
+        return self.node(node).attribute(attribute)
+
     def findNodeCandidates(self, nodeNameExpr):
         pattern = re.compile(nodeNameExpr)
         return [v for k, v in self._nodes.objects.items() if pattern.match(k)]

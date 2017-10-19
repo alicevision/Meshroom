@@ -28,11 +28,14 @@ class FeatureMatching(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
             )
-    describerTypes = desc.StringParam(
+    describerTypes = desc.ChoiceParam(
             label='Describer Types',
-            description='''Describer types to use to describe an image:''',
-            value='SIFT',
+            description='''Describer types used to describe an image.''',
+            value=['SIFT'],
+            values=['SIFT', 'SIFT_FLOAT', 'AKAZE', 'AKAZE_LIOP', 'AKAZE_MLDB', 'CCTAG3', 'CCTAG4', 'SIFT_OCV', 'AKAZE_OCV'],
+            exclusive=False,
             uid=[0],
+            joinChar=',',
             )
     featuresDirectory = desc.File(
             label='Features Directory',

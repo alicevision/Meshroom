@@ -270,6 +270,7 @@ class Node(BaseObject):
         for attr in self._attributes:
             attr._applyExpr()
 
+    @property
     def nodeType(self):
         return self.nodeDesc.__class__.__name__
 
@@ -290,7 +291,7 @@ class Node(BaseObject):
     def toDict(self):
         attributes = {k: v.getExportValue() for k, v in self._attributes.objects.items()}
         return {
-            'nodeType': self.nodeType(),
+            'nodeType': self.nodeType,
             'attributes': {k: v for k, v in attributes.items() if v is not None},  # filter empty values
         }
 
@@ -329,7 +330,7 @@ class Node(BaseObject):
             if not attr.attributeDesc.isOutput:
                 continue  # skip inputs
             attr.value = attr.attributeDesc.value.format(
-                nodeType=self.nodeType(),
+                nodeType=self.nodeType,
                 **self._cmdVars)
             v = attr._value
 
@@ -344,10 +345,10 @@ class Node(BaseObject):
 
     @property
     def internalFolder(self):
-        return self.nodeDesc.internalFolder.format(nodeType=self.nodeType(), **self._cmdVars)
+        return self.nodeDesc.internalFolder.format(nodeType=self.nodeType, **self._cmdVars)
 
     def commandLine(self):
-        return self.nodeDesc.commandLine.format(nodeType=self.nodeType(), **self._cmdVars)
+        return self.nodeDesc.commandLine.format(nodeType=self.nodeType, **self._cmdVars)
 
     def statusFile(self):
         return os.path.join(pg.cacheFolder, self.internalFolder, 'status')
@@ -479,6 +480,7 @@ class Node(BaseObject):
         return self.status.status.name
 
     name = Property(str, getName, constant=True)
+    nodeType = Property(str, nodeType.fget, constant=True)
     attributes = Property(BaseObject, getAttributes, constant=True)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
@@ -571,12 +573,12 @@ class Graph(BaseObject):
         if node.graph is not None and node.graph != self:
             raise RuntimeError(
                 'Node "{}" cannot be part of the Graph "{}", as it is already part of the other graph "{}".'.format(
-                    node.nodeType(), self.name, node.graph.name))
+                    node.nodeType, self.name, node.graph.name))
         if uniqueName:
             assert uniqueName not in self._nodes.objects
             node._name = uniqueName
         else:
-            node._name = self._createUniqueNodeName(node.nodeType())
+            node._name = self._createUniqueNodeName(node.nodeType)
         node.graph = self
         self._nodes.add(node)
         self.stopExecutionRequested.connect(node.stopProcess)

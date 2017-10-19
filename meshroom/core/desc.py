@@ -56,9 +56,10 @@ class FloatParam(Param):
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, label, description, value, values, exclusive, uid, group='allParams'):
+    def __init__(self, label, description, value, values, exclusive, uid, group='allParams', joinChar=' '):
         self.values = values
         self.exclusive = exclusive
+        self.joinChar = joinChar
         super(ChoiceParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
 
 

@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import collections
 import hashlib
 import json
 import os
@@ -13,6 +14,7 @@ from enum import Enum  # available by default in python3. For python2: "pip inst
 from pprint import pprint
 
 from . import stats
+from . import desc
 from meshroom import core as pg
 from meshroom.common import BaseObject, Model, Slot, Signal, Property
 
@@ -305,11 +307,14 @@ class Node(BaseObject):
         # Evaluate input params
         for name, attr in self._attributes.objects.items():
             if attr.attributeDesc.isOutput:
-                continue # skip outputs
+                continue  # skip outputs
             linkAttr = attr.getLinkParam()
             if linkAttr:
                 attr._value = linkAttr._value
             v = attr._value
+            if isinstance(attr.attributeDesc, desc.ChoiceParam) and not attr.attributeDesc.exclusive:
+                assert(isinstance(v, collections.Sequence) and not isinstance(v, basestring))
+                v = attr.attributeDesc.joinChar.join(v)
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             self._cmdVars[name + 'Value'] = str(v)
@@ -321,7 +326,7 @@ class Node(BaseObject):
         # Evaluate output params
         for name, attr in self._attributes.objects.items():
             if not attr.attributeDesc.isOutput:
-                continue # skip inputs
+                continue  # skip inputs
             attr.value = attr.attributeDesc.value.format(
                 nodeType=self.nodeType(),
                 **self._cmdVars)

@@ -7,6 +7,6 @@ class Backend(Enum):
 backend = Backend.STANDALONE
 
 def useUI():
-	global backend
-	backend = Backend.PYSIDE
+    global backend
+    backend = Backend.PYSIDE
 

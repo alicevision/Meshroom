@@ -68,8 +68,10 @@ class QObjectListModel(QtCore.QAbstractListModel):
         oldSize = self.size()
         self.beginResetModel()
         for obj in self._objects:
-            self._referenceItem(obj)
+            self._dereferenceItem(obj)
         self._objects = objects
+        for obj in self._objects:
+            self._referenceItem(obj)
         self.endResetModel()
         self.dataChanged.emit(self.index(0), self.index(self.size() - 1), [])
         if self.size() != oldSize:

@@ -1,4 +1,4 @@
-from meshroom.common import BaseObject, Property, Variant, Signal
+from meshroom.common import BaseObject, Property, Variant
 
 
 class Attribute(BaseObject):
@@ -21,6 +21,26 @@ class Attribute(BaseObject):
     group = Property(str, lambda self: self._group, constant=True)
     isOutput = Property(bool, lambda self: self._isOutput, constant=True)
     
+
+class ListAttribute(Attribute):
+    """ A list of Attributes """
+    def __init__(self, elementDesc, label, description, group='allParams'):
+        """
+        :param elementDesc: the Attribute description of elements to store in that list
+        """
+        self.elementDesc = elementDesc
+        super(ListAttribute, self).__init__(label=label, description=description, value=None, uid=(), group=group)
+
+
+class GroupAttribute(Attribute):
+    """ A macro Attribute composed of several Attributes """
+    def __init__(self, groupDesc, label, description, group='allParams'):
+        """
+        :param groupDesc: the description of the Attributes composing this group
+        """
+        self.groupDesc = groupDesc
+        super(GroupAttribute, self).__init__(label=label, description=description, value=None, uid=(), group=group)
+
 
 class Param(Attribute):
     """

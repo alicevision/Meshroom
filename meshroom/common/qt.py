@@ -194,11 +194,11 @@ class QObjectListModel(QtCore.QAbstractListModel):
         """ Removes all items from the model and notifies any views. """
         if not self._objects:
             return
-        self.beginRemoveRows(QtCore.QModelIndex(), 0, self.size() - 1)
+        self.beginResetModel()
         for obj in self._objects:
             self._dereferenceItem(obj)
         self._objects = []
-        self.endRemoveRows()
+        self.endResetModel()
         self.countChanged.emit()
 
     def update(self, objects):

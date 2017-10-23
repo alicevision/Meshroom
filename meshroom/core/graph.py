@@ -151,6 +151,7 @@ class Attribute(BaseObject):
 
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
+    desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
     valueChanged = Signal()
     value = Property("QVariant", value.fget, value.fset, notify=valueChanged)
     isOutput = Property(bool, isOutput.fget, constant=True)

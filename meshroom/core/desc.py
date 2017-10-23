@@ -1,19 +1,26 @@
+from meshroom.common import BaseObject, Property, Variant, Signal
 
-class Attribute(object):
+
+class Attribute(BaseObject):
     """
     """
-    isOutput = False
-    uid = []
-    group = 'allParams'
-    commandLine = '{nodeType} --help'  # need to be overridden
 
     def __init__(self, label, description, value, uid, group):
-        self.label = label
-        self.description = description
-        self.value = value
-        self.uid = uid
-        self.group = group
-
+        super(Attribute, self).__init__()
+        self._label = label
+        self._description = description
+        self._value = value
+        self._uid = uid
+        self._group = group
+        self._isOutput = False
+    
+    label = Property(str, lambda self: self._label, constant=True)
+    description = Property(str, lambda self: self._description, constant=True)
+    value = Property(Variant, lambda self: self._value, constant=True)
+    uid = Property(Variant, lambda self: self._uid, constant=True)
+    group = Property(str, lambda self: self._group, constant=True)
+    isOutput = Property(bool, lambda self: self._isOutput, constant=True)
+    
 
 class Param(Attribute):
     """
@@ -26,8 +33,8 @@ class File(Attribute):
     """
     """
     def __init__(self, label, description, value, uid, isOutput, group='allParams'):
-        self.isOutput = isOutput
         super(File, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+        self._isOutput = isOutput
 
 
 class BoolParam(Param):
@@ -41,26 +48,34 @@ class IntParam(Param):
     """
     """
     def __init__(self, label, description, value, range, uid, group='allParams'):
-        self.range = range
+        self._range = range
         super(IntParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+
+    range = Property(Variant, lambda self: self._range, constant=True)
 
 
 class FloatParam(Param):
     """
     """
     def __init__(self, label, description, value, range, uid, group='allParams'):
-        self.range = range
+        self._range = range
         super(FloatParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+
+    range = Property(Variant, lambda self: self._range, constant=True)
 
 
 class ChoiceParam(Param):
     """
     """
     def __init__(self, label, description, value, values, exclusive, uid, group='allParams', joinChar=' '):
-        self.values = values
-        self.exclusive = exclusive
-        self.joinChar = joinChar
+        self._values = values
+        self._exclusive = exclusive
+        self._joinChar = joinChar
         super(ChoiceParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+
+    values = Property(Variant, lambda self: self._values, constant=True)
+    exclusive = Property(bool, lambda self: self._exclusive, constant=True)
+    joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
 
 class StringParam(Param):

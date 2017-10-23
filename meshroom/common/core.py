@@ -83,3 +83,4 @@ Slot = CoreSlot
 Signal = CoreSignal
 Property = CoreProperty
 BaseObject = CoreObject
+Variant = object

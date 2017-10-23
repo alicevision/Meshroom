@@ -5,13 +5,14 @@ Slot = None
 Signal = None
 Property = None
 BaseObject = None
+Variant = None
 
 if meshroom.backend == meshroom.Backend.PYSIDE:
     # PySide types
-    from .qt import Model, Slot, Signal, Property, BaseObject
+    from .qt import Model, Slot, Signal, Property, BaseObject, Variant
 elif meshroom.backend == meshroom.Backend.STANDALONE:
     # Core types
-    from .core import Model, Slot, Signal, Property, BaseObject
+    from .core import Model, Slot, Signal, Property, BaseObject, Variant
 
 
 class _BaseModel:

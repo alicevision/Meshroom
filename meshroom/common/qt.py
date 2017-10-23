@@ -311,8 +311,8 @@ class QTypedObjectListModel(QObjectListModel):
         super(QTypedObjectListModel, self)._referenceItem(item)
 
 
-Model = QObjectListModel
 DictModel = QObjectListModel
+ListModel = QObjectListModel
 Slot = QtCore.Slot
 Signal = QtCore.Signal
 Property = QtCore.Property

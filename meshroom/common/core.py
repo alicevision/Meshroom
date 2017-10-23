@@ -54,6 +54,32 @@ class CoreDictModel:
         self.update(objects)
 
 
+class CoreListModel:
+    def __init__(self, parent=None):
+        self._objects = []
+
+    def __iter__(self):
+        return self._objects.__iter__()
+
+    def at(self, idx):
+        return self._objects[idx]
+
+    def append(self, obj):
+        self._objects.append(obj)
+
+    def extend(self, iterable):
+        self._objects.extend(iterable)
+
+    def indexOf(self, obj):
+        self._objects.index(obj)
+
+    def removeAt(self, idx):
+        del self._objects[idx]
+
+    def remove(self, obj):
+        self._objects.remove(obj)
+
+
 class CoreSignal:
     """ Simple signal/callback implementation """
     def __init__(self):
@@ -91,6 +117,7 @@ class CoreObject(object):
 
 
 DictModel = CoreDictModel
+ListModel = CoreListModel
 Slot = CoreSlot
 Signal = CoreSignal
 Property = CoreProperty

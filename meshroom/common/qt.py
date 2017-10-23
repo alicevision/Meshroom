@@ -104,16 +104,15 @@ class QObjectListModel(QtCore.QAbstractListModel):
     ############
     # List API #
     ############
-    def append(self, toAppend):
-        """ Inserts object(s) at the end of the model and notifies any views.
-        Accepts both QObject and list of QObjects.
-        """
-        if not isinstance(toAppend, list):
-            toAppend = [toAppend]
-        self.beginInsertRows(QtCore.QModelIndex(), self.size(), self.size() + len(toAppend) - 1)
-        for obj in toAppend:
-            self._referenceItem(obj)
-        self._objects.extend(toAppend)
+    def append(self, obj):
+        """ Insert object at the end of the model. """
+        self.extend([obj])
+
+    def extend(self, iterable):
+        """ Insert objects at the end of the model. """
+        self.beginInsertRows(QtCore.QModelIndex(), self.size(), self.size() + len(iterable) - 1)
+        [self._referenceItem(obj) for obj in iterable]
+        self._objects.extend(iterable)
         self.endInsertRows()
         self.countChanged.emit()
 
@@ -203,7 +202,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self.countChanged.emit()
 
     def update(self, objects):
-        self.append(objects)
+        self.extend(objects)
 
     def reset(self, objects):
         self.clear()

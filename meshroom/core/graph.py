@@ -105,6 +105,9 @@ class Attribute(BaseObject):
         """ Attribute name """
         return self._name
 
+    def getType(self):
+        return self.attributeDesc.__class__.__name__
+
     def getLabel(self):
         return self._label
 
@@ -177,6 +180,7 @@ class Attribute(BaseObject):
 
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
+    type = Property(str, getType, constant=True)
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
     valueChanged = Signal()
     value = Property(Variant, _get_value, _set_value, notify=valueChanged)

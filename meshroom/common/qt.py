@@ -9,7 +9,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
     items. At the same time it provides QList-like convenience functions such as append, at,
     and removeAt for easily working with the model from Python.
     """
-    def __init__(self, keyAttrName="name", parent=None):
+    def __init__(self, keyAttrName='', parent=None):
         """ Constructs an object list model with the given parent. """
         super(QObjectListModel, self).__init__(parent)
 
@@ -202,6 +202,13 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self.endRemoveRows()
         self.countChanged.emit()
 
+    def update(self, objects):
+        self.append(objects)
+
+    def reset(self, objects):
+        self.clear()
+        self.update(objects)
+
     def contains(self, obj):
         """ Returns true if the list contains an occurrence of object;
         otherwise returns false.
@@ -241,6 +248,8 @@ class QObjectListModel(QtCore.QAbstractListModel):
         return len(self._objects) == 0
 
     def _referenceItem(self, item):
+        if not self._keyAttrName:
+            return
         key = getattr(item, self._keyAttrName, None)
         if key is None:
             return
@@ -250,6 +259,8 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self._objectByKey[key] = item
 
     def _dereferenceItem(self, item):
+        if not self._keyAttrName:
+            return
         key = getattr(item, self._keyAttrName, None)
         if key is None:
             return
@@ -302,6 +313,7 @@ class QTypedObjectListModel(QObjectListModel):
 
 
 Model = QObjectListModel
+DictModel = QObjectListModel
 Slot = QtCore.Slot
 Signal = QtCore.Signal
 Property = QtCore.Property

@@ -2,7 +2,7 @@ import pytest
 
 from PySide2.QtCore import QObject, Property
 
-from meshroom.common.core import CoreModel
+from meshroom.common.core import CoreDictModel
 from meshroom.common.qt import QObjectListModel, QTypedObjectListModel
 
 
@@ -19,7 +19,7 @@ class DummyNode(QObject):
 
 
 def test_coreModel_add_remove():
-    m = CoreModel()
+    m = CoreDictModel(keyAttrName='name')
     node = DummyNode("DummyNode_1")
     m.add(node)
     assert len(m) == 1
@@ -30,7 +30,7 @@ def test_coreModel_add_remove():
 
 
 def test_listModel_add_remove():
-    m = QObjectListModel()
+    m = QObjectListModel(keyAttrName='name')
     node = DummyNode("DummyNode_1")
     m.add(node)
     assert len(m) == 1

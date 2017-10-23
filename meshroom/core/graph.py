@@ -223,7 +223,7 @@ class Node(BaseObject):
         self.graph = None  # type: Graph
         self.nodeDesc = pg.nodesDesc[nodeDesc]()
         self._cmdVars = {}
-        self._attributes = Model(parent=self)
+        self._attributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
         self._initFromDesc()
         for k, v in kwargs.items():
@@ -547,8 +547,8 @@ class Graph(BaseObject):
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
         self.name = name
-        self._nodes = Model(parent=self)
-        self._edges = Model(keyAttrName="dst", parent=self)  # use dst attribute as unique key since it can only have one input connection
+        self._nodes = DictModel(keyAttrName='name', parent=self)
+        self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
 
     def clear(self):
         self._nodes.clear()

@@ -1,6 +1,7 @@
 import meshroom
 
 Model = None
+DictModel = None
 Slot = None
 Signal = None
 Property = None
@@ -9,10 +10,10 @@ Variant = None
 
 if meshroom.backend == meshroom.Backend.PYSIDE:
     # PySide types
-    from .qt import Model, Slot, Signal, Property, BaseObject, Variant
+    from .qt import DictModel, Slot, Signal, Property, BaseObject, Variant
 elif meshroom.backend == meshroom.Backend.STANDALONE:
     # Core types
-    from .core import Model, Slot, Signal, Property, BaseObject, Variant
+    from .core import DictModel, Slot, Signal, Property, BaseObject, Variant
 
 
 class _BaseModel:
@@ -47,4 +48,12 @@ class _BaseModel:
 
     def clear(self):
         """ Remove all internal objects """
+        pass
+
+    def update(self, d):
+        """ Combine dict 'd' with self """
+        pass
+
+    def reset(self, d):
+        """ Reset model with given values """
         pass

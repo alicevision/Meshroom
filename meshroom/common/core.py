@@ -1,7 +1,7 @@
 
-class CoreModel:
+class CoreDictModel:
 
-    def __init__(self, keyAttrName="name", **kwargs):
+    def __init__(self, keyAttrName, **kwargs):
         self._objects = {}
         self._keyAttrName = keyAttrName
 
@@ -43,7 +43,15 @@ class CoreModel:
         return self._objects.pop(getattr(obj, self._keyAttrName))
 
     def clear(self):
-        self._objects = {}
+        self._objects.clear()
+
+    def update(self, objects):
+        for obj in objects:
+            self.add(obj)
+
+    def reset(self, objects):
+        self.clear()
+        self.update(objects)
 
 
 class CoreSignal:
@@ -78,7 +86,7 @@ class CoreObject(object):
         super(CoreObject, self).__init__()
 
 
-Model = CoreModel
+DictModel = CoreDictModel
 Slot = CoreSlot
 Signal = CoreSignal
 Property = CoreProperty

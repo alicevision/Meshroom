@@ -335,7 +335,8 @@ class Node(BaseObject):
         self._initFromDesc()
         for k, v in kwargs.items():
             self.attribute(k).value = v
-        self.status = StatusData(self.name, self.nodeType())
+
+        self.status = StatusData(self.name, self.nodeType)
         self.statistics = stats.Statistics()
         self._subprocess = None
 

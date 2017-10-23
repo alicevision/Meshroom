@@ -566,19 +566,24 @@ class Graph(BaseObject):
             if not isinstance(nodeData, dict):
                 raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
             n = Node(nodeData['nodeType'], parent=self, **nodeData['attributes'])
-            self.addNode(n, uniqueName=nodeName)
+            # Add node to the graph with raw attributes values
+            self._addNode(n, nodeName)
+
+        # Create graph edges by resolving attributes expressions
         self._applyExpr()
 
-    def addNode(self, node, uniqueName=None):
+    def _addNode(self, node, uniqueName):
+        """
+        Internal method to add the given node to this Graph, with the given name (must be unique).
+        Attribute expressions are not resolved.
+        """
         if node.graph is not None and node.graph != self:
             raise RuntimeError(
                 'Node "{}" cannot be part of the Graph "{}", as it is already part of the other graph "{}".'.format(
                     node.nodeType, self.name, node.graph.name))
-        if uniqueName:
-            assert uniqueName not in self._nodes.objects
-            node._name = uniqueName
-        else:
-            node._name = self._createUniqueNodeName(node.nodeType)
+
+        assert uniqueName not in self._nodes.keys()
+        node._name = uniqueName
         node.graph = self
         self._nodes.add(node)
         self.stopExecutionRequested.connect(node.stopProcess)
@@ -587,6 +592,13 @@ class Graph(BaseObject):
         for attr in node.attributes:  # type: Attribute
             attr.valueChanged.connect(self.updateInternals)
 
+    def addNode(self, node, uniqueName=None):
+        """
+        Add the given node to this Graph with an optional unique name,
+        and resolve attributes expressions.
+        """
+        self._addNode(node, uniqueName if uniqueName else self._createUniqueNodeName(node.nodeType))
+        # Resolve attribute expressions
         node._applyExpr()
         return node
 

@@ -205,7 +205,8 @@ class StatisticsThread(threading.Thread):
             if self._stopFlag.wait(60):
                 # stopFlag has been set
                 # update stats one last time and exit main loop
-                self.updateStats()
+                if self.proc.is_running():
+                    self.updateStats()
                 return
 
     def stopRequest(self):

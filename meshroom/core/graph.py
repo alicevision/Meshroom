@@ -17,7 +17,7 @@ import logging
 from . import stats
 from . import desc
 from meshroom import core as pg
-from meshroom.common import BaseObject, Model, Slot, Signal, Property
+from meshroom.common import BaseObject, DictModel, Slot, Signal, Property, Variant, ListModel
 
 # Replace default encoder to support Enums
 DefaultJSONEncoder = json.JSONEncoder  # store the original one
@@ -53,6 +53,30 @@ def hash(v):
     return hashObject.hexdigest()
 
 
+def attribute_factory(description, name, value, node, parent=None):
+    # type: (desc.Attribute, str, (), Node, Attribute) -> Attribute
+    """
+    Create an Attribute based on description type.
+
+    :param description: the Attribute description
+    :param name: name of the Attribute
+    :param value: value of the Attribute. Will be set if not None.
+    :param node: node owning the Attribute. Note that the created Attribute is not added to Node's attributes
+    :param parent: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
+    :return:
+    """
+    if isinstance(description, pg.desc.GroupAttribute):
+        cls = GroupAttribute
+    elif isinstance(description, pg.desc.ListAttribute):
+        cls = ListAttribute
+    else:
+        cls = Attribute
+    attr = cls(name, node, description, parent=parent)
+    if value is not None:
+        attr.value = value
+    return attr
+
+
 class Attribute(BaseObject):
     """
     """
@@ -71,6 +95,10 @@ class Attribute(BaseObject):
 
     def fullName(self):
         """ Name inside the Graph: nodeName.name """
+        if isinstance(self.parent(), ListAttribute):
+            return '{}[{}]'.format(self.parent().fullName(), self.parent().index(self))
+        elif isinstance(self.parent(), GroupAttribute):
+            return '{}.{}'.format(self.parent().fullName(), self._name)
         return '{}.{}'.format(self.node.name, self._name)
 
     def getName(self):
@@ -80,12 +108,10 @@ class Attribute(BaseObject):
     def getLabel(self):
         return self._label
 
-    @property
-    def value(self):
-        return self._value
+    def _get_value(self):
+        return self.getLinkParam().value if self.isLink else self._value
 
-    @value.setter
-    def value(self, value):
+    def _set_value(self, value):
         if self._value == value:
             return
         self._value = value
@@ -153,10 +179,87 @@ class Attribute(BaseObject):
     label = Property(str, getLabel, constant=True)
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
     valueChanged = Signal()
-    value = Property("QVariant", value.fget, value.fset, notify=valueChanged)
+    value = Property(Variant, _get_value, _set_value, notify=valueChanged)
     isOutput = Property(bool, isOutput.fget, constant=True)
     isLinkChanged = Signal()
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
+
+
+class ListAttribute(Attribute):
+
+    def __init__(self, name, node, attributeDesc, parent=None):
+        super(ListAttribute, self).__init__(name, node, attributeDesc, parent)
+        self._value = ListModel(parent=self)
+
+    def __getitem__(self, item):
+        return self._value.at(item)
+
+    def __len__(self):
+        return len(self._value)
+
+    def _set_value(self, value):
+        self._value.clear()
+        self.extend(value)
+
+    def append(self, value):
+        self.extend([value])
+
+    def insert(self, value, index):
+        attr = attribute_factory(self.attributeDesc.elementDesc, "", value, self.node, self)
+        self._value.insert(index, [attr])
+
+    def index(self, item):
+        return self._value.indexOf(item)
+
+    def extend(self, values):
+        childAttributes = []
+        for value in values:
+            attr = attribute_factory(self.attributeDesc.elementDesc, "", value, self.node, parent=self)
+            childAttributes.append(attr)
+        self._value.extend(childAttributes)
+
+    def remove(self, index):
+        self._value.removeAt(index)
+
+    def getExportValue(self):
+        return [attr.getExportValue() for attr in self._value]
+
+    # Override value property setter
+    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+
+
+class GroupAttribute(Attribute):
+
+    def __init__(self, name, node, attributeDesc, parent=None):
+        super(GroupAttribute, self).__init__(name, node, attributeDesc, parent)
+        self._value = DictModel(keyAttrName='name', parent=self)
+
+        subAttributes = []
+        for name, subAttrDesc in self.attributeDesc.groupDesc.items():
+            childAttr = attribute_factory(subAttrDesc, name, None, self.node, parent=self)
+            subAttributes.append(childAttr)
+
+        self._value.reset(subAttributes)
+
+    def __getattr__(self, key):
+        try:
+            return super(GroupAttribute, self).__getattr__(key)
+        except AttributeError:
+            try:
+                return self._value.get(key)
+            except KeyError:
+                raise AttributeError(key)
+
+    def _set_value(self, exportedValue):
+        # set individual child attribute values
+        for key, value in exportedValue.items():
+            self._value.get(key).value = value
+
+    def getExportValue(self):
+        return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
+
+    # Override value property
+    value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
 
 
 class Edge(BaseObject):
@@ -217,6 +320,10 @@ class Node(BaseObject):
     """
     """
 
+    # Regexp handling complex attribute names with recursive understanding of Lists and Groups
+    # i.e: a.b, a[0], a[0].b.c[1]
+    attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
+
     def __init__(self, nodeDesc, parent=None, **kwargs):
         super(Node, self).__init__(parent)
         self._name = None  # type: str
@@ -227,7 +334,7 @@ class Node(BaseObject):
         self.attributesPerUid = defaultdict(set)
         self._initFromDesc()
         for k, v in kwargs.items():
-            self.attribute(k)._value = v
+            self.attribute(k).value = v
         self.status = StatusData(self.name, self.nodeType())
         self.statistics = stats.Statistics()
         self._subprocess = None
@@ -248,20 +355,36 @@ class Node(BaseObject):
 
     @Slot(str, result=Attribute)
     def attribute(self, name):
-        return self._attributes.get(name)
+        att = None
+        # Complex name indicating group or list attribute
+        if '[' in name or '.' in name:
+            p = self.attributeRE.findall(name)
+
+            for n, idx in p:
+                # first step: get root attribute
+                if att is None:
+                    att = self._attributes.get(n)
+                else:
+                    # get child Attribute in Group
+                    assert isinstance(att, GroupAttribute)
+                    att = att.value.get(n)
+                if idx != '':
+                    # get child Attribute in List
+                    assert isinstance(att, ListAttribute)
+                    att = att.value.at(int(idx))
+        else:
+            att = self._attributes.get(name)
+        return att
 
     def getAttributes(self):
         return self._attributes
 
     def _initFromDesc(self):
-        # Init from class members
-        for name, desc in self.nodeDesc.__class__.__dict__.items():
+        # Init from class and instance members
+        for name, desc in vars(self.nodeDesc.__class__).items() + vars(self.nodeDesc).items():
             if issubclass(desc.__class__, pg.desc.Attribute):
-                self._attributes.add(Attribute(name, self, desc))
-        # Init from instance members
-        for name, desc in self.nodeDesc.__dict__.items():
-            if issubclass(desc.__class__, pg.desc.Attribute):
-                self._attributes.add(Attribute(name, self, desc))
+                self._attributes.add(attribute_factory(desc, name, None, self))
+
         # List attributes per uid
         for attr in self._attributes:
             for uidIndex in attr.attributeDesc.uid:

@@ -82,8 +82,12 @@ class CoreProperty(property):
 
 
 class CoreObject(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent=None, *args, **kwargs):
         super(CoreObject, self).__init__()
+        self._parent = parent
+
+    def parent(self):
+        return self._parent
 
 
 DictModel = CoreDictModel

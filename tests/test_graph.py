@@ -115,6 +115,51 @@ def test_depth_diamond_graph2():
     assert len(edges) == 1
 
 
+def test_transitive_reduction():
+
+    graph = Graph('Tests tasks depth')
+
+    tA = graph.addNewNode('Ls', input='/tmp')
+    tB = graph.addNewNode('AppendText', inputText='echo B')
+    tC = graph.addNewNode('AppendText', inputText='echo C')
+    tD = graph.addNewNode('AppendText', inputText='echo D')
+    tE = graph.addNewNode('AppendFiles')
+    #         C
+    #       /   \
+    #  /---/---->\
+    # A -> B ---> E
+    #      \     /
+    #       \   /
+    #         D
+    graph.addEdges(
+        (tA.output, tE.input),
+
+        (tA.output, tB.input),
+        (tB.output, tC.input),
+        (tB.output, tD.input),
+
+        (tB.output, tE.input4),
+        (tC.output, tE.input3),
+        (tD.output, tE.input2),
+        )
+    edgesScore = graph.dfsMaxEdgeLength()
+
+    flowEdges = graph.flowEdges()
+    flowEdgesRes = [(tB, tA),
+                    (tD, tB),
+                    (tC, tB),
+                    (tE, tD),
+                    (tE, tC),
+                    ]
+    assert set(flowEdgesRes) == set(flowEdges)
+
+    depthPerNode = graph.minMaxDepthPerNode()
+    assert len(depthPerNode) ==  len(graph.nodes)
+    for node, (minDepth, maxDepth) in depthPerNode.iteritems():
+        assert node.depth == maxDepth
+
+
 if __name__ == '__main__':
     test_depth()
     test_depth_diamond_graph()
+    test_transitive_reduction()

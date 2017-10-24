@@ -164,3 +164,44 @@ class RemoveEdgeCommand(GraphCommand):
     def undoImpl(self):
         self.graph.addEdge(self.graph.attribute(self.srcAttr),
                            self.graph.attribute(self.dstAttr))
+
+
+class ListAttributeAppendCommand(GraphCommand):
+    def __init__(self, graph, listAttribute, value, parent=None):
+        super(ListAttributeAppendCommand, self).__init__(graph, parent)
+        assert isinstance(listAttribute, ListAttribute)
+        self.attrName = listAttribute.fullName()
+        self.index = None
+        self.value = value
+        self.setText("Append to {}".format(self.attrName))
+
+    def redoImpl(self):
+        listAttribute = self.graph.attribute(self.attrName)
+        listAttribute.append(self.value)
+        self.index = len(listAttribute) - 1
+        return True
+
+    def undoImpl(self):
+        listAttribute = self.graph.attribute(self.attrName)
+        listAttribute.remove(self.index)
+
+
+class ListAttributeRemoveCommand(GraphCommand):
+    def __init__(self, graph, attribute, parent=None):
+        super(ListAttributeRemoveCommand, self).__init__(graph, parent)
+        listAttribute = attribute.parent()
+        assert isinstance(listAttribute, ListAttribute)
+        self.listAttrName = listAttribute.fullName()
+        self.index = listAttribute.index(attribute)
+        self.value = attribute.getExportValue()
+        self.setText("Remove {}".format(attribute.fullName()))
+
+    def redoImpl(self):
+        listAttribute = self.graph.attribute(self.listAttrName)
+        listAttribute.remove(self.index)
+        return True
+
+    def undoImpl(self):
+        listAttribute = self.graph.attribute(self.listAttrName)
+        listAttribute.insert(self.value, self.index)
+

@@ -34,6 +34,14 @@ class Reconstruction(QObject):
     def setAttribute(self, attribute, value):
         self._undoStack.tryAndPush(commands.SetAttributeCommand(self._graph, attribute, value))
 
+    @Slot(graph.Attribute, QJsonValue)
+    def appendAttribute(self, attribute, value):
+        self._undoStack.tryAndPush(commands.ListAttributeAppendCommand(self._graph, attribute, value.toObject()))
+
+    @Slot(graph.Attribute)
+    def removeAttribute(self, attribute):
+        self._undoStack.tryAndPush(commands.ListAttributeRemoveCommand(self._graph, attribute))
+
     @Slot(str)
     def load(self, filepath):
         self._graph.load(filepath)

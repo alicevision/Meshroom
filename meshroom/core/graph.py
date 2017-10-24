@@ -621,21 +621,21 @@ class Visitor:
         """ is invoked when a vertex is encountered for the first time. """
         pass
 
-    # def examineEdge(self, e, g):
-    #     '''is invoked on every out-edge of each vertex after it is discovered.'''
-    #     pass
-    # def treeEdge(self, e, g):
-    #     '''is invoked on each edge as it becomes a member of the edges that form the search tree. If you wish to record predecessors, do so at this event point.'''
-    #     pass
-    # def backEdge(self, e, g):
-    #     '''is invoked on the back edges in the graph.'''
-    #     pass
-    # def forwardOrCrossEdge(self, e, g):
-    #     '''is invoked on forward or cross edges in the graph. In an undirected graph this method is never called.'''
-    #     pass
-    # def finishEdge(self, e, g):
-    #     '''is invoked on the non-tree edges in the graph as well as on each tree edge after its target vertex is finished.'''
-    #     pass
+    def examineEdge(self, e, g):
+        '''is invoked on every out-edge of each vertex after it is discovered.'''
+        pass
+    def treeEdge(self, e, g):
+        '''is invoked on each edge as it becomes a member of the edges that form the search tree. If you wish to record predecessors, do so at this event point.'''
+        pass
+    def backEdge(self, e, g):
+        '''is invoked on the back edges in the graph.'''
+        pass
+    def forwardOrCrossEdge(self, e, g):
+        '''is invoked on forward or cross edges in the graph. In an undirected graph this method is never called.'''
+        pass
+    def finishEdge(self, e, g):
+        '''is invoked on the non-tree edges in the graph as well as on each tree edge after its target vertex is finished.'''
+        pass
     def finishVertex(self, u, g):
         """ is invoked on a vertex after all of its out edges have been added to the search tree and all of the
         adjacent vertices have been discovered (but before their out-edges have been examined). """
@@ -860,25 +860,42 @@ class Graph(BaseObject):
         visitor.discoverVertex(u, self)
         # d_time[u] = time = time + 1
         for v in nodeChildren[u]:
+            visitor.examineEdge((u, v), self)
             if colors[v] == WHITE:
+                visitor.treeEdge((u, v), self)
                 # (u,v) is a tree edge
                 self.dfsVisit(v, visitor, colors, nodeChildren)  # TODO: avoid recursion
             elif colors[v] == GRAY:
+                visitor.backEdge((u, v), self)
                 pass  # (u,v) is a back edge
             elif colors[v] == BLACK:
+                visitor.forwardOrCrossEdge((u, v), self)
                 pass  # (u,v) is a cross or forward edge
+            visitor.finishEdge((u, v), self)
         colors[u] = BLACK
         visitor.finishVertex(u, self)
 
-    def dfsNodesOnFinish(self, startNodes=None):
+    def dfsOnFinish(self, startNodes=None):
+        """
+        :param startNodes: list of starting nodes. Use all leaves if empty.
+        :return: visited nodes and edges. The order is defined by the visit and finishVertex event.
+        """
         nodes = []
+        edges = []
         visitor = Visitor()
         visitor.finishVertex = lambda vertex, graph: nodes.append(vertex)
+        visitor.finishEdge = lambda edge, graph: edges.append(edge)
         self.dfs(visitor=visitor, startNodes=startNodes)
-        return nodes
+        return (nodes, edges)
 
-    def dfsNodesToProcess(self, startNodes=None):
+    def dfsToProcess(self, startNodes=None):
+        """
+        :param startNodes: list of starting nodes. Use all leaves if empty.
+        :return: visited nodes and edges that are not already computed (node.status != SUCCESS).
+                 The order is defined by the visit and finishVertex event.
+        """
         nodes = []
+        edges = []
         visitor = Visitor()
 
         def finishVertex(vertex, graph):
@@ -890,9 +907,14 @@ class Graph(BaseObject):
             if vertex.status.status is not Status.SUCCESS:
                 nodes.append(vertex)
 
+        def finishEdge(edge, graph):
+            if (edge[0].status.status is not Status.SUCCESS) and (edge[1].status.status is not Status.SUCCESS):
+                edges.append(edge)
+
         visitor.finishVertex = finishVertex
+        visitor.finishEdge = finishEdge
         self.dfs(visitor=visitor, startNodes=startNodes)
-        return nodes
+        return (nodes, edges)
 
     def _applyExpr(self):
         for node in self._nodes:
@@ -915,7 +937,7 @@ class Graph(BaseObject):
             json.dump(data, jsonFile, indent=4)
 
     def updateInternals(self, startNodes=None):
-        nodes = self.dfsNodesOnFinish(startNodes=startNodes)
+        nodes, edges = self.dfsOnFinish(startNodes=startNodes)
         for node in nodes:
             node.updateInternals()
 
@@ -976,9 +998,9 @@ def execute(graph, toNodes=None, force=False):
     """
     """
     if force:
-        nodes = graph.dfsNodesOnFinish(startNodes=toNodes)
+        nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
     else:
-        nodes = graph.dfsNodesToProcess(startNodes=toNodes)
+        nodes, edges = graph.dfsToProcess(startNodes=toNodes)
         nodesInConflict = getAlreadySubmittedNodes(nodes)
 
         if nodesInConflict:

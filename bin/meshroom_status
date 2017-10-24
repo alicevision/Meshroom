@@ -38,7 +38,7 @@ else:
     startNodes = None
     if args.graph:
         startNodes = [graph.nodes(args.graph)]
-    nodes = graph.dfsNodesOnFinish(startNodes=startNodes)
+    nodes, edges = graph.dfsOnFinish(startNodes=startNodes)
     for node in nodes:
         print('{}: {}'.format(node.name, node.status.status.name))
     if args.verbose:

@@ -61,7 +61,7 @@ else:
     startNodes = None
     if args.graph:
         startNodes = [graph.node(args.graph)]
-    nodes = graph.dfsNodesOnFinish(startNodes=startNodes)
+    nodes, edges = graph.dfsOnFinish(startNodes=startNodes)
 
 for node in nodes:
     print('{}: {}'.format(node.name, node.statistics.toDict()))

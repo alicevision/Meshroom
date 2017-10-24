@@ -124,11 +124,11 @@ class SetAttributeCommand(GraphCommand):
     def redoImpl(self):
         if self.value == self.oldValue:
             return False
-        self.graph.node(self.nodeName).attribute(self.attrName).value = self.value
+        self.graph.attribute(self.attrName).value = self.value
         return True
 
     def undoImpl(self):
-        self.graph.node(self.nodeName).attribute(self.attrName).value = self.oldValue
+        self.graph.attribute(self.attrName).value = self.oldValue
 
 
 class AddEdgeCommand(GraphCommand):

@@ -139,18 +139,11 @@ class Attribute(BaseObject):
 
     @property
     def isLink(self):
-        """
-        If the attribute is a link to another attribute.
-        """
-        if self.attributeDesc.isOutput:
-            return False
-        else:
-            return self in self.node.graph.edges.keys()
+        """ Whether the attribute is a link to another attribute. """
+        return not self.isOutput and self in self.node.graph.edges.keys()
 
     def getLinkParam(self):
-        if not self.isLink:
-            return None
-        return self.node.graph.edge(self).src
+        return self.node.graph.edge(self).src if self.isLink else None
 
     def _applyExpr(self):
         """
@@ -172,11 +165,7 @@ class Attribute(BaseObject):
             self._value = ""
 
     def getExportValue(self):
-        value = self._value
-        # print('getExportValue: ', self.name(), value, self.isLink())
-        if self.isLink:
-            value = '{' + self.getLinkParam().fullName() + '}'
-        return value
+        return '{' + self.getLinkParam().fullName() + '}' if self.isLink else self._value
 
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
@@ -439,10 +428,7 @@ class Node(BaseObject):
         for name, attr in self._attributes.objects.items():
             if attr.attributeDesc.isOutput:
                 continue  # skip outputs
-            linkAttr = attr.getLinkParam()
-            if linkAttr:
-                attr._value = linkAttr._value
-            v = attr._value
+            v = attr.value
             if isinstance(attr.attributeDesc, desc.ChoiceParam) and not attr.attributeDesc.exclusive:
                 assert(isinstance(v, collections.Sequence) and not isinstance(v, basestring))
                 v = attr.attributeDesc.joinChar.join(v)
@@ -461,7 +447,7 @@ class Node(BaseObject):
             attr.value = attr.attributeDesc.value.format(
                 nodeType=self.nodeType,
                 **self._cmdVars)
-            v = attr._value
+            v = attr.value
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             self._cmdVars[name + 'Value'] = str(v)

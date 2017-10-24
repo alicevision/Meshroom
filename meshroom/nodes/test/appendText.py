@@ -14,7 +14,7 @@ class AppendText(desc.CommandLineNode):
         label='Output',
         description='''''',
         value='{cache}/{nodeType}/{uid0}/appendText.txt',
-        uid=None,
+        uid=[],
         isOutput=True,
         )
     inputText = desc.File(

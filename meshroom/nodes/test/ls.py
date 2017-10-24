@@ -14,7 +14,7 @@ class Ls(desc.CommandLineNode):
         label='Output',
         description='''''',
         value='{cache}/{nodeType}/{uid0}/ls.txt',
-        uid=None,
+        uid=[],
         isOutput=True,
         )
 

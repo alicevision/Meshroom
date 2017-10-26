@@ -471,7 +471,10 @@ class Node(BaseObject):
         return self.nodeDesc.internalFolder.format(nodeType=self.nodeType, **self._cmdVars)
 
     def commandLine(self):
-        return self.nodeDesc.commandLine.format(nodeType=self.nodeType, **self._cmdVars)
+        cmdPrefix = ''
+        if 'REZ_ENV' in os.environ:
+            cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get('REZ_ENV'), packageFullName=self.packageFullName)
+        return cmdPrefix + self.nodeDesc.commandLine.format(nodeType=self.nodeType, **self._cmdVars)
 
     def statusFile(self):
         return os.path.join(self.graph.cacheDir, self.internalFolder, 'status')

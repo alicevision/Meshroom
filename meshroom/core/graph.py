@@ -350,9 +350,11 @@ class Node(BaseObject):
     def getName(self):
         return self._name
 
+
     @property
     def packageFullName(self):
         return '-'.join([self.packageName, self.packageVersion])
+
     @Slot(str, result=Attribute)
     def attribute(self, name):
         att = None
@@ -487,7 +489,7 @@ class Node(BaseObject):
 
     def updateStatusFromCache(self):
         """
-        Need up-to-date UIDs.
+        Warning: Need up-to-date UIDs.
         """
         statusFile = self.statusFile()
         if not os.path.exists(statusFile):
@@ -500,7 +502,7 @@ class Node(BaseObject):
 
     def saveStatusFile(self):
         """
-        Need up-to-date UIDs.
+        Warning: Need up-to-date UIDs.
         """
         data = self.status.toDict()
         statusFilepath = self.statusFile()

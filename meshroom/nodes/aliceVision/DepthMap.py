@@ -3,6 +3,7 @@ from meshroom.core import desc
 class DepthMap(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'CMPMVS {mvsConfigValue} --createDepthmap'
+    gpu = desc.Level.INTENSIVE
 
     mvsConfig = desc.File(
             label='MVS Configuration file',

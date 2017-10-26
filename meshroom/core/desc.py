@@ -1,4 +1,5 @@
 from meshroom.common import BaseObject, Property, Variant
+from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 
 
 class Attribute(BaseObject):
@@ -105,10 +106,19 @@ class StringParam(Param):
         super(StringParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
 
 
+class Level(Enum):
+    NONE = 0
+    NORMAL = 1
+    INTENSIVE = 2
+
+
 class Node(object):
     """
     """
     internalFolder = '{nodeType}/{uid0}/'
+    cpu = Level.NORMAL
+    gpu = Level.NONE
+    ram = Level.NORMAL
 
     def __init__(self):
         pass

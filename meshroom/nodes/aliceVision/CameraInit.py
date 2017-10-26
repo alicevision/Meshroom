@@ -1,4 +1,5 @@
 import sys
+import os
 from meshroom.core import desc
 
 
@@ -24,7 +25,7 @@ class CameraInit(desc.CommandLineNode):
     sensorDatabase = desc.File(
             label='Sensor Database',
             description='''Camera sensor width database path.''',
-            value='',
+            value=os.environ.get('ALICEVISION_SENSOR_DB', ''),
             uid=[0],
             isOutput=False,
             )

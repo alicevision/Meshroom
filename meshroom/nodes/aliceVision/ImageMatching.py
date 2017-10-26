@@ -1,4 +1,5 @@
 import sys
+import os
 from meshroom.core import desc
 
 
@@ -23,7 +24,7 @@ class ImageMatching(desc.CommandLineNode):
     tree = desc.File(
             label='Tree',
             description='''Input name for the vocabulary tree file.''',
-            value='',
+            value=os.environ.get('ALICEVISION_VOCTREE', ''),
             uid=[0],
             isOutput=False,
             )

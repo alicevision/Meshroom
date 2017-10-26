@@ -6,14 +6,12 @@ from .core.graph import Graph
 def photogrammetryPipeline():
     # type: () -> Graph
     graph = Graph('pipeline')
-    cameraInit = graph.addNewNode('CameraInit',
-                                  sensorDatabase=os.environ.get('ALICEVISION_SENSOR_DB', None))
+    cameraInit = graph.addNewNode('CameraInit')
     featureExtraction = graph.addNewNode('FeatureExtraction',
                                          input=cameraInit.outputSfm)
     imageMatching = graph.addNewNode('ImageMatching',
                                          input=cameraInit.outputSfm,
                                          featuresDirectory=featureExtraction.output,
-                                         tree=os.environ.get('ALICEVISION_VOCTREE', None),
                                          )
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=cameraInit.outputSfm,

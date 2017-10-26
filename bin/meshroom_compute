@@ -12,10 +12,15 @@ parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
                     help='Process the node with its dependencies.')
 parser.add_argument("--force", help="Force recompute",
                     action="store_true")
+parser.add_argument('--cache', metavar='FOLDER', type=str,
+                    default=None,
+                    help='Override the cache folder')
 
 args = parser.parse_args()
 
 graph = pg.loadGraph(args.graphFile)
+if args.cache:
+    graph.cacheDir = args.cache
 graph.update()
 
 if args.node:

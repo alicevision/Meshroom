@@ -17,7 +17,7 @@ import logging
 
 from . import stats
 from . import desc
-from meshroom import core as pg
+import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property, Variant, ListModel
 
 # Replace default encoder to support Enums
@@ -66,9 +66,9 @@ def attribute_factory(description, name, value, node, parent=None):
     :param parent: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
     :return:
     """
-    if isinstance(description, pg.desc.GroupAttribute):
+    if isinstance(description, meshroom.core.desc.GroupAttribute):
         cls = GroupAttribute
-    elif isinstance(description, pg.desc.ListAttribute):
+    elif isinstance(description, meshroom.core.desc.ListAttribute):
         cls = ListAttribute
     else:
         cls = Attribute
@@ -322,7 +322,7 @@ class Node(BaseObject):
         super(Node, self).__init__(parent)
         self._name = None  # type: str
         self.graph = None  # type: Graph
-        self.nodeDesc = pg.nodesDesc[nodeDesc]()
+        self.nodeDesc = meshroom.core.nodesDesc[nodeDesc]()
         self._cmdVars = {}
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
@@ -377,7 +377,7 @@ class Node(BaseObject):
     def _initFromDesc(self):
         # Init from class and instance members
         for name, desc in vars(self.nodeDesc.__class__).items() + vars(self.nodeDesc).items():
-            if issubclass(desc.__class__, pg.desc.Attribute):
+            if issubclass(desc.__class__, meshroom.core.desc.Attribute):
                 self._attributes.add(attribute_factory(desc, name, None, self))
 
         # List attributes per uid
@@ -418,7 +418,7 @@ class Node(BaseObject):
         self._updateUid()
 
         self._cmdVars = {
-            'cache': pg.cacheFolder,
+            'cache': self.graph.cacheDir,
             }
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             assAttr = [(a.getName(), a.uid()) for a in associatedAttributes]
@@ -467,13 +467,13 @@ class Node(BaseObject):
         return self.nodeDesc.commandLine.format(nodeType=self.nodeType, **self._cmdVars)
 
     def statusFile(self):
-        return os.path.join(pg.cacheFolder, self.internalFolder, 'status')
+        return os.path.join(self.graph.cacheDir, self.internalFolder, 'status')
 
     def statisticsFile(self):
-        return os.path.join(pg.cacheFolder, self.internalFolder, 'statistics')
+        return os.path.join(self.graph.cacheDir, self.internalFolder, 'statistics')
 
     def logFile(self):
-        return os.path.join(pg.cacheFolder, self.internalFolder, 'log')
+        return os.path.join(self.graph.cacheDir, self.internalFolder, 'log')
 
     def updateStatusFromCache(self):
         """
@@ -667,6 +667,7 @@ class Graph(BaseObject):
         self.name = name
         self._nodes = DictModel(keyAttrName='name', parent=self)
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
+        self._cacheDir = ''
 
     def clear(self):
         self._nodes.clear()
@@ -680,6 +681,7 @@ class Graph(BaseObject):
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
 
+        self._cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
         self.name = os.path.splitext(os.path.basename(filepath))[0]
         for nodeName, nodeData in graphData.items():
             if not isinstance(nodeData, dict):
@@ -1057,10 +1059,24 @@ class Graph(BaseObject):
     def edges(self):
         return self._edges
 
+    @property
+    def cacheDir(self):
+        return self._cacheDir
+
+    @cacheDir.setter
+    def cacheDir(self, value):
+        if self._cacheDir == value:
+            return
+        self._cacheDir = value
+        self.cacheDirChanged.emit()
+
     nodes = Property(BaseObject, nodes.fget, constant=True)
     edges = Property(BaseObject, edges.fget, constant=True)
+    cacheDirChanged = Signal()
+    cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
 
     stopExecutionRequested = Signal()
+
 
 def loadGraph(filepath):
     """

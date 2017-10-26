@@ -8,8 +8,9 @@ from contextlib import contextmanager
 
 from . import desc
 
-cacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), 'MeshroomCache'))
-cacheFolder = cacheFolder.replace("\\", "/")
+cacheFolderName = 'MeshroomCache'
+defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))
+defaultCacheFolder = defaultCacheFolder.replace("\\", "/")
 nodesDesc = {}
 
 

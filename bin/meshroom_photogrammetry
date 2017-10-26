@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import os
 
 import meshroom.core
 from meshroom import multiview
@@ -15,8 +16,8 @@ parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
                     default=None,
                     help='Process the node(s) with its dependencies.')
 parser.add_argument('--cache', metavar='FOLDER', type=str,
-                    default=meshroom.core.cacheFolder,
-                    help='Cache folder')
+                    default=None,
+                    help='Choose a custom cache folder')
 parser.add_argument('--save', metavar='FOLDER', type=str, required=False,
                     help='Save the workflow to a meshroom files.')
 
@@ -33,9 +34,16 @@ if args.input:
 
 if args.save:
     graph.save(args.save)
+    if not args.cache:
+        graph.cacheDir = os.path.abspath(os.path.dirname(args.save))
+
+if args.cache:
+    graph.cacheDir = args.cache
+
+if not graph.cacheDir:
+    graph.cacheDir = meshroom.core.defaultCacheFolder
 
 if args.output:
-    meshroom.core.cacheFolder = args.cache
     graph.update()
     toNodes = None
     if args.toNode:

@@ -119,6 +119,8 @@ class Node(object):
     cpu = Level.NORMAL
     gpu = Level.NONE
     ram = Level.NORMAL
+    packageName = ''
+    packageVersion = ''
 
     def __init__(self):
         pass

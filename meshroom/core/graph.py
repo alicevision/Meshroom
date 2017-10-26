@@ -323,6 +323,8 @@ class Node(BaseObject):
         self._name = None  # type: str
         self.graph = None  # type: Graph
         self.nodeDesc = meshroom.core.nodesDesc[nodeDesc]()
+        self.packageName = self.nodeDesc.packageName
+        self.packageVersion = self.nodeDesc.packageVersion
         self._cmdVars = {}
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
@@ -348,6 +350,9 @@ class Node(BaseObject):
     def getName(self):
         return self._name
 
+    @property
+    def packageFullName(self):
+        return '-'.join([self.packageName, self.packageVersion])
     @Slot(str, result=Attribute)
     def attribute(self, name):
         att = None
@@ -411,6 +416,8 @@ class Node(BaseObject):
         attributes = {k: v.getExportValue() for k, v in self._attributes.objects.items()}
         return {
             'nodeType': self.nodeType,
+            'packageName': self.packageName,
+            'packageVersion': self.packageVersion,
             'attributes': {k: v for k, v in attributes.items() if v is not None},  # filter empty values
         }
 

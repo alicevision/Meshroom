@@ -37,6 +37,8 @@ def loadNodes(folder, packageName):
     with add_to_path(folder):
         # import node package
         package = importlib.import_module(packageName)
+        packageName = package.packageName if hasattr(package, 'packageName') else package.__name__
+        packageVersion = package.__version__
 
         pysearchre = re.compile('.py$', re.IGNORECASE)
         pluginFiles = filter(pysearchre.search, os.listdir(os.path.dirname(package.__file__)))
@@ -51,6 +53,9 @@ def loadNodes(folder, packageName):
                 p = [a for a in m.__dict__.values() if inspect.isclass(a) and issubclass(a, desc.Node)]
                 if not p:
                     raise RuntimeError('No class defined in plugin: %s' % pluginModule)
+                for a in p:
+                    a.packageName = packageName
+                    a.packageVersion = packageVersion
                 nodeTypes.extend(p)
             except Exception as e:
                 errors.append('  * Errors while loading "{}".\n    File: {}\n    {}'.format(pluginName, pluginFile, str(e)))

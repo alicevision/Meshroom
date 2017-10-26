@@ -15,7 +15,8 @@ class CameraInit(desc.CommandLineNode):
             )
     jsonFile = desc.File(
             label='Json File',
-            description='''Input file with all the user options. It can be used to provide a list of images instead of a directory.''',
+            description='''Input file with all the user options. '''
+            '''It can be used to provide a list of images instead of a directory.''',
             value='',
             uid=[0],
             isOutput=False,
@@ -72,7 +73,11 @@ class CameraInit(desc.CommandLineNode):
             )
     groupCameraModel = desc.ChoiceParam(
             label='Group Camera Model',
-            description='''* 0: each view have its own camera intrinsic parameters * 1: view share camera intrinsic parameters based on metadata, if no metadata each view has its own camera intrinsic parameters * 2: view share camera intrinsic parameters based on metadata, if no metadata they are grouped by folder Log parameters:''',
+            description='''* 0: each view have its own camera intrinsic parameters '''
+                        '''* 1: view share camera intrinsic parameters based on metadata, '''
+                        '''if no metadata each view has its own camera intrinsic parameters '''
+                        '''* 2: view share camera intrinsic parameters based on metadata, '''
+                        '''if no metadata they are grouped by folder''',
             value=1,
             values=[0, 1, 2],
             exclusive=True,

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import argparse
 
-from meshroom.core import graph as pg
+import meshroom.core.graph
+from meshroom.core.graph import Status
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
 parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,
@@ -10,15 +11,17 @@ parser.add_argument('--node', metavar='NODE_NAME', type=str,
                     help='Process the node. It will generate an error if the dependencies are not already computed.')
 parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
                     help='Process the node with its dependencies.')
-parser.add_argument("--force", help="Force recompute",
-                    action="store_true")
+parser.add_argument('--force', help='Force recompute',
+                    action='store_true')
+parser.add_argument('--extern', help='Use this option when you compute externally after submission to a render farm from meshroom.',
+                    action='store_true')
 parser.add_argument('--cache', metavar='FOLDER', type=str,
                     default=None,
                     help='Override the cache folder')
 
 args = parser.parse_args()
 
-graph = pg.loadGraph(args.graphFile)
+graph = meshroom.core.graph.loadGraph(args.graphFile)
 if args.cache:
     graph.cacheDir = args.cache
 graph.update()
@@ -26,7 +29,10 @@ graph.update()
 if args.node:
     # Execute the node
     node = graph.node(args.node)
-    if node.isAlreadySubmitted():
+    submittedStatuses = [Status.SUBMITTED_LOCAL, Status.RUNNING]
+    if not args.extern:
+        submittedStatuses.append(Status.SUBMITTED_EXTERN)
+    if node.status.status in submittedStatuses:
         print('Error: Node is already submitted with status "{}"'.format(node.status.status.name))
         exit(-1)
     if args.force or node.status.status != pg.Status.SUCCESS:

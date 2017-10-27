@@ -1,0 +1,113 @@
+#!/usr/bin/env python
+import argparse
+import os
+
+import meshroom.core.graph
+import simpleFarm
+
+MESHROOM_PACKAGE = os.environ.get('REZ_USED_REQUEST', '')
+
+BASE_REQUIREMENTS = ['mikrosRender', '!RenderLow', '!Wkst_OS', '!"vfxpc1*"', '!"vfxpc??"']
+ENGINE = ''
+DEFAULT_TAGS = {'prod': ''}
+
+
+def createTask(meshroomFile, node, nbFrames=1, parallel=False, rangeSize=0):
+    tags = DEFAULT_TAGS.copy()  # copy to not modify default tags
+
+    arguments = {}
+    parallelArgs = ''
+    if parallel:
+        parallelArgs = ' --rangeStart @start --rangeSize {rangeSize}'.format(rangeSize=rangeSize)
+        arguments.update({'start': 0, 'end': nbFrames-1, 'step': rangeSize})
+
+    tags['nbFrames'] = nbFrames
+    allRequirements = list(BASE_REQUIREMENTS)
+    if node.nodeDesc.cpu == meshroom.core.desc.Level.INTENSIVE:
+        allRequirements.extend(['"RenderHigh*"', '@.nCPUs>20'])
+    if node.nodeDesc.gpu != meshroom.core.desc.Level.NONE:
+        allRequirements.extend(['!"*loc*"', 'Wkst'])
+    if node.nodeDesc.ram == meshroom.core.desc.Level.INTENSIVE:
+        allRequirements.append('@.mem>30')
+
+    task = simpleFarm.Task(
+        name=node.nodeType,
+        command='meshroom_compute --node {nodeName} {meshroomFile} {parallelArgs} --extern'.format(
+            nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
+        tags=tags,
+        rezPackages=[MESHROOM_PACKAGE],
+        requirements={'service': ','.join(allRequirements)},
+        **arguments)
+    return task
+
+
+parser = argparse.ArgumentParser(description='Submit a Graph of processes on renderfarm.')
+parser.add_argument('meshroomFile', metavar='MESHROOMFILE.mg', type=str,
+                    help='Filepath to a graph file.')
+parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
+                    help='Process the node with its dependencies.')
+parser.add_argument('--prod', metavar='PROD', type=str,
+                    default=os.environ.get('PROD', 'mvg'),
+                    help='Production short name.')
+parser.add_argument('--share', metavar='SHARE', type=str,
+                    default='vfx',
+                    help='')
+parser.add_argument('--engine',
+                    type=str,
+                    default='tractor',
+                    help='Execute job on a specific engine: tractor, tractor-dummy, puli, local or dummy.')
+
+args = parser.parse_args()
+
+graph = meshroom.core.graph.loadGraph(args.meshroomFile)
+graph.update()
+
+toNodes = None
+if args.toNode:
+    toNodes = graph.findNodes(args.toNode)
+
+nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
+
+flowEdges = graph.flowEdges(startNodes=toNodes)
+edgesToProcess = set(edgesToProcess).intersection(flowEdges)
+
+if not nodesToProcess:
+    print('Nothing to compute')
+    exit(-1)
+
+name = os.path.splitext(os.path.basename(args.meshroomFile))[0] + ' [Meshroom]'
+prod = args.prod
+comment = args.meshroomFile
+nbFrames = 2  # TODO
+share = args.share
+
+if nbFrames < 2:
+    print 'Not enough input resources for the reconstruction.'
+    print 'resources: ' + str()  # TODO
+    exit(-1)
+
+mainTags = {
+    'prod': prod,
+    'nbFrames': str(nbFrames),
+    'comment': comment,
+    }
+
+# Create Job Graph
+job = simpleFarm.Job(name, tags=mainTags)
+
+nodeNameToTask = {}
+
+for node in nodesToProcess:
+    task = createTask(args.meshroomFile, node)
+    job.addTask(task)
+    nodeNameToTask[node.name] = task
+
+for u, v in edgesToProcess:
+    nodeNameToTask[u.name].dependsOn(nodeNameToTask[v.name])
+
+
+if args.engine == 'tractor-dummy':
+    jobResult = job.submit(share=share, engine='tractor', execute=True)
+else:
+    jobResult = job.submit(share=share, engine=args.engine)
+

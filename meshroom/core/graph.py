@@ -11,6 +11,7 @@ import shutil
 import time
 import uuid
 from collections import defaultdict
+from contextlib import contextmanager
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import logging
 
@@ -46,6 +47,29 @@ else:
     unicode = unicode
     bytes = str
     basestring = basestring
+
+
+@contextmanager
+def GraphModification(graph):
+    """
+    A Context Manager that can be used to trigger only one Graph update
+    for a group of several modifications.
+    GraphModifications can be nested.
+    """
+    if not isinstance(graph, Graph):
+        raise ValueError("GraphModification expects a Graph instance")
+    # Store update policy
+    enabled = graph.updateEnabled
+    # Disable graph update for nested block
+    # (does nothing if already disabled)
+    graph.updateEnabled = False
+    try:
+        yield  # Execute nested block
+    except Exception:
+        raise
+    finally:
+        # Restore update policy
+        graph.updateEnabled = enabled
 
 
 def hash(v):
@@ -120,6 +144,14 @@ class Attribute(BaseObject):
         if self._value == value:
             return
         self._value = value
+        # Request graph update when input parameter value is set
+        # and parent node belongs to a graph
+        # Output attributes value are set internally during the update process,
+        # which is why we don't trigger any update in this case
+        # TODO: update only the nodes impacted by this change
+        # TODO: only update the graph if this attribute participates to a UID
+        if self.node.graph and self.attributeDesc.isInput:
+            self.node.graph.update()
         self.valueChanged.emit()
 
     @property
@@ -409,8 +441,9 @@ class Node(BaseObject):
                 self.attributesPerUid[uidIndex].add(attr)
 
     def _applyExpr(self):
-        for attr in self._attributes:
-            attr._applyExpr()
+        with GraphModification(self.graph):
+            for attr in self._attributes:
+                attr._applyExpr()
 
     @property
     def nodeType(self):
@@ -690,6 +723,8 @@ class Graph(BaseObject):
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
         self.name = name
+        self._updateEnabled = True
+        self._updateRequested = False
         self._nodes = DictModel(keyAttrName='name', parent=self)
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
         self._cacheDir = ''
@@ -718,6 +753,18 @@ class Graph(BaseObject):
         # Create graph edges by resolving attributes expressions
         self._applyExpr()
 
+    @property
+    def updateEnabled(self):
+        return self._updateEnabled
+
+    @updateEnabled.setter
+    def updateEnabled(self, enabled):
+        self._updateEnabled = enabled
+        if enabled and self._updateRequested:
+            # Trigger an update if requested while disabled
+            self.update()
+            self._updateRequested = False
+
     def _addNode(self, node, uniqueName):
         """
         Internal method to add the given node to this Graph, with the given name (must be unique).
@@ -733,10 +780,6 @@ class Graph(BaseObject):
         node.graph = self
         self._nodes.add(node)
         self.stopExecutionRequested.connect(node.stopProcess)
-
-        # Trigger internal update when an attribute is modified
-        for attr in node.attributes:  # type: Attribute
-            attr.valueChanged.connect(self.updateInternals)
 
     def addNode(self, node, uniqueName=None):
         """
@@ -763,15 +806,15 @@ class Graph(BaseObject):
 
         inEdges = {}
         outEdges = {}
-        for attr in node._attributes:
-            for edge in self.outEdges(attr):
-                self.edges.remove(edge)
-                outEdges[edge.dst.fullName()] = edge.src.fullName()
-            if attr in self.edges.keys():
-                edge = self.edges.pop(attr)
-                inEdges[edge.dst.fullName()] = edge.src.fullName()
+        with GraphModification(self):
+            for attr in node._attributes:
+                for edge in self.outEdges(attr):
+                    self.edges.remove(edge)
+                    outEdges[edge.dst.fullName()] = edge.src.fullName()
+                if attr in self.edges.keys():
+                    edge = self.edges.pop(attr)
+                    inEdges[edge.dst.fullName()] = edge.src.fullName()
 
-        self.updateInternals()
         return inEdges, outEdges
 
     @Slot(str, result=Node)
@@ -838,11 +881,13 @@ class Graph(BaseObject):
         self.edges.add(edge)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
+        self.update()
         return edge
 
     def addEdges(self, *edges):
-        for edge in edges:
-            self.addEdge(*edge)
+        with GraphModification(self):
+            for edge in edges:
+                self.addEdge(*edge)
 
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
@@ -850,6 +895,7 @@ class Graph(BaseObject):
         edge = self.edges.pop(dstAttr)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
+        self.update()
         return edge
 
     def getDepth(self, node):
@@ -1028,8 +1074,9 @@ class Graph(BaseObject):
         return flowEdges
 
     def _applyExpr(self):
-        for node in self._nodes:
-            node._applyExpr()
+        with GraphModification(self):
+            for node in self._nodes:
+                node._applyExpr()
 
     def toDict(self):
         return {k: node.toDict() for k, node in self._nodes.objects.items()}
@@ -1060,6 +1107,8 @@ class Graph(BaseObject):
             node.updateStatisticsFromCache()
 
     def update(self):
+        if not self._updateEnabled:
+            self._updateRequested = True
         self.updateInternals()
         self.updateStatusFromCache()
 

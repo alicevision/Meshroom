@@ -741,7 +741,7 @@ class Graph(BaseObject):
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
 
-        self._cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
+        self.cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
         self.name = os.path.splitext(os.path.basename(filepath))[0]
         for nodeName, nodeData in graphData.items():
             if not isinstance(nodeData, dict):

@@ -21,23 +21,13 @@ class MouseEvent(QObject):
 class EdgeMouseArea(QQuickItem):
     """
     Provides a MouseArea shaped as a cubic spline for mouse interaction with edges.
-
-    Note: for performance reason, shape is updated only when geometry changes since this is the main use-case with edges.
-    TODOs:
-        - update when start/end points change too
-        - review this when using new QML Shape module
+    Spline goes from (0,0) to (width, height). Works with negative values.
     """
     def __init__(self, parent=None):
         super(EdgeMouseArea, self).__init__(parent)
 
-        self._viewScale = 1.0
-        self._startX = 0.0
-        self._startY = 0.0
-        self._endX = 0.0
-        self._endY = 0.0
         self._curveScale = 0.7
-        self._edgeThickness = 1.0
-        self._hullThickness = 2.0
+        self._thickness = 2.0
         self._containsMouse = False
         self._path = None  # type: QPainterPath
 
@@ -73,107 +63,43 @@ class EdgeMouseArea(QQuickItem):
         e.deleteLater()
 
     def updateShape(self):
-        p1 = QPointF(self._startX, self._startY)
-        p2 = QPointF(self._endX, self._endY)
-        ctrlPt = QPointF(self.ctrlPtDist, 0)
+        p1 = QPointF(0, 0)
+        p2 = QPointF(self.width(), self.height())
+        ctrlPt = QPointF(abs(self.width() * self.curveScale), 0)
         path = QPainterPath(p1)
         path.cubicTo(p1 + ctrlPt, p2 - ctrlPt, p2)
 
         # Compute offset on x and y axis
-        hullOffset = self._edgeThickness * self._viewScale + self._hullThickness
+        halfThickness = self._thickness / 2.0
         v = QVector2D(p2 - p1).normalized()
-        offset = QPointF(hullOffset * -v.y(), hullOffset * v.x())
+        offset = QPointF(halfThickness * -v.y(), halfThickness * v.x())
 
         self._path = QPainterPath(path.toReversed())
         self._path.translate(-offset)
         path.translate(offset)
         self._path.connectPath(path)
 
-    @property
-    def thickness(self):
-        return self._hullThickness
+    def getThickness(self):
+        return self._thickness
 
-    @thickness.setter
-    def thickness(self, value):
-        if self._hullThickness == value:
+    def setThickness(self, value):
+        if self._thickness == value:
             return
-        self._hullThickness = value
+        self._thickness = value
         self.thicknessChanged.emit()
+        self.updateShape()
 
-    @property
-    def edgeThickness(self):
-        return self._edgeThickness
-
-    @edgeThickness.setter
-    def edgeThickness(self, value):
-        if self._edgeThickness == value:
-            return
-        self._edgeThickness = value
-        self.thicknessChanged.emit()
-
-    @property
-    def viewScale(self):
-        return self._viewScale
-
-    @viewScale.setter
-    def viewScale(self, value):
-        if self.viewScale == value:
-            return
-        self._viewScale = value
-        self.viewScaleChanged.emit()
-
-    @property
-    def startX(self):
-        return self._startX
-    
-    @startX.setter
-    def startX(self, value):
-        self._startX = value
-        self.startXChanged.emit()
-
-    @property
-    def startY(self):
-        return self._startY
-
-    @startY.setter
-    def startY(self, value):
-        self._startY = value
-        self.startYChanged.emit()
-
-    @property
-    def endX(self):
-        return self._endX
-
-    @endX.setter
-    def endX(self, value):
-        self._endX = value
-        self.endXChanged.emit()
-
-    @property
-    def endY(self):
-        return self._endY
-
-    @endY.setter
-    def endY(self, value):
-        self._endY = value
-        self.endYChanged.emit()
-
-    @property
-    def curveScale(self):
+    def getCurveScale(self):
         return self._curveScale
 
-    @curveScale.setter
-    def curveScale(self, value):
+    def setCurveScale(self, value):
+        if self.curveScale == value:
+            return
         self._curveScale = value
         self.curveScaleChanged.emit()
         self.updateShape()
 
-    @property
-    def ctrlPtDist(self):
-        return self.width() * self.curveScale * (-1 if self._startX > self._endX else 1)
-
-    @property
-    def containsMouse(self):
+    def getContainsMouse(self):
         return self._containsMouse
 
     def setContainsMouse(self, value):
@@ -183,25 +109,11 @@ class EdgeMouseArea(QQuickItem):
         self.containsMouseChanged.emit()
 
     thicknessChanged = Signal()
-    thickness = Property(float, thickness.fget, thickness.fset, notify=thicknessChanged)
-    edgeThicknessChanged = Signal()
-    edgeThickness = Property(float, edgeThickness.fget, edgeThickness.fset, notify=edgeThicknessChanged)
-    viewScaleChanged = Signal()
-    viewScale = Property(float, viewScale.fget, viewScale.fset, notify=viewScaleChanged)
-    startXChanged = Signal()
-    startX = Property(float, startX.fget, startX.fset, notify=startXChanged)
-    startYChanged = Signal()
-    startY = Property(float, startY.fget, startY.fset, notify=startYChanged)
-    endXChanged = Signal()
-    endX = Property(float, endX.fget, endX.fset, notify=endXChanged)
-    endYChanged = Signal()
-    endY = Property(float, endY.fget, endY.fset, notify=endYChanged)
+    thickness = Property(float, getThickness, setThickness, notify=thicknessChanged)
     curveScaleChanged = Signal()
-    curveScale = Property(float, curveScale.fget, curveScale.fset, notify=curveScaleChanged)
-    ctrlPtDistChanged = Signal()
-    ctrlPtDist = Property(float, ctrlPtDist.fget, notify=ctrlPtDist)
+    curveScale = Property(float, getCurveScale, setCurveScale, notify=curveScaleChanged)
     containsMouseChanged = Signal()
-    containsMouse = Property(float, containsMouse.fget, notify=containsMouseChanged)
+    containsMouse = Property(float, getContainsMouse, notify=containsMouseChanged)
     acceptedButtons = Property(int,
                                lambda self: super(EdgeMouseArea, self).acceptedMouseButtons,
                                lambda self, value: super(EdgeMouseArea, self).setAcceptedMouseButtons(value))

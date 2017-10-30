@@ -92,6 +92,9 @@ class Attribute(BaseObject):
         self._label = getattr(attributeDesc, 'label', None)
         self._isOutput = getattr(attributeDesc, 'isOutput', False)
 
+        # invalidation value for output attributes
+        self._invalidationValue = ""
+
     def absoluteName(self):
         return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self._name)
 
@@ -130,9 +133,8 @@ class Attribute(BaseObject):
         """
         """
         if self.attributeDesc.isOutput:
-            # only dependent of the linked node uid, so it is independent
-            # from the cache folder which may be used in the filepath.
-            return self.node.uid()
+            # only dependent on the hash of its value without the cache folder
+            return hash(self._invalidationValue)
         if self.isLink:
             return self.getLinkParam().uid()
         if isinstance(self._value, basestring):
@@ -461,6 +463,10 @@ class Node(BaseObject):
                 self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
                                                           ' ' + self._cmdVars[name]
 
+        # For updating output attributes invalidation values
+        cmdVarsNoCache = self._cmdVars.copy()
+        cmdVarsNoCache['cache'] = ''
+
         # Evaluate output params
         for name, attr in self._attributes.objects.items():
             if not attr.attributeDesc.isOutput:
@@ -468,6 +474,9 @@ class Node(BaseObject):
             attr.value = attr.attributeDesc.value.format(
                 nodeType=self.nodeType,
                 **self._cmdVars)
+            attr._invalidationValue = attr.attributeDesc.value.format(
+                nodeType=self.nodeType,
+                **cmdVarsNoCache)
             v = attr.value
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)

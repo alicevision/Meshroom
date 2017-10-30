@@ -413,16 +413,6 @@ class Node(BaseObject):
     def nodeType(self):
         return self.nodeDesc.__class__.__name__
 
-    def uid(self):
-        return self.nodeUid
-
-    def _updateUid(self):
-        hashInputParams = [(attr.getName(), attr.uid()) for attr in self._attributes if
-                           not attr.attributeDesc.isOutput]
-        hashInputParams.sort()
-        self.nodeUid = hash(tuple([b for a, b in hashInputParams]))
-        return self.nodeUid
-
     @property
     def depth(self):
         return self.graph.getDepth(self)
@@ -437,8 +427,6 @@ class Node(BaseObject):
         }
 
     def updateInternals(self):
-        self._updateUid()
-
         self._cmdVars = {
             'cache': self.graph.cacheDir,
             }
@@ -578,7 +566,7 @@ class Node(BaseObject):
 
     def process(self):
         global runningProcesses
-        runningProcesses[self.uid()] = self
+        runningProcesses[self.name] = self
         self.upgradeStatusTo(Status.RUNNING)
         statThread = stats.StatisticsThread(self)
         statThread.start()
@@ -607,7 +595,6 @@ class Node(BaseObject):
                 raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(self.name, logContent))
         except BaseException:
             self.upgradeStatusTo(Status.ERROR)
-            del runningProcesses[self.uid()]
             raise
         finally:
             elapsedTime = time.time() - startTime
@@ -616,9 +603,9 @@ class Node(BaseObject):
             # ask and wait for the stats thread to stop
             statThread.stopRequest()
             statThread.join()
+            del runningProcesses[self.name]
 
         self.upgradeStatusTo(Status.SUCCESS)
-        del runningProcesses[self.uid()]
 
     def endSequence(self):
         pass

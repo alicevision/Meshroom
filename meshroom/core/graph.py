@@ -337,6 +337,12 @@ class StatusData:
         self.commandLine = None
         self.env = None
 
+    def reset(self):
+        self.status = Status.NONE
+        self.graph = ''
+        self.commandLine = None
+        self.env = None
+
     def toDict(self):
         return self.__dict__
 
@@ -533,20 +539,23 @@ class Node(BaseObject):
 
     def updateStatusFromCache(self):
         """
-        Warning: Need up-to-date UIDs.
+        Update node status based on status file content/existence.
         """
         statusFile = self.statusFile()
+        oldStatus = self.status.status
+        # No status file => reset status to Status.None
         if not os.path.exists(statusFile):
-            self.upgradeStatusTo(Status.NONE)
-            return
-        with open(statusFile, 'r') as jsonFile:
-            statusData = json.load(jsonFile)
-        self.status.fromDict(statusData)
-        self.statusChanged.emit()
+            self.status.reset()
+        else:
+            with open(statusFile, 'r') as jsonFile:
+                statusData = json.load(jsonFile)
+            self.status.fromDict(statusData)
+        if oldStatus != self.status.status:
+            self.statusChanged.emit()
 
     def saveStatusFile(self):
         """
-        Warning: Need up-to-date UIDs.
+        Write node status on disk.
         """
         data = self.status.toDict()
         statusFilepath = self.statusFile()
@@ -557,6 +566,17 @@ class Node(BaseObject):
         with open(statusFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
         shutil.move(statusFilepathWriting, statusFilepath)
+
+    def upgradeStatusTo(self, newStatus):
+        """
+        Upgrade node to the given status and save it on disk.
+        """
+        if newStatus.value <= self.status.status.value:
+            print('WARNING: downgrade status on node "{}" from {} to {}'.format(self._name, self.status.status,
+                                                                                newStatus))
+        self.status.status = newStatus
+        self.statusChanged.emit()
+        self.saveStatusFile()
 
     def updateStatisticsFromCache(self):
         """
@@ -578,14 +598,6 @@ class Node(BaseObject):
         with open(statisticsFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
         shutil.move(statisticsFilepathWriting, statisticsFilepath)
-
-    def upgradeStatusTo(self, newStatus):
-        if int(newStatus.value) <= int(self.status.status.value):
-            print('WARNING: downgrade status on node "{}" from {} to {}'.format(self._name, self.status.status.name,
-                                                                                newStatus))
-        self.status.status = newStatus
-        self.statusChanged.emit()
-        self.saveStatusFile()
 
     def isAlreadySubmitted(self):
         return self.status.status in (Status.SUBMITTED_EXTERN, Status.SUBMITTED_LOCAL, Status.RUNNING)

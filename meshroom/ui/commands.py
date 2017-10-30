@@ -1,6 +1,6 @@
 from PySide2.QtWidgets import QUndoCommand, QUndoStack
 from PySide2.QtCore import Property, Signal
-from meshroom.core.graph import Node
+from meshroom.core.graph import Node, ListAttribute
 
 
 class UndoCommand(QUndoCommand):

@@ -8,12 +8,10 @@ import os
 import psutil
 import re
 import shutil
-import sys
 import time
 import uuid
 from collections import defaultdict
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
-from pprint import pprint
 import logging
 
 from . import stats
@@ -435,7 +433,7 @@ class Node(BaseObject):
     def updateInternals(self):
         self._cmdVars = {
             'cache': self.graph.cacheDir,
-            }
+        }
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             assAttr = [(a.getName(), a.uid()) for a in associatedAttributes]
             assAttr.sort()
@@ -556,7 +554,7 @@ class Node(BaseObject):
         self.status.status = newStatus
         self.statusChanged.emit()
         self.saveStatusFile()
-    
+
     def isAlreadySubmitted(self):
         return self.status.status in (Status.SUBMITTED_EXTERN, Status.SUBMITTED_LOCAL, Status.RUNNING)
 
@@ -592,7 +590,7 @@ class Node(BaseObject):
                 statThread.proc = self._subprocess
                 stdout, stderr = self._subprocess.communicate()
                 self._subprocess.wait()
-                
+
                 self.status.returnCode = self._subprocess.returncode
 
             if self._subprocess.returncode != 0:
@@ -1046,7 +1044,6 @@ class Graph(BaseObject):
         """
         """
         data = self.toDict()
-        pprint(data)
         with open(filepath, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
 

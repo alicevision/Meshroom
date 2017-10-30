@@ -67,15 +67,25 @@ def loadNodes(folder, packageName):
     return nodeTypes
 
 
+def registerNodeType(nodeType):
+    """ Register a Node Type based on a Node Description class.
+
+    After registration, nodes of this type can be instantiated in a Graph.
+    """
+    global nodesDesc
+    if nodeType.__name__ in nodesDesc:
+        raise RuntimeError("Node Desc {} is already registered.".format(nodeType.__name__))
+    nodesDesc[nodeType.__name__] = nodeType
+
+
 def loadAllNodes(folder):
     global nodesDesc
     for f in os.listdir(folder):
         if os.path.isdir(os.path.join(folder, f)) and not f.startswith('__'):
             nodeTypes = loadNodes(folder, f)
-
-            nodes = dict([(m.__name__, m) for m in nodeTypes])
-            print('Plugins loaded: ', ', '.join(nodes.keys()))
-            nodesDesc.update(nodes)
+            for nodeType in nodeTypes:
+                registerNodeType(nodeType)
+            print('Plugins loaded: ', ', '.join([nodeType.__name__ for nodeType in nodeTypes]))
 
 
 # Load plugins

@@ -218,6 +218,9 @@ class ListAttribute(Attribute):
     def remove(self, index):
         self._value.removeAt(index)
 
+    def uid(self):
+        return 0  # TODO
+
     def getExportValue(self):
         return [attr.getExportValue() for attr in self._value]
 
@@ -251,6 +254,9 @@ class GroupAttribute(Attribute):
         # set individual child attribute values
         for key, value in exportedValue.items():
             self._value.get(key).value = value
+
+    def uid(self):
+        return 0  # TODO
 
     def getExportValue(self):
         return {key: attr.getExportValue() for key, attr in self._value.objects.items()}

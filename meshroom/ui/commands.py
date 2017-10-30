@@ -79,7 +79,6 @@ class AddNodeCommand(GraphCommand):
     def redoImpl(self):
         self.node = self.graph.addNewNode(self.nodeType)
         self.setText("Add Node {}".format(self.node.getName()))
-        self.node._applyExpr()
         return True
 
     def undoImpl(self):
@@ -109,8 +108,6 @@ class RemoveNodeCommand(GraphCommand):
         for dstAttr, srcAttr in self.outEdges.items():
             self.graph.addEdge(self.graph.attribute(srcAttr),
                                self.graph.attribute(dstAttr))
-
-        node.updateInternals()
 
 
 class SetAttributeCommand(GraphCommand):

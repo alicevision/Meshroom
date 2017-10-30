@@ -88,7 +88,6 @@ class Attribute(BaseObject):
         self.attributeDesc = attributeDesc
         self._value = getattr(attributeDesc, 'value', None)
         self._label = getattr(attributeDesc, 'label', None)
-        self._isOutput = getattr(attributeDesc, 'isOutput', False)
 
         # invalidation value for output attributes
         self._invalidationValue = ""
@@ -125,7 +124,7 @@ class Attribute(BaseObject):
 
     @property
     def isOutput(self):
-        return self._isOutput
+        return self.attributeDesc.isOutput
 
     def uid(self):
         """
@@ -142,7 +141,7 @@ class Attribute(BaseObject):
     @property
     def isLink(self):
         """ Whether the attribute is a link to another attribute. """
-        return not self.isOutput and self in self.node.graph.edges.keys()
+        return self.attributeDesc.isInput and self in self.node.graph.edges.keys()
 
     def getLinkParam(self):
         return self.node.graph.edge(self).src if self.isLink else None
@@ -461,7 +460,7 @@ class Node(BaseObject):
 
         # Evaluate output params
         for name, attr in self._attributes.objects.items():
-            if not attr.attributeDesc.isOutput:
+            if attr.attributeDesc.isInput:
                 continue  # skip inputs
             attr.value = attr.attributeDesc.value.format(
                 nodeType=self.nodeType,

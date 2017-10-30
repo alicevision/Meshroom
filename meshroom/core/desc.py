@@ -21,7 +21,8 @@ class Attribute(BaseObject):
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
     isOutput = Property(bool, lambda self: self._isOutput, constant=True)
-    
+    isInput = Property(bool, lambda self: not self._isOutput, constant=True)
+
 
 class ListAttribute(Attribute):
     """ A list of Attributes """

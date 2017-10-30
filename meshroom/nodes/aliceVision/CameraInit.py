@@ -1,12 +1,26 @@
 import sys
+from collections import OrderedDict
 import os
+
 from meshroom.core import desc
+
+
+Viewpoint = OrderedDict([
+            ("path", desc.File(label="Image", description="Image filepath", value="", uid=[0], isOutput=False)),
+            ("focal", desc.FloatParam(label="Focal Length", description="Focal Length", value=0.0, uid=[0], range=(5, 200, 1))),
+])
 
 
 class CameraInit(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_cameraInit {allParams}'
 
+    viewpoints = desc.ListAttribute(
+            elementDesc=desc.GroupAttribute(label="Viewpoint", description="", groupDesc=Viewpoint, group='allParams'),
+            label="Viewpoints",
+            description="Input viewpoints",
+            group=""
+            )
     imageDirectory = desc.File(
             label='Image Directory',
             description='''Input images folder.''',

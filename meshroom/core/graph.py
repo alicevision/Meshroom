@@ -166,8 +166,9 @@ class Attribute(BaseObject):
             return hash(self._invalidationValue)
         if self.isLink:
             return self.getLinkParam().uid()
-        if isinstance(self._value, basestring):
-            return hash(str(self._value))
+        if isinstance(self._value, (list, tuple, set,)):
+            # hash of sorted values hashed
+            return hash([hash(v) for v in sorted(self._value)])
         return hash(self._value)
 
     @property

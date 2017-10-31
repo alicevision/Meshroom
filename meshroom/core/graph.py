@@ -272,6 +272,10 @@ class ListAttribute(Attribute):
                 uids.append(value.uid(uidIndex))
         return hash(uids)
 
+    def _applyExpr(self):
+        for value in self._value:
+            value._applyExpr()
+
     def getExportValue(self):
         return [attr.getExportValue() for attr in self._value]
 
@@ -312,6 +316,10 @@ class GroupAttribute(Attribute):
             if uidIndex in value.desc.uid:
                 uids.append(value.uid(uidIndex))
         return hash(uids)
+
+    def _applyExpr(self):
+        for value in self._value:
+            value._applyExpr()
 
     def getExportValue(self):
         return {key: attr.getExportValue() for key, attr in self._value.objects.items()}

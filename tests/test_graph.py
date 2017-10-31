@@ -158,8 +158,3 @@ def test_transitive_reduction():
     for node, (minDepth, maxDepth) in depthPerNode.iteritems():
         assert node.depth == maxDepth
 
-
-if __name__ == '__main__':
-    test_depth()
-    test_depth_diamond_graph()
-    test_transitive_reduction()

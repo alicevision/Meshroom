@@ -30,6 +30,9 @@ class QObjectListModel(QtCore.QAbstractListModel):
     def keys(self):
         return self._objectByKey.keys()
 
+    def items(self):
+        return self._objectByKey.items()
+
     def __len__(self):
         return self.size()
 

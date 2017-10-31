@@ -8,9 +8,14 @@ from meshroom.core import graph as pg
 
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
-parser.add_argument('--input', metavar='FOLDER', type=str, required=True,
+parser.add_argument('--input', metavar='FOLDER', type=str,
+                    default='',
                     help='Input folder or json file.')
+parser.add_argument('--inputImages', metavar='IMAGES', type=str, nargs='*',
+                    help='Input images.')
+
 parser.add_argument('--output', metavar='FOLDER', type=str, required=False,
+                    default='',
                     help='Results.')
 parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
                     default=None,
@@ -30,7 +35,11 @@ if not args.output and not args.save:
     print('Nothing to do. You need to set --output or --save.')
     exit(1)
 
-graph = multiview.photogrammetryPipeline(inputFolder=args.input)
+if not args.input and not args.inputImages:
+    print('Nothing to compute. You need to set --input or --inputImages.')
+    exit(1)
+
+graph = multiview.photogrammetryPipeline(output=args.output, inputFolder=args.input, inputImages=args.inputImages)
 graph.findNode('PrepareDenseScene').scale.value = args.scale
 
 if args.save:

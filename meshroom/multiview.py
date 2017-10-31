@@ -3,7 +3,7 @@ import os
 from .core.graph import Graph
 
 
-def photogrammetryPipeline(inputFolder='', inputImages=[], inputViewpoints=[]):
+def photogrammetryPipeline(output, inputFolder='', inputImages=[], inputViewpoints=[]):
     # type: () -> Graph
     graph = Graph('pipeline')
     cameraInit = graph.addNewNode('CameraInit')
@@ -39,6 +39,8 @@ def photogrammetryPipeline(inputFolder='', inputImages=[], inputViewpoints=[]):
                                ini=depthMapFilter.ini)
     texturing = graph.addNewNode('Texturing',
                                  ini=meshing.ini)
+    publish = graph.addNewNode('Publish',
+                               inputFiles=[texturing.outputMesh, texturing.outputMaterial, texturing.outputTextures],
+                               output=output)
     return graph
-
 

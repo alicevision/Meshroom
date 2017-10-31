@@ -25,7 +25,7 @@ def photogrammetryPipeline(inputFolder='', inputImages=[], inputViewpoints=[]):
                                            matchesDirectory=featureMatching.output)
     prepareDenseScene = graph.addNewNode('PrepareDenseScene',
                                          input=structureFromMotion.output)
-    camPairs = graph.addNewNode('CamPairs',
+    camPairs = graph.addNewNode('CameraConnection',
                                 mvsConfig=prepareDenseScene.mvsConfig)
     depthMap = graph.addNewNode('DepthMap',
                                 mvsConfig=camPairs.mvsConfig)

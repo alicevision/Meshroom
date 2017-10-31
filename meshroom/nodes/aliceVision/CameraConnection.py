@@ -1,8 +1,8 @@
 from meshroom.core import desc
 
-class CamPairs(desc.CommandLineNode):
+class CameraConnection(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'CMPMVS {mvsConfigValue} --computeCamPairs'
+    commandLine = 'aliceVision_cameraConnection --ini {mvsConfigValue}'
 
     mvsConfig = desc.File(
             label='MVS Configuration file',

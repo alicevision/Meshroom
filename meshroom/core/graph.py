@@ -158,14 +158,16 @@ class Attribute(BaseObject):
     def isOutput(self):
         return self.attributeDesc.isOutput
 
-    def uid(self):
+    def uid(self, uidIndex):
         """
         """
+        # 'uidIndex' should be in 'self.desc.uid' but in the case of linked attribute
+        # it will not be the case (so we cannot have an assert).
         if self.attributeDesc.isOutput:
             # only dependent on the hash of its value without the cache folder
             return hash(self._invalidationValue)
         if self.isLink:
-            return self.getLinkParam().uid()
+            return self.getLinkParam().uid(uidIndex)
         if isinstance(self._value, (list, tuple, set,)):
             # hash of sorted values hashed
             return hash([hash(v) for v in sorted(self._value)])
@@ -248,8 +250,12 @@ class ListAttribute(Attribute):
     def remove(self, index):
         self._value.removeAt(index)
 
-    def uid(self):
-        return 0  # TODO
+    def uid(self, uidIndex):
+        uids = []
+        for value in self._value:
+            if uidIndex in value.desc.uid:
+                uids.append(value.uid(uidIndex))
+        return hash(uids)
 
     def getExportValue(self):
         return [attr.getExportValue() for attr in self._value]
@@ -285,8 +291,12 @@ class GroupAttribute(Attribute):
         for key, value in exportedValue.items():
             self._value.get(key).value = value
 
-    def uid(self):
-        return 0  # TODO
+    def uid(self, uidIndex):
+        uids = []
+        for value in self._value:
+            if uidIndex in value.desc.uid:
+                uids.append(value.uid(uidIndex))
+        return hash(uids)
 
     def getExportValue(self):
         return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
@@ -474,7 +484,7 @@ class Node(BaseObject):
             'cache': self.graph.cacheDir,
         }
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
-            assAttr = [(a.getName(), a.uid()) for a in associatedAttributes]
+            assAttr = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes]
             assAttr.sort()
             self._cmdVars['uid{}'.format(uidIndex)] = hash(tuple([b for a, b in assAttr]))
 

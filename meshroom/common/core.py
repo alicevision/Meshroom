@@ -61,6 +61,9 @@ class CoreListModel:
     def __iter__(self):
         return self._objects.__iter__()
 
+    def __len__(self):
+        return len(self._objects)
+
     def at(self, idx):
         return self._objects[idx]
 
@@ -78,6 +81,9 @@ class CoreListModel:
 
     def remove(self, obj):
         self._objects.remove(obj)
+
+    def clear(self):
+        self._objects = []
 
 
 class CoreSignal:

@@ -33,6 +33,8 @@ class ListAttribute(Attribute):
         self.elementDesc = elementDesc
         super(ListAttribute, self).__init__(label=label, description=description, value=None, uid=(), group=group)
 
+    uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
+
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
@@ -42,6 +44,14 @@ class GroupAttribute(Attribute):
         """
         self.groupDesc = groupDesc
         super(GroupAttribute, self).__init__(label=label, description=description, value=None, uid=(), group=group)
+
+    def retrieveChildrenUids(self):
+        allUids = []
+        for desc in self.groupDesc.values():
+            allUids.extend(desc.uid)
+        return allUids
+
+    uid = Property(Variant, retrieveChildrenUids, constant=True)
 
 
 class Param(Attribute):

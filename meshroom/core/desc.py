@@ -8,22 +8,24 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, label, description, value, uid, group):
+    def __init__(self, name, label, description, value, uid, group):
         super(Attribute, self).__init__()
+        self._name = name
         self._label = label
         self._description = description
         self._value = value
         self._uid = uid
         self._group = group
-        self._isOutput = False
-    
+        # self._isOutput = False
+
+    name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
     description = Property(str, lambda self: self._description, constant=True)
     value = Property(Variant, lambda self: self._value, constant=True)
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
-    isOutput = Property(bool, lambda self: self._isOutput, constant=True)
-    isInput = Property(bool, lambda self: not self._isOutput, constant=True)
+    # isOutput = Property(bool, lambda self: self._isOutput, constant=True)
+    # isInput = Property(bool, lambda self: not self._isOutput, constant=True)
 
     def validateValue(self, value):
         return value
@@ -31,12 +33,12 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, label, description, group='allParams'):
+    def __init__(self, elementDesc, name, label, description, group='allParams'):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
         self.elementDesc = elementDesc
-        super(ListAttribute, self).__init__(label=label, description=description, value=None, uid=(), group=group)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
 
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
 
@@ -48,12 +50,12 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, label, description, group='allParams'):
+    def __init__(self, groupDesc, name, label, description, group='allParams'):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
         self.groupDesc = groupDesc
-        super(GroupAttribute, self).__init__(label=label, description=description, value=None, uid=(), group=group)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
 
     def validateValue(self, value):
         if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
@@ -62,7 +64,7 @@ class GroupAttribute(Attribute):
 
     def retrieveChildrenUids(self):
         allUids = []
-        for desc in self.groupDesc.values():
+        for desc in self.groupDesc:
             allUids.extend(desc.uid)
         return allUids
 
@@ -72,16 +74,15 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, label, description, value, uid, group):
-        super(Param, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
 
 class File(Attribute):
     """
     """
-    def __init__(self, label, description, value, uid, isOutput, group='allParams'):
-        super(File, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
-        self._isOutput = isOutput
+    def __init__(self, name, label, description, value, uid, group='allParams'):
+        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
         if not isinstance(value, basestring):
@@ -92,8 +93,8 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, label, description, value, uid, group='allParams'):
-        super(BoolParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group='allParams'):
+        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
         try:
@@ -105,9 +106,9 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, label, description, value, range, uid, group='allParams'):
+    def __init__(self, name, label, description, value, range, uid, group='allParams'):
         self._range = range
-        super(IntParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
         try:
@@ -121,9 +122,9 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, label, description, value, range, uid, group='allParams'):
+    def __init__(self, name, label, description, value, range, uid, group='allParams'):
         self._range = range
-        super(FloatParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
         try:
@@ -137,11 +138,11 @@ class FloatParam(Param):
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, label, description, value, values, exclusive, uid, group='allParams', joinChar=' '):
+    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' '):
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
-        super(ChoiceParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
         newValues = None
@@ -164,8 +165,8 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, label, description, value, uid, group='allParams'):
-        super(StringParam, self).__init__(label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group='allParams'):
+        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
         if not isinstance(value, basestring):
@@ -188,6 +189,8 @@ class Node(object):
     ram = Level.NORMAL
     packageName = ''
     packageVersion = ''
+    inputs = []
+    outputs = []
 
     def __init__(self):
         pass

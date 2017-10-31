@@ -26,15 +26,15 @@ def photogrammetryPipeline(inputFolder='', inputImages=[], inputViewpoints=[]):
     prepareDenseScene = graph.addNewNode('PrepareDenseScene',
                                          input=structureFromMotion.output)
     camPairs = graph.addNewNode('CameraConnection',
-                                mvsConfig=prepareDenseScene.mvsConfig)
+                                ini=prepareDenseScene.ini)
     depthMap = graph.addNewNode('DepthMap',
-                                mvsConfig=camPairs.mvsConfig)
+                                ini=camPairs.ini)
     depthMapFilter = graph.addNewNode('DepthMapFilter',
-                                      mvsConfig=depthMap.mvsConfig)
+                                      ini=depthMap.ini)
     meshing = graph.addNewNode('Meshing',
-                               mvsConfig=depthMapFilter.mvsConfig)
+                               ini=depthMapFilter.ini)
     texturing = graph.addNewNode('Texturing',
-                                 mvsConfig=meshing.mvsConfig)
+                                 ini=meshing.ini)
     return graph
 
 

@@ -79,17 +79,17 @@ def hash(v):
     return hashObject.hexdigest()
 
 
-def attribute_factory(description, name, value, node, parent=None):
-    # type: (desc.Attribute, str, (), Node, Attribute) -> Attribute
+def attribute_factory(description, value, isOutput, node, parent=None):
+    # type: (desc.Attribute, (), bool, Node, Attribute) -> Attribute
     """
     Create an Attribute based on description type.
 
-    :param description: the Attribute description
-    :param name: name of the Attribute
-    :param value: value of the Attribute. Will be set if not None.
-    :param node: node owning the Attribute. Note that the created Attribute is not added to Node's attributes
-    :param parent: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
-    :return:
+    Args:
+        description: the Attribute description
+        value:  value of the Attribute. Will be set if not None.
+        isOutput: whether is Attribute is an output attribute.
+        node: node owning the Attribute. Note that the created Attribute is not added to Node's attributes
+        parent: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
     """
     if isinstance(description, meshroom.core.desc.GroupAttribute):
         cls = GroupAttribute
@@ -97,7 +97,7 @@ def attribute_factory(description, name, value, node, parent=None):
         cls = ListAttribute
     else:
         cls = Attribute
-    attr = cls(name, node, description, parent=parent)
+    attr = cls(node, description, isOutput, parent=parent)
     if value is not None:
         attr.value = value
     return attr
@@ -107,13 +107,14 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, node, attributeDesc, parent=None):
+    def __init__(self, node, attributeDesc, isOutput, parent=None):
         super(Attribute, self).__init__(parent)
-        self._name = name
+        self._name = attributeDesc.name
         self.node = node  # type: Node
         self.attributeDesc = attributeDesc
-        self._value = getattr(attributeDesc, 'value', None)
-        self._label = getattr(attributeDesc, 'label', None)
+        self._isOutput = isOutput
+        self._value = attributeDesc.value
+        self._label = attributeDesc.label
 
         # invalidation value for output attributes
         self._invalidationValue = ""
@@ -160,20 +161,22 @@ class Attribute(BaseObject):
         # which is why we don't trigger any update in this case
         # TODO: update only the nodes impacted by this change
         # TODO: only update the graph if this attribute participates to a UID
-        if self.node.graph and self.attributeDesc.isInput:
+        if self.node.graph and self.isInput:
             self.node.graph.update()
         self.valueChanged.emit()
 
     @property
     def isOutput(self):
-        return self.attributeDesc.isOutput
+        return self._isOutput
 
-    def uid(self, uidIndex):
+    @property
+    def isInput(self):
+        return not self._isOutput
         """
         """
         # 'uidIndex' should be in 'self.desc.uid' but in the case of linked attribute
         # it will not be the case (so we cannot have an assert).
-        if self.attributeDesc.isOutput:
+        if self.isOutput:
             # only dependent on the hash of its value without the cache folder
             return hash(self._invalidationValue)
         if self.isLink:
@@ -186,7 +189,7 @@ class Attribute(BaseObject):
     @property
     def isLink(self):
         """ Whether the attribute is a link to another attribute. """
-        return self.attributeDesc.isInput and self in self.node.graph.edges.keys()
+        return self.isInput and self in self.node.graph.edges.keys()
 
     def getLinkParam(self):
         return self.node.graph.edge(self).src if self.isLink else None
@@ -226,8 +229,8 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
 
-    def __init__(self, name, node, attributeDesc, parent=None):
-        super(ListAttribute, self).__init__(name, node, attributeDesc, parent)
+    def __init__(self, node, attributeDesc, isOutput, parent=None):
+        super(ListAttribute, self).__init__(node, attributeDesc, isOutput, parent)
         self._value = ListModel(parent=self)
 
     def __getitem__(self, item):
@@ -244,7 +247,7 @@ class ListAttribute(Attribute):
         self.extend([value])
 
     def insert(self, value, index):
-        attr = attribute_factory(self.attributeDesc.elementDesc, "", value, self.node, self)
+        attr = attribute_factory(self.attributeDesc.elementDesc, value, self.isOutput, self.node, self)
         self._value.insert(index, [attr])
 
     def index(self, item):
@@ -253,7 +256,7 @@ class ListAttribute(Attribute):
     def extend(self, values):
         childAttributes = []
         for value in values:
-            attr = attribute_factory(self.attributeDesc.elementDesc, "", value, self.node, parent=self)
+            attr = attribute_factory(self.attributeDesc.elementDesc, value, self.isOutput, self.node, parent=self)
             childAttributes.append(attr)
         self._value.extend(childAttributes)
 
@@ -276,13 +279,13 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
 
-    def __init__(self, name, node, attributeDesc, parent=None):
-        super(GroupAttribute, self).__init__(name, node, attributeDesc, parent)
+    def __init__(self, node, attributeDesc, isOutput, parent=None):
+        super(GroupAttribute, self).__init__(node, attributeDesc, isOutput, parent)
         self._value = DictModel(keyAttrName='name', parent=self)
 
         subAttributes = []
-        for name, subAttrDesc in self.attributeDesc.groupDesc.items():
-            childAttr = attribute_factory(subAttrDesc, name, None, self.node, parent=self)
+        for subAttrDesc in self.attributeDesc.groupDesc:
+            childAttr = attribute_factory(subAttrDesc, None, self.isOutput, self.node, parent=self)
             subAttributes.append(childAttr)
 
         self._value.reset(subAttributes)
@@ -458,9 +461,14 @@ class Node(BaseObject):
 
     def _initFromDesc(self):
         # Init from class and instance members
-        for name, desc in vars(self.nodeDesc.__class__).items() + vars(self.nodeDesc).items():
-            if issubclass(desc.__class__, meshroom.core.desc.Attribute):
-                self._attributes.add(attribute_factory(desc, name, None, self))
+
+        for attrDesc in self.nodeDesc.inputs:
+            assert isinstance(attrDesc, meshroom.core.desc.Attribute)
+            self._attributes.add(attribute_factory(attrDesc, None, False, self))
+
+        for attrDesc in self.nodeDesc.outputs:
+            assert isinstance(attrDesc, meshroom.core.desc.Attribute)
+            self._attributes.add(attribute_factory(attrDesc, None, True, self))
 
         # List attributes per uid
         for attr in self._attributes:
@@ -500,7 +508,7 @@ class Node(BaseObject):
 
         # Evaluate input params
         for name, attr in self._attributes.objects.items():
-            if attr.attributeDesc.isOutput:
+            if attr.isOutput:
                 continue  # skip outputs
             v = attr.value
             if isinstance(attr.attributeDesc, desc.ChoiceParam) and not attr.attributeDesc.exclusive:
@@ -520,7 +528,7 @@ class Node(BaseObject):
 
         # Evaluate output params
         for name, attr in self._attributes.objects.items():
-            if attr.attributeDesc.isInput:
+            if attr.isInput:
                 continue  # skip inputs
             attr.value = attr.attributeDesc.value.format(
                 nodeType=self.nodeType,

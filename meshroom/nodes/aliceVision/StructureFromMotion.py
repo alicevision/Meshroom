@@ -6,99 +6,111 @@ class StructureFromMotion(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_incrementalSfM {allParams}'
 
-    input = desc.File(
+    inputs = [
+        desc.File(
+            name='input',
             label='Input',
             description='''SfMData file.''',
             value='',
             uid=[0],
-            isOutput=False,
-            )
-    output = desc.File(
-            label='Output SfM data file',
-            description='''Path to the output sfmdata file''',
-            value='{cache}/{nodeType}/{uid0}/sfm.abc',
-            uid=[],
-            isOutput=True,
-            )
-    extraInfoDirectory = desc.File(
-            label='Output',
-            description='''Directory for intermediate reconstruction files and additional reconstruction information files.''',
-            value='{cache}/{nodeType}/{uid0}/',
-            uid=[],
-            isOutput=True,
-    )
-    featuresDirectory = desc.File(
+        ),
+
+        desc.File(
+            name='featuresDirectory',
             label='Features Directory',
             description='''Path to a directory containing the extracted features.''',
             value='',
             uid=[0],
-            isOutput=False,
-            )
-    matchesDirectory = desc.File(
+        ),
+        desc.File(
+            name='matchesDirectory',
             label='Matches Directory',
             description='''Path to a directory in which computed matches are stored. Optional parameters:''',
             value='',
             uid=[0],
-            isOutput=False,
-            )
-    describerTypes = desc.ChoiceParam(
+        ),
+        desc.ChoiceParam(
+            name='describerTypes',
             label='Describer Types',
             description='''Describer types used to describe an image.''',
             value=['SIFT'],
-            values=['SIFT', 'SIFT_FLOAT', 'AKAZE', 'AKAZE_LIOP', 'AKAZE_MLDB', 'CCTAG3', 'CCTAG4', 'SIFT_OCV', 'AKAZE_OCV'],
+            values=['SIFT', 'SIFT_FLOAT', 'AKAZE', 'AKAZE_LIOP', 'AKAZE_MLDB', 'CCTAG3', 'CCTAG4', 'SIFT_OCV',
+                    'AKAZE_OCV'],
             exclusive=False,
             uid=[0],
             joinChar=',',
-            )
-    interFileExtension = desc.File(
+        ),
+        desc.File(
+            name='interFileExtension',
             label='Inter File Extension',
             description='''Extension of the intermediate file export.''',
             value='.ply',
             uid=[0],
-            isOutput=False,
-            )
-    minInputTrackLength = desc.IntParam(
+        ),
+        desc.IntParam(
+            name='minInputTrackLength',
             label='Min Input Track Length',
             description='''Minimum track length in input of SfM''',
             value=2,
             range=(-sys.maxsize, sys.maxsize, 1),
             uid=[0],
-            )
-    cameraModel = desc.ChoiceParam(
+        ),
+        desc.ChoiceParam(
+            name='cameraModel',
             label='Camera Model',
             description='''* 1: Pinhole * 2: Pinhole radial 1 * 3: Pinhole radial 3''',
             value=3,
             values=['1', '2', '3'],
             exclusive=True,
             uid=[0],
-            )
-    initialPairA = desc.File(
+        ),
+        desc.File(
+            name='initialPairA',
             label='Initial Pair A',
             description='''filename of the first image (without path).''',
             value='',
             uid=[0],
-            isOutput=False,
-            )
-    initialPairB = desc.File(
+        ),
+        desc.File(
+            name='initialPairB',
             label='Initial Pair B',
             description='''filename of the second image (without path).''',
             value='',
             uid=[0],
-            isOutput=False,
-            )
-    refineIntrinsics = desc.ChoiceParam(
+        ),
+        desc.ChoiceParam(
+            name='refineIntrinsics',
             label='Refine Intrinsics',
             description='''intrinsic parameters. Log parameters:''',
             value=0,
             values=[0, 1],
             exclusive=True,
             uid=[0],
-            )
-    verboseLevel = desc.ChoiceParam(
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
             label='Verbose Level',
             description='''verbosity level (fatal, error, warning, info, debug, trace).''',
             value='info',
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,
             uid=[],
-            )
+        )
+    ]
+
+    outputs = [
+        desc.File(
+            name='output',
+            label='Output SfM data file',
+            description='''Path to the output sfmdata file''',
+            value='{cache}/{nodeType}/{uid0}/sfm.abc',
+            uid=[],
+        ),
+        desc.File(
+            name='extraInfoDirectory',
+            label='Output',
+            description='''Directory for intermediate reconstruction files and additional reconstruction information files.''',
+            value='{cache}/{nodeType}/{uid0}/',
+            uid=[],
+        ),
+    ]

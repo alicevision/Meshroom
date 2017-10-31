@@ -6,10 +6,12 @@ class Meshing(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
-    mvsConfig = desc.File(
+    inputs = [
+        desc.File(
+            name="ini",
             label='MVS Configuration file',
             description='',
             value='',
             uid=[0],
-            isOutput=False,
-            )
+            ),
+    ]

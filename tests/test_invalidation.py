@@ -7,10 +7,13 @@ from meshroom.core import desc, registerNodeType
 class SampleNode(desc.Node):
     """ Sample Node for unit testing """
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    input = desc.File(label='Input', description='', value='', uid=[0], isOutput=False)
-    output = desc.File(label='Output', description='', value='{cache}/{nodeType}/{uid0}/', uid=[], isOutput=True)
-    # No impact on UID
-    paramA = desc.StringParam(label='ParamA', description='', value='', uid=[])
+    inputs = [
+        desc.File(name='input', label='Input', description='', value='', uid=[0],),
+        desc.StringParam(name='paramA', label='ParamA', description='', value='', uid=[])  # No impact on UID
+    ]
+    outputs = [
+        desc.File(name='output', label='Output', description='', value='{cache}/{nodeType}/{uid0}/', uid=[])
+    ]
 
 
 registerNodeType(SampleNode)

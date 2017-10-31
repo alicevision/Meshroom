@@ -3,18 +3,22 @@ from meshroom.core import desc
 
 class Ls(desc.CommandLineNode):
     commandLine = 'ls {inputValue} > {outputValue}'
-    input = desc.File(
-        label='Input',
-        description='''''',
-        value='',
-        uid=[0],
-        isOutput=False,
+    inputs = [
+        desc.File(
+            name='input',
+            label='Input',
+            description='''''',
+            value='',
+            uid=[0],
         )
-    output = desc.File(
-        label='Output',
-        description='''''',
-        value='{cache}/{nodeType}/{uid0}/ls.txt',
-        uid=[],
-        isOutput=True,
-        )
+    ]
 
+    outputs = [
+        desc.File(
+            name='output',
+            label='Output',
+            description='''''',
+            value='{cache}/{nodeType}/{uid0}/ls.txt',
+            uid=[],
+        )
+    ]

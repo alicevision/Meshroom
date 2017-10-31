@@ -24,7 +24,7 @@ class StructureFromMotion(desc.CommandLineNode):
             label='Output',
             description='''Directory for intermediate reconstruction files and additional reconstruction information files.''',
             value='{cache}/{nodeType}/{uid0}/',
-            uid=[0],
+            uid=[],
             isOutput=True,
     )
     featuresDirectory = desc.File(

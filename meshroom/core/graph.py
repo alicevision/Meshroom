@@ -14,6 +14,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import logging
+import re
 
 from . import stats
 from . import desc
@@ -48,6 +49,7 @@ else:
     bytes = str
     basestring = basestring
 
+stringIsLinkRe = re.compile('^\{.+\}$')
 
 @contextmanager
 def GraphModification(graph):
@@ -143,7 +145,15 @@ class Attribute(BaseObject):
     def _set_value(self, value):
         if self._value == value:
             return
-        self._value = value
+
+        if isinstance(value, Attribute) or (isinstance(value, basestring) and stringIsLinkRe.match(value)):
+            # if we set a link to another attribute
+            self._value = value
+        else:
+            # if we set a new value, we use the attribute descriptor validator to check the validity of the value
+            # and apply some conversion if needed
+            convertedValue = self.desc.validateValue(value)
+            self._value = convertedValue
         # Request graph update when input parameter value is set
         # and parent node belongs to a graph
         # Output attributes value are set internally during the update process,

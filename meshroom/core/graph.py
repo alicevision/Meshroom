@@ -172,6 +172,8 @@ class Attribute(BaseObject):
     @property
     def isInput(self):
         return not self._isOutput
+
+    def uid(self, uidIndex=-1):
         """
         """
         # 'uidIndex' should be in 'self.desc.uid' but in the case of linked attribute

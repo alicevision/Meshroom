@@ -2,7 +2,7 @@ from meshroom.core import desc
 
 class Texturing(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'CMPMVS {mvsConfigValue} --texturing'
+    commandLine = 'aliceVision_texturing --ini {mvsConfigValue} {allParams}'
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 

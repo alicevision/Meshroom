@@ -2,7 +2,7 @@ from meshroom.core import desc
 
 class DepthMapFilter(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'CMPMVS {mvsConfigValue} --filterDepthmap'
+    commandLine = 'aliceVision_depthMapFiltering --ini {mvsConfigValue}'
     gpu = desc.Level.NORMAL
 
     mvsConfig = desc.File(

@@ -45,3 +45,17 @@ def test_output_invalidation():
     assert n2.input.uid() != n2inputUid      # => UID has changed
     assert n2.input.uid() == n3.input.uid()  # => UIDs on both node are still equal
 
+
+def test_inputLinkInvalidation():
+    """
+    Input links should not change the invalidation.
+    """
+    graph = Graph('')
+    n1 = graph.addNewNode('SampleNode')
+    n2 = graph.addNewNode('SampleNode')
+
+    graph.addEdges((n1.input, n2.input))
+    assert n1.input.uid() == n2.input.uid()
+    assert n1.output.value == n2.output.value
+
+

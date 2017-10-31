@@ -21,6 +21,9 @@ parser.add_argument('--cache', metavar='FOLDER', type=str,
 parser.add_argument('--save', metavar='FOLDER', type=str, required=False,
                     help='Save the workflow to a meshroom files.')
 
+parser.add_argument('--scale', type=int, default=2,
+                    help='Downscale factor for MVS steps. Possible values are: 1, 2, 4, 8, 16.')
+
 args = parser.parse_args()
 
 if not args.output and not args.save:
@@ -28,6 +31,7 @@ if not args.output and not args.save:
     exit(1)
 
 graph = multiview.photogrammetryPipeline(inputFolder=args.input)
+graph.findNode('PrepareDenseScene').scale.value = args.scale
 
 if args.save:
     graph.save(args.save)

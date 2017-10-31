@@ -6,7 +6,7 @@ from meshroom.core import desc
 
 
 Viewpoint = OrderedDict([
-            ("path", desc.File(label="Image", description="Image filepath", value="", uid=[0], isOutput=False)),
+            ("image", desc.File(label="Image", description="Image filepath", value="", uid=[0], isOutput=False)),
             ("focal", desc.FloatParam(label="Focal Length", description="Focal Length", value=0.0, uid=[0], range=(5, 200, 1))),
 ])
 

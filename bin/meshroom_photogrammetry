@@ -27,10 +27,7 @@ if not args.output and not args.save:
     print('Nothing to do. You need to set --output or --save.')
     exit(1)
 
-graph = multiview.photogrammetryPipeline()
-if args.input:
-    cameraInit = graph.findNode("CameraInit")
-    cameraInit.imageDirectory.value = args.input
+graph = multiview.photogrammetryPipeline(inputFolder=args.input)
 
 if args.save:
     graph.save(args.save)

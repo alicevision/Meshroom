@@ -3,10 +3,12 @@ import os
 from .core.graph import Graph
 
 
-def photogrammetryPipeline():
+def photogrammetryPipeline(inputFolder='', inputImages=[], inputViewpoints=[]):
     # type: () -> Graph
     graph = Graph('pipeline')
-    cameraInit = graph.addNewNode('CameraInit')
+    cameraInit = graph.addNewNode('CameraInit', imageDirectory=inputFolder)
+    cameraInit.viewpoints.value = [{'image': image, 'focal': -1} for image in inputImages]
+    cameraInit.viewpoints.extend(inputViewpoints)
     featureExtraction = graph.addNewNode('FeatureExtraction',
                                          input=cameraInit.outputSfm)
     imageMatching = graph.addNewNode('ImageMatching',

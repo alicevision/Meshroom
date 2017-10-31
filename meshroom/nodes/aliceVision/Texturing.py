@@ -61,6 +61,30 @@ class Texturing(desc.CommandLineNode):
             label='Output Folder',
             description='Folder for output mesh: OBJ, material and texture files.',
             value='{cache}/{nodeType}/{uid0}/',
-            uid=[0],
-        )
+            uid=[],
+        ),
+        desc.File(
+            name='outputMesh',
+            label='Output Mesh',
+            description='Folder for output mesh: OBJ, material and texture files.',
+            value='{cache}/{nodeType}/{uid0}/texturedMesh.obj',
+            uid=[],
+            group='',
+            ),
+        desc.File(
+            name='outputMaterial',
+            label='Output Material',
+            description='Folder for output mesh: OBJ, material and texture files.',
+            value='{cache}/{nodeType}/{uid0}/texturedMesh.mtl',
+            uid=[],
+            group='',
+            ),
+        desc.File(
+            name='outputTextures',
+            label='Output Textures',
+            description='Folder for output mesh: OBJ, material and texture files.',
+            value='{cache}/{nodeType}/{uid0}/texture_*.png',
+            uid=[],
+            group='',
+            ),
     ]

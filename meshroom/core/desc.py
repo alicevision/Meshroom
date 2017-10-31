@@ -2,6 +2,7 @@ from meshroom.common import BaseObject, Property, Variant
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import collections
 import os
+import psutil
 
 
 class Attribute(BaseObject):
@@ -195,7 +196,52 @@ class Node(object):
     def __init__(self):
         pass
 
+    def stop(self, node):
+        pass
+
+    def process(self, node):
+        raise NotImplementedError('No process implementation on this node')
+
 
 class CommandLineNode(Node):
     """
     """
+
+    def buildCommandLine(self, node):
+        cmdPrefix = ''
+        if 'REZ_ENV' in os.environ:
+            cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get('REZ_ENV'), packageFullName=node.packageFullName)
+        return cmdPrefix + node.nodeDesc.commandLine.format(**node._cmdVars)
+
+    def stop(self, node):
+        if node.subprocess:
+            node.subprocess.terminate()
+
+    def process(self, node):
+        try:
+            with open(node.logFile(), 'w') as logF:
+                cmd = self.buildCommandLine(node)
+                print(' - commandLine:', cmd)
+                print(' - logFile:', node.logFile())
+                node.subprocess = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
+
+                # store process static info into the status file
+                node.status.commandLine = cmd
+                # node.status.env = node.proc.environ()
+                # node.status.createTime = node.proc.create_time()
+
+                node.statThread.proc = node.subprocess
+                stdout, stderr = node.subprocess.communicate()
+                node.subprocess.wait()
+
+                node.status.returnCode = node.subprocess.returncode
+
+            if node.subprocess.returncode != 0:
+                with open(node.logFile(), 'r') as logF:
+                    logContent = ''.join(logF.readlines())
+                raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(node.name, logContent))
+        except:
+            raise
+        finally:
+            node.subprocess = None
+

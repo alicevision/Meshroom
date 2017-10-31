@@ -51,6 +51,9 @@ else:
 
 stringIsLinkRe = re.compile('^\{.+\}$')
 
+def isCollection(v):
+    return isinstance(v, collections.Iterable) and not isinstance(v, basestring)
+
 @contextmanager
 def GraphModification(graph):
     """
@@ -510,6 +513,7 @@ class Node(BaseObject):
     def updateInternals(self):
         self._cmdVars = {
             'cache': self.graph.cacheDir,
+            'nodeType': self.nodeType,
         }
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             assAttr = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes]
@@ -541,10 +545,8 @@ class Node(BaseObject):
             if attr.isInput:
                 continue  # skip inputs
             attr.value = attr.attributeDesc.value.format(
-                nodeType=self.nodeType,
                 **self._cmdVars)
             attr._invalidationValue = attr.attributeDesc.value.format(
-                nodeType=self.nodeType,
                 **cmdVarsNoCache)
             v = attr.value
 
@@ -559,13 +561,7 @@ class Node(BaseObject):
 
     @property
     def internalFolder(self):
-        return self.nodeDesc.internalFolder.format(nodeType=self.nodeType, **self._cmdVars)
-
-    def commandLine(self):
-        cmdPrefix = ''
-        if 'REZ_ENV' in os.environ:
-            cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get('REZ_ENV'), packageFullName=self.packageFullName)
-        return cmdPrefix + self.nodeDesc.commandLine.format(nodeType=self.nodeType, **self._cmdVars)
+        return self.nodeDesc.internalFolder.format(**self._cmdVars)
 
     def statusFile(self):
         return os.path.join(self.graph.cacheDir, self.internalFolder, 'status')
@@ -648,48 +644,26 @@ class Node(BaseObject):
         self.upgradeStatusTo(Status.SUBMITTED_LOCAL)
 
     def stopProcess(self):
-        if self._subprocess:
-            self._subprocess.terminate()
+        self.nodeDesc.stop(self)
 
     def process(self):
         global runningProcesses
         runningProcesses[self.name] = self
         self.upgradeStatusTo(Status.RUNNING)
-        statThread = stats.StatisticsThread(self)
-        statThread.start()
+        self.statThread = stats.StatisticsThread(self)
+        self.statThread.start()
         startTime = time.time()
         try:
-            with open(self.logFile(), 'w') as logF:
-                cmd = self.commandLine()
-                print(' - commandLine:', cmd)
-                print(' - logFile:', self.logFile())
-                self._subprocess = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
-
-                # store process static info into the status file
-                self.status.commandLine = cmd
-                # self.status.env = self.proc.environ()
-                # self.status.createTime = self.proc.create_time()
-
-                statThread.proc = self._subprocess
-                stdout, stderr = self._subprocess.communicate()
-                self._subprocess.wait()
-
-                self.status.returnCode = self._subprocess.returncode
-
-            if self._subprocess.returncode != 0:
-                with open(self.logFile(), 'r') as logF:
-                    logContent = ''.join(logF.readlines())
-                raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(self.name, logContent))
+            self.nodeDesc.process(self)
         except BaseException:
             self.upgradeStatusTo(Status.ERROR)
             raise
         finally:
             elapsedTime = time.time() - startTime
             print(' - elapsed time:', elapsedTime)
-            self._subprocess = None
             # ask and wait for the stats thread to stop
-            statThread.stopRequest()
-            statThread.join()
+            self.statThread.stopRequest()
+            self.statThread.join()
             del runningProcesses[self.name]
 
         self.upgradeStatusTo(Status.SUCCESS)

@@ -190,7 +190,7 @@ class StatisticsThread(threading.Thread):
     def __init__(self, node):
         threading.Thread.__init__(self)
         self.node = node
-        self.proc = None
+        self.proc = psutil.Process()  # by default current process pid
         self.statistics = self.node.statistics
         self._stopFlag = threading.Event()
 

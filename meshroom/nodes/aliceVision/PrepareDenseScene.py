@@ -29,11 +29,12 @@ class PrepareDenseScene(desc.CommandLineNode):
             uid=[],
             isOutput=True,
             )
-    scale = desc.IntParam(
+    scale = desc.ChoiceParam(
             label='Scale',
             description='''Image downscale factor.''',
             value=2,
-            range=(-sys.maxsize, sys.maxsize, 1),
+            values=[1, 2, 4, 8, 16],
+            exclusive=True,
             uid=[0],
             )
     verboseLevel = desc.ChoiceParam(

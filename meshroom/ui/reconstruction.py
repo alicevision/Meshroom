@@ -1,18 +1,45 @@
+import os
 from threading import Thread
 
-from PySide2.QtCore import QObject, Slot, Property, Signal
+from PySide2.QtCore import QObject, Slot, Property, Signal, QJsonValue, QUrl
 
-from meshroom.core import graph
+from meshroom import multiview
+from meshroom.core import graph, defaultCacheFolder, cacheFolderName
 from meshroom.ui import commands
 
 
 class Reconstruction(QObject):
 
-    def __init__(self, parent=None):
+    def __init__(self, graphFilepath="", parent=None):
         super(Reconstruction, self).__init__(parent)
-        self._graph = graph.Graph("")
+        self._graph = None
         self._undoStack = commands.UndoStack(self)
         self._computeThread = Thread()
+        self._filepath = graphFilepath
+        if self._filepath:
+            self.load(self._filepath)
+        else:
+            self.new()
+
+    @Slot()
+    def new(self):
+        self.clear()
+        self._graph = multiview.photogrammetryPipeline()
+        self._graph.cacheDir = defaultCacheFolder
+        self.graphChanged.emit()
+
+    def clear(self):
+        if self._graph:
+            self._graph.deleteLater()
+            self._graph = None
+        self.setFilepath("")
+        self._undoStack.clear()
+
+    def setFilepath(self, path):
+        if self._filepath == path:
+            return
+        self._filepath = path
+        self.filepathChanged.emit()
 
     @Slot(str)
     def addNode(self, nodeType):
@@ -42,11 +69,27 @@ class Reconstruction(QObject):
     def removeAttribute(self, attribute):
         self._undoStack.tryAndPush(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
-    @Slot(str)
     def load(self, filepath):
+        self.clear()
+        self._graph = graph.Graph("")
         self._graph.load(filepath)
-        self._graph.update()
-        self._undoStack.clear()
+        self.setFilepath(filepath)
+        self.graphChanged.emit()
+
+    @Slot(QUrl)
+    def loadUrl(self, url):
+        self.load(url.toLocalFile())
+
+    @Slot(QUrl)
+    def saveAs(self, url):
+        self.setFilepath(url.toLocalFile())
+        self.save()
+
+    @Slot()
+    def save(self):
+        self._graph.save(self._filepath)
+        self._graph.cacheDir = os.path.join(os.path.dirname(self._filepath), cacheFolderName)
+        self._undoStack.setClean()
 
     @Slot(graph.Node)
     def execute(self, node=None):
@@ -70,7 +113,9 @@ class Reconstruction(QObject):
         self.computingChanged.emit()
 
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
-    graph = Property(graph.Graph, lambda self: self._graph, constant=True)
-    nodes = Property(QObject, lambda self: self._graph.nodes, constant=True)
+    graphChanged = Signal()
+    graph = Property(graph.Graph, lambda self: self._graph, notify=graphChanged)
     computingChanged = Signal()
     computing = Property(bool, lambda self: self._computeThread.is_alive(), notify=computingChanged)
+    filepathChanged = Signal()
+    filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)

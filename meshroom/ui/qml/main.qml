@@ -1,7 +1,9 @@
-import QtQuick 2.5
-import QtQuick.Controls 1.4 // as Controls1
-//import QtQuick.Controls 2.2
+import QtQuick 2.7
+import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.1
+import QtQuick.Window 2.3
+import QtQml.Models 2.2
+import Qt.labs.platform 1.0 as Platform
 
 ApplicationWindow {
     id: _window
@@ -9,129 +11,221 @@ ApplicationWindow {
     width: 1280
     height: 720
     visible: true
-    title: "Meshroom"
-    color: "#fafafa"
+    title: (_reconstruction.filepath ? _reconstruction.filepath : "Untitled") + (_reconstruction.undoStack.clean ? "" : "*") + " - Meshroom"
+    font.pointSize: 10
 
     property variant node: null
 
-    Connections {
-        target: _reconstruction.undoStack
-        onIndexChanged: graphStr.update()
+    onClosing: {
+        // make sure document is saved before exiting application
+        close.accepted = false
+        ensureSaved(function(){ Qt.quit() })
+    }
+
+    Dialog {
+        id: unsavedDialog
+
+        property var _callback: undefined
+
+        title: "Unsaved Document"
+        modal: true
+        x: parent.width/2 - width/2
+        y: parent.height/2 - height/2
+        standardButtons: Dialog.Save | Dialog.Cancel | Dialog.Discard
+
+        onDiscarded: {
+            close() // BUG ? discard does not close window
+            fireCallback()
+        }
+
+        onAccepted: {
+            // save current file
+            if(saveAction.enabled)
+            {
+                saveAction.trigger()
+                fireCallback()
+            }
+            // open "save as" dialog
+            else
+            {
+                saveFileDialog.open()
+                function _callbackWrapper(rc) {
+                    if(rc == Platform.Dialog.Accepted)
+                        fireCallback()
+                    saveFileDialog.closed.disconnect(_callbackWrapper)
+                }
+                saveFileDialog.closed.connect(_callbackWrapper)
+            }
+        }
+
+        function fireCallback()
+        {
+            // call the callback and reset it
+            if(_callback)
+                _callback()
+            _callback = undefined
+        }
+
+        /// Open the unsaved dialog warning with an optional
+        /// callback to fire when the dialog is accepted/discarded
+        function prompt(callback)
+        {
+            _callback = callback
+            open()
+        }
+
+        Label {
+            text: "Your current Graph is not saved"
+        }
+    }
+
+    Platform.FileDialog {
+        id: saveFileDialog
+
+        signal closed(var result)
+
+        title: "Save File"
+        nameFilters: ["Meshroom Graphs (*.mg)"]
+        defaultSuffix: ".mg"
+        fileMode: Platform.FileDialog.SaveFile
+        onAccepted: {
+            _reconstruction.saveAs(file)
+            closed(Platform.Dialog.Accepted)
+        }
+        onRejected: closed(Platform.Dialog.Rejected)
+    }
+
+    Platform.FileDialog {
+        id: openFileDialog
+        title: "Open File"
+        nameFilters: ["Meshroom Graphs (*.mg)"]
+        onAccepted: {
+            _reconstruction.loadUrl(file.toString())
+            graphEditor.doAutoLayout()
+        }
+    }
+
+    // Check if document has been saved
+    function ensureSaved(callback)
+    {
+        var saved = _reconstruction.undoStack.clean
+        // If current document is modified, open "unsaved dialog"
+        if(!saved)
+        {
+            unsavedDialog.prompt(callback)
+        }
+        else // otherwise, directly call the callback
+        {
+            callback()
+        }
+        return saved
+    }
+
+    Action {
+        id: undoAction
+
+        property string tooltip: 'Undo "' +_reconstruction.undoStack.undoText +'"'
+        text: "Undo"
+        shortcut: "Ctrl+Z"
+        enabled: _reconstruction.undoStack.canUndo
+        onTriggered: _reconstruction.undoStack.undo()
+    }
+    Action {
+        id: redoAction
+
+        property string tooltip: 'Redo "' +_reconstruction.undoStack.redoText +'"'
+        text: "Redo"
+        shortcut: "Ctrl+Shift+Z"
+        enabled: _reconstruction.undoStack.canRedo
+        onTriggered: _reconstruction.undoStack.redo()
+    }
+
+    header: MenuBar {
+        Menu {
+            title: "File"
+            Action {
+                text: "New"
+                onTriggered: ensureSaved(function() { _reconstruction.new(); graphEditor.doAutoLayout() })
+            }
+            Action {
+                text: "Open"
+                shortcut: "Ctrl+O"
+                onTriggered: ensureSaved(function() { openFileDialog.open() })
+            }
+            Action {
+                id: saveAction
+                text: "Save"
+                shortcut: "Ctrl+S"
+                enabled: _reconstruction.filepath != "" && !_reconstruction.undoStack.clean
+                onTriggered: _reconstruction.save()
+            }
+            Action {
+                id: saveAsAction
+                text: "Save As..."
+                shortcut: "Ctrl+Shift+S"
+                onTriggered: saveFileDialog.open()
+            }
+            MenuSeparator { }
+            Action {
+                text: "Quit"
+                onTriggered: Qt.quit()
+            }
+        }
+        Menu {
+            title: "Edit"
+            MenuItem {
+                action: undoAction
+                ToolTip.visible: hovered
+                ToolTip.text: undoAction.tooltip
+            }
+            MenuItem {
+                action: redoAction
+                ToolTip.visible: hovered
+                ToolTip.text: redoAction.tooltip
+            }
+        }
     }
 
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 4
-        Row
-        {
+        Row {
+            spacing: 1
             Layout.fillWidth: true
-            TextField {
-                id: filepath
-                width: 200
-            }
-            Button {
-                text: "Load"
-                onClicked: _reconstruction.graph.load(filepath.text)
-            }
 
             Button {
-                text: "Add Node"
-                onClicked: {
-                    _reconstruction.addNode("FeatureExtraction")
-                }
-            }
-
-            Item {width: 4; height: 1}
-
-            Button {
-                text: "Undo"
-                activeFocusOnPress: true
-                enabled: _reconstruction.undoStack.canUndo
-                tooltip:  'Undo "' +_reconstruction.undoStack.undoText +'"'
-                onClicked: {
-                    _reconstruction.undoStack.undo()
-                }
+                text: "Execute"
+                enabled: _reconstruction.graph.nodes.count && !_reconstruction.computing
+                onClicked: _reconstruction.execute(null)
             }
             Button {
-                text: "Redo"
-                activeFocusOnPress: true
-                enabled: _reconstruction.undoStack.canRedo
-                tooltip:  'Redo "' +_reconstruction.undoStack.redoText +'"'
-                onClicked: {
-                    _reconstruction.undoStack.redo()
-                }
+                text: "Stop"
+                enabled: _reconstruction.computing
+                onClicked: _reconstruction.stopExecution()
             }
         }
+        GraphEditor {
+            id: graphEditor
+            graph: _reconstruction.graph
+            Layout.fillWidth: true
+            Layout.preferredHeight: parent.height * 0.3
+            Layout.margins: 10
+        }
 
-        RowLayout{
+        Loader {
             Layout.fillWidth: true
             Layout.fillHeight: true
-
-            ListView {
-                Layout.fillHeight: true
-                Layout.preferredWidth: 150
-                model: _reconstruction.graph.nodes
-                onCountChanged: {
-                    graphStr.update()
-                }
-                spacing: 2
-                delegate: Rectangle {
-                    width: 130
-                    height: 40
-                    Label {
-                        text: object.name
-                        anchors.centerIn: parent
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.AllButtons
-                        onClicked: {
-                            if(mouse.button == Qt.RightButton)
-                                _reconstruction.removeNode(object)
-                            else
-                                _window.node = object
-                        }
-
-                    }
-                    color: "#81d4fa"
-                    border.color: _window.node == object ? Qt.darker(color) : "transparent"
-                }
-            }
-
-            ListView {
-                id: attributesListView
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                model: _window.node != null ? _window.node.attributes : null
-                delegate: RowLayout {
-                    width: attributesListView.width
-                    spacing: 4
-                    Label {
-                        text: object.label
-                        anchors.verticalCenter: parent.verticalCenter
-                        Layout.preferredWidth: 200
-                    }
-                    TextField {
-                        text: object.value
-                        Layout.fillWidth: true
-                        onEditingFinished: _reconstruction.setAttribute(object, text)
-                    }
-                }
-            }
-
-
-            TextArea {
-                id: graphStr
-                Layout.preferredWidth: 400
-                Layout.fillHeight: true
-                wrapMode: TextEdit.WrapAnywhere
-                selectByMouse: true
-                readOnly: true
-                function update() {
-                    graphStr.text = _reconstruction.graph.asString()
+            active: graphEditor.selectedNode != null
+            sourceComponent: Component {
+                AttributeEditor {
+                    node: graphEditor.selectedNode
+                    // Disable editor when computing
+                    enabled: !_reconstruction.computing
                 }
             }
         }
     }
-}
+ }
+
+
+

@@ -477,11 +477,11 @@ class Node(BaseObject):
 
         for attrDesc in self.nodeDesc.inputs:
             assert isinstance(attrDesc, meshroom.core.desc.Attribute)
-            self._attributes.add(attribute_factory(attrDesc, None, False, self))
+            self._attributes.add(attribute_factory(attrDesc, None, False, self, self))
 
         for attrDesc in self.nodeDesc.outputs:
             assert isinstance(attrDesc, meshroom.core.desc.Attribute)
-            self._attributes.add(attribute_factory(attrDesc, None, True, self))
+            self._attributes.add(attribute_factory(attrDesc, None, True, self, self))
 
         # List attributes per uid
         for attr in self._attributes:

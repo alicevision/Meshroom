@@ -3,7 +3,7 @@ import os
 from .core.graph import Graph
 
 
-def photogrammetryPipeline(output, inputFolder='', inputImages=[], inputViewpoints=[]):
+def photogrammetryPipeline(output='', inputFolder='', inputImages=[], inputViewpoints=[]):
     # type: () -> Graph
     graph = Graph('pipeline')
     cameraInit = graph.addNewNode('CameraInit')

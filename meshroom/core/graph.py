@@ -225,6 +225,12 @@ class Attribute(BaseObject):
             return self.desc.value
         return self._value
 
+    def isDefault(self):
+        return self._value == self.desc.value
+
+    def getPrimitiveValue(self, exportDefault=True):
+        return self._value
+
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     type = Property(str, getType, constant=True)
@@ -286,6 +292,15 @@ class ListAttribute(Attribute):
     def getExportValue(self):
         return [attr.getExportValue() for attr in self._value]
 
+    def isDefault(self):
+        return bool(self._value)
+
+    def getPrimitiveValue(self, exportDefault=True):
+        if exportDefault:
+            return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value]
+        else:
+            return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value if not attr.isDefault()]
+
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
 
@@ -330,6 +345,15 @@ class GroupAttribute(Attribute):
 
     def getExportValue(self):
         return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
+
+    def isDefault(self):
+        return len(self._value) == 0
+
+    def getPrimitiveValue(self, exportDefault=True):
+        if exportDefault:
+            return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()}
+        else:
+            return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault()}
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

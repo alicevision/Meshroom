@@ -1161,7 +1161,9 @@ class Graph(BaseObject):
 
     def update(self):
         if not self._updateEnabled:
+            # To do the update once for multiple changes
             self._updateRequested = True
+            return
         self.updateInternals()
         self.updateStatusFromCache()
 

@@ -49,7 +49,7 @@ else:
     bytes = str
     basestring = basestring
 
-stringIsLinkRe = re.compile('^\{.+\}$')
+stringIsLinkRe = re.compile('^\{[A-Za-z]+[A-Za-z0-9_.]*\}$')
 
 def isCollection(v):
     return isinstance(v, collections.Iterable) and not isinstance(v, basestring)
@@ -63,7 +63,7 @@ def GraphModification(graph):
     """
     if not isinstance(graph, Graph):
         raise ValueError("GraphModification expects a Graph instance")
-    # Store update policy
+    # Store update policy for nested usage
     enabled = graph.updateEnabled
     # Disable graph update for nested block
     # (does nothing if already disabled)
@@ -210,7 +210,7 @@ class Attribute(BaseObject):
             g = self.node.graph
             g.addEdge(v, self)
             self._value = ""
-        elif isinstance(v, basestring) and len(v) > 2 and v[0] == '{' and v[-1] == '}':
+        elif self.isInput and isinstance(v, basestring) and stringIsLinkRe.match(v):
             # value is a link to another attribute
             g = self.node.graph
             link = v[1:-1]

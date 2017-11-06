@@ -219,7 +219,11 @@ class Attribute(BaseObject):
             self._value = ""
 
     def getExportValue(self):
-        return '{' + self.getLinkParam().fullName() + '}' if self.isLink else self._value
+        if self.isLink:
+            return '{' + self.getLinkParam().fullName() + '}'
+        if self.isOutput:
+            return self.desc.value
+        return self._value
 
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)

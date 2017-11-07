@@ -12,14 +12,16 @@ ENGINE = ''
 DEFAULT_TAGS = {'prod': ''}
 
 
-def createTask(meshroomFile, node, nbFrames=1, parallel=False, rangeSize=0):
+def createTask(meshroomFile, node):
     tags = DEFAULT_TAGS.copy()  # copy to not modify default tags
-
+    nbFrames = 1
     arguments = {}
     parallelArgs = ''
-    if parallel:
-        parallelArgs = ' --rangeStart @start --rangeSize {rangeSize}'.format(rangeSize=rangeSize)
-        arguments.update({'start': 0, 'end': nbFrames-1, 'step': rangeSize})
+    print('node: ', node.name)
+    if node.isParallelized:
+        blockSize, fullSize, nbBlocks = node.nodeDesc.parallelization.getSizes(node)
+        parallelArgs = ' --iteration @start'
+        arguments.update({'start': 0, 'end': nbBlocks-1, 'step': 1})
 
     tags['nbFrames'] = nbFrames
     allRequirements = list(BASE_REQUIREMENTS)
@@ -68,8 +70,13 @@ if args.toNode:
 
 nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
 
+print("edgesToProcess:", edgesToProcess)
+
 flowEdges = graph.flowEdges(startNodes=toNodes)
 edgesToProcess = set(edgesToProcess).intersection(flowEdges)
+
+print("nodesToProcess:", nodesToProcess)
+print("edgesToProcess:", edgesToProcess)
 
 if not nodesToProcess:
     print('Nothing to compute')

@@ -2,6 +2,7 @@ from collections import defaultdict
 import psutil
 import time
 import threading
+import signal
 
 
 def bytes2human(n):
@@ -187,27 +188,31 @@ bytesPerGiga = 1024. * 1024. * 1024.
 
 
 class StatisticsThread(threading.Thread):
-    def __init__(self, node):
+    def __init__(self, chunk):
         threading.Thread.__init__(self)
-        self.node = node
+        signal.signal(signal.SIGINT, signal.SIG_IGN)  # lambda signal, frame: self.stopRequest())
+        self.chunk = chunk
         self.proc = psutil.Process()  # by default current process pid
-        self.statistics = self.node.statistics
+        self.statistics = chunk.statistics
         self._stopFlag = threading.Event()
 
     def updateStats(self):
         self.lastTime = time.time()
-        if self.statistics.update(self.proc):
-            self.node.saveStatistics()
+        if self.chunk.statistics.update(self.proc):
+            self.chunk.saveStatistics()
 
     def run(self):
-        while True:
-            self.updateStats()
-            if self._stopFlag.wait(60):
-                # stopFlag has been set
-                # update stats one last time and exit main loop
-                if self.proc.is_running():
-                    self.updateStats()
-                return
+        try:
+            while True:
+                self.updateStats()
+                if self._stopFlag.wait(60):
+                    # stopFlag has been set
+                    # update stats one last time and exit main loop
+                    if self.proc.is_running():
+                        self.updateStats()
+                    return
+        except (KeyboardInterrupt, SystemError, GeneratorExit):
+            pass
 
     def stopRequest(self):
         """ Request the thread to exit as soon as possible. """

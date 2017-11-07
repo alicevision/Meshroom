@@ -1,9 +1,9 @@
 from meshroom.common import BaseObject, Property, Variant
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import collections
+import math
 import os
 import psutil
-
 
 class Attribute(BaseObject):
     """
@@ -181,6 +181,76 @@ class Level(Enum):
     INTENSIVE = 2
 
 
+class Range:
+    def __init__(self, iteration=0, blockSize=0, fullSize=0):
+        self.iteration = iteration
+        self.blockSize = blockSize
+        self.fullSize = fullSize
+
+    @property
+    def start(self):
+        return self.iteration * self.blockSize
+
+    @property
+    def effectiveBlockSize(self):
+        remaining = (self.fullSize - self.start) + 1
+        return self.blockSize if remaining >= self.blockSize else remaining
+
+    @property
+    def end(self):
+        return self.start + self.effectiveBlockSize
+
+    @property
+    def last(self):
+        return self.end - 1
+
+    def toDict(self):
+        return {
+            "rangeIteration": self.iteration,
+            "rangeStart": self.start,
+            "rangeEnd": self.end,
+            "rangeLast": self.last,
+            "rangeBlockSize": self.effectiveBlockSize,
+            "rangeFullSize": self.fullSize,
+            }
+
+
+class Parallelization:
+    def __init__(self, inputListParamName='', staticNbBlocks=0, blockSize=0):
+        self.inputListParamName = inputListParamName
+        self.staticNbBlocks = staticNbBlocks
+        self.blockSize = blockSize
+
+    def getSizes(self, node):
+        """
+        Args:
+            node:
+        Returns: (blockSize, fullSize, nbBlocks)
+        """
+        if self.inputListParamName:
+            parentNodes, edges = node.graph.dfsOnFinish(startNodes=[node])
+            for parentNode in parentNodes:
+                if self.inputListParamName in parentNode.getAttributes().keys():
+                    fullSize = len(parentNode.attribute(self.inputListParamName))
+                    nbBlocks = int(math.ceil(float(fullSize) / float(self.blockSize)))
+                    return (self.blockSize, fullSize, nbBlocks)
+            raise RuntimeError('Cannot find the "inputListParamName": "{}" in the list of input nodes: {} for node: {}'.format(self.inputListParamName, parentNodes, node.name))
+        if self.staticNbBlocks:
+            return (1, self.staticNbBlocks, self.staticNbBlocks)
+        return None
+
+    def getRange(self, node, iteration):
+        blockSize, fullSize, nbBlocks = self.getSizes(node)
+        return Range(iteration=iteration, blockSize=blockSize, fullSize=fullSize)
+
+    def getRanges(self, node):
+        blockSize, fullSize, nbBlocks = self.getSizes(node)
+        ranges = []
+        for i in range(nbBlocks):
+            ranges.append(Range(iteration=i, blockSize=blockSize, fullSize=fullSize))
+        return ranges
+
+
 class Node(object):
     """
     """
@@ -192,56 +262,67 @@ class Node(object):
     packageVersion = ''
     inputs = []
     outputs = []
+    parallelization = None
 
     def __init__(self):
+        pass
+
+    def updateInternals(self, node):
         pass
 
     def stop(self, node):
         pass
 
-    def process(self, node):
-        raise NotImplementedError('No process implementation on this node')
+    def processChunk(self, node, range):
+        raise NotImplementedError('No process implementation on node: "{}"'.format(node.name))
 
 
 class CommandLineNode(Node):
     """
     """
+    internalFolder = '{cache}/{nodeType}/{uid0}/'
+    commandLine = ''  # need to be defined on the node
+    parallelization = None
+    commandLineRange = ''
 
-    def buildCommandLine(self, node):
+    def buildCommandLine(self, chunk):
         cmdPrefix = ''
         if 'REZ_ENV' in os.environ:
-            cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get('REZ_ENV'), packageFullName=node.packageFullName)
-        return cmdPrefix + node.nodeDesc.commandLine.format(**node._cmdVars)
+            cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get('REZ_ENV'), packageFullName=chunk.node.packageFullName)
+        cmdSuffix = ''
+        if chunk.range:
+            cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
+        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
     def stop(self, node):
         if node.subprocess:
             node.subprocess.terminate()
 
-    def process(self, node):
+    def processChunk(self, chunk):
         try:
-            with open(node.logFile(), 'w') as logF:
-                cmd = self.buildCommandLine(node)
+            with open(chunk.logFile(), 'w') as logF:
+                cmd = self.buildCommandLine(chunk)
                 print(' - commandLine:', cmd)
-                print(' - logFile:', node.logFile())
-                node.subprocess = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
+                print(' - logFile:', chunk.logFile())
+                chunk.subprocess = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
 
                 # store process static info into the status file
-                node.status.commandLine = cmd
-                # node.status.env = node.proc.environ()
-                # node.status.createTime = node.proc.create_time()
+                chunk.status.commandLine = cmd
+                # chunk.status.env = node.proc.environ()
+                # chunk.status.createTime = node.proc.create_time()
 
-                node.statThread.proc = node.subprocess
-                stdout, stderr = node.subprocess.communicate()
-                node.subprocess.wait()
+                chunk.statThread.proc = chunk.subprocess
+                stdout, stderr = chunk.subprocess.communicate()
+                chunk.subprocess.wait()
 
-                node.status.returnCode = node.subprocess.returncode
+                chunk.status.returnCode = chunk.subprocess.returncode
 
-            if node.subprocess.returncode != 0:
-                with open(node.logFile(), 'r') as logF:
+            if chunk.subprocess.returncode != 0:
+                with open(chunk.logFile(), 'r') as logF:
                     logContent = ''.join(logF.readlines())
-                raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(node.name, logContent))
+                raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(chunk.name, logContent))
         except:
             raise
         finally:
-            node.subprocess = None
+            chunk.subprocess = None
 

@@ -3,6 +3,8 @@ import argparse
 
 import meshroom.core.graph
 from meshroom.core.graph import Status
+from meshroom.core.desc import Range
+
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
 parser.add_argument('graphFile', metavar='GRAPHFILE.mg', type=str,
@@ -11,13 +13,18 @@ parser.add_argument('--node', metavar='NODE_NAME', type=str,
                     help='Process the node. It will generate an error if the dependencies are not already computed.')
 parser.add_argument('--toNode', metavar='NODE_NAME', type=str,
                     help='Process the node with its dependencies.')
-parser.add_argument('--force', help='Force recompute',
+parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
+                    action='store_true')
+parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
                     action='store_true')
 parser.add_argument('--extern', help='Use this option when you compute externally after submission to a render farm from meshroom.',
                     action='store_true')
 parser.add_argument('--cache', metavar='FOLDER', type=str,
                     default=None,
                     help='Override the cache folder')
+
+parser.add_argument('-i', '--iteration', type=int,
+                    default=-1, help='')
 
 args = parser.parse_args()
 
@@ -32,14 +39,22 @@ if args.node:
     submittedStatuses = [Status.SUBMITTED_LOCAL, Status.RUNNING]
     if not args.extern:
         submittedStatuses.append(Status.SUBMITTED_EXTERN)
-    if node.status.status in submittedStatuses:
-        print('Error: Node is already submitted with status "{}"'.format(node.status.status.name))
-        exit(-1)
-    if args.force or node.status.status != pg.Status.SUCCESS:
-        node.process()
+    if not args.forceStatus and not args.forceCompute:
+        for range in node.ranges:
+            if node.status[range.iteration].status in submittedStatuses:
+                print('Error: Node is already submitted with status "{}". See file: "{}"'.format(node.status[range.iteration].status.name, node.statusFile(range)))
+                exit(-1)
+    if not node.hasStatus(Status.SUCCESS) or args.forceCompute:
+        if args.iteration != -1:
+            node.processIteration(args.iteration)
+        else:
+            node.process()
 else:
+    if args.iteration != -1:
+        print('Error: "--iteration" only make sense when used with "--node".')
+        exit(-1)
     toNodes = None
     if args.toNode:
         toNodes = graph.findNodes(args.toNode)
-    pg.execute(graph, toNodes=toNodes, force=args.force)
+    meshroom.core.graph.execute(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
 

@@ -3,8 +3,8 @@ import argparse
 import os
 
 import meshroom.core
+import meshroom.core.graph
 from meshroom import multiview
-from meshroom.core import graph as pg
 
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
@@ -25,6 +25,10 @@ parser.add_argument('--cache', metavar='FOLDER', type=str,
                     help='Choose a custom cache folder')
 parser.add_argument('--save', metavar='FOLDER', type=str, required=False,
                     help='Save the workflow to a meshroom files.')
+parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
+                    action='store_true')
+parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
+                    action='store_true')
 
 parser.add_argument('--scale', type=int, default=2,
                     help='Downscale factor for MVS steps. Possible values are: 1, 2, 4, 8, 16.')
@@ -54,9 +58,8 @@ if not graph.cacheDir:
     graph.cacheDir = meshroom.core.defaultCacheFolder
 
 if args.output:
-    graph.update()
     toNodes = None
     if args.toNode:
         toNodes = graph.findNodes(args.toNode)
 
-    pg.execute(graph, toNodes=toNodes)
+    meshroom.core.graph.execute(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)

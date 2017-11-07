@@ -5,6 +5,8 @@ from meshroom.core import desc
 class FeatureExtraction(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_featureExtraction {allParams}'
+    parallelization = desc.Parallelization(inputListParamName='viewpoints', blockSize=10)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [
         desc.File(
@@ -38,22 +40,6 @@ class FeatureExtraction(desc.CommandLineNode):
             label='Upright',
             description='''Upright feature.''',
             value='',
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='rangeStart',
-            label='Range Start',
-            description='''Range image index start.''',
-            value=-1,
-            range=(-sys.maxsize, sys.maxsize, 1),
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='rangeSize',
-            label='Range Size',
-            description='''Range size. Log parameters:''',
-            value=1,
-            range=(-sys.maxsize, sys.maxsize, 1),
             uid=[0],
         ),
         desc.ChoiceParam(

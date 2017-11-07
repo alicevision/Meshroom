@@ -64,18 +64,20 @@ else:
     nodes, edges = graph.dfsOnFinish(startNodes=startNodes)
 
 for node in nodes:
-    print('{}: {}'.format(node.name, node.statistics.toDict()))
+    for chunk in node.chunks:
+        print('{}: {}\n'.format(chunk.name, chunk.statistics.toDict()))
 
 if args.exportHtml:
     with open(args.exportHtml, 'w') as fileObj:
         for node in nodes:
-            for curves in (node.statistics.computer.curves, node.statistics.process.curves):
-                exportCurves = defaultdict(list)
-                for name, curve in curves.items():
-                    s = name.split('.')
-                    figName = s[0]
-                    curveName = ''.join(s[1:])
-                    exportCurves[figName].append((curveName, curve))
+            for chunk in node.chunks:
+                for curves in (chunk.statistics.computer.curves, chunk.statistics.process.curves):
+                    exportCurves = defaultdict(list)
+                    for name, curve in curves.items():
+                        s = name.split('.')
+                        figName = s[0]
+                        curveName = ''.join(s[1:])
+                        exportCurves[figName].append((curveName, curve))
 
-                for name, curves in exportCurves.items():
-                    addPlots(curves, name, fileObj)
+                    for name, curves in exportCurves.items():
+                        addPlots(curves, name, fileObj)

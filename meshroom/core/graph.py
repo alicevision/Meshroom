@@ -838,25 +838,35 @@ class Graph(BaseObject):
         # type: (Attribute,) -> [Edge]
         return [edge for edge in self.edges if edge.src == attribute]
 
+    def nodeInEdges(self, node):
+        # type: (Node) -> [Edge]
+        """ Return the list of edges arriving to this node """
+        return [edge for edge in self.edges if edge.dst.node == node]
+
+    def nodeOutEdges(self, node):
+        # type: (Node) -> [Edge]
+        """ Return the list of edges starting from this node """
+        return [edge for edge in self.edges if edge.src.node == node]
+
     def removeNode(self, nodeName):
         """
         Remove the node identified by 'nodeName' from the graph
         and return in and out edges removed by this operation in two dicts {dstAttr.fullName(), srcAttr.fullName()}
         """
         node = self.node(nodeName)
-        self._nodes.pop(nodeName)
-
         inEdges = {}
         outEdges = {}
-        with GraphModification(self):
-            for attr in node._attributes:
-                for edge in self.outEdges(attr):
-                    self.edges.remove(edge)
-                    outEdges[edge.dst.fullName()] = edge.src.fullName()
-                if attr in self.edges.keys():
-                    edge = self.edges.pop(attr)
-                    inEdges[edge.dst.fullName()] = edge.src.fullName()
 
+        # Remove all edges arriving to and starting from this node
+        with GraphModification(self):
+            for edge in self.nodeOutEdges(node):
+                self.edges.remove(edge)
+                outEdges[edge.dst.fullName()] = edge.src.fullName()
+            for edge in self.nodeInEdges(node):
+                self.edges.remove(edge)
+                inEdges[edge.dst.fullName()] = edge.src.fullName()
+
+        self._nodes.remove(node)
         return inEdges, outEdges
 
     @Slot(str, result=Node)

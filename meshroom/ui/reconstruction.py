@@ -63,7 +63,11 @@ class Reconstruction(QObject):
 
     @Slot(graph.Attribute, QJsonValue)
     def appendAttribute(self, attribute, value):
-        self._undoStack.tryAndPush(commands.ListAttributeAppendCommand(self._graph, attribute, value.toObject()))
+        if value.isArray():
+            pyValue = value.toArray().toVariantList()
+        else:
+            pyValue = None if value.isNull() else value.toObject()
+        self._undoStack.tryAndPush(commands.ListAttributeAppendCommand(self._graph, attribute, pyValue))
 
     @Slot(graph.Attribute)
     def removeAttribute(self, attribute):

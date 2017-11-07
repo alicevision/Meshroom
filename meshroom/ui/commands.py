@@ -168,18 +168,23 @@ class ListAttributeAppendCommand(GraphCommand):
         assert isinstance(listAttribute, ListAttribute)
         self.attrName = listAttribute.fullName()
         self.index = None
-        self.value = value
+        self.count = 1
+        self.value = value if len(value) else None
         self.setText("Append to {}".format(self.attrName))
 
     def redoImpl(self):
         listAttribute = self.graph.attribute(self.attrName)
-        listAttribute.append(self.value)
-        self.index = len(listAttribute) - 1
+        self.index = len(listAttribute)
+        if isinstance(self.value, list):
+            listAttribute.extend(self.value)
+            self.count = len(self.value)
+        else:
+            listAttribute.append(self.value)
         return True
 
     def undoImpl(self):
         listAttribute = self.graph.attribute(self.attrName)
-        listAttribute.remove(self.index)
+        listAttribute.remove(self.index, self.count)
 
 
 class ListAttributeRemoveCommand(GraphCommand):

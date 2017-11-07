@@ -224,13 +224,14 @@ class Attribute(BaseObject):
         and clear the string value.
         """
         v = self._value
+        g = self.node.graph
+        if not g:
+            return
         if isinstance(v, Attribute):
-            g = self.node.graph
             g.addEdge(v, self)
             self._value = ""
         elif isinstance(v, basestring) and len(v) > 2 and v[0] == '{' and v[-1] == '}':
             # value is a link to another attribute
-            g = self.node.graph
             link = v[1:-1]
             linkNode, linkAttr = link.split('.')
             g.addEdge(g.node(linkNode).attribute(linkAttr), self)
@@ -273,6 +274,7 @@ class ListAttribute(Attribute):
         values = value if isinstance(value, list) else [value]
         attrs = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
         self._value.insert(index, attrs)
+        self._applyExpr()
 
     def index(self, item):
         return self._value.indexOf(item)
@@ -280,6 +282,7 @@ class ListAttribute(Attribute):
     def extend(self, values):
         values = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
         self._value.extend(values)
+        self._applyExpr()
 
     def remove(self, index):
         self._value.removeAt(index)
@@ -292,6 +295,8 @@ class ListAttribute(Attribute):
         return hash(uids)
 
     def _applyExpr(self):
+        if not self.node.graph:
+            return
         for value in self._value:
             value._applyExpr()
 

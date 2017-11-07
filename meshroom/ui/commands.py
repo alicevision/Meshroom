@@ -74,16 +74,15 @@ class AddNodeCommand(GraphCommand):
     def __init__(self, graph, nodeType, parent=None):
         super(AddNodeCommand, self).__init__(graph, parent)
         self.nodeType = nodeType
-        self.node = None
+        self.nodeName = None
 
     def redoImpl(self):
-        self.node = self.graph.addNewNode(self.nodeType)
-        self.setText("Add Node {}".format(self.node.getName()))
+        self.nodeName = self.graph.addNewNode(self.nodeType).name
+        self.setText("Add Node {}".format(self.nodeName))
         return True
 
     def undoImpl(self):
-        self.graph.removeNode(self.node.getName())
-        self.node = None
+        self.graph.removeNode(self.nodeName)
 
 
 class RemoveNodeCommand(GraphCommand):

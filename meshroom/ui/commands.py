@@ -101,7 +101,7 @@ class RemoveNodeCommand(GraphCommand):
 
     def undoImpl(self):
         node = self.graph.addNode(Node(nodeDesc=self.nodeDict["nodeType"],
-                                       parent=self.graph, **self.nodeDict["attributes"]
+                                       **self.nodeDict["attributes"]
                                        ), self.nodeName)
         assert (node.getName() == self.nodeName)
         # recreate out edges deleted on node removal
@@ -186,7 +186,7 @@ class ListAttributeAppendCommand(GraphCommand):
 class ListAttributeRemoveCommand(GraphCommand):
     def __init__(self, graph, attribute, parent=None):
         super(ListAttributeRemoveCommand, self).__init__(graph, parent)
-        listAttribute = attribute.parent()
+        listAttribute = attribute.root
         assert isinstance(listAttribute, ListAttribute)
         self.listAttrName = listAttribute.fullName()
         self.index = listAttribute.index(attribute)
@@ -200,5 +200,6 @@ class ListAttributeRemoveCommand(GraphCommand):
 
     def undoImpl(self):
         listAttribute = self.graph.attribute(self.listAttrName)
-        listAttribute.insert(self.value, self.index)
+        listAttribute.insert(self.index, self.value)
+
 

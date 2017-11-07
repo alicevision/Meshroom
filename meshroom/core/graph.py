@@ -5,8 +5,7 @@ import collections
 import hashlib
 import json
 import os
-import psutil
-import re
+import weakref
 import shutil
 import time
 import uuid
@@ -82,7 +81,7 @@ def hash(v):
     return hashObject.hexdigest()
 
 
-def attribute_factory(description, value, isOutput, node, parent=None):
+def attribute_factory(description, value, isOutput, node, root=None, parent=None):
     # type: (desc.Attribute, (), bool, Node, Attribute) -> Attribute
     """
     Create an Attribute based on description type.
@@ -92,7 +91,8 @@ def attribute_factory(description, value, isOutput, node, parent=None):
         value:  value of the Attribute. Will be set if not None.
         isOutput: whether is Attribute is an output attribute.
         node: node owning the Attribute. Note that the created Attribute is not added to Node's attributes
-        parent: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
+        root: (optional) parent Attribute (must be ListAttribute or GroupAttribute)
+        parent (BaseObject): (optional) the parent BaseObject if any
     """
     if isinstance(description, meshroom.core.desc.GroupAttribute):
         cls = GroupAttribute
@@ -100,7 +100,7 @@ def attribute_factory(description, value, isOutput, node, parent=None):
         cls = ListAttribute
     else:
         cls = Attribute
-    attr = cls(node, description, isOutput, parent=parent)
+    attr = cls(node, description, isOutput, root, parent)
     if value is not None:
         attr.value = value
     return attr
@@ -110,10 +110,21 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, node, attributeDesc, isOutput, parent=None):
+    def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
+        """
+        Attribute constructor
+
+        Args:
+            node (Node): the Node hosting this Attribute
+            attributeDesc (desc.Attribute): the description of this Attribute
+            isOutput (bool): whether this Attribute is an output of the Node
+            root (Attribute): (optional) the root Attribute (List or Group) containing this one
+            parent (BaseObject): (optional) the parent BaseObject
+        """
         super(Attribute, self).__init__(parent)
         self._name = attributeDesc.name
-        self.node = node  # type: Node
+        self._root = None if root is None else weakref.ref(root)
+        self._node = weakref.ref(node)
         self.attributeDesc = attributeDesc
         self._isOutput = isOutput
         self._value = attributeDesc.value
@@ -122,15 +133,22 @@ class Attribute(BaseObject):
         # invalidation value for output attributes
         self._invalidationValue = ""
 
+    @property
+    def node(self):
+        return self._node()
+
+    @property
+    def root(self):
+        return self._root() if self._root else None
     def absoluteName(self):
         return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self._name)
 
     def fullName(self):
         """ Name inside the Graph: nodeName.name """
-        if isinstance(self.parent(), ListAttribute):
-            return '{}[{}]'.format(self.parent().fullName(), self.parent().index(self))
-        elif isinstance(self.parent(), GroupAttribute):
-            return '{}.{}'.format(self.parent().fullName(), self._name)
+        if isinstance(self.root, ListAttribute):
+            return '{}[{}]'.format(self.root.fullName(), self.root.index(self))
+        elif isinstance(self.root, GroupAttribute):
+            return '{}.{}'.format(self.root.fullName(), self._name)
         return '{}.{}'.format(self.node.name, self._name)
 
     def getName(self):
@@ -234,8 +252,8 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
 
-    def __init__(self, node, attributeDesc, isOutput, parent=None):
-        super(ListAttribute, self).__init__(node, attributeDesc, isOutput, parent)
+    def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
+        super(ListAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
         self._value = ListModel(parent=self)
 
     def __getitem__(self, item):
@@ -251,19 +269,17 @@ class ListAttribute(Attribute):
     def append(self, value):
         self.extend([value])
 
-    def insert(self, value, index):
-        attr = attribute_factory(self.attributeDesc.elementDesc, value, self.isOutput, self.node, self)
-        self._value.insert(index, [attr])
+    def insert(self, index, value):
+        values = value if isinstance(value, list) else [value]
+        attrs = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
+        self._value.insert(index, attrs)
 
     def index(self, item):
         return self._value.indexOf(item)
 
     def extend(self, values):
-        childAttributes = []
-        for value in values:
-            attr = attribute_factory(self.attributeDesc.elementDesc, value, self.isOutput, self.node, parent=self)
-            childAttributes.append(attr)
-        self._value.extend(childAttributes)
+        values = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
+        self._value.extend(values)
 
     def remove(self, index):
         self._value.removeAt(index)
@@ -288,13 +304,13 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
 
-    def __init__(self, node, attributeDesc, isOutput, parent=None):
-        super(GroupAttribute, self).__init__(node, attributeDesc, isOutput, parent)
+    def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
+        super(GroupAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
         self._value = DictModel(keyAttrName='name', parent=self)
 
         subAttributes = []
         for subAttrDesc in self.attributeDesc.groupDesc:
-            childAttr = attribute_factory(subAttrDesc, None, self.isOutput, self.node, parent=self)
+            childAttr = attribute_factory(subAttrDesc, None, self.isOutput, self.node, self)
             subAttributes.append(childAttr)
 
         self._value.reset(subAttributes)
@@ -335,16 +351,17 @@ class Edge(BaseObject):
 
     def __init__(self, src, dst, parent=None):
         super(Edge, self).__init__(parent)
-        self._src = src
-        self._dst = dst
+        self._src = weakref.ref(src)
+        self._dst = weakref.ref(dst)
+        self._repr = "<Edge> {} -> {}".format(self._src(), self._dst())
 
     @property
     def src(self):
-        return self._src
+        return self._src()
 
     @property
     def dst(self):
-        return self._dst
+        return self._dst()
 
     src = Property(Attribute, src.fget, constant=True)
     dst = Property(Attribute, dst.fget, constant=True)
@@ -477,11 +494,11 @@ class Node(BaseObject):
 
         for attrDesc in self.nodeDesc.inputs:
             assert isinstance(attrDesc, meshroom.core.desc.Attribute)
-            self._attributes.add(attribute_factory(attrDesc, None, False, self, self))
+            self._attributes.add(attribute_factory(attrDesc, None, False, self))
 
         for attrDesc in self.nodeDesc.outputs:
             assert isinstance(attrDesc, meshroom.core.desc.Attribute)
-            self._attributes.add(attribute_factory(attrDesc, None, True, self, self))
+            self._attributes.add(attribute_factory(attrDesc, None, True, self))
 
         # List attributes per uid
         for attr in self._attributes:
@@ -771,7 +788,7 @@ class Graph(BaseObject):
         for nodeName, nodeData in graphData.items():
             if not isinstance(nodeData, dict):
                 raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
-            n = Node(nodeData['nodeType'], parent=self, **nodeData['attributes'])
+            n = Node(nodeData['nodeType'], **nodeData['attributes'])
             # Add node to the graph with raw attributes values
             self._addNode(n, nodeName)
 
@@ -851,8 +868,7 @@ class Graph(BaseObject):
         :return:
         :rtype: Node
         """
-        node = self.addNode(Node(nodeDesc=nodeType, parent=self, **kwargs))
-        return node
+        return self.addNode(Node(nodeDesc=nodeType, **kwargs))
 
     def _createUniqueNodeName(self, inputName):
         i = 1
@@ -917,11 +933,10 @@ class Graph(BaseObject):
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
             raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.fullName()))
-        edge = self.edges.pop(dstAttr)
+        self.edges.pop(dstAttr)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
         self.update()
-        return edge
 
     def getDepth(self, node):
         # TODO: would be better to use bfs instead of recursive function

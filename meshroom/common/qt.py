@@ -250,6 +250,9 @@ class QObjectListModel(QtCore.QAbstractListModel):
         return len(self._objects) == 0
 
     def _referenceItem(self, item):
+        if not item.parent():
+            # Take ownership of the object if not already parented
+            item.setParent(self)
         if not self._keyAttrName:
             return
         key = getattr(item, self._keyAttrName, None)
@@ -261,13 +264,17 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self._objectByKey[key] = item
 
     def _dereferenceItem(self, item):
+        # Ask for object deletion if parented to the model
+        if item.parent() == self:
+            item.deleteLater()
+
         if not self._keyAttrName:
             return
         key = getattr(item, self._keyAttrName, None)
         if key is None:
             return
         assert key in self._objectByKey
-        self._objectByKey.pop(key)
+        del self._objectByKey[key]
 
     countChanged = QtCore.Signal()
     count = QtCore.Property(int, size, notify=countChanged)

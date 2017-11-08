@@ -88,7 +88,7 @@ class File(Attribute):
     def validateValue(self, value):
         if not isinstance(value, basestring):
             raise ValueError('File only supports string input: "{}".'.format(value))
-        return os.path.normpath(value).replace('\\', '/')
+        return os.path.normpath(value).replace('\\', '/') if value else ''
 
 
 class BoolParam(Param):

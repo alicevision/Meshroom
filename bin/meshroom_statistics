@@ -43,7 +43,7 @@ parser.add_argument("--verbose", help="Print full status information",
 args = parser.parse_args()
 
 if not os.path.exists(args.graphFile):
-    print('ERROR: No graph file "{}".'.format(args.node, args.graphFile))
+    print('ERROR: No graph file "{}".'.format(args.graphFile))
     exit(-1)
 
 graph = pg.loadGraph(args.graphFile)

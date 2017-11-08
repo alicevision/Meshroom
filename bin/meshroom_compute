@@ -40,14 +40,20 @@ if args.node:
     if not args.extern:
         submittedStatuses.append(Status.SUBMITTED_EXTERN)
     if not args.forceStatus and not args.forceCompute:
-        for range in node.ranges:
-            if node.status[range.iteration].status in submittedStatuses:
-                print('Error: Node is already submitted with status "{}". See file: "{}"'.format(node.status[range.iteration].status.name, node.statusFile(range)))
-                exit(-1)
-    if not node.hasStatus(Status.SUCCESS) or args.forceCompute:
         if args.iteration != -1:
-            node.processIteration(args.iteration)
+            chunks = [node.chunks[args.iteration]]
         else:
+            chunks = node.chunks
+        for chunk in chunks:
+            if chunk.status.status in submittedStatuses:
+                print('Error: Node is already submitted with status "{}". See file: "{}"'.format(chunk.status.status.name, chunk.statusFile()))
+                exit(-1)
+    if args.iteration != -1:
+        chunk = node.chunks[args.iteration]
+        if chunk.status.status != Status.SUCCESS or args.forceCompute:
+            chunk.process()
+    else:
+        if not node.hasStatus(Status.SUCCESS) or args.forceCompute:
             node.process()
 else:
     if args.iteration != -1:

@@ -270,11 +270,11 @@ class Node(object):
     def updateInternals(self, node):
         pass
 
-    def stop(self, node):
-        pass
+    def stopProcess(self, chunk):
+        raise NotImplementedError('No stopProcess implementation on node: {}'.format(chunk.node.name))
 
-    def processChunk(self, node, range):
-        raise NotImplementedError('No process implementation on node: "{}"'.format(node.name))
+    def processChunk(self, chunk):
+        raise NotImplementedError('No processChunk implementation on node: "{}"'.format(chunk.node.name))
 
 
 class CommandLineNode(Node):
@@ -294,9 +294,9 @@ class CommandLineNode(Node):
             cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
-    def stop(self, node):
-        if node.subprocess:
-            node.subprocess.terminate()
+    def stopProcess(self, chunk):
+        if chunk.subprocess:
+            chunk.subprocess.terminate()
 
     def processChunk(self, chunk):
         try:

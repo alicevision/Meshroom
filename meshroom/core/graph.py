@@ -584,6 +584,9 @@ class NodeChunk(BaseObject):
 
         self.upgradeStatusTo(Status.SUCCESS)
 
+    def stopProcess(self):
+        self.node.nodeDesc.stopProcess(self)
+
     statusChanged = Signal()
     statusName = Property(str, statusName.fget, notify=statusChanged)
     statisticsChanged = Signal()
@@ -823,9 +826,6 @@ class Node(BaseObject):
     def beginSequence(self):
         self.upgradeStatusTo(Status.SUBMITTED_LOCAL)
 
-    def stopProcess(self):
-        self.nodeDesc.stop(self)
-
     def processIteration(self, iteration):
         self.chunks[iteration].process()
 
@@ -972,7 +972,6 @@ class Graph(BaseObject):
         node._name = uniqueName
         node.graph = self
         self._nodes.add(node)
-        self.stopExecutionRequested.connect(node.stopProcess)
 
     def addNode(self, node, uniqueName=None):
         """
@@ -1322,14 +1321,29 @@ class Graph(BaseObject):
         self.updateStatusFromCache()
 
     def stopExecution(self):
-        """ Request graph execution to be stopped """
-        self.stopExecutionRequested.emit()
+        """ Request graph execution to be stopped by terminating running chunks"""
+        for chunk in self.iterChunksByStatus(Status.RUNNING):
+            chunk.stopProcess()
 
     def clearSubmittedNodes(self):
         """ Reset the status of already submitted nodes to Status.NONE """
         for node in self.nodes:
             for chunk in node.alreadySubmittedChunks():
                 chunk.upgradeStatusTo(Status.NONE)
+
+    def iterChunksByStatus(self, status):
+        """ Iterate over NodeChunks with the given status """
+        for node in self.nodes:
+            for chunk in node.chunks:
+                if chunk.status.status == status:
+                    yield chunk
+
+    def getChunksByStatus(self, status):
+        """ Return the list of NodeChunks with the given status """
+        chunks = []
+        for node in self.nodes:
+            chunks += [chunk for chunk in node.chunks if chunk.status.status == status]
+        return chunks
 
     @property
     def nodes(self):
@@ -1354,8 +1368,6 @@ class Graph(BaseObject):
     edges = Property(BaseObject, edges.fget, constant=True)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
-
-    stopExecutionRequested = Signal()
 
 
 def loadGraph(filepath):

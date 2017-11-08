@@ -53,10 +53,7 @@ graph.updateStatisticsFromCache()
 
 nodes = []
 if args.node:
-    if args.node not in graph.nodes.keys():
-        print('ERROR: node "{}" does not exist in file "{}".'.format(args.node, args.graphFile))
-        exit(-1)
-    nodes = [graph.node(args.node)]
+    nodes = [graph.findNode(args.node)]
 else:
     startNodes = None
     if args.graph:

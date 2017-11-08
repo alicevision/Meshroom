@@ -130,14 +130,6 @@ class CameraInit(desc.CommandLineNode):
             value='{cache}/{nodeType}/{uid0}',  # TODO
             uid=[],
         ),
-        desc.File(  # TODO: TO REMOVE
-            name='outputSfM',
-            label='Output SfM',
-            description='''Output SfMData.''',
-            value='{cache}/{nodeType}/{uid0}/sfm_data.json',
-            uid=[],
-            group="",
-        ),
         desc.File(
             name='outputSfm',
             label='Output SfM',
@@ -208,7 +200,7 @@ class CameraInit(desc.CommandLineNode):
         """
         if node.viewpoints:
             sfmData = {
-                "resources": [v["image"] for v in node.viewpoints.getPrimitiveValue(exportDefault=False)],
+                "resources": [v.get("image", "") for v in node.viewpoints.getPrimitiveValue(exportDefault=False)],
             }
             node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.json'.format(**node._cmdVars)
             with open(node.viewpointsFile, 'w') as f:

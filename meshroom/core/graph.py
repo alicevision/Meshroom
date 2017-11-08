@@ -785,13 +785,19 @@ class Node(BaseObject):
 
     def updateInternals(self):
         if self.isParallelized:
-            ranges = self.nodeDesc.parallelization.getRanges(self)
-            if len(ranges) != len(self.chunks):
-                self._chunks = [NodeChunk(self, range) for range in ranges]
+            try:
+                ranges = self.nodeDesc.parallelization.getRanges(self)
+                if len(ranges) != len(self.chunks):
+                    self._chunks = [NodeChunk(self, range) for range in ranges]
+                    self.chunksChanged.emit()
+                else:
+                    for chunk, range in zip(self.chunks, ranges):
+                        chunk.range = range
+            except RuntimeError:
+                # TODO: set node internal status to error
+                logging.warning("Invalid Parallelization on node {}".format(self._name))
+                self._chunks = []
                 self.chunksChanged.emit()
-            else:
-                for chunk, range in zip(self.chunks, ranges):
-                    chunk.range = range
         else:
             if len(self._chunks) != 1:
                 self._chunks = [NodeChunk(self, desc.Range())]

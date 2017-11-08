@@ -230,13 +230,17 @@ class Parallelization:
         Returns: (blockSize, fullSize, nbBlocks)
         """
         if self.inputListParamName:
+            # Look for this attribute on preceding nodes
             parentNodes, edges = node.graph.dfsOnFinish(startNodes=[node])
             for parentNode in parentNodes:
                 if self.inputListParamName in parentNode.getAttributes().keys():
                     fullSize = len(parentNode.attribute(self.inputListParamName))
                     nbBlocks = int(math.ceil(float(fullSize) / float(self.blockSize)))
                     return (self.blockSize, fullSize, nbBlocks)
-            raise RuntimeError('Cannot find the "inputListParamName": "{}" in the list of input nodes: {} for node: {}'.format(self.inputListParamName, parentNodes, node.name))
+            # No attribute has been found (parallelization won't work): raise
+            raise RuntimeError(
+                'Cannot find the "inputListParamName": "{}" in the list of input nodes: {} for node: {}'.format(
+                    self.inputListParamName, parentNodes, node.name))
         if self.staticNbBlocks:
             return (1, self.staticNbBlocks, self.staticNbBlocks)
         return None

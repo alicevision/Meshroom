@@ -154,6 +154,8 @@ class ChoiceParam(Param):
                 raise ValueError('Non exclusive ChoiceParam value "{}" should be iterable.'.format(value))
             newValues = value
         for newValue in newValues:
+            t = type(self._values[0])  # cast to value type
+            newValue = t(newValue)
             if newValue not in self.values:
                 raise ValueError('ChoiceParam value "{}" is not in "{}".'.format(newValue, str(self.values)))
         return value

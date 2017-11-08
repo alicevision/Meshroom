@@ -474,7 +474,7 @@ class NodeChunk(BaseObject):
 
     @property
     def statusName(self):
-        return self.status.name
+        return self.status.status.name
 
     def updateStatusFromCache(self):
         """

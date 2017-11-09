@@ -17,7 +17,6 @@ class Attribute(BaseObject):
         self._value = value
         self._uid = uid
         self._group = group
-        # self._isOutput = False
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
@@ -25,8 +24,7 @@ class Attribute(BaseObject):
     value = Property(Variant, lambda self: self._value, constant=True)
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
-    # isOutput = Property(bool, lambda self: self._isOutput, constant=True)
-    # isInput = Property(bool, lambda self: not self._isOutput, constant=True)
+    type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
         return value
@@ -38,9 +36,10 @@ class ListAttribute(Attribute):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
-        self.elementDesc = elementDesc
+        self._elementDesc = elementDesc
         super(ListAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
 
+    elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
 
     def validateValue(self, value):
@@ -55,8 +54,10 @@ class GroupAttribute(Attribute):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
-        self.groupDesc = groupDesc
+        self._groupDesc = groupDesc
         super(GroupAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
+
+    groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def validateValue(self, value):
         if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
@@ -65,7 +66,7 @@ class GroupAttribute(Attribute):
 
     def retrieveChildrenUids(self):
         allUids = []
-        for desc in self.groupDesc:
+        for desc in self._groupDesc:
             allUids.extend(desc.uid)
         return allUids
 

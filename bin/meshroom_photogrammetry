@@ -13,25 +13,25 @@ parser.add_argument('--input', metavar='FOLDER', type=str,
                     help='Input folder or json file.')
 parser.add_argument('--inputImages', metavar='IMAGES', type=str, nargs='*',
                     help='Input images.')
+parser.add_argument('--output', metavar='FOLDER', type=str, required=True,
+                    help='Output folder.')
 
-parser.add_argument('--output', metavar='FOLDER', type=str, required=False,
-                    default='',
-                    help='Results.')
+parser.add_argument('--save', metavar='FOLDER', type=str, required=False,
+                    help='Save the workflow to a meshroom files (instead of running it).')
+
+parser.add_argument('--scale', type=int, default=2,
+                    help='Downscale factor for MVS steps. Possible values are: 1, 2, 4, 8, 16.')
+
 parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
                     default=None,
                     help='Process the node(s) with its dependencies.')
 parser.add_argument('--cache', metavar='FOLDER', type=str,
                     default=None,
                     help='Choose a custom cache folder')
-parser.add_argument('--save', metavar='FOLDER', type=str, required=False,
-                    help='Save the workflow to a meshroom files.')
 parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
                     action='store_true')
 parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
                     action='store_true')
-
-parser.add_argument('--scale', type=int, default=2,
-                    help='Downscale factor for MVS steps. Possible values are: 1, 2, 4, 8, 16.')
 
 args = parser.parse_args()
 
@@ -48,8 +48,8 @@ graph.findNode('PrepareDenseScene').scale.value = args.scale
 
 if args.save:
     graph.save(args.save)
-    if not args.cache:
-        graph.cacheDir = os.path.abspath(os.path.dirname(args.save))
+    print('File successfully saved:', args.save)
+    exit(0)
 
 if args.cache:
     graph.cacheDir = args.cache
@@ -57,9 +57,9 @@ if args.cache:
 if not graph.cacheDir:
     graph.cacheDir = meshroom.core.defaultCacheFolder
 
-if args.output:
-    toNodes = None
-    if args.toNode:
-        toNodes = graph.findNodes(args.toNode)
+toNodes = None
+if args.toNode:
+    toNodes = graph.findNodes(args.toNode)
 
-    meshroom.core.graph.execute(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
+meshroom.core.graph.execute(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
+

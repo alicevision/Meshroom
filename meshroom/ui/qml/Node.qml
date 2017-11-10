@@ -12,6 +12,7 @@ Rectangle {
 
     implicitHeight: body.height + 4
 
+    color: baseColor
     opacity: 0.9
 
     MouseArea {
@@ -47,14 +48,49 @@ Rectangle {
     Column {
         id: body
         width: parent.width
+        spacing: 2
 
         Label {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            padding: 2
+            topPadding: 2
             text: node.nodeType
             color: "#EEE"
             font.pointSize: 8
+        }
+
+        // Node Chunks
+        Rectangle {
+            height: 3
+            width: parent.width - 2
+            anchors.horizontalCenter: parent.horizontalCenter
+            color: Qt.darker(baseColor, 1.2)
+
+            ListView {
+                id: chunksListView
+                anchors.fill: parent
+                anchors.margins: 1
+                interactive: false
+                orientation: Qt.Horizontal
+
+                model: node.chunks
+                property int chunkHeight: height
+
+                delegate: Rectangle {
+                    id: chunkDelegate
+                    height: chunksListView.chunkHeight
+                    width: chunksListView.width / chunksListView.count
+                    state: modelData.statusName
+                    states: [
+                        State { name: "NONE"; PropertyChanges { target: chunkDelegate; color: "transparent"} },
+                        State { name: "SUBMITTED_EXTERN"; PropertyChanges { target: chunkDelegate; color: "#2196F3"} },
+                        State { name: "SUBMITTED_LOCAL"; PropertyChanges { target: chunkDelegate; color: "#009688"} },
+                        State { name: "RUNNING"; PropertyChanges { target: chunkDelegate; color: "#FF9800"} },
+                        State { name: "ERROR"; PropertyChanges { target: chunkDelegate; color: "#F44336"} },
+                        State { name: "SUCCESS"; PropertyChanges { target: chunkDelegate; color: "#4CAF50"} }
+                    ]
+                }
+            }
         }
 
         RowLayout  {
@@ -103,38 +139,5 @@ Rectangle {
                 }
             }
         }
-    }
-
-    StateGroup {
-        id: status
-
-        state: node.statusName
-
-        states: [
-            State {
-                name: "NONE"
-                PropertyChanges { target: root; color: baseColor}
-            },
-            State {
-                name: "SUBMITTED_EXTERN"
-                PropertyChanges { target: root; color: "#2196F3"}
-            },
-            State {
-                name: "SUBMITTED_LOCAL"
-                PropertyChanges { target: root; color: "#009688"}
-            },
-            State {
-                name: "RUNNING"
-                PropertyChanges { target: root; color: "#FF9800"}
-            },
-            State {
-                name: "ERROR"
-                PropertyChanges { target: root; color: "#F44336"}
-            },
-            State {
-                name: "SUCCESS"
-                PropertyChanges { target: root; color: "#4CAF50"}
-            }
-        ]
     }
 }

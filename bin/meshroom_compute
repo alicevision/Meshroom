@@ -47,7 +47,7 @@ if args.node:
         for chunk in chunks:
             if chunk.status.status in submittedStatuses:
                 print('Error: Node is already submitted with status "{}". See file: "{}"'.format(chunk.status.status.name, chunk.statusFile()))
-                exit(-1)
+                # exit(-1)
     if args.iteration != -1:
         chunk = node.chunks[args.iteration]
         if chunk.status.status != Status.SUCCESS or args.forceCompute:

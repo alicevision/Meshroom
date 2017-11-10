@@ -22,14 +22,15 @@ Item {
     signal workspaceClicked()
 
     clip: true
-    // Activate multisampling for edges antialiasing
-    layer.enabled: true
-    layer.samples: 8
+
 
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         property double factor: 1.15
+        // Activate multisampling for edges antialiasing
+        layer.enabled: true
+        layer.samples: 8
 
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton

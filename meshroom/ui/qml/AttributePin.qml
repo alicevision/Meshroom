@@ -14,16 +14,31 @@ Row {
     readonly property point edgeAnchorPos: Qt.point(edgeAnchor.x + edgeAnchor.width/2,
                                                     edgeAnchor.y + edgeAnchor.height/2)
 
+    readonly property bool isList: attribute.type == "ListAttribute"
+
+    signal childPinCreated(var childAttribute, var pin)
+    signal childPinDeleted(var childAttribute, var pin)
+
     objectName: attribute.name + "."
     layoutDirection: attribute.isOutput ? Qt.RightToLeft : Qt.LeftToRight
     spacing: 1
+
+    // Instantiate empty Items for each child attribute
+    Repeater {
+        model: isList ? attribute.value : ""
+        onItemAdded: {childPinCreated(item.childAttribute, item)}
+        onItemRemoved: {childPinDeleted(item.childAttribute, item)}
+        delegate: Item {
+            property var childAttribute: object
+        }
+    }
 
     Rectangle {
         id: edgeAnchor
 
         width: 6
         height: width
-        radius: width/2
+        radius: isList ? 0 : width/2
         anchors.verticalCenter: parent.verticalCenter
         border.color: "#3e3e3e"
         color: (dropArea.containsDrag && dropArea.containsDrag) || attribute.isLink ? "#3e3e3e" : "white"
@@ -39,7 +54,8 @@ Row {
                 // Filter drops:
                 if( drag.source.objectName != dragTarget.objectName  // not an edge connector
                    ||  drag.source.nodeItem == dragTarget.nodeItem   // connection between attributes of the same node
-                   || (dragTarget.isOutput)                          // connection on an output
+                   || dragTarget.isOutput                            // connection on an output
+                   || dragTarget.isList                              // TEMP: disable connection to list
                    || dragTarget.attribute.isLink)                   // already connected attribute
                 {
                     drag.accepted = false
@@ -59,6 +75,7 @@ Row {
             readonly property alias attribute: root.attribute
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: attribute.isOutput
+            readonly property alias isList: root.isList
             anchors.centerIn: root.state == "Dragging" ? undefined : parent
             //anchors.verticalCenter: root.verticalCenter
             width: 2

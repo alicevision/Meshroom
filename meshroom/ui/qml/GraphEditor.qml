@@ -22,14 +22,15 @@ Item {
     signal workspaceClicked()
 
     clip: true
-    // Activate multisampling for edges antialiasing
-    layer.enabled: true
-    layer.samples: 8
+
 
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         property double factor: 1.15
+        // Activate multisampling for edges antialiasing
+        layer.enabled: true
+        layer.samples: 8
 
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -104,7 +105,7 @@ Item {
                     radius: 1
                     border.color: root.selectedNode == node ? Qt.darker(color, 1.8) : Qt.darker(color, 1.1)
 
-                    onAttributePinCreated: root._attributeToDelegate[attribute] = pin
+                    onAttributePinCreated: registerAttributePin(attribute, pin)
 
                     onPressed: {
                         root.selectedNode = object
@@ -135,6 +136,11 @@ Item {
             onClicked: root.doAutoLayout()
             z: 10
         }
+    }
+
+    function registerAttributePin(attribute, pin)
+    {
+        root._attributeToDelegate[attribute] = pin
     }
 
     // Fit graph to fill root

@@ -17,7 +17,6 @@ class Attribute(BaseObject):
         self._value = value
         self._uid = uid
         self._group = group
-        # self._isOutput = False
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
@@ -25,8 +24,7 @@ class Attribute(BaseObject):
     value = Property(Variant, lambda self: self._value, constant=True)
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
-    # isOutput = Property(bool, lambda self: self._isOutput, constant=True)
-    # isInput = Property(bool, lambda self: not self._isOutput, constant=True)
+    type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
         return value
@@ -38,9 +36,10 @@ class ListAttribute(Attribute):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
-        self.elementDesc = elementDesc
+        self._elementDesc = elementDesc
         super(ListAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
 
+    elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
 
     def validateValue(self, value):
@@ -55,8 +54,10 @@ class GroupAttribute(Attribute):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
-        self.groupDesc = groupDesc
+        self._groupDesc = groupDesc
         super(GroupAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
+
+    groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def validateValue(self, value):
         if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
@@ -65,7 +66,7 @@ class GroupAttribute(Attribute):
 
     def retrieveChildrenUids(self):
         allUids = []
-        for desc in self.groupDesc:
+        for desc in self._groupDesc:
             allUids.extend(desc.uid)
         return allUids
 
@@ -88,7 +89,7 @@ class File(Attribute):
     def validateValue(self, value):
         if not isinstance(value, basestring):
             raise ValueError('File only supports string input  (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
-        return os.path.normpath(value).replace('\\', '/')
+        return os.path.normpath(value).replace('\\', '/') if value else ''
 
 
 class BoolParam(Param):
@@ -154,6 +155,8 @@ class ChoiceParam(Param):
                 raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
             newValues = value
         for newValue in newValues:
+            t = type(self._values[0])  # cast to value type
+            newValue = t(newValue)
             if newValue not in self.values:
                 raise ValueError('ChoiceParam value "{}" is not in "{}".'.format(newValue, str(self.values)))
         return value
@@ -228,13 +231,17 @@ class Parallelization:
         Returns: (blockSize, fullSize, nbBlocks)
         """
         if self.inputListParamName:
+            # Look for this attribute on preceding nodes
             parentNodes, edges = node.graph.dfsOnFinish(startNodes=[node])
             for parentNode in parentNodes:
                 if self.inputListParamName in parentNode.getAttributes().keys():
                     fullSize = len(parentNode.attribute(self.inputListParamName))
                     nbBlocks = int(math.ceil(float(fullSize) / float(self.blockSize)))
                     return (self.blockSize, fullSize, nbBlocks)
-            raise RuntimeError('Cannot find the "inputListParamName": "{}" in the list of input nodes: {} for node: {}'.format(self.inputListParamName, parentNodes, node.name))
+            # No attribute has been found (parallelization won't work): raise
+            raise RuntimeError(
+                'Cannot find the "inputListParamName": "{}" in the list of input nodes: {} for node: {}'.format(
+                    self.inputListParamName, parentNodes, node.name))
         if self.staticNbBlocks:
             return (1, self.staticNbBlocks, self.staticNbBlocks)
         return None
@@ -270,11 +277,11 @@ class Node(object):
     def updateInternals(self, node):
         pass
 
-    def stop(self, node):
-        pass
+    def stopProcess(self, chunk):
+        raise NotImplementedError('No stopProcess implementation on node: {}'.format(chunk.node.name))
 
-    def processChunk(self, node, range):
-        raise NotImplementedError('No process implementation on node: "{}"'.format(node.name))
+    def processChunk(self, chunk):
+        raise NotImplementedError('No processChunk implementation on node: "{}"'.format(chunk.node.name))
 
 
 class CommandLineNode(Node):
@@ -294,9 +301,9 @@ class CommandLineNode(Node):
             cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
-    def stop(self, node):
-        if node.subprocess:
-            node.subprocess.terminate()
+    def stopProcess(self, chunk):
+        if chunk.subprocess:
+            chunk.subprocess.terminate()
 
     def processChunk(self, chunk):
         try:

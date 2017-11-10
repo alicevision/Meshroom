@@ -74,16 +74,15 @@ class AddNodeCommand(GraphCommand):
     def __init__(self, graph, nodeType, parent=None):
         super(AddNodeCommand, self).__init__(graph, parent)
         self.nodeType = nodeType
-        self.node = None
+        self.nodeName = None
 
     def redoImpl(self):
-        self.node = self.graph.addNewNode(self.nodeType)
-        self.setText("Add Node {}".format(self.node.getName()))
+        self.nodeName = self.graph.addNewNode(self.nodeType).name
+        self.setText("Add Node {}".format(self.nodeName))
         return True
 
     def undoImpl(self):
-        self.graph.removeNode(self.node.getName())
-        self.node = None
+        self.graph.removeNode(self.nodeName)
 
 
 class RemoveNodeCommand(GraphCommand):
@@ -101,7 +100,7 @@ class RemoveNodeCommand(GraphCommand):
 
     def undoImpl(self):
         node = self.graph.addNode(Node(nodeDesc=self.nodeDict["nodeType"],
-                                       parent=self.graph, **self.nodeDict["attributes"]
+                                       **self.nodeDict["attributes"]
                                        ), self.nodeName)
         assert (node.getName() == self.nodeName)
         # recreate out edges deleted on node removal
@@ -169,24 +168,29 @@ class ListAttributeAppendCommand(GraphCommand):
         assert isinstance(listAttribute, ListAttribute)
         self.attrName = listAttribute.fullName()
         self.index = None
-        self.value = value
+        self.count = 1
+        self.value = value if len(value) else None
         self.setText("Append to {}".format(self.attrName))
 
     def redoImpl(self):
         listAttribute = self.graph.attribute(self.attrName)
-        listAttribute.append(self.value)
-        self.index = len(listAttribute) - 1
+        self.index = len(listAttribute)
+        if isinstance(self.value, list):
+            listAttribute.extend(self.value)
+            self.count = len(self.value)
+        else:
+            listAttribute.append(self.value)
         return True
 
     def undoImpl(self):
         listAttribute = self.graph.attribute(self.attrName)
-        listAttribute.remove(self.index)
+        listAttribute.remove(self.index, self.count)
 
 
 class ListAttributeRemoveCommand(GraphCommand):
     def __init__(self, graph, attribute, parent=None):
         super(ListAttributeRemoveCommand, self).__init__(graph, parent)
-        listAttribute = attribute.parent()
+        listAttribute = attribute.root
         assert isinstance(listAttribute, ListAttribute)
         self.listAttrName = listAttribute.fullName()
         self.index = listAttribute.index(attribute)
@@ -200,5 +204,6 @@ class ListAttributeRemoveCommand(GraphCommand):
 
     def undoImpl(self):
         listAttribute = self.graph.attribute(self.listAttrName)
-        listAttribute.insert(self.value, self.index)
+        listAttribute.insert(self.index, self.value)
+
 

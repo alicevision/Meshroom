@@ -223,7 +223,7 @@ class CameraInit(desc.CommandLineNode):
         """
         if node.viewpoints:
             sfmData = {
-                "resources": [v["path"] for v in node.viewpoints.getPrimitiveValue(exportDefault=False)],
+                "resources": [v.get("path", "") for v in node.viewpoints.getPrimitiveValue(exportDefault=False)],
             }
             node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.json'.format(**node._cmdVars)
             with open(node.viewpointsFile, 'w') as f:

@@ -43,7 +43,7 @@ class CoreDictModel:
 
     def remove(self, obj):
         assert obj in self._objects.values()
-        return self._objects.pop(getattr(obj, self._keyAttrName))
+        del self._objects[getattr(obj, self._keyAttrName)]
 
     def clear(self):
         self._objects.clear()
@@ -79,14 +79,17 @@ class CoreListModel:
     def indexOf(self, obj):
         self._objects.index(obj)
 
-    def removeAt(self, idx):
-        del self._objects[idx]
+    def removeAt(self, idx, count=1):
+        del self._objects[idx:idx+count]
 
     def remove(self, obj):
         self._objects.remove(obj)
 
     def clear(self):
         self._objects = []
+
+    def insert(self, index, iterable):
+        self._objects[index:index] = iterable
 
 
 class CoreSignal:

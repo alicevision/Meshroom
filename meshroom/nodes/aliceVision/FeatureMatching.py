@@ -37,9 +37,9 @@ class FeatureMatching(desc.CommandLineNode):
             joinChar=',',
         ),
         desc.File(
-            name='featuresDirectory',
-            label='Features Directory',
-            description='''Path to a directory containing the extracted features.''',
+            name='featuresFolder',
+            label='Features Folder',
+            description='''Path to a folder containing the extracted features.''',
             value='',
             uid=[0],
         ),
@@ -158,7 +158,7 @@ class FeatureMatching(desc.CommandLineNode):
         desc.File(
             name='output',
             label='Output',
-            description='''Path to a directory in which computed matches will be stored. Optional parameters:''',
+            description='''Path to a folder in which computed matches will be stored.''',
             value='{cache}/{nodeType}/{uid0}/',
             uid=[],
         ),

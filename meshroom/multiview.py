@@ -33,16 +33,16 @@ def photogrammetryPipeline(output='', inputFolder='', inputImages=[], inputViewp
                                              input=cameraInit.output)
         imageMatching = graph.addNewNode('ImageMatching',
                                              input=featureExtraction.input,
-                                             featuresDirectory=featureExtraction.output,
+                                             featuresFolder=featureExtraction.output,
                                              )
         featureMatching = graph.addNewNode('FeatureMatching',
                                            input=imageMatching.input,
-                                           featuresDirectory=imageMatching.featuresDirectory,
+                                           featuresFolder=imageMatching.featuresFolder,
                                            imagePairsList=imageMatching.output)
         structureFromMotion = graph.addNewNode('StructureFromMotion',
                                                input=featureMatching.input,
-                                               featuresDirectory=featureMatching.featuresDirectory,
-                                               matchesDirectory=featureMatching.output)
+                                               featuresFolder=featureMatching.featuresFolder,
+                                               matchesFolder=featureMatching.output)
         prepareDenseScene = graph.addNewNode('PrepareDenseScene',
                                              input=structureFromMotion.output)
         cameraConnection = graph.addNewNode('CameraConnection',

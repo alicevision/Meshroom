@@ -16,9 +16,9 @@ class ImageMatching(desc.CommandLineNode):
             uid=[0],
         ),
         desc.File(
-            name='featuresDirectory',
-            label='Features Directory',
-            description='''Directory containing the extracted features and descriptors. By default, it is the directory containing the SfMData.''',
+            name='featuresFolder',
+            label='Features Folder',
+            description='''Folder containing the extracted features and descriptors. By default, it is the folder containing the SfMData.''',
             value='',
             uid=[0],
         ),

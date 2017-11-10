@@ -47,7 +47,7 @@ class PrepareDenseScene(desc.CommandLineNode):
         desc.File(
             name='output',
             label='Output',
-            description='''Output directory.''',
+            description='''Output folder.''',
             value='{cache}/{nodeType}/{uid0}/',
             uid=[],
         )

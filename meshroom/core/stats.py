@@ -1,8 +1,8 @@
 from collections import defaultdict
+import logging
 import psutil
 import time
 import threading
-import signal
 
 
 def bytes2human(n):
@@ -174,7 +174,7 @@ class Statistics:
     def fromDict(self, d):
         version = d.get('fileVersion', 1.0)
         if version != self.fileVersion:
-            logging.info('Cannot load statistics, version was {} and we only support {}.'.format(version, fileVersion))
+            logging.info('Cannot load statistics, version was {} and we only support {}.'.format(version, self.fileVersion))
             self.computer = {}
             self.process = {}
             self.times = []
@@ -190,7 +190,6 @@ bytesPerGiga = 1024. * 1024. * 1024.
 class StatisticsThread(threading.Thread):
     def __init__(self, chunk):
         threading.Thread.__init__(self)
-        signal.signal(signal.SIGINT, signal.SIG_IGN)  # lambda signal, frame: self.stopRequest())
         self.chunk = chunk
         self.proc = psutil.Process()  # by default current process pid
         self.statistics = chunk.statistics

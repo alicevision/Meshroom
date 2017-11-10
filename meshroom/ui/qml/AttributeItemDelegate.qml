@@ -107,36 +107,49 @@ Loader {
 
     Component {
         id: listAttribute_component
-        RowLayout {
+        ColumnLayout {
+            id: listAttribute_layout
             width: parent.width
-            Label {
-                Layout.alignment: Qt.AlignTop
-                text: attribute.value.count + " elements"
-            }
-            Button {
-                Layout.alignment: Qt.AlignTop
-                text: "+"
-                onClicked: _reconstruction.appendAttribute(attribute, undefined)
+            property bool expanded: false
+            Row {
+                spacing: 2
+                ToolButton {
+                    text: listAttribute_layout.expanded  ? "▾" : "▸"
+                    onClicked: listAttribute_layout.expanded = !listAttribute_layout.expanded
+                }
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: attribute.value.count + " elements"
+                }
+                ToolButton {
+                    text: "+"
+                    onClicked: _reconstruction.appendAttribute(attribute, undefined)
+                }
             }
             ListView {
                 id: lv
-                model: attribute.value
-                implicitHeight: childrenRect.height
+                model: listAttribute_layout.expanded ? attribute.value : undefined
+                visible: model != undefined && count > 0
+                implicitHeight: Math.min(childrenRect.height, 300)
                 Layout.fillWidth: true
+                Layout.margins: 4
+                clip: true
+                spacing: 6
+
+                ScrollBar.vertical: ScrollBar { id: sb }
 
                 delegate:  RowLayout {
                     id: item
                     property var childAttrib: object
                     layoutDirection: Qt.RightToLeft
-                    //height: childrenRect.height
-                    width: lv.width
+                    width: lv.width - sb.width
                     Component.onCompleted: {
                         var cpt = Qt.createComponent("AttributeItemDelegate.qml")
                         var obj = cpt.createObject(item, {'attribute': Qt.binding(function() { return item.childAttrib })})
                         obj.Layout.fillWidth = true
                     }
-                    Button {
-                        text: "-"
+                    ToolButton {
+                        text: "∅"
                         onClicked: _reconstruction.removeAttribute(item.childAttrib)
                     }
                 }
@@ -152,7 +165,7 @@ Loader {
             implicitWidth: parent.width
             implicitHeight: childrenRect.height
             onCountChanged: forceLayout()
-            spacing: 4
+            spacing: 2
 
             delegate: RowLayout {
                 id: row

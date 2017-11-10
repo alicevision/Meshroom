@@ -52,9 +52,13 @@ if args.node:
         chunk = node.chunks[args.iteration]
         if chunk.status.status != Status.SUCCESS or args.forceCompute:
             chunk.process()
+        else:
+            print('Node chunk is already successfully computed. Nothing to do.')
     else:
         if not node.hasStatus(Status.SUCCESS) or args.forceCompute:
             node.process()
+        else:
+            print('Node is already successfully computed. Nothing to do.')
 else:
     if args.iteration != -1:
         print('Error: "--iteration" only make sense when used with "--node".')

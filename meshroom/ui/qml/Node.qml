@@ -68,13 +68,15 @@ Rectangle {
                 Repeater {
                     model: node.attributes
                     delegate: Loader {
-                        active: !object.isOutput && object.type == "File" // TODO: review this
+                        active: !object.isOutput && object.type == "File"
+                                || (object.type == "ListAttribute" && object.desc.elementDesc.type == "File") // TODO: review this
 
                         sourceComponent: AttributePin {
                             id: inPin
                             nodeItem: root
                             attribute: object
-                            Component.onCompleted: attributePinCreated(object, inPin)
+                            Component.onCompleted: attributePinCreated(attribute, inPin)
+                            onChildPinCreated: attributePinCreated(childAttribute, inPin)
                         }
                     }
                 }

@@ -24,13 +24,13 @@ def photogrammetryPipeline(output='', inputFolder='', inputImages=[], inputViewp
         cameraInit = graph.addNewNode('CameraInit')
         if inputFolder:
             images = findFiles(inputFolder, ['*.jpg', '*.png'])
-            cameraInit.viewpoints.extend([{'image': image} for image in images])
+            cameraInit.viewpoints.extend([{'path': image} for image in images])
         if inputImages:
-            cameraInit.viewpoints.extend([{'image': image} for image in inputImages])
+            cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
         if inputViewpoints:
             cameraInit.viewpoints.extend(inputViewpoints)
         featureExtraction = graph.addNewNode('FeatureExtraction',
-                                             input=cameraInit.outputSfm)
+                                             input=cameraInit.output)
         imageMatching = graph.addNewNode('ImageMatching',
                                              input=featureExtraction.input,
                                              featuresDirectory=featureExtraction.output,

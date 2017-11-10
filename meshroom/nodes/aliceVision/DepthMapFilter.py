@@ -5,6 +5,7 @@ class DepthMapFilter(desc.CommandLineNode):
     commandLine = 'aliceVision_depthMapFiltering {allParams}'
     gpu = desc.Level.NORMAL
     parallelization = desc.Parallelization(inputListParamName='viewpoints', blockSize=10)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [
         desc.File(

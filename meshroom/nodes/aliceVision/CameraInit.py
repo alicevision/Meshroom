@@ -12,21 +12,35 @@ from meshroom.core.graph import GraphModification
 
 
 Viewpoint = [
-    desc.IntParam(name="id", label="Id", description="Image UID", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.File(name="image", label="Image", description="Image Filepath", value="", uid=[0, 1]),
+    desc.IntParam(name="viewId", label="Id", description="Image UID", value=-1, uid=[0], range=(0, 200, 1)),
+    desc.IntParam(name="poseId", label="Pose Id", description="Pose Id", value=-1, uid=[0], range=(0, 200, 1)),
+    desc.File(name="path", label="Image Path", description="Image Filepath", value="", uid=[0, 1]),
     desc.IntParam(name="intrinsicId", label="Intrinsic", description="Internal Camera Parameters", value=-1, uid=[0], range=(0, 200, 1)),
     desc.IntParam(name="rigId", label="Rig", description="Rig Parameters", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.IntParam(name="rigSubPoseId", label="Rig Sub-Pose", description="Rig Sub-Pose Parameters", value=-1, uid=[0], range=(0, 200, 1)),
+    desc.IntParam(name="subPoseId", label="Rig Sub-Pose", description="Rig Sub-Pose Parameters", value=-1, uid=[0], range=(0, 200, 1)),
 ]
 
 Intrinsic = [
-    desc.IntParam(name="id", label="Id", description="Intrinsic UID", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.IntParam(name="initialFocalLength", label="Initial Focal Length", description="Initial Guess on the Focal Length", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.IntParam(name="focalLength", label="Focal Length", description="Known/Calibrated Focal Length", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.ChoiceParam(name="cameraType", label="Camera Type", description="Camera Type", value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4'], exclusive=True, uid=[0]),
-    desc.StringParam(name="deviceMake", label="Make", description="Camera Make", value="", uid=[]),
-    desc.StringParam(name="deviceModel", label="Model", description="Camera Model", value="", uid=[]),
-    desc.StringParam(name="sensorWidth", label="Sensor Width", description="Camera Sensor Width", value="", uid=[0]),
+    desc.IntParam(name="intrinsicId", label="Id", description="Intrinsic UID", value=-1, uid=[0], range=(0, 200, 1)),
+    desc.FloatParam(name="pxInitialFocalLength", label="Initial Focal Length", description="Initial Guess on the Focal Length", value=-1.0, uid=[0], range=(0.0, 200.0, 1.0)),
+    desc.FloatParam(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length", value=-1.0, uid=[0], range=(0.0, 200.0, 1.0)),
+    desc.ChoiceParam(name="type", label="Camera Type", description="Camera Type", value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4'], exclusive=True, uid=[0]),
+    # desc.StringParam(name="deviceMake", label="Make", description="Camera Make", value="", uid=[]),
+    # desc.StringParam(name="deviceModel", label="Model", description="Camera Model", value="", uid=[]),
+    # desc.StringParam(name="sensorWidth", label="Sensor Width", description="Camera Sensor Width", value="", uid=[0]),
+    desc.IntParam(name="width", label="Width", description="Image Width", value=0, uid=[], range=(0, 10000, 1)),
+    desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[], range=(0, 10000, 1)),
+    desc.StringParam(name="serialNumber", label="Serial Number", description="Device Serial Number (camera and lens combined)", value="", uid=[]),
+    desc.GroupAttribute(name="principalPoint", label="Principal Point", description="", groupDesc=[
+        desc.IntParam(name="x", label="x", description="", value=0, uid=[], range=(0, 10000, 1)),
+        desc.IntParam(name="y", label="y", description="", value=0, uid=[], range=(0, 10000, 1)),
+        ]),
+    desc.ListAttribute(
+            name="distortionParams",
+            elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
+            label="Distortion Params",
+            description="Distortion Parameters",
+        ),
 ]
 
 
@@ -37,16 +51,14 @@ class CameraInit(desc.CommandLineNode):
     inputs = [
         desc.ListAttribute(
             name="viewpoints",
-            elementDesc=desc.GroupAttribute(name="viewpoint", label="Viewpoint", description="", groupDesc=Viewpoint,
-                                            group="allParams"),
+            elementDesc=desc.GroupAttribute(name="viewpoint", label="Viewpoint", description="", groupDesc=Viewpoint),
             label="Viewpoints",
             description="Input viewpoints",
             group="",
         ),
         desc.ListAttribute(
             name="intrinsics",
-            elementDesc=desc.GroupAttribute(name="intrinsic", label="Intrinsic", description="", groupDesc=Intrinsic,
-                                            group="allParams"),
+            elementDesc=desc.GroupAttribute(name="intrinsic", label="Intrinsic", description="", groupDesc=Intrinsic),
             label="Intrinsics",
             description="Camera Intrinsics",
             group="",
@@ -75,9 +87,9 @@ class CameraInit(desc.CommandLineNode):
             uid=[0],
         ),
         desc.StringParam(
-            name='defaultIntrinsics',
-            label='Default Intrinsics',
-            description='''Intrinsics Kmatrix "f;0;ppx;0;f;ppy;0;0;1".''',
+            name='defaultIntrinsic',
+            label='Default Intrinsic',
+            description='''Intrinsic K matrix "f;0;ppx;0;f;ppy;0;0;1".''',
             value='',
             uid=[0],
         ),
@@ -127,17 +139,9 @@ class CameraInit(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''Output SfMData.''',
-            value='{cache}/{nodeType}/{uid0}',  # TODO
+            value='{cache}/{nodeType}/{uid0}/cameraInit.sfm',
             uid=[],
         ),
-        desc.File(
-            name='outputSfm',
-            label='Output SfM',
-            description='''''',
-            value='{cache}/{nodeType}/{uid0}/sfm_data.json',
-            uid=[],
-            group='',  # not a command line argument
-        )
     ]
 
     def updateInternals(self, node):
@@ -166,41 +170,60 @@ class CameraInit(desc.CommandLineNode):
             subprocess.wait()
             if subprocess.returncode != 0:
                 logging.warning('CameraInit: Error on updateInternals of node "{}".'.format(node.name))
+
+            # Reload result of aliceVision_cameraInit
+            cameraInitSfM = localCmdVars['outputValue']
+            jsonData = open(cameraInitSfM, 'r').read()
+            data = json.loads(jsonData)
+
+            intrinsicsKeys = [i.name for i in Intrinsic]
+            intrinsics = [{k: v for k, v in item.items() if k in intrinsicsKeys} for item in data.get("intrinsics", [])]
+            for intrinsic in intrinsics:
+                pp = intrinsic['principalPoint']
+                intrinsic['principalPoint'] = {}
+                intrinsic['principalPoint']['x'] = pp[0]
+                intrinsic['principalPoint']['y'] = pp[1]
+            # print('intrinsics:', intrinsics)
+            viewsKeys = [v.name for v in Viewpoint]
+            views = [{k: v for k, v in item.items() if k in viewsKeys} for item in data.get("views", [])]
+            # print('views:', views)
+
+            with GraphModification(node.graph):
+                node.viewpoints.value = views
+                node.intrinsics.value = intrinsics
+                node.attribute("_viewpointsUid").value = node.viewpoints.uid(1)
+
         except Exception:
             logging.warning('CameraInit: Error on updateInternals of node "{}".'.format(node.name))
             raise
         finally:
             node._cmdVars = origCmdVars
             shutil.rmtree(tmpCache)
-        # TODO: reload result of aliceVision_cameraInit
-        # cameraInitSfM = node.viewpointsFile  # localCmdVars['outputSfMValue']
-        # jsonData = open(cameraInitSfM, 'r').read()
-        # data = json.loads(jsonData)
-        # with GraphModification(node.graph):
-        #     node.viewpoints.value = data.get("views", [])
-        #     node.intrinsics.value = data.get("intrinsics", [])
 
-        node.attribute("_viewpointsUid").value = node.viewpoints.uid(1)
-
-    def createViewpointsFile_new(self, node):
+    def createViewpointsFile(self, node):
         if node.viewpoints:
+            intrinsics = node.intrinsics.getPrimitiveValue(exportDefault=True)
+            for intrinsic in intrinsics:
+                intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
             sfmData = {
                 "version": [1, 0, 0],
                 "views": node.viewpoints.getPrimitiveValue(exportDefault=False),
-                "intrinsics": node.intrinsics.getPrimitiveValue(exportDefault=False),
+                "intrinsics": intrinsics,
+                "featureFolder": "",
+                "matchingFolder": "",
             }
             node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.json'.format(**node._cmdVars)
             with open(node.viewpointsFile, 'w') as f:
                 f.write(json.dumps(sfmData, indent=4))
                 # python3: json.dumps(node.viewpoints, f, indent=4)
 
-    def createViewpointsFile(self, node):
+    def createViewpointsFile_old(self, node):
         """
         Temporary compatibility method.
         """
         if node.viewpoints:
             sfmData = {
-                "resources": [v.get("image", "") for v in node.viewpoints.getPrimitiveValue(exportDefault=False)],
+                "resources": [v.get("path", "") for v in node.viewpoints.getPrimitiveValue(exportDefault=False)],
             }
             node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.json'.format(**node._cmdVars)
             with open(node.viewpointsFile, 'w') as f:
@@ -210,7 +233,7 @@ class CameraInit(desc.CommandLineNode):
     def buildCommandLine(self, chunk):
         cmd = desc.CommandLineNode.buildCommandLine(self, chunk)
         if len(chunk.node.viewpoints):
-            cmd += ' --jsonFile ' + chunk.node.viewpointsFile
+            cmd += ' --input ' + chunk.node.viewpointsFile
         return cmd
 
     def processChunk(self, chunk):

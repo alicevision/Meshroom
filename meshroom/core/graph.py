@@ -692,7 +692,7 @@ class Node(BaseObject):
         return self.graph.getDepth(self)
 
     def toDict(self):
-        attributes = {k: v.getExportValue() for k, v in self._attributes.objects.items()}
+        attributes = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
         return {
             'nodeType': self.nodeType,
             'packageName': self.packageName,

@@ -44,7 +44,7 @@ class ListAttribute(Attribute):
 
     def validateValue(self, value):
         if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
-            raise ValueError('ListAttribute only supports iterable input values.')
+            raise ValueError('ListAttribute only supports iterable input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
 
@@ -61,7 +61,7 @@ class GroupAttribute(Attribute):
 
     def validateValue(self, value):
         if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
-            raise ValueError('GroupAttribute only supports iterable input values.')
+            raise ValueError('GroupAttribute only supports iterable input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
     def retrieveChildrenUids(self):
@@ -88,7 +88,7 @@ class File(Attribute):
 
     def validateValue(self, value):
         if not isinstance(value, basestring):
-            raise ValueError('File only supports string input: "{}".'.format(value))
+            raise ValueError('File only supports string input  (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return os.path.normpath(value).replace('\\', '/') if value else ''
 
 
@@ -102,7 +102,7 @@ class BoolParam(Param):
         try:
             return bool(value)
         except:
-            raise ValueError('BoolParam only supports bool value.')
+            raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
 
 class IntParam(Param):
@@ -116,7 +116,7 @@ class IntParam(Param):
         try:
             return int(value)
         except:
-            raise ValueError('IntParam only supports int value.')
+            raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
     range = Property(Variant, lambda self: self._range, constant=True)
 
@@ -132,7 +132,7 @@ class FloatParam(Param):
         try:
             return float(value)
         except:
-            raise ValueError('FloatParam only supports float value.')
+            raise ValueError('FloatParam only supports float value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
     range = Property(Variant, lambda self: self._range, constant=True)
 
@@ -152,7 +152,7 @@ class ChoiceParam(Param):
             newValues = [value]
         else:
             if not isinstance(value, collections.Iterable):
-                raise ValueError('Non exclusive ChoiceParam value "{}" should be iterable.'.format(value))
+                raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
             newValues = value
         for newValue in newValues:
             t = type(self._values[0])  # cast to value type
@@ -174,7 +174,7 @@ class StringParam(Param):
 
     def validateValue(self, value):
         if not isinstance(value, basestring):
-            raise ValueError('StringParam value "{}" should be a string.'.format(value))
+            raise ValueError('StringParam value should be a string (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
 

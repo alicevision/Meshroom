@@ -810,9 +810,6 @@ class Node(BaseObject):
             'nodeType': self.nodeType,
         }
         self._buildCmdVars(self._cmdVars)
-
-        self.nodeDesc.updateInternals(self)
-
         self.internalFolderChanged.emit()
 
     @property

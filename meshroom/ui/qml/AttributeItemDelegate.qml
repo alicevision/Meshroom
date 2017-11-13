@@ -73,7 +73,10 @@ Loader {
                 id: s
                 Layout.fillWidth: true
                 value: attribute.value
-                // TODO: range from desc
+                from: attribute.desc.range[0]
+                to: attribute.desc.range[1]
+                stepSize: attribute.desc.range[2]
+                snapMode: Slider.SnapAlways
 
                 onPressedChanged: {
                     if(!pressed)
@@ -87,7 +90,7 @@ Loader {
                 id: doubleValidator
             }
             TextField {
-                text: attribute.value
+                text: s.pressed ? s.value : attribute.value
                 selectByMouse: true
                 validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
                 onEditingFinished: _reconstruction.setAttribute(attribute, text)

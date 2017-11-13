@@ -68,7 +68,7 @@ class FeatureMatching(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
         ),
-        desc.StringParam(
+        desc.BoolParam(
             name='savePutativeMatches',
             label='Save Putative Matches',
             description='''putative matches.''',
@@ -82,11 +82,11 @@ class FeatureMatching(desc.CommandLineNode):
             value=False,
             uid=[0],
         ),
-        desc.File(
+        desc.BoolParam(
             name='matchFilePerImage',
             label='Match File Per Image',
             description='''matches in a separate file per image.''',
-            value='',
+            value=True,
             uid=[0],
         ),
         desc.FloatParam(
@@ -94,16 +94,7 @@ class FeatureMatching(desc.CommandLineNode):
             label='Distance Ratio',
             description='''Distance ratio to discard non meaningful matches.''',
             value=0.8,
-            range=(-float('inf'), float('inf'), 0.01),
-            uid=[0],
-        ),
-        desc.ChoiceParam(
-            name='videoModeMatching',
-            label='Video Mode Matching',
-            description='''sequence matching with an overlap of X images: * 0: will match 0 with (1->X), ... * 2: will match 0 with (1,2), 1 with (2,3), ... * 3: will match 0 with (1,2,3), 1 with (2,3,4), ...''',
-            value=0,
-            values=('0', '2', '3'),
-            exclusive=True,
+            range=(0.0, 1.0, 0.01),
             uid=[0],
         ),
         desc.IntParam(
@@ -111,36 +102,36 @@ class FeatureMatching(desc.CommandLineNode):
             label='Max Iteration',
             description='''Maximum number of iterations allowed in ransac step.''',
             value=2048,
-            range=(0, sys.maxsize, 1),
+            range=(1, 20000, 1),
             uid=[0],
         ),
         desc.BoolParam(
             name='useGridSort',
             label='Use Grid Sort',
             description='''matching grid sort.''',
-            value=False,
+            value=True,
             uid=[0],
         ),
-        desc.File(
+        desc.BoolParam(
             name='exportDebugFiles',
             label='Export Debug Files',
             description='''debug files (svg, dot).''',
-            value='',
-            uid=[0],
+            value=False,
+            uid=[],
         ),
         desc.StringParam(
             name='fileExtension',
             label='File Extension',
             description='''File extension to store matches (bin or txt).''',
-            value='bin',
-            uid=[0],
+            value='txt',
+            uid=[],
         ),
         desc.IntParam(
             name='maxMatches',
             label='Max Matches',
             description='''Maximum number pf matches to keep.''',
             value=0,
-            range=(-sys.maxsize, sys.maxsize, 1),
+            range=(0, 10000, 1),
             uid=[0],
         ),
         desc.ChoiceParam(

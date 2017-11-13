@@ -30,7 +30,7 @@ class PrepareDenseScene(desc.CommandLineNode):
             value='info',
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,
-            uid=[0],
+            uid=[],
         ),
     ]
 

@@ -35,11 +35,11 @@ class FeatureExtraction(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
         ),
-        desc.StringParam(
+        desc.BoolParam(
             name='upright',
             label='Upright',
             description='''Upright feature.''',
-            value='',
+            value=False,
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -57,7 +57,7 @@ class FeatureExtraction(desc.CommandLineNode):
         desc.File(
             name='output',
             label='Output',
-            description='''Output path for the features and descriptors files (*.feat, *.desc). Optional parameters:''',
+            description='''Output path for the features and descriptors files (*.feat, *.desc).''',
             value='{cache}/{nodeType}/{uid0}/',
             uid=[],
         ),

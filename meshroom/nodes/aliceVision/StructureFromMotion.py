@@ -40,19 +40,19 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
             joinChar=',',
         ),
-        desc.File(
+        desc.StringParam(
             name='interFileExtension',
             label='Inter File Extension',
             description='''Extension of the intermediate file export.''',
-            value='.ply',
-            uid=[0],
+            value='.abc',
+            uid=[],
         ),
         desc.IntParam(
             name='minInputTrackLength',
             label='Min Input Track Length',
             description='''Minimum track length in input of SfM''',
             value=2,
-            range=(-sys.maxsize, sys.maxsize, 1),
+            range=(2, 10, 1),
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -60,7 +60,7 @@ class StructureFromMotion(desc.CommandLineNode):
             label='Camera Model',
             description='''* 1: Pinhole * 2: Pinhole radial 1 * 3: Pinhole radial 3''',
             value=3,
-            values=['1', '2', '3'],
+            values=[1, 2, 3],
             exclusive=True,
             uid=[0],
         ),
@@ -76,15 +76,6 @@ class StructureFromMotion(desc.CommandLineNode):
             label='Initial Pair B',
             description='''filename of the second image (without path).''',
             value='',
-            uid=[0],
-        ),
-        desc.ChoiceParam(
-            name='refineIntrinsics',
-            label='Refine Intrinsics',
-            description='''intrinsic parameters. Log parameters:''',
-            value=0,
-            values=[0, 1],
-            exclusive=True,
             uid=[0],
         ),
         desc.ChoiceParam(

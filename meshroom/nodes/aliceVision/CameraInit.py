@@ -1,6 +1,4 @@
 import os
-import sys
-from collections import OrderedDict
 import json
 import psutil
 import shutil
@@ -8,7 +6,6 @@ import tempfile
 import logging
 
 from meshroom.core import desc
-from meshroom.core.graph import GraphModification
 
 
 Viewpoint = [
@@ -70,51 +67,6 @@ class CameraInit(desc.CommandLineNode):
             value=os.environ.get('ALICEVISION_SENSOR_DB', ''),
             uid=[],
         ),
-        desc.IntParam(
-            name='defaultFocalLengthPix',
-            label='Default Focal Length Pix',
-            description='''Focal length in pixels.''',
-            value=-1,
-            range=(-sys.maxsize, sys.maxsize, 1),
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='defaultSensorWidth',
-            label='Default Sensor Width',
-            description='''Sensor width in mm.''',
-            value=-1,
-            range=(-sys.maxsize, sys.maxsize, 1),
-            uid=[0],
-        ),
-        desc.StringParam(
-            name='defaultIntrinsic',
-            label='Default Intrinsic',
-            description='''Intrinsic K matrix "f;0;ppx;0;f;ppy;0;0;1".''',
-            value='',
-            uid=[0],
-        ),
-        desc.ChoiceParam(
-            name='defaultCameraModel',
-            label='Default Camera Model',
-            description='''Camera model type (pinhole, radial1, radial3, brown, fisheye4).''',
-            value='',
-            values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4'],
-            exclusive=True,
-            uid=[0],
-        ),
-        desc.ChoiceParam(
-            name='groupCameraModel',
-            label='Group Camera Model',
-            description='''* 0: each view have its own camera intrinsic parameters '''
-                        '''* 1: view share camera intrinsic parameters based on metadata, '''
-                        '''if no metadata each view has its own camera intrinsic parameters '''
-                        '''* 2: view share camera intrinsic parameters based on metadata, '''
-                        '''if no metadata they are grouped by folder''',
-            value=1,
-            values=[0, 1, 2],
-            exclusive=True,
-            uid=[0],
-        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
@@ -123,14 +75,6 @@ class CameraInit(desc.CommandLineNode):
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,
             uid=[],
-        ),
-        desc.StringParam(
-            name='_viewpointsUid',
-            label='Internal Intrinsics Uid',
-            description='',
-            value='',
-            uid=[],
-            group='',
         ),
     ]
 
@@ -144,13 +88,17 @@ class CameraInit(desc.CommandLineNode):
         ),
     ]
 
-    def updateInternals(self, node):
-        if not node.viewpoints:
-            return
-        lastViewpointsUid = node.attribute("_viewpointsUid").value
-        if lastViewpointsUid == node.viewpoints.uid(1):
-            return
+    def buildIntrinsics(self, node, additionalViews=()):
+        """ Build intrinsics from node current views and optional additional views
 
+        Args:
+            node: the CameraInit node instance to build intrinsics for
+            additionalViews: (optional) the new views (list of path to images) to add to the node's viewpoints
+
+        Returns:
+            The updated views and intrinsics as two separate lists
+        """
+        assert isinstance(node.desc, CameraInit)
         origCmdVars = node._cmdVars.copy()
         # Python3: with tempfile.TemporaryDirectory(prefix="Meshroom_CameraInit") as tmpCache
         tmpCache = tempfile.mkdtemp()
@@ -162,14 +110,14 @@ class CameraInit(desc.CommandLineNode):
         node._cmdVars = localCmdVars
         try:
             os.makedirs(os.path.join(tmpCache, node.internalFolder))
-            self.createViewpointsFile(node)
+            self.createViewpointsFile(node, additionalViews)
             cmd = self.buildCommandLine(node.chunks[0])
             # logging.debug(' - commandLine:', cmd)
             subprocess = psutil.Popen(cmd, stdout=None, stderr=None, shell=True)
             stdout, stderr = subprocess.communicate()
             subprocess.wait()
             if subprocess.returncode != 0:
-                logging.warning('CameraInit: Error on updateInternals of node "{}".'.format(node.name))
+                logging.warning('CameraInit: Error on buildIntrinsics of node "{}".'.format(node.name))
 
             # Reload result of aliceVision_cameraInit
             cameraInitSfM = localCmdVars['outputValue']
@@ -187,27 +135,27 @@ class CameraInit(desc.CommandLineNode):
             viewsKeys = [v.name for v in Viewpoint]
             views = [{k: v for k, v in item.items() if k in viewsKeys} for item in data.get("views", [])]
             # print('views:', views)
-
-            with GraphModification(node.graph):
-                node.viewpoints.value = views
-                node.intrinsics.value = intrinsics
-                node.attribute("_viewpointsUid").value = node.viewpoints.uid(1)
+            return views, intrinsics
 
         except Exception:
-            logging.warning('CameraInit: Error on updateInternals of node "{}".'.format(node.name))
+            logging.warning('CameraInit: Error on buildIntrinsics of node "{}".'.format(node.name))
             raise
         finally:
             node._cmdVars = origCmdVars
             shutil.rmtree(tmpCache)
 
-    def createViewpointsFile(self, node):
-        if node.viewpoints:
+    def createViewpointsFile(self, node, additionalViews=()):
+        node.viewpointsFile = ""
+        if node.viewpoints or additionalViews:
+            newViews = []
+            for path in additionalViews:  # format additional views to match json format
+                newViews.append({"path": path})
             intrinsics = node.intrinsics.getPrimitiveValue(exportDefault=True)
             for intrinsic in intrinsics:
                 intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
             sfmData = {
                 "version": [1, 0, 0],
-                "views": node.viewpoints.getPrimitiveValue(exportDefault=False),
+                "views": node.viewpoints.getPrimitiveValue(exportDefault=False) + newViews,
                 "intrinsics": intrinsics,
                 "featureFolder": "",
                 "matchingFolder": "",
@@ -232,7 +180,7 @@ class CameraInit(desc.CommandLineNode):
 
     def buildCommandLine(self, chunk):
         cmd = desc.CommandLineNode.buildCommandLine(self, chunk)
-        if len(chunk.node.viewpoints):
+        if chunk.node.viewpointsFile:
             cmd += ' --input ' + chunk.node.viewpointsFile
         return cmd
 

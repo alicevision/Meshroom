@@ -1,5 +1,6 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.3
+import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.1
 import QtQuick.Window 2.3
 import QtQml.Models 2.2
@@ -121,6 +122,31 @@ ApplicationWindow {
         return saved
     }
 
+    Dialog {
+        // Popup displayed while the application
+        // is busy building intrinsics while importing images
+        id: buildingIntrinsicsDialog
+        modal: true
+        x: _window.width / 2 - width/2
+        y: _window.height / 2 - height/2
+        visible: _reconstruction.buildingIntrinsics
+        closePolicy: Popup.NoAutoClose
+        title: "Import Images"
+        ColumnLayout {
+            anchors.fill: parent
+            Label {
+                text: "Extracting images metadata... "
+                horizontalAlignment: Text.AlignHCenter
+
+                Layout.fillWidth: true
+            }
+            ProgressBar {
+                indeterminate: true
+                Layout.fillWidth: true
+            }
+        }
+    }
+
     Action {
         id: undoAction
 
@@ -184,43 +210,77 @@ ApplicationWindow {
                 ToolTip.text: redoAction.tooltip
             }
         }
+        Menu {
+            title: "View"
+            Action {
+                text: "Fullscreen"
+                checkable: true
+                checked: _window.visibility == ApplicationWindow.FullScreen
+                shortcut: "Ctrl+F"
+                onTriggered: _window.visibility == ApplicationWindow.FullScreen ? _window.showNormal() : showFullScreen()
+            }
+        }
     }
 
-    ColumnLayout {
+
+    Controls1.SplitView {
         anchors.fill: parent
         anchors.margins: 4
-        Row {
-            spacing: 1
-            Layout.fillWidth: true
+        orientation: Qt.Vertical
 
-            Button {
-                text: "Execute"
-                enabled: _reconstruction.graph.nodes.count && !_reconstruction.computing
-                onClicked: _reconstruction.execute(null)
-            }
-            Button {
-                text: "Stop"
-                enabled: _reconstruction.computing
-                onClicked: _reconstruction.stopExecution()
-            }
-        }
-        GraphEditor {
-            id: graphEditor
-            graph: _reconstruction.graph
+        ImageGallery {
+            property variant node: _reconstruction.graph.nodes.get("CameraInit_1")
+            model: node ? node.attribute("viewpoints").value : undefined
             Layout.fillWidth: true
-            Layout.preferredHeight: parent.height * 0.3
-            Layout.margins: 10
+            implicitHeight: Math.round(parent.height * 0.5)
         }
 
-        Loader {
+        Controls1.SplitView {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            active: graphEditor.selectedNode != null
-            sourceComponent: Component {
-                AttributeEditor {
-                    node: graphEditor.selectedNode
-                    // Disable editor when computing
-                    enabled: !_reconstruction.computing
+            orientation: Qt.Horizontal
+
+            ColumnLayout {
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.margins: 10
+                Row {
+                    spacing: 1
+                    Layout.fillWidth: true
+
+                    Button {
+                        text: "Execute"
+                        enabled: _reconstruction.graph.nodes.count && !_reconstruction.computing
+                        onClicked: _reconstruction.execute(null)
+                    }
+                    Button {
+                        text: "Stop"
+                        enabled: _reconstruction.computing
+                        onClicked: _reconstruction.stopExecution()
+                    }
+                }
+                GraphEditor {
+                    id: graphEditor
+                    graph: _reconstruction.graph
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                }
+            }
+            Item {
+                implicitHeight: Math.round(parent.height * 0.2)
+                implicitWidth: Math.round(parent.width * 0.3)
+
+                Loader {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    active: graphEditor.selectedNode != null
+                    sourceComponent: Component {
+                        AttributeEditor {
+                            node: graphEditor.selectedNode
+                            // Disable editor when computing
+                            enabled: !_reconstruction.computing
+                        }
+                    }
                 }
             }
         }

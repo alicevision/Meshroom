@@ -1,3 +1,4 @@
+import logging
 import os
 from threading import Thread
 
@@ -20,6 +21,9 @@ class Reconstruction(QObject):
             self.load(self._filepath)
         else:
             self.new()
+
+        self._buildIntrinsicsThread = None
+        self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
 
     @Slot()
     def new(self):
@@ -151,6 +155,12 @@ class Reconstruction(QObject):
         self._computeThread.join()
         self.computingChanged.emit()
 
+    @staticmethod
+    def runAsync(func, args=(), kwargs=None):
+        thread = Thread(target=func, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(graph.Graph, lambda self: self._graph, notify=graphChanged)
@@ -158,3 +168,56 @@ class Reconstruction(QObject):
     computing = Property(bool, lambda self: self._computeThread.is_alive(), notify=computingChanged)
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
+
+    @Slot(QObject)
+    def handleFilesDrop(self, drop):
+        """ Handle drop events aiming to add images to the Reconstruction.
+        Fetching urls from dropEvent is generally expensive in QML/JS (bug ?).
+        This method allows to reduce process time by doing it on Python side.
+        """
+        self.importImagesFromUrls(drop.property("urls"))
+
+    @Slot(QObject)
+    def importImagesFromUrls(self, urls):
+        """ Add the given list of images (as QUrl) to the Reconstruction. """
+        # Build the list of images paths
+        images = []
+        for url in urls:
+            localFile = url.toLocalFile()
+            if os.path.splitext(localFile)[1].lower() in (".jpg", ".png", ".jpeg"):
+                images.append(localFile)
+        if not images:
+            return
+        # Start the process of updating views and intrinsics
+        self._buildIntrinsicsThread = self.runAsync(self.buildIntrinsics, args=(images,))
+
+    def buildIntrinsics(self, additionalViews):
+        """
+        Build up-to-date intrinsics and views based on already loaded + additional images.
+        Does not modify the graph, can be called outside the main thread.
+        Emits intrinsicBuilt(views, intrinsics) when done.
+        """
+        try:
+            self.buildingIntrinsicsChanged.emit()
+            cameraInit = self._graph.findNode("CameraInit")
+            # Retrieve the list of updated viewpoints and intrinsics
+            views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, additionalViews)
+            self.intrinsicsBuilt.emit(views, intrinsics)
+            return views, intrinsics
+        except Exception as e:
+            logging.error("Error while building intrinsics : {}".format(e))
+        finally:
+            self.buildingIntrinsicsChanged.emit()
+
+    def onIntrinsicsAvailable(self, views, intrinsics):
+        """ Update CameraInit with given views and intrinsics. """
+        cameraInit = self._graph.findNode("CameraInit")
+        with self.groupedGraphModification("Add Images"):
+            self.setAttribute(cameraInit.viewpoints, views)
+            self.setAttribute(cameraInit.intrinsics, intrinsics)
+
+    intrinsicsBuilt = Signal(list, list)
+
+    buildingIntrinsicsChanged = Signal()
+    buildingIntrinsics = Property(bool, lambda self: self._buildIntrinsicsThread and self._buildIntrinsicsThread.isAlive(),
+                                  notify=buildingIntrinsicsChanged)

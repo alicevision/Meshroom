@@ -102,7 +102,6 @@ Item {
                     node: object
                     width: root.nodeWidth
                     height: Math.max(root.nodeHeight, implicitHeight)
-                    radius: 1
                     border.color: root.selectedNode == node ? Qt.darker(color, 1.8) : Qt.darker(color, 1.1)
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)

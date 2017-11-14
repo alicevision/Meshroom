@@ -27,7 +27,7 @@ ColumnLayout {
         Layout.fillWidth: true
         clip: true
         spacing: 4
-        ScrollBar.vertical: ScrollBar {}
+        ScrollBar.vertical: ScrollBar { id: scrollBar }
 
         model: node ? node.attributes : undefined
 
@@ -52,6 +52,7 @@ ColumnLayout {
 
             AttributeItemDelegate {
                 Layout.fillWidth: true
+                Layout.rightMargin: scrollBar.width
                 height: childrenRect.height
                 attribute: object
             }

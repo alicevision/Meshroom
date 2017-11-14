@@ -14,7 +14,7 @@ Rectangle {
 
     color: baseColor
     opacity: 0.9
-
+    radius: 2
     MouseArea {
         anchors.fill: parent
         drag.target: parent
@@ -69,7 +69,8 @@ Rectangle {
             ListView {
                 id: chunksListView
                 anchors.fill: parent
-                anchors.margins: 1
+                anchors.topMargin: 1
+                anchors.bottomMargin: 1
                 interactive: false
                 orientation: Qt.Horizontal
 

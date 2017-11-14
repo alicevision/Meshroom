@@ -114,7 +114,7 @@ class SetAttributeCommand(GraphCommand):
         super(SetAttributeCommand, self).__init__(graph, parent)
         self.attrName = attribute.fullName()
         self.value = value
-        self.oldValue = attribute.value
+        self.oldValue = attribute.getPrimitiveValue(exportDefault=True)
         self.setText("Set Attribute '{}'".format(attribute.fullName()))
 
     def redoImpl(self):

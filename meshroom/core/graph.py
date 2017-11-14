@@ -298,8 +298,13 @@ class ListAttribute(Attribute):
         if self.node.graph:
             self.node.graph.update()
 
-    def remove(self, index):
-        self._value.removeAt(index)
+    def remove(self, index, count=1):
+        if self.node.graph:
+            for i in range(index, index + count):
+                attr = self[i]
+                if attr.isLink:
+                    self.node.graph.removeEdge(attr)  # delete edge if the attribute is linked
+        self._value.removeAt(index, count)
         if self.node.graph:
             self.node.graph.update()
 

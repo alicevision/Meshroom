@@ -1,3 +1,5 @@
+import logging
+import traceback
 from PySide2.QtWidgets import QUndoCommand, QUndoStack
 from PySide2.QtCore import Property, Signal
 from meshroom.core.graph import Node, ListAttribute
@@ -14,12 +16,18 @@ class UndoCommand(QUndoCommand):
     def redo(self):
         if not self._enabled:
             return
-        self.redoImpl()
+        try:
+            self.redoImpl()
+        except Exception:
+            logging.error("Error while redoing command '{}': \n{}".format(self.text(), traceback.format_exc()))
 
     def undo(self):
         if not self._enabled:
             return
-        self.undoImpl()
+        try:
+            self.undoImpl()
+        except Exception:
+            logging.error("Error while undoing command '{}': \n{}".format(self.text(), traceback.format_exc()))
 
     def redoImpl(self):
         # type: () -> bool
@@ -42,13 +50,16 @@ class UndoStack(QUndoStack):
 
     def tryAndPush(self, command):
         # type: (UndoCommand) -> bool
-        if command.redoImpl():
+        try:
+            res = command.redoImpl()
+        except Exception as e:
+            logging.error("Error while trying command '{}': \n{}".format(command.text(), traceback.format_exc()))
+            res = False
+        if res:
             command.setEnabled(False)
             self.push(command)  # takes ownership
             command.setEnabled(True)
-            return True
-        else:
-            return False
+        return res
 
     # Redeclare QUndoStack signal since original ones can not be used for properties notifying
     _cleanChanged = Signal()
@@ -135,11 +146,7 @@ class AddEdgeCommand(GraphCommand):
         self.setText("Connect '{}'->'{}'".format(self.srcAttr, self.dstAttr))
 
     def redoImpl(self):
-        try:
-            self.graph.addEdge(self.graph.attribute(self.srcAttr),
-                               self.graph.attribute(self.dstAttr))
-        except RuntimeError:
-            return False
+        self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))
         return True
 
     def undoImpl(self):

@@ -1,8 +1,10 @@
 import logging
 import traceback
+from contextlib import contextmanager
+
 from PySide2.QtWidgets import QUndoCommand, QUndoStack
 from PySide2.QtCore import Property, Signal
-from meshroom.core.graph import Node, ListAttribute
+from meshroom.core.graph import Node, ListAttribute, Graph
 
 
 class UndoCommand(QUndoCommand):
@@ -214,3 +216,43 @@ class ListAttributeRemoveCommand(GraphCommand):
         listAttribute.insert(self.index, self.value)
 
 
+class EnableGraphUpdateCommand(GraphCommand):
+    """ Command to enable/disable graph update.
+    Should not be used directly, use GroupedGraphModification context manager instead.
+    """
+    def __init__(self, graph, enabled, parent=None):
+        super(EnableGraphUpdateCommand, self).__init__(graph, parent)
+        self.enabled = enabled
+        self.previousState = self.graph.updateEnabled
+
+    def redoImpl(self):
+        self.graph.updateEnabled = self.enabled
+        return True
+
+    def undoImpl(self):
+        self.graph.updateEnabled = self.previousState
+
+
+@contextmanager
+def GroupedGraphModification(graph, undoStack, title):
+    """ A context manager that creates a macro command disabling (if not already) graph update
+    and resetting its status after nested block execution.
+
+    Args:
+        graph (Graph): the Graph that will be modified
+        undoStack (UndoStack): the UndoStack to work with
+        title (str): the title of the macro command
+    """
+    # Store graph update state
+    state = graph.updateEnabled
+    # Create a new command macro and push a command that disable graph updates
+    undoStack.beginMacro(title)
+    undoStack.tryAndPush(EnableGraphUpdateCommand(graph, False))
+    try:
+        yield  # Execute nested block
+    except Exception:
+        raise
+    finally:
+        # Push a command restoring graph update state and end command macro
+        undoStack.tryAndPush(EnableGraphUpdateCommand(graph, state))
+        undoStack.endMacro()

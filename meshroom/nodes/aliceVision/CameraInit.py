@@ -98,7 +98,7 @@ class CameraInit(desc.CommandLineNode):
         Returns:
             The updated views and intrinsics as two separate lists
         """
-        assert isinstance(node.desc, CameraInit)
+        assert isinstance(node.nodeDesc, CameraInit)
         origCmdVars = node._cmdVars.copy()
         # Python3: with tempfile.TemporaryDirectory(prefix="Meshroom_CameraInit") as tmpCache
         tmpCache = tempfile.mkdtemp()

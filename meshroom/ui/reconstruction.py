@@ -43,13 +43,21 @@ class Reconstruction(QObject):
         self._filepath = path
         self.filepathChanged.emit()
 
+    def push(self, command):
+        """ Try and push the given command to the undo stack.
+
+        Args:
+            command (commands.UndoCommand): the command to push
+        """
+        self._undoStack.tryAndPush(command)
+
     @Slot(str)
     def addNode(self, nodeType):
-        self._undoStack.tryAndPush(commands.AddNodeCommand(self._graph, nodeType))
+        self.push(commands.AddNodeCommand(self._graph, nodeType))
 
     @Slot(graph.Node)
     def removeNode(self, node):
-        self._undoStack.tryAndPush(commands.RemoveNodeCommand(self._graph, node))
+        self.push(commands.RemoveNodeCommand(self._graph, node))
 
     @Slot(graph.Attribute, graph.Attribute)
     def addEdge(self, src, dst):
@@ -61,19 +69,19 @@ class Reconstruction(QObject):
 
     @Slot(graph.Attribute, "QVariant")
     def setAttribute(self, attribute, value):
-        self._undoStack.tryAndPush(commands.SetAttributeCommand(self._graph, attribute, value))
+        self.push(commands.SetAttributeCommand(self._graph, attribute, value))
 
     @Slot(graph.Attribute, QJsonValue)
-    def appendAttribute(self, attribute, value):
+    def appendAttribute(self, attribute, value=QJsonValue()):
         if value.isArray():
             pyValue = value.toArray().toVariantList()
         else:
             pyValue = None if value.isNull() else value.toObject()
-        self._undoStack.tryAndPush(commands.ListAttributeAppendCommand(self._graph, attribute, pyValue))
+        self.push(commands.ListAttributeAppendCommand(self._graph, attribute, pyValue))
 
     @Slot(graph.Attribute)
     def removeAttribute(self, attribute):
-        self._undoStack.tryAndPush(commands.ListAttributeRemoveCommand(self._graph, attribute))
+        self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
     def load(self, filepath):
         self.clear()

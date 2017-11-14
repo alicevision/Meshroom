@@ -51,6 +51,17 @@ class Reconstruction(QObject):
         """
         self._undoStack.tryAndPush(command)
 
+    def groupedGraphModification(self, title):
+        """ Get a GroupedGraphModification for this Reconstruction.
+
+        Args:
+            title (str): the title of the macro command
+
+        Returns:
+            GroupedGraphModification: the instantiated context manager
+        """
+        return commands.GroupedGraphModification(self._graph, self._undoStack, title)
+
     @Slot(str)
     def addNode(self, nodeType):
         self.push(commands.AddNodeCommand(self._graph, nodeType))
@@ -61,11 +72,21 @@ class Reconstruction(QObject):
 
     @Slot(graph.Attribute, graph.Attribute)
     def addEdge(self, src, dst):
-        self._undoStack.tryAndPush(commands.AddEdgeCommand(self._graph, src, dst))
+        if isinstance(dst, graph.ListAttribute):
+            with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.fullName())):
+                self.appendAttribute(dst)
+                self.push(commands.AddEdgeCommand(self._graph, src, dst[-1]))
+        else:
+            self.push(commands.AddEdgeCommand(self._graph, src, dst))
 
     @Slot(graph.Edge)
     def removeEdge(self, edge):
-        self._undoStack.tryAndPush(commands.RemoveEdgeCommand(self._graph, edge))
+        if isinstance(edge.dst.root, graph.ListAttribute):
+            with self.groupedGraphModification("Remove Edge and Delete {}".format(edge.dst.fullName())):
+                self.push(commands.RemoveEdgeCommand(self._graph, edge))
+                self.removeAttribute(edge.dst)
+        else:
+            self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
     @Slot(graph.Attribute, "QVariant")
     def setAttribute(self, attribute, value):

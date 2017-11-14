@@ -55,7 +55,6 @@ Row {
                 if( drag.source.objectName != dragTarget.objectName  // not an edge connector
                    ||  drag.source.nodeItem == dragTarget.nodeItem   // connection between attributes of the same node
                    || dragTarget.isOutput                            // connection on an output
-                   || dragTarget.isList                              // TEMP: disable connection to list
                    || dragTarget.attribute.isLink)                   // already connected attribute
                 {
                     drag.accepted = false

@@ -107,8 +107,12 @@ class Reconstruction(QObject):
 
     def _execute(self, nodes):
         self.computingChanged.emit()
-        graph.execute(self._graph, nodes)
-        self.computingChanged.emit()
+        try:
+            graph.execute(self._graph, nodes)
+        except Exception as e:
+            logging.error("Error during Graph execution {}".format(e))
+        finally:
+            self.computingChanged.emit()
 
     @Slot()
     def stopExecution(self):

@@ -176,7 +176,7 @@ class ListAttributeAppendCommand(GraphCommand):
         self.attrName = listAttribute.fullName()
         self.index = None
         self.count = 1
-        self.value = value if len(value) else None
+        self.value = value if value else None
         self.setText("Append to {}".format(self.attrName))
 
     def redoImpl(self):

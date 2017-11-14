@@ -26,10 +26,12 @@ class Reconstruction(QObject):
         self.clear()
         self._graph = multiview.photogrammetryPipeline()
         self._graph.cacheDir = defaultCacheFolder
+        self._graph.update()
         self.graphChanged.emit()
 
     def clear(self):
         if self._graph:
+            self._graph.clear()
             self._graph.deleteLater()
             self._graph = None
         self.setFilepath("")

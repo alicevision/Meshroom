@@ -285,6 +285,8 @@ class ListAttribute(Attribute):
         attrs = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
         self._value.insert(index, attrs)
         self._applyExpr()
+        if self.node.graph:
+            self.node.graph.update()
 
     def index(self, item):
         return self._value.indexOf(item)
@@ -293,9 +295,13 @@ class ListAttribute(Attribute):
         values = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
         self._value.extend(values)
         self._applyExpr()
+        if self.node.graph:
+            self.node.graph.update()
 
     def remove(self, index):
         self._value.removeAt(index)
+        if self.node.graph:
+            self.node.graph.update()
 
     def uid(self, uidIndex):
         uids = []

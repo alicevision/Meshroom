@@ -65,6 +65,6 @@ else:
         exit(-1)
     toNodes = None
     if args.toNode:
-        toNodes = graph.findNodes(args.toNode)
+        toNodes = graph.findNodes([args.toNode])
     meshroom.core.graph.execute(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
 

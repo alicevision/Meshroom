@@ -261,7 +261,7 @@ class Parallelization:
 class Node(object):
     """
     """
-    internalFolder = '{nodeType}/{uid0}/'
+    internalFolder = '{cache}/{nodeType}/{uid0}/'
     cpu = Level.NORMAL
     gpu = Level.NONE
     ram = Level.NORMAL

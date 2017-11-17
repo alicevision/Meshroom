@@ -6,6 +6,7 @@ from meshroom.core import desc
 class ImageMatching(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_imageMatching {allParams}'
+    size = desc.DynamicNodeSize('input')
 
     inputs = [
         desc.File(

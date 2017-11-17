@@ -223,8 +223,7 @@ class Range:
 
 
 class Parallelization:
-    def __init__(self, inputListParamName='', staticNbBlocks=0, blockSize=0):
-        self.inputListParamName = inputListParamName
+    def __init__(self, staticNbBlocks=0, blockSize=0):
         self.staticNbBlocks = staticNbBlocks
         self.blockSize = blockSize
 
@@ -234,18 +233,10 @@ class Parallelization:
             node:
         Returns: (blockSize, fullSize, nbBlocks)
         """
-        if self.inputListParamName:
-            # Look for this attribute on preceding nodes
-            parentNodes, edges = node.graph.dfsOnFinish(startNodes=[node])
-            for parentNode in parentNodes:
-                if self.inputListParamName in parentNode.getAttributes().keys():
-                    fullSize = len(parentNode.attribute(self.inputListParamName))
-                    nbBlocks = int(math.ceil(float(fullSize) / float(self.blockSize)))
-                    return (self.blockSize, fullSize, nbBlocks)
-            # No attribute has been found (parallelization won't work): raise
-            raise RuntimeError(
-                'Cannot find the "inputListParamName": "{}" in the list of input nodes: {} for node: {}'.format(
-                    self.inputListParamName, parentNodes, node.name))
+        size = node.size
+        if self.blockSize:
+            nbBlocks = int(math.ceil(float(size) / float(self.blockSize)))
+            return (self.blockSize, size, nbBlocks)
         if self.staticNbBlocks:
             return (1, self.staticNbBlocks, self.staticNbBlocks)
         return None
@@ -262,6 +253,27 @@ class Parallelization:
         return ranges
 
 
+class DynamicNodeSize(object):
+    def __init__(self, param):
+        self._param = param
+
+    def computeSize(self, node):
+        param = node.attribute(self._param)
+        if param.isLink:
+            return param.getLinkParam().node.size
+        if isinstance(param.desc, ListAttribute):
+            return len(param)
+        return 1
+
+
+class StaticNodeSize(object):
+    def __init__(self, size):
+        self._size = size
+
+    def computeSize(self, node):
+        return self._size
+
+
 class Node(object):
     """
     """
@@ -273,6 +285,7 @@ class Node(object):
     packageVersion = ''
     inputs = []
     outputs = []
+    size = StaticNodeSize(1)
     parallelization = None
 
     def __init__(self):

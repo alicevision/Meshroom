@@ -621,6 +621,7 @@ class Node(BaseObject):
         self.graph = None  # type: Graph
         self._chunks = []
         self._cmdVars = {}
+        self._size = 0
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
         self._initFromDesc()
@@ -795,6 +796,7 @@ class Node(BaseObject):
             chunk.updateStatisticsFromCache()
 
     def updateInternals(self):
+        self.setSize(self.nodeDesc.size.computeSize(self))
         if self.isParallelized:
             try:
                 ranges = self.nodeDesc.parallelization.getRanges(self)
@@ -860,6 +862,15 @@ class Node(BaseObject):
     def statusNames(self):
         return [s.status.name for s in self.status]
 
+    def getSize(self):
+        return self._size
+
+    def setSize(self, value):
+        if self._size == value:
+            return
+        self._size = value
+        self.sizeChanged.emit()
+
     def __repr__(self):
         return self.name
 
@@ -872,6 +883,8 @@ class Node(BaseObject):
     depth = Property(int, depth.fget, notify=depthChanged)
     chunksChanged = Signal()
     chunks = Property(Variant, getChunks, notify=chunksChanged)
+    sizeChanged = Signal()
+    size = Property(int, getSize, notify=sizeChanged)
 
 WHITE = 0
 GRAY = 1

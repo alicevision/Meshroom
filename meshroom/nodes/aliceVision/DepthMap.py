@@ -4,7 +4,8 @@ class DepthMap(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_depthMapEstimation {allParams}'
     gpu = desc.Level.INTENSIVE
-    parallelization = desc.Parallelization(inputListParamName='viewpoints', blockSize=3)
+    size = desc.DynamicNodeSize('ini')
+    parallelization = desc.Parallelization(blockSize=3)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [

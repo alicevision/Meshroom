@@ -5,6 +5,7 @@ from meshroom.core import desc
 class StructureFromMotion(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_incrementalSfM {allParams}'
+    size = desc.DynamicNodeSize('input')
 
     inputs = [
         desc.File(

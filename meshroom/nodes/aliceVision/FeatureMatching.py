@@ -5,7 +5,8 @@ from meshroom.core import desc
 class FeatureMatching(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_featureMatching {allParams}'
-    parallelization = desc.Parallelization(inputListParamName='viewpoints', blockSize=20)
+    size = desc.DynamicNodeSize('input')
+    parallelization = desc.Parallelization(blockSize=20)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [

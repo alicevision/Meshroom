@@ -45,6 +45,8 @@ class CameraInit(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_cameraInit {allParams}'
 
+    size = desc.DynamicNodeSize('viewpoints')
+
     inputs = [
         desc.ListAttribute(
             name="viewpoints",

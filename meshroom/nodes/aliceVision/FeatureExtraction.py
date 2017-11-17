@@ -5,7 +5,8 @@ from meshroom.core import desc
 class FeatureExtraction(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_featureExtraction {allParams}'
-    parallelization = desc.Parallelization(inputListParamName='viewpoints', blockSize=10)
+    size = desc.DynamicNodeSize('input')
+    parallelization = desc.Parallelization(blockSize=10)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [

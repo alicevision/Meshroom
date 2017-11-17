@@ -30,6 +30,13 @@ class Publish(desc.Node):
             ),
         ]
 
+    def resolvedPaths(self, inputFiles, outDir):
+        paths = {}
+        for inputFile in inputFiles:
+            for f in glob.glob(inputFile.value):
+                paths[f] = os.path.join(outDir, os.path.basename(f))
+        return paths
+
     def processChunk(self, chunk):
         print("Publish")
         if not chunk.node.inputFiles:
@@ -38,19 +45,15 @@ class Publish(desc.Node):
         if not chunk.node.output.value:
             return
 
-        inputFiles = []
-        for inputFile in chunk.node.inputFiles:
-            iFiles = glob.glob(inputFile.value)
-            inputFiles.extend(iFiles)
-        if not inputFiles:
-            raise RuntimeError("Publish: input files listed, but nothing to publish. Listed input files: {}".format(node.inputFiles))
+        outFiles = self.resolvedPaths(chunk.node.inputFiles, chunk.node.output.value)
+
+        if not outFiles:
+            raise RuntimeError("Publish: input files listed, but nothing to publish. Listed input files: {}".format(chunk.node.inputFiles))
 
         if not os.path.exists(chunk.node.output.value):
             os.mkdir(chunk.node.output.value)
 
-        for iFile in inputFiles:
-            filename = os.path.basename(iFile)
-            oFile = os.path.join(chunk.node.output.value, filename)
+        for iFile, oFile in outFiles:
             print('Publish file', iFile, 'into', oFile)
             shutil.copyfile(iFile, oFile)
         print('Publish end')

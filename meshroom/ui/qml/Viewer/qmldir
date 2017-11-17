@@ -1,3 +1,8 @@
 module Viewer
 
 Viewer2D 1.0 Viewer2D.qml
+Viewer3D 1.0 Viewer3D.qml
+MayaCameraController 1.0 MayaCameraController.qml
+Locator3D 1.0 Locator3D.qml
+Grid3D 1.0 Grid3D.qml
+

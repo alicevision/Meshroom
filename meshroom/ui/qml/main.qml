@@ -22,7 +22,7 @@ ApplicationWindow {
         close.accepted = false
         ensureSaved(function(){ Qt.quit() })
     }
-
+    SystemPalette { id: palette }
     Dialog {
         id: unsavedDialog
 
@@ -33,7 +33,7 @@ ApplicationWindow {
         x: parent.width/2 - width/2
         y: parent.height/2 - height/2
         standardButtons: Dialog.Save | Dialog.Cancel | Dialog.Discard
-
+        padding: 15
         onDiscarded: {
             close() // BUG ? discard does not close window
             fireCallback()
@@ -132,6 +132,8 @@ ApplicationWindow {
         visible: _reconstruction.buildingIntrinsics
         closePolicy: Popup.NoAutoClose
         title: "Import Images"
+        padding: 15
+
         ColumnLayout {
             anchors.fill: parent
             Label {
@@ -170,7 +172,9 @@ ApplicationWindow {
         shortcut: "Ctrl+Shift+P"
         onTriggered: _PaletteManager.togglePalette()
     }
+
     header: MenuBar {
+        palette.window: Qt.darker(palette.window, 1.15)
         Menu {
             title: "File"
             Action {
@@ -232,11 +236,30 @@ ApplicationWindow {
         anchors.margins: 4
         orientation: Qt.Vertical
 
-        ImageGallery {
-            property variant node: _reconstruction.graph.nodes.get("CameraInit_1")
-            model: node ? node.attribute("viewpoints").value : undefined
+        ColumnLayout {
             Layout.fillWidth: true
-            implicitHeight: Math.round(parent.height * 0.5)
+            Layout.fillHeight: false
+            implicitHeight: Math.round(parent.height * 0.7)
+            Row {
+                Button {
+                    id: btn
+                    text: "▶  Start"
+                    enabled: imageGallery.model.count > 2 && !_reconstruction.computing
+                    onClicked: _reconstruction.execute(null)
+                }
+                Button {
+                    text: "Stop"
+                    enabled: _reconstruction.computing
+                    onClicked: _reconstruction.stopExecution()
+                }
+            }
+            ImageGallery {
+                id: imageGallery
+                property variant node: _reconstruction.graph.nodes.get("CameraInit_1")
+                model: node ? node.attribute("viewpoints").value : undefined
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
         }
 
         Controls1.SplitView {
@@ -251,17 +274,6 @@ ApplicationWindow {
                 Row {
                     spacing: 1
                     Layout.fillWidth: true
-
-                    Button {
-                        text: "Execute"
-                        enabled: _reconstruction.graph.nodes.count && !_reconstruction.computing
-                        onClicked: _reconstruction.execute(null)
-                    }
-                    Button {
-                        text: "Stop"
-                        enabled: _reconstruction.computing
-                        onClicked: _reconstruction.stopExecution()
-                    }
                 }
                 GraphEditor {
                     id: graphEditor

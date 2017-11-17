@@ -1285,12 +1285,10 @@ class Graph(BaseObject):
         flowEdges = []
         edgesScore = self.dfsMaxEdgeLength(startNodes)
 
-        for e in self.edges.objects.values():
-            ee = (e.dst.node, e.src.node)
-            assert ee in edgesScore
-            assert edgesScore[ee] != 0
-            if edgesScore[ee] == 1:
-                flowEdges.append(ee)
+        for link, score in edgesScore.items():
+            assert score != 0
+            if score == 1:
+                flowEdges.append(link)
         return flowEdges
 
     def _applyExpr(self):

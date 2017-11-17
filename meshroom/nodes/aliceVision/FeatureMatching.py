@@ -119,11 +119,13 @@ class FeatureMatching(desc.CommandLineNode):
             value=False,
             uid=[],
         ),
-        desc.StringParam(
+        desc.ChoiceParam(
             name='fileExtension',
             label='File Extension',
             description='''File extension to store matches (bin or txt).''',
             value='txt',
+            values=('txt', 'bin'),
+            exclusive=True,
             uid=[],
         ),
         desc.IntParam(

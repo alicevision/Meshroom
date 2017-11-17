@@ -40,11 +40,13 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
             joinChar=',',
         ),
-        desc.StringParam(
+        desc.ChoiceParam(
             name='interFileExtension',
             label='Inter File Extension',
             description='''Extension of the intermediate file export.''',
             value='.abc',
+            values=('.abc', '.ply'),
+            exclusive=True,
             uid=[],
         ),
         desc.IntParam(

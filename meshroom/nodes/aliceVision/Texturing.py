@@ -22,13 +22,14 @@ class Texturing(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
-        desc.IntParam(
+        desc.ChoiceParam(
             name='textureSide',
             label='Texture Side',
             description='''Output texture size''',
             value=8192,
-            range=(1024, 16384, 1024),
-            uid=[0],
+            values=(1024, 2048, 4096, 8192, 16384),
+            exclusive=True,
+            uid=[],
         ),
         desc.IntParam(
             name='padding',

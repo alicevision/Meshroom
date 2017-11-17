@@ -39,12 +39,13 @@ class Texturing(desc.CommandLineNode):
             range=(0, 100, 1),
             uid=[0],
         ),
-        desc.IntParam(
+        desc.ChoiceParam(
             name='downscale',
             label='Downscale',
             description='''Texture downscale factor''',
             value=2,
-            range=(0, 16, 1),
+            values=(1, 2, 4, 8),
+            exclusive=True,
             uid=[0],
         ),
         desc.BoolParam(

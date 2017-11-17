@@ -99,14 +99,15 @@ Row {
             point1y: parent.width / 2
             point2x: dragTarget.x + dragTarget.width/2
             point2y: dragTarget.y + dragTarget.height/2
+            color: nameLabel.palette.text
         }
     }
 
     // Attribute name
     Label {
+        id: nameLabel
         text: attribute.name
         font.pointSize: 5
-        color: "#333"  // TODO: style
     }
 
     state: connectMA.pressed ? "Dragging" : ""

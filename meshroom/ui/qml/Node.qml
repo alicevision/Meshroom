@@ -1,20 +1,19 @@
 import QtQuick 2.9
-import QtQuick.Controls 2.2
+import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
+import QtGraphicalEffects 1.0
 
-Rectangle {
+Item {
     id: root
     property variant node: object
     property color baseColor: "#607D8B"
+    property color shadowColor: "black"
 
     signal pressed(var mouse)
     signal attributePinCreated(var attribute, var pin)
 
-    implicitHeight: body.height + 4
+    implicitHeight: body.height
 
-    color: baseColor
-    opacity: 0.9
-    radius: 2
     MouseArea {
         anchors.fill: parent
         drag.target: parent
@@ -45,32 +44,53 @@ Rectangle {
         }
     }
 
+// Cheaper shadow
+/*
+    Rectangle {
+        id: shadow
+        width: parent.width
+        height: parent.height
+        x: 0.5
+        y: 0.5
+        color: "black"
+        opacity: 0.4
+    }
+*/
+    Rectangle {
+        id: background
+        anchors.fill: parent
+        color: palette.base
+        layer.enabled: true
+        layer.effect: DropShadow { radius: 2; color: shadowColor }
+    }
+
     Column {
         id: body
         width: parent.width
-        spacing: 2
 
         Label {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
-            topPadding: 2
+            padding: 4
             text: node.nodeType
             color: "#EEE"
             font.pointSize: 8
+            background: Rectangle {
+                color: root.baseColor
+            }
         }
 
         // Node Chunks
         Rectangle {
             height: 3
-            width: parent.width - 2
+            width: parent.width
             anchors.horizontalCenter: parent.horizontalCenter
-            color: Qt.darker(baseColor, 1.2)
+            color: Qt.darker(baseColor, 1.3)
 
             ListView {
                 id: chunksListView
                 anchors.fill: parent
-                anchors.topMargin: 1
-                anchors.bottomMargin: 1
+
                 interactive: false
                 orientation: Qt.Horizontal
 
@@ -93,6 +113,8 @@ Rectangle {
                 }
             }
         }
+
+        Item { width: 1; height: 2}
 
         RowLayout  {
             width: parent.width + 6
@@ -140,5 +162,6 @@ Rectangle {
                 }
             }
         }
+        Item { width: 1; height: 2}
     }
 }

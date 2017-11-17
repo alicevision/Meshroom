@@ -1,5 +1,5 @@
 import QtQuick 2.7
-import QtQuick.Controls 2.0
+import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
 /**
@@ -23,6 +23,7 @@ Item {
 
     clip: true
 
+    SystemPalette { id: palette }
 
     MouseArea {
         id: mouseArea
@@ -79,6 +80,8 @@ Item {
                     property var dstAnchor: dst.nodeItem.mapFromItem(dst, dst.edgeAnchorPos.x, dst.edgeAnchorPos.y)
 
                     edge: object
+                    color: containsMouse ? palette.highlight : palette.text
+                    opacity: 0.7
                     point1x: src.nodeItem.x + srcAnchor.x
                     point1y: src.nodeItem.y + srcAnchor.y
                     point2x: dst.nodeItem.x + dstAnchor.x
@@ -101,8 +104,6 @@ Item {
                 delegate: Node {
                     node: object
                     width: root.nodeWidth
-                    height: Math.max(root.nodeHeight, implicitHeight)
-                    border.color: root.selectedNode == node ? Qt.darker(color, 1.8) : Qt.darker(color, 1.1)
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
 
@@ -131,7 +132,7 @@ Item {
         }
 
         Button {
-            text: "AutoLayout"
+            text: "Layout"
             onClicked: root.doAutoLayout()
             z: 10
         }

@@ -14,7 +14,10 @@ Shape {
     property real point2x
     property real point2y
     property alias thickness: path.strokeWidth
-    property color color
+    property alias color: path.strokeColor
+
+    // BUG: edgeArea is destroyed before path, need to test if not null to avoid warnings
+    readonly property bool containsMouse: edgeArea && edgeArea.containsMouse
 
     signal pressed(var event)
     signal released(var event)
@@ -37,8 +40,7 @@ Shape {
         startX: root.startX
         startY: root.startY
         fillColor: "transparent"
-        // BUG: edgeArea is destroyed before path, need to test if not null to avoid warnings
-        strokeColor: edgeArea && edgeArea.containsMouse ? "#E91E63" : "#3E3E3E"
+        strokeColor: "#3E3E3E"
         capStyle: ShapePath.RoundCap
         strokeWidth: 1
 

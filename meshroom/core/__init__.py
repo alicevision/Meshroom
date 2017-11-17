@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import importlib
 import inspect
 import os
@@ -6,12 +7,14 @@ import re
 import tempfile
 from contextlib import contextmanager
 
+from meshroom.core.submitter import BaseSubmitter
 from . import desc
 
 cacheFolderName = 'MeshroomCache'
 defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))
 defaultCacheFolder = defaultCacheFolder.replace("\\", "/")
 nodesDesc = {}
+submitters = {}
 
 
 @contextmanager
@@ -26,7 +29,7 @@ def add_to_path(p):
         sys.path = old_path
 
 
-def loadNodes(folder, packageName):
+def loadPlugins(folder, packageName, classType):
     """
     """
 
@@ -38,7 +41,7 @@ def loadNodes(folder, packageName):
         # import node package
         package = importlib.import_module(packageName)
         packageName = package.packageName if hasattr(package, 'packageName') else package.__name__
-        packageVersion = package.__version__
+        packageVersion = getattr(package, "__version__", None)
 
         pysearchre = re.compile('.py$', re.IGNORECASE)
         pluginFiles = filter(pysearchre.search, os.listdir(os.path.dirname(package.__file__)))
@@ -48,9 +51,11 @@ def loadNodes(folder, packageName):
 
             pluginName = os.path.splitext(pluginFile)[0]
             pluginModule = '.' + pluginName
+
             try:
-                m = importlib.import_module(pluginModule, package=package.__name__)
-                p = [a for a in m.__dict__.values() if inspect.isclass(a) and issubclass(a, desc.Node)]
+                pMod = importlib.import_module(pluginModule, package=package.__name__)
+                p = [m for name, m in inspect.getmembers(pMod, inspect.isclass)
+                     if m.__module__ == '{}.{}'.format(packageName, pluginName) and issubclass(m, classType)]
                 if not p:
                     raise RuntimeError('No class defined in plugin: %s' % pluginModule)
                 for a in p:
@@ -78,6 +83,10 @@ def registerNodeType(nodeType):
     nodesDesc[nodeType.__name__] = nodeType
 
 
+def loadNodes(folder, packageName):
+    return loadPlugins(folder, packageName, desc.Node)
+
+
 def loadAllNodes(folder):
     global nodesDesc
     for f in os.listdir(folder):
@@ -88,6 +97,22 @@ def loadAllNodes(folder):
             print('Plugins loaded: ', ', '.join([nodeType.__name__ for nodeType in nodeTypes]))
 
 
-# Load plugins
+def registerSubmitter(s):
+    global submitters
+    if s.name in submitters:
+        raise RuntimeError("Submitter {} is already registered.".format(s.name))
+    submitters[s.name] = s
+
+
+def loadSubmitters(folder, packageName):
+    return loadPlugins(folder, packageName, BaseSubmitter)
+
+
 meshroomFolder = os.path.dirname(os.path.dirname(__file__))
+
+# Load plugins:
+# - Nodes
 loadAllNodes(folder=os.path.join(meshroomFolder, 'nodes'))
+# - Submitters
+for sub in loadSubmitters(meshroomFolder, 'submitters'):
+    registerSubmitter(sub())

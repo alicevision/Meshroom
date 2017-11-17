@@ -1448,3 +1448,38 @@ def execute(graph, toNodes=None, forceCompute=False, forceStatus=False):
 
     for node in nodes:
         node.endSequence()
+
+
+def submitGraph(graph, filepath, submitter, toNode=None):
+    toNodes = graph.findNodes([toNode]) if toNode else None
+    nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
+    flowEdges = graph.flowEdges(startNodes=toNodes)
+    edgesToProcess = set(edgesToProcess).intersection(flowEdges)
+
+    if not nodesToProcess:
+        logging.warning('Nothing to compute')
+        return
+
+    logging.info("Nodes to process: {}".format(edgesToProcess))
+    logging.info("Edges to process: {}".format(edgesToProcess))
+
+    sub = meshroom.core.submitters.get(submitter, None)
+    if sub is None:
+        raise RuntimeError("Unknown Submitter : " + submitter)
+
+    try:
+        res = sub.submit(nodesToProcess, edgesToProcess, filepath)
+        if res:
+            for node in nodesToProcess:
+                node.submit()  # update node status
+    except Exception as e:
+        logging.error("Error on submit : {}".format(e))
+
+
+def submit(graphFile, submitter, toNode=None):
+    """
+    Submit the given graph via the given submitter.
+    """
+    graph = loadGraph(graphFile)
+    submitGraph(graph, graphFile, submitter, toNode)
+

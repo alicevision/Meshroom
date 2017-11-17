@@ -45,12 +45,13 @@ Item {
                     fillMode: Image.PreserveAspectFit
                 }
                 Rectangle {
-                   color: palette.midlight
+                   color: Qt.darker(palette.base, 1.15)
                    anchors.fill: parent
-                   anchors.margins: 3
+                   anchors.margins: 4
                    border.color: palette.highlight
                    border.width: imageMA.containsMouse || grid.currentIndex == index ? 2 : 0
                    z: -1
+
                    MouseArea {
                        id: imageMA
                        anchors.fill: parent
@@ -77,8 +78,30 @@ Item {
             Layout.minimumWidth: 40
             Viewer2D {
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: 4
                 source: grid.currentItem.source
+                Rectangle {
+                    z: -1
+                    anchors.fill: parent
+                    color: Qt.darker(palette.base, 1.1)
+                }
+            }
+        }
+        Item {
+            implicitWidth: Math.round(parent.width * 0.3)
+            Layout.minimumWidth: 20
+            Platform.FileDialog {
+                id: modelDialog
+                nameFilters: ["3D Models (*.obj)"]
+                onAccepted: viewer3D.loadModel(file)
+            }
+            Viewer3D {
+                id: viewer3D
+                anchors.fill: parent
+                Button {
+                    text: "Load Model"
+                    onClicked: modelDialog.open()
+                }
             }
         }
     }

@@ -366,9 +366,9 @@ class GroupAttribute(Attribute):
 
     def uid(self, uidIndex):
         uids = []
-        for value in self._value:
-            if uidIndex in value.desc.uid:
-                uids.append(value.uid(uidIndex))
+        for k, v in self._value.items():
+            if uidIndex in v.desc.uid:
+                uids.append(v.uid(uidIndex))
         return hash(uids)
 
     def _applyExpr(self):

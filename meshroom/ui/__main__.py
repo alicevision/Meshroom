@@ -67,7 +67,7 @@ if __name__ == "__main__":
     qmlDir = os.path.join(pwd, "qml")
     url = os.path.join(qmlDir, "main.qml")
     engine = QmlInstantEngine()
-    engine.addFilesFromDirectory(qmlDir)
+    engine.addFilesFromDirectory(qmlDir, recursive=True)
     engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
     components.registerTypes()
 

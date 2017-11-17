@@ -63,6 +63,7 @@ if __name__ == "__main__":
     app.setAttribute(Qt.AA_EnableHighDpiScaling)
 
     pwd = os.path.dirname(__file__)
+    app.setWindowIcon(QIcon(os.path.join(pwd, "img/icon.png")))
     qmlDir = os.path.join(pwd, "qml")
     url = os.path.join(qmlDir, "main.qml")
     engine = QmlInstantEngine()

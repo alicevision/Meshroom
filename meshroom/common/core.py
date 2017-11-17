@@ -77,7 +77,7 @@ class CoreListModel:
         self._objects.extend(iterable)
 
     def indexOf(self, obj):
-        self._objects.index(obj)
+        return self._objects.index(obj)
 
     def removeAt(self, idx, count=1):
         del self._objects[idx:idx+count]

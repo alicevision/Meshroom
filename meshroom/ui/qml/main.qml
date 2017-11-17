@@ -166,6 +166,10 @@ ApplicationWindow {
         onTriggered: _reconstruction.undoStack.redo()
     }
 
+    Action {
+        shortcut: "Ctrl+Shift+P"
+        onTriggered: _PaletteManager.togglePalette()
+    }
     header: MenuBar {
         Menu {
             title: "File"

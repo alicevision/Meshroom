@@ -175,8 +175,11 @@ class QmlInstantEngine(QQmlApplicationEngine):
             time.sleep(0.1)
             cptTry += 1
 
-        print("Reloading ", self._sourceFile)
-        self.load(self._sourceFile)
+        self.reload()
 
         # Finally, read the modified file to the watch system
         self.addFile(filepath)
+
+    def reload(self):
+        print("Reloading ", self._sourceFile)
+        self.load(self._sourceFile)

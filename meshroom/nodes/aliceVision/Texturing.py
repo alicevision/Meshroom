@@ -29,7 +29,7 @@ class Texturing(desc.CommandLineNode):
             value=8192,
             values=(1024, 2048, 4096, 8192, 16384),
             exclusive=True,
-            uid=[],
+            uid=[0],
         ),
         desc.IntParam(
             name='padding',

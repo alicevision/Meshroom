@@ -53,7 +53,7 @@ class Publish(desc.Node):
         if not os.path.exists(chunk.node.output.value):
             os.mkdir(chunk.node.output.value)
 
-        for iFile, oFile in outFiles:
+        for iFile, oFile in outFiles.items():
             print('Publish file', iFile, 'into', oFile)
             shutil.copyfile(iFile, oFile)
         print('Publish end')

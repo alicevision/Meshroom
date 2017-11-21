@@ -570,7 +570,10 @@ class NodeChunk(BaseObject):
     def isAlreadySubmitted(self):
         return self.status.status in (Status.SUBMITTED_EXTERN, Status.SUBMITTED_LOCAL, Status.RUNNING)
 
-    def process(self):
+    def process(self, forceCompute=False):
+        if not forceCompute and self.status.status == Status.SUCCESS:
+            print("Node chunk already computed:", self.name)
+            return
         global runningProcesses
         runningProcesses[self.name] = self
         self.upgradeStatusTo(Status.RUNNING)
@@ -845,9 +848,9 @@ class Node(BaseObject):
     def processIteration(self, iteration):
         self.chunks[iteration].process()
 
-    def process(self):
+    def process(self, forceCompute=False):
         for chunk in self.chunks:
-            chunk.process()
+            chunk.process(forceCompute)
 
     def endSequence(self):
         pass
@@ -1437,10 +1440,18 @@ def execute(graph, toNodes=None, forceCompute=False, forceStatus=False):
     for node in nodes:
         node.beginSequence()
 
-    for i, node in enumerate(nodes):
+    for n, node in enumerate(nodes):
         try:
-            print('\n[{i}/{N}] {nodeName}'.format(i=i + 1, N=len(nodes), nodeName=node.nodeType))
-            node.process()
+            multiChunks = len(node.chunks) > 1
+            for c, chunk in enumerate(node.chunks):
+                if multiChunks:
+                    print('\n[{node}/{nbNodes}]({chunk}/{nbChunks}) {nodeName}'.format(
+                        node=n+1, nbNodes=len(nodes),
+                        chunk=c+1, nbChunks=len(node.chunks), nodeName=node.nodeType))
+                else:
+                    print('\n[{node}/{nbNodes}] {nodeName}'.format(
+                        node=n + 1, nbNodes=len(nodes), nodeName=node.nodeType))
+                chunk.process(forceCompute)
         except Exception as e:
             logging.error("Error on node computation: {}".format(e))
             graph.clearSubmittedNodes()

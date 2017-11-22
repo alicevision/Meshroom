@@ -326,12 +326,13 @@ class CommandLineNode(Node):
         try:
             with open(chunk.logFile(), 'w') as logF:
                 cmd = self.buildCommandLine(chunk)
+                chunk.status.commandLine = cmd
+                chunk.saveStatusFile()
                 print(' - commandLine:', cmd)
                 print(' - logFile:', chunk.logFile())
                 chunk.subprocess = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
 
                 # store process static info into the status file
-                chunk.status.commandLine = cmd
                 # chunk.status.env = node.proc.environ()
                 # chunk.status.createTime = node.proc.create_time()
 

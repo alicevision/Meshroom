@@ -17,7 +17,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
 
     def __init__(self, parent=None):
         super(SimpleFarmSubmitter, self).__init__(name='SimpleFarm', parent=parent)
-        self.engine = os.environ.get('MESHROOM_SIMPLEFARM_ENGINE', 'tractor-dummy')
+        self.engine = os.environ.get('MESHROOM_SIMPLEFARM_ENGINE', 'tractor')
         self.share = os.environ.get('MESHROOM_SIMPLEFARM_SHARE', 'vfx')
         self.prod = os.environ.get('PROD', 'mvg')
 

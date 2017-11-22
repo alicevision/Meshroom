@@ -8,6 +8,7 @@ import os
 import weakref
 import shutil
 import time
+import datetime
 import uuid
 from collections import defaultdict
 from contextlib import contextmanager
@@ -427,6 +428,7 @@ class Status(Enum):
 class StatusData:
     """
     """
+    dateTimeFormatting = '%Y-%m-%d %H:%M:%S.%f'
 
     def __init__(self, nodeName, nodeType):
         self.status = Status.NONE
@@ -435,15 +437,32 @@ class StatusData:
         self.graph = ''
         self.commandLine = None
         self.env = None
+        self.startDateTime = ""
+        self.endDateTime = ""
+        self.elapsedTime = 0
 
     def reset(self):
         self.status = Status.NONE
         self.graph = ''
         self.commandLine = None
         self.env = None
+        self.elapsedTime = 0
+
+    def initStartDateTime(self):
+        self.startDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
+        # to get datetime obj: datetime.datetime.strptime(obj, self.dateTimeFormatting)
+
+    def initEndDateTime(self):
+        self.endDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
+
+    @property
+    def elapsedTimeStr(self):
+        return str(datetime.timedelta(seconds=self.elapsedTime))
 
     def toDict(self):
-        return self.__dict__
+        d = self.__dict__.copy()
+        d["elapsedTimeStr"] = self.elapsedTimeStr
+        return d
 
     def fromDict(self, d):
         self.status = Status._member_map_[d['status']]
@@ -452,6 +471,9 @@ class StatusData:
         self.graph = d.get('graph', '')
         self.commandLine = d.get('commandLine', '')
         self.env = d.get('env', '')
+        self.startDateTime = d.get('startDateTime', '')
+        self.endDateTime = d.get('endDateTime', '')
+        self.elapsedTime = d.get('elapsedTime', '')
 
 
 runningProcesses = {}
@@ -576,10 +598,11 @@ class NodeChunk(BaseObject):
             return
         global runningProcesses
         runningProcesses[self.name] = self
+        self.status.initStartDateTime()
+        startTime = time.time()
         self.upgradeStatusTo(Status.RUNNING)
         self.statThread = stats.StatisticsThread(self)
         self.statThread.start()
-        startTime = time.time()
         try:
             self.node.nodeDesc.processChunk(self)
         except Exception as e:
@@ -589,8 +612,9 @@ class NodeChunk(BaseObject):
             self.upgradeStatusTo(Status.STOPPED)
             raise
         finally:
-            elapsedTime = time.time() - startTime
-            print(' - elapsed time:', elapsedTime)
+            self.status.initEndDateTime()
+            self.status.elapsedTime = time.time() - startTime
+            print(' - elapsed time:', self.status.elapsedTimeStr)
             # ask and wait for the stats thread to stop
             self.statThread.stopRequest()
             self.statThread.join()

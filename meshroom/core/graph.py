@@ -839,11 +839,15 @@ class Node(BaseObject):
         for chunk in self.chunks:
             chunk.updateStatusFromCache()
 
-    def submit(self):
-        self.upgradeStatusTo(Status.SUBMITTED_EXTERN)
+    def submit(self, forceCompute=False):
+        for chunk in self.chunks:
+            if forceCompute or chunk.status.status != Status.SUCCESS:
+                self.upgradeStatusTo(Status.SUBMITTED_EXTERN)
 
-    def beginSequence(self):
-        self.upgradeStatusTo(Status.SUBMITTED_LOCAL)
+    def beginSequence(self, forceCompute=False):
+        for chunk in self.chunks:
+            if forceCompute or chunk.status.status != Status.SUCCESS:
+                self.upgradeStatusTo(Status.SUBMITTED_LOCAL)
 
     def processIteration(self, iteration):
         self.chunks[iteration].process()
@@ -1438,7 +1442,7 @@ def execute(graph, toNodes=None, forceCompute=False, forceStatus=False):
     print('Nodes to execute: ', str([n.name for n in nodes]))
 
     for node in nodes:
-        node.beginSequence()
+        node.beginSequence(forceCompute)
 
     for n, node in enumerate(nodes):
         try:

@@ -866,12 +866,12 @@ class Node(BaseObject):
     def submit(self, forceCompute=False):
         for chunk in self.chunks:
             if forceCompute or chunk.status.status != Status.SUCCESS:
-                self.upgradeStatusTo(Status.SUBMITTED_EXTERN)
+                chunk.upgradeStatusTo(Status.SUBMITTED_EXTERN)
 
     def beginSequence(self, forceCompute=False):
         for chunk in self.chunks:
             if forceCompute or chunk.status.status != Status.SUCCESS:
-                self.upgradeStatusTo(Status.SUBMITTED_LOCAL)
+                chunk.upgradeStatusTo(Status.SUBMITTED_LOCAL)
 
     def processIteration(self, iteration):
         self.chunks[iteration].process()
@@ -1245,9 +1245,9 @@ class Graph(BaseObject):
             for chunk in vertex.chunks:
                 if chunk.status.status in (Status.SUBMITTED_EXTERN,
                                             Status.SUBMITTED_LOCAL):
-                    logging.warning('Node "{}" is already submitted.'.format(vertex.name))
+                    logging.warning('Node "{}" is already submitted.'.format(chunk.name))
                 if chunk.status.status is Status.RUNNING:
-                    logging.warning('Node "{}" is already running.'.format(vertex.name))
+                    logging.warning('Node "{}" is already running.'.format(chunk.name))
                 if chunk.status.status is not Status.SUCCESS:
                     chunksToProcess.append(chunk)
             if chunksToProcess:

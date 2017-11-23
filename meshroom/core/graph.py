@@ -415,14 +415,19 @@ class Edge(BaseObject):
 class Status(Enum):
     """
     """
-    NONE = 1
-    SUBMITTED_EXTERN = 2
-    SUBMITTED_LOCAL = 3
-    RUNNING = 4
-    ERROR = 5
-    STOPPED = 6
-    KILLED = 7
-    SUCCESS = 8
+    NONE = 0
+    SUBMITTED = 1
+    RUNNING = 2
+    ERROR = 3
+    STOPPED = 4
+    KILLED = 5
+    SUCCESS = 6
+
+
+class ExecMode(Enum):
+    NONE = 0
+    LOCAL = 1
+    EXTERN = 2
 
 
 class StatusData:
@@ -432,6 +437,7 @@ class StatusData:
 
     def __init__(self, nodeName, nodeType, packageName, packageVersion):
         self.status = Status.NONE
+        self.execMode = ExecMode.NONE
         self.nodeName = nodeName
         self.nodeType = nodeType
         self.packageName = packageName
@@ -446,12 +452,16 @@ class StatusData:
         self.sessionUid = meshroom.core.sessionUid
 
     def reset(self):
-        self.sessionUid = meshroom.core.sessionUid
         self.status = Status.NONE
+        self.execMode = ExecMode.NONE
         self.graph = ''
         self.commandLine = None
         self.env = None
+        self.startDateTime = ""
+        self.endDateTime = ""
         self.elapsedTime = 0
+        self.hostname = ""
+        self.sessionUid = meshroom.core.sessionUid
 
     def initStartCompute(self):
         import platform
@@ -474,7 +484,12 @@ class StatusData:
         return d
 
     def fromDict(self, d):
-        self.status = Status._member_map_[d['status']]
+        self.status = Status.NONE
+        try:
+            self.status = Status._member_map_[d.get('status', '')]
+        except:
+            logging.warning('Failed to recognize chunk status. status={}.'.format(d.get('status', '')))
+        self.execMode = d.get('execMode', '')
         self.nodeName = d.get('nodeName', '')
         self.nodeType = d.get('nodeType', '')
         self.packageName = d.get('packageName', '')
@@ -521,6 +536,10 @@ class NodeChunk(BaseObject):
     @property
     def statusName(self):
         return self.status.status.name
+
+    @property
+    def execModeName(self):
+        return self.status.execMode.name
 
     def updateStatusFromCache(self):
         """
@@ -570,10 +589,13 @@ class NodeChunk(BaseObject):
             json.dump(data, jsonFile, indent=4)
         shutil.move(statusFilepathWriting, statusFilepath)
 
-    def upgradeStatusTo(self, newStatus):
+    def upgradeStatusTo(self, newStatus, execMode=None):
         if newStatus.value <= self.status.status.value:
             print('WARNING: downgrade status on node "{}" from {} to {}'.format(self.name, self.status.status,
                                                                                 newStatus))
+        if execMode is not None:
+            self.status.execMode = execMode
+            self.execModeNameChanged.emit()
         self.status.status = newStatus
         self.statusChanged.emit()
         self.saveStatusFile()
@@ -603,7 +625,7 @@ class NodeChunk(BaseObject):
         shutil.move(statisticsFilepathWriting, statisticsFilepath)
 
     def isAlreadySubmitted(self):
-        return self.status.status in (Status.SUBMITTED_EXTERN, Status.SUBMITTED_LOCAL, Status.RUNNING)
+        return self.status.status in (Status.SUBMITTED, Status.RUNNING)
 
     def process(self, forceCompute=False):
         if not forceCompute and self.status.status == Status.SUCCESS:
@@ -640,6 +662,8 @@ class NodeChunk(BaseObject):
 
     statusChanged = Signal()
     statusName = Property(str, statusName.fget, notify=statusChanged)
+    execModeNameChanged = Signal()
+    execModeName = Property(str, execModeName.fget, notify=execModeNameChanged)
     statisticsChanged = Signal()
 
 
@@ -879,12 +903,12 @@ class Node(BaseObject):
     def submit(self, forceCompute=False):
         for chunk in self.chunks:
             if forceCompute or chunk.status.status != Status.SUCCESS:
-                chunk.upgradeStatusTo(Status.SUBMITTED_EXTERN)
+                chunk.upgradeStatusTo(Status.SUBMITTED, ExecMode.EXTERN)
 
     def beginSequence(self, forceCompute=False):
         for chunk in self.chunks:
             if forceCompute or chunk.status.status != Status.SUCCESS:
-                chunk.upgradeStatusTo(Status.SUBMITTED_LOCAL)
+                chunk.upgradeStatusTo(Status.SUBMITTED, ExecMode.LOCAL)
 
     def processIteration(self, iteration):
         self.chunks[iteration].process()
@@ -1256,8 +1280,7 @@ class Graph(BaseObject):
         def finishVertex(vertex, graph):
             chunksToProcess = []
             for chunk in vertex.chunks:
-                if chunk.status.status in (Status.SUBMITTED_EXTERN,
-                                            Status.SUBMITTED_LOCAL):
+                if chunk.status.status is Status.SUBMITTED:
                     logging.warning('Node "{}" is already submitted.'.format(chunk.name))
                 if chunk.status.status is Status.RUNNING:
                     logging.warning('Node "{}" is already running.'.format(chunk.name))
@@ -1398,7 +1421,7 @@ class Graph(BaseObject):
         """ Reset the status of already submitted nodes to Status.NONE """
         for node in self.nodes:
             for chunk in node.alreadySubmittedChunks():
-                chunk.upgradeStatusTo(Status.NONE)
+                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
 
     def iterChunksByStatus(self, status):
         """ Iterate over NodeChunks with the given status """

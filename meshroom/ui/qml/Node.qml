@@ -104,8 +104,7 @@ Item {
                     state: modelData.statusName
                     states: [
                         State { name: "NONE"; PropertyChanges { target: chunkDelegate; color: "transparent"} },
-                        State { name: "SUBMITTED_EXTERN"; PropertyChanges { target: chunkDelegate; color: "#2196F3"} },
-                        State { name: "SUBMITTED_LOCAL"; PropertyChanges { target: chunkDelegate; color: "#009688"} },
+                        State { name: "SUBMITTED"; PropertyChanges { target: chunkDelegate; color: modelData.execModeName == "LOCAL" ? "#009688" : "#2196F3"} },
                         State { name: "RUNNING"; PropertyChanges { target: chunkDelegate; color: "#FF9800"} },
                         State { name: "ERROR"; PropertyChanges { target: chunkDelegate; color: "#F44336"} },
                         State { name: "SUCCESS"; PropertyChanges { target: chunkDelegate; color: "#4CAF50"} }

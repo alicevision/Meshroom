@@ -36,9 +36,7 @@ graph.update()
 if args.node:
     # Execute the node
     node = graph.findNode(args.node)
-    submittedStatuses = [Status.SUBMITTED_LOCAL, Status.RUNNING]
-    if not args.extern:
-        submittedStatuses.append(Status.SUBMITTED_EXTERN)
+    submittedStatuses = [Status.SUBMITTED, Status.RUNNING]
     if not args.forceStatus and not args.forceCompute:
         if args.iteration != -1:
             chunks = [node.chunks[args.iteration]]

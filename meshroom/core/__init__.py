@@ -1,14 +1,19 @@
 from __future__ import print_function
 
+from contextlib import contextmanager
 import importlib
 import inspect
 import os
 import re
 import tempfile
-from contextlib import contextmanager
+import uuid
 
 from meshroom.core.submitter import BaseSubmitter
 from . import desc
+
+
+# make a UUID based on the host ID and current time
+sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
 defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))

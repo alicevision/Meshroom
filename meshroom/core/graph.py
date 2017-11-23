@@ -430,29 +430,38 @@ class StatusData:
     """
     dateTimeFormatting = '%Y-%m-%d %H:%M:%S.%f'
 
-    def __init__(self, nodeName, nodeType):
+    def __init__(self, nodeName, nodeType, packageName, packageVersion):
         self.status = Status.NONE
         self.nodeName = nodeName
         self.nodeType = nodeType
+        self.packageName = packageName
+        self.packageVersion = packageVersion
         self.graph = ''
         self.commandLine = None
         self.env = None
         self.startDateTime = ""
         self.endDateTime = ""
         self.elapsedTime = 0
+        self.hostname = ""
+        self.sessionUid = meshroom.core.sessionUid
 
     def reset(self):
+        self.sessionUid = meshroom.core.sessionUid
         self.status = Status.NONE
         self.graph = ''
         self.commandLine = None
         self.env = None
         self.elapsedTime = 0
 
-    def initStartDateTime(self):
+    def initStartCompute(self):
+        import platform
+        self.sessionUid = meshroom.core.sessionUid
+        self.hostname = platform.node()
         self.startDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
         # to get datetime obj: datetime.datetime.strptime(obj, self.dateTimeFormatting)
 
-    def initEndDateTime(self):
+    def initEndCompute(self):
+        self.sessionUid = meshroom.core.sessionUid
         self.endDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
 
     @property
@@ -468,12 +477,16 @@ class StatusData:
         self.status = Status._member_map_[d['status']]
         self.nodeName = d.get('nodeName', '')
         self.nodeType = d.get('nodeType', '')
+        self.packageName = d.get('packageName', '')
+        self.packageVersion = d.get('packageVersion', '')
         self.graph = d.get('graph', '')
         self.commandLine = d.get('commandLine', '')
         self.env = d.get('env', '')
         self.startDateTime = d.get('startDateTime', '')
         self.endDateTime = d.get('endDateTime', '')
         self.elapsedTime = d.get('elapsedTime', '')
+        self.hostname = d.get('hostname', '')
+        self.sessionUid = d.get('sessionUid', '')
 
 
 runningProcesses = {}
@@ -490,7 +503,7 @@ class NodeChunk(BaseObject):
         super(NodeChunk, self).__init__(node)
         self.node = node
         self.range = range
-        self.status = StatusData(node.name, node.nodeType)
+        self.status = StatusData(node.name, node.nodeType, node.packageName, node.packageVersion)
         self.statistics = stats.Statistics()
         self._subprocess = None
 
@@ -598,7 +611,7 @@ class NodeChunk(BaseObject):
             return
         global runningProcesses
         runningProcesses[self.name] = self
-        self.status.initStartDateTime()
+        self.status.initStartCompute()
         startTime = time.time()
         self.upgradeStatusTo(Status.RUNNING)
         self.statThread = stats.StatisticsThread(self)
@@ -612,7 +625,7 @@ class NodeChunk(BaseObject):
             self.upgradeStatusTo(Status.STOPPED)
             raise
         finally:
-            self.status.initEndDateTime()
+            self.status.initEndCompute()
             self.status.elapsedTime = time.time() - startTime
             print(' - elapsed time:', self.status.elapsedTimeStr)
             # ask and wait for the stats thread to stop

@@ -1434,11 +1434,12 @@ def loadGraph(filepath):
     return graph
 
 
-def getAlreadySubmittedNodes(nodes):
+def getAlreadySubmittedChunks(nodes):
     out = []
     for node in nodes:
-        if node.isAlreadySubmitted():
-            out.append(node)
+        for chunk in node.chunks:
+            if chunk.isAlreadySubmitted():
+                out.append(chunk)
     return out
 
 
@@ -1449,14 +1450,14 @@ def execute(graph, toNodes=None, forceCompute=False, forceStatus=False):
         nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
     else:
         nodes, edges = graph.dfsToProcess(startNodes=toNodes)
-        nodesInConflict = getAlreadySubmittedNodes(nodes)
+        chunksInConflict = getAlreadySubmittedChunks(nodes)
 
-        if nodesInConflict:
-            nodesStatus = set([status.status.name for node in nodesInConflict for status in node.status])
-            nodesName = [node.name for node in nodesInConflict]
+        if chunksInConflict:
+            chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
+            chunksName = [node.name for node in chunksInConflict]
             msg = 'WARNING: Some nodes are already submitted with status: {}\nNodes: {}'.format(
-                  ', '.join(nodesStatus),
-                  ', '.join(nodesName)
+                  ', '.join(chunksStatus),
+                  ', '.join(chunksName)
                   )
             if forceStatus:
                 print(msg)

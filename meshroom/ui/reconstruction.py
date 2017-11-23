@@ -143,7 +143,8 @@ class Reconstruction(QObject):
         try:
             graph.execute(self._graph, nodes)
         except Exception as e:
-            logging.error("Error during Graph execution {}".format(e))
+            import traceback
+            logging.error("Error during Graph execution: {}".format(traceback.format_exc()))
         finally:
             self.computingChanged.emit()
 

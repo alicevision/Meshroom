@@ -484,12 +484,8 @@ class StatusData:
         return d
 
     def fromDict(self, d):
-        self.status = Status.NONE
-        try:
-            self.status = Status._member_map_[d.get('status', '')]
-        except:
-            logging.warning('Failed to recognize chunk status. status={}.'.format(d.get('status', '')))
-        self.execMode = d.get('execMode', '')
+        self.status = getattr(Status, d.get('status', ''), Status.NONE)
+        self.execMode = getattr(ExecMode, d.get('execMode', ''), ExecMode.NONE)
         self.nodeName = d.get('nodeName', '')
         self.nodeType = d.get('nodeType', '')
         self.packageName = d.get('packageName', '')

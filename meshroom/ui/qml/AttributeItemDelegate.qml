@@ -26,13 +26,21 @@ Loader {
         }
     }
 
+    function setTextFieldAttribute(attribute, value)
+    {
+        // editingFinished called even when TextField is readonly
+        if(editable)
+            _reconstruction.setAttribute(attribute, value.trim())
+    }
+
     Component {
         id: textField_component
         TextField {
             readOnly: !root.editable
             text: attribute.value
             selectByMouse: true
-            onEditingFinished: _reconstruction.setAttribute(attribute, text.trim())
+            onEditingFinished: setTextFieldAttribute(attribute, text)
+            onAccepted: setTextFieldAttribute(attribute, text)
         }
     }
 
@@ -100,7 +108,7 @@ Loader {
                 text: s.pressed ? s.value : attribute.value
                 selectByMouse: true
                 validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
-                onEditingFinished: _reconstruction.setAttribute(attribute, text)
+                onEditingFinished: setTextFieldAttribute(attribute, text)
             }
         }
     }

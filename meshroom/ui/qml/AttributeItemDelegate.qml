@@ -7,7 +7,11 @@ import QtQuick.Controls 2.2
 */
 Loader {
     id: root
+
     property variant attribute: null
+    property bool readOnly: false
+
+    readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
     sourceComponent: {
         switch(attribute.type)
@@ -25,8 +29,8 @@ Loader {
     Component {
         id: textField_component
         TextField {
+            readOnly: !root.editable
             text: attribute.value
-            readOnly: attribute.isOutput || attribute.isLink
             selectByMouse: true
             onEditingFinished: _reconstruction.setAttribute(attribute, text.trim())
         }
@@ -35,8 +39,8 @@ Loader {
     Component {
         id: comboBox_component
         ComboBox {
+            enabled: root.editable
             model: attribute.desc.values
-            enabled: !attribute.isOutput && !attribute.isLink
             Component.onCompleted: currentIndex = find(attribute.value)
             onActivated: _reconstruction.setAttribute(attribute, currentText)
             Connections {
@@ -53,6 +57,7 @@ Loader {
                 id: checkbox_repeater
                 model: attribute.desc.values
                 delegate: CheckBox {
+                    enabled: root.editable
                     text: modelData
                     checked: attribute.value.indexOf(modelData) >= 0
                     onToggled: {
@@ -72,6 +77,7 @@ Loader {
             Slider {
                 id: s
                 Layout.fillWidth: true
+                enabled: root.editable
                 value: attribute.value
                 from: attribute.desc.range[0]
                 to: attribute.desc.range[1]
@@ -90,6 +96,7 @@ Loader {
                 id: doubleValidator
             }
             TextField {
+                enabled: root.editable
                 text: s.pressed ? s.value : attribute.value
                 selectByMouse: true
                 validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
@@ -102,6 +109,7 @@ Loader {
         id: checkbox_component
         Row {
             CheckBox {
+                enabled: root.editable
                 checked: attribute.value
                 onToggled: _reconstruction.setAttribute(attribute, !attribute.value)
             }
@@ -126,6 +134,7 @@ Loader {
                 }
                 ToolButton {
                     text: "+"
+                    enabled: root.editable
                     onClicked: _reconstruction.appendAttribute(attribute, undefined)
                 }
             }
@@ -148,11 +157,17 @@ Loader {
                     width: lv.width - sb.width
                     Component.onCompleted: {
                         var cpt = Qt.createComponent("AttributeItemDelegate.qml")
-                        var obj = cpt.createObject(item, {'attribute': Qt.binding(function() { return item.childAttrib })})
+                        var obj = cpt.createObject(item,
+                                                   {'attribute': Qt.binding(function() { return item.childAttrib }),
+                                                    'readOnly': Qt.binding(function() { return root.readOnly })
+                                                   })
                         obj.Layout.fillWidth = true
                     }
                     ToolButton {
+                        enabled: root.editable
                         text: "∅"
+                        ToolTip.text: "Remove Element"
+                        ToolTip.visible: hovered
                         onClicked: _reconstruction.removeAttribute(item.childAttrib)
                     }
                 }
@@ -173,13 +188,15 @@ Loader {
             delegate: RowLayout {
                 id: row
                 width: someview.width
-                //height: childrenRect.height
                 property var childAttrib: object
 
                 Label { text: childAttrib.name }
                 Component.onCompleted:  {
                     var cpt = Qt.createComponent("AttributeItemDelegate.qml")
-                    var obj = cpt.createObject(row, {'attribute': Qt.binding(function() { return row.childAttrib })})
+                    var obj = cpt.createObject(row,
+                                               {'attribute': Qt.binding(function() { return row.childAttrib }),
+                                                'readOnly': Qt.binding(function() { return root.readOnly })
+                                               })
                     obj.Layout.fillWidth = true
                 }
             }

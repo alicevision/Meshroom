@@ -8,8 +8,8 @@ import QtQuick.Controls 2.2
 ColumnLayout {
     id: root
 
-    // the node to edit
-    property variant node: null
+    property variant node: null  // the node to edit
+    property bool readOnly: false
 
     SystemPalette { id: palette }
 
@@ -55,6 +55,7 @@ ColumnLayout {
                 Layout.rightMargin: scrollBar.width
                 height: childrenRect.height
                 attribute: object
+                readOnly: root.readOnly
             }
         }
     }

@@ -293,8 +293,8 @@ ApplicationWindow {
                     sourceComponent: Component {
                         AttributeEditor {
                             node: graphEditor.selectedNode
-                            // Disable editor when computing
-                            enabled: !_reconstruction.computing
+                            // Make AttributeEditor readOnly when computing
+                            readOnly: _reconstruction.computing
                         }
                     }
                 }

@@ -1458,6 +1458,21 @@ class Graph(BaseObject):
             chunks += [chunk for chunk in node.chunks if chunk.status.status == status]
         return chunks
 
+    def getChunks(self, nodes=None):
+        """ Returns the list of NodeChunks for the given list of nodes (for all nodes if nodes is None) """
+        chunks = []
+        for node in nodes or self.nodes:
+            chunks += [chunk for chunk in node.chunks]
+        return chunks
+
+    def getOrderedChunks(self):
+        """ Get chunks as visited by dfsOnFinish.
+
+        Returns:
+            list of NodeChunks: the ordered list of NodeChunks
+        """
+        return self.getChunks(self.dfsOnFinish()[0])
+
     @property
     def nodes(self):
         return self._nodes

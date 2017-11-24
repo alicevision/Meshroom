@@ -593,8 +593,8 @@ class NodeChunk(BaseObject):
             self.status.execMode = execMode
             self.execModeNameChanged.emit()
         self.status.status = newStatus
-        self.statusChanged.emit()
         self.saveStatusFile()
+        self.statusChanged.emit()
 
     def updateStatisticsFromCache(self):
         """

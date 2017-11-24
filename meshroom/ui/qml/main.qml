@@ -12,7 +12,7 @@ ApplicationWindow {
     width: 1280
     height: 720
     visible: true
-    title: (_reconstruction.filepath ? _reconstruction.filepath : "Untitled") + (_reconstruction.undoStack.clean ? "" : "*") + " - Meshroom"
+    title: (_reconstruction.graph.filepath ? _reconstruction.graph.filepath : "Untitled") + (_reconstruction.undoStack.clean ? "" : "*") + " - Meshroom"
     font.pointSize: 10
 
     property variant node: null
@@ -190,7 +190,7 @@ ApplicationWindow {
                 id: saveAction
                 text: "Save"
                 shortcut: "Ctrl+S"
-                enabled: _reconstruction.filepath != "" && !_reconstruction.undoStack.clean
+                enabled: _reconstruction.graph.filepath != "" && !_reconstruction.undoStack.clean
                 onTriggered: _reconstruction.save()
             }
             Action {
@@ -249,7 +249,7 @@ ApplicationWindow {
                 }
                 Button {
                     text: "Stop"
-                    enabled: _reconstruction.computing
+                    enabled: _reconstruction.computingLocally
                     onClicked: _reconstruction.stopExecution()
                 }
             }

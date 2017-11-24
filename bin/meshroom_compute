@@ -3,7 +3,6 @@ import argparse
 
 import meshroom.core.graph
 from meshroom.core.graph import Status
-from meshroom.core.desc import Range
 
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')

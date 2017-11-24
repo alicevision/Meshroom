@@ -1431,7 +1431,9 @@ class Graph(BaseObject):
             self._updateRequested = True
             return
         self.updateInternals()
-        self.updateStatusFromCache()
+        if os.path.exists(self._cacheDir):
+            self.updateStatusFromCache()
+        self.updated.emit()
 
     def stopExecution(self):
         """ Request graph execution to be stopped by terminating running chunks"""
@@ -1499,6 +1501,7 @@ class Graph(BaseObject):
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
+    updated = Signal()
 
 
 def loadGraph(filepath):

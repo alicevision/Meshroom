@@ -1010,7 +1010,8 @@ class Graph(BaseObject):
         self._updateRequested = False
         self._nodes = DictModel(keyAttrName='name', parent=self)
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
-        self._cacheDir = ''
+        self._cacheDir = meshroom.core.defaultCacheFolder
+        self._filepath = ''
 
     def clear(self):
         self._nodes.clear()
@@ -1025,14 +1026,15 @@ class Graph(BaseObject):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
 
         with GraphModification(self):
-            self.cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
-            self.name = os.path.splitext(os.path.basename(filepath))[0]
             for nodeName, nodeData in graphData.items():
                 if not isinstance(nodeData, dict):
                     raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
                 n = Node(nodeData['nodeType'], **nodeData['attributes'])
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
+
+        # Update filepath related members
+        self._setFilepath(filepath)
 
         # Create graph edges by resolving attributes expressions
         self._applyExpr()
@@ -1379,13 +1381,36 @@ class Graph(BaseObject):
     def asString(self):
         return str(self.toDict())
 
-    @Slot(str)
-    def save(self, filepath):
-        """
-        """
+    def save(self, filepath=None):
         data = self.toDict()
-        with open(filepath, 'w') as jsonFile:
+        path = filepath or self._filepath
+        if not path:
+            raise ValueError("filepath must be specified for unsaved files.")
+
+        with open(path, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
+
+        if path != self._filepath:
+            self._setFilepath(path)
+
+    def _setFilepath(self, filepath):
+        """
+        Set the internal filepath of this Graph.
+        This method should not be used directly from outside, use save/load instead.
+        Args:
+            filepath: the graph file path
+        """
+        assert os.path.isfile(filepath)
+
+        if self._filepath == filepath:
+            return
+        self._filepath = filepath
+        # For now:
+        #  * cache folder is located next to the graph file
+        #  * graph name if the basename of the graph file
+        self.name = os.path.splitext(os.path.basename(filepath))[0]
+        self.cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
+        self.filepathChanged.emit()
 
     def updateInternals(self, startNodes=None):
         nodes, edges = self.dfsOnFinish(startNodes=startNodes)
@@ -1450,10 +1475,13 @@ class Graph(BaseObject):
         if self._cacheDir == value:
             return
         self._cacheDir = value
+        self.updateInternals()
         self.cacheDirChanged.emit()
 
     nodes = Property(BaseObject, nodes.fget, constant=True)
     edges = Property(BaseObject, edges.fget, constant=True)
+    filepathChanged = Signal()
+    filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
 
@@ -1522,7 +1550,7 @@ def execute(graph, toNodes=None, forceCompute=False, forceStatus=False):
         node.endSequence()
 
 
-def submitGraph(graph, filepath, submitter, toNode=None):
+def submitGraph(graph, submitter, toNode=None):
     toNodes = graph.findNodes([toNode]) if toNode else None
     nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
     flowEdges = graph.flowEdges(startNodes=toNodes)
@@ -1540,7 +1568,7 @@ def submitGraph(graph, filepath, submitter, toNode=None):
         raise RuntimeError("Unknown Submitter : " + submitter)
 
     try:
-        res = sub.submit(nodesToProcess, edgesToProcess, filepath)
+        res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath)
         if res:
             for node in nodesToProcess:
                 node.submit()  # update node status
@@ -1553,5 +1581,5 @@ def submit(graphFile, submitter, toNode=None):
     Submit the given graph via the given submitter.
     """
     graph = loadGraph(graphFile)
-    submitGraph(graph, graphFile, submitter, toNode)
+    submitGraph(graph, submitter, toNode)
 

@@ -54,7 +54,8 @@ def photogrammetryPipeline(output='', inputFolder='', inputImages=[], inputViewp
         meshing = graph.addNewNode('Meshing',
                                    ini=depthMapFilter.ini)
         texturing = graph.addNewNode('Texturing',
-                                     ini=meshing.ini)
+                                     ini=meshing.ini,
+                                     inputDenseReconstruction=meshing.outputDenseReconstruction)
         publish = graph.addNewNode('Publish',
                                    inputFiles=[texturing.outputMesh, texturing.outputMaterial, texturing.outputTextures],
                                    output=output)

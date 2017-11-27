@@ -16,6 +16,13 @@ class Texturing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.File(
+            name='inputDenseReconstruction',
+            label='Input Dense Reconstruction',
+            description='Path to the dense reconstruction result (mesh with per vertex visibility).',
+            value='',
+            uid=[0],
+        ),
+        desc.File(
             name='inputMesh',
             label='Other Input Mesh',
             description='Optional input mesh to texture. By default, it will texture the result of the reconstruction.',

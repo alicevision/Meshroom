@@ -50,12 +50,28 @@ class StructureFromMotion(desc.CommandLineNode):
             exclusive=True,
             uid=[],
         ),
+        desc.BoolParam(
+            name='useLocalBA',
+            label='Local Bundle Adjustment',
+            description='It reduces the reconstruction time, especially for large datasets (500+ images), '
+                        'by avoiding computation of the Bundle Adjustment on areas that are not changing.',
+            value=True,
+            uid=[0],
+        ),
         desc.IntParam(
             name='minInputTrackLength',
             label='Min Input Track Length',
             description='''Minimum track length in input of SfM''',
             value=2,
             range=(2, 10, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='maxNumberOfMatches',
+            label='Maximum Number of Matches',
+            description='Maximum number of matches per image pair (and per feature type). This can be useful to have a quick reconstruction overview. 0 means no limit.',
+            value=0,
+            range=(0, 50000, 1),
             uid=[0],
         ),
         desc.ChoiceParam(

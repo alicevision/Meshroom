@@ -162,20 +162,7 @@ class CameraInit(desc.CommandLineNode):
                 "featureFolder": "",
                 "matchingFolder": "",
             }
-            node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.json'.format(**node._cmdVars)
-            with open(node.viewpointsFile, 'w') as f:
-                f.write(json.dumps(sfmData, indent=4))
-                # python3: json.dumps(node.viewpoints, f, indent=4)
-
-    def createViewpointsFile_old(self, node):
-        """
-        Temporary compatibility method.
-        """
-        if node.viewpoints:
-            sfmData = {
-                "resources": [v.get("path", "") for v in node.viewpoints.getPrimitiveValue(exportDefault=False)],
-            }
-            node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.json'.format(**node._cmdVars)
+            node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.sfm'.format(**node._cmdVars)
             with open(node.viewpointsFile, 'w') as f:
                 f.write(json.dumps(sfmData, indent=4))
                 # python3: json.dumps(node.viewpoints, f, indent=4)

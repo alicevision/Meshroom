@@ -838,11 +838,19 @@ class Node(BaseObject):
         return False
 
     def alreadySubmittedChunks(self):
-        submittedChunks = []
-        for chunk in self.chunks:
-            if chunk.isAlreadySubmitted():
-                submittedChunks.append(chunk)
-        return submittedChunks
+        return [ch for ch in self._chunks if ch.isAlreadySubmitted()]
+
+    @Slot()
+    def clearSubmittedChunks(self):
+        """ Reset all submitted chunks to Status.NONE. This method should be used to clear inconsistent status
+        if a computation failed without informing the graph.
+
+        Warnings:
+            This must be used with caution. This could lead to inconsistent node status
+            if the graph is still being computed.
+        """
+        for chunk in self.alreadySubmittedChunks():
+            chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
 
     def upgradeStatusTo(self, newStatus):
         """
@@ -1443,8 +1451,7 @@ class Graph(BaseObject):
     def clearSubmittedNodes(self):
         """ Reset the status of already submitted nodes to Status.NONE """
         for node in self.nodes:
-            for chunk in node.alreadySubmittedChunks():
-                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+            node.clearSubmittedChunks()
 
     def iterChunksByStatus(self, status):
         """ Iterate over NodeChunks with the given status """

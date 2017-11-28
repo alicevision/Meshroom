@@ -1111,13 +1111,15 @@ class Graph(BaseObject):
         # Remove all edges arriving to and starting from this node
         with GraphModification(self):
             for edge in self.nodeOutEdges(node):
-                self.edges.remove(edge)
+                self.removeEdge(edge.dst)
                 outEdges[edge.dst.fullName()] = edge.src.fullName()
             for edge in self.nodeInEdges(node):
-                self.edges.remove(edge)
+                self.removeEdge(edge.dst)
                 inEdges[edge.dst.fullName()] = edge.src.fullName()
 
-        self._nodes.remove(node)
+            self._nodes.remove(node)
+            self.update()
+
         return inEdges, outEdges
 
     @Slot(str, result=Node)

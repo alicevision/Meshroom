@@ -7,14 +7,21 @@ import "Viewer" 1.0
 
 
 Item {
+    id: root
+
     property alias model: grid.model
+    property bool readOnly: false
     implicitWidth: 300
     implicitHeight: 400
 
-    clip: true
+    signal removeImageRequest(var attribute)
 
     SystemPalette {
         id: palette
+    }
+
+    function dirname(filename) {
+        return filename.substring(0, filename.lastIndexOf('/'))
     }
 
     Controls1.SplitView {
@@ -32,7 +39,8 @@ Item {
             focus: true
 
             delegate: Item {
-                property url source: object.value.get("path").value
+                id: imageDelegate
+                property string source: object.value.get("path").value
                 width: grid.cellWidth
                 height: grid.cellHeight
                 Image {
@@ -56,11 +64,30 @@ Item {
                        id: imageMA
                        anchors.fill: parent
                        hoverEnabled: true
-                       onClicked: {
+                       acceptedButtons: Qt.LeftButton | Qt.RightButton
+                       onPressed: {
                            grid.currentIndex = index
-                           grid.forceActiveFocus()
+                           if(mouse.button == Qt.RightButton)
+                               imageMenu.popup()
+                           else
+                               grid.forceActiveFocus()
                        }
                    }
+                }
+                Menu {
+                    id: imageMenu
+                    MenuItem {
+                        text: "Show Containing Folder"
+                        onClicked: {
+                            Qt.openUrlExternally(dirname(imageDelegate.source))
+                        }
+                    }
+
+                    MenuItem {
+                        text: "Remove"
+                        enabled: !root.readOnly
+                        onClicked: removeImageRequest(object)
+                    }
                 }
             }
             DropArea {

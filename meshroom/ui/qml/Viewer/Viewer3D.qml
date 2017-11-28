@@ -4,18 +4,22 @@ import QtQuick.Layouts 1.3
 import QtQuick.Scene3D 2.0
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
-import Qt3D.Input 2.1
+import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
 
 
 FocusScope {
-
     id: root
+
+    property alias status: scene.status
+    property alias source: modelLoader.source
+    readonly property alias loading: modelLoader.loading
 
     // functions
     function resetCameraCenter() {
         mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
         mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
     }
+
     function resetCameraPosition() {
         mainCamera.position = Qt.vector3d(28.0, 21.0, 28.0);
         mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
@@ -56,9 +60,9 @@ FocusScope {
         })
     }
 
-    function loadModel(url)
+    function clear()
     {
-        modelLoader.source = Qt.resolvedUrl(url)
+        source = 'no_file'
     }
 
     Scene3D {
@@ -97,7 +101,10 @@ FocusScope {
             MayaCameraController {
                 id: cameraController
                 camera: mainCamera
-                onMousePressed: scene3D.forceActiveFocus()
+                onMousePressed: {
+                    mouse.accepted = false
+                    scene3D.forceActiveFocus()
+                }
                 onMouseReleased: {
                     if(moving)
                         return;
@@ -134,7 +141,7 @@ FocusScope {
                         }
                     }
                 },
-                InputSettings {
+                Qt3DInput.InputSettings {
                     eventSource: _window
                     enabled: true
                 }
@@ -142,8 +149,13 @@ FocusScope {
 
             Entity {
                 id: modelLoader
-                property alias source: scene.source
+                property string source
+                // SceneLoader status is not reliable when loading a 3D file
+                property bool loading
+                onSourceChanged: loading = true
+
                 components: [scene, transform, picker]
+
                 ObjectPicker {
                     id: picker
                     hoverEnabled: false
@@ -162,26 +174,79 @@ FocusScope {
                         running: false
                         interval: 400
                     }
-
                 }
 
                 Transform {
                     id: transform
-
-                }
-                SceneLoader {
-                    id: scene
-                    onStatusChanged: {
-                        if(scene.status == SceneLoader.Ready)
-                            unmirrorTextures(parent);
+                    property real userAngleX: 0.0
+                    property real userAngleY: 0.0
+                    property real userAngleZ: 0.0
+                    property real userScale: 1.0
+                    matrix: {
+                        var m = Qt.matrix4x4();
+                        m.rotate(userAngleX, Qt.vector3d(1, 0, 0));
+                        m.rotate(userAngleY, Qt.vector3d(0, 1, 0));
+                        m.rotate(userAngleZ, Qt.vector3d(0, 0, 1));
+                        m.scale(userScale)
+                        return m;
                     }
                 }
-                Locator3D {}
+
+                SceneLoader {
+                    id: scene
+                    source: Qt.resolvedUrl(modelLoader.source)
+                    onStatusChanged: {
+                        if(scene.status != SceneLoader.Loading)
+                            modelLoader.loading = false;
+                        if(scene.status == SceneLoader.Ready)
+                        {
+                            unmirrorTextures(parent);
+                        }
+                    }
+                }
+                Locator3D { enabled: locatorCheckBox.checked}
             }
 
-           Grid3D { }
-           Locator3D {}
+           Grid3D { enabled: gridCheckBox.checked }
 
+        }
+    }
+    Pane {
+        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
+        Column {
+            spacing: 5            
+            Row {
+                spacing: 4
+                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.userAngleX = value}
+                Label { text: "RX" }
+            }
+
+            Row {
+                spacing: 4
+                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.userAngleY = value }
+                Label { text: "RY" }
+            }
+
+            Row {
+                spacing: 4
+                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.userAngleZ = value }
+                Label { text: "RZ" }
+            }
+
+            Row {
+                spacing: 4
+                Slider { width: 100; from: 1; to: 10; onPositionChanged: transform.userScale = value }
+                Label { text: "Scale" }
+            }
+        }
+    }
+
+    Pane {
+        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
+        anchors.right: parent.right
+        Column {
+            CheckBox { id: gridCheckBox; text: "Grid"; checked: true }
+            CheckBox { id: locatorCheckBox; text: "Locator"; checked: true }
         }
     }
 
@@ -189,11 +254,12 @@ FocusScope {
     Menu {
         id: contextMenu
         MenuItem {
-            text: "Reset camera position [F]"
-            onTriggered: {
-                resetCameraCenter();
-                resetCameraPosition();
-            }
+            text: "View All"
+            onTriggered: mainCamera.viewAll()
+        }
+        MenuItem {
+            text: "Reset View"
+            onTriggered: resetCameraPosition()
         }
     }
 }

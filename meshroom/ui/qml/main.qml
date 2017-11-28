@@ -294,6 +294,7 @@ ApplicationWindow {
                 id: imageGallery
                 property variant node: _reconstruction.graph.nodes.get("CameraInit_1")
                 readOnly: _reconstruction.computing
+                meshFile: _reconstruction.meshFile
                 model: node ? node.attribute("viewpoints").value : undefined
                 Layout.fillWidth: true
                 Layout.fillHeight: true

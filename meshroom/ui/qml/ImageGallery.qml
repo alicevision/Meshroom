@@ -11,10 +11,12 @@ Item {
 
     property alias model: grid.model
     property bool readOnly: false
+    property string meshFile: ''
     implicitWidth: 300
     implicitHeight: 400
 
     signal removeImageRequest(var attribute)
+    onMeshFileChanged: viewer3D.clear()
 
     SystemPalette {
         id: palette
@@ -117,18 +119,42 @@ Item {
         Item {
             implicitWidth: Math.round(parent.width * 0.3)
             Layout.minimumWidth: 20
-            Platform.FileDialog {
-                id: modelDialog
-                nameFilters: ["3D Models (*.obj)"]
-                onAccepted: viewer3D.loadModel(file)
-            }
+
             Viewer3D {
                 id: viewer3D
                 anchors.fill: parent
-                Button {
-                    text: "Load Model"
-                    onClicked: modelDialog.open()
+                DropArea {
+                    anchors.fill: parent
+                    onDropped: viewer3D.source = drop.urls[0]
                 }
+            }
+
+            Label {
+                anchors.centerIn: parent
+                text: "Loading Model..."
+                visible: viewer3D.loading
+                padding: 6
+                background: Rectangle { color: palette.base; opacity: 0.5 }
+            }
+
+            Label {
+                text: "3D Model not available"
+                visible: meshFile == ''
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 10
+                anchors.horizontalCenter: parent.horizontalCenter
+                padding: 6
+                background: Rectangle { color: palette.base; opacity: 0.5 }
+            }
+
+            // Load reconstructed model
+            Button {
+                text: "Load Model"
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 10
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: meshFile != '' && (viewer3D.source != meshFile)
+                onClicked: viewer3D.source = meshFile
             }
         }
     }

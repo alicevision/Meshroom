@@ -280,6 +280,7 @@ ApplicationWindow {
                     graph: _reconstruction.graph
                     Layout.fillHeight: true
                     Layout.fillWidth: true
+                    readOnly: _reconstruction.computing
                 }
             }
             Item {

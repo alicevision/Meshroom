@@ -9,6 +9,7 @@ Row {
 
     property var nodeItem
     property var attribute
+    property bool readOnly: false
 
     // position of the anchor for attaching and edge to this attribute pin
     readonly property point edgeAnchorPos: Qt.point(edgeAnchor.x + edgeAnchor.width/2,
@@ -88,6 +89,7 @@ Row {
             id: connectMA
             drag.target: dragTarget
             drag.threshold: 0
+            enabled: !root.readOnly
             anchors.fill: parent
             onReleased: dragTarget.Drag.drop()
         }

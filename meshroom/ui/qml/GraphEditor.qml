@@ -9,7 +9,7 @@ Item {
     id: root
 
     property variant graph: null
-
+    property bool readOnly: false
     property variant selectedNode: null
 
     property int nodeWidth: 140
@@ -80,14 +80,14 @@ Item {
                     property var dstAnchor: dst.nodeItem.mapFromItem(dst, dst.edgeAnchorPos.x, dst.edgeAnchorPos.y)
 
                     edge: object
-                    color: containsMouse ? palette.highlight : palette.text
+                    color: containsMouse && !readOnly ? palette.highlight : palette.text
                     opacity: 0.7
                     point1x: src.nodeItem.x + srcAnchor.x
                     point1y: src.nodeItem.y + srcAnchor.y
                     point2x: dst.nodeItem.x + dstAnchor.x
                     point2y: dst.nodeItem.y + dstAnchor.y
                     onPressed: {
-                        if(event.button == Qt.RightButton)
+                        if(!root.readOnly && event.button == Qt.RightButton)
                             _reconstruction.removeEdge(edge)
                     }
                 }
@@ -104,6 +104,7 @@ Item {
                 delegate: Node {
                     node: object
                     width: root.nodeWidth
+                    readOnly: root.readOnly
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
 

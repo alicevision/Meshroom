@@ -6,6 +6,7 @@ import QtGraphicalEffects 1.0
 Item {
     id: root
     property variant node: object
+    property bool readOnly: false
     property color baseColor: "#607D8B"
     property color shadowColor: "black"
 
@@ -30,6 +31,7 @@ Item {
             id: nodeMenu
             MenuItem {
                 text: "Compute"
+                enabled: !root.readOnly
                 onTriggered: _reconstruction.execute(node)
             }
             MenuItem {
@@ -39,6 +41,7 @@ Item {
             MenuSeparator {}
             MenuItem {
                 text: "Delete"
+                enabled: !root.readOnly
                 onTriggered: _reconstruction.removeNode(node)
             }
         }
@@ -133,6 +136,7 @@ Item {
                             id: inPin
                             nodeItem: root
                             attribute: object
+                            readOnly: root.readOnly
                             Component.onCompleted: attributePinCreated(attribute, inPin)
                             onChildPinCreated: attributePinCreated(childAttribute, inPin)
                         }
@@ -155,6 +159,7 @@ Item {
                             id: outPin
                             nodeItem: root
                             attribute: object
+                            readOnly: root.readOnly
                             Component.onCompleted: attributePinCreated(object, outPin)
                         }
                     }

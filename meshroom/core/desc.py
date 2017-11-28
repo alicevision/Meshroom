@@ -324,7 +324,10 @@ class CommandLineNode(Node):
 
     def stopProcess(self, chunk):
         if chunk.subprocess:
-            chunk.subprocess.terminate()
+            try:
+                chunk.subprocess.terminate()
+            except psutil.NoSuchProcess:
+                pass
 
     def processChunk(self, chunk):
         try:

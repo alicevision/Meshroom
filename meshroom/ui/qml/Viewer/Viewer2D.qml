@@ -99,7 +99,7 @@ FocusScope {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.margins: 4
-        text: image.scale.toFixed(1) + "x"
+        text: (image.status == Image.Ready ? image.scale.toFixed(2) : "1.00") + "x"
         state: "xsmall"
     }
 }

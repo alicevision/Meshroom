@@ -28,76 +28,105 @@ Item {
 
     Controls1.SplitView {
         anchors.fill: parent
-        GridView {
-            id: grid
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.minimumWidth: cellWidth
-            cellWidth: 160
-            cellHeight: 120
-            ScrollBar.vertical: ScrollBar {}
-            keyNavigationEnabled: true
-            highlightFollowsCurrentItem: true
-            focus: true
+            Layout.minimumWidth: grid.cellWidth
 
-            delegate: Item {
-                id: imageDelegate
-                property string source: object.value.get("path").value
-                width: grid.cellWidth
-                height: grid.cellHeight
-                Image {
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    source:parent.source
-                    sourceSize: Qt.size(150, 150)
-                    asynchronous: true
-                    autoTransform: true
-                    fillMode: Image.PreserveAspectFit
-                }
-                Rectangle {
-                   color: Qt.darker(palette.base, 1.15)
-                   anchors.fill: parent
-                   anchors.margins: 4
-                   border.color: palette.highlight
-                   border.width: imageMA.containsMouse || grid.currentIndex == index ? 2 : 0
-                   z: -1
+            GridView {
+                id: grid
+                Layout.fillWidth: true
+                Layout.fillHeight: true
 
-                   MouseArea {
-                       id: imageMA
+                cellWidth: thumbnailSizeSlider.value
+                cellHeight: cellWidth * 0.75
+                ScrollBar.vertical: ScrollBar {}
+                keyNavigationEnabled: true
+                highlightFollowsCurrentItem: true
+                focus: true
+                clip: true
+
+                delegate: Item {
+                    id: imageDelegate
+                    property string source: object.value.get("path").value
+                    width: grid.cellWidth
+                    height: grid.cellHeight
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        source:parent.source
+                        sourceSize: Qt.size(100, 100)
+                        asynchronous: true
+                        autoTransform: true
+                        fillMode: Image.PreserveAspectFit
+                    }
+                    Rectangle {
+                       color: Qt.darker(palette.base, 1.15)
                        anchors.fill: parent
-                       hoverEnabled: true
-                       acceptedButtons: Qt.LeftButton | Qt.RightButton
-                       onPressed: {
-                           grid.currentIndex = index
-                           if(mouse.button == Qt.RightButton)
-                               imageMenu.popup()
-                           else
-                               grid.forceActiveFocus()
+                       anchors.margins: 4
+                       border.color: palette.highlight
+                       border.width: imageMA.containsMouse || grid.currentIndex == index ? 2 : 0
+                       z: -1
+
+                       MouseArea {
+                           id: imageMA
+                           anchors.fill: parent
+                           hoverEnabled: true
+                           acceptedButtons: Qt.LeftButton | Qt.RightButton
+                           onPressed: {
+                               grid.currentIndex = index
+                               if(mouse.button == Qt.RightButton)
+                                   imageMenu.popup()
+                               else
+                                   grid.forceActiveFocus()
+                           }
                        }
-                   }
-                }
-                Menu {
-                    id: imageMenu
-                    MenuItem {
-                        text: "Show Containing Folder"
-                        onClicked: {
-                            Qt.openUrlExternally(dirname(imageDelegate.source))
+                    }
+                    Menu {
+                        id: imageMenu
+                        MenuItem {
+                            text: "Show Containing Folder"
+                            onClicked: {
+                                Qt.openUrlExternally(dirname(imageDelegate.source))
+                            }
+                        }
+
+                        MenuItem {
+                            text: "Remove"
+                            enabled: !root.readOnly
+                            onClicked: removeImageRequest(object)
                         }
                     }
-
-                    MenuItem {
-                        text: "Remove"
-                        enabled: !root.readOnly
-                        onClicked: removeImageRequest(object)
+                }
+                DropArea {
+                    id: dropArea
+                    anchors.fill: parent
+                    enabled: !root.readOnly
+                    // TODO: onEntered: call specific method to filter files based on extension
+                    onDropped: {
+                        _reconstruction.handleFilesDrop(drop)
                     }
                 }
             }
-            DropArea {
-                id: dropArea
-                anchors.fill: parent
-                // TODO: onEntered: call specific method to filter files based on extension
-                onDropped: {
-                    _reconstruction.handleFilesDrop(drop)
+            Pane {
+                Layout.fillWidth: true
+                padding: 2
+                background: Rectangle { color: Qt.darker(palette.window, 1.15) }
+                RowLayout {
+                    width: parent.width
+                    Label {
+                        Layout.fillWidth: true
+                        text: model.count + " image" + (model.count > 1 ? "s" : "")
+                        padding: 4
+                    }
+                    Slider {
+                        id: thumbnailSizeSlider
+                        from: 70
+                        value: 160
+                        to: 250
+                        implicitWidth: 70
+                        Layout.margins: 2
+                    }
                 }
             }
         }
@@ -107,8 +136,8 @@ Item {
             Layout.minimumWidth: 40
             Viewer2D {
                 anchors.fill: parent
-                anchors.margins: 4
-                source: grid.currentItem.source
+                anchors.margins: 2
+                source: grid.count && grid.currentItem ? grid.currentItem.source : ''
                 Rectangle {
                     z: -1
                     anchors.fill: parent

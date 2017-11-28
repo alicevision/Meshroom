@@ -155,7 +155,7 @@ ApplicationWindow {
         property string tooltip: 'Undo "' +_reconstruction.undoStack.undoText +'"'
         text: "Undo"
         shortcut: "Ctrl+Z"
-        enabled: _reconstruction.undoStack.canUndo
+        enabled: _reconstruction.undoStack.canUndo && !_reconstruction.computing
         onTriggered: _reconstruction.undoStack.undo()
     }
     Action {
@@ -164,7 +164,7 @@ ApplicationWindow {
         property string tooltip: 'Redo "' +_reconstruction.undoStack.redoText +'"'
         text: "Redo"
         shortcut: "Ctrl+Shift+Z"
-        enabled: _reconstruction.undoStack.canRedo
+        enabled: _reconstruction.undoStack.canRedo && !_reconstruction.computing
         onTriggered: _reconstruction.undoStack.redo()
     }
 

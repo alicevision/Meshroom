@@ -11,13 +11,45 @@ ColumnLayout {
     property variant node: null  // the node to edit
     property bool readOnly: false
 
+    spacing: 4
+
     SystemPalette { id: palette }
 
-    Button {
-        text: "Open Node Folder"
-        onClicked: Qt.openUrlExternally("file://" + node.internalFolder)
-        ToolTip.text: node.internalFolder
-        ToolTip.visible: hovered
+    Pane {
+        Layout.fillWidth: true
+        background: Rectangle { color: Qt.darker(palette.window, 1.15) }
+        padding: 2
+        RowLayout {
+            width: parent.width
+
+            Label {
+                Layout.fillWidth: true
+                elide: Text.ElideMiddle
+                text: node.nodeType
+                horizontalAlignment: Text.AlignHCenter
+                padding: 6
+            }
+
+            ToolButton {
+                text: "⚙"
+                onClicked: settingsMenu.popup()
+            }
+        }
+        Menu {
+            id: settingsMenu
+            MenuItem {
+                text: "Open Cache Folder"
+                onClicked: Qt.openUrlExternally("file://" + node.internalFolder)
+                ToolTip.text: node.internalFolder
+                ToolTip.visible: hovered
+                ToolTip.delay: 500
+            }
+            MenuSeparator {}
+            MenuItem {
+                text: "Clear Submitted Status"
+                onClicked: node.clearSubmittedChunks()
+            }
+        }
     }
 
     ListView {
@@ -25,6 +57,7 @@ ColumnLayout {
 
         Layout.fillHeight: true
         Layout.fillWidth: true
+        Layout.margins: 4
         clip: true
         spacing: 4
         ScrollBar.vertical: ScrollBar { id: scrollBar }
@@ -38,8 +71,9 @@ ColumnLayout {
             Label {
                 id: parameterLabel
                 text: object.label
-                Layout.preferredWidth: 200
+                Layout.preferredWidth: 180
                 color: object.isOutput ? "orange" : palette.text
+                elide: Label.ElideRight
                 ToolTip.text: object.desc.description
                 ToolTip.visible: parameterMA.containsMouse
                 ToolTip.delay: 200

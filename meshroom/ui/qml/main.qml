@@ -291,7 +291,7 @@ ApplicationWindow {
 
                 Loader {
                     anchors.fill: parent
-                    anchors.margins: 10
+                    anchors.margins: 2
                     active: graphEditor.selectedNode != null
                     sourceComponent: Component {
                         AttributeEditor {

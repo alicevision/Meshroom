@@ -22,7 +22,10 @@ ApplicationWindow {
         close.accepted = false
         ensureSaved(function(){ Qt.quit() })
     }
+
     SystemPalette { id: palette }
+    SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled}
+
     Dialog {
         id: unsavedDialog
 
@@ -230,10 +233,8 @@ ApplicationWindow {
         }
     }
 
-
     Controls1.SplitView {
         anchors.fill: parent
-        anchors.margins: 4
         orientation: Qt.Vertical
 
         ColumnLayout {
@@ -241,9 +242,15 @@ ApplicationWindow {
             Layout.fillHeight: false
             implicitHeight: Math.round(parent.height * 0.7)
             Row {
+                enabled: !_reconstruction.computingExternally
+                anchors.horizontalCenter: parent.horizontalCenter
+
                 Button {
-                    id: btn
+                    property color buttonColor: Qt.darker("#4CAF50", 1.8)
                     text: "▶  Start"
+                    palette.button: enabled ? buttonColor : disabledPalette.button
+                    palette.window: enabled ? buttonColor : disabledPalette.window
+                    palette.buttonText: enabled ? "white" : disabledPalette.buttonText
                     enabled: imageGallery.model.count > 2 && !_reconstruction.computing
                     onClicked: _reconstruction.execute(null)
                 }
@@ -252,6 +259,18 @@ ApplicationWindow {
                     enabled: _reconstruction.computingLocally
                     onClicked: _reconstruction.stopExecution()
                 }
+                Item { width: 20; height: 1 }
+                Button {
+                    enabled: imageGallery.model.count > 2 && !_reconstruction.computing  && _reconstruction.graph.filepath != ""
+                    text: "Submit"
+                    onClicked: _reconstruction.submit(null)
+                }
+            }
+            Label {
+                text: "Graph is being computed externally"
+                font.italic: true
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: _reconstruction.computingExternally
             }
             ImageGallery {
                 id: imageGallery

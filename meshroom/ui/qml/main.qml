@@ -13,7 +13,7 @@ ApplicationWindow {
     height: 720
     visible: true
     title: (_reconstruction.graph.filepath ? _reconstruction.graph.filepath : "Untitled") + (_reconstruction.undoStack.clean ? "" : "*") + " - Meshroom"
-    font.pointSize: 10
+    font.pointSize: 9
 
     property variant node: null
 

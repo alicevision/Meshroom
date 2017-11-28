@@ -84,36 +84,11 @@ Item {
         }
 
         // Node Chunks
-        Rectangle {
-            height: 3
+        NodeChunks {
+            defaultColor: Qt.darker(baseColor, 1.3)
+            implicitHeight: 3
             width: parent.width
-            anchors.horizontalCenter: parent.horizontalCenter
-            color: Qt.darker(baseColor, 1.3)
-
-            ListView {
-                id: chunksListView
-                anchors.fill: parent
-
-                interactive: false
-                orientation: Qt.Horizontal
-
-                model: node.chunks
-                property int chunkHeight: height
-
-                delegate: Rectangle {
-                    id: chunkDelegate
-                    height: chunksListView.chunkHeight
-                    width: chunksListView.width / chunksListView.count
-                    state: modelData.statusName
-                    states: [
-                        State { name: "NONE"; PropertyChanges { target: chunkDelegate; color: "transparent"} },
-                        State { name: "SUBMITTED"; PropertyChanges { target: chunkDelegate; color: modelData.execModeName == "LOCAL" ? "#009688" : "#2196F3"} },
-                        State { name: "RUNNING"; PropertyChanges { target: chunkDelegate; color: "#FF9800"} },
-                        State { name: "ERROR"; PropertyChanges { target: chunkDelegate; color: "#F44336"} },
-                        State { name: "SUCCESS"; PropertyChanges { target: chunkDelegate; color: "#4CAF50"} }
-                    ]
-                }
-            }
+            model: node.chunks
         }
 
         Item { width: 1; height: 2}

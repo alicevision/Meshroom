@@ -6,7 +6,7 @@ from threading import Thread
 import os
 from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal
 
-from meshroom.common.qt import QObjectListModel
+from meshroom.common.qt import SortedModelByReference
 from meshroom.core import graph
 from meshroom.ui import commands
 
@@ -37,30 +37,29 @@ class ChunksMonitor(QObject):
             f = chunk.statusFile()
             self.chunkByStatusFile[f] = chunk
             # For local use, handle statusChanged emitted directly from the node chunk
-            chunk.statusChanged.connect(lambda ch=chunk: self.onChunkStatusChanged(chunk))
+            chunk.statusChanged.connect(self.onChunkStatusChanged)
             self.lastModificationRecords[f] = os.path.getmtime(f) if os.path.exists(f) else -1
 
         self.chunkStatusChanged.emit(None, -1)
 
     def clear(self):
-        """ Clear the list of monitored chunks"""
+        """ Clear the list of monitored chunks """
+        for ch in self.chunkByStatusFile.values():
+            ch.statusChanged.disconnect(self.onChunkStatusChanged)
         self.chunkByStatusFile.clear()
         self.lastModificationRecords.clear()
 
     def timerEvent(self, evt):
         self.checkFileTimes()
 
-    def onChunkStatusChanged(self, chunk):
-        """ React to change of status coming from the NodeChunk itself.
-
-        Args:
-            chunk (graph.NodeChunk): the chunk that emitted statusChanged signal
-        """
+    def onChunkStatusChanged(self):
+        """ React to change of status coming from the NodeChunk itself. """
+        chunk = self.sender()
         f = chunk.statusFile()
-        assert f in self.lastModificationRecords
         # Update record entry for this file so that it's up-to-date on next timerEvent
-        self.lastModificationRecords[f] = self.getFileLastModTime(f)
-        self.chunkStatusChanged.emit(chunk, chunk.status.status)
+        if f in self.lastModificationRecords:
+            self.lastModificationRecords[f] = self.getFileLastModTime(f)
+            self.chunkStatusChanged.emit(chunk, chunk.status.status)
 
     @staticmethod
     def getFileLastModTime(f):
@@ -81,6 +80,8 @@ class ChunksMonitor(QObject):
         return any([ch.status.status in (graph.Status.RUNNING, graph.Status.SUBMITTED) for ch in self.chunkByStatusFile.values()])
 
     chunkStatusChanged = Signal(graph.NodeChunk, int)
+    countChanged = Signal()
+    count = Property(int, lambda self: len(self._chunkByStatusFile), notify=countChanged)
 
 
 class UIGraph(QObject):
@@ -96,8 +97,10 @@ class UIGraph(QObject):
         self._chunksMonitor = ChunksMonitor(parent=self)
         self._chunksMonitor.chunkStatusChanged.connect(self.onChunkStatusChanged)
         self._computeThread = Thread()
-        self._orderedChunks = QObjectListModel(parent=self)
         self._running = self._submitted = False
+        # List of ordered nodes as visited by a DFS
+        self._sortedDFSNodes = SortedModelByReference(self)
+        self._sortedDFSChunks = []
         if filepath:
             self.load(filepath)
 
@@ -107,21 +110,35 @@ class UIGraph(QObject):
             self.clear()
         self._graph = g
         self._graph.updated.connect(self.onGraphUpdated)
+        self._sortedDFSNodes.setSourceModel(self._graph.nodes)
         self._graph.update()
         self.graphChanged.emit()
 
     def onGraphUpdated(self):
-        """ Callback to any kind of graph modification. """
+        """ Callback to any kind of attribute modification. """
         # TODO: handle this with a better granularity
-        # TODO: make sure the list of chunks has changed before resetting it
-        chunks = self._graph.getOrderedChunks()
-        self._orderedChunks.setObjectList(chunks)
-        self._chunksMonitor.setChunks(chunks)
+        self.updateChunks()
+
+    def updateChunks(self):
+        dfsNodes = self._graph.dfsOnFinish(None)[0]
+        chunks = self._graph.getChunks(dfsNodes)
+        # Nothing has changed, return
+        if self._sortedDFSChunks == chunks:
+            return
+        self._sortedDFSChunks = chunks
+        # Update reference for sorted nodes according to DFS visit
+        if dfsNodes != self._sortedDFSNodes:
+            self._sortedDFSNodes.setReference(dfsNodes)
+        # Update the list of monitored chunks
+        self._chunksMonitor.setChunks(self._sortedDFSChunks)
+        self.chunksCountChanged.emit()
 
     def clear(self):
         if self._graph:
             self._graph.deleteLater()
             self._graph = None
+        self._sortedDFSChunks = []
+        self._sortedDFSNodes.setSourceModel(None)
         self._undoStack.clear()
 
     def load(self, filepath):
@@ -178,8 +195,10 @@ class UIGraph(QObject):
 
     def onChunkStatusChanged(self, chunk, status):
         # update graph computing status
-        running = any([ch.status.status == graph.Status.RUNNING for ch in self._orderedChunks])
-        submitted = any([ch.status.status == graph.Status.SUBMITTED for ch in self._orderedChunks])
+        running = any([ch.status.status == graph.Status.RUNNING
+                       for ch in self._chunksMonitor.chunkByStatusFile.values()])
+        submitted = any([ch.status.status == graph.Status.SUBMITTED
+                         for ch in self._chunksMonitor.chunkByStatusFile.values()])
         if self._running != running or self._submitted != submitted:
             self._running = running
             self._submitted = submitted
@@ -267,7 +286,7 @@ class UIGraph(QObject):
     computingExternally = Property(bool, isComputingExternally, notify=computeStatusChanged)
     computingLocally = Property(bool, isComputingLocally, notify=computeStatusChanged)
 
-    chunksMonitor = Property(ChunksMonitor, lambda self: self._chunksMonitor, constant=True)
-    # The list of NodeChunks in this graph sorted by processing order
-    orderedChunks = Property(QObject, lambda self: self._orderedChunks, constant=True)
+    chunksCountChanged = Signal()
+    chunksCount = Property(int, lambda self: len(self._sortedDFSChunks), notify=chunksCountChanged)
+    sortedDFSNodes = Property(QObject, lambda self: self._sortedDFSNodes, constant=True)
     lockedChanged = Signal()

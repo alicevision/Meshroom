@@ -510,8 +510,8 @@ def clearProcessesStatus():
 
 
 class NodeChunk(BaseObject):
-    def __init__(self, node, range):
-        super(NodeChunk, self).__init__(node)
+    def __init__(self, node, range, parent=None):
+        super(NodeChunk, self).__init__(parent)
         self.node = node
         self.range = range
         self.status = StatusData(node.name, node.nodeType, node.packageName, node.packageVersion)
@@ -679,7 +679,7 @@ class Node(BaseObject):
 
         self._name = None  # type: str
         self.graph = None  # type: Graph
-        self._chunks = []
+        self._chunks = ListModel(parent=self)
         self._cmdVars = {}
         self._size = 0
         self._attributes = DictModel(keyAttrName='name', parent=self)
@@ -821,18 +821,18 @@ class Node(BaseObject):
 
     @property
     def nbParallelizationBlocks(self):
-        return len(self.chunks)
+        return len(self._chunks)
 
     def hasStatus(self, status):
-        if not self.chunks:
+        if not self._chunks:
             return False
-        for chunk in self.chunks:
+        for chunk in self._chunks:
             if chunk.status.status != status:
                 return False
         return True
 
     def isAlreadySubmitted(self):
-        for chunk in self.chunks:
+        for chunk in self._chunks:
             if chunk.isAlreadySubmitted():
                 return True
         return False
@@ -856,11 +856,11 @@ class Node(BaseObject):
         """
         Upgrade node to the given status and save it on disk.
         """
-        for chunk in self.chunks:
+        for chunk in self._chunks:
             chunk.upgradeStatusTo(newStatus)
 
     def updateStatisticsFromCache(self):
-        for chunk in self.chunks:
+        for chunk in self._chunks:
             chunk.updateStatisticsFromCache()
 
     def updateInternals(self):
@@ -868,21 +868,18 @@ class Node(BaseObject):
         if self.isParallelized:
             try:
                 ranges = self.nodeDesc.parallelization.getRanges(self)
-                if len(ranges) != len(self.chunks):
-                    self._chunks = [NodeChunk(self, range) for range in ranges]
-                    self.chunksChanged.emit()
+                if len(ranges) != len(self._chunks):
+                    self._chunks.setObjectList([NodeChunk(self, range) for range in ranges])
                 else:
-                    for chunk, range in zip(self.chunks, ranges):
+                    for chunk, range in zip(self._chunks, ranges):
                         chunk.range = range
             except RuntimeError:
                 # TODO: set node internal status to error
                 logging.warning("Invalid Parallelization on node {}".format(self._name))
-                self._chunks = []
-                self.chunksChanged.emit()
+                self._chunks.clear()
         else:
             if len(self._chunks) != 1:
-                self._chunks = [NodeChunk(self, desc.Range())]
-                self.chunksChanged.emit()
+                self._chunks.setObjectList([NodeChunk(self, desc.Range())])
             else:
                 self._chunks[0].range = desc.Range()
 
@@ -901,24 +898,24 @@ class Node(BaseObject):
         """
         Update node status based on status file content/existence.
         """
-        for chunk in self.chunks:
+        for chunk in self._chunks:
             chunk.updateStatusFromCache()
 
     def submit(self, forceCompute=False):
-        for chunk in self.chunks:
+        for chunk in self._chunks:
             if forceCompute or chunk.status.status != Status.SUCCESS:
                 chunk.upgradeStatusTo(Status.SUBMITTED, ExecMode.EXTERN)
 
     def beginSequence(self, forceCompute=False):
-        for chunk in self.chunks:
+        for chunk in self._chunks:
             if forceCompute or chunk.status.status != Status.SUCCESS:
                 chunk.upgradeStatusTo(Status.SUBMITTED, ExecMode.LOCAL)
 
     def processIteration(self, iteration):
-        self.chunks[iteration].process()
+        self._chunks[iteration].process()
 
     def process(self, forceCompute=False):
-        for chunk in self.chunks:
+        for chunk in self._chunks:
             chunk.process(forceCompute)
 
     def endSequence(self):

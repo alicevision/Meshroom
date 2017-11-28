@@ -9,6 +9,8 @@ class QObjectListModel(QtCore.QAbstractListModel):
     items. At the same time it provides QList-like convenience functions such as append, at,
     and removeAt for easily working with the model from Python.
     """
+    ObjectRole = QtCore.Qt.UserRole
+
     def __init__(self, keyAttrName='', parent=None):
         """ Constructs an object list model with the given parent. """
         super(QObjectListModel, self).__init__(parent)
@@ -17,7 +19,6 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self._keyAttrName = keyAttrName
         self._objectByKey = {}
         self.roles = QtCore.QAbstractListModel.roleNames(self)
-        self.ObjectRole = QtCore.Qt.UserRole
         self.roles[self.ObjectRole] = b"object"
 
     def roleNames(self):
@@ -319,6 +320,37 @@ class QTypedObjectListModel(QObjectListModel):
             raise TypeError("Invalid object type: expected {}, got {}".format(
                 self._metaObject.className(), item.staticMetaObject.className()))
         super(QTypedObjectListModel, self)._referenceItem(item)
+
+
+class SortedModelByReference(QtCore.QSortFilterProxyModel):
+    """ Sort a source model based on the ordered list (reference) of the same elements.
+    This proxy is useful if the model needs to be sorted a certain way for a specific use.
+    """
+    def __init__(self, parent):
+        super(SortedModelByReference, self).__init__(parent)
+        self._reference = []
+
+    def setReference(self, iterable):
+        """ Set the reference ordered list """
+        self._reference = iterable
+        self.sort()
+
+    def reference(self):
+        return self._reference
+
+    def lessThan(self, left, right):
+        l = self.sourceModel().data(left, QObjectListModel.ObjectRole)
+        r = self.sourceModel().data(right, QObjectListModel.ObjectRole)
+        if l not in self._reference:
+            return False
+        if r not in self._reference:
+            return True
+        return self._reference.index(l) < self._reference.index(r)
+
+    def sort(self):
+        """ Sort the proxy and call invalidate() """
+        super(SortedModelByReference, self).sort(0, QtCore.Qt.AscendingOrder)
+        self.invalidate()
 
 
 DictModel = QObjectListModel

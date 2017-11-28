@@ -4,7 +4,7 @@ from meshroom.core import desc
 
 class StructureFromMotion(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'aliceVision_incrementalSfM {allParams}'
+    commandLine = 'aliceVision_incrementalSfM {allParams} --allowUserInteraction 0'
     size = desc.DynamicNodeSize('input')
 
     inputs = [
@@ -53,9 +53,9 @@ class StructureFromMotion(desc.CommandLineNode):
         desc.BoolParam(
             name='useLocalBA',
             label='Local Bundle Adjustment',
-            description='It reduces the reconstruction time, especially for large datasets (500+ images), '
+            description='It reduces the reconstruction time, especially for large datasets (500+ images),\n'
                         'by avoiding computation of the Bundle Adjustment on areas that are not changing.',
-            value=True,
+            value=False,
             uid=[0],
         ),
         desc.IntParam(
@@ -69,7 +69,9 @@ class StructureFromMotion(desc.CommandLineNode):
         desc.IntParam(
             name='maxNumberOfMatches',
             label='Maximum Number of Matches',
-            description='Maximum number of matches per image pair (and per feature type). This can be useful to have a quick reconstruction overview. 0 means no limit.',
+            description='Maximum number of matches per image pair (and per feature type). \n'
+                        'This can be useful to have a quick reconstruction overview. \n'
+                        '0 means no limit.',
             value=0,
             range=(0, 50000, 1),
             uid=[0],
@@ -77,7 +79,9 @@ class StructureFromMotion(desc.CommandLineNode):
         desc.ChoiceParam(
             name='cameraModel',
             label='Camera Model',
-            description='''* 1: Pinhole * 2: Pinhole radial 1 * 3: Pinhole radial 3''',
+            description="1: Pinhole \n"
+                        "2: Pinhole 2\n"
+                        "3: Pinhole 3",
             value=3,
             values=[1, 2, 3],
             exclusive=True,
@@ -86,21 +90,21 @@ class StructureFromMotion(desc.CommandLineNode):
         desc.File(
             name='initialPairA',
             label='Initial Pair A',
-            description='''filename of the first image (without path).''',
+            description='''Filename of the first image (without path).''',
             value='',
             uid=[0],
         ),
         desc.File(
             name='initialPairB',
             label='Initial Pair B',
-            description='''filename of the second image (without path).''',
+            description='''Filename of the second image (without path).''',
             value='',
             uid=[0],
         ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
-            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            description='''Verbosity level (fatal, error, warning, info, debug, trace).''',
             value='info',
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,

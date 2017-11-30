@@ -21,6 +21,8 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self.roles = QtCore.QAbstractListModel.roleNames(self)
         self.roles[self.ObjectRole] = b"object"
 
+        self.requestDeletion.connect(self.onRequestDeletion, QtCore.Qt.QueuedConnection)
+
     def roleNames(self):
         return self.roles
 
@@ -267,7 +269,10 @@ class QObjectListModel(QtCore.QAbstractListModel):
     def _dereferenceItem(self, item):
         # Ask for object deletion if parented to the model
         if item.parent() == self:
-            item.deleteLater()
+            # delay deletion until the next event loop
+            # This avoids warnings when the QML engine tries to evaluate (but should not)
+            # an object that has already been deleted
+            self.requestDeletion.emit(item)
 
         if not self._keyAttrName:
             return
@@ -277,8 +282,13 @@ class QObjectListModel(QtCore.QAbstractListModel):
         assert key in self._objectByKey
         del self._objectByKey[key]
 
+    def onRequestDeletion(self, item):
+        item.deleteLater()
+
     countChanged = QtCore.Signal()
     count = QtCore.Property(int, size, notify=countChanged)
+
+    requestDeletion = QtCore.Signal(QtCore.QObject)
 
 
 class QTypedObjectListModel(QObjectListModel):

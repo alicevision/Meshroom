@@ -20,6 +20,8 @@ ApplicationWindow {
     onClosing: {
         // make sure document is saved before exiting application
         close.accepted = false
+        if(!ensureNotComputing())
+            return
         ensureSaved(function(){ Qt.quit() })
     }
 
@@ -123,6 +125,31 @@ ApplicationWindow {
             callback()
         }
         return saved
+    }
+
+    Dialog {
+        id: computingAtExitDialog
+        title: "Operation in progress"
+        x: parent.width/2 - width/2
+        y: parent.height/2 - height/2
+        padding: 15
+        standardButtons: Dialog.Ok
+        modal: true
+        Label {
+            text: "Please stop any local computation before exiting Meshroom"
+        }
+    }
+
+    // Check and return whether no local computation is in progress
+    function ensureNotComputing()
+    {
+        if(_reconstruction.computingLocally)
+        {
+            // Open a warning dialog to ask for computation to be stopped
+            computingAtExitDialog.open()
+            return false
+        }
+        return true
     }
 
     Dialog {

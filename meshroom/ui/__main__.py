@@ -45,12 +45,12 @@ class PaletteManager(QObject):
         darkPalette.setColor(QPalette.Shadow, Qt.black)
 
         self.darkPalette = darkPalette
-        self.defaultPalette = QGuiApplication.instance().palette()
+        self.defaultPalette = QApplication.instance().palette()
         self.togglePalette()
 
     @Slot()
     def togglePalette(self):
-        app = QGuiApplication.instance()
+        app = QApplication.instance()
         if app.palette() == self.darkPalette:
             app.setPalette(self.defaultPalette)
         else:

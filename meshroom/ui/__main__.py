@@ -2,7 +2,8 @@ import os
 import sys
 
 from PySide2.QtCore import Qt, QObject, Slot
-from PySide2.QtGui import QGuiApplication, QPalette, QColor, QIcon
+from PySide2.QtGui import QPalette, QColor, QIcon
+from PySide2.QtWidgets import QApplication
 
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
@@ -59,7 +60,9 @@ class PaletteManager(QObject):
 
 
 if __name__ == "__main__":
-    app = QGuiApplication([sys.argv[0], '-style', 'fusion'] + sys.argv[1:])  # force Fusion style as default
+    args = [sys.argv[0], '-style', 'fusion'] + sys.argv[1:]  # force Fusion style as default
+    # use QApplication (QtWidgets) for Platform.FileDialog fallback on platform without native implementation
+    app = QApplication(args)
     app.setAttribute(Qt.AA_EnableHighDpiScaling)
 
     pwd = os.path.dirname(__file__)

@@ -178,18 +178,6 @@ FocusScope {
 
                 Transform {
                     id: transform
-                    property real userAngleX: 0.0
-                    property real userAngleY: 0.0
-                    property real userAngleZ: 0.0
-                    property real userScale: 1.0
-                    matrix: {
-                        var m = Qt.matrix4x4();
-                        m.rotate(userAngleX, Qt.vector3d(1, 0, 0));
-                        m.rotate(userAngleY, Qt.vector3d(0, 1, 0));
-                        m.rotate(userAngleZ, Qt.vector3d(0, 0, 1));
-                        m.scale(userScale)
-                        return m;
-                    }
                 }
 
                 SceneLoader {
@@ -211,31 +199,32 @@ FocusScope {
 
         }
     }
+
     Pane {
         background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
         Column {
             spacing: 5            
             Row {
                 spacing: 4
-                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.userAngleX = value}
+                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.rotationX = value}
                 Label { text: "RX" }
             }
 
             Row {
                 spacing: 4
-                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.userAngleY = value }
+                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.rotationY = value }
                 Label { text: "RY" }
             }
 
             Row {
                 spacing: 4
-                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.userAngleZ = value }
+                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.rotationZ = value }
                 Label { text: "RZ" }
             }
 
             Row {
                 spacing: 4
-                Slider { width: 100; from: 1; to: 10; onPositionChanged: transform.userScale = value }
+                Slider { width: 100; from: 1; to: 10; onPositionChanged: transform.scale = value }
                 Label { text: "Scale" }
             }
         }

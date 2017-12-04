@@ -23,7 +23,6 @@ class ChunksMonitor(QObject):
     """
     def __init__(self, chunks=(), parent=None):
         super(ChunksMonitor, self).__init__(parent)
-        self.chunkByStatusFile = dict()
         self.lastModificationRecords = dict()
         self.setChunks(chunks)
         # Check status files every x seconds
@@ -35,18 +34,16 @@ class ChunksMonitor(QObject):
         self.clear()
         for chunk in chunks:
             f = chunk.statusFile()
-            self.chunkByStatusFile[f] = chunk
+            # Store a record of {chunk: status file last modification}
+            self.lastModificationRecords[chunk] = self.getFileLastModTime(f)
             # For local use, handle statusChanged emitted directly from the node chunk
             chunk.statusChanged.connect(self.onChunkStatusChanged)
-            self.lastModificationRecords[f] = os.path.getmtime(f) if os.path.exists(f) else -1
-
         self.chunkStatusChanged.emit(None, -1)
 
     def clear(self):
         """ Clear the list of monitored chunks """
-        for ch in self.chunkByStatusFile.values():
+        for ch in self.lastModificationRecords:
             ch.statusChanged.disconnect(self.onChunkStatusChanged)
-        self.chunkByStatusFile.clear()
         self.lastModificationRecords.clear()
 
     def timerEvent(self, evt):
@@ -55,11 +52,10 @@ class ChunksMonitor(QObject):
     def onChunkStatusChanged(self):
         """ React to change of status coming from the NodeChunk itself. """
         chunk = self.sender()
-        f = chunk.statusFile()
+        assert chunk in self.lastModificationRecords
         # Update record entry for this file so that it's up-to-date on next timerEvent
-        if f in self.lastModificationRecords:
-            self.lastModificationRecords[f] = self.getFileLastModTime(f)
-            self.chunkStatusChanged.emit(chunk, chunk.status.status)
+        self.lastModificationRecords[chunk] = self.getFileLastModTime(chunk.statusFile())
+        self.chunkStatusChanged.emit(chunk, chunk.status.status)
 
     @staticmethod
     def getFileLastModTime(f):
@@ -68,20 +64,14 @@ class ChunksMonitor(QObject):
 
     def checkFileTimes(self):
         """ Check status files last modification time and compare with stored value """
-        for f, t in self.lastModificationRecords.items():
-            lastMod = self.getFileLastModTime(f)
+        for chunk, t in self.lastModificationRecords.items():
+            lastMod = self.getFileLastModTime(chunk.statusFile())
             if lastMod != t:
-                self.lastModificationRecords[f] = lastMod
-                self.chunkByStatusFile[f].updateStatusFromCache()
-                logging.debug("Status for node {} changed: {}".format(self.chunkByStatusFile[f].node,
-                                                                      self.chunkByStatusFile[f].status.status))
-
-    def isLocked(self):
-        return any([ch.status.status in (graph.Status.RUNNING, graph.Status.SUBMITTED) for ch in self.chunkByStatusFile.values()])
+                self.lastModificationRecords[chunk] = lastMod
+                chunk.updateStatusFromCache()
+                logging.debug("Status for node {} changed: {}".format(chunk.node, chunk.status.status))
 
     chunkStatusChanged = Signal(graph.NodeChunk, int)
-    countChanged = Signal()
-    count = Property(int, lambda self: len(self._chunkByStatusFile), notify=countChanged)
 
 
 class UIGraph(QObject):
@@ -195,10 +185,8 @@ class UIGraph(QObject):
 
     def onChunkStatusChanged(self, chunk, status):
         # update graph computing status
-        running = any([ch.status.status == graph.Status.RUNNING
-                       for ch in self._chunksMonitor.chunkByStatusFile.values()])
-        submitted = any([ch.status.status == graph.Status.SUBMITTED
-                         for ch in self._chunksMonitor.chunkByStatusFile.values()])
+        running = any([ch.status.status == graph.Status.RUNNING for ch in self._sortedDFSChunks])
+        submitted = any([ch.status.status == graph.Status.SUBMITTED for ch in self._sortedDFSChunks])
         if self._running != running or self._submitted != submitted:
             self._running = running
             self._submitted = submitted

@@ -495,7 +495,7 @@ class StatusData:
         self.env = d.get('env', '')
         self.startDateTime = d.get('startDateTime', '')
         self.endDateTime = d.get('endDateTime', '')
-        self.elapsedTime = d.get('elapsedTime', '')
+        self.elapsedTime = d.get('elapsedTime', 0)
         self.hostname = d.get('hostname', '')
         self.sessionUid = d.get('sessionUid', '')
 

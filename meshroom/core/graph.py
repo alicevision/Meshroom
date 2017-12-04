@@ -1499,6 +1499,7 @@ class Graph(BaseObject):
             return
         self._cacheDir = value
         self.updateInternals()
+        self.updateStatusFromCache()
         self.cacheDirChanged.emit()
 
     nodes = Property(BaseObject, nodes.fget, constant=True)

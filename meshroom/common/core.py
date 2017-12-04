@@ -67,6 +67,9 @@ class CoreListModel:
     def __len__(self):
         return len(self._objects)
 
+    def __getitem__(self, idx):
+        return self._objects[idx]
+
     def setObjectList(self, iterable):
         self.clear()
         self._objects = iterable

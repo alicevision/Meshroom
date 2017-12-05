@@ -72,6 +72,7 @@ if __name__ == "__main__":
     engine = QmlInstantEngine()
     engine.addFilesFromDirectory(qmlDir, recursive=True)
     engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
+    engine.addImportPath(qmlDir)
     components.registerTypes()
 
     r = Reconstruction(parent=app)

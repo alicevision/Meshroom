@@ -1,0 +1,2 @@
+module MaterialIcons
+singleton MaterialIcons 2.2 MaterialIcons.qml

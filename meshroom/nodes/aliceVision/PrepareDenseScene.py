@@ -40,7 +40,7 @@ class PrepareDenseScene(desc.CommandLineNode):
             name='ini',
             label='MVS Configuration file',
             description='',
-            value='{cache}/{nodeType}/{uid0}/_tmp_scale{scaleValue}/mvs.ini',
+            value='{cache}/{nodeType}/{uid0}/mvs.ini',
             uid=[],
             group='',  # not a command line arg
         ),

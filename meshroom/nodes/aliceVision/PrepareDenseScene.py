@@ -25,6 +25,15 @@ class PrepareDenseScene(desc.CommandLineNode):
             uid=[0],
         ),
         desc.ChoiceParam(
+            name='outputFileType',
+            label='Image File Type',
+            description='Output Image File Type',
+            value='exr',
+            values=['jpg', 'png', 'tif', 'exr'],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='''verbosity level (fatal, error, warning, info, debug, trace).''',

@@ -55,6 +55,15 @@ class Texturing(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
         ),
+        desc.ChoiceParam(
+            name='outputTextureFileType',
+            label='Texture File Type',
+            description='Texture File Type',
+            value='png',
+            values=('jpg', 'png', 'tiff', 'exr'),
+            exclusive=True,
+            uid=[0],
+        ),
         desc.BoolParam(
             name='flipNormals',
             label='Flip Normals',

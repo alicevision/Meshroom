@@ -83,13 +83,6 @@ class FeatureMatching(desc.CommandLineNode):
             value=False,
             uid=[0],
         ),
-        desc.BoolParam(
-            name='matchFilePerImage',
-            label='Match File Per Image',
-            description='''matches in a separate file per image.''',
-            value=True,
-            uid=[0],
-        ),
         desc.FloatParam(
             name='distanceRatio',
             label='Distance Ratio',
@@ -104,13 +97,6 @@ class FeatureMatching(desc.CommandLineNode):
             description='''Maximum number of iterations allowed in ransac step.''',
             value=2048,
             range=(1, 20000, 1),
-            uid=[0],
-        ),
-        desc.BoolParam(
-            name='useGridSort',
-            label='Use Grid Sort',
-            description='''matching grid sort.''',
-            value=True,
             uid=[0],
         ),
         desc.BoolParam(

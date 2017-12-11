@@ -59,6 +59,14 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
+            name='localBAGraphDistance',
+            label='LocalBA Graph Distance',
+            description='Graph-distance limit to define the Active region in the Local Bundle Adjustment strategy.',
+            value=1,
+            range=(2, 10, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
             name='minInputTrackLength',
             label='Min Input Track Length',
             description='''Minimum track length in input of SfM''',

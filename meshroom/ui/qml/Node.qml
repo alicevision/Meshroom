@@ -40,7 +40,12 @@ Item {
             }
             MenuSeparator {}
             MenuItem {
-                text: "Delete"
+                text: "Clear Data"
+                enabled: !root.readOnly
+                onTriggered: node.clearData()
+            }
+            MenuItem {
+                text: "Delete Node"
                 enabled: !root.readOnly
                 onTriggered: _reconstruction.removeNode(node)
             }

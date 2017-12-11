@@ -831,6 +831,15 @@ class Node(BaseObject):
                 return False
         return True
 
+    @Slot()
+    def clearData(self):
+        """ Delete this Node internal folder.
+        Status will be reset to Status.NONE
+        """
+        if os.path.exists(self.internalFolder):
+            shutil.rmtree(self.internalFolder)
+            self.updateStatusFromCache()
+
     def isAlreadySubmitted(self):
         for chunk in self._chunks:
             if chunk.isAlreadySubmitted():

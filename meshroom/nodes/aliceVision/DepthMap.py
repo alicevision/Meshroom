@@ -18,3 +18,12 @@ class DepthMap(desc.CommandLineNode):
             ),
     ]
 
+    outputs = [
+        desc.File(
+            name='output',
+            label='Output',
+            description='Output folder for generated depth maps.',
+            value='{cache}/{nodeType}/{uid0}/',
+            uid=[],
+        ),
+    ]

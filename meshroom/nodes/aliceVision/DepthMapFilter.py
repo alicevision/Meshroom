@@ -16,4 +16,21 @@ class DepthMapFilter(desc.CommandLineNode):
             value='',
             uid=[0],
             ),
+        desc.File(
+            name="depthMapFolder",
+            label='Depth Map Folder',
+            description='Input depth map folder',
+            value='',
+            uid=[0],
+            ),
+    ]
+
+    outputs = [
+        desc.File(
+            name='output',
+            label='Output',
+            description='Output folder for generated depth maps.',
+            value='{cache}/{nodeType}/{uid0}/',
+            uid=[],
+        ),
     ]

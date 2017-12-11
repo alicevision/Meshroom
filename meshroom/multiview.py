@@ -50,8 +50,11 @@ def photogrammetryPipeline(output='', inputFolder='', inputImages=[], inputViewp
         depthMap = graph.addNewNode('DepthMap',
                                     ini=cameraConnection.ini)
         depthMapFilter = graph.addNewNode('DepthMapFilter',
+                                          depthMapFolder=depthMap.output,
                                           ini=depthMap.ini)
         meshing = graph.addNewNode('Meshing',
+                                   depthMapFolder=depthMapFilter.depthMapFolder,
+                                   depthMapFilterFolder=depthMapFilter.output,
                                    ini=depthMapFilter.ini)
         texturing = graph.addNewNode('Texturing',
                                      ini=meshing.ini,

@@ -19,7 +19,7 @@ Entity {
     property color ambient: "#999999"
     property real shininess
     property color specular
-    property vector3d diffuseColor: "#AA9999"
+    property color diffuseColor: "#AA9999"
     property alias object: instantiator.object
 
     NodeInstantiator {

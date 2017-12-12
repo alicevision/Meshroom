@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.1
 import QtQuick.Window 2.3
 import QtQml.Models 2.2
 import Qt.labs.platform 1.0 as Platform
+import GraphEditor 1.0
 
 ApplicationWindow {
     id: _window

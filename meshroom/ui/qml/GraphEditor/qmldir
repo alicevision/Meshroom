@@ -1,0 +1,11 @@
+module GraphEditor
+
+GraphEditor 1.0 GraphEditor.qml
+Node 1.0 Node.qml
+NodeChunks 1.0 NodeChunks.qml
+Edge 1.0 Edge.qml
+AttributePin 1.0 AttributePin.qml
+AttributeEditor 1.0 AttirbuteEditor.qml
+
+AttributeEditor 1.0 AttributeEditor.qml
+AttributeItemDelegate 1.0 AttributeItemDelegate.qml

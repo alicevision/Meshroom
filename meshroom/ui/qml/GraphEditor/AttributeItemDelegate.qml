@@ -154,7 +154,7 @@ Loader {
                 Layout.fillWidth: true
                 Layout.margins: 4
                 clip: true
-                spacing: 6
+                spacing: 10
 
                 ScrollBar.vertical: ScrollBar { id: sb }
 

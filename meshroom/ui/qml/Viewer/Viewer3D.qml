@@ -98,32 +98,42 @@ FocusScope {
                 }
             }
 
-            MayaCameraController {
+            DefaultCameraController {
                 id: cameraController
                 camera: mainCamera
                 onMousePressed: {
-                    mouse.accepted = false
                     scene3D.forceActiveFocus()
+                    if(mouse.button == Qt.LeftButton)
+                    {
+                        if(!doubleClickTimer.running)
+                            doubleClickTimer.restart()
+                    }
+                    else
+                        doubleClickTimer.stop()
                 }
                 onMouseReleased: {
                     if(moving)
-                        return;
-                    switch(mouse.button) {
-                        case Qt.LeftButton:
-                            break;
-                        case Qt.RightButton:
-                            contextMenu.x = mouse.x;
-                            contextMenu.y = mouse.y;
-                            contextMenu.open();
-                            break;
+                        return
+                    if(mouse.button == Qt.RightButton)
+                    {
+                        contextMenu.popup()
                     }
+                }
+
+                // Manually handle double click to activate object picking
+                // for camera re-centering only during a short amount of time
+                Timer {
+                    id: doubleClickTimer
+                    running: false
+                    interval: 300
                 }
             }
 
             components: [
                 RenderSettings {
-                    // To avoid performance drop, only pick triangles when not moving the camera
-                    pickingSettings.pickMethod: cameraController.moving ? PickingSettings.BoundingVolumePicking : PickingSettings.TrianglePicking
+                    // To avoid performance drops, picking is only enabled under certain circumstances (see ObjectPicker below)
+                    pickingSettings.pickMethod: PickingSettings.TrianglePicking
+                    pickingSettings.pickResultMode: PickingSettings.NearestPick
                     renderPolicy: RenderSettings.Always
                     activeFrameGraph: Viewport {
                         normalizedRect: Qt.rect(0.0, 0.0, 1.0, 1.0)
@@ -156,23 +166,17 @@ FocusScope {
 
                 components: [scene, transform, picker]
 
+                // ObjectPicker used for view re-centering
                 ObjectPicker {
                     id: picker
+                    // Triangle picking is expensive
+                    // Only activate it when a double click may happen or when the 'Control' key is pressed
+                    enabled: cameraController.controlPressed || doubleClickTimer.running
                     hoverEnabled: false
                     onPressed: {
-                        if(Qt.LeftButton & pick.buttons)
-                        {
-                            if(!doubleClickTimer.running)
-                                doubleClickTimer.start()
-                            else
-                                mainCamera.viewCenter = pick.worldIntersection
-                        }
-                    }
-
-                    Timer {
-                        id: doubleClickTimer
-                        running: false
-                        interval: 400
+                        if(pick.button == Qt.LeftButton)
+                            mainCamera.viewCenter = pick.worldIntersection
+                        doubleClickTimer.stop()
                     }
                 }
 
@@ -239,7 +243,7 @@ FocusScope {
         }
     }
 
-    // menus
+    // Menu
     Menu {
         id: contextMenu
         MenuItem {

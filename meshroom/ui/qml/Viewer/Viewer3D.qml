@@ -42,22 +42,55 @@ FocusScope {
         }
     }
 
-    function unmirrorTextures(rootEntity)
+    // Remove automatically created DiffuseMapMaterial and
+    // instantiate a MaterialSwitcher instead
+    function setupMaterialSwitchers(rootEntity)
     {
         var materials = [];
         findChildrenByProperty(rootEntity, "diffuse", materials);
-
-        var textures = [];
+        var entities = []
         materials.forEach(function(mat){
-            mat["diffuse"].magnificationFilter = Texture.Linear;
-            findChildrenByProperty(mat["diffuse"], "mirrored", textures)
+            entities.push(mat.parent)
         })
 
-        //console.log(textures)
-        textures.forEach(function(tex){
-            //console.log("Unmirroring: " + tex.source)
-            tex.mirrored = false
+        entities.forEach(function(entity) {
+            var comps = [];
+            var mats = []
+            for(var i=0; i < entity.components.length; ++i)
+            {
+                var comp = entity.components[i]
+                // handle DiffuseMapMaterials created by SceneLoader
+                if(comp.toString().indexOf("QDiffuseMapMaterial") > -1)
+                {
+                    // store material definition
+                    var m = {
+                        "diffuseMap": comp.diffuse.data[0].source,
+                        "shininess": comp.shininess,
+                        "specular": comp.specular,
+                        "ambient": comp.ambient,
+                        "showTextures": texturesCheckBox.checked
+                    }
+                    mats.push(m)
+                    // unparent previous material
+                    // and exclude it from the entity components
+                    comp.parent = null
+                }
+                else
+                    comps.push(comp)
+            }
+            entity.components = comps
+            mats.forEach(function(m){
+                // create a material switcher for each material definition
+                var matSwitcher = materialSwitcherComponent.createObject(entity, m)
+                // bind textures checkbox to texture switch property
+                matSwitcher.showTextures = Qt.binding(function(){ return texturesCheckBox.checked })
+            })
         })
+    }
+
+    Component {
+        id: materialSwitcherComponent
+        MaterialSwitcher {}
     }
 
     function clear()
@@ -192,7 +225,7 @@ FocusScope {
                             modelLoader.loading = false;
                         if(scene.status == SceneLoader.Ready)
                         {
-                            unmirrorTextures(parent);
+                            setupMaterialSwitchers(parent)
                         }
                     }
                 }
@@ -240,6 +273,7 @@ FocusScope {
         Column {
             CheckBox { id: gridCheckBox; text: "Grid"; checked: true }
             CheckBox { id: locatorCheckBox; text: "Locator"; checked: true }
+            CheckBox { id: texturesCheckBox; text: "Textures"; checked: true }
         }
     }
 

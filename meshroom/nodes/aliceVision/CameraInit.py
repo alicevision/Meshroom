@@ -15,6 +15,7 @@ Viewpoint = [
     desc.IntParam(name="intrinsicId", label="Intrinsic", description="Internal Camera Parameters", value=-1, uid=[0], range=(0, 200, 1)),
     desc.IntParam(name="rigId", label="Rig", description="Rig Parameters", value=-1, uid=[0], range=(0, 200, 1)),
     desc.IntParam(name="subPoseId", label="Rig Sub-Pose", description="Rig Sub-Pose Parameters", value=-1, uid=[0], range=(0, 200, 1)),
+    desc.StringParam(name="metadata", label="Image Metadata", description="", value="", uid=[]),
 ]
 
 Intrinsic = [
@@ -136,6 +137,8 @@ class CameraInit(desc.CommandLineNode):
             # print('intrinsics:', intrinsics)
             viewsKeys = [v.name for v in Viewpoint]
             views = [{k: v for k, v in item.items() if k in viewsKeys} for item in data.get("views", [])]
+            for view in views:
+                view['metadata'] = json.dumps(view['metadata'])  # convert metadata to string
             # print('views:', views)
             return views, intrinsics
 
@@ -155,9 +158,15 @@ class CameraInit(desc.CommandLineNode):
             intrinsics = node.intrinsics.getPrimitiveValue(exportDefault=True)
             for intrinsic in intrinsics:
                 intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
+            views = node.viewpoints.getPrimitiveValue(exportDefault=False)
+
+            for view in views:
+                # filter out unnecessary attributes
+                del view['metadata']
+
             sfmData = {
                 "version": [1, 0, 0],
-                "views": node.viewpoints.getPrimitiveValue(exportDefault=False) + newViews,
+                "views": views + newViews,
                 "intrinsics": intrinsics,
                 "featureFolder": "",
                 "matchingFolder": "",

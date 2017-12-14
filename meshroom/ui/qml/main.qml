@@ -6,6 +6,7 @@ import QtQuick.Window 2.3
 import QtQml.Models 2.2
 import Qt.labs.platform 1.0 as Platform
 import GraphEditor 1.0
+import MaterialIcons 2.2
 
 ApplicationWindow {
     id: _window
@@ -17,7 +18,6 @@ ApplicationWindow {
     font.pointSize: 9
 
     property variant node: null
-
     onClosing: {
         // make sure document is saved before exiting application
         close.accepted = false
@@ -28,6 +28,7 @@ ApplicationWindow {
 
     SystemPalette { id: palette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled}
+
 
     Dialog {
         id: unsavedDialog
@@ -267,8 +268,10 @@ ApplicationWindow {
 
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.fillHeight: false
+            Layout.fillHeight: true
+            Layout.topMargin: 2
             implicitHeight: Math.round(parent.height * 0.7)
+            spacing: 4
             Row {
                 enabled: !_reconstruction.computingExternally
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -279,7 +282,7 @@ ApplicationWindow {
                     palette.button: enabled ? buttonColor : disabledPalette.button
                     palette.window: enabled ? buttonColor : disabledPalette.window
                     palette.buttonText: enabled ? "white" : disabledPalette.buttonText
-                    enabled: imageGallery.model.count > 2 && !_reconstruction.computing
+                    enabled: _reconstruction.viewpoints.count > 2 && !_reconstruction.computing
                     onClicked: _reconstruction.execute(null)
                 }
                 Button {
@@ -289,7 +292,7 @@ ApplicationWindow {
                 }
                 Item { width: 20; height: 1 }
                 Button {
-                    enabled: imageGallery.model.count > 2 && !_reconstruction.computing  && _reconstruction.graph.filepath != ""
+                    enabled: _reconstruction.viewpoints.count > 2 && !_reconstruction.computing  && _reconstruction.graph.filepath != ""
                     text: "Submit"
                     onClicked: _reconstruction.submit(null)
                 }
@@ -305,7 +308,7 @@ ApplicationWindow {
             ListView {
                 id: chunksListView
                 Layout.fillWidth: true
-                height: 10
+                height: 6
                 model: _reconstruction.sortedDFSNodes
                 orientation: ListView.Horizontal
                 interactive: false
@@ -318,52 +321,51 @@ ApplicationWindow {
                 }
             }
 
-            ImageGallery {
+            WorkspaceView {
                 id: imageGallery
-                property variant node: _reconstruction.graph.nodes.get("CameraInit_1")
-                readOnly: _reconstruction.computing
-                meshFile: _reconstruction.meshFile
-                model: node ? node.attribute("viewpoints").value : undefined
+                reconstruction: _reconstruction
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                onRemoveImageRequest: _reconstruction.removeAttribute(attribute)
+                Layout.minimumHeight: 50
             }
         }
-
-        Controls1.SplitView {
+        Panel {
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            orientation: Qt.Horizontal
+            Layout.fillHeight: false
+            height: Math.round(parent.height * 0.3)
+            title: "Graph Editor"
 
-            ColumnLayout {
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                Layout.margins: 10
-                Row {
-                    spacing: 1
-                    Layout.fillWidth: true
-                }
-                GraphEditor {
-                    id: graphEditor
-                    graph: _reconstruction.graph
+            Controls1.SplitView {
+                orientation: Qt.Horizontal
+                anchors.fill: parent
+
+                ColumnLayout {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
-                    readOnly: _reconstruction.computing
-                }
-            }
-            Item {
-                implicitHeight: Math.round(parent.height * 0.2)
-                implicitWidth: Math.round(parent.width * 0.3)
+                    Layout.margins: 10
+                    GraphEditor {
+                        id: graphEditor
+                        graph: _reconstruction.graph
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        readOnly: _reconstruction.computing
+                    }
 
-                Loader {
-                    anchors.fill: parent
-                    anchors.margins: 2
-                    active: graphEditor.selectedNode != null
-                    sourceComponent: Component {
-                        AttributeEditor {
-                            node: graphEditor.selectedNode
-                            // Make AttributeEditor readOnly when computing
-                            readOnly: _reconstruction.computing
+                }
+                Item {
+                    implicitHeight: Math.round(parent.height * 0.2)
+                    implicitWidth: Math.round(parent.width * 0.3)
+
+                    Loader {
+                        anchors.fill: parent
+                        anchors.margins: 2
+                        active: graphEditor.selectedNode != null
+                        sourceComponent: Component {
+                            AttributeEditor {
+                                node: graphEditor.selectedNode
+                                // Make AttributeEditor readOnly when computing
+                                readOnly: _reconstruction.computing
+                            }
                         }
                     }
                 }
@@ -371,6 +373,3 @@ ApplicationWindow {
         }
     }
  }
-
-
-

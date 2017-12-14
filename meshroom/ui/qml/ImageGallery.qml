@@ -64,13 +64,11 @@ Panel {
                     hoverEnabled: true
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     onPressed: {
-                        onPressed: {
-                           grid.currentIndex = index
-                           if(mouse.button == Qt.RightButton)
-                               imageMenu.popup()
-                           else
-                               grid.forceActiveFocus()
-                       }
+                       grid.currentIndex = index
+                       if(mouse.button == Qt.RightButton)
+                           imageMenu.popup()
+                       else
+                           grid.forceActiveFocus()
                     }
                     Menu {
                         id: imageMenu

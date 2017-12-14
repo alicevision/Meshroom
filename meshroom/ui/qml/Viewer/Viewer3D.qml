@@ -105,6 +105,7 @@ FocusScope {
         hoverEnabled: false // if true, will trigger positionChanged events in attached MouseHandler
         aspects: ["logic", "input"]
         focus: true
+
         Keys.onPressed: {
             if (event.key == Qt.Key_F) {
                 resetCameraCenter();
@@ -115,6 +116,7 @@ FocusScope {
 
         Entity {
             id: rootEntity
+
             Camera {
                 id: mainCamera
                 projectionType: CameraLens.PerspectiveProjection
@@ -174,12 +176,10 @@ FocusScope {
                             CameraSelector {
                                 id: cameraSelector
                                 camera: mainCamera
-                                //FrustumCulling {
-                                    ClearBuffers {
-                                        buffers : ClearBuffers.ColorDepthBuffer
-                                        clearColor: Qt.rgba(0, 0, 0, 0.1)
-                                    }
-                                //}
+                                ClearBuffers {
+                                    buffers : ClearBuffers.ColorDepthBuffer
+                                    clearColor: Qt.rgba(0, 0, 0, 0.1)
+                                }
                             }
                         }
                     }
@@ -229,10 +229,9 @@ FocusScope {
                         }
                     }
                 }
-                Locator3D { enabled: locatorCheckBox.checked}
+                Locator3D { enabled: locatorCheckBox.checked }
             }
-
-           Grid3D { enabled: gridCheckBox.checked }
+            Grid3D { enabled: gridCheckBox.checked }
 
         }
     }

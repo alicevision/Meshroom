@@ -13,6 +13,9 @@ class Reconstruction(UIGraph):
     """
     Specialization of a UIGraph designed to manage a 3D reconstruction.
     """
+
+    imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr')
+
     def __init__(self, graphFilepath='', parent=None):
         super(Reconstruction, self).__init__(graphFilepath, parent)
         self._buildIntrinsicsThread = None
@@ -97,6 +100,11 @@ class Reconstruction(UIGraph):
         """
         self.importImagesFromUrls(drop.property("urls"))
 
+    @staticmethod
+    def isImageFile(filepath):
+        """ Return whether filepath is a path to an image file supported by Meshroom. """
+        return os.path.splitext(filepath)[1].lower() in Reconstruction.imageExtensions
+
     @Slot(QObject)
     def importImagesFromUrls(self, urls):
         """ Add the given list of images (as QUrl) to the Reconstruction. """
@@ -104,8 +112,11 @@ class Reconstruction(UIGraph):
         images = []
         for url in urls:
             localFile = url.toLocalFile()
-            if os.path.splitext(localFile)[1].lower() in (".jpg", ".png", ".jpeg"):
-                images.append(localFile)
+            if os.path.isdir(localFile):  # get folder content
+                files = [os.path.join(localFile, f) for f in os.listdir(localFile)]
+            else:
+                files = [localFile]
+            images.extend([f for f in files if Reconstruction.isImageFile(f)])
         if not images:
             return
         # Start the process of updating views and intrinsics

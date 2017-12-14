@@ -37,17 +37,7 @@ FocusScope {
         }
     }
 
-    // placeholder, visible when image isn't ready
-    Rectangle {
-        anchors.centerIn: parent
-        width: Math.min(parent.width, parent.height*1.5) * 0.95 // 5% margin
-        height: Math.min(parent.height, parent.width*1.5) * 0.95 // 5% margin
-        color: "transparent"
-        border.color: "#333"
-        visible: image.status != Image.Ready
-    }
-
-    // image
+    // Main Image
     Image {
         id: image
         transformOrigin: Item.TopLeft
@@ -56,12 +46,33 @@ FocusScope {
         fillMode: Image.PreserveAspectFit
         autoTransform: true
         onWidthChanged: if(status==Image.Ready) fit()
+        onStatusChanged: {
+            // update cache source when image is loaded
+            if(status === Image.Ready)
+                cache.source = source
+        }
+
+        // Image cache of the last loaded image
+        // Only visible when the main one is loading, to keep an image
+        // displayed at all time and smoothen transitions
+        Image {
+            id: cache
+
+            anchors.fill: parent
+            asynchronous: true
+            smooth: parent.smooth
+            fillMode: parent.fillMode
+            autoTransform: parent.autoTransform
+
+            visible: image.status === Image.Loading
+        }
     }
 
-    // busy indicator
+    // Busy indicator
     BusyIndicator {
         anchors.centerIn: parent
-        running: image.status === Image.Loading
+        // running property binding seems broken, only dynamic binding assignment works
+        Component.onCompleted: running = Qt.binding(function() { return image.status === Image.Loading })
     }
 
     // mouse area

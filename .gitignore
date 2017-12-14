@@ -39,3 +39,4 @@ __pycache__
 .nfs*
 
 *.qmlc
+*.jsc

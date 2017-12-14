@@ -16,6 +16,7 @@ class Reconstruction(UIGraph):
     def __init__(self, graphFilepath='', parent=None):
         super(Reconstruction, self).__init__(graphFilepath, parent)
         self._buildIntrinsicsThread = None
+        self._cameraInit = None
         self._endChunk = None
         self._meshFile = ''
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
@@ -34,7 +35,7 @@ class Reconstruction(UIGraph):
         """ React to the change of the internal graph. """
         self._endChunk = None
         self.setMeshFile('')
-
+        self.updateCameraInit()
         if not self._graph:
             return
 
@@ -46,12 +47,35 @@ class Reconstruction(UIGraph):
             self.updateMeshFile()
         except KeyError:
             self._endChunk = None
+        # TODO: listen specifically for cameraInit creation/deletion
+        self._graph.nodes.countChanged.connect(self.updateCameraInit)
 
     @staticmethod
     def runAsync(func, args=(), kwargs=None):
         thread = Thread(target=func, args=args, kwargs=kwargs)
         thread.start()
         return thread
+
+    def getViewpoints(self):
+        """ Return the Viewpoints model. """
+        # TODO: handle multiple Viewpoints models
+        return self._cameraInit.viewpoints.value if self._cameraInit else None
+
+    def updateCameraInit(self):
+        """ Update internal CameraInit node (Viewpoints model owner) based on graph content. """
+        # TODO: handle multiple CameraInit nodes
+        if self._cameraInit in self._graph.nodes:
+            return
+        cameraInits = self._graph.findNodeCandidates("CameraInit")
+        self.setCameraInit(cameraInits[0] if cameraInits else None)
+
+    def setCameraInit(self, cameraInit):
+        """ Set the internal CameraInit node. """
+        # TODO: handle multiple CameraInit nodes
+        if self._cameraInit == cameraInit:
+            return
+        self._cameraInit = cameraInit
+        self.viewpointsChanged.emit()
 
     def updateMeshFile(self):
         if self._endChunk and self._endChunk.status.status == graph.Status.SUCCESS:
@@ -95,9 +119,8 @@ class Reconstruction(UIGraph):
         """
         try:
             self.buildingIntrinsicsChanged.emit()
-            cameraInit = self._graph.findNode("CameraInit")
             # Retrieve the list of updated viewpoints and intrinsics
-            views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, additionalViews)
+            views, intrinsics = self._cameraInit.nodeDesc.buildIntrinsics(self._cameraInit, additionalViews)
             self.intrinsicsBuilt.emit(views, intrinsics)
             return views, intrinsics
         except Exception as e:
@@ -107,15 +130,16 @@ class Reconstruction(UIGraph):
 
     def onIntrinsicsAvailable(self, views, intrinsics):
         """ Update CameraInit with given views and intrinsics. """
-        cameraInit = self._graph.findNode("CameraInit")
         with self.groupedGraphModification("Add Images"):
-            self.setAttribute(cameraInit.viewpoints, views)
-            self.setAttribute(cameraInit.intrinsics, intrinsics)
+            self.setAttribute(self._cameraInit.viewpoints, views)
+            self.setAttribute(self._cameraInit.intrinsics, intrinsics)
 
     def isBuildingIntrinsics(self):
         """ Whether intrinsics are being built """
         return self._buildIntrinsicsThread and self._buildIntrinsicsThread.isAlive()
 
+    viewpointsChanged = Signal()
+    viewpoints = Property(QObject, getViewpoints, notify=viewpointsChanged)
     intrinsicsBuilt = Signal(list, list)
     buildingIntrinsicsChanged = Signal()
     buildingIntrinsics = Property(bool, isBuildingIntrinsics, notify=buildingIntrinsicsChanged)

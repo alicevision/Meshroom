@@ -14,6 +14,7 @@ Panel {
 
     property alias model: grid.model
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
+    readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
     signal removeImageRequest(var attribute)
     property int defaultCellSize: 160
 
@@ -44,11 +45,13 @@ Panel {
 
                 readonly property bool isCurrentItem: grid.currentIndex == index
                 readonly property alias source: _viewpoint.source
+                readonly property alias metadata: _viewpoint.metadata
 
                 // retrieve viewpoints inner data
                 QtObject {
                     id: _viewpoint
                     readonly property string source: object.value.get("path").value
+                    readonly property var metadata: JSON.parse(object.value.get("metadata").value)
                 }
 
                 width: grid.cellWidth

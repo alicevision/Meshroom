@@ -8,7 +8,9 @@ import QtQuick.Layouts 1.3
 Item {
     id: root
 
-    property variant graph: null
+    property variant uigraph: null  /// Meshroom ui graph (UIGraph)
+    readonly property variant graph: uigraph ? uigraph.graph : null  /// core graph contained in ui graph
+    property variant nodeTypesModel: null  /// the list of node types that can be instantiated
     property bool readOnly: false
     property variant selectedNode: null
 
@@ -60,6 +62,53 @@ Item {
             if(drag.active)
                 workspaceMoved()
         }
+
+        onClicked: {
+            if(mouse.button & Qt.RightButton)
+            {
+                // store mouse click position in 'draggable' coordinates as new node spawn position
+                newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
+                newNodeMenu.popup()
+            }
+        }
+
+        // Contextual Menu for creating new nodes
+        // TODO: add filtering + validate on 'Enter'
+        Menu {
+            id: newNodeMenu
+            property point spawnPosition
+
+            function createNode(nodeType)
+            {
+                // add node via the proper command in uigraph
+                uigraph.addNode(nodeType)
+                // retrieve node delegate (the last one created in the node repeater)
+                var item = nodeRepeater.itemAt(nodeRepeater.count-1)
+                // convert mouse position
+                // disable node animation on position
+                item.animatePosition = false
+                // set the node position
+                item.x = spawnPosition.x;
+                item.y = spawnPosition.y
+                // reactivate animation on position
+                item.animatePosition = true
+                // select this node
+                selectedNode = item.node
+            }
+
+            Repeater {
+                model: _nodeTypes
+                focus: true
+                // Create Menu items from available node types model
+                delegate: MenuItem {
+                    font.pointSize: 8
+                    padding: 3
+                    text: modelData
+                    onClicked: newNodeMenu.createNode(modelData)
+                }
+            }
+        }
+
         Item {
             id: draggable
             transformOrigin: Item.TopLeft
@@ -88,7 +137,7 @@ Item {
                     point2y: dst.nodeItem.y + dstAnchor.y
                     onPressed: {
                         if(!root.readOnly && event.button == Qt.RightButton)
-                            _reconstruction.removeEdge(edge)
+                            uigraph.removeEdge(edge)
                     }
                 }
             }
@@ -102,6 +151,7 @@ Item {
                 onLoadedChanged: if(loaded) { doAutoLayout() }
 
                 delegate: Node {
+                    property bool animatePosition: true
                     node: object
                     width: root.nodeWidth
                     readOnly: root.readOnly
@@ -114,9 +164,11 @@ Item {
                     }
 
                     Behavior on x {
+                        enabled: animatePosition
                         NumberAnimation {}
                     }
                     Behavior on y {
+                        enabled: animatePosition
                         NumberAnimation {}
                     }
                 }

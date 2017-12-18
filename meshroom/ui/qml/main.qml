@@ -345,9 +345,10 @@ ApplicationWindow {
                     Layout.margins: 10
                     GraphEditor {
                         id: graphEditor
-                        graph: _reconstruction.graph
                         Layout.fillHeight: true
                         Layout.fillWidth: true
+                        uigraph: _reconstruction
+                        nodeTypesModel: _nodeTypes
                         readOnly: _reconstruction.computing
                     }
 

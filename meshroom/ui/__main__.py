@@ -9,6 +9,7 @@ from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
 
 from meshroom.ui import components
+from meshroom.core import nodesDesc
 
 
 class PaletteManager(QObject):
@@ -75,6 +76,8 @@ if __name__ == "__main__":
     engine.addImportPath(qmlDir)
     components.registerTypes()
 
+    # expose available node types that can be instantiated
+    engine.rootContext().setContextProperty("_nodeTypes", sorted(nodesDesc.keys()))
     r = Reconstruction(parent=app)
     engine.rootContext().setContextProperty("_reconstruction", r)
     pm = PaletteManager(engine, parent=app)

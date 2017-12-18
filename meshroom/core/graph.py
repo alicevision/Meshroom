@@ -1137,7 +1137,9 @@ class Graph(BaseObject):
         :return:
         :rtype: Node
         """
-        return self.addNode(Node(nodeDesc=nodeType, **kwargs))
+        n = self.addNode(Node(nodeDesc=nodeType, **kwargs))
+        n.updateInternals()
+        return n
 
     def _createUniqueNodeName(self, inputName):
         i = 1

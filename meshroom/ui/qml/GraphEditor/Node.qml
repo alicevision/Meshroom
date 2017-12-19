@@ -98,19 +98,20 @@ Item {
 
         Item { width: 1; height: 2}
 
-        RowLayout  {
+        Item {
             width: parent.width + 6
+            height: childrenRect.height
             anchors.horizontalCenter: parent.horizontalCenter
 
             Column {
                 id: inputs
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                width: parent.width / 2
                 Repeater {
                     model: node.attributes
                     delegate: Loader {
                         active: !object.isOutput && object.type == "File"
                                 || (object.type == "ListAttribute" && object.desc.elementDesc.type == "File") // TODO: review this
+                        width: inputs.width
 
                         sourceComponent: AttributePin {
                             id: inPin
@@ -125,8 +126,7 @@ Item {
             }
             Column {
                 id: outputs
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                width: parent.width / 2
                 anchors.right: parent.right
                 Repeater {
                     model: node.attributes
@@ -134,6 +134,7 @@ Item {
                     delegate: Loader {
                         active: object.isOutput
                         anchors.right: parent.right
+                        width: outputs.width
 
                         sourceComponent: AttributePin {
                             id: outPin

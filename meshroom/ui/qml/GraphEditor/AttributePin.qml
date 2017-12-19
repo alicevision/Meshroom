@@ -1,10 +1,11 @@
 import QtQuick 2.9
 import QtQuick.Controls 2.3
+import QtQuick.Layouts 1.3
 
 /**
   The representation of an Attribute on a Node.
 */
-Row {
+RowLayout {
     id: root
 
     property var nodeItem
@@ -109,7 +110,33 @@ Row {
     Label {
         id: nameLabel
         text: attribute.name
+        elide: Text.ElideMiddle
+        Layout.fillWidth: true
         font.pointSize: 5
+        horizontalAlignment: attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+
+        // Extend truncated names at mouse hover
+        MouseArea {
+            id: ma
+            anchors.fill: parent
+            enabled: parent.truncated
+            visible: enabled
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+        }
+        Loader {
+            active: ma.containsMouse
+            anchors.right: root.layoutDirection == Qt.LeftToRight ? undefined : nameLabel.right
+            // Non-elided label
+            sourceComponent: Label {
+                leftPadding: root.layoutDirection == Qt.LeftToRight ? 0 : 1
+                rightPadding: root.layoutDirection == Qt.LeftToRight ? 1 : 0
+                text: attribute.name
+                background: Rectangle {
+                    color: palette.window
+                }
+            }
+        }
     }
 
     state: connectMA.pressed ? "Dragging" : ""

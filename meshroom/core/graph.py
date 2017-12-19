@@ -1128,16 +1128,21 @@ class Graph(BaseObject):
 
         return inEdges, outEdges
 
-    @Slot(str, result=Node)
-    def addNewNode(self, nodeType, **kwargs):
+    def addNewNode(self, nodeDesc, name=None, **kwargs):
         """
+        Create and add a new node to the graph.
 
-        :param nodeType:
-        :param kwargs:
-        :return:
-        :rtype: Node
+        Args:
+            nodeDesc (desc.Node): the node description to use.
+            name (str): if specified, the desired name for this node. If not unique, will be prefixed (_N).
+            **kwargs: keyword arguments to initialize node's attributes
+
+        Returns:
+             The newly created node.
         """
-        n = self.addNode(Node(nodeDesc=nodeType, **kwargs))
+        if name and name in self._nodes.keys():
+            name = self._createUniqueNodeName(name)
+        n = self.addNode(Node(nodeDesc=nodeDesc, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 

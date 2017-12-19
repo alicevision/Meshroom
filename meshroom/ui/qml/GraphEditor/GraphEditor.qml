@@ -97,8 +97,8 @@ Item {
             }
 
             Repeater {
-                model: _nodeTypes
-                focus: true
+                model: root.nodeTypesModel
+
                 // Create Menu items from available node types model
                 delegate: MenuItem {
                     font.pointSize: 8

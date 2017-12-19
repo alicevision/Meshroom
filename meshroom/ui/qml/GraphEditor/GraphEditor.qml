@@ -88,12 +88,30 @@ Item {
                 // disable node animation on position
                 item.animatePosition = false
                 // set the node position
-                item.x = spawnPosition.x;
+                item.x = spawnPosition.x
                 item.y = spawnPosition.y
                 // reactivate animation on position
                 item.animatePosition = true
                 // select this node
-                selectedNode = item.node
+                draggable.selectNode(item)
+            }
+
+            onVisibleChanged: {
+                if(visible) {
+                    // when menu is shown,
+                    // clear and give focus to the TextField filter
+                    filterTextField.clear()
+                    filterTextField.forceActiveFocus()
+                }
+            }
+
+            TextField {
+                id: filterTextField
+                selectByMouse: true
+                width: parent.width
+                // ensure down arrow give focus to the first MenuItem
+                // (without this, we have to pressed the down key twice to do so)
+                Keys.onDownPressed: nextItemInFocusChain().forceActiveFocus()
             }
 
             Repeater {
@@ -101,10 +119,44 @@ Item {
 
                 // Create Menu items from available node types model
                 delegate: MenuItem {
+                    id: menuItemDelegate
                     font.pointSize: 8
                     padding: 3
+                    // Hide items that does not match the filter text
+                    visible: modelData.toLowerCase().indexOf(filterTextField.text.toLocaleLowerCase()) > -1
                     text: modelData
+                    Keys.onPressed: {
+                        switch(event.key)
+                        {
+                        case Qt.Key_Return:
+                        case Qt.Key_Enter:
+                            // create node on validation (Enter/Return keys)
+                            newNodeMenu.createNode(modelData)
+                            newNodeMenu.dismiss()
+                            break;
+                        case Qt.Key_Home:
+                            // give focus back to filter
+                            filterTextField.forceActiveFocus()
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    // Create node on mouse click
                     onClicked: newNodeMenu.createNode(modelData)
+
+                    states: [
+                        State {
+                            // Additional property setting when the MenuItem is not visible
+                            when: !visible
+                            name: "invisible"
+                            PropertyChanges {
+                                target: menuItemDelegate
+                                height: 0 // make sure the item is no visible by setting height to 0
+                                focusPolicy: Qt.NoFocus // don't grab focus when not visible
+                            }
+                        }
+                    ]
                 }
             }
         }
@@ -114,6 +166,12 @@ Item {
             transformOrigin: Item.TopLeft
             width: 1000
             height: 1000
+
+            function selectNode(delegate)
+            {
+                root.selectedNode = delegate.node
+                delegate.forceActiveFocus()
+            }
 
             // Edges
             Repeater {
@@ -151,7 +209,10 @@ Item {
                 onLoadedChanged: if(loaded) { doAutoLayout() }
 
                 delegate: Node {
+                    id: nodeDelegate
+
                     property bool animatePosition: true
+
                     node: object
                     width: root.nodeWidth
                     readOnly: root.readOnly
@@ -159,9 +220,9 @@ Item {
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
 
-                    onPressed: {
-                        root.selectedNode = object
-                    }
+                    onPressed: draggable.selectNode(nodeDelegate)
+
+                    Keys.onDeletePressed: uigraph.removeNode(node)
 
                     Behavior on x {
                         enabled: animatePosition

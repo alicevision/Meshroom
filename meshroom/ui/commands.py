@@ -113,9 +113,8 @@ class RemoveNodeCommand(GraphCommand):
 
     def undoImpl(self):
         with GraphModification(self.graph):
-            node = self.graph.addNode(Node(nodeDesc=self.nodeDict["nodeType"],
-                                           **self.nodeDict["attributes"]
-                                           ), self.nodeName)
+            node = self.graph.addNewNode(nodeDesc=self.nodeDict["nodeType"],
+                                         name=self.nodeName, **self.nodeDict["attributes"])
             assert (node.getName() == self.nodeName)
             # recreate out edges deleted on node removal
             for dstAttr, srcAttr in self.outEdges.items():

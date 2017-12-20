@@ -2,14 +2,14 @@ from meshroom.core import desc
 
 class MeshResampling(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'aliceVision_meshing {allParams}'
+    commandLine = 'aliceVision_meshResampling {allParams}'
 
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
 
     inputs = [
         desc.File(
-            name="intput",
+            name="input",
             label='Input Mesh (OBJ file format).',
             description='',
             value='',
@@ -27,24 +27,24 @@ class MeshResampling(desc.CommandLineNode):
             name='nbVertices',
             label='Fixed Number of Vertices',
             description='Fixed number of output vertices.',
-            value=0.0,
-            range=(0.0, 1.0, 0.01),
+            value=0,
+            range=(0, 1000000, 1),
             uid=[0],
         ),
         desc.IntParam(
             name='minVertices',
             label='Min Vertices',
             description='Min number of output vertices.',
-            value=0.0,
-            range=(0.0, 1.0, 0.01),
+            value=0,
+            range=(0, 1000000, 1),
             uid=[0],
         ),
         desc.IntParam(
             name='maxVertices',
             label='Max Vertices',
             description='Max number of output vertices.',
-            value=0.0,
-            range=(0.0, 1.0, 0.01),
+            value=0,
+            range=(0, 1000000, 1),
             uid=[0],
         ),
         desc.IntParam(

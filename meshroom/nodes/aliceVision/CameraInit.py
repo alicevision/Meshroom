@@ -30,8 +30,8 @@ Intrinsic = [
     desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[], range=(0, 10000, 1)),
     desc.StringParam(name="serialNumber", label="Serial Number", description="Device Serial Number (camera and lens combined)", value="", uid=[]),
     desc.GroupAttribute(name="principalPoint", label="Principal Point", description="", groupDesc=[
-        desc.IntParam(name="x", label="x", description="", value=0, uid=[], range=(0, 10000, 1)),
-        desc.IntParam(name="y", label="y", description="", value=0, uid=[], range=(0, 10000, 1)),
+        desc.FloatParam(name="x", label="x", description="", value=0, uid=[], range=(0, 10000, 1)),
+        desc.FloatParam(name="y", label="y", description="", value=0, uid=[], range=(0, 10000, 1)),
         ]),
     desc.ListAttribute(
             name="distortionParams",

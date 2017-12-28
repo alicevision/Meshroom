@@ -33,7 +33,7 @@ class ChunksMonitor(QObject):
         """ Set the list of chunks to monitor. """
         self.clear()
         for chunk in chunks:
-            f = chunk.statusFile()
+            f = chunk.statusFile
             # Store a record of {chunk: status file last modification}
             self.lastModificationRecords[chunk] = self.getFileLastModTime(f)
             # For local use, handle statusChanged emitted directly from the node chunk
@@ -54,7 +54,7 @@ class ChunksMonitor(QObject):
         chunk = self.sender()
         assert chunk in self.lastModificationRecords
         # Update record entry for this file so that it's up-to-date on next timerEvent
-        self.lastModificationRecords[chunk] = self.getFileLastModTime(chunk.statusFile())
+        self.lastModificationRecords[chunk] = self.getFileLastModTime(chunk.statusFile)
         self.chunkStatusChanged.emit(chunk, chunk.status.status)
 
     @staticmethod
@@ -65,7 +65,7 @@ class ChunksMonitor(QObject):
     def checkFileTimes(self):
         """ Check status files last modification time and compare with stored value """
         for chunk, t in self.lastModificationRecords.items():
-            lastMod = self.getFileLastModTime(chunk.statusFile())
+            lastMod = self.getFileLastModTime(chunk.statusFile)
             if lastMod != t:
                 self.lastModificationRecords[chunk] = lastMod
                 chunk.updateStatusFromCache()

@@ -541,7 +541,7 @@ class NodeChunk(BaseObject):
         """
         Update node status based on status file content/existence.
         """
-        statusFile = self.statusFile()
+        statusFile = self.statusFile
         oldStatus = self.status.status
         # No status file => reset status to Status.None
         if not os.path.exists(statusFile):
@@ -553,18 +553,21 @@ class NodeChunk(BaseObject):
         if oldStatus != self.status.status:
             self.statusChanged.emit()
 
+    @property
     def statusFile(self):
         if self.range.blockSize == 0:
             return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, 'status')
         else:
             return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + '.status')
 
+    @property
     def statisticsFile(self):
         if self.range.blockSize == 0:
             return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, 'statistics')
         else:
             return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, str(self.index) + '.statistics')
 
+    @property
     def logFile(self):
         if self.range.blockSize == 0:
             return os.path.join(self.node.graph.cacheDir, self.node.internalFolder, 'log')
@@ -576,7 +579,7 @@ class NodeChunk(BaseObject):
         Write node status on disk.
         """
         data = self.status.toDict()
-        statusFilepath = self.statusFile()
+        statusFilepath = self.statusFile
         folder = os.path.dirname(statusFilepath)
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -600,7 +603,7 @@ class NodeChunk(BaseObject):
         """
         """
         oldTimes = self.statistics.times
-        statisticsFile = self.statisticsFile()
+        statisticsFile = self.statisticsFile
         if not os.path.exists(statisticsFile):
             return
         with open(statisticsFile, 'r') as jsonFile:
@@ -611,7 +614,7 @@ class NodeChunk(BaseObject):
 
     def saveStatistics(self):
         data = self.statistics.toDict()
-        statisticsFilepath = self.statisticsFile()
+        statisticsFilepath = self.statisticsFile
         folder = os.path.dirname(statisticsFilepath)
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -661,6 +664,10 @@ class NodeChunk(BaseObject):
     execModeNameChanged = Signal()
     execModeName = Property(str, execModeName.fget, notify=execModeNameChanged)
     statisticsChanged = Signal()
+
+    statusFile = Property(str, statusFile.fget, constant=True)
+    logFile = Property(str, logFile.fget, constant=True)
+    statisticsFile = Property(str, statisticsFile.fget, constant=True)
 
 
 class Node(BaseObject):

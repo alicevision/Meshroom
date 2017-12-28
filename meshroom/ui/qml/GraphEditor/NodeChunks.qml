@@ -1,5 +1,6 @@
 import QtQuick 2.7
 
+import "common.js" as Common
 
 ListView {
     id: root
@@ -17,14 +18,7 @@ ListView {
         id: chunkDelegate
         height: root.chunkHeight
         width: root.chunkWidth
-        state: object.statusName
-        states: [
-            State { name: "NONE"; PropertyChanges { target: chunkDelegate; color: root.defaultColor } },
-            State { name: "SUBMITTED"; PropertyChanges { target: chunkDelegate; color: object.execModeName == "LOCAL" ? "#009688" : "#2196F3"} },
-            State { name: "RUNNING"; PropertyChanges { target: chunkDelegate; color: "#FF9800"} },
-            State { name: "ERROR"; PropertyChanges { target: chunkDelegate; color: "#F44336"} },
-            State { name: "SUCCESS"; PropertyChanges { target: chunkDelegate; color: "#4CAF50"} }
-        ]
+        color: Common.getChunkColor(object, {"NONE": root.defaultColor})
     }
 }
 

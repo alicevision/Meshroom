@@ -11,7 +11,7 @@ ColumnLayout {
     property variant node: null  // the node to edit
     property bool readOnly: false
 
-    spacing: 4
+    spacing: 0
 
     SystemPalette { id: palette }
 
@@ -52,45 +52,85 @@ ColumnLayout {
         }
     }
 
-    ListView {
-        id: attributesListView
-
+    StackLayout {
         Layout.fillHeight: true
         Layout.fillWidth: true
-        Layout.margins: 4
-        clip: true
-        spacing: 4
-        ScrollBar.vertical: ScrollBar { id: scrollBar }
 
-        model: node ? node.attributes : undefined
+        currentIndex: tabBar.currentIndex
 
-        delegate: RowLayout {
-            width: attributesListView.width
-            spacing: 4
+        Item {
 
-            Label {
-                id: parameterLabel
-                text: object.label
-                Layout.preferredWidth: 180
-                color: object.isOutput ? "orange" : palette.text
-                elide: Label.ElideRight
-                ToolTip.text: object.desc.description
-                ToolTip.visible: parameterMA.containsMouse
-                ToolTip.delay: 200
-                MouseArea {
-                    id: parameterMA
-                    anchors.fill: parent
-                    hoverEnabled: true
+            ListView {
+                id: attributesListView
+
+                anchors.fill: parent
+                anchors.margins: 6
+
+                clip: true
+                spacing: 4
+                ScrollBar.vertical: ScrollBar { id: scrollBar }
+
+                model: node ? node.attributes : undefined
+
+                delegate: RowLayout {
+                    width: attributesListView.width
+                    spacing: 4
+
+                    Label {
+                        id: parameterLabel
+                        text: object.label
+                        Layout.preferredWidth: 180
+                        color: object.isOutput ? "orange" : palette.text
+                        elide: Label.ElideRight
+                        ToolTip.text: object.desc.description
+                        ToolTip.visible: parameterMA.containsMouse && object.desc.description
+                        ToolTip.delay: 200
+
+                        MouseArea {
+                            id: parameterMA
+                            anchors.fill: parent
+                            hoverEnabled: true
+                        }
+                    }
+
+                    AttributeItemDelegate {
+                        Layout.fillWidth: true
+                        Layout.rightMargin: scrollBar.width
+                        height: childrenRect.height
+                        attribute: object
+                        readOnly: root.readOnly
+                    }
                 }
             }
+        }
 
-            AttributeItemDelegate {
-                Layout.fillWidth: true
-                Layout.rightMargin: scrollBar.width
-                height: childrenRect.height
-                attribute: object
-                readOnly: root.readOnly
-            }
+        NodeLog {
+            id: nodeLog
+
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            node: root.node
+
+        }
+    }
+    TabBar {
+        id: tabBar
+
+        Layout.fillWidth: true
+        width: childrenRect.width
+        position: TabBar.Footer
+        TabButton {
+            text: "Attributes"
+            width: implicitWidth
+            padding: 4
+            leftPadding: 8
+            rightPadding: leftPadding
+        }
+        TabButton {
+            text: "Log"
+            width: implicitWidth
+            leftPadding: 8
+            rightPadding: leftPadding
         }
     }
 }

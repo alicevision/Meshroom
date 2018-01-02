@@ -245,6 +245,12 @@ class Attribute(BaseObject):
             return self.desc.value
         return self._value
 
+    def getValueStr(self):
+        if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
+            assert(isinstance(self.value, collections.Sequence) and not isinstance(self.value, basestring))
+            return self.attributeDesc.joinChar.join(self.value)
+        return str(self.value)
+
     def isDefault(self):
         return self._value == self.desc.value
 
@@ -334,6 +340,9 @@ class ListAttribute(Attribute):
         else:
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value if not attr.isDefault()]
 
+    def getValueStr(self):
+        return self.attributeDesc.joinChar.join([v.getValueStr() for v in self._value])
+
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
 
@@ -387,6 +396,9 @@ class GroupAttribute(Attribute):
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()}
         else:
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault()}
+
+    def getValueStr(self):
+        return self.attributeDesc.joinChar.join([v.getValueStr() for v in self._value.objects.values()])
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
@@ -782,10 +794,7 @@ class Node(BaseObject):
         for name, attr in self._attributes.objects.items():
             if attr.isOutput:
                 continue  # skip outputs
-            v = attr.value
-            if isinstance(attr.attributeDesc, desc.ChoiceParam) and not attr.attributeDesc.exclusive:
-                assert(isinstance(v, collections.Sequence) and not isinstance(v, basestring))
-                v = attr.attributeDesc.joinChar.join(v)
+            v = attr.getValueStr()
 
             cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             cmdVars[name + 'Value'] = str(v)

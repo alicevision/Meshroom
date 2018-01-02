@@ -34,15 +34,17 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, name, label, description, group='allParams'):
+    def __init__(self, elementDesc, name, label, description, group='allParams', joinChar=' '):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
         self._elementDesc = elementDesc
+        self._joinChar = joinChar
         super(ListAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
+    joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def validateValue(self, value):
         if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
@@ -52,11 +54,12 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group='allParams'):
+    def __init__(self, groupDesc, name, label, description, group='allParams', joinChar=' '):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
         self._groupDesc = groupDesc
+        self._joinChar = joinChar
         super(GroupAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
@@ -73,6 +76,7 @@ class GroupAttribute(Attribute):
         return allUids
 
     uid = Property(Variant, retrieveChildrenUids, constant=True)
+    joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
 
 class Param(Attribute):

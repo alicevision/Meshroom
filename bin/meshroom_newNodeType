@@ -134,8 +134,9 @@ else:
     print('Error: Unknown input parser "{}"'.format(args.parser))
     exit(-1)
 
-choiceValues_re = re.compile('\* (?P<value>\w+):')
+choiceValues1_re = re.compile('\* (?P<value>\w+):')
 choiceValues2_re = re.compile('\((?P<value>.+?)\)')
+choiceValues3_re = re.compile('\{(?P<value>.+?)\}')
 
 cmdLineArgs = args_re.findall(inputCmdLineDoc)
 
@@ -153,20 +154,28 @@ for cmdLineArg in cmdLineArgs:
 
     arg = cmdLineArg[2]
     value = cmdLineArg[3]
-    description = trim(''.join(cmdLineArg[4:]))
-    values = choiceValues_re.findall(description)
+    descLines = cmdLineArg[4:]
+    description = ''.join(descLines).strip()
+    if description.endswith(':'):
+        # If documentation is multiple lines and the last line ends with ':',
+        # we remove this last line as it is probably the title of the next group of options
+        description = '\n'.join(description.split('\n')[:-1])
+    description = trim(description)
+
+    values = choiceValues1_re.findall(description)
     if not values:
-        possibleLists = choiceValues2_re.findall(description)
+        possibleLists = choiceValues2_re.findall(description) + choiceValues3_re.findall(description)
         for possibleList in possibleLists:
             candidate = possibleList.split(',')
             if len(candidate) > 1:
                 values = [trim(v) for v in candidate]
 
-    cmdLineArgLower = ' '.join(cmdLineArg).lower()
+    cmdLineArgLower = ' '.join([shortName, longName, arg, value, description]).lower()
+    namesLower = ' '.join([shortName, longName]).lower()
     isBool = (arg == '' and value == '')
     isFile = 'path' in cmdLineArgLower or 'folder' in cmdLineArgLower or 'file' in cmdLineArgLower
     isChoice = bool(values)
-    isOutput = 'output' in cmdLineArgLower
+    isOutput = 'output' in cmdLineArgLower or 'out' in namesLower
     isInt = is_int(value)
     isFloat = is_float(value)
     uid = '[]' if isOutput else '[0]'

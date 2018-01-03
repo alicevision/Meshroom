@@ -517,6 +517,8 @@ class NodeChunk(BaseObject):
         self.status = StatusData(node.name, node.nodeType, node.packageName, node.packageVersion)
         self.statistics = stats.Statistics()
         self._subprocess = None
+        # notify update in filepaths when node's internal folder changes
+        self.node.internalFolderChanged.connect(self.nodeFolderChanged)
 
     @property
     def index(self):
@@ -665,9 +667,10 @@ class NodeChunk(BaseObject):
     execModeName = Property(str, execModeName.fget, notify=execModeNameChanged)
     statisticsChanged = Signal()
 
-    statusFile = Property(str, statusFile.fget, constant=True)
-    logFile = Property(str, logFile.fget, constant=True)
-    statisticsFile = Property(str, statisticsFile.fget, constant=True)
+    nodeFolderChanged = Signal()
+    statusFile = Property(str, statusFile.fget, notify=nodeFolderChanged)
+    logFile = Property(str, logFile.fget, notify=nodeFolderChanged)
+    statisticsFile = Property(str, statisticsFile.fget, notify=nodeFolderChanged)
 
 
 class Node(BaseObject):
@@ -879,7 +882,8 @@ class Node(BaseObject):
         for chunk in self._chunks:
             chunk.updateStatisticsFromCache()
 
-    def updateInternals(self):
+    def _updateChunks(self):
+        """ Update Node's computation task splitting into NodeChunks based on its description """
         self.setSize(self.nodeDesc.size.computeSize(self))
         if self.isParallelized:
             try:
@@ -899,12 +903,29 @@ class Node(BaseObject):
             else:
                 self._chunks[0].range = desc.Range()
 
+    def updateInternals(self):
+        """ Update Node's internal parameters and output attributes.
+
+        This method is called when:
+         - an input parameter is modified
+         - the graph main cache directory is changed
+        """
+        # Update chunks splitting
+        self._updateChunks()
+        # Retrieve current internal folder (if possible)
+        try:
+            folder = self.internalFolder
+        except KeyError:
+            folder = ''
+        # Update command variables / output attributes
         self._cmdVars = {
             'cache': self.graph.cacheDir,
             'nodeType': self.nodeType,
         }
         self._buildCmdVars(self._cmdVars)
-        self.internalFolderChanged.emit()
+        # Notify internal folder change if needed
+        if self.internalFolder != folder:
+            self.internalFolderChanged.emit()
 
     @property
     def internalFolder(self):

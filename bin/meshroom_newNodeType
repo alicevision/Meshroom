@@ -89,7 +89,7 @@ if not inputCmdLineDoc:
     exit(-1)
 
 
-outputNodeStr = '''import sys
+fileStr = '''import sys
 from meshroom.core import desc
 
 
@@ -134,131 +134,167 @@ else:
     print('Error: Unknown input parser "{}"'.format(args.parser))
     exit(-1)
 
-choiceValues_re = re.compile('\* (?P<value>\w+):')
+choiceValues1_re = re.compile('\* (?P<value>\w+):')
 choiceValues2_re = re.compile('\((?P<value>.+?)\)')
+choiceValues3_re = re.compile('\{(?P<value>.+?)\}')
 
-inputArgs = args_re.findall(inputCmdLineDoc)
+cmdLineArgs = args_re.findall(inputCmdLineDoc)
 
 print('='*80)
-pprint(inputArgs)
+pprint(cmdLineArgs)
 
-for inputArg in inputArgs:
-    shortName = inputArg[0]
-    longName = inputArg[1]
+outputNodeStr = ''
+inputNodeStr = ''
+
+for cmdLineArg in cmdLineArgs:
+    shortName = cmdLineArg[0]
+    longName = cmdLineArg[1]
     if longName == 'help':
         continue  # skip help argument
 
-    arg = inputArg[2]
-    value = inputArg[3]
-    description = trim(''.join(inputArg[4:]))
-    values = choiceValues_re.findall(description)
+    arg = cmdLineArg[2]
+    value = cmdLineArg[3]
+    descLines = cmdLineArg[4:]
+    description = ''.join(descLines).strip()
+    if description.endswith(':'):
+        # If documentation is multiple lines and the last line ends with ':',
+        # we remove this last line as it is probably the title of the next group of options
+        description = '\n'.join(description.split('\n')[:-1])
+    description = trim(description)
+
+    values = choiceValues1_re.findall(description)
     if not values:
-        possibleLists = choiceValues2_re.findall(description)
+        possibleLists = choiceValues2_re.findall(description) + choiceValues3_re.findall(description)
         for possibleList in possibleLists:
             candidate = possibleList.split(',')
             if len(candidate) > 1:
                 values = [trim(v) for v in candidate]
 
-    inputArgLower = ' '.join(inputArg).lower()
+    cmdLineArgLower = ' '.join([shortName, longName, arg, value, description]).lower()
+    namesLower = ' '.join([shortName, longName]).lower()
     isBool = (arg == '' and value == '')
-    isFile = 'path' in inputArgLower or 'folder' in inputArgLower or 'file' in inputArgLower
+    isFile = 'path' in cmdLineArgLower or 'folder' in cmdLineArgLower or 'file' in cmdLineArgLower
     isChoice = bool(values)
-    isOutput = 'output' in inputArgLower
+    isOutput = 'output' in cmdLineArgLower or 'out' in namesLower
     isInt = is_int(value)
     isFloat = is_float(value)
+    uid = '[]' if isOutput else '[0]'
 
+    argStr = None
     if isBool:
-        outputNodeStr += """
-    {name} = desc.BoolParam(
+        argStr = """
+        desc.BoolParam(
+            name='{name}',
             label='{label}',
             description='''{description}''',
             value={value},
-            uid=[0],
-            )""".format(
+            uid={uid},
+            ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=quotesForStrings(value),
                 arg=arg,
+                uid=uid,
                 )
     elif isFile:
-        outputNodeStr += """
-    {name} = desc.File(
+        argStr = """
+        desc.File(
+            name='{name}',
             label='{label}',
             description='''{description}''',
             value={value},
-            uid=[0],
-            isOutput={isOutput},
-            )""".format(
+            uid={uid},
+            ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=quotesForStrings(value),
                 arg=arg,
-                isOutput=isOutput,
+                uid=uid,
                 )
     elif isChoice:
-        outputNodeStr += """
-    {name} = desc.ChoiceParam(
+        argStr = """
+        desc.ChoiceParam(
+            name='{name}',
             label='{label}',
             description='''{description}''',
             value={value},
             values={values},
             exclusive={exclusive},
-            uid=[0],
-            )""".format(
+            uid={uid},
+            ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=quotesForStrings(value),
                 values=values,
                 exclusive=True,
+                uid=uid,
                 )
     elif isInt:
-        outputNodeStr += """
-    {name} = desc.IntParam(
+        argStr = """
+        desc.IntParam(
+            name='{name}',
             label='{label}',
             description='''{description}''',
             value={value},
             range={range},
-            uid=[0],
-            )""".format(
+            uid={uid},
+            ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=value,
                 range='(-sys.maxsize, sys.maxsize, 1)',
+                uid=uid,
                 )
     elif isFloat:
-        outputNodeStr += """
-    {name} = desc.FloatParam(
+        argStr = """
+        desc.FloatParam(
+            name='{name}',
             label='{label}',
             description='''{description}''',
             value={value},
             range={range},
-            uid=[0],
-            )""".format(
+            uid={uid},
+            ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=value,
                 range='''(-float('inf'), float('inf'), 0.01)''',
+                uid=uid,
                 )
     else:
-        outputNodeStr += """
-    {name} = desc.StringParam(
+        argStr = """
+        desc.StringParam(
+            name='{name}',
             label='{label}',
             description='''{description}''',
             value={value},
-            uid=[0],
-            )""".format(
+            uid={uid},
+            ),""".format(
                 name=longName,
                 label=convertToLabel(longName),
                 description=description,
                 value=quotesForStrings(value),
                 range=range,
+                uid=uid,
                 )
+    if isOutput:
+        outputNodeStr += argStr
+    else:
+        inputNodeStr += argStr
 
+
+fileStr += """
+    inputs = [""" + inputNodeStr + """
+    ]
+
+    outputs = [""" + outputNodeStr + """
+    ]
+"""
 
 outputFilepath = os.path.join(args.output, args.node + '.py')
 
@@ -267,6 +303,6 @@ if not args.force and os.path.exists(outputFilepath):
     exit(-1)
 
 with open(outputFilepath, 'w') as pluginFile:
-    pluginFile.write(outputNodeStr)
+    pluginFile.write(fileStr)
 
 print('New node exported to: "{}"'.format(outputFilepath))

@@ -33,7 +33,7 @@ if args.node:
     for chunk in node.chunks:
         print('{}: {}'.format(chunk.name, chunk.status.status.name))
     if args.verbose:
-        print('statusFile: ', node.statusFile())
+        print('statusFile: ', node.statusFile)
         pprint(node.status.toDict())
 else:
     startNodes = None

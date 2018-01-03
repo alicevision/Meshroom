@@ -335,12 +335,12 @@ class CommandLineNode(Node):
 
     def processChunk(self, chunk):
         try:
-            with open(chunk.logFile(), 'w') as logF:
+            with open(chunk.logFile, 'w') as logF:
                 cmd = self.buildCommandLine(chunk)
                 chunk.status.commandLine = cmd
                 chunk.saveStatusFile()
                 print(' - commandLine:', cmd)
-                print(' - logFile:', chunk.logFile())
+                print(' - logFile:', chunk.logFile)
                 chunk.subprocess = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
 
                 # store process static info into the status file
@@ -354,7 +354,7 @@ class CommandLineNode(Node):
                 chunk.status.returnCode = chunk.subprocess.returncode
 
             if chunk.subprocess.returncode != 0:
-                with open(chunk.logFile(), 'r') as logF:
+                with open(chunk.logFile, 'r') as logF:
                     logContent = ''.join(logF.readlines())
                 raise RuntimeError('Error on node "{}":\nLog:\n{}'.format(chunk.name, logContent))
         except:

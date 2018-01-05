@@ -22,6 +22,7 @@ Item {
     // signals
     signal workspaceMoved()
     signal workspaceClicked()
+    signal nodeDoubleClicked(var node)
 
     clip: true
 
@@ -221,6 +222,7 @@ Item {
                     onAttributePinCreated: registerAttributePin(attribute, pin)
 
                     onPressed: draggable.selectNode(nodeDelegate)
+                    onDoubleClicked: root.nodeDoubleClicked(node)
 
                     Keys.onDeletePressed: uigraph.removeNode(node)
 

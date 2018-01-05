@@ -74,15 +74,24 @@ FocusScope {
                     // unparent previous material
                     // and exclude it from the entity components
                     comp.parent = null
+                    continue; // skip original component and continue
                 }
-                else
-                    comps.push(comp)
+
+                // make default material brighter
+                if(comp.toString().indexOf("QPhongMaterial") > -1) {
+                    comp.diffuse = "#AAA"
+                    comp.ambient = "#AAA"
+                }
+                comps.push(comp)
             }
             entity.components = comps
             mats.forEach(function(m){
                 // create a material switcher for each material definition
                 var matSwitcher = materialSwitcherComponent.createObject(entity, m)
-                // bind textures checkbox to texture switch property
+                // trigger showTextures update by inverting it
+                // and re-bind textures checkbox to texture switch property
+                // (this double update ensure the texture display is correct)
+                matSwitcher.showTextures = !matSwitcher.showTextures
                 matSwitcher.showTextures = Qt.binding(function(){ return texturesCheckBox.checked })
             })
         })

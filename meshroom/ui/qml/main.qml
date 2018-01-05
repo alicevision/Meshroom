@@ -7,6 +7,7 @@ import QtQml.Models 2.2
 import Qt.labs.platform 1.0 as Platform
 import GraphEditor 1.0
 import MaterialIcons 2.2
+import "filepath.js" as Filepath
 
 ApplicationWindow {
     id: _window
@@ -322,7 +323,7 @@ ApplicationWindow {
             }
 
             WorkspaceView {
-                id: imageGallery
+                id: workspaceView
                 reconstruction: _reconstruction
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -339,19 +340,30 @@ ApplicationWindow {
                 orientation: Qt.Horizontal
                 anchors.fill: parent
 
-                ColumnLayout {
+                Item {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
                     Layout.margins: 10
                     GraphEditor {
                         id: graphEditor
-                        Layout.fillHeight: true
-                        Layout.fillWidth: true
+                        anchors.fill: parent
                         uigraph: _reconstruction
                         nodeTypesModel: _nodeTypes
                         readOnly: _reconstruction.computing
+                        onNodeDoubleClicked: {
+                            for(var i=0; i < node.attributes.count; ++i)
+                            {
+                                var attr = node.attributes.at(i)
+                                if(attr.isOutput
+                                   && attr.desc.type === "File"
+                                   && Filepath.extension(attr.value) === ".obj")
+                                  {
+                                    workspaceView.load3DMedia(attr.value)
+                                    break // only load first model found
+                                  }
+                            }
+                        }
                     }
-
                 }
                 Item {
                     implicitHeight: Math.round(parent.height * 0.2)

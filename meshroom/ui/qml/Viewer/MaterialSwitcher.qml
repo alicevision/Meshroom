@@ -16,10 +16,10 @@ Entity {
 
     property bool showTextures: true
     property string diffuseMap: ""
-    property color ambient: "#999999"
+    property color ambient: "#AAA"
     property real shininess
     property color specular
-    property color diffuseColor: "#AA9999"
+    property color diffuseColor: "#AAA"
     property alias object: instantiator.object
 
     NodeInstantiator {

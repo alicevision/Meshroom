@@ -11,6 +11,7 @@ Item {
     property color shadowColor: "black"
 
     signal pressed(var mouse)
+    signal doubleClicked(var mouse)
     signal attributePinCreated(var attribute, var pin)
 
     implicitHeight: body.height
@@ -26,6 +27,8 @@ Item {
                 nodeMenu.popup()
             root.pressed(mouse)
         }
+
+        onDoubleClicked: root.doubleClicked(mouse)
 
         Menu {
             id: nodeMenu

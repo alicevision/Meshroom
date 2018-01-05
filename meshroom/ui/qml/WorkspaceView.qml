@@ -26,6 +26,12 @@ Item {
 
     onMeshFileChanged: viewer3D.clear()
 
+    // Load a 3D media file in the 3D viewer
+    function load3DMedia(filepath)
+    {
+        viewer3D.source = filepath
+    }
+
     SystemPalette { id: palette }
 
     Controls1.SplitView {

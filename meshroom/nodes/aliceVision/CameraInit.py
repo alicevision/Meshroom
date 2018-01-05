@@ -162,7 +162,8 @@ class CameraInit(desc.CommandLineNode):
 
             for view in views:
                 # filter out unnecessary attributes
-                del view['metadata']
+                if 'metadata' in view:
+                    del view['metadata']
 
             sfmData = {
                 "version": [1, 0, 0],

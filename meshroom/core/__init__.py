@@ -60,7 +60,7 @@ def loadPlugins(folder, packageName, classType):
             try:
                 pMod = importlib.import_module(pluginModule, package=package.__name__)
                 p = [m for name, m in inspect.getmembers(pMod, inspect.isclass)
-                     if m.__module__ == '{}.{}'.format(packageName, pluginName) and issubclass(m, classType)]
+                     if m.__module__ == '{}.{}'.format(package.__name__, pluginName) and issubclass(m, classType)]
                 if not p:
                     raise RuntimeError('No class defined in plugin: %s' % pluginModule)
                 for a in p:

@@ -141,6 +141,7 @@ class Attribute(BaseObject):
     @property
     def root(self):
         return self._root() if self._root else None
+
     def absoluteName(self):
         return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self._name)
 
@@ -1010,6 +1011,7 @@ class Node(BaseObject):
     sizeChanged = Signal()
     size = Property(int, getSize, notify=sizeChanged)
 
+
 WHITE = 0
 GRAY = 1
 BLACK = 2
@@ -1381,7 +1383,7 @@ class Graph(BaseObject):
         visitor.finishVertex = lambda vertex, graph: nodes.append(vertex)
         visitor.finishEdge = lambda edge, graph: edges.append(edge)
         self.dfs(visitor=visitor, startNodes=startNodes)
-        return (nodes, edges)
+        return nodes, edges
 
     def dfsToProcess(self, startNodes=None):
         """
@@ -1414,7 +1416,7 @@ class Graph(BaseObject):
         visitor.finishVertex = finishVertex
         visitor.finishEdge = finishEdge
         self.dfs(visitor=visitor, startNodes=startNodes)
-        return (nodes, edges)
+        return nodes, edges
 
     def minMaxDepthPerNode(self, startNodes=None):
         """

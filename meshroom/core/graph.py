@@ -1296,8 +1296,18 @@ class Graph(BaseObject):
 
         return nodeEdges
 
-    def dfs(self, visitor, startNodes=None, longestPathFirst=False):
-        nodeChildren = self._getInputEdgesPerNode()
+    def _getOutputEdgesPerNode(self):
+        nodeEdges = defaultdict(set)
+
+        for edge in self.edges:
+            nodeEdges[edge.src.node].add(edge.dst.node)
+
+        return nodeEdges
+
+    def dfs(self, visitor, startNodes=None, longestPathFirst=False, reverse=False):
+        # Default direction: from node to root
+        # Reverse direction: from node to leaves
+        nodeChildren = self._getOutputEdgesPerNode() if reverse else self._getInputEdgesPerNode()
         # Initialize color map
         colors = {}
         for u in self._nodes:

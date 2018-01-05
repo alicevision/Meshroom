@@ -179,7 +179,7 @@ class CameraInit(desc.CommandLineNode):
     def buildCommandLine(self, chunk):
         cmd = desc.CommandLineNode.buildCommandLine(self, chunk)
         if chunk.node.viewpointsFile:
-            cmd += ' --input ' + chunk.node.viewpointsFile
+            cmd += ' --input "{}"'.format(chunk.node.viewpointsFile)
         return cmd
 
     def processChunk(self, chunk):

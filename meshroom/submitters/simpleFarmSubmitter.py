@@ -44,7 +44,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
 
         task = simpleFarm.Task(
             name=node.nodeType,
-            command='meshroom_compute --node {nodeName} {meshroomFile} {parallelArgs} --extern'.format(
+            command='meshroom_compute --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(
                 nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
             tags=tags,
             rezPackages=[self.MESHROOM_PACKAGE],

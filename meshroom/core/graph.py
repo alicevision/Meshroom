@@ -249,6 +249,8 @@ class Attribute(BaseObject):
         if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
             assert(isinstance(self.value, collections.Sequence) and not isinstance(self.value, basestring))
             return self.attributeDesc.joinChar.join(self.value)
+        if isinstance(self.attributeDesc, (desc.StringParam, desc.File)):
+            return '"{}"'.format(self.value)
         return str(self.value)
 
     def isDefault(self):
@@ -825,7 +827,7 @@ class Node(BaseObject):
                 **cmdVars)
             attr._invalidationValue = attr.attributeDesc.value.format(
                 **cmdVarsNoCache)
-            v = attr.value
+            v = attr.getValueStr()
 
             cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             cmdVars[name + 'Value'] = str(v)

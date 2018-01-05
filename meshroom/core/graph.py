@@ -1015,34 +1015,48 @@ GRAY = 1
 BLACK = 2
 
 
-class Visitor:
+class Visitor(object):
+    """
+    Base class for Graph Visitors that does nothing.
+    Sub-classes can override any method to implement specific algorithms.
+    """
+
     # def initializeVertex(self, s, g):
     #     '''is invoked on every vertex of the graph before the start of the graph search.'''
     #     pass
     # def startVertex(self, s, g):
     #     '''is invoked on the source vertex once before the start of the search.'''
     #     pass
+
     def discoverVertex(self, u, g):
-        """ is invoked when a vertex is encountered for the first time. """
+        """ Is invoked when a vertex is encountered for the first time. """
         pass
 
     def examineEdge(self, e, g):
-        '''is invoked on every out-edge of each vertex after it is discovered.'''
+        """ Is invoked on every out-edge of each vertex after it is discovered."""
         pass
+
     def treeEdge(self, e, g):
-        '''is invoked on each edge as it becomes a member of the edges that form the search tree. If you wish to record predecessors, do so at this event point.'''
+        """ Is invoked on each edge as it becomes a member of the edges that form the search tree.
+        If you wish to record predecessors, do so at this event point. """
         pass
+
     def backEdge(self, e, g):
-        '''is invoked on the back edges in the graph.'''
+        """ Is invoked on the back edges in the graph. """
         pass
+
     def forwardOrCrossEdge(self, e, g):
-        '''is invoked on forward or cross edges in the graph. In an undirected graph this method is never called.'''
+        """ Is invoked on forward or cross edges in the graph.
+        In an undirected graph this method is never called."""
         pass
+
     def finishEdge(self, e, g):
-        '''is invoked on the non-tree edges in the graph as well as on each tree edge after its target vertex is finished.'''
+        """ Is invoked on the non-tree edges in the graph
+        as well as on each tree edge after its target vertex is finished. """
         pass
+
     def finishVertex(self, u, g):
-        """ is invoked on a vertex after all of its out edges have been added to the search tree and all of the
+        """ Is invoked on a vertex after all of its out edges have been added to the search tree and all of the
         adjacent vertices have been discovered (but before their out-edges have been examined). """
         pass
 

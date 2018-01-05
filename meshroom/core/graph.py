@@ -693,9 +693,18 @@ class Node(BaseObject):
     # i.e: a.b, a[0], a[0].b.c[1]
     attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
 
-    def __init__(self, nodeDesc, parent=None, **kwargs):
+    def __init__(self, nodeType, parent=None, **kwargs):
+        """
+        Create a new Node instance based of the given node type name (name of a desc.Node subclass).
+        Any other keyword argument will be used to initialize this node's attributes.
+
+        Args:
+            nodeType: the node type name
+            parent (BaseObject): this Node's parent
+            **kwargs: attributes values
+        """
         super(Node, self).__init__(parent)
-        self.nodeDesc = meshroom.core.nodesDesc[nodeDesc]()
+        self.nodeDesc = meshroom.core.nodesDesc[nodeType]()
         self.packageName = self.nodeDesc.packageName
         self.packageVersion = self.nodeDesc.packageVersion
 
@@ -1186,12 +1195,12 @@ class Graph(BaseObject):
 
         return inEdges, outEdges
 
-    def addNewNode(self, nodeDesc, name=None, **kwargs):
+    def addNewNode(self, nodeType, name=None, **kwargs):
         """
         Create and add a new node to the graph.
 
         Args:
-            nodeDesc (desc.Node): the node description to use.
+            nodeType (str): the node type name.
             name (str): if specified, the desired name for this node. If not unique, will be prefixed (_N).
             **kwargs: keyword arguments to initialize node's attributes
 
@@ -1200,7 +1209,7 @@ class Graph(BaseObject):
         """
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
-        n = self.addNode(Node(nodeDesc=nodeDesc, **kwargs), uniqueName=name)
+        n = self.addNode(Node(nodeType=nodeType, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 

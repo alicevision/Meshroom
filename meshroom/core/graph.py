@@ -1038,6 +1038,23 @@ class Visitor:
         pass
 
 
+def changeTopology(func):
+    """
+    Graph methods modifying the graph topology (add/remove edges or nodes)
+    must be decorated with 'changeTopology' for update mechanism to work as intended.
+    """
+    def decorator(self, *args, **kwargs):
+        assert isinstance(self, Graph)
+        # call method
+        result = func(self, *args, **kwargs)
+        # mark graph dirty
+        self.dirtyTopology = True
+        # request graph update
+        self.update()
+        return result
+    return decorator
+
+
 class Graph(BaseObject):
     """
     _________________      _________________      _________________
@@ -1059,6 +1076,8 @@ class Graph(BaseObject):
         self.name = name
         self._updateEnabled = True
         self._updateRequested = False
+        self.dirtyTopology = False
+        self._nodesMinMaxDepths = {}
         self._nodes = DictModel(keyAttrName='name', parent=self)
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
         self._cacheDir = meshroom.core.defaultCacheFolder
@@ -1102,6 +1121,7 @@ class Graph(BaseObject):
             self.update()
             self._updateRequested = False
 
+    @changeTopology
     def _addNode(self, node, uniqueName):
         """
         Internal method to add the given node to this Graph, with the given name (must be unique).
@@ -1142,6 +1162,7 @@ class Graph(BaseObject):
         """ Return the list of edges starting from this node """
         return [edge for edge in self.edges if edge.src.node == node]
 
+    @changeTopology
     def removeNode(self, nodeName):
         """
         Remove the node identified by 'nodeName' from the graph
@@ -1224,6 +1245,7 @@ class Graph(BaseObject):
         nodesWithOutput = set([edge.src.node for edge in self.edges])
         return set(self._nodes) - nodesWithOutput
 
+    @changeTopology
     def addEdge(self, srcAttr, dstAttr):
         assert isinstance(srcAttr, Attribute)
         assert isinstance(dstAttr, Attribute)
@@ -1235,7 +1257,6 @@ class Graph(BaseObject):
         self.edges.add(edge)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
-        self.update()
         return edge
 
     def addEdges(self, *edges):
@@ -1243,21 +1264,26 @@ class Graph(BaseObject):
             for edge in edges:
                 self.addEdge(*edge)
 
+    @changeTopology
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
             raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.fullName()))
         self.edges.pop(dstAttr)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
-        self.update()
 
     def getDepth(self, node):
-        # TODO: would be better to use bfs instead of recursive function
-        inputEdges = self.getInputEdges(node)
-        if not inputEdges:
-            return 0
-        inputDepths = [e.src.node.depth for e in inputEdges]
-        return max(inputDepths) + 1
+        """ Return node's (max) depth in this Graph.
+
+        Args:
+            node (Node): the node to consider.
+        Returns:
+            int: the node's max depth in this Graph.
+        """
+        assert node.graph == self
+        assert not self.dirtyTopology
+        minDepth, maxDepth = self._nodesMinMaxDepths[node]
+        return maxDepth
 
     def getInputEdges(self, node):
         return set([edge for edge in self.edges if edge.dst.node is node])
@@ -1272,36 +1298,35 @@ class Graph(BaseObject):
 
     def dfs(self, visitor, startNodes=None, longestPathFirst=False):
         nodeChildren = self._getInputEdgesPerNode()
-        minMaxDepthPerNode = self.minMaxDepthPerNode() if longestPathFirst else None
+        # Initialize color map
         colors = {}
         for u in self._nodes:
             colors[u] = WHITE
-        if startNodes:
-            if longestPathFirst:
-                startNodes = sorted(startNodes, key=lambda item: item.depth)
-            for startNode in startNodes:
-                self.dfsVisit(startNode, visitor, colors, nodeChildren, longestPathFirst, minMaxDepthPerNode)
-        else:
-            leaves = self.getLeaves()
-            if longestPathFirst:
-                leaves = sorted(leaves, key=lambda item: item.depth)
-            for u in leaves:
-                if colors[u] == WHITE:
-                    self.dfsVisit(u, visitor, colors, nodeChildren, longestPathFirst, minMaxDepthPerNode)
 
-    def dfsVisit(self, u, visitor, colors, nodeChildren, longestPathFirst, minMaxDepthPerNode):
+        nodes = startNodes or self.getLeaves()
+
+        if longestPathFirst:
+            # Graph topology must be known and node depths up-to-date
+            assert not self.dirtyTopology
+            nodes = sorted(nodes, key=lambda item: item.depth)
+
+        for node in nodes:
+            self.dfsVisit(node, visitor, colors, nodeChildren, longestPathFirst)
+
+    def dfsVisit(self, u, visitor, colors, nodeChildren, longestPathFirst):
         colors[u] = GRAY
         visitor.discoverVertex(u, self)
         # d_time[u] = time = time + 1
         children = nodeChildren[u]
         if longestPathFirst:
-            children = sorted(children, reverse=True, key=lambda item: minMaxDepthPerNode[item][1])
+            assert not self.dirtyTopology
+            children = sorted(children, reverse=True, key=lambda item: self._nodesMinMaxDepths[item][1])
         for v in children:
             visitor.examineEdge((u, v), self)
             if colors[v] == WHITE:
                 visitor.treeEdge((u, v), self)
                 # (u,v) is a tree edge
-                self.dfsVisit(v, visitor, colors, nodeChildren, longestPathFirst, minMaxDepthPerNode)  # TODO: avoid recursion
+                self.dfsVisit(v, visitor, colors, nodeChildren, longestPathFirst)  # TODO: avoid recursion
             elif colors[v] == GRAY:
                 visitor.backEdge((u, v), self)
                 pass  # (u,v) is a back edge
@@ -1362,8 +1387,11 @@ class Graph(BaseObject):
         """
         Compute the min and max depth for each node.
 
-        :param startNodes: list of starting nodes. Use all leaves if empty.
-        :return: {node: (minDepth, maxDepth)}
+        Args:
+            startNodes: list of starting nodes. Use all leaves if empty.
+
+        Returns:
+            dict: {node: (minDepth, maxDepth)}
         """
         depthPerNode = {}
         for node in self.nodes:
@@ -1490,6 +1518,13 @@ class Graph(BaseObject):
             # To do the update once for multiple changes
             self._updateRequested = True
             return
+
+        # Graph topology has changed
+        if self.dirtyTopology:
+            # Update nodes depths cache
+            self._nodesMinMaxDepths = self.minMaxDepthPerNode()
+            self.dirtyTopology = False
+
         self.updateInternals()
         if os.path.exists(self._cacheDir):
             self.updateStatusFromCache()

@@ -4,7 +4,7 @@ from meshroom.core import desc
 
 class StructureFromMotion(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'aliceVision_incrementalSfM {allParams} --allowUserInteraction 0'
+    commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 
     inputs = [
@@ -84,17 +84,6 @@ class StructureFromMotion(desc.CommandLineNode):
             range=(0, 50000, 1),
             uid=[0],
         ),
-        desc.ChoiceParam(
-            name='cameraModel',
-            label='Camera Model',
-            description="1: Pinhole \n"
-                        "2: Pinhole 2\n"
-                        "3: Pinhole 3",
-            value=3,
-            values=[1, 2, 3],
-            exclusive=True,
-            uid=[0],
-        ),
         desc.File(
             name='initialPairA',
             label='Initial Pair A',
@@ -126,6 +115,13 @@ class StructureFromMotion(desc.CommandLineNode):
             label='Output SfM data file',
             description='''Path to the output sfmdata file''',
             value='{cache}/{nodeType}/{uid0}/sfm.abc',
+            uid=[],
+        ),
+        desc.File(
+            name='outputViewsAndPoses',
+            label='Output SfM Views and Poses',
+            description='''Path to the output SfMData file (with only views and poses).''',
+            value='{cache}/{nodeType}/{uid0}/viewsAndPoses.sfm',
             uid=[],
         ),
         desc.File(

@@ -1492,6 +1492,30 @@ class Graph(BaseObject):
                 flowEdges.append(link)
         return flowEdges
 
+    def nodesFromNode(self, startNode, filterType=None):
+        """
+        Return the node chain from startNode to the graph leaves.
+
+        Args:
+            startNode (Node): the node to start the visit from.
+            filterType (str): (optional) only return the nodes of the given type
+                              (does not stop the visit, this is a post-process only)
+        Returns:
+            The list of nodes from startNode to the graph leaves following edges.
+        """
+        nodes = []
+        edges = []
+        visitor = Visitor()
+
+        def discoverVertex(vertex, graph):
+            if not filterType or vertex.nodeType == filterType:
+                nodes.append(vertex)
+
+        visitor.discoverVertex = discoverVertex
+        visitor.examineEdge = lambda edge, graph: edges.append(edge)
+        self.dfs(visitor=visitor, startNodes=[startNode], reverse=True)
+        return nodes, edges
+
     def _applyExpr(self):
         with GraphModification(self):
             for node in self._nodes:

@@ -123,7 +123,7 @@ class CameraInit(desc.CommandLineNode):
                 logging.warning('CameraInit: Error on buildIntrinsics of node "{}".'.format(node.name))
 
             # Reload result of aliceVision_cameraInit
-            cameraInitSfM = localCmdVars['outputValue']
+            cameraInitSfM = node.output.value
             jsonData = open(cameraInitSfM, 'r').read()
             data = json.loads(jsonData)
 

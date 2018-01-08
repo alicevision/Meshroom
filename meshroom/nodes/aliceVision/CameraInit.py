@@ -147,6 +147,7 @@ class CameraInit(desc.CommandLineNode):
             raise
         finally:
             node._cmdVars = origCmdVars
+            node._buildCmdVars(localCmdVars)
             shutil.rmtree(tmpCache)
 
     def createViewpointsFile(self, node, additionalViews=()):

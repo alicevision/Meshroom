@@ -28,7 +28,7 @@ def test_multiviewPipeline():
     assert len(graph4.findNode('CameraInit').viewpoints) == 2
 
     viewpoints = graph3.findNode('CameraInit').viewpoints
-    assert viewpoints[0].image.value == '/non/existing/file1'
+    assert viewpoints[0].path.value == '/non/existing/file1'
 
     assert viewpoints[0].path.value == '/non/existing/file1'
     assert viewpoints[0].intrinsicId.value == -1

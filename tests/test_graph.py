@@ -158,3 +158,31 @@ def test_transitive_reduction():
     for node, (minDepth, maxDepth) in depthPerNode.iteritems():
         assert node.depth == maxDepth
 
+
+def test_graph_reverse_dfs():
+    graph = Graph('Test reverse DFS')
+
+    #    ------------\
+    #   /   ~ C - E - F
+    # A - B
+    #      ~ D
+
+    A = graph.addNewNode('Ls', input='/tmp')
+    B = graph.addNewNode('AppendText', inputText=A.output)
+    C = graph.addNewNode('AppendText', inputText=B.output)
+    D = graph.addNewNode('AppendText', inputText=B.output)
+    E = graph.addNewNode('Ls', input=C.output)
+    F = graph.addNewNode('AppendText', input=A.output, inputText=E.output)
+
+    # Get all nodes from A (use set, order not guaranteed)
+    nodes = graph.nodesFromNode(A)[0]
+    assert set(nodes) == {A, B, D, C, E, F}
+    # Get all nodes from B
+    nodes = graph.nodesFromNode(B)[0]
+    assert set(nodes) == {B, D, C, E, F}
+    # Get all nodes of type AppendText from B
+    nodes = graph.nodesFromNode(B, filterType='AppendText')[0]
+    assert set(nodes) == {B, D, C, F}
+    # Get all nodes from C (order guaranteed)
+    nodes = graph.nodesFromNode(C)[0]
+    assert nodes == [C, E, F]

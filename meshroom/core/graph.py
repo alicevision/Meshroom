@@ -141,6 +141,7 @@ class Attribute(BaseObject):
     @property
     def root(self):
         return self._root() if self._root else None
+
     def absoluteName(self):
         return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self._name)
 
@@ -695,9 +696,18 @@ class Node(BaseObject):
     # i.e: a.b, a[0], a[0].b.c[1]
     attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
 
-    def __init__(self, nodeDesc, parent=None, **kwargs):
+    def __init__(self, nodeType, parent=None, **kwargs):
+        """
+        Create a new Node instance based of the given node type name (name of a desc.Node subclass).
+        Any other keyword argument will be used to initialize this node's attributes.
+
+        Args:
+            nodeType: the node type name
+            parent (BaseObject): this Node's parent
+            **kwargs: attributes values
+        """
         super(Node, self).__init__(parent)
-        self.nodeDesc = meshroom.core.nodesDesc[nodeDesc]()
+        self.nodeDesc = meshroom.core.nodesDesc[nodeType]()
         self.packageName = self.nodeDesc.packageName
         self.packageVersion = self.nodeDesc.packageVersion
 
@@ -1003,41 +1013,73 @@ class Node(BaseObject):
     sizeChanged = Signal()
     size = Property(int, getSize, notify=sizeChanged)
 
+
 WHITE = 0
 GRAY = 1
 BLACK = 2
 
 
-class Visitor:
+class Visitor(object):
+    """
+    Base class for Graph Visitors that does nothing.
+    Sub-classes can override any method to implement specific algorithms.
+    """
+
     # def initializeVertex(self, s, g):
     #     '''is invoked on every vertex of the graph before the start of the graph search.'''
     #     pass
     # def startVertex(self, s, g):
     #     '''is invoked on the source vertex once before the start of the search.'''
     #     pass
+
     def discoverVertex(self, u, g):
-        """ is invoked when a vertex is encountered for the first time. """
+        """ Is invoked when a vertex is encountered for the first time. """
         pass
 
     def examineEdge(self, e, g):
-        '''is invoked on every out-edge of each vertex after it is discovered.'''
+        """ Is invoked on every out-edge of each vertex after it is discovered."""
         pass
+
     def treeEdge(self, e, g):
-        '''is invoked on each edge as it becomes a member of the edges that form the search tree. If you wish to record predecessors, do so at this event point.'''
+        """ Is invoked on each edge as it becomes a member of the edges that form the search tree.
+        If you wish to record predecessors, do so at this event point. """
         pass
+
     def backEdge(self, e, g):
-        '''is invoked on the back edges in the graph.'''
+        """ Is invoked on the back edges in the graph. """
         pass
+
     def forwardOrCrossEdge(self, e, g):
-        '''is invoked on forward or cross edges in the graph. In an undirected graph this method is never called.'''
+        """ Is invoked on forward or cross edges in the graph.
+        In an undirected graph this method is never called."""
         pass
+
     def finishEdge(self, e, g):
-        '''is invoked on the non-tree edges in the graph as well as on each tree edge after its target vertex is finished.'''
+        """ Is invoked on the non-tree edges in the graph
+        as well as on each tree edge after its target vertex is finished. """
         pass
+
     def finishVertex(self, u, g):
-        """ is invoked on a vertex after all of its out edges have been added to the search tree and all of the
+        """ Is invoked on a vertex after all of its out edges have been added to the search tree and all of the
         adjacent vertices have been discovered (but before their out-edges have been examined). """
         pass
+
+
+def changeTopology(func):
+    """
+    Graph methods modifying the graph topology (add/remove edges or nodes)
+    must be decorated with 'changeTopology' for update mechanism to work as intended.
+    """
+    def decorator(self, *args, **kwargs):
+        assert isinstance(self, Graph)
+        # call method
+        result = func(self, *args, **kwargs)
+        # mark graph dirty
+        self.dirtyTopology = True
+        # request graph update
+        self.update()
+        return result
+    return decorator
 
 
 class Graph(BaseObject):
@@ -1061,6 +1103,8 @@ class Graph(BaseObject):
         self.name = name
         self._updateEnabled = True
         self._updateRequested = False
+        self.dirtyTopology = False
+        self._nodesMinMaxDepths = {}
         self._nodes = DictModel(keyAttrName='name', parent=self)
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
         self._cacheDir = meshroom.core.defaultCacheFolder
@@ -1104,6 +1148,7 @@ class Graph(BaseObject):
             self.update()
             self._updateRequested = False
 
+    @changeTopology
     def _addNode(self, node, uniqueName):
         """
         Internal method to add the given node to this Graph, with the given name (must be unique).
@@ -1144,6 +1189,7 @@ class Graph(BaseObject):
         """ Return the list of edges starting from this node """
         return [edge for edge in self.edges if edge.src.node == node]
 
+    @changeTopology
     def removeNode(self, nodeName):
         """
         Remove the node identified by 'nodeName' from the graph
@@ -1167,12 +1213,12 @@ class Graph(BaseObject):
 
         return inEdges, outEdges
 
-    def addNewNode(self, nodeDesc, name=None, **kwargs):
+    def addNewNode(self, nodeType, name=None, **kwargs):
         """
         Create and add a new node to the graph.
 
         Args:
-            nodeDesc (desc.Node): the node description to use.
+            nodeType (str): the node type name.
             name (str): if specified, the desired name for this node. If not unique, will be prefixed (_N).
             **kwargs: keyword arguments to initialize node's attributes
 
@@ -1181,7 +1227,7 @@ class Graph(BaseObject):
         """
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
-        n = self.addNode(Node(nodeDesc=nodeDesc, **kwargs), uniqueName=name)
+        n = self.addNode(Node(nodeType=nodeType, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 
@@ -1226,6 +1272,7 @@ class Graph(BaseObject):
         nodesWithOutput = set([edge.src.node for edge in self.edges])
         return set(self._nodes) - nodesWithOutput
 
+    @changeTopology
     def addEdge(self, srcAttr, dstAttr):
         assert isinstance(srcAttr, Attribute)
         assert isinstance(dstAttr, Attribute)
@@ -1237,7 +1284,6 @@ class Graph(BaseObject):
         self.edges.add(edge)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
-        self.update()
         return edge
 
     def addEdges(self, *edges):
@@ -1245,21 +1291,26 @@ class Graph(BaseObject):
             for edge in edges:
                 self.addEdge(*edge)
 
+    @changeTopology
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
             raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.fullName()))
         self.edges.pop(dstAttr)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
-        self.update()
 
     def getDepth(self, node):
-        # TODO: would be better to use bfs instead of recursive function
-        inputEdges = self.getInputEdges(node)
-        if not inputEdges:
-            return 0
-        inputDepths = [e.src.node.depth for e in inputEdges]
-        return max(inputDepths) + 1
+        """ Return node's (max) depth in this Graph.
+
+        Args:
+            node (Node): the node to consider.
+        Returns:
+            int: the node's max depth in this Graph.
+        """
+        assert node.graph == self
+        assert not self.dirtyTopology
+        minDepth, maxDepth = self._nodesMinMaxDepths[node]
+        return maxDepth
 
     def getInputEdges(self, node):
         return set([edge for edge in self.edges if edge.dst.node is node])
@@ -1272,38 +1323,47 @@ class Graph(BaseObject):
 
         return nodeEdges
 
-    def dfs(self, visitor, startNodes=None, longestPathFirst=False):
-        nodeChildren = self._getInputEdgesPerNode()
-        minMaxDepthPerNode = self.minMaxDepthPerNode() if longestPathFirst else None
+    def _getOutputEdgesPerNode(self):
+        nodeEdges = defaultdict(set)
+
+        for edge in self.edges:
+            nodeEdges[edge.src.node].add(edge.dst.node)
+
+        return nodeEdges
+
+    def dfs(self, visitor, startNodes=None, longestPathFirst=False, reverse=False):
+        # Default direction: from node to root
+        # Reverse direction: from node to leaves
+        nodeChildren = self._getOutputEdgesPerNode() if reverse else self._getInputEdgesPerNode()
+        # Initialize color map
         colors = {}
         for u in self._nodes:
             colors[u] = WHITE
-        if startNodes:
-            if longestPathFirst:
-                startNodes = sorted(startNodes, key=lambda item: item.depth)
-            for startNode in startNodes:
-                self.dfsVisit(startNode, visitor, colors, nodeChildren, longestPathFirst, minMaxDepthPerNode)
-        else:
-            leaves = self.getLeaves()
-            if longestPathFirst:
-                leaves = sorted(leaves, key=lambda item: item.depth)
-            for u in leaves:
-                if colors[u] == WHITE:
-                    self.dfsVisit(u, visitor, colors, nodeChildren, longestPathFirst, minMaxDepthPerNode)
 
-    def dfsVisit(self, u, visitor, colors, nodeChildren, longestPathFirst, minMaxDepthPerNode):
+        nodes = startNodes or self.getLeaves()
+
+        if longestPathFirst:
+            # Graph topology must be known and node depths up-to-date
+            assert not self.dirtyTopology
+            nodes = sorted(nodes, key=lambda item: item.depth)
+
+        for node in nodes:
+            self.dfsVisit(node, visitor, colors, nodeChildren, longestPathFirst)
+
+    def dfsVisit(self, u, visitor, colors, nodeChildren, longestPathFirst):
         colors[u] = GRAY
         visitor.discoverVertex(u, self)
         # d_time[u] = time = time + 1
         children = nodeChildren[u]
         if longestPathFirst:
-            children = sorted(children, reverse=True, key=lambda item: minMaxDepthPerNode[item][1])
+            assert not self.dirtyTopology
+            children = sorted(children, reverse=True, key=lambda item: self._nodesMinMaxDepths[item][1])
         for v in children:
             visitor.examineEdge((u, v), self)
             if colors[v] == WHITE:
                 visitor.treeEdge((u, v), self)
                 # (u,v) is a tree edge
-                self.dfsVisit(v, visitor, colors, nodeChildren, longestPathFirst, minMaxDepthPerNode)  # TODO: avoid recursion
+                self.dfsVisit(v, visitor, colors, nodeChildren, longestPathFirst)  # TODO: avoid recursion
             elif colors[v] == GRAY:
                 visitor.backEdge((u, v), self)
                 pass  # (u,v) is a back edge
@@ -1325,7 +1385,7 @@ class Graph(BaseObject):
         visitor.finishVertex = lambda vertex, graph: nodes.append(vertex)
         visitor.finishEdge = lambda edge, graph: edges.append(edge)
         self.dfs(visitor=visitor, startNodes=startNodes)
-        return (nodes, edges)
+        return nodes, edges
 
     def dfsToProcess(self, startNodes=None):
         """
@@ -1358,14 +1418,17 @@ class Graph(BaseObject):
         visitor.finishVertex = finishVertex
         visitor.finishEdge = finishEdge
         self.dfs(visitor=visitor, startNodes=startNodes)
-        return (nodes, edges)
+        return nodes, edges
 
     def minMaxDepthPerNode(self, startNodes=None):
         """
         Compute the min and max depth for each node.
 
-        :param startNodes: list of starting nodes. Use all leaves if empty.
-        :return: {node: (minDepth, maxDepth)}
+        Args:
+            startNodes: list of starting nodes. Use all leaves if empty.
+
+        Returns:
+            dict: {node: (minDepth, maxDepth)}
         """
         depthPerNode = {}
         for node in self.nodes:
@@ -1431,6 +1494,30 @@ class Graph(BaseObject):
                 flowEdges.append(link)
         return flowEdges
 
+    def nodesFromNode(self, startNode, filterType=None):
+        """
+        Return the node chain from startNode to the graph leaves.
+
+        Args:
+            startNode (Node): the node to start the visit from.
+            filterType (str): (optional) only return the nodes of the given type
+                              (does not stop the visit, this is a post-process only)
+        Returns:
+            The list of nodes from startNode to the graph leaves following edges.
+        """
+        nodes = []
+        edges = []
+        visitor = Visitor()
+
+        def discoverVertex(vertex, graph):
+            if not filterType or vertex.nodeType == filterType:
+                nodes.append(vertex)
+
+        visitor.discoverVertex = discoverVertex
+        visitor.examineEdge = lambda edge, graph: edges.append(edge)
+        self.dfs(visitor=visitor, startNodes=[startNode], reverse=True)
+        return nodes, edges
+
     def _applyExpr(self):
         with GraphModification(self):
             for node in self._nodes:
@@ -1492,6 +1579,13 @@ class Graph(BaseObject):
             # To do the update once for multiple changes
             self._updateRequested = True
             return
+
+        # Graph topology has changed
+        if self.dirtyTopology:
+            # Update nodes depths cache
+            self._nodesMinMaxDepths = self.minMaxDepthPerNode()
+            self.dirtyTopology = False
+
         self.updateInternals()
         if os.path.exists(self._cacheDir):
             self.updateStatusFromCache()

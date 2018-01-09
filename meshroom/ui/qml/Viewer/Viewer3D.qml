@@ -10,9 +10,14 @@ import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
 FocusScope {
     id: root
 
-    property alias status: scene.status
     property alias source: modelLoader.source
+    property alias abcSource: modelLoader.abcSource
+
     readonly property alias loading: modelLoader.loading
+
+    // Alembic optional support => won't be available if AlembicEntity plugin is not available
+    readonly property Component abcLoaderComp: Qt.createComponent("AlembicLoader.qml")
+    readonly property bool supportAlembic: abcLoaderComp.status == Component.Ready
 
     // functions
     function resetCameraCenter() {
@@ -104,7 +109,20 @@ FocusScope {
 
     function clear()
     {
-        source = 'no_file'
+        clearScene()
+        clearAbc()
+    }
+
+    function clearScene()
+    {
+        source = 'no_file' // only way to force unloading of valid scene
+        source = ''
+    }
+
+    function clearAbc()
+    {
+        abcSource = ''               // does not work yet by itself
+        abcLoaderEntity.reload()     // need to re-create the alembic loader
     }
 
     Scene3D {
@@ -202,9 +220,11 @@ FocusScope {
             Entity {
                 id: modelLoader
                 property string source
+                property url abcSource
                 // SceneLoader status is not reliable when loading a 3D file
-                property bool loading
+                property bool loading: false
                 onSourceChanged: loading = true
+                onAbcSourceChanged: { if(root.supportAlembic) loading = true  }
 
                 components: [scene, transform, picker]
 
@@ -234,16 +254,44 @@ FocusScope {
                             modelLoader.loading = false;
                         if(scene.status == SceneLoader.Ready)
                         {
-                            setupMaterialSwitchers(parent)
+                            setupMaterialSwitchers(modelLoader)
                         }
                     }
                 }
+
+                Entity {
+                    id: abcLoaderEntity
+                    // Instantiate the AlembicEntity dynamically
+                    // to avoid import errors if the plugin is not available
+                    property Entity abcLoader: undefined
+
+                    Component.onCompleted: reload()
+                    function reload() {
+                        if(!root.supportAlembic) // Alembic plugin not available
+                            return
+
+                        // destroy previously created entity
+                        if(abcLoader != undefined)
+                            abcLoader.destroy()
+
+                        abcLoader = abcLoaderComp.createObject(abcLoaderEntity, {
+                                                       'url': Qt.binding(function() { return modelLoader.abcSource } ),
+                                                       'particleSize': Qt.binding(function() { return 0.01 * transform.scale })
+                                                   });
+                        // urlChanged signal is emitted once the Alembic file is loaded
+                        // set the 'loading' property to false when it's emitted
+                        // TODO: AlembicEntity should expose a status
+                        abcLoader.onUrlChanged.connect(function(){ modelLoader.loading = false })
+                        modelLoader.loading = false
+                    }
+                }
+
                 Locator3D { enabled: locatorCheckBox.checked }
             }
             Grid3D { enabled: gridCheckBox.checked }
-
         }
     }
+
 
     Pane {
         background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
@@ -295,6 +343,19 @@ FocusScope {
         MenuItem {
             text: "Reset View"
             onTriggered: resetCameraPosition()
+        }
+        MenuSeparator {}
+        MenuItem {
+            height: visible ? implicitHeight : 0
+            text: "Unload Model"
+            visible: root.source != ''
+            onTriggered: clearScene()
+        }
+        MenuItem {
+            height: visible ? implicitHeight : 0
+            text: "Unload Alembic"
+            visible: abcSource != ''
+            onTriggered: clearAbc()
         }
     }
 }

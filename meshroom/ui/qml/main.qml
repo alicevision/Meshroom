@@ -19,6 +19,9 @@ ApplicationWindow {
     font.pointSize: 9
 
     property variant node: null
+    // supported 3D files extensions
+    readonly property var _3dFileExtensions: ['.obj', '.abc']
+
     onClosing: {
         // make sure document is saved before exiting application
         close.accepted = false
@@ -356,7 +359,7 @@ ApplicationWindow {
                                 var attr = node.attributes.at(i)
                                 if(attr.isOutput
                                    && attr.desc.type === "File"
-                                   && Filepath.extension(attr.value) === ".obj")
+                                   && _3dFileExtensions.indexOf(Filepath.extension(attr.value)) > - 1 )
                                   {
                                     workspaceView.load3DMedia(attr.value)
                                     break // only load first model found

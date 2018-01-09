@@ -29,7 +29,10 @@ Item {
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
     {
-        viewer3D.source = filepath
+        if(Filepath.extension(filepath) === ".abc")
+            viewer3D.abcSource = filepath
+        else
+            viewer3D.source = filepath
     }
 
     SystemPalette { id: palette }
@@ -73,7 +76,7 @@ Item {
                 anchors.fill: parent
                 DropArea {
                     anchors.fill: parent
-                    onDropped: viewer3D.source = drop.urls[0]
+                    onDropped: load3DMedia(drop.urls[0])
                 }
             }
 

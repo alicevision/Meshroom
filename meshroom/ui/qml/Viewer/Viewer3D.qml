@@ -90,6 +90,7 @@ FocusScope {
                 comps.push(comp)
             }
             entity.components = comps
+            modelLoader.meshHasTexture = mats.length > 0
             mats.forEach(function(m){
                 // create a material switcher for each material definition
                 var matSwitcher = materialSwitcherComponent.createObject(entity, m)
@@ -220,13 +221,20 @@ FocusScope {
             Entity {
                 id: modelLoader
                 property string source
-                property url abcSource
+                property string abcSource
+                property bool meshHasTexture: false
                 // SceneLoader status is not reliable when loading a 3D file
                 property bool loading: false
-                onSourceChanged: loading = true
-                onAbcSourceChanged: { if(root.supportAlembic) loading = true  }
+                onSourceChanged: {
+                    meshHasTexture = false
+                    loading = true
+                }
+                onAbcSourceChanged: {
+                    if(root.supportAlembic)
+                        loading = true
+                }
 
-                components: [scene, transform, picker]
+                components: [sceneLoaderEntity, transform, picker]
 
                 // ObjectPicker used for view re-centering
                 ObjectPicker {
@@ -246,17 +254,24 @@ FocusScope {
                     id: transform
                 }
 
-                SceneLoader {
-                    id: scene
-                    source: Qt.resolvedUrl(modelLoader.source)
-                    onStatusChanged: {
-                        if(scene.status != SceneLoader.Loading)
-                            modelLoader.loading = false;
-                        if(scene.status == SceneLoader.Ready)
-                        {
-                            setupMaterialSwitchers(modelLoader)
+                Entity {
+                    id: sceneLoaderEntity
+                    enabled: showMeshCheckBox.checked
+
+                    components: [
+                        SceneLoader {
+                            id: scene
+                            source: Qt.resolvedUrl(modelLoader.source)
+                            onStatusChanged: {
+                                if(scene.status != SceneLoader.Loading)
+                                    modelLoader.loading = false;
+                                if(scene.status == SceneLoader.Ready)
+                                {
+                                    setupMaterialSwitchers(modelLoader)
+                                }
+                            }
                         }
-                    }
+                    ]
                 }
 
                 Entity {
@@ -264,6 +279,7 @@ FocusScope {
                     // Instantiate the AlembicEntity dynamically
                     // to avoid import errors if the plugin is not available
                     property Entity abcLoader: undefined
+                    enabled: showSfMCheckBox.checked
 
                     Component.onCompleted: reload()
                     function reload() {
@@ -327,35 +343,43 @@ FocusScope {
         background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
         anchors.right: parent.right
         Column {
+            CheckBox { id: showMeshCheckBox; text: "Mesh"; checked: true; opacity: root.source ? 1.0 : 0.6 }
+            CheckBox { id: texturesCheckBox; text: "Textures"; checked: true; opacity: modelLoader.meshHasTexture ? 1.0 : 0.6 }
+            CheckBox { id: showSfMCheckBox; text: "SfM"; checked: true; visible: root.supportAlembic; opacity: root.abcSource ? 1.0 : 0.6 }
             CheckBox { id: gridCheckBox; text: "Grid"; checked: true }
             CheckBox { id: locatorCheckBox; text: "Locator"; checked: true }
-            CheckBox { id: texturesCheckBox; text: "Textures"; checked: true }
         }
     }
 
     // Menu
     Menu {
         id: contextMenu
+
         MenuItem {
-            text: "View All"
+            text: "Fit All"
             onTriggered: mainCamera.viewAll()
         }
         MenuItem {
             text: "Reset View"
             onTriggered: resetCameraPosition()
         }
+
         MenuSeparator {}
-        MenuItem {
-            height: visible ? implicitHeight : 0
-            text: "Unload Model"
-            visible: root.source != ''
-            onTriggered: clearScene()
-        }
-        MenuItem {
-            height: visible ? implicitHeight : 0
-            text: "Unload Alembic"
-            visible: abcSource != ''
-            onTriggered: clearAbc()
+
+        Menu {
+            title: "Unload"
+            MenuItem {
+                text: "Mesh"
+                enabled: root.source != ''
+                onTriggered: clearScene()
+            }
+            MenuItem {
+                height: visible ? implicitHeight : 0
+                text: "SfM"
+                enabled: root.abcSource != ''
+                visible: root.supportAlembic
+                onTriggered: clearAbc()
+            }
         }
     }
 }

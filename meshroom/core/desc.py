@@ -240,9 +240,9 @@ class Parallelization:
         size = node.size
         if self.blockSize:
             nbBlocks = int(math.ceil(float(size) / float(self.blockSize)))
-            return (self.blockSize, size, nbBlocks)
+            return self.blockSize, size, nbBlocks
         if self.staticNbBlocks:
-            return (1, self.staticNbBlocks, self.staticNbBlocks)
+            return 1, self.staticNbBlocks, self.staticNbBlocks
         return None
 
     def getRange(self, node, iteration):
@@ -258,19 +258,58 @@ class Parallelization:
 
 
 class DynamicNodeSize(object):
+    """
+    DynamicNodeSize expresses a dependency to an input attribute to define
+    the size of a Node in terms of individual tasks for parallelization.
+    If the attribute is a link to another node, Node's size will be the same as this connected node.
+    If the attribute is a ListAttribute, Node's size will be the size of this list.
+    """
     def __init__(self, param):
         self._param = param
 
     def computeSize(self, node):
         param = node.attribute(self._param)
+        assert param.isInput
+        # Link: use linked node's size
         if param.isLink:
             return param.getLinkParam().node.size
+        # ListAttribute: use list size
         if isinstance(param.desc, ListAttribute):
             return len(param)
         return 1
 
 
+class MultiDynamicNodeSize(object):
+    """
+    MultiDynamicNodeSize expresses dependencies to multiple input attributes to
+    define the size of a node in terms of individual tasks for parallelization.
+    Works as DynamicNodeSize and sum the sizes of each dependency.
+    """
+    def __init__(self, params):
+        """
+        Args:
+            params (list): list of input attributes names
+        """
+        assert isinstance(params, (list, tuple))
+        self._params = params
+
+    def computeSize(self, node):
+        size = 0
+        for param in self._params:
+            param = node.attribute(param)
+            if param.isLink:
+                size += param.getLinkParam().node.size
+            elif isinstance(param.desc, ListAttribute):
+                size += len(param)
+            else:
+                size += 1
+        return size
+
+
 class StaticNodeSize(object):
+    """
+    StaticNodeSize expresses a static Node size in terms of individual tasks for parallelization.
+    """
     def __init__(self, size):
         self._size = size
 

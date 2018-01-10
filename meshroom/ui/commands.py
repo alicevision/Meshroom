@@ -57,7 +57,7 @@ class UndoStack(QUndoStack):
         except Exception as e:
             logging.error("Error while trying command '{}': \n{}".format(command.text(), traceback.format_exc()))
             res = False
-        if res:
+        if res is not False:
             command.setEnabled(False)
             self.push(command)  # takes ownership
             command.setEnabled(True)
@@ -84,15 +84,17 @@ class GraphCommand(UndoCommand):
 
 
 class AddNodeCommand(GraphCommand):
-    def __init__(self, graph, nodeType, parent=None):
+    def __init__(self, graph, nodeType, parent=None, **kwargs):
         super(AddNodeCommand, self).__init__(graph, parent)
         self.nodeType = nodeType
         self.nodeName = None
+        self.kwargs = kwargs
 
     def redoImpl(self):
-        self.nodeName = self.graph.addNewNode(self.nodeType).name
+        node = self.graph.addNewNode(self.nodeType, **self.kwargs)
+        self.nodeName = node.name
         self.setText("Add Node {}".format(self.nodeName))
-        return True
+        return node
 
     def undoImpl(self):
         self.graph.removeNode(self.nodeName)

@@ -210,7 +210,7 @@ class UIGraph(QObject):
         Args:
             command (commands.UndoCommand): the command to push
         """
-        self._undoStack.tryAndPush(command)
+        return self._undoStack.tryAndPush(command)
 
     def groupedGraphModification(self, title):
         """ Get a GroupedGraphModification for this Reconstruction.
@@ -223,9 +223,18 @@ class UIGraph(QObject):
         """
         return commands.GroupedGraphModification(self._graph, self._undoStack, title)
 
-    @Slot(str)
-    def addNode(self, nodeType):
-        self.push(commands.AddNodeCommand(self._graph, nodeType))
+    @Slot(str, result=QObject)
+    def addNode(self, nodeType, **kwargs):
+        """ [Undoable]
+        Create a new Node of type 'nodeType' and returns it.
+
+        Args:
+            nodeType (str): the type of the Node to create.
+            **kwargs: optional node attributes values
+        Returns:
+            Node: the created node
+        """
+        return self.push(commands.AddNodeCommand(self._graph, nodeType, **kwargs))
 
     @Slot(graph.Node)
     def removeNode(self, node):

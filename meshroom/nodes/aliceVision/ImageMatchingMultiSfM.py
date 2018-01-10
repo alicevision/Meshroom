@@ -6,7 +6,8 @@ from meshroom.core import desc
 class ImageMatchingMultiSfM(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_imageMatching {allParams}'
-    size = desc.DynamicNodeSize('input')
+    # use both SfM inputs to define Node's size
+    size = desc.MultiDynamicNodeSize(['input', 'inputB'])
 
     inputs = [
         desc.File(

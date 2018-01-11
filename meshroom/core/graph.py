@@ -1250,6 +1250,46 @@ class Graph(BaseObject):
         node, attribute = fullName.split('.', 1)
         return self.node(node).attribute(attribute)
 
+    @staticmethod
+    def getNodeIndexFromName(name):
+        """ Nodes are created with a suffix index; returns this index by parsing node name.
+
+        Args:
+            name (str): the node name
+        Returns:
+             int: the index retrieved from node name (-1 if not found)
+        """
+        try:
+            return int(name.split('_')[-1])
+        except:
+            return -1
+
+    @staticmethod
+    def sortNodesByIndex(nodes):
+        """
+        Sort the given list of Nodes using the suffix index in their names.
+        [NodeName_1, NodeName_0] => [NodeName_0, NodeName_1]
+
+        Args:
+            nodes (list[Node]): the list of Nodes to sort
+        Returns:
+            list[Node]: the sorted list of Nodes based on their index
+        """
+        return sorted(nodes, key=lambda x: Graph.getNodeIndexFromName(x.name))
+
+    def nodesByType(self, nodeType, sortedByIndex=True):
+        """
+        Returns all Nodes of the given nodeType.
+
+        Args:
+            nodeType (str): the node type name to consider.
+            sortedByIndex (bool): whether to sort the nodes by their index (see Graph.sortNodesByIndex)
+        Returns:
+            list[Node]: the list of nodes matching the given nodeType.
+        """
+        nodes = [n for n in self._nodes.values() if n.nodeType == nodeType]
+        return self.sortNodesByIndex(nodes) if sortedByIndex else nodes
+
     def findNodeCandidates(self, nodeNameExpr):
         pattern = re.compile(nodeNameExpr)
         return [v for k, v in self._nodes.objects.items() if pattern.match(k)]

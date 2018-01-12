@@ -797,6 +797,10 @@ class Node(BaseObject):
     def depth(self):
         return self.graph.getDepth(self)
 
+    @property
+    def minDepth(self):
+        return self.graph.getDepth(self, minimal=True)
+
     def toDict(self):
         attributes = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
         return {
@@ -1008,6 +1012,7 @@ class Node(BaseObject):
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     depthChanged = Signal()
     depth = Property(int, depth.fget, notify=depthChanged)
+    minDepth = Property(int, minDepth.fget, notify=depthChanged)
     chunksChanged = Signal()
     chunks = Property(Variant, getChunks, notify=chunksChanged)
     sizeChanged = Signal()
@@ -1340,18 +1345,20 @@ class Graph(BaseObject):
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
 
-    def getDepth(self, node):
-        """ Return node's (max) depth in this Graph.
+    def getDepth(self, node, minimal=False):
+        """ Return node's depth in this Graph.
+        By default, returns the maximal depth of the node unless minimal is set to True.
 
         Args:
             node (Node): the node to consider.
+            minimal (bool): whether to return the minimal depth instead of the maximal one (default).
         Returns:
-            int: the node's max depth in this Graph.
+            int: the node's depth in this Graph.
         """
         assert node.graph == self
         assert not self.dirtyTopology
         minDepth, maxDepth = self._nodesMinMaxDepths[node]
-        return maxDepth
+        return minDepth if minimal else maxDepth
 
     def getInputEdges(self, node):
         return set([edge for edge in self.edges if edge.dst.node is node])

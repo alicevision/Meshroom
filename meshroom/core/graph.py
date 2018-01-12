@@ -1123,7 +1123,8 @@ class Graph(BaseObject):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
 
         with GraphModification(self):
-            for nodeName, nodeData in graphData.items():
+            # iterate over nodes sorted by suffix index in their names
+            for nodeName, nodeData in sorted(graphData.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
                 if not isinstance(nodeData, dict):
                     raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
                 n = Node(nodeData['nodeType'], **nodeData['attributes'])

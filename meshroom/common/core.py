@@ -18,6 +18,9 @@ class CoreDictModel:
     def items(self):
         return self._objects.items()
 
+    def values(self):
+        return self._objects.values()
+
     @property
     def objects(self):
         return self._objects

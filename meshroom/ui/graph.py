@@ -277,10 +277,13 @@ class UIGraph(QObject):
 
     @Slot(graph.Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):
-        if value.isArray():
-            pyValue = value.toArray().toVariantList()
+        if isinstance(value, QJsonValue):
+            if value.isArray():
+                pyValue = value.toArray().toVariantList()
+            else:
+                pyValue = None if value.isNull() else value.toObject()
         else:
-            pyValue = None if value.isNull() else value.toObject()
+            pyValue = value
         self.push(commands.ListAttributeAppendCommand(self._graph, attribute, pyValue))
 
     @Slot(graph.Attribute)

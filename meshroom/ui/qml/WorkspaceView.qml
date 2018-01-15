@@ -71,8 +71,14 @@ Item {
             implicitWidth: Math.round(parent.width * 0.4)
             Layout.minimumWidth: 40
             Viewer2D {
+                id: viewer2D
                 anchors.fill: parent
-                source: imageGallery.currentItemSource
+                property url imageGallerySource: imageGallery.currentItemSource
+                onImageGallerySourceChanged: viewer2D.source = imageGallerySource
+                DropArea {
+                    anchors.fill: parent
+                    onDropped: viewer2D.source = drop.urls[0]
+                }
                 Rectangle {
                     z: -1
                     anchors.fill: parent

@@ -16,6 +16,7 @@ Item {
     property alias metadata: _viewpoint.metadata
 
     signal pressed(var mouse)
+    signal removeRequest()
 
     // retrieve viewpoints inner data
     QtObject {
@@ -48,7 +49,7 @@ Item {
             MenuItem {
                 text: "Remove"
                 enabled: !root.readOnly
-                onClicked: removeImageRequest(viewpoint)
+                onClicked: removeRequest()
             }
         }
 

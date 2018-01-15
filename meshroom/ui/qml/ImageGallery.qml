@@ -70,6 +70,9 @@ Panel {
                     if(mouse.button == Qt.LeftButton)
                         grid.forceActiveFocus()
                 }
+                onRemoveRequest: removeImageRequest(object)
+                Keys.onDeletePressed: removeImageRequest(object)
+
                 // Reconstruction status indicator
                 Label {
                     property bool inViews: _reconstruction.views[viewpoint.get('viewId').value] != undefined

@@ -38,6 +38,7 @@ ApplicationWindow {
         id: settings_UILayout
         category: 'UILayout'
         property alias showLiveReconstruction: liveSfMVisibilityCB.checked
+        property alias showGraphEditor: graphEditorVisibilityCB.checked
     }
 
     Dialog {
@@ -263,6 +264,12 @@ ApplicationWindow {
         Menu {
             title: "View"
             MenuItem {
+                id: graphEditorVisibilityCB
+                text: "Graph Editor"
+                checkable: true
+                checked: true
+            }
+            MenuItem {
                 id: liveSfMVisibilityCB
                 text: "Live Reconstruction"
                 checkable: true
@@ -352,6 +359,7 @@ ApplicationWindow {
             Layout.fillHeight: false
             height: Math.round(parent.height * 0.3)
             title: "Graph Editor"
+            visible: settings_UILayout.showGraphEditor
 
             Controls1.SplitView {
                 orientation: Qt.Horizontal

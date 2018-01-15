@@ -10,6 +10,140 @@ from meshroom.core import graph
 from meshroom.ui.graph import UIGraph
 
 
+class LiveSfmManager(QObject):
+    """
+    Manage a live SfM reconstruction by creating augmentation steps in the graph over time,
+    based on images progressively added to a watched folder.
+
+    File watching is based on regular polling and not filesystem events to work on network mounts.
+    """
+    def __init__(self, reconstruction):
+        super(LiveSfmManager, self).__init__(reconstruction)
+        self.reconstruction = reconstruction
+        self._folder = ''
+        self.timerId = -1
+        self.minImagesPerStep = 4
+        self.watchTimerInterval = 1000
+        self.allImages = []
+        self.cameraInit = None
+        self.sfm = None
+        self._running = False
+
+    def reset(self):
+        self.stop(False)
+        self.sfm = None
+        self.cameraInit = None
+
+    def setRunning(self, value):
+        if self._running == value:
+            return
+        if self._running:
+            self.killTimer(self.timerId)
+        else:
+            self.timerId = self.startTimer(self.watchTimerInterval)
+        self._running = value
+        self.runningChanged.emit()
+
+    @Slot(str, int)
+    def start(self, folder, minImagesPerStep):
+        """
+        Start live SfM augmentation.
+
+        Args:
+            folder (str): the folder to watch in which images are added over time
+            minImagesPerStep (int): minimum number of images in an augmentation step
+        """
+        # print('[LiveSfmManager] Watching {} for images'.format(folder))
+        if not os.path.isdir(folder):
+            raise RuntimeError("Invalid folder provided: {}".format(folder))
+        self._folder = folder
+        self.folderChanged.emit()
+        self.cameraInit = self.sfm = None
+        self.allImages = self.imagesInReconstruction()
+        self.minImagesPerStep = minImagesPerStep
+        self.setRunning(True)
+        self.update()  # trigger initial update
+
+    @Slot()
+    def stop(self, requestCompute=True):
+        """ Stop the live SfM reconstruction.
+
+        Request the computation of the last augmentation step if any.
+        """
+        self.setRunning(False)
+        if requestCompute:
+            self.computeStep()
+
+    def timerEvent(self, evt):
+        self.update()
+
+    def update(self):
+        """
+        Look for new images in the watched folder and create SfM augmentation step (or modify existing one)
+        to include those images to the reconstruction.
+        """
+        # Get all new images in the watched folder
+        filesInFolder = [os.path.join(self._folder, f) for f in os.listdir(self._folder)]
+        imagesInFolder = [f for f in filesInFolder if Reconstruction.isImageFile(f)]
+        newImages = set(imagesInFolder).difference(self.allImages)
+        for imagePath in newImages:
+            # print('[LiveSfmManager] New image file : {}'.format(imagePath))
+            if not self.cameraInit:
+                # Start graph modification: until 'computeAugmentation' is called, every commands
+                # used will be part of this macro
+                self.reconstruction.beginModification("SfM Augmentation")
+                # Add SfM augmentation step in the graph
+                self.cameraInit, self.sfm = self.reconstruction.addSfmAugmentation()
+                self.stepCreated.emit()
+            self.addImageToStep(imagePath)
+
+        # If we have enough images and the graph is not being computed, compute augmentation step
+        if len(self.imagesInStep()) >= self.minImagesPerStep and not self.reconstruction.computing:
+            self.computeStep()
+
+    def addImageToStep(self, path):
+        """ Add an image to the current augmentation step. """
+        self.reconstruction.appendAttribute(self.cameraInit.viewpoints, {'path': path})
+        self.allImages.append(path)
+
+    def imagePathsInCameraInit(self, node):
+        """ Get images in the given CameraInit node. """
+        assert node.nodeType == 'CameraInit'
+        return [vp.path.value for vp in node.viewpoints]
+
+    def imagesInStep(self):
+        """ Get images in the current augmentation step. """
+        return self.imagePathsInCameraInit(self.cameraInit) if self.cameraInit else []
+
+    def imagesInReconstruction(self):
+        """ Get all images in the reconstruction. """
+        return [vp.path.value for node in self.reconstruction.cameraInits for vp in node.viewpoints]
+
+    @Slot()
+    def computeStep(self):
+        """ Freeze the current augmentation step and request its computation.
+        A new step will be created once another image is added to the watched folder during 'update'.
+        """
+        if not self.cameraInit:
+            return
+
+        # print('[LiveSfmManager] Compute SfM augmentation')
+        # Build intrinsics in the main thread
+        self.reconstruction.buildIntrinsics(self.cameraInit, [])
+        self.cameraInit = None
+        sfm = self.sfm
+        self.sfm = None
+        # Stop graph modification and start sfm computation
+        self.reconstruction.endModification()
+        self.reconstruction.execute(sfm)
+
+    stepCreated = Signal()
+    runningChanged = Signal()
+    running = Property(bool, lambda self: self._running, notify=runningChanged)
+    folderChanged = Signal()
+    folder = Property(str, lambda self: self._folder, notify=folderChanged)
+
+
 class Reconstruction(UIGraph):
     """
     Specialization of a UIGraph designed to manage a 3D reconstruction.
@@ -27,6 +161,7 @@ class Reconstruction(UIGraph):
         self._meshFile = ''
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
         self.graphChanged.connect(self.onGraphChanged)
+        self._liveSfmManager = LiveSfmManager(self)
         if graphFilepath:
             self.onGraphChanged()
         else:
@@ -39,6 +174,7 @@ class Reconstruction(UIGraph):
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
+        self._liveSfmManager.reset()
         self._endChunk = None
         self.setMeshFile('')
         self.updateCameraInits()
@@ -101,6 +237,59 @@ class Reconstruction(UIGraph):
             return
         self._meshFile = mf
         self.meshFileChanged.emit()
+
+    def lastSfmNode(self):
+        """ Retrieve the last SfM node from the initial CameraInit node. """
+        sfmNodes = self._graph.nodesFromNode(self._cameraInits[0], 'StructureFromMotion')[0]
+        return sfmNodes[-1] if sfmNodes else None
+
+    def addSfmAugmentation(self):
+        """
+        Create a new augmentation step connected to the last SfM node of this Reconstruction and
+        return the created CameraInit and SfM nodes.
+
+        If the Reconstruction is not initialized (empty initial CameraInit), this method won't
+        create anything and return initial CameraInit and SfM nodes.
+
+        Returns:
+            Node, Node: CameraInit, StructureFromMotion
+        """
+        sfm = self.lastSfmNode()
+        if not sfm:
+            return None, None
+
+        if len(self._cameraInits) == 1:
+            assert self._cameraInit == self._cameraInits[0]
+            # Initial CameraInit is empty, use this one
+            if len(self._cameraInits[0].viewpoints) == 0:
+                return self._cameraInit, sfm
+
+        with self.groupedGraphModification("SfM Augmentation"):
+            # instantiate sfm augmentation chain
+            cameraInit = self.addNode('CameraInit')
+            featureExtraction = self.addNode('FeatureExtraction')
+            imageMatching = self.addNode('ImageMatchingMultiSfM')
+            featureMatching = self.addNode('FeatureMatching')
+            structureFromMotion = self.addNode('StructureFromMotion')
+
+            edges = (
+                (cameraInit.output, featureExtraction.input),
+                (featureExtraction.input, imageMatching.input),
+                (featureExtraction.output, imageMatching.featuresFolder),
+                (imageMatching.featuresFolder, featureMatching.featuresFolder),
+                (imageMatching.outputCombinedSfM, featureMatching.input),
+                (imageMatching.output, featureMatching.imagePairsList),
+                (featureMatching.input, structureFromMotion.input),
+                (featureMatching.featuresFolder, structureFromMotion.featuresFolder),
+                (featureMatching.output, structureFromMotion.matchesFolder),
+            )
+            for src, dst in edges:
+                self.addEdge(src, dst)
+
+            # connect last SfM node to ImageMatchingMultiSfm
+            self.addEdge(sfm.output, imageMatching.inputB)
+
+        return cameraInit, structureFromMotion
 
     @Slot(QObject, graph.Node)
     def handleFilesDrop(self, drop, cameraInit):
@@ -175,4 +364,5 @@ class Reconstruction(UIGraph):
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
     meshFileChanged = Signal()
     meshFile = Property(str, lambda self: self._meshFile, notify=meshFileChanged)
+    liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
 

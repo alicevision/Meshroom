@@ -84,6 +84,7 @@ class UIGraph(QObject):
         super(UIGraph, self).__init__(parent)
         self._undoStack = commands.UndoStack(self)
         self._graph = graph.Graph('', self)
+        self._modificationCount = 0
         self._chunksMonitor = ChunksMonitor(parent=self)
         self._chunksMonitor.chunkStatusChanged.connect(self.onChunkStatusChanged)
         self._computeThread = Thread()
@@ -222,6 +223,18 @@ class UIGraph(QObject):
             GroupedGraphModification: the instantiated context manager
         """
         return commands.GroupedGraphModification(self._graph, self._undoStack, title)
+
+    def beginModification(self, name):
+        """ Begin a Graph modification. Calls to beginModification and endModification may be nested, but
+        every call to beginModification must have a matching call to endModification. """
+        self._modificationCount += 1
+        self._undoStack.beginMacro(name)
+
+    def endModification(self):
+        """ Ends a Graph modification. Must match a call to beginModification. """
+        assert self._modificationCount > 0
+        self._modificationCount -= 1
+        self._undoStack.endMacro()
 
     @Slot(str, result=QObject)
     def addNode(self, nodeType, **kwargs):

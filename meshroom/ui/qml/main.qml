@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.1
 import QtQuick.Window 2.3
 import QtQml.Models 2.2
 import Qt.labs.platform 1.0 as Platform
+import Qt.labs.settings 1.0
 import GraphEditor 1.0
 import MaterialIcons 2.2
 import "filepath.js" as Filepath
@@ -33,6 +34,11 @@ ApplicationWindow {
     SystemPalette { id: palette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled}
 
+    Settings {
+        id: settings_UILayout
+        category: 'UILayout'
+        property alias showLiveReconstruction: liveSfMVisibilityCB.checked
+    }
 
     Dialog {
         id: unsavedDialog
@@ -256,6 +262,13 @@ ApplicationWindow {
         }
         Menu {
             title: "View"
+            MenuItem {
+                id: liveSfMVisibilityCB
+                text: "Live Reconstruction"
+                checkable: true
+                checked: false
+            }
+            MenuSeparator {}
             Action {
                 text: "Fullscreen"
                 checkable: true
@@ -331,6 +344,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 50
+                onRequestGraphAutoLayout: graphEditor.doAutoLayout()
             }
         }
         Panel {

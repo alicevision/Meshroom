@@ -1,0 +1,110 @@
+import QtQuick 2.9
+import QtQuick.Controls 2.3
+import QtQuick.Layouts 1.3
+import MaterialIcons 2.2
+import Qt.labs.platform 1.0 as Platform // for FileDialog
+
+/**
+ * LiveSfMView provides controls for setting up and starting a live reconstruction.
+ */
+Panel {
+    id: root
+
+    property variant reconstruction
+    readonly property variant liveSfmManager: reconstruction.liveSfmManager
+
+    signal requestGraphAutoLayout()
+
+    title: "Live Reconstruction"
+    icon: Label {
+        text: MaterialIcons.linked_camera;
+        font.family: MaterialIcons.fontFamily;
+        font.pixelSize: 13
+    }
+
+    padding: 2
+    clip: true
+
+    Connections {
+        target: root.liveSfmManager
+        // Request graph auto-layout when an augmentation step is added for readability
+        onStepCreated: requestGraphAutoLayout()
+    }
+
+    Platform.FolderDialog {
+        id: selectFolderDialog
+        title: "Live Reconstruction - Select Image Folder"
+        onAccepted: {
+            folderPath.text = folder.toLocaleString().replace("file://", "")
+        }
+    }
+
+    // Options
+    Pane {
+        width: parent.width
+        Layout.alignment: Qt.AlignTop
+        ColumnLayout {
+            width: parent.width
+            GroupBox {
+                Layout.fillWidth: true
+                enabled: !liveSfmManager.running
+
+                GridLayout {
+                    width: parent.width
+                    columnSpacing: 12
+                    columns: 2
+
+                    Label {
+                        text: "Image Folder"
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        TextField {
+                            id: folderPath
+                            Layout.fillWidth: true
+                            selectByMouse: true
+                            text: liveSfmManager.folder
+                            placeholderText: "Select a Folder"
+                        }
+                        ToolButton {
+                            text: MaterialIcons.folder
+                            font.family: MaterialIcons.fontFamily
+                            onClicked: selectFolderDialog.open()
+                            ToolTip.text: "Select Folder in which Images will be progressively added for Live Reconstruction"
+                            ToolTip.visible: hovered
+                            ToolTip.delay: 200
+                        }
+                    }
+
+                    Label {
+                        text: "Min. Images per Step"
+                    }
+
+                    SpinBox {
+                        id: minImg_SB
+                        editable: true
+                        from: 2
+                        value: 4
+                        to: 50
+                        implicitWidth: 50
+                    }
+                }
+            }
+
+            Button {                
+                Layout.alignment: Qt.AlignCenter
+                text: checked ? "Stop" : "Start"
+                enabled: liveSfmManager.running || folderPath.text.trim() != ''
+                checked: liveSfmManager.running
+                onClicked: {
+                    if(!liveSfmManager.running)
+                        liveSfmManager.start(folderPath.text, minImg_SB.value)
+                    else
+                        liveSfmManager.stop()
+                }
+            }
+        }
+    }
+}

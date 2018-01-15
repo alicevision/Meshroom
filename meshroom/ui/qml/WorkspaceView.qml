@@ -26,6 +26,8 @@ Item {
 
     onMeshFileChanged: viewer3D.clear()
 
+    signal requestGraphAutoLayout()
+
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
     {
@@ -40,19 +42,29 @@ Item {
     Controls1.SplitView {
         anchors.fill: parent
 
-        ImageGallery {
-            id: imageGallery
+        Controls1.SplitView {
+            orientation: Qt.Vertical
             Layout.fillHeight: true
-            Layout.fillWidth: true
-            Layout.minimumWidth: defaultCellSize
-            cameraInits: root.cameraInits
-            cameraInit: _reconstruction.cameraInit
-            currentIndex: reconstruction.cameraInitIndex
-            onCurrentIndexChanged: reconstruction.cameraInitIndex = currentIndex
-            onRemoveImageRequest: reconstruction.removeAttribute(attribute)
-            onFilesDropped: reconstruction.handleFilesDrop(drop, cameraInit)
-        }
+            Layout.minimumWidth: imageGallery.defaultCellSize
 
+            ImageGallery {
+                id: imageGallery
+                Layout.fillHeight: true
+                cameraInits: root.cameraInits
+                cameraInit: _reconstruction.cameraInit
+                currentIndex: reconstruction.cameraInitIndex
+                onCurrentIndexChanged: reconstruction.cameraInitIndex = currentIndex
+                onRemoveImageRequest: reconstruction.removeAttribute(attribute)
+                onFilesDropped: reconstruction.handleFilesDrop(drop, cameraInit)
+            }
+            LiveSfmView {
+                visible: settings_UILayout.showLiveReconstruction
+                reconstruction: root.reconstruction
+                Layout.fillWidth: true
+                Layout.preferredHeight: childrenRect.height
+                onRequestGraphAutoLayout: graphEditor.doAutoLayout()
+            }
+        }
         Panel {
             title: "Image Viewer"
             Layout.fillHeight: true

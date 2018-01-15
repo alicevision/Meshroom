@@ -98,6 +98,7 @@ class UIGraph(QObject):
     def setGraph(self, g):
         """ Set the internal graph. """
         if self._graph:
+            self.stopExecution()
             self.clear()
         self._graph = g
         self._graph.updated.connect(self.onGraphUpdated)
@@ -214,7 +215,7 @@ class UIGraph(QObject):
         return self._undoStack.tryAndPush(command)
 
     def groupedGraphModification(self, title):
-        """ Get a GroupedGraphModification for this Reconstruction.
+        """ Get a GroupedGraphModification for this Graph.
 
         Args:
             title (str): the title of the macro command

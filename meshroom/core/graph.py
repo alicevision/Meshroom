@@ -1248,6 +1248,7 @@ class Graph(BaseObject):
     def node(self, nodeName):
         return self._nodes.get(nodeName)
 
+    @Slot(str, result=Attribute)
     def attribute(self, fullName):
         # type: (str) -> Attribute
         """

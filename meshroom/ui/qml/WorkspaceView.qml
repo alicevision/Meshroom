@@ -17,7 +17,7 @@ Item {
     id: root
 
     property variant reconstruction: _reconstruction
-    readonly property variant viewpoints: _reconstruction.viewpoints
+    readonly property variant cameraInits: _reconstruction.cameraInits
     readonly property string meshFile: _reconstruction.meshFile
     property bool readOnly: false
 
@@ -45,8 +45,12 @@ Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
             Layout.minimumWidth: defaultCellSize
-            model: viewpoints
+            cameraInits: root.cameraInits
+            cameraInit: _reconstruction.cameraInit
+            currentIndex: reconstruction.cameraInitIndex
+            onCurrentIndexChanged: reconstruction.cameraInitIndex = currentIndex
             onRemoveImageRequest: reconstruction.removeAttribute(attribute)
+            onFilesDropped: reconstruction.handleFilesDrop(drop, cameraInit)
         }
 
         Panel {

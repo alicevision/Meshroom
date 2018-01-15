@@ -5,7 +5,7 @@ import QtQuick.Scene3D 2.0
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
 import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
-
+import MaterialIcons 2.2
 
 FocusScope {
     id: root
@@ -343,9 +343,25 @@ FocusScope {
         background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
         anchors.right: parent.right
         Column {
-            CheckBox { id: showMeshCheckBox; text: "Mesh"; checked: true; opacity: root.source ? 1.0 : 0.6 }
+            Row {
+                CheckBox { id: showSfMCheckBox; text: "SfM"; checked: true; visible: root.supportAlembic; opacity: root.abcSource ? 1.0 : 0.6 }
+                ToolButton {
+                    text: MaterialIcons.clear; font.family: MaterialIcons.fontFamily; visible: root.abcSource != '';
+                    onClicked: clearAbc()
+                    ToolTip.text: "Unload"
+                    ToolTip.visible: hovered
+                }
+            }
+            Row {
+                CheckBox { id: showMeshCheckBox; text: "Mesh"; checked: true; opacity: root.source ? 1.0 : 0.6 }
+                ToolButton {
+                    text: MaterialIcons.clear; font.family: MaterialIcons.fontFamily; visible: root.source != '';
+                    onClicked: clearScene()
+                    ToolTip.text: "Unload"
+                    ToolTip.visible: hovered
+                }
+            }
             CheckBox { id: texturesCheckBox; text: "Textures"; checked: true; opacity: modelLoader.meshHasTexture ? 1.0 : 0.6 }
-            CheckBox { id: showSfMCheckBox; text: "SfM"; checked: true; visible: root.supportAlembic; opacity: root.abcSource ? 1.0 : 0.6 }
             CheckBox { id: gridCheckBox; text: "Grid"; checked: true }
             CheckBox { id: locatorCheckBox; text: "Locator"; checked: true }
         }
@@ -362,24 +378,6 @@ FocusScope {
         MenuItem {
             text: "Reset View"
             onTriggered: resetCameraPosition()
-        }
-
-        MenuSeparator {}
-
-        Menu {
-            title: "Unload"
-            MenuItem {
-                text: "Mesh"
-                enabled: root.source != ''
-                onTriggered: clearScene()
-            }
-            MenuItem {
-                height: visible ? implicitHeight : 0
-                text: "SfM"
-                enabled: root.abcSource != ''
-                visible: root.supportAlembic
-                onTriggered: clearAbc()
-            }
         }
     }
 }

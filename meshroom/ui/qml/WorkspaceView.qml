@@ -32,9 +32,23 @@ Item {
     function load3DMedia(filepath)
     {
         if(Filepath.extension(filepath) === ".abc")
+        {
+            viewer3D.clearAbc()
             viewer3D.abcSource = filepath
+        }
         else
             viewer3D.source = filepath
+    }
+
+    Connections {
+        target: reconstruction
+        onSfmChanged: loadSfmAbc()
+        onSfmReportChanged: loadSfmAbc()
+    }
+
+    function loadSfmAbc()
+    {
+        workspaceView.load3DMedia(reconstruction.sfm.attribute('output').value)
     }
 
     SystemPalette { id: palette }

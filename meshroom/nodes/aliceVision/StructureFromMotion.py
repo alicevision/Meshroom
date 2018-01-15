@@ -1,4 +1,6 @@
-import sys
+import json
+import os
+
 from meshroom.core import desc
 
 
@@ -132,3 +134,26 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[],
         ),
     ]
+
+    @staticmethod
+    def getViewsAndPoses(node):
+        """
+        Parse SfM result and return views and poses as two dict with viewId and poseId as keys.
+        """
+        reportFile = node.outputViewsAndPoses.value
+        if not os.path.exists(reportFile):
+            return {}, {}
+
+        with open(reportFile) as jsonFile:
+            report = json.load(jsonFile)
+
+        views = dict()
+        poses = dict()
+
+        for view in report['views']:
+            views[view['viewId']] = view
+
+        for pose in report['poses']:
+            poses[pose['poseId']] = pose['pose']
+
+        return views, poses

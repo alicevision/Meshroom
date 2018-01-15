@@ -70,6 +70,19 @@ Panel {
                     if(mouse.button == Qt.LeftButton)
                         grid.forceActiveFocus()
                 }
+                // Reconstruction status indicator
+                Label {
+                    property bool inViews: _reconstruction.views[viewpoint.get('viewId').value] != undefined
+                    property bool reconstructed: _reconstruction.poses[viewpoint.get('poseId').value] != undefined
+                    property bool skipped: inViews && !reconstructed
+                    text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
+                    color: reconstructed ? "#4CAF50" : "#F44336"
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: 10
+                    font.pointSize: 10
+                    visible: inViews
+                }
             }
 
             // Explanatory placeholder when no image has been added yet

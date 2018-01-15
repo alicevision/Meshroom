@@ -162,6 +162,12 @@ class Reconstruction(UIGraph):
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
         self.graphChanged.connect(self.onGraphChanged)
         self._liveSfmManager = LiveSfmManager(self)
+
+        # SfM result
+        self._sfm = None
+        self._views = None
+        self._poses = None
+
         if graphFilepath:
             self.onGraphChanged()
         else:
@@ -175,12 +181,14 @@ class Reconstruction(UIGraph):
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
+        self._sfm = None
         self._endChunk = None
         self.setMeshFile('')
         self.updateCameraInits()
         if not self._graph:
             return
 
+        self.setSfm(self.lastSfmNode())
         try:
             endNode = self._graph.findNode("Texturing")
             self._endChunk = endNode.getChunks()[0]  # type: graph.NodeChunk
@@ -366,3 +374,33 @@ class Reconstruction(UIGraph):
     meshFile = Property(str, lambda self: self._meshFile, notify=meshFileChanged)
     liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
 
+    def updateViewsAndPoses(self):
+        """
+        Update internal views and poses based on the current SfM node.
+        """
+        assert self._sfm is not None
+        self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
+        self.sfmReportChanged.emit()
+
+    def getSfm(self):
+        """ Returns the current SfM node. """
+        return self._sfm
+
+    def setSfm(self, node):
+        """ Set the current SfM node.
+        This node will be used to retrieve sparse reconstruction result like camera poses.
+        """
+        if self._sfm:
+            self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
+        self._sfm = node
+        # Update views and poses and do so each time
+        # the status of the SfM node's only chunk changes
+        self.updateViewsAndPoses()
+        self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
+        self.sfmChanged.emit()
+
+    sfmChanged = Signal()
+    sfm = Property(QObject, getSfm, setSfm, notify=sfmChanged)
+    sfmReportChanged = Signal()
+    views = Property("QVariant", lambda self: self._views, notify=sfmReportChanged)
+    poses = Property("QVariant", lambda self: self._poses, notify=sfmReportChanged)

@@ -368,6 +368,11 @@ ApplicationWindow {
                         nodeTypesModel: _nodeTypes
                         readOnly: _reconstruction.computing
                         onNodeDoubleClicked: {
+                            if(node.nodeType == "StructureFromMotion")
+                            {
+                                _reconstruction.sfm = node
+                                return
+                            }
                             for(var i=0; i < node.attributes.count; ++i)
                             {
                                 var attr = node.attributes.at(i)

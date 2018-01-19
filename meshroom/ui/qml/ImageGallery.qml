@@ -78,6 +78,7 @@ Panel {
                     property bool inViews: _reconstruction.views[viewpoint.get('viewId').value] != undefined
                     property bool reconstructed: _reconstruction.poses[viewpoint.get('poseId').value] != undefined
                     property bool skipped: inViews && !reconstructed
+                    font.family: MaterialIcons.fontFamily
                     text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
                     color: reconstructed ? "#4CAF50" : "#F44336"
                     anchors.top: parent.top

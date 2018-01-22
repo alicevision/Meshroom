@@ -132,9 +132,9 @@ class StructureFromMotion(desc.CommandLineNode):
         ),
         desc.File(
             name='outputViewsAndPoses',
-            label='Output SfM Views and Poses',
-            description='''Path to the output SfMData file (with only views and poses).''',
-            value='{cache}/{nodeType}/{uid0}/viewsAndPoses.sfm',
+            label='Output SfM data file',
+            description='''Path to the output sfmdata file with cameras (views and poses).''',
+            value='{cache}/{nodeType}/{uid0}/cameras.sfm',
             uid=[],
         ),
         desc.File(

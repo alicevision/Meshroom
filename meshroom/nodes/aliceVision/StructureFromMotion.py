@@ -77,6 +77,17 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
+            name='minNumberOfObservationsForTriangulation',
+            label='Min Observation For Triangulation',
+            description='Minimum number of observations to triangulate a point.\n'
+                        'Set it to 3 (or more) reduces drastically the noise in the point cloud,\n'
+                        'but the number of final poses is a little bit reduced\n'
+                        '(from 1.5% to 11% on the tested datasets).',
+            value=2,
+            range=(2, 10, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
             name='maxNumberOfMatches',
             label='Maximum Number of Matches',
             description='Maximum number of matches per image pair (and per feature type). \n'

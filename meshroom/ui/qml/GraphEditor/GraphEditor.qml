@@ -15,14 +15,17 @@ Item {
     property variant selectedNode: null
 
     property int nodeWidth: 140
-    property int nodeHeight: 40
-    property int gridSpacing: 10
+    property int nodeHeight: 80
+    property int gridSpacing: 15
+    property bool useMinDepth: true
     property var _attributeToDelegate: ({})
 
     // signals
     signal workspaceMoved()
     signal workspaceClicked()
     signal nodeDoubleClicked(var node)
+
+    onUseMinDepthChanged: doAutoLayout()
 
     clip: true
 
@@ -253,6 +256,12 @@ Item {
             onClicked: root.doAutoLayout()
             z: 10
         }
+        ComboBox {
+            model: ['Min Depth', 'Max Depth']
+            onActivated: {
+                useMinDepth = currentIndex == 0
+            }
+        }
     }
 
     function registerAttributePin(attribute, pin)
@@ -284,6 +293,7 @@ Item {
     // Really basic auto-layout based on node depths
     function doAutoLayout()
     {
+        var depthProperty = useMinDepth ? 'minDepth' : 'depth'
         var grid = new Array(nodeRepeater.count)
         for(var i=0; i< nodeRepeater.count; ++i)
             grid[i] = new Array(nodeRepeater.count)
@@ -298,9 +308,9 @@ Item {
             var j=0;
             while(1)
             {
-                if(grid[obj.node.depth][j] == undefined)
+                if(grid[obj.node[depthProperty]][j] == undefined)
                 {
-                    grid[obj.node.depth][j] = obj;
+                    grid[obj.node[depthProperty]][j] = obj;
                     break;
                 }
                 j++;

@@ -1,10 +1,12 @@
-import sys
+import json
+import os
+
 from meshroom.core import desc
 
 
 class StructureFromMotion(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'aliceVision_incrementalSfM {allParams} --allowUserInteraction 0'
+    commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 
     inputs = [
@@ -75,6 +77,17 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
+            name='minNumberOfObservationsForTriangulation',
+            label='Min Observation For Triangulation',
+            description='Minimum number of observations to triangulate a point.\n'
+                        'Set it to 3 (or more) reduces drastically the noise in the point cloud,\n'
+                        'but the number of final poses is a little bit reduced\n'
+                        '(from 1.5% to 11% on the tested datasets).',
+            value=2,
+            range=(2, 10, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
             name='maxNumberOfMatches',
             label='Maximum Number of Matches',
             description='Maximum number of matches per image pair (and per feature type). \n'
@@ -82,17 +95,6 @@ class StructureFromMotion(desc.CommandLineNode):
                         '0 means no limit.',
             value=0,
             range=(0, 50000, 1),
-            uid=[0],
-        ),
-        desc.ChoiceParam(
-            name='cameraModel',
-            label='Camera Model',
-            description="1: Pinhole \n"
-                        "2: Pinhole 2\n"
-                        "3: Pinhole 3",
-            value=3,
-            values=[1, 2, 3],
-            exclusive=True,
             uid=[0],
         ),
         desc.File(
@@ -129,6 +131,13 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[],
         ),
         desc.File(
+            name='outputViewsAndPoses',
+            label='Output SfM data file',
+            description='''Path to the output sfmdata file with cameras (views and poses).''',
+            value='{cache}/{nodeType}/{uid0}/cameras.sfm',
+            uid=[],
+        ),
+        desc.File(
             name='extraInfoFolder',
             label='Output',
             description='''Folder for intermediate reconstruction files and additional reconstruction information files.''',
@@ -136,3 +145,26 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[],
         ),
     ]
+
+    @staticmethod
+    def getViewsAndPoses(node):
+        """
+        Parse SfM result and return views and poses as two dict with viewId and poseId as keys.
+        """
+        reportFile = node.outputViewsAndPoses.value
+        if not os.path.exists(reportFile):
+            return {}, {}
+
+        with open(reportFile) as jsonFile:
+            report = json.load(jsonFile)
+
+        views = dict()
+        poses = dict()
+
+        for view in report['views']:
+            views[view['viewId']] = view
+
+        for pose in report['poses']:
+            poses[pose['poseId']] = pose['pose']
+
+        return views, poses

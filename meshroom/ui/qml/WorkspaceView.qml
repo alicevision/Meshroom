@@ -17,7 +17,7 @@ Item {
     id: root
 
     property variant reconstruction: _reconstruction
-    readonly property variant viewpoints: _reconstruction.viewpoints
+    readonly property variant cameraInits: _reconstruction.cameraInits
     readonly property string meshFile: _reconstruction.meshFile
     property bool readOnly: false
 
@@ -26,10 +26,29 @@ Item {
 
     onMeshFileChanged: viewer3D.clear()
 
+    signal requestGraphAutoLayout()
+
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
     {
-        viewer3D.source = filepath
+        if(Filepath.extension(filepath) === ".abc")
+        {
+            viewer3D.clearAbc()
+            viewer3D.abcSource = filepath
+        }
+        else
+            viewer3D.source = filepath
+    }
+
+    Connections {
+        target: reconstruction
+        onSfmChanged: loadSfmAbc()
+        onSfmReportChanged: loadSfmAbc()
+    }
+
+    function loadSfmAbc()
+    {
+        workspaceView.load3DMedia(reconstruction.sfm.attribute('output').value)
     }
 
     SystemPalette { id: palette }
@@ -37,23 +56,43 @@ Item {
     Controls1.SplitView {
         anchors.fill: parent
 
-        ImageGallery {
-            id: imageGallery
+        Controls1.SplitView {
+            orientation: Qt.Vertical
             Layout.fillHeight: true
-            Layout.fillWidth: true
-            Layout.minimumWidth: defaultCellSize
-            model: viewpoints
-            onRemoveImageRequest: reconstruction.removeAttribute(attribute)
-        }
+            Layout.minimumWidth: imageGallery.defaultCellSize
 
+            ImageGallery {
+                id: imageGallery
+                Layout.fillHeight: true
+                cameraInits: root.cameraInits
+                cameraInit: _reconstruction.cameraInit
+                currentIndex: reconstruction.cameraInitIndex
+                onCurrentIndexChanged: reconstruction.cameraInitIndex = currentIndex
+                onRemoveImageRequest: reconstruction.removeAttribute(attribute)
+                onFilesDropped: reconstruction.handleFilesDrop(drop, cameraInit)
+            }
+            LiveSfmView {
+                visible: settings_UILayout.showLiveReconstruction
+                reconstruction: root.reconstruction
+                Layout.fillWidth: true
+                Layout.preferredHeight: childrenRect.height
+                onRequestGraphAutoLayout: graphEditor.doAutoLayout()
+            }
+        }
         Panel {
             title: "Image Viewer"
             Layout.fillHeight: true
             implicitWidth: Math.round(parent.width * 0.4)
             Layout.minimumWidth: 40
             Viewer2D {
+                id: viewer2D
                 anchors.fill: parent
-                source: imageGallery.currentItemSource
+                property url imageGallerySource: imageGallery.currentItemSource
+                onImageGallerySourceChanged: viewer2D.source = imageGallerySource
+                DropArea {
+                    anchors.fill: parent
+                    onDropped: viewer2D.source = drop.urls[0]
+                }
                 Rectangle {
                     z: -1
                     anchors.fill: parent
@@ -73,7 +112,7 @@ Item {
                 anchors.fill: parent
                 DropArea {
                     anchors.fill: parent
-                    onDropped: viewer3D.source = drop.urls[0]
+                    onDropped: load3DMedia(drop.urls[0])
                 }
             }
 

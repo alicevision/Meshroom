@@ -3,17 +3,34 @@ import os
 from meshroom.core import desc
 
 
-class ImageMatching(desc.CommandLineNode):
+class ImageMatchingMultiSfM(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_imageMatching {allParams}'
-    size = desc.DynamicNodeSize('input')
+    # use both SfM inputs to define Node's size
+    size = desc.MultiDynamicNodeSize(['input', 'inputB'])
 
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='Input A',
             description='''SfMData file .''',
             value='',
+            uid=[0],
+        ),
+        desc.File(
+            name='inputB',
+            label='Input B',
+            description='''SfMData file .''',
+            value='',
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='modeMultiSfM',
+            label='Multiple SfM mode',
+            description='''Image matching multiple SfM mode. "a_ab" for images in input SfMData A plus between A and B. "a_b" for images between input SfMData A and B''',
+            value='a_ab',
+            values=['a_ab', 'a_b'],
+            exclusive=True,
             uid=[0],
         ),
         desc.File(
@@ -78,6 +95,13 @@ class ImageMatching(desc.CommandLineNode):
             label='Output',
             description='''Filepath to the output file with the list of selected image pairs.''',
             value='{cache}/{nodeType}/{uid0}/imageMatches.txt',
+            uid=[],
+        ),
+        desc.File(
+            name='outputCombinedSfM',
+            label='Output Combined SfM',
+            description='''Path for the combined SfMData file''',
+            value='{cache}/{nodeType}/{uid0}/combineSfM.sfm',
             uid=[],
         ),
     ]

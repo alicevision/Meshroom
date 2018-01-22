@@ -67,6 +67,9 @@ class QObjectListModel(QtCore.QAbstractListModel):
         """ Returns the object list used by the model to store data. """
         return self._objects
 
+    def values(self):
+        return self._objects
+
     def setObjectList(self, objects):
         """ Sets the model's internal objects list to objects. The model will
         notify any attached views that its underlying data has changed.

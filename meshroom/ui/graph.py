@@ -84,6 +84,7 @@ class UIGraph(QObject):
         super(UIGraph, self).__init__(parent)
         self._undoStack = commands.UndoStack(self)
         self._graph = graph.Graph('', self)
+        self._modificationCount = 0
         self._chunksMonitor = ChunksMonitor(parent=self)
         self._chunksMonitor.chunkStatusChanged.connect(self.onChunkStatusChanged)
         self._computeThread = Thread()
@@ -97,6 +98,7 @@ class UIGraph(QObject):
     def setGraph(self, g):
         """ Set the internal graph. """
         if self._graph:
+            self.stopExecution()
             self.clear()
         self._graph = g
         self._graph.updated.connect(self.onGraphUpdated)
@@ -210,10 +212,10 @@ class UIGraph(QObject):
         Args:
             command (commands.UndoCommand): the command to push
         """
-        self._undoStack.tryAndPush(command)
+        return self._undoStack.tryAndPush(command)
 
     def groupedGraphModification(self, title):
-        """ Get a GroupedGraphModification for this Reconstruction.
+        """ Get a GroupedGraphModification for this Graph.
 
         Args:
             title (str): the title of the macro command
@@ -223,9 +225,30 @@ class UIGraph(QObject):
         """
         return commands.GroupedGraphModification(self._graph, self._undoStack, title)
 
-    @Slot(str)
-    def addNode(self, nodeType):
-        self.push(commands.AddNodeCommand(self._graph, nodeType))
+    def beginModification(self, name):
+        """ Begin a Graph modification. Calls to beginModification and endModification may be nested, but
+        every call to beginModification must have a matching call to endModification. """
+        self._modificationCount += 1
+        self._undoStack.beginMacro(name)
+
+    def endModification(self):
+        """ Ends a Graph modification. Must match a call to beginModification. """
+        assert self._modificationCount > 0
+        self._modificationCount -= 1
+        self._undoStack.endMacro()
+
+    @Slot(str, result=QObject)
+    def addNode(self, nodeType, **kwargs):
+        """ [Undoable]
+        Create a new Node of type 'nodeType' and returns it.
+
+        Args:
+            nodeType (str): the type of the Node to create.
+            **kwargs: optional node attributes values
+        Returns:
+            Node: the created node
+        """
+        return self.push(commands.AddNodeCommand(self._graph, nodeType, **kwargs))
 
     @Slot(graph.Node)
     def removeNode(self, node):
@@ -255,10 +278,13 @@ class UIGraph(QObject):
 
     @Slot(graph.Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):
-        if value.isArray():
-            pyValue = value.toArray().toVariantList()
+        if isinstance(value, QJsonValue):
+            if value.isArray():
+                pyValue = value.toArray().toVariantList()
+            else:
+                pyValue = None if value.isNull() else value.toObject()
         else:
-            pyValue = None if value.isNull() else value.toObject()
+            pyValue = value
         self.push(commands.ListAttributeAppendCommand(self._graph, attribute, pyValue))
 
     @Slot(graph.Attribute)

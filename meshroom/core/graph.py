@@ -797,6 +797,10 @@ class Node(BaseObject):
     def depth(self):
         return self.graph.getDepth(self)
 
+    @property
+    def minDepth(self):
+        return self.graph.getDepth(self, minimal=True)
+
     def toDict(self):
         attributes = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
         return {
@@ -1008,6 +1012,7 @@ class Node(BaseObject):
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     depthChanged = Signal()
     depth = Property(int, depth.fget, notify=depthChanged)
+    minDepth = Property(int, minDepth.fget, notify=depthChanged)
     chunksChanged = Signal()
     chunks = Property(Variant, getChunks, notify=chunksChanged)
     sizeChanged = Signal()
@@ -1123,7 +1128,8 @@ class Graph(BaseObject):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
 
         with GraphModification(self):
-            for nodeName, nodeData in graphData.items():
+            # iterate over nodes sorted by suffix index in their names
+            for nodeName, nodeData in sorted(graphData.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
                 if not isinstance(nodeData, dict):
                     raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
                 n = Node(nodeData['nodeType'], **nodeData['attributes'])
@@ -1242,6 +1248,7 @@ class Graph(BaseObject):
     def node(self, nodeName):
         return self._nodes.get(nodeName)
 
+    @Slot(str, result=Attribute)
     def attribute(self, fullName):
         # type: (str) -> Attribute
         """
@@ -1249,6 +1256,46 @@ class Graph(BaseObject):
         """
         node, attribute = fullName.split('.', 1)
         return self.node(node).attribute(attribute)
+
+    @staticmethod
+    def getNodeIndexFromName(name):
+        """ Nodes are created with a suffix index; returns this index by parsing node name.
+
+        Args:
+            name (str): the node name
+        Returns:
+             int: the index retrieved from node name (-1 if not found)
+        """
+        try:
+            return int(name.split('_')[-1])
+        except:
+            return -1
+
+    @staticmethod
+    def sortNodesByIndex(nodes):
+        """
+        Sort the given list of Nodes using the suffix index in their names.
+        [NodeName_1, NodeName_0] => [NodeName_0, NodeName_1]
+
+        Args:
+            nodes (list[Node]): the list of Nodes to sort
+        Returns:
+            list[Node]: the sorted list of Nodes based on their index
+        """
+        return sorted(nodes, key=lambda x: Graph.getNodeIndexFromName(x.name))
+
+    def nodesByType(self, nodeType, sortedByIndex=True):
+        """
+        Returns all Nodes of the given nodeType.
+
+        Args:
+            nodeType (str): the node type name to consider.
+            sortedByIndex (bool): whether to sort the nodes by their index (see Graph.sortNodesByIndex)
+        Returns:
+            list[Node]: the list of nodes matching the given nodeType.
+        """
+        nodes = [n for n in self._nodes.values() if n.nodeType == nodeType]
+        return self.sortNodesByIndex(nodes) if sortedByIndex else nodes
 
     def findNodeCandidates(self, nodeNameExpr):
         pattern = re.compile(nodeNameExpr)
@@ -1299,18 +1346,20 @@ class Graph(BaseObject):
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
 
-    def getDepth(self, node):
-        """ Return node's (max) depth in this Graph.
+    def getDepth(self, node, minimal=False):
+        """ Return node's depth in this Graph.
+        By default, returns the maximal depth of the node unless minimal is set to True.
 
         Args:
             node (Node): the node to consider.
+            minimal (bool): whether to return the minimal depth instead of the maximal one (default).
         Returns:
-            int: the node's max depth in this Graph.
+            int: the node's depth in this Graph.
         """
         assert node.graph == self
         assert not self.dirtyTopology
         minDepth, maxDepth = self._nodesMinMaxDepths[node]
-        return maxDepth
+        return minDepth if minimal else maxDepth
 
     def getInputEdges(self, node):
         return set([edge for edge in self.edges if edge.dst.node is node])

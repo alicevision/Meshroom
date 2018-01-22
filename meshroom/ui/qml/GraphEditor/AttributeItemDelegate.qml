@@ -82,6 +82,20 @@ Loader {
     Component {
         id: slider_component
         RowLayout {
+            TextField {
+                IntValidator {
+                    id: intValidator
+                }
+                DoubleValidator {
+                    id: doubleValidator
+                }
+                implicitWidth: 70
+                enabled: root.editable
+                text: s.pressed ? s.value : attribute.value
+                selectByMouse: true
+                validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
+                onEditingFinished: setTextFieldAttribute(attribute, text)
+            }
             Slider {
                 id: s
                 Layout.fillWidth: true
@@ -97,19 +111,7 @@ Loader {
                         _reconstruction.setAttribute(attribute, value)
                 }
             }
-            IntValidator {
-                id: intValidator
-            }
-            DoubleValidator {
-                id: doubleValidator
-            }
-            TextField {
-                enabled: root.editable
-                text: s.pressed ? s.value : attribute.value
-                selectByMouse: true
-                validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
-                onEditingFinished: setTextFieldAttribute(attribute, text)
-            }
+
         }
     }
 

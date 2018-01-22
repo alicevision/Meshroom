@@ -1,4 +1,5 @@
 import os
+import signal
 import sys
 
 from PySide2.QtCore import Qt, QObject, Slot
@@ -61,9 +62,13 @@ class PaletteManager(QObject):
 
 
 if __name__ == "__main__":
+    # Force exit on Keyboard Interrupt from command line (Ctrl+C)
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
     args = [sys.argv[0], '-style', 'fusion'] + sys.argv[1:]  # force Fusion style as default
     # use QApplication (QtWidgets) for Platform.FileDialog fallback on platform without native implementation
     app = QApplication(args)
+    app.setOrganizationName('AliceVision')
+    app.setApplicationName('Meshroom')
     app.setAttribute(Qt.AA_EnableHighDpiScaling)
 
     pwd = os.path.dirname(__file__)

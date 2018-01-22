@@ -5,14 +5,19 @@ import QtQuick.Scene3D 2.0
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
 import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
-
+import MaterialIcons 2.2
 
 FocusScope {
     id: root
 
-    property alias status: scene.status
     property alias source: modelLoader.source
+    property alias abcSource: modelLoader.abcSource
+
     readonly property alias loading: modelLoader.loading
+
+    // Alembic optional support => won't be available if AlembicEntity plugin is not available
+    readonly property Component abcLoaderComp: Qt.createComponent("AlembicLoader.qml")
+    readonly property bool supportAlembic: abcLoaderComp.status == Component.Ready
 
     // functions
     function resetCameraCenter() {
@@ -85,6 +90,7 @@ FocusScope {
                 comps.push(comp)
             }
             entity.components = comps
+            modelLoader.meshHasTexture = mats.length > 0
             mats.forEach(function(m){
                 // create a material switcher for each material definition
                 var matSwitcher = materialSwitcherComponent.createObject(entity, m)
@@ -104,7 +110,20 @@ FocusScope {
 
     function clear()
     {
-        source = 'no_file'
+        clearScene()
+        clearAbc()
+    }
+
+    function clearScene()
+    {
+        source = 'no_file' // only way to force unloading of valid scene
+        source = ''
+    }
+
+    function clearAbc()
+    {
+        abcSource = ''               // does not work yet by itself
+        abcLoaderEntity.reload()     // need to re-create the alembic loader
     }
 
     Scene3D {
@@ -202,11 +221,20 @@ FocusScope {
             Entity {
                 id: modelLoader
                 property string source
+                property string abcSource
+                property bool meshHasTexture: false
                 // SceneLoader status is not reliable when loading a 3D file
-                property bool loading
-                onSourceChanged: loading = true
+                property bool loading: false
+                onSourceChanged: {
+                    meshHasTexture = false
+                    loading = true
+                }
+                onAbcSourceChanged: {
+                    if(root.supportAlembic)
+                        loading = true
+                }
 
-                components: [scene, transform, picker]
+                components: [sceneLoaderEntity, transform, picker]
 
                 // ObjectPicker used for view re-centering
                 ObjectPicker {
@@ -226,24 +254,61 @@ FocusScope {
                     id: transform
                 }
 
-                SceneLoader {
-                    id: scene
-                    source: Qt.resolvedUrl(modelLoader.source)
-                    onStatusChanged: {
-                        if(scene.status != SceneLoader.Loading)
-                            modelLoader.loading = false;
-                        if(scene.status == SceneLoader.Ready)
-                        {
-                            setupMaterialSwitchers(parent)
+                Entity {
+                    id: sceneLoaderEntity
+                    enabled: showMeshCheckBox.checked
+
+                    components: [
+                        SceneLoader {
+                            id: scene
+                            source: Qt.resolvedUrl(modelLoader.source)
+                            onStatusChanged: {
+                                if(scene.status != SceneLoader.Loading)
+                                    modelLoader.loading = false;
+                                if(scene.status == SceneLoader.Ready)
+                                {
+                                    setupMaterialSwitchers(modelLoader)
+                                }
+                            }
                         }
+                    ]
+                }
+
+                Entity {
+                    id: abcLoaderEntity
+                    // Instantiate the AlembicEntity dynamically
+                    // to avoid import errors if the plugin is not available
+                    property Entity abcLoader: undefined
+                    enabled: showSfMCheckBox.checked
+
+                    Component.onCompleted: reload()
+                    function reload() {
+                        if(!root.supportAlembic) // Alembic plugin not available
+                            return
+
+                        // destroy previously created entity
+                        if(abcLoader != undefined)
+                            abcLoader.destroy()
+
+                        abcLoader = abcLoaderComp.createObject(abcLoaderEntity, {
+                                                       'url': Qt.binding(function() { return modelLoader.abcSource } ),
+                                                       'particleSize': Qt.binding(function() { return 0.01 * transform.scale }),
+                                                       'locatorScale': Qt.binding(function() { return 0.07 * transform.scale })
+                                                   });
+                        // urlChanged signal is emitted once the Alembic file is loaded
+                        // set the 'loading' property to false when it's emitted
+                        // TODO: AlembicEntity should expose a status
+                        abcLoader.onUrlChanged.connect(function(){ modelLoader.loading = false })
+                        modelLoader.loading = false
                     }
                 }
+
                 Locator3D { enabled: locatorCheckBox.checked }
             }
             Grid3D { enabled: gridCheckBox.checked }
-
         }
     }
+
 
     Pane {
         background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
@@ -279,17 +344,36 @@ FocusScope {
         background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
         anchors.right: parent.right
         Column {
+            Row {
+                CheckBox { id: showSfMCheckBox; text: "SfM"; checked: true; visible: root.supportAlembic; opacity: root.abcSource ? 1.0 : 0.6 }
+                ToolButton {
+                    text: MaterialIcons.clear; font.family: MaterialIcons.fontFamily; visible: root.abcSource != '';
+                    onClicked: clearAbc()
+                    ToolTip.text: "Unload"
+                    ToolTip.visible: hovered
+                }
+            }
+            Row {
+                CheckBox { id: showMeshCheckBox; text: "Mesh"; checked: true; opacity: root.source ? 1.0 : 0.6 }
+                ToolButton {
+                    text: MaterialIcons.clear; font.family: MaterialIcons.fontFamily; visible: root.source != '';
+                    onClicked: clearScene()
+                    ToolTip.text: "Unload"
+                    ToolTip.visible: hovered
+                }
+            }
+            CheckBox { id: texturesCheckBox; text: "Textures"; checked: true; opacity: modelLoader.meshHasTexture ? 1.0 : 0.6 }
             CheckBox { id: gridCheckBox; text: "Grid"; checked: true }
             CheckBox { id: locatorCheckBox; text: "Locator"; checked: true }
-            CheckBox { id: texturesCheckBox; text: "Textures"; checked: true }
         }
     }
 
     // Menu
     Menu {
         id: contextMenu
+
         MenuItem {
-            text: "View All"
+            text: "Fit All"
             onTriggered: mainCamera.viewAll()
         }
         MenuItem {

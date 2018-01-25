@@ -83,6 +83,8 @@ FocusScope {
                 id: fileSelector
                 Layout.fillWidth: true
                 property string currentFile: chunksLV.currentChunk ? chunksLV.currentChunk[currentItem.fileProperty] : ""
+                property string lastLoadedFile
+                property date lastModTime
                 onCurrentFileChanged: if(visible) loadCurrentFile(false)
                 onVisibleChanged: loadCurrentFile()
 
@@ -185,18 +187,43 @@ FocusScope {
         var xhr = new XMLHttpRequest;
         xhr.open("GET", fileSelector.currentFile);
         xhr.onreadystatechange = function() {
-            if (xhr.readyState == XMLHttpRequest.DONE) {
+            if(xhr.readyState == XMLHttpRequest.HEADERS_RECEIVED)
+            {
+                // if the file is already open
+                // check last modification date
+                var lastMod = new Date(xhr.getResponseHeader("Last-Modified"));
+                if(fileSelector.lastLoadedFile == fileSelector.currentFile
+                  && lastMod.getTime() == fileSelector.lastModTime.getTime() )
+                {
+                    // file has not changed, don't reload it
+                    xhr.doLoad = false;
+                    return
+                }
+                // file is different or last modification time has changed
+                fileSelector.lastLoadedFile = fileSelector.currentFile
+                fileSelector.lastModTime = lastMod
+                xhr.doLoad = true
+            }
+
+            if(xhr.readyState == XMLHttpRequest.DONE && xhr.doLoad) {
+                // store cursor position and content position
                 var cursorPosition = logArea.cursorPosition;
+                var contentY = logScrollView.ScrollBar.vertical.position;
+
+                // replace text
                 logArea.text = xhr.responseText;
-                // Reset cursor position to trigger scroll to bottom
-                logArea.cursorPosition = 0;
+
                 if(autoScroll.checked)
                 {
+                    // Reset cursor position to trigger scroll to bottom
+                    logArea.cursorPosition = 0;
                     logArea.cursorPosition = logArea.length;
                 }
                 else if(keepCursorPosition)
                 {
-                    logArea.cursorPosition = cursorPosition;
+                    if(cursorPosition)
+                        logArea.cursorPosition = cursorPosition;
+                    logScrollView.ScrollBar.vertical.position = contentY
                 }
             }
         };

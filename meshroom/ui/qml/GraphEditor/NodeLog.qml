@@ -125,6 +125,15 @@ FocusScope {
                             onClicked: loadCurrentFile(false)
                         }
                         ToolButton {
+                            id: autoRefresh
+                            text: MaterialIcons.timer
+                            ToolTip.text: "Auto-Refresh when Running"
+                            ToolTip.visible: hovered
+                            font.family: MaterialIcons.fontFamily
+                            checked: true
+                            checkable: true
+                        }
+                        ToolButton {
                             text: MaterialIcons.vertical_align_top
                             ToolTip.text: "Scroll to Top"
                             ToolTip.visible: hovered
@@ -175,7 +184,7 @@ FocusScope {
 
     // Auto-reload current file if NodeChunk is being computed
     Timer {
-        running: chunksLV.currentChunk != undefined && chunksLV.currentChunk.statusName === "RUNNING"
+        running: autoRefresh.checked && chunksLV.currentChunk != undefined && chunksLV.currentChunk.statusName === "RUNNING"
         interval: 2000
         repeat: true
         triggeredOnStart: true

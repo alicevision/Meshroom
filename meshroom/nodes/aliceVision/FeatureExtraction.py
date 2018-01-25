@@ -43,6 +43,13 @@ class FeatureExtraction(desc.CommandLineNode):
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='forceCpuExtraction',
+            label='Force CPU Extraction',
+            description='''Use only CPU feature extraction.''',
+            value=False,
+            uid=[],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

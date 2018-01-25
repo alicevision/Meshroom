@@ -399,8 +399,18 @@ class Reconstruction(UIGraph):
         self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
         self.sfmChanged.emit()
 
+    @Slot(QObject, result=bool)
+    def isInViews(self, viewpoint):
+        # keys are strings (faster lookup)
+        return str(viewpoint.viewId.value) in self._views
+
+    @Slot(QObject, result=bool)
+    def isReconstructed(self, viewpoint):
+        # keys are strings (faster lookup)
+        return str(viewpoint.poseId.value) in self._poses
+
     sfmChanged = Signal()
     sfm = Property(QObject, getSfm, setSfm, notify=sfmChanged)
     sfmReportChanged = Signal()
-    views = Property("QVariant", lambda self: self._views, notify=sfmReportChanged)
-    poses = Property("QVariant", lambda self: self._poses, notify=sfmReportChanged)
+    # convenient property for QML binding re-evaluation when sfm report changes
+    sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)

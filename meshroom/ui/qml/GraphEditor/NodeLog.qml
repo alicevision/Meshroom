@@ -31,7 +31,7 @@ FocusScope {
             highlightFollowsCurrentItem: true
             keyNavigationEnabled: true
             focus: true
-            currentIndex: -1
+            currentIndex: 0
 
             header: Component {
                 Label {

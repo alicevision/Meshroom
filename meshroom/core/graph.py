@@ -184,9 +184,13 @@ class Attribute(BaseObject):
         # which is why we don't trigger any update in this case
         # TODO: update only the nodes impacted by this change
         # TODO: only update the graph if this attribute participates to a UID
-        if self.node.graph and self.isInput:
-            self.node.graph.update()
+        if self.isInput:
+            self.requestGraphUpdate()
         self.valueChanged.emit()
+
+    def requestGraphUpdate(self):
+        if self.node.graph and self.attributeDesc.uid:
+            self.node.graph.markNodesDirty(self.node)
 
     @property
     def isOutput(self):
@@ -285,7 +289,9 @@ class ListAttribute(Attribute):
 
     def _set_value(self, value):
         self._value.clear()
-        self.extend(value)
+        if value:
+            self.extend(value)
+        self.requestGraphUpdate()
 
     def append(self, value):
         self.extend([value])
@@ -295,18 +301,13 @@ class ListAttribute(Attribute):
         attrs = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
         self._value.insert(index, attrs)
         self._applyExpr()
-        if self.node.graph:
-            self.node.graph.update()
+        self.requestGraphUpdate()
 
     def index(self, item):
         return self._value.indexOf(item)
 
     def extend(self, values):
-        values = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
-        self._value.extend(values)
-        self._applyExpr()
-        if self.node.graph:
-            self.node.graph.update()
+        self.insert(len(self._value), values)
 
     def remove(self, index, count=1):
         if self.node.graph:
@@ -315,8 +316,7 @@ class ListAttribute(Attribute):
                 if attr.isLink:
                     self.node.graph.removeEdge(attr)  # delete edge if the attribute is linked
         self._value.removeAt(index, count)
-        if self.node.graph:
-            self.node.graph.update()
+        self.requestGraphUpdate()
 
     def uid(self, uidIndex):
         uids = []
@@ -713,6 +713,7 @@ class Node(BaseObject):
 
         self._name = None  # type: str
         self.graph = None  # type: Graph
+        self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)
         self._cmdVars = {}
         self._size = 0
@@ -1329,6 +1330,7 @@ class Graph(BaseObject):
             raise RuntimeError('Destination attribute "{}" is already connected.'.format(dstAttr.fullName()))
         edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
+        self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
         return edge
@@ -1343,6 +1345,7 @@ class Graph(BaseObject):
         if dstAttr not in self.edges.keys():
             raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.fullName()))
         self.edges.pop(dstAttr)
+        self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
 
@@ -1610,14 +1613,16 @@ class Graph(BaseObject):
         self.cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
         self.filepathChanged.emit()
 
-    def updateInternals(self, startNodes=None):
+    def updateInternals(self, startNodes=None, force=False):
         nodes, edges = self.dfsOnFinish(startNodes=startNodes)
         for node in nodes:
-            node.updateInternals()
+            if node.dirty or force:
+                node.updateInternals()
 
-    def updateStatusFromCache(self):
+    def updateStatusFromCache(self, force=False):
         for node in self._nodes:
-            node.updateStatusFromCache()
+            if node.dirty or force:
+                node.updateStatusFromCache()
 
     def updateStatisticsFromCache(self):
         for node in self._nodes:
@@ -1638,7 +1643,27 @@ class Graph(BaseObject):
         self.updateInternals()
         if os.path.exists(self._cacheDir):
             self.updateStatusFromCache()
+        for node in self.nodes:
+            node.dirty = False
+
         self.updated.emit()
+
+    def markNodesDirty(self, fromNode):
+        """
+        Mark all nodes following 'fromNode' as dirty, and request a graph update.
+        All nodes marked as dirty will get their outputs to be re-evaluated
+        during the next graph update.
+
+        Args:
+            fromNode (Node): the node to start the invalidation from
+
+        See Also:
+            Graph.update, Graph.updateInternals, Graph.updateStatusFromCache
+        """
+        nodes, edges = self.nodesFromNode(fromNode)
+        for node in nodes:
+            node.dirty = True
+        self.update()
 
     def stopExecution(self):
         """ Request graph execution to be stopped by terminating running chunks"""
@@ -1696,8 +1721,8 @@ class Graph(BaseObject):
         if self._cacheDir == value:
             return
         self._cacheDir = value
-        self.updateInternals()
-        self.updateStatusFromCache()
+        self.updateInternals(force=True)
+        self.updateStatusFromCache(force=True)
         self.cacheDirChanged.emit()
 
     nodes = Property(BaseObject, nodes.fget, constant=True)

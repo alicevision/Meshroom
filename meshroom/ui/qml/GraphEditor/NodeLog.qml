@@ -209,12 +209,23 @@ FocusScope {
                     return
                 }
                 // file is different or last modification time has changed
-                fileSelector.lastLoadedFile = fileSelector.currentFile
                 fileSelector.lastModTime = lastMod
                 xhr.doLoad = true
             }
-
-            if(xhr.readyState == XMLHttpRequest.DONE && xhr.doLoad) {
+            if (xhr.readyState == XMLHttpRequest.DONE) {
+                // store lastLoadedFile url
+                fileSelector.lastLoadedFile = fileSelector.currentFile
+                // if responseText should not be loaded
+                if(!xhr.doLoad)
+                {
+                    // file could not be opened, reset text and lastModTime
+                    if(xhr.status == 0)
+                    {
+                        fileSelector.lastModTime = new Date()
+                        logArea.text = ''
+                    }
+                    return;
+                }
                 // store cursor position and content position
                 var cursorPosition = logArea.cursorPosition;
                 var contentY = logScrollView.ScrollBar.vertical.position;

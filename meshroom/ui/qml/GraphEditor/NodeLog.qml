@@ -176,6 +176,7 @@ FocusScope {
                         selectByMouse: true
                         selectByKeyboard: true
                         persistentSelection: true
+                        font.family: "Monospace"
                     }
                 }
             }

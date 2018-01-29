@@ -122,8 +122,7 @@ FocusScope {
 
     function clearAbc()
     {
-        abcSource = ''               // does not work yet by itself
-        abcLoaderEntity.reload()     // need to re-create the alembic loader
+        abcSource = ''
     }
 
     Scene3D {
@@ -281,8 +280,7 @@ FocusScope {
                     property Entity abcLoader: undefined
                     enabled: showSfMCheckBox.checked
 
-                    Component.onCompleted: reload()
-                    function reload() {
+                    Component.onCompleted: {
                         if(!root.supportAlembic) // Alembic plugin not available
                             return
 

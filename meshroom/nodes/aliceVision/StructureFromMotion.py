@@ -56,7 +56,7 @@ class StructureFromMotion(desc.CommandLineNode):
             label='Local Bundle Adjustment',
             description='It reduces the reconstruction time, especially for large datasets (500+ images),\n'
                         'by avoiding computation of the Bundle Adjustment on areas that are not changing.',
-            value=False,
+            value=True,
             uid=[0],
         ),
         desc.IntParam(

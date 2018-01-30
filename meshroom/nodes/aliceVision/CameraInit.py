@@ -44,7 +44,7 @@ Intrinsic = [
 
 class CameraInit(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
-    commandLine = 'aliceVision_cameraInit {allParams}'
+    commandLine = 'aliceVision_cameraInit {allParams} --allowSingleView 1' # don't throw an error if there is only one image
 
     size = desc.DynamicNodeSize('viewpoints')
 
@@ -115,6 +115,7 @@ class CameraInit(desc.CommandLineNode):
             os.makedirs(os.path.join(tmpCache, node.internalFolder))
             self.createViewpointsFile(node, additionalViews)
             cmd = self.buildCommandLine(node.chunks[0])
+            cmd += " --allowIncompleteOutput 1" # don't throw an error if the image intrinsic is undefined
             # logging.debug(' - commandLine:', cmd)
             subprocess = psutil.Popen(cmd, stdout=None, stderr=None, shell=True)
             stdout, stderr = subprocess.communicate()

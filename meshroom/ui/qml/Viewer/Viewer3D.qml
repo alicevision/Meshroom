@@ -12,12 +12,15 @@ FocusScope {
 
     property alias source: modelLoader.source
     property alias abcSource: modelLoader.abcSource
+    property alias depthMapSource: modelLoader.depthMapSource
 
     readonly property alias loading: modelLoader.loading
 
     // Alembic optional support => won't be available if AlembicEntity plugin is not available
     readonly property Component abcLoaderComp: Qt.createComponent("AlembicLoader.qml")
     readonly property bool supportAlembic: abcLoaderComp.status == Component.Ready
+    readonly property Component depthMapLoaderComp: Qt.createComponent("DepthMapLoader.qml")
+    readonly property bool supportDepthMap: depthMapLoaderComp.status == Component.Ready
 
     // functions
     function resetCameraCenter() {
@@ -233,6 +236,7 @@ FocusScope {
                 id: modelLoader
                 property string source
                 property string abcSource
+                property string depthMapSource
                 property bool meshHasTexture: false
                 // SceneLoader status is not reliable when loading a 3D file
                 property bool loading: false
@@ -313,6 +317,32 @@ FocusScope {
                     }
                 }
 
+                Entity {
+                    id: depthMapLoaderEntity
+                    // Instantiate the DepthMapEntity dynamically
+                    // to avoid import errors if the plugin is not available
+                    property Entity depthMapLoader: undefined
+                    enabled: showDepthMapCheckBox.checked
+
+                    Component.onCompleted: {
+                        if(!root.supportDepthMap) // DepthMap plugin not available
+                            return
+
+                        // destroy previously created entity
+                        if(depthMapLoader != undefined)
+                            depthMapLoader.destroy()
+
+                        depthMapLoader = depthMapLoaderComp.createObject(depthMapLoaderEntity, {
+                                                       'source': Qt.binding(function() { return modelLoader.depthMapSource } )
+                                                   });
+                        // 'sourceChanged' signal is emitted once the depthMap file is loaded
+                        // set the 'loading' property to false when it's emitted
+                        // TODO: DepthMapEntity should expose a status
+                        depthMapLoader.onSourceChanged.connect(function(){ modelLoader.loading = false })
+                        modelLoader.loading = false
+                    }
+                }
+
                 Locator3D { enabled: locatorCheckBox.checked }
             }
             Grid3D { enabled: gridCheckBox.checked }
@@ -359,6 +389,16 @@ FocusScope {
                 ToolButton {
                     text: MaterialIcons.clear; font.family: MaterialIcons.fontFamily; visible: root.abcSource != '';
                     onClicked: clearAbc()
+                    ToolTip.text: "Unload"
+                    ToolTip.visible: hovered
+                }
+            }
+            Row {
+                visible: root.depthMapSource != ''
+                CheckBox { id: showDepthMapCheckBox; text: "DepthMap"; checked: true; }
+                ToolButton {
+                    text: MaterialIcons.clear; font.family: MaterialIcons.fontFamily;
+                    onClicked: root.depthMapSource = ''
                     ToolTip.text: "Unload"
                     ToolTip.visible: hovered
                 }

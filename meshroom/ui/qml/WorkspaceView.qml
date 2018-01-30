@@ -42,13 +42,12 @@ Item {
 
     Connections {
         target: reconstruction
-        onSfmChanged: loadSfmAbc()
         onSfmReportChanged: loadSfmAbc()
     }
 
     function loadSfmAbc()
     {
-        workspaceView.load3DMedia(reconstruction.sfm.attribute('output').value)
+        load3DMedia(reconstruction.sfm.attribute('output').value)
     }
 
     SystemPalette { id: palette }

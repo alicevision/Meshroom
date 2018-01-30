@@ -122,8 +122,7 @@ FocusScope {
 
     function clearAbc()
     {
-        abcSource = ''               // does not work yet by itself
-        abcLoaderEntity.reload()     // need to re-create the alembic loader
+        abcSource = ''
     }
 
     Scene3D {
@@ -281,8 +280,7 @@ FocusScope {
                     property Entity abcLoader: undefined
                     enabled: showSfMCheckBox.checked
 
-                    Component.onCompleted: reload()
-                    function reload() {
+                    Component.onCompleted: {
                         if(!root.supportAlembic) // Alembic plugin not available
                             return
 
@@ -293,7 +291,7 @@ FocusScope {
                         abcLoader = abcLoaderComp.createObject(abcLoaderEntity, {
                                                        'url': Qt.binding(function() { return modelLoader.abcSource } ),
                                                        'particleSize': Qt.binding(function() { return 0.01 * transform.scale }),
-                                                       'locatorScale': Qt.binding(function() { return 0.07 * transform.scale })
+                                                       'locatorScale': Qt.binding(function() { return 0.2})
                                                    });
                         // urlChanged signal is emitted once the Alembic file is loaded
                         // set the 'loading' property to false when it's emitted

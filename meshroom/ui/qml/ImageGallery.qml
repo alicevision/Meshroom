@@ -75,9 +75,10 @@ Panel {
 
                 // Reconstruction status indicator
                 Label {
-                    property bool inViews: _reconstruction.views[viewpoint.get('viewId').value] != undefined
-                    property bool reconstructed: _reconstruction.poses[viewpoint.get('poseId').value] != undefined
-                    property bool skipped: inViews && !reconstructed
+                    id: statusIndicator
+                    property bool inViews: _reconstruction.sfmReport && _reconstruction.isInViews(object)
+                    property bool reconstructed: _reconstruction.sfmReport && _reconstruction.isReconstructed(object)
+
                     font.family: MaterialIcons.fontFamily
                     text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
                     color: reconstructed ? "#4CAF50" : "#F44336"

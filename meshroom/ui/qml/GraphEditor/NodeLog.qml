@@ -31,7 +31,7 @@ FocusScope {
             highlightFollowsCurrentItem: true
             keyNavigationEnabled: true
             focus: true
-            currentIndex: -1
+            currentIndex: 0
 
             header: Component {
                 Label {
@@ -83,6 +83,8 @@ FocusScope {
                 id: fileSelector
                 Layout.fillWidth: true
                 property string currentFile: chunksLV.currentChunk ? chunksLV.currentChunk[currentItem.fileProperty] : ""
+                property string lastLoadedFile
+                property date lastModTime
                 onCurrentFileChanged: if(visible) loadCurrentFile(false)
                 onVisibleChanged: loadCurrentFile()
 
@@ -121,6 +123,15 @@ FocusScope {
                             ToolTip.visible: hovered
                             font.family: MaterialIcons.fontFamily
                             onClicked: loadCurrentFile(false)
+                        }
+                        ToolButton {
+                            id: autoRefresh
+                            text: MaterialIcons.timer
+                            ToolTip.text: "Auto-Refresh when Running"
+                            ToolTip.visible: hovered
+                            font.family: MaterialIcons.fontFamily
+                            checked: true
+                            checkable: true
                         }
                         ToolButton {
                             text: MaterialIcons.vertical_align_top
@@ -165,6 +176,7 @@ FocusScope {
                         selectByMouse: true
                         selectByKeyboard: true
                         persistentSelection: true
+                        font.family: "Monospace"
                     }
                 }
             }
@@ -173,7 +185,7 @@ FocusScope {
 
     // Auto-reload current file if NodeChunk is being computed
     Timer {
-        running: chunksLV.currentChunk != undefined && chunksLV.currentChunk.statusName === "RUNNING"
+        running: autoRefresh.checked && chunksLV.currentChunk != undefined && chunksLV.currentChunk.statusName === "RUNNING"
         interval: 2000
         repeat: true
         triggeredOnStart: true
@@ -185,18 +197,54 @@ FocusScope {
         var xhr = new XMLHttpRequest;
         xhr.open("GET", fileSelector.currentFile);
         xhr.onreadystatechange = function() {
+            if(xhr.readyState == XMLHttpRequest.HEADERS_RECEIVED)
+            {
+                // if the file is already open
+                // check last modification date
+                var lastMod = new Date(xhr.getResponseHeader("Last-Modified"));
+                if(fileSelector.lastLoadedFile == fileSelector.currentFile
+                  && lastMod.getTime() == fileSelector.lastModTime.getTime() )
+                {
+                    // file has not changed, don't reload it
+                    xhr.doLoad = false;
+                    return
+                }
+                // file is different or last modification time has changed
+                fileSelector.lastModTime = lastMod
+                xhr.doLoad = true
+            }
             if (xhr.readyState == XMLHttpRequest.DONE) {
+                // store lastLoadedFile url
+                fileSelector.lastLoadedFile = fileSelector.currentFile
+                // if responseText should not be loaded
+                if(!xhr.doLoad)
+                {
+                    // file could not be opened, reset text and lastModTime
+                    if(xhr.status == 0)
+                    {
+                        fileSelector.lastModTime = new Date()
+                        logArea.text = ''
+                    }
+                    return;
+                }
+                // store cursor position and content position
                 var cursorPosition = logArea.cursorPosition;
+                var contentY = logScrollView.ScrollBar.vertical.position;
+
+                // replace text
                 logArea.text = xhr.responseText;
-                // Reset cursor position to trigger scroll to bottom
-                logArea.cursorPosition = 0;
+
                 if(autoScroll.checked)
                 {
+                    // Reset cursor position to trigger scroll to bottom
+                    logArea.cursorPosition = 0;
                     logArea.cursorPosition = logArea.length;
                 }
                 else if(keepCursorPosition)
                 {
-                    logArea.cursorPosition = cursorPosition;
+                    if(cursorPosition)
+                        logArea.cursorPosition = cursorPosition;
+                    logScrollView.ScrollBar.vertical.position = contentY
                 }
             }
         };

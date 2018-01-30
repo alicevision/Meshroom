@@ -291,7 +291,7 @@ FocusScope {
                         abcLoader = abcLoaderComp.createObject(abcLoaderEntity, {
                                                        'url': Qt.binding(function() { return modelLoader.abcSource } ),
                                                        'particleSize': Qt.binding(function() { return 0.01 * transform.scale }),
-                                                       'locatorScale': Qt.binding(function() { return 0.07 * transform.scale })
+                                                       'locatorScale': Qt.binding(function() { return 0.2})
                                                    });
                         // urlChanged signal is emitted once the Alembic file is loaded
                         // set the 'loading' property to false when it's emitted

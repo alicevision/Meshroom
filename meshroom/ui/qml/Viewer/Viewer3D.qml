@@ -160,6 +160,18 @@ FocusScope {
                 }
             }
 
+            // Scene light, attached to the camera
+            Entity {
+                components: [
+                    PointLight {
+                        color: "white"
+                    },
+                    Transform {
+                        translation: mainCamera.position
+                    }
+                ]
+            }
+
             DefaultCameraController {
                 id: cameraController
                 camera: mainCamera

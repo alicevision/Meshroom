@@ -55,6 +55,13 @@ class MeshResampling(desc.CommandLineNode):
             range=(0, 100, 1),
             uid=[0],
         ),
+        desc.BoolParam(
+            name='flipNormals',
+            label='Flip Normals',
+            description='''Option to flip face normals. It can be needed as it depends on the vertices order in triangles and the convention change from one software to another.''',
+            value=False,
+            uid=[0],
+        ),
     ]
 
     outputs = [

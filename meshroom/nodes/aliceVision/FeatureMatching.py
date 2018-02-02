@@ -73,7 +73,7 @@ class FeatureMatching(desc.CommandLineNode):
             name='savePutativeMatches',
             label='Save Putative Matches',
             description='''putative matches.''',
-            value='',
+            value=False,
             uid=[0],
         ),
         desc.BoolParam(

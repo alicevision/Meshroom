@@ -29,8 +29,17 @@ Loader {
     function setTextFieldAttribute(attribute, value)
     {
         // editingFinished called even when TextField is readonly
-        if(editable)
+        if(!editable)
+            return
+        switch(attribute.type)
+        {
+        case "IntParam":
+        case "FloatParam":
+            _reconstruction.setAttribute(attribute, Number(value))
+            break;
+        default:
             _reconstruction.setAttribute(attribute, value.trim())
+        }
     }
 
     Component {

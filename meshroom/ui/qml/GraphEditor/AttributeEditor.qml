@@ -1,6 +1,7 @@
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
+import MaterialIcons 2.2
 
 /**
   A component to display and edit a Node's attributes.
@@ -31,8 +32,11 @@ ColumnLayout {
             }
 
             ToolButton {
-                text: "⚙"
+                text: MaterialIcons.settings
+                font.family: MaterialIcons.fontFamily
                 onClicked: settingsMenu.popup()
+                checkable: true
+                checked: settingsMenu.visible
             }
         }
         Menu {

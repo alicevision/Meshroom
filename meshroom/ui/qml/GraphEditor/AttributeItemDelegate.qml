@@ -1,6 +1,7 @@
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
+import MaterialIcons 2.2
 import "../filepath.js" as Filepath
 
 /**
@@ -240,8 +241,8 @@ RowLayout {
                 id: listAttribute_layout
                 width: parent.width
                 property bool expanded: false
-                Row {
-                    spacing: 2
+                RowLayout {
+                    spacing: 4
                     ToolButton {
                         text: listAttribute_layout.expanded  ? "▾" : "▸"
                         onClicked: listAttribute_layout.expanded = !listAttribute_layout.expanded
@@ -251,7 +252,10 @@ RowLayout {
                         text: attribute.value.count + " elements"
                     }
                     ToolButton {
-                        text: "+"
+                        text: MaterialIcons.add_circle_outline
+                        font.family: MaterialIcons.fontFamily
+                        font.pointSize: 11
+                        padding: 2
                         enabled: root.editable
                         onClicked: _reconstruction.appendAttribute(attribute, undefined)
                     }
@@ -286,7 +290,10 @@ RowLayout {
                         }
                         ToolButton {
                             enabled: root.editable
-                            text: "∅"
+                            text: MaterialIcons.remove_circle_outline
+                            font.family: MaterialIcons.fontFamily
+                            font.pointSize: 11
+                            padding: 2
                             ToolTip.text: "Remove Element"
                             ToolTip.visible: hovered
                             onClicked: _reconstruction.removeAttribute(item.childAttrib)

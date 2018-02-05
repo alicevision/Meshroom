@@ -64,6 +64,9 @@ RowLayout {
         case "FloatParam":
             _reconstruction.setAttribute(root.attribute, Number(value))
             break;
+        case "File":
+            _reconstruction.setAttribute(root.attribute, value.replace("file://", "").trim())
+            break;
         default:
             _reconstruction.setAttribute(root.attribute, value.trim())
         }
@@ -93,6 +96,16 @@ RowLayout {
                 selectByMouse: true
                 onEditingFinished: setTextFieldAttribute(text)
                 onAccepted: setTextFieldAttribute(text)
+                DropArea {
+                    enabled: root.editable
+                    anchors.fill: parent
+                    onDropped: {
+                        if(drop.hasUrls)
+                            setTextFieldAttribute(drop.urls[0].toLocaleString())
+                        else if(drop.hasText && drop.text != '')
+                            setTextFieldAttribute(drop.text)
+                    }
+                }
             }
         }
 

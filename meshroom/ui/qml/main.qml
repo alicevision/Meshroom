@@ -290,6 +290,9 @@ ApplicationWindow {
         anchors.fill: parent
         orientation: Qt.Vertical
 
+        // Setup global tooltip style
+        ToolTip.toolTip.background: Rectangle { color: palette.base; border.color: palette.mid }
+
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true

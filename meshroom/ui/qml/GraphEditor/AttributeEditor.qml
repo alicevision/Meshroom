@@ -64,7 +64,7 @@ ColumnLayout {
                 id: attributesListView
 
                 anchors.fill: parent
-                anchors.margins: 6
+                anchors.margins: 4
 
                 clip: true
                 spacing: 1

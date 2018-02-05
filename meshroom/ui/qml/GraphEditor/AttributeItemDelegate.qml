@@ -1,6 +1,7 @@
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
+import "../filepath.js" as Filepath
 
 /**
   Instantiate a control to visualize and edit an Attribute based on its type.
@@ -52,10 +53,33 @@ RowLayout {
             property Component menuComp: Menu {
                 id: paramMenu
 
+                property bool isFileAttribute: attribute.type == "File"
+                property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.value)
+
                 MenuItem {
                     text: "Reset To Default Value"
                     enabled: !attribute.isOutput && !attribute.isLink && !attribute.isDefault
                     onTriggered: _reconstruction.resetAttribute(attribute)
+                }
+
+                MenuSeparator {
+                    visible: paramMenu.isFileAttribute
+                    height: visible ? implicitHeight : 0
+                }
+
+                MenuItem {
+                    visible: paramMenu.isFileAttribute
+                    height: visible ? implicitHeight : 0
+                    text: paramMenu.isFilepath ? "Open Containing Folder" : "Open Folder"
+                    onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(attribute.value)) :
+                                                      Qt.openUrlExternally(attribute.value)
+                }
+
+                MenuItem {
+                    visible: paramMenu.isFilepath
+                    height: visible ? implicitHeight : 0
+                    text: "Open File"
+                    onClicked: Qt.openUrlExternally(attribute.value)
                 }
             }
 
@@ -240,7 +264,7 @@ RowLayout {
                     Layout.fillWidth: true
                     Layout.margins: 4
                     clip: true
-                    spacing: 10
+                    spacing: 4
 
                     ScrollBar.vertical: ScrollBar { id: sb }
 

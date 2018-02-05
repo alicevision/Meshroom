@@ -36,6 +36,9 @@ RowLayout {
         ToolTip.visible: parameterMA.containsMouse && object.desc.description
         ToolTip.delay: 800
 
+        // make label bold if attribute's value is not the default one
+        font.bold: !object.isDefault
+
         background: Rectangle { color: Qt.darker(palette.window, 1.2) }
 
         MouseArea {

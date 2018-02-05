@@ -11,8 +11,8 @@ RowLayout {
     property variant attribute: null
     property bool readOnly: false // whether the attribute's value can be modified
 
-    property bool showLabel: true // whether to show the label
-    property int labelWidth: 180  // the fixed size of the label
+    property alias label: parameterLabel  // accessor to the internal Label (attribute's name)
+    property int labelWidth               // shortcut to set the fixed size of the Label
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
@@ -29,7 +29,6 @@ RowLayout {
         wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
         text: attribute.label
-        visible: showLabel
 
         // Tooltip hint with attribute's description
         ToolTip.text: object.desc.description
@@ -221,7 +220,6 @@ RowLayout {
                     implicitHeight: Math.min(childrenRect.height, 300)
                     Layout.fillWidth: true
                     Layout.margins: 4
-                    Layout.leftMargin: 10
                     clip: true
                     spacing: 10
 
@@ -239,7 +237,9 @@ RowLayout {
                                                         'readOnly': Qt.binding(function() { return root.readOnly })
                                                        })
                             obj.Layout.fillWidth = true
-                            obj.showLabel = false
+                            obj.label.text = index
+                            obj.label.horizontalAlignment = Text.AlignHCenter
+                            obj.label.verticalAlignment = Text.AlignVCenter
                         }
                         ToolButton {
                             enabled: root.editable
@@ -275,11 +275,10 @@ RowLayout {
                                                     'readOnly': Qt.binding(function() { return root.readOnly })
                                                    })
                         obj.Layout.fillWidth = true
-                        obj.labelWidth = 100 // reduce label width for children (gain space)
+                        obj.labelWidth = 100 // reduce label width for children (space gain)
                     }
                 }
             }
         }
     }
-
 }

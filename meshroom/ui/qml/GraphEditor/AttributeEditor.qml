@@ -73,6 +73,7 @@ ColumnLayout {
                 model: node ? node.attributes : undefined
 
                 delegate: AttributeItemDelegate {
+                    labelWidth: 180
                     width: attributesListView.width
                     attribute: object
                 }

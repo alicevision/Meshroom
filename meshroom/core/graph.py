@@ -258,8 +258,11 @@ class Attribute(BaseObject):
             return '"{}"'.format(self.value)
         return str(self.value)
 
+    def defaultValue(self):
+        return self.desc.value
+
     def _isDefault(self):
-        return self._value == self.desc.value
+        return self._value == self.defaultValue()
 
     def getPrimitiveValue(self, exportDefault=True):
         return self._value
@@ -336,6 +339,9 @@ class ListAttribute(Attribute):
     def getExportValue(self):
         return [attr.getExportValue() for attr in self._value]
 
+    def defaultValue(self):
+        return []
+
     def _isDefault(self):
         return len(self._value) == 0
 
@@ -397,6 +403,9 @@ class GroupAttribute(Attribute):
     def _isDefault(self):
         return all(v.isDefault for v in self._value)
 
+    def defaultValue(self):
+        return {key: attr.defaultValue() for key, attr in self._value.items()}
+
     def getPrimitiveValue(self, exportDefault=True):
         if exportDefault:
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()}
@@ -409,6 +418,7 @@ class GroupAttribute(Attribute):
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+
 
 class Edge(BaseObject):
 

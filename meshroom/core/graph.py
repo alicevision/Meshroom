@@ -369,6 +369,7 @@ class GroupAttribute(Attribute):
         for subAttrDesc in self.attributeDesc.groupDesc:
             childAttr = attribute_factory(subAttrDesc, None, self.isOutput, self.node, self)
             subAttributes.append(childAttr)
+            childAttr.valueChanged.connect(self.valueChanged)
 
         self._value.reset(subAttributes)
 

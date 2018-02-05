@@ -38,6 +38,9 @@ RowLayout {
         // make label bold if attribute's value is not the default one
         font.bold: !object.isOutput && !object.isDefault
 
+        // make label italic if attribute is a link
+        font.italic: object.isLink
+
         background: Rectangle { color: Qt.darker(palette.window, 1.2) }
 
         MouseArea {

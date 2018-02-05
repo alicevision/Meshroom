@@ -49,8 +49,24 @@ RowLayout {
             hoverEnabled: true
             acceptedButtons: Qt.AllButtons
 
+            property Component menuComp: Menu {
+                id: paramMenu
+
+                MenuItem {
+                    text: "Reset To Default Value"
+                    enabled: !attribute.isOutput && !attribute.isLink && !attribute.isDefault
+                    onTriggered: _reconstruction.resetAttribute(attribute)
+                }
+            }
+
             onClicked: {
                 forceActiveFocus()
+                if(mouse.button == Qt.RightButton)
+                {
+                    var menu = menuComp.createObject(parameterLabel)
+                    menu.parent = parameterLabel
+                    menu.popup()
+                }
             }
         }
     }

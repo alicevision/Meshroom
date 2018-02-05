@@ -36,7 +36,7 @@ RowLayout {
         ToolTip.delay: 800
 
         // make label bold if attribute's value is not the default one
-        font.bold: !object.isDefault
+        font.bold: !object.isOutput && !object.isDefault
 
         background: Rectangle { color: Qt.darker(palette.window, 1.2) }
 

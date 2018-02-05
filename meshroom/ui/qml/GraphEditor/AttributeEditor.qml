@@ -67,39 +67,14 @@ ColumnLayout {
                 anchors.margins: 6
 
                 clip: true
-                spacing: 4
+                spacing: 1
                 ScrollBar.vertical: ScrollBar { id: scrollBar }
 
                 model: node ? node.attributes : undefined
 
-                delegate: RowLayout {
+                delegate: AttributeItemDelegate {
                     width: attributesListView.width
-                    spacing: 4
-
-                    Label {
-                        id: parameterLabel
-                        text: object.label
-                        Layout.preferredWidth: 180
-                        color: object.isOutput ? "orange" : palette.text
-                        elide: Label.ElideRight
-                        ToolTip.text: object.desc.description
-                        ToolTip.visible: parameterMA.containsMouse && object.desc.description
-                        ToolTip.delay: 200
-
-                        MouseArea {
-                            id: parameterMA
-                            anchors.fill: parent
-                            hoverEnabled: true
-                        }
-                    }
-
-                    AttributeItemDelegate {
-                        Layout.fillWidth: true
-                        Layout.rightMargin: scrollBar.width
-                        height: childrenRect.height
-                        attribute: object
-                        readOnly: root.readOnly
-                    }
+                    attribute: object
                 }
             }
         }

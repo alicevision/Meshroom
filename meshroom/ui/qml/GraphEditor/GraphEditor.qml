@@ -60,6 +60,7 @@ Item {
         }
         onReleased: {
             drag.target = undefined // stop drag
+            root.forceActiveFocus()
             workspaceClicked()
         }
         onPositionChanged: {

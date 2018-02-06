@@ -138,7 +138,10 @@ RowLayout {
                 text: attribute.value
                 selectByMouse: true
                 onEditingFinished: setTextFieldAttribute(text)
-                onAccepted: setTextFieldAttribute(text)
+                onAccepted: {
+                    setTextFieldAttribute(text)
+                    root.forceActiveFocus()
+                }
                 DropArea {
                     enabled: root.editable
                     anchors.fill: parent
@@ -203,6 +206,7 @@ RowLayout {
                     selectByMouse: true
                     validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
+                    onAccepted: setTextFieldAttribute(text)
                 }
 
                 Slider {

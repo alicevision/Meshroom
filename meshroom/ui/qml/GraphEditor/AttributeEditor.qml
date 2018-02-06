@@ -81,6 +81,13 @@ ColumnLayout {
                     width: attributesListView.width
                     attribute: object
                 }
+                // Helper MouseArea to lose edit/activeFocus
+                // when clicking on the background
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.forceActiveFocus()
+                    z: -1
+                }
             }
         }
 

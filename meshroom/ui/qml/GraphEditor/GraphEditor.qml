@@ -229,6 +229,7 @@ Item {
                     onDoubleClicked: root.nodeDoubleClicked(node)
 
                     onComputeRequest: uigraph.execute(node)
+                    onSubmitRequest: uigraph.submit(node)
                     onRemoveRequest: uigraph.removeNode(node)
 
                     Keys.onDeletePressed: uigraph.removeNode(node)

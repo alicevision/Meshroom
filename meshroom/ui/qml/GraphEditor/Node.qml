@@ -15,6 +15,7 @@ Item {
     signal attributePinCreated(var attribute, var pin)
 
     signal computeRequest()
+    signal submitRequest()
     signal removeRequest()
 
     implicitHeight: body.height
@@ -39,6 +40,11 @@ Item {
                 text: "Compute"
                 enabled: !root.readOnly
                 onTriggered: root.computeRequest()
+            }
+            MenuItem {
+                text: "Submit"
+                enabled: !root.readOnly
+                onTriggered: root.submitRequest()
             }
             MenuItem {
                 text: "Open Folder"

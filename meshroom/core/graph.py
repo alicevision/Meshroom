@@ -1812,8 +1812,7 @@ def execute(graph, toNodes=None, forceCompute=False, forceStatus=False):
         node.endSequence()
 
 
-def submitGraph(graph, submitter, toNode=None):
-    toNodes = graph.findNodes([toNode]) if toNode else None
+def submitGraph(graph, submitter, toNodes=None):
     nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
     flowEdges = graph.flowEdges(startNodes=toNodes)
     edgesToProcess = set(edgesToProcess).intersection(flowEdges)
@@ -1843,5 +1842,6 @@ def submit(graphFile, submitter, toNode=None):
     Submit the given graph via the given submitter.
     """
     graph = loadGraph(graphFile)
-    submitGraph(graph, submitter, toNode)
+    toNodes = graph.findNodes([toNode]) if toNode else None
+    submitGraph(graph, submitter, toNodes)
 

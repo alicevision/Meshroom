@@ -1,7 +1,7 @@
 import os
 import time
 
-from PySide2.QtCore import QFileSystemWatcher, QUrl, Slot
+from PySide2.QtCore import QFileSystemWatcher, QUrl, Slot, QTimer
 from PySide2.QtQml import QQmlApplicationEngine
 
 
@@ -29,6 +29,8 @@ class QmlInstantEngine(QQmlApplicationEngine):
         self._rootItem = None
 
         def onObjectCreated(root, url):
+            if not root:
+                return
             # Restore root item geometry
             if self._rootItem:
                 root.setGeometry(self._rootItem.geometry())
@@ -160,6 +162,11 @@ class QmlInstantEngine(QQmlApplicationEngine):
     @Slot(str)
     def onFileChanged(self, filepath):
         """ Handle changes in a watched file. """
+        if filepath not in self._watchedFiles:
+            # could happen if a file has just been reloaded
+            # and has not been re-added yet to the watched files
+            return
+
         if self._verbose:
             print("Source file changed : ", filepath)
         # Clear the QQuickEngine cache
@@ -177,9 +184,10 @@ class QmlInstantEngine(QQmlApplicationEngine):
 
         self.reload()
 
-        # Finally, read the modified file to the watch system
-        self.addFile(filepath)
+        # Finally, re-add the modified file to the watch system
+        # after a short cooldown to avoid multiple consecutive reloads
+        QTimer.singleShot(200, lambda: self.addFile(filepath))
 
     def reload(self):
-        print("Reloading ", self._sourceFile)
+        print("Reloading {}".format(self._sourceFile))
         self.load(self._sourceFile)

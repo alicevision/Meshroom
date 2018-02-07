@@ -15,3 +15,10 @@ function extension(path) {
     var dot_pos = path.lastIndexOf('.');
     return dot_pos > -1 ? path.substring(dot_pos, path.length) : ""
 }
+
+/// Return whether the given path is a path to a file.
+/// (only based on the fact that the last portion of the path
+/// matches the 'basename.extension' pattern)
+function isFile(path) {
+    return extension(path) !== ""
+}

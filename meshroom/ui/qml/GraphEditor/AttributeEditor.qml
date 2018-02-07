@@ -1,6 +1,7 @@
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
+import MaterialIcons 2.2
 
 /**
   A component to display and edit a Node's attributes.
@@ -31,8 +32,11 @@ ColumnLayout {
             }
 
             ToolButton {
-                text: "⚙"
+                text: MaterialIcons.settings
+                font.family: MaterialIcons.fontFamily
                 onClicked: settingsMenu.popup()
+                checkable: true
+                checked: settingsMenu.visible
             }
         }
         Menu {
@@ -64,42 +68,25 @@ ColumnLayout {
                 id: attributesListView
 
                 anchors.fill: parent
-                anchors.margins: 6
+                anchors.margins: 4
 
                 clip: true
-                spacing: 4
+                spacing: 1
                 ScrollBar.vertical: ScrollBar { id: scrollBar }
 
                 model: node ? node.attributes : undefined
 
-                delegate: RowLayout {
+                delegate: AttributeItemDelegate {
+                    labelWidth: 180
                     width: attributesListView.width
-                    spacing: 4
-
-                    Label {
-                        id: parameterLabel
-                        text: object.label
-                        Layout.preferredWidth: 180
-                        color: object.isOutput ? "orange" : palette.text
-                        elide: Label.ElideRight
-                        ToolTip.text: object.desc.description
-                        ToolTip.visible: parameterMA.containsMouse && object.desc.description
-                        ToolTip.delay: 200
-
-                        MouseArea {
-                            id: parameterMA
-                            anchors.fill: parent
-                            hoverEnabled: true
-                        }
-                    }
-
-                    AttributeItemDelegate {
-                        Layout.fillWidth: true
-                        Layout.rightMargin: scrollBar.width
-                        height: childrenRect.height
-                        attribute: object
-                        readOnly: root.readOnly
-                    }
+                    attribute: object
+                }
+                // Helper MouseArea to lose edit/activeFocus
+                // when clicking on the background
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.forceActiveFocus()
+                    z: -1
                 }
             }
         }

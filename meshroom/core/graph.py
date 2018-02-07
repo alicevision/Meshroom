@@ -258,8 +258,11 @@ class Attribute(BaseObject):
             return '"{}"'.format(self.value)
         return str(self.value)
 
-    def isDefault(self):
-        return self._value == self.desc.value
+    def defaultValue(self):
+        return self.desc.value
+
+    def _isDefault(self):
+        return self._value == self.defaultValue()
 
     def getPrimitiveValue(self, exportDefault=True):
         return self._value
@@ -273,6 +276,7 @@ class Attribute(BaseObject):
     isOutput = Property(bool, isOutput.fget, constant=True)
     isLinkChanged = Signal()
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
+    isDefault = Property(bool, _isDefault, notify=valueChanged)
 
 
 class ListAttribute(Attribute):
@@ -289,8 +293,7 @@ class ListAttribute(Attribute):
 
     def _set_value(self, value):
         self._value.clear()
-        if value:
-            self.extend(value)
+        self.extend(value)
         self.requestGraphUpdate()
 
     def append(self, value):
@@ -300,6 +303,7 @@ class ListAttribute(Attribute):
         values = value if isinstance(value, list) else [value]
         attrs = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
         self._value.insert(index, attrs)
+        self.valueChanged.emit()
         self._applyExpr()
         self.requestGraphUpdate()
 
@@ -317,6 +321,7 @@ class ListAttribute(Attribute):
                     self.node.graph.removeEdge(attr)  # delete edge if the attribute is linked
         self._value.removeAt(index, count)
         self.requestGraphUpdate()
+        self.valueChanged.emit()
 
     def uid(self, uidIndex):
         uids = []
@@ -334,20 +339,24 @@ class ListAttribute(Attribute):
     def getExportValue(self):
         return [attr.getExportValue() for attr in self._value]
 
-    def isDefault(self):
-        return bool(self._value)
+    def defaultValue(self):
+        return []
+
+    def _isDefault(self):
+        return len(self._value) == 0
 
     def getPrimitiveValue(self, exportDefault=True):
         if exportDefault:
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value]
         else:
-            return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value if not attr.isDefault()]
+            return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value if not attr.isDefault]
 
     def getValueStr(self):
         return self.attributeDesc.joinChar.join([v.getValueStr() for v in self._value])
 
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
 
 
 class GroupAttribute(Attribute):
@@ -360,6 +369,7 @@ class GroupAttribute(Attribute):
         for subAttrDesc in self.attributeDesc.groupDesc:
             childAttr = attribute_factory(subAttrDesc, None, self.isOutput, self.node, self)
             subAttributes.append(childAttr)
+            childAttr.valueChanged.connect(self.valueChanged)
 
         self._value.reset(subAttributes)
 
@@ -391,20 +401,24 @@ class GroupAttribute(Attribute):
     def getExportValue(self):
         return {key: attr.getExportValue() for key, attr in self._value.objects.items()}
 
-    def isDefault(self):
-        return len(self._value) == 0
+    def _isDefault(self):
+        return all(v.isDefault for v in self._value)
+
+    def defaultValue(self):
+        return {key: attr.defaultValue() for key, attr in self._value.items()}
 
     def getPrimitiveValue(self, exportDefault=True):
         if exportDefault:
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()}
         else:
-            return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault()}
+            return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault}
 
     def getValueStr(self):
         return self.attributeDesc.joinChar.join([v.getValueStr() for v in self._value.objects.values()])
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
+    isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
 
 
 class Edge(BaseObject):

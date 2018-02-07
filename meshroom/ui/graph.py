@@ -276,6 +276,11 @@ class UIGraph(QObject):
     def setAttribute(self, attribute, value):
         self.push(commands.SetAttributeCommand(self._graph, attribute, value))
 
+    @Slot(graph.Attribute)
+    def resetAttribute(self, attribute):
+        """ Reset 'attribute' to its default value """
+        self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
+
     @Slot(graph.Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):
         if isinstance(value, QJsonValue):

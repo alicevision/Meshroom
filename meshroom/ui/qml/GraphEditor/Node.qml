@@ -14,6 +14,9 @@ Item {
     signal doubleClicked(var mouse)
     signal attributePinCreated(var attribute, var pin)
 
+    signal computeRequest()
+    signal removeRequest()
+
     implicitHeight: body.height
 
     MouseArea {
@@ -35,7 +38,7 @@ Item {
             MenuItem {
                 text: "Compute"
                 enabled: !root.readOnly
-                onTriggered: _reconstruction.execute(node)
+                onTriggered: root.computeRequest()
             }
             MenuItem {
                 text: "Open Folder"
@@ -50,7 +53,7 @@ Item {
             MenuItem {
                 text: "Delete Node"
                 enabled: !root.readOnly
-                onTriggered: _reconstruction.removeNode(node)
+                onTriggered: root.removeRequest()
             }
         }
     }

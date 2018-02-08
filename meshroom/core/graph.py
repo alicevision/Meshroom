@@ -189,7 +189,7 @@ class Attribute(BaseObject):
         self.valueChanged.emit()
 
     def requestGraphUpdate(self):
-        if self.node.graph and self.attributeDesc.uid:
+        if self.node.graph:
             self.node.graph.markNodesDirty(self.node)
 
     @property

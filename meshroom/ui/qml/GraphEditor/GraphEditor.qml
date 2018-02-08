@@ -228,6 +228,10 @@ Item {
                     onPressed: draggable.selectNode(nodeDelegate)
                     onDoubleClicked: root.nodeDoubleClicked(node)
 
+                    onComputeRequest: uigraph.execute(node)
+                    onSubmitRequest: uigraph.submit(node)
+                    onRemoveRequest: uigraph.removeNode(node)
+
                     Keys.onDeletePressed: uigraph.removeNode(node)
 
                     Behavior on x {

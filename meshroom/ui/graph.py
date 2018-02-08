@@ -179,11 +179,18 @@ class UIGraph(QObject):
         self._computeThread.join()
         self.computeStatusChanged.emit()
 
-    @Slot()
-    def submit(self):
-        """ Submit the whole graph to the default Submitter. """
+    @Slot(graph.Node)
+    def submit(self, node=None):
+        """ Submit the graph to the default Submitter.
+        If a node is specified, submit this node and its uncomputed predecessors.
+        Otherwise, submit the whole graph.
+
+        Notes:
+            Default submitter is specified using the MESHROOM_DEFAULT_SUBMITTER environment variable.
+        """
         self.save()  # graph must be saved before being submitted
-        graph.submitGraph(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''))
+        node = [node] if node else None
+        graph.submitGraph(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
 
     def onChunkStatusChanged(self, chunk, status):
         # update graph computing status

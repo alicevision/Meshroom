@@ -20,6 +20,7 @@ Item {
     signal removeRequest()
 
     implicitHeight: body.height
+    objectName: node.name
 
     MouseArea {
         anchors.fill: parent

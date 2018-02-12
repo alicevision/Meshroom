@@ -288,6 +288,61 @@ class UIGraph(QObject):
         """ Reset 'attribute' to its default value """
         self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
 
+    @Slot(graph.Node)
+    def duplicateNode(self, srcNode, createEdges=True):
+        """
+        Duplicate 'srcNode'.
+
+        Args:
+            srcNode (graph.Node): the node to duplicate
+            createEdges (bool): whether to replicate 'srcNode' edges on the duplicated node
+
+        Returns:
+            graph.Node: the duplicated node
+        """
+        serialized = srcNode.toDict()
+        with self.groupedGraphModification("Duplicate Node {}".format(srcNode.name)):
+            # skip edges: filter out attributes which are links
+            if not createEdges:
+                serialized["attributes"] = {k: v for k, v in serialized["attributes"].items() if not graph.isLink(v)}
+            # create a new node of the same type and with the same attributes values
+            node = self.addNode(serialized["nodeType"], **serialized["attributes"])
+        return node
+
+    @Slot(graph.Node, result="QVariantList")
+    def duplicateNodes(self, fromNode):
+        """
+        Duplicate 'fromNode' and all the following nodes towards graph's leaves.
+
+        Args:
+            fromNode (graph.Node): the node to start the duplication from
+
+        Returns:
+            [graph.Nodes]: the duplicated nodes
+        """
+        srcNodes, srcEdges = self._graph.nodesFromNode(fromNode)
+        srcNodes = srcNodes[1:]  # skip fromNode
+        duplicates = {}
+        with self.groupedGraphModification("Duplicate {} Nodes".format(len(srcNodes))):
+            # duplicate the first node with its external edges
+            duplicates[fromNode.name] = self.duplicateNode(fromNode)
+            # duplicate all the following nodes and remap their edges internally
+            for srcNode in srcNodes:
+                duplicate = self.duplicateNode(srcNode, createEdges=False)
+                duplicates[srcNode.name] = duplicate  # original node to duplicate map
+                # get link attributes
+                links = {k: v for k, v in srcNode.toDict()["attributes"].items() if graph.isLink(v)}
+                for attr, link in links.items():
+                    link = link[1:-1]  # remove starting '{' and trailing '}'
+                    # get source node and attribute name
+                    edgeSrcNode, edgeSrcAttrName = link.split(".", 1)
+                    # if the edge's source node has been duplicated, use the duplicate
+                    # otherwise use the original node
+                    edgeSrcNode = duplicates.get(edgeSrcNode, self._graph.node(edgeSrcNode))
+                    self.addEdge(edgeSrcNode.attribute(edgeSrcAttrName), duplicate.attribute(attr))
+
+        return duplicates.values()
+
     @Slot(graph.Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):
         if isinstance(value, QJsonValue):

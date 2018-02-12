@@ -225,11 +225,34 @@ Item {
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
 
-                    onPressed: draggable.selectNode(nodeDelegate)
+                    onPressed: {
+                        if(mouse.modifiers & Qt.AltModifier)
+                        {
+                            var delegates = duplicate(true)
+                            draggable.selectNode(delegates[0])
+                        }
+                        else
+                            draggable.selectNode(nodeDelegate)
+                    }
+
+                    function duplicate(duplicateFollowingNodes) {
+                        var nodes = duplicateFollowingNodes ? uigraph.duplicateNodes(node) : [uigraph.duplicateNode(node)]
+                        var delegates = []
+                        var from = nodeRepeater.count - nodes.length
+                        var to = nodeRepeater.count
+                        for(var i=from; i < to; ++i)
+                        {
+                            delegates.push(nodeRepeater.itemAt(i))
+                        }
+                        doAutoLayout(from, to, x, y + (root.nodeHeight + root.gridSpacing))
+                        return delegates
+                    }
+
                     onDoubleClicked: root.nodeDoubleClicked(node)
 
                     onComputeRequest: uigraph.execute(node)
                     onSubmitRequest: uigraph.submit(node)
+                    onDuplicateRequest: duplicate(duplicateFollowingNodes)
                     onRemoveRequest: uigraph.removeNode(node)
 
                     Keys.onDeletePressed: uigraph.removeNode(node)
@@ -317,6 +340,7 @@ Item {
         for(var i=0; i< count; ++i)
             grid[i] = new Array(count)
 
+        // retrieve reference depth from start node
         var zeroDepth = from > 0 ? nodeRepeater.itemAt(from).node[depthProperty] : 0
 
         for(var i=0; i<count; ++i)

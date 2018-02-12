@@ -16,6 +16,7 @@ Item {
 
     signal computeRequest()
     signal submitRequest()
+    signal duplicateRequest(var duplicateFollowingNodes)
     signal removeRequest()
 
     implicitHeight: body.height
@@ -49,6 +50,15 @@ Item {
             MenuItem {
                 text: "Open Folder"
                 onTriggered: Qt.openUrlExternally(node.internalFolder)
+            }
+            MenuSeparator {}
+            MenuItem {
+                text: "Duplicate"
+                onTriggered: duplicateRequest(false)
+            }
+            MenuItem {
+                text: "Duplicate From Here"
+                onTriggered: duplicateRequest(true)
             }
             MenuSeparator {}
             MenuItem {

@@ -51,6 +51,15 @@ else:
 
 stringIsLinkRe = re.compile('^\{[A-Za-z]+[A-Za-z0-9_.]*\}$')
 
+
+def isLink(value):
+    """
+    Return whether the given argument is a link expression.
+    A link expression is a string matching the {nodeName.attrName} pattern.
+    """
+    return isinstance(value, basestring) and stringIsLinkRe.match(value)
+
+
 def isCollection(v):
     return isinstance(v, collections.Iterable) and not isinstance(v, basestring)
 
@@ -170,7 +179,7 @@ class Attribute(BaseObject):
         if self._value == value:
             return
 
-        if isinstance(value, Attribute) or (isinstance(value, basestring) and stringIsLinkRe.match(value)):
+        if isinstance(value, Attribute) or (isinstance(value, basestring) and isLink(value)):
             # if we set a link to another attribute
             self._value = value
         else:
@@ -236,7 +245,7 @@ class Attribute(BaseObject):
         if isinstance(v, Attribute):
             g.addEdge(v, self)
             self._value = ""
-        elif self.isInput and isinstance(v, basestring) and stringIsLinkRe.match(v):
+        elif self.isInput and isinstance(v, basestring) and isLink(v):
             # value is a link to another attribute
             link = v[1:-1]
             linkNode, linkAttr = link.split('.')

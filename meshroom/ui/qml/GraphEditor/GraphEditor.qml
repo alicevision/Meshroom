@@ -225,11 +225,34 @@ Item {
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
 
-                    onPressed: draggable.selectNode(nodeDelegate)
+                    onPressed: {
+                        if(mouse.modifiers & Qt.AltModifier)
+                        {
+                            var delegates = duplicate(true)
+                            draggable.selectNode(delegates[0])
+                        }
+                        else
+                            draggable.selectNode(nodeDelegate)
+                    }
+
+                    function duplicate(duplicateFollowingNodes) {
+                        var nodes = duplicateFollowingNodes ? uigraph.duplicateNodes(node) : [uigraph.duplicateNode(node)]
+                        var delegates = []
+                        var from = nodeRepeater.count - nodes.length
+                        var to = nodeRepeater.count
+                        for(var i=from; i < to; ++i)
+                        {
+                            delegates.push(nodeRepeater.itemAt(i))
+                        }
+                        doAutoLayout(from, to, x, y + (root.nodeHeight + root.gridSpacing))
+                        return delegates
+                    }
+
                     onDoubleClicked: root.nodeDoubleClicked(node)
 
                     onComputeRequest: uigraph.execute(node)
                     onSubmitRequest: uigraph.submit(node)
+                    onDuplicateRequest: duplicate(duplicateFollowingNodes)
                     onRemoveRequest: uigraph.removeNode(node)
 
                     Keys.onDeletePressed: uigraph.removeNode(node)
@@ -295,40 +318,53 @@ Item {
         draggable.y = bbox.y*draggable.scale*-1 + (root.height-bbox.height*draggable.scale)*0.5
     }
 
-    // Really basic auto-layout based on node depths
-    function doAutoLayout()
+    /** Basic auto-layout based on node depths
+     * @param {int} from the index of the node to start the layout from (default: 0)
+     * @param {int} to the index of the node end the layout at (default: nodeCount)
+     * @param {real} startX layout origin x coordinate (default: 0)
+     * @param {real} startY layout origin y coordinate (default: 0)
+    */
+    function doAutoLayout(from, to, startX, startY)
     {
-        var depthProperty = useMinDepth ? 'minDepth' : 'depth'
-        var grid = new Array(nodeRepeater.count)
-        for(var i=0; i< nodeRepeater.count; ++i)
-            grid[i] = new Array(nodeRepeater.count)
-        for(var i=0; i<nodeRepeater.count; ++i)
-        {
-            var obj = nodeRepeater.itemAt(i);
-        }
+        // default values
+        from = from === undefined ? 0 : from
+        to = to === undefined ? nodeRepeater.count : to
+        startX = startX === undefined ? 0 : startX
+        startY = startY === undefined ? 0 : startY
 
-        for(var i=0; i<nodeRepeater.count; ++i)
+        var count = to - from;
+
+        var depthProperty = useMinDepth ? 'minDepth' : 'depth'
+        var grid = new Array(count)
+
+        for(var i=0; i< count; ++i)
+            grid[i] = new Array(count)
+
+        // retrieve reference depth from start node
+        var zeroDepth = from > 0 ? nodeRepeater.itemAt(from).node[depthProperty] : 0
+
+        for(var i=0; i<count; ++i)
         {
-            var obj = nodeRepeater.itemAt(i);
+            var obj = nodeRepeater.itemAt(from + i);
             var j=0;
             while(1)
             {
-                if(grid[obj.node[depthProperty]][j] == undefined)
+                if(grid[obj.node[depthProperty]-zeroDepth][j] == undefined)
                 {
-                    grid[obj.node[depthProperty]][j] = obj;
+                    grid[obj.node[depthProperty]-zeroDepth][j] = obj;
                     break;
                 }
                 j++;
             }
         }
-        for(var x= 0; x<nodeRepeater.count; ++x)
+        for(var x=0; x<count; ++x)
         {
-            for(var y=0; y<nodeRepeater.count; ++y)
+            for(var y=0; y<count; ++y)
             {
                 if(grid[x][y] != undefined)
                 {
-                    grid[x][y].x = x * (root.nodeWidth + root.gridSpacing)
-                    grid[x][y].y = y * (root.nodeHeight + root.gridSpacing)
+                    grid[x][y].x = startX + x * (root.nodeWidth + root.gridSpacing)
+                    grid[x][y].y = startY + y * (root.nodeHeight + root.gridSpacing)
                 }
             }
         }

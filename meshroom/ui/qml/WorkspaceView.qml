@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.3
 import Qt.labs.platform 1.0 as Platform
 import Viewer 1.0
 import MaterialIcons 2.2
-import "filepath.js" as Filepath
+import Utils 1.0
 
 
 /**

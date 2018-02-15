@@ -1,7 +1,7 @@
 import QtQuick 2.9
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
-import "filepath.js" as Filepath
+import Utils 1.0
 
 
 /**

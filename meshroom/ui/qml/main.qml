@@ -8,7 +8,7 @@ import Qt.labs.platform 1.0 as Platform
 import Qt.labs.settings 1.0
 import GraphEditor 1.0
 import MaterialIcons 2.2
-import "filepath.js" as Filepath
+import Utils 1.0
 
 ApplicationWindow {
     id: _window

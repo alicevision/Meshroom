@@ -14,6 +14,7 @@ Panel {
 
     property variant cameraInits
     property variant cameraInit
+    readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
     signal removeImageRequest(var attribute)

@@ -1,12 +1,14 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
+import MaterialIcons 2.2
 
 FocusScope {
     id: root
 
     clip: true
     property alias source: image.source
+    property var metadata
 
     // slots
     Keys.onPressed: {
@@ -81,7 +83,7 @@ FocusScope {
         property double factor: 1.2
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onPressed: {
-            root.forceActiveFocus();
+            image.forceActiveFocus()
             if(mouse.button & Qt.MiddleButton)
                 drag.target = image // start drag
         }
@@ -105,12 +107,65 @@ FocusScope {
         }
     }
 
-    // zoom label
-    Label {
+    // Image Metadata overlay Pane
+    ImageMetadataView {
+        width: 350
+        anchors {
+            top: parent.top
+            right: parent.right
+            bottom: bottomToolbar.top
+            margins: 2
+        }
+
+        visible: metadataCB.checked
+        // only load metadata model if visible
+        metadata: visible ? root.metadata : {}
+    }
+
+    Pane {
+        id: bottomToolbar
         anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.margins: 4
-        text: (image.status == Image.Ready ? image.scale.toFixed(2) : "1.00") + "x"
-        state: "xsmall"
+        width: parent.width
+        padding: 2
+        leftPadding: 4
+        rightPadding: leftPadding
+
+        background: Rectangle { color: palette.base; opacity: 0.6 }
+
+        RowLayout {
+            anchors.fill: parent
+
+            // zoom label
+            Label {
+                text: (image.status == Image.Ready ? image.scale.toFixed(2) : "1.00") + "x"
+                state: "xsmall"
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Label {
+                    id: resolutionLabel
+                    text: image.sourceSize.width + "x" + image.sourceSize.height
+                    anchors.centerIn: parent
+                    elide: Text.ElideMiddle
+                }
+            }
+
+            ToolButton {
+                id: metadataCB
+                padding: 3
+
+                font.family: MaterialIcons.fontFamily
+                text: MaterialIcons.info_outline
+
+                ToolTip.text: "Image Metadata"
+                ToolTip.visible: hovered
+
+                font.pointSize: 12
+                smooth: false
+                flat: true
+                checkable: enabled
+            }
+        }
     }
 }

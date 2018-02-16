@@ -1,0 +1,18 @@
+{
+    "BASE": ["mikrosRender", "!RenderLow", "!Wkst_OS", "!\"vfxpc1*\"", "!\"vfxpc??\""],
+    "CPU": {
+        "NONE": [],
+        "NORMAL": [],
+        "INTENSIVE": ["\"RenderHigh*\"", "@.nCPUs>20"]
+    },
+    "RAM": {
+        "NONE": [],
+        "NORMAL": ["@.mem>8"],
+        "INTENSIVE": ["@.mem>30"]
+    },
+    "GPU": {
+        "NONE": [],
+        "NORMAL": ["!\"*loc*\"", "Wkst"],
+        "INTENSIVE": ["!\"*loc*\"", "Wkst"]
+    }
+}

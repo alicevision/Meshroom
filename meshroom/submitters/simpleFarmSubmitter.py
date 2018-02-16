@@ -2,16 +2,21 @@
 # coding:utf-8
 
 import os
+import json
 
 import simpleFarm
 from meshroom.core.desc import Level
 from meshroom.core.submitter import BaseSubmitter
 
+currentDir = os.path.dirname(os.path.realpath(__file__))
+
 
 class SimpleFarmSubmitter(BaseSubmitter):
     MESHROOM_PACKAGE = os.environ.get('REZ_USED_REQUEST', '')
 
-    BASE_REQUIREMENTS = ['mikrosRender', '!RenderLow', '!Wkst_OS', '!"vfxpc1*"', '!"vfxpc??"']
+    filepath = os.environ.get('SIMPLEFARMCONFIG', os.path.join(currentDir, 'simpleFarmConfig.json'))
+    config = json.load(open(filepath))
+
     ENGINE = ''
     DEFAULT_TAGS = {'prod': ''}
 
@@ -34,13 +39,10 @@ class SimpleFarmSubmitter(BaseSubmitter):
 
         tags['nbFrames'] = nbFrames
         tags['prod'] = self.prod
-        allRequirements = list(self.BASE_REQUIREMENTS)
-        if node.nodeDesc.cpu == Level.INTENSIVE:
-            allRequirements.extend(['"RenderHigh*"', '@.nCPUs>20'])
-        if node.nodeDesc.gpu != Level.NONE:
-            allRequirements.extend(['!"*loc*"', 'Wkst'])
-        if node.nodeDesc.ram == Level.INTENSIVE:
-            allRequirements.append('@.mem>30')
+        allRequirements = self.config.get('BASE', [])
+        allRequirements.extend(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
+        allRequirements.extend(self.config['RAM'].get(node.nodeDesc.ram.name, []))
+        allRequirements.extend(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
 
         task = simpleFarm.Task(
             name=node.nodeType,
@@ -48,7 +50,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
                 nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
             tags=tags,
             rezPackages=[self.MESHROOM_PACKAGE],
-            requirements={'service': ','.join(allRequirements)},
+            requirements={'service': str(','.join(allRequirements))},
             **arguments)
         return task
 

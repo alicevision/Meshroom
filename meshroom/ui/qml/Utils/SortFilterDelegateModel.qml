@@ -5,21 +5,27 @@ import QtQuick.Controls 2.3
 /**
  * SortFilderDelegateModel adds sorting and filtering capabilities on a source model.
  *
- * Filter only works on string properties for now.
+ * The way model data is accessed can be overriden by redefining the modelData function.
+ * This is useful if the value is not directly accessible from the model and needs
+ * some extra logic.
+ *
+ * Regarding filtering, any type of value can be used as 'filterValue' (variant).
+ * Filtering behavior can also be overriden by redefining the respectFilter function.
+ *
  * Based on http://doc.qt.io/qt-5/qtquick-tutorials-dynamicview-dynamicview4-example.html
  */
 DelegateModel {
     id: sortFilterModel
 
-    property string sortRole: "name"            /// the role to use for sorting
+    property string sortRole: ""                /// the role to use for sorting
     property int sortOrder: Qt.AscendingOrder   /// the sorting order
     property string filterRole: ""              /// the role to use for filtering
-    property string textFilter: ""              /// the text used as filter
+    property variant filterValue                /// the value to use as filter
 
     onSortRoleChanged: invalidateSort()
     onSortOrderChanged: invalidateSort()
     onFilterRoleChanged: invalidateFilter()
-    onTextFilterChanged: invalidateFilter()
+    onFilterValueChanged: invalidateFilter()
 
     // display "filtered" group
     filterOnGroup: "filtered"
@@ -36,7 +42,14 @@ DelegateModel {
             includeByDefault: true
             // if the source model changes, perform sorting and filtering
             onChanged: {
-                sort()
+                // no sorting: move everything from unsorted to sorted group
+                if(sortRole == "") {
+                    unsortedItems.setGroups(0, unsortedItems.count, ["items"])
+                }
+                else {
+                    sort()
+                }
+                // perform filter invalidation in both cases
                 invalidateFilter()
             }
         },
@@ -47,23 +60,46 @@ DelegateModel {
         }
     ]
 
+    /// Get data from model for 'roleName'
+    function modelData(item, roleName) {
+        return item.model[roleName]
+    }
+
+    /**
+     * Return whether 'value' respects 'filter' condition
+     *
+     * The test is based on the value's type:
+     *   - String: check if 'value' contains 'filter' (case insensitive)
+     *   - any other type: test for equality (===)
+     *
+     * TODO: add case sensitivity / whole word options for Strings
+     */
+    function respectFilter(value, filter) {
+        switch(value.constructor.name)
+        {
+        case "String":
+            return value.toLowerCase().search(filter.toLowerCase()) >= 0
+        default:
+            return value === filter
+        }
+    }
+
+    /// Reverse sort order (toggle between Qt.AscendingOrder / Qt.DescendingOrder)
+    function reverseSortOrder() {
+        sortOrder = sortOrder == Qt.AscendingOrder ? Qt.DescendingOrder : Qt.AscendingOrder
+    }
+
     property var lessThan: [
-        function(left, right) { return left[sortRole] < right[sortRole] }
+        function(left, right) { return modelData(left, sortRole) < modelData(right, sortRole) }
     ]
 
     function invalidateSort() {
-        if(!sortFilterModel.model)
+        if(!sortFilterModel.model || !sortFilterModel.model.count)
             return;
 
         // move everything from "items" to "unsorted
         // will trigger "unsorted" DelegateModelGroup 'changed' signal
         items.setGroups(0, items.count, ["unsorted"])
-    }
-
-    // TODO: add option for case sensitivity / whole word
-    function containsText(reference, text)
-    {
-        return reference.toLowerCase().search(text.toLowerCase()) >= 0
     }
 
     /// Invalidate filtering
@@ -78,7 +114,7 @@ DelegateModel {
         for(var i=0; i < items.count; ++i)
         {
             // if the property value contains filterText, add it to the filtered group
-            if(containsText(items.get(i).model[filterRole], textFilter))
+            if(respectFilter(modelData(items.get(i), filterRole), filterValue))
             {
                 items.addGroups(items.get(i), 1, "filtered")
             }
@@ -96,7 +132,7 @@ DelegateModel {
         var upper = items.count
         while (lower < upper) {
             var middle = Math.floor(lower + (upper - lower) / 2)
-            var result = lessThan(item.model, items.get(middle).model)
+            var result = lessThan(item, items.get(middle))
             if(sortOrder == Qt.DescendingOrder)
                 result = !result
             if (result) {

@@ -125,7 +125,7 @@ Pane {
         model: metadataModel
         sortRole: "raw"
         filterRole: "raw"
-        textFilter: filter.text
+        filterValue: filter.text
         delegate: RowLayout {
             width: parent.width
             Label {

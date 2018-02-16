@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import QtQml.Models 2.2
 
+import Utils 1.0
 
 /**
  * ImageGallery displays as a grid of Images a model containing Viewpoints objects.
@@ -45,7 +46,58 @@ Panel {
             cellHeight: cellWidth
             highlightFollowsCurrentItem: true
             keyNavigationEnabled: true
-            model: root.viewpoints
+
+            model: SortFilterDelegateModel {
+                id: sortedModel
+                model: _reconstruction.viewpoints
+                sortRole: "path"
+                // TODO: provide filtering on reconstruction status
+                // filterRole: _reconstruction.sfmReport ? "reconstructed" : ""
+                // filterValue: true / false
+                // in modelData:
+                // if(filterRole == roleName)
+                //     return _reconstruction.isReconstructed(item.model.object)
+
+                // override modelData to return basename of viewpoint's path for sorting
+                function modelData(item, roleName) {
+                    if(roleName == sortRole)
+                        return Filepath.basename(item.model.object.value.get(roleName).value)
+                }
+
+                delegate: ImageDelegate {
+
+                    viewpoint: object.value
+                    width: grid.cellWidth
+                    height: grid.cellHeight
+
+                    isCurrentItem: GridView.isCurrentItem
+                    onPressed: {
+                        grid.currentIndex = DelegateModel.filteredIndex
+                        if(mouse.button == Qt.LeftButton)
+                            grid.forceActiveFocus()
+                    }
+                    onRemoveRequest: removeImageRequest(object)
+                    Keys.onDeletePressed: removeImageRequest(object)
+
+                    // Reconstruction status indicator
+                    Label {
+                        id: statusIndicator
+
+                        // object can be evaluated to null at some point during creation/deletion
+                        property bool inViews: Qt.isQtObject(object) && _reconstruction.sfmReport && _reconstruction.isInViews(object)
+                        property bool reconstructed: inViews && _reconstruction.isReconstructed(model.object)
+
+                        font.family: MaterialIcons.fontFamily
+                        text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
+                        color: reconstructed ? "#4CAF50" : "#F44336"
+                        anchors.top: parent.top
+                        anchors.right: parent.right
+                        anchors.margins: 10
+                        font.pointSize: 10
+                        visible: inViews
+                    }
+                }
+            }
 
             // Keyboard shortcut to change current image group
             Keys.priority: Keys.BeforeItem
@@ -57,37 +109,6 @@ Panel {
                         root.currentIndex = Math.min(root.cameraInits.count - 1, root.currentIndex + 1)
                     else if(event.key == Qt.Key_Left)
                         root.currentIndex = Math.max(0, root.currentIndex - 1)
-                }
-            }
-
-            delegate: ImageDelegate {
-                viewpoint: object.value
-                width: grid.cellWidth
-                height: grid.cellHeight
-
-                isCurrentItem: grid.currentIndex == index
-                onPressed: {
-                    grid.currentIndex = index
-                    if(mouse.button == Qt.LeftButton)
-                        grid.forceActiveFocus()
-                }
-                onRemoveRequest: removeImageRequest(object)
-                Keys.onDeletePressed: removeImageRequest(object)
-
-                // Reconstruction status indicator
-                Label {
-                    id: statusIndicator
-                    property bool inViews: _reconstruction.sfmReport && _reconstruction.isInViews(object)
-                    property bool reconstructed: _reconstruction.sfmReport && _reconstruction.isReconstructed(object)
-
-                    font.family: MaterialIcons.fontFamily
-                    text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
-                    color: reconstructed ? "#4CAF50" : "#F44336"
-                    anchors.top: parent.top
-                    anchors.right: parent.right
-                    anchors.margins: 10
-                    font.pointSize: 10
-                    visible: inViews
                 }
             }
 

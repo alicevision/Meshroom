@@ -119,30 +119,6 @@ Pane {
         onWheel: wheel.accepted = true
     }
 
-    // SortFilter delegate over the metadataModel
-    SortFilterDelegateModel {
-        id: sortedMetadataModel
-        model: metadataModel
-        sortRole: "raw"
-        filterRole: "raw"
-        filterValue: filter.text
-        delegate: RowLayout {
-            width: parent.width
-            Label {
-                text: key
-                leftPadding: 6
-                rightPadding: 4
-                Layout.preferredWidth: sizeHandle.x
-
-                elide: Text.ElideRight
-            }
-            Label {
-                text: value
-                Layout.fillWidth: true
-                wrapMode: Label.WrapAtWordBoundaryOrAnywhere
-            }
-        }
-    }
 
     // Main Layout
     ColumnLayout {
@@ -166,9 +142,32 @@ Pane {
             id: metadataView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            model: sortedMetadataModel
             spacing: 3
             clip: true
+
+            // SortFilter delegate over the metadataModel
+            model: SortFilterDelegateModel {
+                id: sortedMetadataModel
+                model: metadataModel
+                sortRole: "raw"
+                filterRole: "raw"
+                filterValue: filter.text
+                delegate: RowLayout {
+                    width: parent.width
+                    Label {
+                        text: key
+                        leftPadding: 6
+                        rightPadding: 4
+                        Layout.preferredWidth: sizeHandle.x
+                        elide: Text.ElideRight
+                    }
+                    Label {
+                        text: value
+                        Layout.fillWidth: true
+                        wrapMode: Label.WrapAtWordBoundaryOrAnywhere
+                    }
+                }
+            }
 
             // Categories resize handle
             Rectangle {

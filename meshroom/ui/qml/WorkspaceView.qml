@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.3
 import Qt.labs.platform 1.0 as Platform
 import Viewer 1.0
 import MaterialIcons 2.2
-import "filepath.js" as Filepath
+import Utils 1.0
 
 
 /**
@@ -91,11 +91,21 @@ Item {
             Viewer2D {
                 id: viewer2D
                 anchors.fill: parent
-                property url imageGallerySource: imageGallery.currentItemSource
-                onImageGallerySourceChanged: viewer2D.source = imageGallerySource
+
+                Connections {
+                    target: imageGallery
+                    onCurrentItemChanged: {
+                        viewer2D.source = imageGallery.currentItemSource
+                        viewer2D.metadata = imageGallery.currentItemMetadata
+                    }
+                }
+
                 DropArea {
                     anchors.fill: parent
-                    onDropped: viewer2D.source = drop.urls[0]
+                    onDropped: {
+                        viewer2D.source = drop.urls[0]
+                        viewer2D.metadata = {}
+                    }
                 }
                 Rectangle {
                     z: -1

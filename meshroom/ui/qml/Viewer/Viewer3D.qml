@@ -293,7 +293,7 @@ FocusScope {
                     id: abcLoaderEntity
                     // Instantiate the AlembicEntity dynamically
                     // to avoid import errors if the plugin is not available
-                    property Entity abcLoader: undefined
+                    property Entity abcLoader: null
                     enabled: showSfMCheckBox.checked
 
                     Component.onCompleted: {
@@ -321,7 +321,7 @@ FocusScope {
                     id: depthMapLoaderEntity
                     // Instantiate the DepthMapEntity dynamically
                     // to avoid import errors if the plugin is not available
-                    property Entity depthMapLoader: undefined
+                    property Entity depthMapLoader: null
                     enabled: showDepthMapCheckBox.checked
 
                     Component.onCompleted: {

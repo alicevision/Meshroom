@@ -2,7 +2,7 @@ import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
 import MaterialIcons 2.2
-import "../filepath.js" as Filepath
+import Utils 1.0
 
 /**
   Instantiate a control to visualize and edit an Attribute based on its type.

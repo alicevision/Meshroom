@@ -40,6 +40,22 @@ class Meshing(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
         ),
+        desc.IntParam(
+            name='smoothingIteration',
+            label='Smoothing Iteration',
+            description='Number of Smoothing Iterations',
+            value=10,
+            range=(0, 50, 1),
+            uid=[0],
+        ),
+        desc.FloatParam(
+            name='smoothingWeight',
+            label='Smoothing Weight',
+            description='Smoothing Weight',
+            value=1.0,
+            range=(0, 2, 1),
+            uid=[0],
+        ),
         desc.File(
             name="depthMapFolder",
             label='Depth Maps Folder',

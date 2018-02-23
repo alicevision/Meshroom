@@ -63,6 +63,14 @@ class CameraInit(desc.CommandLineNode):
             description="Camera Intrinsics",
             group="",
         ),
+		desc.FloatParam(
+            name='defaultFieldOfView',
+            label='Default Field Of View',
+            description='Empirical value for the field of view in degree.',
+            value=45.0,
+            range=(0, 180.0, 1),
+            uid=[0],
+        ),
         desc.File(
             name='sensorDatabase',
             label='Sensor Database',

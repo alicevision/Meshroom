@@ -6,7 +6,7 @@ class FeatureExtraction(desc.CommandLineNode):
     internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_featureExtraction {allParams}'
     size = desc.DynamicNodeSize('input')
-    parallelization = desc.Parallelization(blockSize=10)
+    parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [

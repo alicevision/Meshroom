@@ -22,3 +22,29 @@ function extension(path) {
 function isFile(path) {
     return extension(path) !== ""
 }
+
+/// Conform 'path' to the Qt file representation relying on "file:" protocol prefix
+function stringToFile(path) {
+    // already containing the file protocol
+    if(path.startsWith("file:"))
+        return path
+    // network path
+    if(path.startsWith("//"))
+        return "file:" + path
+    // assumed local path
+    if(path.trim() == "")
+        return ""
+    return "file:/" + path
+}
+
+/// Remove any "file:" protocol prefix from 'path'
+function fileToString(path)
+{
+    // local path
+    if(path.startsWith("file:///"))
+        return path.replace("file:///", "")
+    // network path
+    else if(path.startsWith("file://"))
+        return path.replace("file://", "")
+    return path
+}

@@ -68,7 +68,7 @@ Item {
                 Image {
                     anchors.fill: parent
                     anchors.margins: 4
-                    source: imageDelegate.source
+                    source: Filepath.stringToFile(imageDelegate.source)
                     sourceSize: Qt.size(100, 100)
                     asynchronous: true
                     autoTransform: true

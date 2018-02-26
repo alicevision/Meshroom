@@ -3,6 +3,8 @@ import QtQuick.Controls 2.3
 import QtQuick.Controls 1.4 as Controls1 // SplitView
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
+import Utils 1.0
+
 import "common.js" as Common
 
 /**
@@ -195,7 +197,7 @@ FocusScope {
     function loadCurrentFile(keepCursorPosition)
     {
         var xhr = new XMLHttpRequest;
-        xhr.open("GET", fileSelector.currentFile);
+        xhr.open("GET", Filepath.stringToFile(fileSelector.currentFile));
         xhr.onreadystatechange = function() {
             if(xhr.readyState == XMLHttpRequest.HEADERS_RECEIVED)
             {

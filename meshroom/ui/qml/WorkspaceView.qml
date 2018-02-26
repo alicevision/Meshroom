@@ -31,6 +31,7 @@ Item {
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
     {
+        filepath = Filepath.stringToFile(filepath)
         if(Filepath.extension(filepath) === ".abc")
         {
             viewer3D.abcSource = filepath
@@ -154,7 +155,7 @@ Item {
                 anchors.bottomMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: meshFile != '' && (viewer3D.source != meshFile)
-                onClicked: viewer3D.source = meshFile
+                onClicked: load3DMedia(meshFile)
             }
         }
     }

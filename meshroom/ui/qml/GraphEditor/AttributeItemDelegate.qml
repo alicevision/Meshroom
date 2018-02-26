@@ -108,7 +108,7 @@ RowLayout {
             _reconstruction.setAttribute(root.attribute, Number(value))
             break;
         case "File":
-            _reconstruction.setAttribute(root.attribute, value.replace("file://", "").trim())
+            _reconstruction.setAttribute(root.attribute, Filepath.fileToString(value.trim()))
             break;
         default:
             _reconstruction.setAttribute(root.attribute, value.trim())

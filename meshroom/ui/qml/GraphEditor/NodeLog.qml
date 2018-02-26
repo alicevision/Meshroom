@@ -190,7 +190,8 @@ FocusScope {
         running: autoRefresh.checked && chunksLV.currentChunk != undefined && chunksLV.currentChunk.statusName === "RUNNING"
         interval: 2000
         repeat: true
-        triggeredOnStart: true
+        // reload file on start and stop
+        onRunningChanged: loadCurrentFile(true)
         onTriggered: loadCurrentFile(true)
     }
 

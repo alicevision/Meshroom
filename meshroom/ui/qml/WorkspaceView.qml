@@ -33,10 +33,9 @@ Item {
     {
         if(Filepath.extension(filepath) === ".abc")
         {
-            viewer3D.clearAbc()
             viewer3D.abcSource = filepath
         }
-        if(Filepath.extension(filepath) === ".exr")
+        else if(Filepath.extension(filepath) === ".exr")
         {
             // viewer3D.clearDepthMap()
             viewer3D.depthMapSource = filepath

@@ -41,7 +41,9 @@ class MeshDenoising(desc.CommandLineNode):
         desc.FloatParam(
             name='eta',
             label='Eta',
-            description='''Gaussian standard deviation for spatial weight, scaled by the average distance between adjacent face cetroids. Must be positive.''',
+            description='Gaussian standard deviation for spatial weight, '
+                        'scaled by the average distance between adjacent face centroids.\n'
+                        'Must be positive.',
             value=1.5,
             range=(0.0, 20.0, 0.01),
             uid=[0],
@@ -65,7 +67,9 @@ class MeshDenoising(desc.CommandLineNode):
         desc.ChoiceParam(
             name='meshUpdateMethod',
             label='Mesh Update Method',
-            description='Mesh Update Method: * ITERATIVE_UPDATE(SDFilter::MeshFilter Parameters::ITERATIVE_UPDATE) (default): ShapeUp styled iterative solver * POISSON_UPDATE(SDFilter::MeshFilterPa rameters::POISSON_UPDATE): Poisson-based update from [Want et al. 2015]',
+            description='Mesh Update Method\n'
+                        ' * ITERATIVE_UPDATE (default): ShapeUp styled iterative solver \n'
+                        ' * POISSON_UPDATE: Poisson-based update from [Want et al. 2015]',
             value=0,
             values=(0, 1),
             exclusive=True,

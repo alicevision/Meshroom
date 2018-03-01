@@ -50,7 +50,9 @@ class MeshDecimate(desc.CommandLineNode):
         desc.BoolParam(
             name='flipNormals',
             label='Flip Normals',
-            description='''Option to flip face normals. It can be needed as it depends on the vertices order in triangles and the convention change from one software to another.''',
+            description='Option to flip face normals.\n'
+                        'It can be needed as it depends on the vertices order in triangles\n'
+                        'and the convention change from one software to another.',
             value=False,
             uid=[0],
         ),

@@ -2,12 +2,13 @@ import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
+import Utils 1.0
 
 FocusScope {
     id: root
 
     clip: true
-    property alias source: image.source
+    property string source
     property var metadata
 
     // slots
@@ -48,6 +49,7 @@ FocusScope {
         fillMode: Image.PreserveAspectFit
         autoTransform: true
         onWidthChanged: if(status==Image.Ready) fit()
+        source: Filepath.stringToFile(root.source)
         onStatusChanged: {
             // update cache source when image is loaded
             if(status === Image.Ready)

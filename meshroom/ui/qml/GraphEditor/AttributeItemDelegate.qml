@@ -108,7 +108,7 @@ RowLayout {
             _reconstruction.setAttribute(root.attribute, Number(value))
             break;
         case "File":
-            _reconstruction.setAttribute(root.attribute, value.replace("file://", "").trim())
+            _reconstruction.setAttribute(root.attribute, Filepath.fileToString(value.trim()))
             break;
         default:
             _reconstruction.setAttribute(root.attribute, value.trim())
@@ -248,7 +248,8 @@ RowLayout {
                 RowLayout {
                     spacing: 4
                     ToolButton {
-                        text: listAttribute_layout.expanded  ? "▾" : "▸"
+                        text: listAttribute_layout.expanded  ? MaterialIcons.keyboard_arrow_down : MaterialIcons.keyboard_arrow_right
+                        font.family: MaterialIcons.fontFamily
                         onClicked: listAttribute_layout.expanded = !listAttribute_layout.expanded
                     }
                     Label {

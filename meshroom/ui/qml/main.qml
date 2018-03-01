@@ -305,7 +305,7 @@ ApplicationWindow {
 
                 Button {
                     property color buttonColor: Qt.darker("#4CAF50", 1.8)
-                    text: "▶  Start"
+                    text: "Start"
                     palette.button: enabled ? buttonColor : disabledPalette.button
                     palette.window: enabled ? buttonColor : disabledPalette.window
                     palette.buttonText: enabled ? "white" : disabledPalette.buttonText

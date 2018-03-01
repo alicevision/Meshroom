@@ -31,12 +31,12 @@ Item {
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
     {
+        filepath = Filepath.stringToFile(filepath)
         if(Filepath.extension(filepath) === ".abc")
         {
-            viewer3D.clearAbc()
             viewer3D.abcSource = filepath
         }
-        if(Filepath.extension(filepath) === ".exr")
+        else if(Filepath.extension(filepath) === ".exr")
         {
             // viewer3D.clearDepthMap()
             viewer3D.depthMapSource = filepath
@@ -155,7 +155,7 @@ Item {
                 anchors.bottomMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: meshFile != '' && (viewer3D.source != meshFile)
-                onClicked: viewer3D.source = meshFile
+                onClicked: load3DMedia(meshFile)
             }
         }
     }

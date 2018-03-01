@@ -2,6 +2,7 @@ import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
 import MaterialIcons 2.2
+import Utils 1.0
 
 /**
   A component to display and edit a Node's attributes.
@@ -43,7 +44,7 @@ ColumnLayout {
             id: settingsMenu
             MenuItem {
                 text: "Open Cache Folder"
-                onClicked: Qt.openUrlExternally("file://" + node.internalFolder)
+                onClicked: Qt.openUrlExternally(Filepath.stringToFile(node.internalFolder))
                 ToolTip.text: node.internalFolder
                 ToolTip.visible: hovered
                 ToolTip.delay: 500

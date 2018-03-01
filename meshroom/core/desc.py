@@ -378,8 +378,8 @@ class CommandLineNode(Node):
                 cmd = self.buildCommandLine(chunk)
                 chunk.status.commandLine = cmd
                 chunk.saveStatusFile()
-                print(' - commandLine:', cmd)
-                print(' - logFile:', chunk.logFile)
+                print(' - commandLine: {}'.format(cmd))
+                print(' - logFile: {}'.format(chunk.logFile))
                 chunk.subprocess = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
 
                 # store process static info into the status file

@@ -49,7 +49,7 @@ FocusScope {
         fillMode: Image.PreserveAspectFit
         autoTransform: true
         onWidthChanged: if(status==Image.Ready) fit()
-        source: Filepath.stringToFile(root.source)
+        source: Filepath.stringToUrl(root.source)
         onStatusChanged: {
             // update cache source when image is loaded
             if(status === Image.Ready)

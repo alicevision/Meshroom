@@ -44,7 +44,7 @@ ColumnLayout {
             id: settingsMenu
             MenuItem {
                 text: "Open Cache Folder"
-                onClicked: Qt.openUrlExternally(Filepath.stringToFile(node.internalFolder))
+                onClicked: Qt.openUrlExternally(Filepath.stringToUrl(node.internalFolder))
                 ToolTip.text: node.internalFolder
                 ToolTip.visible: hovered
                 ToolTip.delay: 500

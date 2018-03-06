@@ -198,7 +198,7 @@ FocusScope {
     function loadCurrentFile(keepCursorPosition)
     {
         var xhr = new XMLHttpRequest;
-        xhr.open("GET", Filepath.stringToFile(fileSelector.currentFile));
+        xhr.open("GET", Filepath.stringToUrl(fileSelector.currentFile));
         xhr.onreadystatechange = function() {
             if(xhr.readyState == XMLHttpRequest.HEADERS_RECEIVED)
             {

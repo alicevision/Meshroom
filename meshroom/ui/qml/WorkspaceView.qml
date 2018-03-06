@@ -31,7 +31,6 @@ Item {
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
     {
-        filepath = Filepath.stringToFile(filepath)
         if(Filepath.extension(filepath) === ".abc")
         {
             viewer3D.abcSource = filepath
@@ -52,7 +51,7 @@ Item {
 
     function loadSfmAbc()
     {
-        load3DMedia(reconstruction.sfm.attribute('output').value)
+        load3DMedia(Filepath.stringToUrl(reconstruction.sfm.attribute('output').value))
     }
 
     SystemPalette { id: palette }

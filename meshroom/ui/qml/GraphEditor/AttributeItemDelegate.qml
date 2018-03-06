@@ -108,7 +108,7 @@ RowLayout {
             _reconstruction.setAttribute(root.attribute, Number(value))
             break;
         case "File":
-            _reconstruction.setAttribute(root.attribute, Filepath.fileToString(value.trim()))
+            _reconstruction.setAttribute(root.attribute, value)
             break;
         default:
             _reconstruction.setAttribute(root.attribute, value.trim())
@@ -147,7 +147,7 @@ RowLayout {
                     anchors.fill: parent
                     onDropped: {
                         if(drop.hasUrls)
-                            setTextFieldAttribute(drop.urls[0].toLocaleString())
+                            setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
                         else if(drop.hasText && drop.text != '')
                             setTextFieldAttribute(drop.text)
                     }

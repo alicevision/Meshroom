@@ -63,7 +63,7 @@ class CameraInit(desc.CommandLineNode):
             description="Camera Intrinsics",
             group="",
         ),
-		desc.FloatParam(
+        desc.FloatParam(
             name='defaultFieldOfView',
             label='Default Field Of View',
             description='Empirical value for the field of view in degree.',

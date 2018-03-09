@@ -18,7 +18,7 @@ Item {
 
     property variant reconstruction: _reconstruction
     readonly property variant cameraInits: _reconstruction.cameraInits
-    readonly property string meshFile: _reconstruction.meshFile
+    readonly property url meshFile: Filepath.stringToUrl(_reconstruction.meshFile)
     property bool readOnly: false
 
     implicitWidth: 300
@@ -31,17 +31,12 @@ Item {
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
     {
-        if(Filepath.extension(filepath) === ".abc")
+        switch(Filepath.extension(filepath))
         {
-            viewer3D.abcSource = filepath
+        case ".abc": viewer3D.abcSource = filepath; break;
+        case ".exr": viewer3D.depthMapSource = filepath; break;
+        case ".obj": viewer3D.source = filepath; break;
         }
-        else if(Filepath.extension(filepath) === ".exr")
-        {
-            // viewer3D.clearDepthMap()
-            viewer3D.depthMapSource = filepath
-        }
-        else
-            viewer3D.source = filepath
     }
 
     Connections {
@@ -137,23 +132,13 @@ Item {
                 background: Rectangle { color: palette.base; opacity: 0.5 }
             }
 
-            Label {
-                text: "3D Model not available"
-                visible: meshFile == ''
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 10
-                anchors.horizontalCenter: parent.horizontalCenter
-                padding: 6
-                background: Rectangle { color: palette.base; opacity: 0.5 }
-            }
-
             // Load reconstructed model
             Button {
                 text: "Load Model"
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible: meshFile != '' && (viewer3D.source != meshFile)
+                visible: meshFile != "" && (viewer3D.source != meshFile)
                 onClicked: load3DMedia(meshFile)
             }
         }

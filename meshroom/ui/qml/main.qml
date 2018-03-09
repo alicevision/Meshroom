@@ -391,7 +391,7 @@ ApplicationWindow {
                                    && attr.desc.type === "File"
                                    && _3dFileExtensions.indexOf(Filepath.extension(attr.value)) > - 1 )
                                   {
-                                    workspaceView.load3DMedia(attr.value)
+                                    workspaceView.load3DMedia(Filepath.stringToUrl(attr.value))
                                     break // only load first model found
                                   }
                             }

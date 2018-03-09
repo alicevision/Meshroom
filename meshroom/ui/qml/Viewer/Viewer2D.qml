@@ -8,7 +8,7 @@ FocusScope {
     id: root
 
     clip: true
-    property string source
+    property url source
     property var metadata
 
     // slots
@@ -49,7 +49,7 @@ FocusScope {
         fillMode: Image.PreserveAspectFit
         autoTransform: true
         onWidthChanged: if(status==Image.Ready) fit()
-        source: Filepath.stringToUrl(root.source)
+        source: root.source
         onStatusChanged: {
             // update cache source when image is loaded
             if(status === Image.Ready)

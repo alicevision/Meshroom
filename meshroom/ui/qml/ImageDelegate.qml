@@ -21,7 +21,7 @@ Item {
     // retrieve viewpoints inner data
     QtObject {
         id: _viewpoint
-        property string source: viewpoint ? viewpoint.get("path").value : ''
+        property url source: viewpoint ? Filepath.stringToUrl(viewpoint.get("path").value) : ''
         property string metadataStr: viewpoint ? viewpoint.get("metadata").value : ''
         property var metadata: metadataStr ? JSON.parse(viewpoint.get("metadata").value) : null
     }
@@ -68,7 +68,7 @@ Item {
                 Image {
                     anchors.fill: parent
                     anchors.margins: 4
-                    source: Filepath.stringToUrl(imageDelegate.source)
+                    source: imageDelegate.source
                     sourceSize: Qt.size(100, 100)
                     asynchronous: true
                     autoTransform: true

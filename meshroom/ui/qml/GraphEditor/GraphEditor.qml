@@ -239,8 +239,8 @@ Item {
                         var nodes = duplicateFollowingNodes ? uigraph.duplicateNodes(node) : [uigraph.duplicateNode(node)]
                         var delegates = []
                         var from = nodeRepeater.count - nodes.length
-                        var to = nodeRepeater.count
-                        for(var i=from; i < to; ++i)
+                        var to = nodeRepeater.count - 1
+                        for(var i=from; i <= to; ++i)
                         {
                             delegates.push(nodeRepeater.itemAt(i))
                         }
@@ -297,9 +297,8 @@ Item {
         root._attributeToDelegate[attribute] = pin
     }
 
-    // Fit graph to fill root
-    function fit() {
-        // compute bounding box
+    function boundingBox()
+    {
         var first = nodeRepeater.itemAt(0)
         var bbox = Qt.rect(first.x, first.y, 1, 1)
         for(var i=0; i<root.graph.nodes.count; ++i) {
@@ -311,6 +310,13 @@ Item {
         }
         bbox.width -= bbox.x
         bbox.height -= bbox.y
+        return bbox;
+    }
+
+    // Fit graph to fill root
+    function fit() {
+        // compute bounding box
+        var bbox = boudingBox()
         // rescale
         draggable.scale = Math.min(root.width/bbox.width, root.height/bbox.height)
         // recenter
@@ -328,11 +334,11 @@ Item {
     {
         // default values
         from = from === undefined ? 0 : from
-        to = to === undefined ? nodeRepeater.count : to
+        to = to === undefined ? nodeRepeater.count - 1 : to
         startX = startX === undefined ? 0 : startX
         startY = startY === undefined ? 0 : startY
 
-        var count = to - from;
+        var count = to - from + 1;
 
         var depthProperty = useMinDepth ? 'minDepth' : 'depth'
         var grid = new Array(count)

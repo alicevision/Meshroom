@@ -339,17 +339,29 @@ class Reconstruction(UIGraph):
         Does not modify the graph, can be called outside the main thread.
         Emits intrinsicBuilt(views, intrinsics) when done.
         """
+        views = []
+        intrinsics = []
+
+        # Duplicate 'cameraInit' outside the graph.
+        #   => allows to compute intrinsics without modifying the node or the graph
+        attributes = cameraInit.toDict()["attributes"]
+        cameraInitCopy = graph.Node("CameraInit", **attributes)
+
         try:
             self.setBuildingIntrinsics(True)
             # Retrieve the list of updated viewpoints and intrinsics
-            views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, additionalViews)
-            self.intrinsicsBuilt.emit(cameraInit, views, intrinsics)
-            return views, intrinsics
+            views, intrinsics = cameraInitCopy.nodeDesc.buildIntrinsics(cameraInitCopy, additionalViews)
         except Exception:
             import traceback
             logging.error("Error while building intrinsics : {}".format(traceback.format_exc()))
-        finally:
-            self.setBuildingIntrinsics(False)
+
+        # Delete the duplicate
+        cameraInitCopy.deleteLater()
+
+        self.setBuildingIntrinsics(False)
+        # always emit intrinsicsBuilt signal to inform listeners
+        # in other threads that computation is over
+        self.intrinsicsBuilt.emit(cameraInit, views, intrinsics)
 
     def onIntrinsicsAvailable(self, cameraInit, views, intrinsics):
         """ Update CameraInit with given views and intrinsics. """

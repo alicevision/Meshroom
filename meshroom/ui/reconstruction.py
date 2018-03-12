@@ -344,7 +344,10 @@ class Reconstruction(UIGraph):
 
         # Duplicate 'cameraInit' outside the graph.
         #   => allows to compute intrinsics without modifying the node or the graph
-        attributes = cameraInit.toDict()["attributes"]
+        # If cameraInit is None (i.e: SfM augmentation):
+        #   * create an uninitialized node
+        #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
+        attributes = cameraInit.toDict()["attributes"] if cameraInit else {}
         cameraInitCopy = graph.Node("CameraInit", **attributes)
 
         try:
@@ -365,9 +368,29 @@ class Reconstruction(UIGraph):
 
     def onIntrinsicsAvailable(self, cameraInit, views, intrinsics):
         """ Update CameraInit with given views and intrinsics. """
-        with self.groupedGraphModification("Add Images"):
-            self.setAttribute(cameraInit.viewpoints, views)
-            self.setAttribute(cameraInit.intrinsics, intrinsics)
+        augmentSfM = cameraInit is None
+        commandTitle = "Add {} Images"
+
+        # SfM augmentation
+        if augmentSfM:
+            # filter out views already involved in the reconstruction
+            allViewIds = self.allViewIds()
+            views = [view for view in views if int(view["viewId"]) not in allViewIds]
+            commandTitle = "Augment Reconstruction ({} Images)"
+
+        # No additional views: early return
+        if not views:
+            return
+
+        commandTitle = commandTitle.format(len(views))
+        # allow updates between commands so that node depths
+        # are updated after "addSfmAugmentation" (useful for auto layout)
+        with self.groupedGraphModification(commandTitle, disableUpdates=False):
+            if augmentSfM:
+                cameraInit, self.sfm = self.addSfmAugmentation()
+            with self.groupedGraphModification("Set Views and Intrinsics"):
+                self.setAttribute(cameraInit.viewpoints, views)
+                self.setAttribute(cameraInit.intrinsics, intrinsics)
         self.setCameraInit(cameraInit)
 
     def setBuildingIntrinsics(self, value):

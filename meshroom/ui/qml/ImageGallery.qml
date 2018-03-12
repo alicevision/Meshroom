@@ -26,7 +26,7 @@ Panel {
     title: "Images"
     property int currentIndex: 0
     readonly property variant viewpoints: cameraInit.attribute('viewpoints').value
-    signal filesDropped(var drop)
+    signal filesDropped(var drop, var augmentSfm)
 
     ColumnLayout {
         anchors.fill: parent
@@ -134,14 +134,56 @@ Panel {
                 enabled: !root.readOnly
                 // TODO: onEntered: call specific method to filter files based on extension
                 onDropped: {
-                    root.filesDropped(drop)
+                    var augmentSfm = augmentArea.hovered
+                    root.filesDropped(drop, augmentSfm)
                 }
-                // DropArea overlay
+
+                // Background opacifier
                 Rectangle {
+                    visible: dropArea.containsDrag
                     anchors.fill: parent
-                    opacity: 0.4
-                    visible: parent.containsDrag
-                    color: palette.highlight
+                    color: palette.window
+                    opacity: 0.8
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    visible: dropArea.containsDrag
+                    spacing: 1
+                    Label {
+                        id: addArea
+                        property bool hovered: dropArea.drag.y < height
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        text: "Add Images"
+                        font.bold: true
+                        background: Rectangle {
+                            color: parent.hovered ? palette.highlight : palette.window
+                            opacity: 0.8
+                            border.color: palette.highlight
+                        }
+                    }
+
+                    // DropArea overlay
+                    Label {
+                        id: augmentArea
+                        property bool hovered: visible && dropArea.drag.y >= y
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: parent.height * 0.3
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        text: "Augment Reconstruction"
+                        font.bold: true
+                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        visible: viewpoints.count > 0
+                        background: Rectangle {
+                            color: parent.hovered ? palette.highlight : palette.window
+                            opacity: 0.8
+                            border.color: palette.highlight
+                        }
+                    }
                 }
             }
         }

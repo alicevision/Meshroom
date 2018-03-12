@@ -286,6 +286,17 @@ ApplicationWindow {
         }
     }
 
+
+    Connections {
+        target: _reconstruction
+        // Request graph auto-layout when an augmentation step is added for readability
+        onSfmAugmented: graphEditor.doAutoLayout(_reconstruction.graph.nodes.indexOf(arguments[0]),
+                                                 _reconstruction.graph.nodes.indexOf(arguments[1]),
+                                                 0,
+                                                 graphEditor.boundingBox().height + graphEditor.gridSpacing
+                                                 )
+    }
+
     Controls1.SplitView {
         anchors.fill: parent
         orientation: Qt.Vertical

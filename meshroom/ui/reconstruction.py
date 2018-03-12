@@ -59,7 +59,7 @@ class LiveSfmManager(QObject):
         self._folder = folder
         self.folderChanged.emit()
         self.cameraInit = self.sfm = None
-        self.allImages = self.imagesInReconstruction()
+        self.allImages = self.reconstruction.allImagePaths()
         self.minImagesPerStep = minImagesPerStep
         self.setRunning(True)
         self.update()  # trigger initial update
@@ -94,7 +94,6 @@ class LiveSfmManager(QObject):
                 self.reconstruction.beginModification("SfM Augmentation")
                 # Add SfM augmentation step in the graph
                 self.cameraInit, self.sfm = self.reconstruction.addSfmAugmentation()
-                self.stepCreated.emit()
             self.addImageToStep(imagePath)
 
         # If we have enough images and the graph is not being computed, compute augmentation step
@@ -115,9 +114,6 @@ class LiveSfmManager(QObject):
         """ Get images in the current augmentation step. """
         return self.imagePathsInCameraInit(self.cameraInit) if self.cameraInit else []
 
-    def imagesInReconstruction(self):
-        """ Get all images in the reconstruction. """
-        return [vp.path.value for node in self.reconstruction.cameraInits for vp in node.viewpoints]
 
     @Slot()
     def computeStep(self):
@@ -137,7 +133,6 @@ class LiveSfmManager(QObject):
         self.reconstruction.endModification()
         self.reconstruction.execute(sfm)
 
-    stepCreated = Signal()
     runningChanged = Signal()
     running = Property(bool, lambda self: self._running, notify=runningChanged)
     folderChanged = Signal()
@@ -296,8 +291,16 @@ class Reconstruction(UIGraph):
 
             # connect last SfM node to ImageMatchingMultiSfm
             self.addEdge(sfm.output, imageMatching.inputB)
-
+        self.sfmAugmented.emit(cameraInit, structureFromMotion)
         return cameraInit, structureFromMotion
+
+    def allImagePaths(self):
+        """ Get all image paths in the reconstruction. """
+        return [vp.path.value for node in self._cameraInits for vp in node.viewpoints]
+
+    def allViewIds(self):
+        """ Get all view Ids involved in the reconstruction. """
+        return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints]
 
     @Slot(QObject, graph.Node)
     def handleFilesDrop(self, drop, cameraInit):
@@ -426,3 +429,5 @@ class Reconstruction(UIGraph):
     sfmReportChanged = Signal()
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
+    sfmAugmented = Signal(graph.Node, graph.Node)
+

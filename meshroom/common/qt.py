@@ -223,6 +223,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
         """
         return obj in self._objects
 
+    @QtCore.Slot(QtCore.QObject, result=int)
     def indexOf(self, matchObj, fromIndex=0, positive=True):
         """ Returns the index position of the first occurrence of object in
         the model, searching forward from index position from.

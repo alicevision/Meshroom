@@ -148,7 +148,6 @@ class Reconstruction(UIGraph):
 
     def __init__(self, graphFilepath='', parent=None):
         super(Reconstruction, self).__init__(graphFilepath, parent)
-        self._buildIntrinsicsThread = None
         self._buildingIntrinsics = False
         self._cameraInit = None
         self._cameraInits = QObjectListModel(parent=self)
@@ -332,7 +331,7 @@ class Reconstruction(UIGraph):
     def importImages(self, images, cameraInit):
         """ Add the given list of images to the Reconstruction. """
         # Start the process of updating views and intrinsics
-        self._buildIntrinsicsThread = self.runAsync(self.buildIntrinsics, args=(cameraInit, images,))
+        self.runAsync(self.buildIntrinsics, args=(cameraInit, images,))
 
     def buildIntrinsics(self, cameraInit, additionalViews):
         """

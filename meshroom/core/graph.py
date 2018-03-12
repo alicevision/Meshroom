@@ -745,7 +745,7 @@ class Node(BaseObject):
         self._initFromDesc()
         for k, v in kwargs.items():
             self.attribute(k).value = v
-
+        self._updateChunks()
 
     def __getattr__(self, k):
         try:

@@ -236,25 +236,28 @@ class EnableGraphUpdateCommand(GraphCommand):
 
 
 @contextmanager
-def GroupedGraphModification(graph, undoStack, title):
-    """ A context manager that creates a macro command disabling (if not already) graph update
+def GroupedGraphModification(graph, undoStack, title, disableUpdates=True):
+    """ A context manager that creates a macro command disabling (if not already) graph update by default
     and resetting its status after nested block execution.
 
     Args:
         graph (Graph): the Graph that will be modified
         undoStack (UndoStack): the UndoStack to work with
         title (str): the title of the macro command
+        disableUpdates (bool): whether to disable graph updates
     """
     # Store graph update state
     state = graph.updateEnabled
     # Create a new command macro and push a command that disable graph updates
     undoStack.beginMacro(title)
-    undoStack.tryAndPush(EnableGraphUpdateCommand(graph, False))
+    if disableUpdates:
+        undoStack.tryAndPush(EnableGraphUpdateCommand(graph, False))
     try:
         yield  # Execute nested block
     except Exception:
         raise
     finally:
-        # Push a command restoring graph update state and end command macro
-        undoStack.tryAndPush(EnableGraphUpdateCommand(graph, state))
+        if disableUpdates:
+            # Push a command restoring graph update state and end command macro
+            undoStack.tryAndPush(EnableGraphUpdateCommand(graph, state))
         undoStack.endMacro()

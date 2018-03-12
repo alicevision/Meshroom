@@ -378,9 +378,17 @@ class Reconstruction(UIGraph):
         """
         Update internal views and poses based on the current SfM node.
         """
-        assert self._sfm is not None
-        self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
+        if not self._sfm:
+            self._views = []
+            self._poses = []
+        else:
+            self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
         self.sfmReportChanged.emit()
+
+    def _resetSfm(self):
+        """ Reset sfm-related members. """
+        self._sfm = None
+        self.updateViewsAndPoses()
 
     def getSfm(self):
         """ Returns the current SfM node. """
@@ -392,11 +400,15 @@ class Reconstruction(UIGraph):
         """
         if self._sfm:
             self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
+            self._sfm.destroyed.disconnect(self._resetSfm)
+
         self._sfm = node
         # Update views and poses and do so each time
         # the status of the SfM node's only chunk changes
         self.updateViewsAndPoses()
-        self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
+        if self._sfm:
+            self._sfm.destroyed.connect(self._resetSfm)
+            self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
         self.sfmChanged.emit()
 
     @Slot(QObject, result=bool)

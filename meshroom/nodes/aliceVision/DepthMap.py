@@ -16,6 +16,15 @@ class DepthMap(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+       desc.ChoiceParam(
+            name='downscale',
+            label='Downscale',
+            description='Image downscale factor.',
+            value=2,
+            values=[1, 2, 4, 8, 16],
+            exclusive=True,
+            uid=[0],
+        ),
         desc.IntParam(
             name='sgmMaxTCams',
             label='SGM: Nb Neighbour Cameras',

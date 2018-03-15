@@ -151,7 +151,7 @@ FocusScope {
                 id: mainCamera
                 projectionType: CameraLens.PerspectiveProjection
                 fieldOfView: 45
-                nearPlane : 0.1
+                nearPlane : 0.01
                 farPlane : 1000.0
                 position: Qt.vector3d(28.0, 21.0, 28.0)
                 upVector: Qt.vector3d(0.0, 1.0, 0.0)

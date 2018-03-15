@@ -16,6 +16,15 @@ class DepthMap(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+       desc.ChoiceParam(
+            name='downscale',
+            label='Downscale',
+            description='Image downscale factor.',
+            value=2,
+            values=[1, 2, 4, 8, 16],
+            exclusive=True,
+            uid=[0],
+        ),
         desc.IntParam(
             name='sgmMaxTCams',
             label='SGM: Nb Neighbour Cameras',
@@ -118,6 +127,15 @@ class DepthMap(desc.CommandLineNode):
             description='Refine: Use minimum pixel size of neighbour cameras (Tc) or current camera pixel size (Rc)',
             value=False,
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[],
         ),
     ]
 

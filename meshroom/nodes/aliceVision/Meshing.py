@@ -62,14 +62,23 @@ class Meshing(desc.CommandLineNode):
             description='Input depth maps folder',
             value='',
             uid=[0],
-            ),
+        ),
         desc.File(
             name="depthMapFilterFolder",
             label='Filtered Depth Maps Folder',
             description='Input filtered depth maps folder',
             value='',
             uid=[0],
-            ),
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[],
+        ),
     ]
 
     outputs = [

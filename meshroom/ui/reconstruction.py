@@ -245,13 +245,16 @@ class Reconstruction(UIGraph):
         sfmNodes = self._graph.nodesFromNode(self._cameraInits[0], 'StructureFromMotion')[0]
         return sfmNodes[-1] if sfmNodes else None
 
-    def addSfmAugmentation(self):
+    def addSfmAugmentation(self, withMVS=False):
         """
         Create a new augmentation step connected to the last SfM node of this Reconstruction and
         return the created CameraInit and SfM nodes.
 
         If the Reconstruction is not initialized (empty initial CameraInit), this method won't
         create anything and return initial CameraInit and SfM nodes.
+
+        Args:
+            withMVS (bool): whether to create the MVS pipeline after the augmentation
 
         Returns:
             Node, Node: CameraInit, StructureFromMotion
@@ -267,31 +270,10 @@ class Reconstruction(UIGraph):
                 return self._cameraInit, sfm
 
         with self.groupedGraphModification("SfM Augmentation"):
-            # instantiate sfm augmentation chain
-            cameraInit = self.addNode('CameraInit')
-            featureExtraction = self.addNode('FeatureExtraction')
-            imageMatching = self.addNode('ImageMatchingMultiSfM')
-            featureMatching = self.addNode('FeatureMatching')
-            structureFromMotion = self.addNode('StructureFromMotion')
+            sfm, mvs = multiview.sfmAugmentation(self, self.lastSfmNode(), withMVS=withMVS)
 
-            edges = (
-                (cameraInit.output, featureExtraction.input),
-                (featureExtraction.input, imageMatching.input),
-                (featureExtraction.output, imageMatching.featuresFolder),
-                (imageMatching.featuresFolder, featureMatching.featuresFolder),
-                (imageMatching.outputCombinedSfM, featureMatching.input),
-                (imageMatching.output, featureMatching.imagePairsList),
-                (featureMatching.input, structureFromMotion.input),
-                (featureMatching.featuresFolder, structureFromMotion.featuresFolder),
-                (featureMatching.output, structureFromMotion.matchesFolder),
-            )
-            for src, dst in edges:
-                self.addEdge(src, dst)
-
-            # connect last SfM node to ImageMatchingMultiSfm
-            self.addEdge(sfm.output, imageMatching.inputB)
-        self.sfmAugmented.emit(cameraInit, structureFromMotion)
-        return cameraInit, structureFromMotion
+        self.sfmAugmented.emit(sfm[0], mvs[-1])
+        return sfm[0], sfm[-1]
 
     def allImagePaths(self):
         """ Get all image paths in the reconstruction. """
@@ -387,7 +369,7 @@ class Reconstruction(UIGraph):
         # are updated after "addSfmAugmentation" (useful for auto layout)
         with self.groupedGraphModification(commandTitle, disableUpdates=False):
             if augmentSfM:
-                cameraInit, self.sfm = self.addSfmAugmentation()
+                cameraInit, self.sfm = self.addSfmAugmentation(withMVS=True)
             with self.groupedGraphModification("Set Views and Intrinsics"):
                 self.setAttribute(cameraInit.viewpoints, views)
                 self.setAttribute(cameraInit.intrinsics, intrinsics)

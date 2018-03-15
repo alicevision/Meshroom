@@ -14,6 +14,7 @@ FocusScope {
     property alias abcSource: modelLoader.abcSource
     property alias depthMapSource: modelLoader.depthMapSource
 
+    property int renderMode: 2
     readonly property alias loading: modelLoader.loading
 
     // Alembic optional support => won't be available if AlembicEntity plugin is not available
@@ -62,8 +63,11 @@ FocusScope {
         })
 
         entities.forEach(function(entity) {
-            var comps = [];
             var mats = []
+            var hasTextures = false
+            // Create as many MaterialSwitcher as individual materials for this entity
+            // NOTE: we let each MaterialSwitcher modify the components of the entity
+            //       and therefore remove the default material spawned by the sceneLoader
             for(var i=0; i < entity.components.length; ++i)
             {
                 var comp = entity.components[i]
@@ -76,32 +80,23 @@ FocusScope {
                         "shininess": comp.shininess,
                         "specular": comp.specular,
                         "ambient": comp.ambient,
-                        "showTextures": texturesCheckBox.checked
+                        "mode": root.renderMode
                     }
                     mats.push(m)
-                    // unparent previous material
-                    // and exclude it from the entity components
-                    comp.parent = null
-                    continue; // skip original component and continue
+                    hasTextures = true
                 }
 
-                // make default material brighter
                 if(comp.toString().indexOf("QPhongMaterial") > -1) {
-                    comp.diffuse = "#AAA"
-                    comp.ambient = "#AAA"
+                    // create MaterialSwitcher with default colors
+                    mats.push({})
                 }
-                comps.push(comp)
             }
-            entity.components = comps
+
             modelLoader.meshHasTexture = mats.length > 0
             mats.forEach(function(m){
                 // create a material switcher for each material definition
                 var matSwitcher = materialSwitcherComponent.createObject(entity, m)
-                // trigger showTextures update by inverting it
-                // and re-bind textures checkbox to texture switch property
-                // (this double update ensure the texture display is correct)
-                matSwitcher.showTextures = !matSwitcher.showTextures
-                matSwitcher.showTextures = Qt.binding(function(){ return texturesCheckBox.checked })
+                matSwitcher.mode = Qt.binding(function(){ return root.renderMode })
             })
         })
     }
@@ -395,9 +390,11 @@ FocusScope {
         }
     }
 
+    // Outliner
     Pane {
-        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
         anchors.right: parent.right
+        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
+
         Column {
             Row {
                 CheckBox { id: showSfMCheckBox; text: "SfM"; checked: true; visible: root.supportAlembic; opacity: root.abcSource ? 1.0 : 0.6 }
@@ -427,9 +424,36 @@ FocusScope {
                     ToolTip.visible: hovered
                 }
             }
-            CheckBox { id: texturesCheckBox; text: "Textures"; checked: true; opacity: modelLoader.meshHasTexture ? 1.0 : 0.6 }
             CheckBox { id: gridCheckBox; text: "Grid"; checked: true }
             CheckBox { id: locatorCheckBox; text: "Locator"; checked: true }
+        }
+    }
+
+    // Render Mode
+    Pane {
+        anchors.bottom: parent.bottom
+        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
+
+        Row {
+            anchors.verticalCenter: parent.verticalCenter
+            Repeater {
+                model: [ // Can't use ListModel because of MaterialIcons expressions
+                    {"name": "Solid", "icon": MaterialIcons.crop_din},
+                    {"name": "Wireframe", "icon": MaterialIcons.grid_on},
+                    {"name": "Textured", "icon": MaterialIcons.texture },
+                ]
+                delegate: ToolButton {
+                    text: modelData["icon"]
+                    ToolTip.text: modelData["name"]
+                    ToolTip.visible: hovered
+                    font.family: MaterialIcons.fontFamily
+                    font.pointSize: 11
+                    padding: 4
+                    onClicked: root.renderMode = index
+                    checkable: !checked // hack to disable check toggle on click
+                    checked: renderMode === index
+                }
+            }
         }
     }
 

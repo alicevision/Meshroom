@@ -162,6 +162,10 @@ class Attribute(BaseObject):
             return '{}.{}'.format(self.root.fullName(), self._name)
         return '{}.{}'.format(self.node.name, self._name)
 
+    def asLinkExpr(self):
+        """ Return link expression for this Attribute """
+        return "{" + self.fullName() + "}"
+
     def getName(self):
         """ Attribute name """
         return self._name
@@ -254,7 +258,7 @@ class Attribute(BaseObject):
 
     def getExportValue(self):
         if self.isLink:
-            return '{' + self.getLinkParam().fullName() + '}'
+            return self.getLinkParam().asLinkExpr()
         if self.isOutput:
             return self.desc.value
         return self._value

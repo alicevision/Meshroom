@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from PySide2.QtWidgets import QUndoCommand, QUndoStack
 from PySide2.QtCore import Property, Signal
-from meshroom.core.graph import Node, ListAttribute, Graph, GraphModification
+from meshroom.core.graph import Node, ListAttribute, Graph, GraphModification, Attribute
 
 
 class UndoCommand(QUndoCommand):
@@ -89,6 +89,10 @@ class AddNodeCommand(GraphCommand):
         self.nodeType = nodeType
         self.nodeName = None
         self.kwargs = kwargs
+        # Serialize Attributes as link expressions
+        for key, value in self.kwargs.items():
+            if isinstance(value, Attribute):
+                self.kwargs[key] = value.asLinkExpr()
 
     def redoImpl(self):
         node = self.graph.addNewNode(self.nodeType, **self.kwargs)

@@ -139,3 +139,49 @@ def mvsPipeline(graph, sfm=None):
         meshing,
         texturing
     ]
+
+
+def sfmAugmentation(graph, sourceSfm, withMVS=False):
+    """
+    Create a SfM augmentation inside 'graph'.
+
+    Args:
+        graph (Graph/UIGraph): the graph in which nodes should be instantiated
+        sourceSfm (Node, optional): if specified, connect the MVS pipeline to this StructureFromMotion node
+        withMVS (bool): whether to create a MVS pipeline after the augmented SfM branch
+
+    Returns:
+        tuple: the created nodes (sfmNodes, mvsNodes)
+    """
+    cameraInit = graph.addNewNode('CameraInit')
+
+    featureExtraction = graph.addNewNode('FeatureExtraction',
+                                         input=cameraInit.output)
+    imageMatchingMulti = graph.addNewNode('ImageMatchingMultiSfM',
+                                          input=featureExtraction.input,
+                                          featuresFolder=featureExtraction.output
+                                          )
+    featureMatching = graph.addNewNode('FeatureMatching',
+                                       input=imageMatchingMulti.outputCombinedSfM,
+                                       featuresFolder=imageMatchingMulti.featuresFolder,
+                                       imagePairsList=imageMatchingMulti.output)
+    structureFromMotion = graph.addNewNode('StructureFromMotion',
+                                           input=featureMatching.input,
+                                           featuresFolder=featureMatching.featuresFolder,
+                                           matchesFolder=featureMatching.output)
+    graph.addEdge(sourceSfm.output, imageMatchingMulti.inputB)
+
+    sfmNodes = [
+        cameraInit,
+        featureMatching,
+        imageMatchingMulti,
+        featureMatching,
+        structureFromMotion
+    ]
+
+    mvsNodes = []
+
+    if withMVS:
+        mvsNodes = mvsPipeline(graph, structureFromMotion)
+
+    return sfmNodes, mvsNodes

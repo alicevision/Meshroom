@@ -164,7 +164,7 @@ FocusScope {
                             ToolTip.visible: hovered
                             font.family: MaterialIcons.fontFamily
                             enabled: fileSelector.currentFile != ""
-                            onClicked: Qt.openUrlExternally(fileSelector.currentFile)
+                            onClicked: Qt.openUrlExternally(Filepath.stringToUrl(fileSelector.currentFile))
                         }
                     }
                 }

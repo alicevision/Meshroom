@@ -349,34 +349,49 @@ FocusScope {
         }
     }
 
+    //
+    //  UI Overlay
+    //
 
+    // Rotation/Scale
     Pane {
         background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
-        Column {
-            spacing: 5            
-            Row {
-                spacing: 4
-                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.rotationX = value}
-                Label { text: "RX" }
+
+        GridLayout {
+            id: controlsLayout
+            columns: 2
+            columnSpacing: 12
+            property int sliderWidth: 100
+
+            // Rotation Controls
+            Label {
+                font.family: MaterialIcons.fontFamily
+                text: MaterialIcons.rotation3D
+                font.pointSize: 14
+                Layout.rowSpan: 3
             }
 
             Row {
                 spacing: 4
-                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.rotationY = value }
-                Label { text: "RY" }
+                Slider { width: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationX = value }
+                Label { text: "X" }
             }
 
             Row {
                 spacing: 4
-                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.rotationZ = value }
-                Label { text: "RZ" }
+                Slider { width: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationY = value }
+                Label { text: "Y" }
             }
 
             Row {
                 spacing: 4
-                Slider { width: 100; from: 1; to: 10; onPositionChanged: transform.scale = value }
-                Label { text: "Scale" }
+                Slider { width: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationZ = value }
+                Label { text: "Z" }
             }
+
+            // Scale Control
+            Label { text: "Scale" }
+            Slider { implicitWidth: controlsLayout.sliderWidth; from: 1; to: 10; onPositionChanged: transform.scale = value }
         }
     }
 

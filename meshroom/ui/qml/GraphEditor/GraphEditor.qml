@@ -86,7 +86,7 @@ Item {
             function createNode(nodeType)
             {
                 // add node via the proper command in uigraph
-                uigraph.addNode(nodeType)
+                uigraph.addNewNode(nodeType)
                 // retrieve node delegate (the last one created in the node repeater)
                 var item = nodeRepeater.itemAt(nodeRepeater.count-1)
                 // convert mouse position

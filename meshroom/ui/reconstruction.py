@@ -170,7 +170,7 @@ class Reconstruction(UIGraph):
     @Slot()
     def new(self):
         """ Create a new photogrammetry pipeline. """
-        self.setGraph(multiview.photogrammetryPipeline())
+        self.setGraph(multiview.photogrammetry())
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """

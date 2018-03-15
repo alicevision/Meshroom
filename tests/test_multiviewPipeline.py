@@ -4,15 +4,15 @@ import meshroom.multiview
 
 
 def test_multiviewPipeline():
-    graph1 = meshroom.multiview.photogrammetryPipeline(inputImages=['/non/existing/fileA'])
-    graph2 = meshroom.multiview.photogrammetryPipeline(inputImages=[])
-    graph2b = meshroom.multiview.photogrammetryPipeline(inputImages=[])
-    graph3 = meshroom.multiview.photogrammetryPipeline(inputImages=['/non/existing/file1', '/non/existing/file2'])
-    graph4 = meshroom.multiview.photogrammetryPipeline(inputViewpoints=[
+    graph1 = meshroom.multiview.photogrammetry(inputImages=['/non/existing/fileA'])
+    graph2 = meshroom.multiview.photogrammetry(inputImages=[])
+    graph2b = meshroom.multiview.photogrammetry(inputImages=[])
+    graph3 = meshroom.multiview.photogrammetry(inputImages=['/non/existing/file1', '/non/existing/file2'])
+    graph4 = meshroom.multiview.photogrammetry(inputViewpoints=[
         {'path': '/non/existing/file1', 'intrinsicId': 50},
         {'path': '/non/existing/file2', 'intrinsicId': 55}
         ])
-    graph4b = meshroom.multiview.photogrammetryPipeline(inputViewpoints=[
+    graph4b = meshroom.multiview.photogrammetry(inputViewpoints=[
         {'path': '/non/existing/file1', 'intrinsicId': 50},
         {'path': '/non/existing/file2', 'intrinsicId': 55}
         ])

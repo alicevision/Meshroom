@@ -368,9 +368,10 @@ FocusScope {
 
         GridLayout {
             id: controlsLayout
-            columns: 2
-            columnSpacing: 12
-            property int sliderWidth: 100
+            columns: 3
+            columnSpacing: 6
+
+            property int sliderWidth: 70
 
             // Rotation Controls
             Label {
@@ -380,27 +381,18 @@ FocusScope {
                 Layout.rowSpan: 3
             }
 
-            Row {
-                spacing: 4
-                Slider { width: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationX = value }
-                Label { text: "X" }
-            }
+            Slider { implicitWidth: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationX = value }
+            Label { text: "X" }
 
-            Row {
-                spacing: 4
-                Slider { width: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationY = value }
-                Label { text: "Y" }
-            }
+            Slider { implicitWidth: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationY = value }
+            Label { text: "Y" }
 
-            Row {
-                spacing: 4
-                Slider { width: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationZ = value }
-                Label { text: "Z" }
-            }
+            Slider { implicitWidth: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationZ = value }
+            Label { text: "Z" }
 
             // Scale Control
             Label { text: "Scale" }
-            Slider { implicitWidth: controlsLayout.sliderWidth; from: 1; to: 10; onPositionChanged: transform.scale = value }
+            Slider { Layout.columnSpan: 2; implicitWidth: controlsLayout.sliderWidth; from: 1; to: 10; onPositionChanged: transform.scale = value }
         }
     }
 

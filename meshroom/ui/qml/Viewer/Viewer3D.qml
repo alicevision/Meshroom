@@ -19,6 +19,7 @@ FocusScope {
 
     property int renderMode: 2
     readonly property alias loading: modelLoader.loading
+    readonly property alias polyCount: modelLoader.polyCount
 
     // Alembic optional support => won't be available if AlembicEntity plugin is not available
     readonly property Component abcLoaderComp: Qt.createComponent("AlembicLoader.qml")
@@ -93,6 +94,14 @@ FocusScope {
                     // create MaterialSwitcher with default colors
                     mats.push({})
                 }
+                // Retrieve polycount using vertexPosition buffer
+                if(comp.toString().indexOf("Geometry") > -1) {
+                    for(var k = 0; k < comp.geometry.attributes.length; ++k)
+                    {
+                        if(comp.geometry.attributes[k].name == "vertexPosition")
+                            modelLoader.polyCount += comp.geometry.attributes[k].count / 3
+                    }
+                }
             }
 
             modelLoader.meshHasTexture = mats.length > 0
@@ -119,6 +128,7 @@ FocusScope {
     {
         source = 'no_file' // only way to force unloading of valid scene
         source = ''
+        modelLoader.polyCount = 0
     }
 
     function clearAbc()
@@ -235,6 +245,7 @@ FocusScope {
                 property string source
                 property string abcSource
                 property string depthMapSource
+                property int polyCount
                 property bool meshHasTexture: false
                 // SceneLoader status is not reliable when loading a 3D file
                 property bool loading: false
@@ -274,7 +285,7 @@ FocusScope {
                     components: [
                         SceneLoader {
                             id: scene
-                            source: Qt.resolvedUrl(modelLoader.source)
+                            source: modelLoader.source
                             onStatusChanged: {
                                 if(scene.status != SceneLoader.Loading)
                                     modelLoader.loading = false;
@@ -456,6 +467,15 @@ FocusScope {
                     checked: renderMode === index
                 }
             }
+        }
+    }
+
+    FloatingPane {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        visible: modelLoader.polyCount > 0
+        Label {
+            text: modelLoader.polyCount + " faces"
         }
     }
 

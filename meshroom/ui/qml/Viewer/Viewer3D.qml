@@ -5,7 +5,10 @@ import QtQuick.Scene3D 2.0
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
 import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
+
 import MaterialIcons 2.2
+
+import Controls 1.0
 
 FocusScope {
     id: root
@@ -349,8 +352,8 @@ FocusScope {
     //
 
     // Rotation/Scale
-    Pane {
-        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
+    FloatingPane {
+        anchors { top: parent.top; left: parent.left }
 
         GridLayout {
             id: controlsLayout
@@ -391,9 +394,8 @@ FocusScope {
     }
 
     // Outliner
-    Pane {
-        anchors.right: parent.right
-        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
+    FloatingPane {
+        anchors { top: parent.top; right: parent.right }
 
         Column {
             Row {
@@ -430,9 +432,9 @@ FocusScope {
     }
 
     // Render Mode
-    Pane {
-        anchors.bottom: parent.bottom
-        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
+    FloatingPane {
+        anchors { bottom: parent.bottom; left: parent.left }
+
 
         Row {
             anchors.verticalCenter: parent.verticalCenter

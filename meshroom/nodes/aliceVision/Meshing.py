@@ -40,6 +40,15 @@ class Meshing(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
         ),
+        desc.ChoiceParam(
+            name='repartition',
+            label='Repartition',
+            description='',
+            value='multiResolution',
+            values=('multiResolution', 'regularGrid'),
+            exclusive=True,
+            uid=[0],
+        ),
         desc.IntParam(
             name='smoothingIteration',
             label='Smoothing Iteration',

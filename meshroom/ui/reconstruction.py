@@ -59,7 +59,7 @@ class LiveSfmManager(QObject):
         self._folder = folder
         self.folderChanged.emit()
         self.cameraInit = self.sfm = None
-        self.allImages = self.imagesInReconstruction()
+        self.allImages = self.reconstruction.allImagePaths()
         self.minImagesPerStep = minImagesPerStep
         self.setRunning(True)
         self.update()  # trigger initial update
@@ -94,7 +94,6 @@ class LiveSfmManager(QObject):
                 self.reconstruction.beginModification("SfM Augmentation")
                 # Add SfM augmentation step in the graph
                 self.cameraInit, self.sfm = self.reconstruction.addSfmAugmentation()
-                self.stepCreated.emit()
             self.addImageToStep(imagePath)
 
         # If we have enough images and the graph is not being computed, compute augmentation step
@@ -115,9 +114,6 @@ class LiveSfmManager(QObject):
         """ Get images in the current augmentation step. """
         return self.imagePathsInCameraInit(self.cameraInit) if self.cameraInit else []
 
-    def imagesInReconstruction(self):
-        """ Get all images in the reconstruction. """
-        return [vp.path.value for node in self.reconstruction.cameraInits for vp in node.viewpoints]
 
     @Slot()
     def computeStep(self):
@@ -137,7 +133,6 @@ class LiveSfmManager(QObject):
         self.reconstruction.endModification()
         self.reconstruction.execute(sfm)
 
-    stepCreated = Signal()
     runningChanged = Signal()
     running = Property(bool, lambda self: self._running, notify=runningChanged)
     folderChanged = Signal()
@@ -153,7 +148,6 @@ class Reconstruction(UIGraph):
 
     def __init__(self, graphFilepath='', parent=None):
         super(Reconstruction, self).__init__(graphFilepath, parent)
-        self._buildIntrinsicsThread = None
         self._buildingIntrinsics = False
         self._cameraInit = None
         self._cameraInits = QObjectListModel(parent=self)
@@ -176,7 +170,7 @@ class Reconstruction(UIGraph):
     @Slot()
     def new(self):
         """ Create a new photogrammetry pipeline. """
-        self.setGraph(multiview.photogrammetryPipeline())
+        self.setGraph(multiview.photogrammetry())
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
@@ -251,13 +245,16 @@ class Reconstruction(UIGraph):
         sfmNodes = self._graph.nodesFromNode(self._cameraInits[0], 'StructureFromMotion')[0]
         return sfmNodes[-1] if sfmNodes else None
 
-    def addSfmAugmentation(self):
+    def addSfmAugmentation(self, withMVS=False):
         """
         Create a new augmentation step connected to the last SfM node of this Reconstruction and
         return the created CameraInit and SfM nodes.
 
         If the Reconstruction is not initialized (empty initial CameraInit), this method won't
         create anything and return initial CameraInit and SfM nodes.
+
+        Args:
+            withMVS (bool): whether to create the MVS pipeline after the augmentation
 
         Returns:
             Node, Node: CameraInit, StructureFromMotion
@@ -273,31 +270,18 @@ class Reconstruction(UIGraph):
                 return self._cameraInit, sfm
 
         with self.groupedGraphModification("SfM Augmentation"):
-            # instantiate sfm augmentation chain
-            cameraInit = self.addNode('CameraInit')
-            featureExtraction = self.addNode('FeatureExtraction')
-            imageMatching = self.addNode('ImageMatchingMultiSfM')
-            featureMatching = self.addNode('FeatureMatching')
-            structureFromMotion = self.addNode('StructureFromMotion')
+            sfm, mvs = multiview.sfmAugmentation(self, self.lastSfmNode(), withMVS=withMVS)
 
-            edges = (
-                (cameraInit.output, featureExtraction.input),
-                (featureExtraction.input, imageMatching.input),
-                (featureExtraction.output, imageMatching.featuresFolder),
-                (imageMatching.featuresFolder, featureMatching.featuresFolder),
-                (imageMatching.outputCombinedSfM, featureMatching.input),
-                (imageMatching.output, featureMatching.imagePairsList),
-                (featureMatching.input, structureFromMotion.input),
-                (featureMatching.featuresFolder, structureFromMotion.featuresFolder),
-                (featureMatching.output, structureFromMotion.matchesFolder),
-            )
-            for src, dst in edges:
-                self.addEdge(src, dst)
+        self.sfmAugmented.emit(sfm[0], mvs[-1])
+        return sfm[0], sfm[-1]
 
-            # connect last SfM node to ImageMatchingMultiSfm
-            self.addEdge(sfm.output, imageMatching.inputB)
+    def allImagePaths(self):
+        """ Get all image paths in the reconstruction. """
+        return [vp.path.value for node in self._cameraInits for vp in node.viewpoints]
 
-        return cameraInit, structureFromMotion
+    def allViewIds(self):
+        """ Get all view Ids involved in the reconstruction. """
+        return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints]
 
     @Slot(QObject, graph.Node)
     def handleFilesDrop(self, drop, cameraInit):
@@ -329,7 +313,7 @@ class Reconstruction(UIGraph):
     def importImages(self, images, cameraInit):
         """ Add the given list of images to the Reconstruction. """
         # Start the process of updating views and intrinsics
-        self._buildIntrinsicsThread = self.runAsync(self.buildIntrinsics, args=(cameraInit, images,))
+        self.runAsync(self.buildIntrinsics, args=(cameraInit, images,))
 
     def buildIntrinsics(self, cameraInit, additionalViews):
         """
@@ -337,23 +321,58 @@ class Reconstruction(UIGraph):
         Does not modify the graph, can be called outside the main thread.
         Emits intrinsicBuilt(views, intrinsics) when done.
         """
+        views = []
+        intrinsics = []
+
+        # Duplicate 'cameraInit' outside the graph.
+        #   => allows to compute intrinsics without modifying the node or the graph
+        # If cameraInit is None (i.e: SfM augmentation):
+        #   * create an uninitialized node
+        #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
+        attributes = cameraInit.toDict()["attributes"] if cameraInit else {}
+        cameraInitCopy = graph.Node("CameraInit", **attributes)
+
         try:
             self.setBuildingIntrinsics(True)
             # Retrieve the list of updated viewpoints and intrinsics
-            views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, additionalViews)
-            self.intrinsicsBuilt.emit(cameraInit, views, intrinsics)
-            return views, intrinsics
+            views, intrinsics = cameraInitCopy.nodeDesc.buildIntrinsics(cameraInitCopy, additionalViews)
         except Exception:
             import traceback
             logging.error("Error while building intrinsics : {}".format(traceback.format_exc()))
-        finally:
-            self.setBuildingIntrinsics(False)
+
+        # Delete the duplicate
+        cameraInitCopy.deleteLater()
+
+        self.setBuildingIntrinsics(False)
+        # always emit intrinsicsBuilt signal to inform listeners
+        # in other threads that computation is over
+        self.intrinsicsBuilt.emit(cameraInit, views, intrinsics)
 
     def onIntrinsicsAvailable(self, cameraInit, views, intrinsics):
         """ Update CameraInit with given views and intrinsics. """
-        with self.groupedGraphModification("Add Images"):
-            self.setAttribute(cameraInit.viewpoints, views)
-            self.setAttribute(cameraInit.intrinsics, intrinsics)
+        augmentSfM = cameraInit is None
+        commandTitle = "Add {} Images"
+
+        # SfM augmentation
+        if augmentSfM:
+            # filter out views already involved in the reconstruction
+            allViewIds = self.allViewIds()
+            views = [view for view in views if int(view["viewId"]) not in allViewIds]
+            commandTitle = "Augment Reconstruction ({} Images)"
+
+        # No additional views: early return
+        if not views:
+            return
+
+        commandTitle = commandTitle.format(len(views))
+        # allow updates between commands so that node depths
+        # are updated after "addSfmAugmentation" (useful for auto layout)
+        with self.groupedGraphModification(commandTitle, disableUpdates=False):
+            if augmentSfM:
+                cameraInit, self.sfm = self.addSfmAugmentation(withMVS=True)
+            with self.groupedGraphModification("Set Views and Intrinsics"):
+                self.setAttribute(cameraInit.viewpoints, views)
+                self.setAttribute(cameraInit.intrinsics, intrinsics)
         self.setCameraInit(cameraInit)
 
     def setBuildingIntrinsics(self, value):
@@ -378,9 +397,17 @@ class Reconstruction(UIGraph):
         """
         Update internal views and poses based on the current SfM node.
         """
-        assert self._sfm is not None
-        self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
+        if not self._sfm:
+            self._views = []
+            self._poses = []
+        else:
+            self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
         self.sfmReportChanged.emit()
+
+    def _resetSfm(self):
+        """ Reset sfm-related members. """
+        self._sfm = None
+        self.updateViewsAndPoses()
 
     def getSfm(self):
         """ Returns the current SfM node. """
@@ -392,11 +419,15 @@ class Reconstruction(UIGraph):
         """
         if self._sfm:
             self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
+            self._sfm.destroyed.disconnect(self._resetSfm)
+
         self._sfm = node
         # Update views and poses and do so each time
         # the status of the SfM node's only chunk changes
         self.updateViewsAndPoses()
-        self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
+        if self._sfm:
+            self._sfm.destroyed.connect(self._resetSfm)
+            self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
         self.sfmChanged.emit()
 
     @Slot(QObject, result=bool)
@@ -414,3 +445,5 @@ class Reconstruction(UIGraph):
     sfmReportChanged = Signal()
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
+    sfmAugmented = Signal(graph.Node, graph.Node)
+

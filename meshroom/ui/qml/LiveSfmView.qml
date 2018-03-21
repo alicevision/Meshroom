@@ -25,12 +25,6 @@ Panel {
     padding: 2
     clip: true
 
-    Connections {
-        target: root.liveSfmManager
-        // Request graph auto-layout when an augmentation step is added for readability
-        onStepCreated: requestGraphAutoLayout()
-    }
-
     Platform.FolderDialog {
         id: selectFolderDialog
         title: "Live Reconstruction - Select Image Folder"

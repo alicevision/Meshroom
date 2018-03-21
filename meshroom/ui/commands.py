@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from PySide2.QtWidgets import QUndoCommand, QUndoStack
 from PySide2.QtCore import Property, Signal
-from meshroom.core.graph import Node, ListAttribute, Graph, GraphModification
+from meshroom.core.graph import Node, ListAttribute, Graph, GraphModification, Attribute
 
 
 class UndoCommand(QUndoCommand):
@@ -89,6 +89,10 @@ class AddNodeCommand(GraphCommand):
         self.nodeType = nodeType
         self.nodeName = None
         self.kwargs = kwargs
+        # Serialize Attributes as link expressions
+        for key, value in self.kwargs.items():
+            if isinstance(value, Attribute):
+                self.kwargs[key] = value.asLinkExpr()
 
     def redoImpl(self):
         node = self.graph.addNewNode(self.nodeType, **self.kwargs)
@@ -236,25 +240,28 @@ class EnableGraphUpdateCommand(GraphCommand):
 
 
 @contextmanager
-def GroupedGraphModification(graph, undoStack, title):
-    """ A context manager that creates a macro command disabling (if not already) graph update
+def GroupedGraphModification(graph, undoStack, title, disableUpdates=True):
+    """ A context manager that creates a macro command disabling (if not already) graph update by default
     and resetting its status after nested block execution.
 
     Args:
         graph (Graph): the Graph that will be modified
         undoStack (UndoStack): the UndoStack to work with
         title (str): the title of the macro command
+        disableUpdates (bool): whether to disable graph updates
     """
     # Store graph update state
     state = graph.updateEnabled
     # Create a new command macro and push a command that disable graph updates
     undoStack.beginMacro(title)
-    undoStack.tryAndPush(EnableGraphUpdateCommand(graph, False))
+    if disableUpdates:
+        undoStack.tryAndPush(EnableGraphUpdateCommand(graph, False))
     try:
         yield  # Execute nested block
     except Exception:
         raise
     finally:
-        # Push a command restoring graph update state and end command macro
-        undoStack.tryAndPush(EnableGraphUpdateCommand(graph, state))
+        if disableUpdates:
+            # Push a command restoring graph update state and end command macro
+            undoStack.tryAndPush(EnableGraphUpdateCommand(graph, state))
         undoStack.endMacro()

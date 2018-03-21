@@ -43,7 +43,7 @@ if not args.input and not args.inputImages:
     print('Nothing to compute. You need to set --input or --inputImages.')
     exit(1)
 
-graph = multiview.photogrammetryPipeline(output=args.output, inputFolder=args.input, inputImages=args.inputImages)
+graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
 graph.findNode('PrepareDenseScene').scale.value = args.scale
 
 if args.save:

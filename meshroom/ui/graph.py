@@ -221,16 +221,17 @@ class UIGraph(QObject):
         """
         return self._undoStack.tryAndPush(command)
 
-    def groupedGraphModification(self, title):
+    def groupedGraphModification(self, title, disableUpdates=True):
         """ Get a GroupedGraphModification for this Graph.
 
         Args:
             title (str): the title of the macro command
+            disableUpdates (bool): whether to disable graph updates
 
         Returns:
             GroupedGraphModification: the instantiated context manager
         """
-        return commands.GroupedGraphModification(self._graph, self._undoStack, title)
+        return commands.GroupedGraphModification(self._graph, self._undoStack, title, disableUpdates)
 
     def beginModification(self, name):
         """ Begin a Graph modification. Calls to beginModification and endModification may be nested, but
@@ -245,7 +246,7 @@ class UIGraph(QObject):
         self._undoStack.endMacro()
 
     @Slot(str, result=QObject)
-    def addNode(self, nodeType, **kwargs):
+    def addNewNode(self, nodeType, **kwargs):
         """ [Undoable]
         Create a new Node of type 'nodeType' and returns it.
 
@@ -306,7 +307,7 @@ class UIGraph(QObject):
             if not createEdges:
                 serialized["attributes"] = {k: v for k, v in serialized["attributes"].items() if not graph.isLink(v)}
             # create a new node of the same type and with the same attributes values
-            node = self.addNode(serialized["nodeType"], **serialized["attributes"])
+            node = self.addNewNode(serialized["nodeType"], **serialized["attributes"])
         return node
 
     @Slot(graph.Node, result="QVariantList")

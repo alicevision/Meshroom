@@ -30,6 +30,15 @@ class MeshFiltering(desc.CommandLineNode):
             range=(0.0, 10.0, 0.1),
             uid=[0],
             ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[],
+        ),
     ]
 
     outputs = [

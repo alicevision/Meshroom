@@ -35,7 +35,7 @@ class MeshDenoising(desc.CommandLineNode):
             label='Lambda',
             description='''Regularization weight.''',
             value=2.0,
-            range=(0.0, 10.0, 1.0),
+            range=(0.0, 10.0, 0.01),
             uid=[0],
             ),
         desc.FloatParam(

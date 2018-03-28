@@ -19,7 +19,7 @@ class ConvertSfMFormat(desc.CommandLineNode):
             label='SfM File Format',
             description='''SfM File Format''',
             value='abc',
-            values=['abc', 'sfm', 'ply', 'bin', 'json'],
+            values=['abc', 'sfm', 'ply', 'bin', 'json','colmap-txt'],
             exclusive=True,
             uid=[0],
             group='',  # exclude from command line

@@ -15,15 +15,25 @@ class ConvertSfMFormat(desc.CommandLineNode):
             uid=[0],
             ),
         desc.ChoiceParam(
-            name='fileExt',
+            name='inputFileExt',
+            label='Input SfM format',
+            description='''SfM File Format''',
+            value='abc',
+            values=['abc','json','colmap'],
+            exclusive=True,
+            uid=[0],
+            #group='',  # exclude from command line
+            ),
+        desc.ChoiceParam(
+            name='outputFileExt',
             label='SfM File Format',
             description='''SfM File Format''',
             value='abc',
-            values=['abc', 'sfm', 'ply', 'bin', 'json','colmap-txt'],
+            values=['abc', 'sfm', 'ply', 'bin', 'json'],
             exclusive=True,
             uid=[0],
-            group='',  # exclude from command line
-            ),
+            #group='',  # exclude from command line
+        ),
         desc.BoolParam(
             name='views',
             label='Views',
@@ -75,7 +85,7 @@ class ConvertSfMFormat(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''Path to the output SfM Data file.''',
-            value='{cache}/{nodeType}/{uid0}/sfm.{fileExtValue}',
+            value='{cache}/{nodeType}/{uid0}/sfm.{outputFileExtValue}',
             uid=[],
             ),
     ]

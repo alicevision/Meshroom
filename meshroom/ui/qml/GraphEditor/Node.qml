@@ -2,6 +2,7 @@ import QtQuick 2.9
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 import QtGraphicalEffects 1.0
+import Utils 1.0
 
 Item {
     id: root
@@ -50,7 +51,7 @@ Item {
             }
             MenuItem {
                 text: "Open Folder"
-                onTriggered: Qt.openUrlExternally(node.internalFolder)
+                onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(node.internalFolder))
             }
             MenuSeparator {}
             MenuItem {

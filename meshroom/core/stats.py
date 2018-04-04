@@ -89,7 +89,7 @@ class ProcStatistics:
         'num_threads',
         # 'memory_maps',
         'status',
-        'num_fds', # The number of file descriptors currently opened by this process (non cumulative)
+        # 'num_fds', # The number of file descriptors currently opened by this process (non cumulative) - N/A on Windows
         'io_counters',
         'num_ctx_switches',
         ]

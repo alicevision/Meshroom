@@ -5,7 +5,10 @@ import QtQuick.Scene3D 2.0
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
 import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
+
 import MaterialIcons 2.2
+
+import Controls 1.0
 
 FocusScope {
     id: root
@@ -14,7 +17,9 @@ FocusScope {
     property alias abcSource: modelLoader.abcSource
     property alias depthMapSource: modelLoader.depthMapSource
 
+    property int renderMode: 2
     readonly property alias loading: modelLoader.loading
+    readonly property alias polyCount: modelLoader.polyCount
 
     // Alembic optional support => won't be available if AlembicEntity plugin is not available
     readonly property Component abcLoaderComp: Qt.createComponent("AlembicLoader.qml")
@@ -62,8 +67,11 @@ FocusScope {
         })
 
         entities.forEach(function(entity) {
-            var comps = [];
             var mats = []
+            var hasTextures = false
+            // Create as many MaterialSwitcher as individual materials for this entity
+            // NOTE: we let each MaterialSwitcher modify the components of the entity
+            //       and therefore remove the default material spawned by the sceneLoader
             for(var i=0; i < entity.components.length; ++i)
             {
                 var comp = entity.components[i]
@@ -76,32 +84,31 @@ FocusScope {
                         "shininess": comp.shininess,
                         "specular": comp.specular,
                         "ambient": comp.ambient,
-                        "showTextures": texturesCheckBox.checked
+                        "mode": root.renderMode
                     }
                     mats.push(m)
-                    // unparent previous material
-                    // and exclude it from the entity components
-                    comp.parent = null
-                    continue; // skip original component and continue
+                    hasTextures = true
                 }
 
-                // make default material brighter
                 if(comp.toString().indexOf("QPhongMaterial") > -1) {
-                    comp.diffuse = "#AAA"
-                    comp.ambient = "#AAA"
+                    // create MaterialSwitcher with default colors
+                    mats.push({})
                 }
-                comps.push(comp)
+                // Retrieve polycount using vertexPosition buffer
+                if(comp.toString().indexOf("Geometry") > -1) {
+                    for(var k = 0; k < comp.geometry.attributes.length; ++k)
+                    {
+                        if(comp.geometry.attributes[k].name == "vertexPosition")
+                            modelLoader.polyCount += comp.geometry.attributes[k].count / 3
+                    }
+                }
             }
-            entity.components = comps
+
             modelLoader.meshHasTexture = mats.length > 0
             mats.forEach(function(m){
                 // create a material switcher for each material definition
                 var matSwitcher = materialSwitcherComponent.createObject(entity, m)
-                // trigger showTextures update by inverting it
-                // and re-bind textures checkbox to texture switch property
-                // (this double update ensure the texture display is correct)
-                matSwitcher.showTextures = !matSwitcher.showTextures
-                matSwitcher.showTextures = Qt.binding(function(){ return texturesCheckBox.checked })
+                matSwitcher.mode = Qt.binding(function(){ return root.renderMode })
             })
         })
     }
@@ -121,6 +128,7 @@ FocusScope {
     {
         source = 'no_file' // only way to force unloading of valid scene
         source = ''
+        modelLoader.polyCount = 0
     }
 
     function clearAbc()
@@ -151,7 +159,7 @@ FocusScope {
                 id: mainCamera
                 projectionType: CameraLens.PerspectiveProjection
                 fieldOfView: 45
-                nearPlane : 0.1
+                nearPlane : 0.01
                 farPlane : 1000.0
                 position: Qt.vector3d(28.0, 21.0, 28.0)
                 upVector: Qt.vector3d(0.0, 1.0, 0.0)
@@ -237,6 +245,7 @@ FocusScope {
                 property string source
                 property string abcSource
                 property string depthMapSource
+                property int polyCount
                 property bool meshHasTexture: false
                 // SceneLoader status is not reliable when loading a 3D file
                 property bool loading: false
@@ -276,7 +285,7 @@ FocusScope {
                     components: [
                         SceneLoader {
                             id: scene
-                            source: Qt.resolvedUrl(modelLoader.source)
+                            source: modelLoader.source
                             onStatusChanged: {
                                 if(scene.status != SceneLoader.Loading)
                                     modelLoader.loading = false;
@@ -349,40 +358,48 @@ FocusScope {
         }
     }
 
+    //
+    //  UI Overlay
+    //
 
-    Pane {
-        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
-        Column {
-            spacing: 5            
-            Row {
-                spacing: 4
-                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.rotationX = value}
-                Label { text: "RX" }
+    // Rotation/Scale
+    FloatingPane {
+        anchors { top: parent.top; left: parent.left }
+
+        GridLayout {
+            id: controlsLayout
+            columns: 3
+            columnSpacing: 6
+
+            property int sliderWidth: 70
+
+            // Rotation Controls
+            Label {
+                font.family: MaterialIcons.fontFamily
+                text: MaterialIcons.rotation3D
+                font.pointSize: 14
+                Layout.rowSpan: 3
             }
 
-            Row {
-                spacing: 4
-                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.rotationY = value }
-                Label { text: "RY" }
-            }
+            Slider { implicitWidth: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationX = value }
+            Label { text: "X" }
 
-            Row {
-                spacing: 4
-                Slider { width: 100; from: -180; to: 180; onPositionChanged: transform.rotationZ = value }
-                Label { text: "RZ" }
-            }
+            Slider { implicitWidth: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationY = value }
+            Label { text: "Y" }
 
-            Row {
-                spacing: 4
-                Slider { width: 100; from: 1; to: 10; onPositionChanged: transform.scale = value }
-                Label { text: "Scale" }
-            }
+            Slider { implicitWidth: controlsLayout.sliderWidth; from: -180; to: 180; onPositionChanged: transform.rotationZ = value }
+            Label { text: "Z" }
+
+            // Scale Control
+            Label { text: "Scale" }
+            Slider { Layout.columnSpan: 2; implicitWidth: controlsLayout.sliderWidth; from: 1; to: 10; onPositionChanged: transform.scale = value }
         }
     }
 
-    Pane {
-        background: Rectangle { color: palette.base; opacity: 0.5; radius: 2 }
-        anchors.right: parent.right
+    // Outliner
+    FloatingPane {
+        anchors { top: parent.top; right: parent.right }
+
         Column {
             Row {
                 CheckBox { id: showSfMCheckBox; text: "SfM"; checked: true; visible: root.supportAlembic; opacity: root.abcSource ? 1.0 : 0.6 }
@@ -412,9 +429,45 @@ FocusScope {
                     ToolTip.visible: hovered
                 }
             }
-            CheckBox { id: texturesCheckBox; text: "Textures"; checked: true; opacity: modelLoader.meshHasTexture ? 1.0 : 0.6 }
             CheckBox { id: gridCheckBox; text: "Grid"; checked: true }
             CheckBox { id: locatorCheckBox; text: "Locator"; checked: true }
+        }
+    }
+
+    // Render Mode
+    FloatingPane {
+        anchors { bottom: parent.bottom; left: parent.left }
+
+
+        Row {
+            anchors.verticalCenter: parent.verticalCenter
+            Repeater {
+                model: [ // Can't use ListModel because of MaterialIcons expressions
+                    {"name": "Solid", "icon": MaterialIcons.crop_din},
+                    {"name": "Wireframe", "icon": MaterialIcons.grid_on},
+                    {"name": "Textured", "icon": MaterialIcons.texture },
+                ]
+                delegate: ToolButton {
+                    text: modelData["icon"]
+                    ToolTip.text: modelData["name"]
+                    ToolTip.visible: hovered
+                    font.family: MaterialIcons.fontFamily
+                    font.pointSize: 11
+                    padding: 4
+                    onClicked: root.renderMode = index
+                    checkable: !checked // hack to disable check toggle on click
+                    checked: renderMode === index
+                }
+            }
+        }
+    }
+
+    FloatingPane {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        visible: modelLoader.polyCount > 0
+        Label {
+            text: modelLoader.polyCount + " faces"
         }
     }
 

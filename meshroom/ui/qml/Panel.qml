@@ -19,6 +19,8 @@ Page {
     property alias footerContent: footerLayout.data
     property alias icon: iconPlaceHolder.data
 
+    clip: true
+
     QtObject {
         id: m
         property int headerHeight: 24

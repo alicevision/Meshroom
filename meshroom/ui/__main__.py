@@ -6,6 +6,7 @@ from PySide2.QtCore import Qt, QObject, Slot
 from PySide2.QtGui import QPalette, QColor, QIcon
 from PySide2.QtWidgets import QApplication
 
+from meshroom.ui.components.filepath import FilepathHelper
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
 
@@ -87,7 +88,8 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("_reconstruction", r)
     pm = PaletteManager(engine, parent=app)
     engine.rootContext().setContextProperty("_PaletteManager", pm)
-
+    fpHelper = FilepathHelper(parent=app)
+    engine.rootContext().setContextProperty("Filepath", fpHelper)
     # Request any potential computation to stop on exit
     app.aboutToQuit.connect(r.stopExecution)
 

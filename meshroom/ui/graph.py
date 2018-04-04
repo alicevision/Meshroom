@@ -267,7 +267,7 @@ class UIGraph(QObject):
         if isinstance(dst, graph.ListAttribute):
             with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.fullName())):
                 self.appendAttribute(dst)
-                self.push(commands.AddEdgeCommand(self._graph, src, dst[-1]))
+                self.push(commands.AddEdgeCommand(self._graph, src, dst.at(-1)))
         else:
             self.push(commands.AddEdgeCommand(self._graph, src, dst))
 

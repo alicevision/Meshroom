@@ -27,7 +27,7 @@ RowLayout {
 
     // Instantiate empty Items for each child attribute
     Repeater {
-        model: isList ? attribute.value : ""
+        model: isList && !attribute.isLink ? attribute.value : 0
         onItemAdded: {childPinCreated(item.childAttribute, item)}
         onItemRemoved: {childPinDeleted(item.childAttribute, item)}
         delegate: Item {

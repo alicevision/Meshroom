@@ -264,7 +264,7 @@ class UIGraph(QObject):
 
     @Slot(graph.Attribute, graph.Attribute)
     def addEdge(self, src, dst):
-        if isinstance(dst, graph.ListAttribute):
+        if isinstance(dst, graph.ListAttribute) and not isinstance(src, graph.ListAttribute):
             with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.fullName())):
                 self.appendAttribute(dst)
                 self.push(commands.AddEdgeCommand(self._graph, src, dst.at(-1)))

@@ -201,6 +201,9 @@ class Attribute(BaseObject):
             self.requestGraphUpdate()
         self.valueChanged.emit()
 
+    def resetValue(self):
+        self._value = ""
+
     def requestGraphUpdate(self):
         if self.node.graph:
             self.node.graph.markNodesDirty(self.node)
@@ -248,13 +251,13 @@ class Attribute(BaseObject):
             return
         if isinstance(v, Attribute):
             g.addEdge(v, self)
-            self._value = ""
+            self.resetValue()
         elif self.isInput and isinstance(v, basestring) and isLink(v):
             # value is a link to another attribute
             link = v[1:-1]
             linkNode, linkAttr = link.split('.')
             g.addEdge(g.node(linkNode).attribute(linkAttr), self)
-            self._value = ""
+            self.resetValue()
 
     def getExportValue(self):
         if self.isLink:
@@ -292,6 +295,15 @@ class Attribute(BaseObject):
     isDefault = Property(bool, _isDefault, notify=valueChanged)
 
 
+def raiseIfLink(func):
+    """ If Attribute instance is a link, raise a RuntimeError."""
+    def wrapper(attr, *args, **kwargs):
+        if attr.isLink:
+            raise RuntimeError("Can't modify connected Attribute")
+        return func(attr, *args, **kwargs)
+    return wrapper
+
+
 class ListAttribute(Attribute):
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
@@ -299,22 +311,35 @@ class ListAttribute(Attribute):
         self._value = ListModel(parent=self)
 
     def __len__(self):
-        return len(self._value)
+        return len(self.value)
 
     def at(self, idx):
         """ Returns child attribute at index 'idx' """
         # implement 'at' rather than '__getitem__'
         # since the later is called spuriously when object is used in QML
-        return self._value.at(idx)
+        return self.value.at(idx)
+
+    def index(self, item):
+        return self.value.indexOf(item)
+
+    def resetValue(self):
+        self._value = ListModel(parent=self)
 
     def _set_value(self, value):
         self._value.clear()
-        self.extend(value)
+        # Link to another attribute
+        if isinstance(value, ListAttribute) or isLink(value):
+            self._value = value
+        # New value
+        else:
+            self.extend(value)
         self.requestGraphUpdate()
 
+    @raiseIfLink
     def append(self, value):
         self.extend([value])
 
+    @raiseIfLink
     def insert(self, index, value):
         values = value if isinstance(value, list) else [value]
         attrs = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
@@ -323,13 +348,13 @@ class ListAttribute(Attribute):
         self._applyExpr()
         self.requestGraphUpdate()
 
-    def index(self, item):
-        return self._value.indexOf(item)
-
+    @raiseIfLink
     def extend(self, values):
         self.insert(len(self._value), values)
 
+    @raiseIfLink
     def remove(self, index, count=1):
+        assert not self.isLink
         if self.node.graph:
             for i in range(index, index + count):
                 attr = self._value.at(i)
@@ -340,19 +365,26 @@ class ListAttribute(Attribute):
         self.valueChanged.emit()
 
     def uid(self, uidIndex):
-        uids = []
-        for value in self._value:
-            if uidIndex in value.desc.uid:
-                uids.append(value.uid(uidIndex))
-        return hash(uids)
+        if isinstance(self.value, ListModel):
+            uids = []
+            for value in self.value:
+                if uidIndex in value.desc.uid:
+                    uids.append(value.uid(uidIndex))
+            return hash(uids)
+        return super(ListAttribute, self).uid(uidIndex)
 
     def _applyExpr(self):
         if not self.node.graph:
             return
-        for value in self._value:
-            value._applyExpr()
+        if isinstance(self._value, ListAttribute) or isLink(self._value):
+            super(ListAttribute, self)._applyExpr()
+        else:
+            for value in self._value:
+                value._applyExpr()
 
     def getExportValue(self):
+        if self.isLink:
+            return self.getLinkParam().asLinkExpr()
         return [attr.getExportValue() for attr in self._value]
 
     def defaultValue(self):
@@ -368,7 +400,9 @@ class ListAttribute(Attribute):
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value if not attr.isDefault]
 
     def getValueStr(self):
-        return self.attributeDesc.joinChar.join([v.getValueStr() for v in self._value])
+        if isinstance(self.value, ListModel):
+            return self.attributeDesc.joinChar.join([v.getValueStr() for v in self.value])
+        return super(ListAttribute, self).getValueStr()
 
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

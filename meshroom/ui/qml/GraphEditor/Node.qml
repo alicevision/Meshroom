@@ -14,6 +14,7 @@ Item {
     signal pressed(var mouse)
     signal doubleClicked(var mouse)
     signal attributePinCreated(var attribute, var pin)
+    signal attributePinDeleted(var attribute, var pin)
 
     signal computeRequest()
     signal submitRequest()
@@ -145,7 +146,9 @@ Item {
                             attribute: object
                             readOnly: root.readOnly
                             Component.onCompleted: attributePinCreated(attribute, inPin)
+                            Component.onDestruction: attributePinDeleted(attribute, inPin)
                             onChildPinCreated: attributePinCreated(childAttribute, inPin)
+                            onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
                         }
                     }
                 }

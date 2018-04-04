@@ -59,7 +59,7 @@ RowLayout {
 
                 MenuItem {
                     text: "Reset To Default Value"
-                    enabled: !attribute.isOutput && !attribute.isLink && !attribute.isDefault
+                    enabled: root.editable && !attribute.isDefault
                     onTriggered: _reconstruction.resetAttribute(attribute)
                 }
 
@@ -286,7 +286,7 @@ RowLayout {
                             var cpt = Qt.createComponent("AttributeItemDelegate.qml")
                             var obj = cpt.createObject(item,
                                                        {'attribute': Qt.binding(function() { return item.childAttrib }),
-                                                        'readOnly': Qt.binding(function() { return root.readOnly })
+                                                        'readOnly': Qt.binding(function() { return !root.editable })
                                                        })
                             obj.Layout.fillWidth = true
                             obj.label.text = index

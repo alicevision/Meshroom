@@ -285,11 +285,14 @@ class ListAttribute(Attribute):
         super(ListAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
         self._value = ListModel(parent=self)
 
-    def __getitem__(self, item):
-        return self._value.at(item)
-
     def __len__(self):
         return len(self._value)
+
+    def at(self, idx):
+        """ Returns child attribute at index 'idx' """
+        # implement 'at' rather than '__getitem__'
+        # since the later is called spuriously when object is used in QML
+        return self._value.at(idx)
 
     def _set_value(self, value):
         self.desc.validateValue(value)
@@ -317,7 +320,7 @@ class ListAttribute(Attribute):
     def remove(self, index, count=1):
         if self.node.graph:
             for i in range(index, index + count):
-                attr = self[i]
+                attr = self._value.at(i)
                 if attr.isLink:
                     self.node.graph.removeEdge(attr)  # delete edge if the attribute is linked
         self._value.removeAt(index, count)

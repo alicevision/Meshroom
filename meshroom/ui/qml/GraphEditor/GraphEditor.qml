@@ -316,7 +316,7 @@ Item {
     // Fit graph to fill root
     function fit() {
         // compute bounding box
-        var bbox = boudingBox()
+        var bbox = boundingBox()
         // rescale
         draggable.scale = Math.min(root.width/bbox.width, root.height/bbox.height)
         // recenter

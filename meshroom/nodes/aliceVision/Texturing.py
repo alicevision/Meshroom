@@ -6,7 +6,6 @@ class Texturing(desc.CommandLineNode):
     commandLine = 'aliceVision_texturing {allParams}'
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
-
     inputs = [
         desc.File(
             name='ini',
@@ -38,17 +37,9 @@ class Texturing(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
         ),
-        desc.IntParam(
-            name='padding',
-            label='Padding',
-            description='''Texture edge padding size in pixel''',
-            value=15,
-            range=(0, 100, 1),
-            uid=[0],
-        ),
         desc.ChoiceParam(
             name='downscale',
-            label='Downscale',
+            label='Texture Downscale',
             description='''Texture downscale factor''',
             value=2,
             values=(1, 2, 4, 8),
@@ -62,6 +53,33 @@ class Texturing(desc.CommandLineNode):
             value='png',
             values=('jpg', 'png', 'tiff', 'exr'),
             exclusive=True,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='unwrapMethod',
+            label='Unwrap Method',
+            description='Method to unwrap input mesh if it does not have UV coordinates.\n'
+                        ' * Basic (> 600k faces) fast and simple. Can generate multiple atlases.\n'
+                        ' * LSCM (<= 600k faces): optimize space. Generates one atlas.\n'
+                        ' * ABF (<= 300k faces): optimize space and stretch. Generates one atlas.',
+            value="Basic",
+            values=("Basic", "LSCM", "ABF"),
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='fillHoles',
+            label='Fill Holes',
+            description='Fill Texture holes with plausible values',
+            value=False,
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='padding',
+            label='Padding',
+            description='''Texture edge padding size in pixel''',
+            value=15,
+            range=(0, 100, 1),
             uid=[0],
         ),
         desc.BoolParam(
@@ -81,6 +99,7 @@ class Texturing(desc.CommandLineNode):
             uid=[],
         ),
     ]
+
 
     outputs = [
         desc.File(

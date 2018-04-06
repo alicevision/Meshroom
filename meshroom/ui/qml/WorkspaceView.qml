@@ -24,13 +24,13 @@ Item {
     implicitWidth: 300
     implicitHeight: 400
 
-    onMeshFileChanged: viewer3D.clear()
-
     signal requestGraphAutoLayout()
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
     {
+        if(!Filepath.exists(Filepath.urlToString(filepath)))
+            return
         switch(Filepath.extension(filepath))
         {
         case ".abc": viewer3D.abcSource = filepath; break;
@@ -41,12 +41,16 @@ Item {
 
     Connections {
         target: reconstruction
-        onSfmReportChanged: loadSfmAbc()
-    }
-
-    function loadSfmAbc()
-    {
-        load3DMedia(Filepath.stringToUrl(reconstruction.sfm.attribute('output').value))
+        onGraphChanged: {
+            viewer3D.clear()
+            viewer2D.clear()
+        }
+        onSfmReportChanged: {
+            viewer3D.abcSource = ''
+            if(!reconstruction.sfm)
+                return
+            load3DMedia(Filepath.stringToUrl(reconstruction.sfm.attribute('output').value))
+        }
     }
 
     SystemPalette { id: palette }
@@ -126,7 +130,7 @@ Item {
 
             Label {
                 anchors.centerIn: parent
-                text: "Loading Model..."
+                text: "Loading..."
                 visible: viewer3D.loading
                 padding: 6
                 background: Rectangle { color: palette.base; opacity: 0.5 }

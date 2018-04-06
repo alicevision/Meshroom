@@ -149,25 +149,27 @@ class ChoiceParam(Param):
     """
     """
     def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' '):
+        assert values
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
+        self._valueType = type(self._values[0])  # cast to value type
         super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
+    def conformValue(self, val):
+        """ Conform 'val' to the correct type and check for its validity """
+        val = self._valueType(val)
+        if val not in self.values:
+            raise ValueError('ChoiceParam value "{}" is not in "{}".'.format(val, str(self.values)))
+        return val
+
     def validateValue(self, value):
-        newValues = None
         if self.exclusive:
-            newValues = [value]
-        else:
-            if not isinstance(value, collections.Iterable):
-                raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
-            newValues = value
-        for newValue in newValues:
-            t = type(self._values[0])  # cast to value type
-            newValue = t(newValue)
-            if newValue not in self.values:
-                raise ValueError('ChoiceParam value "{}" is not in "{}".'.format(newValue, str(self.values)))
-        return value
+            return self.conformValue(value)
+
+        if not isinstance(value, collections.Iterable):
+            raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        return [self.conformValue(v) for v in value]
 
     values = Property(Variant, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)

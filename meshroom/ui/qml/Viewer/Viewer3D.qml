@@ -128,7 +128,6 @@ FocusScope {
     {
         source = 'no_file' // only way to force unloading of valid scene
         source = ''
-        modelLoader.polyCount = 0
     }
 
     function clearAbc()
@@ -250,6 +249,7 @@ FocusScope {
                 // SceneLoader status is not reliable when loading a 3D file
                 property bool loading: false
                 onSourceChanged: {
+                    polyCount = 0
                     meshHasTexture = false
                     loading = true
                 }

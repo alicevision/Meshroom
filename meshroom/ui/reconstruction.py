@@ -175,7 +175,7 @@ class Reconstruction(UIGraph):
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
-        self._sfm = None
+        self.sfm = None
         self._endChunk = None
         self.setMeshFile('')
         self.updateCameraInits()
@@ -404,31 +404,36 @@ class Reconstruction(UIGraph):
             self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
         self.sfmReportChanged.emit()
 
-    def _resetSfm(self):
-        """ Reset sfm-related members. """
-        self._sfm = None
-        self.updateViewsAndPoses()
-
     def getSfm(self):
         """ Returns the current SfM node. """
         return self._sfm
 
-    def setSfm(self, node):
-        """ Set the current SfM node.
-        This node will be used to retrieve sparse reconstruction result like camera poses.
+    def _setSfm(self, node=None):
+        """ Set current SfM node to 'node' and update views and poses.
+        Notes: this should not be called directly, use setSfm instead.
+        See Also: setSfm
         """
-        if self._sfm:
-            self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
-            self._sfm.destroyed.disconnect(self._resetSfm)
-
         self._sfm = node
         # Update views and poses and do so each time
         # the status of the SfM node's only chunk changes
         self.updateViewsAndPoses()
         if self._sfm:
-            self._sfm.destroyed.connect(self._resetSfm)
+            # when destroyed, directly use '_setSfm' to bypass
+            # disconnection step in 'setSfm' (at this point, 'self._sfm' underlying object
+            # has been destroyed and can't be evaluated anymore)
+            self._sfm.destroyed.connect(self._setSfm)
             self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
         self.sfmChanged.emit()
+
+    def setSfm(self, node):
+        """ Set the current SfM node.
+        This node will be used to retrieve sparse reconstruction result like camera poses.
+        """
+        # disconnect from previous SfM node if any
+        if self._sfm:
+            self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
+            self._sfm.destroyed.disconnect(self._setSfm)
+        self._setSfm(node)
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):

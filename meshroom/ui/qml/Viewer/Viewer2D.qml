@@ -11,6 +11,12 @@ FocusScope {
     property url source
     property var metadata
 
+    function clear()
+    {
+        source = ''
+        metadata = {}
+    }
+
     // slots
     Keys.onPressed: {
         if(event.key == Qt.Key_F) {

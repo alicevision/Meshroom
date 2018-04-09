@@ -17,7 +17,6 @@ ApplicationWindow {
     height: 720
     visible: true
     title: (_reconstruction.graph.filepath ? _reconstruction.graph.filepath : "Untitled") + (_reconstruction.undoStack.clean ? "" : "*") + " - Meshroom"
-    font.pointSize: 9
 
     property variant node: null
     // supported 3D files extensions

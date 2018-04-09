@@ -72,6 +72,10 @@ if __name__ == "__main__":
     app.setApplicationName('Meshroom')
     app.setAttribute(Qt.AA_EnableHighDpiScaling)
 
+    font = app.font()
+    font.setPointSize(9)
+    app.setFont(font)
+
     pwd = os.path.dirname(__file__)
     app.setWindowIcon(QIcon(os.path.join(pwd, "img/icon.png")))
     qmlDir = os.path.join(pwd, "qml")

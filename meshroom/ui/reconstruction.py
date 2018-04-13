@@ -172,6 +172,14 @@ class Reconstruction(UIGraph):
         """ Create a new photogrammetry pipeline. """
         self.setGraph(multiview.photogrammetry())
 
+    def load(self, filepath):
+        try:
+            super(Reconstruction, self).load(filepath)
+        except Exception as e:
+            self.error.emit("Error while loading {}".format(os.path.basename(filepath)),
+                            "An unexpected error has occurred",
+                            str(e))
+
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()

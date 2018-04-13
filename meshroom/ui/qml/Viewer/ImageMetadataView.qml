@@ -5,6 +5,7 @@ import MaterialIcons 2.2
 import QtPositioning 5.8
 import QtLocation 5.9
 
+import Controls 1.0
 import Utils 1.0
 
 /**
@@ -204,6 +205,66 @@ Pane {
                 }
             }
             ScrollBar.vertical: ScrollBar{}
+        }
+
+
+        // Display map if GPS coordinates are available
+        Loader {
+            Layout.fillWidth: true
+            Layout.preferredHeight: coordinates.isValid ? 160 : 0
+
+            active: coordinates.isValid
+
+            Plugin {
+                id: osmPlugin
+                name: "osm"
+            }
+
+            sourceComponent: Map {
+                id: map
+                plugin: osmPlugin
+                center: coordinates
+
+                function recenter() {
+                    center = coordinates
+                }
+
+                Connections {
+                    target: root
+                    onCoordinatesChanged: recenter()
+                }
+
+                zoomLevel: 16
+                // Coordinates visual indicator
+                MapQuickItem {
+                    coordinate: coordinates
+                    anchorPoint.x: circle.paintedWidth / 2
+                    anchorPoint.y: circle.paintedHeight
+                    sourceItem: Text {
+                        id: circle
+                        color: palette.highlight
+                        font.pointSize: 18
+                        font.family: MaterialIcons.fontFamily
+                        text: MaterialIcons.location_on
+                    }
+                }
+                // Reset map center
+                FloatingPane {
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    padding: 2
+                    visible: map.center != coordinates
+
+                    ToolButton {
+                        font.family: MaterialIcons.fontFamily
+                        text: MaterialIcons.my_location
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Recenter"
+                        padding: 0
+                        onClicked: recenter()
+                    }
+                }
+            }
         }
     }
 }

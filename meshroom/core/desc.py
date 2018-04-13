@@ -47,7 +47,7 @@ class ListAttribute(Attribute):
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def validateValue(self, value):
-        if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
+        if not isinstance(value, collections.Iterable):
             raise ValueError('ListAttribute only supports iterable input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
@@ -65,8 +65,8 @@ class GroupAttribute(Attribute):
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def validateValue(self, value):
-        if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
-            raise ValueError('GroupAttribute only supports iterable input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        if not isinstance(value, dict):
+            raise ValueError('GroupAttribute only supports dict input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
     def retrieveChildrenUids(self):

@@ -305,6 +305,7 @@ class ListAttribute(Attribute):
         return len(self._value)
 
     def _set_value(self, value):
+        self.desc.validateValue(value)
         self._value.clear()
         self.extend(value)
         self.requestGraphUpdate()
@@ -396,6 +397,7 @@ class GroupAttribute(Attribute):
                 raise AttributeError(key)
 
     def _set_value(self, exportedValue):
+        self.desc.validateValue(exportedValue)
         # set individual child attribute values
         for key, value in exportedValue.items():
             self._value.get(key).value = value

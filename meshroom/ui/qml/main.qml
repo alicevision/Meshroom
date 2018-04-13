@@ -191,6 +191,26 @@ ApplicationWindow {
         }
     }
 
+    DialogsFactory {
+        id: dialogsFactory
+    }
+
+    // Bind log messages to DialogsFactory
+    Connections {
+        target: _reconstruction
+        function createDialog(func, args)
+        {
+            var dialog = func(_window)
+            // Set text afterwards to avoid dialog sizing issues
+            dialog.title = args[0]
+            dialog.text = args[1]
+            dialog.detailedText = args[2]
+        }
+        onInfo: createDialog(dialogsFactory.info, arguments)
+        onWarning: createDialog(dialogsFactory.warning, arguments)
+        onError: createDialog(dialogsFactory.error, arguments)
+    }
+
     Action {
         id: undoAction
 

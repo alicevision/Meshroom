@@ -452,3 +452,8 @@ class Reconstruction(UIGraph):
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(graph.Node, graph.Node)
 
+    # Signals to propagate high-level log messages
+    # Signal(title, text, detailedText)
+    error = Signal(str, str, str)
+    warning = Signal(str, str, str)
+    info = Signal(str, str, str)

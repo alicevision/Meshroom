@@ -135,6 +135,12 @@ FocusScope {
         abcSource = ''
     }
 
+    function clearDepthMap()
+    {
+        depthMapSource = 'no_file'
+        depthMapSource = ''
+    }
+
     Scene3D {
         id: scene3D
         anchors.fill: parent
@@ -415,7 +421,7 @@ FocusScope {
                 CheckBox { id: showDepthMapCheckBox; text: "DepthMap"; checked: true; }
                 ToolButton {
                     text: MaterialIcons.clear; font.family: MaterialIcons.fontFamily;
-                    onClicked: root.depthMapSource = ''
+                    onClicked: clearDepthMap()
                     ToolTip.text: "Unload"
                     ToolTip.visible: hovered
                 }

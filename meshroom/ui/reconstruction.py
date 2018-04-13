@@ -330,7 +330,7 @@ class Reconstruction(UIGraph):
         #   * create an uninitialized node
         #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
         attributes = cameraInit.toDict()["attributes"] if cameraInit else {}
-        cameraInitCopy = graph.Node("CameraInit", **attributes)
+        cameraInitCopy = graph.node_factory("CameraInit", **attributes)
 
         try:
             self.setBuildingIntrinsics(True)

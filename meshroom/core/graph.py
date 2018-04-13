@@ -20,6 +20,7 @@ from . import stats
 from . import desc
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property, Variant, ListModel
+from meshroom.core.exception import UnknownNodeTypeError
 
 # Replace default encoder to support Enums
 DefaultJSONEncoder = json.JSONEncoder  # store the original one
@@ -725,18 +726,18 @@ class Node(BaseObject):
     # i.e: a.b, a[0], a[0].b.c[1]
     attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
 
-    def __init__(self, nodeType, parent=None, **kwargs):
+    def __init__(self, nodeDesc, parent=None, **kwargs):
         """
-        Create a new Node instance based of the given node type name (name of a desc.Node subclass).
+        Create a new Node instance based on the given node description.
         Any other keyword argument will be used to initialize this node's attributes.
 
         Args:
-            nodeType: the node type name
+            nodeDesc (desc.Node): the node description for this node
             parent (BaseObject): this Node's parent
             **kwargs: attributes values
         """
         super(Node, self).__init__(parent)
-        self.nodeDesc = meshroom.core.nodesDesc[nodeType]()
+        self.nodeDesc = nodeDesc
         self.packageName = self.nodeDesc.packageName
         self.packageVersion = self.nodeDesc.packageVersion
 
@@ -1049,6 +1050,47 @@ class Node(BaseObject):
     size = Property(int, getSize, notify=sizeChanged)
 
 
+def node_factory(nodeType, skipInvalidAttributes=False, **attributes):
+    """
+    Create a new Node of type NodeType and initialize its attributes with given kwargs.
+
+    Args:
+        nodeType (str): name of the node description class
+        skipInvalidAttributes (bool): whether to skip attributes not defined in
+                                      or incompatible with nodeType's description.
+        attributes (): serialized nodes attributes
+
+    Raises:
+        UnknownNodeTypeError if nodeType is unknown
+    """
+    try:
+        nodeDesc = meshroom.core.nodesDesc[nodeType]()
+    except KeyError:
+        # unknown node type
+        raise UnknownNodeTypeError(nodeType)
+
+    if skipInvalidAttributes:
+        # compare given attributes with the ones from node desc
+        descAttrNames = set([attr.name for attr in nodeDesc.inputs])
+        attrNames = set([name for name in attributes.keys()])
+        invalidAttributes = list(attrNames.difference(descAttrNames))
+        commonAttributes = list(attrNames.intersection(descAttrNames))
+        # compare value types for common attributes
+        for attr in [attr for attr in nodeDesc.inputs if attr.name in commonAttributes]:
+            try:
+                attr.validateValue(attributes[attr.name])
+            except:
+                invalidAttributes.append(attr.name)
+
+        if invalidAttributes and skipInvalidAttributes:
+            # filter out invalid attributes
+            logging.info("Skipping invalid attributes initialization for {}: {}".format(nodeType, invalidAttributes))
+            for attr in invalidAttributes:
+                del attributes[attr]
+
+    return Node(nodeDesc, **attributes)
+
+
 WHITE = 0
 GRAY = 1
 BLACK = 2
@@ -1162,7 +1204,12 @@ class Graph(BaseObject):
             for nodeName, nodeData in sorted(graphData.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
                 if not isinstance(nodeData, dict):
                     raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
-                n = Node(nodeData['nodeType'], **nodeData['attributes'])
+
+                n = node_factory(nodeData['nodeType'],
+                                 # allow simple retro-compatibility, though cache might get invalidated
+                                 skipInvalidAttributes=True,
+                                 **nodeData['attributes'])
+
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
 
@@ -1263,7 +1310,8 @@ class Graph(BaseObject):
         """
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
-        n = self.addNode(Node(nodeType=nodeType, **kwargs), uniqueName=name)
+
+        n = self.addNode(node_factory(nodeType, False, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 

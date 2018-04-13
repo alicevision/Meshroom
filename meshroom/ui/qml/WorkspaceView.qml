@@ -100,6 +100,7 @@ Item {
 
                 DropArea {
                     anchors.fill: parent
+                    keys: ["text/uri-list"]
                     onDropped: {
                         viewer2D.source = drop.urls[0]
                         viewer2D.metadata = {}
@@ -124,6 +125,7 @@ Item {
                 anchors.fill: parent
                 DropArea {
                     anchors.fill: parent
+                    keys: ["text/uri-list"]
                     onDropped: load3DMedia(drop.urls[0])
                 }
             }

@@ -132,6 +132,7 @@ Panel {
                 id: dropArea
                 anchors.fill: parent
                 enabled: !root.readOnly
+                keys: ["text/uri-list"]
                 // TODO: onEntered: call specific method to filter files based on extension
                 onDropped: {
                     var augmentSfm = augmentArea.hovered

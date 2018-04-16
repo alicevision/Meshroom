@@ -11,7 +11,7 @@ import Utils 1.0
 /**
  * ImageMetadataView displays a JSON model representing an image"s metadata as a ListView.
  */
-Pane {
+FloatingPane {
     id: root
 
     property alias metadata: metadataModel.metadata
@@ -21,8 +21,6 @@ Pane {
     padding: 4
 
     SystemPalette { id: palette }
-
-    background: Rectangle { color: palette.window; opacity: 0.9 }
 
     /**
      * Convert GPS metadata to degree coordinates.

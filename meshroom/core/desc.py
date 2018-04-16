@@ -357,7 +357,7 @@ class CommandLineNode(Node):
     def buildCommandLine(self, chunk):
         cmdPrefix = ''
         # if rez available in env, we use it
-        if 'REZ_ENV' in os.environ:
+        if 'REZ_ENV' in os.environ and chunk.node.packageVersion:
             # if the node package is already in the environment, we don't need a new dedicated rez environment
             alreadyInEnv = os.environ.get('REZ_{}_VERSION'.format(chunk.node.packageName.upper()), "").startswith(chunk.node.packageVersion)
             if not alreadyInEnv:

@@ -12,7 +12,7 @@ currentDir = os.path.dirname(os.path.realpath(__file__))
 
 
 class SimpleFarmSubmitter(BaseSubmitter):
-    MESHROOM_PACKAGE = os.environ.get('REZ_USED_REQUEST', '')
+    MESHROOM_PACKAGE = "meshroom-{}".format(os.environ.get('REZ_MESHROOM_VERSION', ''))
 
     filepath = os.environ.get('SIMPLEFARMCONFIG', os.path.join(currentDir, 'simpleFarmConfig.json'))
     config = json.load(open(filepath))

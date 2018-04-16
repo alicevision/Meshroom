@@ -51,7 +51,7 @@ RowLayout {
             property bool acceptableDrop: false
 
             anchors.fill: parent
-
+            keys: [dragTarget.objectName]
             onEntered: {
                 // Filter drops:
                 if( drag.source.objectName != dragTarget.objectName  // not an edge connector
@@ -81,6 +81,7 @@ RowLayout {
             //anchors.verticalCenter: root.verticalCenter
             width: 2
             height: 2
+            Drag.keys: [dragTarget.objectName]
             Drag.active: connectMA.drag.active
             Drag.hotSpot.x: width*0.5
             Drag.hotSpot.y: height*0.5

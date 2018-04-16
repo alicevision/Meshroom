@@ -172,6 +172,14 @@ class Reconstruction(UIGraph):
         """ Create a new photogrammetry pipeline. """
         self.setGraph(multiview.photogrammetry())
 
+    def load(self, filepath):
+        try:
+            super(Reconstruction, self).load(filepath)
+        except Exception as e:
+            self.error.emit("Error while loading {}".format(os.path.basename(filepath)),
+                            "An unexpected error has occurred",
+                            str(e))
+
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
@@ -330,7 +338,7 @@ class Reconstruction(UIGraph):
         #   * create an uninitialized node
         #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
         attributes = cameraInit.toDict()["attributes"] if cameraInit else {}
-        cameraInitCopy = graph.Node("CameraInit", **attributes)
+        cameraInitCopy = graph.node_factory("CameraInit", **attributes)
 
         try:
             self.setBuildingIntrinsics(True)
@@ -452,3 +460,8 @@ class Reconstruction(UIGraph):
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(graph.Node, graph.Node)
 
+    # Signals to propagate high-level log messages
+    # Signal(title, text, detailedText)
+    error = Signal(str, str, str)
+    warning = Signal(str, str, str)
+    info = Signal(str, str, str)

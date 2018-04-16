@@ -7,10 +7,13 @@ import os
 import re
 import tempfile
 import uuid
+import logging
 
 from meshroom.core.submitter import BaseSubmitter
 from . import desc
 
+# Setup logging
+logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
 
 # make a UUID based on the host ID and current time
 sessionUid = str(uuid.uuid1())

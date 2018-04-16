@@ -77,7 +77,7 @@ if __name__ == "__main__":
     app.setFont(font)
 
     pwd = os.path.dirname(__file__)
-    app.setWindowIcon(QIcon(os.path.join(pwd, "img/icon.png")))
+    app.setWindowIcon(QIcon(os.path.join(pwd, "img/meshroom.svg")))
     qmlDir = os.path.join(pwd, "qml")
     url = os.path.join(qmlDir, "main.qml")
     engine = QmlInstantEngine()

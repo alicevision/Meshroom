@@ -39,7 +39,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
 
         tags['nbFrames'] = nbFrames
         tags['prod'] = self.prod
-        allRequirements = self.config.get('BASE', [])
+        allRequirements = list(self.config.get('BASE', []))
         allRequirements.extend(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
         allRequirements.extend(self.config['RAM'].get(node.nodeDesc.ram.name, []))
         allRequirements.extend(self.config['GPU'].get(node.nodeDesc.gpu.name, []))

@@ -33,7 +33,7 @@ class MeshFiltering(desc.CommandLineNode):
             name='iterations',
             label='Nb Iterations',
             description='',
-            value=2,
+            value=5,
             range=(0, 50, 1),
             uid=[0],
             ),

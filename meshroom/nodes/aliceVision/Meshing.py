@@ -110,7 +110,7 @@ class Meshing(desc.CommandLineNode):
             name='pixSizeMarginFinalCoef',
             label='pixSizeMarginFinalCoef',
             description='pixSizeMarginFinalCoef',
-            value=1.0,
+            value=4.0,
             range=(0.0, 10.0, 0.1),
             uid=[0],
         ),

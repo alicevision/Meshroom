@@ -161,6 +161,7 @@ class Reconstruction(UIGraph):
         self._sfm = None
         self._views = None
         self._poses = None
+        self._selectedViewId = None
 
         if graphFilepath:
             self.onGraphChanged()
@@ -452,6 +453,15 @@ class Reconstruction(UIGraph):
     def isReconstructed(self, viewpoint):
         # keys are strings (faster lookup)
         return str(viewpoint.poseId.value) in self._poses
+
+    def setSelectedViewId(self, viewId):
+        if viewId == self._selectedViewId:
+            return
+        self._selectedViewId = viewId
+        self.selectedViewIdChanged.emit()
+
+    selectedViewIdChanged = Signal()
+    selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)
 
     sfmChanged = Signal()
     sfm = Property(QObject, getSfm, setSfm, notify=sfmChanged)

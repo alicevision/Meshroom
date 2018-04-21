@@ -69,10 +69,24 @@ Panel {
                     viewpoint: object.value
                     width: grid.cellWidth
                     height: grid.cellHeight
+                    property bool isGridCurrentItem: GridView.isCurrentItem
+                    property bool isSelectedViewId: _reconstruction.selectedViewId == viewpoint.get("viewId").value
+
+                    // need to handle this both ways
+                    // since arrow keys navigation modifies GridView.isCurrentItem out of our scope
+                    onIsGridCurrentItemChanged: {
+                        if(isGridCurrentItem && !isSelectedViewId)
+                            _reconstruction.selectedViewId = viewpoint.get("viewId").value
+                    }
+                    onIsSelectedViewIdChanged: {
+                        if(isSelectedViewId && !isGridCurrentItem)
+                            grid.currentIndex = DelegateModel.filteredIndex
+                    }
 
                     isCurrentItem: GridView.isCurrentItem
+
                     onPressed: {
-                        grid.currentIndex = DelegateModel.filteredIndex
+                         _reconstruction.selectedViewId = viewpoint.get("viewId").value
                         if(mouse.button == Qt.LeftButton)
                             grid.forceActiveFocus()
                     }

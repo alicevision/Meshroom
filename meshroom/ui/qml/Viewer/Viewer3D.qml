@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 import QtQuick.Scene3D 2.0
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
+import Qt3D.Extras 2.1
 import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
 
 import MaterialIcons 2.2
@@ -327,8 +328,44 @@ FocusScope {
                         // urlChanged signal is emitted once the Alembic file is loaded
                         // set the 'loading' property to false when it's emitted
                         // TODO: AlembicEntity should expose a status
-                        abcLoader.onUrlChanged.connect(function(){ modelLoader.loading = false })
+                        abcLoader.onUrlChanged.connect(function(){
+                            modelLoader.loading = false
+                            spawnCameraSelectors()
+                        })
                         modelLoader.loading = false
+                    }
+                    function spawnCameraSelectors() {
+                        // spawn camera selector for each camera
+                        for(var i = 0; i < abcLoader.cameras.length; ++i)
+                        {
+                            var cam = abcLoader.cameras[i]
+                            // retrieve view id
+                            var viewId = cam.userProperties["mvg_viewId"]
+                            if(viewId == undefined)
+                                continue
+                            var obj = camSelectionComponent.createObject(cam)
+                            obj.viewId = viewId
+                        }
+                    }
+
+                    // Camera selection picking and display
+                    property Component camSelectionComponent: Component {
+                        id: camSelectionComponent
+                        Entity {
+                            property string viewId
+                            property alias ambient: mat.ambient
+                            components: [
+                                CuboidMesh { xExtent: 0.2; yExtent: 0.2; zExtent: 0.2},
+                                PhongMaterial{
+                                    id: mat
+                                    ambient: viewId == _reconstruction.selectedViewId ? palette.highlight : "#CCC"
+                                    diffuse: ambient
+                                },
+                                ObjectPicker {
+                                    onClicked: _reconstruction.selectedViewId = viewId
+                                }
+                            ]
+                        }
                     }
                 }
 

@@ -51,7 +51,7 @@ Page {
                     id: iconPlaceHolder
                     width: childrenRect.width
                     height: childrenRect.height
-                    anchors.verticalCenter: parent.verticalCenter
+                    Layout.alignment: Qt.AlignVCenter
                     visible: icon != ""
                 }
 

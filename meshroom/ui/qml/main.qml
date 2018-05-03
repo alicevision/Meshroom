@@ -331,7 +331,7 @@ ApplicationWindow {
             spacing: 4
             Row {
                 enabled: !_reconstruction.computingExternally
-                anchors.horizontalCenter: parent.horizontalCenter
+                Layout.alignment: Qt.AlignHCenter
 
                 Button {
                     property color buttonColor: Qt.darker("#4CAF50", 1.8)
@@ -357,7 +357,7 @@ ApplicationWindow {
             Label {
                 text: "Graph is being computed externally"
                 font.italic: true
-                anchors.horizontalCenter: parent.horizontalCenter
+                Layout.alignment: Qt.AlignHCenter
                 visible: _reconstruction.computingExternally
             }
 

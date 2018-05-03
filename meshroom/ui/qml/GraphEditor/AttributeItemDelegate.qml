@@ -253,7 +253,7 @@ RowLayout {
                         onClicked: listAttribute_layout.expanded = !listAttribute_layout.expanded
                     }
                     Label {
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.alignment: Qt.AlignVCenter
                         text: attribute.value.count + " elements"
                     }
                     ToolButton {

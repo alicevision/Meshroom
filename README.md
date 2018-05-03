@@ -10,7 +10,7 @@ See [results of the pipeline on sketchfab](http://sketchfab.com/AliceVision).
 ## Photogrammetry
 
 Photogrammetry is the science of making measurements from photographs.
-It infers the geometry of a scene from a set of unordered photographies or videos.
+It infers the geometry of a scene from a set of unordered photographs or videos.
 Photography is the projection of a 3D scene onto a 2D plane, losing depth information.
 The goal of photogrammetry is to reverse this process.
 
@@ -24,7 +24,9 @@ The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 ## Get the project
 
+See [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
+
 Get the source code: `git clone --recursive git://github.com/alicevision/meshroom`
 
-See [**INSTALL.md**](INSTALL.md) to build the project.
+Start Meshroom: `python meshroom/ui`
 

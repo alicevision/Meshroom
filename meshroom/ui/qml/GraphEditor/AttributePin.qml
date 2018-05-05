@@ -41,7 +41,7 @@ RowLayout {
         width: 6
         height: width
         radius: isList ? 0 : width/2
-        anchors.verticalCenter: parent.verticalCenter
+        Layout.alignment: Qt.AlignVCenter
         border.color: "#3e3e3e"
         color: (dropArea.containsDrag && dropArea.containsDrag) || attribute.isLink ? "#3e3e3e" : "white"
 

@@ -206,7 +206,7 @@ Panel {
         RowLayout {
             Layout.fillHeight: false
             visible: root.cameraInits.count > 1
-            anchors.horizontalCenter: parent.horizontalCenter
+            Layout.alignment: Qt.AlignHCenter
             spacing: 2
 
             ToolButton {

@@ -417,7 +417,11 @@ class Reconstruction(UIGraph):
         """ Returns the current SfM node. """
         return self._sfm
 
-    def _setSfm(self, node=None):
+    def _unsetSfm(self):
+        """ Unset current SfM node. This is shortcut equivalent to _setSfm(None). """
+        self._setSfm(None)
+
+    def _setSfm(self, node):
         """ Set current SfM node to 'node' and update views and poses.
         Notes: this should not be called directly, use setSfm instead.
         See Also: setSfm
@@ -430,7 +434,7 @@ class Reconstruction(UIGraph):
             # when destroyed, directly use '_setSfm' to bypass
             # disconnection step in 'setSfm' (at this point, 'self._sfm' underlying object
             # has been destroyed and can't be evaluated anymore)
-            self._sfm.destroyed.connect(self._setSfm)
+            self._sfm.destroyed.connect(self._unsetSfm)
             self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
         self.sfmChanged.emit()
 
@@ -441,7 +445,7 @@ class Reconstruction(UIGraph):
         # disconnect from previous SfM node if any
         if self._sfm:
             self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
-            self._sfm.destroyed.disconnect(self._setSfm)
+            self._sfm.destroyed.disconnect(self._unsetSfm)
         self._setSfm(node)
 
     @Slot(QObject, result=bool)

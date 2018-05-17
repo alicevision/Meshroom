@@ -44,7 +44,7 @@ if not args.input and not args.inputImages:
     exit(1)
 
 graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
-graph.findNode('PrepareDenseScene').scale.value = args.scale
+graph.findNode('DepthMap_1').downscale.value = args.scale
 
 if args.save:
     graph.save(args.save)

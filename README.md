@@ -28,5 +28,7 @@ See [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
 
 Get the source code: `git clone --recursive git://github.com/alicevision/meshroom`
 
-Start Meshroom: `python meshroom/ui`
+`cd meshroom`
+
+Start Meshroom: `PYTHONPATH=$PWD python meshroom/ui`
 

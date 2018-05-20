@@ -206,9 +206,9 @@ ApplicationWindow {
             dialog.text = args[1]
             dialog.detailedText = args[2]
         }
-        onInfo: createDialog(dialogsFactory.info, arguments)
-        onWarning: createDialog(dialogsFactory.warning, arguments)
-        onError: createDialog(dialogsFactory.error, arguments)
+        // onInfo: createDialog(dialogsFactory.info, arguments)
+        // onWarning: createDialog(dialogsFactory.warning, arguments)
+        // onError: createDialog(dialogsFactory.error, arguments)
     }
 
     Action {

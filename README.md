@@ -32,3 +32,6 @@ Get the source code: `git clone --recursive git://github.com/alicevision/meshroo
 
 Start Meshroom: `PYTHONPATH=$PWD python meshroom/ui`
 
+On Ubuntu, you may have conflicts between native drivers and mesa drivers. In that case, you need to force usage of native drivers by adding them to the LD_LIBRARY_PATH:
+`LD_LIBRARY_PATH=/usr/lib/nvidia-340 PYTHONPATH=$PWD python meshroom/ui`
+You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver version.

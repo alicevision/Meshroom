@@ -33,6 +33,8 @@ ApplicationWindow {
     SystemPalette { id: palette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled}
 
+    palette.window: palette.window
+
     Settings {
         id: settings_UILayout
         category: 'UILayout'

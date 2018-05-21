@@ -9,10 +9,12 @@ import QtQuick.Layouts 1.3
 Pane {
     id: root
 
+    SystemPalette { id: palette }
+
     property bool opaque: false
     property int radius: 1
 
     padding: 6
     anchors.margins: 2
-    background: Rectangle { color: root.palette.base; opacity: opaque ? 1.0 : 0.7; radius: root.radius }
+    background: Rectangle { color: palette.base; opacity: opaque ? 1.0 : 0.7; radius: root.radius }
 }

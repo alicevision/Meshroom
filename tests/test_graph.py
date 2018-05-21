@@ -155,7 +155,7 @@ def test_transitive_reduction():
 
     depthPerNode = graph.minMaxDepthPerNode()
     assert len(depthPerNode) ==  len(graph.nodes)
-    for node, (minDepth, maxDepth) in depthPerNode.iteritems():
+    for node, (minDepth, maxDepth) in depthPerNode.items():
         assert node.depth == maxDepth
 
 

@@ -550,7 +550,7 @@ runningProcesses = {}
 @atexit.register
 def clearProcessesStatus():
     global runningProcesses
-    for k, v in runningProcesses.iteritems():
+    for k, v in runningProcesses.items():
         v.upgradeStatusTo(Status.KILLED)
 
 

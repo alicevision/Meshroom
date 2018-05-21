@@ -1,4 +1,5 @@
 from meshroom.common import BaseObject, Property, Variant
+from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import collections
 import math
@@ -93,7 +94,7 @@ class File(Attribute):
         super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, pyCompatibility.basestring):
             raise ValueError('File only supports string input  (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return os.path.normpath(value).replace('\\', '/') if value else ''
 
@@ -183,7 +184,7 @@ class StringParam(Param):
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, pyCompatibility.basestring):
             raise ValueError('StringParam value should be a string (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 

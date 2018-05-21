@@ -21,6 +21,7 @@ from . import desc
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property, Variant, ListModel
 from meshroom.core.exception import UnknownNodeTypeError
+from meshroom.core import pyCompatibility
 
 # Replace default encoder to support Enums
 DefaultJSONEncoder = json.JSONEncoder  # store the original one
@@ -35,21 +36,6 @@ class MyJSONEncoder(DefaultJSONEncoder):  # declare a new one with Enum support
 
 json.JSONEncoder = MyJSONEncoder  # replace the default implementation with our new one
 
-try:
-    unicode = unicode
-except NameError:
-    # 'unicode' is undefined, must be Python 3
-    str = str
-    unicode = str
-    bytes = bytes
-    basestring = (str, bytes)
-else:
-    # 'unicode' exists, must be Python 2
-    str = str
-    unicode = unicode
-    bytes = str
-    basestring = basestring
-
 stringIsLinkRe = re.compile('^\{[A-Za-z]+[A-Za-z0-9_.]*\}$')
 
 
@@ -58,11 +44,11 @@ def isLink(value):
     Return whether the given argument is a link expression.
     A link expression is a string matching the {nodeName.attrName} pattern.
     """
-    return isinstance(value, basestring) and stringIsLinkRe.match(value)
+    return isinstance(value, pyCompatibility.basestring) and stringIsLinkRe.match(value)
 
 
 def isCollection(v):
-    return isinstance(v, collections.Iterable) and not isinstance(v, basestring)
+    return isinstance(v, collections.Iterable) and not isinstance(v, pyCompatibility.basestring)
 
 @contextmanager
 def GraphModification(graph):
@@ -184,7 +170,7 @@ class Attribute(BaseObject):
         if self._value == value:
             return
 
-        if isinstance(value, Attribute) or (isinstance(value, basestring) and isLink(value)):
+        if isinstance(value, Attribute) or (isinstance(value, pyCompatibility.basestring) and isLink(value)):
             # if we set a link to another attribute
             self._value = value
         else:
@@ -250,7 +236,7 @@ class Attribute(BaseObject):
         if isinstance(v, Attribute):
             g.addEdge(v, self)
             self._value = ""
-        elif self.isInput and isinstance(v, basestring) and isLink(v):
+        elif self.isInput and isinstance(v, pyCompatibility.basestring) and isLink(v):
             # value is a link to another attribute
             link = v[1:-1]
             linkNode, linkAttr = link.split('.')
@@ -266,7 +252,7 @@ class Attribute(BaseObject):
 
     def getValueStr(self):
         if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
-            assert(isinstance(self.value, collections.Sequence) and not isinstance(self.value, basestring))
+            assert(isinstance(self.value, collections.Sequence) and not isinstance(self.value, pyCompatibility.basestring))
             return self.attributeDesc.joinChar.join(self.value)
         if isinstance(self.attributeDesc, (desc.StringParam, desc.File)):
             return '"{}"'.format(self.value)

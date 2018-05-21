@@ -18,6 +18,8 @@ Item {
     signal pressed(var mouse)
     signal removeRequest()
 
+    SystemPalette { id: palette }
+    
     // retrieve viewpoints inner data
     QtObject {
         id: _viewpoint

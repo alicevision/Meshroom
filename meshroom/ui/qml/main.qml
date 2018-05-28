@@ -30,10 +30,12 @@ ApplicationWindow {
         ensureSaved(function(){ Qt.quit() })
     }
 
-    SystemPalette { id: palette }
-    SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled}
+    // force Application palette assignation
+    // note: should be implicit (PySide bug)
+    palette: _PaletteManager.palette
 
-    palette.window: palette.window
+    SystemPalette { id: activePalette }
+    SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
     Settings {
         id: settings_UILayout
@@ -222,7 +224,7 @@ ApplicationWindow {
     }
 
     header: MenuBar {
-        palette.window: Qt.darker(palette.window, 1.15)
+        palette.window: Qt.darker(activePalette.window, 1.15)
         Menu {
             title: "File"
             Action {
@@ -321,7 +323,7 @@ ApplicationWindow {
         orientation: Qt.Vertical
 
         // Setup global tooltip style
-        ToolTip.toolTip.background: Rectangle { color: palette.base; border.color: palette.mid }
+        ToolTip.toolTip.background: Rectangle { color: activePalette.base; border.color: activePalette.mid }
 
         ColumnLayout {
             Layout.fillWidth: true

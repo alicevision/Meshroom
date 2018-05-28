@@ -18,8 +18,6 @@ Item {
     signal pressed(var mouse)
     signal removeRequest()
 
-    SystemPalette { id: palette }
-    
     // retrieve viewpoints inner data
     QtObject {
         id: _viewpoint
@@ -62,10 +60,10 @@ Item {
             // Image thumbnail and background
             Rectangle {
                 id: imageBackground
-                color: Qt.darker(palette.base, 1.15)
+                color: Qt.darker(imageLabel.palette.base, 1.15)
                 Layout.fillHeight: true
                 Layout.fillWidth: true
-                border.color: isCurrentItem ? palette.highlight : Qt.darker(palette.highlight)
+                border.color: isCurrentItem ? imageLabel.palette.highlight : Qt.darker(imageLabel.palette.highlight)
                 border.width: imageMA.containsMouse || imageDelegate.isCurrentItem ? 2 : 0
                 Image {
                     anchors.fill: parent
@@ -79,6 +77,7 @@ Item {
             }
             // Image basename
             Label {
+                id: imageLabel
                 Layout.fillWidth: true
                 padding: 2
                 font.pointSize: 8
@@ -86,7 +85,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 text: Filepath.basename(imageDelegate.source)
                 background: Rectangle {
-                    color: imageDelegate.isCurrentItem ? palette.highlight : "transparent"
+                    color: imageDelegate.isCurrentItem ? parent.palette.highlight : "transparent"
                 }
             }
         }

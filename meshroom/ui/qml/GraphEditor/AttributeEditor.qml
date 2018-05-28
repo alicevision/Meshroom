@@ -15,11 +15,9 @@ ColumnLayout {
 
     spacing: 0
 
-    SystemPalette { id: palette }
-
     Pane {
         Layout.fillWidth: true
-        background: Rectangle { color: Qt.darker(palette.window, 1.15) }
+        background: Rectangle { color: Qt.darker(parent.palette.window, 1.15) }
         padding: 2
         RowLayout {
             width: parent.width

@@ -29,7 +29,7 @@ Item {
 
     clip: true
 
-    SystemPalette { id: palette }
+    SystemPalette { id: activePalette }
 
     MouseArea {
         id: mouseArea
@@ -195,7 +195,7 @@ Item {
                     property var dstAnchor: dst.nodeItem.mapFromItem(dst, dst.edgeAnchorPos.x, dst.edgeAnchorPos.y)
 
                     edge: object
-                    color: containsMouse && !readOnly ? palette.highlight : palette.text
+                    color: containsMouse && !readOnly ? activePalette.highlight : activePalette.text
                     opacity: 0.7
                     point1x: src.nodeItem.x + srcAnchor.x
                     point1y: src.nodeItem.y + srcAnchor.y

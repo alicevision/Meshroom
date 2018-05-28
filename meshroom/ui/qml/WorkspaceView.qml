@@ -53,7 +53,7 @@ Item {
         }
     }
 
-    SystemPalette { id: palette }
+    SystemPalette { id: activePalette }
 
     Controls1.SplitView {
         anchors.fill: parent
@@ -109,7 +109,7 @@ Item {
                 Rectangle {
                     z: -1
                     anchors.fill: parent
-                    color: Qt.darker(palette.base, 1.1)
+                    color: Qt.darker(activePalette.base, 1.1)
                 }
             }
         }
@@ -135,7 +135,7 @@ Item {
                 text: "Loading..."
                 visible: viewer3D.loading
                 padding: 6
-                background: Rectangle { color: palette.base; opacity: 0.5 }
+                background: Rectangle { color: parent.palette.base; opacity: 0.5 }
             }
 
             // Load reconstructed model

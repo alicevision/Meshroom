@@ -142,6 +142,8 @@ FocusScope {
         depthMapSource = ''
     }
 
+    SystemPalette { id: activePalette }
+
     Scene3D {
         id: scene3D
         anchors.fill: parent
@@ -358,7 +360,7 @@ FocusScope {
                                 CuboidMesh { xExtent: 0.2; yExtent: 0.2; zExtent: 0.2},
                                 PhongMaterial{
                                     id: mat
-                                    ambient: viewId == _reconstruction.selectedViewId ? palette.highlight : "#CCC"
+                                    ambient: viewId == _reconstruction.selectedViewId ? activePalette.highlight : "#CCC"
                                     diffuse: ambient
                                 },
                                 ObjectPicker {

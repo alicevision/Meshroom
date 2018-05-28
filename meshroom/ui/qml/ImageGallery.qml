@@ -157,7 +157,7 @@ Panel {
                 Rectangle {
                     visible: dropArea.containsDrag
                     anchors.fill: parent
-                    color: palette.window
+                    color: root.palette.window
                     opacity: 0.8
                 }
 
@@ -175,9 +175,9 @@ Panel {
                         text: "Add Images"
                         font.bold: true
                         background: Rectangle {
-                            color: parent.hovered ? palette.highlight : palette.window
+                            color: parent.hovered ? parent.palette.highlight : parent.palette.window
                             opacity: 0.8
-                            border.color: palette.highlight
+                            border.color: parent.palette.highlight
                         }
                     }
 
@@ -196,7 +196,7 @@ Panel {
                         background: Rectangle {
                             color: parent.hovered ? palette.highlight : palette.window
                             opacity: 0.8
-                            border.color: palette.highlight
+                            border.color: parent.palette.highlight
                         }
                     }
                 }

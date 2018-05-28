@@ -197,22 +197,6 @@ ApplicationWindow {
         id: dialogsFactory
     }
 
-    // Bind log messages to DialogsFactory
-    Connections {
-        target: _reconstruction
-        function createDialog(func, args)
-        {
-            var dialog = func(_window)
-            // Set text afterwards to avoid dialog sizing issues
-            dialog.title = args[0]
-            dialog.text = args[1]
-            dialog.detailedText = args[2]
-        }
-        // onInfo: createDialog(dialogsFactory.info, arguments)
-        // onWarning: createDialog(dialogsFactory.warning, arguments)
-        // onError: createDialog(dialogsFactory.error, arguments)
-    }
-
     Action {
         id: undoAction
 
@@ -316,6 +300,20 @@ ApplicationWindow {
                                                  0,
                                                  graphEditor.boundingBox().height + graphEditor.gridSpacing
                                                  )
+
+        // Bind messages to DialogsFactory
+        function createDialog(func, message)
+        {
+            var dialog = func(_window)
+            // Set text afterwards to avoid dialog sizing issues
+            dialog.title = message.title
+            dialog.text = message.text
+            dialog.detailedText = message.detailedText
+        }
+
+        onInfo: createDialog(dialogsFactory.info, arguments[0])
+        onWarning: createDialog(dialogsFactory.warning, arguments[0])
+        onError: createDialog(dialogsFactory.error, arguments[0])
     }
 
     Controls1.SplitView {

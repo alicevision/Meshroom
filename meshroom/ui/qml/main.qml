@@ -364,20 +364,11 @@ ApplicationWindow {
             }
 
             // "ProgressBar" reflecting status of all the chunks in the graph, in their process order
-            ListView {
+            NodeChunks {
                 id: chunksListView
                 Layout.fillWidth: true
                 height: 6
-                model: _reconstruction.sortedDFSNodes
-                orientation: ListView.Horizontal
-                interactive: false
-
-                delegate: NodeChunks {
-                    model: object.chunks
-                    height: 6
-                    chunkWidth: chunksListView.width / _reconstruction.chunksCount
-                    width: childrenRect.width
-                }
+                model: _reconstruction.sortedDFSChunks
             }
 
             WorkspaceView {

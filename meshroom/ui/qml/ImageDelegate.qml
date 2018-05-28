@@ -8,12 +8,13 @@ import Utils 1.0
  * ImageDelegate for a Viewpoint object.
  */
 Item {
-    id: imageDelegate
+    id: root
 
     property variant viewpoint
     property bool isCurrentItem: false
     property alias source: _viewpoint.source
     property alias metadata: _viewpoint.metadata
+    property bool readOnly: false
 
     signal pressed(var mouse)
     signal removeRequest()
@@ -35,7 +36,7 @@ Item {
         onPressed: {
             if (mouse.button == Qt.RightButton)
                 imageMenu.popup()
-            imageDelegate.pressed(mouse)
+            root.pressed(mouse)
         }
 
         Menu {
@@ -43,7 +44,7 @@ Item {
             MenuItem {
                 text: "Show Containing Folder"
                 onClicked: {
-                    Qt.openUrlExternally(Filepath.dirname(imageDelegate.source))
+                    Qt.openUrlExternally(Filepath.dirname(root.source))
                 }
             }
             MenuItem {
@@ -64,11 +65,11 @@ Item {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 border.color: isCurrentItem ? imageLabel.palette.highlight : Qt.darker(imageLabel.palette.highlight)
-                border.width: imageMA.containsMouse || imageDelegate.isCurrentItem ? 2 : 0
+                border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
                 Image {
                     anchors.fill: parent
                     anchors.margins: 4
-                    source: imageDelegate.source
+                    source: root.source
                     sourceSize: Qt.size(100, 100)
                     asynchronous: true
                     autoTransform: true
@@ -83,9 +84,9 @@ Item {
                 font.pointSize: 8
                 elide: Text.ElideMiddle
                 horizontalAlignment: Text.AlignHCenter
-                text: Filepath.basename(imageDelegate.source)
+                text: Filepath.basename(root.source)
                 background: Rectangle {
-                    color: imageDelegate.isCurrentItem ? parent.palette.highlight : "transparent"
+                    color: root.isCurrentItem ? parent.palette.highlight : "transparent"
                 }
             }
         }

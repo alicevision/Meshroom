@@ -18,15 +18,16 @@ Panel {
     readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
-    signal removeImageRequest(var attribute)
     property int defaultCellSize: 160
-
-    implicitWidth: 100
-    implicitHeight: 300
-    title: "Images"
     property int currentIndex: 0
+    property bool readOnly: false
     readonly property variant viewpoints: cameraInit.attribute('viewpoints').value
+
+    signal removeImageRequest(var attribute)
     signal filesDropped(var drop, var augmentSfm)
+
+    title: "Images"
+    implicitWidth: (root.defaultCellSize + 2) * 2
 
     ColumnLayout {
         anchors.fill: parent
@@ -71,6 +72,7 @@ Panel {
                     height: grid.cellHeight
                     property bool isGridCurrentItem: GridView.isCurrentItem
                     property bool isSelectedViewId: _reconstruction.selectedViewId == viewpoint.get("viewId").value
+                    readOnly: root.readOnly
 
                     // need to handle this both ways
                     // since arrow keys navigation modifies GridView.isCurrentItem out of our scope
@@ -90,8 +92,15 @@ Panel {
                         if(mouse.button == Qt.LeftButton)
                             grid.forceActiveFocus()
                     }
-                    onRemoveRequest: removeImageRequest(object)
-                    Keys.onDeletePressed: removeImageRequest(object)
+
+                    function sendRemoveRequest()
+                    {
+                        if(!readOnly)
+                            removeImageRequest(object)
+                    }
+
+                    onRemoveRequest: sendRemoveRequest()
+                    Keys.onDeletePressed: sendRemoveRequest()
 
                     // Reconstruction status indicator
                     Label {

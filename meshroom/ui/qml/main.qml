@@ -382,10 +382,11 @@ ApplicationWindow {
 
             WorkspaceView {
                 id: workspaceView
-                reconstruction: _reconstruction
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 50
+                reconstruction: _reconstruction
+                readOnly: _reconstruction.computing
                 onRequestGraphAutoLayout: graphEditor.doAutoLayout()
             }
         }

@@ -66,6 +66,7 @@ Item {
             ImageGallery {
                 id: imageGallery
                 Layout.fillHeight: true
+                readOnly: root.readOnly
                 cameraInits: root.cameraInits
                 cameraInit: _reconstruction.cameraInit
                 currentIndex: reconstruction.cameraInitIndex
@@ -84,7 +85,7 @@ Item {
         Panel {
             title: "Image Viewer"
             Layout.fillHeight: true
-            implicitWidth: Math.round(parent.width * 0.4)
+            Layout.fillWidth: true
             Layout.minimumWidth: 40
             Viewer2D {
                 id: viewer2D

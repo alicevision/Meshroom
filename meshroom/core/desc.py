@@ -370,8 +370,11 @@ class CommandLineNode(Node):
 
     def stopProcess(self, chunk):
         if chunk.subprocess:
+            # kill process tree
+            processes = chunk.subprocess.children(recursive=True) + [chunk.subprocess]
             try:
-                chunk.subprocess.terminate()
+                for process in processes:
+                    process.terminate()
             except psutil.NoSuchProcess:
                 pass
 

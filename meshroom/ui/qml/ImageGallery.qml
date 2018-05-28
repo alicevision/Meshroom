@@ -48,6 +48,16 @@ Panel {
             highlightFollowsCurrentItem: true
             keyNavigationEnabled: true
 
+            // Update grid current item when selected view changes
+            Connections {
+                target: _reconstruction
+                onSelectedViewIdChanged: {
+                    var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
+                    if(idx >= 0)
+                        grid.currentIndex = idx
+                }
+            }
+
             model: SortFilterDelegateModel {
                 id: sortedModel
                 model: _reconstruction.viewpoints
@@ -61,8 +71,11 @@ Panel {
 
                 // override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName) {
+                    var value = item.model.object.value.get(roleName).value
                     if(roleName == sortRole)
-                        return Filepath.basename(item.model.object.value.get(roleName).value)
+                        return Filepath.basename(value)
+                    else
+                        return value
                 }
 
                 delegate: ImageDelegate {
@@ -70,25 +83,17 @@ Panel {
                     viewpoint: object.value
                     width: grid.cellWidth
                     height: grid.cellHeight
-                    property bool isGridCurrentItem: GridView.isCurrentItem
-                    property bool isSelectedViewId: _reconstruction.selectedViewId == viewpoint.get("viewId").value
                     readOnly: root.readOnly
-
-                    // need to handle this both ways
-                    // since arrow keys navigation modifies GridView.isCurrentItem out of our scope
-                    onIsGridCurrentItemChanged: {
-                        if(isGridCurrentItem && !isSelectedViewId)
-                            _reconstruction.selectedViewId = viewpoint.get("viewId").value
-                    }
-                    onIsSelectedViewIdChanged: {
-                        if(isSelectedViewId && !isGridCurrentItem)
-                            grid.currentIndex = DelegateModel.filteredIndex
-                    }
 
                     isCurrentItem: GridView.isCurrentItem
 
+                    onIsCurrentItemChanged: {
+                        if(isCurrentItem)
+                            _reconstruction.selectedViewId = viewpoint.get("viewId").value
+                    }
+
                     onPressed: {
-                         _reconstruction.selectedViewId = viewpoint.get("viewId").value
+                        grid.currentIndex = DelegateModel.filteredIndex
                         if(mouse.button == Qt.LeftButton)
                             grid.forceActiveFocus()
                     }

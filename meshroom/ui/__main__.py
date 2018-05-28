@@ -83,6 +83,8 @@ if __name__ == "__main__":
     engine = QmlInstantEngine()
     engine.addFilesFromDirectory(qmlDir, recursive=True)
     engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
+    # whether to output qml warnings to stderr (disable by default)
+    engine.setOutputWarningsToStandardError(os.environ.get("MESHROOM_OUTPUT_QML_WARNINGS", "") == "1")
     engine.addImportPath(qmlDir)
     components.registerTypes()
 

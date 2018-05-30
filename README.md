@@ -26,7 +26,30 @@ The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 See [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
 
-Get the source code: `git clone --recursive git://github.com/alicevision/meshroom`
+Get the source code:
+```bash
+git clone --recursive git://github.com/alicevision/meshroom
+cd meshroom
+```
 
-Start Meshroom: `python meshroom/ui`
+
+## Start Meshroom
+
+You need to have [AliceVision](https://github.com/alicevision/AliceVision) installation in your PATH and LD_LIBRARY_PATH.
+
+ - __Launch the User Interface__
+
+```
+PYTHONPATH=$PWD python meshroom/ui
+```
+
+On Ubuntu, you may have conflicts between native drivers and mesa drivers. In that case, you need to force usage of native drivers by adding them to the LD_LIBRARY_PATH:
+`LD_LIBRARY_PATH=/usr/lib/nvidia-340 PYTHONPATH=$PWD python meshroom/ui`
+You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver version.
+
+ - __Launch a 3D reconstruction in command line__
+
+```
+PYTHONPATH=$PWD python bin/meshroom_photogrammetry --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
+```
 

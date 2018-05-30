@@ -23,6 +23,8 @@ Item {
     implicitHeight: body.height
     objectName: node.name
 
+    SystemPalette { id: activePalette }
+
     MouseArea {
         anchors.fill: parent
         drag.target: parent
@@ -91,7 +93,7 @@ Item {
     Rectangle {
         id: background
         anchors.fill: parent
-        color: palette.base
+        color: activePalette.base
         layer.enabled: true
         layer.effect: DropShadow { radius: 2; color: shadowColor }
     }

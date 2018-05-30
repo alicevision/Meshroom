@@ -6,11 +6,12 @@ ListView {
     id: root
     interactive: false
 
-    SystemPalette { id: palette }
+    SystemPalette { id: activePalette }
 
-    property color defaultColor: Qt.darker(palette.window, 1.1)
+    property color defaultColor: Qt.darker(activePalette.window, 1.1)
     property real chunkHeight: height
     property real chunkWidth: model ? width / model.count : 0
+
     orientation: ListView.Horizontal
     implicitWidth: 100
     spacing: 0

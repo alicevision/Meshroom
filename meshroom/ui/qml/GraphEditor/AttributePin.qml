@@ -134,7 +134,7 @@ RowLayout {
                 rightPadding: root.layoutDirection == Qt.LeftToRight ? 1 : 0
                 text: attribute.name
                 background: Rectangle {
-                    color: palette.window
+                    color: parent.palette.window
                 }
             }
         }

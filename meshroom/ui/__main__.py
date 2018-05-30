@@ -2,7 +2,7 @@ import os
 import signal
 import sys
 
-from PySide2.QtCore import Qt, QObject, Slot
+from PySide2.QtCore import Qt, QObject, Slot, Signal, Property
 from PySide2.QtGui import QPalette, QColor, QIcon
 from PySide2.QtWidgets import QApplication
 
@@ -60,6 +60,10 @@ class PaletteManager(QObject):
             app.setPalette(self.darkPalette)
         if self.qmlEngine.rootObjects():
             self.qmlEngine.reload()
+        self.paletteChanged.emit()
+
+    paletteChanged = Signal()
+    palette = Property(QPalette, lambda self: QApplication.instance().palette(), notify=paletteChanged)
 
 
 if __name__ == "__main__":
@@ -83,6 +87,8 @@ if __name__ == "__main__":
     engine = QmlInstantEngine()
     engine.addFilesFromDirectory(qmlDir, recursive=True)
     engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
+    # whether to output qml warnings to stderr (disable by default)
+    engine.setOutputWarningsToStandardError(os.environ.get("MESHROOM_OUTPUT_QML_WARNINGS", "") == "1")
     engine.addImportPath(qmlDir)
     components.registerTypes()
 

@@ -43,7 +43,7 @@ RowLayout {
         // make label italic if attribute is a link
         font.italic: object.isLink
 
-        background: Rectangle { color: Qt.darker(palette.window, 1.2) }
+        background: Rectangle { color: Qt.darker(parent.palette.window, 1.2) }
 
         MouseArea {
             id: parameterMA

@@ -16,7 +16,7 @@ import "common.js" as Common
 FocusScope {
     property variant node
 
-    SystemPalette { id: palette }
+    SystemPalette { id: activePalette }
 
     Controls1.SplitView {
         anchors.fill: parent
@@ -42,13 +42,13 @@ FocusScope {
                     text: "Chunks"
                     padding: 4
                     z: 10
-                    background: Rectangle { color: palette.window }
+                    background: Rectangle { color: parent.palette.window }
                 }
             }
 
             highlight: Component {
                 Rectangle {
-                    color: palette.highlight
+                    color: activePalette.highlight
                     opacity: 0.3
                     z: 2
                 }
@@ -116,7 +116,7 @@ FocusScope {
                     Layout.alignment: Qt.AlignTop
                     Layout.fillHeight: true
                     padding: 0
-                    background: Rectangle { color: Qt.darker(palette.window, 1.2) }
+                    background: Rectangle { color: Qt.darker(activePalette.window, 1.2) }
                     Column {
                         height: parent.height
                         ToolButton {

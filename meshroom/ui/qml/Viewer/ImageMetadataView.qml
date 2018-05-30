@@ -20,8 +20,6 @@ FloatingPane {
     clip: true
     padding: 4
 
-    SystemPalette { id: palette }
-
     /**
      * Convert GPS metadata to degree coordinates.
      *
@@ -173,7 +171,7 @@ FloatingPane {
                 id: sizeHandle
                 height: parent.contentHeight
                 width: 1
-                color: palette.mid
+                color: root.palette.mid
                 x: parent.width * 0.4
                 MouseArea {
                     anchors.fill: parent
@@ -198,7 +196,7 @@ FloatingPane {
                 Label {
                     width: parent.width
                     padding: 2
-                    background: Rectangle { color: palette.mid }
+                    background: Rectangle { color: parent.palette.mid }
                     text: section
                 }
             }
@@ -240,7 +238,7 @@ FloatingPane {
                     anchorPoint.y: circle.paintedHeight
                     sourceItem: Text {
                         id: circle
-                        color: palette.highlight
+                        color: root.palette.highlight
                         font.pointSize: 18
                         font.family: MaterialIcons.fontFamily
                         text: MaterialIcons.location_on

@@ -26,6 +26,10 @@ ALICEVISION_VOCTREE=/path/to/voctree
 [Python for Qt](http://blog.qt.io/blog/2018/04/13/qt-for-python-is-coming-to-a-computer-near-you/) is becoming official 
 and [beta python wheels](http://download.qt.io/snapshots/ci/pyside/5.11/latest/pyside2/) are now provided.
 
+```bash
+pip install --index-url=http://download.qt.io/snapshots/ci/pyside/5.11/latest/ pyside2 --trusted-host download.qt.io
+```
+
 #### Build Instructions (based on [this guide](https://fredrikaverpil.github.io/2016/08/17/compiling-pyside2/))
 
 Since PySide2 is (not yet) available in Qt installer and no prebuilt binaries are available for Qt 5.10, 

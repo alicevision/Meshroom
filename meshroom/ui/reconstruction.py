@@ -10,6 +10,20 @@ from meshroom.core import graph
 from meshroom.ui.graph import UIGraph
 
 
+class Message(QObject):
+    """ Simple structure wrapping a high-level message. """
+
+    def __init__(self, title, text, detailedText="", parent=None):
+        super(Message, self).__init__(parent)
+        self._title = title
+        self._text = text
+        self._detailedText = detailedText
+
+    title = Property(str, lambda self: self._title, constant=True)
+    text = Property(str, lambda self: self._text, constant=True)
+    detailedText = Property(str, lambda self: self._detailedText, constant=True)
+
+
 class LiveSfmManager(QObject):
     """
     Manage a live SfM reconstruction by creating augmentation steps in the graph over time,
@@ -177,9 +191,13 @@ class Reconstruction(UIGraph):
         try:
             super(Reconstruction, self).load(filepath)
         except Exception as e:
-            self.error.emit("Error while loading {}".format(os.path.basename(filepath)),
-                            "An unexpected error has occurred",
-                            str(e))
+            self.error.emit(
+                Message(
+                    "Error while loading {}".format(os.path.basename(filepath)),
+                    "An unexpected error has occurred",
+                    str(e)
+                )
+            )
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
@@ -474,8 +492,7 @@ class Reconstruction(UIGraph):
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(graph.Node, graph.Node)
 
-    # Signals to propagate high-level log messages
-    # Signal(title, text, detailedText)
-    error = Signal(str, str, str)
-    warning = Signal(str, str, str)
-    info = Signal(str, str, str)
+    # Signals to propagate high-level messages
+    error = Signal(Message)
+    warning = Signal(Message)
+    info = Signal(Message)

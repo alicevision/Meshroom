@@ -18,15 +18,16 @@ Panel {
     readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
-    signal removeImageRequest(var attribute)
     property int defaultCellSize: 160
-
-    implicitWidth: 100
-    implicitHeight: 300
-    title: "Images"
     property int currentIndex: 0
+    property bool readOnly: false
     readonly property variant viewpoints: cameraInit.attribute('viewpoints').value
+
+    signal removeImageRequest(var attribute)
     signal filesDropped(var drop, var augmentSfm)
+
+    title: "Images"
+    implicitWidth: (root.defaultCellSize + 2) * 2
 
     ColumnLayout {
         anchors.fill: parent
@@ -47,6 +48,16 @@ Panel {
             highlightFollowsCurrentItem: true
             keyNavigationEnabled: true
 
+            // Update grid current item when selected view changes
+            Connections {
+                target: _reconstruction
+                onSelectedViewIdChanged: {
+                    var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
+                    if(idx >= 0)
+                        grid.currentIndex = idx
+                }
+            }
+
             model: SortFilterDelegateModel {
                 id: sortedModel
                 model: _reconstruction.viewpoints
@@ -60,8 +71,11 @@ Panel {
 
                 // override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName) {
+                    var value = item.model.object.value.get(roleName).value
                     if(roleName == sortRole)
-                        return Filepath.basename(item.model.object.value.get(roleName).value)
+                        return Filepath.basename(value)
+                    else
+                        return value
                 }
 
                 delegate: ImageDelegate {
@@ -69,29 +83,29 @@ Panel {
                     viewpoint: object.value
                     width: grid.cellWidth
                     height: grid.cellHeight
-                    property bool isGridCurrentItem: GridView.isCurrentItem
-                    property bool isSelectedViewId: _reconstruction.selectedViewId == viewpoint.get("viewId").value
-
-                    // need to handle this both ways
-                    // since arrow keys navigation modifies GridView.isCurrentItem out of our scope
-                    onIsGridCurrentItemChanged: {
-                        if(isGridCurrentItem && !isSelectedViewId)
-                            _reconstruction.selectedViewId = viewpoint.get("viewId").value
-                    }
-                    onIsSelectedViewIdChanged: {
-                        if(isSelectedViewId && !isGridCurrentItem)
-                            grid.currentIndex = DelegateModel.filteredIndex
-                    }
+                    readOnly: root.readOnly
 
                     isCurrentItem: GridView.isCurrentItem
 
+                    onIsCurrentItemChanged: {
+                        if(isCurrentItem)
+                            _reconstruction.selectedViewId = viewpoint.get("viewId").value
+                    }
+
                     onPressed: {
-                         _reconstruction.selectedViewId = viewpoint.get("viewId").value
+                        grid.currentIndex = DelegateModel.filteredIndex
                         if(mouse.button == Qt.LeftButton)
                             grid.forceActiveFocus()
                     }
-                    onRemoveRequest: removeImageRequest(object)
-                    Keys.onDeletePressed: removeImageRequest(object)
+
+                    function sendRemoveRequest()
+                    {
+                        if(!readOnly)
+                            removeImageRequest(object)
+                    }
+
+                    onRemoveRequest: sendRemoveRequest()
+                    Keys.onDeletePressed: sendRemoveRequest()
 
                     // Reconstruction status indicator
                     Label {
@@ -157,7 +171,7 @@ Panel {
                 Rectangle {
                     visible: dropArea.containsDrag
                     anchors.fill: parent
-                    color: palette.window
+                    color: root.palette.window
                     opacity: 0.8
                 }
 
@@ -175,9 +189,9 @@ Panel {
                         text: "Add Images"
                         font.bold: true
                         background: Rectangle {
-                            color: parent.hovered ? palette.highlight : palette.window
+                            color: parent.hovered ? parent.palette.highlight : parent.palette.window
                             opacity: 0.8
-                            border.color: palette.highlight
+                            border.color: parent.palette.highlight
                         }
                     }
 
@@ -196,7 +210,7 @@ Panel {
                         background: Rectangle {
                             color: parent.hovered ? palette.highlight : palette.window
                             opacity: 0.8
-                            border.color: palette.highlight
+                            border.color: parent.palette.highlight
                         }
                     }
                 }

@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # coding:utf-8
+from meshroom.core import pyCompatibility
+
 from PySide2.QtCore import QUrl
 from PySide2.QtCore import QObject, Slot
+
 import os
 
 
@@ -24,7 +27,7 @@ class FilepathHelper(QObject):
         Returns:
             str: String representation of 'path'
         """
-        if not isinstance(path, (QUrl, basestring)):
+        if not isinstance(path, (QUrl, pyCompatibility.basestring)):
             raise TypeError("Unexpected data type: {}".format(path.__class__))
         if isinstance(path, QUrl):
             path = path.toLocalFile()

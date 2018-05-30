@@ -30,8 +30,12 @@ ApplicationWindow {
         ensureSaved(function(){ Qt.quit() })
     }
 
-    SystemPalette { id: palette }
-    SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled}
+    // force Application palette assignation
+    // note: should be implicit (PySide bug)
+    palette: _PaletteManager.palette
+
+    SystemPalette { id: activePalette }
+    SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
     Settings {
         id: settings_UILayout
@@ -195,22 +199,6 @@ ApplicationWindow {
         id: dialogsFactory
     }
 
-    // Bind log messages to DialogsFactory
-    Connections {
-        target: _reconstruction
-        function createDialog(func, args)
-        {
-            var dialog = func(_window)
-            // Set text afterwards to avoid dialog sizing issues
-            dialog.title = args[0]
-            dialog.text = args[1]
-            dialog.detailedText = args[2]
-        }
-        onInfo: createDialog(dialogsFactory.info, arguments)
-        onWarning: createDialog(dialogsFactory.warning, arguments)
-        onError: createDialog(dialogsFactory.error, arguments)
-    }
-
     Action {
         id: undoAction
 
@@ -236,7 +224,7 @@ ApplicationWindow {
     }
 
     header: MenuBar {
-        palette.window: Qt.darker(palette.window, 1.15)
+        palette.window: Qt.darker(activePalette.window, 1.15)
         Menu {
             title: "File"
             Action {
@@ -314,6 +302,20 @@ ApplicationWindow {
                                                  0,
                                                  graphEditor.boundingBox().height + graphEditor.gridSpacing
                                                  )
+
+        // Bind messages to DialogsFactory
+        function createDialog(func, message)
+        {
+            var dialog = func(_window)
+            // Set text afterwards to avoid dialog sizing issues
+            dialog.title = message.title
+            dialog.text = message.text
+            dialog.detailedText = message.detailedText
+        }
+
+        onInfo: createDialog(dialogsFactory.info, arguments[0])
+        onWarning: createDialog(dialogsFactory.warning, arguments[0])
+        onError: createDialog(dialogsFactory.error, arguments[0])
     }
 
     Controls1.SplitView {
@@ -321,7 +323,7 @@ ApplicationWindow {
         orientation: Qt.Vertical
 
         // Setup global tooltip style
-        ToolTip.toolTip.background: Rectangle { color: palette.base; border.color: palette.mid }
+        ToolTip.toolTip.background: Rectangle { color: activePalette.base; border.color: activePalette.mid }
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -362,28 +364,20 @@ ApplicationWindow {
             }
 
             // "ProgressBar" reflecting status of all the chunks in the graph, in their process order
-            ListView {
+            NodeChunks {
                 id: chunksListView
                 Layout.fillWidth: true
                 height: 6
-                model: _reconstruction.sortedDFSNodes
-                orientation: ListView.Horizontal
-                interactive: false
-
-                delegate: NodeChunks {
-                    model: object.chunks
-                    height: 6
-                    chunkWidth: chunksListView.width / _reconstruction.chunksCount
-                    width: childrenRect.width
-                }
+                model: _reconstruction.sortedDFSChunks
             }
 
             WorkspaceView {
                 id: workspaceView
-                reconstruction: _reconstruction
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 50
+                reconstruction: _reconstruction
+                readOnly: _reconstruction.computing
                 onRequestGraphAutoLayout: graphEditor.doAutoLayout()
             }
         }

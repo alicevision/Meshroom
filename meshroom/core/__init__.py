@@ -66,12 +66,12 @@ def loadPlugins(folder, packageName, classType):
                     a.packageVersion = packageVersion
                 nodeTypes.extend(p)
             except Exception as e:
-                errors.append('  * Errors while loading "{}".\n    File: {}\n    {}'.format(pluginName, pluginFile, str(e)))
+                errors.append('  * {}: {}'.format(pluginName, str(e)))
 
     if errors:
-        print('== Error while loading the following plugins: ==')
-        print('\n'.join(errors))
-        print('================================================')
+        logging.warning('== Error while loading the following plugins ==\n'
+                        '{}\n'
+                        .format('\n'.join(errors)))
     return nodeTypes
 
 

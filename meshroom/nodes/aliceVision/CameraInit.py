@@ -134,6 +134,7 @@ class CameraInit(desc.CommandLineNode):
             # Reload result of aliceVision_cameraInit
             cameraInitSfM = node.output.value
             jsonData = open(cameraInitSfM, 'r').read()
+            jsonData = jsonData.decode('utf8', errors='ignore')
             data = json.loads(jsonData)
 
             intrinsicsKeys = [i.name for i in Intrinsic]

@@ -13,7 +13,7 @@ class FeatureExtraction(desc.CommandLineNode):
         desc.File(
             name='input',
             label='Input',
-            description='''SfMData file.''',
+            description='SfMData file.',
             value='',
             uid=[0],
         ),
@@ -39,14 +39,14 @@ class FeatureExtraction(desc.CommandLineNode):
         desc.BoolParam(
             name='forceCpuExtraction',
             label='Force CPU Extraction',
-            description='''Use only CPU feature extraction.''',
+            description='Use only CPU feature extraction.',
             value=True,
             uid=[],
         ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
-            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            description='verbosity level (fatal, error, warning, info, debug, trace).',
             value='info',
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,
@@ -57,8 +57,8 @@ class FeatureExtraction(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output',
-            description='''Output path for the features and descriptors files (*.feat, *.desc).''',
+            label='Output Folder',
+            description='Output path for the features and descriptors files (*.feat, *.desc).',
             value='{cache}/{nodeType}/{uid0}/',
             uid=[],
         ),

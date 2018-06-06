@@ -212,10 +212,10 @@ class CameraLocalization(desc.CommandLineNode):
             uid=[],
             ),
         desc.File(
-            name='outputBinary',
-            label='Output Binary',
-            description='''Filename for the localization results (raw data) as .bin''',
-            value='{cache}/{nodeType}/{uid0}/trackedCameras.bin',
+            name='outputJSON',
+            label='Output JSON',
+            description='''Filename for the localization results as .json''',
+            value='{cache}/{nodeType}/{uid0}/trackedCameras.json',
             uid=[],
             ),
     ]

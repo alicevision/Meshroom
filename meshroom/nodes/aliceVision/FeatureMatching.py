@@ -39,10 +39,9 @@ class FeatureMatching(desc.CommandLineNode):
         desc.ChoiceParam(
             name='describerTypes',
             label='Describer Types',
-            description='''Describer types used to describe an image.''',
-            value=['SIFT'],
-            values=['SIFT', 'SIFT_FLOAT', 'AKAZE', 'AKAZE_LIOP', 'AKAZE_MLDB', 'CCTAG3', 'CCTAG4', 'SIFT_OCV',
-                    'AKAZE_OCV'],
+            description='Describer types used to describe an image.',
+            value=['sift'],
+            values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
             exclusive=False,
             uid=[0],
             joinChar=',',

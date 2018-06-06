@@ -1,0 +1,12 @@
+# packaging
+cx_Freeze
+
+# testing
+pytest
+
+# runtime
+psutil
+enum34;python_version<"3.4"
+
+--extra-index-url https://download.qt.io/snapshots/ci/pyside/5.11/latest/
+pyside2

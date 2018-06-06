@@ -63,6 +63,13 @@ class CameraInit(desc.CommandLineNode):
             description="Camera Intrinsics",
             group="",
         ),
+        desc.File(
+            name='sensorDatabase',
+            label='Sensor Database',
+            description='''Camera sensor width database path.''',
+            value=os.environ.get('ALICEVISION_SENSOR_DB', ''),
+            uid=[],
+        ),
         desc.FloatParam(
             name='defaultFieldOfView',
             label='Default Field Of View',
@@ -70,13 +77,6 @@ class CameraInit(desc.CommandLineNode):
             value=45.0,
             range=(0, 180.0, 1),
             uid=[0],
-        ),
-        desc.File(
-            name='sensorDatabase',
-            label='Sensor Database',
-            description='''Camera sensor width database path.''',
-            value=os.environ.get('ALICEVISION_SENSOR_DB', ''),
-            uid=[],
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -92,7 +92,7 @@ class CameraInit(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output',
+            label='Output SfMData File',
             description='''Output SfMData.''',
             value='{cache}/{nodeType}/{uid0}/cameraInit.sfm',
             uid=[],

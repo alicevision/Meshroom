@@ -64,7 +64,7 @@ class FeatureMatching(desc.CommandLineNode):
         desc.ChoiceParam(
             name='geometricEstimator',
             label='Geometric Estimator',
-            description='''Geometric estimator: * acransac: A-Contrario Ransac * loransac: LO-Ransac (only available for fundamental matrix)''',
+            description='Geometric estimator: (acransac: A-Contrario Ransac, loransac: LO-Ransac (only available for "fundamental_matrix" model)',
             value='acransac',
             values=['acransac', 'loransac'],
             exclusive=True,
@@ -81,12 +81,13 @@ class FeatureMatching(desc.CommandLineNode):
             value=['fundamental_matrix'],
             values=['fundamental_matrix', 'essential_matrix', 'homography_matrix', 'homography_growing'],
             exclusive=False,
-            uid=[0]
+            uid=[0],
+            joinChar=',',
         ),
         desc.FloatParam(
             name='distanceRatio',
             label='Distance Ratio',
-            description='''Distance ratio to discard non meaningful matches.''',
+            description='Distance ratio to discard non meaningful matches.',
             value=0.8,
             range=(0.0, 1.0, 0.01),
             uid=[0],

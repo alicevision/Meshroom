@@ -17,19 +17,29 @@ class StructureFromMotion(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
-        desc.File(
-            name='featuresFolder',
-            label='Features Folder',
-            description='Path to a folder containing the extracted features.',
-            value='',
-            uid=[0],
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="featuresFolder",
+                label="Features Folder",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="featuresFolders",
+            label="Features Folders",
+            description="Folder(s) containing the extracted features and descriptors."
         ),
-        desc.File(
-            name='matchesFolder',
-            label='Matches Folder',
-            description='Path to a folder in which computed matches are stored.',
-            value='',
-            uid=[0],
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="matchesFolder",
+                label="Matches Folder",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="matchesFolders",
+            label="Matches Folders",
+            description="Folder(s) in which computed matches are stored."
         ),
         desc.ChoiceParam(
             name='describerTypes',
@@ -43,13 +53,13 @@ class StructureFromMotion(desc.CommandLineNode):
             joinChar=',',
         ),
         desc.ChoiceParam(
-            name='interFileExtension',
-            label='Inter File Extension',
-            description='Extension of the intermediate file export.',
-            value='.abc',
-            values=('.abc', '.ply'),
+            name='localizerEstimator',
+            label='Localizer Estimator',
+            description='Estimator type used to localize cameras (acransac, ransac, lsmeds, loransac, maxconsensus).',
+            value='acransac',
+            values=['acransac', 'ransac', 'lsmeds', 'loransac', 'maxconsensus'],
             exclusive=True,
-            uid=[],
+            uid=[0],
         ),
         desc.BoolParam(
             name='useLocalBA',
@@ -67,13 +77,14 @@ class StructureFromMotion(desc.CommandLineNode):
             range=(2, 10, 1),
             uid=[0],
         ),
-        desc.ChoiceParam(
-            name='localizerEstimator',
-            label='Localizer Estimator',
-            description='Estimator type used to localize cameras (acransac, ransac, lsmeds, loransac, maxconsensus).',
-            value='acransac',
-            values=['acransac', 'ransac', 'lsmeds', 'loransac', 'maxconsensus'],
-            exclusive=True,
+        desc.IntParam(
+            name='maxNumberOfMatches',
+            label='Maximum Number of Matches',
+            description='Maximum number of matches per image pair (and per feature type). \n'
+                        'This can be useful to have a quick reconstruction overview. \n'
+                        '0 means no limit.',
+            value=0,
+            range=(0, 50000, 1),
             uid=[0],
         ),
         desc.IntParam(
@@ -95,14 +106,6 @@ class StructureFromMotion(desc.CommandLineNode):
             range=(2, 10, 1),
             uid=[0],
         ),
-        desc.IntParam(
-            name='maxNumberOfMatches',
-            label='Maximum Number of Matches',
-            description='Maximum number of matches per image pair (and per feature type). \n'
-                        'This can be useful to have a quick reconstruction overview. \n'
-                        '0 means no limit.',
-            value=0,
-            range=(0, 50000, 1),
             uid=[0],
         ),
         desc.File(
@@ -120,6 +123,15 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
         ),
         desc.ChoiceParam(
+            name='interFileExtension',
+            label='Inter File Extension',
+            description='Extension of the intermediate file export.',
+            value='.abc',
+            values=('.abc', '.ply'),
+            exclusive=True,
+            uid=[],
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='Verbosity level (fatal, error, warning, info, debug, trace).',
@@ -133,21 +145,21 @@ class StructureFromMotion(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output SfM data file',
+            label='Output SfMData File',
             description='Path to the output sfmdata file',
             value='{cache}/{nodeType}/{uid0}/sfm.abc',
             uid=[],
         ),
         desc.File(
             name='outputViewsAndPoses',
-            label='Output SfM data file',
+            label='Output SfMData File',
             description='''Path to the output sfmdata file with cameras (views and poses).''',
             value='{cache}/{nodeType}/{uid0}/cameras.sfm',
             uid=[],
         ),
         desc.File(
             name='extraInfoFolder',
-            label='Output',
+            label='Output Folder',
             description='Folder for intermediate reconstruction files and additional reconstruction information files.',
             value='{cache}/{nodeType}/{uid0}/',
             uid=[],

@@ -37,13 +37,6 @@ class FeatureExtraction(desc.CommandLineNode):
             uid=[0],
         ),
         desc.BoolParam(
-            name='upright',
-            label='Upright',
-            description='''Upright feature.''',
-            value=False,
-            uid=[0],
-        ),
-        desc.BoolParam(
             name='forceCpuExtraction',
             label='Force CPU Extraction',
             description='''Use only CPU feature extraction.''',

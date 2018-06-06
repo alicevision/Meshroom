@@ -13,17 +13,27 @@ class FeatureMatching(desc.CommandLineNode):
         desc.File(
             name='input',
             label='Input',
-            description='''SfMData file.''',
+            description='SfMData file.',
             value='',
             uid=[0],
         ),
-        desc.ChoiceParam(
-            name='geometricModel',
-            label='Geometric Model',
-            description='''Pairwise correspondences filtering thanks to robust model estimation: * f: fundamental matrix * e: essential matrix * h: homography matrix''',
-            value='f',
-            values=['f', 'e', 'h'],
-            exclusive=True,
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="featuresFolder",
+                label="Features Folder",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="featuresFolders",
+            label="Features Folders",
+            description="Folder(s) containing the extracted features and descriptors."
+        ),
+        desc.File(
+            name='imagePairsList',
+            label='Image Pairs List',
+            description='Path to a file which contains the list of image pairs to match.',
+            value='',
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -36,20 +46,6 @@ class FeatureMatching(desc.CommandLineNode):
             exclusive=False,
             uid=[0],
             joinChar=',',
-        ),
-        desc.File(
-            name='featuresFolder',
-            label='Features Folder',
-            description='''Path to a folder containing the extracted features.''',
-            value='',
-            uid=[0],
-        ),
-        desc.File(
-            name='imagePairsList',
-            label='Image Pairs List',
-            description='''Path to a file which contains the list of image pairs to match.''',
-            value='',
-            uid=[0],
         ),
         desc.ChoiceParam(
             name='photometricMatchingMethod',
@@ -100,42 +96,55 @@ class FeatureMatching(desc.CommandLineNode):
         desc.IntParam(
             name='maxIteration',
             label='Max Iteration',
-            description='''Maximum number of iterations allowed in ransac step.''',
+            description='Maximum number of iterations allowed in ransac step.',
             value=2048,
             range=(1, 20000, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='maxMatches',
+            label='Max Matches',
+            description='Maximum number of matches to keep.',
+            value=0,
+            range=(0, 10000, 1),
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='savePutativeMatches',
+            label='Save Putative Matches',
+            description='putative matches.',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='guidedMatching',
+            label='Guided Matching',
+            description='the found model to improve the pairwise correspondences.',
+            value=False,
             uid=[0],
         ),
         desc.BoolParam(
             name='exportDebugFiles',
             label='Export Debug Files',
-            description='''debug files (svg, dot).''',
+            description='debug files (svg, dot).',
             value=False,
             uid=[],
-        ),
-        desc.IntParam(
-            name='maxMatches',
-            label='Max Matches',
-            description='''Maximum number pf matches to keep.''',
-            value=0,
-            range=(0, 10000, 1),
-            uid=[0],
         ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
-            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
+            description='verbosity level (fatal, error, warning, info, debug, trace).',
             value='info',
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,
             uid=[],
         )
     ]
-
     outputs = [
         desc.File(
             name='output',
-            label='Output',
-            description='''Path to a folder in which computed matches will be stored.''',
+            label='Output Folder',
+            description='Path to a folder in which computed matches will be stored.',
             value='{cache}/{nodeType}/{uid0}/',
             uid=[],
         ),

@@ -8,6 +8,7 @@ import re
 import tempfile
 import uuid
 import logging
+import pkgutil
 
 from meshroom.core.submitter import BaseSubmitter
 from . import desc
@@ -51,13 +52,7 @@ def loadPlugins(folder, packageName, classType):
         packageName = package.packageName if hasattr(package, 'packageName') else package.__name__
         packageVersion = getattr(package, "__version__", None)
 
-        pysearchre = re.compile('.py$', re.IGNORECASE)
-        pluginFiles = filter(pysearchre.search, os.listdir(os.path.dirname(package.__file__)))
-        for pluginFile in pluginFiles:
-            if pluginFile.startswith('__'):
-                continue
-
-            pluginName = os.path.splitext(pluginFile)[0]
+        for importer, pluginName, ispkg in pkgutil.iter_modules(package.__path__):
             pluginModule = '.' + pluginName
 
             try:
@@ -97,9 +92,9 @@ def loadNodes(folder, packageName):
 
 def loadAllNodes(folder):
     global nodesDesc
-    for f in os.listdir(folder):
-        if os.path.isdir(os.path.join(folder, f)) and not f.startswith('__'):
-            nodeTypes = loadNodes(folder, f)
+    for importer, package, ispkg in pkgutil.walk_packages([folder]):
+        if ispkg:
+            nodeTypes = loadNodes(folder, package)
             for nodeType in nodeTypes:
                 registerNodeType(nodeType)
             print('Plugins loaded: ', ', '.join([nodeType.__name__ for nodeType in nodeTypes]))

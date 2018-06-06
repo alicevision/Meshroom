@@ -108,7 +108,7 @@ class LiveSfmManager(QObject):
     def imagePathsInCameraInit(self, node):
         """ Get images in the given CameraInit node. """
         assert node.nodeType == 'CameraInit'
-        return [vp.path.value for vp in node.viewpoints]
+        return [vp.path.value for vp in node.viewpoints.value]
 
     def imagesInStep(self):
         """ Get images in the current augmentation step. """
@@ -277,11 +277,11 @@ class Reconstruction(UIGraph):
 
     def allImagePaths(self):
         """ Get all image paths in the reconstruction. """
-        return [vp.path.value for node in self._cameraInits for vp in node.viewpoints]
+        return [vp.path.value for node in self._cameraInits for vp in node.viewpoints.value]
 
     def allViewIds(self):
         """ Get all view Ids involved in the reconstruction. """
-        return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints]
+        return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints.value]
 
     @Slot(QObject, graph.Node)
     def handleFilesDrop(self, drop, cameraInit):

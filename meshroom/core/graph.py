@@ -313,13 +313,13 @@ class ListAttribute(Attribute):
         self._value = ListModel(parent=self)
 
     def _set_value(self, value):
-        self.desc.validateValue(value)
         self._value.clear()
         # Link to another attribute
         if isinstance(value, ListAttribute) or isLinkExpression(value):
             self._value = value
         # New value
         else:
+            self.desc.validateValue(value)
             self.extend(value)
         self.requestGraphUpdate()
 

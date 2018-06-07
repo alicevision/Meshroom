@@ -27,6 +27,7 @@ RowLayout {
 
     // Instantiate empty Items for each child attribute
     Repeater {
+        id: childrenRepeater
         model: isList && !attribute.isLink ? attribute.value : 0
         onItemAdded: {childPinCreated(item.childAttribute, item)}
         onItemRemoved: {childPinDeleted(item.childAttribute, item)}
@@ -57,7 +58,9 @@ RowLayout {
                 if( drag.source.objectName != dragTarget.objectName  // not an edge connector
                    ||  drag.source.nodeItem == dragTarget.nodeItem   // connection between attributes of the same node
                    || dragTarget.isOutput                            // connection on an output
-                   || dragTarget.attribute.isLink)                   // already connected attribute
+                   || dragTarget.attribute.isLink                    // already connected attribute
+                   || childrenRepeater.count                         // attribute has children
+                   )
                 {
                     drag.accepted = false
                 }

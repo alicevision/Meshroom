@@ -93,6 +93,10 @@ class AddNodeCommand(GraphCommand):
         for key, value in self.kwargs.items():
             if isinstance(value, Attribute):
                 self.kwargs[key] = value.asLinkExpr()
+            elif isinstance(value, list):
+                for idx, v in enumerate(value):
+                    if isinstance(v, Attribute):
+                         value[idx] = v.asLinkExpr()
 
     def redoImpl(self):
         node = self.graph.addNewNode(self.nodeType, **self.kwargs)

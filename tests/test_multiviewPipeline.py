@@ -17,10 +17,10 @@ def test_multiviewPipeline():
         {'path': '/non/existing/file2', 'intrinsicId': 55}
         ])
 
-    assert graph1.findNode('CameraInit').viewpoints[0].path.value == '/non/existing/fileA'
+    assert graph1.findNode('CameraInit').viewpoints.at(0).path.value == '/non/existing/fileA'
     assert len(graph2.findNode('CameraInit').viewpoints) == 0
-    assert graph3.findNode('CameraInit').viewpoints[0].path.value == '/non/existing/file1'
-    assert graph4.findNode('CameraInit').viewpoints[0].path.value == '/non/existing/file1'
+    assert graph3.findNode('CameraInit').viewpoints.at(0).path.value == '/non/existing/file1'
+    assert graph4.findNode('CameraInit').viewpoints.at(0).path.value == '/non/existing/file1'
 
     assert len(graph1.findNode('CameraInit').viewpoints) == 1
     assert len(graph2.findNode('CameraInit').viewpoints) == 0

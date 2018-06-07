@@ -313,8 +313,8 @@ class ListAttribute(Attribute):
         self._value = ListModel(parent=self)
 
     def _set_value(self, value):
-        self.desc.validateValue(value)
-        self._value.clear()
+        if self.node.graph:
+            self.remove(0, len(self))
         # Link to another attribute
         if isinstance(value, ListAttribute) or isLinkExpression(value):
             self._value = value
@@ -343,12 +343,14 @@ class ListAttribute(Attribute):
 
     @raiseIfLink
     def remove(self, index, count=1):
-        assert not self.isLink
         if self.node.graph:
-            for i in range(index, index + count):
-                attr = self._value.at(i)
-                if attr.isLink:
-                    self.node.graph.removeEdge(attr)  # delete edge if the attribute is linked
+            # remove potential links
+            with GraphModification(self.node.graph):
+                for i in range(index, index + count):
+                    attr = self._value.at(i)
+                    if attr.isLink:
+                        # delete edge if the attribute is linked
+                        self.node.graph.removeEdge(attr)
         self._value.removeAt(index, count)
         self.requestGraphUpdate()
         self.valueChanged.emit()

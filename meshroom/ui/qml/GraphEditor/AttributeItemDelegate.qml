@@ -43,7 +43,7 @@ RowLayout {
         // make label italic if attribute is a link
         font.italic: object.isLink
 
-        background: Rectangle { color: Qt.darker(palette.window, 1.2) }
+        background: Rectangle { color: Qt.darker(parent.palette.window, 1.2) }
 
         MouseArea {
             id: parameterMA
@@ -73,14 +73,14 @@ RowLayout {
                     height: visible ? implicitHeight : 0
                     text: paramMenu.isFilepath ? "Open Containing Folder" : "Open Folder"
                     onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(attribute.value)) :
-                                                      Qt.openUrlExternally(attribute.value)
+                                                      Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
                 }
 
                 MenuItem {
                     visible: paramMenu.isFilepath
                     height: visible ? implicitHeight : 0
                     text: "Open File"
-                    onClicked: Qt.openUrlExternally(attribute.value)
+                    onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
                 }
             }
 
@@ -253,7 +253,7 @@ RowLayout {
                         onClicked: listAttribute_layout.expanded = !listAttribute_layout.expanded
                     }
                     Label {
-                        anchors.verticalCenter: parent.verticalCenter
+                        Layout.alignment: Qt.AlignVCenter
                         text: attribute.value.count + " elements"
                     }
                     ToolButton {

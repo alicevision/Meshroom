@@ -29,12 +29,14 @@ Item {
 
     clip: true
 
-    SystemPalette { id: palette }
+    SystemPalette { id: activePalette }
 
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         property double factor: 1.15
+        property real minZoom: 0.1
+        property real maxZoom: 2.0
         // Activate multisampling for edges antialiasing
         layer.enabled: true
         layer.samples: 8
@@ -44,13 +46,14 @@ Item {
         drag.threshold: 0
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
-            if(Math.min(draggable.width*draggable.scale*zoomFactor, draggable.height*draggable.scale*zoomFactor) < 10)
+            var scale = draggable.scale * zoomFactor
+            scale = Math.min(Math.max(minZoom, scale), maxZoom)
+            if(draggable.scale == scale)
                 return
             var point = mapToItem(draggable, wheel.x, wheel.y)
             draggable.x += (1-zoomFactor) * point.x * draggable.scale
             draggable.y += (1-zoomFactor) * point.y * draggable.scale
-            draggable.scale *= zoomFactor
-            draggable.scale = draggable.scale.toFixed(2)
+            draggable.scale = scale
             workspaceMoved()
         }
 
@@ -192,7 +195,7 @@ Item {
                     property var dstAnchor: dst.nodeItem.mapFromItem(dst, dst.edgeAnchorPos.x, dst.edgeAnchorPos.y)
 
                     edge: object
-                    color: containsMouse && !readOnly ? palette.highlight : palette.text
+                    color: containsMouse && !readOnly ? activePalette.highlight : activePalette.text
                     opacity: 0.7
                     point1x: src.nodeItem.x + srcAnchor.x
                     point1y: src.nodeItem.y + srcAnchor.y
@@ -321,7 +324,7 @@ Item {
     // Fit graph to fill root
     function fit() {
         // compute bounding box
-        var bbox = boudingBox()
+        var bbox = boundingBox()
         // rescale
         draggable.scale = Math.min(root.width/bbox.width, root.height/bbox.height)
         // recenter

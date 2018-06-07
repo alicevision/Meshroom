@@ -19,18 +19,19 @@ Page {
     property alias footerContent: footerLayout.data
     property alias icon: iconPlaceHolder.data
 
+    clip: true
+
     QtObject {
         id: m
         property int headerHeight: 24
         property int footerHeight: 22
         property int hPadding: 6
         property int vPadding: 2
-        readonly property color paneBackgroundColor: Qt.darker(palette.window, 1.15)
+        readonly property color paneBackgroundColor: Qt.darker(root.palette.window, 1.15)
     }
 
     padding: 2
 
-    SystemPalette { id: palette }
 
     header: Pane {
         id: headerPane
@@ -49,7 +50,7 @@ Page {
                     id: iconPlaceHolder
                     width: childrenRect.width
                     height: childrenRect.height
-                    anchors.verticalCenter: parent.verticalCenter
+                    Layout.alignment: Qt.AlignVCenter
                     visible: icon != ""
                 }
 

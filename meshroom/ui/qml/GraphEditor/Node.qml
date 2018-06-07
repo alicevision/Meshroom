@@ -2,6 +2,7 @@ import QtQuick 2.9
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 import QtGraphicalEffects 1.0
+import Utils 1.0
 
 Item {
     id: root
@@ -22,6 +23,8 @@ Item {
 
     implicitHeight: body.height
     objectName: node.name
+
+    SystemPalette { id: activePalette }
 
     MouseArea {
         anchors.fill: parent
@@ -51,7 +54,7 @@ Item {
             }
             MenuItem {
                 text: "Open Folder"
-                onTriggered: Qt.openUrlExternally(node.internalFolder)
+                onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(node.internalFolder))
             }
             MenuSeparator {}
             MenuItem {
@@ -91,7 +94,7 @@ Item {
     Rectangle {
         id: background
         anchors.fill: parent
-        color: palette.base
+        color: activePalette.base
         layer.enabled: true
         layer.effect: DropShadow { radius: 2; color: shadowColor }
     }

@@ -24,13 +24,13 @@ Item {
     implicitWidth: 300
     implicitHeight: 400
 
-    onMeshFileChanged: viewer3D.clear()
-
     signal requestGraphAutoLayout()
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
     {
+        if(!Filepath.exists(Filepath.urlToString(filepath)))
+            return
         switch(Filepath.extension(filepath))
         {
         case ".abc": viewer3D.abcSource = filepath; break;
@@ -41,15 +41,19 @@ Item {
 
     Connections {
         target: reconstruction
-        onSfmReportChanged: loadSfmAbc()
+        onGraphChanged: {
+            viewer3D.clear()
+            viewer2D.clear()
+        }
+        onSfmReportChanged: {
+            viewer3D.abcSource = ''
+            if(!reconstruction.sfm)
+                return
+            load3DMedia(Filepath.stringToUrl(reconstruction.sfm.attribute('output').value))
+        }
     }
 
-    function loadSfmAbc()
-    {
-        load3DMedia(Filepath.stringToUrl(reconstruction.sfm.attribute('output').value))
-    }
-
-    SystemPalette { id: palette }
+    SystemPalette { id: activePalette }
 
     Controls1.SplitView {
         anchors.fill: parent
@@ -62,6 +66,7 @@ Item {
             ImageGallery {
                 id: imageGallery
                 Layout.fillHeight: true
+                readOnly: root.readOnly
                 cameraInits: root.cameraInits
                 cameraInit: _reconstruction.cameraInit
                 currentIndex: reconstruction.cameraInitIndex
@@ -80,7 +85,7 @@ Item {
         Panel {
             title: "Image Viewer"
             Layout.fillHeight: true
-            implicitWidth: Math.round(parent.width * 0.4)
+            Layout.fillWidth: true
             Layout.minimumWidth: 40
             Viewer2D {
                 id: viewer2D
@@ -96,6 +101,7 @@ Item {
 
                 DropArea {
                     anchors.fill: parent
+                    keys: ["text/uri-list"]
                     onDropped: {
                         viewer2D.source = drop.urls[0]
                         viewer2D.metadata = {}
@@ -104,7 +110,7 @@ Item {
                 Rectangle {
                     z: -1
                     anchors.fill: parent
-                    color: Qt.darker(palette.base, 1.1)
+                    color: Qt.darker(activePalette.base, 1.1)
                 }
             }
         }
@@ -120,16 +126,17 @@ Item {
                 anchors.fill: parent
                 DropArea {
                     anchors.fill: parent
+                    keys: ["text/uri-list"]
                     onDropped: load3DMedia(drop.urls[0])
                 }
             }
 
             Label {
                 anchors.centerIn: parent
-                text: "Loading Model..."
+                text: "Loading..."
                 visible: viewer3D.loading
                 padding: 6
-                background: Rectangle { color: palette.base; opacity: 0.5 }
+                background: Rectangle { color: parent.palette.base; opacity: 0.5 }
             }
 
             // Load reconstructed model

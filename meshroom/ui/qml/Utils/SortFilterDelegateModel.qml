@@ -65,6 +65,16 @@ DelegateModel {
         return item.model[roleName]
     }
 
+    /// Get the index of the first element which matches 'value' for the given 'roleName'
+    function find(value, roleName) {
+        for(var i = 0; i < filteredItems.count; ++i)
+        {
+            if(modelData(filteredItems.get(i), roleName) == value)
+                return i
+        }
+        return -1
+    }
+
     /**
      * Return whether 'value' respects 'filter' condition
      *

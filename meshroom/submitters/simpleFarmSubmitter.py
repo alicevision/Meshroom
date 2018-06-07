@@ -12,7 +12,7 @@ currentDir = os.path.dirname(os.path.realpath(__file__))
 
 
 class SimpleFarmSubmitter(BaseSubmitter):
-    MESHROOM_PACKAGE = os.environ.get('REZ_USED_REQUEST', '')
+    MESHROOM_PACKAGE = "meshroom-{}".format(os.environ.get('REZ_MESHROOM_VERSION', ''))
 
     filepath = os.environ.get('SIMPLEFARMCONFIG', os.path.join(currentDir, 'simpleFarmConfig.json'))
     config = json.load(open(filepath))
@@ -39,7 +39,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
 
         tags['nbFrames'] = nbFrames
         tags['prod'] = self.prod
-        allRequirements = self.config.get('BASE', [])
+        allRequirements = list(self.config.get('BASE', []))
         allRequirements.extend(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
         allRequirements.extend(self.config['RAM'].get(node.nodeDesc.ram.name, []))
         allRequirements.extend(self.config['GPU'].get(node.nodeDesc.gpu.name, []))

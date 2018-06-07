@@ -41,7 +41,7 @@ RowLayout {
         width: 6
         height: width
         radius: isList ? 0 : width/2
-        anchors.verticalCenter: parent.verticalCenter
+        Layout.alignment: Qt.AlignVCenter
         border.color: "#3e3e3e"
         color: (dropArea.containsDrag && dropArea.containsDrag) || attribute.isLink ? "#3e3e3e" : "white"
 
@@ -51,7 +51,7 @@ RowLayout {
             property bool acceptableDrop: false
 
             anchors.fill: parent
-
+            keys: [dragTarget.objectName]
             onEntered: {
                 // Filter drops:
                 if( drag.source.objectName != dragTarget.objectName  // not an edge connector
@@ -81,6 +81,7 @@ RowLayout {
             //anchors.verticalCenter: root.verticalCenter
             width: 2
             height: 2
+            Drag.keys: [dragTarget.objectName]
             Drag.active: connectMA.drag.active
             Drag.hotSpot.x: width*0.5
             Drag.hotSpot.y: height*0.5
@@ -133,7 +134,7 @@ RowLayout {
                 rightPadding: root.layoutDirection == Qt.LeftToRight ? 1 : 0
                 text: attribute.name
                 background: Rectangle {
-                    color: palette.window
+                    color: parent.palette.window
                 }
             }
         }

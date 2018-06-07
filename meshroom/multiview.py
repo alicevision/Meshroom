@@ -126,9 +126,12 @@ def mvsPipeline(graph, sfm=None):
                                depthMapFolder=depthMapFilter.depthMapFolder,
                                depthMapFilterFolder=depthMapFilter.output,
                                ini=depthMapFilter.ini)
+    meshFiltering = graph.addNewNode('MeshFiltering',
+                               input=meshing.output)
     texturing = graph.addNewNode('Texturing',
                                  ini=meshing.ini,
-                                 inputDenseReconstruction=meshing.outputDenseReconstruction)
+                                 inputDenseReconstruction=meshing.outputDenseReconstruction,
+                                 inputMesh=meshFiltering.output)
 
     return [
         prepareDenseScene,
@@ -136,6 +139,7 @@ def mvsPipeline(graph, sfm=None):
         depthMap,
         depthMapFilter,
         meshing,
+        meshFiltering,
         texturing
     ]
 

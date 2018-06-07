@@ -6,7 +6,7 @@ from threading import Thread
 import os
 from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal
 
-from meshroom.common.qt import SortedModelByReference
+from meshroom.common.qt import QObjectListModel
 from meshroom.core import graph
 from meshroom.ui import commands
 
@@ -89,9 +89,7 @@ class UIGraph(QObject):
         self._chunksMonitor.chunkStatusChanged.connect(self.onChunkStatusChanged)
         self._computeThread = Thread()
         self._running = self._submitted = False
-        # List of ordered nodes as visited by a DFS
-        self._sortedDFSNodes = SortedModelByReference(self)
-        self._sortedDFSChunks = []
+        self._sortedDFSChunks = QObjectListModel(parent=self)
         if filepath:
             self.load(filepath)
 
@@ -102,7 +100,6 @@ class UIGraph(QObject):
             self.clear()
         self._graph = g
         self._graph.updated.connect(self.onGraphUpdated)
-        self._sortedDFSNodes.setSourceModel(self._graph.nodes)
         self._graph.update()
         self.graphChanged.emit()
 
@@ -115,22 +112,17 @@ class UIGraph(QObject):
         dfsNodes = self._graph.dfsOnFinish(None)[0]
         chunks = self._graph.getChunks(dfsNodes)
         # Nothing has changed, return
-        if self._sortedDFSChunks == chunks:
+        if self._sortedDFSChunks.objectList() == chunks:
             return
-        self._sortedDFSChunks = chunks
-        # Update reference for sorted nodes according to DFS visit
-        if dfsNodes != self._sortedDFSNodes:
-            self._sortedDFSNodes.setReference(dfsNodes)
+        self._sortedDFSChunks.setObjectList(chunks)
         # Update the list of monitored chunks
         self._chunksMonitor.setChunks(self._sortedDFSChunks)
-        self.chunksCountChanged.emit()
 
     def clear(self):
         if self._graph:
             self._graph.deleteLater()
             self._graph = None
-        self._sortedDFSChunks = []
-        self._sortedDFSNodes.setSourceModel(None)
+        self._sortedDFSChunks.clear()
         self._undoStack.clear()
 
     def load(self, filepath):
@@ -368,7 +360,5 @@ class UIGraph(QObject):
     computingExternally = Property(bool, isComputingExternally, notify=computeStatusChanged)
     computingLocally = Property(bool, isComputingLocally, notify=computeStatusChanged)
 
-    chunksCountChanged = Signal()
-    chunksCount = Property(int, lambda self: len(self._sortedDFSChunks), notify=chunksCountChanged)
-    sortedDFSNodes = Property(QObject, lambda self: self._sortedDFSNodes, constant=True)
+    sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, constant=True)
     lockedChanged = Signal()

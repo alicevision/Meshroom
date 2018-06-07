@@ -2,7 +2,8 @@ import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
-import Utils 1.0
+
+import Controls 1.0
 
 FocusScope {
     id: root
@@ -10,6 +11,12 @@ FocusScope {
     clip: true
     property url source
     property var metadata
+
+    function clear()
+    {
+        source = ''
+        metadata = {}
+    }
 
     // slots
     Keys.onPressed: {
@@ -109,14 +116,30 @@ FocusScope {
         }
     }
 
+    FloatingPane {
+        id: topToolbar
+        width: parent.width
+        radius: 0
+        padding: 4
+        // selectable filepath to source image
+        TextField {
+            width: parent.width
+            padding: 0
+            background: Item {}
+            font.pointSize: 8
+            readOnly: true
+            selectByMouse: true
+            text: Filepath.urlToString(source)
+        }
+    }
+
     // Image Metadata overlay Pane
     ImageMetadataView {
         width: 350
         anchors {
-            top: parent.top
+            top: topToolbar.bottom
             right: parent.right
             bottom: bottomToolbar.top
-            margins: 2
         }
 
         visible: metadataCB.checked
@@ -124,15 +147,13 @@ FocusScope {
         metadata: visible ? root.metadata : {}
     }
 
-    Pane {
+    FloatingPane {
         id: bottomToolbar
         anchors.bottom: parent.bottom
+        anchors.margins: 0
         width: parent.width
-        padding: 2
-        leftPadding: 4
-        rightPadding: leftPadding
-
-        background: Rectangle { color: palette.base; opacity: 0.6 }
+        topPadding: 2
+        bottomPadding: topPadding
 
         RowLayout {
             anchors.fill: parent

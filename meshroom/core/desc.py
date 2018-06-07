@@ -1,4 +1,5 @@
 from meshroom.common import BaseObject, Property, Variant
+from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import collections
 import math
@@ -47,7 +48,7 @@ class ListAttribute(Attribute):
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def validateValue(self, value):
-        if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
+        if not isinstance(value, collections.Iterable):
             raise ValueError('ListAttribute only supports iterable input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
@@ -65,8 +66,8 @@ class GroupAttribute(Attribute):
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def validateValue(self, value):
-        if not (isinstance(value, collections.Iterable) and isinstance(value, basestring)):
-            raise ValueError('GroupAttribute only supports iterable input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        if not isinstance(value, dict):
+            raise ValueError('GroupAttribute only supports dict input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
     def retrieveChildrenUids(self):
@@ -93,7 +94,7 @@ class File(Attribute):
         super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, pyCompatibility.basestring):
             raise ValueError('File only supports string input  (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return os.path.normpath(value).replace('\\', '/') if value else ''
 
@@ -149,25 +150,27 @@ class ChoiceParam(Param):
     """
     """
     def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' '):
+        assert values
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
+        self._valueType = type(self._values[0])  # cast to value type
         super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
+    def conformValue(self, val):
+        """ Conform 'val' to the correct type and check for its validity """
+        val = self._valueType(val)
+        if val not in self.values:
+            raise ValueError('ChoiceParam value "{}" is not in "{}".'.format(val, str(self.values)))
+        return val
+
     def validateValue(self, value):
-        newValues = None
         if self.exclusive:
-            newValues = [value]
-        else:
-            if not isinstance(value, collections.Iterable):
-                raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
-            newValues = value
-        for newValue in newValues:
-            t = type(self._values[0])  # cast to value type
-            newValue = t(newValue)
-            if newValue not in self.values:
-                raise ValueError('ChoiceParam value "{}" is not in "{}".'.format(newValue, str(self.values)))
-        return value
+            return self.conformValue(value)
+
+        if not isinstance(value, collections.Iterable):
+            raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        return [self.conformValue(v) for v in value]
 
     values = Property(Variant, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
@@ -181,7 +184,7 @@ class StringParam(Param):
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
 
     def validateValue(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, pyCompatibility.basestring):
             raise ValueError('StringParam value should be a string (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
@@ -355,7 +358,7 @@ class CommandLineNode(Node):
     def buildCommandLine(self, chunk):
         cmdPrefix = ''
         # if rez available in env, we use it
-        if 'REZ_ENV' in os.environ:
+        if 'REZ_ENV' in os.environ and chunk.node.packageVersion:
             # if the node package is already in the environment, we don't need a new dedicated rez environment
             alreadyInEnv = os.environ.get('REZ_{}_VERSION'.format(chunk.node.packageName.upper()), "").startswith(chunk.node.packageVersion)
             if not alreadyInEnv:
@@ -367,8 +370,11 @@ class CommandLineNode(Node):
 
     def stopProcess(self, chunk):
         if chunk.subprocess:
+            # kill process tree
+            processes = chunk.subprocess.children(recursive=True) + [chunk.subprocess]
             try:
-                chunk.subprocess.terminate()
+                for process in processes:
+                    process.terminate()
             except psutil.NoSuchProcess:
                 pass
 

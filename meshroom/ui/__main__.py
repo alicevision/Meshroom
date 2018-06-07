@@ -2,10 +2,11 @@ import os
 import signal
 import sys
 
-from PySide2.QtCore import Qt, QObject, Slot
+from PySide2.QtCore import Qt, QObject, Slot, Signal, Property
 from PySide2.QtGui import QPalette, QColor, QIcon
 from PySide2.QtWidgets import QApplication
 
+from meshroom.ui.components.filepath import FilepathHelper
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
 
@@ -59,6 +60,10 @@ class PaletteManager(QObject):
             app.setPalette(self.darkPalette)
         if self.qmlEngine.rootObjects():
             self.qmlEngine.reload()
+        self.paletteChanged.emit()
+
+    paletteChanged = Signal()
+    palette = Property(QPalette, lambda self: QApplication.instance().palette(), notify=paletteChanged)
 
 
 if __name__ == "__main__":
@@ -71,13 +76,19 @@ if __name__ == "__main__":
     app.setApplicationName('Meshroom')
     app.setAttribute(Qt.AA_EnableHighDpiScaling)
 
+    font = app.font()
+    font.setPointSize(9)
+    app.setFont(font)
+
     pwd = os.path.dirname(__file__)
-    app.setWindowIcon(QIcon(os.path.join(pwd, "img/icon.png")))
+    app.setWindowIcon(QIcon(os.path.join(pwd, "img/meshroom.svg")))
     qmlDir = os.path.join(pwd, "qml")
     url = os.path.join(qmlDir, "main.qml")
     engine = QmlInstantEngine()
     engine.addFilesFromDirectory(qmlDir, recursive=True)
     engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
+    # whether to output qml warnings to stderr (disable by default)
+    engine.setOutputWarningsToStandardError(os.environ.get("MESHROOM_OUTPUT_QML_WARNINGS", "") == "1")
     engine.addImportPath(qmlDir)
     components.registerTypes()
 
@@ -87,7 +98,8 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("_reconstruction", r)
     pm = PaletteManager(engine, parent=app)
     engine.rootContext().setContextProperty("_PaletteManager", pm)
-
+    fpHelper = FilepathHelper(parent=app)
+    engine.rootContext().setContextProperty("Filepath", fpHelper)
     # Request any potential computation to stop on exit
     app.aboutToQuit.connect(r.stopExecution)
 

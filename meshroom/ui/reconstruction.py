@@ -10,6 +10,20 @@ from meshroom.core import graph
 from meshroom.ui.graph import UIGraph
 
 
+class Message(QObject):
+    """ Simple structure wrapping a high-level message. """
+
+    def __init__(self, title, text, detailedText="", parent=None):
+        super(Message, self).__init__(parent)
+        self._title = title
+        self._text = text
+        self._detailedText = detailedText
+
+    title = Property(str, lambda self: self._title, constant=True)
+    text = Property(str, lambda self: self._text, constant=True)
+    detailedText = Property(str, lambda self: self._detailedText, constant=True)
+
+
 class LiveSfmManager(QObject):
     """
     Manage a live SfM reconstruction by creating augmentation steps in the graph over time,
@@ -161,6 +175,7 @@ class Reconstruction(UIGraph):
         self._sfm = None
         self._views = None
         self._poses = None
+        self._selectedViewId = None
 
         if graphFilepath:
             self.onGraphChanged()
@@ -172,10 +187,22 @@ class Reconstruction(UIGraph):
         """ Create a new photogrammetry pipeline. """
         self.setGraph(multiview.photogrammetry())
 
+    def load(self, filepath):
+        try:
+            super(Reconstruction, self).load(filepath)
+        except Exception as e:
+            self.error.emit(
+                Message(
+                    "Error while loading {}".format(os.path.basename(filepath)),
+                    "An unexpected error has occurred",
+                    str(e)
+                )
+            )
+
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
-        self._sfm = None
+        self.sfm = None
         self._endChunk = None
         self.setMeshFile('')
         self.updateCameraInits()
@@ -330,7 +357,7 @@ class Reconstruction(UIGraph):
         #   * create an uninitialized node
         #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
         attributes = cameraInit.toDict()["attributes"] if cameraInit else {}
-        cameraInitCopy = graph.Node("CameraInit", **attributes)
+        cameraInitCopy = graph.node_factory("CameraInit", **attributes)
 
         try:
             self.setBuildingIntrinsics(True)
@@ -404,31 +431,40 @@ class Reconstruction(UIGraph):
             self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
         self.sfmReportChanged.emit()
 
-    def _resetSfm(self):
-        """ Reset sfm-related members. """
-        self._sfm = None
-        self.updateViewsAndPoses()
-
     def getSfm(self):
         """ Returns the current SfM node. """
         return self._sfm
 
-    def setSfm(self, node):
-        """ Set the current SfM node.
-        This node will be used to retrieve sparse reconstruction result like camera poses.
-        """
-        if self._sfm:
-            self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
-            self._sfm.destroyed.disconnect(self._resetSfm)
+    def _unsetSfm(self):
+        """ Unset current SfM node. This is shortcut equivalent to _setSfm(None). """
+        self._setSfm(None)
 
+    def _setSfm(self, node):
+        """ Set current SfM node to 'node' and update views and poses.
+        Notes: this should not be called directly, use setSfm instead.
+        See Also: setSfm
+        """
         self._sfm = node
         # Update views and poses and do so each time
         # the status of the SfM node's only chunk changes
         self.updateViewsAndPoses()
         if self._sfm:
-            self._sfm.destroyed.connect(self._resetSfm)
+            # when destroyed, directly use '_setSfm' to bypass
+            # disconnection step in 'setSfm' (at this point, 'self._sfm' underlying object
+            # has been destroyed and can't be evaluated anymore)
+            self._sfm.destroyed.connect(self._unsetSfm)
             self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
         self.sfmChanged.emit()
+
+    def setSfm(self, node):
+        """ Set the current SfM node.
+        This node will be used to retrieve sparse reconstruction result like camera poses.
+        """
+        # disconnect from previous SfM node if any
+        if self._sfm:
+            self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
+            self._sfm.destroyed.disconnect(self._unsetSfm)
+        self._setSfm(node)
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):
@@ -440,6 +476,15 @@ class Reconstruction(UIGraph):
         # keys are strings (faster lookup)
         return str(viewpoint.poseId.value) in self._poses
 
+    def setSelectedViewId(self, viewId):
+        if viewId == self._selectedViewId:
+            return
+        self._selectedViewId = viewId
+        self.selectedViewIdChanged.emit()
+
+    selectedViewIdChanged = Signal()
+    selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)
+
     sfmChanged = Signal()
     sfm = Property(QObject, getSfm, setSfm, notify=sfmChanged)
     sfmReportChanged = Signal()
@@ -447,3 +492,7 @@ class Reconstruction(UIGraph):
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(graph.Node, graph.Node)
 
+    # Signals to propagate high-level messages
+    error = Signal(Message)
+    warning = Signal(Message)
+    info = Signal(Message)

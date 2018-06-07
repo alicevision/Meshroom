@@ -320,6 +320,7 @@ class ListAttribute(Attribute):
             self._value = value
         # New value
         else:
+            self.desc.validateValue(value)
             self.extend(value)
         self.requestGraphUpdate()
 

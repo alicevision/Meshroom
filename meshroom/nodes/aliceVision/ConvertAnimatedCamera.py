@@ -13,14 +13,14 @@ class ConvertAnimatedCamera(desc.CommandLineNode):
             description='''SfMData file.''',
             value='',
             uid=[0],
-            ),
+        ),
     ]
 
     outputs = [
         desc.File(
             name='output',
             label='Output',
-            description='''Path to the output Alembic file.''',
+            description='Path to the output Alembic file.',
             value='{cache}/{nodeType}/{uid0}/animatedCamera.abc',
             uid=[],
             ),

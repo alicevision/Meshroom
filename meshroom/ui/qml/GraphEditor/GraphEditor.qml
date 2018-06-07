@@ -227,6 +227,7 @@ Item {
                     baseColor: root.selectedNode == node ? Qt.lighter("#607D8B", 1.2) : "#607D8B"
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
+                    onAttributePinDeleted: unregisterAttributePin(attribute, pin)
 
                     onPressed: {
                         if(mouse.modifiers & Qt.AltModifier)
@@ -298,6 +299,10 @@ Item {
     function registerAttributePin(attribute, pin)
     {
         root._attributeToDelegate[attribute] = pin
+    }
+    function unregisterAttributePin(attribute, pin)
+    {
+        delete root._attributeToDelegate[attribute]
     }
 
     function boundingBox()

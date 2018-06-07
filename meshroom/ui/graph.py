@@ -256,10 +256,10 @@ class UIGraph(QObject):
 
     @Slot(graph.Attribute, graph.Attribute)
     def addEdge(self, src, dst):
-        if isinstance(dst, graph.ListAttribute):
+        if isinstance(dst, graph.ListAttribute) and not isinstance(src, graph.ListAttribute):
             with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.fullName())):
                 self.appendAttribute(dst)
-                self.push(commands.AddEdgeCommand(self._graph, src, dst[-1]))
+                self.push(commands.AddEdgeCommand(self._graph, src, dst.at(-1)))
         else:
             self.push(commands.AddEdgeCommand(self._graph, src, dst))
 
@@ -297,7 +297,7 @@ class UIGraph(QObject):
         with self.groupedGraphModification("Duplicate Node {}".format(srcNode.name)):
             # skip edges: filter out attributes which are links
             if not createEdges:
-                serialized["attributes"] = {k: v for k, v in serialized["attributes"].items() if not graph.isLink(v)}
+                serialized["attributes"] = {k: v for k, v in serialized["attributes"].items() if not graph.isLinkExpression(v)}
             # create a new node of the same type and with the same attributes values
             node = self.addNewNode(serialized["nodeType"], **serialized["attributes"])
         return node
@@ -324,7 +324,7 @@ class UIGraph(QObject):
                 duplicate = self.duplicateNode(srcNode, createEdges=False)
                 duplicates[srcNode.name] = duplicate  # original node to duplicate map
                 # get link attributes
-                links = {k: v for k, v in srcNode.toDict()["attributes"].items() if graph.isLink(v)}
+                links = {k: v for k, v in srcNode.toDict()["attributes"].items() if graph.isLinkExpression(v)}
                 for attr, link in links.items():
                     link = link[1:-1]  # remove starting '{' and trailing '}'
                     # get source node and attribute name

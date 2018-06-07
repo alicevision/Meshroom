@@ -39,7 +39,7 @@ json.JSONEncoder = MyJSONEncoder  # replace the default implementation with our 
 stringIsLinkRe = re.compile('^\{[A-Za-z]+[A-Za-z0-9_.]*\}$')
 
 
-def isLink(value):
+def isLinkExpression(value):
     """
     Return whether the given argument is a link expression.
     A link expression is a string matching the {nodeName.attrName} pattern.
@@ -170,7 +170,7 @@ class Attribute(BaseObject):
         if self._value == value:
             return
 
-        if isinstance(value, Attribute) or (isinstance(value, pyCompatibility.basestring) and isLink(value)):
+        if isinstance(value, Attribute) or isLinkExpression(value):
             # if we set a link to another attribute
             self._value = value
         else:
@@ -187,6 +187,9 @@ class Attribute(BaseObject):
         if self.isInput:
             self.requestGraphUpdate()
         self.valueChanged.emit()
+
+    def resetValue(self):
+        self._value = ""
 
     def requestGraphUpdate(self):
         if self.node.graph:
@@ -235,13 +238,13 @@ class Attribute(BaseObject):
             return
         if isinstance(v, Attribute):
             g.addEdge(v, self)
-            self._value = ""
-        elif self.isInput and isinstance(v, pyCompatibility.basestring) and isLink(v):
+            self.resetValue()
+        elif self.isInput and isLinkExpression(v):
             # value is a link to another attribute
             link = v[1:-1]
             linkNode, linkAttr = link.split('.')
             g.addEdge(g.node(linkNode).attribute(linkAttr), self)
-            self._value = ""
+            self.resetValue()
 
     def getExportValue(self):
         if self.isLink:
@@ -279,27 +282,53 @@ class Attribute(BaseObject):
     isDefault = Property(bool, _isDefault, notify=valueChanged)
 
 
+def raiseIfLink(func):
+    """ If Attribute instance is a link, raise a RuntimeError."""
+    def wrapper(attr, *args, **kwargs):
+        if attr.isLink:
+            raise RuntimeError("Can't modify connected Attribute")
+        return func(attr, *args, **kwargs)
+    return wrapper
+
+
 class ListAttribute(Attribute):
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         super(ListAttribute, self).__init__(node, attributeDesc, isOutput, root, parent)
         self._value = ListModel(parent=self)
 
-    def __getitem__(self, item):
-        return self._value.at(item)
-
     def __len__(self):
-        return len(self._value)
+        return len(self.value)
+
+    def at(self, idx):
+        """ Returns child attribute at index 'idx' """
+        # implement 'at' rather than '__getitem__'
+        # since the later is called spuriously when object is used in QML
+        return self.value.at(idx)
+
+    def index(self, item):
+        return self.value.indexOf(item)
+
+    def resetValue(self):
+        self._value = ListModel(parent=self)
 
     def _set_value(self, value):
-        self.desc.validateValue(value)
-        self._value.clear()
-        self.extend(value)
+        if self.node.graph:
+            self.remove(0, len(self))
+        # Link to another attribute
+        if isinstance(value, ListAttribute) or isLinkExpression(value):
+            self._value = value
+        # New value
+        else:
+            self.desc.validateValue(value)
+            self.extend(value)
         self.requestGraphUpdate()
 
+    @raiseIfLink
     def append(self, value):
         self.extend([value])
 
+    @raiseIfLink
     def insert(self, index, value):
         values = value if isinstance(value, list) else [value]
         attrs = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
@@ -308,36 +337,45 @@ class ListAttribute(Attribute):
         self._applyExpr()
         self.requestGraphUpdate()
 
-    def index(self, item):
-        return self._value.indexOf(item)
-
+    @raiseIfLink
     def extend(self, values):
         self.insert(len(self._value), values)
 
+    @raiseIfLink
     def remove(self, index, count=1):
         if self.node.graph:
-            for i in range(index, index + count):
-                attr = self[i]
-                if attr.isLink:
-                    self.node.graph.removeEdge(attr)  # delete edge if the attribute is linked
+            # remove potential links
+            with GraphModification(self.node.graph):
+                for i in range(index, index + count):
+                    attr = self._value.at(i)
+                    if attr.isLink:
+                        # delete edge if the attribute is linked
+                        self.node.graph.removeEdge(attr)
         self._value.removeAt(index, count)
         self.requestGraphUpdate()
         self.valueChanged.emit()
 
     def uid(self, uidIndex):
-        uids = []
-        for value in self._value:
-            if uidIndex in value.desc.uid:
-                uids.append(value.uid(uidIndex))
-        return hash(uids)
+        if isinstance(self.value, ListModel):
+            uids = []
+            for value in self.value:
+                if uidIndex in value.desc.uid:
+                    uids.append(value.uid(uidIndex))
+            return hash(uids)
+        return super(ListAttribute, self).uid(uidIndex)
 
     def _applyExpr(self):
         if not self.node.graph:
             return
-        for value in self._value:
-            value._applyExpr()
+        if isinstance(self._value, ListAttribute) or isLinkExpression(self._value):
+            super(ListAttribute, self)._applyExpr()
+        else:
+            for value in self._value:
+                value._applyExpr()
 
     def getExportValue(self):
+        if self.isLink:
+            return self.getLinkParam().asLinkExpr()
         return [attr.getExportValue() for attr in self._value]
 
     def defaultValue(self):
@@ -353,7 +391,9 @@ class ListAttribute(Attribute):
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value if not attr.isDefault]
 
     def getValueStr(self):
-        return self.attributeDesc.joinChar.join([v.getValueStr() for v in self._value])
+        if isinstance(self.value, ListModel):
+            return self.attributeDesc.joinChar.join([v.getValueStr() for v in self.value])
+        return super(ListAttribute, self).getValueStr()
 
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

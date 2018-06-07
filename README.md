@@ -1,4 +1,4 @@
-# ![Meshroom - 3D Reconstruction Sofware](/docs/logo/banner-meshroom.png)
+# ![Meshroom - 3D Reconstruction Software](/docs/logo/banner-meshroom.png)
 
 Meshroom is a free, open-source 3D Reconstruction Software based on the [AliceVision](https://github.com/alicevision/AliceVision) framework.
 
@@ -6,7 +6,8 @@ Learn more details about the pipeline on [AliceVision website](http://alicevisio
 
 See [results of the pipeline on sketchfab](http://sketchfab.com/AliceVision).
 
-
+Continous integration:
+* Windows: [![Build status](https://ci.appveyor.com/api/projects/status/25sd7lfr3v0rnvni/branch/develop?svg=true)](https://ci.appveyor.com/project/AliceVision/meshroom/branch/develop)
 ## Photogrammetry
 
 Photogrammetry is the science of making measurements from photographs.
@@ -26,12 +27,12 @@ The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 See [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
 
-Get the source code:
+Get the source code and install runtime requirements:
 ```bash
 git clone --recursive git://github.com/alicevision/meshroom
 cd meshroom
+pip install -r requirements.txt
 ```
-
 
 ## Start Meshroom
 

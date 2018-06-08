@@ -6,7 +6,7 @@ environment:
 
 install:
   - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "pip install -r requirements.txt -r dev_requirements.txt"
+  - "pip install -r requirements.txt -r dev_requirements.txt --timeout 45"
 
 build: off
 

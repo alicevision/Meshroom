@@ -12,3 +12,6 @@ build: off
 
 test_script:
   - "pytest tests/"
+
+after_test:
+  - "python setup.py build"

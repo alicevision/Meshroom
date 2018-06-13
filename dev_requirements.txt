@@ -1,0 +1,5 @@
+# packaging
+cx_Freeze
+
+# testing
+pytest

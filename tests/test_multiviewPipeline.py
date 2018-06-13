@@ -35,8 +35,8 @@ def test_multiviewPipeline():
     assert viewpoints[1].path.value == '/non/existing/file2'
     assert viewpoints[1].intrinsicId.value == -1
 
-    assert viewpoints[0].path.isDefault() == False
-    assert viewpoints[0].intrinsicId.isDefault() == True
+    assert viewpoints[0].path.isDefault == False
+    assert viewpoints[0].intrinsicId.isDefault == True
     assert viewpoints.getPrimitiveValue(exportDefault=False) == [
         {"path": '/non/existing/file1'},
         {"path": '/non/existing/file2'},

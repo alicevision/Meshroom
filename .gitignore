@@ -23,13 +23,13 @@ __pycache__
 # datas or personal files
 /data
 /scripts
+/build
+/dist
 /*.sh
 
 # tests
 /.tests
-
-# in case uncrustify.sh script fails, do not commit the temporary file
-/files_to_uncrustify_delete_me.txt
+/.pytest_cache
 
 # IDEs folders
 *.qmlproject*

@@ -1,0 +1,13 @@
+language: python
+python:
+  - "2.7"
+  - "3.6"
+
+install:
+  - "pip install -r requirements.txt -r dev_requirements.txt --timeout 45"
+
+script:
+  - "pytest tests/"
+
+after_success:
+- "python setup.py build"

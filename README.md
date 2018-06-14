@@ -6,7 +6,7 @@ Learn more details about the pipeline on [AliceVision website](http://alicevisio
 
 See [results of the pipeline on sketchfab](http://sketchfab.com/AliceVision).
 
-Continous integration:
+Continuous integration:
 * Windows: [![Build status](https://ci.appveyor.com/api/projects/status/25sd7lfr3v0rnvni/branch/develop?svg=true)](https://ci.appveyor.com/project/AliceVision/meshroom/branch/develop)
 ## Photogrammetry
 
@@ -36,11 +36,14 @@ pip install -r requirements.txt
 
 ## Start Meshroom
 
-You need to have [AliceVision](https://github.com/alicevision/AliceVision) installation in your PATH and LD_LIBRARY_PATH.
+You need to have [AliceVision](https://github.com/alicevision/AliceVision) installation in your PATH (and LD_LIBRARY_PATH on Linux/macOS).
 
  - __Launch the User Interface__
 
-```
+```bash
+# Windows
+set PYTHONPATH=%CD% && python meshroom/ui
+# Linux/macOS
 PYTHONPATH=$PWD python meshroom/ui
 ```
 
@@ -50,7 +53,8 @@ You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver 
 
  - __Launch a 3D reconstruction in command line__
 
+```bash
+# Windows: set PYTHONPATH=%CD% &&
+# Linux/macOS: PYTHONPATH=$PWD
+python bin/meshroom_photogrammetry --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
 ```
-PYTHONPATH=$PWD python bin/meshroom_photogrammetry --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
-```
-

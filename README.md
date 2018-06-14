@@ -8,6 +8,7 @@ See [results of the pipeline on sketchfab](http://sketchfab.com/AliceVision).
 
 Continuous integration:
 * Windows: [![Build status](https://ci.appveyor.com/api/projects/status/25sd7lfr3v0rnvni/branch/develop?svg=true)](https://ci.appveyor.com/project/AliceVision/meshroom/branch/develop)
+* Linux: [![Build Status](https://travis-ci.org/alicevision/meshroom.svg?branch=develop)](https://travis-ci.org/alicevision/meshroom)
 ## Photogrammetry
 
 Photogrammetry is the science of making measurements from photographs.

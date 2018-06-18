@@ -20,9 +20,14 @@ class FeatureMatching(desc.CommandLineNode):
         desc.ChoiceParam(
             name='geometricModel',
             label='Geometric Model',
-            description='''Pairwise correspondences filtering thanks to robust model estimation: * f: fundamental matrix * e: essential matrix * h: homography matrix''',
+            description='Geometric validation method to filter features matches:\n'
+                        ' * f: fundamental matrix\n'
+                        ' * e: essential matrix\n'
+                        ' * h: homography matrix\n'
+                        ' * hg: homography growing\n'
+                        ' * none: no geometric filtering',
             value='f',
-            values=['f', 'e', 'h'],
+            values=['f', 'e', 'h', 'hg', 'none'],
             exclusive=True,
             uid=[0],
         ),

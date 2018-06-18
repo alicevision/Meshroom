@@ -39,7 +39,7 @@ json.JSONEncoder = MyJSONEncoder  # replace the default implementation with our 
 stringIsLinkRe = re.compile('^\{[A-Za-z]+[A-Za-z0-9_.]*\}$')
 
 
-def isLink(value):
+def isLinkExpression(value):
     """
     Return whether the given argument is a link expression.
     A link expression is a string matching the {nodeName.attrName} pattern.
@@ -170,7 +170,7 @@ class Attribute(BaseObject):
         if self._value == value:
             return
 
-        if isinstance(value, Attribute) or (isinstance(value, pyCompatibility.basestring) and isLink(value)):
+        if isinstance(value, Attribute) or isLinkExpression(value):
             # if we set a link to another attribute
             self._value = value
         else:
@@ -239,7 +239,7 @@ class Attribute(BaseObject):
         if isinstance(v, Attribute):
             g.addEdge(v, self)
             self.resetValue()
-        elif self.isInput and isinstance(v, basestring) and isLink(v):
+        elif self.isInput and isLinkExpression(v):
             # value is a link to another attribute
             link = v[1:-1]
             linkNode, linkAttr = link.split('.')
@@ -316,7 +316,7 @@ class ListAttribute(Attribute):
         self.desc.validateValue(value)
         self._value.clear()
         # Link to another attribute
-        if isinstance(value, ListAttribute) or isLink(value):
+        if isinstance(value, ListAttribute) or isLinkExpression(value):
             self._value = value
         # New value
         else:
@@ -364,7 +364,7 @@ class ListAttribute(Attribute):
     def _applyExpr(self):
         if not self.node.graph:
             return
-        if isinstance(self._value, ListAttribute) or isLink(self._value):
+        if isinstance(self._value, ListAttribute) or isLinkExpression(self._value):
             super(ListAttribute, self)._applyExpr()
         else:
             for value in self._value:

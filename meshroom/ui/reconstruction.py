@@ -6,7 +6,7 @@ from PySide2.QtCore import QObject, Slot, Property, Signal
 
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
-from meshroom.core import graph
+from meshroom.core.node import Node, node_factory, Status
 from meshroom.ui.graph import UIGraph
 
 
@@ -256,7 +256,7 @@ class Reconstruction(UIGraph):
         self.setCameraInit(self._cameraInits[idx])
 
     def updateMeshFile(self):
-        if self._endChunk and self._endChunk.status.status == graph.Status.SUCCESS:
+        if self._endChunk and self._endChunk.status.status == Status.SUCCESS:
             self.setMeshFile(self._endChunk.node.outputMesh.value)
         else:
             self.setMeshFile('')
@@ -310,7 +310,7 @@ class Reconstruction(UIGraph):
         """ Get all view Ids involved in the reconstruction. """
         return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints.value]
 
-    @Slot(QObject, graph.Node)
+    @Slot(QObject, Node)
     def handleFilesDrop(self, drop, cameraInit):
         """ Handle drop events aiming to add images to the Reconstruction.
         Fetching urls from dropEvent is generally expensive in QML/JS (bug ?).
@@ -357,7 +357,7 @@ class Reconstruction(UIGraph):
         #   * create an uninitialized node
         #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
         attributes = cameraInit.toDict()["attributes"] if cameraInit else {}
-        cameraInitCopy = graph.node_factory("CameraInit", **attributes)
+        cameraInitCopy = node_factory("CameraInit", **attributes)
 
         try:
             self.setBuildingIntrinsics(True)
@@ -490,7 +490,7 @@ class Reconstruction(UIGraph):
     sfmReportChanged = Signal()
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
-    sfmAugmented = Signal(graph.Node, graph.Node)
+    sfmAugmented = Signal(Node, Node)
 
     # Signals to propagate high-level messages
     error = Signal(Message)

@@ -4,7 +4,9 @@ from contextlib import contextmanager
 
 from PySide2.QtWidgets import QUndoCommand, QUndoStack
 from PySide2.QtCore import Property, Signal
-from meshroom.core.graph import Node, ListAttribute, Graph, GraphModification, Attribute
+
+from meshroom.core.attribute import ListAttribute, Attribute
+from meshroom.core.graph import GraphModification
 
 
 class UndoCommand(QUndoCommand):

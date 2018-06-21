@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # coding:utf-8
 import logging
+import os
 from threading import Thread
 
-import os
 from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal
 
 from meshroom.common.qt import QObjectListModel
-from meshroom.core import graph
+from meshroom.core.attribute import Attribute, ListAttribute
+from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
+from meshroom.core.node import NodeChunk, Node, Status
 from meshroom.ui import commands
 
 
@@ -71,7 +73,7 @@ class ChunksMonitor(QObject):
                 chunk.updateStatusFromCache()
                 logging.debug("Status for node {} changed: {}".format(chunk.node, chunk.status.status))
 
-    chunkStatusChanged = Signal(graph.NodeChunk, int)
+    chunkStatusChanged = Signal(NodeChunk, int)
 
 
 class UIGraph(QObject):
@@ -83,7 +85,7 @@ class UIGraph(QObject):
     def __init__(self, filepath='', parent=None):
         super(UIGraph, self).__init__(parent)
         self._undoStack = commands.UndoStack(self)
-        self._graph = graph.Graph('', self)
+        self._graph = Graph('', self)
         self._modificationCount = 0
         self._chunksMonitor = ChunksMonitor(parent=self)
         self._chunksMonitor.chunkStatusChanged.connect(self.onChunkStatusChanged)
@@ -126,7 +128,7 @@ class UIGraph(QObject):
         self._undoStack.clear()
 
     def load(self, filepath):
-        g = graph.Graph('')
+        g = Graph('')
         g.load(filepath)
         if not os.path.exists(g.cacheDir):
             os.mkdir(g.cacheDir)
@@ -146,7 +148,7 @@ class UIGraph(QObject):
         self._graph.save()
         self._undoStack.setClean()
 
-    @Slot(graph.Node)
+    @Slot(Node)
     def execute(self, node=None):
         if self.computing:
             return
@@ -157,7 +159,7 @@ class UIGraph(QObject):
     def _execute(self, nodes):
         self.computeStatusChanged.emit()
         try:
-            graph.execute(self._graph, nodes)
+            executeGraph(self._graph, nodes)
         except Exception as e:
             logging.error("Error during Graph execution {}".format(e))
         finally:
@@ -171,23 +173,23 @@ class UIGraph(QObject):
         self._computeThread.join()
         self.computeStatusChanged.emit()
 
-    @Slot(graph.Node)
+    @Slot(Node)
     def submit(self, node=None):
         """ Submit the graph to the default Submitter.
         If a node is specified, submit this node and its uncomputed predecessors.
-        Otherwise, submit the whole graph.
+        Otherwise, submit the whole 
 
         Notes:
             Default submitter is specified using the MESHROOM_DEFAULT_SUBMITTER environment variable.
         """
         self.save()  # graph must be saved before being submitted
         node = [node] if node else None
-        graph.submitGraph(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
+        submitGraph(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
 
     def onChunkStatusChanged(self, chunk, status):
         # update graph computing status
-        running = any([ch.status.status == graph.Status.RUNNING for ch in self._sortedDFSChunks])
-        submitted = any([ch.status.status == graph.Status.SUBMITTED for ch in self._sortedDFSChunks])
+        running = any([ch.status.status == Status.RUNNING for ch in self._sortedDFSChunks])
+        submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])
         if self._running != running or self._submitted != submitted:
             self._running = running
             self._submitted = submitted
@@ -250,68 +252,68 @@ class UIGraph(QObject):
         """
         return self.push(commands.AddNodeCommand(self._graph, nodeType, **kwargs))
 
-    @Slot(graph.Node)
+    @Slot(Node)
     def removeNode(self, node):
         self.push(commands.RemoveNodeCommand(self._graph, node))
 
-    @Slot(graph.Attribute, graph.Attribute)
+    @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
-        if isinstance(dst, graph.ListAttribute) and not isinstance(src, graph.ListAttribute):
+        if isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
             with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.fullName())):
                 self.appendAttribute(dst)
                 self.push(commands.AddEdgeCommand(self._graph, src, dst.at(-1)))
         else:
             self.push(commands.AddEdgeCommand(self._graph, src, dst))
 
-    @Slot(graph.Edge)
+    @Slot(Edge)
     def removeEdge(self, edge):
-        if isinstance(edge.dst.root, graph.ListAttribute):
+        if isinstance(edge.dst.root, ListAttribute):
             with self.groupedGraphModification("Remove Edge and Delete {}".format(edge.dst.fullName())):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
                 self.removeAttribute(edge.dst)
         else:
             self.push(commands.RemoveEdgeCommand(self._graph, edge))
 
-    @Slot(graph.Attribute, "QVariant")
+    @Slot(Attribute, "QVariant")
     def setAttribute(self, attribute, value):
         self.push(commands.SetAttributeCommand(self._graph, attribute, value))
 
-    @Slot(graph.Attribute)
+    @Slot(Attribute)
     def resetAttribute(self, attribute):
         """ Reset 'attribute' to its default value """
         self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
 
-    @Slot(graph.Node)
+    @Slot(Node)
     def duplicateNode(self, srcNode, createEdges=True):
         """
         Duplicate 'srcNode'.
 
         Args:
-            srcNode (graph.Node): the node to duplicate
+            srcNode (Node): the node to duplicate
             createEdges (bool): whether to replicate 'srcNode' edges on the duplicated node
 
         Returns:
-            graph.Node: the duplicated node
+            Node: the duplicated node
         """
         serialized = srcNode.toDict()
         with self.groupedGraphModification("Duplicate Node {}".format(srcNode.name)):
             # skip edges: filter out attributes which are links
             if not createEdges:
-                serialized["attributes"] = {k: v for k, v in serialized["attributes"].items() if not graph.isLinkExpression(v)}
+                serialized["attributes"] = {k: v for k, v in serialized["attributes"].items() if not Attribute.isLinkExpression(v)}
             # create a new node of the same type and with the same attributes values
             node = self.addNewNode(serialized["nodeType"], **serialized["attributes"])
         return node
 
-    @Slot(graph.Node, result="QVariantList")
+    @Slot(Node, result="QVariantList")
     def duplicateNodes(self, fromNode):
         """
         Duplicate 'fromNode' and all the following nodes towards graph's leaves.
 
         Args:
-            fromNode (graph.Node): the node to start the duplication from
+            fromNode (Node): the node to start the duplication from
 
         Returns:
-            [graph.Nodes]: the duplicated nodes
+            [Nodes]: the duplicated nodes
         """
         srcNodes, srcEdges = self._graph.nodesFromNode(fromNode)
         srcNodes = srcNodes[1:]  # skip fromNode
@@ -324,7 +326,7 @@ class UIGraph(QObject):
                 duplicate = self.duplicateNode(srcNode, createEdges=False)
                 duplicates[srcNode.name] = duplicate  # original node to duplicate map
                 # get link attributes
-                links = {k: v for k, v in srcNode.toDict()["attributes"].items() if graph.isLinkExpression(v)}
+                links = {k: v for k, v in srcNode.toDict()["attributes"].items() if Attribute.isLinkExpression(v)}
                 for attr, link in links.items():
                     link = link[1:-1]  # remove starting '{' and trailing '}'
                     # get source node and attribute name
@@ -336,7 +338,7 @@ class UIGraph(QObject):
 
         return duplicates.values()
 
-    @Slot(graph.Attribute, QJsonValue)
+    @Slot(Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):
         if isinstance(value, QJsonValue):
             if value.isArray():
@@ -347,13 +349,13 @@ class UIGraph(QObject):
             pyValue = value
         self.push(commands.ListAttributeAppendCommand(self._graph, attribute, pyValue))
 
-    @Slot(graph.Attribute)
+    @Slot(Attribute)
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
-    graph = Property(graph.Graph, lambda self: self._graph, notify=graphChanged)
+    graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
 
     computeStatusChanged = Signal()
     computing = Property(bool, isComputing, notify=computeStatusChanged)

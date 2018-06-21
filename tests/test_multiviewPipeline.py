@@ -17,10 +17,10 @@ def test_multiviewPipeline():
         {'path': '/non/existing/file2', 'intrinsicId': 55}
         ])
 
-    assert graph1.findNode('CameraInit').viewpoints[0].path.value == '/non/existing/fileA'
+    assert graph1.findNode('CameraInit').viewpoints.at(0).path.value == '/non/existing/fileA'
     assert len(graph2.findNode('CameraInit').viewpoints) == 0
-    assert graph3.findNode('CameraInit').viewpoints[0].path.value == '/non/existing/file1'
-    assert graph4.findNode('CameraInit').viewpoints[0].path.value == '/non/existing/file1'
+    assert graph3.findNode('CameraInit').viewpoints.at(0).path.value == '/non/existing/file1'
+    assert graph4.findNode('CameraInit').viewpoints.at(0).path.value == '/non/existing/file1'
 
     assert len(graph1.findNode('CameraInit').viewpoints) == 1
     assert len(graph2.findNode('CameraInit').viewpoints) == 0
@@ -28,15 +28,15 @@ def test_multiviewPipeline():
     assert len(graph4.findNode('CameraInit').viewpoints) == 2
 
     viewpoints = graph3.findNode('CameraInit').viewpoints
-    assert viewpoints[0].path.value == '/non/existing/file1'
+    assert viewpoints.at(0).path.value == '/non/existing/file1'
 
-    assert viewpoints[0].path.value == '/non/existing/file1'
-    assert viewpoints[0].intrinsicId.value == -1
-    assert viewpoints[1].path.value == '/non/existing/file2'
-    assert viewpoints[1].intrinsicId.value == -1
+    assert viewpoints.at(0).path.value == '/non/existing/file1'
+    assert viewpoints.at(0).intrinsicId.value == -1
+    assert viewpoints.at(1).path.value == '/non/existing/file2'
+    assert viewpoints.at(1).intrinsicId.value == -1
 
-    assert viewpoints[0].path.isDefault == False
-    assert viewpoints[0].intrinsicId.isDefault == True
+    assert not viewpoints.at(0).path.isDefault
+    assert viewpoints.at(0).intrinsicId.isDefault
     assert viewpoints.getPrimitiveValue(exportDefault=False) == [
         {"path": '/non/existing/file1'},
         {"path": '/non/existing/file2'},
@@ -44,10 +44,10 @@ def test_multiviewPipeline():
 
     for graph in (graph4, graph4b):
         viewpoints = graph.findNode('CameraInit').viewpoints
-        assert viewpoints[0].path.value == '/non/existing/file1'
-        assert viewpoints[0].intrinsicId.value == 50
-        assert viewpoints[1].path.value == '/non/existing/file2'
-        assert viewpoints[1].intrinsicId.value == 55
+        assert viewpoints.at(0).path.value == '/non/existing/file1'
+        assert viewpoints.at(0).intrinsicId.value == 50
+        assert viewpoints.at(1).path.value == '/non/existing/file2'
+        assert viewpoints.at(1).intrinsicId.value == 55
 
     # Ensure that all output UIDs are different as the input is different:
     # graph1 != graph2 != graph3 != graph4

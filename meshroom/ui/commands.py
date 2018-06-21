@@ -93,6 +93,10 @@ class AddNodeCommand(GraphCommand):
         for key, value in self.kwargs.items():
             if isinstance(value, Attribute):
                 self.kwargs[key] = value.asLinkExpr()
+            elif isinstance(value, list):
+                for idx, v in enumerate(value):
+                    if isinstance(v, Attribute):
+                         value[idx] = v.asLinkExpr()
 
     def redoImpl(self):
         node = self.graph.addNewNode(self.nodeType, **self.kwargs)
@@ -133,7 +137,7 @@ class SetAttributeCommand(GraphCommand):
         super(SetAttributeCommand, self).__init__(graph, parent)
         self.attrName = attribute.fullName()
         self.value = value
-        self.oldValue = attribute.getPrimitiveValue(exportDefault=True)
+        self.oldValue = attribute.getExportValue()
         self.setText("Set Attribute '{}'".format(attribute.fullName()))
 
     def redoImpl(self):

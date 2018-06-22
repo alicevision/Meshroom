@@ -71,18 +71,18 @@ class FeatureMatching(desc.CommandLineNode):
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='geometricModel',
-            label='Geometric Model',
+            name='geometricFilterType',
+            label='Geometric Filter Type',
             description='Geometric validation method to filter features matches: \n'
                         ' * fundamental_matrix\n'
                         ' * essential_matrix\n'
                         ' * homography_matrix\n'
-                        ' * homography_growing',
-            value=['fundamental_matrix'],
-            values=['fundamental_matrix', 'essential_matrix', 'homography_matrix', 'homography_growing'],
-            exclusive=False,
+                        ' * homography_growing\n'
+                        ' * no_filtering',
+            value='fundamental_matrix',
+            values=['fundamental_matrix', 'essential_matrix', 'homography_matrix', 'homography_growing', 'no_filtering'],
+            exclusive=True,
             uid=[0],
-            joinChar=',',
         ),
         desc.FloatParam(
             name='distanceRatio',

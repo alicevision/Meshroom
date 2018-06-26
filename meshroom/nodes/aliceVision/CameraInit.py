@@ -129,7 +129,9 @@ class CameraInit(desc.CommandLineNode):
             stdout, stderr = subprocess.communicate()
             subprocess.wait()
             if subprocess.returncode != 0:
-                logging.warning('CameraInit: Error on buildIntrinsics of node "{}".'.format(node.name))
+                raise RuntimeError('CameraInit failed with error code {}. Command was: "{}"'.format(
+                    subprocess.returncode, cmd)
+                )
 
             # Reload result of aliceVision_cameraInit
             cameraInitSfM = node.output.value
@@ -152,7 +154,6 @@ class CameraInit(desc.CommandLineNode):
             return views, intrinsics
 
         except Exception:
-            logging.warning('CameraInit: Error on buildIntrinsics of node "{}".'.format(node.name))
             raise
         finally:
             node._cmdVars = origCmdVars

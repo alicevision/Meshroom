@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import hashlib
 from contextlib import contextmanager
 import importlib
 import inspect
@@ -24,6 +25,12 @@ defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gett
 defaultCacheFolder = defaultCacheFolder.replace("\\", "/")
 nodesDesc = {}
 submitters = {}
+
+
+def hashValue(value):
+    """ Hash 'value' using sha1. """
+    hashObject = hashlib.sha1(str(value).encode('utf-8'))
+    return hashObject.hexdigest()
 
 
 @contextmanager

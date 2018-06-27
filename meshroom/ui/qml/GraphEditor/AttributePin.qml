@@ -59,7 +59,8 @@ RowLayout {
                    ||  drag.source.nodeItem == dragTarget.nodeItem   // connection between attributes of the same node
                    || dragTarget.isOutput                            // connection on an output
                    || dragTarget.attribute.isLink                    // already connected attribute
-                   || childrenRepeater.count                         // attribute has children
+                   || (drag.source.isList && !dragTarget.isList)     // connection between a list and a simple attribute
+                   || (drag.source.isList && childrenRepeater.count) // source/target are lists but target already has children
                    )
                 {
                     drag.accepted = false

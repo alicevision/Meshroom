@@ -2,7 +2,7 @@
 import argparse
 
 import meshroom.core.graph
-from meshroom.core.graph import Status
+from meshroom.core.node import Status
 
 
 parser = argparse.ArgumentParser(description='Execute a Graph of processes.')
@@ -57,5 +57,5 @@ else:
     toNodes = None
     if args.toNode:
         toNodes = graph.findNodes([args.toNode])
-    meshroom.core.graph.execute(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
+    meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
 

@@ -35,9 +35,9 @@ class SfMTransform(desc.CommandLineNode):
         desc.ChoiceParam(
             name='landmarksDescriberTypes',
             label='Landmarks Describer Types',
-            description='''Image describer types used to compute the mean of the point cloud. (only for 'landmarks' method)''',
-            value=['SIFT', 'SIFT_FLOAT', 'AKAZE', 'AKAZE_LIOP', 'AKAZE_MLDB', 'CCTAG3', 'CCTAG4', 'SIFT_OCV', 'AKAZE_OCV'],
-            values=['SIFT', 'SIFT_FLOAT', 'AKAZE', 'AKAZE_LIOP', 'AKAZE_MLDB', 'CCTAG3', 'CCTAG4', 'SIFT_OCV', 'AKAZE_OCV'],
+            description='Image describer types used to compute the mean of the point cloud. (only for "landmarks" method).',
+            value=['sift', 'akaze'],
+            values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
             exclusive=False,
             uid=[0],
             joinChar=',',

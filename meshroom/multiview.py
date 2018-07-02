@@ -81,16 +81,15 @@ def sfmPipeline(graph):
                                          input=cameraInit.output)
     imageMatching = graph.addNewNode('ImageMatching',
                                      input=featureExtraction.input,
-                                     featuresFolder=featureExtraction.output,
-                                     )
+                                     featuresFolders=[featureExtraction.output])
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=imageMatching.input,
-                                       featuresFolder=imageMatching.featuresFolder,
+                                       featuresFolders=imageMatching.featuresFolders,
                                        imagePairsList=imageMatching.output)
     structureFromMotion = graph.addNewNode('StructureFromMotion',
                                            input=featureMatching.input,
-                                           featuresFolder=featureMatching.featuresFolder,
-                                           matchesFolder=featureMatching.output)
+                                           featuresFolders=featureMatching.featuresFolders,
+                                           matchesFolders=[featureMatching.output])
     return [
         cameraInit,
         featureExtraction,
@@ -163,16 +162,16 @@ def sfmAugmentation(graph, sourceSfm, withMVS=False):
                                          input=cameraInit.output)
     imageMatchingMulti = graph.addNewNode('ImageMatchingMultiSfM',
                                           input=featureExtraction.input,
-                                          featuresFolder=featureExtraction.output
+                                          featuresFolders=[featureExtraction.output]
                                           )
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=imageMatchingMulti.outputCombinedSfM,
-                                       featuresFolder=imageMatchingMulti.featuresFolder,
+                                       featuresFolders=imageMatchingMulti.featuresFolders,
                                        imagePairsList=imageMatchingMulti.output)
     structureFromMotion = graph.addNewNode('StructureFromMotion',
                                            input=featureMatching.input,
-                                           featuresFolder=featureMatching.featuresFolder,
-                                           matchesFolder=featureMatching.output)
+                                           featuresFolders=featureMatching.featuresFolders,
+                                           matchesFolders=[featureMatching.output])
     graph.addEdge(sourceSfm.output, imageMatchingMulti.inputB)
 
     sfmNodes = [

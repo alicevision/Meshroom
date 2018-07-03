@@ -32,3 +32,6 @@ def test_duplicate_nodes():
     assert nMap[n2].input.getLinkParam() == nMap[n1].output
     assert nMap[n3].input.getLinkParam() == nMap[n1].output
     assert nMap[n3].input2.getLinkParam() == nMap[n2].output
+
+    # ensure de-allocation order for un-parented UIGraph (QObject) with no QApplication instance
+    g.deleteLater()

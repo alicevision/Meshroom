@@ -299,7 +299,7 @@ class Reconstruction(UIGraph):
         with self.groupedGraphModification("SfM Augmentation"):
             sfm, mvs = multiview.sfmAugmentation(self, self.lastSfmNode(), withMVS=withMVS)
 
-        self.sfmAugmented.emit(sfm[0], mvs[-1])
+        self.sfmAugmented.emit(sfm[0], mvs[-1] if mvs else sfm[-1])
         return sfm[0], sfm[-1]
 
     def allImagePaths(self):

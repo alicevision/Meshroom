@@ -29,7 +29,7 @@ Panel {
         id: selectFolderDialog
         title: "Live Reconstruction - Select Image Folder"
         onAccepted: {
-            folderPath.text = folder.toLocaleString().replace("file://", "")
+            folderPath.text = Filepath.urlToString(folder)
         }
     }
 

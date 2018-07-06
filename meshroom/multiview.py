@@ -1,3 +1,6 @@
+# Multiview pipeline version
+__version__ = "1.0"
+
 import os
 import fnmatch
 import re

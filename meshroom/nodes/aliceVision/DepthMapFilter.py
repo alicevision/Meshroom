@@ -1,4 +1,7 @@
+__version__ = "1.0"
+
 from meshroom.core import desc
+
 
 class DepthMapFilter(desc.CommandLineNode):
     commandLine = 'aliceVision_depthMapFiltering {allParams}'

@@ -1,5 +1,5 @@
-import sys
-import os
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 

@@ -1,4 +1,7 @@
+__version__ = "1.0"
+
 from meshroom.core import desc
+
 
 class MeshDecimate(desc.CommandLineNode):
     commandLine = 'aliceVision_meshDecimate {allParams}'

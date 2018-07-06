@@ -1,4 +1,6 @@
-import sys, os
+__version__ = "1.0"
+
+import os
 from meshroom.core import desc
 
 

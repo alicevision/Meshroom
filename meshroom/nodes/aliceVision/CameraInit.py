@@ -1,9 +1,10 @@
+__version__ = "1.0"
+
 import os
 import json
 import psutil
 import shutil
 import tempfile
-import logging
 
 from meshroom.core import desc
 

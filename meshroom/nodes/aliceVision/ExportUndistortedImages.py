@@ -1,3 +1,5 @@
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 class ExportUndistortedImages(desc.CommandLineNode):

@@ -1,4 +1,7 @@
+__version__ = "1.0"
+
 from meshroom.core import desc
+
 
 class DepthMap(desc.CommandLineNode):
     commandLine = 'aliceVision_depthMapEstimation {allParams}'

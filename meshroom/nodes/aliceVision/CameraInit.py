@@ -135,9 +135,10 @@ class CameraInit(desc.CommandLineNode):
 
             # Reload result of aliceVision_cameraInit
             cameraInitSfM = node.output.value
-            jsonData = open(cameraInitSfM, 'r').read()
-            jsonData = jsonData.decode('utf8', errors='ignore')
-            data = json.loads(jsonData)
+            import io  # use io.open for Python2/3 compatibility (allow to specify encoding + errors handling)
+            # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
+            with io.open(cameraInitSfM, 'r', encoding='utf-8', errors='ignore') as f:
+                data = json.load(f)
 
             intrinsicsKeys = [i.name for i in Intrinsic]
             intrinsics = [{k: v for k, v in item.items() if k in intrinsicsKeys} for item in data.get("intrinsics", [])]
@@ -186,8 +187,7 @@ class CameraInit(desc.CommandLineNode):
             }
             node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.sfm'.format(**node._cmdVars)
             with open(node.viewpointsFile, 'w') as f:
-                f.write(json.dumps(sfmData, indent=4))
-                # python3: json.dumps(node.viewpoints, f, indent=4)
+                json.dump(sfmData, f, indent=4)
 
     def buildCommandLine(self, chunk):
         cmd = desc.CommandLineNode.buildCommandLine(self, chunk)

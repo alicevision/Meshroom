@@ -4,26 +4,24 @@ import setuptools  # for bdist
 from cx_Freeze import setup, Executable
 
 
-def getExecutableExtension():
-    """ Return file extension for an executable program based on current platform. """
-    if sys.platform == "win32":
-        return ".exe"
-    if sys.platform == "darwin":
-        return ".app"
-    return ""
-
-
 build_exe_options = {
     # include dynamically loaded plugins
     "packages": ["meshroom.nodes", "meshroom.submitters"]
 }
 
-executables = [
-    Executable(
-        "meshroom/ui/__main__.py",
-        targetName="Meshroom" + getExecutableExtension(),
-    ),
-]
+meshroomExe = Executable(
+    "meshroom/ui/__main__.py",
+    targetName="Meshroom",
+)
+
+# Customize executable for each target platform
+if sys.platform.startswith("win32"):
+    # meshroomExe.base = "Win32GUI"  # for no-console version
+    meshroomExe.targetName += ".exe"
+    meshroomExe.icon = "meshroom/ui/img/meshroom.ico"
+elif sys.platform.startswith("darwin"):
+    meshroomExe.targetName += ".app"
+    # TODO: icon for Mac
 
 setup(
     name="Meshroom",
@@ -36,5 +34,5 @@ setup(
     },
     version="1.0",  # TODO: get correct version info
     options={"build_exe": build_exe_options},
-    executables=executables,
+    executables=[meshroomExe],
 )

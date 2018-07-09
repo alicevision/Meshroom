@@ -5,7 +5,6 @@ from meshroom.core import desc
 
 
 class StructureFromMotion(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 
@@ -199,21 +198,21 @@ class StructureFromMotion(desc.CommandLineNode):
             name='output',
             label='Output SfMData File',
             description='Path to the output sfmdata file',
-            value='{cache}/{nodeType}/{uid0}/sfm.abc',
+            value=desc.Node.internalFolder + 'sfm.abc',
             uid=[],
         ),
         desc.File(
             name='outputViewsAndPoses',
             label='Output SfMData File',
             description='''Path to the output sfmdata file with cameras (views and poses).''',
-            value='{cache}/{nodeType}/{uid0}/cameras.sfm',
+            value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],
         ),
         desc.File(
             name='extraInfoFolder',
             label='Output Folder',
             description='Folder for intermediate reconstruction files and additional reconstruction information files.',
-            value='{cache}/{nodeType}/{uid0}/',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
     ]

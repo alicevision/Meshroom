@@ -4,7 +4,6 @@ from meshroom.core import desc
 
 
 class ImageMatchingMultiSfM(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_imageMatching {allParams}'
     # use both SfM inputs to define Node's size
     size = desc.MultiDynamicNodeSize(['input', 'inputB'])
@@ -99,14 +98,14 @@ class ImageMatchingMultiSfM(desc.CommandLineNode):
             name='output',
             label='Output List File',
             description='Filepath to the output file with the list of selected image pairs.',
-            value='{cache}/{nodeType}/{uid0}/imageMatches.txt',
+            value=desc.Node.internalFolder + 'imageMatches.txt',
             uid=[],
         ),
         desc.File(
             name='outputCombinedSfM',
             label='Output Combined SfM',
             description='Path for the combined SfMData file',
-            value='{cache}/{nodeType}/{uid0}/combineSfM.sfm',
+            value=desc.Node.internalFolder + 'combineSfM.sfm',
             uid=[],
         ),
     ]

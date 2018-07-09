@@ -3,7 +3,6 @@ from meshroom.core import desc
 
 
 class FeatureExtraction(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_featureExtraction {allParams}'
     size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=40)
@@ -59,7 +58,7 @@ class FeatureExtraction(desc.CommandLineNode):
             name='output',
             label='Output Folder',
             description='Output path for the features and descriptors files (*.feat, *.desc).',
-            value='{cache}/{nodeType}/{uid0}/',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
     ]

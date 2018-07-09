@@ -1,7 +1,6 @@
 from meshroom.core import desc
 
 class MeshDecimate(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_meshDecimate {allParams}'
 
     cpu = desc.Level.NORMAL
@@ -72,7 +71,7 @@ class MeshDecimate(desc.CommandLineNode):
             name="output",
             label="Output mesh",
             description="Output mesh (OBJ file format).",
-            value='{cache}/{nodeType}/{uid0}/mesh.obj',
+            value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],
             ),
     ]

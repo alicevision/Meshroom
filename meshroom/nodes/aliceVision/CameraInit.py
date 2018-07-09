@@ -43,7 +43,6 @@ Intrinsic = [
 
 
 class CameraInit(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_cameraInit {allParams} --allowSingleView 1' # don't throw an error if there is only one image
 
     size = desc.DynamicNodeSize('viewpoints')
@@ -94,7 +93,7 @@ class CameraInit(desc.CommandLineNode):
             name='output',
             label='Output SfMData File',
             description='''Output SfMData.''',
-            value='{cache}/{nodeType}/{uid0}/cameraInit.sfm',
+            value=desc.Node.internalFolder + 'cameraInit.sfm',
             uid=[],
         ),
     ]
@@ -185,7 +184,7 @@ class CameraInit(desc.CommandLineNode):
                 "featureFolder": "",
                 "matchingFolder": "",
             }
-            node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.sfm'.format(**node._cmdVars)
+            node.viewpointsFile = (node.nodeDesc.internalFolder + '/viewpoints.sfm').format(**node._cmdVars)
             with open(node.viewpointsFile, 'w') as f:
                 json.dump(sfmData, f, indent=4)
 

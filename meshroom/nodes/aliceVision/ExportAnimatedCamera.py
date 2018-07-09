@@ -2,7 +2,6 @@ from meshroom.core import desc
 
 
 class ExportAnimatedCamera(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_exportAnimatedCamera {allParams}'
 
     inputs = [
@@ -36,7 +35,7 @@ class ExportAnimatedCamera(desc.CommandLineNode):
             name='output',
             label='Output filename',
             description='Output filename for the alembic animated camera.',
-            value='{cache}/{nodeType}/{uid0}/camera.abc',
+            value=desc.Node.internalFolder + 'camera.abc',
             uid=[],
         ),
     ]

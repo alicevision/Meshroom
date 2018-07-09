@@ -2,7 +2,7 @@ from meshroom.core import desc
 
 
 class CameraConnection(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
+    internalFolder = desc.Node.internalFolder
     commandLine = 'aliceVision_cameraConnection {allParams}'
     size = desc.DynamicNodeSize('ini')
 

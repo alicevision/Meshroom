@@ -3,7 +3,6 @@ from meshroom.core import desc
 
 
 class MeshDenoising(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_meshDenoising {allParams}'
 
     inputs = [
@@ -91,7 +90,7 @@ class MeshDenoising(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''Output mesh (OBJ file format).''',
-            value='{cache}/{nodeType}/{uid0}/mesh.obj',
+            value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],
             ),
     ]

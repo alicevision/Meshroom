@@ -1,7 +1,6 @@
 from meshroom.core import desc
 
 class DepthMap(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_depthMapEstimation {allParams}'
     gpu = desc.Level.INTENSIVE
     size = desc.DynamicNodeSize('ini')
@@ -144,7 +143,7 @@ class DepthMap(desc.CommandLineNode):
             name='output',
             label='Output',
             description='Output folder for generated depth maps.',
-            value='{cache}/{nodeType}/{uid0}/',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
     ]

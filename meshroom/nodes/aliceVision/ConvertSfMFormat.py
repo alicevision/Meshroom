@@ -3,7 +3,6 @@ from meshroom.core import desc
 
 
 class ConvertSfMFormat(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_convertSfMFormat {allParams}'
 
     inputs = [
@@ -75,7 +74,7 @@ class ConvertSfMFormat(desc.CommandLineNode):
             name='output',
             label='Output',
             description='Path to the output SfM Data file.',
-            value='{cache}/{nodeType}/{uid0}/sfm.{fileExtValue}',
+            value=desc.Node.internalFolder + 'sfm.{fileExtValue}',
             uid=[],
             ),
     ]

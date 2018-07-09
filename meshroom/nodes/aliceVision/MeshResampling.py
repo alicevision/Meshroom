@@ -1,7 +1,7 @@
 from meshroom.core import desc
 
+
 class MeshResampling(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_meshResampling {allParams}'
 
     cpu = desc.Level.NORMAL
@@ -78,7 +78,7 @@ class MeshResampling(desc.CommandLineNode):
             name="output",
             label="Output mesh",
             description="Output mesh (OBJ file format).",
-            value='{cache}/{nodeType}/{uid0}/mesh.obj',
+            value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],
             ),
     ]

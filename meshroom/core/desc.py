@@ -350,7 +350,6 @@ class Node(object):
 class CommandLineNode(Node):
     """
     """
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = ''  # need to be defined on the node
     parallelization = None
     commandLineRange = ''

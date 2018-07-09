@@ -3,7 +3,6 @@ from meshroom.core import desc
 
 
 class CameraLocalization(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_cameraLocalization {allParams}'
 
     inputs = [
@@ -208,14 +207,14 @@ class CameraLocalization(desc.CommandLineNode):
             name='outputAlembic',
             label='Output Alembic',
             description='''Filename for the SfMData export file (where camera poses will be stored)''',
-            value='{cache}/{nodeType}/{uid0}/trackedCameras.abc',
+            value=desc.Node.internalFolder + 'trackedCameras.abc',
             uid=[],
             ),
         desc.File(
             name='outputJSON',
             label='Output JSON',
             description='''Filename for the localization results as .json''',
-            value='{cache}/{nodeType}/{uid0}/trackedCameras.json',
+            value=desc.Node.internalFolder + 'trackedCameras.json',
             uid=[],
             ),
     ]

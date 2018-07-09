@@ -2,7 +2,6 @@ from meshroom.core import desc
 
 
 class Texturing(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_texturing {allParams}'
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
@@ -106,14 +105,14 @@ class Texturing(desc.CommandLineNode):
             name='output',
             label='Output Folder',
             description='Folder for output mesh: OBJ, material and texture files.',
-            value='{cache}/{nodeType}/{uid0}/',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name='outputMesh',
             label='Output Mesh',
             description='Folder for output mesh: OBJ, material and texture files.',
-            value='{cache}/{nodeType}/{uid0}/texturedMesh.obj',
+            value=desc.Node.internalFolder + 'texturedMesh.obj',
             uid=[],
             group='',
             ),
@@ -121,7 +120,7 @@ class Texturing(desc.CommandLineNode):
             name='outputMaterial',
             label='Output Material',
             description='Folder for output mesh: OBJ, material and texture files.',
-            value='{cache}/{nodeType}/{uid0}/texturedMesh.mtl',
+            value=desc.Node.internalFolder + 'texturedMesh.mtl',
             uid=[],
             group='',
             ),
@@ -129,7 +128,7 @@ class Texturing(desc.CommandLineNode):
             name='outputTextures',
             label='Output Textures',
             description='Folder for output mesh: OBJ, material and texture files.',
-            value='{cache}/{nodeType}/{uid0}/texture_*.png',
+            value=desc.Node.internalFolder + 'texture_*.png',
             uid=[],
             group='',
             ),

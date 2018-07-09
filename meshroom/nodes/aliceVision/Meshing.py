@@ -2,7 +2,6 @@ from meshroom.core import desc
 
 
 class Meshing(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_meshing {allParams}'
 
     cpu = desc.Level.INTENSIVE

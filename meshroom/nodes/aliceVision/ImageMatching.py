@@ -4,7 +4,6 @@ from meshroom.core import desc
 
 
 class ImageMatching(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_imageMatching {allParams}'
     size = desc.DynamicNodeSize('input')
 
@@ -82,7 +81,7 @@ class ImageMatching(desc.CommandLineNode):
             name='output',
             label='Output List File',
             description='Filepath to the output file with the list of selected image pairs.',
-            value='{cache}/{nodeType}/{uid0}/imageMatches.txt',
+            value=desc.Node.internalFolder + 'imageMatches.txt',
             uid=[],
         ),
     ]

@@ -60,6 +60,13 @@ class StructureFromMotion(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
         ),
+       desc.BoolParam(
+            name='lockScenePreviouslyReconstructed',
+            label='Lock Scene Previously Reconstructed',
+            description='This option is useful for SfM augmentation. Lock previously reconstructed poses and intrinsics.',
+            value=False,
+            uid=[0],
+        ),
         desc.BoolParam(
             name='useLocalBA',
             label='Local Bundle Adjustment',

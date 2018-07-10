@@ -155,6 +155,7 @@ class Graph(BaseObject):
         edges = {B.input: A.output, C.input: B.output,}
 
     """
+    _cacheDir = ""
 
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
@@ -165,7 +166,7 @@ class Graph(BaseObject):
         self._nodesMinMaxDepths = {}
         self._nodes = DictModel(keyAttrName='name', parent=self)
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
-        self._cacheDir = meshroom.core.defaultCacheFolder
+        self.cacheDir = meshroom.core.defaultCacheFolder
         self._filepath = ''
 
     def clear(self):
@@ -779,7 +780,8 @@ class Graph(BaseObject):
     def cacheDir(self, value):
         if self._cacheDir == value:
             return
-        self._cacheDir = value
+        # use unix-style paths for cache directory
+        self._cacheDir = value.replace(os.path.sep, "/")
         self.updateInternals(force=True)
         self.updateStatusFromCache(force=True)
         self.cacheDirChanged.emit()

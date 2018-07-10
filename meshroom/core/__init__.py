@@ -22,7 +22,6 @@ sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
 defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))
-defaultCacheFolder = defaultCacheFolder.replace("\\", "/")
 nodesDesc = {}
 submitters = {}
 

@@ -66,6 +66,9 @@ def photogrammetryPipeline(graph):
     sfmNodes = sfmPipeline(graph)
     mvsNodes = mvsPipeline(graph, sfmNodes[-1])
 
+    # store current pipeline version in graph header
+    graph.header.update({'pipelineVersion': __version__})
+
     return sfmNodes, mvsNodes
 
 

@@ -10,6 +10,7 @@ from contextlib import contextmanager
 
 from enum import Enum
 
+import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core.attribute import Attribute
@@ -157,6 +158,16 @@ class Graph(BaseObject):
     """
     _cacheDir = ""
 
+    class IO(object):
+        """ Centralize Graph file keys and IO version. """
+        __version__ = "1.0"
+
+        Header = "header"
+        NodesVersions = "nodesVersions"
+        ReleaseVersion = "releaseVersion"
+        FileVersion = "fileVersion"
+        Graph = "graph"
+
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
         self.name = name
@@ -168,6 +179,7 @@ class Graph(BaseObject):
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
         self.cacheDir = meshroom.core.defaultCacheFolder
         self._filepath = ''
+        self.header = {}
 
     def clear(self):
         self._nodes.clear()
@@ -177,9 +189,17 @@ class Graph(BaseObject):
     def load(self, filepath):
         self.clear()
         with open(filepath) as jsonFile:
-            graphData = json.load(jsonFile)
+            fileData = json.load(jsonFile)
+
+        # older versions of Meshroom files only contained the serialized nodes
+        graphData = fileData.get(Graph.IO.Graph, fileData)
+
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
+
+        self.header = fileData.get(Graph.IO.Header, {})
+        nodesVersions = self.header.get(Graph.IO.NodesVersions, {})
+        fileVersion = self.header.get(Graph.IO.FileVersion, "0.0")
 
         with GraphModification(self):
             # iterate over nodes sorted by suffix index in their names
@@ -643,10 +663,24 @@ class Graph(BaseObject):
         return str(self.toDict())
 
     def save(self, filepath=None):
-        data = self.toDict()
         path = filepath or self._filepath
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
+
+        self.header[Graph.IO.ReleaseVersion] = meshroom.__version__
+        self.header[Graph.IO.FileVersion] = Graph.IO.__version__
+
+        usedNodeTypes = set([n.nodeDesc.__class__ for n in self._nodes])
+
+        self.header[Graph.IO.NodesVersions] = {
+            "{}".format(p.__name__): meshroom.core.nodeVersion(p, "0.0")
+            for p in usedNodeTypes
+        }
+
+        data = {
+            Graph.IO.Header: self.header,
+            Graph.IO.Graph: self.toDict()
+        }
 
         with open(path, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)

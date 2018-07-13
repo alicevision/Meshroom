@@ -48,7 +48,7 @@ def loadPlugins(folder, packageName, classType):
     """
     """
 
-    nodeTypes = []
+    pluginTypes = []
     errors = []
 
     # temporarily add folder to python path
@@ -59,26 +59,27 @@ def loadPlugins(folder, packageName, classType):
         packageVersion = getattr(package, "__version__", None)
 
         for importer, pluginName, ispkg in pkgutil.iter_modules(package.__path__):
-            pluginModule = '.' + pluginName
+            pluginModuleName = '.' + pluginName
 
             try:
-                pMod = importlib.import_module(pluginModule, package=package.__name__)
-                p = [m for name, m in inspect.getmembers(pMod, inspect.isclass)
-                     if m.__module__ == '{}.{}'.format(package.__name__, pluginName) and issubclass(m, classType)]
-                if not p:
-                    raise RuntimeError('No class defined in plugin: %s' % pluginModule)
-                for a in p:
-                    a.packageName = packageName
-                    a.packageVersion = packageVersion
-                nodeTypes.extend(p)
+                pluginMod = importlib.import_module(pluginModuleName, package=package.__name__)
+                plugins = [plugin for name, plugin in inspect.getmembers(pluginMod, inspect.isclass)
+                           if plugin.__module__ == '{}.{}'.format(package.__name__, pluginName)
+                           and issubclass(plugin, classType)]
+                if not plugins:
+                    logging.warning("No class defined in plugin: {}".format(pluginModuleName))
+                for p in plugins:
+                    p.packageName = packageName
+                    p.packageVersion = packageVersion
+                pluginTypes.extend(plugins)
             except Exception as e:
                 errors.append('  * {}: {}'.format(pluginName, str(e)))
 
     if errors:
-        logging.warning('== Error while loading the following plugins ==\n'
+        logging.warning('== The following plugins could not be loaded ==\n'
                         '{}\n'
                         .format('\n'.join(errors)))
-    return nodeTypes
+    return pluginTypes
 
 
 def registerNodeType(nodeType):

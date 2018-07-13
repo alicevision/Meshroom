@@ -11,6 +11,8 @@ import uuid
 import logging
 import pkgutil
 
+import sys
+
 from meshroom.core.submitter import BaseSubmitter
 from . import desc
 
@@ -80,6 +82,32 @@ def loadPlugins(folder, packageName, classType):
                         '{}\n'
                         .format('\n'.join(errors)))
     return pluginTypes
+
+
+def moduleVersion(moduleName, default=None):
+    """ Return the version of a module indicated with '__version__' keyword.
+
+    Args:
+        moduleName (str): the name of the module to get the version of
+        default: the value to return if no version info is available
+
+    Returns:
+        str: the version of the module
+    """
+    return getattr(sys.modules[moduleName], "__version__", default)
+
+
+def nodeVersion(nodeDesc, default=None):
+    """ Return node type version for the given node description class.
+
+    Args:
+        nodeDesc (desc.Node): the node description class
+        default: the value to return if no version info is available
+
+    Returns:
+        str: the version of the node type
+    """
+    return moduleVersion(nodeDesc.__module__, default)
 
 
 def registerNodeType(nodeType):

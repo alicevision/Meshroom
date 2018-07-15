@@ -9,7 +9,7 @@ from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
-from meshroom.core.node import NodeChunk, Node, Status
+from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode
 from meshroom.ui import commands
 
 
@@ -352,6 +352,11 @@ class UIGraph(QObject):
             [Nodes]: the list of duplicated nodes
         """
         return self.duplicateNodesFromNode(fromNode).values()
+
+    @Slot(CompatibilityNode)
+    def upgradeNode(self, node):
+        """ Upgrade a CompatibilityNode. """
+        self.push(commands.UpgradeNodeCommand(self._graph, node))
 
     @Slot(Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):

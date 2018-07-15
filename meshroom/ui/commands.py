@@ -229,6 +229,34 @@ class ListAttributeRemoveCommand(GraphCommand):
         listAttribute.insert(self.index, self.value)
 
 
+class UpgradeNodeCommand(GraphCommand):
+    """
+    Perform node upgrade on a CompatibilityNode.
+    """
+    def __init__(self, graph, node, parent=None):
+        super(UpgradeNodeCommand, self).__init__(graph, parent)
+        self.nodeDict = node.toDict()
+        self.nodeName = node.getName()
+        self.outEdges = {}
+        self.setText("Upgrade Node {}".format(self.nodeName))
+
+    def redoImpl(self):
+        inEdges, self.outEdges = self.graph.upgradeNode(self.nodeName)
+        return True
+
+    def undoImpl(self):
+        # delete upgraded node
+        self.graph.removeNode(self.nodeName)
+        # recreate compatibility node
+        with GraphModification(self.graph):
+            node = node_factory(self.nodeDict)
+            self.graph.addNode(node, self.nodeName)
+            # recreate out edges
+            for dstAttr, srcAttr in self.outEdges.items():
+                self.graph.addEdge(self.graph.attribute(srcAttr),
+                                   self.graph.attribute(dstAttr))
+
+
 class EnableGraphUpdateCommand(GraphCommand):
     """ Command to enable/disable graph update.
     Should not be used directly, use GroupedGraphModification context manager instead.

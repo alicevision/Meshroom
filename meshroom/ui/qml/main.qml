@@ -16,7 +16,14 @@ ApplicationWindow {
     width: 1280
     height: 720
     visible: true
-    title: (_reconstruction.graph.filepath ? _reconstruction.graph.filepath : "Untitled") + (_reconstruction.undoStack.clean ? "" : "*") + " - Meshroom"
+
+    title: {
+        var t = _reconstruction.graph.filepath || "Untitled"
+        if(!_reconstruction.undoStack.clean)
+            t += "*"
+        t += " - " + Qt.application.name + " " + Qt.application.version
+        return t
+    }
 
     property variant node: null
     // supported 3D files extensions

@@ -121,6 +121,13 @@ def registerNodeType(nodeType):
     nodesDesc[nodeType.__name__] = nodeType
 
 
+def unregisterNodeType(nodeType):
+    """ Remove 'nodeType' from the list of register node types. """
+    global nodesDesc
+    assert nodeType.__name__ in nodesDesc
+    del nodesDesc[nodeType.__name__]
+
+
 def loadNodes(folder, packageName):
     return loadPlugins(folder, packageName, desc.Node)
 

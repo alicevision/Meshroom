@@ -4,6 +4,7 @@ from PySide2.QtCore import Qt
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
+import meshroom
 from meshroom.core import nodesDesc
 from meshroom.ui import components
 from meshroom.ui.components.filepath import FilepathHelper
@@ -21,6 +22,7 @@ class MeshroomApp(QApplication):
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
         self.setAttribute(Qt.AA_EnableHighDpiScaling)
+        self.setApplicationVersion(meshroom.__version__)
 
         font = self.font()
         font.setPointSize(9)

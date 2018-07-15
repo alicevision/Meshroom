@@ -630,7 +630,7 @@ class Node(BaseNode):
             },
             'uids': self._uids,
             'internalFolder': self._internalFolder,
-            'attributes': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
+            'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
             'outputs': outputs,
         }
 

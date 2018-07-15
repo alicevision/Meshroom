@@ -299,9 +299,9 @@ class UIGraph(QObject):
         with self.groupedGraphModification("Duplicate Node {}".format(srcNode.name)):
             # skip edges: filter out attributes which are links
             if not createEdges:
-                serialized["attributes"] = {k: v for k, v in serialized["attributes"].items() if not Attribute.isLinkExpression(v)}
+                serialized["inputs"] = {k: v for k, v in serialized["inputs"].items() if not Attribute.isLinkExpression(v)}
             # create a new node of the same type and with the same attributes values
-            node = self.addNewNode(serialized["nodeType"], **serialized["attributes"])
+            node = self.addNewNode(serialized["nodeType"], **serialized["inputs"])
         return node
 
     def duplicateNodesFromNode(self, fromNode):
@@ -326,7 +326,7 @@ class UIGraph(QObject):
             # re-create edges taking into account what has been duplicated
             for srcNode, duplicate in duplicates.items():
                 # get link attributes
-                links = {k: v for k, v in srcNode.toDict()["attributes"].items() if Attribute.isLinkExpression(v)}
+                links = {k: v for k, v in srcNode.toDict()["inputs"].items() if Attribute.isLinkExpression(v)}
                 for attr, link in links.items():
                     link = link[1:-1]  # remove starting '{' and trailing '}'
                     # get source node and attribute name

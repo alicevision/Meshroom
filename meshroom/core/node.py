@@ -408,7 +408,7 @@ class Node(BaseObject):
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             assAttr = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes]
             assAttr.sort()
-            cmdVars['uid{}'.format(uidIndex)] = hashValue(tuple([b for a, b in assAttr]))
+            cmdVars['uid{}'.format(uidIndex)] = hashValue(assAttr)
 
         # Evaluate input params
         for name, attr in self._attributes.objects.items():

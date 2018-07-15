@@ -7,6 +7,7 @@ from PySide2.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
 from meshroom.core.graph import GraphModification
+from meshroom.core.node import node_factory
 
 
 class UndoCommand(QUndoCommand):
@@ -125,8 +126,8 @@ class RemoveNodeCommand(GraphCommand):
 
     def undoImpl(self):
         with GraphModification(self.graph):
-            node = self.graph.addNewNode(nodeType=self.nodeDict["nodeType"],
-                                         name=self.nodeName, **self.nodeDict["attributes"])
+            node = node_factory(self.nodeDict, self.nodeName)
+            self.graph.addNode(node, self.nodeName)
             assert (node.getName() == self.nodeName)
             # recreate out edges deleted on node removal
             for dstAttr, srcAttr in self.outEdges.items():

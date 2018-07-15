@@ -356,8 +356,7 @@ class Reconstruction(UIGraph):
         # If cameraInit is None (i.e: SfM augmentation):
         #   * create an uninitialized node
         #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
-        attributes = cameraInit.toDict()["attributes"] if cameraInit else {}
-        cameraInitCopy = node_factory("CameraInit", **attributes)
+        cameraInitCopy = node_factory(cameraInit.toDict())
 
         try:
             self.setBuildingIntrinsics(True)

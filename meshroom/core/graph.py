@@ -14,7 +14,8 @@ import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core.attribute import Attribute
-from meshroom.core.node import node_factory, Status
+from meshroom.core.exception import UnknownNodeTypeError
+from meshroom.core.node import node_factory, Status, Node, CompatibilityNode
 
 # Replace default encoder to support Enums
 
@@ -207,10 +208,13 @@ class Graph(BaseObject):
                 if not isinstance(nodeData, dict):
                     raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
 
-                n = node_factory(nodeData['nodeType'],
-                                 # allow simple retro-compatibility, though cache might get invalidated
-                                 skipInvalidAttributes=True,
-                                 **nodeData['attributes'])
+                # retrieve version from
+                #   1. nodeData: node saved from a CompatibilityNode
+                #   2. nodesVersion in file header: node saved from a Node
+                #   3. fallback to no version "0.0": retro-compatibility
+                if "version" not in nodeData:
+                    nodeData["version"] = nodesVersions.get(nodeData["nodeType"], "0.0")
+                n = node_factory(nodeData, nodeName)
 
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
@@ -314,7 +318,7 @@ class Graph(BaseObject):
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 
-        n = self.addNode(node_factory(nodeType, False, **kwargs), uniqueName=name)
+        n = self.addNode(Node(nodeType, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 
@@ -328,6 +332,29 @@ class Graph(BaseObject):
 
     def node(self, nodeName):
         return self._nodes.get(nodeName)
+
+    def upgradeNode(self, nodeName):
+        """
+        Upgrade the CompatibilityNode identified as 'nodeName'
+        Args:
+            nodeName (str): the name of the CompatibilityNode to upgrade
+
+        Returns:
+            the list of deleted input/output edges
+        """
+        node = self.node(nodeName)
+        if not isinstance(node, CompatibilityNode):
+            raise ValueError("Upgrade is only available on CompatibilityNode instances.")
+        upgradedNode = node.upgrade()
+        inEdges, outEdges = self.removeNode(nodeName)
+        self.addNode(upgradedNode, nodeName)
+        for dst, src in outEdges.items():
+            try:
+                self.addEdge(self.attribute(src), self.attribute(dst))
+            except (KeyError, ValueError) as e:
+                logging.warning("Failed to restore edge {} -> {}: {}".format(src, dst, str(e)))
+
+        return inEdges, outEdges
 
     @Slot(str, result=Attribute)
     def attribute(self, fullName):
@@ -670,7 +697,8 @@ class Graph(BaseObject):
         self.header[Graph.IO.ReleaseVersion] = meshroom.__version__
         self.header[Graph.IO.FileVersion] = Graph.IO.__version__
 
-        usedNodeTypes = set([n.nodeDesc.__class__ for n in self._nodes])
+        # store versions of node types present in the graph (excluding CompatibilityNode instances)
+        usedNodeTypes = set([n.nodeDesc.__class__ for n in self._nodes if isinstance(n, Node)])
 
         self.header[Graph.IO.NodesVersions] = {
             "{}".format(p.__name__): meshroom.core.nodeVersion(p, "0.0")

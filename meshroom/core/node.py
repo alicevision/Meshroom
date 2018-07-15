@@ -309,6 +309,7 @@ class Node(BaseObject):
         self.graph = None  # type: Graph
         self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)
+        self._uids = dict()
         self._cmdVars = {}
         self._size = 0
         self._attributes = DictModel(keyAttrName='name', parent=self)
@@ -404,11 +405,18 @@ class Node(BaseObject):
             'attributes': {k: v for k, v in attributes.items() if v is not None},  # filter empty values
         }
 
-    def _buildCmdVars(self, cmdVars):
+    def _computeUids(self):
+        """ Compute node uids by combining associated attributes' uids. """
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
-            assAttr = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes]
-            assAttr.sort()
-            cmdVars['uid{}'.format(uidIndex)] = hashValue(assAttr)
+            # uid is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this uid
+            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes]
+            uidAttributes.sort()
+            self._uids[uidIndex] = hashValue(uidAttributes)
+
+    def _buildCmdVars(self):
+        """ Generate command variables using input attributes and resolved output attributes names and values. """
+        for uidIndex, value in self._uids.items():
+            self._cmdVars['uid{}'.format(uidIndex)] = value
 
         # Evaluate input params
         for name, attr in self._attributes.objects.items():
@@ -416,33 +424,31 @@ class Node(BaseObject):
                 continue  # skip outputs
             v = attr.getValueStr()
 
-            cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-            cmdVars[name + 'Value'] = str(v)
+            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+            self._cmdVars[name + 'Value'] = str(v)
 
             if v is not None and v is not '':
-                cmdVars[attr.attributeDesc.group] = cmdVars.get(attr.attributeDesc.group, '') + \
-                                                          ' ' + cmdVars[name]
+                self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
+                                                          ' ' + self._cmdVars[name]
 
         # For updating output attributes invalidation values
-        cmdVarsNoCache = cmdVars.copy()
+        cmdVarsNoCache = self._cmdVars.copy()
         cmdVarsNoCache['cache'] = ''
 
         # Evaluate output params
         for name, attr in self._attributes.objects.items():
             if attr.isInput:
                 continue  # skip inputs
-            attr.value = attr.attributeDesc.value.format(
-                **cmdVars)
-            attr._invalidationValue = attr.attributeDesc.value.format(
-                **cmdVarsNoCache)
+            attr.value = attr.attributeDesc.value.format(**self._cmdVars)
+            attr._invalidationValue = attr.attributeDesc.value.format(**cmdVarsNoCache)
             v = attr.getValueStr()
 
-            cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-            cmdVars[name + 'Value'] = str(v)
+            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+            self._cmdVars[name + 'Value'] = str(v)
 
             if v is not None and v is not '':
-                cmdVars[attr.attributeDesc.group] = cmdVars.get(attr.attributeDesc.group, '') + \
-                                                          ' ' + cmdVars[name]
+                self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
+                                                          ' ' + self._cmdVars[name]
 
     @property
     def isParallelized(self):
@@ -522,12 +528,15 @@ class Node(BaseObject):
             else:
                 self._chunks[0].range = desc.Range()
 
-    def updateInternals(self):
+    def updateInternals(self, cacheDir=None):
         """ Update Node's internal parameters and output attributes.
 
         This method is called when:
          - an input parameter is modified
          - the graph main cache directory is changed
+
+        Args:
+            cacheDir (str): (optional) override graph's cache directory with custom path
         """
         # Update chunks splitting
         self._updateChunks()
@@ -538,10 +547,11 @@ class Node(BaseObject):
             folder = ''
         # Update command variables / output attributes
         self._cmdVars = {
-            'cache': self.graph.cacheDir,
+            'cache': cacheDir or self.graph.cacheDir,
             'nodeType': self.nodeType,
         }
-        self._buildCmdVars(self._cmdVars)
+        self._computeUids()
+        self._buildCmdVars()
         # Notify internal folder change if needed
         if self.internalFolder != folder:
             self.internalFolderChanged.emit()

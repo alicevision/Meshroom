@@ -110,15 +110,11 @@ class CameraInit(desc.CommandLineNode):
             The updated views and intrinsics as two separate lists
         """
         assert isinstance(node.nodeDesc, CameraInit)
-        origCmdVars = node._cmdVars.copy()
-        # Python3: with tempfile.TemporaryDirectory(prefix="Meshroom_CameraInit") as tmpCache
+        assert node.graph is None
+
         tmpCache = tempfile.mkdtemp()
-        localCmdVars = {
-            'cache': tmpCache,
-            'nodeType': node.nodeType,
-        }
-        node._buildCmdVars(localCmdVars)
-        node._cmdVars = localCmdVars
+        node.updateInternals(tmpCache)
+
         try:
             os.makedirs(os.path.join(tmpCache, node.internalFolder))
             self.createViewpointsFile(node, additionalViews)
@@ -158,8 +154,6 @@ class CameraInit(desc.CommandLineNode):
         except Exception:
             raise
         finally:
-            node._cmdVars = origCmdVars
-            node._buildCmdVars(localCmdVars)
             shutil.rmtree(tmpCache)
 
     def createViewpointsFile(self, node, additionalViews=()):

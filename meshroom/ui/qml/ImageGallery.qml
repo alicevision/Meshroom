@@ -258,7 +258,7 @@ Panel {
         // Image count
         Label {
             Layout.fillWidth: true
-            text: grid.model.count + " image" + (grid.model.count > 1 ? "s" : "")
+            text: grid.model.count + " image" + (grid.model.count > 1 ? "s" : "") + (_reconstruction.nbCameras > 0 ? " / " + _reconstruction.nbCameras + " camera" + (_reconstruction.nbCameras > 1 ? "s": "") : "")
             elide: Text.ElideRight
         }
 

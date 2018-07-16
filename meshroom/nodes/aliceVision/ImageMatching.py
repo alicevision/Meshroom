@@ -33,7 +33,7 @@ class ImageMatching(desc.CommandLineNode):
             label='Tree',
             description='Input name for the vocabulary tree file.',
             value=os.environ.get('ALICEVISION_VOCTREE', ''),
-            uid=[0],
+            uid=[],
         ),
         desc.File(
             name='weights',

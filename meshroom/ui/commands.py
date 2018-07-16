@@ -135,6 +135,35 @@ class RemoveNodeCommand(GraphCommand):
                                    self.graph.attribute(dstAttr))
 
 
+class DuplicateNodeCommand(GraphCommand):
+    """
+    Handle node duplication in a Graph.
+    """
+    def __init__(self, graph, srcNode, duplicateFollowingNodes, parent=None):
+        super(DuplicateNodeCommand, self).__init__(graph, parent)
+        self.srcNodeName = srcNode.name
+        self.duplicateFollowingNodes = duplicateFollowingNodes
+        self.duplicates = []
+
+    def redoImpl(self):
+        srcNode = self.graph.node(self.srcNodeName)
+
+        if self.duplicateFollowingNodes:
+            duplicates = self.graph.duplicateNodesFromNode(srcNode)
+            self.duplicates = [n.name for n in duplicates.values()]
+            self.setText("Duplicate {} nodes from {}".format(len(duplicates), self.srcNodeName))
+        else:
+            self.duplicates = [self.graph.duplicateNode(srcNode).name]
+            self.setText("Duplicate {}".format(self.srcNodeName))
+
+        return self.duplicates
+
+    def undoImpl(self):
+        # delete all the duplicated nodes
+        for nodeName in self.duplicates:
+            self.graph.removeNode(nodeName)
+
+
 class SetAttributeCommand(GraphCommand):
     def __init__(self, graph, attribute, value, parent=None):
         super(SetAttributeCommand, self).__init__(graph, parent)

@@ -13,7 +13,7 @@ from enum import Enum
 import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
-from meshroom.core.attribute import Attribute
+from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.exception import UnknownNodeTypeError
 from meshroom.core.node import node_factory, Status, Node, CompatibilityNode
 
@@ -263,6 +263,86 @@ class Graph(BaseObject):
         with GraphModification(self):
             node._applyExpr()
         return node
+
+    def copyNode(self, srcNode, withEdges=False):
+        """
+        Get a copy instance of a node outside the graph.
+
+        Args:
+            srcNode (Node): the node to copy
+            withEdges (bool): whether to copy edges
+
+        Returns:
+            Node, dict: the created node instance,
+                        a dictionary of linked attributes with their original value (empty if withEdges is True)
+        """
+        with GraphModification(self):
+            # create a new node of the same type and with the same attributes values
+            # keep links as-is so that CompatibilityNodes attributes can be created with correct automatic description
+            # (File params for link expressions)
+            node = node_factory(srcNode.toDict())
+            # skip edges: filter out attributes which are links by resetting default values
+            skippedEdges = {}
+            if not withEdges:
+                for n, attr in node.attributes.items():
+                    # find top-level links
+                    if Attribute.isLinkExpression(attr.value):
+                        skippedEdges[attr] = attr.value
+                        attr.resetValue()
+                    # find links in ListAttribute children
+                    elif isinstance(attr, ListAttribute):
+                        for child in attr.value:
+                            if Attribute.isLinkExpression(child.value):
+                                skippedEdges[child] = child.value
+                                child.resetValue()
+        return node, skippedEdges
+
+    def duplicateNode(self, srcNode):
+        """ Duplicate a node in the graph with its connections.
+
+        Args:
+            srcNode: the node to duplicate
+
+        Returns:
+            Node: the created node
+        """
+        node, edges = self.copyNode(srcNode, withEdges=True)
+        return self.addNode(node)
+
+    def duplicateNodesFromNode(self, fromNode):
+        """
+        Duplicate 'fromNode' and all the following nodes towards graph's leaves.
+
+        Args:
+            fromNode (Node): the node to start the duplication from
+
+        Returns:
+            Dict[Node, Node]: the source->duplicate map
+        """
+        srcNodes, srcEdges = self.nodesFromNode(fromNode)
+        duplicates = {}
+
+        with GraphModification(self):
+            duplicateEdges = {}
+            # first, duplicate all nodes without edges and keep a 'source=>duplicate' map
+            # keeps tracks of non-created edges for later remap
+            for srcNode in srcNodes:
+                node, edges = self.copyNode(srcNode, withEdges=False)
+                duplicate = self.addNode(node)
+                duplicateEdges.update(edges)
+                duplicates[srcNode] = duplicate  # original node to duplicate map
+
+            # re-create edges taking into account what has been duplicated
+            for attr, linkExpression in duplicateEdges.items():
+                link = linkExpression[1:-1]  # remove starting '{' and trailing '}'
+                # get source node and attribute name
+                edgeSrcNodeName, edgeSrcAttrName = link.split(".", 1)
+                edgeSrcNode = self.node(edgeSrcNodeName)
+                # if the edge's source node has been duplicated, use the duplicate; otherwise use the original node
+                edgeSrcNode = duplicates.get(edgeSrcNode, edgeSrcNode)
+                self.addEdge(edgeSrcNode.attribute(edgeSrcAttrName), attr)
+
+        return duplicates
 
     def outEdges(self, attribute):
         """ Return the list of edges starting from the given attribute """

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
 import atexit
+import copy
 import datetime
 import json
 import logging
@@ -677,7 +678,9 @@ class CompatibilityNode(BaseNode):
         super(CompatibilityNode, self).__init__(nodeType, parent)
 
         self.issue = issue
-        self.nodeDict = nodeDict
+        # make a deepcopy of nodeDict to handle CompatibilityNode duplication
+        # and be able to change modified inputs (see CompatibilityNode.toDict)
+        self.nodeDict = copy.deepcopy(nodeDict)
 
         self.inputs = nodeDict.get("inputs", {})
         self.outputs = nodeDict.get("outputs", {})
@@ -804,10 +807,21 @@ class CompatibilityNode(BaseNode):
         self._attributes.add(attribute)
         return matchDesc
 
+    @property
+    def actualInputs(self):
+        """ Get actual node inputs, where links could differ from original serialized node data
+        (i.e after node duplication) """
+        return {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
+
     def toDict(self):
         """
         Return the original serialized node that generated a compatibility issue.
+
+        Serialized inputs are updated to handle instances that have been duplicated
+        and might be connected to different nodes.
         """
+        # update inputs to get up-to-date connections
+        self.nodeDict.update({"inputs": self.actualInputs})
         return self.nodeDict
 
     @property
@@ -823,7 +837,8 @@ class CompatibilityNode(BaseNode):
         if not self.canUpgrade:
             raise NodeUpgradeError(self.name, "no matching node type")
         # TODO: use upgrade method of node description if available
-        return Node(self.nodeType, **{key: value for key, value in self.inputs.items() if key in self._commonInputs})
+        return Node(self.nodeType, **{key: value for key, value in self.actualInputs.items()
+                                      if key in self._commonInputs})
 
 
 def node_factory(nodeDict, name=None):

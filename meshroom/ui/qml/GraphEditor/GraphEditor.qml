@@ -240,7 +240,7 @@ Item {
                     }
 
                     function duplicate(duplicateFollowingNodes) {
-                        var nodes = duplicateFollowingNodes ? uigraph.duplicateNodes(node) : [uigraph.duplicateNode(node)]
+                        var nodes = uigraph.duplicateNode(node, duplicateFollowingNodes)
                         var delegates = []
                         var from = nodeRepeater.count - nodes.length
                         var to = nodeRepeater.count - 1

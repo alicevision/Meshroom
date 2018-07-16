@@ -855,11 +855,13 @@ def node_factory(nodeDict, name=None):
         BaseNode: the created node
     """
     nodeType = nodeDict["nodeType"]
-    # get node inputs/outputs
-    if "inputs" not in nodeDict:
-        # retro-compatibility: inputs were previously saved as "attributes"
-        nodeDict["inputs"] = nodeDict.get("attributes", {})
 
+    # retro-compatibility: inputs were previously saved as "attributes"
+    if "inputs" not in nodeDict and "attributes" in nodeDict:
+        nodeDict["inputs"] = nodeDict["attributes"]
+        del nodeDict["attributes"]
+
+    # get node inputs/outputs
     inputs = nodeDict.get("inputs", {})
     outputs = nodeDict.get("outputs", {})
     version = nodeDict.get("version", None)

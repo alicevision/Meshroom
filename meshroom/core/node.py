@@ -737,7 +737,25 @@ class CompatibilityNode(BaseNode):
                 return desc.File(**params)
             else:
                 return desc.StringParam(**params)
-        # handle any other type of parameters (List/Group) as Strings
+        # List/GroupAttribute: recursively build descriptions
+        elif isinstance(value, (list, dict)):
+            del params["value"]
+            del params["uid"]
+            attrDesc = None
+            if isinstance(value, list):
+                elt = value[0] if value else ""  # fallback: empty string value if list is empty
+                eltDesc = CompatibilityNode.attributeDescFromValue("element", elt, isOutput)
+                attrDesc = desc.ListAttribute(elementDesc=eltDesc, **params)
+            elif isinstance(value, dict):
+                groupDesc = []
+                for key, value in value.items():
+                    eltDesc = CompatibilityNode.attributeDescFromValue(key, value, isOutput)
+                    groupDesc.append(eltDesc)
+                attrDesc = desc.GroupAttribute(groupDesc=groupDesc, **params)
+            # override empty default value with
+            attrDesc._value = value
+            return attrDesc
+        # handle any other type of parameters as Strings
         return desc.StringParam(**params)
 
     @staticmethod

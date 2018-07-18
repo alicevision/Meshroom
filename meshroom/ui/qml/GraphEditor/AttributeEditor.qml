@@ -12,6 +12,9 @@ ColumnLayout {
 
     property variant node: null  // the node to edit
     property bool readOnly: false
+    readonly property bool isCompatibilityNode: node.hasOwnProperty("compatibilityIssue")
+
+    signal upgradeRequest()
 
     spacing: 0
 
@@ -19,6 +22,7 @@ ColumnLayout {
         Layout.fillWidth: true
         background: Rectangle { color: Qt.darker(parent.palette.window, 1.15) }
         padding: 2
+
         RowLayout {
             width: parent.width
 
@@ -55,6 +59,20 @@ ColumnLayout {
         }
     }
 
+    // CompatibilityBadge banner for CompatibilityNode
+    Loader {
+        active: isCompatibilityNode
+        Layout.fillWidth: true
+        visible: active  // for layout update
+
+        sourceComponent: CompatibilityBadge {
+            canUpgrade: root.node.canUpgrade
+            issueDetails: root.node.issueDetails
+            onUpgradeRequest: root.upgradeRequest()
+            sourceComponent: bannerDelegate
+        }
+    }
+
     StackLayout {
         Layout.fillHeight: true
         Layout.fillWidth: true
@@ -76,6 +94,7 @@ ColumnLayout {
                 model: node ? node.attributes : undefined
 
                 delegate: AttributeItemDelegate {
+                    readOnly: root.isCompatibilityNode
                     labelWidth: 180
                     width: attributesListView.width
                     attribute: object

@@ -442,6 +442,14 @@ ApplicationWindow {
                                 node: graphEditor.selectedNode
                                 // Make AttributeEditor readOnly when computing
                                 readOnly: _reconstruction.computing
+
+                                onUpgradeRequest: {
+                                    var delegate = graphEditor.nodeDelegate(node.name)
+                                    var posX = delegate.x
+                                    var posY = delegate.y
+                                    _reconstruction.upgradeNode(node)
+                                    graphEditor.moveNode(node.name, posX, posY)
+                                }
                             }
                         }
                     }

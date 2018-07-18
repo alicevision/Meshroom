@@ -6,10 +6,12 @@ import Utils 1.0
 
 Item {
     id: root
-    property variant node: object
+    property variant node
     property bool readOnly: false
-    property color baseColor: "#607D8B"
+    property color baseColor: defaultColor
     property color shadowColor: "black"
+    readonly property bool isCompatibilityNode: node.hasOwnProperty("compatibilityIssue")
+    readonly property color defaultColor: isCompatibilityNode ? "#444" : "#607D8B"
 
     signal pressed(var mouse)
     signal doubleClicked(var mouse)
@@ -177,5 +179,20 @@ Item {
             }
         }
         Item { width: 1; height: 2}
+    }
+
+    // CompatibilityBadge icon for CompatibilityNodes
+    Loader {
+        active: root.isCompatibilityNode
+        anchors {
+            right: parent.right
+            top: parent.top
+            margins: -4
+        }
+        sourceComponent: CompatibilityBadge {
+            sourceComponent: iconDelegate
+            canUpgrade: root.node.canUpgrade
+            issueDetails: root.node.issueDetails
+        }
     }
 }

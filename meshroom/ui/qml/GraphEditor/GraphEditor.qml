@@ -237,7 +237,7 @@ Item {
                     node: object
                     width: root.nodeWidth
                     readOnly: root.readOnly
-                    baseColor: root.selectedNode == node ? Qt.lighter("#607D8B", 1.2) : "#607D8B"
+                    baseColor: root.selectedNode == node ? Qt.lighter(defaultColor, 1.2) : defaultColor
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
                     onAttributePinDeleted: unregisterAttributePin(attribute, pin)

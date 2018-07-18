@@ -637,13 +637,23 @@ class Graph(BaseObject):
 
     def dfsToProcess(self, startNodes=None):
         """
-        :param startNodes: list of starting nodes. Use all leaves if empty.
-        :return: visited nodes and edges that are not already computed (node.status != SUCCESS).
-                 The order is defined by the visit and finishVertex event.
+        Return the full list of predecessor nodes to process in order to compute the given nodes.
+
+        Args:
+            startNodes: list of starting nodes. Use all leaves if empty.
+
+        Returns:
+             visited nodes and edges that are not already computed (node.status != SUCCESS).
+             The order is defined by the visit and finishVertex event.
         """
         nodes = []
         edges = []
         visitor = Visitor()
+
+        def discoverVertex(vertex, graph):
+            if vertex.hasStatus(Status.SUCCESS):
+                # stop branch visit if discovering a node already computed
+                raise StopBranchVisit()
 
         def finishVertex(vertex, graph):
             chunksToProcess = []
@@ -665,6 +675,7 @@ class Graph(BaseObject):
 
         visitor.finishVertex = finishVertex
         visitor.finishEdge = finishEdge
+        visitor.discoverVertex = discoverVertex
         self.dfs(visitor=visitor, startNodes=startNodes)
         return nodes, edges
 

@@ -202,26 +202,29 @@ RowLayout {
                     }
                     implicitWidth: 70
                     enabled: root.editable
-                    text: s.pressed ? s.value : attribute.value
+                    text: slider.active && slider.item.pressed ? slider.value : attribute.value
                     selectByMouse: true
                     validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: setTextFieldAttribute(text)
                 }
 
-                Slider {
-                    id: s
+                Loader {
+                    id: slider
                     Layout.fillWidth: true
-                    enabled: root.editable
-                    value: attribute.value
-                    from: attribute.desc.range[0]
-                    to: attribute.desc.range[1]
-                    stepSize: attribute.desc.range[2]
-                    snapMode: Slider.SnapAlways
+                    active: attribute.desc.range != undefined
+                    sourceComponent: Slider {
+                        enabled: root.editable
+                        value: attribute.value
+                        from: attribute.desc.range[0]
+                        to: attribute.desc.range[1]
+                        stepSize: attribute.desc.range[2]
+                        snapMode: Slider.SnapAlways
 
-                    onPressedChanged: {
-                        if(!pressed)
-                            _reconstruction.setAttribute(attribute, value)
+                        onPressedChanged: {
+                            if(!pressed)
+                                _reconstruction.setAttribute(attribute, value)
+                        }
                     }
                 }
 

@@ -16,7 +16,7 @@ from enum import Enum
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
-from meshroom.core import desc, stats, hashValue, pyCompatibility
+from meshroom.core import desc, stats, hashValue, pyCompatibility, nodeVersion
 from meshroom.core.attribute import attribute_factory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
@@ -808,6 +808,19 @@ class CompatibilityNode(BaseNode):
         return matchDesc
 
     @property
+    def issueDetails(self):
+        if self.issue == CompatibilityIssue.UnknownNodeType:
+            return "Unknown node type: {}.".format(self.nodeType)
+        elif self.issue == CompatibilityIssue.VersionConflict:
+            return "Node version '{}' conflicts with current version '{}'.".format(
+                self.nodeDict["version"], nodeVersion(self.nodeDesc)
+            )
+        elif self.issue == CompatibilityIssue.DescriptionConflict:
+            return "Node attributes don't match node description."
+        else:
+            return "Unknown error."
+
+    @property
     def actualInputs(self):
         """ Get actual node inputs, where links could differ from original serialized node data
         (i.e after node duplication) """
@@ -839,6 +852,10 @@ class CompatibilityNode(BaseNode):
         # TODO: use upgrade method of node description if available
         return Node(self.nodeType, **{key: value for key, value in self.actualInputs.items()
                                       if key in self._commonInputs})
+
+    compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
+    canUpgrade = Property(bool, canUpgrade.fget, constant=True)
+    issueDetails = Property(str, issueDetails.fget, constant=True)
 
 
 def node_factory(nodeDict, name=None):

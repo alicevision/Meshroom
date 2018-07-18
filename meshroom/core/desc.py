@@ -368,6 +368,10 @@ class CommandLineNode(Node):
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
     def stopProcess(self, chunk):
+        # the same node could exists several times in the graph and
+        # only one would have the running subprocess; ignore all others
+        if not hasattr(chunk, "subprocess"):
+            return
         if chunk.subprocess:
             # kill process tree
             processes = chunk.subprocess.children(recursive=True) + [chunk.subprocess]

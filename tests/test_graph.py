@@ -153,9 +153,8 @@ def test_transitive_reduction():
                     ]
     assert set(flowEdgesRes) == set(flowEdges)
 
-    depthPerNode = graph.minMaxDepthPerNode()
-    assert len(depthPerNode) ==  len(graph.nodes)
-    for node, (minDepth, maxDepth) in depthPerNode.items():
+    assert len(graph._nodesMinMaxDepths) ==  len(graph.nodes)
+    for node, (minDepth, maxDepth) in graph._nodesMinMaxDepths.items():
         assert node.depth == maxDepth
 
 

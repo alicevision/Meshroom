@@ -18,11 +18,6 @@ Item {
     signal attributePinCreated(var attribute, var pin)
     signal attributePinDeleted(var attribute, var pin)
 
-    signal computeRequest()
-    signal submitRequest()
-    signal duplicateRequest(var duplicateFollowingNodes)
-    signal removeRequest()
-
     implicitHeight: body.height
     objectName: node.name
 
@@ -34,65 +29,10 @@ Item {
         drag.threshold: 0
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onPressed: {
-            if(mouse.button == Qt.RightButton)
-                nodeMenu.popup()
-            root.pressed(mouse)
-        }
-
+        onPressed: root.pressed(mouse)
         onDoubleClicked: root.doubleClicked(mouse)
-
-        Menu {
-            id: nodeMenu
-            MenuItem {
-                text: "Compute"
-                enabled: !root.readOnly
-                onTriggered: root.computeRequest()
-            }
-            MenuItem {
-                text: "Submit"
-                enabled: !root.readOnly
-                onTriggered: root.submitRequest()
-            }
-            MenuItem {
-                text: "Open Folder"
-                onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(node.internalFolder))
-            }
-            MenuSeparator {}
-            MenuItem {
-                text: "Duplicate"
-                onTriggered: duplicateRequest(false)
-            }
-            MenuItem {
-                text: "Duplicate From Here"
-                onTriggered: duplicateRequest(true)
-            }
-            MenuSeparator {}
-            MenuItem {
-                text: "Clear Data"
-                enabled: !root.readOnly
-                onTriggered: node.clearData()
-            }
-            MenuItem {
-                text: "Delete Node"
-                enabled: !root.readOnly
-                onTriggered: root.removeRequest()
-            }
-        }
     }
 
-// Cheaper shadow
-/*
-    Rectangle {
-        id: shadow
-        width: parent.width
-        height: parent.height
-        x: 0.5
-        y: 0.5
-        color: "black"
-        opacity: 0.4
-    }
-*/
     Rectangle {
         id: background
         anchors.fill: parent

@@ -339,6 +339,16 @@ ApplicationWindow {
             implicitHeight: Math.round(parent.height * 0.7)
             spacing: 4
             Row {
+                // evaluate if global reconstruction computation can be started
+                property bool canStartComputation: _reconstruction.viewpoints.count >= 2      // at least 2 images
+                                                   && !_reconstruction.computing              // computation is not started
+                                                   && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
+
+                // evalute if graph computation can be submitted externally
+                property bool canSubmit: canStartComputation                                  // can be computed
+                                         && _reconstruction.graph.filepath                    // graph is saved on disk
+
+                // disable controls if graph is executed externally
                 enabled: !_reconstruction.computingExternally
                 Layout.alignment: Qt.AlignHCenter
 
@@ -348,7 +358,7 @@ ApplicationWindow {
                     palette.button: enabled ? buttonColor : disabledPalette.button
                     palette.window: enabled ? buttonColor : disabledPalette.window
                     palette.buttonText: enabled ? "white" : disabledPalette.buttonText
-                    enabled: _reconstruction.viewpoints.count > 2 && !_reconstruction.computing
+                    enabled: parent.canStartComputation
                     onClicked: _reconstruction.execute(null)
                 }
                 Button {
@@ -358,7 +368,7 @@ ApplicationWindow {
                 }
                 Item { width: 20; height: 1 }
                 Button {
-                    enabled: _reconstruction.viewpoints.count > 2 && !_reconstruction.computing  && _reconstruction.graph.filepath != ""
+                    enabled: parent.canSubmit
                     text: "Submit"
                     onClicked: _reconstruction.submit(null)
                 }

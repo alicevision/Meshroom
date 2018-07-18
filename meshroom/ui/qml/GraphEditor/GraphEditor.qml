@@ -31,6 +31,35 @@ Item {
 
     SystemPalette { id: activePalette }
 
+    /// Get node delegate based on a node name
+    function nodeDelegate(nodeName)
+    {
+        for(var i=0; i<nodeRepeater.count; ++i)
+        {
+            if(nodeRepeater.itemAt(i).node.name === nodeName)
+                return nodeRepeater.itemAt(i);
+        }
+        return undefined
+    }
+
+    /// Move the node identified by nodeName to the given position
+    function moveNode(nodeName, posX, posY)
+    {
+        var delegate = nodeDelegate(nodeName)
+        delegate.animatePosition = false
+        delegate.x = posX
+        delegate.y = posY
+        delegate.animatePosition = true
+        selectNode(delegate)
+    }
+
+    /// Select node delegate
+    function selectNode(delegate)
+    {
+        root.selectedNode = delegate.node
+        delegate.forceActiveFocus()
+    }
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -89,19 +118,8 @@ Item {
             function createNode(nodeType)
             {
                 // add node via the proper command in uigraph
-                uigraph.addNewNode(nodeType)
-                // retrieve node delegate (the last one created in the node repeater)
-                var item = nodeRepeater.itemAt(nodeRepeater.count-1)
-                // convert mouse position
-                // disable node animation on position
-                item.animatePosition = false
-                // set the node position
-                item.x = spawnPosition.x
-                item.y = spawnPosition.y
-                // reactivate animation on position
-                item.animatePosition = true
-                // select this node
-                draggable.selectNode(item)
+                var node = uigraph.addNewNode(nodeType)
+                moveNode(node.name, spawnPosition.x, spawnPosition.y)
             }
 
             onVisibleChanged: {
@@ -175,11 +193,6 @@ Item {
             width: 1000
             height: 1000
 
-            function selectNode(delegate)
-            {
-                root.selectedNode = delegate.node
-                delegate.forceActiveFocus()
-            }
 
             // Edges
             Repeater {
@@ -233,10 +246,10 @@ Item {
                         if(mouse.modifiers & Qt.AltModifier)
                         {
                             var delegates = duplicate(true)
-                            draggable.selectNode(delegates[0])
+                            selectNode(delegates[0])
                         }
                         else
-                            draggable.selectNode(nodeDelegate)
+                            selectNode(nodeDelegate)
                     }
 
                     function duplicate(duplicateFollowingNodes) {
@@ -256,7 +269,10 @@ Item {
 
                     onComputeRequest: uigraph.execute(node)
                     onSubmitRequest: uigraph.submit(node)
-                    onDuplicateRequest: duplicate(duplicateFollowingNodes)
+                    onDuplicateRequest: {
+                        var delegate = duplicate(duplicateFollowingNodes)[0]
+                        selectNode(delegate)
+                    }
                     onRemoveRequest: uigraph.removeNode(node)
 
                     Keys.onDeletePressed: uigraph.removeNode(node)

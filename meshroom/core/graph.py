@@ -14,7 +14,7 @@ import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core.attribute import Attribute, ListAttribute
-from meshroom.core.exception import UnknownNodeTypeError
+from meshroom.core.exception import StopGraphVisit, StopBranchVisit
 from meshroom.core.node import node_factory, Status, Node, CompatibilityNode
 
 # Replace default encoder to support Enums
@@ -586,10 +586,19 @@ class Graph(BaseObject):
             assert not self.dirtyTopology
             nodes = sorted(nodes, key=lambda item: item.depth)
 
-        for node in nodes:
-            self.dfsVisit(node, visitor, colors, nodeChildren, longestPathFirst)
+        try:
+            for node in nodes:
+                self.dfsVisit(node, visitor, colors, nodeChildren, longestPathFirst)
+        except StopGraphVisit:
+            pass
 
     def dfsVisit(self, u, visitor, colors, nodeChildren, longestPathFirst):
+        try:
+            self._dfsVisit(u, visitor, colors, nodeChildren, longestPathFirst)
+        except StopBranchVisit:
+            pass
+
+    def _dfsVisit(self, u, visitor, colors, nodeChildren, longestPathFirst):
         colors[u] = GRAY
         visitor.discoverVertex(u, self)
         # d_time[u] = time = time + 1

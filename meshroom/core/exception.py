@@ -28,3 +28,18 @@ class NodeUpgradeError(GraphException):
         if details:
             msg += ": {}".format(details)
         super(NodeUpgradeError, self).__init__(msg)
+
+
+class GraphVisitMessage(GraphException):
+    """ Base class for sending messages via exceptions during a graph visit. """
+    pass
+
+
+class StopGraphVisit(GraphVisitMessage):
+    """ Immediately interrupt graph visit. """
+    pass
+
+
+class StopBranchVisit(GraphVisitMessage):
+    """ Immediately stop branch visit. """
+    pass

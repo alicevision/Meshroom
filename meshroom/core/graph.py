@@ -897,17 +897,17 @@ class Graph(BaseObject):
             self._updateRequested = True
             return
 
-        # Graph topology has changed
-        if self.dirtyTopology:
-            # update nodes topological data cache
-            self.updateNodesTopologicalData()
-            self.dirtyTopology = False
-
         self.updateInternals()
         if os.path.exists(self._cacheDir):
             self.updateStatusFromCache()
         for node in self.nodes:
             node.dirty = False
+
+        # Graph topology has changed
+        if self.dirtyTopology:
+            # update nodes topological data cache
+            self.updateNodesTopologicalData()
+            self.dirtyTopology = False
 
         self.updated.emit()
 

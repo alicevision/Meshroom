@@ -429,13 +429,14 @@ class Graph(BaseObject):
         if not isinstance(node, CompatibilityNode):
             raise ValueError("Upgrade is only available on CompatibilityNode instances.")
         upgradedNode = node.upgrade()
-        inEdges, outEdges = self.removeNode(nodeName)
-        self.addNode(upgradedNode, nodeName)
-        for dst, src in outEdges.items():
-            try:
-                self.addEdge(self.attribute(src), self.attribute(dst))
-            except (KeyError, ValueError) as e:
-                logging.warning("Failed to restore edge {} -> {}: {}".format(src, dst, str(e)))
+        with GraphModification(self):
+            inEdges, outEdges = self.removeNode(nodeName)
+            self.addNode(upgradedNode, nodeName)
+            for dst, src in outEdges.items():
+                try:
+                    self.addEdge(self.attribute(src), self.attribute(dst))
+                except (KeyError, ValueError) as e:
+                    logging.warning("Failed to restore edge {} -> {}: {}".format(src, dst, str(e)))
 
         return inEdges, outEdges
 

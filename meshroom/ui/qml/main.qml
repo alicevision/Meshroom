@@ -206,6 +206,12 @@ ApplicationWindow {
         id: dialogsFactory
     }
 
+    CompatibilityManager {
+        id: compatibilityManager
+        uigraph: _reconstruction
+        onUpgradeDone: graphEditor.doAutoLayout()
+    }
+
     Action {
         id: undoAction
 
@@ -320,10 +326,17 @@ ApplicationWindow {
             dialog.detailedText = message.detailedText
         }
 
+        onGraphChanged: {
+            // open CompatibilityManager after file loading if any issue is detected
+            if(compatibilityManager.issueCount)
+                compatibilityManager.open()
+        }
+
         onInfo: createDialog(dialogsFactory.info, arguments[0])
         onWarning: createDialog(dialogsFactory.warning, arguments[0])
         onError: createDialog(dialogsFactory.error, arguments[0])
     }
+
 
     Controls1.SplitView {
         anchors.fill: parent
@@ -338,41 +351,62 @@ ApplicationWindow {
             Layout.topMargin: 2
             implicitHeight: Math.round(parent.height * 0.7)
             spacing: 4
-            Row {
-                // evaluate if global reconstruction computation can be started
-                property bool canStartComputation: _reconstruction.viewpoints.count >= 2      // at least 2 images
-                                                   && !_reconstruction.computing              // computation is not started
-                                                   && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
+            RowLayout {
+                Layout.rightMargin: 4
+                Layout.leftMargin: 4
+                Layout.fillHeight: false
+                Item { Layout.fillWidth: true }
 
-                // evalute if graph computation can be submitted externally
-                property bool canSubmit: canStartComputation                                  // can be computed
-                                         && _reconstruction.graph.filepath                    // graph is saved on disk
+                Row {
+                    // evaluate if global reconstruction computation can be started
+                    property bool canStartComputation: _reconstruction.viewpoints.count >= 2      // at least 2 images
+                                                       && !_reconstruction.computing              // computation is not started
+                                                       && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
 
-                // disable controls if graph is executed externally
-                enabled: !_reconstruction.computingExternally
-                Layout.alignment: Qt.AlignHCenter
+                    // evalute if graph computation can be submitted externally
+                    property bool canSubmit: canStartComputation                                  // can be computed
+                                             && _reconstruction.graph.filepath                    // graph is saved on disk
 
-                Button {
-                    property color buttonColor: Qt.darker("#4CAF50", 1.8)
-                    text: "Start"
-                    palette.button: enabled ? buttonColor : disabledPalette.button
-                    palette.window: enabled ? buttonColor : disabledPalette.window
-                    palette.buttonText: enabled ? "white" : disabledPalette.buttonText
-                    enabled: parent.canStartComputation
-                    onClicked: _reconstruction.execute(null)
+                    // disable controls if graph is executed externally
+                    enabled: !_reconstruction.computingExternally
+                    Layout.alignment: Qt.AlignHCenter
+
+                    Button {
+                        property color buttonColor: Qt.darker("#4CAF50", 1.8)
+                        text: "Start"
+                        palette.button: enabled ? buttonColor : disabledPalette.button
+                        palette.window: enabled ? buttonColor : disabledPalette.window
+                        palette.buttonText: enabled ? "white" : disabledPalette.buttonText
+                        enabled: parent.canStartComputation
+                        onClicked: _reconstruction.execute(null)
+                    }
+                    Button {
+                        text: "Stop"
+                        enabled: _reconstruction.computingLocally
+                        onClicked: _reconstruction.stopExecution()
+                    }
+                    Item { width: 20; height: 1 }
+                    Button {
+                        enabled: parent.canSubmit
+                        text: "Submit"
+                        onClicked: _reconstruction.submit(null)
+                    }
                 }
-                Button {
-                    text: "Stop"
-                    enabled: _reconstruction.computingLocally
-                    onClicked: _reconstruction.stopExecution()
-                }
-                Item { width: 20; height: 1 }
-                Button {
-                    enabled: parent.canSubmit
-                    text: "Submit"
-                    onClicked: _reconstruction.submit(null)
+                Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
+                // CompatibilityManager indicator
+                ToolButton {
+                    visible: compatibilityManager.issueCount
+                    text: MaterialIcons.warning
+                    font.family: MaterialIcons.fontFamily
+                    palette.buttonText: "#FF9800"
+                    font.pointSize: 12
+                    onClicked: compatibilityManager.open()
+                    ToolTip.text: "Compatibility Issues"
+                    ToolTip.visible: hovered
                 }
             }
+
             Label {
                 text: "Graph is being computed externally"
                 font.italic: true
@@ -398,6 +432,7 @@ ApplicationWindow {
                 onRequestGraphAutoLayout: graphEditor.doAutoLayout()
             }
         }
+
         Panel {
             Layout.fillWidth: true
             Layout.fillHeight: false

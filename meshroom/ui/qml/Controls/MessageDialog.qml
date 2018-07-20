@@ -10,6 +10,8 @@ Dialog {
     property alias helperText: helperLabel.text
     property alias icon: iconLabel
 
+    default property alias children: layout.children
+
     x: parent.width/2 - width/2
     y: parent.height/2 - height/2
     modal: true
@@ -30,6 +32,7 @@ Dialog {
         }
 
         ColumnLayout {
+            id: layout
             // Text
             spacing: 12
             Label {

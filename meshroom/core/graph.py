@@ -185,6 +185,7 @@ class Graph(BaseObject):
         self.header = {}
 
     def clear(self):
+        self.header.clear()
         self._nodes.clear()
         self._edges.clear()
 
@@ -993,6 +994,7 @@ class Graph(BaseObject):
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
+    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.ReleaseVersion, "0.0"), notify=filepathChanged)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
     updated = Signal()

@@ -442,6 +442,13 @@ class Graph(BaseObject):
 
         return inEdges, outEdges
 
+    def upgradeAllNodes(self):
+        """ Upgrade all upgradable CompatibilityNode instances in the graph. """
+        nodeNames = [name for name, n in self._compatibilityNodes.items() if n.canUpgrade]
+        with GraphModification(self):
+            for nodeName in nodeNames:
+                self.upgradeNode(nodeName)
+
     @Slot(str, result=Attribute)
     def attribute(self, fullName):
         # type: (str) -> Attribute

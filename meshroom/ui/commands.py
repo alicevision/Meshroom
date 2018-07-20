@@ -270,6 +270,8 @@ class UpgradeNodeCommand(GraphCommand):
         self.setText("Upgrade Node {}".format(self.nodeName))
 
     def redoImpl(self):
+        if not self.graph.node(self.nodeName).canUpgrade:
+            return False
         inEdges, self.outEdges = self.graph.upgradeNode(self.nodeName)
         return True
 

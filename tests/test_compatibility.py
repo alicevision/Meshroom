@@ -112,3 +112,40 @@ def test_description_conflict():
     assert hasattr(n, "in")
     # check uid has changed (not the same set of attributes)
     assert n.internalFolder != internalFolder
+    unregisterNodeType(SampleNodeV1)
+
+
+def test_upgradeAllNodes():
+    registerNodeType(SampleNodeV1)
+    registerNodeType(SampleNodeV2)
+
+    g = Graph('')
+    n1 = g.addNewNode("SampleNodeV1")
+    n2 = g.addNewNode("SampleNodeV2")
+    n1Name = n1.name
+    n2Name = n2.name
+    graphFile = os.path.join(tempfile.mkdtemp(), "test_description_conflict.mg")
+    g.save(graphFile)
+
+    # make SampleNodeV2 an unknown type
+    unregisterNodeType(SampleNodeV2)
+    # replace SampleNodeV1 by SampleNodeV2
+    meshroom.core.nodesDesc[SampleNodeV1.__name__] = SampleNodeV2
+
+    # reload file
+    g = loadGraph(graphFile)
+    os.remove(graphFile)
+
+    # both nodes are CompatibilityNodes
+    assert len(g.compatibilityNodes) == 2
+    assert g.node(n1Name).canUpgrade      # description conflict
+    assert not g.node(n2Name).canUpgrade  # unknown type
+
+    # upgrade all upgradable nodes
+    g.upgradeAllNodes()
+
+    # only the node with an unknown type has not been upgraded
+    assert len(g.compatibilityNodes) == 1
+    assert n2Name in g.compatibilityNodes.keys()
+
+    unregisterNodeType(SampleNodeV1)

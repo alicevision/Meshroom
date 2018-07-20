@@ -302,6 +302,14 @@ class UIGraph(QObject):
         """ Upgrade a CompatibilityNode. """
         self.push(commands.UpgradeNodeCommand(self._graph, node))
 
+    @Slot()
+    def upgradeAllNodes(self):
+        """ Upgrade all upgradable CompatibilityNode instances in the graph. """
+        with self.groupedGraphModification("Upgrade all Nodes"):
+            nodes = [n for n in self._graph._compatibilityNodes.values() if n.canUpgrade]
+            for node in nodes:
+                self.upgradeNode(node)
+
     @Slot(Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):
         if isinstance(value, QJsonValue):

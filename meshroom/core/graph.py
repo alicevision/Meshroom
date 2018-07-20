@@ -180,12 +180,14 @@ class Graph(BaseObject):
         self._canComputeLeaves = True
         self._nodes = DictModel(keyAttrName='name', parent=self)
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
+        self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
         self.cacheDir = meshroom.core.defaultCacheFolder
         self._filepath = ''
         self.header = {}
 
     def clear(self):
         self.header.clear()
+        self._compatibilityNodes.clear()
         self._nodes.clear()
         self._edges.clear()
 
@@ -713,13 +715,19 @@ class Graph(BaseObject):
         self._nodesMinMaxDepths.clear()
         self._computationBlocked.clear()
 
+        compatNodes = []
         visitor = Visitor()
 
         def discoverVertex(vertex, graph):
             # initialize depths
             self._nodesMinMaxDepths[vertex] = (0, 0)
             # initialize computability
-            self._computationBlocked[vertex] = isinstance(vertex, CompatibilityNode) and not vertex.hasStatus(Status.SUCCESS)
+            self._computationBlocked[vertex] = False
+            if isinstance(vertex, CompatibilityNode):
+                compatNodes.append(vertex)
+                # a not computed CompatibilityNode blocks computation
+                if not vertex.hasStatus(Status.SUCCESS):
+                    self._computationBlocked[vertex] = True
 
         def finishEdge(edge, graph):
             currentVertex, inputVertex = edge
@@ -752,6 +760,12 @@ class Graph(BaseObject):
         if self._canComputeLeaves != canComputeLeaves:
             self._canComputeLeaves = canComputeLeaves
             self.canComputeLeavesChanged.emit()
+
+        # update compatibilityNodes model
+        if len(self._compatibilityNodes) != len(compatNodes):
+            self._compatibilityNodes.reset(compatNodes)
+
+    compatibilityNodes = Property(BaseObject, lambda self: self._compatibilityNodes, constant=True)
 
     def dfsMaxEdgeLength(self, startNodes=None):
         """

@@ -114,18 +114,18 @@ Entity {
     components: [
         FrameAction {
             onTriggered: {
+                if(actionMMB.active || (actionLMB.active && actionControl.active)) { // translate
+                    var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
+                    var tx = axisMX.value * root.translateSpeed * d;
+                    var ty = axisMY.value * root.translateSpeed * d;
+                    root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt))
+                    return;
+                }
                 if(actionLMB.active) { // rotate
                     var rx = -axisMX.value;
                     var ry = -axisMY.value;
                     root.camera.panAboutViewCenter(root.panSpeed * rx * dt, Qt.vector3d(0,1,0))
                     root.camera.tiltAboutViewCenter(root.tiltSpeed * ry * dt)
-                    return;
-                }
-                if(actionMMB.active) { // translate
-                    var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
-                    var tx = axisMX.value * root.translateSpeed * d;
-                    var ty = axisMY.value * root.translateSpeed * d;
-                    root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt))
                     return;
                 }
                 if(actionAlt.active && actionRMB.active) { // zoom with alt + RMD

@@ -93,7 +93,7 @@ FocusScope {
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onPressed: {
             image.forceActiveFocus()
-            if(mouse.button & Qt.MiddleButton)
+            if(mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ControlModifier))
                 drag.target = image // start drag
         }
         onReleased: {

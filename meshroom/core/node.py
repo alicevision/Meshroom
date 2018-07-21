@@ -197,6 +197,15 @@ class NodeChunk(BaseObject):
         statusFilepathWriting = statusFilepath + '.writing.' + str(uuid.uuid4())
         with open(statusFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
+        for i in range(20):
+            try:
+                os.remove(statusFilepath)
+                # if remove is successful, we can stop the iterations
+                break
+            except:
+                # On Windows, attempting to remove a file that is in use causes an exception to be raised.
+                # So we may need multiple trials
+                pass
         shutil.move(statusFilepathWriting, statusFilepath)
 
     def upgradeStatusTo(self, newStatus, execMode=None):

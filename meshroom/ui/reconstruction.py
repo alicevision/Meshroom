@@ -492,6 +492,8 @@ class Reconstruction(UIGraph):
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(Node, Node)
 
+    nbCameras = Property(int, lambda self: len(self._poses), notify=sfmReportChanged)
+
     # Signals to propagate high-level messages
     error = Signal(Message)
     warning = Signal(Message)

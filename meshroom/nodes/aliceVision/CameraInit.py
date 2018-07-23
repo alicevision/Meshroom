@@ -170,14 +170,10 @@ class CameraInit(desc.CommandLineNode):
                 intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
             views = node.viewpoints.getPrimitiveValue(exportDefault=False)
 
-            # convert metadata string into a map
+            # convert the metadata string into a map
             for view in views:
-                # filter out unnecessary attributes
                 if 'metadata' in view:
-                    try:
-                        view['metadata'] = eval(view['metadata'])
-                    except:
-                        del view['metadata']
+                    view['metadata'] = json.loads(view['metadata'])
 
             sfmData = {
                 "version": [1, 0, 0],

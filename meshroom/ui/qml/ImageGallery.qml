@@ -107,22 +107,65 @@ Panel {
                     onRemoveRequest: sendRemoveRequest()
                     Keys.onDeletePressed: sendRemoveRequest()
 
-                    // Reconstruction status indicator
-                    Label {
-                        id: statusIndicator
-
-                        // object can be evaluated to null at some point during creation/deletion
-                        property bool inViews: Qt.isQtObject(object) && _reconstruction.sfmReport && _reconstruction.isInViews(object)
-                        property bool reconstructed: inViews && _reconstruction.isReconstructed(model.object)
-
-                        font.family: MaterialIcons.fontFamily
-                        text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
-                        color: reconstructed ? "#4CAF50" : "#F44336"
+                    Row {
                         anchors.top: parent.top
                         anchors.right: parent.right
                         anchors.margins: 10
-                        font.pointSize: 10
-                        visible: inViews
+                        // Lens recognized
+                        ToolButton {
+                            id: metadataIndicator
+
+                            // object can be evaluated to null at some point during creation/deletion
+                            property bool valid: Qt.isQtObject(object)
+                            property bool hasMetadata: _reconstruction.hasMetadata(model.object)
+
+                            contentItem: Label {
+                                font.family: MaterialIcons.fontFamily
+                                text: MaterialIcons.info_outline
+                                color: parent.hasMetadata ? "#4CAF50" : "#F44336"
+                                font.pointSize: 10
+                            }
+                            ToolTip.text: hasMetadata ? "Has Metadata" : "Missing Metadata"
+                            ToolTip.visible: pressed
+                            visible: valid && !hasMetadata
+                        }
+                        // Lens recognized
+                        ToolButton {
+                            id: lensIndicator
+
+                            // object can be evaluated to null at some point during creation/deletion
+                            property bool valid: Qt.isQtObject(object)
+                            property bool hasValidIntrinsic: _reconstruction.hasValidIntrinsic(model.object)
+
+                            contentItem: Label {
+                                font.family: MaterialIcons.fontFamily
+                                text: MaterialIcons.warning
+                                color: "#F44336"
+                                font.pointSize: 10
+                            }
+                            visible: valid && !hasValidIntrinsic
+
+                            ToolTip.text: "Unable to find camera intrinsic parameters.\nCheck image metadata."
+                            ToolTip.visible: pressed
+                        }
+                        // Reconstruction status indicator
+                        ToolButton {
+                            id: statusIndicator
+
+                            // object can be evaluated to null at some point during creation/deletion
+                            property bool inViews: Qt.isQtObject(object) && _reconstruction.sfmReport && _reconstruction.isInViews(object)
+                            property bool reconstructed: inViews && _reconstruction.isReconstructed(model.object)
+
+                            contentItem: Label {
+                                font.family: MaterialIcons.fontFamily
+                                text: parent.reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
+                                color: parent.reconstructed ? "#4CAF50" : "#F44336"
+                                font.pointSize: 10
+                            }
+                            ToolTip.text: reconstructed ? "Reconstructed" : "Not Reconstructed"
+                            ToolTip.visible: pressed
+                            visible: inViews
+                        }
                     }
                 }
             }

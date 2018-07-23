@@ -495,6 +495,17 @@ class Reconstruction(UIGraph):
         # keys are strings (faster lookup)
         return str(viewpoint.poseId.value) in self._poses
 
+    @Slot(QObject, result=bool)
+    def hasValidIntrinsic(self, viewpoint):
+        # keys are strings (faster lookup)
+        allIntrinsicIds = [i.intrinsicId.value for i in self._cameraInit.intrinsics.value]
+        return viewpoint.intrinsicId.value in allIntrinsicIds
+
+    @Slot(QObject, result=bool)
+    def hasMetadata(self, viewpoint):
+        # Should be greater than 2 to avoid the particular case of ""
+        return len(viewpoint.metadata.value) > 2
+
     def setSelectedViewId(self, viewId):
         if viewId == self._selectedViewId:
             return

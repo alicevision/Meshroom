@@ -202,7 +202,9 @@ RowLayout {
                     }
                     implicitWidth: 70
                     enabled: root.editable
-                    text: slider.active && slider.item.pressed ? slider.value : attribute.value
+                    // cast value to string to avoid intrusive scientific notations on numbers
+                    property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : attribute.value)
+                    text: displayValue
                     selectByMouse: true
                     validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
@@ -214,6 +216,8 @@ RowLayout {
                     Layout.fillWidth: true
                     active: attribute.desc.range != undefined
                     sourceComponent: Slider {
+                        readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
+                        readonly property real formattedValue: value.toFixed(stepDecimalCount)
                         enabled: root.editable
                         value: attribute.value
                         from: attribute.desc.range[0]
@@ -223,7 +227,7 @@ RowLayout {
 
                         onPressedChanged: {
                             if(!pressed)
-                                _reconstruction.setAttribute(attribute, value)
+                                _reconstruction.setAttribute(attribute, formattedValue)
                         }
                     }
                 }

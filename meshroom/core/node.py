@@ -5,6 +5,7 @@ import datetime
 import json
 import logging
 import os
+import platform
 import re
 import shutil
 import time
@@ -18,6 +19,24 @@ from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListMod
 from meshroom.core import desc, stats, hashValue
 from meshroom.core.attribute import attribute_factory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import UnknownNodeTypeError
+
+
+def getWritingFilepath(filepath):
+    return filepath + '.writing.' + str(uuid.uuid4())
+
+
+def renameWritingToFinalPath(writingFilepath, filepath):
+    if platform.system() == 'Windows':
+        # On Windows, attempting to remove a file that is in use causes an exception to be raised.
+        # So we may need multiple trials, if someone is reading it at the same time.
+        for i in range(20):
+            try:
+                os.remove(filepath)
+                # if remove is successful, we can stop the iterations
+                break
+            except WindowsError:
+                pass
+    os.rename(writingFilepath, filepath)
 
 
 class Status(Enum):
@@ -194,10 +213,10 @@ class NodeChunk(BaseObject):
         folder = os.path.dirname(statusFilepath)
         if not os.path.exists(folder):
             os.makedirs(folder)
-        statusFilepathWriting = statusFilepath + '.writing.' + str(uuid.uuid4())
+        statusFilepathWriting = getWritingFilepath(statusFilepath)
         with open(statusFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
-        shutil.move(statusFilepathWriting, statusFilepath)
+        renameWritingToFinalPath(statusFilepathWriting, statusFilepath)
 
     def upgradeStatusTo(self, newStatus, execMode=None):
         if newStatus.value <= self.status.status.value:
@@ -229,10 +248,10 @@ class NodeChunk(BaseObject):
         folder = os.path.dirname(statisticsFilepath)
         if not os.path.exists(folder):
             os.makedirs(folder)
-        statisticsFilepathWriting = statisticsFilepath + '.writing.' + str(uuid.uuid4())
+        statisticsFilepathWriting = getWritingFilepath(statisticsFilepath)
         with open(statisticsFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
-        shutil.move(statisticsFilepathWriting, statisticsFilepath)
+        renameWritingToFinalPath(statisticsFilepathWriting, statisticsFilepath)
 
     def isAlreadySubmitted(self):
         return self.status.status in (Status.SUBMITTED, Status.RUNNING)

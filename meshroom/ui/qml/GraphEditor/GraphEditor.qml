@@ -58,7 +58,7 @@ Item {
         }
 
         onPressed: {
-            if(mouse.button & Qt.MiddleButton)
+            if(mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ControlModifier))
                 drag.target = draggable // start drag
         }
         onReleased: {

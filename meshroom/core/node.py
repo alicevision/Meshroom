@@ -10,7 +10,6 @@ import re
 import shutil
 import time
 import uuid
-from abc import ABCMeta
 from collections import defaultdict
 from enum import Enum
 
@@ -287,7 +286,6 @@ class BaseNode(BaseObject):
     """
     Base Abstract class for Graph nodes.
     """
-    __metaclass__ = ABCMeta
 
     # Regexp handling complex attribute names with recursive understanding of Lists and Groups
     # i.e: a.b, a[0], a[0].b.c[1]

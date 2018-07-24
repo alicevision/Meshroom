@@ -680,7 +680,7 @@ class CompatibilityNode(BaseNode):
         # and be able to change modified inputs (see CompatibilityNode.toDict)
         self.nodeDict = copy.deepcopy(nodeDict)
 
-        self.inputs = nodeDict.get("inputs", {})
+        self._inputs = nodeDict.get("inputs", {})
         self.outputs = nodeDict.get("outputs", {})
         self._internalFolder = self.nodeDict.get("internalFolder", "")
         self._uids = self.nodeDict.get("uids", {})
@@ -693,7 +693,7 @@ class CompatibilityNode(BaseNode):
         # inputs matching current type description
         self._commonInputs = []
         # create input attributes
-        for attrName, value in self.inputs.items():
+        for attrName, value in self._inputs.items():
             matchDesc = self._addAttribute(attrName, value, False)
             # store attributes that could be used during node upgrade
             if matchDesc:
@@ -819,9 +819,12 @@ class CompatibilityNode(BaseNode):
             return "Unknown error."
 
     @property
-    def actualInputs(self):
-        """ Get actual node inputs, where links could differ from original serialized node data
+    def inputs(self):
+        """ Get current node inputs, where links could differ from original serialized node data
         (i.e after node duplication) """
+        # if node has not been added to a graph, return serialized node inputs
+        if not self.graph:
+            return self._inputs
         return {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
 
     def toDict(self):
@@ -832,7 +835,7 @@ class CompatibilityNode(BaseNode):
         and might be connected to different nodes.
         """
         # update inputs to get up-to-date connections
-        self.nodeDict.update({"inputs": self.actualInputs})
+        self.nodeDict.update({"inputs": self.inputs})
         return self.nodeDict
 
     @property
@@ -848,8 +851,7 @@ class CompatibilityNode(BaseNode):
         if not self.canUpgrade:
             raise NodeUpgradeError(self.name, "no matching node type")
         # TODO: use upgrade method of node description if available
-        return Node(self.nodeType, **{key: value for key, value in self.actualInputs.items()
-                                      if key in self._commonInputs})
+        return Node(self.nodeType, **{key: value for key, value in self.inputs.items() if key in self._commonInputs})
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)

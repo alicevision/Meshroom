@@ -84,6 +84,99 @@ def loadPlugins(folder, packageName, classType):
     return pluginTypes
 
 
+class Version(object):
+    """
+    Version provides convenient properties and methods to manipulate and compare version names.
+    """
+    def __init__(self, versionName):
+        """
+        Args:
+            versionName (str): the name of the version as a string
+        """
+        self.name = versionName
+        self.components = Version.toComponents(self.name)
+
+    def __repr__(self):
+        return self.name
+
+    def __neg__(self):
+        return not self.name
+
+    def __len__(self):
+        return len(self.components)
+
+    def __eq__(self, other):
+        """
+        Test equality between 'self' with 'other'.
+
+        Args:
+            other (Version): the version to compare to
+
+        Returns:
+            bool: whether the versions are equal
+        """
+        return self.name == other.name
+
+    def __lt__(self, other):
+        """
+        Test 'self' inferiority to 'other'.
+
+        Args:
+            other (Version): the version to compare to
+
+        Returns:
+            bool: whether self is inferior to other
+        """
+        # sequence comparison works natively for this use-case
+        return self.name < other.name
+
+    def __le__(self, other):
+        """
+        Test 'self' inferiority or equality to 'other'.
+
+        Args:
+            other (Version): the version to compare to
+
+        Returns:
+            bool: whether self is inferior or equal to other
+        """
+        return self.name <= other.name
+
+    @staticmethod
+    def toComponents(versionName):
+        """
+        Split 'versionName' as a tuple of individual components.
+
+        Args:
+            versionName (str): version name
+
+        Returns:
+            tuple of str: split version numbers
+        """
+        if not versionName:
+            return ()
+        return tuple(versionName.split("."))
+
+    @property
+    def major(self):
+        """ Version major number. """
+        return self.components[0]
+
+    @property
+    def minor(self):
+        """ Version minor number. """
+        if len(self) < 2:
+            return ""
+        return self.components[1]
+
+    @property
+    def micro(self):
+        """ Version micro number. """
+        if len(self) < 3:
+            return ""
+        return self.components[2]
+
+
 def moduleVersion(moduleName, default=None):
     """ Return the version of a module indicated with '__version__' keyword.
 

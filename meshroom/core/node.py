@@ -15,7 +15,7 @@ from enum import Enum
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
-from meshroom.core import desc, stats, hashValue, pyCompatibility, nodeVersion
+from meshroom.core import desc, stats, hashValue, pyCompatibility, nodeVersion, Version
 from meshroom.core.attribute import attribute_factory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
@@ -897,7 +897,7 @@ def node_factory(nodeDict, name=None):
         # compare serialized node version with current node version
         currentNodeVersion = meshroom.core.nodeVersion(nodeDesc)
         # if both versions are available, check for incompatibility in major version
-        if version and currentNodeVersion and version.split('.')[0] != currentNodeVersion.split('.')[0]:
+        if version and currentNodeVersion and Version(version).major != Version(currentNodeVersion).major:
             compatibilityIssue = CompatibilityIssue.VersionConflict
         # in other cases, check attributes compatibility between serialized node and its description
         else:

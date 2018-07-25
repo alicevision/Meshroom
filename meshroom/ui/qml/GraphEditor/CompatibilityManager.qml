@@ -47,8 +47,7 @@ MessageDialog {
 
     title: "Compatibility issues detected"
     text: "This project contains " + issueCount + " node(s) incompatible with the current version of Meshroom."
-    detailedText: "Project version: " + uigraph.graph.fileReleaseVersion + "\n" +
-                  "Current version: " + Qt.application.version
+    detailedText: "Project was created with Meshroom " + uigraph.graph.fileReleaseVersion + "."
 
     helperText: upgradableCount ?
                 upgradableCount + " node(s) can be upgraded but this might invalidate already computed data.\n"

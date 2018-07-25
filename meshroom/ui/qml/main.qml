@@ -9,6 +9,7 @@ import Qt.labs.settings 1.0
 import GraphEditor 1.0
 import MaterialIcons 2.2
 import Utils 1.0
+import Controls 1.0
 
 ApplicationWindow {
     id: _window
@@ -51,17 +52,20 @@ ApplicationWindow {
         property alias showGraphEditor: graphEditorVisibilityCB.checked
     }
 
-    Dialog {
+    MessageDialog {
         id: unsavedDialog
 
         property var _callback: undefined
 
-        title: "Unsaved Document"
-        modal: true
-        x: parent.width/2 - width/2
-        y: parent.height/2 - height/2
+        title: Filepath.basename(_reconstruction.graph.filepath) || "Unsaved Project"
+        icon.text: MaterialIcons.info
+        text: _reconstruction.graph.filepath ? "Current project has unsaved modifications."
+                                             : "Current project has not been saved."
+        helperText: _reconstruction.graph.filepath ? "Would you like to save those changes ?"
+                                                   : "Would you like to save this project ?"
+
         standardButtons: Dialog.Save | Dialog.Cancel | Dialog.Discard
-        padding: 15
+
         onDiscarded: {
             close() // BUG ? discard does not close window
             fireCallback()
@@ -101,10 +105,6 @@ ApplicationWindow {
         {
             _callback = callback
             open()
-        }
-
-        Label {
-            text: "Your current Graph is not saved"
         }
     }
 

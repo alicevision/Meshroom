@@ -28,6 +28,20 @@ MessageDialog {
         return count
     }
 
+    // override MessageDialog.getAsString to add compatibility report
+    function getAsString() {
+        var t = asString + "\n"
+        t += '-------------------------\n'
+        t += "Node | Issue | Upgradable\n"
+        t += '-------------------------\n'
+        for(var i=0; i<issueCount; ++i)
+        {
+            var n = nodesModel.at(i)
+             t += n.nodeType + " | " + n.issueDetails +  " | " + n.canUpgrade + "\n"
+        }
+        t += "\n" + questionLabel.text
+        return t
+    }
 
     signal upgradeDone()
 
@@ -96,6 +110,7 @@ MessageDialog {
         }
 
         Label {
+            id: questionLabel
             text: upgradableCount ? "Upgrade all possible nodes to current version ?"
                                   : "Those nodes can't be upgraded, remove them manually if needed."
         }

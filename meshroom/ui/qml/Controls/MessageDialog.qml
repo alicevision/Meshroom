@@ -14,7 +14,7 @@ Dialog {
     default property alias children: layout.children
 
     // the content of this MessageDialog as a string
-    readonly property string asString: title + "\n\n" + text + "\n" + detailedText + "\n" + helperText + "\n"
+    readonly property string asString: titleLabel.text + "\n\n" + text + "\n" + detailedText + "\n" + helperText + "\n"
 
     /// Return the text content of this dialog as a simple string.
     /// Used when copying the message in the system clipboard.
@@ -54,8 +54,9 @@ Dialog {
             }
 
             Label {
+                id: titleLabel
                 Layout.fillWidth: true
-                text: title
+                text: title + " - " + Qt.application.name + " " + Qt.application.version
                 font.bold: true
             }
             ToolButton {

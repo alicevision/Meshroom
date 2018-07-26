@@ -12,6 +12,7 @@ Item {
     property color shadowColor: "black"
     readonly property bool isCompatibilityNode: node.hasOwnProperty("compatibilityIssue")
     readonly property color defaultColor: isCompatibilityNode ? "#444" : "#607D8B"
+    property bool selected: false
 
     signal pressed(var mouse)
     signal doubleClicked(var mouse)
@@ -50,6 +51,17 @@ Item {
             if(!drag.active)
                 root.moved(Qt.point(root.x, root.y))
         }
+    }
+
+    // Selection border
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -border.width
+        visible: root.selected
+        border.width: 2.5
+        border.color: activePalette.highlight
+        opacity: 0.9
+        color: "transparent"
     }
 
     Rectangle {

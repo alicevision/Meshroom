@@ -267,7 +267,8 @@ Item {
                     node: object
                     width: uigraph.layout.nodeWidth
                     readOnly: root.readOnly
-                    baseColor: root.selectedNode == node ? Qt.lighter(defaultColor, 1.2) : defaultColor
+                    selected: root.selectedNode == node
+                    onSelectedChanged: if(selected) forceActiveFocus()
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
                     onAttributePinDeleted: unregisterAttributePin(attribute, pin)

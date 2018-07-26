@@ -1,4 +1,7 @@
 from __future__ import print_function
+
+__version__ = "1.0"
+
 from meshroom.core import desc
 import shutil
 import glob

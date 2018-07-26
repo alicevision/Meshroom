@@ -7,6 +7,7 @@ from PySide2.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
 from meshroom.core.graph import GraphModification
+from meshroom.core.node import nodeFactory
 
 
 class UndoCommand(QUndoCommand):
@@ -125,13 +126,42 @@ class RemoveNodeCommand(GraphCommand):
 
     def undoImpl(self):
         with GraphModification(self.graph):
-            node = self.graph.addNewNode(nodeType=self.nodeDict["nodeType"],
-                                         name=self.nodeName, **self.nodeDict["attributes"])
+            node = nodeFactory(self.nodeDict, self.nodeName)
+            self.graph.addNode(node, self.nodeName)
             assert (node.getName() == self.nodeName)
             # recreate out edges deleted on node removal
             for dstAttr, srcAttr in self.outEdges.items():
                 self.graph.addEdge(self.graph.attribute(srcAttr),
                                    self.graph.attribute(dstAttr))
+
+
+class DuplicateNodeCommand(GraphCommand):
+    """
+    Handle node duplication in a Graph.
+    """
+    def __init__(self, graph, srcNode, duplicateFollowingNodes, parent=None):
+        super(DuplicateNodeCommand, self).__init__(graph, parent)
+        self.srcNodeName = srcNode.name
+        self.duplicateFollowingNodes = duplicateFollowingNodes
+        self.duplicates = []
+
+    def redoImpl(self):
+        srcNode = self.graph.node(self.srcNodeName)
+
+        if self.duplicateFollowingNodes:
+            duplicates = self.graph.duplicateNodesFromNode(srcNode)
+            self.duplicates = [n.name for n in duplicates.values()]
+            self.setText("Duplicate {} nodes from {}".format(len(duplicates), self.srcNodeName))
+        else:
+            self.duplicates = [self.graph.duplicateNode(srcNode).name]
+            self.setText("Duplicate {}".format(self.srcNodeName))
+
+        return self.duplicates
+
+    def undoImpl(self):
+        # delete all the duplicated nodes
+        for nodeName in self.duplicates:
+            self.graph.removeNode(nodeName)
 
 
 class SetAttributeCommand(GraphCommand):
@@ -226,6 +256,36 @@ class ListAttributeRemoveCommand(GraphCommand):
     def undoImpl(self):
         listAttribute = self.graph.attribute(self.listAttrName)
         listAttribute.insert(self.index, self.value)
+
+
+class UpgradeNodeCommand(GraphCommand):
+    """
+    Perform node upgrade on a CompatibilityNode.
+    """
+    def __init__(self, graph, node, parent=None):
+        super(UpgradeNodeCommand, self).__init__(graph, parent)
+        self.nodeDict = node.toDict()
+        self.nodeName = node.getName()
+        self.outEdges = {}
+        self.setText("Upgrade Node {}".format(self.nodeName))
+
+    def redoImpl(self):
+        if not self.graph.node(self.nodeName).canUpgrade:
+            return False
+        inEdges, self.outEdges = self.graph.upgradeNode(self.nodeName)
+        return True
+
+    def undoImpl(self):
+        # delete upgraded node
+        self.graph.removeNode(self.nodeName)
+        # recreate compatibility node
+        with GraphModification(self.graph):
+            node = nodeFactory(self.nodeDict)
+            self.graph.addNode(node, self.nodeName)
+            # recreate out edges
+            for dstAttr, srcAttr in self.outEdges.items():
+                self.graph.addEdge(self.graph.attribute(srcAttr),
+                                   self.graph.attribute(dstAttr))
 
 
 class EnableGraphUpdateCommand(GraphCommand):

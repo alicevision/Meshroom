@@ -1,7 +1,9 @@
+__version__ = "1.0"
+
 from meshroom.core import desc
 
+
 class DepthMapFilter(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_depthMapFiltering {allParams}'
     gpu = desc.Level.NORMAL
     size = desc.DynamicNodeSize('ini')
@@ -79,7 +81,7 @@ class DepthMapFilter(desc.CommandLineNode):
             name='output',
             label='Output',
             description='Output folder for generated depth maps.',
-            value='{cache}/{nodeType}/{uid0}/',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
     ]

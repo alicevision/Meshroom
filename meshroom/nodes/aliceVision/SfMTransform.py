@@ -1,10 +1,9 @@
-import sys
-import os
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 
 class SfMTransform(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_utils_sfmTransform {allParams}'
     size = desc.DynamicNodeSize('input')
 
@@ -66,7 +65,7 @@ class SfMTransform(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''Aligned SfMData file .''',
-            value='{cache}/{nodeType}/{uid0}/transformedSfM.abc',
+            value=desc.Node.internalFolder + 'transformedSfM.abc',
             uid=[],
         ),
     ]

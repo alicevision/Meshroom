@@ -9,7 +9,7 @@ from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
-from meshroom.core.node import NodeChunk, Node, Status
+from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode
 from meshroom.ui import commands
 
 
@@ -283,75 +283,32 @@ class UIGraph(QObject):
         """ Reset 'attribute' to its default value """
         self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
 
-    @Slot(Node)
-    def duplicateNode(self, srcNode, createEdges=True):
+    @Slot(Node, bool, result="QVariantList")
+    def duplicateNode(self, srcNode, duplicateFollowingNodes=False):
         """
-        Duplicate 'srcNode'.
+        Duplicate a node an optionally all the following nodes to graph leaves.
 
         Args:
-            srcNode (Node): the node to duplicate
-            createEdges (bool): whether to replicate 'srcNode' edges on the duplicated node
-
-        Returns:
-            Node: the duplicated node
-        """
-        serialized = srcNode.toDict()
-        with self.groupedGraphModification("Duplicate Node {}".format(srcNode.name)):
-            # skip edges: filter out attributes which are links
-            if not createEdges:
-                serialized["attributes"] = {k: v for k, v in serialized["attributes"].items() if not Attribute.isLinkExpression(v)}
-            # create a new node of the same type and with the same attributes values
-            node = self.addNewNode(serialized["nodeType"], **serialized["attributes"])
-        return node
-
-    def duplicateNodesFromNode(self, fromNode):
-        """
-        Duplicate 'fromNode' and all the following nodes towards graph's leaves.
-
-        Args:
-            fromNode (Node): the node to start the duplication from
-
-        Returns:
-            {Nodes: Node}: the source->duplicate nodes map
-        """
-        srcNodes, srcEdges = self._graph.nodesFromNode(fromNode)
-        duplicates = {}
-
-        with self.groupedGraphModification("Duplicate {} Nodes".format(len(srcNodes))):
-            # duplicate all nodes without edges and keep a 'source=>duplicate' map
-            for srcNode in srcNodes:
-                duplicate = self.duplicateNode(srcNode, createEdges=False)
-                duplicates[srcNode] = duplicate  # original node to duplicate map
-
-            # re-create edges taking into account what has been duplicated
-            for srcNode, duplicate in duplicates.items():
-                # get link attributes
-                links = {k: v for k, v in srcNode.toDict()["attributes"].items() if Attribute.isLinkExpression(v)}
-                for attr, link in links.items():
-                    link = link[1:-1]  # remove starting '{' and trailing '}'
-                    # get source node and attribute name
-                    edgeSrcNodeName, edgeSrcAttrName = link.split(".", 1)
-                    edgeSrcNode = self._graph.node(edgeSrcNodeName)
-                    # if the edge's source node has been duplicated, use the duplicate; otherwise use the original node
-                    edgeSrcNode = duplicates.get(edgeSrcNode, edgeSrcNode)
-                    self.addEdge(edgeSrcNode.attribute(edgeSrcAttrName), duplicate.attribute(attr))
-
-        return duplicates
-
-    @Slot(Node, result="QVariantList")
-    def duplicateNodes(self, fromNode):
-        """
-        Slot accessor to 'duplicateNodesFromNode'. Returns the list of created nodes, usable from QML.
-
-        Args:
-            fromNode (Node): node to start the duplication from
-
-        See Also: duplicateNodesFromNode
+            srcNode (Node): node to start the duplication from
+            duplicateFollowingNodes (bool): whether to duplicate all the following nodes to graph leaves
 
         Returns:
             [Nodes]: the list of duplicated nodes
         """
-        return self.duplicateNodesFromNode(fromNode).values()
+        return self.push(commands.DuplicateNodeCommand(self._graph, srcNode, duplicateFollowingNodes))
+
+    @Slot(CompatibilityNode)
+    def upgradeNode(self, node):
+        """ Upgrade a CompatibilityNode. """
+        self.push(commands.UpgradeNodeCommand(self._graph, node))
+
+    @Slot()
+    def upgradeAllNodes(self):
+        """ Upgrade all upgradable CompatibilityNode instances in the graph. """
+        with self.groupedGraphModification("Upgrade all Nodes"):
+            nodes = [n for n in self._graph._compatibilityNodes.values() if n.canUpgrade]
+            for node in nodes:
+                self.upgradeNode(node)
 
     @Slot(Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):

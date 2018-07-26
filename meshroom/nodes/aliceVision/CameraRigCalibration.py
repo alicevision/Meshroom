@@ -1,9 +1,10 @@
-import sys, os
+__version__ = "1.0"
+
+import os
 from meshroom.core import desc
 
 
 class CameraRigCalibration(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_rigCalibration {allParams}'
 
     inputs = [
@@ -164,7 +165,7 @@ class CameraRigCalibration(desc.CommandLineNode):
             name='outfile',
             label='Output File',
             description='''The name of the file where to store the calibration data''',
-            value='{cache}/{nodeType}/{uid0}/cameraRigCalibration.rigCal',
+            value=desc.Node.internalFolder + 'cameraRigCalibration.rigCal',
             uid=[],
             ),
     ]

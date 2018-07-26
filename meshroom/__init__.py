@@ -1,4 +1,6 @@
-from enum import Enum  # available by default in python3. For python2: "pip install enum34"
+__version__ = "2018.1"
+
+from enum import Enum
 
 class Backend(Enum):
     STANDALONE = 1

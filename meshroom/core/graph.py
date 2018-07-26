@@ -10,10 +10,12 @@ from contextlib import contextmanager
 
 from enum import Enum
 
+import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
-from meshroom.core.attribute import Attribute
-from meshroom.core.node import node_factory, Status
+from meshroom.core.attribute import Attribute, ListAttribute
+from meshroom.core.exception import StopGraphVisit, StopBranchVisit
+from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
 
 # Replace default encoder to support Enums
 
@@ -155,6 +157,17 @@ class Graph(BaseObject):
         edges = {B.input: A.output, C.input: B.output,}
 
     """
+    _cacheDir = ""
+
+    class IO(object):
+        """ Centralize Graph file keys and IO version. """
+        __version__ = "1.0"
+
+        Header = "header"
+        NodesVersions = "nodesVersions"
+        ReleaseVersion = "releaseVersion"
+        FileVersion = "fileVersion"
+        Graph = "graph"
 
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
@@ -163,12 +176,18 @@ class Graph(BaseObject):
         self._updateRequested = False
         self.dirtyTopology = False
         self._nodesMinMaxDepths = {}
+        self._computationBlocked = {}
+        self._canComputeLeaves = True
         self._nodes = DictModel(keyAttrName='name', parent=self)
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
-        self._cacheDir = meshroom.core.defaultCacheFolder
+        self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
+        self.cacheDir = meshroom.core.defaultCacheFolder
         self._filepath = ''
+        self.header = {}
 
     def clear(self):
+        self.header.clear()
+        self._compatibilityNodes.clear()
         self._nodes.clear()
         self._edges.clear()
 
@@ -176,9 +195,17 @@ class Graph(BaseObject):
     def load(self, filepath):
         self.clear()
         with open(filepath) as jsonFile:
-            graphData = json.load(jsonFile)
+            fileData = json.load(jsonFile)
+
+        # older versions of Meshroom files only contained the serialized nodes
+        graphData = fileData.get(Graph.IO.Graph, fileData)
+
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
+
+        self.header = fileData.get(Graph.IO.Header, {})
+        nodesVersions = self.header.get(Graph.IO.NodesVersions, {})
+        fileVersion = self.header.get(Graph.IO.FileVersion, "0.0")
 
         with GraphModification(self):
             # iterate over nodes sorted by suffix index in their names
@@ -186,10 +213,13 @@ class Graph(BaseObject):
                 if not isinstance(nodeData, dict):
                     raise RuntimeError('loadGraph error: Node is not a dict. File: {}'.format(filepath))
 
-                n = node_factory(nodeData['nodeType'],
-                                 # allow simple retro-compatibility, though cache might get invalidated
-                                 skipInvalidAttributes=True,
-                                 **nodeData['attributes'])
+                # retrieve version from
+                #   1. nodeData: node saved from a CompatibilityNode
+                #   2. nodesVersion in file header: node saved from a Node
+                #   3. fallback to no version "0.0": retro-compatibility
+                if "version" not in nodeData:
+                    nodeData["version"] = nodesVersions.get(nodeData["nodeType"], "0.0")
+                n = nodeFactory(nodeData, nodeName)
 
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
@@ -238,6 +268,86 @@ class Graph(BaseObject):
         with GraphModification(self):
             node._applyExpr()
         return node
+
+    def copyNode(self, srcNode, withEdges=False):
+        """
+        Get a copy instance of a node outside the graph.
+
+        Args:
+            srcNode (Node): the node to copy
+            withEdges (bool): whether to copy edges
+
+        Returns:
+            Node, dict: the created node instance,
+                        a dictionary of linked attributes with their original value (empty if withEdges is True)
+        """
+        with GraphModification(self):
+            # create a new node of the same type and with the same attributes values
+            # keep links as-is so that CompatibilityNodes attributes can be created with correct automatic description
+            # (File params for link expressions)
+            node = nodeFactory(srcNode.toDict(), srcNode.nodeType)  # use nodeType as name
+            # skip edges: filter out attributes which are links by resetting default values
+            skippedEdges = {}
+            if not withEdges:
+                for n, attr in node.attributes.items():
+                    # find top-level links
+                    if Attribute.isLinkExpression(attr.value):
+                        skippedEdges[attr] = attr.value
+                        attr.resetValue()
+                    # find links in ListAttribute children
+                    elif isinstance(attr, ListAttribute):
+                        for child in attr.value:
+                            if Attribute.isLinkExpression(child.value):
+                                skippedEdges[child] = child.value
+                                child.resetValue()
+        return node, skippedEdges
+
+    def duplicateNode(self, srcNode):
+        """ Duplicate a node in the graph with its connections.
+
+        Args:
+            srcNode: the node to duplicate
+
+        Returns:
+            Node: the created node
+        """
+        node, edges = self.copyNode(srcNode, withEdges=True)
+        return self.addNode(node)
+
+    def duplicateNodesFromNode(self, fromNode):
+        """
+        Duplicate 'fromNode' and all the following nodes towards graph's leaves.
+
+        Args:
+            fromNode (Node): the node to start the duplication from
+
+        Returns:
+            Dict[Node, Node]: the source->duplicate map
+        """
+        srcNodes, srcEdges = self.nodesFromNode(fromNode)
+        duplicates = {}
+
+        with GraphModification(self):
+            duplicateEdges = {}
+            # first, duplicate all nodes without edges and keep a 'source=>duplicate' map
+            # keeps tracks of non-created edges for later remap
+            for srcNode in srcNodes:
+                node, edges = self.copyNode(srcNode, withEdges=False)
+                duplicate = self.addNode(node)
+                duplicateEdges.update(edges)
+                duplicates[srcNode] = duplicate  # original node to duplicate map
+
+            # re-create edges taking into account what has been duplicated
+            for attr, linkExpression in duplicateEdges.items():
+                link = linkExpression[1:-1]  # remove starting '{' and trailing '}'
+                # get source node and attribute name
+                edgeSrcNodeName, edgeSrcAttrName = link.split(".", 1)
+                edgeSrcNode = self.node(edgeSrcNodeName)
+                # if the edge's source node has been duplicated, use the duplicate; otherwise use the original node
+                edgeSrcNode = duplicates.get(edgeSrcNode, edgeSrcNode)
+                self.addEdge(edgeSrcNode.attribute(edgeSrcAttrName), attr)
+
+        return duplicates
 
     def outEdges(self, attribute):
         """ Return the list of edges starting from the given attribute """
@@ -293,7 +403,7 @@ class Graph(BaseObject):
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 
-        n = self.addNode(node_factory(nodeType, False, **kwargs), uniqueName=name)
+        n = self.addNode(Node(nodeType, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 
@@ -307,6 +417,37 @@ class Graph(BaseObject):
 
     def node(self, nodeName):
         return self._nodes.get(nodeName)
+
+    def upgradeNode(self, nodeName):
+        """
+        Upgrade the CompatibilityNode identified as 'nodeName'
+        Args:
+            nodeName (str): the name of the CompatibilityNode to upgrade
+
+        Returns:
+            the list of deleted input/output edges
+        """
+        node = self.node(nodeName)
+        if not isinstance(node, CompatibilityNode):
+            raise ValueError("Upgrade is only available on CompatibilityNode instances.")
+        upgradedNode = node.upgrade()
+        with GraphModification(self):
+            inEdges, outEdges = self.removeNode(nodeName)
+            self.addNode(upgradedNode, nodeName)
+            for dst, src in outEdges.items():
+                try:
+                    self.addEdge(self.attribute(src), self.attribute(dst))
+                except (KeyError, ValueError) as e:
+                    logging.warning("Failed to restore edge {} -> {}: {}".format(src, dst, str(e)))
+
+        return inEdges, outEdges
+
+    def upgradeAllNodes(self):
+        """ Upgrade all upgradable CompatibilityNode instances in the graph. """
+        nodeNames = [name for name, n in self._compatibilityNodes.items() if n.canUpgrade]
+        with GraphModification(self):
+            for nodeName in nodeNames:
+                self.upgradeNode(nodeName)
 
     @Slot(str, result=Attribute)
     def attribute(self, fullName):
@@ -458,10 +599,19 @@ class Graph(BaseObject):
             assert not self.dirtyTopology
             nodes = sorted(nodes, key=lambda item: item.depth)
 
-        for node in nodes:
-            self.dfsVisit(node, visitor, colors, nodeChildren, longestPathFirst)
+        try:
+            for node in nodes:
+                self.dfsVisit(node, visitor, colors, nodeChildren, longestPathFirst)
+        except StopGraphVisit:
+            pass
 
     def dfsVisit(self, u, visitor, colors, nodeChildren, longestPathFirst):
+        try:
+            self._dfsVisit(u, visitor, colors, nodeChildren, longestPathFirst)
+        except StopBranchVisit:
+            pass
+
+    def _dfsVisit(self, u, visitor, colors, nodeChildren, longestPathFirst):
         colors[u] = GRAY
         visitor.discoverVertex(u, self)
         # d_time[u] = time = time + 1
@@ -500,13 +650,25 @@ class Graph(BaseObject):
 
     def dfsToProcess(self, startNodes=None):
         """
-        :param startNodes: list of starting nodes. Use all leaves if empty.
-        :return: visited nodes and edges that are not already computed (node.status != SUCCESS).
-                 The order is defined by the visit and finishVertex event.
+        Return the full list of predecessor nodes to process in order to compute the given nodes.
+
+        Args:
+            startNodes: list of starting nodes. Use all leaves if empty.
+
+        Returns:
+             visited nodes and edges that are not already computed (node.status != SUCCESS).
+             The order is defined by the visit and finishVertex event.
         """
         nodes = []
         edges = []
         visitor = Visitor()
+
+        def discoverVertex(vertex, graph):
+            if vertex.hasStatus(Status.SUCCESS):
+                # stop branch visit if discovering a node already computed
+                raise StopBranchVisit()
+            if self._computationBlocked[vertex]:
+                raise RuntimeError("Can't compute node '{}'".format(vertex.name))
 
         def finishVertex(vertex, graph):
             chunksToProcess = []
@@ -528,39 +690,89 @@ class Graph(BaseObject):
 
         visitor.finishVertex = finishVertex
         visitor.finishEdge = finishEdge
+        visitor.discoverVertex = discoverVertex
         self.dfs(visitor=visitor, startNodes=startNodes)
         return nodes, edges
 
-    def minMaxDepthPerNode(self, startNodes=None):
+    @Slot(Node, result=bool)
+    def canCompute(self, node):
         """
-        Compute the min and max depth for each node.
+        Return the computability of a node based on itself and its dependency chain.
+        Computation can't happen for:
+         - CompatibilityNodes
+         - nodes having a non-computed CompatibilityNode in its dependency chain
 
         Args:
-            startNodes: list of starting nodes. Use all leaves if empty.
+            node (Node): the node to evaluate
 
         Returns:
-            dict: {node: (minDepth, maxDepth)}
+            bool: whether the node can be computed
         """
-        depthPerNode = {}
-        for node in self.nodes:
-            depthPerNode[node] = (0, 0)
+        if isinstance(node, CompatibilityNode):
+            return False
+        return not self._computationBlocked[node]
 
+    def updateNodesTopologicalData(self):
+        """
+        Compute and cache nodes topological data:
+            - min and max depth
+            - computability
+        """
+
+        self._nodesMinMaxDepths.clear()
+        self._computationBlocked.clear()
+
+        compatNodes = []
         visitor = Visitor()
 
-        def finishEdge(edge, graph):
-            u, v = edge
-            du = depthPerNode[u]
-            dv = depthPerNode[v]
-            if du[0] == 0:
-                # if not initialized, set the depth of the first child
-                depthMin = dv[0] + 1
-            else:
-                depthMin = min(du[0], dv[0] + 1)
-            depthPerNode[u] = (depthMin, max(du[1], dv[1] + 1))
+        def discoverVertex(vertex, graph):
+            # initialize depths
+            self._nodesMinMaxDepths[vertex] = (0, 0)
+            # initialize computability
+            self._computationBlocked[vertex] = False
+            if isinstance(vertex, CompatibilityNode):
+                compatNodes.append(vertex)
+                # a not computed CompatibilityNode blocks computation
+                if not vertex.hasStatus(Status.SUCCESS):
+                    self._computationBlocked[vertex] = True
 
+        def finishEdge(edge, graph):
+            currentVertex, inputVertex = edge
+
+            # update depths
+            currentDepths = self._nodesMinMaxDepths[currentVertex]
+            inputDepths = self._nodesMinMaxDepths[inputVertex]
+            if currentDepths[0] == 0:
+                # if not initialized, set the depth of the first child
+                depthMin = inputDepths[0] + 1
+            else:
+                depthMin = min(currentDepths[0], inputDepths[0] + 1)
+            self._nodesMinMaxDepths[currentVertex] = (depthMin, max(currentDepths[1], inputDepths[1] + 1))
+
+            # update computability
+            if currentVertex.hasStatus(Status.SUCCESS):
+                # output is already computed and available,
+                # does not depend on input connections computability
+                return
+            # propagate inputVertex computability
+            self._computationBlocked[currentVertex] |= self._computationBlocked[inputVertex]
+
+        leaves = self.getLeaves()
         visitor.finishEdge = finishEdge
-        self.dfs(visitor=visitor, startNodes=startNodes)
-        return depthPerNode
+        visitor.discoverVertex = discoverVertex
+        self.dfs(visitor=visitor, startNodes=leaves)
+
+        # update graph computability status
+        canComputeLeaves = all([self.canCompute(node) for node in leaves])
+        if self._canComputeLeaves != canComputeLeaves:
+            self._canComputeLeaves = canComputeLeaves
+            self.canComputeLeavesChanged.emit()
+
+        # update compatibilityNodes model
+        if len(self._compatibilityNodes) != len(compatNodes):
+            self._compatibilityNodes.reset(compatNodes)
+
+    compatibilityNodes = Property(BaseObject, lambda self: self._compatibilityNodes, constant=True)
 
     def dfsMaxEdgeLength(self, startNodes=None):
         """
@@ -642,10 +854,25 @@ class Graph(BaseObject):
         return str(self.toDict())
 
     def save(self, filepath=None):
-        data = self.toDict()
         path = filepath or self._filepath
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
+
+        self.header[Graph.IO.ReleaseVersion] = meshroom.__version__
+        self.header[Graph.IO.FileVersion] = Graph.IO.__version__
+
+        # store versions of node types present in the graph (excluding CompatibilityNode instances)
+        usedNodeTypes = set([n.nodeDesc.__class__ for n in self._nodes if isinstance(n, Node)])
+
+        self.header[Graph.IO.NodesVersions] = {
+            "{}".format(p.__name__): meshroom.core.nodeVersion(p, "0.0")
+            for p in usedNodeTypes
+        }
+
+        data = {
+            Graph.IO.Header: self.header,
+            Graph.IO.Graph: self.toDict()
+        }
 
         with open(path, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
@@ -693,17 +920,17 @@ class Graph(BaseObject):
             self._updateRequested = True
             return
 
-        # Graph topology has changed
-        if self.dirtyTopology:
-            # Update nodes depths cache
-            self._nodesMinMaxDepths = self.minMaxDepthPerNode()
-            self.dirtyTopology = False
-
         self.updateInternals()
         if os.path.exists(self._cacheDir):
             self.updateStatusFromCache()
         for node in self.nodes:
             node.dirty = False
+
+        # Graph topology has changed
+        if self.dirtyTopology:
+            # update nodes topological data cache
+            self.updateNodesTopologicalData()
+            self.dirtyTopology = False
 
         self.updated.emit()
 
@@ -779,7 +1006,8 @@ class Graph(BaseObject):
     def cacheDir(self, value):
         if self._cacheDir == value:
             return
-        self._cacheDir = value
+        # use unix-style paths for cache directory
+        self._cacheDir = value.replace(os.path.sep, "/")
         self.updateInternals(force=True)
         self.updateStatusFromCache(force=True)
         self.cacheDirChanged.emit()
@@ -788,9 +1016,12 @@ class Graph(BaseObject):
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
+    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.ReleaseVersion, "0.0"), notify=filepathChanged)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
     updated = Signal()
+    canComputeLeavesChanged = Signal()
+    canComputeLeaves = Property(bool, lambda self: self._canComputeLeaves, notify=canComputeLeavesChanged)
 
 
 def loadGraph(filepath):

@@ -6,7 +6,8 @@ from PySide2.QtCore import QObject, Slot, Property, Signal
 
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
-from meshroom.core.node import Node, node_factory, Status
+from meshroom.core import Version
+from meshroom.core.node import Node, Status
 from meshroom.ui.graph import UIGraph
 
 
@@ -190,6 +191,14 @@ class Reconstruction(UIGraph):
     def load(self, filepath):
         try:
             super(Reconstruction, self).load(filepath)
+            # warn about pre-release projects being automatically upgraded
+            if Version(self._graph.fileReleaseVersion).major == "0":
+                self.warning.emit(Message(
+                    "Automatic project upgrade",
+                    "This project was created with an older version of Meshroom and has been automatically upgraded.\n"
+                    "Data might have been lost in the process.",
+                    "Open it with the corresponding version of Meshroom to recover your data."
+                ))
         except Exception as e:
             self.error.emit(
                 Message(
@@ -356,8 +365,8 @@ class Reconstruction(UIGraph):
         # If cameraInit is None (i.e: SfM augmentation):
         #   * create an uninitialized node
         #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
-        attributes = cameraInit.toDict()["attributes"] if cameraInit else {}
-        cameraInitCopy = node_factory("CameraInit", **attributes)
+        inputs = cameraInit.toDict()["inputs"] if cameraInit else {}
+        cameraInitCopy = Node("CameraInit", **inputs)
 
         try:
             self.setBuildingIntrinsics(True)

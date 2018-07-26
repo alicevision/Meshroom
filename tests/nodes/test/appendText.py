@@ -26,7 +26,7 @@ class AppendText(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''''',
-            value='{cache}/{nodeType}/{uid0}/appendText.txt',
+            value=desc.Node.internalFolder + 'appendText.txt',
             uid=[],
         ),
     ]

@@ -1,8 +1,9 @@
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 
 class ExportMaya(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_exportMayaMVG {allParams}'
 
     inputs = [
@@ -20,7 +21,7 @@ class ExportMaya(desc.CommandLineNode):
             name='output',
             label='Output Folder',
             description='Folder for MeshroomMaya outputs: undistorted images and thumbnails.',
-            value='{cache}/{nodeType}/{uid0}/',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
     ]

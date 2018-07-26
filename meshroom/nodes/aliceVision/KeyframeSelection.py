@@ -1,9 +1,10 @@
-import sys, os
+__version__ = "1.0"
+
+import os
 from meshroom.core import desc
 
 
 class KeyframeSelection(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_utils_keyframeSelection {allParams}'
 
     inputs = [
@@ -106,7 +107,7 @@ class KeyframeSelection(desc.CommandLineNode):
             name='outputFolder',
             label='Output Folder',
             description='''Output keyframes folder for extracted frames.''',
-            value='{cache}/{nodeType}/{uid0}/',
+            value=desc.Node.internalFolder,
             uid=[],
             ),
     ]

@@ -1,9 +1,9 @@
-import sys
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 
 class FeatureMatching(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_featureMatching {allParams}'
     size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=20)
@@ -144,7 +144,7 @@ class FeatureMatching(desc.CommandLineNode):
             name='output',
             label='Output Folder',
             description='Path to a folder in which computed matches will be stored.',
-            value='{cache}/{nodeType}/{uid0}/',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
     ]

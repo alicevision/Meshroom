@@ -11,6 +11,8 @@ import uuid
 import logging
 import pkgutil
 
+import sys
+
 from meshroom.core.submitter import BaseSubmitter
 from . import desc
 
@@ -22,7 +24,6 @@ sessionUid = str(uuid.uuid1())
 
 cacheFolderName = 'MeshroomCache'
 defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))
-defaultCacheFolder = defaultCacheFolder.replace("\\", "/")
 nodesDesc = {}
 submitters = {}
 
@@ -49,7 +50,7 @@ def loadPlugins(folder, packageName, classType):
     """
     """
 
-    nodeTypes = []
+    pluginTypes = []
     errors = []
 
     # temporarily add folder to python path
@@ -60,26 +61,146 @@ def loadPlugins(folder, packageName, classType):
         packageVersion = getattr(package, "__version__", None)
 
         for importer, pluginName, ispkg in pkgutil.iter_modules(package.__path__):
-            pluginModule = '.' + pluginName
+            pluginModuleName = '.' + pluginName
 
             try:
-                pMod = importlib.import_module(pluginModule, package=package.__name__)
-                p = [m for name, m in inspect.getmembers(pMod, inspect.isclass)
-                     if m.__module__ == '{}.{}'.format(package.__name__, pluginName) and issubclass(m, classType)]
-                if not p:
-                    raise RuntimeError('No class defined in plugin: %s' % pluginModule)
-                for a in p:
-                    a.packageName = packageName
-                    a.packageVersion = packageVersion
-                nodeTypes.extend(p)
+                pluginMod = importlib.import_module(pluginModuleName, package=package.__name__)
+                plugins = [plugin for name, plugin in inspect.getmembers(pluginMod, inspect.isclass)
+                           if plugin.__module__ == '{}.{}'.format(package.__name__, pluginName)
+                           and issubclass(plugin, classType)]
+                if not plugins:
+                    logging.warning("No class defined in plugin: {}".format(pluginModuleName))
+                for p in plugins:
+                    p.packageName = packageName
+                    p.packageVersion = packageVersion
+                pluginTypes.extend(plugins)
             except Exception as e:
                 errors.append('  * {}: {}'.format(pluginName, str(e)))
 
     if errors:
-        logging.warning('== Error while loading the following plugins ==\n'
+        logging.warning('== The following plugins could not be loaded ==\n'
                         '{}\n'
                         .format('\n'.join(errors)))
-    return nodeTypes
+    return pluginTypes
+
+
+class Version(object):
+    """
+    Version provides convenient properties and methods to manipulate and compare version names.
+    """
+    def __init__(self, versionName):
+        """
+        Args:
+            versionName (str): the name of the version as a string
+        """
+        self.name = versionName
+        self.components = Version.toComponents(self.name)
+
+    def __repr__(self):
+        return self.name
+
+    def __neg__(self):
+        return not self.name
+
+    def __len__(self):
+        return len(self.components)
+
+    def __eq__(self, other):
+        """
+        Test equality between 'self' with 'other'.
+
+        Args:
+            other (Version): the version to compare to
+
+        Returns:
+            bool: whether the versions are equal
+        """
+        return self.name == other.name
+
+    def __lt__(self, other):
+        """
+        Test 'self' inferiority to 'other'.
+
+        Args:
+            other (Version): the version to compare to
+
+        Returns:
+            bool: whether self is inferior to other
+        """
+        # sequence comparison works natively for this use-case
+        return self.name < other.name
+
+    def __le__(self, other):
+        """
+        Test 'self' inferiority or equality to 'other'.
+
+        Args:
+            other (Version): the version to compare to
+
+        Returns:
+            bool: whether self is inferior or equal to other
+        """
+        return self.name <= other.name
+
+    @staticmethod
+    def toComponents(versionName):
+        """
+        Split 'versionName' as a tuple of individual components.
+
+        Args:
+            versionName (str): version name
+
+        Returns:
+            tuple of str: split version numbers
+        """
+        if not versionName:
+            return ()
+        return tuple(versionName.split("."))
+
+    @property
+    def major(self):
+        """ Version major number. """
+        return self.components[0]
+
+    @property
+    def minor(self):
+        """ Version minor number. """
+        if len(self) < 2:
+            return ""
+        return self.components[1]
+
+    @property
+    def micro(self):
+        """ Version micro number. """
+        if len(self) < 3:
+            return ""
+        return self.components[2]
+
+
+def moduleVersion(moduleName, default=None):
+    """ Return the version of a module indicated with '__version__' keyword.
+
+    Args:
+        moduleName (str): the name of the module to get the version of
+        default: the value to return if no version info is available
+
+    Returns:
+        str: the version of the module
+    """
+    return getattr(sys.modules[moduleName], "__version__", default)
+
+
+def nodeVersion(nodeDesc, default=None):
+    """ Return node type version for the given node description class.
+
+    Args:
+        nodeDesc (desc.Node): the node description class
+        default: the value to return if no version info is available
+
+    Returns:
+        str: the version of the node type
+    """
+    return moduleVersion(nodeDesc.__module__, default)
 
 
 def registerNodeType(nodeType):
@@ -91,6 +212,13 @@ def registerNodeType(nodeType):
     if nodeType.__name__ in nodesDesc:
         raise RuntimeError("Node Desc {} is already registered.".format(nodeType.__name__))
     nodesDesc[nodeType.__name__] = nodeType
+
+
+def unregisterNodeType(nodeType):
+    """ Remove 'nodeType' from the list of register node types. """
+    global nodesDesc
+    assert nodeType.__name__ in nodesDesc
+    del nodesDesc[nodeType.__name__]
 
 
 def loadNodes(folder, packageName):

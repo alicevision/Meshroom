@@ -1,9 +1,10 @@
-import sys, os
+__version__ = "1.0"
+
+import os
 from meshroom.core import desc
 
 
 class CameraRigLocalization(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_rigLocalization {allParams}'
 
     inputs = [
@@ -171,7 +172,7 @@ class CameraRigLocalization(desc.CommandLineNode):
             name='outputAlembic',
             label='Output Alembic',
             description='''Filename for the SfMData export file (where camera poses will be stored).''',
-            value='{cache}/{nodeType}/{uid0}/trackedcameras.abc',
+            value=desc.Node.internalFolder + 'trackedcameras.abc',
             uid=[],
             ),
     ]

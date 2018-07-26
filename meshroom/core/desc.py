@@ -41,7 +41,7 @@ class ListAttribute(Attribute):
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group)
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
@@ -61,7 +61,7 @@ class GroupAttribute(Attribute):
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value=None, uid=(), group=group)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
@@ -350,7 +350,6 @@ class Node(object):
 class CommandLineNode(Node):
     """
     """
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = ''  # need to be defined on the node
     parallelization = None
     commandLineRange = ''
@@ -369,6 +368,10 @@ class CommandLineNode(Node):
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
     def stopProcess(self, chunk):
+        # the same node could exists several times in the graph and
+        # only one would have the running subprocess; ignore all others
+        if not hasattr(chunk, "subprocess"):
+            return
         if chunk.subprocess:
             # kill process tree
             processes = chunk.subprocess.children(recursive=True) + [chunk.subprocess]

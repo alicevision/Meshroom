@@ -1,7 +1,8 @@
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 class ExportUndistortedImages(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_exportUndistortedImages {allParams}'
 
     inputs = [
@@ -37,7 +38,7 @@ class ExportUndistortedImages(desc.CommandLineNode):
             name='output',
             label='Output Folder',
             description='Output folder for the undistorted images.',
-            value='{cache}/{nodeType}/{uid0}/',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
     ]

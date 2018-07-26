@@ -214,8 +214,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self.extend(objects)
 
     def reset(self, objects):
-        self.clear()
-        self.update(objects)
+        self.setObjectList(objects)
 
     def contains(self, obj):
         """ Returns true if the list contains an occurrence of object;

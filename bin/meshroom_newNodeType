@@ -94,7 +94,6 @@ from meshroom.core import desc
 
 
 class __COMMANDNAME__(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = '__SOFT__ {allParams}'
 '''.replace('__COMMANDNAME__', args.node).replace('__SOFT__', soft)
 

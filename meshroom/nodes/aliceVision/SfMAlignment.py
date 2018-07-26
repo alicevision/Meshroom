@@ -1,10 +1,9 @@
-import sys
-import os
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 
 class SfMAlignment(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_utils_sfmAlignment {allParams}'
     size = desc.DynamicNodeSize('input')
 
@@ -39,7 +38,7 @@ class SfMAlignment(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''Aligned SfMData file .''',
-            value='{cache}/{nodeType}/{uid0}/alignedSfM.abc',
+            value=desc.Node.internalFolder + 'alignedSfM.abc',
             uid=[],
         ),
     ]

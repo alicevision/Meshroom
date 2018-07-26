@@ -6,13 +6,12 @@ from meshroom.core import desc, registerNodeType
 
 class SampleNode(desc.Node):
     """ Sample Node for unit testing """
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     inputs = [
         desc.File(name='input', label='Input', description='', value='', uid=[0],),
         desc.StringParam(name='paramA', label='ParamA', description='', value='', uid=[])  # No impact on UID
     ]
     outputs = [
-        desc.File(name='output', label='Output', description='', value='{cache}/{nodeType}/{uid0}/', uid=[])
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
     ]
 
 

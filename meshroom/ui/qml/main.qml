@@ -9,6 +9,7 @@ import Qt.labs.settings 1.0
 import GraphEditor 1.0
 import MaterialIcons 2.2
 import Utils 1.0
+import Controls 1.0
 
 ApplicationWindow {
     id: _window
@@ -16,7 +17,14 @@ ApplicationWindow {
     width: 1280
     height: 720
     visible: true
-    title: (_reconstruction.graph.filepath ? _reconstruction.graph.filepath : "Untitled") + (_reconstruction.undoStack.clean ? "" : "*") + " - Meshroom"
+
+    title: {
+        var t = _reconstruction.graph.filepath || "Untitled"
+        if(!_reconstruction.undoStack.clean)
+            t += "*"
+        t += " - " + Qt.application.name + " " + Qt.application.version
+        return t
+    }
 
     property variant node: null
     // supported 3D files extensions
@@ -44,17 +52,20 @@ ApplicationWindow {
         property alias showGraphEditor: graphEditorVisibilityCB.checked
     }
 
-    Dialog {
+    MessageDialog {
         id: unsavedDialog
 
         property var _callback: undefined
 
-        title: "Unsaved Document"
-        modal: true
-        x: parent.width/2 - width/2
-        y: parent.height/2 - height/2
+        title: Filepath.basename(_reconstruction.graph.filepath) || "Unsaved Project"
+        icon.text: MaterialIcons.info
+        text: _reconstruction.graph.filepath ? "Current project has unsaved modifications."
+                                             : "Current project has not been saved."
+        helperText: _reconstruction.graph.filepath ? "Would you like to save those changes ?"
+                                                   : "Would you like to save this project ?"
+
         standardButtons: Dialog.Save | Dialog.Cancel | Dialog.Discard
-        padding: 15
+
         onDiscarded: {
             close() // BUG ? discard does not close window
             fireCallback()
@@ -94,10 +105,6 @@ ApplicationWindow {
         {
             _callback = callback
             open()
-        }
-
-        Label {
-            text: "Your current Graph is not saved"
         }
     }
 
@@ -197,6 +204,12 @@ ApplicationWindow {
 
     DialogsFactory {
         id: dialogsFactory
+    }
+
+    CompatibilityManager {
+        id: compatibilityManager
+        uigraph: _reconstruction
+        onUpgradeDone: graphEditor.doAutoLayout()
     }
 
     Action {
@@ -313,10 +326,17 @@ ApplicationWindow {
             dialog.detailedText = message.detailedText
         }
 
+        onGraphChanged: {
+            // open CompatibilityManager after file loading if any issue is detected
+            if(compatibilityManager.issueCount)
+                compatibilityManager.open()
+        }
+
         onInfo: createDialog(dialogsFactory.info, arguments[0])
         onWarning: createDialog(dialogsFactory.warning, arguments[0])
         onError: createDialog(dialogsFactory.error, arguments[0])
     }
+
 
     Controls1.SplitView {
         anchors.fill: parent
@@ -331,31 +351,62 @@ ApplicationWindow {
             Layout.topMargin: 2
             implicitHeight: Math.round(parent.height * 0.7)
             spacing: 4
-            Row {
-                enabled: !_reconstruction.computingExternally
-                Layout.alignment: Qt.AlignHCenter
+            RowLayout {
+                Layout.rightMargin: 4
+                Layout.leftMargin: 4
+                Layout.fillHeight: false
+                Item { Layout.fillWidth: true }
 
-                Button {
-                    property color buttonColor: Qt.darker("#4CAF50", 1.8)
-                    text: "Start"
-                    palette.button: enabled ? buttonColor : disabledPalette.button
-                    palette.window: enabled ? buttonColor : disabledPalette.window
-                    palette.buttonText: enabled ? "white" : disabledPalette.buttonText
-                    enabled: _reconstruction.viewpoints.count > 2 && !_reconstruction.computing
-                    onClicked: _reconstruction.execute(null)
+                Row {
+                    // evaluate if global reconstruction computation can be started
+                    property bool canStartComputation: _reconstruction.viewpoints.count >= 2      // at least 2 images
+                                                       && !_reconstruction.computing              // computation is not started
+                                                       && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
+
+                    // evaluate if graph computation can be submitted externally
+                    property bool canSubmit: canStartComputation                                  // can be computed
+                                             && _reconstruction.graph.filepath                    // graph is saved on disk
+
+                    // disable controls if graph is executed externally
+                    enabled: !_reconstruction.computingExternally
+                    Layout.alignment: Qt.AlignHCenter
+
+                    Button {
+                        property color buttonColor: Qt.darker("#4CAF50", 1.8)
+                        text: "Start"
+                        palette.button: enabled ? buttonColor : disabledPalette.button
+                        palette.window: enabled ? buttonColor : disabledPalette.window
+                        palette.buttonText: enabled ? "white" : disabledPalette.buttonText
+                        enabled: parent.canStartComputation
+                        onClicked: _reconstruction.execute(null)
+                    }
+                    Button {
+                        text: "Stop"
+                        enabled: _reconstruction.computingLocally
+                        onClicked: _reconstruction.stopExecution()
+                    }
+                    Item { width: 20; height: 1 }
+                    Button {
+                        enabled: parent.canSubmit
+                        text: "Submit"
+                        onClicked: _reconstruction.submit(null)
+                    }
                 }
-                Button {
-                    text: "Stop"
-                    enabled: _reconstruction.computingLocally
-                    onClicked: _reconstruction.stopExecution()
-                }
-                Item { width: 20; height: 1 }
-                Button {
-                    enabled: _reconstruction.viewpoints.count > 2 && !_reconstruction.computing  && _reconstruction.graph.filepath != ""
-                    text: "Submit"
-                    onClicked: _reconstruction.submit(null)
+                Item { Layout.fillWidth: true; Layout.fillHeight: true }
+
+                // CompatibilityManager indicator
+                ToolButton {
+                    visible: compatibilityManager.issueCount
+                    text: MaterialIcons.warning
+                    font.family: MaterialIcons.fontFamily
+                    palette.buttonText: "#FF9800"
+                    font.pointSize: 12
+                    onClicked: compatibilityManager.open()
+                    ToolTip.text: "Compatibility Issues"
+                    ToolTip.visible: hovered
                 }
             }
+
             Label {
                 text: "Graph is being computed externally"
                 font.italic: true
@@ -381,6 +432,7 @@ ApplicationWindow {
                 onRequestGraphAutoLayout: graphEditor.doAutoLayout()
             }
         }
+
         Panel {
             Layout.fillWidth: true
             Layout.fillHeight: false
@@ -435,6 +487,14 @@ ApplicationWindow {
                                 node: graphEditor.selectedNode
                                 // Make AttributeEditor readOnly when computing
                                 readOnly: _reconstruction.computing
+
+                                onUpgradeRequest: {
+                                    var delegate = graphEditor.nodeDelegate(node.name)
+                                    var posX = delegate.x
+                                    var posY = delegate.y
+                                    _reconstruction.upgradeNode(node)
+                                    graphEditor.moveNode(node.name, posX, posY)
+                                }
                             }
                         }
                     }

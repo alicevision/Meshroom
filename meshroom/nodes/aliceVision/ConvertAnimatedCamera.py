@@ -1,9 +1,9 @@
-import sys
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 
 class ConvertAnimatedCamera(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_convertAnimatedCamera {allParams}'
 
     inputs = [
@@ -21,7 +21,7 @@ class ConvertAnimatedCamera(desc.CommandLineNode):
             name='output',
             label='Output',
             description='Path to the output Alembic file.',
-            value='{cache}/{nodeType}/{uid0}/animatedCamera.abc',
+            value=desc.Node.internalFolder + 'animatedCamera.abc',
             uid=[],
             ),
     ]

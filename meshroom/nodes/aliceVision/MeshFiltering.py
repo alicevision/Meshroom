@@ -1,9 +1,9 @@
-import sys
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 
 class MeshFiltering(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_meshFiltering {allParams}'
 
     inputs = [
@@ -61,7 +61,7 @@ class MeshFiltering(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''Output mesh (OBJ file format).''',
-            value='{cache}/{nodeType}/{uid0}/mesh.obj',
+            value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],
             ),
     ]

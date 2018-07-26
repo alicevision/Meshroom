@@ -1,9 +1,9 @@
-import sys
+__version__ = "1.0"
+
 from meshroom.core import desc
 
 
 class CameraCalibration(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_cameraCalibration {allParams}'
 
     inputs = [
@@ -121,7 +121,7 @@ class CameraCalibration(desc.CommandLineNode):
             name='output',
             label='Output',
             description='''Output filename for intrinsic [and extrinsic] parameters.''',
-            value='{cache}/{nodeType}/{uid0}/cameraCalibration.cal',
+            value=desc.Node.internalFolder + '/cameraCalibration.cal',
             uid=[],
             ),
     ]

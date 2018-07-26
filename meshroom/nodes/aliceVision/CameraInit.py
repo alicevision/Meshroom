@@ -1,9 +1,10 @@
+__version__ = "1.0"
+
 import os
 import json
 import psutil
 import shutil
 import tempfile
-import logging
 
 from meshroom.core import desc
 
@@ -11,7 +12,7 @@ from meshroom.core import desc
 Viewpoint = [
     desc.IntParam(name="viewId", label="Id", description="Image UID", value=-1, uid=[0], range=(0, 200, 1)),
     desc.IntParam(name="poseId", label="Pose Id", description="Pose Id", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.File(name="path", label="Image Path", description="Image Filepath", value="", uid=[0, 1]),
+    desc.File(name="path", label="Image Path", description="Image Filepath", value="", uid=[0]),
     desc.IntParam(name="intrinsicId", label="Intrinsic", description="Internal Camera Parameters", value=-1, uid=[0], range=(0, 200, 1)),
     desc.IntParam(name="rigId", label="Rig", description="Rig Parameters", value=-1, uid=[0], range=(0, 200, 1)),
     desc.IntParam(name="subPoseId", label="Rig Sub-Pose", description="Rig Sub-Pose Parameters", value=-1, uid=[0], range=(0, 200, 1)),
@@ -43,7 +44,6 @@ Intrinsic = [
 
 
 class CameraInit(desc.CommandLineNode):
-    internalFolder = '{cache}/{nodeType}/{uid0}/'
     commandLine = 'aliceVision_cameraInit {allParams} --allowSingleView 1' # don't throw an error if there is only one image
 
     size = desc.DynamicNodeSize('viewpoints')
@@ -94,7 +94,7 @@ class CameraInit(desc.CommandLineNode):
             name='output',
             label='Output SfMData File',
             description='''Output SfMData.''',
-            value='{cache}/{nodeType}/{uid0}/cameraInit.sfm',
+            value=desc.Node.internalFolder + 'cameraInit.sfm',
             uid=[],
         ),
     ]
@@ -110,15 +110,11 @@ class CameraInit(desc.CommandLineNode):
             The updated views and intrinsics as two separate lists
         """
         assert isinstance(node.nodeDesc, CameraInit)
-        origCmdVars = node._cmdVars.copy()
-        # Python3: with tempfile.TemporaryDirectory(prefix="Meshroom_CameraInit") as tmpCache
+        assert node.graph is None
+
         tmpCache = tempfile.mkdtemp()
-        localCmdVars = {
-            'cache': tmpCache,
-            'nodeType': node.nodeType,
-        }
-        node._buildCmdVars(localCmdVars)
-        node._cmdVars = localCmdVars
+        node.updateInternals(tmpCache)
+
         try:
             os.makedirs(os.path.join(tmpCache, node.internalFolder))
             self.createViewpointsFile(node, additionalViews)
@@ -158,8 +154,6 @@ class CameraInit(desc.CommandLineNode):
         except Exception:
             raise
         finally:
-            node._cmdVars = origCmdVars
-            node._buildCmdVars(localCmdVars)
             shutil.rmtree(tmpCache)
 
     def createViewpointsFile(self, node, additionalViews=()):
@@ -185,7 +179,7 @@ class CameraInit(desc.CommandLineNode):
                 "featureFolder": "",
                 "matchingFolder": "",
             }
-            node.viewpointsFile = '{cache}/{nodeType}/{uid0}/viewpoints.sfm'.format(**node._cmdVars)
+            node.viewpointsFile = (node.nodeDesc.internalFolder + '/viewpoints.sfm').format(**node._cmdVars)
             with open(node.viewpointsFile, 'w') as f:
                 json.dump(sfmData, f, indent=4)
 

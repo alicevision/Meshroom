@@ -8,7 +8,7 @@ from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, Di
 from meshroom.core import desc, pyCompatibility, hashValue
 
 
-def attribute_factory(description, value, isOutput, node, root=None, parent=None):
+def attributeFactory(description, value, isOutput, node, root=None, parent=None):
     """
     Create an Attribute based on description type.
 
@@ -269,7 +269,7 @@ class ListAttribute(Attribute):
     @raiseIfLink
     def insert(self, index, value):
         values = value if isinstance(value, list) else [value]
-        attrs = [attribute_factory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
+        attrs = [attributeFactory(self.attributeDesc.elementDesc, v, self.isOutput, self.node, self) for v in values]
         self._value.insert(index, attrs)
         self.valueChanged.emit()
         self._applyExpr()
@@ -347,7 +347,7 @@ class GroupAttribute(Attribute):
 
         subAttributes = []
         for subAttrDesc in self.attributeDesc.groupDesc:
-            childAttr = attribute_factory(subAttrDesc, None, self.isOutput, self.node, self)
+            childAttr = attributeFactory(subAttrDesc, None, self.isOutput, self.node, self)
             subAttributes.append(childAttr)
             childAttr.valueChanged.connect(self.valueChanged)
 

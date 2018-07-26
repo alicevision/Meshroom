@@ -189,7 +189,7 @@ class Graph(BaseObject):
                 fileVersion (str, Version): the file version
 
             Returns:
-                list of Graph.IO.Features: the list of supported features
+                tuple of Graph.IO.Features: the list of supported features
             """
             if isinstance(fileVersion, str):
                 fileVersion = Version(fileVersion)
@@ -202,7 +202,7 @@ class Graph(BaseObject):
                              ]
             if fileVersion >= Version("1.1"):
                 features += [Graph.IO.Features.NodesPositions]
-            return features
+            return tuple(features)
 
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)

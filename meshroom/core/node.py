@@ -11,7 +11,7 @@ import re
 import shutil
 import time
 import uuid
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from enum import Enum
 
 import meshroom
@@ -301,6 +301,12 @@ class NodeChunk(BaseObject):
     statisticsFile = Property(str, statisticsFile.fget, notify=nodeFolderChanged)
 
 
+# simple structure for storing node position
+Position = namedtuple("Position", ["x", "y"])
+# initialize default coordinates values to 0
+Position.__new__.__defaults__ = (0,) * len(Position._fields)
+
+
 class BaseNode(BaseObject):
     """
     Base Abstract class for Graph nodes.
@@ -310,7 +316,7 @@ class BaseNode(BaseObject):
     # i.e: a.b, a[0], a[0].b.c[1]
     attributeRE = re.compile(r'\.?(?P<name>\w+)(?:\[(?P<index>\d+)\])?')
 
-    def __init__(self, nodeType, parent=None, **kwargs):
+    def __init__(self, nodeType, position=None, parent=None, **kwargs):
         """
         Create a new Node instance based on the given node description.
         Any other keyword argument will be used to initialize this node's attributes.
@@ -338,6 +344,7 @@ class BaseNode(BaseObject):
         self._uids = dict()
         self._cmdVars = {}
         self._size = 0
+        self._position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
 
@@ -392,6 +399,23 @@ class BaseNode(BaseObject):
     @property
     def nodeType(self):
         return self._nodeType
+
+    @property
+    def position(self):
+        """ Get node position. """
+        return self._position
+
+    @position.setter
+    def position(self, value):
+        """ Set node position.
+
+        Args:
+            value (Position): target position
+        """
+        if self._position == value:
+            return
+        self._position = value
+        self.positionChanged.emit()
 
     @property
     def depth(self):
@@ -592,6 +616,10 @@ class BaseNode(BaseObject):
 
     name = Property(str, getName, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
+    positionChanged = Signal()
+    position = Property(Variant, position.fget, position.fset, notify=positionChanged)
+    x = Property(float, lambda self: self._position.x, notify=positionChanged)
+    y = Property(float, lambda self: self._position.y, notify=positionChanged)
     attributes = Property(BaseObject, getAttributes, constant=True)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
@@ -608,8 +636,8 @@ class Node(BaseNode):
     """
     A standard Graph node based on a node type.
     """
-    def __init__(self, nodeType, parent=None, **kwargs):
-        super(Node, self).__init__(nodeType, parent, **kwargs)
+    def __init__(self, nodeType, position=None, parent=None, **kwargs):
+        super(Node, self).__init__(nodeType, position, parent, **kwargs)
 
         if not self.nodeDesc:
             raise UnknownNodeTypeError(nodeType)
@@ -691,8 +719,8 @@ class CompatibilityNode(BaseNode):
     CompatibilityNode creates an 'empty-shell' exposing the deserialized node as-is,
     with all its inputs and precomputed outputs.
     """
-    def __init__(self, nodeType, nodeDict, issue=CompatibilityIssue.UnknownIssue, parent=None):
-        super(CompatibilityNode, self).__init__(nodeType, parent)
+    def __init__(self, nodeType, nodeDict, position=None, issue=CompatibilityIssue.UnknownIssue, parent=None):
+        super(CompatibilityNode, self).__init__(nodeType, position, parent)
 
         self.issue = issue
         # make a deepcopy of nodeDict to handle CompatibilityNode duplication
@@ -870,7 +898,8 @@ class CompatibilityNode(BaseNode):
         if not self.canUpgrade:
             raise NodeUpgradeError(self.name, "no matching node type")
         # TODO: use upgrade method of node description if available
-        return Node(self.nodeType, **{key: value for key, value in self.inputs.items() if key in self._commonInputs})
+        return Node(self.nodeType, position=self.position,
+                    **{key: value for key, value in self.inputs.items() if key in self._commonInputs})
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)

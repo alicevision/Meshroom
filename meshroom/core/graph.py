@@ -426,13 +426,14 @@ class Graph(BaseObject):
 
         return inEdges, outEdges
 
-    def addNewNode(self, nodeType, name=None, **kwargs):
+    def addNewNode(self, nodeType, name=None, position=None, **kwargs):
         """
         Create and add a new node to the graph.
 
         Args:
             nodeType (str): the node type name.
             name (str): if specified, the desired name for this node. If not unique, will be prefixed (_N).
+            position (Position): (optional) the position of the node
             **kwargs: keyword arguments to initialize node's attributes
 
         Returns:
@@ -441,7 +442,7 @@ class Graph(BaseObject):
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 
-        n = self.addNode(Node(nodeType, **kwargs), uniqueName=name)
+        n = self.addNode(Node(nodeType, position=position, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 

@@ -13,6 +13,7 @@ from enum import Enum
 import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
+from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.exception import StopGraphVisit, StopBranchVisit
 from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
@@ -172,6 +173,33 @@ class Graph(BaseObject):
             FileVersion = "fileVersion"
             Graph = "graph"
 
+        class Features(Enum):
+            """ File Features. """
+            Graph = "graph"
+            Header = "header"
+            NodesVersions = "nodesVersions"
+            PrecomputedOutputs = "precomputedOutputs"
+
+        @staticmethod
+        def getFeaturesForVersion(fileVersion):
+            """ Return the list of supported features based on a file version.
+
+            Args:
+                fileVersion (str, Version): the file version
+
+            Returns:
+                list of Graph.IO.Features: the list of supported features
+            """
+            if isinstance(fileVersion, str):
+                fileVersion = Version(fileVersion)
+
+            features = [Graph.IO.Features.Graph]
+            if fileVersion >= Version("1.0"):
+                features += [Graph.IO.Features.Header,
+                             Graph.IO.Features.NodesVersions,
+                             Graph.IO.Features.PrecomputedOutputs,
+                             ]
+            return features
 
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
@@ -194,6 +222,13 @@ class Graph(BaseObject):
         self._compatibilityNodes.clear()
         self._nodes.clear()
         self._edges.clear()
+
+    @property
+    def fileFeatures(self):
+        """ Get loaded file supported features based on its version. """
+        if not self._filepath:
+            return []
+        return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)
     def load(self, filepath):

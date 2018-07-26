@@ -87,10 +87,11 @@ class GraphCommand(UndoCommand):
 
 
 class AddNodeCommand(GraphCommand):
-    def __init__(self, graph, nodeType, parent=None, **kwargs):
+    def __init__(self, graph, nodeType, position, parent=None, **kwargs):
         super(AddNodeCommand, self).__init__(graph, parent)
         self.nodeType = nodeType
         self.nodeName = None
+        self.position = position
         self.kwargs = kwargs
         # Serialize Attributes as link expressions
         for key, value in self.kwargs.items():
@@ -102,7 +103,7 @@ class AddNodeCommand(GraphCommand):
                          value[idx] = v.asLinkExpr()
 
     def redoImpl(self):
-        node = self.graph.addNewNode(self.nodeType, **self.kwargs)
+        node = self.graph.addNewNode(self.nodeType, position=self.position, **self.kwargs)
         self.nodeName = node.name
         self.setText("Add Node {}".format(self.nodeName))
         return node

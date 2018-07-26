@@ -15,6 +15,7 @@ Item {
 
     signal pressed(var mouse)
     signal doubleClicked(var mouse)
+    signal moved(var position)
     signal attributePinCreated(var attribute, var pin)
     signal attributePinDeleted(var attribute, var pin)
 
@@ -23,14 +24,32 @@ Item {
 
     SystemPalette { id: activePalette }
 
+    // initialize position with node coordinates
+    x: root.node.x
+    y: root.node.y
+
+    Connections {
+        target: root.node
+        // update x,y when node position changes
+        onPositionChanged: {
+            root.x = root.node.x
+            root.y = root.node.y
+        }
+    }
+
     MouseArea {
         anchors.fill: parent
         drag.target: parent
-        drag.threshold: 0
+        // small drag threshold to avoid moving the node by mistake
+        drag.threshold: 2
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onPressed: root.pressed(mouse)
         onDoubleClicked: root.doubleClicked(mouse)
+        drag.onActiveChanged: {
+            if(!drag.active)
+                root.moved(Qt.point(root.x, root.y))
+        }
     }
 
     Rectangle {

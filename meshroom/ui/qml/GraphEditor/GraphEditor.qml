@@ -14,10 +14,6 @@ Item {
     property bool readOnly: false
     property variant selectedNode: null
 
-    property int nodeWidth: 140
-    property int nodeHeight: 80
-    property int gridSpacing: 15
-    property bool useMinDepth: true
     property var _attributeToDelegate: ({})
 
     // signals
@@ -25,55 +21,32 @@ Item {
     signal workspaceClicked()
     signal nodeDoubleClicked(var node)
 
-    onUseMinDepthChanged: doAutoLayout()
 
     clip: true
 
     SystemPalette { id: activePalette }
 
-    /// Get node delegate based on a node name
-    function nodeDelegate(nodeName)
+    /// Get node delegate for the given node object
+    function nodeDelegate(node)
     {
         for(var i=0; i<nodeRepeater.count; ++i)
         {
-            if(nodeRepeater.itemAt(i).node.name === nodeName)
-                return nodeRepeater.itemAt(i);
+            if(nodeRepeater.itemAt(i).node === node)
+                return nodeRepeater.itemAt(i)
         }
         return undefined
     }
 
-    /// Move the node identified by nodeName to the given position
-    function moveNode(nodeName, posX, posY)
-    {
-        var delegate = nodeDelegate(nodeName)
-        delegate.animatePosition = false
-        delegate.x = posX
-        delegate.y = posY
-        delegate.animatePosition = true
-        selectNode(delegate)
-    }
-
     /// Select node delegate
-    function selectNode(delegate)
+    function selectNode(node)
     {
-        root.selectedNode = delegate.node
-        delegate.forceActiveFocus()
+        root.selectedNode = node
     }
 
     /// Duplicate a node and optionnally all the following ones
     function duplicateNode(node, duplicateFollowingNodes) {
         var nodes = uigraph.duplicateNode(node, duplicateFollowingNodes)
-        var delegates = []
-        var from = nodeRepeater.count - nodes.length
-        var to = nodeRepeater.count - 1
-        for(var i=from; i <= to; ++i)
-        {
-            delegates.push(nodeRepeater.itemAt(i))
-        }
-        var srcNodeDelegate = nodeDelegate(node.name)
-        doAutoLayout(from, to, srcNodeDelegate.x, srcNodeDelegate.y + (root.nodeHeight + root.gridSpacing))
-        selectNode(delegates[0])
-        return delegates
+        selectNode(nodes[0])
     }
 
     MouseArea {
@@ -134,8 +107,8 @@ Item {
             function createNode(nodeType)
             {
                 // add node via the proper command in uigraph
-                var node = uigraph.addNewNode(nodeType)
-                moveNode(node.name, spawnPosition.x, spawnPosition.y)
+                var node = uigraph.addNewNode(nodeType, spawnPosition)
+                selectNode(node)
             }
 
             onVisibleChanged: {
@@ -285,7 +258,6 @@ Item {
 
                 model: root.graph.nodes
                 property bool loaded: count === model.count
-                onLoadedChanged: if(loaded) { doAutoLayout() }
 
                 delegate: Node {
                     id: nodeDelegate
@@ -293,7 +265,7 @@ Item {
                     property bool animatePosition: true
 
                     node: object
-                    width: root.nodeWidth
+                    width: uigraph.layout.nodeWidth
                     readOnly: root.readOnly
                     baseColor: root.selectedNode == node ? Qt.lighter(defaultColor, 1.2) : defaultColor
 
@@ -303,12 +275,11 @@ Item {
                     onPressed: {
                         if(mouse.modifiers & Qt.AltModifier)
                         {
-                            var delegates = duplicateNode(node, true)
-                            selectNode(delegates[0])
+                            duplicateNode(node, true)
                         }
                         else
                         {
-                            selectNode(nodeDelegate)
+                            selectNode(node)
                         }
                         if(mouse.button == Qt.RightButton)
                         {
@@ -318,6 +289,8 @@ Item {
                     }
 
                     onDoubleClicked: root.nodeDoubleClicked(node)
+
+                    onMoved: uigraph.moveNode(node, position)
 
                     Keys.onDeletePressed: uigraph.removeNode(node)
 
@@ -345,13 +318,14 @@ Item {
 
         Button {
             text: "Layout"
-            onClicked: root.doAutoLayout()
+            onClicked: uigraph.layout.reset()
             z: 10
         }
         ComboBox {
             model: ['Min Depth', 'Max Depth']
+            currentIndex: uigraph.layout.depthMode
             onActivated: {
-                useMinDepth = currentIndex == 0
+                uigraph.layout.depthMode = currentIndex
             }
         }
     }
@@ -392,55 +366,4 @@ Item {
         draggable.y = bbox.y*draggable.scale*-1 + (root.height-bbox.height*draggable.scale)*0.5
     }
 
-    /** Basic auto-layout based on node depths
-     * @param {int} from the index of the node to start the layout from (default: 0)
-     * @param {int} to the index of the node end the layout at (default: nodeCount)
-     * @param {real} startX layout origin x coordinate (default: 0)
-     * @param {real} startY layout origin y coordinate (default: 0)
-    */
-    function doAutoLayout(from, to, startX, startY)
-    {
-        // default values
-        from = from === undefined ? 0 : from
-        to = to === undefined ? nodeRepeater.count - 1 : to
-        startX = startX === undefined ? 0 : startX
-        startY = startY === undefined ? 0 : startY
-
-        var count = to - from + 1;
-
-        var depthProperty = useMinDepth ? 'minDepth' : 'depth'
-        var grid = new Array(count)
-
-        for(var i=0; i< count; ++i)
-            grid[i] = new Array(count)
-
-        // retrieve reference depth from start node
-        var zeroDepth = from > 0 ? nodeRepeater.itemAt(from).node[depthProperty] : 0
-
-        for(var i=0; i<count; ++i)
-        {
-            var obj = nodeRepeater.itemAt(from + i);
-            var j=0;
-            while(1)
-            {
-                if(grid[obj.node[depthProperty]-zeroDepth][j] == undefined)
-                {
-                    grid[obj.node[depthProperty]-zeroDepth][j] = obj;
-                    break;
-                }
-                j++;
-            }
-        }
-        for(var x=0; x<count; ++x)
-        {
-            for(var y=0; y<count; ++y)
-            {
-                if(grid[x][y] != undefined)
-                {
-                    grid[x][y].x = startX + x * (root.nodeWidth + root.gridSpacing)
-                    grid[x][y].y = startY + y * (root.nodeHeight + root.gridSpacing)
-                }
-            }
-        }
-    }
 }

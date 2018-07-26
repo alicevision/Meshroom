@@ -5,7 +5,7 @@ import os
 from enum import Enum
 from threading import Thread
 
-from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal
+from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
 
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
@@ -199,6 +199,7 @@ class UIGraph(QObject):
         self._computeThread = Thread()
         self._running = self._submitted = False
         self._sortedDFSChunks = QObjectListModel(parent=self)
+        self._layout = GraphLayout(self)
         if filepath:
             self.load(filepath)
 
@@ -346,18 +347,22 @@ class UIGraph(QObject):
         self._modificationCount -= 1
         self._undoStack.endMacro()
 
-    @Slot(str, result=QObject)
-    def addNewNode(self, nodeType, **kwargs):
+    @Slot(str, QPoint, result=QObject)
+    def addNewNode(self, nodeType, position=None, **kwargs):
         """ [Undoable]
         Create a new Node of type 'nodeType' and returns it.
 
         Args:
             nodeType (str): the type of the Node to create.
+            position (QPoint): (optional) the initial position of the node
             **kwargs: optional node attributes values
+
         Returns:
             Node: the created node
         """
-        return self.push(commands.AddNodeCommand(self._graph, nodeType, **kwargs))
+        if isinstance(position, QPoint):
+            position = Position(position.x(), position.y())
+        return self.push(commands.AddNodeCommand(self._graph, nodeType, position=position, **kwargs))
 
     @Slot(Node, QPoint)
     def moveNode(self, node, position):
@@ -415,7 +420,18 @@ class UIGraph(QObject):
         Returns:
             [Nodes]: the list of duplicated nodes
         """
-        return self.push(commands.DuplicateNodeCommand(self._graph, srcNode, duplicateFollowingNodes))
+        title = "Duplicate Nodes from {}" if duplicateFollowingNodes else "Duplicate {}"
+        # enable updates between duplication and layout to get correct depths during layout
+        with self.groupedGraphModification(title.format(srcNode.name), disableUpdates=False):
+            # disable graph updates during duplication
+            with self.groupedGraphModification("Node duplication", disableUpdates=True):
+                duplicates = self.push(commands.DuplicateNodeCommand(self._graph, srcNode, duplicateFollowingNodes))
+            # move nodes below the bounding box formed by the duplicated node(s)
+            bbox = self._layout.boundingBox(duplicates)
+            for n in duplicates:
+                self.moveNode(n, Position(n.x, bbox[3] + self.layout.gridSpacing + n.y))
+
+        return duplicates
 
     @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):
@@ -449,6 +465,7 @@ class UIGraph(QObject):
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
     nodes = Property(QObject, lambda self: self._graph.nodes, notify=graphChanged)
+    layout = Property(GraphLayout, lambda self: self._layout, constant=True)
 
     computeStatusChanged = Signal()
     computing = Property(bool, isComputing, notify=computeStatusChanged)

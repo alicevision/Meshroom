@@ -163,11 +163,15 @@ class Graph(BaseObject):
         """ Centralize Graph file keys and IO version. """
         __version__ = "1.0"
 
-        Header = "header"
-        NodesVersions = "nodesVersions"
-        ReleaseVersion = "releaseVersion"
-        FileVersion = "fileVersion"
-        Graph = "graph"
+        class Keys(object):
+            """ File Keys. """
+            # Doesn't inherit enum to simplify usage (Graph.IO.Keys.XX, without .value)
+            Header = "header"
+            NodesVersions = "nodesVersions"
+            ReleaseVersion = "releaseVersion"
+            FileVersion = "fileVersion"
+            Graph = "graph"
+
 
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
@@ -198,14 +202,13 @@ class Graph(BaseObject):
             fileData = json.load(jsonFile)
 
         # older versions of Meshroom files only contained the serialized nodes
-        graphData = fileData.get(Graph.IO.Graph, fileData)
+        graphData = fileData.get(Graph.IO.Keys.Graph, fileData)
 
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
 
-        self.header = fileData.get(Graph.IO.Header, {})
-        nodesVersions = self.header.get(Graph.IO.NodesVersions, {})
-        fileVersion = self.header.get(Graph.IO.FileVersion, "0.0")
+        self.header = fileData.get(Graph.IO.Keys.Header, {})
+        nodesVersions = self.header.get(Graph.IO.Keys.NodesVersions, {})
 
         with GraphModification(self):
             # iterate over nodes sorted by suffix index in their names
@@ -858,20 +861,20 @@ class Graph(BaseObject):
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
 
-        self.header[Graph.IO.ReleaseVersion] = meshroom.__version__
-        self.header[Graph.IO.FileVersion] = Graph.IO.__version__
+        self.header[Graph.IO.Keys.ReleaseVersion] = meshroom.__version__
+        self.header[Graph.IO.Keys.FileVersion] = Graph.IO.__version__
 
         # store versions of node types present in the graph (excluding CompatibilityNode instances)
         usedNodeTypes = set([n.nodeDesc.__class__ for n in self._nodes if isinstance(n, Node)])
 
-        self.header[Graph.IO.NodesVersions] = {
+        self.header[Graph.IO.Keys.NodesVersions] = {
             "{}".format(p.__name__): meshroom.core.nodeVersion(p, "0.0")
             for p in usedNodeTypes
         }
 
         data = {
-            Graph.IO.Header: self.header,
-            Graph.IO.Graph: self.toDict()
+            Graph.IO.Keys.Header: self.header,
+            Graph.IO.Keys.Graph: self.toDict()
         }
 
         with open(path, 'w') as jsonFile:
@@ -1016,7 +1019,7 @@ class Graph(BaseObject):
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
-    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.ReleaseVersion, "0.0"), notify=filepathChanged)
+    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.Keys.ReleaseVersion, "0.0"), notify=filepathChanged)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
     updated = Signal()

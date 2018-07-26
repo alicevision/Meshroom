@@ -211,6 +211,10 @@ class UIGraph(QObject):
         self._graph = g
         self._graph.updated.connect(self.onGraphUpdated)
         self._graph.update()
+        # perform auto-layout if graph does not provide nodes positions
+        if Graph.IO.Features.NodesPositions not in self._graph.fileFeatures:
+            self._layout.reset()
+            self._undoStack.clear()  # clear undo-stack after layout
         self.graphChanged.emit()
 
     def onGraphUpdated(self):

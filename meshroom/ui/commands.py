@@ -258,6 +258,23 @@ class ListAttributeRemoveCommand(GraphCommand):
         listAttribute.insert(self.index, self.value)
 
 
+class MoveNodeCommand(GraphCommand):
+    """ Move a node to a given position. """
+    def __init__(self, graph, node, position, parent=None):
+        super(MoveNodeCommand, self).__init__(graph, parent)
+        self.nodeName = node.name
+        self.oldPosition = node.position
+        self.newPosition = position
+        self.setText("Move {}".format(self.nodeName))
+
+    def redoImpl(self):
+        self.graph.node(self.nodeName).position = self.newPosition
+        return True
+
+    def undoImpl(self):
+        self.graph.node(self.nodeName).position = self.oldPosition
+
+
 class UpgradeNodeCommand(GraphCommand):
     """
     Perform node upgrade on a CompatibilityNode.

@@ -252,6 +252,19 @@ class UIGraph(QObject):
         """
         return self.push(commands.AddNodeCommand(self._graph, nodeType, **kwargs))
 
+    @Slot(Node, QPoint)
+    def moveNode(self, node, position):
+        """
+        Move 'node' to the given 'position'.
+
+        Args:
+            node (Node): the node to move
+            position (QPoint): the target position
+        """
+        if isinstance(position, QPoint):
+            position = Position(position.x(), position.y())
+        self.push(commands.MoveNodeCommand(self._graph, node, position))
+
     @Slot(Node)
     def removeNode(self, node):
         self.push(commands.RemoveNodeCommand(self._graph, node))

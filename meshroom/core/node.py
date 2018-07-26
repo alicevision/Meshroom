@@ -669,6 +669,7 @@ class Node(BaseNode):
 
         return {
             'nodeType': self.nodeType,
+            'position': self._position,
             'parallelization': {
                 'blockSize': self.nodeDesc.parallelization.blockSize if self.isParallelized else 0,
                 'size': self.size,
@@ -883,6 +884,8 @@ class CompatibilityNode(BaseNode):
         """
         # update inputs to get up-to-date connections
         self.nodeDict.update({"inputs": self.inputs})
+        # update position
+        self.nodeDict.update({"position": self.position})
         return self.nodeDict
 
     @property
@@ -931,6 +934,7 @@ def nodeFactory(nodeDict, name=None):
     outputs = nodeDict.get("outputs", {})
     version = nodeDict.get("version", None)
     internalFolder = nodeDict.get("internalFolder", None)
+    position = Position(*nodeDict.get("position", []))
 
     compatibilityIssue = None
 
@@ -956,11 +960,11 @@ def nodeFactory(nodeDict, name=None):
 
     # no compatibility issues: instantiate a Node
     if compatibilityIssue is None:
-        n = Node(nodeType, **inputs)
+        n = Node(nodeType, position, **inputs)
     # otherwise, instantiate a CompatibilityNode
     else:
         logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
-        n = CompatibilityNode(nodeType, nodeDict, compatibilityIssue)
+        n = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)
         # retro-compatibility: no internal folder saved
         # can't spawn meaningful CompatibilityNode with precomputed outputs
         # => automatically try to perform node upgrade

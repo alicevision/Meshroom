@@ -162,7 +162,7 @@ class Graph(BaseObject):
 
     class IO(object):
         """ Centralize Graph file keys and IO version. """
-        __version__ = "1.0"
+        __version__ = "1.1"
 
         class Keys(object):
             """ File Keys. """
@@ -179,6 +179,7 @@ class Graph(BaseObject):
             Header = "header"
             NodesVersions = "nodesVersions"
             PrecomputedOutputs = "precomputedOutputs"
+            NodesPositions = "nodesPositions"
 
         @staticmethod
         def getFeaturesForVersion(fileVersion):
@@ -199,6 +200,8 @@ class Graph(BaseObject):
                              Graph.IO.Features.NodesVersions,
                              Graph.IO.Features.PrecomputedOutputs,
                              ]
+            if fileVersion >= Version("1.1"):
+                features += [Graph.IO.Features.NodesPositions]
             return features
 
     def __init__(self, name, parent=None):

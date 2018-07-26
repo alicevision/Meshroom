@@ -417,10 +417,10 @@ class UIGraph(QObject):
         """
         return self.push(commands.DuplicateNodeCommand(self._graph, srcNode, duplicateFollowingNodes))
 
-    @Slot(CompatibilityNode)
+    @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):
         """ Upgrade a CompatibilityNode. """
-        self.push(commands.UpgradeNodeCommand(self._graph, node))
+        return self.push(commands.UpgradeNodeCommand(self._graph, node))
 
     @Slot()
     def upgradeAllNodes(self):

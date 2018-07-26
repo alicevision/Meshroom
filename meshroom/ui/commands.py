@@ -149,14 +149,14 @@ class DuplicateNodeCommand(GraphCommand):
         srcNode = self.graph.node(self.srcNodeName)
 
         if self.duplicateFollowingNodes:
-            duplicates = self.graph.duplicateNodesFromNode(srcNode)
-            self.duplicates = [n.name for n in duplicates.values()]
+            duplicates = list(self.graph.duplicateNodesFromNode(srcNode).values())
             self.setText("Duplicate {} nodes from {}".format(len(duplicates), self.srcNodeName))
         else:
-            self.duplicates = [self.graph.duplicateNode(srcNode).name]
+            duplicates = [self.graph.duplicateNode(srcNode)]
             self.setText("Duplicate {}".format(self.srcNodeName))
 
-        return self.duplicates
+        self.duplicates = [n.name for n in duplicates]
+        return duplicates
 
     def undoImpl(self):
         # delete all the duplicated nodes
@@ -289,8 +289,8 @@ class UpgradeNodeCommand(GraphCommand):
     def redoImpl(self):
         if not self.graph.node(self.nodeName).canUpgrade:
             return False
-        inEdges, self.outEdges = self.graph.upgradeNode(self.nodeName)
-        return True
+        upgradedNode, inEdges, self.outEdges = self.graph.upgradeNode(self.nodeName)
+        return upgradedNode
 
     def undoImpl(self):
         # delete upgraded node

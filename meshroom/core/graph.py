@@ -482,7 +482,7 @@ class Graph(BaseObject):
                 except (KeyError, ValueError) as e:
                     logging.warning("Failed to restore edge {} -> {}: {}".format(src, dst, str(e)))
 
-        return inEdges, outEdges
+        return upgradedNode, inEdges, outEdges
 
     def upgradeAllNodes(self):
         """ Upgrade all upgradable CompatibilityNode instances in the graph. """

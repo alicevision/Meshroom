@@ -296,11 +296,11 @@ Item {
 
                     Behavior on x {
                         enabled: animatePosition
-                        NumberAnimation {}
+                        NumberAnimation { duration: 100 }
                     }
                     Behavior on y {
                         enabled: animatePosition
-                        NumberAnimation {}
+                        NumberAnimation { duration: 100 }
                     }
                 }
             }

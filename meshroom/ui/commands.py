@@ -7,7 +7,7 @@ from PySide2.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
 from meshroom.core.graph import GraphModification
-from meshroom.core.node import node_factory
+from meshroom.core.node import nodeFactory
 
 
 class UndoCommand(QUndoCommand):
@@ -126,7 +126,7 @@ class RemoveNodeCommand(GraphCommand):
 
     def undoImpl(self):
         with GraphModification(self.graph):
-            node = node_factory(self.nodeDict, self.nodeName)
+            node = nodeFactory(self.nodeDict, self.nodeName)
             self.graph.addNode(node, self.nodeName)
             assert (node.getName() == self.nodeName)
             # recreate out edges deleted on node removal
@@ -280,7 +280,7 @@ class UpgradeNodeCommand(GraphCommand):
         self.graph.removeNode(self.nodeName)
         # recreate compatibility node
         with GraphModification(self.graph):
-            node = node_factory(self.nodeDict)
+            node = nodeFactory(self.nodeDict)
             self.graph.addNode(node, self.nodeName)
             # recreate out edges
             for dstAttr, srcAttr in self.outEdges.items():

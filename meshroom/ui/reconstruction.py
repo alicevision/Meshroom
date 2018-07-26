@@ -7,7 +7,7 @@ from PySide2.QtCore import QObject, Slot, Property, Signal
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
-from meshroom.core.node import Node, node_factory, Status
+from meshroom.core.node import Node, Status
 from meshroom.ui.graph import UIGraph
 
 

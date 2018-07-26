@@ -16,7 +16,7 @@ from enum import Enum
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
 from meshroom.core import desc, stats, hashValue, pyCompatibility, nodeVersion, Version
-from meshroom.core.attribute import attribute_factory, ListAttribute, GroupAttribute, Attribute
+from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
 
@@ -600,10 +600,10 @@ class Node(BaseNode):
         self._internalFolder = self.nodeDesc.internalFolder
 
         for attrDesc in self.nodeDesc.inputs:
-            self._attributes.add(attribute_factory(attrDesc, None, False, self))
+            self._attributes.add(attributeFactory(attrDesc, None, False, self))
 
         for attrDesc in self.nodeDesc.outputs:
-            self._attributes.add(attribute_factory(attrDesc, None, True, self))
+            self._attributes.add(attributeFactory(attrDesc, None, True, self))
 
         # List attributes per uid
         for attr in self._attributes:
@@ -801,7 +801,7 @@ class CompatibilityNode(BaseNode):
         matchDesc = attrDesc is not None
         if not matchDesc:
             attrDesc = CompatibilityNode.attributeDescFromValue(name, val, isOutput)
-        attribute = attribute_factory(attrDesc, val, isOutput, self)
+        attribute = attributeFactory(attrDesc, val, isOutput, self)
         self._attributes.add(attribute)
         return matchDesc
 
@@ -858,7 +858,7 @@ class CompatibilityNode(BaseNode):
     issueDetails = Property(str, issueDetails.fget, constant=True)
 
 
-def node_factory(nodeDict, name=None):
+def nodeFactory(nodeDict, name=None):
     """
     Create a node instance by deserializing the given node data.
     If the serialized data matches the corresponding node type description, a Node instance is created.

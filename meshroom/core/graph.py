@@ -15,7 +15,7 @@ import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.exception import StopGraphVisit, StopBranchVisit
-from meshroom.core.node import node_factory, Status, Node, CompatibilityNode
+from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
 
 # Replace default encoder to support Enums
 
@@ -219,7 +219,7 @@ class Graph(BaseObject):
                 #   3. fallback to no version "0.0": retro-compatibility
                 if "version" not in nodeData:
                     nodeData["version"] = nodesVersions.get(nodeData["nodeType"], "0.0")
-                n = node_factory(nodeData, nodeName)
+                n = nodeFactory(nodeData, nodeName)
 
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
@@ -285,7 +285,7 @@ class Graph(BaseObject):
             # create a new node of the same type and with the same attributes values
             # keep links as-is so that CompatibilityNodes attributes can be created with correct automatic description
             # (File params for link expressions)
-            node = node_factory(srcNode.toDict())
+            node = nodeFactory(srcNode.toDict(), srcNode.nodeType)  # use nodeType as name
             # skip edges: filter out attributes which are links by resetting default values
             skippedEdges = {}
             if not withEdges:
@@ -740,14 +740,14 @@ class Graph(BaseObject):
             currentVertex, inputVertex = edge
 
             # update depths
-            du = self._nodesMinMaxDepths[currentVertex]
-            dv = self._nodesMinMaxDepths[inputVertex]
-            if du[0] == 0:
+            currentDepths = self._nodesMinMaxDepths[currentVertex]
+            inputDepths = self._nodesMinMaxDepths[inputVertex]
+            if currentDepths[0] == 0:
                 # if not initialized, set the depth of the first child
-                depthMin = dv[0] + 1
+                depthMin = inputDepths[0] + 1
             else:
-                depthMin = min(du[0], dv[0] + 1)
-            self._nodesMinMaxDepths[currentVertex] = (depthMin, max(du[1], dv[1] + 1))
+                depthMin = min(currentDepths[0], inputDepths[0] + 1)
+            self._nodesMinMaxDepths[currentVertex] = (depthMin, max(currentDepths[1], inputDepths[1] + 1))
 
             # update computability
             if currentVertex.hasStatus(Status.SUCCESS):

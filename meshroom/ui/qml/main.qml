@@ -363,7 +363,7 @@ ApplicationWindow {
                                                        && !_reconstruction.computing              // computation is not started
                                                        && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
 
-                    // evalute if graph computation can be submitted externally
+                    // evaluate if graph computation can be submitted externally
                     property bool canSubmit: canStartComputation                                  // can be computed
                                              && _reconstruction.graph.filepath                    // graph is saved on disk
 

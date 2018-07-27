@@ -12,10 +12,12 @@ class MouseEvent(QObject):
         self._x = evt.x()
         self._y = evt.y()
         self._button = evt.button()
+        self._modifiers = evt.modifiers()
 
     x = Property(float, lambda self: self._x, constant=True)
     y = Property(float, lambda self: self._y, constant=True)
     button = Property(Qt.MouseButton, lambda self: self._button, constant=True)
+    modifiers = Property(int, lambda self: self._modifiers, constant=True)
 
 
 class EdgeMouseArea(QQuickItem):

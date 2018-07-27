@@ -182,6 +182,15 @@ Item {
             width: 1000
             height: 1000
 
+            Menu {
+                id: edgeMenu
+                property var currentEdge: null
+                MenuItem {
+                    text: "Remove"
+                    enabled: !root.readOnly
+                    onTriggered: uigraph.removeEdge(edgeMenu.currentEdge)
+                }
+            }
 
             // Edges
             Repeater {
@@ -196,16 +205,27 @@ Item {
                     property var srcAnchor: src.nodeItem.mapFromItem(src, src.edgeAnchorPos.x, src.edgeAnchorPos.y)
                     property var dstAnchor: dst.nodeItem.mapFromItem(dst, dst.edgeAnchorPos.x, dst.edgeAnchorPos.y)
 
+                    property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge == edge)
+
                     edge: object
-                    color: containsMouse && !readOnly ? activePalette.highlight : activePalette.text
+                    color: inFocus ? activePalette.highlight : activePalette.text
+                    thickness: inFocus ? 2 : 1
                     opacity: 0.7
                     point1x: src.nodeItem.x + srcAnchor.x
                     point1y: src.nodeItem.y + srcAnchor.y
                     point2x: dst.nodeItem.x + dstAnchor.x
                     point2y: dst.nodeItem.y + dstAnchor.y
                     onPressed: {
-                        if(!root.readOnly && event.button == Qt.RightButton)
-                            uigraph.removeEdge(edge)
+                        if(event.button == Qt.RightButton)
+                        {
+                            if(!root.readOnly && event.modifiers & Qt.AltModifier) {
+                                uigraph.removeEdge(edge)
+                            }
+                            else {
+                                edgeMenu.currentEdge = edge
+                                edgeMenu.popup()
+                            }
+                        }
                     }
                 }
             }

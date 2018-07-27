@@ -1,6 +1,8 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
+import Controls 1.0
+import MaterialIcons 2.2
 
 /**
   A component displaying a Graph (nodes, attributes and edges).
@@ -345,25 +347,58 @@ Item {
         }
     }
 
-    Row {
+    // Toolbar
+    FloatingPane {
+        padding: 2
         anchors.bottom: parent.bottom
+        RowLayout {
+            spacing: 4
+            // Fit
+            MaterialToolButton {
+                text: MaterialIcons.fullscreen
+                ToolTip.text: "Fit"
+                onClicked: root.fit()
+            }
+            // Auto-Layout
+            MaterialToolButton {
+                text: MaterialIcons.linear_scale
+                ToolTip.text: "Auto-Layout"
+                onClicked: uigraph.layout.reset()
+            }
 
-        Button {
-            text: "Fit"
-            onClicked: root.fit()
-            z: 10
-        }
-
-        Button {
-            text: "Layout"
-            onClicked: uigraph.layout.reset()
-            z: 10
-        }
-        ComboBox {
-            model: ['Min Depth', 'Max Depth']
-            currentIndex: uigraph.layout.depthMode
-            onActivated: {
-                uigraph.layout.depthMode = currentIndex
+            // Separator
+            Rectangle {
+                Layout.fillHeight: true
+                Layout.margins: 2
+                implicitWidth: 1
+                color: activePalette.window
+            }
+            // Settings
+            MaterialToolButton {
+                text: MaterialIcons.settings
+                font.pointSize: 11
+                onClicked: menu.open()
+                Menu {
+                    id: menu
+                    y: -height
+                    padding: 4
+                    RowLayout {
+                        spacing: 2
+                        Label {
+                            padding: 2
+                            text: "Auto-Layout Depth:"
+                        }
+                        ComboBox {
+                            flat: true
+                            model: ['Minimum', 'Maximum']
+                            implicitWidth: 80
+                            currentIndex: uigraph.layout.depthMode
+                            onActivated: {
+                                uigraph.layout.depthMode = currentIndex
+                            }
+                        }
+                    }
+                }
             }
         }
     }

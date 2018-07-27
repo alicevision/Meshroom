@@ -440,13 +440,16 @@ ApplicationWindow {
                 Item {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
-                    Layout.margins: 10
+                    Layout.margins: 2
+
                     GraphEditor {
                         id: graphEditor
+
                         anchors.fill: parent
                         uigraph: _reconstruction
                         nodeTypesModel: _nodeTypes
                         readOnly: _reconstruction.computing
+
                         onNodeDoubleClicked: {
                             if(node.nodeType == "StructureFromMotion")
                             {

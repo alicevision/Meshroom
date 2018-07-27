@@ -5,7 +5,7 @@ import logging
 import os
 import re
 import weakref
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
 
 from enum import Enum
@@ -363,10 +363,11 @@ class Graph(BaseObject):
             fromNode (Node): the node to start the duplication from
 
         Returns:
-            Dict[Node, Node]: the source->duplicate map
+            OrderedDict[Node, Node]: the source->duplicate map
         """
         srcNodes, srcEdges = self.nodesFromNode(fromNode)
-        duplicates = {}
+        # use OrderedDict to keep duplicated nodes creation order
+        duplicates = OrderedDict()
 
         with GraphModification(self):
             duplicateEdges = {}

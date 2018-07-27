@@ -92,7 +92,10 @@ Item {
         }
 
         onPressed: {
-            if(mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ControlModifier))
+            if(mouse.button == Qt.LeftButton)
+                selectNode(null)
+
+            if(mouse.button == Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ControlModifier))
                 drag.target = draggable // start drag
         }
         onReleased: {
@@ -106,7 +109,7 @@ Item {
         }
 
         onClicked: {
-            if(mouse.button & Qt.RightButton)
+            if(mouse.button == Qt.RightButton)
             {
                 // store mouse click position in 'draggable' coordinates as new node spawn position
                 newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
@@ -310,13 +313,11 @@ Item {
                     onAttributePinDeleted: unregisterAttributePin(attribute, pin)
 
                     onPressed: {
-                        if(mouse.modifiers & Qt.AltModifier)
+                        selectNode(node)
+
+                        if(mouse.button == Qt.LeftButton && mouse.modifiers & Qt.AltModifier)
                         {
                             duplicateNode(node, true)
-                        }
-                        else
-                        {
-                            selectNode(node)
                         }
                         if(mouse.button == Qt.RightButton)
                         {

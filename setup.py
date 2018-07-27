@@ -2,7 +2,7 @@ import sys
 
 import setuptools  # for bdist
 from cx_Freeze import setup, Executable
-
+import meshroom
 
 build_exe_options = {
     # include dynamically loaded plugins
@@ -32,7 +32,10 @@ setup(
             'enum34',
         ],
     },
-    version="1.0",  # TODO: get correct version info
+    setup_requires=[
+        'cx_Freeze'
+    ],
+    version=meshroom.__version__,
     options={"build_exe": build_exe_options},
     executables=[meshroomExe],
 )

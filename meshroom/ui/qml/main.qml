@@ -322,6 +322,8 @@ ApplicationWindow {
             // open CompatibilityManager after file loading if any issue is detected
             if(compatibilityManager.issueCount)
                 compatibilityManager.open()
+            // trigger fit to visualize all nodes
+            graphEditor.fit()
         }
 
         onInfo: createDialog(dialogsFactory.info, arguments[0])

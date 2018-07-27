@@ -21,6 +21,16 @@ Item {
     signal workspaceClicked()
     signal nodeDoubleClicked(var node)
 
+    // trigger initial fit() after initialization
+    // (ensure GraphEditor has its final size)
+    Component.onCompleted: firstFitTimer.start()
+
+    Timer {
+        id: firstFitTimer
+        running: false
+        interval: 10
+        onTriggered: fit()
+    }
 
     clip: true
 
@@ -47,6 +57,12 @@ Item {
     function duplicateNode(node, duplicateFollowingNodes) {
         var nodes = uigraph.duplicateNode(node, duplicateFollowingNodes)
         selectNode(nodes[0])
+    }
+
+
+    Keys.onPressed: {
+        if(event.key === Qt.Key_F)
+            fit()
     }
 
     MouseArea {

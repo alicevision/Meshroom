@@ -106,6 +106,7 @@ Item {
             Column {
                 id: inputs
                 width: parent.width / 2
+                spacing: 1
                 Repeater {
                     model: node.attributes
                     delegate: Loader {
@@ -120,6 +121,7 @@ Item {
                             readOnly: root.readOnly
                             Component.onCompleted: attributePinCreated(attribute, inPin)
                             Component.onDestruction: attributePinDeleted(attribute, inPin)
+                            onPressed: root.pressed(mouse)
                             onChildPinCreated: attributePinCreated(childAttribute, inPin)
                             onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
                         }
@@ -130,6 +132,7 @@ Item {
                 id: outputs
                 width: parent.width / 2
                 anchors.right: parent.right
+                spacing: 1
                 Repeater {
                     model: node.attributes
 
@@ -143,7 +146,9 @@ Item {
                             nodeItem: root
                             attribute: object
                             readOnly: root.readOnly
+                            onPressed: root.pressed(mouse)
                             Component.onCompleted: attributePinCreated(object, outPin)
+                            Component.onDestruction: attributePinDeleted(attribute, outPin)
                         }
                     }
                 }

@@ -11,6 +11,7 @@ from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
 from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode, Position
+from meshroom.core import submitters
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
 
@@ -475,6 +476,7 @@ class UIGraph(QObject):
     computing = Property(bool, isComputing, notify=computeStatusChanged)
     computingExternally = Property(bool, isComputingExternally, notify=computeStatusChanged)
     computingLocally = Property(bool, isComputingLocally, notify=computeStatusChanged)
+    canSubmit = Property(bool, lambda self: len(submitters), constant=True)
 
     sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, constant=True)
     lockedChanged = Signal()

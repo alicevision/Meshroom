@@ -358,7 +358,8 @@ ApplicationWindow {
                                                        && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
 
                     // evaluate if graph computation can be submitted externally
-                    property bool canSubmit: canStartComputation                                  // can be computed
+                    property bool canSubmit: _reconstruction.canSubmit                            // current setup allows to compute externally
+                                             && canStartComputation                               // can be computed
                                              && _reconstruction.graph.filepath                    // graph is saved on disk
 
                     // disable controls if graph is executed externally
@@ -381,6 +382,7 @@ ApplicationWindow {
                     }
                     Item { width: 20; height: 1 }
                     Button {
+                        visible: _reconstruction.canSubmit
                         enabled: parent.canSubmit
                         text: "Submit"
                         onClicked: _reconstruction.submit(null)

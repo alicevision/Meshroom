@@ -143,6 +143,9 @@ class CameraInit(desc.CommandLineNode):
                 intrinsic['principalPoint'] = {}
                 intrinsic['principalPoint']['x'] = pp[0]
                 intrinsic['principalPoint']['y'] = pp[1]
+                # convert empty string distortionParams (i.e: Pinhole model) to empty list
+                if intrinsic['distortionParams'] == '':
+                    intrinsic['distortionParams'] = list()
             # print('intrinsics:', intrinsics)
             viewsKeys = [v.name for v in Viewpoint]
             views = [{k: v for k, v in item.items() if k in viewsKeys} for item in data.get("views", [])]

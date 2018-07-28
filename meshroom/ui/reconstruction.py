@@ -200,13 +200,16 @@ class Reconstruction(UIGraph):
                     "Open it with the corresponding version of Meshroom to recover your data."
                 ))
         except Exception as e:
+            import traceback
+            trace = traceback.format_exc()
             self.error.emit(
                 Message(
                     "Error while loading {}".format(os.path.basename(filepath)),
                     "An unexpected error has occurred",
-                    str(e)
+                    trace
                 )
             )
+            logging.error(trace)
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """

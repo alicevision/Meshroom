@@ -13,7 +13,7 @@ from enum import Enum
 import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
-from meshroom.core import Version
+from meshroom.core import Version, pyCompatibility
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.exception import StopGraphVisit, StopBranchVisit
 from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
@@ -191,7 +191,7 @@ class Graph(BaseObject):
             Returns:
                 tuple of Graph.IO.Features: the list of supported features
             """
-            if isinstance(fileVersion, str):
+            if isinstance(fileVersion, pyCompatibility.basestring):
                 fileVersion = Version(fileVersion)
 
             features = [Graph.IO.Features.Graph]

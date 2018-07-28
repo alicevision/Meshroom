@@ -71,6 +71,15 @@ Entity {
                 ]
             },
             Action {
+                id: actionShift
+                inputs: [
+                    ActionInput {
+                        sourceDevice: keyboardSourceDevice
+                        buttons: [Qt.Key_Shift]
+                    }
+                ]
+            },
+            Action {
                 id: actionControl
                 inputs: [
                     ActionInput {
@@ -114,7 +123,7 @@ Entity {
     components: [
         FrameAction {
             onTriggered: {
-                if(actionMMB.active || (actionLMB.active && actionControl.active)) { // translate
+                if(actionMMB.active || (actionLMB.active && actionShift.active)) { // translate
                     var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
                     var tx = axisMX.value * root.translateSpeed * d;
                     var ty = axisMY.value * root.translateSpeed * d;

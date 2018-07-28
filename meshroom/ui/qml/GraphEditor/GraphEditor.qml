@@ -94,10 +94,10 @@ Item {
         }
 
         onPressed: {
-            if(mouse.button == Qt.LeftButton)
+            if(mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier)
                 selectNode(null)
 
-            if(mouse.button == Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ControlModifier))
+            if(mouse.button == Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
                 drag.target = draggable // start drag
         }
         onReleased: {

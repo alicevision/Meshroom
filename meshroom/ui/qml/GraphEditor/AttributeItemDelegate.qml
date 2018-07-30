@@ -142,6 +142,10 @@ RowLayout {
                     setTextFieldAttribute(text)
                     root.forceActiveFocus()
                 }
+                Component.onDestruction: {
+                    if(activeFocus)
+                        setTextFieldAttribute(text)
+                }
                 DropArea {
                     enabled: root.editable
                     anchors.fill: parent
@@ -209,6 +213,10 @@ RowLayout {
                     validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: setTextFieldAttribute(text)
+                    Component.onDestruction: {
+                        if(activeFocus)
+                            setTextFieldAttribute(text)
+                    }
                 }
 
                 Loader {

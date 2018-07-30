@@ -60,7 +60,7 @@ Shape {
         anchors.fill: parent
         curveScale: cubic.curveScale
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        thickness: root.thickness + 2
+        thickness: root.thickness + 4
         onPressed: root.pressed(arguments[0])   // can't get named args, use arguments array
         onReleased: root.released(arguments[0])
     }

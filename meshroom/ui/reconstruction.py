@@ -200,13 +200,16 @@ class Reconstruction(UIGraph):
                     "Open it with the corresponding version of Meshroom to recover your data."
                 ))
         except Exception as e:
+            import traceback
+            trace = traceback.format_exc()
             self.error.emit(
                 Message(
                     "Error while loading {}".format(os.path.basename(filepath)),
                     "An unexpected error has occurred",
-                    str(e)
+                    trace
                 )
             )
+            logging.error(trace)
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
@@ -305,10 +308,17 @@ class Reconstruction(UIGraph):
             if len(self._cameraInits[0].viewpoints) == 0:
                 return self._cameraInit, sfm
 
-        with self.groupedGraphModification("SfM Augmentation"):
-            sfm, mvs = multiview.sfmAugmentation(self, self.lastSfmNode(), withMVS=withMVS)
+        # enable updates between duplication and layout to get correct depths during layout
+        with self.groupedGraphModification("SfM Augmentation", disableUpdates=False):
+            # disable graph updates when adding augmentation branch
+            with self.groupedGraphModification("Augmentation", disableUpdates=True):
+                sfm, mvs = multiview.sfmAugmentation(self, self.lastSfmNode(), withMVS=withMVS)
+            first, last = sfm[0], mvs[-1] if mvs else sfm[-1]
+            # use graph current bounding box height to spawn the augmentation branch
+            bb = self.layout.boundingBox()
+            self.layout.autoLayout(first, last, bb[0], bb[3] + self._layout.gridSpacing)
 
-        self.sfmAugmented.emit(sfm[0], mvs[-1] if mvs else sfm[-1])
+        self.sfmAugmented.emit(first, last)
         return sfm[0], sfm[-1]
 
     def allImagePaths(self):

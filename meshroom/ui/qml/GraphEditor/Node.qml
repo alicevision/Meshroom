@@ -12,9 +12,11 @@ Item {
     property color shadowColor: "black"
     readonly property bool isCompatibilityNode: node.hasOwnProperty("compatibilityIssue")
     readonly property color defaultColor: isCompatibilityNode ? "#444" : "#607D8B"
+    property bool selected: false
 
     signal pressed(var mouse)
     signal doubleClicked(var mouse)
+    signal moved(var position)
     signal attributePinCreated(var attribute, var pin)
     signal attributePinDeleted(var attribute, var pin)
 
@@ -23,14 +25,43 @@ Item {
 
     SystemPalette { id: activePalette }
 
+    // initialize position with node coordinates
+    x: root.node.x
+    y: root.node.y
+
+    Connections {
+        target: root.node
+        // update x,y when node position changes
+        onPositionChanged: {
+            root.x = root.node.x
+            root.y = root.node.y
+        }
+    }
+
     MouseArea {
         anchors.fill: parent
         drag.target: parent
-        drag.threshold: 0
+        // small drag threshold to avoid moving the node by mistake
+        drag.threshold: 2
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onPressed: root.pressed(mouse)
         onDoubleClicked: root.doubleClicked(mouse)
+        drag.onActiveChanged: {
+            if(!drag.active)
+                root.moved(Qt.point(root.x, root.y))
+        }
+    }
+
+    // Selection border
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -border.width
+        visible: root.selected
+        border.width: 2.5
+        border.color: activePalette.highlight
+        opacity: 0.9
+        color: "transparent"
     }
 
     Rectangle {
@@ -75,6 +106,7 @@ Item {
             Column {
                 id: inputs
                 width: parent.width / 2
+                spacing: 1
                 Repeater {
                     model: node.attributes
                     delegate: Loader {
@@ -89,6 +121,7 @@ Item {
                             readOnly: root.readOnly
                             Component.onCompleted: attributePinCreated(attribute, inPin)
                             Component.onDestruction: attributePinDeleted(attribute, inPin)
+                            onPressed: root.pressed(mouse)
                             onChildPinCreated: attributePinCreated(childAttribute, inPin)
                             onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
                         }
@@ -99,6 +132,7 @@ Item {
                 id: outputs
                 width: parent.width / 2
                 anchors.right: parent.right
+                spacing: 1
                 Repeater {
                     model: node.attributes
 
@@ -112,7 +146,9 @@ Item {
                             nodeItem: root
                             attribute: object
                             readOnly: root.readOnly
+                            onPressed: root.pressed(mouse)
                             Component.onCompleted: attributePinCreated(object, outPin)
+                            Component.onDestruction: attributePinDeleted(attribute, outPin)
                         }
                     }
                 }

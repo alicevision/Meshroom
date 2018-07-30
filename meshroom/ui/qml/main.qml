@@ -130,7 +130,6 @@ ApplicationWindow {
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
             _reconstruction.loadUrl(file.toString())
-            graphEditor.doAutoLayout()
         }
     }
 
@@ -209,7 +208,6 @@ ApplicationWindow {
     CompatibilityManager {
         id: compatibilityManager
         uigraph: _reconstruction
-        onUpgradeDone: graphEditor.doAutoLayout()
     }
 
     Action {
@@ -242,7 +240,7 @@ ApplicationWindow {
             title: "File"
             Action {
                 text: "New"
-                onTriggered: ensureSaved(function() { _reconstruction.new(); graphEditor.doAutoLayout() })
+                onTriggered: ensureSaved(function() { _reconstruction.new() })
             }
             Action {
                 text: "Open"
@@ -309,12 +307,6 @@ ApplicationWindow {
 
     Connections {
         target: _reconstruction
-        // Request graph auto-layout when an augmentation step is added for readability
-        onSfmAugmented: graphEditor.doAutoLayout(_reconstruction.graph.nodes.indexOf(arguments[0]),
-                                                 _reconstruction.graph.nodes.indexOf(arguments[1]),
-                                                 0,
-                                                 graphEditor.boundingBox().height + graphEditor.gridSpacing
-                                                 )
 
         // Bind messages to DialogsFactory
         function createDialog(func, message)
@@ -330,6 +322,8 @@ ApplicationWindow {
             // open CompatibilityManager after file loading if any issue is detected
             if(compatibilityManager.issueCount)
                 compatibilityManager.open()
+            // trigger fit to visualize all nodes
+            graphEditor.fit()
         }
 
         onInfo: createDialog(dialogsFactory.info, arguments[0])
@@ -429,7 +423,6 @@ ApplicationWindow {
                 Layout.minimumHeight: 50
                 reconstruction: _reconstruction
                 readOnly: _reconstruction.computing
-                onRequestGraphAutoLayout: graphEditor.doAutoLayout()
             }
         }
 
@@ -447,13 +440,16 @@ ApplicationWindow {
                 Item {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
-                    Layout.margins: 10
+                    Layout.margins: 2
+
                     GraphEditor {
                         id: graphEditor
+
                         anchors.fill: parent
                         uigraph: _reconstruction
                         nodeTypesModel: _nodeTypes
                         readOnly: _reconstruction.computing
+
                         onNodeDoubleClicked: {
                             if(node.nodeType == "StructureFromMotion")
                             {
@@ -489,11 +485,8 @@ ApplicationWindow {
                                 readOnly: _reconstruction.computing
 
                                 onUpgradeRequest: {
-                                    var delegate = graphEditor.nodeDelegate(node.name)
-                                    var posX = delegate.x
-                                    var posY = delegate.y
-                                    _reconstruction.upgradeNode(node)
-                                    graphEditor.moveNode(node.name, posX, posY)
+                                    var n = _reconstruction.upgradeNode(node)
+                                    graphEditor.selectNode(n)
                                 }
                             }
                         }

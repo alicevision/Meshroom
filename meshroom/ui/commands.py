@@ -87,10 +87,11 @@ class GraphCommand(UndoCommand):
 
 
 class AddNodeCommand(GraphCommand):
-    def __init__(self, graph, nodeType, parent=None, **kwargs):
+    def __init__(self, graph, nodeType, position, parent=None, **kwargs):
         super(AddNodeCommand, self).__init__(graph, parent)
         self.nodeType = nodeType
         self.nodeName = None
+        self.position = position
         self.kwargs = kwargs
         # Serialize Attributes as link expressions
         for key, value in self.kwargs.items():
@@ -102,7 +103,7 @@ class AddNodeCommand(GraphCommand):
                          value[idx] = v.asLinkExpr()
 
     def redoImpl(self):
-        node = self.graph.addNewNode(self.nodeType, **self.kwargs)
+        node = self.graph.addNewNode(self.nodeType, position=self.position, **self.kwargs)
         self.nodeName = node.name
         self.setText("Add Node {}".format(self.nodeName))
         return node
@@ -149,14 +150,14 @@ class DuplicateNodeCommand(GraphCommand):
         srcNode = self.graph.node(self.srcNodeName)
 
         if self.duplicateFollowingNodes:
-            duplicates = self.graph.duplicateNodesFromNode(srcNode)
-            self.duplicates = [n.name for n in duplicates.values()]
+            duplicates = list(self.graph.duplicateNodesFromNode(srcNode).values())
             self.setText("Duplicate {} nodes from {}".format(len(duplicates), self.srcNodeName))
         else:
-            self.duplicates = [self.graph.duplicateNode(srcNode).name]
+            duplicates = [self.graph.duplicateNode(srcNode)]
             self.setText("Duplicate {}".format(self.srcNodeName))
 
-        return self.duplicates
+        self.duplicates = [n.name for n in duplicates]
+        return duplicates
 
     def undoImpl(self):
         # delete all the duplicated nodes
@@ -258,6 +259,23 @@ class ListAttributeRemoveCommand(GraphCommand):
         listAttribute.insert(self.index, self.value)
 
 
+class MoveNodeCommand(GraphCommand):
+    """ Move a node to a given position. """
+    def __init__(self, graph, node, position, parent=None):
+        super(MoveNodeCommand, self).__init__(graph, parent)
+        self.nodeName = node.name
+        self.oldPosition = node.position
+        self.newPosition = position
+        self.setText("Move {}".format(self.nodeName))
+
+    def redoImpl(self):
+        self.graph.node(self.nodeName).position = self.newPosition
+        return True
+
+    def undoImpl(self):
+        self.graph.node(self.nodeName).position = self.oldPosition
+
+
 class UpgradeNodeCommand(GraphCommand):
     """
     Perform node upgrade on a CompatibilityNode.
@@ -272,8 +290,8 @@ class UpgradeNodeCommand(GraphCommand):
     def redoImpl(self):
         if not self.graph.node(self.nodeName).canUpgrade:
             return False
-        inEdges, self.outEdges = self.graph.upgradeNode(self.nodeName)
-        return True
+        upgradedNode, inEdges, self.outEdges = self.graph.upgradeNode(self.nodeName)
+        return upgradedNode
 
     def undoImpl(self):
         # delete upgraded node

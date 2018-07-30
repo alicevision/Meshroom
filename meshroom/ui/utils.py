@@ -1,7 +1,7 @@
 import os
 import time
 
-from PySide2.QtCore import QFileSystemWatcher, QUrl, Slot, QTimer
+from PySide2.QtCore import QFileSystemWatcher, QUrl, Slot, QTimer, Property
 from PySide2.QtQml import QQmlApplicationEngine
 
 
@@ -191,3 +191,49 @@ class QmlInstantEngine(QQmlApplicationEngine):
     def reload(self):
         print("Reloading {}".format(self._sourceFile))
         self.load(self._sourceFile)
+
+
+def makeProperty(T, attributeName, notify=None):
+    """
+    Shortcut function to create a Qt Property with generic getter and setter.
+
+    Getter returns the underlying attribute value.
+    Setter sets and emit notify signal only if the given value is different from the current one.
+
+    Args:
+        T (type): the type of the property
+        attributeName (str): the name of underlying instance attribute to get/set
+        notify (Signal): the notify signal; if None, property will be constant
+
+    Examples:
+        class Foo(QObject):
+            _bar = 10
+            barChanged = Signal()
+            # read/write
+            bar = makeProperty(int, "_bar", notify=barChanged)
+            # read only (constant)
+            bar = makeProperty(int, "_bar")
+
+    Returns:
+        Property: the created Property
+    """
+    def setter(instance, value, notifyName):
+        """ Generic setter. """
+        if getattr(instance, attributeName) == value:
+            return
+        setattr(instance, attributeName, value)
+        getattr(instance, notifyName).emit()
+
+    def getter(instance):
+        """ Generic getter. """
+        return getattr(instance, attributeName)
+
+    def signalName(signalInstance):
+        """ Get signal name from instance. """
+        # string representation contains trailing '()', remove it
+        return str(signalInstance)[:-2]
+
+    if notify:
+        return Property(T, getter, lambda self, value: setter(self, value, signalName(notify)), notify=notify)
+    else:
+        return Property(T, getter, constant=True)

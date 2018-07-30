@@ -13,8 +13,6 @@ Panel {
     property variant reconstruction
     readonly property variant liveSfmManager: reconstruction.liveSfmManager
 
-    signal requestGraphAutoLayout()
-
     title: "Live Reconstruction"
     icon: Label {
         text: MaterialIcons.linked_camera;

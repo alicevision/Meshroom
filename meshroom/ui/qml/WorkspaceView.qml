@@ -24,7 +24,6 @@ Item {
     implicitWidth: 300
     implicitHeight: 400
 
-    signal requestGraphAutoLayout()
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath)
@@ -79,7 +78,6 @@ Item {
                 reconstruction: root.reconstruction
                 Layout.fillWidth: true
                 Layout.preferredHeight: childrenRect.height
-                onRequestGraphAutoLayout: graphEditor.doAutoLayout()
             }
         }
         Panel {

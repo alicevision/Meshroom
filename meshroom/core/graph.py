@@ -5,7 +5,7 @@ import logging
 import os
 import re
 import weakref
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
 
 from enum import Enum
@@ -13,6 +13,7 @@ from enum import Enum
 import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
+from meshroom.core import Version, pyCompatibility
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.exception import StopGraphVisit, StopBranchVisit
 from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
@@ -161,13 +162,47 @@ class Graph(BaseObject):
 
     class IO(object):
         """ Centralize Graph file keys and IO version. """
-        __version__ = "1.0"
+        __version__ = "1.1"
 
-        Header = "header"
-        NodesVersions = "nodesVersions"
-        ReleaseVersion = "releaseVersion"
-        FileVersion = "fileVersion"
-        Graph = "graph"
+        class Keys(object):
+            """ File Keys. """
+            # Doesn't inherit enum to simplify usage (Graph.IO.Keys.XX, without .value)
+            Header = "header"
+            NodesVersions = "nodesVersions"
+            ReleaseVersion = "releaseVersion"
+            FileVersion = "fileVersion"
+            Graph = "graph"
+
+        class Features(Enum):
+            """ File Features. """
+            Graph = "graph"
+            Header = "header"
+            NodesVersions = "nodesVersions"
+            PrecomputedOutputs = "precomputedOutputs"
+            NodesPositions = "nodesPositions"
+
+        @staticmethod
+        def getFeaturesForVersion(fileVersion):
+            """ Return the list of supported features based on a file version.
+
+            Args:
+                fileVersion (str, Version): the file version
+
+            Returns:
+                tuple of Graph.IO.Features: the list of supported features
+            """
+            if isinstance(fileVersion, pyCompatibility.basestring):
+                fileVersion = Version(fileVersion)
+
+            features = [Graph.IO.Features.Graph]
+            if fileVersion >= Version("1.0"):
+                features += [Graph.IO.Features.Header,
+                             Graph.IO.Features.NodesVersions,
+                             Graph.IO.Features.PrecomputedOutputs,
+                             ]
+            if fileVersion >= Version("1.1"):
+                features += [Graph.IO.Features.NodesPositions]
+            return tuple(features)
 
     def __init__(self, name, parent=None):
         super(Graph, self).__init__(parent)
@@ -191,6 +226,13 @@ class Graph(BaseObject):
         self._nodes.clear()
         self._edges.clear()
 
+    @property
+    def fileFeatures(self):
+        """ Get loaded file supported features based on its version. """
+        if not self._filepath:
+            return []
+        return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
+
     @Slot(str)
     def load(self, filepath):
         self.clear()
@@ -198,14 +240,13 @@ class Graph(BaseObject):
             fileData = json.load(jsonFile)
 
         # older versions of Meshroom files only contained the serialized nodes
-        graphData = fileData.get(Graph.IO.Graph, fileData)
+        graphData = fileData.get(Graph.IO.Keys.Graph, fileData)
 
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
 
-        self.header = fileData.get(Graph.IO.Header, {})
-        nodesVersions = self.header.get(Graph.IO.NodesVersions, {})
-        fileVersion = self.header.get(Graph.IO.FileVersion, "0.0")
+        self.header = fileData.get(Graph.IO.Keys.Header, {})
+        nodesVersions = self.header.get(Graph.IO.Keys.NodesVersions, {})
 
         with GraphModification(self):
             # iterate over nodes sorted by suffix index in their names
@@ -322,10 +363,11 @@ class Graph(BaseObject):
             fromNode (Node): the node to start the duplication from
 
         Returns:
-            Dict[Node, Node]: the source->duplicate map
+            OrderedDict[Node, Node]: the source->duplicate map
         """
         srcNodes, srcEdges = self.nodesFromNode(fromNode)
-        duplicates = {}
+        # use OrderedDict to keep duplicated nodes creation order
+        duplicates = OrderedDict()
 
         with GraphModification(self):
             duplicateEdges = {}
@@ -388,13 +430,14 @@ class Graph(BaseObject):
 
         return inEdges, outEdges
 
-    def addNewNode(self, nodeType, name=None, **kwargs):
+    def addNewNode(self, nodeType, name=None, position=None, **kwargs):
         """
         Create and add a new node to the graph.
 
         Args:
             nodeType (str): the node type name.
             name (str): if specified, the desired name for this node. If not unique, will be prefixed (_N).
+            position (Position): (optional) the position of the node
             **kwargs: keyword arguments to initialize node's attributes
 
         Returns:
@@ -403,7 +446,7 @@ class Graph(BaseObject):
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 
-        n = self.addNode(Node(nodeType, **kwargs), uniqueName=name)
+        n = self.addNode(Node(nodeType, position=position, **kwargs), uniqueName=name)
         n.updateInternals()
         return n
 
@@ -440,7 +483,7 @@ class Graph(BaseObject):
                 except (KeyError, ValueError) as e:
                     logging.warning("Failed to restore edge {} -> {}: {}".format(src, dst, str(e)))
 
-        return inEdges, outEdges
+        return upgradedNode, inEdges, outEdges
 
     def upgradeAllNodes(self):
         """ Upgrade all upgradable CompatibilityNode instances in the graph. """
@@ -858,20 +901,20 @@ class Graph(BaseObject):
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
 
-        self.header[Graph.IO.ReleaseVersion] = meshroom.__version__
-        self.header[Graph.IO.FileVersion] = Graph.IO.__version__
+        self.header[Graph.IO.Keys.ReleaseVersion] = meshroom.__version__
+        self.header[Graph.IO.Keys.FileVersion] = Graph.IO.__version__
 
         # store versions of node types present in the graph (excluding CompatibilityNode instances)
         usedNodeTypes = set([n.nodeDesc.__class__ for n in self._nodes if isinstance(n, Node)])
 
-        self.header[Graph.IO.NodesVersions] = {
+        self.header[Graph.IO.Keys.NodesVersions] = {
             "{}".format(p.__name__): meshroom.core.nodeVersion(p, "0.0")
             for p in usedNodeTypes
         }
 
         data = {
-            Graph.IO.Header: self.header,
-            Graph.IO.Graph: self.toDict()
+            Graph.IO.Keys.Header: self.header,
+            Graph.IO.Keys.Graph: self.toDict()
         }
 
         with open(path, 'w') as jsonFile:
@@ -1016,7 +1059,7 @@ class Graph(BaseObject):
     edges = Property(BaseObject, edges.fget, constant=True)
     filepathChanged = Signal()
     filepath = Property(str, lambda self: self._filepath, notify=filepathChanged)
-    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.ReleaseVersion, "0.0"), notify=filepathChanged)
+    fileReleaseVersion = Property(str, lambda self: self.header.get(Graph.IO.Keys.ReleaseVersion, "0.0"), notify=filepathChanged)
     cacheDirChanged = Signal()
     cacheDir = Property(str, cacheDir.fget, cacheDir.fset, notify=cacheDirChanged)
     updated = Signal()

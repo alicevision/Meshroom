@@ -21,9 +21,11 @@ RowLayout {
     signal childPinCreated(var childAttribute, var pin)
     signal childPinDeleted(var childAttribute, var pin)
 
+    signal pressed(var mouse)
+
     objectName: attribute.name + "."
     layoutDirection: attribute.isOutput ? Qt.RightToLeft : Qt.LeftToRight
-    spacing: 1
+    spacing: 2
 
     // Instantiate empty Items for each child attribute
     Repeater {
@@ -39,19 +41,31 @@ RowLayout {
     Rectangle {
         id: edgeAnchor
 
-        width: 6
+        width: 7
         height: width
         radius: isList ? 0 : width/2
         Layout.alignment: Qt.AlignVCenter
         border.color: "#3e3e3e"
-        color: (dropArea.containsDrag && dropArea.containsDrag) || attribute.isLink ? "#3e3e3e" : "white"
+        color: {
+            if(connectMA.containsMouse || connectMA.drag.active || (dropArea.containsDrag && dropArea.acceptableDrop))
+                return nameLabel.palette.highlight
+            else if(attribute.isLink)
+                return "#3e3e3e"
+            return "white"
+        }
 
         DropArea {
             id: dropArea
 
             property bool acceptableDrop: false
 
+            // add negative margins for DropArea to make the connection zone easier to reach
             anchors.fill: parent
+            anchors.margins: -2
+            // add horizontal negative margins according to the current layout
+            anchors.leftMargin: root.layoutDirection == Qt.RightToLeft ?  -root.width * 0.3 : 0
+            anchors.rightMargin: root.layoutDirection == Qt.LeftToRight ?  -root.width * 0.3 : 0
+
             keys: [dragTarget.objectName]
             onEntered: {
                 // Filter drops:
@@ -82,13 +96,20 @@ RowLayout {
             readonly property bool isOutput: attribute.isOutput
             readonly property alias isList: root.isList
             anchors.centerIn: root.state == "Dragging" ? undefined : parent
-            //anchors.verticalCenter: root.verticalCenter
-            width: 2
-            height: 2
+            width: 4
+            height: 4
             Drag.keys: [dragTarget.objectName]
             Drag.active: connectMA.drag.active
             Drag.hotSpot.x: width*0.5
             Drag.hotSpot.y: height*0.5
+            anchors.onCenterInChanged: {
+                // snap dragTarget to current mouse position in connectMA
+                if(anchors.centerIn == undefined) {
+                    var pos = mapFromItem(connectMA, connectMA.mouseX, connectMA.mouseY)
+                    x = pos.x
+                    y = pos.y
+                }
+            }
         }
 
         MouseArea {
@@ -97,7 +118,13 @@ RowLayout {
             drag.threshold: 0
             enabled: !root.readOnly
             anchors.fill: parent
+            // use the same negative margins as DropArea to ease pin selection
+            anchors.margins: dropArea.anchors.margins
+            anchors.leftMargin: dropArea.anchors.leftMargin
+            anchors.rightMargin: dropArea.anchors.rightMargin
+            onPressed: root.pressed(mouse)
             onReleased: dragTarget.Drag.drop()
+            hoverEnabled: true
         }
 
         Edge {
@@ -120,17 +147,8 @@ RowLayout {
         font.pointSize: 5
         horizontalAlignment: attribute.isOutput ? Text.AlignRight : Text.AlignLeft
 
-        // Extend truncated names at mouse hover
-        MouseArea {
-            id: ma
-            anchors.fill: parent
-            enabled: parent.truncated
-            visible: enabled
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
-        }
         Loader {
-            active: ma.containsMouse
+            active: parent.truncated && (connectMA.containsMouse || connectMA.drag.active || dropArea.containsDrag)
             anchors.right: root.layoutDirection == Qt.LeftToRight ? undefined : nameLabel.right
             // Non-elided label
             sourceComponent: Label {
@@ -158,7 +176,6 @@ RowLayout {
                 z: 100
                 visible: true
             }
-
         }
     ]
 

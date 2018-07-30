@@ -2,15 +2,17 @@
 # coding:utf-8
 import logging
 import os
+from enum import Enum
 from threading import Thread
 
-from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal
+from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
 
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
-from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode
+from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode, Position
 from meshroom.ui import commands
+from meshroom.ui.utils import makeProperty
 
 
 class ChunksMonitor(QObject):
@@ -76,6 +78,111 @@ class ChunksMonitor(QObject):
     chunkStatusChanged = Signal(NodeChunk, int)
 
 
+class GraphLayout(QObject):
+    """
+    GraphLayout provides auto-layout features to a UIGraph.
+    """
+
+    class DepthMode(Enum):
+        """ Defines available node depth mode to layout the graph automatically. """
+        MinDepth = 0  # use node minimal depth
+        MaxDepth = 1  # use node maximal depth
+
+    # map between DepthMode and corresponding node depth attribute name
+    _depthAttribute = {
+        DepthMode.MinDepth: 'minDepth',
+        DepthMode.MaxDepth: 'depth'
+    }
+
+    def __init__(self, graph):
+        super(GraphLayout, self).__init__(graph)
+        self.graph = graph
+        self._depthMode = GraphLayout.DepthMode.MaxDepth
+        self._nodeWidth = 140   # implicit node width
+        self._nodeHeight = 80   # implicit node height
+        self._gridSpacing = 15  # column/line spacing between nodes
+
+    @Slot(Node, Node, int, int)
+    def autoLayout(self, fromNode=None, toNode=None, startX=0, startY=0):
+        """
+        Perform auto-layout from 'fromNode' to 'toNode', starting from (startX, startY) position.
+
+        Args:
+            fromNode (BaseNode): where to start the auto layout from
+            toNode (BaseNode): up to where to perform the layout
+            startX (int): start position x coordinate
+            startY (int): start position y coordinate
+        """
+        fromIndex = self.graph.nodes.indexOf(fromNode) if fromNode else 0
+        toIndex = self.graph.nodes.indexOf(toNode) if toNode else self.graph.nodes.count - 1
+
+        def getDepth(n):
+            return getattr(n, self._depthAttribute[self._depthMode])
+
+        maxDepth = max([getDepth(n) for n in self.graph.nodes.values()])
+        grid = [[] for _ in range(maxDepth + 1)]
+
+        # retrieve reference depth from start node
+        zeroDepth = getDepth(self.graph.nodes.at(fromIndex)) if fromIndex > 0 else 0
+        for i in range(fromIndex, toIndex + 1):
+            n = self.graph.nodes.at(i)
+            grid[getDepth(n) - zeroDepth].append(n)
+
+        with self.graph.groupedGraphModification("Graph Auto-Layout"):
+            for x, line in enumerate(grid):
+                for y, node in enumerate(line):
+                    px = startX + x * (self._nodeWidth + self._gridSpacing)
+                    py = startY + y * (self._nodeHeight + self._gridSpacing)
+                    self.graph.moveNode(node, Position(px, py))
+
+    @Slot()
+    def reset(self):
+        """ Perform auto-layout on the whole graph. """
+        self.autoLayout()
+
+    def boundingBox(self, nodes=None):
+        """
+        Return bounding box for a set of nodes as (x, y, width, height).
+
+        Args:
+            nodes (list of Node): the list of nodes or the whole graph if None
+
+        Returns:
+            tuple of int: the resulting bounding box (x, y, width, height)
+        """
+        if nodes is None:
+            nodes = self.graph.nodes.values()
+        first = nodes[0]
+        bbox = [first.x, first.y, 1, 1]
+        for n in nodes:
+            bbox[0] = min(bbox[0], n.x)
+            bbox[1] = min(bbox[1], n.y)
+            bbox[2] = max(bbox[2], n.x + self._nodeWidth)
+            bbox[3] = max(bbox[3], n.y + self._nodeHeight)
+
+        bbox[2] -= bbox[0]
+        bbox[3] -= bbox[1]
+
+        return tuple(bbox)
+
+    def setDepthMode(self, mode):
+        """ Set node depth mode to use. """
+        if isinstance(mode, int):
+            mode = GraphLayout.DepthMode(mode)
+        if self._depthMode.value == mode.value:
+            return
+        self._depthMode = mode
+
+    depthModeChanged = Signal()
+    depthMode = Property(int, lambda self: self._depthMode.value, setDepthMode, notify=depthModeChanged)
+    nodeHeightChanged = Signal()
+    nodeHeight = makeProperty(int, "_nodeHeight", notify=nodeHeightChanged)
+    nodeWidthChanged = Signal()
+    nodeWidth = makeProperty(int, "_nodeWidth", notify=nodeWidthChanged)
+    gridSpacingChanged = Signal()
+    gridSpacing = makeProperty(int, "_gridSpacing", notify=gridSpacingChanged)
+
+
 class UIGraph(QObject):
     """ High level wrapper over core.Graph, with additional features dedicated to UI integration.
 
@@ -92,6 +199,7 @@ class UIGraph(QObject):
         self._computeThread = Thread()
         self._running = self._submitted = False
         self._sortedDFSChunks = QObjectListModel(parent=self)
+        self._layout = GraphLayout(self)
         if filepath:
             self.load(filepath)
 
@@ -103,6 +211,10 @@ class UIGraph(QObject):
         self._graph = g
         self._graph.updated.connect(self.onGraphUpdated)
         self._graph.update()
+        # perform auto-layout if graph does not provide nodes positions
+        if Graph.IO.Features.NodesPositions not in self._graph.fileFeatures:
+            self._layout.reset()
+            self._undoStack.clear()  # clear undo-stack after layout
         self.graphChanged.emit()
 
     def onGraphUpdated(self):
@@ -239,18 +351,35 @@ class UIGraph(QObject):
         self._modificationCount -= 1
         self._undoStack.endMacro()
 
-    @Slot(str, result=QObject)
-    def addNewNode(self, nodeType, **kwargs):
+    @Slot(str, QPoint, result=QObject)
+    def addNewNode(self, nodeType, position=None, **kwargs):
         """ [Undoable]
         Create a new Node of type 'nodeType' and returns it.
 
         Args:
             nodeType (str): the type of the Node to create.
+            position (QPoint): (optional) the initial position of the node
             **kwargs: optional node attributes values
+
         Returns:
             Node: the created node
         """
-        return self.push(commands.AddNodeCommand(self._graph, nodeType, **kwargs))
+        if isinstance(position, QPoint):
+            position = Position(position.x(), position.y())
+        return self.push(commands.AddNodeCommand(self._graph, nodeType, position=position, **kwargs))
+
+    @Slot(Node, QPoint)
+    def moveNode(self, node, position):
+        """
+        Move 'node' to the given 'position'.
+
+        Args:
+            node (Node): the node to move
+            position (QPoint): the target position
+        """
+        if isinstance(position, QPoint):
+            position = Position(position.x(), position.y())
+        self.push(commands.MoveNodeCommand(self._graph, node, position))
 
     @Slot(Node)
     def removeNode(self, node):
@@ -295,12 +424,23 @@ class UIGraph(QObject):
         Returns:
             [Nodes]: the list of duplicated nodes
         """
-        return self.push(commands.DuplicateNodeCommand(self._graph, srcNode, duplicateFollowingNodes))
+        title = "Duplicate Nodes from {}" if duplicateFollowingNodes else "Duplicate {}"
+        # enable updates between duplication and layout to get correct depths during layout
+        with self.groupedGraphModification(title.format(srcNode.name), disableUpdates=False):
+            # disable graph updates during duplication
+            with self.groupedGraphModification("Node duplication", disableUpdates=True):
+                duplicates = self.push(commands.DuplicateNodeCommand(self._graph, srcNode, duplicateFollowingNodes))
+            # move nodes below the bounding box formed by the duplicated node(s)
+            bbox = self._layout.boundingBox(duplicates)
+            for n in duplicates:
+                self.moveNode(n, Position(n.x, bbox[3] + self.layout.gridSpacing + n.y))
 
-    @Slot(CompatibilityNode)
+        return duplicates
+
+    @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):
         """ Upgrade a CompatibilityNode. """
-        self.push(commands.UpgradeNodeCommand(self._graph, node))
+        return self.push(commands.UpgradeNodeCommand(self._graph, node))
 
     @Slot()
     def upgradeAllNodes(self):
@@ -328,6 +468,8 @@ class UIGraph(QObject):
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
+    nodes = Property(QObject, lambda self: self._graph.nodes, notify=graphChanged)
+    layout = Property(GraphLayout, lambda self: self._layout, constant=True)
 
     computeStatusChanged = Signal()
     computing = Property(bool, isComputing, notify=computeStatusChanged)

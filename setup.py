@@ -15,6 +15,10 @@ meshroomExe = Executable(
     targetName="Meshroom",
 )
 
+meshroomPhotog = Executable(
+    "bin/meshroom_photogrammetry"
+)
+
 # Customize executable for each target platform
 if sys.platform.startswith("win32"):
     # meshroomExe.base = "Win32GUI"  # for no-console version
@@ -38,5 +42,5 @@ setup(
     ],
     version=meshroom.__version__,
     options={"build_exe": build_exe_options},
-    executables=[meshroomExe],
+    executables=[meshroomExe, meshroomPhotog],
 )

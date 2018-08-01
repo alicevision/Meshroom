@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import argparse
 
+import meshroom
+meshroom.setupEnvironment()
+
 import meshroom.core.graph
 from meshroom.core.node import Status
 

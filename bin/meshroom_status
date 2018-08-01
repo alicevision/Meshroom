@@ -3,6 +3,9 @@ import argparse
 import os
 from pprint import pprint
 
+import meshroom
+meshroom.setupEnvironment()
+
 import meshroom.core.graph
 
 parser = argparse.ArgumentParser(description='Query the status of nodes in a Graph of processes.')

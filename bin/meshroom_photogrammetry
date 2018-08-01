@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import argparse
-import os
 
-import meshroom.core
+import meshroom
+meshroom.setupEnvironment()
+
 import meshroom.core.graph
 from meshroom import multiview
-
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
 parser.add_argument('--input', metavar='FOLDER', type=str,

@@ -27,7 +27,7 @@ elif sys.platform.startswith("darwin"):
 setup(
     name="Meshroom",
     description="Meshroom",
-    install_requires=['psutil', 'pytest', 'PySide2'],
+    install_requires=['psutil', 'pytest', 'PySide2', 'markdown'],
     extras_require={
         ':python_version < "3.4"': [
             'enum34',

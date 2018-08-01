@@ -133,6 +133,10 @@ ApplicationWindow {
         }
     }
 
+    AboutDialog {
+        id: aboutDialog
+    }
+
     // Check if document has been saved
     function ensureSaved(callback)
     {
@@ -302,8 +306,17 @@ ApplicationWindow {
                 onTriggered: _window.visibility == ApplicationWindow.FullScreen ? _window.showNormal() : showFullScreen()
             }
         }
+        Menu {
+            title: "Help"
+            Action {
+                text: "About Meshroom"
+                onTriggered: aboutDialog.open()
+                // shoud be StandardKey.HelpContents, but for some reason it's not stable
+                // (may cause crash, requires pressing F1 twice after closing the popup)
+                shortcut: "F1"
+            }
+        }
     }
-
 
     Connections {
         target: _reconstruction

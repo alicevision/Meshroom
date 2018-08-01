@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-__version__ = "1.0"
+__version__ = "1.1"
 
 from meshroom.core import desc
 import shutil
@@ -48,10 +48,11 @@ class Publish(desc.Node):
         if not chunk.node.output.value:
             return
 
-        outFiles = self.resolvedPaths(chunk.node.inputFiles, chunk.node.output.value)
+        outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
         if not outFiles:
-            raise RuntimeError("Publish: input files listed, but nothing to publish. Listed input files: {}".format(chunk.node.inputFiles))
+            raise RuntimeError("Publish: input files listed, but nothing to publish. "
+                               "Listed input files: {}".format(chunk.node.inputFiles.value))
 
         if not os.path.exists(chunk.node.output.value):
             os.mkdir(chunk.node.output.value)

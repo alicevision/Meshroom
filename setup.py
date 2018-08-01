@@ -6,7 +6,8 @@ import meshroom
 
 build_exe_options = {
     # include dynamically loaded plugins
-    "packages": ["meshroom.nodes", "meshroom.submitters"]
+    "packages": ["meshroom.nodes", "meshroom.submitters"],
+    "include_files": ['COPYING.md']
 }
 
 meshroomExe = Executable(

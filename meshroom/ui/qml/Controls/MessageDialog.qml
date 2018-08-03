@@ -10,6 +10,8 @@ Dialog {
     property alias detailedText: detailedLabel.text
     property alias helperText: helperLabel.text
     property alias icon: iconLabel
+    property alias canCopy: copyButton.visible
+    property alias preset: presets.state
 
     default property alias children: layout.children
 
@@ -31,7 +33,8 @@ Dialog {
     standardButtons: Dialog.Ok
 
     header: Pane {
-        padding: 6
+        topPadding: 6
+        bottomPadding: 0
         leftPadding: 8
         rightPadding: leftPadding
 
@@ -59,12 +62,11 @@ Dialog {
                 text: title + " - " + Qt.application.name + " " + Qt.application.version
                 font.bold: true
             }
-            ToolButton {
-                font.family: MaterialIcons.fontFamily
+            MaterialToolButton {
+                id: copyButton
                 text: MaterialIcons.content_copy
                 ToolTip.text: "Copy Message to Clipboard"
-                ToolTip.visible: hovered
-                font.pointSize: 12
+                font.pointSize: 11
                 onClicked: {
                     textContent.text = getAsString()
                     textContent.selectAll(); textContent.copy()
@@ -94,4 +96,34 @@ Dialog {
             visible: text != ""
         }
     }
+
+    StateGroup {
+        id: presets
+        states: [
+            State {
+                name: "Info"
+                PropertyChanges {
+                    target: iconLabel
+                    text: MaterialIcons.info
+                }
+            },
+            State {
+                name: "Warning"
+                PropertyChanges {
+                    target: iconLabel
+                    text: MaterialIcons.warning
+                    color: "#FF9800"
+                }
+            },
+            State {
+                name: "Error"
+                PropertyChanges {
+                    target: iconLabel
+                    text: MaterialIcons.error
+                    color: "#F44336"
+                }
+            }
+        ]
+    }
+
 }

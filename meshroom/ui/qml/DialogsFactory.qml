@@ -12,17 +12,14 @@ QtObject {
     property Component infoDialog: Component {
         MessageDialog {
             title: "Info"
-            icon.text: MaterialIcons.info
+            preset: "Info"
             visible: true
         }
     }
     property Component warningDialog: Component {
         MessageDialog {
             title: "Warning"
-            icon {
-                text: MaterialIcons.warning
-                color: "#FF9800"
-            }
+            preset: "Warning"
             visible: true
         }
     }
@@ -30,10 +27,7 @@ QtObject {
         id: errorDialog
         MessageDialog {
             title: "Error"
-            icon {
-                text: MaterialIcons.error
-                color: "#F44336"
-            }
+            preset: "Error"
             text: defaultErrorText
             visible: true
         }

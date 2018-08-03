@@ -73,7 +73,8 @@ ApplicationWindow {
         property var _callback: undefined
 
         title: Filepath.basename(_reconstruction.graph.filepath) || "Unsaved Project"
-        icon.text: MaterialIcons.info
+        preset: "Info"
+        canCopy: false
         text: _reconstruction.graph.filepath ? "Current project has unsaved modifications."
                                              : "Current project has not been saved."
         helperText: _reconstruction.graph.filepath ? "Would you like to save those changes ?"
@@ -168,14 +169,11 @@ ApplicationWindow {
         return saved
     }
 
-    Dialog {
+    MessageDialog {
         id: computingAtExitDialog
         title: "Operation in progress"
-        x: parent.width/2 - width/2
-        y: parent.height/2 - height/2
-        padding: 15
-        standardButtons: Dialog.Ok
         modal: true
+        canCopy: false
         Label {
             text: "Please stop any local computation before exiting Meshroom"
         }

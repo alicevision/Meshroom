@@ -77,8 +77,8 @@ ApplicationWindow {
         canCopy: false
         text: _reconstruction.graph.filepath ? "Current project has unsaved modifications."
                                              : "Current project has not been saved."
-        helperText: _reconstruction.graph.filepath ? "Would you like to save those changes ?"
-                                                   : "Would you like to save this project ?"
+        helperText: _reconstruction.graph.filepath ? "Would you like to save those changes?"
+                                                   : "Would you like to save this project?"
 
         standardButtons: Dialog.Save | Dialog.Cancel | Dialog.Discard
 
@@ -138,6 +138,22 @@ ApplicationWindow {
             closed(Platform.Dialog.Accepted)
         }
         onRejected: closed(Platform.Dialog.Rejected)
+    }
+
+    MessageDialog {
+        id: unsavedComputeDialog
+
+        canCopy: false
+        icon.text: MaterialIcons.warning
+        preset: "Warning"
+        title: "Unsaved Project"
+        text: "Data will be computed in the default cache folder if project remains unsaved."
+        detailedText: "Default cache folder: " + _reconstruction.graph.cacheDir
+        helperText: "Save project first?"
+        standardButtons: Dialog.Discard | Dialog.Cancel | Dialog.Save
+
+        onDiscarded: { close(); _reconstruction.execute(null) }
+        onAccepted: saveAsAction.trigger()
     }
 
     Platform.FileDialog {
@@ -427,7 +443,12 @@ ApplicationWindow {
                         palette.window: enabled ? buttonColor : disabledPalette.window
                         palette.buttonText: enabled ? "white" : disabledPalette.buttonText
                         enabled: parent.canStartComputation
-                        onClicked: _reconstruction.execute(null)
+                        onClicked: {
+                            if(!_reconstruction.graph.filepath)
+                                unsavedComputeDialog.open()
+                            else
+                                _reconstruction.execute(null)
+                        }
                     }
                     Button {
                         text: "Stop"

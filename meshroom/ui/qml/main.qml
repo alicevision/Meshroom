@@ -333,6 +333,33 @@ ApplicationWindow {
         }
     }
 
+    footer: ToolBar {
+        id: footer
+        padding: 1
+        leftPadding: 4
+        rightPadding: 4
+        palette.window: Qt.darker(activePalette.window, 1.15)
+
+        // Cache Folder
+        RowLayout {
+            spacing: 0
+            MaterialToolButton {
+                font.pointSize: 8
+                text: MaterialIcons.folder_open
+                ToolTip.text: "Open Cache Folder"
+                onClicked: Qt.openUrlExternally(Filepath.stringToUrl(_reconstruction.graph.cacheDir))
+            }
+
+            TextField {
+                readOnly: true
+                selectByMouse: true
+                text: _reconstruction.graph.cacheDir
+                color: Qt.darker(palette.text, 1.2)
+                background: Item {}
+            }
+        }
+    }
+
     Connections {
         target: _reconstruction
 
@@ -459,6 +486,7 @@ ApplicationWindow {
         Panel {
             Layout.fillWidth: true
             Layout.fillHeight: false
+            padding: 0
             height: Math.round(parent.height * 0.3)
             title: "Graph Editor"
             visible: settings_UILayout.showGraphEditor

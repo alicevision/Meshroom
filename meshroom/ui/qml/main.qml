@@ -14,8 +14,10 @@ import Controls 1.0
 ApplicationWindow {
     id: _window
 
-    width: 1280
-    height: 720
+    width: settings_General.windowWidth
+    height: settings_General.windowHeight
+    minimumWidth: 650
+    minimumHeight: 500
     visible: true
 
     title: {
@@ -46,10 +48,23 @@ ApplicationWindow {
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
     Settings {
+        id: settings_General
+        category: 'General'
+        property int windowWidth: 1280
+        property int windowHeight: 720
+    }
+
+    Settings {
         id: settings_UILayout
         category: 'UILayout'
         property alias showLiveReconstruction: liveSfMVisibilityCB.checked
         property alias showGraphEditor: graphEditorVisibilityCB.checked
+    }
+
+    Component.onDestruction: {
+        // store main window dimensions in persisting Settings
+        settings_General.windowWidth = _window.width
+        settings_General.windowHeight = _window.height
     }
 
     MessageDialog {

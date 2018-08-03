@@ -257,6 +257,7 @@ ApplicationWindow {
             title: "File"
             Action {
                 text: "New"
+                shortcut: "Ctrl+N"
                 onTriggered: ensureSaved(function() { _reconstruction.new() })
             }
             Action {
@@ -268,8 +269,8 @@ ApplicationWindow {
                 id: saveAction
                 text: "Save"
                 shortcut: "Ctrl+S"
-                enabled: _reconstruction.graph.filepath != "" && !_reconstruction.undoStack.clean
-                onTriggered: _reconstruction.save()
+                enabled: !_reconstruction.graph.filepath || !_reconstruction.undoStack.clean
+                onTriggered: _reconstruction.graph.filepath ? _reconstruction.save() : saveFileDialog.open()
             }
             Action {
                 id: saveAsAction

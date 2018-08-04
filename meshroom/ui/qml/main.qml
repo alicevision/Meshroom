@@ -14,8 +14,10 @@ import Controls 1.0
 ApplicationWindow {
     id: _window
 
-    width: 1280
-    height: 720
+    width: settings_General.windowWidth
+    height: settings_General.windowHeight
+    minimumWidth: 650
+    minimumHeight: 500
     visible: true
 
     title: {
@@ -46,10 +48,23 @@ ApplicationWindow {
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
     Settings {
+        id: settings_General
+        category: 'General'
+        property int windowWidth: 1280
+        property int windowHeight: 720
+    }
+
+    Settings {
         id: settings_UILayout
         category: 'UILayout'
         property alias showLiveReconstruction: liveSfMVisibilityCB.checked
         property alias showGraphEditor: graphEditorVisibilityCB.checked
+    }
+
+    Component.onDestruction: {
+        // store main window dimensions in persisting Settings
+        settings_General.windowWidth = _window.width
+        settings_General.windowHeight = _window.height
     }
 
     MessageDialog {
@@ -58,11 +73,12 @@ ApplicationWindow {
         property var _callback: undefined
 
         title: Filepath.basename(_reconstruction.graph.filepath) || "Unsaved Project"
-        icon.text: MaterialIcons.info
+        preset: "Info"
+        canCopy: false
         text: _reconstruction.graph.filepath ? "Current project has unsaved modifications."
                                              : "Current project has not been saved."
-        helperText: _reconstruction.graph.filepath ? "Would you like to save those changes ?"
-                                                   : "Would you like to save this project ?"
+        helperText: _reconstruction.graph.filepath ? "Would you like to save those changes?"
+                                                   : "Would you like to save this project?"
 
         standardButtons: Dialog.Save | Dialog.Cancel | Dialog.Discard
 
@@ -124,6 +140,22 @@ ApplicationWindow {
         onRejected: closed(Platform.Dialog.Rejected)
     }
 
+    MessageDialog {
+        id: unsavedComputeDialog
+
+        canCopy: false
+        icon.text: MaterialIcons.warning
+        preset: "Warning"
+        title: "Unsaved Project"
+        text: "Data will be computed in the default cache folder if project remains unsaved."
+        detailedText: "Default cache folder: " + _reconstruction.graph.cacheDir
+        helperText: "Save project first?"
+        standardButtons: Dialog.Discard | Dialog.Cancel | Dialog.Save
+
+        onDiscarded: { close(); _reconstruction.execute(null) }
+        onAccepted: saveAsAction.trigger()
+    }
+
     Platform.FileDialog {
         id: openFileDialog
         title: "Open File"
@@ -131,6 +163,10 @@ ApplicationWindow {
         onAccepted: {
             _reconstruction.loadUrl(file.toString())
         }
+    }
+
+    AboutDialog {
+        id: aboutDialog
     }
 
     // Check if document has been saved
@@ -149,14 +185,11 @@ ApplicationWindow {
         return saved
     }
 
-    Dialog {
+    MessageDialog {
         id: computingAtExitDialog
         title: "Operation in progress"
-        x: parent.width/2 - width/2
-        y: parent.height/2 - height/2
-        padding: 15
-        standardButtons: Dialog.Ok
         modal: true
+        canCopy: false
         Label {
             text: "Please stop any local computation before exiting Meshroom"
         }
@@ -240,6 +273,7 @@ ApplicationWindow {
             title: "File"
             Action {
                 text: "New"
+                shortcut: "Ctrl+N"
                 onTriggered: ensureSaved(function() { _reconstruction.new() })
             }
             Action {
@@ -251,8 +285,8 @@ ApplicationWindow {
                 id: saveAction
                 text: "Save"
                 shortcut: "Ctrl+S"
-                enabled: _reconstruction.graph.filepath != "" && !_reconstruction.undoStack.clean
-                onTriggered: _reconstruction.save()
+                enabled: !_reconstruction.graph.filepath || !_reconstruction.undoStack.clean
+                onTriggered: _reconstruction.graph.filepath ? _reconstruction.save() : saveFileDialog.open()
             }
             Action {
                 id: saveAsAction
@@ -302,8 +336,44 @@ ApplicationWindow {
                 onTriggered: _window.visibility == ApplicationWindow.FullScreen ? _window.showNormal() : showFullScreen()
             }
         }
+        Menu {
+            title: "Help"
+            Action {
+                text: "About Meshroom"
+                onTriggered: aboutDialog.open()
+                // shoud be StandardKey.HelpContents, but for some reason it's not stable
+                // (may cause crash, requires pressing F1 twice after closing the popup)
+                shortcut: "F1"
+            }
+        }
     }
 
+    footer: ToolBar {
+        id: footer
+        padding: 1
+        leftPadding: 4
+        rightPadding: 4
+        palette.window: Qt.darker(activePalette.window, 1.15)
+
+        // Cache Folder
+        RowLayout {
+            spacing: 0
+            MaterialToolButton {
+                font.pointSize: 8
+                text: MaterialIcons.folder_open
+                ToolTip.text: "Open Cache Folder"
+                onClicked: Qt.openUrlExternally(Filepath.stringToUrl(_reconstruction.graph.cacheDir))
+            }
+
+            TextField {
+                readOnly: true
+                selectByMouse: true
+                text: _reconstruction.graph.cacheDir
+                color: Qt.darker(palette.text, 1.2)
+                background: Item {}
+            }
+        }
+    }
 
     Connections {
         target: _reconstruction
@@ -358,7 +428,8 @@ ApplicationWindow {
                                                        && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
 
                     // evaluate if graph computation can be submitted externally
-                    property bool canSubmit: canStartComputation                                  // can be computed
+                    property bool canSubmit: _reconstruction.canSubmit                            // current setup allows to compute externally
+                                             && canStartComputation                               // can be computed
                                              && _reconstruction.graph.filepath                    // graph is saved on disk
 
                     // disable controls if graph is executed externally
@@ -372,7 +443,12 @@ ApplicationWindow {
                         palette.window: enabled ? buttonColor : disabledPalette.window
                         palette.buttonText: enabled ? "white" : disabledPalette.buttonText
                         enabled: parent.canStartComputation
-                        onClicked: _reconstruction.execute(null)
+                        onClicked: {
+                            if(!_reconstruction.graph.filepath)
+                                unsavedComputeDialog.open()
+                            else
+                                _reconstruction.execute(null)
+                        }
                     }
                     Button {
                         text: "Stop"
@@ -381,6 +457,7 @@ ApplicationWindow {
                     }
                     Item { width: 20; height: 1 }
                     Button {
+                        visible: _reconstruction.canSubmit
                         enabled: parent.canSubmit
                         text: "Submit"
                         onClicked: _reconstruction.submit(null)
@@ -429,6 +506,7 @@ ApplicationWindow {
         Panel {
             Layout.fillWidth: true
             Layout.fillHeight: false
+            padding: 0
             height: Math.round(parent.height * 0.3)
             title: "Graph Editor"
             visible: settings_UILayout.showGraphEditor

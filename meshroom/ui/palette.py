@@ -16,6 +16,7 @@ class PaletteManager(QObject):
         disabledText = text.darker(170)
         base = window.darker(150)
         button = window.lighter(115)
+        highlight = QColor(42, 130, 218)
         dark = window.darker(170)
 
         darkPalette.setColor(QPalette.Window, window)
@@ -32,11 +33,12 @@ class PaletteManager(QObject):
         darkPalette.setColor(QPalette.Disabled, QPalette.ButtonText, disabledText)
 
         darkPalette.setColor(QPalette.Mid, button.lighter(120))
-        darkPalette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        darkPalette.setColor(QPalette.Highlight, highlight)
         darkPalette.setColor(QPalette.Disabled, QPalette.Highlight, QColor(80, 80, 80))
         darkPalette.setColor(QPalette.HighlightedText, Qt.white)
         darkPalette.setColor(QPalette.Disabled, QPalette.HighlightedText, QColor(127, 127, 127))
         darkPalette.setColor(QPalette.Shadow, Qt.black)
+        darkPalette.setColor(QPalette.Link, highlight.lighter(130))
 
         self.darkPalette = darkPalette
         self.defaultPalette = QApplication.instance().palette()

@@ -127,7 +127,6 @@ FocusScope {
 
     function clearScene()
     {
-        source = 'no_file' // only way to force unloading of valid scene
         source = ''
     }
 
@@ -447,6 +446,7 @@ FocusScope {
 
         Column {
             Row {
+                visible: root.supportAlembic
                 CheckBox { id: showSfMCheckBox; text: "SfM"; checked: true; visible: root.supportAlembic; opacity: root.abcSource ? 1.0 : 0.6 }
                 ToolButton {
                     text: MaterialIcons.clear; font.family: MaterialIcons.fontFamily; visible: root.abcSource != '';

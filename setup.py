@@ -1,5 +1,6 @@
-import sys
+import platform
 
+import os
 import setuptools  # for bdist
 from cx_Freeze import setup, Executable
 import meshroom
@@ -10,23 +11,45 @@ build_exe_options = {
     "include_files": ['COPYING.md']
 }
 
-meshroomExe = Executable(
+
+class PlatformExecutable(Executable):
+    """
+    Extend cx_Freeze.Executable to handle platform variations.
+    """
+
+    Windows = "Windows"
+    Linux = "Linux"
+    Darwin = "Darwin"
+
+    exeExtensions = {
+        Windows: ".exe",
+        Linux: "",
+        Darwin: ".app"
+    }
+
+    def __init__(self, script, initScript=None, base=None, targetName=None, icons=None, shortcutName=None,
+                 shortcutDir=None, copyright=None, trademarks=None):
+
+        # despite supposed to be optional, targetName is actually required on some configurations
+        if not targetName:
+            targetName = os.path.splitext(os.path.basename(script))[0]
+        # add platform extension to targetName
+        targetName += PlatformExecutable.exeExtensions[platform.system()]
+        # get icon for platform if defined
+        icon = icons.get(platform.system(), None) if icons else None
+        super(PlatformExecutable, self).__init__(script, initScript, base, targetName, icon, shortcutName,
+                                                 shortcutDir, copyright, trademarks)
+
+
+meshroomExe = PlatformExecutable(
     "meshroom/ui/__main__.py",
     targetName="Meshroom",
+    icons={PlatformExecutable.Windows: "meshroom/ui/img/meshroom.ico"}
 )
 
-meshroomPhotog = Executable(
+meshroomPhotog = PlatformExecutable(
     "bin/meshroom_photogrammetry"
 )
-
-# Customize executable for each target platform
-if sys.platform.startswith("win32"):
-    # meshroomExe.base = "Win32GUI"  # for no-console version
-    meshroomExe.targetName += ".exe"
-    meshroomExe.icon = "meshroom/ui/img/meshroom.ico"
-elif sys.platform.startswith("darwin"):
-    meshroomExe.targetName += ".app"
-    # TODO: icon for Mac
 
 setup(
     name="Meshroom",

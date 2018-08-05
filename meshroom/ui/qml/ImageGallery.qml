@@ -110,61 +110,44 @@ Panel {
                     Row {
                         anchors.top: parent.top
                         anchors.right: parent.right
-                        anchors.margins: 10
-                        // Lens recognized
-                        ToolButton {
-                            id: metadataIndicator
+                        anchors.margins: 4
+                        spacing: 2
 
-                            // object can be evaluated to null at some point during creation/deletion
-                            property bool valid: Qt.isQtObject(object)
-                            property bool hasMetadata: _reconstruction.hasMetadata(model.object)
+                        property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
+                        property bool noMetadata: valid && !_reconstruction.hasMetadata(model.object)
+                        property bool noIntrinsic: valid  && !_reconstruction.hasValidIntrinsic(model.object)
+                        property bool inViews: valid && _reconstruction.sfmReport && _reconstruction.isInViews(object)
 
-                            contentItem: Label {
-                                font.family: MaterialIcons.fontFamily
+                        // Missing metadata indicator
+                        Loader {
+                            active: parent.noMetadata
+                            visible: active
+                            sourceComponent: MaterialLabel {
                                 text: MaterialIcons.info_outline
-                                color: parent.hasMetadata ? "#4CAF50" : "#F44336"
-                                font.pointSize: 10
+                                color: "#FF9800"
+                                ToolTip.text: "No Metadata"
                             }
-                            ToolTip.text: hasMetadata ? "Has Metadata" : "Missing Metadata"
-                            ToolTip.visible: pressed
-                            visible: valid && !hasMetadata
                         }
-                        // Lens recognized
-                        ToolButton {
-                            id: lensIndicator
-
-                            // object can be evaluated to null at some point during creation/deletion
-                            property bool valid: Qt.isQtObject(object)
-                            property bool hasValidIntrinsic: _reconstruction.hasValidIntrinsic(model.object)
-
-                            contentItem: Label {
-                                font.family: MaterialIcons.fontFamily
-                                text: MaterialIcons.warning
-                                color: "#F44336"
-                                font.pointSize: 10
+                        // Unknown camera instrinsics indicator
+                        Loader {
+                            active: parent.noIntrinsic
+                            visible: active
+                            sourceComponent: MaterialLabel {
+                                text: MaterialIcons.camera
+                                color: "#FF9800"
+                                ToolTip.text: "No Camera Instrinsic Parameters (missing Metadata?)"
                             }
-                            visible: valid && !hasValidIntrinsic
-
-                            ToolTip.text: "Unable to find camera intrinsic parameters.\nCheck image metadata."
-                            ToolTip.visible: pressed
                         }
                         // Reconstruction status indicator
-                        ToolButton {
-                            id: statusIndicator
-
-                            // object can be evaluated to null at some point during creation/deletion
-                            property bool inViews: Qt.isQtObject(object) && _reconstruction.sfmReport && _reconstruction.isInViews(object)
-                            property bool reconstructed: inViews && _reconstruction.isReconstructed(model.object)
-
-                            contentItem: Label {
-                                font.family: MaterialIcons.fontFamily
-                                text: parent.reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
-                                color: parent.reconstructed ? "#4CAF50" : "#F44336"
-                                font.pointSize: 10
+                        Loader {
+                            active: parent.inViews
+                            visible: active
+                            sourceComponent: MaterialLabel {
+                                property bool reconstructed: _reconstruction.isReconstructed(model.object)
+                                text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
+                                color: reconstructed ? "#4CAF50" : "#F44336"
+                                ToolTip.text: reconstructed ? "Reconstructed" : "Not Reconstructed"
                             }
-                            ToolTip.text: reconstructed ? "Reconstructed" : "Not Reconstructed"
-                            ToolTip.visible: pressed
-                            visible: inViews
                         }
                     }
                 }

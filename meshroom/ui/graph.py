@@ -154,7 +154,7 @@ class GraphLayout(QObject):
         if nodes is None:
             nodes = self.graph.nodes.values()
         first = nodes[0]
-        bbox = [first.x, first.y, 1, 1]
+        bbox = [first.x, first.y, first.x + self._nodeWidth, first.y + self._nodeHeight]
         for n in nodes:
             bbox[0] = min(bbox[0], n.x)
             bbox[1] = min(bbox[1], n.y)

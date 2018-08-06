@@ -5,12 +5,6 @@ import setuptools  # for bdist
 from cx_Freeze import setup, Executable
 import meshroom
 
-build_exe_options = {
-    # include dynamically loaded plugins
-    "packages": ["meshroom.nodes", "meshroom.submitters"],
-    "include_files": ['COPYING.md']
-}
-
 
 class PlatformExecutable(Executable):
     """
@@ -40,6 +34,71 @@ class PlatformExecutable(Executable):
         super(PlatformExecutable, self).__init__(script, initScript, base, targetName, icon, shortcutName,
                                                  shortcutDir, copyright, trademarks)
 
+
+build_exe_options = {
+    # include dynamically loaded plugins
+    "packages": ["meshroom.nodes", "meshroom.submitters"],
+    "include_files": ['COPYING.md']
+}
+
+if platform.system() == PlatformExecutable.Linux:
+    # include required system libs
+    # from https://github.com/Ultimaker/cura-build/blob/master/packaging/setup_linux.py.in
+    build_exe_options.update({
+        "bin_path_includes": [
+            "/lib",
+            "/lib64",
+            "/usr/lib",
+            "/usr/lib64",
+        ],
+        "bin_includes": [
+            "libssl3",
+            "libssl",
+            "libcrypto",
+        ],
+        "bin_excludes": [
+            "linux-vdso.so",
+            "libpthread.so",
+            "libdl.so",
+            "librt.so",
+            "libstdc++.so",
+            "libm.so",
+            "libgcc_s.so",
+            "libc.so",
+            "ld-linux-x86-64.so",
+            "libz.so",
+            "libgcc_s.so",
+            "libglib-2",
+            "librt.so",
+            "libcap.so",
+            "libGL.so",
+            "libglapi.so",
+            "libXext.so",
+            "libXdamage.so",
+            "libXfixes.so",
+            "libX11-xcb.so",
+            "libX11.so",
+            "libxcb-glx.so",
+            "libxcb-dri2.so",
+            "libxcb.so",
+            "libXxf86vm.so",
+            "libdrm.so",
+            "libexpat.so",
+            "libXau.so",
+            "libglib-2.0.so",
+            "libgssapi_krb5.so",
+            "libgthread-2.0.so",
+            "libk5crypto.so",
+            "libkeyutils.so",
+            "libkrb5.so",
+            "libkrb5support.so",
+            "libresolv.so",
+            "libutil.so",
+            "libXrender.so",
+            "libcom_err.so",
+            "libgssapi_krb5.so",
+        ]
+    })
 
 meshroomExe = PlatformExecutable(
     "meshroom/ui/__main__.py",

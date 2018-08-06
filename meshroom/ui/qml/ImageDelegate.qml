@@ -19,6 +19,8 @@ Item {
     signal pressed(var mouse)
     signal removeRequest()
 
+    default property alias children: imageMA.children
+
     // retrieve viewpoints inner data
     QtObject {
         id: _viewpoint

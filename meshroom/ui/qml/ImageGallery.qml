@@ -107,22 +107,48 @@ Panel {
                     onRemoveRequest: sendRemoveRequest()
                     Keys.onDeletePressed: sendRemoveRequest()
 
-                    // Reconstruction status indicator
-                    Label {
-                        id: statusIndicator
-
-                        // object can be evaluated to null at some point during creation/deletion
-                        property bool inViews: Qt.isQtObject(object) && _reconstruction.sfmReport && _reconstruction.isInViews(object)
-                        property bool reconstructed: inViews && _reconstruction.isReconstructed(model.object)
-
-                        font.family: MaterialIcons.fontFamily
-                        text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
-                        color: reconstructed ? "#4CAF50" : "#F44336"
+                    Row {
                         anchors.top: parent.top
                         anchors.right: parent.right
-                        anchors.margins: 10
-                        font.pointSize: 10
-                        visible: inViews
+                        anchors.margins: 4
+                        spacing: 2
+
+                        property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
+                        property bool noMetadata: valid && !_reconstruction.hasMetadata(model.object)
+                        property bool noIntrinsic: valid  && !_reconstruction.hasValidIntrinsic(model.object)
+                        property bool inViews: valid && _reconstruction.sfmReport && _reconstruction.isInViews(object)
+
+                        // Missing metadata indicator
+                        Loader {
+                            active: parent.noMetadata
+                            visible: active
+                            sourceComponent: MaterialLabel {
+                                text: MaterialIcons.info_outline
+                                color: "#FF9800"
+                                ToolTip.text: "No Metadata"
+                            }
+                        }
+                        // Unknown camera instrinsics indicator
+                        Loader {
+                            active: parent.noIntrinsic
+                            visible: active
+                            sourceComponent: MaterialLabel {
+                                text: MaterialIcons.camera
+                                color: "#FF9800"
+                                ToolTip.text: "No Camera Instrinsic Parameters (missing Metadata?)"
+                            }
+                        }
+                        // Reconstruction status indicator
+                        Loader {
+                            active: parent.inViews
+                            visible: active
+                            sourceComponent: MaterialLabel {
+                                property bool reconstructed: _reconstruction.isReconstructed(model.object)
+                                text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
+                                color: reconstructed ? "#4CAF50" : "#F44336"
+                                ToolTip.text: reconstructed ? "Reconstructed" : "Not Reconstructed"
+                            }
+                        }
                     }
                 }
             }

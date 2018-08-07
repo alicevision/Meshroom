@@ -69,16 +69,17 @@ def setupEnvironment():
         aliceVisionDir = os.path.join(rootDir, "aliceVision")
         # default directories
         aliceVisionBinDir = os.path.join(aliceVisionDir, "bin")
+        aliceVisionLibDir = os.path.join(aliceVisionDir, "lib64")  # Unix
         aliceVisionShareDir = os.path.join(aliceVisionDir, "share")
         qtPluginsDir = os.path.join(rootDir, "qtPlugins")
         sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
         voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.tree")
-        # Linux: "lib" contains shared libraries that needs to be in LD_LIBRARY_PATH
-        libPath = os.path.join(rootDir, "lib")
+        # Unix: "lib" contains shared libraries that needs to be in LD_LIBRARY_PATH
+        libDir = os.path.join(rootDir, "lib")
 
         env = {
             'PATH': aliceVisionBinDir,
-            'LD_LIBRARY_PATH': [aliceVisionBinDir, libPath],
+            'LD_LIBRARY_PATH': [libDir, aliceVisionLibDir],  # Unix
             'QT_PLUGIN_PATH': [qtPluginsDir],
             'QML2_IMPORT_PATH': [os.path.join(qtPluginsDir, "qml")]
         }

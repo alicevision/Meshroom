@@ -31,8 +31,7 @@ RUN yum install -y \
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
-    QT_DIR=/path/to/qt/5.11.0/gcc_64 \
-    OPENIMAGEIO_DIR=/path/to/oiio/install \
+    QT_DIR=/opt/qt/5.11.0/gcc_64 \
     PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 COPY . "${MESHROOM_DEV}"
@@ -43,6 +42,6 @@ RUN chmod u+x qt-unified-linux-x64-online.run
 RUN ./qt-unified-linux-x64-online.run --verbose --platform minimal --script "${MESHROOM_DEV}/docker/qt-installer-noninteractive.qs"
 
 WORKDIR ${MESHROOM_BUILD}
-RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT=${AV_INSTALL} -DCMAKE_INSTALL_PREFIX=${MESHROOM_BUNDLE}
-RUN make -j8 install
+RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DQT_DIR="${QT_DIR}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}"
+RUN make -j8
 

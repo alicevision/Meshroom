@@ -39,7 +39,7 @@ include(ExternalProject)
 # ==============================================================================
 include(GNUInstallDirs)
 
-message(WARNING "QT_CMAKE_FLAGS: ${QT_CMAKE_FLAGS}")
+# message(STATUS "QT_CMAKE_FLAGS: ${QT_CMAKE_FLAGS}")
 
 if(MR_BUILD_QTOIIO)
 set(QTOIIO_TARGET qtoiio)

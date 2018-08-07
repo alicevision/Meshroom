@@ -4,7 +4,7 @@ from meshroom.core import desc
 
 
 class ExportMaya(desc.CommandLineNode):
-    commandLine = 'aliceVision_exportMayaMVG {allParams}'
+    commandLine = 'aliceVision_exportMeshroomMaya {allParams}'
 
     inputs = [
         desc.File(

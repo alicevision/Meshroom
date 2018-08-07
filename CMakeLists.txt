@@ -4,26 +4,31 @@ project(meshroom LANGUAGES C CXX)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type for Meshroom plugins" FORCE)
 endif()
-set(DEPS_CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type for all external libraries")
-string(TOLOWER ${DEPS_CMAKE_BUILD_TYPE} DEPS_CMAKE_BUILD_TYPE_LOWERCASE)
 
-
-option(ALICEVISION_ROOT "AliceVision root dir" $ENV{ALICEVISION_ROOT})
-option(QT_DIR "Qt root directory" $ENV{QT_DIR})
+set(ALICEVISION_ROOT "$ENV{ALICEVISION_ROOT}" CACHE STRING "AliceVision root dir")
+set(QT_DIR "$ENV{QT_DIR}" CACHE STRING "Qt root directory")
 
 option(MR_BUILD_QTOIIO "Enable building of QtOIIO plugin" ON)
 option(MR_BUILD_QMLALEMBIC "Enable building of qmlAlembic plugin" ON)
 
 if(CMAKE_BUILD_TYPE MATCHES Release)
     message(STATUS "Force CMAKE_INSTALL_DO_STRIP in Release")
-    set(CMAKE_INSTALL_DO_STRIP TRUE)
+    set(CMAKE_INSTALL_DO_STRIP ON)
+else()
+    set(CMAKE_INSTALL_DO_STRIP OFF)
 endif()
 
-set(CMAKE_CORE_BUILD_FLAGS -DCMAKE_BUILD_TYPE=${DEPS_CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_DO_STRIP=${CMAKE_INSTALL_DO_STRIP})
+set(CMAKE_CORE_BUILD_FLAGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_DO_STRIP=${CMAKE_INSTALL_DO_STRIP})
 
-set(OIIO_CMAKE_FLAGS -DOPENIMAGEIO_LIBRARY_DIR_HINTS=${ALICEVISION_ROOT} -DOPENIMAGEIO_INCLUDE_DIR_HINTS=${ALICEVISION_ROOT})
-set(ALEMBIC_CMAKE_FLAGS -DAlembic_DIR:PATH=${ALICEVISION_ROOT}/lib/cmake/Alembic)
-set(QT_CMAKE_FLAGS -DQT_DIR=${QT_DIR} -DCMAKE_PREFIX_PATH=${QT_DIR})
+set(OIIO_CMAKE_FLAGS 
+  -DOPENIMAGEIO_LIBRARY_DIR_HINTS=${ALICEVISION_ROOT}/lib64
+  -DOPENIMAGEIO_INCLUDE_DIR_HINTS=${ALICEVISION_ROOT}/include
+)
+set(ALEMBIC_CMAKE_FLAGS
+  -DAlembic_DIR:PATH=${ALICEVISION_ROOT}/lib64/cmake/Alembic
+  -DILMBASE_ROOT=${ALICEVISION_ROOT}
+)
+set(QT_CMAKE_FLAGS -DCMAKE_PREFIX_PATH=${QT_DIR})
 
 
 include(ExternalProject)
@@ -33,6 +38,8 @@ include(ExternalProject)
 # - Provides install directory variables as defined by the GNU Coding Standards.
 # ==============================================================================
 include(GNUInstallDirs)
+
+message(WARNING "QT_CMAKE_FLAGS: ${QT_CMAKE_FLAGS}")
 
 if(MR_BUILD_QTOIIO)
 set(QTOIIO_TARGET qtoiio)

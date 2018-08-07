@@ -42,6 +42,7 @@ RUN chmod u+x qt-unified-linux-x64-online.run
 RUN ./qt-unified-linux-x64-online.run --verbose --platform minimal --script "${MESHROOM_DEV}/docker/qt-installer-noninteractive.qs"
 
 WORKDIR ${MESHROOM_BUILD}
+RUN rm -rf "${AV_BUNDLE}/lib" && ln -s "${AV_BUNDLE}/lib64" "${AV_BUNDLE}/lib"
 RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DQT_DIR="${QT_DIR}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}"
 RUN make -j8
 

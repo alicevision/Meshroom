@@ -31,6 +31,9 @@ class PlatformExecutable(Executable):
         targetName += PlatformExecutable.exeExtensions[platform.system()]
         # get icon for platform if defined
         icon = icons.get(platform.system(), None) if icons else None
+        if platform.system() in (self.Linux, self.Darwin):
+            currentDir = os.path.dirname(os.path.abspath(__file__))
+            initScript = os.path.join(currentDir, "setupInitScriptUnix.py")
         super(PlatformExecutable, self).__init__(script, initScript, base, targetName, icon, shortcutName,
                                                  shortcutDir, copyright, trademarks)
 

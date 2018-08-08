@@ -6,6 +6,8 @@ from meshroom.core import desc
 class PrepareDenseScene(desc.CommandLineNode):
     commandLine = 'aliceVision_prepareDenseScene {allParams}'
     size = desc.DynamicNodeSize('input')
+    parallelization = desc.Parallelization(blockSize=40)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [
         desc.File(
@@ -27,15 +29,6 @@ class PrepareDenseScene(desc.CommandLineNode):
     ]
 
     outputs = [
-        desc.File(
-            name='ini',
-            label='MVS Configuration file',
-            description='',
-            value=desc.Node.internalFolder + 'mvs.ini',
-            uid=[],
-            group='',  # not a command line arg
-        ),
-
         desc.File(
             name='output',
             label='Output',

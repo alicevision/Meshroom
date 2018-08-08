@@ -11,12 +11,19 @@ class Meshing(desc.CommandLineNode):
 
     inputs = [
         desc.File(
-            name="ini",
-            label='MVS Configuration file',
-            description='',
+            name='input',
+            label='Input',
+            description='SfMData file.',
             value='',
             uid=[0],
-            ),
+        ),
+        desc.File(
+            name='cameraPairsMatrixFolder',
+            label='Camera Pairs Matrix Folder',
+            description='Camera pairs matrix folder.',
+            value='',
+            uid=[0],
+        ),   
         desc.File(
             name="depthMapFolder",
             label='Depth Maps Folder',

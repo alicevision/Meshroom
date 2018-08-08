@@ -27,11 +27,13 @@ def setupEnvironment():
 
     - Meshroom/
        - aliceVision/
-           - bin/    # runtime bundled binaries (exe + libs)
+           - bin/    # runtime bundled binaries (windows: exe + libs, unix: executables)
+           - lib/    # runtime bundled libraries (unix: libs)
            - share/  # resource files
-               - COPYING.md         # AliceVision COPYING file
-               - cameraSensors.db   # sensor database
-               - vlfeat_K80L3.tree  # voctree file
+               - aliceVision/
+                   - COPYING.md         # AliceVision COPYING file
+                   - cameraSensors.db   # sensor database
+                   - vlfeat_K80L3.tree  # voctree file
        - lib/      # Python lib folder
        - qtPlugins/
        Meshroom    # main executable
@@ -58,10 +60,10 @@ def setupEnvironment():
         paths[index:index] = val
         os.environ[var] = os.pathsep.join(paths)
 
-    # detect if this is a frozen environment based on executable name
-    isStandalone = "python" not in os.path.basename(sys.executable).lower()
+    # sys.frozen is initialized by cx_Freeze
+    isFrozen = getattr(sys, "frozen", False)
     # setup root directory (override possible by setting "MESHROOM_INSTALL_DIR" environment variable)
-    rootDir = os.path.dirname(sys.executable) if isStandalone else os.environ.get("MESHROOM_INSTALL_DIR", None)
+    rootDir = os.path.dirname(sys.executable) if isFrozen else os.environ.get("MESHROOM_INSTALL_DIR", None)
 
     if rootDir:
         os.environ["MESHROOM_INSTALL_DIR"] = rootDir
@@ -69,17 +71,13 @@ def setupEnvironment():
         aliceVisionDir = os.path.join(rootDir, "aliceVision")
         # default directories
         aliceVisionBinDir = os.path.join(aliceVisionDir, "bin")
-        aliceVisionLibDirs = [os.path.join(aliceVisionDir, "lib64"), os.path.join(aliceVisionDir, "lib")]  # Unix
         aliceVisionShareDir = os.path.join(aliceVisionDir, "share", "aliceVision")
         qtPluginsDir = os.path.join(rootDir, "qtPlugins")
         sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
         voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.tree")
-        # Unix: "lib" contains shared libraries that needs to be in LD_LIBRARY_PATH
-        libDir = os.path.join(rootDir, "lib")
 
         env = {
             'PATH': aliceVisionBinDir,
-            'LD_LIBRARY_PATH': [libDir] + aliceVisionLibDirs,  # Unix
             'QT_PLUGIN_PATH': [qtPluginsDir],
             'QML2_IMPORT_PATH': [os.path.join(qtPluginsDir, "qml")]
         }

@@ -151,6 +151,10 @@ ApplicationWindow {
         detailedText: "Default cache folder: " + _reconstruction.graph.cacheDir
         helperText: "Save project first?"
         standardButtons: Dialog.Discard | Dialog.Cancel | Dialog.Save
+        Component.onCompleted: {
+            // set up discard button text
+            standardButton(Dialog.Discard).text = "Continue without Saving"
+        }
 
         onDiscarded: { close(); _reconstruction.execute(null) }
         onAccepted: saveAsAction.trigger()

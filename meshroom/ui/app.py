@@ -102,7 +102,7 @@ class MeshroomApp(QApplication):
             },
             {
                 "title": "AliceVision",
-                "localUrl": os.path.join(rootDir, "aliceVision", "share", "COPYING.md"),
+                "localUrl": os.path.join(rootDir, "aliceVision", "share", "aliceVision", "COPYING.md"),
                 "onlineUrl": "https://raw.githubusercontent.com/alicevision/AliceVision/develop/COPYING.md"
             }
         ]

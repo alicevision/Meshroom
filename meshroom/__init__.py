@@ -1,4 +1,4 @@
-__version__ = "2018.1"
+__version__ = "2018.1.0"
 
 import logging
 from enum import Enum

@@ -1,4 +1,4 @@
-__version__ = "2018.1"
+__version__ = "2018.1.0"
 
 import logging
 from enum import Enum
@@ -74,7 +74,7 @@ def setupEnvironment():
         aliceVisionShareDir = os.path.join(aliceVisionDir, "share", "aliceVision")
         qtPluginsDir = os.path.join(rootDir, "qtPlugins")
         sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
-        voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.tree")
+        voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.SIFT.tree")
 
         env = {
             'PATH': aliceVisionBinDir,

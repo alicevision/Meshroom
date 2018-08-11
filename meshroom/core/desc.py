@@ -5,7 +5,6 @@ import collections
 import math
 import os
 import psutil
-import sys
 
 
 class Attribute(BaseObject):
@@ -121,9 +120,10 @@ class IntParam(Param):
 
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
-        longInt = int if sys.version_info > (3,) else long
         try:
-            return longInt(value)
+            return long(value)  # Python 2
+        except NameError:
+            return int(value)   # Python 3
         except:
             raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 

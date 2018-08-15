@@ -9,7 +9,7 @@ To build AliceVision, follow this [guide](https://github.com/alicevision/AliceVi
 
 Meshroom also relies on specific files provided with AliceVision.
 * sensor database: a text database of sensor width per camera model.
-Provided in AliceVision source tree: {ALICEVISION_ROOT}/src/aliceVision/sensorDB/sensor_width_camera_database.txt
+Provided in AliceVision source tree: {ALICEVISION_ROOT}/src/aliceVision/sensorDB/cameraSensors.db
 * voctree (optional): for larger datasets (>200 images), greatly improves image matching performances.
 It can be downloaded [here](https://gitlab.com/alicevision/trainedVocabularyTreeData/raw/master/vlfeat_K80L3.SIFT.tree).
 

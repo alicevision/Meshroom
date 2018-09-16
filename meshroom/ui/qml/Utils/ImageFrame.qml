@@ -1,0 +1,87 @@
+import QtQuick 2.9
+import QtQuick.Controls 2.3
+import QtQuick.Layouts 1.3
+import Utils 1.0
+
+// Item for images
+Item {
+    id: root
+
+    property string path
+    property string fname
+    property string description
+    property bool isCurrentItem: false
+    property var adt
+    property var gridy
+
+    signal pressed(var mouse)
+
+    Frame {
+        anchors.fill: parent
+        // padding: 100
+        MouseArea {
+            id: imageMA
+            height: 125
+            width: 160
+            // anchors.fill: parent
+            // anchors.margins: 6
+            hoverEnabled: true
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onPressed: {
+                if (mouse.button == Qt.LeftButton)
+                    for(var child in gridy.contentItem.children) {
+                        gridy.contentItem.children[child].isCurrentItem = false
+                    }
+                    root.isCurrentItem = root.isCurrentItem ? false : true
+                    root.adt.selectedName = root.fname
+                    root.adt.text = description
+                root.pressed(mouse)
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: 0
+
+                // Image thumbnail and background
+                Rectangle {
+                    id: imageBackground
+                    color: Qt.darker(imageLabel.palette.base, 1.15)
+                    height: 125
+                    width: 160
+                    // Layout.fillHeight: true
+                    // Layout.fillWidth: true
+                    border.color: root.isCurrentItem ? imageLabel.palette.highlight : Qt.darker(imageLabel.palette.highlight)
+                    border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
+                    Image {
+                        id: img
+                        anchors.left: parent.left
+                        anchors.leftMargin: 5
+                        anchors.top: parent.top
+                        anchors.topMargin: 5
+                        source: "../../img/"+root.path
+                        sourceSize: Qt.size(150, 150)
+                        asynchronous: true
+                        autoTransform: true
+                        // fillMode: Image.PreserveAspectFit
+                    }
+                    Rectangle {
+                        color: root.isCurrentItem ? imageLabel.palette.highlight : parent.color
+                        height: 30
+                        width: parent.width
+                        anchors.bottom: parent.bottom
+                        // Image basename
+                        Label {
+                            id: imageLabel
+                            Layout.fillWidth: true
+                            padding: 10
+                            font.pointSize: 8
+                            anchors.bottom: parent.bottom
+                            horizontalAlignment: Text.AlignHCenter
+                            text: root.fname
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

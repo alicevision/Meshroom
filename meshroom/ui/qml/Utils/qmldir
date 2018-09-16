@@ -1,6 +1,7 @@
 module Utils
 
 SortFilterDelegateModel 1.0 SortFilterDelegateModel.qml
+ImageFrame 1.0 ImageFrame.qml
 Request 1.0 request.js
 # causes random crash at application exit
 # singleton Filepath 1.0 Filepath.qml

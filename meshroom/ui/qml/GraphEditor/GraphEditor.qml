@@ -122,6 +122,7 @@ Item {
 
         AddNodeDialog {
             id: addNodeDialog
+            node: newNodeMenu.createNode
         }
 
         // Graphical Menu for creating new nodes

@@ -9,6 +9,8 @@ import QtQml.Models 2.2
 Dialog {
     id: root
 
+    property var node
+
     x: parent.width / 2 - width / 2
     y: parent.height / 2 - height / 2
     width: 600
@@ -77,7 +79,8 @@ Dialog {
             topPadding: 0
             function createNode(node)
             {
-                // code
+                root.node(node)
+                root.close()
             }
 
             GroupBox {
@@ -96,7 +99,7 @@ Dialog {
             Button {
                 text: "Add"
                 anchors.left: description.right
-                onClicked: createNode(showntext.selectedName)
+                onClicked: bottominteraction.createNode(showntext.selectedName)
             }
         }
     }

@@ -10,7 +10,10 @@ Dialog {
     id: root
 
     x: parent.width / 2 - width / 2
+    y: parent.height / 2 - height / 2
     width: 600
+
+    parent: ApplicationWindow.overlay
 
     // Fade in transition
     enter: Transition {

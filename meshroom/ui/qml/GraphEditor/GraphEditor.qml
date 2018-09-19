@@ -3,6 +3,7 @@ import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 import Controls 1.0
 import MaterialIcons 2.2
+import "../../qml"
 
 /**
   A component displaying a Graph (nodes, attributes and edges).
@@ -119,9 +120,13 @@ Item {
             }
         }
 
-        // Contextual Menu for creating new nodes
+        AddNodeDialog {
+            id: addNodeDialog
+        }
+
+        // Graphical Menu for creating new nodes
         // TODO: add filtering + validate on 'Enter'
-        Menu {
+        Item {
             id: newNodeMenu
             property point spawnPosition
 
@@ -132,69 +137,12 @@ Item {
                 selectNode(node)
             }
 
-            onVisibleChanged: {
-                if(visible) {
-                    // when menu is shown,
-                    // clear and give focus to the TextField filter
-                    filterTextField.clear()
-                    filterTextField.forceActiveFocus()
-                }
+            function popup()
+            {
+                addNodeDialog.open()
             }
 
-            TextField {
-                id: filterTextField
-                selectByMouse: true
-                width: parent.width
-                // ensure down arrow give focus to the first MenuItem
-                // (without this, we have to pressed the down key twice to do so)
-                Keys.onDownPressed: nextItemInFocusChain().forceActiveFocus()
-            }
-
-            Repeater {
-                model: root.nodeTypesModel
-
-                // Create Menu items from available node types model
-                delegate: MenuItem {
-                    id: menuItemDelegate
-                    font.pointSize: 8
-                    padding: 3
-                    // Hide items that does not match the filter text
-                    visible: modelData.toLowerCase().indexOf(filterTextField.text.toLocaleLowerCase()) > -1
-                    text: modelData
-                    Keys.onPressed: {
-                        switch(event.key)
-                        {
-                        case Qt.Key_Return:
-                        case Qt.Key_Enter:
-                            // create node on validation (Enter/Return keys)
-                            newNodeMenu.createNode(modelData)
-                            newNodeMenu.dismiss()
-                            break;
-                        case Qt.Key_Home:
-                            // give focus back to filter
-                            filterTextField.forceActiveFocus()
-                            break;
-                        default:
-                            break;
-                        }
-                    }
-                    // Create node on mouse click
-                    onClicked: newNodeMenu.createNode(modelData)
-
-                    states: [
-                        State {
-                            // Additional property setting when the MenuItem is not visible
-                            when: !visible
-                            name: "invisible"
-                            PropertyChanges {
-                                target: menuItemDelegate
-                                height: 0 // make sure the item is no visible by setting height to 0
-                                focusPolicy: Qt.NoFocus // don't grab focus when not visible
-                            }
-                        }
-                    ]
-                }
-            }
+            // onClicked: newNodeMenu.createNode(modelData)
         }
 
         Item {

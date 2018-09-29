@@ -46,9 +46,6 @@ Dialog {
             id: grid
             width: parent.width
             height: 600
-            // Layout.fillWidth: true
-            // Layout.fillHeight: true
-            // flow: GridView.TopToBottom
             
             ScrollBar.vertical: ScrollBar {}
             
@@ -65,8 +62,8 @@ Dialog {
 
                 // "nopreview.png"
                 // "No description available"
-
                 // ListElement{file: "";name: ""; info: ""}
+                
                 ListElement{file: "cameracalibration.png";name: "CameraCalibration"; info: "The internal camera parameters can be calibrated from multiple views of a checkerboard. This allows to retrieve focal length, principal point and distortion parameters."}
                 ListElement{file: "nopreview.png";name: "CameraConnection"; info: "No description available"}
                 ListElement{file: "nopreview.png";name: "CameraInit"; info: "No description available"}

@@ -142,8 +142,6 @@ Item {
             {
                 addNodeDialog.open()
             }
-
-            // onClicked: newNodeMenu.createNode(modelData)
         }
 
         Item {

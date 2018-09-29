@@ -18,13 +18,10 @@ Item {
 
     Frame {
         anchors.fill: parent
-        // padding: 100
         MouseArea {
             id: imageMA
             height: 125
             width: 160
-            // anchors.fill: parent
-            // anchors.margins: 6
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             onPressed: {
@@ -48,8 +45,6 @@ Item {
                     color: Qt.darker(imageLabel.palette.base, 1.15)
                     height: 125
                     width: 160
-                    // Layout.fillHeight: true
-                    // Layout.fillWidth: true
                     border.color: root.isCurrentItem ? imageLabel.palette.highlight : Qt.darker(imageLabel.palette.highlight)
                     border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
                     Image {
@@ -62,7 +57,6 @@ Item {
                         sourceSize: Qt.size(150, 150)
                         asynchronous: true
                         autoTransform: true
-                        // fillMode: Image.PreserveAspectFit
                     }
                     Rectangle {
                         color: root.isCurrentItem ? imageLabel.palette.highlight : parent.color

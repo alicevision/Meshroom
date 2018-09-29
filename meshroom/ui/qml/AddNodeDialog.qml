@@ -78,24 +78,24 @@ Dialog {
                 ListElement{file: "depthmap.jpg";name: "DepthMap"; info: "For all cameras that have been resolved by SfM, we want to retrieve the depth value of each pixel. "}
                 ListElement{file: "depthmapfilter.jpg";name: "DepthMapFilter"; info: "To ensure consistency between multiple cameras. A compromise is chosen based on both similarity value and the number of coherent cameras to keep weakly supported surfaces without adding artefacts."}
                 ListElement{file: "nopreview.png";name: "ExportAnimatedCamera"; info: "No description available"}
-                ListElement{file: "nopreview.png";name: "ExportMaya"; info: "No description available"}
+                ListElement{file: "exportmaya.jpg";name: "ExportMaya"; info: "No description available"}
                 ListElement{file: "nopreview.png";name: "ExportUndistortedImages"; info: "No description available"}
                 ListElement{file: "featureextraction.jpg";name: "FeatureExtraction"; info: "The objective of this step is to extract distinctive groups of pixels that are, to some extent, invariant to changing camera viewpoints during image acquisition. Hence, a feature in the scene should have similar feature descriptions in all images."}
                 ListElement{file: "featurematching.jpg";name: "FeatureMatching"; info: "The objective of this step is to match all features between candidate image pairs."}
                 ListElement{file: "imagematching.jpg";name: "ImageMatching"; info: "The objective of this part is to find images that are looking to the same areas of the scene. For that, we use the image retrieval techniques to find images that share some content without the cost of resolving all feature matches in details. The ambition is to simplify the image in a compact image descriptor which allows to compute the distance between all images descriptors efficiently."}
                 ListElement{file: "nopreview.png";name: "ImageMatchingMultiSfM"; info: "No description available"}
                 ListElement{file: "nopreview.png";name: "KeyframeSelection"; info: "No description available"}
-                ListElement{file: "nopreview.png";name: "MeshDecimate"; info: "No description available"}
+                ListElement{file: "meshdecimate.jpg";name: "MeshDecimate"; info: "No description available"}
                 ListElement{file: "nopreview.png";name: "MeshDenoising"; info: "No description available"}
-                ListElement{file: "nopreview.png";name: "MeshFiltering"; info: "No description available"}
-                ListElement{file: "nopreview.png";name: "MeshResampling"; info: "No description available"}
-                ListElement{file: "nopreview.png";name: "Meshing"; info: "No description available"}
+                ListElement{file: "meshfiltering.jpg";name: "MeshFiltering"; info: "No description available"}
+                ListElement{file: "meshresampling.jpg";name: "MeshResampling"; info: "No description available"}
+                ListElement{file: "meshing.jpg";name: "Meshing"; info: "No description available"}
                 ListElement{file: "nopreview.png";name: "PrepareDenseScene"; info: "No description available"}
                 ListElement{file: "nopreview.png";name: "Publish"; info: "No description available"}
                 ListElement{file: "nopreview.png";name: "SfMAlignment"; info: "No description available"}
                 ListElement{file: "nopreview.png";name: "SfMTransform"; info: "No description available"}
                 ListElement{file: "structurefrommotion.jpg";name: "StructureFromMotion"; info: "The objective of this step is to understand the geometric relationship behind all the observations provided by the input images, and infer the rigid scene structure (3D points) with the pose (position and orientation) and internal calibration of all cameras."}
-                ListElement{file: "nopreview.png";name: "Texturing"; info: "No description available"}
+                ListElement{file: "texturing.jpg";name: "Texturing"; info: "No description available"}
             }
 
             model: addNodeIconList

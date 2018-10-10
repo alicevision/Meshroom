@@ -19,7 +19,7 @@ class CameraConnection(desc.CommandLineNode):
         desc.File(
             name='imagesFolder',
             label='Images Folder',
-            description='Use images from a specific folder instead of those specify in the SfMData file.\nFilename should be the image uid.',
+            description='Use images from a specific folder. Filename should be the image uid.',
             value='',
             uid=[0],
         ),

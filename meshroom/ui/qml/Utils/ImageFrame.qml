@@ -63,11 +63,16 @@ Item {
                         height: 30
                         width: parent.width
                         anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 2
+                        anchors.left: parent.left
+                        anchors.leftMargin: 2
+                        anchors.right: parent.right
+                        anchors.rightMargin: 2
                         // Image basename
                         Label {
                             id: imageLabel
                             Layout.fillWidth: true
-                            padding: 10
+                            padding: 8
                             font.pointSize: 8
                             anchors.bottom: parent.bottom
                             horizontalAlignment: Text.AlignHCenter

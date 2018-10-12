@@ -13,6 +13,7 @@ Item {
     property bool isCurrentItem: false
     property var adt
     property var gridy
+    property var doubleclickcreate
 
     signal pressed(var mouse)
 
@@ -33,6 +34,10 @@ Item {
                     root.adt.selectedName = root.fname
                     root.adt.text = description
                 root.pressed(mouse)
+            }
+            onDoubleClicked: {
+                if (mouse.button == Qt.LeftButton)
+                    doubleclickcreate(fname)
             }
 
             ColumnLayout {

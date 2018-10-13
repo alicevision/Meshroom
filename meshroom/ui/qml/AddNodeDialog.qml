@@ -35,7 +35,16 @@ Dialog {
             onClicked: root.close()
         }
         Label {
+            id:title
             text: "Add Node"
+        }
+        TextField {
+            id: filterTextField
+            anchors.top: parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width/2
+
+            Keys.onPressed: grid.unselectAll()
         }
     }
     ColumnLayout {
@@ -56,6 +65,12 @@ Dialog {
             clip: true
             highlightFollowsCurrentItem: true
             keyNavigationEnabled: true
+
+            function unselectAll() {
+                for(var child in grid.contentItem.children) {
+                        grid.contentItem.children[child].isCurrentItem = false
+                    }
+            }
 
             ListModel {
                 id: addNodeIconList

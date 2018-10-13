@@ -111,7 +111,7 @@ Dialog {
             }
 
             model: addNodeIconList
-            delegate: ImageFrame {path: file; fname: name; description: info; adt: showntext; gridy: grid; doubleclickcreate: bottominteraction.createNode}
+            delegate: ImageFrame {path: file; fname: name; description: info; adt: showntext; gridy: grid; doubleclickcreate: bottominteraction.createNode; filtertext: filterTextField}
 
         }
         Column {

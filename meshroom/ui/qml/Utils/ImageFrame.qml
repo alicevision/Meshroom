@@ -14,8 +14,11 @@ Item {
     property var adt
     property var gridy
     property var doubleclickcreate
+    property var filtertext
 
     signal pressed(var mouse)
+
+    visible: fname.toLowerCase().indexOf(filtertext.text.toLocaleLowerCase()) > -1
 
     Frame {
         anchors.fill: parent
@@ -39,50 +42,47 @@ Item {
                     doubleclickcreate(fname)
             }
 
-            ColumnLayout {
+            // Image thumbnail and background
+            Column {
                 anchors.fill: parent
                 spacing: 0
-
-                // Image thumbnail and background
-                Column {
+                Rectangle {
+                    id: imageBackground
+                    color: Qt.darker(imageLabel.palette.base, 1.15)
+                    height: 125
+                    width: 160
+                    border.color: root.isCurrentItem ? imageLabel.palette.highlight : Qt.darker(imageLabel.palette.highlight)
+                    border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
+                    Image {
+                        id: img
+                        anchors.left: parent.left
+                        anchors.leftMargin: 5
+                        anchors.top: parent.top
+                        anchors.topMargin: 5
+                        source: "../../img/"+root.path
+                        sourceSize: Qt.size(150, 150)
+                        asynchronous: true
+                        autoTransform: true
+                    }
                     Rectangle {
-                        id: imageBackground
-                        color: Qt.darker(imageLabel.palette.base, 1.15)
-                        height: 125
-                        width: 160
-                        border.color: root.isCurrentItem ? imageLabel.palette.highlight : Qt.darker(imageLabel.palette.highlight)
-                        border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
-                        Image {
-                            id: img
-                            anchors.left: parent.left
-                            anchors.leftMargin: 5
-                            anchors.top: parent.top
-                            anchors.topMargin: 5
-                            source: "../../img/"+root.path
-                            sourceSize: Qt.size(150, 150)
-                            asynchronous: true
-                            autoTransform: true
-                        }
-                        Rectangle {
-                            color: root.isCurrentItem ? imageLabel.palette.highlight : parent.color
-                            height: 30
-                            width: parent.width
+                        color: root.isCurrentItem ? imageLabel.palette.highlight : parent.color
+                        height: 30
+                        width: parent.width
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 2
+                        anchors.left: parent.left
+                        anchors.leftMargin: 2
+                        anchors.right: parent.right
+                        anchors.rightMargin: 2
+                        // Image basename
+                        Label {
+                            id: imageLabel
+                            Layout.fillWidth: true
+                            padding: 8
+                            font.pointSize: 8
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 2
-                            anchors.left: parent.left
-                            anchors.leftMargin: 2
-                            anchors.right: parent.right
-                            anchors.rightMargin: 2
-                            // Image basename
-                            Label {
-                                id: imageLabel
-                                Layout.fillWidth: true
-                                padding: 8
-                                font.pointSize: 8
-                                anchors.bottom: parent.bottom
-                                horizontalAlignment: Text.AlignHCenter
-                                text: root.fname
-                            }
+                            horizontalAlignment: Text.AlignHCenter
+                            text: root.fname
                         }
                     }
                 }

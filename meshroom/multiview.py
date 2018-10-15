@@ -121,20 +121,14 @@ def mvsPipeline(graph, sfm=None):
 
     prepareDenseScene = graph.addNewNode('PrepareDenseScene',
                                          input=sfm.output if sfm else "")
-    cameraConnection = graph.addNewNode('CameraConnection',
-                                        input=prepareDenseScene.input,
-                                        imagesFolder=prepareDenseScene.output)
     depthMap = graph.addNewNode('DepthMap',
-                                input=cameraConnection.input,
-                                cameraPairsMatrixFolder=cameraConnection.output,
-                                imagesFolder=cameraConnection.imagesFolder)
+                                input=prepareDenseScene.input,
+                                imagesFolder=prepareDenseScene.output)
     depthMapFilter = graph.addNewNode('DepthMapFilter',
                                       input=depthMap.input,
-                                      cameraPairsMatrixFolder=depthMap.cameraPairsMatrixFolder,
                                       depthMapFolder=depthMap.output)
     meshing = graph.addNewNode('Meshing',
                                input=depthMapFilter.input,
-                               cameraPairsMatrixFolder=depthMapFilter.cameraPairsMatrixFolder,
                                depthMapFolder=depthMapFilter.depthMapFolder,
                                depthMapFilterFolder=depthMapFilter.output)
     meshFiltering = graph.addNewNode('MeshFiltering',
@@ -147,7 +141,6 @@ def mvsPipeline(graph, sfm=None):
 
     return [
         prepareDenseScene,
-        cameraConnection,
         depthMap,
         depthMapFilter,
         meshing,

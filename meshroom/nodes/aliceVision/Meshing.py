@@ -18,13 +18,6 @@ class Meshing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.File(
-            name='cameraPairsMatrixFolder',
-            label='Camera Pairs Matrix Folder',
-            description='Camera pairs matrix folder.',
-            value='',
-            uid=[0],
-        ),   
-        desc.File(
             name='imagesFolder',
             label='Images Folder',
             description='Use images from a specific folder. Filename should be the image uid.',

@@ -17,13 +17,6 @@ class DepthMap(desc.CommandLineNode):
             description='SfMData file.',
             value='',
             uid=[0],
-        ),
-        desc.File(
-            name='cameraPairsMatrixFolder',
-            label='Camera Pairs Matrix Folder',
-            description='Camera pairs matrix folder.',
-            value='',
-            uid=[0],
         ),        
         desc.File(
             name='imagesFolder',

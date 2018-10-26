@@ -87,8 +87,9 @@ FocusScope {
                 property string currentFile: chunksLV.currentChunk ? chunksLV.currentChunk[currentItem.fileProperty] : ""
                 property string lastLoadedFile
                 property date lastModTime
-                onCurrentFileChanged: if(visible) loadCurrentFile(false)
-                onVisibleChanged: loadCurrentFile()
+                onCurrentFileChanged: if(visible) loadCurrentFile()
+                onVisibleChanged: if(visible) loadCurrentFile()
+
 
                 TabButton {
                     property string fileProperty: "logFile"
@@ -178,7 +179,7 @@ FocusScope {
                         selectByMouse: true
                         selectByKeyboard: true
                         persistentSelection: true
-                        font.family: "Monospace"
+                        font.family: "Monospace, Consolas, Monaco"
                     }
                 }
             }
@@ -197,6 +198,8 @@ FocusScope {
 
     function loadCurrentFile(keepCursorPosition)
     {
+        if(keepCursorPosition == undefined)
+            keepCursorPosition = false
         var xhr = new XMLHttpRequest;
         xhr.open("GET", Filepath.stringToUrl(fileSelector.currentFile));
         xhr.onreadystatechange = function() {

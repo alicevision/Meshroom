@@ -39,6 +39,14 @@ class Meshing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
+            name='minObservations',
+            label='Min Observations For SfM Space Estimation',
+            description='Minimum number of observations for SfM space estimation.',
+            value=3,
+            range=(0, 100, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
             name='maxInputPoints',
             label='Max Input Points',
             description='Max input points loaded from depth map images.',

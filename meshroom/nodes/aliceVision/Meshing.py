@@ -38,6 +38,13 @@ class Meshing(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+        desc.BoolParam(
+            name='estimateSpaceFromSfM',
+            label='Estimate Space From SfM',
+            description='Estimate the 3d space from the SfM',
+            value=True,
+            uid=[0],
+        ),
         desc.IntParam(
             name='minObservations',
             label='Min Observations For SfM Space Estimation',

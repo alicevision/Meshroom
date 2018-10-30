@@ -159,7 +159,7 @@ class Reconstruction(UIGraph):
     Specialization of a UIGraph designed to manage a 3D reconstruction.
     """
 
-    imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr', '.rw2', '.cr2', '.nef')
+    imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr', '.rw2', '.cr2', '.nef', '.arw')
 
     def __init__(self, graphFilepath='', parent=None):
         super(Reconstruction, self).__init__(graphFilepath, parent)

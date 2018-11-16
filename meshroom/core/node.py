@@ -362,6 +362,14 @@ class BaseNode(BaseObject):
     def getName(self):
         return self._name
 
+    def getLabel(self):
+        """
+        Returns:
+            str: the high-level label of this node
+        """
+        t, idx = self._name.split("_")
+        return "{}{}".format(t, idx if int(idx) > 1 else "")
+
     @property
     def packageFullName(self):
         return '-'.join([self.packageName, self.packageVersion])
@@ -615,6 +623,7 @@ class BaseNode(BaseObject):
         return self.name
 
     name = Property(str, getName, constant=True)
+    label = Property(str, getLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     positionChanged = Signal()
     position = Property(Variant, position.fget, position.fset, notify=positionChanged)

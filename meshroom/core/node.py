@@ -600,15 +600,30 @@ class BaseNode(BaseObject):
     def endSequence(self):
         pass
 
-    def getStatus(self):
-        return self.status
+    def getGlobalStatus(self):
+        """
+        Get node global status based on the status of its chunks.
+
+        Returns:
+            Status: the node global status
+        """
+        chunksStatus = [chunk.status.status for chunk in self._chunks]
+
+        anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
+                 Status.RUNNING, Status.SUBMITTED)
+        allOf = (Status.SUCCESS,)
+
+        for status in anyOf:
+            if any(s == status for s in chunksStatus):
+                return status
+        for status in allOf:
+            if all(s == status for s in chunksStatus):
+                return status
+
+        return Status.NONE
 
     def getChunks(self):
         return self._chunks
-
-    @property
-    def statusNames(self):
-        return [s.status.name for s in self.status]
 
     def getSize(self):
         return self._size
@@ -639,6 +654,8 @@ class BaseNode(BaseObject):
     chunks = Property(Variant, getChunks, notify=chunksChanged)
     sizeChanged = Signal()
     size = Property(int, getSize, notify=sizeChanged)
+    globalStatusChanged = Signal()
+    globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
 
 
 class Node(BaseNode):
@@ -698,6 +715,8 @@ class Node(BaseNode):
                 ranges = self.nodeDesc.parallelization.getRanges(self)
                 if len(ranges) != len(self._chunks):
                     self._chunks.setObjectList([NodeChunk(self, range) for range in ranges])
+                    for c in self._chunks:
+                        c.statusChanged.connect(self.globalStatusChanged)
                 else:
                     for chunk, range in zip(self._chunks, ranges):
                         chunk.range = range
@@ -708,6 +727,7 @@ class Node(BaseNode):
         else:
             if len(self._chunks) != 1:
                 self._chunks.setObjectList([NodeChunk(self, desc.Range())])
+                self._chunks[0].statusChanged.connect(self.globalStatusChanged)
             else:
                 self._chunks[0].range = desc.Range()
 

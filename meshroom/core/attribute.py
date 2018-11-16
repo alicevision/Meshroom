@@ -219,6 +219,8 @@ class Attribute(BaseObject):
     isLinkChanged = Signal()
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
+    linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
+    node = Property(BaseObject, node.fget, constant=True)
 
 
 def raiseIfLink(func):

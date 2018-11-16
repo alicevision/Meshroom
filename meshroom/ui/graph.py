@@ -389,7 +389,7 @@ class UIGraph(QObject):
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
-            with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.fullName())):
+            with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.getFullName())):
                 self.appendAttribute(dst)
                 self.push(commands.AddEdgeCommand(self._graph, src, dst.at(-1)))
         else:
@@ -398,7 +398,7 @@ class UIGraph(QObject):
     @Slot(Edge)
     def removeEdge(self, edge):
         if isinstance(edge.dst.root, ListAttribute):
-            with self.groupedGraphModification("Remove Edge and Delete {}".format(edge.dst.fullName())):
+            with self.groupedGraphModification("Remove Edge and Delete {}".format(edge.dst.getFullName())):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
                 self.removeAttribute(edge.dst)
         else:

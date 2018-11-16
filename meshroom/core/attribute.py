@@ -71,17 +71,17 @@ class Attribute(BaseObject):
     def absoluteName(self):
         return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self._name)
 
-    def fullName(self):
+    def getFullName(self):
         """ Name inside the Graph: nodeName.name """
         if isinstance(self.root, ListAttribute):
-            return '{}[{}]'.format(self.root.fullName(), self.root.index(self))
+            return '{}[{}]'.format(self.root.getFullName(), self.root.index(self))
         elif isinstance(self.root, GroupAttribute):
-            return '{}.{}'.format(self.root.fullName(), self._name)
+            return '{}.{}'.format(self.root.getFullName(), self._name)
         return '{}.{}'.format(self.node.name, self._name)
 
     def asLinkExpr(self):
         """ Return link expression for this Attribute """
-        return "{" + self.fullName() + "}"
+        return "{" + self.getFullName() + "}"
 
     def getName(self):
         """ Attribute name """
@@ -209,6 +209,7 @@ class Attribute(BaseObject):
         return self._value
 
     name = Property(str, getName, constant=True)
+    fullName = Property(str, getFullName, constant=True)
     label = Property(str, getLabel, constant=True)
     type = Property(str, getType, constant=True)
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)

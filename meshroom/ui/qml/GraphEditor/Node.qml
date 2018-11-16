@@ -80,7 +80,7 @@ Item {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             padding: 4
-            text: node.nodeType
+            text: node.label
             color: "#EEE"
             font.pointSize: 8
             background: Rectangle {

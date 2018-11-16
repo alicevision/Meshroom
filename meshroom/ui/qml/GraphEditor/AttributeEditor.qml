@@ -29,7 +29,7 @@ ColumnLayout {
             Label {
                 Layout.fillWidth: true
                 elide: Text.ElideMiddle
-                text: node.nodeType
+                text: node.label
                 horizontalAlignment: Text.AlignHCenter
                 padding: 6
             }

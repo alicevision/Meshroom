@@ -12,8 +12,9 @@ Entity {
     property real translateSpeed: 75.0
     property real tiltSpeed: 500.0
     property real panSpeed: 500.0
-    property bool moving: pressed || actionAlt.active
-    readonly property alias controlPressed: actionControl.active
+    property bool moving: pressed || (actionAlt.active && keyboardHandler._pressed)
+    property alias focus: keyboardHandler.focus
+    readonly property bool pickingActive: actionControl.active && keyboardHandler._pressed
 
     readonly property alias pressed: mouseHandler._pressed
     signal mousePressed(var mouse)
@@ -38,6 +39,20 @@ Entity {
             var tz = (wheel.angleDelta.y / 120) * d;
             root.camera.translate(Qt.vector3d(0, 0, tz), Camera.DontTranslateViewCenter)
         }
+    }
+
+    KeyboardHandler {
+        id: keyboardHandler
+        sourceDevice: keyboardSourceDevice
+        property bool _pressed
+
+        // When focus is lost while pressing a key, the corresponding action
+        // stays active, even when it's released.
+        // Handle this issue manually by keeping an additional _pressed state
+        // which is cleared when focus changes (used for 'pickingActive' property).
+        onFocusChanged: if(!focus) _pressed = false
+        onPressed: _pressed = true
+        onReleased: _pressed = false
     }
 
     LogicalDevice {

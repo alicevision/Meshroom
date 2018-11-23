@@ -193,6 +193,7 @@ FocusScope {
             DefaultCameraController {
                 id: cameraController
                 camera: mainCamera
+                focus: scene3D.activeFocus
                 onMousePressed: {
                     scene3D.forceActiveFocus()
                     if(mouse.button == Qt.LeftButton)
@@ -273,7 +274,7 @@ FocusScope {
                     id: picker
                     // Triangle picking is expensive
                     // Only activate it when a double click may happen or when the 'Control' key is pressed
-                    enabled: cameraController.controlPressed || doubleClickTimer.running
+                    enabled: cameraController.pickingActive || doubleClickTimer.running
                     hoverEnabled: false
                     onPressed: {
                         if(pick.button == Qt.LeftButton)

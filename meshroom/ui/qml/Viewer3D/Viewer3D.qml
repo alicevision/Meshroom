@@ -21,16 +21,15 @@ FocusScope {
     property alias library: mediaLibrary
     property alias inspector: inspector3d
 
-    // functions
-    function resetCameraCenter() {
-        mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
-        mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
-    }
+    readonly property vector3d defaultCamPosition: Qt.vector3d(12.0, 10.0, -12.0)
+    readonly property vector3d defaultCamUpVector: Qt.vector3d(0.0, 1.0, 0.0)
+    readonly property vector3d defaultCamViewCenter: Qt.vector3d(0.0, 0.0, 0.0)
 
+    // functions
     function resetCameraPosition() {
-        mainCamera.position = Qt.vector3d(28.0, 21.0, 28.0);
-        mainCamera.upVector = Qt.vector3d(0.0, 1.0, 0.0);
-        mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, 0.0);
+        mainCamera.position = defaultCamPosition;
+        mainCamera.upVector = defaultCamUpVector;
+        mainCamera.viewCenter = defaultCamViewCenter;
     }
 
     function load(filepath) {
@@ -59,7 +58,6 @@ FocusScope {
 
         Keys.onPressed: {
             if (event.key == Qt.Key_F) {
-                resetCameraCenter();
                 resetCameraPosition();
             }
             else if(Qt.Key_1 <= event.key && event.key <= Qt.Key_3)
@@ -80,14 +78,18 @@ FocusScope {
                 fieldOfView: 45
                 nearPlane : 0.01
                 farPlane : 10000.0
-                position: Qt.vector3d(28.0, 21.0, 28.0)
-                upVector: Qt.vector3d(0.0, 1.0, 0.0)
-                viewCenter: Qt.vector3d(0.0, 0.0, 0.0)
+                position: defaultCamPosition
+                upVector: defaultCamUpVector
+                viewCenter: defaultCamViewCenter
                 aspectRatio: width/height
 
                 Behavior on viewCenter {
                     Vector3dAnimation { duration: 250 }
                 }
+                Behavior on position {
+                    Vector3dAnimation { duration: 250 }
+                }
+
                 // Scene light, attached to the camera
                 Entity {
                     components: [

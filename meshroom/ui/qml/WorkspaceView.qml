@@ -21,35 +21,33 @@ Item {
     readonly property variant cameraInits: _reconstruction.cameraInits
     property bool readOnly: false
 
+
     implicitWidth: 300
     implicitHeight: 400
 
 
     // Load a 3D media file in the 3D viewer
-    function load3DMedia(filepath)
-    {
-        if(!Filepath.exists(Filepath.urlToString(filepath)))
-            return
-        switch(Filepath.extension(filepath))
-        {
-        case ".abc": viewer3D.abcSource = filepath; break;
-        case ".exr": viewer3D.depthMapSource = filepath; break;
-        case ".obj": viewer3D.source = filepath; break;
-        }
+    function load3DMedia(filepath) {
+        viewer3D.load(filepath);
+    }
+
+    function viewAttribute(attr) {
+        viewer3D.view(attr);
     }
 
     Connections {
         target: reconstruction
-        onGraphChanged: {
-            viewer3D.clear()
-            viewer2D.clear()
-        }
-        onSfmReportChanged: {
-            viewer3D.abcSource = ''
-            if(!reconstruction.sfm)
-                return
-            load3DMedia(Filepath.stringToUrl(reconstruction.sfm.attribute('output').value))
-        }
+        onGraphChanged: viewer3D.clear()
+        onSfmChanged: viewSfM()
+        onSfmReportChanged: viewSfM()
+    }
+    Component.onCompleted: viewSfM()
+
+    // Load reconstruction's current SfM file
+    function viewSfM() {
+        if(!reconstruction.sfm)
+            return;
+        viewAttribute(reconstruction.sfm.attribute('output'));
     }
 
     SystemPalette { id: activePalette }
@@ -115,12 +113,16 @@ Item {
 
         Panel {
             title: "3D Viewer"
-            implicitWidth: Math.round(parent.width * 0.33)
+            implicitWidth: Math.round(parent.width * 0.45)
             Layout.minimumWidth: 20
             Layout.minimumHeight: 80
 
             Viewer3D {
                 id: viewer3D
+                readonly property var outputAttribute: _reconstruction.endNode ? _reconstruction.endNode.attribute("outputMesh") : null
+                readonly property bool outputReady: outputAttribute && _reconstruction.endNode.globalStatus === "SUCCESS"
+                readonly property int outputMediaIndex: library.find(outputAttribute)
+
                 anchors.fill: parent
                 DropArea {
                     anchors.fill: parent
@@ -129,20 +131,14 @@ Item {
                 }
             }
 
-            Label {
-                anchors.centerIn: parent
-                text: "Loading..."
-                visible: viewer3D.loading
-                padding: 6
-                background: Rectangle { color: parent.palette.base; opacity: 0.5 }
-            }
-
             // Load reconstructed model
             Button {
                 text: "Load Model"
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
+                visible: viewer3D.outputReady && viewer3D.outputMediaIndex == -1
+                onClicked: viewAttribute(_reconstruction.endNode.attribute("outputMesh"))
             }
         }
     }

@@ -21,7 +21,10 @@ Item {
     property int renderMode: 2
 
     // Rasterized point size
-    property real pointSize: 4
+    property real pointSize: 1.5
     // Whether point size is fixed or view dependent
     property bool fixedPointSize: false
+    // Helpers display
+    property bool displayGrid: true
+    property bool displayLocator: true
 }

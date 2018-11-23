@@ -127,7 +127,9 @@ Item {
                 DropArea {
                     anchors.fill: parent
                     keys: ["text/uri-list"]
-                    onDropped: load3DMedia(drop.urls[0])
+                    onDropped: {
+                        drop.urls.forEach(function(url){ load3DMedia(url); });
+                    }
                 }
             }
 

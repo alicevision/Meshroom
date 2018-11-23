@@ -19,7 +19,6 @@ Item {
 
     property variant reconstruction: _reconstruction
     readonly property variant cameraInits: _reconstruction.cameraInits
-    readonly property url meshFile: Filepath.stringToUrl(_reconstruction.meshFile)
     property bool readOnly: false
 
     implicitWidth: 300
@@ -144,8 +143,6 @@ Item {
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible: meshFile != "" && (viewer3D.source != meshFile)
-                onClicked: load3DMedia(meshFile)
             }
         }
     }

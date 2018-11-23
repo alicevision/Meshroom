@@ -166,8 +166,7 @@ class Reconstruction(UIGraph):
         self._buildingIntrinsics = False
         self._cameraInit = None
         self._cameraInits = QObjectListModel(parent=self)
-        self._endChunk = None
-        self._meshFile = ''
+        self._endNode = None
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
         self.graphChanged.connect(self.onGraphChanged)
         self._liveSfmManager = LiveSfmManager(self)
@@ -215,21 +214,13 @@ class Reconstruction(UIGraph):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
         self.sfm = None
-        self._endChunk = None
-        self.setMeshFile('')
+        self.endNode = None
         self.updateCameraInits()
         if not self._graph:
             return
 
         self.setSfm(self.lastSfmNode())
-        try:
-            endNode = self._graph.findNode("Texturing")
-            self._endChunk = endNode.getChunks()[0]  # type: graph.NodeChunk
-            endNode.outputMesh.valueChanged.connect(self.updateMeshFile)
-            self._endChunk.statusChanged.connect(self.updateMeshFile)
-            self.updateMeshFile()
-        except KeyError:
-            self._endChunk = None
+
         # TODO: listen specifically for cameraInit creation/deletion
         self._graph.nodes.countChanged.connect(self.updateCameraInits)
 
@@ -265,24 +256,35 @@ class Reconstruction(UIGraph):
         return self._cameraInits.indexOf(self._cameraInit)
 
     def setCameraInitIndex(self, idx):
-        self.setCameraInit(self._cameraInits[idx])
-
-    def updateMeshFile(self):
-        if self._endChunk and self._endChunk.status.status == Status.SUCCESS:
-            self.setMeshFile(self._endChunk.node.outputMesh.value)
-        else:
-            self.setMeshFile('')
-
-    def setMeshFile(self, mf):
-        if self._meshFile == mf:
-            return
-        self._meshFile = mf
-        self.meshFileChanged.emit()
+        camInit = self._cameraInits[idx] if self._cameraInits else None
+        self.setCameraInit(camInit)
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
-        sfmNodes = self._graph.nodesFromNode(self._cameraInits[0], 'StructureFromMotion')[0]
-        return sfmNodes[-1] if sfmNodes else None
+        return self.lastNodeOfType("StructureFromMotion", self._cameraInit, Status.SUCCESS)
+
+    def lastNodeOfType(self, nodeType, startNode, preferredStatus=None):
+        """
+        Returns the last node of the given type starting from 'startNode'.
+        If 'preferredStatus' is specified, the last node with this status will be considered in priority.
+
+        Args:
+            nodeType (str): the node type
+            startNode (Node): the node to start from
+            preferredStatus (Status): (optional) the node status to prioritize
+
+        Returns:
+            Node: the node matching the input parameters or None
+        """
+        if not startNode:
+            return None
+        nodes = self._graph.nodesFromNode(startNode, nodeType)[0]
+        if not nodes:
+            return None
+        node = nodes[-1]
+        if preferredStatus:
+            node = next((n for n in reversed(nodes) if n.getGlobalStatus() == preferredStatus), node)
+        return node
 
     def addSfmAugmentation(self, withMVS=False):
         """
@@ -435,8 +437,6 @@ class Reconstruction(UIGraph):
     intrinsicsBuilt = Signal(QObject, list, list)
     buildingIntrinsicsChanged = Signal()
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
-    meshFileChanged = Signal()
-    meshFile = Property(str, lambda self: self._meshFile, notify=meshFileChanged)
     liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
 
     def updateViewsAndPoses(self):
@@ -484,6 +484,21 @@ class Reconstruction(UIGraph):
             self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
             self._sfm.destroyed.disconnect(self._unsetSfm)
         self._setSfm(node)
+        self.setEndNode(self.lastNodeOfType("Texturing", self._sfm, Status.SUCCESS))
+
+    def setEndNode(self, node=None):
+        if self._endNode == node:
+            return
+        if self._endNode:
+            try:
+                self._endNode.destroyed.disconnect(self.setEndNode)
+            except RuntimeError:
+                # self._endNode might have been destroyed at this point, causing PySide2 to throw a RuntimeError
+                pass
+        self._endNode = node
+        if self._endNode:
+            self._endNode.destroyed.connect(self.setEndNode)
+        self.endNodeChanged.emit()
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):
@@ -521,6 +536,8 @@ class Reconstruction(UIGraph):
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(Node, Node)
+    endNodeChanged = Signal()
+    endNode = Property(QObject, lambda self: self._endNode, setEndNode, notify=endNodeChanged)
 
     nbCameras = Property(int, lambda self: len(self._poses), notify=sfmReportChanged)
 

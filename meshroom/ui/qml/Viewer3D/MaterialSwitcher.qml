@@ -14,7 +14,6 @@ Entity {
     objectName: "MaterialSwitcher"
 
     property int mode: 2
-    readonly property var modes: ["Solid", "Wireframe", "Textured"]
     property string diffuseMap: ""
     property color ambient: "#AAA"
     property real shininess
@@ -89,7 +88,7 @@ Entity {
 
     StateGroup {
         id: modeState
-        state: modes[mode]
+        state: Viewer3DSettings.renderModes[mode].name
 
         states: [
             State {
@@ -124,7 +123,7 @@ Entity {
     DiffuseSpecularMaterial {
         id: textured
         parent: root.parent
-        objectName: "SolidMaterial"
+        objectName: "TexturedMaterial"
         ambient: root.ambient
         shininess: root.shininess
         specular: root.specular

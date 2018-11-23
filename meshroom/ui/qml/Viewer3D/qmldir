@@ -1,0 +1,6 @@
+module Viewer3D
+
+Viewer3D 1.0 Viewer3D.qml
+DefaultCameraController 1.0 DefaultCameraController.qml
+Locator3D 1.0 Locator3D.qml
+Grid3D 1.0 Grid3D.qml

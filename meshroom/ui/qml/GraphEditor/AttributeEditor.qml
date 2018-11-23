@@ -16,6 +16,8 @@ ColumnLayout {
 
     signal upgradeRequest()
 
+    signal attributeDoubleClicked(var attribute)
+
     spacing: 0
 
     Pane {
@@ -98,6 +100,7 @@ ColumnLayout {
                     labelWidth: 180
                     width: attributesListView.width
                     attribute: object
+                    onDoubleClicked: root.attributeDoubleClicked(attr)
                 }
                 // Helper MouseArea to lose edit/activeFocus
                 // when clicking on the background

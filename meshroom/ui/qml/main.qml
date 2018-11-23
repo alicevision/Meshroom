@@ -508,12 +508,23 @@ ApplicationWindow {
         }
 
         Panel {
+            id: graphEditorPanel
             Layout.fillWidth: true
             Layout.fillHeight: false
             padding: 0
             height: Math.round(parent.height * 0.3)
             title: "Graph Editor"
             visible: settings_UILayout.showGraphEditor
+
+            function displayAttribute(attr) {
+                if( attr.desc.type === "File"
+                   && _3dFileExtensions.indexOf(Filepath.extension(attr.value)) > - 1 )
+                  {
+                    workspaceView.viewAttribute(attr);
+                    return true;
+                  }
+                return false;
+            }
 
             Controls1.SplitView {
                 orientation: Qt.Horizontal
@@ -533,7 +544,7 @@ ApplicationWindow {
                         readOnly: _reconstruction.computing
 
                         onNodeDoubleClicked: {
-                            if(node.nodeType == "StructureFromMotion")
+                            if(node.nodeType === "StructureFromMotion")
                             {
                                 _reconstruction.sfm = node
                                 return
@@ -542,12 +553,10 @@ ApplicationWindow {
                             {
                                 var attr = node.attributes.at(i)
                                 if(attr.isOutput
-                                   && attr.desc.type === "File"
-                                   && _3dFileExtensions.indexOf(Filepath.extension(attr.value)) > - 1 )
-                                  {
-                                    workspaceView.load3DMedia(Filepath.stringToUrl(attr.value))
-                                    break // only load first model found
-                                  }
+                                   && graphEditorPanel.displayAttribute(attr))
+                                {
+                                    break;
+                                }
                             }
                         }
                     }
@@ -565,6 +574,9 @@ ApplicationWindow {
                                 node: graphEditor.selectedNode
                                 // Make AttributeEditor readOnly when computing
                                 readOnly: _reconstruction.computing
+                                onAttributeDoubleClicked: {
+                                    graphEditorPanel.displayAttribute(attribute)
+                                }
 
                                 onUpgradeRequest: {
                                     var n = _reconstruction.upgradeNode(node)

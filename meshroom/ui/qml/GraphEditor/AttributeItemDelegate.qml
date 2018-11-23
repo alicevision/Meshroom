@@ -18,6 +18,8 @@ RowLayout {
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
+    signal doubleClicked(var attr)
+
     spacing: 4
 
     Label {
@@ -50,6 +52,7 @@ RowLayout {
             anchors.fill: parent
             hoverEnabled: true
             acceptedButtons: Qt.AllButtons
+            onDoubleClicked: root.doubleClicked(root.attribute)
 
             property Component menuComp: Menu {
                 id: paramMenu
@@ -307,6 +310,7 @@ RowLayout {
                             obj.label.text = index
                             obj.label.horizontalAlignment = Text.AlignHCenter
                             obj.label.verticalAlignment = Text.AlignVCenter
+                            obj.doubleClicked.connect(function(attr) {root.doubleClicked(attr)})
                         }
                         ToolButton {
                             enabled: root.editable
@@ -346,6 +350,7 @@ RowLayout {
                                                    })
                         obj.Layout.fillWidth = true
                         obj.labelWidth = 100 // reduce label width for children (space gain)
+                        obj.doubleClicked.connect(function(attr) {root.doubleClicked(attr)})
                     }
                 }
             }

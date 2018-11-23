@@ -22,5 +22,6 @@ Item {
 
     // Rasterized point size
     property real pointSize: 4
-
+    // Whether point size is fixed or view dependent
+    property bool fixedPointSize: false
 }

@@ -167,7 +167,7 @@ FocusScope {
                 projectionType: CameraLens.PerspectiveProjection
                 fieldOfView: 45
                 nearPlane : 0.01
-                farPlane : 1000.0
+                farPlane : 10000.0
                 position: Qt.vector3d(28.0, 21.0, 28.0)
                 upVector: Qt.vector3d(0.0, 1.0, 0.0)
                 viewCenter: Qt.vector3d(0.0, 0.0, 0.0)
@@ -224,28 +224,37 @@ FocusScope {
 
             components: [
                 RenderSettings {
-                    // To avoid performance drops, picking is only enabled under certain circumstances (see ObjectPicker below)
-                    pickingSettings.pickMethod: PickingSettings.TrianglePicking
+                    pickingSettings.pickMethod: PickingSettings.PrimitivePicking  // enables point/edge/triangle picking
                     pickingSettings.pickResultMode: PickingSettings.NearestPick
-                    renderPolicy: RenderSettings.Always
-                    activeFrameGraph: Viewport {
-                        normalizedRect: Qt.rect(0.0, 0.0, 1.0, 1.0)
-                        RenderSurfaceSelector {
+                    renderPolicy: RenderSettings.OnDemand
+
+                    activeFrameGraph: RenderSurfaceSelector {
+                        // Use the whole viewport
+                        Viewport {
+                            normalizedRect: Qt.rect(0.0, 0.0, 1.0, 1.0)
                             CameraSelector {
                                 id: cameraSelector
                                 camera: mainCamera
-                                ClearBuffers {
-                                    buffers : ClearBuffers.ColorDepthBuffer
-                                    clearColor: Qt.rgba(0, 0, 0, 0.1)
+                                FrustumCulling {
+                                    ClearBuffers {
+                                        clearColor: "transparent"
+                                        buffers : ClearBuffers.ColorDepthBuffer
+                                        RenderStateSet {
+                                            renderStates: [
+                                                PointSize {
+                                                    sizeMode: Viewer3DSettings.fixedPointSize ? PointSize.Fixed : PointSize.Programmable
+                                                    value: Viewer3DSettings.pointSize
+                                                },
+                                                DepthTest { depthFunction: DepthTest.Less }
+                                            ]
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 },
-                Qt3DInput.InputSettings {
-                    eventSource: _window
-                    enabled: true
-                }
+                Qt3DInput.InputSettings { }
             ]
 
             Entity {

@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 
@@ -11,12 +11,19 @@ class Meshing(desc.CommandLineNode):
 
     inputs = [
         desc.File(
-            name="ini",
-            label='MVS Configuration file',
-            description='',
+            name='input',
+            label='Input',
+            description='SfMData file.',
             value='',
             uid=[0],
-            ),
+        ),
+        desc.File(
+            name='imagesFolder',
+            label='Images Folder',
+            description='Use images from a specific folder. Filename should be the image uid.',
+            value='',
+            uid=[0],
+        ),
         desc.File(
             name="depthMapFolder",
             label='Depth Maps Folder',
@@ -29,6 +36,21 @@ class Meshing(desc.CommandLineNode):
             label='Filtered Depth Maps Folder',
             description='Input filtered depth maps folder',
             value='',
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='estimateSpaceFromSfM',
+            label='Estimate Space From SfM',
+            description='Estimate the 3d space from the SfM',
+            value=True,
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='estimateSpaceMinObservations',
+            label='Min Observations For SfM Space Estimation',
+            description='Minimum number of observations for SfM space estimation.',
+            value=3,
+            range=(0, 100, 1),
             uid=[0],
         ),
         desc.IntParam(

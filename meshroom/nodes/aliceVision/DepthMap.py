@@ -6,15 +6,22 @@ from meshroom.core import desc
 class DepthMap(desc.CommandLineNode):
     commandLine = 'aliceVision_depthMapEstimation {allParams}'
     gpu = desc.Level.INTENSIVE
-    size = desc.DynamicNodeSize('ini')
+    size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=3)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [
         desc.File(
-            name="ini",
-            label='MVS Configuration File',
-            description='',
+            name='input',
+            label='Input',
+            description='SfMData file.',
+            value='',
+            uid=[0],
+        ),        
+        desc.File(
+            name='imagesFolder',
+            label='Images Folder',
+            description='Use images from a specific folder instead of those specify in the SfMData file.\nFilename should be the image uid.',
             value='',
             uid=[0],
         ),

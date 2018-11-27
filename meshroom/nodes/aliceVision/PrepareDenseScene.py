@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 
@@ -6,6 +6,8 @@ from meshroom.core import desc
 class PrepareDenseScene(desc.CommandLineNode):
     commandLine = 'aliceVision_prepareDenseScene {allParams}'
     size = desc.DynamicNodeSize('input')
+    parallelization = desc.Parallelization(blockSize=40)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [
         desc.File(
@@ -13,6 +15,29 @@ class PrepareDenseScene(desc.CommandLineNode):
             label='Input',
             description='''SfMData file.''',
             value='',
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='outputFileType',
+            label='Output File Type',
+            description='Output file type for the undistorted images.',
+            value='exr',
+            values=['jpg', 'png', 'tif', 'exr'],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='saveMetadata',
+            label='Save Metadata',
+            description='Save projections and intrinsics informations in images metadata (only for .exr images).',
+            value=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='saveMatricesTxtFiles',
+            label='Save Matrices Text Files',
+            description='Save projections and intrinsics informations in text files.',
+            value=False,
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -27,15 +52,6 @@ class PrepareDenseScene(desc.CommandLineNode):
     ]
 
     outputs = [
-        desc.File(
-            name='ini',
-            label='MVS Configuration file',
-            description='',
-            value=desc.Node.internalFolder + 'mvs.ini',
-            uid=[],
-            group='',  # not a command line arg
-        ),
-
         desc.File(
             name='output',
             label='Output',

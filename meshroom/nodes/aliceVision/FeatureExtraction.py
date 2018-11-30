@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "1.1"
 
 from meshroom.core import desc
 
@@ -40,7 +40,7 @@ class FeatureExtraction(desc.CommandLineNode):
             name='forceCpuExtraction',
             label='Force CPU Extraction',
             description='Use only CPU feature extraction.',
-            value=True,
+            value=False,
             uid=[],
         ),
         desc.ChoiceParam(

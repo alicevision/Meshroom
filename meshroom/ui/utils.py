@@ -1,8 +1,9 @@
 import os
 import time
 
-from PySide2.QtCore import QFileSystemWatcher, QUrl, Slot, QTimer, Property
+from PySide2.QtCore import QFileSystemWatcher, QUrl, Slot, QTimer, Property, QObject
 from PySide2.QtQml import QQmlApplicationEngine
+from PySide2 import shiboken2
 
 
 class QmlInstantEngine(QQmlApplicationEngine):
@@ -193,7 +194,7 @@ class QmlInstantEngine(QQmlApplicationEngine):
         self.load(self._sourceFile)
 
 
-def makeProperty(T, attributeName, notify=None):
+def makeProperty(T, attributeName, notify=None, destroyCallback=None):
     """
     Shortcut function to create a Qt Property with generic getter and setter.
 
@@ -204,6 +205,8 @@ def makeProperty(T, attributeName, notify=None):
         T (type): the type of the property
         attributeName (str): the name of underlying instance attribute to get/set
         notify (Signal): the notify signal; if None, property will be constant
+        destroyCallback (function): (optional) Function to call when value gets destroyed.
+                                               Only applicable for QObject-type properties.
 
     Examples:
         class Foo(QObject):
@@ -217,12 +220,17 @@ def makeProperty(T, attributeName, notify=None):
     Returns:
         Property: the created Property
     """
-    def setter(instance, value, notifyName):
+    def setter(instance, value):
         """ Generic setter. """
-        if getattr(instance, attributeName) == value:
+        currentValue = getattr(instance, attributeName)
+        if currentValue == value:
             return
+        if destroyCallback and currentValue and shiboken2.isValid(currentValue):
+            currentValue.destroyed.disconnect(destroyCallback)
         setattr(instance, attributeName, value)
-        getattr(instance, notifyName).emit()
+        if destroyCallback and value:
+            value.destroyed.connect(destroyCallback)
+        getattr(instance, signalName(notify)).emit()
 
     def getter(instance):
         """ Generic getter. """
@@ -233,7 +241,9 @@ def makeProperty(T, attributeName, notify=None):
         # string representation contains trailing '()', remove it
         return str(signalInstance)[:-2]
 
+    if destroyCallback and not issubclass(T, QObject):
+        raise RuntimeError("destroyCallback can only be used with QObject-type properties.")
     if notify:
-        return Property(T, getter, lambda self, value: setter(self, value, signalName(notify)), notify=notify)
+        return Property(T, getter, setter, notify=notify)
     else:
         return Property(T, getter, constant=True)

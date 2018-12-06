@@ -19,6 +19,7 @@ FloatingPane {
     property Grid3D grid: null
     property MediaLibrary mediaLibrary
     property Camera camera
+    property var uigraph: null
 
     signal mediaFocusRequest(var index)
     signal mediaRemoveRequest(var index)
@@ -128,6 +129,13 @@ FloatingPane {
                 }
             }
 
+            currentIndex: -1
+
+            Connections {
+                target: uigraph
+                onSelectedNodeChanged: mediaListView.currentIndex = -1
+            }
+
             Connections {
                 target: mediaLibrary
                 onLoadRequest: {
@@ -136,6 +144,7 @@ FloatingPane {
             }
 
             delegate: RowLayout {
+                id: mediaDelegate
                 // add mediaLibrary.count in the binding to ensure 'entity'
                 // is re-evaluated when mediaLibrary delegates are modified
                 property bool loading: model.status === SceneLoader.Loading
@@ -145,12 +154,37 @@ FloatingPane {
                 property string src: model.source
                 onSrcChanged: focusAnim.restart()
 
-                RowLayout {
-                    Layout.alignment: Qt.AlignTop
-                    spacing: 0
+                property bool hovered:  model.attribute ? uigraph.hoveredNode === model.attribute.node : mouseArea.containsMouse
+                property bool isSelectedNode: model.attribute ? uigraph.selectedNode === model.attribute.node : false
 
-                    MaterialToolButton {
-                        text: model.visible ? MaterialIcons.visibility : MaterialIcons.visibility_off
+                function updateCurrentIndex() {
+                    if(isSelectedNode) { mediaListView.currentIndex = index }
+                }
+
+                onIsSelectedNodeChanged: updateCurrentIndex()
+
+                Connections {
+                    target: mediaListView
+                    onCountChanged: mediaDelegate.updateCurrentIndex()
+                }
+
+                // Current/selected element indicator
+                Rectangle {
+                    Layout.fillHeight: true
+                    width: 2
+                    color: {
+                        if(mediaListView.currentIndex == index || mediaDelegate.isSelectedNode)
+                            return label.palette.highlight;
+                        if(mediaDelegate.hovered)
+                            return Qt.darker(label.palette.highlight, 1.5);
+                        return "transparent";
+                    }
+                }
+
+                // Media visibility/loading control
+                MaterialToolButton {
+                    Layout.alignment: Qt.AlignTop
+                    text: model.visible ? MaterialIcons.visibility : MaterialIcons.visibility_off
                         font.pointSize: 10
                         ToolTip.text: model.visible ? "Hide" : "Show"
                         flat: true
@@ -173,47 +207,42 @@ FloatingPane {
                                 modifiers = mouse.modifiers;
                                 mouse.accepted = false;
                             }
-                        }
-                    }
-                    MaterialToolButton {
-                        text: MaterialIcons.filter_center_focus
-                        font.pointSize: 10
-                        ToolTip.text: "Frame"
-                        onClicked: camera.viewEntity(mediaLibrary.entityAt(index))
-                        flat: true
                     }
                 }
 
-                ColumnLayout {
+                // Media label and info
+                Item {
+                    implicitHeight: childrenRect.height
                     Layout.fillWidth: true
-                    spacing: 1
                     Layout.alignment: Qt.AlignTop
+                    ColumnLayout {
+                        id: centralLayout
+                        width: parent.width
+                        spacing: 1
 
-                    Label {
-                        id: label
-                        leftPadding: 0
-                        rightPadding: 0
-                        topPadding: 3
-                        bottomPadding: topPadding
-                        Layout.fillWidth: true
-                        text: model.label
-                        elide: Text.ElideMiddle
-                        background: Rectangle {
-                            Connections {
-                                target: mediaLibrary
-                                onLoadRequest: if(idx == index) focusAnim.restart()
+                        Label {
+                            id: label
+                            Layout.fillWidth: true
+                            leftPadding: 0
+                            rightPadding: 0
+                            topPadding: 3
+                            bottomPadding: topPadding
+                            text: model.label
+                            opacity: model.valid ? 1.0 : 0.6
+                            elide: Text.ElideMiddle
+                            font.weight: mediaListView.currentIndex == index ? Font.DemiBold : Font.Normal
+                            background: Rectangle {
+                                Connections {
+                                    target: mediaLibrary
+                                    onLoadRequest: if(idx == index) focusAnim.restart()
+                                }
+                                ColorAnimation on color {
+                                    id: focusAnim
+                                    from: label.palette.highlight
+                                    to: "transparent"
+                                    duration: 2000
+                                }
                             }
-                            ColorAnimation on color {
-                                id: focusAnim
-                                from: label.palette.highlight
-                                to: "transparent"
-                                duration: 2000
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                onDoubleClicked: camera.viewEntity(mediaLibrary.entityAt(index))
-                            }
-                        }
                     }
                     Item {
                         Layout.fillWidth: true
@@ -228,6 +257,25 @@ FloatingPane {
                             Label { visible: model.cameraCount; text: model.cameraCount }
                             MaterialLabel { visible: model.textureCount; text: MaterialIcons.texture }
                             Label { visible: model.textureCount; text: model.textureCount }
+                        }
+                    }
+                    }
+                    MouseArea {
+                        id: mouseArea
+                        anchors.fill: centralLayout
+                        hoverEnabled: true
+                        onEntered: { if(model.attribute) uigraph.hoveredNode = model.attribute.node }
+                        onExited: { if(model.attribute) uigraph.hoveredNode = null }
+                        onClicked: {
+                            if(model.attribute)
+                                uigraph.selectedNode = model.attribute.node;
+                            else
+                                uigraph.selectedNode = null;
+                            mediaListView.currentIndex = index;
+                        }
+                        onDoubleClicked: {
+                            model.visible = true;
+                            camera.viewEntity(mediaLibrary.entityAt(index));
                         }
                     }
                 }

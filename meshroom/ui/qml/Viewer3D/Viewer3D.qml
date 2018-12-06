@@ -19,6 +19,7 @@ FocusScope {
 
     property int renderMode: 2
     property alias library: mediaLibrary
+    property alias inspector: inspector3d
 
     // functions
     function resetCameraCenter() {
@@ -218,7 +219,7 @@ FocusScope {
         Item { Layout.fillWidth: true; Layout.minimumWidth: parent.width * 0.5  }
 
         Inspector3D {
-            id: inspector
+            id: inspector3d
             width: 220
             Layout.minimumWidth: 5
 

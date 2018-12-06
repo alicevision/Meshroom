@@ -124,6 +124,8 @@ Item {
                 readonly property int outputMediaIndex: library.find(outputAttribute)
 
                 anchors.fill: parent
+                inspector.uigraph: reconstruction
+
                 DropArea {
                     anchors.fill: parent
                     keys: ["text/uri-list"]

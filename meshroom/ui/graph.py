@@ -201,6 +201,7 @@ class UIGraph(QObject):
         self._running = self._submitted = False
         self._sortedDFSChunks = QObjectListModel(parent=self)
         self._layout = GraphLayout(self)
+        self._selectedNode = None
         if filepath:
             self.load(filepath)
 
@@ -235,6 +236,7 @@ class UIGraph(QObject):
 
     def clear(self):
         if self._graph:
+            self.clearNodeSelection()
             self._graph.deleteLater()
             self._graph = None
         self._sortedDFSChunks.clear()
@@ -466,6 +468,10 @@ class UIGraph(QObject):
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
+    def clearNodeSelection(self):
+        """ Clear node selection. """
+        self.selectedNode = None
+
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
@@ -480,3 +486,7 @@ class UIGraph(QObject):
 
     sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, constant=True)
     lockedChanged = Signal()
+
+    selectedNodeChanged = Signal()
+    # Currently selected node
+    selectedNode = makeProperty(QObject, "_selectedNode", selectedNodeChanged, clearNodeSelection)

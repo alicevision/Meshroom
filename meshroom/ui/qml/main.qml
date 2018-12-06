@@ -568,10 +568,10 @@ ApplicationWindow {
                     Loader {
                         anchors.fill: parent
                         anchors.margins: 2
-                        active: graphEditor.selectedNode != null
+                        active: _reconstruction.selectedNode !== null
                         sourceComponent: Component {
                             AttributeEditor {
-                                node: graphEditor.selectedNode
+                                node: _reconstruction.selectedNode
                                 // Make AttributeEditor readOnly when computing
                                 readOnly: _reconstruction.computing
                                 onAttributeDoubleClicked: {
@@ -580,7 +580,7 @@ ApplicationWindow {
 
                                 onUpgradeRequest: {
                                     var n = _reconstruction.upgradeNode(node)
-                                    graphEditor.selectNode(n)
+                                    _reconstruction.selectedNode = n;
                                 }
                             }
                         }

@@ -49,8 +49,6 @@ Entity {
         var idx = find(source);
         if(idx === -1)
             return
-        // load / make media visible
-        m.mediaModel.get(idx).requested = true;
         m.mediaModel.get(idx).visible = true;
         loadRequest(idx);
     }
@@ -143,6 +141,7 @@ Entity {
             readonly property var attribute: model.attribute
             readonly property int idx: index
             readonly property var modelSource: attribute || model.source
+            readonly property bool visible: model.visible
 
             // multi-step binding to ensure MediaLoader source is properly
             // updated when needed, whether raw source is valid or not
@@ -163,7 +162,7 @@ Entity {
             readonly property string finalSource: model.requested ? currentSource : ""
 
             renderMode: root.renderMode
-            enabled: model.visible
+            enabled: visible
 
             // QObject.destroyed signal is not accessible
             // Use the object as NodeInstantiator model to be notified of its deletion
@@ -171,6 +170,17 @@ Entity {
                 model: attribute
                 delegate: Entity { objectName: "DestructionWatcher [" + attribute.toString() + "]" }
                 onObjectRemoved: remove(idx)
+            }
+
+            // 'visible' property drives media loading request
+            onVisibleChanged: {
+                // always request media loading if visible
+                if(model.visible)
+                    model.requested = true;
+                // only cancel loading request if media is not valid
+                // (a media won't be unloaded if already loaded, only hidden)
+                else if(!model.valid)
+                    model.requested = false;
             }
 
             function updateModelAndCache(forceRequest) {
@@ -184,8 +194,10 @@ Entity {
                 if(attribute) {
                     model.source = rawSource;
                 }
-                // auto-restore entity if raw source is in cache
+                // auto-restore entity if raw source is in cache ...
                 model.requested = forceRequest || (!model.valid && model.requested) || cache.contains(rawSource);
+                // ... and update media visibility (useful if media was hidden but loaded back from cache)
+                model.visible = model.requested;
                 model.valid = Filepath.exists(rawSource) && dependencyReady;
             }
 

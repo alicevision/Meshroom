@@ -147,7 +147,6 @@ FloatingPane {
 
                 RowLayout {
                     Layout.alignment: Qt.AlignTop
-                    enabled: model.status === SceneLoader.Ready
                     spacing: 0
 
                     MaterialToolButton {
@@ -233,19 +232,18 @@ FloatingPane {
                     }
                 }
 
+                // Media unavailability indicator
                 MaterialToolButton {
-                    id: requestMediaButton
                     Layout.alignment: Qt.AlignTop
-
-                    enabled: !loading
-                    text: loading || !model.requested ? MaterialIcons.radio_button_unchecked : MaterialIcons.radio_button_checked
+                    enabled: false
+                    visible: !model.valid
+                    text: MaterialIcons.no_sim
                     font.pointSize: 10
-                    palette.buttonText: model.valid ? "#4CAF50" : label.palette.buttonText
-                    ToolTip.text: ""
-                    onClicked: model.requested = !model.requested
                 }
 
+                // Remove media from library button
                 MaterialToolButton {
+                    id: removeButton
                     Layout.alignment: Qt.AlignTop
 
                     visible: !loading
@@ -255,12 +253,13 @@ FloatingPane {
                     onClicked: mediaLibrary.remove(index)
                 }
 
+                // Media loading indicator
                 BusyIndicator {
                     visible: loading
                     running: visible
-                    padding: 0
-                    implicitHeight: 14
-                    implicitWidth: requestMediaButton.width
+                    padding: removeButton.padding
+                    implicitHeight: implicitWidth
+                    implicitWidth: removeButton.width
                 }
             }
         }

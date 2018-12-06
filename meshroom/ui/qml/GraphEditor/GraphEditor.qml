@@ -308,6 +308,7 @@ Item {
                     width: uigraph.layout.nodeWidth
                     readOnly: root.readOnly
                     selected: uigraph.selectedNode === node
+                    hovered: uigraph.hoveredNode === node
                     onSelectedChanged: if(selected) forceActiveFocus()
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
@@ -330,6 +331,9 @@ Item {
                     onDoubleClicked: root.nodeDoubleClicked(node)
 
                     onMoved: uigraph.moveNode(node, position)
+
+                    onEntered: uigraph.hoveredNode = node
+                    onExited: uigraph.hoveredNode = null
 
                     Keys.onDeletePressed: uigraph.removeNode(node)
 

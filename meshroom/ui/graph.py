@@ -202,6 +202,7 @@ class UIGraph(QObject):
         self._sortedDFSChunks = QObjectListModel(parent=self)
         self._layout = GraphLayout(self)
         self._selectedNode = None
+        self._hoveredNode = None
         if filepath:
             self.load(filepath)
 
@@ -236,6 +237,7 @@ class UIGraph(QObject):
 
     def clear(self):
         if self._graph:
+            self.clearNodeHover()
             self.clearNodeSelection()
             self._graph.deleteLater()
             self._graph = None
@@ -472,6 +474,10 @@ class UIGraph(QObject):
         """ Clear node selection. """
         self.selectedNode = None
 
+    def clearNodeHover(self):
+        """ Reset currently hovered node to None. """
+        self.hoveredNode = None
+
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
@@ -490,3 +496,7 @@ class UIGraph(QObject):
     selectedNodeChanged = Signal()
     # Currently selected node
     selectedNode = makeProperty(QObject, "_selectedNode", selectedNodeChanged, clearNodeSelection)
+
+    hoveredNodeChanged = Signal()
+    # Currently hovered node
+    hoveredNode = makeProperty(QObject, "_hoveredNode", hoveredNodeChanged, clearNodeHover)

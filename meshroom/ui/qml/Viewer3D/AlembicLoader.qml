@@ -1,4 +1,4 @@
-import AlembicEntity 1.0
+import AlembicEntity 2.0
 import QtQuick 2.9
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
@@ -10,6 +10,9 @@ import Qt3D.Extras 2.1
  */
 AlembicEntity {
     id: root
+
+    // filter out non-reconstructed cameras
+    skipHidden: true
 
     signal cameraSelected(var viewId)
 
@@ -23,11 +26,6 @@ AlembicEntity {
             var viewId = cam.userProperties["mvg_viewId"];
             if(viewId === undefined)
                 continue;
-            // filter out non-reconstructed cameras
-            if(cam.parent.parent.objectName === "mvgCamerasUndefined") {
-                cam.enabled = false;
-                continue;
-            }
             camSelectionComponent.createObject(cam, {"viewId": viewId});
             validCameras++;
         }

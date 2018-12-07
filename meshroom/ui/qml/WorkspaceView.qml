@@ -119,9 +119,6 @@ Item {
 
             Viewer3D {
                 id: viewer3D
-                readonly property var outputAttribute: _reconstruction.endNode ? _reconstruction.endNode.attribute("outputMesh") : null
-                readonly property bool outputReady: outputAttribute && _reconstruction.endNode.globalStatus === "SUCCESS"
-                readonly property int outputMediaIndex: library.find(outputAttribute)
 
                 anchors.fill: parent
                 inspector.uigraph: reconstruction
@@ -137,11 +134,15 @@ Item {
 
             // Load reconstructed model
             Button {
+                readonly property var outputAttribute: _reconstruction.endNode ? _reconstruction.endNode.attribute("outputMesh") : null
+                readonly property bool outputReady: outputAttribute && _reconstruction.endNode.globalStatus === "SUCCESS"
+                readonly property int outputMediaIndex: viewer3D.library.find(outputAttribute)
+
                 text: "Load Model"
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible: viewer3D.outputReady && viewer3D.outputMediaIndex == -1
+                visible: outputReady && outputMediaIndex == -1
                 onClicked: viewAttribute(_reconstruction.endNode.attribute("outputMesh"))
             }
         }

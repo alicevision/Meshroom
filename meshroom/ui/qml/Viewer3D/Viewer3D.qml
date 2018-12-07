@@ -220,12 +220,32 @@ FocusScope {
 
         Inspector3D {
             id: inspector3d
-            width: 220
+            width: 200
             Layout.minimumWidth: 5
 
             camera: mainCamera
             targetTransform: transform
             mediaLibrary: mediaLibrary
+        }
+    }
+
+    // Rendering modes
+    FloatingPane {
+        anchors.bottom: parent.bottom
+        padding: 4
+        Row {
+            Repeater {
+                model: Viewer3DSettings.renderModes
+
+                delegate: MaterialToolButton {
+                    text: modelData["icon"]
+                    ToolTip.text: modelData["name"] + " (" + (index+1) + ")"
+                    font.pointSize: 11
+                    onClicked: Viewer3DSettings.renderMode = index
+                    checked: Viewer3DSettings.renderMode === index
+                    checkable: !checked // hack to disabled check on toggle
+                }
+            }
         }
     }
 

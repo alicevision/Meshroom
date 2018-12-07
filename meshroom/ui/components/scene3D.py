@@ -1,6 +1,7 @@
 from PySide2.QtCore import QObject, Slot
 from PySide2.Qt3DCore import Qt3DCore
 from PySide2.Qt3DRender import Qt3DRender
+from PySide2.QtGui import QVector3D, QQuaternion
 
 
 class Scene3DHelper(QObject):
@@ -40,3 +41,8 @@ class Scene3DHelper(QObject):
         for geo in entity.findChildren(Qt3DRender.QGeometry):
             count += sum([attr.count() for attr in geo.attributes() if attr.name() == "vertexPosition"])
         return count / 3
+
+    @Slot(QQuaternion, QVector3D, result=QVector3D)
+    def rotatedVector(self, quaternion, vector):
+        """ Returns the rotation of 'vector' with 'quaternion'. """
+        return quaternion.rotatedVector(vector)

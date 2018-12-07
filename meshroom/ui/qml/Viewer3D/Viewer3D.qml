@@ -100,26 +100,21 @@ FocusScope {
                 }
             }
 
-            Entity {
-                components: [
-                    SphereMesh {
-                    },
-                    Transform {
-                        id: viewCenterTransform
-                        translation: mainCamera.viewCenter
-                        scale: 0.005 * mainCamera.viewCenter.minus(mainCamera.position).length()
-                    },
-                    PhongMaterial {
-                        ambient: "#FFF"
-                        shininess: 0.2
-                        diffuse: activePalette.highlight
-                        specular: activePalette.highlight
-                    }
-                ]
+            TrackballGizmo {
+                beamRadius: 4.0/root.height
+                alpha: cameraController.moving ? 1.0 : 0.7
+                transform: Transform {
+                    translation: mainCamera.viewCenter
+                    scale: 0.15 * mainCamera.viewCenter.minus(mainCamera.position).length()
+                }
             }
 
             DefaultCameraController {
                 id: cameraController
+                windowSize: Qt.size(root.width, root.height)
+                rotationSpeed: 10
+                trackballSize: 0.4
+
                 camera: mainCamera
                 focus: scene3D.activeFocus
                 onMousePressed: {

@@ -100,6 +100,12 @@ FloatingPane {
                         onClicked: Viewer3DSettings.displayGrid = !Viewer3DSettings.displayGrid
                     }
                     CheckBox {
+                        text: "Gizmo"
+                        padding: 2
+                        checked: Viewer3DSettings.displayGizmo
+                        onClicked: Viewer3DSettings.displayGizmo = !Viewer3DSettings.displayGizmo
+                    }
+                    CheckBox {
                         text: "Locator"
                         padding: 2
                         checked: Viewer3DSettings.displayLocator

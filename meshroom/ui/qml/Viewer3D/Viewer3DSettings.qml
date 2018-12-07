@@ -27,5 +27,6 @@ Item {
     property real cameraScale: 0.3
     // Helpers display
     property bool displayGrid: true
-    property bool displayLocator: true
+    property bool displayGizmo: true
+    property bool displayLocator: false
 }

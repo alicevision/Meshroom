@@ -24,6 +24,7 @@ Item {
     property real pointSize: 1.5
     // Whether point size is fixed or view dependent
     property bool fixedPointSize: false
+    property real cameraScale: 0.3
     // Helpers display
     property bool displayGrid: true
     property bool displayLocator: true

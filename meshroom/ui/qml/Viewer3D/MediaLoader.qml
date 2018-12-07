@@ -80,12 +80,13 @@ import Utils 1.0
         id: abcLoaderEntityComponent
         MediaLoaderEntity {
             id: abcLoaderEntity
+            enabled: root.enabled
             Component.onCompleted: {
 
                 var obj = Viewer3DSettings.abcLoaderComp.createObject(abcLoaderEntity, {
                                                'source': source,
                                                'pointSize': Qt.binding(function() { return 0.01 * Viewer3DSettings.pointSize }),
-                                               'locatorScale': 0.3
+                                               'locatorScale': Qt.binding(function() { return Viewer3DSettings.cameraScale })
                                            });
 
                 obj.statusChanged.connect(function() {

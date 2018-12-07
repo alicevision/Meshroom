@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 import os
 import json
@@ -40,6 +40,7 @@ Intrinsic = [
             label="Distortion Params",
             description="Distortion Parameters",
         ),
+    desc.BoolParam(name='locked', label='Locked', description='Whether Intrinsic is locked.', value=False, uid=[0]),
 ]
 
 

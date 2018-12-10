@@ -9,9 +9,16 @@ class Texturing(desc.CommandLineNode):
     ram = desc.Level.INTENSIVE
     inputs = [
         desc.File(
-            name='ini',
-            label='MVS Configuration file',
-            description='',
+            name='input',
+            label='Input',
+            description='SfMData file.',
+            value='',
+            uid=[0],
+        ), 
+        desc.File(
+            name='imagesFolder',
+            label='Images Folder',
+            description='Use images from a specific folder instead of those specify in the SfMData file.\nFilename should be the image uid.',
             value='',
             uid=[0],
         ),

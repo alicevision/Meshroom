@@ -6,25 +6,41 @@ from meshroom.core import desc
 class DepthMapFilter(desc.CommandLineNode):
     commandLine = 'aliceVision_depthMapFiltering {allParams}'
     gpu = desc.Level.NORMAL
-    size = desc.DynamicNodeSize('ini')
+    size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=10)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [
         desc.File(
-            name="ini",
-            label="MVS Configuration file",
-            description="",
-            value="",
+            name='input',
+            label='Input',
+            description='SfMData file.',
+            value='',
             uid=[0],
-            ),
+        ),    
         desc.File(
             name="depthMapFolder",
             label="Depth Map Folder",
             description="Input depth map folder",
             value="",
             uid=[0],
-            ),
+        ),
+        desc.FloatParam(
+            name='minViewAngle',
+            label='Min View Angle',
+            description='Minimum angle between two views.',
+            value=2.0,
+            range=(0.0, 10.0, 0.1),
+            uid=[0],
+        ),
+        desc.FloatParam(
+            name='maxViewAngle',
+            label='Max View Angle',
+            description='Maximum angle between two views.',
+            value=70.0,
+            range=(10.0, 120.0, 1),
+            uid=[0],
+        ),
         desc.IntParam(
             name="nNearestCams",
             label="Number of Nearest Cameras",

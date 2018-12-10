@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 
@@ -23,6 +23,16 @@ class ConvertSfMFormat(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
             group='',  # exclude from command line
+        ),
+        desc.ChoiceParam(
+            name='describerTypes',
+            label='Describer Types',
+            description='Describer types to keep.',
+            value=['sift'],
+            values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            exclusive=False,
+            uid=[0],
+            joinChar=',',
         ),
         desc.BoolParam(
             name='views',

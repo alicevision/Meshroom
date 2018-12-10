@@ -106,7 +106,7 @@ class BoolParam(Param):
 
     def validateValue(self, value):
         try:
-            return bool(value)
+            return bool(int(value)) # int cast is useful to handle string values ('0', '1')
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 

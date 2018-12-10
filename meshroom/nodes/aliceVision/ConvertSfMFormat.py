@@ -24,6 +24,16 @@ class ConvertSfMFormat(desc.CommandLineNode):
             uid=[0],
             group='',  # exclude from command line
         ),
+        desc.ChoiceParam(
+            name='describerTypes',
+            label='Describer Types',
+            description='Describer types to keep.',
+            value=['sift'],
+            values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            exclusive=False,
+            uid=[0],
+            joinChar=',',
+        ),
         desc.BoolParam(
             name='views',
             label='Views',

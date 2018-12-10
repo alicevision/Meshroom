@@ -444,8 +444,8 @@ class Reconstruction(UIGraph):
         Update internal views and poses based on the current SfM node.
         """
         if not self._sfm:
-            self._views = []
-            self._poses = []
+            self._views = dict()
+            self._poses = dict()
         else:
             self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
         self.sfmReportChanged.emit()
@@ -492,8 +492,9 @@ class Reconstruction(UIGraph):
 
     @Slot(QObject, result=bool)
     def isReconstructed(self, viewpoint):
-        # keys are strings (faster lookup)
-        return str(viewpoint.poseId.value) in self._poses
+        # fetch up-to-date poseId from sfm result (in case of rigs, poseId might have changed)
+        view = self._views.get(str(viewpoint.poseId.value), None)  # keys are strings (faster lookup)
+        return view.get('poseId', -1) in self._poses if view else False
 
     @Slot(QObject, result=bool)
     def hasValidIntrinsic(self, viewpoint):
@@ -512,6 +513,11 @@ class Reconstruction(UIGraph):
         self._selectedViewId = viewId
         self.selectedViewIdChanged.emit()
 
+    def reconstructedCamerasCount(self):
+        """ Get the number of reconstructed cameras in the current context. """
+        return len([v for v in self.getViewpoints() if self.isReconstructed(v)])
+
+
     selectedViewIdChanged = Signal()
     selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)
 
@@ -522,7 +528,7 @@ class Reconstruction(UIGraph):
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(Node, Node)
 
-    nbCameras = Property(int, lambda self: len(self._poses), notify=sfmReportChanged)
+    nbCameras = Property(int, reconstructedCamerasCount, notify=sfmReportChanged)
 
     # Signals to propagate high-level messages
     error = Signal(Message)

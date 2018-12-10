@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 import json
 import os
@@ -160,6 +160,13 @@ class StructureFromMotion(desc.CommandLineNode):
                         'Matches folders previously added to the SfMData file will be ignored.',
             value=False,
             uid=[],
+        ),
+        desc.BoolParam(
+            name='useRigsCalibration',
+            label='Use Rigs Calibration',
+            description='Enable/Disable rigs calibration.',
+            value=True,
+            uid=[0],
         ),
         desc.File(
             name='initialPairA',

@@ -194,10 +194,8 @@ Entity {
                 if(attribute) {
                     model.source = rawSource;
                 }
-                // auto-restore entity if raw source is in cache ...
+                // auto-restore entity if raw source is in cache
                 model.requested = forceRequest || (!model.valid && model.requested) || cache.contains(rawSource);
-                // ... and update media visibility (useful if media was hidden but loaded back from cache)
-                model.visible = model.requested;
                 model.valid = Filepath.exists(rawSource) && dependencyReady;
             }
 
@@ -211,9 +209,13 @@ Entity {
                     remove(index)
             }
 
-            onCurrentSourceChanged: updateModelAndCache()
+            onCurrentSourceChanged: updateModelAndCache(false)
 
             onFinalSourceChanged: {
+                // update media visibility
+                // (useful if media was explicitly unloaded or hidden but loaded back from cache)
+                model.visible = model.requested;
+
                 var cachedObject = cache.pop(rawSource);
                 cached = cachedObject !== undefined;
                 if(cached) {

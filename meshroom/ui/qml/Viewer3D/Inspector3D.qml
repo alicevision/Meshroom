@@ -193,7 +193,7 @@ FloatingPane {
                         Layout.alignment: Qt.AlignTop
                         text: model.visible ? MaterialIcons.visibility : MaterialIcons.visibility_off
                         font.pointSize: 10
-                        ToolTip.text: model.visible ? "Hide" : "Show"
+                        ToolTip.text: model.visible ? "Hide" : model.requested ? "Show" : model.valid ? "Load and Show" : "Load and Show when Available"
                         flat: true
                         opacity: model.visible ? 1.0 : 0.6
                         onClicked: {
@@ -272,6 +272,7 @@ FloatingPane {
                             id: mouseArea
                             anchors.fill: centralLayout
                             hoverEnabled: true
+                            acceptedButtons: Qt.AllButtons
                             onEntered: { if(model.attribute) uigraph.hoveredNode = model.attribute.node }
                             onExited: { if(model.attribute) uigraph.hoveredNode = null }
                             onClicked: {
@@ -279,11 +280,34 @@ FloatingPane {
                                     uigraph.selectedNode = model.attribute.node;
                                 else
                                     uigraph.selectedNode = null;
+                                if(mouse.button == Qt.RightButton)
+                                    contextMenu.popup();
                                 mediaListView.currentIndex = index;
                             }
                             onDoubleClicked: {
                                 model.visible = true;
                                 camera.viewEntity(mediaLibrary.entityAt(index));
+                            }
+                        }
+
+                        Menu {
+                            id: contextMenu
+                            MenuItem {
+                                text: "Open Containing Folder"
+                                enabled: model.valid
+                                onTriggered: Qt.openUrlExternally(Filepath.dirname(model.source))
+                            }
+                            MenuItem {
+                                text: "Copy Path"
+                                // hidden TextEdit to copy to clipboard
+                                TextEdit { id: fullpath; visible: false; text: Filepath.normpath(model.source) }
+                                onTriggered: { fullpath.selectAll(); fullpath.copy(); }
+                            }
+                            MenuSeparator {}
+                            MenuItem {
+                                text: model.requested ? "Unload Media" : "Load Media"
+                                enabled: model.valid
+                                onTriggered: model.requested = !model.requested
                             }
                         }
                     }

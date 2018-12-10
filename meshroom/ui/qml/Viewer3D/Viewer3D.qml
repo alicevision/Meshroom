@@ -12,6 +12,7 @@ import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
 import MaterialIcons 2.2
 
 import Controls 1.0
+import Utils 1.0
 
 
 FocusScope {
@@ -103,6 +104,11 @@ FocusScope {
             TrackballGizmo {
                 beamRadius: 4.0/root.height
                 alpha: cameraController.moving ? 1.0 : 0.7
+                enabled: Viewer3DSettings.displayGizmo
+                xColor: Colors.red
+                yColor: Colors.green
+                zColor: Colors.blue
+                centerColor: Colors.sysPalette.highlight
                 transform: Transform {
                     translation: mainCamera.viewCenter
                     scale: 0.15 * mainCamera.viewCenter.minus(mainCamera.position).length()

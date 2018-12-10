@@ -10,9 +10,10 @@ Entity {
     property real beamLength: 1
     property int slices: 10
     property int rings: 50
-    property color colorX: "#F44336"
-    property color colorY: "#8BC34A"
-    property color colorZ: "#03A9F4"
+    property color centerColor: "white"
+    property color xColor: "red"
+    property color yColor: "green"
+    property color zColor: "blue"
     property real alpha: 1.0
     property Transform transform: Transform {}
 
@@ -22,8 +23,6 @@ Entity {
         PropertyAnimation { duration: 100 }
     }
 
-    SystemPalette { id: sysPalette }
-
     // Gizmo center
     Entity {
         components: [
@@ -31,8 +30,8 @@ Entity {
             PhongMaterial {
                 ambient: "#FFF"
                 shininess: 0.2
-                diffuse: sysPalette.highlight
-                specular: sysPalette.highlight
+                diffuse: centerColor
+                specular: centerColor
             }
         ]
     }
@@ -51,9 +50,9 @@ Entity {
                 DiffuseSpecularMaterial {
                     ambient: {
                         switch(index) {
-                            case 0: return colorX;
-                            case 1: return colorY;
-                            case 2: return colorZ;
+                            case 0: return xColor;
+                            case 1: return yColor;
+                            case 2: return zColor;
                         }
                     }
                     shininess: 0

@@ -5,6 +5,8 @@ import Qt3D.Input 2.1
 import Qt3D.Logic 2.0
 import QtQml 2.2
 
+import Meshroom.Helpers 1.0
+
 Entity {
     id: root
 
@@ -15,9 +17,9 @@ Entity {
     property bool moving: pressed || (actionAlt.active && keyboardHandler._pressed)
     property alias focus: keyboardHandler.focus
     readonly property bool pickingActive: actionControl.active && keyboardHandler._pressed
-    property real rotationSpeed: 2.0
-    property size windowSize
-    property real trackballSize: 1.0
+    property alias rotationSpeed: trackball.rotationSpeed
+    property alias windowSize: trackball.windowSize
+    property alias trackballSize: trackball.trackballSize
 
     readonly property alias pressed: mouseHandler._pressed
     signal mousePressed(var mouse)
@@ -28,6 +30,11 @@ Entity {
 
     KeyboardDevice { id: keyboardSourceDevice }
     MouseDevice { id: mouseSourceDevice }
+
+    TrackballController {
+        id: trackball
+        camera: root.camera
+    }
 
     MouseHandler {
         id: mouseHandler
@@ -148,36 +155,6 @@ Entity {
         ]
     }
 
-    // Based on the C++ version from https://github.com/cjmdaixi/Qt3DTrackball
-    function projectToTrackball(screenCoords)
-    {
-        var sx = screenCoords.x, sy = windowSize.height - screenCoords.y;
-        var p2d = Qt.vector2d(sx / windowSize.width - 0.5, sy / windowSize.height - 0.5);
-        var z = 0.0;
-        var r2 = trackballSize * trackballSize;
-        var lengthSquared = p2d.length() * p2d.length();
-        if(lengthSquared <= r2 * 0.5)
-            z = Math.sqrt(r2 - lengthSquared);
-        else
-            z = r2 * 0.5 / p2d.length();
-        return Qt.vector3d(p2d.x, p2d.y, z);
-    }
-
-    function clamp(x)
-    {
-        return Math.max(-1, Math.min(x, 1));
-    }
-
-    function createRotation(firstPoint, nextPoint)
-    {
-        var lastPos3D = projectToTrackball(firstPoint).normalized();
-        var currentPos3D = projectToTrackball(nextPoint).normalized();
-        var obj = {};
-        obj.angle = Math.acos(clamp(currentPos3D.dotProduct(lastPos3D)));
-        obj.dir = currentPos3D.crossProduct(lastPos3D);
-        return obj;
-    }
-
     components: [
         FrameAction {
             onTriggered: {
@@ -189,12 +166,7 @@ Entity {
                     return;
                 }
                 if(actionLMB.active){ // trackball rotation
-                    var res = createRotation(mouseHandler.lastPosition, mouseHandler.currentPosition);
-                    var transform = root.camera.components[1]; // transform is camera first component
-                    var currentRotation = transform.rotation;
-                    var rotatedAxis = Scene3DHelper.rotatedVector(transform.rotation, res.dir);
-                    res.angle *= rotationSpeed * dt;
-                    root.camera.rotateAboutViewCenter(transform.fromAxisAndAngle(rotatedAxis, res.angle * Math.PI * 180));
+                    trackball.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition, dt);
                     mouseHandler.lastPosition = mouseHandler.currentPosition;
                     return;
                 }

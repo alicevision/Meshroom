@@ -41,6 +41,7 @@ class DepthMap(desc.CommandLineNode):
             value=2.0,
             range=(0.0, 10.0, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='maxViewAngle',
@@ -49,6 +50,7 @@ class DepthMap(desc.CommandLineNode):
             value=70.0,
             range=(10.0, 120.0, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='sgmMaxTCams',
@@ -65,6 +67,7 @@ class DepthMap(desc.CommandLineNode):
             value=4,
             range=(1, 20, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='sgmGammaC',
@@ -73,6 +76,7 @@ class DepthMap(desc.CommandLineNode):
             value=5.5,
             range=(0.0, 30.0, 0.5),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='sgmGammaP',
@@ -81,6 +85,7 @@ class DepthMap(desc.CommandLineNode):
             value=8.0,
             range=(0.0, 30.0, 0.5),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='refineNSamplesHalf',
@@ -89,6 +94,7 @@ class DepthMap(desc.CommandLineNode):
             value=150,
             range=(1, 500, 10),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='refineNDepthsToRefine',
@@ -97,6 +103,7 @@ class DepthMap(desc.CommandLineNode):
             value=31,
             range=(1, 100, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='refineNiters',
@@ -105,14 +112,7 @@ class DepthMap(desc.CommandLineNode):
             value=100,
             range=(1, 500, 10),
             uid=[0],
-        ),
-        desc.IntParam(
-            name='refineWSH',
-            label='Refine: WSH',
-            description='Refine: Half-size of the patch used to compute the similarity.',
-            value=3,
-            range=(1, 20, 1),
-            uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='refineMaxTCams',
@@ -122,6 +122,15 @@ class DepthMap(desc.CommandLineNode):
             range=(1, 20, 1),
             uid=[0],
         ),
+        desc.IntParam(
+            name='refineWSH',
+            label='Refine: WSH',
+            description='Refine: Half-size of the patch used to compute the similarity.',
+            value=3,
+            range=(1, 20, 1),
+            uid=[0],
+            advanced=True,
+        ),
         desc.FloatParam(
             name='refineSigma',
             label='Refine: Sigma',
@@ -129,6 +138,7 @@ class DepthMap(desc.CommandLineNode):
             value=15,
             range=(0.0, 30.0, 0.5),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='refineGammaC',
@@ -137,6 +147,7 @@ class DepthMap(desc.CommandLineNode):
             value=15.5,
             range=(0.0, 30.0, 0.5),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='refineGammaP',
@@ -145,6 +156,7 @@ class DepthMap(desc.CommandLineNode):
             value=8.0,
             range=(0.0, 30.0, 0.5),
             uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='refineUseTcOrRcPixSize',
@@ -152,6 +164,7 @@ class DepthMap(desc.CommandLineNode):
             description='Refine: Use minimum pixel size of neighbour cameras (Tc) or current camera pixel size (Rc)',
             value=False,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

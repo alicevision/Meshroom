@@ -240,7 +240,6 @@ FocusScope {
             Layout.minimumWidth: 5
 
             camera: mainCamera
-            targetTransform: transform
             mediaLibrary: mediaLibrary
         }
     }

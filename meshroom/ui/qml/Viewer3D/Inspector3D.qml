@@ -14,8 +14,6 @@ FloatingPane {
     implicitWidth: 200
 
     property int renderMode: 2
-    property Transform targetTransform
-    property Locator3D origin: null
     property Grid3D grid: null
     property MediaLibrary mediaLibrary
     property Camera camera
@@ -38,31 +36,12 @@ FloatingPane {
 
             GridLayout {
                 width: parent.width
-                columns: 3
+                columns: 2
                 columnSpacing: 6
                 rowSpacing: 3
 
-                // Rotation Controls
-                Label {
-                    font.family: MaterialIcons.fontFamily
-                    text: MaterialIcons.rotation3D
-                    font.pointSize: 14
-                    Layout.rowSpan: 3
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-                Slider { Layout.fillWidth: true; from: -180; to: 180; onPositionChanged: targetTransform.rotationX = value}
-                Label { text: "X" }
-
-                Slider { Layout.fillWidth: true;  from: -180; to: 180; onPositionChanged: targetTransform.rotationY = value}
-                Label { text: "Y" }
-
-                Slider { Layout.fillWidth: true;  from: -180; to: 180; onPositionChanged: targetTransform.rotationZ = value }
-                Label { text: "Z" }
-
                 Label { text: "Points"; padding: 2 }
                 RowLayout {
-                    Layout.columnSpan: 2
                     Slider {
                         Layout.fillWidth: true; from: 0.1; to: 10; stepSize: 0.1
                         value: Viewer3DSettings.pointSize
@@ -80,7 +59,6 @@ FloatingPane {
                 }
                 Label { text: "Cameras"; padding: 2 }
                 Slider {
-                    Layout.columnSpan: 2
                     value: Viewer3DSettings.cameraScale
                     from: 0
                     to: 2
@@ -90,7 +68,7 @@ FloatingPane {
                     onMoved: Viewer3DSettings.cameraScale = value
                 }
                 Flow {
-                    Layout.columnSpan: 3
+                    Layout.columnSpan: 2
                     Layout.fillWidth: true
                     spacing: 2
                     CheckBox {

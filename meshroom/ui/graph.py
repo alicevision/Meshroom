@@ -495,8 +495,8 @@ class UIGraph(QObject):
 
     selectedNodeChanged = Signal()
     # Currently selected node
-    selectedNode = makeProperty(QObject, "_selectedNode", selectedNodeChanged, clearNodeSelection)
+    selectedNode = makeProperty(QObject, "_selectedNode", selectedNodeChanged, resetOnDestroy=True)
 
     hoveredNodeChanged = Signal()
     # Currently hovered node
-    hoveredNode = makeProperty(QObject, "_hoveredNode", hoveredNodeChanged, clearNodeHover)
+    hoveredNode = makeProperty(QObject, "_hoveredNode", hoveredNodeChanged, resetOnDestroy=True)

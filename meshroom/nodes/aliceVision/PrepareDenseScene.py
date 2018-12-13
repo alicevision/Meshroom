@@ -17,6 +17,13 @@ class PrepareDenseScene(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+        desc.File(
+            name='imagesFolder',
+            label='Images Folder',
+            description='Use images from a specific folder. Filename should be the same or the image uid.',
+            value='',
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='outputFileType',
             label='Output File Type',

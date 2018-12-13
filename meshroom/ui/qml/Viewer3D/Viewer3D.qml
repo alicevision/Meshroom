@@ -214,6 +214,19 @@ FocusScope {
         }
     }
 
+    // Media loading overlay
+    // (Scene3D is frozen while a media is being loaded)
+    Rectangle {
+        anchors.fill: parent
+        visible: mediaLibrary.loading
+        color: Qt.darker(Colors.sysPalette.mid, 1.2)
+        opacity: 0.6
+        BusyIndicator {
+            anchors.centerIn: parent
+            running: parent.visible
+        }
+    }
+
     //  UI Overlay
     Controls1.SplitView {
         id: overlaySplitView

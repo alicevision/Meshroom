@@ -16,6 +16,15 @@ Entity {
     property bool pickingEnabled: false
     readonly property alias count: instantiator.count // number of instantiated media delegates
 
+    /// True while at least one media is being loaded
+    readonly property bool loading: {
+        for(var i=0; i<m.mediaModel.count; ++i) {
+            if(m.mediaModel.get(i).status === SceneLoader.Loading)
+                return true;
+        }
+        return false;
+    }
+
     signal pressed(var pick)
     signal loadRequest(var idx)
 

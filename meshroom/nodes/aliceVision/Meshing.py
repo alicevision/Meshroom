@@ -50,8 +50,8 @@ class Meshing(desc.CommandLineNode):
             name='estimateSpaceMinObservationAngle',
             label='Min Observations Angle For SfM Space Estimation',
             description='Minimum angle between two observations for SfM space estimation.',
-            value=0.2,
-            range=(0, 10, 0.1),
+            value=10,
+            range=(0, 120, 1),
             uid=[0],
         ),
         desc.IntParam(

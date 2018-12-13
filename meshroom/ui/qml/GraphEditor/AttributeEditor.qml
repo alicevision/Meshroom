@@ -47,6 +47,11 @@ ColumnLayout {
         Menu {
             id: settingsMenu
             MenuItem {
+                text: "Advanced Attributes"
+                checked: GraphEditorSettings.showAdvancedAttributes
+                onClicked: GraphEditorSettings.showAdvancedAttributes = !GraphEditorSettings.showAdvancedAttributes
+            }
+            MenuItem {
                 text: "Open Cache Folder"
                 onClicked: Qt.openUrlExternally(Filepath.stringToUrl(node.internalFolder))
                 ToolTip.text: node.internalFolder
@@ -87,21 +92,32 @@ ColumnLayout {
                 id: attributesListView
 
                 anchors.fill: parent
-                anchors.margins: 4
-
+                anchors.margins: 2
                 clip: true
-                spacing: 1
+                spacing: 2
                 ScrollBar.vertical: ScrollBar { id: scrollBar }
 
-                model: node ? node.attributes : undefined
+                model: SortFilterDelegateModel {
 
-                delegate: AttributeItemDelegate {
-                    readOnly: root.isCompatibilityNode
-                    labelWidth: 180
-                    width: attributesListView.width
-                    attribute: object
-                    onDoubleClicked: root.attributeDoubleClicked(attr)
+                    model: node ? node.attributes : null
+                    filterRole: GraphEditorSettings.showAdvancedAttributes ? "" : "advanced"
+                    filterValue: false
+                    function modelData(item, roleName) {
+                        return item.model.object.desc[roleName]
+                    }
+
+                    Component {
+                        id: delegateComponent
+                        AttributeItemDelegate {
+                            width: attributesListView.width - scrollBar.width
+                            readOnly: root.isCompatibilityNode
+                            labelWidth: 180
+                            attribute: object
+                            onDoubleClicked: root.attributeDoubleClicked(attr)
+                        }
+                    }
                 }
+
                 // Helper MouseArea to lose edit/activeFocus
                 // when clicking on the background
                 MouseArea {

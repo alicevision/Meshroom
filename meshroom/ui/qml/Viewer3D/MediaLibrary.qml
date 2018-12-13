@@ -231,6 +231,10 @@ Entity {
                         model[prop] = Qt.binding(function() { return object ? object[prop] : 0; });
                     })
                 }
+                else if(finalSource) {
+                    // source was valid but no loader was created, remove element
+                    remove(index);
+                }
             }
 
             onStatusChanged: {

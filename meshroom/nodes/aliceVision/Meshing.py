@@ -18,14 +18,14 @@ class Meshing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.File(
-            name="depthMapFolder",
+            name="depthMapsFolder",
             label='Depth Maps Folder',
             description='Input depth maps folder',
             value='',
             uid=[0],
         ),
         desc.File(
-            name="depthMapFilterFolder",
+            name="depthMapsFilterFolder",
             label='Filtered Depth Maps Folder',
             description='Input filtered depth maps folder',
             value='',

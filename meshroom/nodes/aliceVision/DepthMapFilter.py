@@ -19,9 +19,9 @@ class DepthMapFilter(desc.CommandLineNode):
             uid=[0],
         ),    
         desc.File(
-            name="depthMapFolder",
-            label="Depth Map Folder",
-            description="Input depth map folder",
+            name="depthMapsFolder",
+            label="Depth Maps Folder",
+            description="Input depth maps folder",
             value="",
             uid=[0],
         ),

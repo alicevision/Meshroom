@@ -41,14 +41,14 @@ class PrepareDenseScene(desc.CommandLineNode):
         desc.BoolParam(
             name='saveMetadata',
             label='Save Metadata',
-            description='Save projections and intrinsics informations in images metadata (only for .exr images).',
+            description='Save projections and intrinsics information in images metadata (only for .exr images).',
             value=True,
             uid=[0],
         ),
         desc.BoolParam(
             name='saveMatricesTxtFiles',
             label='Save Matrices Text Files',
-            description='Save projections and intrinsics informations in text files.',
+            description='Save projections and intrinsics information in text files.',
             value=False,
             uid=[0],
         ),

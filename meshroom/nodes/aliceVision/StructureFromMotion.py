@@ -162,9 +162,9 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[],
         ),
         desc.BoolParam(
-            name='useRigsCalibration',
-            label='Use Rigs Calibration',
-            description='Enable/Disable rigs calibration.',
+            name='useRigConstraint',
+            label='Use Rig Constraint',
+            description='Enable/Disable rig constraint.',
             value=True,
             uid=[0],
         ),

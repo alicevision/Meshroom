@@ -207,9 +207,8 @@ FocusScope {
                     doubleClickTimer.stop();
                 }
 
-                Locator3D { enabled: Viewer3DSettings.displayLocator }
             }
-
+            Locator3D { enabled: Viewer3DSettings.displayOrigin }
             Grid3D { enabled: Viewer3DSettings.displayGrid }
         }
     }

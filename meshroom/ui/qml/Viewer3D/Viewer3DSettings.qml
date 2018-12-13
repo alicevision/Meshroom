@@ -28,5 +28,5 @@ Item {
     // Helpers display
     property bool displayGrid: true
     property bool displayGizmo: true
-    property bool displayLocator: false
+    property bool displayOrigin: false
 }

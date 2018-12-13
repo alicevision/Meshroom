@@ -84,10 +84,10 @@ FloatingPane {
                         onClicked: Viewer3DSettings.displayGizmo = !Viewer3DSettings.displayGizmo
                     }
                     CheckBox {
-                        text: "Locator"
+                        text: "Origin"
                         padding: 2
-                        checked: Viewer3DSettings.displayLocator
-                        onClicked: Viewer3DSettings.displayLocator = !Viewer3DSettings.displayLocator
+                        checked: Viewer3DSettings.displayOrigin
+                        onClicked: Viewer3DSettings.displayOrigin = !Viewer3DSettings.displayOrigin
                     }
                 }
             }

@@ -18,13 +18,6 @@ class Meshing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.File(
-            name='imagesFolder',
-            label='Images Folder',
-            description='Use images from a specific folder. Filename should be the image uid.',
-            value='',
-            uid=[0],
-        ),
-        desc.File(
             name="depthMapFolder",
             label='Depth Maps Folder',
             description='Input depth maps folder',

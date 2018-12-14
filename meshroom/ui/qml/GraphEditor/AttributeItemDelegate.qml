@@ -20,81 +20,100 @@ RowLayout {
 
     signal doubleClicked(var attr)
 
-    spacing: 4
+    spacing: 2
 
-    Label {
-        id: parameterLabel
 
+    Pane {
+        background: Rectangle { color: Qt.darker(parent.palette.window, 1.1) }
+        padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
         Layout.fillHeight: true
-        horizontalAlignment: attribute.isOutput ? Qt.AlignRight : Qt.AlignLeft
-        elide: Label.ElideRight
-        padding: 5
-        wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
-        text: attribute.label
+        RowLayout {
+            spacing: 0
+            width: parent.width
+            height: parent.height
+            Label {
+                id: parameterLabel
 
-        // Tooltip hint with attribute's description
-        ToolTip.text: object.desc.description
-        ToolTip.visible: parameterMA.containsMouse && object.desc.description
-        ToolTip.delay: 800
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                horizontalAlignment: attribute.isOutput ? Qt.AlignRight : Qt.AlignLeft
+                elide: Label.ElideRight
+                padding: 5
+                wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
-        // make label bold if attribute's value is not the default one
-        font.bold: !object.isOutput && !object.isDefault
+                text: attribute.label
 
-        // make label italic if attribute is a link
-        font.italic: object.isLink
+                // Tooltip hint with attribute's description
+                ToolTip.text: object.desc.description
+                ToolTip.visible: parameterMA.containsMouse && object.desc.description
+                ToolTip.delay: 800
 
-        background: Rectangle { color: Qt.darker(parent.palette.window, 1.2) }
+                // make label bold if attribute's value is not the default one
+                font.bold: !object.isOutput && !object.isDefault
 
-        MouseArea {
-            id: parameterMA
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.AllButtons
-            onDoubleClicked: root.doubleClicked(root.attribute)
+                // make label italic if attribute is a link
+                font.italic: object.isLink
 
-            property Component menuComp: Menu {
-                id: paramMenu
 
-                property bool isFileAttribute: attribute.type == "File"
-                property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.value)
+                MouseArea {
+                    id: parameterMA
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.AllButtons
+                    onDoubleClicked: root.doubleClicked(root.attribute)
 
-                MenuItem {
-                    text: "Reset To Default Value"
-                    enabled: root.editable && !attribute.isDefault
-                    onTriggered: _reconstruction.resetAttribute(attribute)
-                }
+                    property Component menuComp: Menu {
+                        id: paramMenu
 
-                MenuSeparator {
-                    visible: paramMenu.isFileAttribute
-                    height: visible ? implicitHeight : 0
-                }
+                        property bool isFileAttribute: attribute.type == "File"
+                        property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.value)
 
-                MenuItem {
-                    visible: paramMenu.isFileAttribute
-                    height: visible ? implicitHeight : 0
-                    text: paramMenu.isFilepath ? "Open Containing Folder" : "Open Folder"
-                    onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(attribute.value)) :
-                                                      Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
-                }
+                        MenuItem {
+                            text: "Reset To Default Value"
+                            enabled: root.editable && !attribute.isDefault
+                            onTriggered: _reconstruction.resetAttribute(attribute)
+                        }
 
-                MenuItem {
-                    visible: paramMenu.isFilepath
-                    height: visible ? implicitHeight : 0
-                    text: "Open File"
-                    onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                        MenuSeparator {
+                            visible: paramMenu.isFileAttribute
+                            height: visible ? implicitHeight : 0
+                        }
+
+                        MenuItem {
+                            visible: paramMenu.isFileAttribute
+                            height: visible ? implicitHeight : 0
+                            text: paramMenu.isFilepath ? "Open Containing Folder" : "Open Folder"
+                            onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(attribute.value)) :
+                                                              Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                        }
+
+                        MenuItem {
+                            visible: paramMenu.isFilepath
+                            height: visible ? implicitHeight : 0
+                            text: "Open File"
+                            onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                        }
+                    }
+
+                    onClicked: {
+                        forceActiveFocus()
+                        if(mouse.button == Qt.RightButton)
+                        {
+                            var menu = menuComp.createObject(parameterLabel)
+                            menu.parent = parameterLabel
+                            menu.popup()
+                        }
+                    }
                 }
             }
-
-            onClicked: {
-                forceActiveFocus()
-                if(mouse.button == Qt.RightButton)
-                {
-                    var menu = menuComp.createObject(parameterLabel)
-                    menu.parent = parameterLabel
-                    menu.popup()
-                }
+            MaterialLabel {
+                visible: attribute.desc.advanced
+                text: MaterialIcons.build
+                color: palette.mid
+                font.pointSize: 8
+                padding: 4
             }
         }
     }

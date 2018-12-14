@@ -348,37 +348,17 @@ RowLayout {
 
         Component {
             id: groupAttribute_component
-            ListView {
-                id: chilrenListView
-                implicitWidth: parent.width
-                implicitHeight: childrenRect.height
-                onCountChanged: forceLayout()
-                spacing: 2
-                model: SortFilterDelegateModel {
-                    model: attribute.value
-                    filterRole: GraphEditorSettings.showAdvancedAttributes ? "" : "advanced"
-                    filterValue: false
-
-                    function modelData(item, roleName) {
-                        return item.model.object.desc[roleName]
-                    }
-
-                    delegate: RowLayout {
-                        id: row
-                        width: chilrenListView.width
-                        property var childAttrib: object
-
-                        Component.onCompleted:  {
-                            var cpt = Qt.createComponent("AttributeItemDelegate.qml")
-                            var obj = cpt.createObject(row,
-                                                       {'attribute': Qt.binding(function() { return row.childAttrib }),
-                                                        'readOnly': Qt.binding(function() { return root.readOnly })
-                                                       })
-                            obj.Layout.fillWidth = true
-                            obj.labelWidth = 100 // reduce label width for children (space gain)
-                            obj.doubleClicked.connect(function(attr) {root.doubleClicked(attr)})
-                        }
-                    }
+            ColumnLayout {
+                id: groupItem
+                Component.onCompleted:  {
+                    var cpt = Qt.createComponent("AttributeEditor.qml");
+                    var obj = cpt.createObject(groupItem,
+                                               {'attributes': Qt.binding(function() { return attribute.value }),
+                                                'readOnly': Qt.binding(function() { return root.readOnly }),
+                                                'labelWidth': 100, // reduce label width for children (space gain)
+                                               })
+                    obj.Layout.fillWidth = true;
+                    obj.attributeDoubleClicked.connect(function(attr) {root.doubleClicked(attr)})
                 }
             }
         }

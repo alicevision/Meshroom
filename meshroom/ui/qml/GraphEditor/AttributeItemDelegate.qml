@@ -184,13 +184,14 @@ RowLayout {
         Component {
             id: comboBox_component
             ComboBox {
+                id: combo
                 enabled: root.editable
                 model: attribute.desc.values
                 Component.onCompleted: currentIndex = find(attribute.value)
                 onActivated: _reconstruction.setAttribute(attribute, currentText)
                 Connections {
                     target: attribute
-                    onValueChanged: currentIndex = find(attribute.value)
+                    onValueChanged: combo.currentIndex = combo.find(attribute.value)
                 }
             }
         }
@@ -225,8 +226,10 @@ RowLayout {
                     }
                     DoubleValidator {
                         id: doubleValidator
+                        locale: 'C'  // use '.' decimal separator disregarding the system locale
                     }
-                    implicitWidth: 70
+                    implicitWidth: 100
+                    Layout.fillWidth: !slider.active
                     enabled: root.editable
                     // cast value to string to avoid intrusive scientific notations on numbers
                     property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : attribute.value)
@@ -306,7 +309,7 @@ RowLayout {
                     id: lv
                     model: listAttribute_layout.expanded ? attribute.value : undefined
                     visible: model != undefined && count > 0
-                    implicitHeight: Math.min(childrenRect.height, 300)
+                    implicitHeight: Math.min(contentHeight, 300)
                     Layout.fillWidth: true
                     Layout.margins: 4
                     clip: true

@@ -19,9 +19,9 @@ class DepthMapFilter(desc.CommandLineNode):
             uid=[0],
         ),    
         desc.File(
-            name="depthMapFolder",
-            label="Depth Map Folder",
-            description="Input depth map folder",
+            name="depthMapsFolder",
+            label="Depth Maps Folder",
+            description="Input depth maps folder",
             value="",
             uid=[0],
         ),
@@ -50,7 +50,7 @@ class DepthMapFilter(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
-            name="minNumOfConsistensCams",
+            name="minNumOfConsistentCams",
             label="Min Consistent Cameras",
             description="Min Number of Consistent Cameras",
             value=3,
@@ -58,7 +58,7 @@ class DepthMapFilter(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
-            name="minNumOfConsistensCamsWithLowSimilarity",
+            name="minNumOfConsistentCamsWithLowSimilarity",
             label="Min Consistent Cameras Bad Similarity",
             description="Min Number of Consistent Cameras for pixels with weak similarity value",
             value=4,

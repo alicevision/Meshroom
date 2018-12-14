@@ -17,6 +17,18 @@ class PrepareDenseScene(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="imagesFolder",
+                label="Images Folder",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="imagesFolders",
+            label="Images Folders",
+            description='Use images from specific folder(s). Filename should be the same or the image uid.',
+        ),
         desc.ChoiceParam(
             name='outputFileType',
             label='Output File Type',
@@ -29,14 +41,14 @@ class PrepareDenseScene(desc.CommandLineNode):
         desc.BoolParam(
             name='saveMetadata',
             label='Save Metadata',
-            description='Save projections and intrinsics informations in images metadata (only for .exr images).',
+            description='Save projections and intrinsics information in images metadata (only for .exr images).',
             value=True,
             uid=[0],
         ),
         desc.BoolParam(
             name='saveMatricesTxtFiles',
             label='Save Matrices Text Files',
-            description='Save projections and intrinsics informations in text files.',
+            description='Save projections and intrinsics information in text files.',
             value=False,
             uid=[0],
         ),

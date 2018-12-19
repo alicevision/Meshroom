@@ -168,6 +168,16 @@ class StructureFromMotion(desc.CommandLineNode):
             value=True,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='refineIntrinsics',
+            label='Refine intrinsic parameters.',
+            description='The intrinsics parameters of the cameras (focal length, \n'
+                        'principal point, distortion if any) are kept constant '
+                        'during the reconstruction.\n'
+                        'This may be helpful if the input cameras are already fully calibrated.',
+            value=True,
+            uid=[0],
+        ),
         desc.File(
             name='initialPairA',
             label='Initial Pair A',

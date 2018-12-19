@@ -20,7 +20,7 @@ class SfMTransform(desc.CommandLineNode):
             label='Transformation Method',
             description='''Transformation method (transformation, auto_from_cameras, auto_from_landmarks).''',
             value='auto_from_landmarks',
-            values=['transformation', 'auto_from_cameras', 'auto_from_landmarks'],
+            values=['transformation', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera'],
             exclusive=True,
             uid=[0],
         ),

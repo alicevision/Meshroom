@@ -5,7 +5,8 @@ from meshroom.core import desc
 
 class ConvertSfMFormat(desc.CommandLineNode):
     commandLine = 'aliceVision_convertSfMFormat {allParams}'
-
+    size = desc.DynamicNodeSize('input')
+    
     inputs = [
         desc.File(
             name='input',
@@ -33,6 +34,18 @@ class ConvertSfMFormat(desc.CommandLineNode):
             exclusive=False,
             uid=[0],
             joinChar=',',
+        ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="imageId",
+                label="Image id",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="imageWhiteList",
+            label="Image White List",
+            description='image white list (uids or image paths).',
         ),
         desc.BoolParam(
             name='views',

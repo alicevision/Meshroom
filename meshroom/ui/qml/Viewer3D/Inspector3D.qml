@@ -43,7 +43,7 @@ FloatingPane {
                 Label { text: "Points"; padding: 2 }
                 RowLayout {
                     Slider {
-                        Layout.fillWidth: true; from: 0.1; to: 10; stepSize: 0.1
+                        Layout.fillWidth: true; from: 0; to: 10; stepSize: 0.1
                         value: Viewer3DSettings.pointSize
                         onValueChanged: Viewer3DSettings.pointSize = value
                     }

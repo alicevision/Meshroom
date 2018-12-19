@@ -93,8 +93,12 @@ import Utils 1.0
                     if(obj.status === SceneLoader.Ready) {
                         for(var i = 0; i < obj.pointClouds.length; ++i) {
                             vertexCount += Scene3DHelper.vertexCount(obj.pointClouds[i]);
+                            obj.pointClouds[i].enabled = Qt.binding(function() { return Viewer3DSettings.pointSize > 0; });
                         }
                         cameraCount = obj.spawnCameraSelectors();
+                        for(var i = 0; i < obj.cameras.length; ++i) {
+                            obj.cameras[i].enabled = Qt.binding(function() { return Viewer3DSettings.cameraScale > 0; });
+                        }
                     }
                     root.status = obj.status;
                 })

@@ -33,7 +33,14 @@ parser.add_argument('--forceStatus', help='Force computation if status is RUNNIN
 parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
                     action='store_true')
 
+parser.add_argument('--graph', metavar='FOLDER', type=str, required=False,
+                    help='Input configured graph to run.')
+
 args = parser.parse_args()
+
+if args.graph and not args.output:
+    print('--graph needs --output to be set.')
+    exit(1)
 
 if not args.output and not args.save:
     print('Nothing to do. You need to set --output or --save.')
@@ -43,7 +50,22 @@ if not args.input and not args.inputImages:
     print('Nothing to compute. You need to set --input or --inputImages.')
     exit(1)
 
-graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
+if args.graph:
+    graph = meshroom.core.graph.Graph("")
+    graph.load(args.graph)
+    cameraInit = graph.findNode('CameraInit')
+    cameraInit.viewpoints.resetValue()
+    if args.input:
+        images = multiview.findFiles(args.input, ['*.jpg', '*.png', '*.CR2'])
+        cameraInit.viewpoints.extend([{'path': image} for image in images])
+    if args.inputImages:
+        cameraInit.viewpoints.extend([{'path': image} for image in args.inputImages])
+    publish = graph.findNode('Publish')
+    publish.output.value = args.output
+
+else:
+    graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
+
 graph.findNode('DepthMap_1').downscale.value = args.scale
 
 if args.save:

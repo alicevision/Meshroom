@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 import argparse
+import json
+import os
+import io
 
 import meshroom
 meshroom.setupEnvironment()
@@ -43,8 +46,34 @@ if not args.input and not args.inputImages:
     print('Nothing to compute. You need to set --input or --inputImages.')
     exit(1)
 
-graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
-graph.findNode('DepthMap_1').downscale.value = args.scale
+if  args.input and os.path.isfile(args.input):
+    # with open(args.input) as jsonFile:
+    with io.open(args.input, 'r', encoding='utf-8', errors='ignore') as jsonFile:
+        fileData = json.load(jsonFile)
+        intrinsics = fileData.get("intrinsics", [])
+        print(intrinsics)
+        intrinsics = [{k: v for k, v in item.items()} for item in fileData.get("intrinsics", [])]
+        for intrinsic in intrinsics:
+            pp = intrinsic['principalPoint']
+            intrinsic['principalPoint'] = {}
+            intrinsic['principalPoint']['x'] = pp[0]
+            intrinsic['principalPoint']['y'] = pp[1]
+            # convert empty string distortionParams (i.e: Pinhole model) to empty list
+            if intrinsic['distortionParams'] == '':
+                intrinsic['distortionParams'] = list()
+        print(intrinsics)
+
+        # views = fileData.get("views", [])
+        views = [{k: v for k, v in item.items()} for item in fileData.get("views", [])]
+        for view in views:
+            view['metadata'] = json.dumps(view['metadata'])  # convert metadata to string
+        # print(views)
+
+        graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, inputImages=args.inputImages, output=args.output)
+        graph.findNode('DepthMap_1').downscale.value = args.scale
+else:
+    graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
+    graph.findNode('DepthMap_1').downscale.value = args.scale
 
 if args.save:
     graph.save(args.save)
@@ -62,4 +91,3 @@ if args.toNode:
     toNodes = graph.findNodes(args.toNode)
 
 meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
-

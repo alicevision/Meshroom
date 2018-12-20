@@ -1,4 +1,5 @@
 module Controls
 
 FloatingPane 1.0 FloatingPane.qml
+Group 1.0 Group.qml
 MessageDialog 1.0 MessageDialog.qml

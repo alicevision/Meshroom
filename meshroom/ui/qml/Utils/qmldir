@@ -1,6 +1,9 @@
 module Utils
 
+singleton Colors 1.0 Colors.qml
 SortFilterDelegateModel 1.0 SortFilterDelegateModel.qml
 Request 1.0 request.js
+Format 1.0 format.js
 # causes random crash at application exit
 # singleton Filepath 1.0 Filepath.qml
+# singleton Scene3DHelper 1.0 Scene3DHelper.qml

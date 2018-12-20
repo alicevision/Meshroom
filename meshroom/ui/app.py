@@ -9,6 +9,7 @@ import meshroom
 from meshroom.core import nodesDesc
 from meshroom.ui import components
 from meshroom.ui.components.filepath import FilepathHelper
+from meshroom.ui.components.scene3D import Scene3DHelper
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
@@ -51,6 +52,8 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("_PaletteManager", pm)
         fpHelper = FilepathHelper(parent=self)
         self.engine.rootContext().setContextProperty("Filepath", fpHelper)
+        scene3DHelper = Scene3DHelper(parent=self)
+        self.engine.rootContext().setContextProperty("Scene3DHelper", scene3DHelper)
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
         # Request any potential computation to stop on exit
         self.aboutToQuit.connect(r.stopExecution)

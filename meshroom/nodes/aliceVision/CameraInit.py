@@ -10,19 +10,19 @@ from meshroom.core import desc
 
 
 Viewpoint = [
-    desc.IntParam(name="viewId", label="Id", description="Image UID", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.IntParam(name="poseId", label="Pose Id", description="Pose Id", value=-1, uid=[0], range=(0, 200, 1)),
+    desc.IntParam(name="viewId", label="Id", description="Image UID", value=-1, uid=[0], range=None),
+    desc.IntParam(name="poseId", label="Pose Id", description="Pose Id", value=-1, uid=[0], range=None),
     desc.File(name="path", label="Image Path", description="Image Filepath", value="", uid=[0]),
-    desc.IntParam(name="intrinsicId", label="Intrinsic", description="Internal Camera Parameters", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.IntParam(name="rigId", label="Rig", description="Rig Parameters", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.IntParam(name="subPoseId", label="Rig Sub-Pose", description="Rig Sub-Pose Parameters", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.StringParam(name="metadata", label="Image Metadata", description="", value="", uid=[]),
+    desc.IntParam(name="intrinsicId", label="Intrinsic", description="Internal Camera Parameters", value=-1, uid=[0], range=None),
+    desc.IntParam(name="rigId", label="Rig", description="Rig Parameters", value=-1, uid=[0], range=None),
+    desc.IntParam(name="subPoseId", label="Rig Sub-Pose", description="Rig Sub-Pose Parameters", value=-1, uid=[0], range=None),
+    desc.StringParam(name="metadata", label="Image Metadata", description="", value="", uid=[], advanced=True),
 ]
 
 Intrinsic = [
-    desc.IntParam(name="intrinsicId", label="Id", description="Intrinsic UID", value=-1, uid=[0], range=(0, 200, 1)),
-    desc.FloatParam(name="pxInitialFocalLength", label="Initial Focal Length", description="Initial Guess on the Focal Length", value=-1.0, uid=[0], range=(0.0, 200.0, 1.0)),
-    desc.FloatParam(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length", value=-1.0, uid=[0], range=(0.0, 200.0, 1.0)),
+    desc.IntParam(name="intrinsicId", label="Id", description="Intrinsic UID", value=-1, uid=[0], range=None),
+    desc.FloatParam(name="pxInitialFocalLength", label="Initial Focal Length", description="Initial Guess on the Focal Length", value=-1.0, uid=[0], range=None),
+    desc.FloatParam(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length", value=-1.0, uid=[0], range=None),
     desc.ChoiceParam(name="type", label="Camera Type", description="Camera Type", value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4'], exclusive=True, uid=[0]),
     # desc.StringParam(name="deviceMake", label="Make", description="Camera Make", value="", uid=[]),
     # desc.StringParam(name="deviceModel", label="Model", description="Camera Model", value="", uid=[]),

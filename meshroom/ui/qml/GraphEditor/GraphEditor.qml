@@ -264,6 +264,8 @@ Item {
                 MenuItem {
                     text: "Submit"
                     enabled: !root.readOnly && nodeMenu.canComputeNode
+                    visible: uigraph.canSubmit
+                    height: visible ? implicitHeight : 0
                     onTriggered: uigraph.submit(nodeMenu.currentNode)
                 }
                 MenuItem {

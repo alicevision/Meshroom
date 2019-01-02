@@ -46,8 +46,8 @@ RowLayout {
                 text: attribute.label
 
                 // Tooltip hint with attribute's description
-                ToolTip.text: object.desc.description
-                ToolTip.visible: parameterMA.containsMouse && object.desc.description
+                ToolTip.text: "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.desc.description)
+                ToolTip.visible: parameterMA.containsMouse
                 ToolTip.delay: 800
 
                 // make label bold if attribute's value is not the default one

@@ -2,6 +2,7 @@ import QtQuick 2.7
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 import Controls 1.0
+import Utils 1.0
 import MaterialIcons 2.2
 
 /**
@@ -274,7 +275,7 @@ Item {
                 }
                 MenuSeparator {}
                 MenuItem {
-                    text: "Duplicate"
+                    text: "Duplicate Node"
                     onTriggered: duplicateNode(nodeMenu.currentNode, false)
                 }
                 MenuItem {
@@ -283,14 +284,21 @@ Item {
                 }
                 MenuSeparator {}
                 MenuItem {
-                    text: "Clear Data"
-                    enabled: !root.readOnly
-                    onTriggered: nodeMenu.currentNode.clearData()
-                }
-                MenuItem {
                     text: "Delete Node"
                     enabled: !root.readOnly
                     onTriggered: uigraph.removeNode(nodeMenu.currentNode)
+                }
+                MenuItem {
+                    text: "Delete From Here"
+                    enabled: !root.readOnly
+                    onTriggered: uigraph.removeNodesFrom(nodeMenu.currentNode)
+                }
+                MenuSeparator {}
+                MenuItem {
+                    text: "Clear Data"
+                    palette.text: Colors.red
+                    enabled: !root.readOnly
+                    onTriggered: nodeMenu.currentNode.clearData()
                 }
             }
 
@@ -337,7 +345,12 @@ Item {
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null
 
-                    Keys.onDeletePressed: uigraph.removeNode(node)
+                    Keys.onDeletePressed: {
+                        if(event.modifiers == Qt.AltModifier)
+                            uigraph.removeNodesFrom(node)
+                        else
+                            uigraph.removeNode(node)
+                    }
 
                     Behavior on x {
                         enabled: animatePosition

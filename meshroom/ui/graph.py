@@ -390,6 +390,18 @@ class UIGraph(QObject):
     def removeNode(self, node):
         self.push(commands.RemoveNodeCommand(self._graph, node))
 
+    @Slot(Node)
+    def removeNodesFrom(self, startNode):
+        """
+        Remove all nodes starting from 'startNode' to graph leaves.
+        Args:
+            startNode (Node): the node to start from.
+        """
+        with self.groupedGraphModification("Remove Nodes from {}".format(startNode.name)):
+            # Perform nodes removal from leaves to start node so that edges
+            # can be re-created in correct order on redo.
+            [self.removeNode(node) for node in reversed(self._graph.nodesFromNode(startNode)[0])]
+
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):

@@ -1,4 +1,4 @@
-from meshroom.common import BaseObject, Property, Variant
+from meshroom.common import BaseObject, Property, Variant, VariantList
 from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import collections
@@ -129,7 +129,7 @@ class IntParam(Param):
         except:
             raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
-    range = Property(Variant, lambda self: self._range, constant=True)
+    range = Property(VariantList, lambda self: self._range, constant=True)
 
 
 class FloatParam(Param):
@@ -145,7 +145,7 @@ class FloatParam(Param):
         except:
             raise ValueError('FloatParam only supports float value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
-    range = Property(Variant, lambda self: self._range, constant=True)
+    range = Property(VariantList, lambda self: self._range, constant=True)
 
 
 class ChoiceParam(Param):
@@ -174,7 +174,7 @@ class ChoiceParam(Param):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
-    values = Property(Variant, lambda self: self._values, constant=True)
+    values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 

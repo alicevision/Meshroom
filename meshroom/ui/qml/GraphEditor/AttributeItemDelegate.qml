@@ -247,7 +247,7 @@ RowLayout {
                 Loader {
                     id: slider
                     Layout.fillWidth: true
-                    active: attribute.desc.range != undefined
+                    active: attribute.desc.range.length === 3
                     sourceComponent: Slider {
                         readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
                         readonly property real formattedValue: value.toFixed(stepDecimalCount)

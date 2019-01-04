@@ -275,23 +275,33 @@ Item {
                 }
                 MenuSeparator {}
                 MenuItem {
-                    text: "Duplicate Node"
+                    text: "Duplicate Node" + (duplicateFollowingButton.hovered ? "s From Here" : "")
                     onTriggered: duplicateNode(nodeMenu.currentNode, false)
+                    MaterialToolButton {
+                        id: duplicateFollowingButton
+                        height: parent.height
+                        anchors { right: parent.right; rightMargin: parent.padding }
+                        text: MaterialIcons.fast_forward
+                        onClicked: {
+                            duplicateNode(nodeMenu.currentNode, true);
+                            nodeMenu.close();
+                        }
+                    }
                 }
                 MenuItem {
-                    text: "Duplicate From Here"
-                    onTriggered: duplicateNode(nodeMenu.currentNode, true)
-                }
-                MenuSeparator {}
-                MenuItem {
-                    text: "Delete Node"
+                    text: "Remove Node" + (removeFollowingButton.hovered ? "s From Here" : "")
                     enabled: !root.readOnly
                     onTriggered: uigraph.removeNode(nodeMenu.currentNode)
-                }
-                MenuItem {
-                    text: "Delete From Here"
-                    enabled: !root.readOnly
-                    onTriggered: uigraph.removeNodesFrom(nodeMenu.currentNode)
+                    MaterialToolButton {
+                        id: removeFollowingButton
+                        height: parent.height
+                        anchors { right: parent.right; rightMargin: parent.padding }
+                        text: MaterialIcons.fast_forward
+                        onClicked: {
+                            uigraph.removeNodesFrom(nodeMenu.currentNode);
+                            nodeMenu.close();
+                        }
+                    }
                 }
                 MenuSeparator {}
                 MenuItem {

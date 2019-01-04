@@ -57,6 +57,8 @@ Item {
 
     /// Duplicate a node and optionnally all the following ones
     function duplicateNode(node, duplicateFollowingNodes) {
+        if(root.readOnly)
+            return;
         var nodes = uigraph.duplicateNode(node, duplicateFollowingNodes)
         selectNode(nodes[0])
     }
@@ -113,9 +115,13 @@ Item {
         onClicked: {
             if(mouse.button == Qt.RightButton)
             {
-                // store mouse click position in 'draggable' coordinates as new node spawn position
-                newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
-                newNodeMenu.popup()
+                if(readOnly)
+                    lockedMenu.popup();
+                else {
+                    // store mouse click position in 'draggable' coordinates as new node spawn position
+                    newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y);
+                    newNodeMenu.popup();
+                }
             }
         }
 
@@ -197,6 +203,17 @@ Item {
             }
         }
 
+        // Informative contextual menu when graph is read-only
+        Menu {
+            id: lockedMenu
+            MenuItem {
+                id: item
+                font.pointSize: 8
+                enabled: false
+                text: "Computing - Graph is Locked!"
+            }
+        }
+
         Item {
             id: draggable
             transformOrigin: Item.TopLeft
@@ -259,12 +276,12 @@ Item {
 
                 MenuItem {
                     text: "Compute"
-                    enabled: !root.readOnly && nodeMenu.canComputeNode
+                    enabled: !uigraph.computing && !root.readOnly && nodeMenu.canComputeNode
                     onTriggered: uigraph.execute(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Submit"
-                    enabled: !root.readOnly && nodeMenu.canComputeNode
+                    enabled: !uigraph.computing && !root.readOnly && nodeMenu.canComputeNode
                     visible: uigraph.canSubmit
                     height: visible ? implicitHeight : 0
                     onTriggered: uigraph.submit(nodeMenu.currentNode)
@@ -276,6 +293,7 @@ Item {
                 MenuSeparator {}
                 MenuItem {
                     text: "Duplicate Node" + (duplicateFollowingButton.hovered ? "s From Here" : "")
+                    enabled: !root.readOnly
                     onTriggered: duplicateNode(nodeMenu.currentNode, false)
                     MaterialToolButton {
                         id: duplicateFollowingButton
@@ -399,6 +417,8 @@ Item {
                     onExited: uigraph.hoveredNode = null
 
                     Keys.onDeletePressed: {
+                        if(root.readOnly)
+                            return;
                         if(event.modifiers == Qt.AltModifier)
                             uigraph.removeNodesFrom(node)
                         else

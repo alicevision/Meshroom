@@ -1004,6 +1004,11 @@ class Graph(BaseObject):
         for node in self.nodes:
             node.clearSubmittedChunks()
 
+    @Slot(Node)
+    def clearDataFrom(self, startNode):
+        for node in self.nodesFromNode(startNode)[0]:
+            node.clearData()
+
     def iterChunksByStatus(self, status):
         """ Iterate over NodeChunks with the given status """
         for node in self.nodes:

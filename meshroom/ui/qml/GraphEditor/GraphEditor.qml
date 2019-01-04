@@ -305,10 +305,53 @@ Item {
                 }
                 MenuSeparator {}
                 MenuItem {
-                    text: "Clear Data"
-                    palette.text: Colors.red
+                    text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
                     enabled: !root.readOnly
-                    onTriggered: nodeMenu.currentNode.clearData()
+
+                    function showConfirmationDialog(deleteFollowing) {
+                        var obj = deleteDataDialog.createObject(root,
+                                           {
+                                               "node": nodeMenu.currentNode,
+                                               "deleteFollowing": deleteFollowing
+                                           });
+                        obj.open()
+                        nodeMenu.close();
+                    }
+
+                    onTriggered: showConfirmationDialog(false)
+
+                    MaterialToolButton {
+                        id: deleteFollowingButton
+                        anchors { right: parent.right; rightMargin: parent.padding }
+                        height: parent.height
+                        text: MaterialIcons.fast_forward
+                        onClicked: parent.showConfirmationDialog(true)
+                    }
+
+                    // Confirmation dialog for node cache deletion
+                    Component {
+                        id: deleteDataDialog
+                        MessageDialog  {
+                            property var node
+                            property bool deleteFollowing: false
+
+                            focus: true
+                            modal: false
+                            header.visible: false
+
+                            text: "Delete Data computed by '" + node.label + (deleteFollowing ?  "' and following Nodes?" : "'?")
+                            helperText: "Warning: This operation can not be undone."
+                            standardButtons: Dialog.Yes | Dialog.Cancel
+
+                            onAccepted: {
+                                if(deleteFollowing)
+                                    graph.clearDataFrom(node);
+                                else
+                                    node.clearData();
+                            }
+                            onClosed: destroy()
+                        }
+                    }
                 }
             }
 

@@ -54,7 +54,7 @@ Panel {
                 MenuSeparator {}
                 MenuItem {
                     enabled: root.node !== null
-                    text: "Clear Submitted Status"
+                    text: "Clear Pending Status"
                     onClicked: node.clearSubmittedChunks()
                 }
             }
@@ -115,7 +115,7 @@ Panel {
                         AttributeEditor {
                             Layout.fillWidth: true
                             attributes: root.node.attributes
-                            readOnly: root.isCompatibilityNode
+                            readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: root.attributeDoubleClicked(attribute)
                             onUpgradeRequest: root.upgradeRequest()
                         }

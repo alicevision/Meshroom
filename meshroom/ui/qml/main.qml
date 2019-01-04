@@ -518,7 +518,25 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 padding: 4
                 title: "Graph Editor"
-                visible: settings_UILayout.showGraphEditor
+
+                headerBar: RowLayout {
+                    MaterialToolButton {
+                        text: MaterialIcons.more_vert
+                        font.pointSize: 11
+                        padding: 2
+                        onClicked: graphEditorMenu.open()
+                        Menu {
+                            id: graphEditorMenu
+                            y: parent.height
+                            x: -width + parent.width
+                            MenuItem {
+                                text: "Clear Pending Status"
+                                enabled: !_reconstruction.computingLocally
+                                onTriggered: _reconstruction.graph.clearSubmittedNodes()
+                            }
+                        }
+                    }
+                }
 
                 function displayAttribute(attr) {
                     if( attr.desc.type === "File"

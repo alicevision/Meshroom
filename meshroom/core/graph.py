@@ -999,6 +999,7 @@ class Graph(BaseObject):
         for chunk in self.iterChunksByStatus(Status.RUNNING):
             chunk.stopProcess()
 
+    @Slot()
     def clearSubmittedNodes(self):
         """ Reset the status of already submitted nodes to Status.NONE """
         for node in self.nodes:

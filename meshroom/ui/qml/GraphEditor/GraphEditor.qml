@@ -82,6 +82,8 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         drag.threshold: 0
+        cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
+
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
             var scale = draggable.scale * zoomFactor

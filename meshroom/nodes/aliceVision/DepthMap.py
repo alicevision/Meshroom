@@ -87,6 +87,14 @@ class DepthMap(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.IntParam( 
+            name='refineMaxTCams', 
+            label='Refine: Nb Neighbour Cameras', 
+            description='Refine: Number of neighbour cameras.', 
+            value=6, 
+            range=(1, 20, 1), 
+            uid=[0], 
+        ), 
         desc.IntParam(
             name='refineNSamplesHalf',
             label='Refine: Number of Samples',
@@ -113,14 +121,6 @@ class DepthMap(desc.CommandLineNode):
             range=(1, 500, 10),
             uid=[0],
             advanced=True,
-        ),
-        desc.IntParam(
-            name='refineMaxTCams',
-            label='Refine: Nb Neighbour Cameras',
-            description='Refine: Number of neighbour cameras.',
-            value=6,
-            range=(1, 20, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name='refineWSH',
@@ -164,6 +164,14 @@ class DepthMap(desc.CommandLineNode):
             description='Refine: Use minimum pixel size of neighbour cameras (Tc) or current camera pixel size (Rc)',
             value=False,
             uid=[0],
+            advanced=True,
+        ),
+        desc.BoolParam(
+            name='exportIntermediateResults',
+            label='Export Intermediate Results',
+            description='Export intermediate results from the SGM and Refine steps.',
+            value=False,
+            uid=[],
             advanced=True,
         ),
         desc.ChoiceParam(

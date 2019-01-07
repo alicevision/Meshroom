@@ -142,18 +142,14 @@ Item {
                 if(visible) {
                     // when menu is shown,
                     // clear and give focus to the TextField filter
-                    filterTextField.clear()
-                    filterTextField.forceActiveFocus()
+                    searchBar.clear()
+                    searchBar.forceActiveFocus()
                 }
             }
 
-            TextField {
-                id: filterTextField
-                selectByMouse: true
+            SearchBar {
+                id: searchBar
                 width: parent.width
-                // ensure down arrow give focus to the first MenuItem
-                // (without this, we have to pressed the down key twice to do so)
-                Keys.onDownPressed: nextItemInFocusChain().forceActiveFocus()
             }
 
             Repeater {
@@ -164,24 +160,28 @@ Item {
                     id: menuItemDelegate
                     font.pointSize: 8
                     padding: 3
+
                     // Hide items that does not match the filter text
-                    visible: modelData.toLowerCase().indexOf(filterTextField.text.toLocaleLowerCase()) > -1
+                    visible: modelData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
+                    // Reset menu currentIndex if highlighted items gets filtered out
+                    onVisibleChanged: if(highlighted) newNodeMenu.currentIndex = 0
                     text: modelData
+                    // Forward key events to the search bar to continue typing seamlessly
+                    // even if this delegate took the activeFocus due to mouse hovering
+                    Keys.forwardTo: [searchBar.textField]
                     Keys.onPressed: {
+                        event.accepted = false;
                         switch(event.key)
                         {
                         case Qt.Key_Return:
                         case Qt.Key_Enter:
                             // create node on validation (Enter/Return keys)
-                            newNodeMenu.createNode(modelData)
-                            newNodeMenu.dismiss()
-                            break;
-                        case Qt.Key_Home:
-                            // give focus back to filter
-                            filterTextField.forceActiveFocus()
+                            newNodeMenu.createNode(modelData);
+                            newNodeMenu.close();
+                            event.accepted = true;
                             break;
                         default:
-                            break;
+                            searchBar.textField.forceActiveFocus();
                         }
                     }
                     // Create node on mouse click

@@ -37,6 +37,7 @@ class Meshing(desc.CommandLineNode):
             description='Estimate the 3d space from the SfM',
             value=True,
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='estimateSpaceMinObservations',
@@ -45,6 +46,7 @@ class Meshing(desc.CommandLineNode):
             value=3,
             range=(0, 100, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='estimateSpaceMinObservationAngle',
@@ -77,6 +79,7 @@ class Meshing(desc.CommandLineNode):
             value=1000000,
             range=(500000, 30000000, 1000),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='minStep',
@@ -87,6 +90,7 @@ class Meshing(desc.CommandLineNode):
             value=2,
             range=(1, 20, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='partitioning',
@@ -96,6 +100,7 @@ class Meshing(desc.CommandLineNode):
             values=('singleBlock', 'auto'),
             exclusive=True,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='repartition',
@@ -105,6 +110,7 @@ class Meshing(desc.CommandLineNode):
             values=('multiResolution', 'regularGrid'),
             exclusive=True,
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='angleFactor',
@@ -113,6 +119,7 @@ class Meshing(desc.CommandLineNode):
             value=15.0,
             range=(0.0, 200.0, 1.0),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='simFactor',
@@ -121,6 +128,7 @@ class Meshing(desc.CommandLineNode):
             value=15.0,
             range=(0.0, 200.0, 1.0),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='pixSizeMarginInitCoef',
@@ -129,6 +137,7 @@ class Meshing(desc.CommandLineNode):
             value=2.0,
             range=(0.0, 10.0, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='pixSizeMarginFinalCoef',
@@ -137,6 +146,7 @@ class Meshing(desc.CommandLineNode):
             value=4.0,
             range=(0.0, 10.0, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='voteMarginFactor',
@@ -145,6 +155,7 @@ class Meshing(desc.CommandLineNode):
             value=4.0,
             range=(0.1, 10.0, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='contributeMarginFactor',
@@ -153,6 +164,7 @@ class Meshing(desc.CommandLineNode):
             value=2.0,
             range=(0.0, 10.0, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='simGaussianSizeInit',
@@ -161,6 +173,7 @@ class Meshing(desc.CommandLineNode):
             value=10.0,
             range=(0.0, 50.0, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='simGaussianSize',
@@ -169,6 +182,7 @@ class Meshing(desc.CommandLineNode):
             value=10.0,
             range=(0.0, 50.0, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='minAngleThreshold',
@@ -177,6 +191,7 @@ class Meshing(desc.CommandLineNode):
             value=1.0,
             range=(0.0, 10.0, 0.01),
             uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='refineFuse',
@@ -184,6 +199,7 @@ class Meshing(desc.CommandLineNode):
             description='Refine depth map fusion with the new pixels size defined by angle and similarity scores.',
             value=True,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

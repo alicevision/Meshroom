@@ -1,6 +1,7 @@
 module GraphEditor
 
 GraphEditor 1.0 GraphEditor.qml
+NodeEditor 1.0 NodeEditor.qml
 Node 1.0 Node.qml
 NodeChunks 1.0 NodeChunks.qml
 Edge 1.0 Edge.qml
@@ -9,3 +10,4 @@ AttributeEditor 1.0 AttributeEditor.qml
 AttributeItemDelegate 1.0 AttributeItemDelegate.qml
 CompatibilityBadge 1.0 CompatibilityBadge.qml
 CompatibilityManager 1.0 CompatibilityManager.qml
+singleton GraphEditorSettings 1.0 GraphEditorSettings.qml

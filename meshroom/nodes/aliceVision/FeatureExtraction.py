@@ -42,6 +42,7 @@ class FeatureExtraction(desc.CommandLineNode):
             description='Use only CPU feature extraction.',
             value=False,
             uid=[],
+            advanced=True
         ),
         desc.ChoiceParam(
             name='verboseLevel',

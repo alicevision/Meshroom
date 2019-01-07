@@ -37,6 +37,7 @@ class PrepareDenseScene(desc.CommandLineNode):
             values=['jpg', 'png', 'tif', 'exr'],
             exclusive=True,
             uid=[0],
+            advanced=True
         ),
         desc.BoolParam(
             name='saveMetadata',
@@ -44,6 +45,7 @@ class PrepareDenseScene(desc.CommandLineNode):
             description='Save projections and intrinsics information in images metadata (only for .exr images).',
             value=True,
             uid=[0],
+            advanced=True
         ),
         desc.BoolParam(
             name='saveMatricesTxtFiles',
@@ -51,6 +53,7 @@ class PrepareDenseScene(desc.CommandLineNode):
             description='Save projections and intrinsics information in text files.',
             value=False,
             uid=[0],
+            advanced=True
         ),
         desc.ChoiceParam(
             name='verboseLevel',

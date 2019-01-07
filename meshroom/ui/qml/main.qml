@@ -507,84 +507,65 @@ ApplicationWindow {
             }
         }
 
-        Panel {
-            id: graphEditorPanel
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            padding: 0
+        Controls1.SplitView {
+            orientation: Qt.Horizontal
+            width: parent.width
             height: Math.round(parent.height * 0.3)
-            title: "Graph Editor"
             visible: settings_UILayout.showGraphEditor
 
-            function displayAttribute(attr) {
-                if( attr.desc.type === "File"
-                   && _3dFileExtensions.indexOf(Filepath.extension(attr.value)) > - 1 )
-                  {
-                    workspaceView.viewAttribute(attr);
-                    return true;
-                  }
-                return false;
-            }
+            Panel {
+                id: graphEditorPanel
+                Layout.fillWidth: true
+                padding: 4
+                title: "Graph Editor"
+                visible: settings_UILayout.showGraphEditor
 
-            Controls1.SplitView {
-                orientation: Qt.Horizontal
-                anchors.fill: parent
+                function displayAttribute(attr) {
+                    if( attr.desc.type === "File"
+                       && _3dFileExtensions.indexOf(Filepath.extension(attr.value)) > - 1 )
+                      {
+                        workspaceView.viewAttribute(attr);
+                        return true;
+                      }
+                    return false;
+                }
 
-                Item {
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
-                    Layout.margins: 2
+                GraphEditor {
+                    id: graphEditor
 
-                    GraphEditor {
-                        id: graphEditor
+                    anchors.fill: parent
+                    uigraph: _reconstruction
+                    nodeTypesModel: _nodeTypes
+                    readOnly: _reconstruction.computing
 
-                        anchors.fill: parent
-                        uigraph: _reconstruction
-                        nodeTypesModel: _nodeTypes
-                        readOnly: _reconstruction.computing
-
-                        onNodeDoubleClicked: {
-                            if(node.nodeType === "StructureFromMotion")
+                    onNodeDoubleClicked: {
+                        if(node.nodeType === "StructureFromMotion")
+                        {
+                            _reconstruction.sfm = node
+                            return
+                        }
+                        for(var i=0; i < node.attributes.count; ++i)
+                        {
+                            var attr = node.attributes.at(i)
+                            if(attr.isOutput
+                               && graphEditorPanel.displayAttribute(attr))
                             {
-                                _reconstruction.sfm = node
-                                return
-                            }
-                            for(var i=0; i < node.attributes.count; ++i)
-                            {
-                                var attr = node.attributes.at(i)
-                                if(attr.isOutput
-                                   && graphEditorPanel.displayAttribute(attr))
-                                {
-                                    break;
-                                }
+                                break;
                             }
                         }
                     }
                 }
-                Item {
-                    implicitHeight: Math.round(parent.height * 0.2)
-                    implicitWidth: Math.round(parent.width * 0.3)
+            }
 
-                    Loader {
-                        anchors.fill: parent
-                        anchors.margins: 2
-                        active: _reconstruction.selectedNode !== null
-                        sourceComponent: Component {
-                            AttributeEditor {
-                                node: _reconstruction.selectedNode
-                                // Make AttributeEditor readOnly when computing
-                                readOnly: _reconstruction.computing
-                                onAttributeDoubleClicked: {
-                                    graphEditorPanel.displayAttribute(attribute)
-                                }
-
-                                onUpgradeRequest: {
-                                    var n = _reconstruction.upgradeNode(node)
-                                    _reconstruction.selectedNode = n;
-                                }
-                            }
-                        }
-                    }
+            NodeEditor {
+                width: Math.round(parent.width * 0.3)
+                node: _reconstruction.selectedNode
+                // Make NodeEditor readOnly when computing
+                readOnly: _reconstruction.computing
+                onAttributeDoubleClicked: graphEditorPanel.displayAttribute(attribute)
+                onUpgradeRequest: {
+                    var n = _reconstruction.upgradeNode(node);
+                    _reconstruction.selectedNode = n;
                 }
             }
         }

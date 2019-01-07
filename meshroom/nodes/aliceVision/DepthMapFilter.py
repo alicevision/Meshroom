@@ -32,6 +32,7 @@ class DepthMapFilter(desc.CommandLineNode):
             value=2.0,
             range=(0.0, 10.0, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='maxViewAngle',
@@ -40,6 +41,7 @@ class DepthMapFilter(desc.CommandLineNode):
             value=70.0,
             range=(10.0, 120.0, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name="nNearestCams",
@@ -48,6 +50,7 @@ class DepthMapFilter(desc.CommandLineNode):
             value=10,
             range=(0, 20, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name="minNumOfConsistentCams",
@@ -72,6 +75,7 @@ class DepthMapFilter(desc.CommandLineNode):
             value=0,
             range=(0, 10, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name="pixSizeBallWithLowSimilarity",
@@ -80,6 +84,7 @@ class DepthMapFilter(desc.CommandLineNode):
             value=0,
             range=(0, 10, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

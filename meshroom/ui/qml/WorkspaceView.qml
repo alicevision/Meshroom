@@ -21,6 +21,7 @@ Item {
     property variant reconstruction: _reconstruction
     readonly property variant cameraInits: _reconstruction.cameraInits
     property bool readOnly: false
+    readonly property Viewer3D viewer3D: viewer3D
 
 
     implicitWidth: 300
@@ -30,10 +31,6 @@ Item {
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath) {
         viewer3D.load(filepath);
-    }
-
-    function viewAttribute(attr) {
-        viewer3D.view(attr);
     }
 
     Connections {
@@ -48,7 +45,7 @@ Item {
     function viewSfM() {
         if(!reconstruction.sfm)
             return;
-        viewAttribute(reconstruction.sfm.attribute('output'));
+        viewer3D.view(reconstruction.sfm.attribute('output'));
     }
 
     SystemPalette { id: activePalette }
@@ -144,7 +141,7 @@ Item {
                 anchors.bottomMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: outputReady && outputMediaIndex == -1
-                onClicked: viewAttribute(_reconstruction.endNode.attribute("outputMesh"))
+                onClicked: viewer3D.view(_reconstruction.endNode.attribute("outputMesh"))
             }
         }
     }

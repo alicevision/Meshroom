@@ -31,8 +31,6 @@ ApplicationWindow {
         return t
     }
 
-    // supported 3D files extensions
-    readonly property var _3dFileExtensions: ['.obj', '.abc']
     onClosing: {
         // make sure document is saved before exiting application
         close.accepted = false
@@ -505,6 +503,14 @@ ApplicationWindow {
                 Layout.minimumHeight: 50
                 reconstruction: _reconstruction
                 readOnly: _reconstruction.computing
+
+                function viewIn3D(attribute, mouse) {
+                    var loaded = viewer3D.view(attribute);
+                    // solo media if Control modifier was held
+                    if(loaded && mouse && mouse.modifiers & Qt.ControlModifier)
+                        viewer3D.solo(attribute);
+                    return loaded;
+                }
             }
         }
 
@@ -550,15 +556,6 @@ ApplicationWindow {
                     }
                 }
 
-                function displayAttribute(attr) {
-                    if( attr.desc.type === "File"
-                       && _3dFileExtensions.indexOf(Filepath.extension(attr.value)) > - 1 )
-                      {
-                        workspaceView.viewAttribute(attr);
-                        return true;
-                      }
-                    return false;
-                }
 
                 GraphEditor {
                     id: graphEditor
@@ -571,14 +568,13 @@ ApplicationWindow {
                     onNodeDoubleClicked: {
                         if(node.nodeType === "StructureFromMotion")
                         {
-                            _reconstruction.sfm = node
-                            return
+                            _reconstruction.sfm = node;
                         }
                         for(var i=0; i < node.attributes.count; ++i)
                         {
                             var attr = node.attributes.at(i)
                             if(attr.isOutput
-                               && graphEditorPanel.displayAttribute(attr))
+                               && workspaceView.viewIn3D(attr, mouse))
                             {
                                 break;
                             }
@@ -592,7 +588,7 @@ ApplicationWindow {
                 node: _reconstruction.selectedNode
                 // Make NodeEditor readOnly when computing
                 readOnly: graphLocked
-                onAttributeDoubleClicked: graphEditorPanel.displayAttribute(attribute)
+                onAttributeDoubleClicked: workspaceView.viewIn3D(attribute, mouse)
                 onUpgradeRequest: {
                     var n = _reconstruction.upgradeNode(node);
                     _reconstruction.selectedNode = n;

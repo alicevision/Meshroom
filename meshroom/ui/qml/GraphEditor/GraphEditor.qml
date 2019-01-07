@@ -21,7 +21,7 @@ Item {
     // signals
     signal workspaceMoved()
     signal workspaceClicked()
-    signal nodeDoubleClicked(var node)
+    signal nodeDoubleClicked(var mouse, var node)
 
     // trigger initial fit() after initialization
     // (ensure GraphEditor has its final size)
@@ -409,7 +409,7 @@ Item {
                         }
                     }
 
-                    onDoubleClicked: root.nodeDoubleClicked(node)
+                    onDoubleClicked: root.nodeDoubleClicked(mouse, node)
 
                     onMoved: uigraph.moveNode(node, position)
 

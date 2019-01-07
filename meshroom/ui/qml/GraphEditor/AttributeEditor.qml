@@ -15,7 +15,7 @@ ListView {
     property int labelWidth: 180
 
     signal upgradeRequest()
-    signal attributeDoubleClicked(var attribute)
+    signal attributeDoubleClicked(var mouse, var attribute)
 
     implicitHeight: contentHeight
 
@@ -40,7 +40,7 @@ ListView {
                 readOnly: root.readOnly
                 labelWidth: root.labelWidth
                 attribute: object
-                onDoubleClicked: root.attributeDoubleClicked(attr)
+                onDoubleClicked: root.attributeDoubleClicked(mouse, attr)
             }
         }
     }

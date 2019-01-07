@@ -92,7 +92,7 @@ class Texturing(desc.CommandLineNode):
         ),
         desc.IntParam(
             name='maxNbImagesForFusion',
-            label='Max Nb of Images For Fusion',
+            label='Max Number of Images For Fusion',
             description='''Max number of images to combine to create the final texture''',
             value=3,
             range=(0, 10, 1),
@@ -122,6 +122,7 @@ class Texturing(desc.CommandLineNode):
             description='''Triangle visibility is based on the union of vertices visiblity.''',
             value=False,
             uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='flipNormals',

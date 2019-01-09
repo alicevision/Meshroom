@@ -201,6 +201,8 @@ class UIGraph(QObject):
         self._running = self._submitted = False
         self._sortedDFSChunks = QObjectListModel(parent=self)
         self._layout = GraphLayout(self)
+        self._selectedNode = None
+        self._hoveredNode = None
         if filepath:
             self.load(filepath)
 
@@ -235,6 +237,8 @@ class UIGraph(QObject):
 
     def clear(self):
         if self._graph:
+            self.clearNodeHover()
+            self.clearNodeSelection()
             self._graph.deleteLater()
             self._graph = None
         self._sortedDFSChunks.clear()
@@ -389,7 +393,7 @@ class UIGraph(QObject):
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
         if isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
-            with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.fullName())):
+            with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.getFullName())):
                 self.appendAttribute(dst)
                 self.push(commands.AddEdgeCommand(self._graph, src, dst.at(-1)))
         else:
@@ -398,7 +402,7 @@ class UIGraph(QObject):
     @Slot(Edge)
     def removeEdge(self, edge):
         if isinstance(edge.dst.root, ListAttribute):
-            with self.groupedGraphModification("Remove Edge and Delete {}".format(edge.dst.fullName())):
+            with self.groupedGraphModification("Remove Edge and Delete {}".format(edge.dst.getFullName())):
                 self.push(commands.RemoveEdgeCommand(self._graph, edge))
                 self.removeAttribute(edge.dst)
         else:
@@ -466,6 +470,14 @@ class UIGraph(QObject):
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
+    def clearNodeSelection(self):
+        """ Clear node selection. """
+        self.selectedNode = None
+
+    def clearNodeHover(self):
+        """ Reset currently hovered node to None. """
+        self.hoveredNode = None
+
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
@@ -480,3 +492,11 @@ class UIGraph(QObject):
 
     sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, constant=True)
     lockedChanged = Signal()
+
+    selectedNodeChanged = Signal()
+    # Currently selected node
+    selectedNode = makeProperty(QObject, "_selectedNode", selectedNodeChanged, resetOnDestroy=True)
+
+    hoveredNodeChanged = Signal()
+    # Currently hovered node
+    hoveredNode = makeProperty(QObject, "_hoveredNode", hoveredNodeChanged, resetOnDestroy=True)

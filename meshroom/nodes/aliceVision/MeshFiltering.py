@@ -44,6 +44,7 @@ class MeshFiltering(desc.CommandLineNode):
             value=1.0,
             range=(0.0, 10.0, 0.1),
             uid=[0],
+            advanced=True,
             ),
         desc.ChoiceParam(
             name='verboseLevel',

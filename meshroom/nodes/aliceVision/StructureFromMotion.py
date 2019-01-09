@@ -60,6 +60,7 @@ class StructureFromMotion(desc.CommandLineNode):
             values=['acransac', 'ransac', 'lsmeds', 'loransac', 'maxconsensus'],
             exclusive=True,
             uid=[0],
+            advanced=True,
         ),
        desc.BoolParam(
             name='lockScenePreviouslyReconstructed',
@@ -83,6 +84,7 @@ class StructureFromMotion(desc.CommandLineNode):
             value=1,
             range=(2, 10, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='maxNumberOfMatches',
@@ -112,6 +114,7 @@ class StructureFromMotion(desc.CommandLineNode):
             value=2,
             range=(2, 10, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='minAngleForTriangulation',
@@ -120,6 +123,7 @@ class StructureFromMotion(desc.CommandLineNode):
             value=3.0,
             range=(0.1, 10, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='minAngleForLandmark',
@@ -128,6 +132,7 @@ class StructureFromMotion(desc.CommandLineNode):
             value=2.0,
             range=(0.1, 10, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='maxReprojectionError',
@@ -136,6 +141,7 @@ class StructureFromMotion(desc.CommandLineNode):
             value=4.0,
             range=(0.1, 10, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='minAngleInitialPair',
@@ -144,6 +150,7 @@ class StructureFromMotion(desc.CommandLineNode):
             value=5.0,
             range=(0.1, 10, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='maxAngleInitialPair',
@@ -152,6 +159,7 @@ class StructureFromMotion(desc.CommandLineNode):
             value=40.0,
             range=(0.1, 60, 0.1),
             uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='useOnlyMatchesFromInputFolder',
@@ -160,6 +168,7 @@ class StructureFromMotion(desc.CommandLineNode):
                         'Matches folders previously added to the SfMData file will be ignored.',
             value=False,
             uid=[],
+            advanced=True,
         ),
         desc.BoolParam(
             name='useRigConstraint',
@@ -167,6 +176,7 @@ class StructureFromMotion(desc.CommandLineNode):
             description='Enable/Disable rig constraint.',
             value=True,
             uid=[0],
+            advanced=True,
         ),
         desc.File(
             name='initialPairA',
@@ -190,6 +200,7 @@ class StructureFromMotion(desc.CommandLineNode):
             values=('.abc', '.ply'),
             exclusive=True,
             uid=[],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

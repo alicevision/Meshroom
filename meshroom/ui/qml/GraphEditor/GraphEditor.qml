@@ -14,7 +14,6 @@ Item {
     readonly property variant graph: uigraph ? uigraph.graph : null  /// core graph contained in ui graph
     property variant nodeTypesModel: null  /// the list of node types that can be instantiated
     property bool readOnly: false
-    property variant selectedNode: null
 
     property var _attributeToDelegate: ({})
 
@@ -52,7 +51,7 @@ Item {
     /// Select node delegate
     function selectNode(node)
     {
-        root.selectedNode = node
+        uigraph.selectedNode = node
     }
 
     /// Duplicate a node and optionnally all the following ones
@@ -308,7 +307,8 @@ Item {
                     node: object
                     width: uigraph.layout.nodeWidth
                     readOnly: root.readOnly
-                    selected: root.selectedNode == node
+                    selected: uigraph.selectedNode === node
+                    hovered: uigraph.hoveredNode === node
                     onSelectedChanged: if(selected) forceActiveFocus()
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
@@ -331,6 +331,9 @@ Item {
                     onDoubleClicked: root.nodeDoubleClicked(node)
 
                     onMoved: uigraph.moveNode(node, position)
+
+                    onEntered: uigraph.hoveredNode = node
+                    onExited: uigraph.hoveredNode = null
 
                     Keys.onDeletePressed: uigraph.removeNode(node)
 

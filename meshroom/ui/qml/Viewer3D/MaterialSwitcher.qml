@@ -14,7 +14,6 @@ Entity {
     objectName: "MaterialSwitcher"
 
     property int mode: 2
-    readonly property var modes: ["Solid", "Wireframe", "Textured"]
     property string diffuseMap: ""
     property color ambient: "#AAA"
     property real shininess
@@ -29,67 +28,28 @@ Entity {
         onMaterialChanged: {
             // remove previous material(s)
             removeComponentsByType(parent, "Material")
-            addComponent(root.parent, material)
+            Scene3DHelper.addComponent(root.parent, material)
         }
-    }
-
-    function printComponents(entity)
-    {
-        console.log("Components of Entity '" + entity + "'")
-        for(var i=0; i < entity.components.length; ++i)
-        {
-            console.log(" -- [" + i + "]: " + entity.components[i])
-        }
-    }
-
-    function addComponent(entity, component)
-    {
-        if(!entity)
-            return
-        var comps = [];
-        comps.push(component);
-
-        for(var i=0; i < entity.components.length; ++i)
-        {
-            comps.push(entity.components[i]);
-        }
-        entity.components = comps;
     }
 
     function removeComponentsByType(entity, type)
     {
         if(!entity)
             return
-        var comps = [];
         for(var i=0; i < entity.components.length; ++i)
         {
-            if(entity.components[i].toString().indexOf(type) == -1)
+            if(entity.components[i].toString().indexOf(type) != -1)
             {
-                comps.push(entity.components[i]);
+                //entity.components[i].enabled = false;
+                Scene3DHelper.removeComponent(entity, entity.components[i]);
             }
         }
-        entity.components = comps;
     }
 
-    function removeComponent(entity, component)
-    {
-        if(!entity)
-            return
-        var comps = [];
-
-        for(var i=0; i < entity.components.length; ++i)
-        {
-            if(entity.components[i] == component)
-            {
-                comps.push(entity.components[i]);
-            }
-        }
-        entity.components = comps;
-    }
 
     StateGroup {
         id: modeState
-        state: modes[mode]
+        state: Viewer3DSettings.renderModes[mode].name
 
         states: [
             State {
@@ -113,7 +73,6 @@ Entity {
 
     DiffuseSpecularMaterial {
         id: solid
-        parent: root.parent
         objectName: "SolidMaterial"
         ambient: root.ambient
         shininess: root.shininess
@@ -123,8 +82,7 @@ Entity {
 
     DiffuseSpecularMaterial {
         id: textured
-        parent: root.parent
-        objectName: "SolidMaterial"
+        objectName: "TexturedMaterial"
         ambient: root.ambient
         shininess: root.shininess
         specular: root.specular
@@ -137,7 +95,6 @@ Entity {
 
     WireframeMaterial {
         id: wireframe
-        parent: root.parent
         objectName: "WireframeMaterial"
         effect: WireframeEffect {}
         ambient: root.ambient

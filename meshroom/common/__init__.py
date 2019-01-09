@@ -7,13 +7,14 @@ Signal = None
 Property = None
 BaseObject = None
 Variant = None
+VariantList = None
 
 if meshroom.backend == meshroom.Backend.PYSIDE:
     # PySide types
-    from .qt import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant
+    from .qt import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList
 elif meshroom.backend == meshroom.Backend.STANDALONE:
     # Core types
-    from .core import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant
+    from .core import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList
 
 
 class _BaseModel:

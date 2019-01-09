@@ -41,6 +41,7 @@ class ImageMatching(desc.CommandLineNode):
             description='Input name for the weight file, if not provided the weights will be computed on the database built with the provided set.',
             value='',
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='minNbImages',
@@ -49,6 +50,7 @@ class ImageMatching(desc.CommandLineNode):
             value=200,
             range=(0, 500, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='maxDescriptors',
@@ -57,6 +59,7 @@ class ImageMatching(desc.CommandLineNode):
             value=500,
             range=(0, 100000, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='nbMatches',
@@ -65,6 +68,7 @@ class ImageMatching(desc.CommandLineNode):
             value=50,
             range=(0, 1000, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

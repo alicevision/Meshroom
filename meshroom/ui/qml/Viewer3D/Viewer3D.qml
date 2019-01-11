@@ -37,8 +37,21 @@ FocusScope {
         mediaLibrary.load(filepath);
     }
 
+    /// View 'attribute' in the 3D Viewer. Media will be loaded if needed.
+    /// Returns whether the attribute can be visualized (matching type and extension).
     function view(attribute) {
-        mediaLibrary.view(attribute)
+        if( attribute.desc.type === "File"
+           && Viewer3DSettings.supportedExtensions.indexOf(Filepath.extension(attribute.value)) > - 1 )
+        {
+            mediaLibrary.view(attribute);
+            return true;
+        }
+        return false;
+    }
+
+    /// Solo (i.e display only) the given attribute.
+    function solo(attribute) {
+        mediaLibrary.solo(mediaLibrary.find(attribute));
     }
 
     function clear() {

@@ -16,7 +16,7 @@ Panel {
     property bool readOnly: false
     property bool isCompatibilityNode: node && node.compatibilityIssue !== undefined
 
-    signal attributeDoubleClicked(var attribute)
+    signal attributeDoubleClicked(var mouse, var attribute)
     signal upgradeRequest()
 
     title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" : "")
@@ -54,7 +54,7 @@ Panel {
                 MenuSeparator {}
                 MenuItem {
                     enabled: root.node !== null
-                    text: "Clear Submitted Status"
+                    text: "Clear Pending Status"
                     onClicked: node.clearSubmittedChunks()
                 }
             }
@@ -115,8 +115,8 @@ Panel {
                         AttributeEditor {
                             Layout.fillWidth: true
                             attributes: root.node.attributes
-                            readOnly: root.isCompatibilityNode
-                            onAttributeDoubleClicked: root.attributeDoubleClicked(attribute)
+                            readOnly: root.readOnly || root.isCompatibilityNode
+                            onAttributeDoubleClicked: root.attributeDoubleClicked(mouse, attribute)
                             onUpgradeRequest: root.upgradeRequest()
                         }
 

@@ -11,6 +11,16 @@ Item {
     readonly property Component depthMapLoaderComp: Qt.createComponent("DepthMapLoader.qml")
     readonly property bool supportDepthMap: depthMapLoaderComp.status == Component.Ready
 
+    // supported 3D files extensions
+    readonly property var supportedExtensions: {
+        var exts = ['.obj'];
+        if(supportAlembic)
+            exts.push('.abc');
+        if(supportDepthMap)
+            exts.push('.exr');
+        return exts;
+    }
+
     // Available render modes
     readonly property var renderModes: [ // Can't use ListModel because of MaterialIcons expressions
                          {"name": "Solid", "icon": MaterialIcons.crop_din },

@@ -18,7 +18,7 @@ RowLayout {
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
-    signal doubleClicked(var attr)
+    signal doubleClicked(var mouse, var attr)
 
     spacing: 2
 
@@ -62,7 +62,7 @@ RowLayout {
                     anchors.fill: parent
                     hoverEnabled: true
                     acceptedButtons: Qt.AllButtons
-                    onDoubleClicked: root.doubleClicked(root.attribute)
+                    onDoubleClicked: root.doubleClicked(mouse, root.attribute)
 
                     property Component menuComp: Menu {
                         id: paramMenu

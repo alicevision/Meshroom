@@ -20,6 +20,9 @@ ApplicationWindow {
     minimumHeight: 500
     visible: true
 
+    /// Whether graph is currently locked and therefore read-only
+    readonly property bool graphLocked: _reconstruction.computing && GraphEditorSettings.lockOnCompute
+
     title: {
         var t = _reconstruction.graph.filepath || "Untitled"
         if(!_reconstruction.undoStack.clean)
@@ -27,10 +30,6 @@ ApplicationWindow {
         t += " - " + Qt.application.name + " " + Qt.application.version
         return t
     }
-
-    property variant node: null
-    // supported 3D files extensions
-    readonly property var _3dFileExtensions: ['.obj', '.abc']
 
     onClosing: {
         // make sure document is saved before exiting application
@@ -253,7 +252,7 @@ ApplicationWindow {
         property string tooltip: 'Undo "' +_reconstruction.undoStack.undoText +'"'
         text: "Undo"
         shortcut: "Ctrl+Z"
-        enabled: _reconstruction.undoStack.canUndo && !_reconstruction.computing
+        enabled: _reconstruction.undoStack.canUndo && !graphLocked
         onTriggered: _reconstruction.undoStack.undo()
     }
     Action {
@@ -262,7 +261,7 @@ ApplicationWindow {
         property string tooltip: 'Redo "' +_reconstruction.undoStack.redoText +'"'
         text: "Redo"
         shortcut: "Ctrl+Shift+Z"
-        enabled: _reconstruction.undoStack.canRedo && !_reconstruction.computing
+        enabled: _reconstruction.undoStack.canRedo && !graphLocked
         onTriggered: _reconstruction.undoStack.redo()
     }
 
@@ -504,6 +503,14 @@ ApplicationWindow {
                 Layout.minimumHeight: 50
                 reconstruction: _reconstruction
                 readOnly: _reconstruction.computing
+
+                function viewIn3D(attribute, mouse) {
+                    var loaded = viewer3D.view(attribute);
+                    // solo media if Control modifier was held
+                    if(loaded && mouse && mouse.modifiers & Qt.ControlModifier)
+                        viewer3D.solo(attribute);
+                    return loaded;
+                }
             }
         }
 
@@ -518,17 +525,37 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 padding: 4
                 title: "Graph Editor"
-                visible: settings_UILayout.showGraphEditor
 
-                function displayAttribute(attr) {
-                    if( attr.desc.type === "File"
-                       && _3dFileExtensions.indexOf(Filepath.extension(attr.value)) > - 1 )
-                      {
-                        workspaceView.viewAttribute(attr);
-                        return true;
-                      }
-                    return false;
+                headerBar: RowLayout {
+                    MaterialToolButton {
+                        text: MaterialIcons.more_vert
+                        font.pointSize: 11
+                        padding: 2
+                        onClicked: graphEditorMenu.open()
+                        Menu {
+                            id: graphEditorMenu
+                            y: parent.height
+                            x: -width + parent.width
+                            MenuItem {
+                                text: "Clear Pending Status"
+                                enabled: !_reconstruction.computingLocally
+                                onTriggered: _reconstruction.graph.clearSubmittedNodes()
+                            }
+                            Menu {
+                                title: "Advanced"
+                                MenuItem {
+                                    text: "Lock on Compute"
+                                    ToolTip.text: "Lock Graph when computing. This should only be disabled for advanced usage."
+                                    ToolTip.visible: hovered
+                                    checkable: true
+                                    checked: GraphEditorSettings.lockOnCompute
+                                    onClicked: GraphEditorSettings.lockOnCompute = !GraphEditorSettings.lockOnCompute
+                                }
+                            }
+                        }
+                    }
                 }
+
 
                 GraphEditor {
                     id: graphEditor
@@ -536,19 +563,18 @@ ApplicationWindow {
                     anchors.fill: parent
                     uigraph: _reconstruction
                     nodeTypesModel: _nodeTypes
-                    readOnly: _reconstruction.computing
+                    readOnly: graphLocked
 
                     onNodeDoubleClicked: {
                         if(node.nodeType === "StructureFromMotion")
                         {
-                            _reconstruction.sfm = node
-                            return
+                            _reconstruction.sfm = node;
                         }
                         for(var i=0; i < node.attributes.count; ++i)
                         {
                             var attr = node.attributes.at(i)
                             if(attr.isOutput
-                               && graphEditorPanel.displayAttribute(attr))
+                               && workspaceView.viewIn3D(attr, mouse))
                             {
                                 break;
                             }
@@ -561,8 +587,8 @@ ApplicationWindow {
                 width: Math.round(parent.width * 0.3)
                 node: _reconstruction.selectedNode
                 // Make NodeEditor readOnly when computing
-                readOnly: _reconstruction.computing
-                onAttributeDoubleClicked: graphEditorPanel.displayAttribute(attribute)
+                readOnly: graphLocked
+                onAttributeDoubleClicked: workspaceView.viewIn3D(attribute, mouse)
                 onUpgradeRequest: {
                     var n = _reconstruction.upgradeNode(node);
                     _reconstruction.selectedNode = n;

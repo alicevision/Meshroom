@@ -8,6 +8,7 @@ import meshroom
 meshroom.setupEnvironment()
 
 import meshroom.core.graph
+from meshroom.nodes.aliceVision.CameraInit import readSfMData
 from meshroom import multiview
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
@@ -47,27 +48,9 @@ if not args.input and not args.inputImages:
     exit(1)
 
 if  args.input and os.path.isfile(args.input):
-    # with open(args.input) as jsonFile:
-    with io.open(args.input, 'r', encoding='utf-8', errors='ignore') as jsonFile:
-        fileData = json.load(jsonFile)
-        intrinsics = fileData.get("intrinsics", [])
+        views, intrinsics = readSfMData(args.input)
+        print(views)
         print(intrinsics)
-        intrinsics = [{k: v for k, v in item.items()} for item in fileData.get("intrinsics", [])]
-        for intrinsic in intrinsics:
-            pp = intrinsic['principalPoint']
-            intrinsic['principalPoint'] = {}
-            intrinsic['principalPoint']['x'] = pp[0]
-            intrinsic['principalPoint']['y'] = pp[1]
-            # convert empty string distortionParams (i.e: Pinhole model) to empty list
-            if intrinsic['distortionParams'] == '':
-                intrinsic['distortionParams'] = list()
-        print(intrinsics)
-
-        # views = fileData.get("views", [])
-        views = [{k: v for k, v in item.items()} for item in fileData.get("views", [])]
-        for view in views:
-            view['metadata'] = json.dumps(view['metadata'])  # convert metadata to string
-        # print(views)
 
         graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, inputImages=args.inputImages, output=args.output)
         graph.findNode('DepthMap_1').downscale.value = args.scale

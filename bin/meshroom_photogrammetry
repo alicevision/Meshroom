@@ -53,10 +53,10 @@ if  args.input and os.path.isfile(args.input):
         print(intrinsics)
 
         graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, inputImages=args.inputImages, output=args.output)
-        graph.findNode('DepthMap_1').downscale.value = args.scale
 else:
     graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
-    graph.findNode('DepthMap_1').downscale.value = args.scale
+
+graph.findNode('DepthMap_1').downscale.value = args.scale
 
 if args.save:
     graph.save(args.save)

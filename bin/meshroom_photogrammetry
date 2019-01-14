@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import json
-import os
-import io
 
 import meshroom
 meshroom.setupEnvironment()
@@ -49,8 +46,8 @@ if not args.input and not args.inputImages:
 
 if  args.input and os.path.isfile(args.input):
         views, intrinsics = readSfMData(args.input)
-        print(views)
-        print(intrinsics)
+        # print(views)
+        # print(intrinsics)
 
         graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, inputImages=args.inputImages, output=args.output)
 else:

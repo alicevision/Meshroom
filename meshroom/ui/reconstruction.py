@@ -9,6 +9,7 @@ from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
 from meshroom.core.node import Node, Status
 from meshroom.ui.graph import UIGraph
+from meshroom.ui.utils import makeProperty
 
 
 class Message(QObject):
@@ -240,15 +241,7 @@ class Reconstruction(UIGraph):
         if set(self._cameraInits.objectList()) == set(cameraInits):
             return
         self._cameraInits.setObjectList(cameraInits)
-        self.setCameraInit(cameraInits[0] if cameraInits else None)
-
-    def setCameraInit(self, cameraInit):
-        """ Set the internal CameraInit node. """
-        # TODO: handle multiple CameraInit nodes
-        if self._cameraInit == cameraInit:
-            return
-        self._cameraInit = cameraInit
-        self.cameraInitChanged.emit()
+        self.cameraInit = cameraInits[0] if cameraInits else None
 
     def getCameraInitIndex(self):
         if not self._cameraInit:
@@ -257,7 +250,7 @@ class Reconstruction(UIGraph):
 
     def setCameraInitIndex(self, idx):
         camInit = self._cameraInits[idx] if self._cameraInits else None
-        self.setCameraInit(camInit)
+        self.cameraInit = camInit
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
@@ -421,7 +414,7 @@ class Reconstruction(UIGraph):
             with self.groupedGraphModification("Set Views and Intrinsics"):
                 self.setAttribute(cameraInit.viewpoints, views)
                 self.setAttribute(cameraInit.intrinsics, intrinsics)
-        self.setCameraInit(cameraInit)
+        self.cameraInit = cameraInit
 
     def setBuildingIntrinsics(self, value):
         if self._buildingIntrinsics == value:
@@ -430,7 +423,7 @@ class Reconstruction(UIGraph):
         self.buildingIntrinsicsChanged.emit()
 
     cameraInitChanged = Signal()
-    cameraInit = Property(QObject, lambda self: self._cameraInit, notify=cameraInitChanged)
+    cameraInit = makeProperty(QObject, "_cameraInit", cameraInitChanged, resetOnDestroy=True)
     cameraInitIndex = Property(int, getCameraInitIndex, setCameraInitIndex, notify=cameraInitChanged)
     viewpoints = Property(QObject, getViewpoints, notify=cameraInitChanged)
     cameraInits = Property(QObject, lambda self: self._cameraInits, constant=True)
@@ -502,11 +495,15 @@ class Reconstruction(UIGraph):
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):
+        if not viewpoint:
+            return
         # keys are strings (faster lookup)
         return str(viewpoint.viewId.value) in self._views
 
     @Slot(QObject, result=bool)
     def isReconstructed(self, viewpoint):
+        if not viewpoint:
+            return
         # fetch up-to-date poseId from sfm result (in case of rigs, poseId might have changed)
         view = self._views.get(str(viewpoint.poseId.value), None)  # keys are strings (faster lookup)
         return view.get('poseId', -1) in self._poses if view else False

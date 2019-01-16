@@ -280,20 +280,27 @@ Panel {
     }
 
     footerContent: RowLayout {
-        anchors.fill: parent
 
         // Image count
-        Label {
+        RowLayout {
             Layout.fillWidth: true
-            text: grid.model.count + " image" + (grid.model.count > 1 ? "s" : "") + (_reconstruction.nbCameras > 0 ? " / " + _reconstruction.nbCameras + " camera" + (_reconstruction.nbCameras > 1 ? "s": "") : "")
-            elide: Text.ElideRight
+            spacing: 8
+            RowLayout {
+                MaterialLabel { text: MaterialIcons.image }
+                Label { text: grid.model.count }
+            }
+            RowLayout {
+                visible: _reconstruction.cameraInit && _reconstruction.nbCameras
+                MaterialLabel { text: MaterialIcons.videocam }
+                Label { text: _reconstruction.cameraInit ? _reconstruction.nbCameras : 0 }
+            }
         }
 
+        Item { Layout.fillHeight: true; Layout.fillWidth: true }
+
         // Thumbnail size icon and slider
-        Label {
+        MaterialLabel {
             text: MaterialIcons.photo_size_select_large
-            font.family: MaterialIcons.fontFamily
-            font.pixelSize: 13
         }
         Slider {
             id: thumbnailSizeSlider
@@ -301,7 +308,6 @@ Panel {
             value: defaultCellSize
             to: 250
             implicitWidth: 70
-            height: parent.height
         }
     }
 

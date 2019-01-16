@@ -144,9 +144,9 @@ Panel {
                             active: parent.inViews
                             visible: active
                             sourceComponent: MaterialLabel {
-                                property bool reconstructed: _reconstruction.isReconstructed(model.object)
+                                property bool reconstructed: _reconstruction.sfmReport && _reconstruction.isReconstructed(model.object)
                                 text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
-                                color: reconstructed ? "#4CAF50" : "#F44336"
+                                color: reconstructed ? Colors.green : Colors.red
                                 ToolTip.text: reconstructed ? "Reconstructed" : "Not Reconstructed"
                             }
                         }

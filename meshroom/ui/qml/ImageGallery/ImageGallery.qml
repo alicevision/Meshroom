@@ -40,7 +40,7 @@ Panel {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            ScrollBar.vertical: ScrollBar {}
+            ScrollBar.vertical: ScrollBar { minimumSize: 0.05 }
 
             focus: true
             clip: true

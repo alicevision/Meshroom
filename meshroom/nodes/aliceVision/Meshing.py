@@ -201,6 +201,14 @@ class Meshing(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.BoolParam(
+            name='addLandmarksToTheDensePointCloud',
+            label='Add Landmarks To The Dense Point Cloud',
+            description='Add SfM Landmarks to the dense point cloud.',
+            value=True,
+            uid=[0],
+            advanced=True,
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

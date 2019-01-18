@@ -70,12 +70,12 @@ def readSfMData(sfmFile):
         # convert empty string distortionParams (i.e: Pinhole model) to empty list
         if intrinsic['distortionParams'] == '':
             intrinsic['distortionParams'] = list()
-    print('intrinsics:', intrinsics)
+
     viewsKeys = [v.name for v in Viewpoint]
     views = [{k: v for k, v in item.items() if k in viewsKeys} for item in data.get("views", [])]
     for view in views:
         view['metadata'] = json.dumps(view['metadata'])  # convert metadata to string
-    print('views:', views)
+
     return views, intrinsics
 
 class CameraInit(desc.CommandLineNode):

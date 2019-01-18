@@ -18,16 +18,22 @@ class SfMTransform(desc.CommandLineNode):
         desc.ChoiceParam(
             name='method',
             label='Transformation Method',
-            description='''Transformation method (transformation, auto_from_cameras, auto_from_landmarks).''',
+            description="Transformation method:\n"
+                        " * transformation: Apply a given transformation\n"
+                        " * auto_from_cameras: Use cameras\n"
+                        " * auto_from_landmarks: Use landmarks\n"
+                        " * from_single_camera: Use a specific camera as the origin of the coordinate system",
             value='auto_from_landmarks',
-            values=['transformation', 'auto_from_cameras', 'auto_from_landmarks'],
+            values=['transformation', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera'],
             exclusive=True,
             uid=[0],
         ),
         desc.StringParam(
             name='transformation',
             label='Transformation',
-            description='''Align [X,Y,Z] to +Y-axis, rotate around Y by R deg, scale by S; syntax: X,Y,Z;R;S. (required only for 'transformation' method)''',
+            description="Required only for 'transformation' and 'from_single_camera' methods:\n"
+                        " * transformation: Align [X,Y,Z] to +Y-axis, rotate around Y by R deg, scale by S; syntax: X,Y,Z;R;S\n"
+                        " * from_single_camera: Camera UID or image filename",
             value='',
             uid=[0],
         ),

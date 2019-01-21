@@ -80,6 +80,7 @@ Panel {
                 }
 
                 delegate: ImageDelegate {
+                    id: imageDelegate
 
                     viewpoint: object.value
                     width: grid.cellWidth
@@ -108,37 +109,29 @@ Panel {
                     onRemoveRequest: sendRemoveRequest()
                     Keys.onDeletePressed: sendRemoveRequest()
 
-                    Row {
+                    RowLayout {
                         anchors.top: parent.top
+                        anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.margins: 4
+                        anchors.margins: 2
                         spacing: 2
 
                         property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
-                        property bool noMetadata: valid && !_reconstruction.hasMetadata(model.object)
-                        property bool noIntrinsic: valid  && !_reconstruction.hasValidIntrinsic(model.object)
+                        property string intrinsicInitMode: valid ? _reconstruction.getIntrinsicInitMode(object) : ""
                         property bool inViews: valid && _reconstruction.sfmReport && _reconstruction.isInViews(object)
 
-                        // Missing metadata indicator
-                        Loader {
-                            active: parent.noMetadata
-                            visible: active
-                            sourceComponent: MaterialLabel {
-                                text: MaterialIcons.info_outline
-                                color: "#FF9800"
-                                ToolTip.text: "No Metadata"
-                            }
+
+                        // Camera Initialization indicator
+                        IntrinsicsIndicator {
+                            intrinsicInitMode: parent.intrinsicInitMode
+                            metadata: imageDelegate.metadata
+                            font.pointSize: 10
+                            padding: 2
+                            background: Rectangle { color: Colors.sysPalette.window; opacity: 0.6 }
                         }
-                        // Unknown camera instrinsics indicator
-                        Loader {
-                            active: parent.noIntrinsic
-                            visible: active
-                            sourceComponent: MaterialLabel {
-                                text: MaterialIcons.camera
-                                color: "#FF9800"
-                                ToolTip.text: "No Camera Instrinsic Parameters (missing Metadata?)"
-                            }
-                        }
+
+                        Item { Layout.fillWidth: true }
+
                         // Reconstruction status indicator
                         Loader {
                             active: parent.inViews

@@ -26,7 +26,7 @@ Item {
         id: _viewpoint
         property url source: viewpoint ? Filepath.stringToUrl(viewpoint.get("path").value) : ''
         property string metadataStr: viewpoint ? viewpoint.get("metadata").value : ''
-        property var metadata: metadataStr ? JSON.parse(viewpoint.get("metadata").value) : null
+        property var metadata: metadataStr ? JSON.parse(viewpoint.get("metadata").value) : {}
     }
 
     MouseArea {

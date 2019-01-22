@@ -138,9 +138,12 @@ Panel {
                             visible: active
                             sourceComponent: MaterialLabel {
                                 property bool reconstructed: _reconstruction.sfmReport && _reconstruction.isReconstructed(model.object)
-                                text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
+                                text: reconstructed ? MaterialIcons.videocam : MaterialIcons.videocam_off
                                 color: reconstructed ? Colors.green : Colors.red
-                                ToolTip.text: reconstructed ? "Reconstructed" : "Not Reconstructed"
+                                font.pointSize: 10
+                                padding: 2
+                                ToolTip.text: "<b>Camera: " + (reconstructed ? "" : "Not ") + "Reconstructed</b>"
+                                background: Rectangle { color: Colors.sysPalette.window; opacity: 0.6 }
                             }
                         }
                     }

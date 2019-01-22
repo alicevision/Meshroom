@@ -205,7 +205,7 @@ class Meshing(desc.CommandLineNode):
             name='addLandmarksToTheDensePointCloud',
             label='Add Landmarks To The Dense Point Cloud',
             description='Add SfM Landmarks to the dense point cloud.',
-            value=True,
+            value=False,
             uid=[0],
             advanced=True,
         ),

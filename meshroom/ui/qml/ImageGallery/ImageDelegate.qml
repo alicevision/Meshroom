@@ -15,6 +15,7 @@ Item {
     property alias source: _viewpoint.source
     property alias metadata: _viewpoint.metadata
     property bool readOnly: false
+    property bool displayViewId: false
 
     signal pressed(var mouse)
     signal removeRequest()
@@ -25,6 +26,7 @@ Item {
     QtObject {
         id: _viewpoint
         property url source: viewpoint ? Filepath.stringToUrl(viewpoint.get("path").value) : ''
+        property int viewId: viewpoint ? viewpoint.get("viewId").value : -1
         property string metadataStr: viewpoint ? viewpoint.get("metadata").value : ''
         property var metadata: metadataStr ? JSON.parse(viewpoint.get("metadata").value) : {}
     }
@@ -89,6 +91,23 @@ Item {
                 text: Filepath.basename(root.source)
                 background: Rectangle {
                     color: root.isCurrentItem ? parent.palette.highlight : "transparent"
+                }
+            }
+
+            // Image viewId
+            Loader {
+                active: displayViewId
+                Layout.fillWidth: true
+                visible: active
+                sourceComponent: Label {
+                    padding: imageLabel.padding
+                    font.pointSize: imageLabel.font.pointSize
+                    elide: imageLabel.elide
+                    horizontalAlignment: imageLabel.horizontalAlignment
+                    text: _viewpoint.viewId
+                    background: Rectangle {
+                        color: imageLabel.background.color
+                    }
                 }
             }
         }

@@ -30,6 +30,27 @@ Panel {
     title: "Images"
     implicitWidth: (root.defaultCellSize + 2) * 2
 
+    headerBar: RowLayout {
+        MaterialToolButton {
+            text: MaterialIcons.more_vert
+            font.pointSize: 11
+            padding: 2
+            onClicked: graphEditorMenu.open()
+            Menu {
+                id: graphEditorMenu
+                y: parent.height
+                x: -width + parent.width
+                Menu {
+                    title: "Advanced"
+                    Action {
+                        id: displayViewIdsAction
+                        text: "Display View IDs"
+                        checkable: true
+                    }
+                }
+            }
+        }
+    }
     ColumnLayout {
         anchors.fill: parent
         spacing: 4
@@ -86,6 +107,7 @@ Panel {
                     width: grid.cellWidth
                     height: grid.cellHeight
                     readOnly: root.readOnly
+                    displayViewId: displayViewIdsAction.checked
 
                     isCurrentItem: GridView.isCurrentItem
 

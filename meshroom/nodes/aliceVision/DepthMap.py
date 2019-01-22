@@ -174,6 +174,15 @@ class DepthMap(desc.CommandLineNode):
             uid=[],
             advanced=True,
         ),
+        desc.IntParam(
+            name='nbGPUs',
+            label='Number of GPUs',
+            description='Number of GPUs to use (0 means use all available GPUs).',
+            value=0,
+            range=(0, 5, 1),
+            uid=[],
+            advanced=True,
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

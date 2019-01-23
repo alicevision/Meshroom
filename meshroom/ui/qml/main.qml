@@ -210,30 +210,23 @@ ApplicationWindow {
         return true
     }
 
-    Dialog {
+    MessageDialog {
         // Popup displayed while the application
         // is busy building intrinsics while importing images
         id: buildingIntrinsicsDialog
         modal: true
-        x: _window.width / 2 - width/2
-        y: _window.height / 2 - height/2
         visible: _reconstruction.buildingIntrinsics
         closePolicy: Popup.NoAutoClose
-        title: "Import Images"
-        padding: 15
+        title: "Initializing Cameras"
+        icon.text: MaterialIcons.camera
+        icon.font.pointSize: 10
+        canCopy: false
+        standardButtons: Dialog.NoButton
 
-        ColumnLayout {
-            anchors.fill: parent
-            Label {
-                text: "Extracting images metadata... "
-                horizontalAlignment: Text.AlignHCenter
-
-                Layout.fillWidth: true
-            }
-            ProgressBar {
-                indeterminate: true
-                Layout.fillWidth: true
-            }
+        detailedText:  "Extracting images metadata and creating Camera intrinsics..."
+        ProgressBar {
+            indeterminate: true
+            Layout.fillWidth: true
         }
     }
 

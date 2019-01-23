@@ -40,6 +40,13 @@ Panel {
                 id: graphEditorMenu
                 y: parent.height
                 x: -width + parent.width
+                MenuItem {
+                    text: "Edit Sensor Database..."
+                    onTriggered: {
+                        sensorDBDialog.open()
+                    }
+                }
+
                 Menu {
                     title: "Advanced"
                     Action {
@@ -51,6 +58,14 @@ Panel {
             }
         }
     }
+
+    SensorDBDialog {
+        id: sensorDBDialog
+        sensorDatabase: Filepath.stringToUrl(cameraInit.attribute("sensorDatabase").value)
+        readOnly: _reconstruction.computing
+        onUpdateIntrinsicsRequest: _reconstruction.rebuildIntrinsics(cameraInit)
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 4

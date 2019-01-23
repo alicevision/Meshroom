@@ -40,7 +40,7 @@ class FeatureExtraction(desc.CommandLineNode):
             name='forceCpuExtraction',
             label='Force CPU Extraction',
             description='Use only CPU feature extraction.',
-            value=False,
+            value=True,
             uid=[],
             advanced=True
         ),

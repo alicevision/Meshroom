@@ -132,12 +132,11 @@ def mvsPipeline(graph, sfm=None):
                                depthMapsFolder=depthMapFilter.depthMapsFolder,
                                depthMapsFilterFolder=depthMapFilter.output)
     meshFiltering = graph.addNewNode('MeshFiltering',
-                               input=meshing.output)
+                                     inputMesh=meshing.outputMesh)
     texturing = graph.addNewNode('Texturing',
-                                 input=meshing.input,
+                                 input=meshing.output,
                                  imagesFolder=depthMap.imagesFolder,
-                                 inputDenseReconstruction=meshing.outputDenseReconstruction,
-                                 inputMesh=meshFiltering.output)
+                                 inputMesh=meshFiltering.outputMesh)
 
     return [
         prepareDenseScene,

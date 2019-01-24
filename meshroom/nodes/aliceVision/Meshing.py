@@ -209,6 +209,14 @@ class Meshing(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.BoolParam(
+            name='saveRawDensePointCloud',
+            label='Save Raw Dense Point Cloud',
+            description='Save dense point cloud before cut and filtering.',
+            value=False,
+            uid=[],
+            advanced=True,
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

@@ -134,30 +134,38 @@ RowLayout {
             point1y: parent.width / 2
             point2x: dragTarget.x + dragTarget.width/2
             point2y: dragTarget.y + dragTarget.height/2
-            color: nameLabel.palette.text
+            color: nameLabel.color
         }
     }
 
     // Attribute name
-    Label {
-        id: nameLabel
-        text: attribute.name
-        elide: Text.ElideMiddle
+    Item {
+        id: nameContainer
         Layout.fillWidth: true
-        font.pointSize: 5
-        horizontalAlignment: attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+        implicitHeight: childrenRect.height
 
-        Loader {
-            active: parent.truncated && (connectMA.containsMouse || connectMA.drag.active || dropArea.containsDrag)
-            anchors.right: root.layoutDirection == Qt.LeftToRight ? undefined : nameLabel.right
-            // Non-elided label
-            sourceComponent: Label {
-                leftPadding: root.layoutDirection == Qt.LeftToRight ? 0 : 1
-                rightPadding: root.layoutDirection == Qt.LeftToRight ? 1 : 0
-                text: attribute.name
-                background: Rectangle {
-                    color: parent.palette.window
-                }
+        TextMetrics {
+            id: metrics
+            property bool truncated: width > nameContainer.width
+            text: nameLabel.text
+            font: nameLabel.font
+        }
+
+        Label {
+            id: nameLabel
+
+            property bool hovered: (connectMA.containsMouse || connectMA.drag.active || dropArea.containsDrag)
+            text: attribute.name
+            elide: hovered ? Text.ElideNone : Text.ElideMiddle
+            width: hovered ? contentWidth : parent.width
+            font.pointSize: 5
+            horizontalAlignment: attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+            anchors.right: attribute.isOutput ? parent.right : undefined
+
+            background: Rectangle {
+                visible: parent.hovered && metrics.truncated
+                anchors { fill: parent; leftMargin: -1; rightMargin: -1 }
+                color: parent.palette.window
             }
         }
     }

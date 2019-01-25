@@ -1,7 +1,7 @@
 import logging
 import os
 
-from PySide2.QtCore import Qt, Slot, QJsonValue, Property
+from PySide2.QtCore import Qt, Slot, QJsonValue, Property, qInstallMessageHandler, QtMsgType
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
@@ -15,12 +15,47 @@ from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
 
 
+class MessageHandler(object):
+    """
+    MessageHandler that translates Qt logs to Python logging system.
+    Also contains and filters a list of blacklisted QML warnings that end up in the
+    standard error even when setOutputWarningsToStandardError is set to false on the engine.
+    """
+
+    outputQmlWarnings = bool(os.environ.get("MESHROOM_OUTPUT_QML_WARNINGS", False))
+
+    logFunctions = {
+        QtMsgType.QtDebugMsg: logging.debug,
+        QtMsgType.QtWarningMsg: logging.warning,
+        QtMsgType.QtInfoMsg: logging.info,
+        QtMsgType.QtFatalMsg: logging.fatal,
+        QtMsgType.QtCriticalMsg: logging.critical,
+        QtMsgType.QtSystemMsg: logging.critical
+    }
+
+    # Warnings known to be inoffensive and related to QML but not silenced
+    # even when 'MESHROOM_OUTPUT_QML_WARNINGS' is set to False
+    qmlWarningsBlacklist = (
+        'Failed to download scene at QUrl("")',
+        'QVariant(Invalid) Please check your QParameters',
+        'Texture will be invalid for this frame',
+    )
+
+    @classmethod
+    def handler(cls, messageType, context, message):
+        """ Message handler remapping Qt logs to Python logging system. """
+        # discard blacklisted Qt messages related to QML when 'output qml warnings' is set to false
+        if not cls.outputQmlWarnings and any(w in message for w in cls.qmlWarningsBlacklist):
+            return
+        MessageHandler.logFunctions[messageType](message)
+
+
 class MeshroomApp(QApplication):
     """ Meshroom UI Application. """
     def __init__(self, args):
         args = [args[0], '-style', 'fusion'] + args[1:]  # force Fusion style by default
-
         super(MeshroomApp, self).__init__(args)
+
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
         self.setAttribute(Qt.AA_EnableHighDpiScaling)
@@ -40,7 +75,9 @@ class MeshroomApp(QApplication):
         self.engine.addFilesFromDirectory(qmlDir, recursive=True)
         self.engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
         # whether to output qml warnings to stderr (disable by default)
-        self.engine.setOutputWarningsToStandardError(bool(os.environ.get("MESHROOM_OUTPUT_QML_WARNINGS", False)))
+        self.engine.setOutputWarningsToStandardError(MessageHandler.outputQmlWarnings)
+        qInstallMessageHandler(MessageHandler.handler)
+
         self.engine.addImportPath(qmlDir)
         components.registerTypes()
 

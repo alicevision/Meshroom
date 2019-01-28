@@ -157,14 +157,10 @@ Panel {
                         property string intrinsicInitMode: valid ? _reconstruction.getIntrinsicInitMode(object) : ""
                         property bool inViews: valid && _reconstruction.sfmReport && _reconstruction.isInViews(object)
 
-
                         // Camera Initialization indicator
                         IntrinsicsIndicator {
                             intrinsicInitMode: parent.intrinsicInitMode
                             metadata: imageDelegate.metadata
-                            font.pointSize: 10
-                            padding: 2
-                            background: Rectangle { color: Colors.sysPalette.window; opacity: 0.6 }
                         }
 
                         Item { Layout.fillWidth: true }
@@ -173,14 +169,11 @@ Panel {
                         Loader {
                             active: parent.inViews
                             visible: active
-                            sourceComponent: MaterialLabel {
+                            sourceComponent: ImageBadge {
                                 property bool reconstructed: _reconstruction.sfmReport && _reconstruction.isReconstructed(model.object)
                                 text: reconstructed ? MaterialIcons.videocam : MaterialIcons.videocam_off
                                 color: reconstructed ? Colors.green : Colors.red
-                                font.pointSize: 10
-                                padding: 2
                                 ToolTip.text: "<b>Camera: " + (reconstructed ? "" : "Not ") + "Reconstructed</b>"
-                                background: Rectangle { color: Colors.sysPalette.window; opacity: 0.6 }
                             }
                         }
                     }

@@ -8,7 +8,7 @@ import Utils 1.0
  * Display camera initialization status and the value of metadata
  * that take part in this process.
  */
-MaterialLabel {
+ImageBadge {
     id: root
 
     property string intrinsicInitMode

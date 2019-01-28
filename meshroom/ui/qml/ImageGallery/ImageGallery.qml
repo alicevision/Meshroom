@@ -163,6 +163,20 @@ Panel {
                             metadata: imageDelegate.metadata
                         }
 
+                        // Rig indicator
+                        Loader {
+                            id: rigIndicator
+                            property int rigId: parent.valid ? object.value.get("rigId").value : -1
+                            active: rigId >= 0
+                            sourceComponent: ImageBadge {
+                                property int rigSubPoseId: model.object.value.get("subPoseId").value
+                                text: MaterialIcons.link
+                                ToolTip.text: "<b>Rig: Initialized</b><br>" +
+                                              "Rig ID: " + rigIndicator.rigId + " <br>" +
+                                              "SubPose: " + rigSubPoseId
+                            }
+                        }
+
                         Item { Layout.fillWidth: true }
 
                         // Reconstruction status indicator

@@ -169,13 +169,12 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
         ),
         desc.BoolParam(
-            name='refineIntrinsics',
-            label='Refine intrinsic parameters.',
-            description='The intrinsics parameters of the cameras (focal length, \n'
-                        'principal point, distortion if any) are kept constant '
-                        'during the reconstruction.\n'
+            name='lockAllIntrinsics',
+            label='Force Lock of All Intrinsic Camera Parameters.',
+            description='Force to keep constant all the intrinsics parameters of the cameras (focal length, \n'
+                        'principal point, distortion if any) during the reconstruction.\n'
                         'This may be helpful if the input cameras are already fully calibrated.',
-            value=True,
+            value=False,
             uid=[0],
         ),
         desc.File(

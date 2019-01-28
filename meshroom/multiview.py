@@ -20,7 +20,7 @@ def findFiles(folder, patterns):
     return outFiles
 
 
-def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), output=''):
+def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), inputIntrinsics=(), output=''):
     """
     Create a new Graph with a complete photogrammetry pipeline.
 
@@ -44,6 +44,8 @@ def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), output=''
             cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
         if inputViewpoints:
             cameraInit.viewpoints.extend(inputViewpoints)
+        if inputIntrinsics:
+            cameraInit.intrinsics.extend(inputIntrinsics)
 
     if output:
         texturing = mvsNodes[-1]

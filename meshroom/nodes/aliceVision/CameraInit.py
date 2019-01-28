@@ -45,6 +45,38 @@ Intrinsic = [
                    value=False, uid=[0]),
 ]
 
+def readSfMData(sfmFile):
+    """ Read views and intrinsics from a .sfm file
+
+    Args:
+        sfmFile: the .sfm file containing views and intrinsics
+
+    Returns:
+        The views and intrinsics of the .sfm as two separate lists
+    """
+    import io  # use io.open for Python2/3 compatibility (allow to specify encoding + errors handling)
+    # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
+    with io.open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
+        data = json.load(f)
+
+    intrinsicsKeys = [i.name for i in Intrinsic]
+
+    intrinsics = [{k: v for k, v in item.items() if k in intrinsicsKeys} for item in data.get("intrinsics", [])]
+    for intrinsic in intrinsics:
+        pp = intrinsic['principalPoint']
+        intrinsic['principalPoint'] = {}
+        intrinsic['principalPoint']['x'] = pp[0]
+        intrinsic['principalPoint']['y'] = pp[1]
+        # convert empty string distortionParams (i.e: Pinhole model) to empty list
+        if intrinsic['distortionParams'] == '':
+            intrinsic['distortionParams'] = list()
+
+    viewsKeys = [v.name for v in Viewpoint]
+    views = [{k: v for k, v in item.items() if k in viewsKeys} for item in data.get("views", [])]
+    for view in views:
+        view['metadata'] = json.dumps(view['metadata'])  # convert metadata to string
+
+    return views, intrinsics
 
 class CameraInit(desc.CommandLineNode):
     commandLine = 'aliceVision_cameraInit {allParams} --allowSingleView 1' # don't throw an error if there is only one image
@@ -134,28 +166,7 @@ class CameraInit(desc.CommandLineNode):
 
             # Reload result of aliceVision_cameraInit
             cameraInitSfM = node.output.value
-            import io  # use io.open for Python2/3 compatibility (allow to specify encoding + errors handling)
-            # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
-            with io.open(cameraInitSfM, 'r', encoding='utf-8', errors='ignore') as f:
-                data = json.load(f)
-
-            intrinsicsKeys = [i.name for i in Intrinsic]
-            intrinsics = [{k: v for k, v in item.items() if k in intrinsicsKeys} for item in data.get("intrinsics", [])]
-            for intrinsic in intrinsics:
-                pp = intrinsic['principalPoint']
-                intrinsic['principalPoint'] = {}
-                intrinsic['principalPoint']['x'] = pp[0]
-                intrinsic['principalPoint']['y'] = pp[1]
-                # convert empty string distortionParams (i.e: Pinhole model) to empty list
-                if intrinsic['distortionParams'] == '':
-                    intrinsic['distortionParams'] = list()
-            # print('intrinsics:', intrinsics)
-            viewsKeys = [v.name for v in Viewpoint]
-            views = [{k: v for k, v in item.items() if k in viewsKeys} for item in data.get("views", [])]
-            for view in views:
-                view['metadata'] = json.dumps(view['metadata'])  # convert metadata to string
-            # print('views:', views)
-            return views, intrinsics
+            return readSfMData(cameraInitSfM)
 
         except Exception:
             raise
@@ -198,4 +209,3 @@ class CameraInit(desc.CommandLineNode):
     def processChunk(self, chunk):
         self.createViewpointsFile(chunk.node)
         desc.CommandLineNode.processChunk(self, chunk)
-

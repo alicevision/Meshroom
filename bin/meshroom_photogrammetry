@@ -5,6 +5,7 @@ import meshroom
 meshroom.setupEnvironment()
 
 import meshroom.core.graph
+from meshroom.nodes.aliceVision.CameraInit import readSfMData
 from meshroom import multiview
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
@@ -43,7 +44,15 @@ if not args.input and not args.inputImages:
     print('Nothing to compute. You need to set --input or --inputImages.')
     exit(1)
 
-graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
+if  args.input and os.path.isfile(args.input):
+        views, intrinsics = readSfMData(args.input)
+        # print(views)
+        # print(intrinsics)
+
+        graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, inputImages=args.inputImages, output=args.output)
+else:
+    graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
+
 graph.findNode('DepthMap_1').downscale.value = args.scale
 
 if args.save:
@@ -62,4 +71,3 @@ if args.toNode:
     toNodes = graph.findNodes(args.toNode)
 
 meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
-

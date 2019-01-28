@@ -521,14 +521,14 @@ class Reconstruction(UIGraph):
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):
         if not viewpoint:
-            return
+            return False
         # keys are strings (faster lookup)
         return str(viewpoint.viewId.value) in self._views
 
     @Slot(QObject, result=bool)
     def isReconstructed(self, viewpoint):
         if not viewpoint:
-            return
+            return False
         # fetch up-to-date poseId from sfm result (in case of rigs, poseId might have changed)
         view = self._views.get(str(viewpoint.poseId.value), None)  # keys are strings (faster lookup)
         return view.get('poseId', -1) in self._poses if view else False

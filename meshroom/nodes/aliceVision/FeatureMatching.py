@@ -105,6 +105,17 @@ class FeatureMatching(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.FloatParam(
+            name='geometricError',
+            label='Geometric Validation Error',
+            description='Maximum error (in pixels) allowed for features matching during geometric verification.\n'
+                        'If set to 0, it will select a threshold according to the localizer estimator used\n'
+                        '(if ACRansac, it will analyze the input data to select the optimal value).',
+            value=0.0,
+            range=(0.0, 10.0, 0.1),
+            uid=[0],
+            advanced=True,
+        ),
         desc.IntParam(
             name='maxMatches',
             label='Max Matches',

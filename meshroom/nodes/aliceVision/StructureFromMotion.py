@@ -62,6 +62,26 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.IntParam(
+            name='localizerEstimatorMaxIterations',
+            label='Localizer Max Ransac Iterations',
+            description='Maximum number of iterations allowed in ransac step.',
+            value=4096,
+            range=(1, 20000, 1),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.FloatParam(
+            name='localizerEstimatorError',
+            label='Localizer Max Ransac Error',
+            description='Maximum error (in pixels) allowed for camera localization (resectioning).\n'
+                        'If set to 0, it will select a threshold according to the localizer estimator used\n'
+                        '(if ACRansac, it will analyze the input data to select the optimal value).',
+            value=0.0,
+            range=(0.0, 100.0, 0.1),
+            uid=[0],
+            advanced=True,
+        ),
        desc.BoolParam(
             name='lockScenePreviouslyReconstructed',
             label='Lock Scene Previously Reconstructed',

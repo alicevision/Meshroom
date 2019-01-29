@@ -15,14 +15,14 @@ ImageBadge {
     property var metadata: ({})
 
     // access useful metadata
-    readonly property string make: metadata["Make"]
-    readonly property string model: metadata["Model"]
-    readonly property string focalLength: metadata["Exif:FocalLength"]
-    readonly property string focalLength35: metadata["Exif:FocalLengthIn35mmFilm"]
-    readonly property string bodySerialNumber: metadata["Exif:BodySerialNumber"]
-    readonly property string lensSerialNumber: metadata["Exif:LensSerialNumber"]
-    readonly property string sensorWidth: metadata["AliceVision:SensorWidth"]
-    readonly property string sensorWidthEstimation: metadata["AliceVision:SensorWidthEstimation"]
+    readonly property var make: metadata["Make"]
+    readonly property var model: metadata["Model"]
+    readonly property var focalLength: metadata["Exif:FocalLength"]
+    readonly property var focalLength35: metadata["Exif:FocalLengthIn35mmFilm"]
+    readonly property var bodySerialNumber: metadata["Exif:BodySerialNumber"]
+    readonly property var lensSerialNumber: metadata["Exif:LensSerialNumber"]
+    readonly property var sensorWidth: metadata["AliceVision:SensorWidth"]
+    readonly property var sensorWidthEstimation: metadata["AliceVision:SensorWidthEstimation"]
 
     property string statusText: ""
     property string detailsText: ""

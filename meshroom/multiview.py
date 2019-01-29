@@ -2,22 +2,29 @@
 __version__ = "1.0"
 
 import os
-import fnmatch
-import re
 
 from meshroom.core.graph import Graph, GraphModification
 
+# Supported image extensions
+imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr', '.rw2', '.cr2', '.nef', '.arw')
 
-def findFiles(folder, patterns):
-    rules = [re.compile(fnmatch.translate(pattern), re.IGNORECASE) for pattern in patterns]
-    outFiles = []
-    for name in os.listdir(folder):
-        for rule in rules:
-            if rule.match(name):
-                filepath = os.path.join(folder, name)
-                outFiles.append(filepath)
-                break
-    return outFiles
+
+def isImageFile(filepath):
+    """ Return whether filepath is a path to an image file supported by Meshroom. """
+    return os.path.splitext(filepath)[1].lower() in imageExtensions
+
+
+def findImageFiles(folder):
+    """
+    Return all files that are images in 'folder' based on their extensions.
+
+    Args:
+        folder (str): the folder to look into
+
+    Returns:
+        list: the list of image files.
+    """
+    return [os.path.join(folder, filename) for filename in os.listdir(folder) if isImageFile(filename)]
 
 
 def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), inputIntrinsics=(), output=''):
@@ -38,7 +45,7 @@ def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), inputIntr
         sfmNodes, mvsNodes = photogrammetryPipeline(graph)
         cameraInit = sfmNodes[0]
         if inputFolder:
-            images = findFiles(inputFolder, ['*.jpg', '*.png'])
+            images = findImageFiles(inputFolder)
             cameraInit.viewpoints.extend([{'path': image} for image in images])
         if inputImages:
             cameraInit.viewpoints.extend([{'path': image} for image in inputImages])

@@ -171,7 +171,10 @@ class CameraInit(desc.CommandLineNode):
             The updated views and intrinsics as two separate lists
         """
         assert isinstance(node.nodeDesc, CameraInit)
-        assert node.graph is None
+        if node.graph:
+            # make a copy of the node outside the graph
+            # to change its cache folder without modifying the original node
+            node = node.graph.copyNode(node)[0]
 
         tmpCache = tempfile.mkdtemp()
         node.updateInternals(tmpCache)

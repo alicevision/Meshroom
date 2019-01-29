@@ -60,6 +60,7 @@ class FeatureMatching(desc.CommandLineNode):
             values=('BRUTE_FORCE_L2', 'ANN_L2', 'CASCADE_HASHING_L2', 'FAST_CASCADE_HASHING_L2', 'BRUTE_FORCE_HAMMING'),
             exclusive=True,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='geometricEstimator',
@@ -69,6 +70,7 @@ class FeatureMatching(desc.CommandLineNode):
             values=['acransac', 'loransac'],
             exclusive=True,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='geometricFilterType',
@@ -83,6 +85,7 @@ class FeatureMatching(desc.CommandLineNode):
             values=['fundamental_matrix', 'essential_matrix', 'homography_matrix', 'homography_growing', 'no_filtering'],
             exclusive=True,
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='distanceRatio',
@@ -91,6 +94,7 @@ class FeatureMatching(desc.CommandLineNode):
             value=0.8,
             range=(0.0, 1.0, 0.01),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='maxIteration',
@@ -99,6 +103,18 @@ class FeatureMatching(desc.CommandLineNode):
             value=2048,
             range=(1, 20000, 1),
             uid=[0],
+            advanced=True,
+        ),
+        desc.FloatParam(
+            name='geometricError',
+            label='Geometric Validation Error',
+            description='Maximum error (in pixels) allowed for features matching during geometric verification.\n'
+                        'If set to 0, it will select a threshold according to the localizer estimator used\n'
+                        '(if ACRansac, it will analyze the input data to select the optimal value).',
+            value=0.0,
+            range=(0.0, 10.0, 0.1),
+            uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name='maxMatches',
@@ -107,6 +123,7 @@ class FeatureMatching(desc.CommandLineNode):
             value=0,
             range=(0, 10000, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='savePutativeMatches',
@@ -114,6 +131,7 @@ class FeatureMatching(desc.CommandLineNode):
             description='putative matches.',
             value=False,
             uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='guidedMatching',
@@ -128,6 +146,7 @@ class FeatureMatching(desc.CommandLineNode):
             description='debug files (svg, dot).',
             value=False,
             uid=[],
+            advanced=True
         ),
         desc.ChoiceParam(
             name='verboseLevel',

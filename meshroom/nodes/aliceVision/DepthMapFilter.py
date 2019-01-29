@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 
@@ -6,25 +6,43 @@ from meshroom.core import desc
 class DepthMapFilter(desc.CommandLineNode):
     commandLine = 'aliceVision_depthMapFiltering {allParams}'
     gpu = desc.Level.NORMAL
-    size = desc.DynamicNodeSize('ini')
+    size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=10)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     inputs = [
         desc.File(
-            name="ini",
-            label="MVS Configuration file",
-            description="",
-            value="",
+            name='input',
+            label='Input',
+            description='SfMData file.',
+            value='',
             uid=[0],
-            ),
+        ),    
         desc.File(
-            name="depthMapFolder",
-            label="Depth Map Folder",
-            description="Input depth map folder",
+            name="depthMapsFolder",
+            label="Depth Maps Folder",
+            description="Input depth maps folder",
             value="",
             uid=[0],
-            ),
+        ),
+        desc.FloatParam(
+            name='minViewAngle',
+            label='Min View Angle',
+            description='Minimum angle between two views.',
+            value=2.0,
+            range=(0.0, 10.0, 0.1),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.FloatParam(
+            name='maxViewAngle',
+            label='Max View Angle',
+            description='Maximum angle between two views.',
+            value=70.0,
+            range=(10.0, 120.0, 1),
+            uid=[0],
+            advanced=True,
+        ),
         desc.IntParam(
             name="nNearestCams",
             label="Number of Nearest Cameras",
@@ -32,9 +50,10 @@ class DepthMapFilter(desc.CommandLineNode):
             value=10,
             range=(0, 20, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
-            name="minNumOfConsistensCams",
+            name="minNumOfConsistentCams",
             label="Min Consistent Cameras",
             description="Min Number of Consistent Cameras",
             value=3,
@@ -42,7 +61,7 @@ class DepthMapFilter(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
-            name="minNumOfConsistensCamsWithLowSimilarity",
+            name="minNumOfConsistentCamsWithLowSimilarity",
             label="Min Consistent Cameras Bad Similarity",
             description="Min Number of Consistent Cameras for pixels with weak similarity value",
             value=4,
@@ -56,6 +75,7 @@ class DepthMapFilter(desc.CommandLineNode):
             value=0,
             range=(0, 10, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.IntParam(
             name="pixSizeBallWithLowSimilarity",
@@ -64,6 +84,7 @@ class DepthMapFilter(desc.CommandLineNode):
             value=0,
             range=(0, 10, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

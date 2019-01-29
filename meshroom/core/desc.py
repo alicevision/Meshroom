@@ -1,4 +1,4 @@
-from meshroom.common import BaseObject, Property, Variant
+from meshroom.common import BaseObject, Property, Variant, VariantList
 from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import collections
@@ -11,7 +11,7 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, uid, group):
+    def __init__(self, name, label, description, value, advanced, uid, group):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
@@ -19,6 +19,7 @@ class Attribute(BaseObject):
         self._value = value
         self._uid = uid
         self._group = group
+        self._advanced = advanced
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
@@ -26,6 +27,7 @@ class Attribute(BaseObject):
     value = Property(Variant, lambda self: self._value, constant=True)
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
+    advanced = Property(bool, lambda self: self._advanced, constant=True)
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
@@ -40,7 +42,7 @@ class ListAttribute(Attribute):
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=False)
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
@@ -60,7 +62,7 @@ class GroupAttribute(Attribute):
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=False)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
@@ -82,15 +84,15 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group):
-        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group, advanced):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
 
 class File(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams'):
-        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False):
+        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):
@@ -101,12 +103,12 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams'):
-        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False):
+        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         try:
-            return bool(value)
+            return bool(int(value)) # int cast is useful to handle string values ('0', '1')
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
@@ -114,9 +116,9 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams'):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False):
         self._range = range
-        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
@@ -127,15 +129,15 @@ class IntParam(Param):
         except:
             raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
-    range = Property(Variant, lambda self: self._range, constant=True)
+    range = Property(VariantList, lambda self: self._range, constant=True)
 
 
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams'):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False):
         self._range = range
-        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         try:
@@ -143,19 +145,19 @@ class FloatParam(Param):
         except:
             raise ValueError('FloatParam only supports float value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
-    range = Property(Variant, lambda self: self._range, constant=True)
+    range = Property(VariantList, lambda self: self._range, constant=True)
 
 
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' '):
+    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False):
         assert values
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
         self._valueType = type(self._values[0])  # cast to value type
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def conformValue(self, val):
         """ Conform 'val' to the correct type and check for its validity """
@@ -172,7 +174,7 @@ class ChoiceParam(Param):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
-    values = Property(Variant, lambda self: self._values, constant=True)
+    values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
@@ -180,8 +182,8 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams'):
-        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False):
+        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):

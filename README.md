@@ -1,6 +1,6 @@
 # ![Meshroom - 3D Reconstruction Software](/docs/logo/banner-meshroom.png)
 
-Meshroom is a free, open-source 3D Reconstruction Software based on the [AliceVision](https://github.com/alicevision/AliceVision) framework.
+Meshroom is a free, open-source 3D Reconstruction Software based on the [AliceVision](https://github.com/alicevision/AliceVision) Photogrammetric Computer Vision framework.
 
 Learn more details about the pipeline on [AliceVision website](http://alicevision.github.io).
 
@@ -9,6 +9,8 @@ See [results of the pipeline on sketchfab](http://sketchfab.com/AliceVision).
 Continuous integration:
 * Windows: [![Build status](https://ci.appveyor.com/api/projects/status/25sd7lfr3v0rnvni/branch/develop?svg=true)](https://ci.appveyor.com/project/AliceVision/meshroom/branch/develop)
 * Linux: [![Build Status](https://travis-ci.org/alicevision/meshroom.svg?branch=develop)](https://travis-ci.org/alicevision/meshroom)
+
+
 ## Photogrammetry
 
 Photogrammetry is the science of making measurements from photographs.
@@ -59,3 +61,17 @@ You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver 
 # Linux/macOS: PYTHONPATH=$PWD
 python bin/meshroom_photogrammetry --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
 ```
+
+
+## FAQ
+
+See the [Meshroom wiki](https://github.com/alicevision/meshroom/wiki) for more information.
+
+
+## Contact
+
+Use the public mailing-list to ask questions or request features. It is also a good place for informal discussions like sharing results, interesting related technologies or publications:
+> [alicevision@googlegroups.com](mailto:alicevision@googlegroups.com)
+> [http://groups.google.com/group/alicevision](http://groups.google.com/group/alicevision)
+
+You can also contact the core team privately on: [alicevision-team@googlegroups.com](mailto:alicevision-team@googlegroups.com).

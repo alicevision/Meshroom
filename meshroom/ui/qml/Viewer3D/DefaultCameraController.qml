@@ -5,6 +5,8 @@ import Qt3D.Input 2.1
 import Qt3D.Logic 2.0
 import QtQml 2.2
 
+import Meshroom.Helpers 1.0
+
 Entity {
     id: root
 
@@ -12,8 +14,12 @@ Entity {
     property real translateSpeed: 75.0
     property real tiltSpeed: 500.0
     property real panSpeed: 500.0
-    property bool moving: pressed || actionAlt.active
-    readonly property alias controlPressed: actionControl.active
+    property bool moving: pressed || (actionAlt.active && keyboardHandler._pressed)
+    property alias focus: keyboardHandler.focus
+    readonly property bool pickingActive: actionControl.active && keyboardHandler._pressed
+    property alias rotationSpeed: trackball.rotationSpeed
+    property alias windowSize: trackball.windowSize
+    property alias trackballSize: trackball.trackballSize
 
     readonly property alias pressed: mouseHandler._pressed
     signal mousePressed(var mouse)
@@ -25,19 +31,48 @@ Entity {
     KeyboardDevice { id: keyboardSourceDevice }
     MouseDevice { id: mouseSourceDevice }
 
+    TrackballController {
+        id: trackball
+        camera: root.camera
+    }
+
     MouseHandler {
         id: mouseHandler
         property bool _pressed
+        property point lastPosition
+        property point currentPosition
         sourceDevice: mouseSourceDevice
-        onPressed: { _pressed = true; mousePressed(mouse) }
-        onReleased: { _pressed = false; mouseReleased(mouse)  }
+        onPressed: {
+            _pressed = true;
+            currentPosition = lastPosition = Qt.point(mouse.x, mouse.y);
+            mousePressed(mouse);
+        }
+        onReleased: {
+            _pressed = false;
+            mouseReleased(mouse);
+        }
         onClicked: mouseClicked(mouse)
+        onPositionChanged: { currentPosition = Qt.point(mouse.x, mouse.y) }
         onDoubleClicked: mouseDoubleClicked(mouse)
         onWheel: {
             var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.2;
             var tz = (wheel.angleDelta.y / 120) * d;
             root.camera.translate(Qt.vector3d(0, 0, tz), Camera.DontTranslateViewCenter)
         }
+    }
+
+    KeyboardHandler {
+        id: keyboardHandler
+        sourceDevice: keyboardSourceDevice
+        property bool _pressed
+
+        // When focus is lost while pressing a key, the corresponding action
+        // stays active, even when it's released.
+        // Handle this issue manually by keeping an additional _pressed state
+        // which is cleared when focus changes (used for 'pickingActive' property).
+        onFocusChanged: if(!focus) _pressed = false
+        onPressed: _pressed = true
+        onReleased: _pressed = false
     }
 
     LogicalDevice {
@@ -130,11 +165,9 @@ Entity {
                     root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt))
                     return;
                 }
-                if(actionLMB.active) { // rotate
-                    var rx = -axisMX.value;
-                    var ry = -axisMY.value;
-                    root.camera.panAboutViewCenter(root.panSpeed * rx * dt, Qt.vector3d(0,1,0))
-                    root.camera.tiltAboutViewCenter(root.tiltSpeed * ry * dt)
+                if(actionLMB.active){ // trackball rotation
+                    trackball.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition, dt);
+                    mouseHandler.lastPosition = mouseHandler.currentPosition;
                     return;
                 }
                 if(actionAlt.active && actionRMB.active) { // zoom with alt + RMD

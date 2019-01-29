@@ -18,80 +18,102 @@ RowLayout {
 
     readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
 
-    spacing: 4
+    signal doubleClicked(var mouse, var attr)
 
-    Label {
-        id: parameterLabel
+    spacing: 2
 
+
+    Pane {
+        background: Rectangle { color: Qt.darker(parent.palette.window, 1.1) }
+        padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
         Layout.fillHeight: true
-        horizontalAlignment: attribute.isOutput ? Qt.AlignRight : Qt.AlignLeft
-        elide: Label.ElideRight
-        padding: 5
-        wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
-        text: attribute.label
+        RowLayout {
+            spacing: 0
+            width: parent.width
+            height: parent.height
+            Label {
+                id: parameterLabel
 
-        // Tooltip hint with attribute's description
-        ToolTip.text: object.desc.description
-        ToolTip.visible: parameterMA.containsMouse && object.desc.description
-        ToolTip.delay: 800
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                horizontalAlignment: attribute.isOutput ? Qt.AlignRight : Qt.AlignLeft
+                elide: Label.ElideRight
+                padding: 5
+                wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
-        // make label bold if attribute's value is not the default one
-        font.bold: !object.isOutput && !object.isDefault
+                text: attribute.label
 
-        // make label italic if attribute is a link
-        font.italic: object.isLink
+                // Tooltip hint with attribute's description
+                ToolTip.text: "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.desc.description)
+                ToolTip.visible: parameterMA.containsMouse
+                ToolTip.delay: 800
 
-        background: Rectangle { color: Qt.darker(parent.palette.window, 1.2) }
+                // make label bold if attribute's value is not the default one
+                font.bold: !object.isOutput && !object.isDefault
 
-        MouseArea {
-            id: parameterMA
-            anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.AllButtons
+                // make label italic if attribute is a link
+                font.italic: object.isLink
 
-            property Component menuComp: Menu {
-                id: paramMenu
 
-                property bool isFileAttribute: attribute.type == "File"
-                property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.value)
+                MouseArea {
+                    id: parameterMA
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.AllButtons
+                    onDoubleClicked: root.doubleClicked(mouse, root.attribute)
 
-                MenuItem {
-                    text: "Reset To Default Value"
-                    enabled: root.editable && !attribute.isDefault
-                    onTriggered: _reconstruction.resetAttribute(attribute)
-                }
+                    property Component menuComp: Menu {
+                        id: paramMenu
 
-                MenuSeparator {
-                    visible: paramMenu.isFileAttribute
-                    height: visible ? implicitHeight : 0
-                }
+                        property bool isFileAttribute: attribute.type == "File"
+                        property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.value)
 
-                MenuItem {
-                    visible: paramMenu.isFileAttribute
-                    height: visible ? implicitHeight : 0
-                    text: paramMenu.isFilepath ? "Open Containing Folder" : "Open Folder"
-                    onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(attribute.value)) :
-                                                      Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
-                }
+                        MenuItem {
+                            text: "Reset To Default Value"
+                            enabled: root.editable && !attribute.isDefault
+                            onTriggered: _reconstruction.resetAttribute(attribute)
+                        }
 
-                MenuItem {
-                    visible: paramMenu.isFilepath
-                    height: visible ? implicitHeight : 0
-                    text: "Open File"
-                    onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                        MenuSeparator {
+                            visible: paramMenu.isFileAttribute
+                            height: visible ? implicitHeight : 0
+                        }
+
+                        MenuItem {
+                            visible: paramMenu.isFileAttribute
+                            height: visible ? implicitHeight : 0
+                            text: paramMenu.isFilepath ? "Open Containing Folder" : "Open Folder"
+                            onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(attribute.value)) :
+                                                              Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                        }
+
+                        MenuItem {
+                            visible: paramMenu.isFilepath
+                            height: visible ? implicitHeight : 0
+                            text: "Open File"
+                            onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                        }
+                    }
+
+                    onClicked: {
+                        forceActiveFocus()
+                        if(mouse.button == Qt.RightButton)
+                        {
+                            var menu = menuComp.createObject(parameterLabel)
+                            menu.parent = parameterLabel
+                            menu.popup()
+                        }
+                    }
                 }
             }
-
-            onClicked: {
-                forceActiveFocus()
-                if(mouse.button == Qt.RightButton)
-                {
-                    var menu = menuComp.createObject(parameterLabel)
-                    menu.parent = parameterLabel
-                    menu.popup()
-                }
+            MaterialLabel {
+                visible: attribute.desc.advanced
+                text: MaterialIcons.build
+                color: palette.mid
+                font.pointSize: 8
+                padding: 4
             }
         }
     }
@@ -162,13 +184,14 @@ RowLayout {
         Component {
             id: comboBox_component
             ComboBox {
+                id: combo
                 enabled: root.editable
                 model: attribute.desc.values
                 Component.onCompleted: currentIndex = find(attribute.value)
                 onActivated: _reconstruction.setAttribute(attribute, currentText)
                 Connections {
                     target: attribute
-                    onValueChanged: currentIndex = find(attribute.value)
+                    onValueChanged: combo.currentIndex = combo.find(attribute.value)
                 }
             }
         }
@@ -203,8 +226,10 @@ RowLayout {
                     }
                     DoubleValidator {
                         id: doubleValidator
+                        locale: 'C'  // use '.' decimal separator disregarding the system locale
                     }
-                    implicitWidth: 70
+                    implicitWidth: 100
+                    Layout.fillWidth: !slider.active
                     enabled: root.editable
                     // cast value to string to avoid intrusive scientific notations on numbers
                     property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : attribute.value)
@@ -222,7 +247,7 @@ RowLayout {
                 Loader {
                     id: slider
                     Layout.fillWidth: true
-                    active: attribute.desc.range != undefined
+                    active: attribute.desc.range.length === 3
                     sourceComponent: Slider {
                         readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
                         readonly property real formattedValue: value.toFixed(stepDecimalCount)
@@ -284,7 +309,7 @@ RowLayout {
                     id: lv
                     model: listAttribute_layout.expanded ? attribute.value : undefined
                     visible: model != undefined && count > 0
-                    implicitHeight: Math.min(childrenRect.height, 300)
+                    implicitHeight: Math.min(contentHeight, 300)
                     Layout.fillWidth: true
                     Layout.margins: 4
                     clip: true
@@ -307,6 +332,7 @@ RowLayout {
                             obj.label.text = index
                             obj.label.horizontalAlignment = Text.AlignHCenter
                             obj.label.verticalAlignment = Text.AlignVCenter
+                            obj.doubleClicked.connect(function(attr) {root.doubleClicked(attr)})
                         }
                         ToolButton {
                             enabled: root.editable
@@ -325,28 +351,17 @@ RowLayout {
 
         Component {
             id: groupAttribute_component
-            ListView {
-                id: chilrenListView
-                model: attribute.value
-                implicitWidth: parent.width
-                implicitHeight: childrenRect.height
-                onCountChanged: forceLayout()
-                spacing: 2
-
-                delegate: RowLayout {
-                    id: row
-                    width: chilrenListView.width
-                    property var childAttrib: object
-
-                    Component.onCompleted:  {
-                        var cpt = Qt.createComponent("AttributeItemDelegate.qml")
-                        var obj = cpt.createObject(row,
-                                                   {'attribute': Qt.binding(function() { return row.childAttrib }),
-                                                    'readOnly': Qt.binding(function() { return root.readOnly })
-                                                   })
-                        obj.Layout.fillWidth = true
-                        obj.labelWidth = 100 // reduce label width for children (space gain)
-                    }
+            ColumnLayout {
+                id: groupItem
+                Component.onCompleted:  {
+                    var cpt = Qt.createComponent("AttributeEditor.qml");
+                    var obj = cpt.createObject(groupItem,
+                                               {'attributes': Qt.binding(function() { return attribute.value }),
+                                                'readOnly': Qt.binding(function() { return root.readOnly }),
+                                                'labelWidth': 100, // reduce label width for children (space gain)
+                                               })
+                    obj.Layout.fillWidth = true;
+                    obj.attributeDoubleClicked.connect(function(attr) {root.doubleClicked(attr)})
                 }
             }
         }

@@ -20,7 +20,7 @@ def findFiles(folder, patterns):
     return outFiles
 
 
-def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), output=''):
+def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), inputIntrinsics=(), output=''):
     """
     Create a new Graph with a complete photogrammetry pipeline.
 
@@ -44,6 +44,8 @@ def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), output=''
             cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
         if inputViewpoints:
             cameraInit.viewpoints.extend(inputViewpoints)
+        if inputIntrinsics:
+            cameraInit.intrinsics.extend(inputIntrinsics)
 
     if output:
         texturing = mvsNodes[-1]
@@ -121,27 +123,26 @@ def mvsPipeline(graph, sfm=None):
 
     prepareDenseScene = graph.addNewNode('PrepareDenseScene',
                                          input=sfm.output if sfm else "")
-    cameraConnection = graph.addNewNode('CameraConnection',
-                                        ini=prepareDenseScene.ini)
     depthMap = graph.addNewNode('DepthMap',
-                                ini=cameraConnection.ini)
+                                input=prepareDenseScene.input,
+                                imagesFolder=prepareDenseScene.output)
     depthMapFilter = graph.addNewNode('DepthMapFilter',
-                                      depthMapFolder=depthMap.output,
-                                      ini=depthMap.ini)
+                                      input=depthMap.input,
+                                      depthMapsFolder=depthMap.output)
     meshing = graph.addNewNode('Meshing',
-                               depthMapFolder=depthMapFilter.depthMapFolder,
-                               depthMapFilterFolder=depthMapFilter.output,
-                               ini=depthMapFilter.ini)
+                               input=depthMapFilter.input,
+                               depthMapsFolder=depthMapFilter.depthMapsFolder,
+                               depthMapsFilterFolder=depthMapFilter.output)
     meshFiltering = graph.addNewNode('MeshFiltering',
                                input=meshing.output)
     texturing = graph.addNewNode('Texturing',
-                                 ini=meshing.ini,
+                                 input=meshing.input,
+                                 imagesFolder=depthMap.imagesFolder,
                                  inputDenseReconstruction=meshing.outputDenseReconstruction,
                                  inputMesh=meshFiltering.output)
 
     return [
         prepareDenseScene,
-        cameraConnection,
         depthMap,
         depthMapFilter,
         meshing,

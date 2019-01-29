@@ -373,3 +373,4 @@ Signal = QtCore.Signal
 Property = QtCore.Property
 BaseObject = QtCore.QObject
 Variant = "QVariant"
+VariantList = "QVariantList"

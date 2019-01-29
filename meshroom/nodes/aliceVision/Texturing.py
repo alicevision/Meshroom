@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 from meshroom.core import desc
 
@@ -9,9 +9,16 @@ class Texturing(desc.CommandLineNode):
     ram = desc.Level.INTENSIVE
     inputs = [
         desc.File(
-            name='ini',
-            label='MVS Configuration file',
-            description='',
+            name='input',
+            label='Input',
+            description='SfMData file.',
+            value='',
+            uid=[0],
+        ), 
+        desc.File(
+            name='imagesFolder',
+            label='Images Folder',
+            description='Use images from a specific folder instead of those specify in the SfMData file.\nFilename should be the image uid.',
             value='',
             uid=[0],
         ),
@@ -85,7 +92,7 @@ class Texturing(desc.CommandLineNode):
         ),
         desc.IntParam(
             name='maxNbImagesForFusion',
-            label='Max Nb of Images For Fusion',
+            label='Max Number of Images For Fusion',
             description='''Max number of images to combine to create the final texture''',
             value=3,
             range=(0, 10, 1),
@@ -98,6 +105,7 @@ class Texturing(desc.CommandLineNode):
             value=0.0,
             range=(0.0, 1.0, 0.01),
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='angleHardThreshold',
@@ -106,6 +114,7 @@ class Texturing(desc.CommandLineNode):
             value=90.0,
             range=(0.0, 180.0, 0.01),
             uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='forceVisibleByAllVertices',
@@ -113,6 +122,7 @@ class Texturing(desc.CommandLineNode):
             description='''Triangle visibility is based on the union of vertices visiblity.''',
             value=False,
             uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='flipNormals',
@@ -120,6 +130,7 @@ class Texturing(desc.CommandLineNode):
             description='''Option to flip face normals. It can be needed as it depends on the vertices order in triangles and the convention change from one software to another.''',
             value=False,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='visibilityRemappingMethod',
@@ -129,6 +140,7 @@ class Texturing(desc.CommandLineNode):
             values=['Pull', 'Push', 'PullPush'],
             exclusive=True,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

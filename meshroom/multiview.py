@@ -27,12 +27,11 @@ def findImageFiles(folder):
     return [os.path.join(folder, filename) for filename in os.listdir(folder) if isImageFile(filename)]
 
 
-def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), inputIntrinsics=(), output=''):
+def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output=''):
     """
     Create a new Graph with a complete photogrammetry pipeline.
 
     Args:
-        inputFolder (str, optional): folder containing image files
         inputImages (list of str, optional): list of image file paths
         inputViewpoints (list of Viewpoint, optional): list of Viewpoints
         output (str, optional): the path to export reconstructed model to
@@ -44,15 +43,9 @@ def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), inputIntr
     with GraphModification(graph):
         sfmNodes, mvsNodes = photogrammetryPipeline(graph)
         cameraInit = sfmNodes[0]
-        if inputFolder:
-            images = findImageFiles(inputFolder)
-            cameraInit.viewpoints.extend([{'path': image} for image in images])
-        if inputImages:
-            cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
-        if inputViewpoints:
-            cameraInit.viewpoints.extend(inputViewpoints)
-        if inputIntrinsics:
-            cameraInit.intrinsics.extend(inputIntrinsics)
+        cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        cameraInit.viewpoints.extend(inputViewpoints)
+        cameraInit.intrinsics.extend(inputIntrinsics)
 
     if output:
         texturing = mvsNodes[-1]

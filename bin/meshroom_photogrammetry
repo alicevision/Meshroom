@@ -6,14 +6,14 @@ import meshroom
 meshroom.setupEnvironment()
 
 import meshroom.core.graph
-from meshroom.nodes.aliceVision.CameraInit import readSfMData
 from meshroom import multiview
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
-parser.add_argument('--input', metavar='FOLDER', type=str,
+parser.add_argument('--input', metavar='FOLDER_OR_SFM', type=str,
                     default='',
-                    help='Input folder or json file.')
+                    help='Input folder with images or SfM file (.sfm, .json).')
 parser.add_argument('--inputImages', metavar='IMAGES', type=str, nargs='*',
+                    default=[],
                     help='Input images.')
 parser.add_argument('--output', metavar='FOLDER', type=str, required=True,
                     help='Output folder.')
@@ -45,16 +45,27 @@ if not args.input and not args.inputImages:
     print('Nothing to compute. You need to set --input or --inputImages.')
     exit(1)
 
-if  args.input and os.path.isfile(args.input):
-        views, intrinsics = readSfMData(args.input)
-        # print(views)
-        # print(intrinsics)
 
-        graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, inputImages=args.inputImages, output=args.output)
-else:
-    graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
+views, intrinsics = [], []
+# Build image files list from inputImages arguments
+images = [f for f in args.inputImages if multiview.isImageFile(f)]
+
+if os.path.isdir(args.input):
+    # args.input is a folder: extend images list with images in that folder
+    images += multiview.findImageFiles(args.input)
+elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json', '.sfm'):
+    # args.input is a sfmData file: setup pre-calibrated views and intrinsics
+    from meshroom.nodes.aliceVision.CameraInit import readSfMData
+    views, intrinsics = readSfMData(args.input)
+
+graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
 
 graph.findNode('DepthMap_1').downscale.value = args.scale
+
+cameraInit = graph.findNode('CameraInit')
+views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
+cameraInit.viewpoints.value = views
+cameraInit.intrinsics.value = intrinsics
 
 if args.save:
     graph.save(args.save)

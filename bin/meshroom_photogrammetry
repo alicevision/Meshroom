@@ -15,6 +15,11 @@ parser.add_argument('--input', metavar='FOLDER_OR_SFM', type=str,
 parser.add_argument('--inputImages', metavar='IMAGES', type=str, nargs='*',
                     default=[],
                     help='Input images.')
+
+parser.add_argument('--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
+                    help='Meshroom file containing a pre-configured photogrammetry pipeline to run on input images. '
+                         'Requirements: the graph must contain one CameraInit and one Publish node.')
+
 parser.add_argument('--output', metavar='FOLDER', type=str, required=True,
                     help='Output folder.')
 
@@ -47,6 +52,9 @@ if not args.input and not args.inputImages:
     print('Nothing to compute. You need to set --input or --inputImages.')
     exit(1)
 
+if args.pipeline and not args.output:
+    print('--output must be set when using --pipeline.')
+    exit(1)
 
 views, intrinsics = [], []
 # Build image files list from inputImages arguments
@@ -60,7 +68,29 @@ elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json'
     from meshroom.nodes.aliceVision.CameraInit import readSfMData
     views, intrinsics = readSfMData(args.input)
 
-graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
+# initialize photogrammetry pipeline
+if args.pipeline:
+    # custom pipeline
+    graph = meshroom.core.graph.loadGraph(args.pipeline)
+    try:
+        cameraInit = graph.findNode('CameraInit')
+        # reset graph inputs
+        cameraInit.viewpoints.resetValue()
+        cameraInit.intrinsics.resetValue()
+    except KeyError:
+        raise RuntimeError("meshroom_photogrammetry requires a pipeline graph with exactly one 'CameraInit' node.")
+
+    if not graph.canComputeLeaves:
+        raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")
+
+    try:
+        publish = graph.findNode('Publish')
+        publish.output.value = args.output
+    except KeyError:
+        raise RuntimeError("meshroom_photogrammetry requires a pipeline graph with exactly one 'Publish' node.")
+else:
+    # default pipeline
+    graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
 
 if args.scale > 0:
     graph.findNode('DepthMap_1').downscale.value = args.scale

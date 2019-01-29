@@ -9,6 +9,7 @@ from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
 from meshroom.core.node import Node, Status
 from meshroom.ui.graph import UIGraph
+from meshroom.ui.utils import makeProperty
 
 
 class Message(QObject):
@@ -240,15 +241,7 @@ class Reconstruction(UIGraph):
         if set(self._cameraInits.objectList()) == set(cameraInits):
             return
         self._cameraInits.setObjectList(cameraInits)
-        self.setCameraInit(cameraInits[0] if cameraInits else None)
-
-    def setCameraInit(self, cameraInit):
-        """ Set the internal CameraInit node. """
-        # TODO: handle multiple CameraInit nodes
-        if self._cameraInit == cameraInit:
-            return
-        self._cameraInit = cameraInit
-        self.cameraInitChanged.emit()
+        self.cameraInit = cameraInits[0] if cameraInits else None
 
     def getCameraInitIndex(self):
         if not self._cameraInit:
@@ -257,7 +250,7 @@ class Reconstruction(UIGraph):
 
     def setCameraInitIndex(self, idx):
         camInit = self._cameraInits[idx] if self._cameraInits else None
-        self.setCameraInit(camInit)
+        self.cameraInit = camInit
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
@@ -363,11 +356,16 @@ class Reconstruction(UIGraph):
         # Start the process of updating views and intrinsics
         self.runAsync(self.buildIntrinsics, args=(cameraInit, images,))
 
-    def buildIntrinsics(self, cameraInit, additionalViews):
+    def buildIntrinsics(self, cameraInit, additionalViews, rebuild=False):
         """
         Build up-to-date intrinsics and views based on already loaded + additional images.
         Does not modify the graph, can be called outside the main thread.
         Emits intrinsicBuilt(views, intrinsics) when done.
+
+        Args:
+            cameraInit (Node): CameraInit node to build the intrinsics for
+            additionalViews: list of additional views to add to the CameraInit viewpoints
+            rebuild (bool): whether to rebuild already created intrinsics
         """
         views = []
         intrinsics = []
@@ -379,6 +377,13 @@ class Reconstruction(UIGraph):
         #   * wait for the result before actually creating new nodes in the graph (see onIntrinsicsAvailable)
         inputs = cameraInit.toDict()["inputs"] if cameraInit else {}
         cameraInitCopy = Node("CameraInit", **inputs)
+        if rebuild:
+            # if rebuilding all intrinsics, for each Viewpoint:
+            for vp in cameraInitCopy.viewpoints.value:
+                vp.intrinsicId.resetValue()  # reset intrinsic assignation
+                vp.metadata.resetValue()  # and metadata (to clear any previous 'SensorWidth' entries)
+            # reset existing intrinsics list
+            cameraInitCopy.intrinsics.resetValue()
 
         try:
             self.setBuildingIntrinsics(True)
@@ -394,9 +399,19 @@ class Reconstruction(UIGraph):
         self.setBuildingIntrinsics(False)
         # always emit intrinsicsBuilt signal to inform listeners
         # in other threads that computation is over
-        self.intrinsicsBuilt.emit(cameraInit, views, intrinsics)
+        self.intrinsicsBuilt.emit(cameraInit, views, intrinsics, rebuild)
 
-    def onIntrinsicsAvailable(self, cameraInit, views, intrinsics):
+    @Slot(Node)
+    def rebuildIntrinsics(self, cameraInit):
+        """
+        Rebuild intrinsics of 'cameraInit' from scratch.
+
+        Args:
+            cameraInit (Node): the CameraInit node
+        """
+        self.runAsync(self.buildIntrinsics, args=(cameraInit, (), True))
+
+    def onIntrinsicsAvailable(self, cameraInit, views, intrinsics, rebuild=False):
         """ Update CameraInit with given views and intrinsics. """
         augmentSfM = cameraInit is None
         commandTitle = "Add {} Images"
@@ -407,6 +422,9 @@ class Reconstruction(UIGraph):
             allViewIds = self.allViewIds()
             views = [view for view in views if int(view["viewId"]) not in allViewIds]
             commandTitle = "Augment Reconstruction ({} Images)"
+
+        if rebuild:
+            commandTitle = "Rebuild '{}' Intrinsics".format(cameraInit.label)
 
         # No additional views: early return
         if not views:
@@ -421,7 +439,7 @@ class Reconstruction(UIGraph):
             with self.groupedGraphModification("Set Views and Intrinsics"):
                 self.setAttribute(cameraInit.viewpoints, views)
                 self.setAttribute(cameraInit.intrinsics, intrinsics)
-        self.setCameraInit(cameraInit)
+        self.cameraInit = cameraInit
 
     def setBuildingIntrinsics(self, value):
         if self._buildingIntrinsics == value:
@@ -430,11 +448,11 @@ class Reconstruction(UIGraph):
         self.buildingIntrinsicsChanged.emit()
 
     cameraInitChanged = Signal()
-    cameraInit = Property(QObject, lambda self: self._cameraInit, notify=cameraInitChanged)
+    cameraInit = makeProperty(QObject, "_cameraInit", cameraInitChanged, resetOnDestroy=True)
     cameraInitIndex = Property(int, getCameraInitIndex, setCameraInitIndex, notify=cameraInitChanged)
     viewpoints = Property(QObject, getViewpoints, notify=cameraInitChanged)
     cameraInits = Property(QObject, lambda self: self._cameraInits, constant=True)
-    intrinsicsBuilt = Signal(QObject, list, list)
+    intrinsicsBuilt = Signal(QObject, list, list, bool)
     buildingIntrinsicsChanged = Signal()
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
     liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
@@ -502,11 +520,15 @@ class Reconstruction(UIGraph):
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):
+        if not viewpoint:
+            return False
         # keys are strings (faster lookup)
         return str(viewpoint.viewId.value) in self._views
 
     @Slot(QObject, result=bool)
     def isReconstructed(self, viewpoint):
+        if not viewpoint:
+            return False
         # fetch up-to-date poseId from sfm result (in case of rigs, poseId might have changed)
         view = self._views.get(str(viewpoint.poseId.value), None)  # keys are strings (faster lookup)
         return view.get('poseId', -1) in self._poses if view else False
@@ -516,6 +538,38 @@ class Reconstruction(UIGraph):
         # keys are strings (faster lookup)
         allIntrinsicIds = [i.intrinsicId.value for i in self._cameraInit.intrinsics.value]
         return viewpoint.intrinsicId.value in allIntrinsicIds
+
+    @Slot(QObject, result=QObject)
+    def getIntrinsic(self, viewpoint):
+        """
+        Get the intrinsic attribute associated to 'viewpoint' based on its intrinsicId.
+
+        Args:
+            viewpoint (Attribute): the Viewpoint to consider.
+        Returns:
+            Attribute: the Viewpoint's corresponding intrinsic or None if not found.
+        """
+        return next((i for i in self._cameraInit.intrinsics.value if i.intrinsicId.value == viewpoint.intrinsicId.value)
+                    , None)
+
+    @Slot(QObject, result=str)
+    def getIntrinsicInitMode(self, viewpoint):
+        """
+        Get the initialization mode for the intrinsic associated to 'viewpoint'.
+
+        Args:
+            viewpoint (Attribute): the Viewpoint to consider.
+        Returns:
+            str: the initialization mode of the Viewpoint's intrinsic or an empty string if none.
+        """
+        intrinsic = self.getIntrinsic(viewpoint)
+        if not intrinsic:
+            return ""
+        try:
+            return intrinsic.initializationMode.value
+        except AttributeError:
+            # handle older versions that did not have this attribute
+            return ""
 
     @Slot(QObject, result=bool)
     def hasMetadata(self, viewpoint):

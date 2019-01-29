@@ -18,11 +18,13 @@ parser.add_argument('--inputImages', metavar='IMAGES', type=str, nargs='*',
 parser.add_argument('--output', metavar='FOLDER', type=str, required=True,
                     help='Output folder.')
 
-parser.add_argument('--save', metavar='FOLDER', type=str, required=False,
-                    help='Save the workflow to a meshroom files (instead of running it).')
+parser.add_argument('--save', metavar='FILE', type=str, required=False,
+                    help='Save the resulting pipeline to a Meshroom file (instead of running it).')
 
-parser.add_argument('--scale', type=int, default=2,
-                    help='Downscale factor for MVS steps. Possible values are: 1, 2, 4, 8, 16.')
+parser.add_argument('--scale', type=int, default=-1,
+                    choices=[-1, 1, 2, 4, 8, 16],
+                    help='Downscale factor override for DepthMap estimation. '
+                         'By default (-1): use pipeline default value.')
 
 parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
                     default=None,
@@ -60,7 +62,8 @@ elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json'
 
 graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
 
-graph.findNode('DepthMap_1').downscale.value = args.scale
+if args.scale > 0:
+    graph.findNode('DepthMap_1').downscale.value = args.scale
 
 cameraInit = graph.findNode('CameraInit')
 views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)

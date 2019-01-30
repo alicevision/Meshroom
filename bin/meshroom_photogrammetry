@@ -92,8 +92,10 @@ else:
     # default pipeline
     graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
 
+# setup DepthMap downscaling
 if args.scale > 0:
-    graph.findNode('DepthMap_1').downscale.value = args.scale
+    for node in graph.nodesByType('DepthMap'):
+        node.downscale.value = args.scale
 
 cameraInit = graph.findNode('CameraInit')
 views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)

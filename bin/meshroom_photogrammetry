@@ -11,20 +11,29 @@ from meshroom import multiview
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
 parser.add_argument('--input', metavar='FOLDER_OR_SFM', type=str,
                     default='',
-                    help='Input folder with images or SfM file (.sfm, .json).')
+                    help='Input folder containing images or file (.sfm or .json) '
+                         'with images paths and optionally predefined camera intrinsics.')
 parser.add_argument('--inputImages', metavar='IMAGES', type=str, nargs='*',
                     default=[],
                     help='Input images.')
 
 parser.add_argument('--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
                     help='Meshroom file containing a pre-configured photogrammetry pipeline to run on input images. '
-                         'Requirements: the graph must contain one CameraInit and one Publish node.')
+                         'If not set, the default photogrammetry pipeline will be used. ' 
+                         'Requirements: the graph must contain one CameraInit node, '
+                         'and one Publish node if --output is set.')
 
-parser.add_argument('--output', metavar='FOLDER', type=str, required=True,
-                    help='Output folder.')
+parser.add_argument('--output', metavar='FOLDER', type=str, required=False,
+                    help='Output folder where results should be copied to. '
+                         'If not set, results will have to be retrieved directly from the cache folder.')
+
+parser.add_argument('--cache', metavar='FOLDER', type=str,
+                    default=None,
+                    help='Custom cache folder to write computation results. '
+                         'If not set, the default cache folder will be used: ' + meshroom.core.defaultCacheFolder)
 
 parser.add_argument('--save', metavar='FILE', type=str, required=False,
-                    help='Save the resulting pipeline to a Meshroom file (instead of running it).')
+                    help='Save the configured Meshroom project to a file (instead of running it).')
 
 parser.add_argument('--scale', type=int, default=-1,
                     choices=[-1, 1, 2, 4, 8, 16],
@@ -34,9 +43,7 @@ parser.add_argument('--scale', type=int, default=-1,
 parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
                     default=None,
                     help='Process the node(s) with its dependencies.')
-parser.add_argument('--cache', metavar='FOLDER', type=str,
-                    default=None,
-                    help='Choose a custom cache folder')
+
 parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
                     action='store_true')
 parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
@@ -44,16 +51,18 @@ parser.add_argument('--forceCompute', help='Compute in all cases even if already
 
 args = parser.parse_args()
 
-if not args.output and not args.save:
-    print('Nothing to do. You need to set --output or --save.')
-    exit(1)
+
+def getOnlyNodeOfType(g, nodeType):
+    """ Helper function to get a node of 'nodeType' in the graph 'g' and raise if no or multiple candidates. """
+    nodes = g.nodesByType(nodeType)
+    if len(nodes) != 1:
+        raise RuntimeError("meshroom_photogrammetry requires a pipeline graph with exactly one '{}' node, {} found."
+                           .format(nodeType, len(nodes)))
+    return nodes[0]
+
 
 if not args.input and not args.inputImages:
     print('Nothing to compute. You need to set --input or --inputImages.')
-    exit(1)
-
-if args.pipeline and not args.output:
-    print('--output must be set when using --pipeline.')
     exit(1)
 
 views, intrinsics = [], []
@@ -72,49 +81,44 @@ elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json'
 if args.pipeline:
     # custom pipeline
     graph = meshroom.core.graph.loadGraph(args.pipeline)
-    try:
-        cameraInit = graph.findNode('CameraInit')
-        # reset graph inputs
-        cameraInit.viewpoints.resetValue()
-        cameraInit.intrinsics.resetValue()
-    except KeyError:
-        raise RuntimeError("meshroom_photogrammetry requires a pipeline graph with exactly one 'CameraInit' node.")
+    cameraInit = getOnlyNodeOfType(graph, 'CameraInit')
+    # reset graph inputs
+    cameraInit.viewpoints.resetValue()
+    cameraInit.intrinsics.resetValue()
 
     if not graph.canComputeLeaves:
         raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")
 
-    try:
-        publish = graph.findNode('Publish')
+    if args.output:
+        publish = getOnlyNodeOfType(graph, 'Publish')
         publish.output.value = args.output
-    except KeyError:
-        raise RuntimeError("meshroom_photogrammetry requires a pipeline graph with exactly one 'Publish' node.")
 else:
     # default pipeline
     graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
+    cameraInit = getOnlyNodeOfType(graph, 'CameraInit')
+
+views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
+cameraInit.viewpoints.value = views
+cameraInit.intrinsics.value = intrinsics
 
 # setup DepthMap downscaling
 if args.scale > 0:
     for node in graph.nodesByType('DepthMap'):
         node.downscale.value = args.scale
 
-cameraInit = graph.findNode('CameraInit')
-views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
-cameraInit.viewpoints.value = views
-cameraInit.intrinsics.value = intrinsics
-
 if args.save:
     graph.save(args.save)
     print('File successfully saved:', args.save)
     exit(0)
 
-if args.cache:
-    graph.cacheDir = args.cache
+# setup cache directory
+graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder
 
-if not graph.cacheDir:
-    graph.cacheDir = meshroom.core.defaultCacheFolder
+if not args.output:
+    print('No output set, results will be available in {}'.format(graph.cacheDir))
 
-toNodes = None
-if args.toNode:
-    toNodes = graph.findNodes(args.toNode)
+# find end nodes (None will compute all graph)
+toNodes = graph.findNodes(args.toNode) if args.toNode else None
 
+# start computation
 meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)

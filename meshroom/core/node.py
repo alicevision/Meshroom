@@ -337,8 +337,8 @@ class BaseNode(BaseObject):
         self.packageName = self.packageVersion = ""
         self._internalFolder = ""
 
-        self._name = None  # type: str
-        self.graph = None  # type: Graph
+        self._name = None
+        self.graph = None
         self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)
         self._uids = dict()

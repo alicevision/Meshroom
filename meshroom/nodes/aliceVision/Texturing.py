@@ -69,6 +69,13 @@ class Texturing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.BoolParam(
+            name='useUDIM',
+            label='Use UDIM',
+            description='Use UDIM UV mapping.',
+            value=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='fillHoles',
             label='Fill Holes',
             description='Fill Texture holes with plausible values',

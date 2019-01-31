@@ -146,6 +146,9 @@ Entity {
         delegate: MediaLoader {
             id: mediaLoader
 
+            // whether MediaLoader has been fully instantiated by the NodeInstantiator
+            property bool fullyInstantiated: false
+
             // explicitely store some attached model properties for outside use and ease binding
             readonly property var attribute: model.attribute
             readonly property int idx: index
@@ -192,13 +195,17 @@ Entity {
                     model.requested = false;
             }
 
-            function updateModelAndCache(forceRequest) {
+            function updateCacheAndModel(forceRequest) {
                 // don't cache explicitely unloaded media
                 if(model.requested && object && dependencyReady) {
                     // cache current object
                     if(cache.add(Filepath.urlToString(mediaLoader.source), object));
                         object = null;
                 }
+                updateModel(forceRequest);
+            }
+
+            function updateModel(forceRequest) {
                 // update model's source path if input is an attribute
                 if(attribute) {
                     model.source = rawSource;
@@ -212,13 +219,15 @@ Entity {
                 // keep 'source' -> 'entity' reference
                 m.sourceToEntity[modelSource] = mediaLoader;
                 // always request media loading when delegate has been created
-                updateModelAndCache(true);
+                updateModel(true);
                 // if external media failed to open, remove element from model
                 if(!attribute && !object)
                     remove(index)
             }
 
-            onCurrentSourceChanged: updateModelAndCache(false)
+            onCurrentSourceChanged: {
+                updateCacheAndModel(false)
+            }
 
             onFinalSourceChanged: {
                 // update media visibility
@@ -229,7 +238,12 @@ Entity {
                 cached = cachedObject !== undefined;
                 if(cached) {
                     object = cachedObject;
-                    object.parent = mediaLoader;
+                    // only change cached object parent if mediaLoader has been fully instantiated
+                    // by the NodeInstantiator; otherwise re-parenting will fail silently and the object will disappear...
+                    // see "onFullyInstantiatedChanged" and parent NodeInstantiator's "onObjectAdded"
+                    if(fullyInstantiated) {
+                        object.parent = mediaLoader;
+                    }
                 }
                 mediaLoader.source = Filepath.stringToUrl(finalSource);
                 if(object) {
@@ -244,6 +258,12 @@ Entity {
                     // source was valid but no loader was created, remove element
                     remove(index);
                 }
+            }
+
+            onFullyInstantiatedChanged: {
+                // delayed reparenting of object coming from the cache
+                if(object)
+                    object.parent = mediaLoader;
             }
 
             onStatusChanged: {
@@ -261,6 +281,12 @@ Entity {
                 }
             ]
         }
+
+        onObjectAdded: {
+            // notify object that it is now fully instantiated
+            object.fullyInstantiated = true;
+        }
+
         onObjectRemoved: {
             delete m.sourceToEntity[object.modelSource];
         }

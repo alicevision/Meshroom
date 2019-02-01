@@ -11,7 +11,11 @@ import Utils 1.0
 ImageBadge {
     id: root
 
-    property string intrinsicInitMode
+    // Intrinsic GroupAttribute
+    property var intrinsic: null
+
+    readonly property string intrinsicInitMode: intrinsic ? childAttributeValue(intrinsic, "initializationMode", "none") : "unknown"
+    readonly property string distortionModel: intrinsic ? childAttributeValue(intrinsic, "type", "") : ""
     property var metadata: ({})
 
     // access useful metadata
@@ -29,6 +33,11 @@ ImageBadge {
     property string helperText: ""
 
     text: MaterialIcons.camera
+    
+    function childAttributeValue(attribute, childName, defaultValue) {
+        var attr = attribute.value.get(childName);
+        return attr ? attr.value : defaultValue;
+    }
 
     function metaStr(value) {
         return value || "<i>undefined</i>"
@@ -37,6 +46,7 @@ ImageBadge {
     ToolTip.text: "<b>Camera Intrinsics: " + statusText + "</b><br>"
                   + (detailsText ? detailsText + "<br>" : "")
                   + (helperText ? helperText + "<br>" : "")
+                  + (distortionModel ? 'Distortion Model: ' + distortionModel + "<br>" : "")
                   + "<br>"
                   + "[Metadata]<br>"
                   + " - Make: " + metaStr(make) + "<br>"
@@ -47,7 +57,7 @@ ImageBadge {
                   + ((bodySerialNumber || lensSerialNumber) ? "" : "<br><br>Warning: SerialNumber metadata is missing.<br> Images from different devices might incorrectly share the same camera internal settings.")
 
 
-    state: intrinsicInitMode ? intrinsicInitMode : "unknown"
+    state: intrinsicInitMode
 
     states: [
         State {

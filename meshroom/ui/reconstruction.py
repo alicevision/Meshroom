@@ -540,27 +540,10 @@ class Reconstruction(UIGraph):
         Returns:
             Attribute: the Viewpoint's corresponding intrinsic or None if not found.
         """
+        if not viewpoint:
+            return None
         return next((i for i in self._cameraInit.intrinsics.value if i.intrinsicId.value == viewpoint.intrinsicId.value)
                     , None)
-
-    @Slot(QObject, result=str)
-    def getIntrinsicInitMode(self, viewpoint):
-        """
-        Get the initialization mode for the intrinsic associated to 'viewpoint'.
-
-        Args:
-            viewpoint (Attribute): the Viewpoint to consider.
-        Returns:
-            str: the initialization mode of the Viewpoint's intrinsic or an empty string if none.
-        """
-        intrinsic = self.getIntrinsic(viewpoint)
-        if not intrinsic:
-            return ""
-        try:
-            return intrinsic.initializationMode.value
-        except AttributeError:
-            # handle older versions that did not have this attribute
-            return ""
 
     @Slot(QObject, result=bool)
     def hasMetadata(self, viewpoint):

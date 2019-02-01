@@ -154,12 +154,11 @@ Panel {
                         spacing: 2
 
                         property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
-                        property string intrinsicInitMode: valid ? _reconstruction.getIntrinsicInitMode(object) : ""
                         property bool inViews: valid && _reconstruction.sfmReport && _reconstruction.isInViews(object)
 
                         // Camera Initialization indicator
                         IntrinsicsIndicator {
-                            intrinsicInitMode: parent.intrinsicInitMode
+                            intrinsic: parent.valid ? _reconstruction.getIntrinsic(object) : null
                             metadata: imageDelegate.metadata
                         }
 

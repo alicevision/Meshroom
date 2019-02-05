@@ -775,6 +775,7 @@ class CompatibilityNode(BaseNode):
             # store attributes that could be used during node upgrade
             if matchDesc:
                 self._commonInputs.append(attrName)
+
         # create outputs attributes
         for attrName, value in self.outputs.items():
             self._addAttribute(attrName, value, True)
@@ -842,7 +843,7 @@ class CompatibilityNode(BaseNode):
         Try to find a matching attribute description in refAttributes for given attribute 'name' and 'value'.
 
         Args:
-            refAttributes ([Attribute]): reference Attributes to look for a description
+            refAttributes ([desc.Attribute]): reference Attributes to look for a description
             name (str): attribute's name
             value: attribute's value
 
@@ -851,13 +852,12 @@ class CompatibilityNode(BaseNode):
         """
         # from original node description based on attribute's name
         attrDesc = next((d for d in refAttributes if d.name == name), None)
-        if attrDesc:
-            # ensure value is valid for this description
-            try:
-                attrDesc.validateValue(value)
-            except ValueError:
-                attrDesc = None
-        return attrDesc
+        # consider this value matches description:
+        #  - if it's a serialized link expression (no proper value to set/evaluate)
+        #  - or if it passes the 'matchDescription' test
+        if attrDesc and (Attribute.isLinkExpression(value) or attrDesc.matchDescription(value)):
+            return attrDesc
+        return None
 
     def _addAttribute(self, name, val, isOutput):
         """
@@ -982,23 +982,31 @@ def nodeFactory(nodeDict, name=None):
             compatibilityIssue = CompatibilityIssue.VersionConflict
         # in other cases, check attributes compatibility between serialized node and its description
         else:
-            descAttrNames = set([attr.name for attr in nodeDesc.inputs + nodeDesc.outputs])
-            attrNames = set([name for name in list(inputs.keys()) + list(outputs.keys())])
-            if attrNames != descAttrNames:
+            # check that the node has the exact same set of inputs/outputs as its description
+            if sorted([attr.name for attr in nodeDesc.inputs]) != sorted(inputs.keys()) or \
+                    sorted([attr.name for attr in nodeDesc.outputs]) != sorted(outputs.keys()):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
+            # verify that all inputs match their descriptions
+            for attrName, value in inputs.items():
+                if not CompatibilityNode.attributeDescFromName(nodeDesc.inputs, attrName, value):
+                    compatibilityIssue = CompatibilityIssue.DescriptionConflict
+                    break
+            # verify that all outputs match their descriptions
+            for attrName, value in outputs.items():
+                if not CompatibilityNode.attributeDescFromName(nodeDesc.outputs, attrName, value):
+                    compatibilityIssue = CompatibilityIssue.DescriptionConflict
+                    break
 
-    # no compatibility issues: instantiate a Node
     if compatibilityIssue is None:
-        n = Node(nodeType, position, **inputs)
-    # otherwise, instantiate a CompatibilityNode
+        node = Node(nodeType, position, **inputs)
     else:
         logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
-        n = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)
+        node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)
         # retro-compatibility: no internal folder saved
         # can't spawn meaningful CompatibilityNode with precomputed outputs
         # => automatically try to perform node upgrade
         if not internalFolder and nodeDesc:
             logging.warning("No serialized output data: performing automatic upgrade on '{}'".format(name))
-            n = n.upgrade()
+            node = node.upgrade()
 
-    return n
+    return node

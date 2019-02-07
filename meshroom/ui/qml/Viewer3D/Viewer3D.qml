@@ -130,7 +130,10 @@ FocusScope {
 
             DefaultCameraController {
                 id: cameraController
-                windowSize: Qt.size(root.width, root.height)
+                windowSize {
+                    width: root.width
+                    height: root.height
+                }
                 rotationSpeed: 10
                 trackballSize: 0.4
 

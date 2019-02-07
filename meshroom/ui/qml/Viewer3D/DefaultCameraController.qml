@@ -44,7 +44,8 @@ Entity {
         sourceDevice: mouseSourceDevice
         onPressed: {
             _pressed = true;
-            currentPosition = lastPosition = Qt.point(mouse.x, mouse.y);
+            currentPosition.x = lastPosition.x = mouse.x;
+            currentPosition.y = lastPosition.y = mouse.y;
             mousePressed(mouse);
         }
         onReleased: {
@@ -52,7 +53,7 @@ Entity {
             mouseReleased(mouse);
         }
         onClicked: mouseClicked(mouse)
-        onPositionChanged: { currentPosition = Qt.point(mouse.x, mouse.y) }
+        onPositionChanged: { currentPosition.x = mouse.x; currentPosition.y = mouse.y }
         onDoubleClicked: mouseDoubleClicked(mouse)
         onWheel: {
             var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.2;

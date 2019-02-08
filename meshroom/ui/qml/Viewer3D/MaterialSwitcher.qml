@@ -3,6 +3,7 @@ import Qt3D.Render 2.9
 import Qt3D.Input 2.0
 import Qt3D.Extras 2.10
 import QtQuick 2.0
+import Utils 1.0
 import "Materials"
 
 /**
@@ -63,6 +64,10 @@ Entity {
             State {
                 name: "Textured"
                 PropertyChanges { target: m; material: diffuseMap ? textured : solid }
+            },
+            State {
+                name: "Spherical Harmonics"
+                PropertyChanges { target: m; material: shMaterial }
             }
         ]
     }
@@ -103,4 +108,11 @@ Entity {
         specular: root.specular
     }
 
+    SphericalHarmonicsMaterial {
+        id: shMaterial
+        objectName: "SphericalHarmonicsMaterial"
+        effect: SphericalHarmonicsEffect {}
+        shlSource: Filepath.stringToUrl(Viewer3DSettings.shlFile)
+        displayNormals: Viewer3DSettings.displayNormals
+    }
 }

@@ -30,7 +30,7 @@ Entity {
 
     QtObject {
         id: m
-        property ListModel mediaModel: ListModel {}
+        property ListModel mediaModel: ListModel { dynamicRoles: true }
         property var sourceToEntity: ({})
 
         readonly property var mediaElement: ({

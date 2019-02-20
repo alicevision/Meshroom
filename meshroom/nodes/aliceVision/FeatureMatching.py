@@ -9,6 +9,9 @@ class FeatureMatching(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=20)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 1
+    info = "A node"
+
     inputs = [
         desc.File(
             name='input',

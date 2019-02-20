@@ -6,6 +6,9 @@ from meshroom.core import desc
 class CameraCalibration(desc.CommandLineNode):
     commandLine = 'aliceVision_cameraCalibration {allParams}'
 
+    category = 3
+    info = "A node"
+
     inputs = [
         desc.File(
             name='input',

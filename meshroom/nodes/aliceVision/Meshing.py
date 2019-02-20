@@ -9,6 +9,9 @@ class Meshing(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
+    category = 2
+    info = "A node"
+
     inputs = [
         desc.File(
             name='input',

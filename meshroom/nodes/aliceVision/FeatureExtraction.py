@@ -9,6 +9,9 @@ class FeatureExtraction(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 1
+    info = "A node"
+
     inputs = [
         desc.File(
             name='input',

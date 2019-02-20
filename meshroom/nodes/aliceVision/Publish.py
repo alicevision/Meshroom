@@ -10,6 +10,10 @@ import os
 
 class Publish(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
+
+    category = 3
+    info = "A node"
+    
     inputs = [
         desc.ListAttribute(
             elementDesc=desc.File(

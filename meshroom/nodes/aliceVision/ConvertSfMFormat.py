@@ -6,6 +6,9 @@ from meshroom.core import desc
 class ConvertSfMFormat(desc.CommandLineNode):
     commandLine = 'aliceVision_convertSfMFormat {allParams}'
     size = desc.DynamicNodeSize('input')
+
+    category = 3
+    info = "A node"
     
     inputs = [
         desc.File(

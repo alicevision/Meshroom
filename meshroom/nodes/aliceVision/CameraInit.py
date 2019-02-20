@@ -94,6 +94,9 @@ class CameraInit(desc.CommandLineNode):
 
     size = desc.DynamicNodeSize('viewpoints')
 
+    category = 1
+    info = "A node"
+
     inputs = [
         desc.ListAttribute(
             name="viewpoints",

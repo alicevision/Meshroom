@@ -7,6 +7,9 @@ from meshroom.core import desc
 class KeyframeSelection(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_keyframeSelection {allParams}'
 
+    category = 3
+    info = "A node"
+
     inputs = [
         desc.ListAttribute(
             elementDesc=desc.File(

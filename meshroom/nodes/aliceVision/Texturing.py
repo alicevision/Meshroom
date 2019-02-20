@@ -7,6 +7,10 @@ class Texturing(desc.CommandLineNode):
     commandLine = 'aliceVision_texturing {allParams}'
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
+
+    category = 2
+    info = "A node"
+    
     inputs = [
         desc.File(
             name='input',

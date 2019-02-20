@@ -6,6 +6,9 @@ from meshroom.core import desc
 class MeshFiltering(desc.CommandLineNode):
     commandLine = 'aliceVision_meshFiltering {allParams}'
 
+    category = 2
+    info = "A node"
+
     inputs = [
         desc.File(
             name='input',

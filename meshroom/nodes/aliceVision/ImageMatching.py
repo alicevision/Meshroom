@@ -8,6 +8,9 @@ class ImageMatching(desc.CommandLineNode):
     commandLine = 'aliceVision_imageMatching {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 1
+    info = "A node"
+
     inputs = [
         desc.File(
             name='input',

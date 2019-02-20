@@ -9,6 +9,9 @@ class MeshDecimate(desc.CommandLineNode):
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
 
+    category = 4
+    info = "A node"
+
     inputs = [
         desc.File(
             name="input",

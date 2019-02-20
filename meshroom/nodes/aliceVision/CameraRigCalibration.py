@@ -7,6 +7,9 @@ from meshroom.core import desc
 class CameraRigCalibration(desc.CommandLineNode):
     commandLine = 'aliceVision_rigCalibration {allParams}'
 
+    category = 3
+    info = "A node"
+
     inputs = [
         desc.File(
             name='sfmdata',

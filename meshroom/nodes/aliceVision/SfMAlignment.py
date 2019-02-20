@@ -7,6 +7,9 @@ class SfMAlignment(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmAlignment {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 3
+    info = "A node"
+
     inputs = [
         desc.File(
             name='input',

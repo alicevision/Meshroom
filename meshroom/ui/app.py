@@ -45,7 +45,10 @@ class MeshroomApp(QApplication):
         components.registerTypes()
 
         # expose available node types that can be instantiated
-        self.engine.rootContext().setContextProperty("_nodeTypes", sorted(nodesDesc.keys()))
+        nodeTypes = {}
+        for n in sorted(nodesDesc.keys()):
+            nodeTypes[n] = {"category":nodesDesc[n].category,"info":nodesDesc[n].info}
+        self.engine.rootContext().setContextProperty("_nodeTypes", nodeTypes)
         r = Reconstruction(parent=self)
         self.engine.rootContext().setContextProperty("_reconstruction", r)
         pm = PaletteManager(self.engine, parent=self)

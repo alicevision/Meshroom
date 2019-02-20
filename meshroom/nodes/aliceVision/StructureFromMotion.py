@@ -10,6 +10,9 @@ class StructureFromMotion(desc.CommandLineNode):
     commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 1
+    info = "A node"
+
     inputs = [
         desc.File(
             name='input',

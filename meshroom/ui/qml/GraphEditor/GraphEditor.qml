@@ -129,9 +129,19 @@ Item {
 
         // Graphical Menu for creating new nodes
         // TODO: add filtering + validate on 'Enter'
-        Item {
+        Menu {
             id: newNodeMenu
             property point spawnPosition
+
+            function parseCategories(pick)
+            {
+                let categories = {1:[],2:[],3:[],4:[]};
+                for (var n in root.nodeTypesModel) {
+                    let category = root.nodeTypesModel[n]["category"];
+                    categories[category].push(n)
+                }
+                return categories[pick]
+            }
 
             function createNode(nodeType)
             {
@@ -140,37 +150,18 @@ Item {
                 selectNode(node)
             }
 
-            onVisibleChanged: {
-                if(visible) {
-                    // when menu is shown,
-                    // clear and give focus to the TextField filter
-                    searchBar.clear()
-                    searchBar.forceActiveFocus()
-                }
-            }
-
-            SearchBar {
-                id: searchBar
-                width: parent.width
-            }
-
-            Repeater {
-                model: root.nodeTypesModel
-
-                // Create Menu items from available node types model
-                delegate: MenuItem {
+            Component {
+                id: menuItemComponent
+                MenuItem {
                     id: menuItemDelegate
-                    font.pointSize: 8
+                    font.pointSize: 8;
                     padding: 3
-
+                    property string nameData: null
                     // Hide items that does not match the filter text
-                    visible: modelData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
+                    visible: nameData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
                     // Reset menu currentIndex if highlighted items gets filtered out
                     onVisibleChanged: if(highlighted) newNodeMenu.currentIndex = 0
-                    text: modelData
-                    // Forward key events to the search bar to continue typing seamlessly
-                    // even if this delegate took the activeFocus due to mouse hovering
-                    Keys.forwardTo: [searchBar.textField]
+                    text: nameData
                     Keys.onPressed: {
                         event.accepted = false;
                         switch(event.key)
@@ -178,7 +169,7 @@ Item {
                         case Qt.Key_Return:
                         case Qt.Key_Enter:
                             // create node on validation (Enter/Return keys)
-                            newNodeMenu.createNode(modelData);
+                            newNodeMenu.createNode(nameData);
                             newNodeMenu.close();
                             event.accepted = true;
                             break;
@@ -187,7 +178,10 @@ Item {
                         }
                     }
                     // Create node on mouse click
-                    onClicked: newNodeMenu.createNode(modelData)
+                    onClicked: { 
+                        newNodeMenu.createNode(nameData)
+                        newNodeMenu.close()
+                    }
 
                     states: [
                         State {
@@ -201,6 +195,98 @@ Item {
                             }
                         }
                     ]
+                }
+            }
+
+            onVisibleChanged: {
+                if(visible) {
+                    // when menu is shown, clear the searchbar
+                    searchBar.clear()
+                    searchBar.focus = false;
+                    newNodeMenu.forceActiveFocus()
+                }
+            }
+
+            SearchBar {
+                id: searchBar
+                width: parent.width
+            }
+
+            Repeater {
+                id: nodeMenuRepeater
+                model: searchBar.focus || (searchBar.text != "") ? Object.keys(root.nodeTypesModel) : null
+
+                // Create Menu items from available items
+                delegate: Loader {
+                    sourceComponent: { menuItemComponent }
+                    onLoaded: { item.nameData = modelData, item.parent = newNodeMenu; }
+                }
+            }
+
+            MenuSeparator { visible:false }
+
+            Menu {
+                id: nodeSubMenuOne
+                title: "Sparse Reconstruction"
+                enabled: !(searchBar.focus || (searchBar.text != ""))
+
+                Repeater {
+                    id: nodeSubMenuRepeaterOne
+                    model: newNodeMenu.parseCategories(1)
+    
+                    // Create Menu items from available items
+                    delegate: Loader {
+                        sourceComponent: { menuItemComponent }
+                        onLoaded: { item.nameData = modelData; }
+                    }
+                }
+            }
+            Menu {
+                id: nodeSubMenuTwo
+                title: "Dense Reconstruction"
+                enabled: !(searchBar.focus || (searchBar.text != ""))
+
+                Repeater {
+                    id: nodeSubMenuRepeaterTwo
+                    model: newNodeMenu.parseCategories(2)
+    
+                    // Create Menu items from available items
+                    delegate: Loader {
+                        sourceComponent: { menuItemComponent }
+                        onLoaded: { item.nameData = modelData; }
+                    }
+                }
+            }
+            Menu {
+                id: nodeSubMenuThree
+                title: "Utils"
+                enabled: !(searchBar.focus || (searchBar.text != ""))
+
+                Repeater {
+                    id: nodeSubMenuRepeaterThree
+                    model: newNodeMenu.parseCategories(4)
+    
+                    // Create Menu items from available items
+                    delegate: Loader {
+                        sourceComponent: { menuItemComponent }
+                        onLoaded: { item.nameData = modelData; }
+                    }
+                }
+            }
+            Menu {
+                id: nodeSubMenuFour
+                title: "Mesh Post-Processing"
+                enabled: !(searchBar.focus || (searchBar.text != ""))
+
+                Repeater {
+                    id: nodeSubMenuRepeaterFour
+                    model: newNodeMenu.parseCategories(4)
+    
+                    // Create Menu items from available items
+                    delegate: Loader {
+                        sourceComponent: { menuItemComponent }
+                        onLoaded: { item.nameData = modelData; }
+                    }
                 }
             }
         }

@@ -10,6 +10,9 @@ class DepthMap(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=3)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 2
+    info = "A node"
+
     inputs = [
         desc.File(
             name='input',

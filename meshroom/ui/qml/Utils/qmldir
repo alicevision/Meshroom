@@ -2,7 +2,6 @@ module Utils
 
 singleton Colors 1.0 Colors.qml
 SortFilterDelegateModel 1.0 SortFilterDelegateModel.qml
-ImageFrame 1.0 ImageFrame.qml
 Request 1.0 request.js
 Format 1.0 format.js
 # causes random crash at application exit

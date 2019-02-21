@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 import Controls 1.0
 import Utils 1.0
 import MaterialIcons 2.2
+import "../../qml"
 
 /**
   A component displaying a Graph (nodes, attributes and edges).
@@ -69,6 +70,11 @@ Item {
             fit()
     }
 
+    NodeInfoDialog {
+        id: nodeInfoDialog
+        createNode: newNodeMenu.createNode
+    }
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -127,7 +133,7 @@ Item {
             }
         }
 
-        // Graphical Menu for creating new nodes
+        // Contextual Menu for creating new nodes
         // TODO: add filtering + validate on 'Enter'
         Menu {
             id: newNodeMenu
@@ -156,12 +162,38 @@ Item {
                     id: menuItemDelegate
                     font.pointSize: 8;
                     padding: 3
+                    width: parent.width
                     property string nameData: null
                     // Hide items that does not match the filter text
                     visible: nameData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
                     // Reset menu currentIndex if highlighted items gets filtered out
                     onVisibleChanged: if(highlighted) newNodeMenu.currentIndex = 0
                     text: nameData
+                    background: Item {
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: 1
+                            color: menuItemDelegate.highlighted ? palette.highlight : "transparent"
+                            MouseArea {
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                anchors.fill: parent
+                                hoverEnabled: true 
+                                onContainsMouseChanged: menuItemDelegate.highlighted = containsMouse
+
+                                onClicked: {
+                                    if (mouse.button & Qt.LeftButton) {
+                                        // Create node on left mouse click
+                                        newNodeMenu.createNode(nameData)
+                                        newNodeMenu.close()
+                                    }
+                                    if (mouse.button & Qt.RightButton) {
+                                        newNodeInfoMenu.nodeType = nameData;
+                                        newNodeInfoMenu.popup()
+                                    }
+                                }
+                            }
+                        }
+                    }
                     Keys.onPressed: {
                         event.accepted = false;
                         switch(event.key)
@@ -176,11 +208,6 @@ Item {
                         default:
                             searchBar.textField.forceActiveFocus();
                         }
-                    }
-                    // Create node on mouse click
-                    onClicked: { 
-                        newNodeMenu.createNode(nameData)
-                        newNodeMenu.close()
                     }
 
                     states: [
@@ -214,7 +241,7 @@ Item {
 
             Repeater {
                 id: nodeMenuRepeater
-                model: searchBar.focus || (searchBar.text != "") ? Object.keys(root.nodeTypesModel) : null
+                model: searchBar.focus || (searchBar.text != "") ? Object.keys(root.nodeTypesModel) : undefined
 
                 // Create Menu items from available items
                 delegate: Loader {
@@ -287,6 +314,32 @@ Item {
                         sourceComponent: { menuItemComponent }
                         onLoaded: { item.nameData = modelData; }
                     }
+                }
+            }
+        }
+
+        Menu {
+            id: newNodeInfoMenu
+
+            property string nodeType
+
+            MenuItem {
+                text: "Add"
+
+                onClicked: {
+                    newNodeMenu.createNode(newNodeInfoMenu.nodeType)
+                    newNodeMenu.close()
+                }
+            }
+            MenuItem {
+                text: "Info"
+
+                onClicked: {
+                    nodeInfoDialog.nodeType = newNodeInfoMenu.nodeType;
+                    nodeInfoDialog.info = root.nodeTypesModel[newNodeInfoMenu.nodeType]["info"];
+                    nodeInfoDialog.addNodeMode = true;
+                    nodeInfoDialog.open()
+                    newNodeMenu.close()
                 }
             }
         }
@@ -377,6 +430,15 @@ Item {
                 MenuItem {
                     text: "Open Folder"
                     onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
+                }
+                MenuItem {
+                    text: "Info"
+                    onTriggered: { 
+                        nodeInfoDialog.nodeType = nodeMenu.currentNode.name.split("_")[0];
+                        nodeInfoDialog.info = root.nodeTypesModel[nodeInfoDialog.nodeType]["info"];
+                        nodeInfoDialog.addNodeMode = false;
+                        nodeInfoDialog.open()
+                    }
                 }
                 MenuSeparator {}
                 MenuItem {

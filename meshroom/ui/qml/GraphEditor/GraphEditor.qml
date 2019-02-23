@@ -4,7 +4,6 @@ import QtQuick.Layouts 1.3
 import Controls 1.0
 import Utils 1.0
 import MaterialIcons 2.2
-import "../../qml"
 
 /**
   A component displaying a Graph (nodes, attributes and edges).
@@ -166,13 +165,10 @@ Item {
                     property string nameData: null
                     // Hide items that does not match the filter text
                     visible: nameData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
-                    // Reset menu currentIndex if highlighted items gets filtered out
-                    onVisibleChanged: if(highlighted) newNodeMenu.currentIndex = 0
                     text: nameData
                     background: Item {
                         Rectangle {
                             anchors.fill: parent
-                            anchors.margins: 1
                             color: menuItemDelegate.highlighted ? palette.highlight : "transparent"
                             MouseArea {
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -192,21 +188,6 @@ Item {
                                     }
                                 }
                             }
-                        }
-                    }
-                    Keys.onPressed: {
-                        event.accepted = false;
-                        switch(event.key)
-                        {
-                        case Qt.Key_Return:
-                        case Qt.Key_Enter:
-                            // create node on validation (Enter/Return keys)
-                            newNodeMenu.createNode(nameData);
-                            newNodeMenu.close();
-                            event.accepted = true;
-                            break;
-                        default:
-                            searchBar.textField.forceActiveFocus();
                         }
                     }
 
@@ -237,16 +218,17 @@ Item {
             SearchBar {
                 id: searchBar
                 width: parent.width
+                fixFocus: true
             }
 
             Repeater {
                 id: nodeMenuRepeater
-                model: searchBar.focus || (searchBar.text != "") ? Object.keys(root.nodeTypesModel) : undefined
+                model: searchBar.text != "" ? Object.keys(root.nodeTypesModel) : undefined
 
                 // Create Menu items from available items
                 delegate: Loader {
                     sourceComponent: { menuItemComponent }
-                    onLoaded: { item.nameData = modelData, item.parent = newNodeMenu; }
+                    onLoaded: { item.nameData = modelData; }
                 }
             }
 
@@ -255,11 +237,11 @@ Item {
             Menu {
                 id: nodeSubMenuOne
                 title: "Sparse Reconstruction"
-                enabled: !(searchBar.focus || (searchBar.text != ""))
+                enabled: !(searchBar.text != "")
 
                 Repeater {
                     id: nodeSubMenuRepeaterOne
-                    model: newNodeMenu.parseCategories(1)
+                    model: enabled ? newNodeMenu.parseCategories(1) : undefined
     
                     // Create Menu items from available items
                     delegate: Loader {
@@ -271,11 +253,11 @@ Item {
             Menu {
                 id: nodeSubMenuTwo
                 title: "Dense Reconstruction"
-                enabled: !(searchBar.focus || (searchBar.text != ""))
+                enabled: !(searchBar.text != "")
 
                 Repeater {
                     id: nodeSubMenuRepeaterTwo
-                    model: newNodeMenu.parseCategories(2)
+                    model: enabled ? newNodeMenu.parseCategories(2) : undefined
     
                     // Create Menu items from available items
                     delegate: Loader {
@@ -287,11 +269,11 @@ Item {
             Menu {
                 id: nodeSubMenuThree
                 title: "Utils"
-                enabled: !(searchBar.focus || (searchBar.text != ""))
+                enabled: !(searchBar.text != "")
 
                 Repeater {
                     id: nodeSubMenuRepeaterThree
-                    model: newNodeMenu.parseCategories(4)
+                    model: enabled ? newNodeMenu.parseCategories(3) : undefined
     
                     // Create Menu items from available items
                     delegate: Loader {
@@ -303,11 +285,11 @@ Item {
             Menu {
                 id: nodeSubMenuFour
                 title: "Mesh Post-Processing"
-                enabled: !(searchBar.focus || (searchBar.text != ""))
+                enabled: !(searchBar.text != "")
 
                 Repeater {
                     id: nodeSubMenuRepeaterFour
-                    model: newNodeMenu.parseCategories(4)
+                    model: enabled ? newNodeMenu.parseCategories(4) : undefined
     
                     // Create Menu items from available items
                     delegate: Loader {

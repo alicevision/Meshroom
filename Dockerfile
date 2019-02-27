@@ -9,7 +9,7 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
-    QT_DIR=/opt/qt/5.11.0/gcc_64 \
+    QT_DIR=/opt/qt/5.11.1/gcc_64 \
     PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 COPY . "${MESHROOM_DEV}"

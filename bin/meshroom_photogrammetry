@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import os
+import sys
 
 import meshroom
 meshroom.setupEnvironment()
@@ -63,7 +64,7 @@ def getOnlyNodeOfType(g, nodeType):
 
 if not args.input and not args.inputImages:
     print('Nothing to compute. You need to set --input or --inputImages.')
-    exit(1)
+    sys.exit(1)
 
 views, intrinsics = [], []
 # Build image files list from inputImages arguments
@@ -109,7 +110,7 @@ if args.scale > 0:
 if args.save:
     graph.save(args.save)
     print('File successfully saved:', args.save)
-    exit(0)
+    sys.exit(0)
 
 # setup cache directory
 graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder

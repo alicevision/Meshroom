@@ -86,7 +86,7 @@ elif sys.stdin.isatty():
 if not inputCmdLineDoc:
     print('No input documentation.')
     print('Usage: YOUR_COMMAND --help | {cmd}'.format(cmd=os.path.splitext(__file__)[0]))
-    exit(-1)
+    sys.exit(-1)
 
 
 fileStr = '''import sys
@@ -131,7 +131,7 @@ elif args.parser == 'basic':
     args_re = re.compile('()--(?P<argLongName>\w+)()()()()')
 else:
     print('Error: Unknown input parser "{}"'.format(args.parser))
-    exit(-1)
+    sys.exit(-1)
 
 choiceValues1_re = re.compile('\* (?P<value>\w+):')
 choiceValues2_re = re.compile('\((?P<value>.+?)\)')
@@ -299,7 +299,7 @@ outputFilepath = os.path.join(args.output, args.node + '.py')
 
 if not args.force and os.path.exists(outputFilepath):
     print('Plugin "{}" already exists "{}".'.format(args.node, outputFilepath))
-    exit(-1)
+    sys.exit(-1)
 
 with open(outputFilepath, 'w') as pluginFile:
     pluginFile.write(fileStr)

@@ -1,4 +1,4 @@
-__version__ = "2018.1.0"
+__version__ = "2019.1.0"
 
 import os
 # Allow override from env variable

@@ -1,5 +1,5 @@
 # Multiview pipeline version
-__version__ = "1.0"
+__version__ = "2.1"
 
 import os
 

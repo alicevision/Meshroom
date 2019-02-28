@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 from meshroom.core import desc
 
@@ -83,6 +83,14 @@ class DepthMapFilter(desc.CommandLineNode):
             description="Filtering size in pixels",
             value=0,
             range=(0, 10, 1),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.BoolParam(
+            name='computeNormalMaps',
+            label='Compute Normal Maps',
+            description='Compute normal maps per depth map.',
+            value=False,
             uid=[0],
             advanced=True,
         ),

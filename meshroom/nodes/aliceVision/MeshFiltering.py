@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 
@@ -8,8 +8,8 @@ class MeshFiltering(desc.CommandLineNode):
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
+            name='inputMesh',
+            label='Input Mesh',
             description='''Input Mesh (OBJ file format).''',
             value='',
             uid=[0],
@@ -59,8 +59,8 @@ class MeshFiltering(desc.CommandLineNode):
 
     outputs = [
         desc.File(
-            name='output',
-            label='Output',
+            name='outputMesh',
+            label='Output Mesh',
             description='''Output mesh (OBJ file format).''',
             value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],

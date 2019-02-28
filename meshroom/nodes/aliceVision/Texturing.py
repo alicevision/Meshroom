@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "4.0"
 
 from meshroom.core import desc
 
@@ -19,13 +19,6 @@ class Texturing(desc.CommandLineNode):
             name='imagesFolder',
             label='Images Folder',
             description='Use images from a specific folder instead of those specify in the SfMData file.\nFilename should be the image uid.',
-            value='',
-            uid=[0],
-        ),
-        desc.File(
-            name='inputDenseReconstruction',
-            label='Input Dense Reconstruction',
-            description='Path to the dense reconstruction result (mesh with per vertex visibility).',
             value='',
             uid=[0],
         ),

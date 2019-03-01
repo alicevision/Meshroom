@@ -35,7 +35,7 @@ ImageBadge {
     text: MaterialIcons.camera
     
     function childAttributeValue(attribute, childName, defaultValue) {
-        var attr = attribute.value.get(childName);
+        var attr = attribute.childAttribute(childName);
         return attr ? attr.value : defaultValue;
     }
 

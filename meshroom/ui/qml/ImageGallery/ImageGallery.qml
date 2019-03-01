@@ -108,7 +108,7 @@ Panel {
 
                 // override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName) {
-                    var value = item.model.object.value.get(roleName).value
+                    var value = item.model.object.childAttribute(roleName).value
                     if(roleName == sortRole)
                         return Filepath.basename(value)
                     else
@@ -165,10 +165,10 @@ Panel {
                         // Rig indicator
                         Loader {
                             id: rigIndicator
-                            property int rigId: parent.valid ? object.value.get("rigId").value : -1
+                            property int rigId: parent.valid ? object.childAttribute("rigId").value : -1
                             active: rigId >= 0
                             sourceComponent: ImageBadge {
-                                property int rigSubPoseId: model.object.value.get("subPoseId").value
+                                property int rigSubPoseId: model.object.childAttribute("subPoseId").value
                                 text: MaterialIcons.link
                                 ToolTip.text: "<b>Rig: Initialized</b><br>" +
                                               "Rig ID: " + rigIndicator.rigId + " <br>" +

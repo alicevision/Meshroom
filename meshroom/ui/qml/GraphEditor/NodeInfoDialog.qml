@@ -1,9 +1,6 @@
 import QtQuick 2.9
 import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.3
-import Utils 1.0
 import MaterialIcons 2.2
-import QtQml.Models 2.2
 
 /// Meshroom "Add Node" window
 Dialog {

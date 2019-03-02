@@ -95,7 +95,7 @@ class CameraInit(desc.CommandLineNode):
     size = desc.DynamicNodeSize('viewpoints')
 
     category = 1
-    info = "A node"
+    info = "Initialises the images with the correct distortion parameters"
 
     inputs = [
         desc.ListAttribute(

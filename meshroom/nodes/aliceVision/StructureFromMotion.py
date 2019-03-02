@@ -11,7 +11,7 @@ class StructureFromMotion(desc.CommandLineNode):
     size = desc.DynamicNodeSize('input')
 
     category = 1
-    info = "A node"
+    info = "Measures the geometric relationship behind all the observations provided by the input images, and infer the rigid scene structure (3D points) with the pose (position and orientation) and internal calibration of all cameras."
 
     inputs = [
         desc.File(

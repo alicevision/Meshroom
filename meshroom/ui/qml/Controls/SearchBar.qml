@@ -26,7 +26,7 @@ FocusScope {
     }
 
     onActiveFocusChanged: {
-        if ((fixFocus) && (!activeFocus)) {
+        if ((fixFocus) && (!activeFocus) && (field.hovered)) {
             field.forceActiveFocus()
         }
     }

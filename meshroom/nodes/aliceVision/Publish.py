@@ -12,7 +12,7 @@ class Publish(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
 
     category = 3
-    info = "A node"
+    info = "Outputs a file to a specified path."
     
     inputs = [
         desc.ListAttribute(

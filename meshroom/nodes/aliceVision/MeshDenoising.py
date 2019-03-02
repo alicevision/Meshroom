@@ -7,7 +7,7 @@ class MeshDenoising(desc.CommandLineNode):
     commandLine = 'aliceVision_meshDenoising {allParams}'
 
     category = 4
-    info = "A node"
+    info = "Smooths a rough mesh."
 
     inputs = [
         desc.File(

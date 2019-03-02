@@ -10,7 +10,7 @@ class FeatureMatching(desc.CommandLineNode):
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     category = 1
-    info = "A node"
+    info = "Matchs all features between candidate image pairs."
 
     inputs = [
         desc.File(

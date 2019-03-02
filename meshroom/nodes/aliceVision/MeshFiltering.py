@@ -7,7 +7,7 @@ class MeshFiltering(desc.CommandLineNode):
     commandLine = 'aliceVision_meshFiltering {allParams}'
 
     category = 2
-    info = "A node"
+    info = "Removes anomalies like large triangles."
 
     inputs = [
         desc.File(

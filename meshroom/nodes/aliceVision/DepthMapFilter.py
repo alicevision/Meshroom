@@ -11,7 +11,7 @@ class DepthMapFilter(desc.CommandLineNode):
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     category = 2
-    info = "A node"
+    info = "To ensure consistency between multiple cameras, a compromise is chosen based on both similarity value and the number of coherent cameras to keep weakly supported surfaces without adding artefacts."
 
     inputs = [
         desc.File(

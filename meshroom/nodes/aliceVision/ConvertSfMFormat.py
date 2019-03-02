@@ -8,7 +8,7 @@ class ConvertSfMFormat(desc.CommandLineNode):
     size = desc.DynamicNodeSize('input')
 
     category = 3
-    info = "A node"
+    info = "Converts the SfM file into formats such as .abc, .sfm, .json, .ply and .baf"
     
     inputs = [
         desc.File(

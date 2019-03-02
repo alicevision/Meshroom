@@ -10,7 +10,7 @@ class Meshing(desc.CommandLineNode):
     ram = desc.Level.INTENSIVE
 
     category = 2
-    info = "A node"
+    info = "Fuses the depthmaps or the sparse pointcloud (from SfM step) together to generate a mesh"
 
     inputs = [
         desc.File(

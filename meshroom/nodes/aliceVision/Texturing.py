@@ -9,7 +9,7 @@ class Texturing(desc.CommandLineNode):
     ram = desc.Level.INTENSIVE
 
     category = 2
-    info = "A node"
+    info = "Projects each camera onto the mesh and choses which ones are most suitable to use in the texture."
     
     inputs = [
         desc.File(

@@ -11,7 +11,7 @@ class DepthMap(desc.CommandLineNode):
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     category = 2
-    info = "A node"
+    info = "For all cameras that have been resolved by SfM, depthmap software will retrieve the depth value of each pixel."
 
     inputs = [
         desc.File(

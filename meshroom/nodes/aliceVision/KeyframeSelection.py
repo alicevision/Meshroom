@@ -8,7 +8,7 @@ class KeyframeSelection(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_keyframeSelection {allParams}'
 
     category = 3
-    info = "A node"
+    info = "Picks frames from a video file so that they can be used in the reconstruction."
 
     inputs = [
         desc.ListAttribute(

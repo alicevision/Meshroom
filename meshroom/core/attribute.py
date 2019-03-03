@@ -4,7 +4,7 @@ import collections
 import re
 import weakref
 
-from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel
+from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, pyCompatibility, hashValue
 
 
@@ -370,6 +370,22 @@ class GroupAttribute(Attribute):
         # set individual child attribute values
         for key, value in exportedValue.items():
             self._value.get(key).value = value
+
+    @Slot(str, result=Attribute)
+    def childAttribute(self, key):
+        """
+        Get child attribute by name or None if none was found.
+
+        Args:
+            key (str): the name of the child attribute
+
+        Returns:
+            Attribute: the child attribute or None
+        """
+        try:
+            return self._value.get(key)
+        except KeyError:
+            return None
 
     def uid(self, uidIndex):
         uids = []

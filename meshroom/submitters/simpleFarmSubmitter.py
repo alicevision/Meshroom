@@ -9,10 +9,13 @@ from meshroom.core.desc import Level
 from meshroom.core.submitter import BaseSubmitter
 
 currentDir = os.path.dirname(os.path.realpath(__file__))
-
+binDir = os.path.dirname(os.path.dirname(os.path.dirname(currentDir)))
 
 class SimpleFarmSubmitter(BaseSubmitter):
-    MESHROOM_PACKAGE = "meshroom-{}".format(os.environ.get('REZ_MESHROOM_VERSION', ''))
+    if 'REZ_MESHROOM_VERSION' in os.environ:
+        MESHROOM_PACKAGE = "meshroom-{}".format(os.environ.get('REZ_MESHROOM_VERSION', ''))
+    else:
+        MESHROOM_PACKAGE = None
 
     filepath = os.environ.get('SIMPLEFARMCONFIG', os.path.join(currentDir, 'simpleFarmConfig.json'))
     config = json.load(open(filepath))
@@ -46,10 +49,11 @@ class SimpleFarmSubmitter(BaseSubmitter):
 
         task = simpleFarm.Task(
             name=node.nodeType,
-            command='meshroom_compute --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(
+            command='{exe} --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(
+                exe='meshroom_compute' if self.MESHROOM_PACKAGE else os.path.join(binDir, 'meshroom_compute'),
                 nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
             tags=tags,
-            rezPackages=[self.MESHROOM_PACKAGE],
+            rezPackages=[self.MESHROOM_PACKAGE] if self.MESHROOM_PACKAGE else None,
             requirements={'service': str(','.join(allRequirements))},
             **arguments)
         return task
@@ -64,9 +68,10 @@ class SimpleFarmSubmitter(BaseSubmitter):
             'nbFrames': str(nbFrames),
             'comment': comment,
         }
+        allRequirements = list(self.config.get('BASE', []))
 
         # Create Job Graph
-        job = simpleFarm.Job(name, tags=mainTags)
+        job = simpleFarm.Job(name, tags=mainTags, requirements={'service': str(','.join(allRequirements))})
 
         nodeNameToTask = {}
 

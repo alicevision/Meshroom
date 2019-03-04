@@ -13,6 +13,13 @@ import pkgutil
 
 import sys
 
+try:
+    import encodings.ascii
+    import encodings.idna
+    import encodings.utf_8
+except:
+    pass
+
 from meshroom.core.submitter import BaseSubmitter
 from . import desc
 

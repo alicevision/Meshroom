@@ -20,9 +20,12 @@ parser.add_argument('--inputImages', metavar='IMAGES', type=str, nargs='*',
 
 parser.add_argument('--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
                     help='Meshroom file containing a pre-configured photogrammetry pipeline to run on input images. '
-                         'If not set, the default photogrammetry pipeline will be used. ' 
+                         'If not set, the default photogrammetry pipeline will be used. '
                          'Requirements: the graph must contain one CameraInit node, '
                          'and one Publish node if --output is set.')
+
+parser.add_argument('--overrides', metavar='SETTINGS', type=str, default=None,
+                    help='A JSON file containing the graph parameters override.')
 
 parser.add_argument('--output', metavar='FOLDER', type=str, required=False,
                     help='Output folder where results should be copied to. '
@@ -101,6 +104,15 @@ else:
 views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
 cameraInit.viewpoints.value = views
 cameraInit.intrinsics.value = intrinsics
+
+if args.overrides:
+    import io
+    import json
+    with io.open(args.overrides, 'r', encoding='utf-8', errors='ignore') as f:
+        data = json.load(f)
+        for nodeName, overrides in data.items():
+            for attrName, value in overrides.items():
+                graph.findNode(nodeName).attribute(attrName).value = value
 
 # setup DepthMap downscaling
 if args.scale > 0:

@@ -1,7 +1,8 @@
 import logging
 import os
+import argparse
 
-from PySide2.QtCore import Qt, Slot, QJsonValue, Property, qInstallMessageHandler, QtMsgType
+from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, qInstallMessageHandler, QtMsgType
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
@@ -53,8 +54,8 @@ class MessageHandler(object):
 class MeshroomApp(QApplication):
     """ Meshroom UI Application. """
     def __init__(self, args):
-        args = [args[0], '-style', 'fusion'] + args[1:]  # force Fusion style by default
-        super(MeshroomApp, self).__init__(args)
+        QtArgs = [args[0], '-style', 'fusion'] + args[1:]  # force Fusion style by default
+        super(MeshroomApp, self).__init__(QtArgs)
 
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
@@ -94,6 +95,13 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
         # Request any potential computation to stop on exit
         self.aboutToQuit.connect(r.stopExecution)
+
+        parser = argparse.ArgumentParser(prog=args[0], description='Launch Meshroom UI.')
+        parser.add_argument('--project', metavar='MESHROOM_FILE', type=str, required=False,
+                            help='Meshroom project file (e.g. myProject.mg).')
+        args = parser.parse_args(args[1:])
+        if args.pipeline:
+            r.loadUrl(QUrl.fromLocalFile(args.pipeline))
 
         self.engine.load(os.path.normpath(url))
 

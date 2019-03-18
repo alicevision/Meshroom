@@ -42,7 +42,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
 
         tags['nbFrames'] = nbFrames
         tags['prod'] = self.prod
-        allRequirements = list(self.config.get('BASE', []))
+        allRequirements = list()
         allRequirements.extend(self.config['CPU'].get(node.nodeDesc.cpu.name, []))
         allRequirements.extend(self.config['RAM'].get(node.nodeDesc.ram.name, []))
         allRequirements.extend(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
@@ -71,7 +71,10 @@ class SimpleFarmSubmitter(BaseSubmitter):
         allRequirements = list(self.config.get('BASE', []))
 
         # Create Job Graph
-        job = simpleFarm.Job(name, tags=mainTags, requirements={'service': str(','.join(allRequirements))})
+        job = simpleFarm.Job(name,
+                tags=mainTags,
+                requirements={'limits': self.config.get('LIMITS', ''), 'service': str(','.join(allRequirements))},
+                )
 
         nodeNameToTask = {}
 

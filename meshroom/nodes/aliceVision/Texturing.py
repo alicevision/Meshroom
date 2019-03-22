@@ -90,12 +90,19 @@ class Texturing(desc.CommandLineNode):
             range=(0, 100, 1),
             uid=[0],
         ),
-        desc.IntParam(
-            name='maxNbImagesForFusion',
-            label='Max Number of Images For Fusion',
-            description='''Max number of images to combine to create the final texture''',
-            value=3,
-            range=(0, 10, 1),
+        #desc.ListAttribute(
+        #        name='multiBandNbContrib',
+        #        elementDesc=desc.IntParam(name='levelContrib', label='', description='', value=1, uid=[0], range=(0, 50, 1)),
+        #        label='Nb Contribution per Band',
+        #        value=[1, 5, 10], # TODO: need support for default values on ListAttribute
+        #        description='Number of images to combine per band of frequencies to create the final texture.',
+        #),
+        desc.FloatParam(
+            name='multiBandKernelSize',
+            label='MultiBand Blending Kernel Size',
+            description='''Kernel size for the lowest band of frequencies''',
+            value=40.0,
+            range=(0.0, 100.0, 1.0),
             uid=[0],
         ),
         desc.FloatParam(

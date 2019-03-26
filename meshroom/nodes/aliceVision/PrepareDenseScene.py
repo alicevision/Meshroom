@@ -73,5 +73,14 @@ class PrepareDenseScene(desc.CommandLineNode):
             description='''Output folder.''',
             value=desc.Node.internalFolder,
             uid=[],
-        )
+        ),
+        desc.File(
+            name='outputUndistorted',
+            label='Undistorted images',
+            description='List of undistorted images.',
+            value=desc.Node.internalFolder + '*.{outputFileTypeValue}',
+            uid=[],
+            group='',
+            advanced=True
+            ),
     ]

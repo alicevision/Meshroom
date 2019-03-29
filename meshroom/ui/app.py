@@ -100,8 +100,8 @@ class MeshroomApp(QApplication):
         parser.add_argument('--project', metavar='MESHROOM_FILE', type=str, required=False,
                             help='Meshroom project file (e.g. myProject.mg).')
         args = parser.parse_args(args[1:])
-        if args.pipeline:
-            r.loadUrl(QUrl.fromLocalFile(args.pipeline))
+        if args.project:
+            r.loadUrl(QUrl.fromLocalFile(args.project))
 
         self.engine.load(os.path.normpath(url))
 

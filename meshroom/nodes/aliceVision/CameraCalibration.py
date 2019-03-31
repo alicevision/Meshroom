@@ -6,8 +6,7 @@ from meshroom.core import desc
 class CameraCalibration(desc.CommandLineNode):
     commandLine = 'aliceVision_cameraCalibration {allParams}'
 
-    category = 3
-    info = "The internal camera parameters can be calibrated from multiple views of a checkerboard. This allows to retrieve focal length, principal point and distortion parameters."
+    category = "Utils"
 
     inputs = [
         desc.File(

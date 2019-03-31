@@ -7,8 +7,7 @@ class SfMTransform(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmTransform {allParams}'
     size = desc.DynamicNodeSize('input')
 
-    category = 3
-    info = "A node"
+    category = "Utils"
 
     inputs = [
         desc.File(

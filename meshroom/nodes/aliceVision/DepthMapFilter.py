@@ -10,8 +10,7 @@ class DepthMapFilter(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=10)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
-    category = 2
-    info = "To ensure consistency between multiple cameras, a compromise is chosen based on both similarity value and the number of coherent cameras to keep weakly supported surfaces without adding artefacts."
+    category = "Dense Reconstruction"
 
     inputs = [
         desc.File(

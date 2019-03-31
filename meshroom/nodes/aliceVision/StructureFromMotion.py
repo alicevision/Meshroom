@@ -10,8 +10,7 @@ class StructureFromMotion(desc.CommandLineNode):
     commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 
-    category = 1
-    info = "Measures the geometric relationship behind all the observations provided by the input images, and infer the rigid scene structure (3D points) with the pose (position and orientation) and internal calibration of all cameras."
+    category = "Sparse Reconstruction"
 
     inputs = [
         desc.File(

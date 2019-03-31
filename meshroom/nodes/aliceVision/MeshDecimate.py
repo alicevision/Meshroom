@@ -9,8 +9,7 @@ class MeshDecimate(desc.CommandLineNode):
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
 
-    category = 4
-    info = "Reduces the number of polygons/faces on the mesh."
+    category = "Mesh Post-Processing"
 
     inputs = [
         desc.File(

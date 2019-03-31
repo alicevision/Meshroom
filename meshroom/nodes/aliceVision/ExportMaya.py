@@ -6,8 +6,7 @@ from meshroom.core import desc
 class ExportMaya(desc.CommandLineNode):
     commandLine = 'aliceVision_exportMeshroomMaya {allParams}'
 
-    category = 3
-    info = "A node"
+    category = "Utils"
 
     inputs = [
         desc.File(

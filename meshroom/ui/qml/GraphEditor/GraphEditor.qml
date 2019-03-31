@@ -69,11 +69,6 @@ Item {
             fit()
     }
 
-    NodeInfoDialog {
-        id: nodeInfoDialog
-        createNode: newNodeMenu.createNode
-    }
-
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -138,14 +133,17 @@ Item {
             id: newNodeMenu
             property point spawnPosition
 
-            function parseCategories(pick)
+            function parseCategories()
             {
-                let categories = {1:[],2:[],3:[],4:[]};
+                let categories = {};
                 for (var n in root.nodeTypesModel) {
                     let category = root.nodeTypesModel[n]["category"];
+                    if (categories[category] === undefined) {
+                        categories[category] = []
+                    }
                     categories[category].push(n)
                 }
-                return categories[pick]
+                return categories
             }
 
             function createNode(nodeType)
@@ -221,6 +219,8 @@ Item {
                 fixFocus: true
             }
 
+            MenuSeparator { visible:false } // Adds a small gap under the searchbar for aesthetic reasons
+
             Repeater {
                 id: nodeMenuRepeater
                 model: searchBar.text != "" ? Object.keys(root.nodeTypesModel) : undefined
@@ -231,72 +231,24 @@ Item {
                     onLoaded: { item.nameData = modelData; }
                 }
             }
-
-            MenuSeparator { visible:false }
-
-            Menu {
-                id: nodeSubMenuOne
-                title: "Sparse Reconstruction"
-                enabled: !(searchBar.text != "")
-
-                Repeater {
-                    id: nodeSubMenuRepeaterOne
-                    model: enabled ? newNodeMenu.parseCategories(1) : undefined
-    
-                    // Create Menu items from available items
-                    delegate: Loader {
-                        sourceComponent: { menuItemComponent }
-                        onLoaded: { item.nameData = modelData; }
+            
+            // Dynamically add the menu categories
+            Instantiator { 
+                model: !(searchBar.text != "") ? Object.keys(newNodeMenu.parseCategories()) : undefined
+                onObjectAdded: newNodeMenu.insertMenu(index+2, object ) 
+                onObjectRemoved: newNodeMenu.removeMenu(object)  
+                delegate: Menu {  
+                    title: modelData
+                    Repeater {
+                        model: newNodeMenu.parseCategories()[modelData]
+        
+                        // Create Menu items from available items
+                        delegate: Loader {
+                            sourceComponent: { menuItemComponent }
+                            onLoaded: { item.nameData = modelData; }
+                        }
                     }
-                }
-            }
-            Menu {
-                id: nodeSubMenuTwo
-                title: "Dense Reconstruction"
-                enabled: !(searchBar.text != "")
-
-                Repeater {
-                    id: nodeSubMenuRepeaterTwo
-                    model: enabled ? newNodeMenu.parseCategories(2) : undefined
-    
-                    // Create Menu items from available items
-                    delegate: Loader {
-                        sourceComponent: { menuItemComponent }
-                        onLoaded: { item.nameData = modelData; }
-                    }
-                }
-            }
-            Menu {
-                id: nodeSubMenuThree
-                title: "Utils"
-                enabled: !(searchBar.text != "")
-
-                Repeater {
-                    id: nodeSubMenuRepeaterThree
-                    model: enabled ? newNodeMenu.parseCategories(3) : undefined
-    
-                    // Create Menu items from available items
-                    delegate: Loader {
-                        sourceComponent: { menuItemComponent }
-                        onLoaded: { item.nameData = modelData; }
-                    }
-                }
-            }
-            Menu {
-                id: nodeSubMenuFour
-                title: "Mesh Post-Processing"
-                enabled: !(searchBar.text != "")
-
-                Repeater {
-                    id: nodeSubMenuRepeaterFour
-                    model: enabled ? newNodeMenu.parseCategories(4) : undefined
-    
-                    // Create Menu items from available items
-                    delegate: Loader {
-                        sourceComponent: { menuItemComponent }
-                        onLoaded: { item.nameData = modelData; }
-                    }
-                }
+                }  
             }
         }
 
@@ -310,17 +262,6 @@ Item {
 
                 onClicked: {
                     newNodeMenu.createNode(newNodeInfoMenu.nodeType)
-                    newNodeMenu.close()
-                }
-            }
-            MenuItem {
-                text: "Info"
-
-                onClicked: {
-                    nodeInfoDialog.nodeType = newNodeInfoMenu.nodeType;
-                    nodeInfoDialog.info = root.nodeTypesModel[newNodeInfoMenu.nodeType]["info"];
-                    nodeInfoDialog.addNodeMode = true;
-                    nodeInfoDialog.open()
                     newNodeMenu.close()
                 }
             }
@@ -412,15 +353,6 @@ Item {
                 MenuItem {
                     text: "Open Folder"
                     onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
-                }
-                MenuItem {
-                    text: "Info"
-                    onTriggered: { 
-                        nodeInfoDialog.nodeType = nodeMenu.currentNode.name.split("_")[0];
-                        nodeInfoDialog.info = root.nodeTypesModel[nodeInfoDialog.nodeType]["info"];
-                        nodeInfoDialog.addNodeMode = false;
-                        nodeInfoDialog.open()
-                    }
                 }
                 MenuSeparator {}
                 MenuItem {

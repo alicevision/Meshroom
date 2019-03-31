@@ -8,9 +8,8 @@ class Texturing(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
-    category = 2
-    info = "Projects each camera onto the mesh and choses which ones are most suitable to use in the texture."
-    
+    category = "Dense Reconstruction"
+
     inputs = [
         desc.File(
             name='input',

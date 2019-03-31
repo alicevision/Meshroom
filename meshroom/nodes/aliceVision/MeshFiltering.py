@@ -6,8 +6,7 @@ from meshroom.core import desc
 class MeshFiltering(desc.CommandLineNode):
     commandLine = 'aliceVision_meshFiltering {allParams}'
 
-    category = 2
-    info = "Removes anomalies like large triangles."
+    category = "Dense Reconstruction"
 
     inputs = [
         desc.File(

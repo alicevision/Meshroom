@@ -7,8 +7,7 @@ from meshroom.core import desc
 class CameraRigLocalization(desc.CommandLineNode):
     commandLine = 'aliceVision_rigLocalization {allParams}'
 
-    category = 3
-    info = "A node"
+    category = "Utils"
 
     inputs = [
         desc.File(

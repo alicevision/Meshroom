@@ -8,9 +8,8 @@ class ImageMatching(desc.CommandLineNode):
     commandLine = 'aliceVision_imageMatching {allParams}'
     size = desc.DynamicNodeSize('input')
 
-    category = 1
-    info = "Finds images that are looking to the same areas of the scene by using image retrieval techniques to find images that share some content without the cost of resolving all feature matches in details. The ambition is to simplify the image in a compact image descriptor which allows to compute the distance between all images descriptors efficiently."
-
+    category = "Sparse Reconstruction"
+   
     inputs = [
         desc.File(
             name='input',

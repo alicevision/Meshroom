@@ -9,8 +9,7 @@ class MeshResampling(desc.CommandLineNode):
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
 
-    category = 4
-    info = "A node"
+    category = "Mesh Post-Processing"
 
     inputs = [
         desc.File(

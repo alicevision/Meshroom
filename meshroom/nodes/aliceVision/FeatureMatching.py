@@ -9,8 +9,7 @@ class FeatureMatching(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=20)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
-    category = 1
-    info = "Matchs all features between candidate image pairs."
+    category = "Sparse Reconstruction"
 
     inputs = [
         desc.File(

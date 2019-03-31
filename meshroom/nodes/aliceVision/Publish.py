@@ -11,8 +11,7 @@ import os
 class Publish(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
 
-    category = 3
-    info = "Outputs a file to a specified path."
+    category = "Utils"
     
     inputs = [
         desc.ListAttribute(

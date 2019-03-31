@@ -7,8 +7,7 @@ class ConvertSfMFormat(desc.CommandLineNode):
     commandLine = 'aliceVision_convertSfMFormat {allParams}'
     size = desc.DynamicNodeSize('input')
 
-    category = 3
-    info = "Converts the SfM file into formats such as .abc, .sfm, .json, .ply and .baf"
+    category = "Utils"
     
     inputs = [
         desc.File(

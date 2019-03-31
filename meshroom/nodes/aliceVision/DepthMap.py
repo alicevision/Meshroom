@@ -10,8 +10,7 @@ class DepthMap(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=3)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
-    category = 2
-    info = "For all cameras that have been resolved by SfM, depthmap software will retrieve the depth value of each pixel."
+    category = "Dense Reconstruction"
 
     inputs = [
         desc.File(

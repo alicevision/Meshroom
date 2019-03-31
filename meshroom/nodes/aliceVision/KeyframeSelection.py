@@ -7,8 +7,7 @@ from meshroom.core import desc
 class KeyframeSelection(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_keyframeSelection {allParams}'
 
-    category = 3
-    info = "Picks frames from a video file so that they can be used in the reconstruction."
+    category = "Utils"
 
     inputs = [
         desc.ListAttribute(

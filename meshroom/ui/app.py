@@ -47,7 +47,7 @@ class MeshroomApp(QApplication):
         # expose available node types that can be instantiated
         nodeTypes = {}
         for n in sorted(nodesDesc.keys()):
-            nodeTypes[n] = {"category":nodesDesc[n].category,"info":nodesDesc[n].info}
+            nodeTypes[n] = {"category":nodesDesc[n].category}
         self.engine.rootContext().setContextProperty("_nodeTypes", nodeTypes)
         r = Reconstruction(parent=self)
         self.engine.rootContext().setContextProperty("_reconstruction", r)

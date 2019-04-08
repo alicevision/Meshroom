@@ -1,5 +1,4 @@
 {
-    "LIMITS": ["mikros"],
     "BASE": ["mikrosRender"],
     "CPU": {
         "NONE": [],
@@ -14,6 +13,6 @@
     "GPU": {
         "NONE": [],
         "NORMAL": ["!\"*rnd*\""],
-        "INTENSIVE": ["!\"*rnd*\"", "@.nCPUs=12"]
+        "INTENSIVE": ["!\"*rnd*\"", "@.nCPUs>=12"]
     }
 }

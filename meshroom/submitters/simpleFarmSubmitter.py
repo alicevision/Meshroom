@@ -73,7 +73,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
         # Create Job Graph
         job = simpleFarm.Job(name,
                 tags=mainTags,
-                requirements={'limits': self.config.get('LIMITS', ''), 'service': str(','.join(allRequirements))},
+                requirements={'service': str(','.join(allRequirements))},
                 )
 
         nodeNameToTask = {}

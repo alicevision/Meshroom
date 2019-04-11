@@ -14,6 +14,7 @@ import pkgutil
 import sys
 
 try:
+    # for cx_freeze
     import encodings.ascii
     import encodings.idna
     import encodings.utf_8

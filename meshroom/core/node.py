@@ -458,7 +458,7 @@ class BaseNode(BaseObject):
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             self._cmdVars[name + 'Value'] = str(v)
 
-            if v is not None and v is not '':
+            if v not in (None, ''):
                 self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
                                                           ' ' + self._cmdVars[name]
 
@@ -477,7 +477,7 @@ class BaseNode(BaseObject):
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             self._cmdVars[name + 'Value'] = str(v)
 
-            if v is not None and v is not '':
+            if v not in (None, ''):
                 self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
                                                           ' ' + self._cmdVars[name]
 

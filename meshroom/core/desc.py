@@ -269,7 +269,8 @@ class Range:
             "rangeStart": self.start,
             "rangeEnd": self.end,
             "rangeLast": self.last,
-            "rangeBlockSize": self.effectiveBlockSize,
+            "rangeBlockSize": self.blockSize,
+            "rangeEffectiveBlockSize": self.effectiveBlockSize,
             "rangeFullSize": self.fullSize,
             }
 

@@ -101,8 +101,9 @@ class MeshroomApp(QApplication):
         # additional context properties
         self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
-        # Request any potential computation to stop on exit
-        self.aboutToQuit.connect(r.stopExecution)
+
+        # request any potential computation to stop on exit
+        self.aboutToQuit.connect(r.stopChildThreads)
 
         parser = argparse.ArgumentParser(prog=args[0], description='Launch Meshroom UI.')
         parser.add_argument('--project', metavar='MESHROOM_FILE', type=str, required=False,

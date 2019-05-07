@@ -9,6 +9,7 @@ from PySide2.QtWidgets import QApplication
 import meshroom
 from meshroom.core import nodesDesc
 from meshroom.ui import components
+from meshroom.ui.components.clipboard import ClipboardHelper
 from meshroom.ui.components.filepath import FilepathHelper
 from meshroom.ui.components.scene3D import Scene3DHelper
 from meshroom.ui.palette import PaletteManager
@@ -95,6 +96,7 @@ class MeshroomApp(QApplication):
         # => expose them as context properties instead
         self.engine.rootContext().setContextProperty("Filepath", FilepathHelper(parent=self))
         self.engine.rootContext().setContextProperty("Scene3DHelper", Scene3DHelper(parent=self))
+        self.engine.rootContext().setContextProperty("Clipboard", ClipboardHelper(parent=self))
 
         # additional context properties
         self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))

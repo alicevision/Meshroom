@@ -1,6 +1,5 @@
 import QtQuick 2.11
-import QtQml.Models 2.11
-import QtQuick.Controls 2.5
+import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
 
@@ -312,19 +311,22 @@ Item {
     }
 
     // Load current source file and update ListView's model
-    function loadSource(keepPosition = false)
+    function loadSource(keepPosition)
     {
         if(!visible)
             return;
         loading = true;
         var xhr = new XMLHttpRequest;
+
         xhr.open("GET", root.source);
-        xhr.onload = function() {
+        xhr.onreadystatechange = function() {
             // - can't rely on 'Last-Modified' header response to verify
             //   that file has changed on disk (not always up-to-date)
             // - instead, let QML engine evaluate whether 'text' property value has changed
-            textView.setText(xhr.status === 200 ? xhr.responseText : "", keepPosition);
-            loading = false;
+            if(xhr.readyState === XMLHttpRequest.DONE) {
+                textView.setText(xhr.status === 200 ? xhr.responseText : "", keepPosition);
+                loading = false;
+            }
         };
         xhr.send();
     }

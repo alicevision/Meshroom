@@ -41,7 +41,7 @@ Item {
                     ToolTip.text: "Reload"
                     ToolTip.visible: hovered
                     font.family: MaterialIcons.fontFamily
-                    onClicked: loadSource(false)
+                    onClicked: loadSource()
                 }
                 ToolButton {
                     text: MaterialIcons.vertical_align_top
@@ -51,6 +51,7 @@ Item {
                     onClicked: textView.positionViewAtBeginning()
                 }
                 ToolButton {
+                    id: autoscroll
                     text: MaterialIcons.vertical_align_bottom
                     ToolTip.text: "Scroll to Bottom"
                     ToolTip.visible: hovered
@@ -145,17 +146,21 @@ Item {
                     }
                 }
 
-                function setText(value, keepPosition) {
-                    // store cursor position and content position
+                function setText(value) {
+                    // store current first index
                     var topIndex = firstVisibleIndex();
-                    var scrollToBottom = atYEnd;
+                    // store whether autoscroll to bottom is active
+                    var scrollToBottom = atYEnd && autoscroll.checked;
                     // replace text
                     text = value;
 
+                    // restore content position by either:
+                    //  - autoscrolling to bottom
                     if(scrollToBottom)
                         positionViewAtEnd();
-                    else if(topIndex !== firstVisibleIndex() && keepPosition)
-                        positionViewAtIndex(topIndex, ListView.Beginning);
+                    //  - setting first visible index back (when possible)
+                    else if(topIndex !== firstVisibleIndex())
+                        positionViewAtIndex(Math.min(topIndex, count-1), ListView.Beginning);
                 }
 
                 function firstVisibleIndex() {
@@ -306,15 +311,17 @@ Item {
         interval: root.autoReloadInterval
         repeat: true
         // reload file on start and stop
-        onRunningChanged: loadSource(true)
-        onTriggered: loadSource(true)
+        onRunningChanged: loadSource()
+        onTriggered: loadSource()
     }
 
+
     // Load current source file and update ListView's model
-    function loadSource(keepPosition)
+    function loadSource()
     {
         if(!visible)
             return;
+
         loading = true;
         var xhr = new XMLHttpRequest;
 
@@ -324,7 +331,7 @@ Item {
             //   that file has changed on disk (not always up-to-date)
             // - instead, let QML engine evaluate whether 'text' property value has changed
             if(xhr.readyState === XMLHttpRequest.DONE) {
-                textView.setText(xhr.status === 200 ? xhr.responseText : "", keepPosition);
+                textView.setText(xhr.status === 200 ? xhr.responseText : "");
                 loading = false;
             }
         };

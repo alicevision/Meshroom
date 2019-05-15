@@ -85,6 +85,13 @@ FocusScope {
                 id: fileSelector
                 Layout.fillWidth: true
                 property string currentFile: chunksLV.currentChunk ? chunksLV.currentChunk[currentItem.fileProperty] : ""
+                onCurrentFileChanged: {
+                    // only set text file viewer source when ListView is fully ready
+                    // (either empty or fully populated with a valid currentChunk)
+                    // to avoid going through an empty url when switching between two nodes
+                    if(!chunksLV.count || chunksLV.currentChunk)
+                        textFileViewer.source = Filepath.stringToUrl(currentFile);
+                }
 
                 TabButton {
                     property string fileProperty: "logFile"
@@ -105,10 +112,11 @@ FocusScope {
             }
 
             TextFileViewer {
+                id: textFileViewer
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 autoReload: chunksLV.currentChunk !== undefined && chunksLV.currentChunk.statusName === "RUNNING"
-                source: Filepath.stringToUrl(fileSelector.currentFile)
+                // source is set in fileSelector
             }
         }
     }

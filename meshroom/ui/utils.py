@@ -3,7 +3,10 @@ import time
 
 from PySide2.QtCore import QFileSystemWatcher, QUrl, Slot, QTimer, Property, QObject
 from PySide2.QtQml import QQmlApplicationEngine
-from PySide2 import shiboken2
+try:
+    from PySide2 import shiboken2
+except:
+    import shiboken2
 
 
 class QmlInstantEngine(QQmlApplicationEngine):

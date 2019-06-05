@@ -289,9 +289,7 @@ FloatingPane {
                             }
                             MenuItem {
                                 text: "Copy Path"
-                                // hidden TextEdit to copy to clipboard
-                                TextEdit { id: fullpath; visible: false; text: Filepath.normpath(model.source) }
-                                onTriggered: { fullpath.selectAll(); fullpath.copy(); }
+                                onTriggered: Clipboard.setText(Filepath.normpath(model.source))
                             }
                             MenuSeparator {}
                             MenuItem {

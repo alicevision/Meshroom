@@ -1,6 +1,17 @@
 __version__ = "2019.1.0"
 
 import os
+scriptPath = os.path.dirname(os.path.abspath( __file__ ))
+headFilepath = os.path.join(scriptPath, "../.git/HEAD")
+# If we are in a release, the git history will not exist.
+# If we are in development, we declare the name of the git development branch in the version name
+if os.path.exists(headFilepath):
+    with open (headFilepath, "r") as headFile:
+        data = headFile.readlines()
+        branchName = data[0].split('/')[-1]
+        # Add git branch name to the Meshroom version name
+        __version__ = __version__ + "-" + branchName
+
 # Allow override from env variable
 __version__ = os.environ.get("REZ_MESHROOM_VERSION", __version__)
 

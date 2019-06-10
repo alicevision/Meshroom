@@ -83,7 +83,7 @@ class MeshroomApp(QApplication):
         self.engine.addImportPath(qmlDir)
         components.registerTypes()
 
-        # expose available node types that can be instantiate
+        # expose available node types that can be instantiated
         nodeTypes = {}
         for n in sorted(nodesDesc.keys()):
             nodeTypes[n] = {"category":nodesDesc[n].category}

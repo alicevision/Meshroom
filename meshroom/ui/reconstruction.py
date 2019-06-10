@@ -99,8 +99,7 @@ class LiveSfmManager(QObject):
         to include those images to the reconstruction.
         """
         # Get all new images in the watched folder
-        filesInFolder = [os.path.join(self._folder, f) for f in os.listdir(self._folder)]
-        imagesInFolder = [f for f in filesInFolder if Reconstruction.isImageFile(f)]
+        imagesInFolder = multiview.findImageFiles(self._folder)
         newImages = set(imagesInFolder).difference(self.allImages)
         for imagePath in newImages:
             # print('[LiveSfmManager] New image file : {}'.format(imagePath))
@@ -159,8 +158,6 @@ class Reconstruction(UIGraph):
     """
     Specialization of a UIGraph designed to manage a 3D reconstruction.
     """
-
-    imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr', '.rw2', '.cr2', '.nef', '.arw')
 
     def __init__(self, graphFilepath='', parent=None):
         super(Reconstruction, self).__init__(graphFilepath, parent)
@@ -333,11 +330,6 @@ class Reconstruction(UIGraph):
         self.importImages(self.getImageFilesFromDrop(drop), cameraInit)
 
     @staticmethod
-    def isImageFile(filepath):
-        """ Return whether filepath is a path to an image file supported by Meshroom. """
-        return os.path.splitext(filepath)[1].lower() in Reconstruction.imageExtensions
-
-    @staticmethod
     def getImageFilesFromDrop(drop):
         urls = drop.property("urls")
         # Build the list of images paths
@@ -345,10 +337,9 @@ class Reconstruction(UIGraph):
         for url in urls:
             localFile = url.toLocalFile()
             if os.path.isdir(localFile):  # get folder content
-                files = [os.path.join(localFile, f) for f in os.listdir(localFile)]
-            else:
-                files = [localFile]
-            images.extend([f for f in files if Reconstruction.isImageFile(f)])
+                images.extend(multiview.findImageFiles(localFile))
+            elif multiview.isImageFile(localFile):
+                images.append(localFile)
         return images
 
     def importImages(self, images, cameraInit):
@@ -549,27 +540,10 @@ class Reconstruction(UIGraph):
         Returns:
             Attribute: the Viewpoint's corresponding intrinsic or None if not found.
         """
+        if not viewpoint:
+            return None
         return next((i for i in self._cameraInit.intrinsics.value if i.intrinsicId.value == viewpoint.intrinsicId.value)
                     , None)
-
-    @Slot(QObject, result=str)
-    def getIntrinsicInitMode(self, viewpoint):
-        """
-        Get the initialization mode for the intrinsic associated to 'viewpoint'.
-
-        Args:
-            viewpoint (Attribute): the Viewpoint to consider.
-        Returns:
-            str: the initialization mode of the Viewpoint's intrinsic or an empty string if none.
-        """
-        intrinsic = self.getIntrinsic(viewpoint)
-        if not intrinsic:
-            return ""
-        try:
-            return intrinsic.initializationMode.value
-        except AttributeError:
-            # handle older versions that did not have this attribute
-            return ""
 
     @Slot(QObject, result=bool)
     def hasMetadata(self, viewpoint):

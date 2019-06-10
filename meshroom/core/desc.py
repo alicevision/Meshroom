@@ -31,45 +31,88 @@ class Attribute(BaseObject):
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
+        """ Return validated/conformed 'value'.
+
+        Raises:
+            ValueError: if value does not have the proper type
+        """
         return value
+
+    def matchDescription(self, value):
+        """ Returns whether the value perfectly match attribute's description. """
+        try:
+            self.validateValue(value)
+        except ValueError:
+            return False
+        return True
 
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, name, label, description, group='allParams', joinChar=' '):
+    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, joinChar=' '):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=False)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced)
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def validateValue(self, value):
-        if not isinstance(value, collections.Iterable):
-            raise ValueError('ListAttribute only supports iterable input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        if not isinstance(value, (list, tuple)):
+            raise ValueError('ListAttribute only supports list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
+
+    def matchDescription(self, value):
+        """ Check that 'value' content matches ListAttribute's element description. """
+        if not super(ListAttribute, self).matchDescription(value):
+            return False
+        # list must be homogeneous: only test first element
+        if value:
+            return self._elementDesc.matchDescription(value[0])
+        return True
 
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group='allParams', joinChar=' '):
+    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, joinChar=' '):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=False)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def validateValue(self, value):
+        """ Ensure value is a dictionary with keys compatible with the group description. """
         if not isinstance(value, dict):
             raise ValueError('GroupAttribute only supports dict input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
+        if invalidKeys:
+            raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
         return value
+
+    def matchDescription(self, value):
+        """
+        Check that 'value' contains the exact same set of keys as GroupAttribute's group description
+        and that every child value match corresponding child attribute description.
+        """
+        if not super(GroupAttribute, self).matchDescription(value):
+            return False
+        attrMap = {attr.name: attr for attr in self._groupDesc}
+        # must have the exact same child attributes
+        if sorted(value.keys()) != sorted(attrMap.keys()):
+            return False
+        for k, v in value.items():
+            # each child value must match corresponding child attribute description
+            if not attrMap[k].matchDescription(v):
+                return False
+        return True
 
     def retrieveChildrenUids(self):
         allUids = []
@@ -226,7 +269,8 @@ class Range:
             "rangeStart": self.start,
             "rangeEnd": self.end,
             "rangeLast": self.last,
-            "rangeBlockSize": self.effectiveBlockSize,
+            "rangeBlockSize": self.blockSize,
+            "rangeEffectiveBlockSize": self.effectiveBlockSize,
             "rangeFullSize": self.fullSize,
             }
 

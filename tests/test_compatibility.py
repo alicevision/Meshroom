@@ -3,6 +3,8 @@
 import tempfile
 
 import os
+
+import copy
 import pytest
 
 import meshroom.core
@@ -10,6 +12,27 @@ from meshroom.core import desc, registerNodeType, unregisterNodeType
 from meshroom.core.exception import NodeUpgradeError
 from meshroom.core.graph import Graph, loadGraph
 from meshroom.core.node import CompatibilityNode, CompatibilityIssue, Node
+
+
+SampleGroupV1 = [
+    desc.IntParam(name="a", label="a", description="", value=0, uid=[0], range=None),
+    desc.ListAttribute(
+        name="b",
+        elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=None),
+        label="b",
+        description="",
+    )
+]
+
+SampleGroupV2 = [
+    desc.IntParam(name="a", label="a", description="", value=0, uid=[0], range=None),
+    desc.ListAttribute(
+        name="b",
+        elementDesc=desc.GroupAttribute(name="p", label="", description="", groupDesc=SampleGroupV1),
+        label="b",
+        description="",
+    )
+]
 
 
 class SampleNodeV1(desc.Node):
@@ -29,7 +52,52 @@ class SampleNodeV2(desc.Node):
     """
     inputs = [
         desc.File(name='in', label='Input', description='', value='', uid=[0],),
-        desc.StringParam(name='paramA', label='ParamA', description='', value='', uid=[])  # No impact on UID
+        desc.StringParam(name='paramA', label='ParamA', description='', value='', uid=[]),  # No impact on UID
+    ]
+    outputs = [
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+    ]
+
+class SampleNodeV3(desc.Node):
+    """
+    Changes from V3:
+        * 'paramA' has been removed'
+    """
+    inputs = [
+        desc.File(name='in', label='Input', description='', value='', uid=[0], ),
+    ]
+    outputs = [
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+    ]
+
+class SampleNodeV4(desc.Node):
+    """
+    Changes from V3:
+        * 'paramA' has been added
+    """
+    inputs = [
+        desc.File(name='in', label='Input', description='', value='', uid=[0], ),
+        desc.ListAttribute(name='paramA', label='ParamA',
+                           elementDesc=desc.GroupAttribute(
+                               groupDesc=SampleGroupV1, name='gA', label='gA', description=''),
+                           description='')
+    ]
+    outputs = [
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+    ]
+
+
+class SampleNodeV5(desc.Node):
+    """
+    Changes from V4:
+        * 'paramA' elementDesc has changed from SampleGroupV1 to SampleGroupV2
+    """
+    inputs = [
+        desc.File(name='in', label='Input', description='', value='', uid=[0]),
+        desc.ListAttribute(name='paramA', label='ParamA',
+                           elementDesc=desc.GroupAttribute(
+                               groupDesc=SampleGroupV2, name='gA', label='gA', description=''),
+                           description='')
     ]
     outputs = [
         desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
@@ -76,43 +144,115 @@ def test_description_conflict():
     """
     Test compatibility behavior for conflicting node descriptions.
     """
-    registerNodeType(SampleNodeV1)
+    # copy registered node types to be able to restore them
+    originalNodeTypes = copy.copy(meshroom.core.nodesDesc)
 
+    nodeTypes = [SampleNodeV1, SampleNodeV2, SampleNodeV3, SampleNodeV4, SampleNodeV5]
+    nodes = []
     g = Graph('')
-    n = g.addNewNode("SampleNodeV1")
+
+    # register and instantiate instances of all node types except last one
+    for nt in nodeTypes[:-1]:
+        registerNodeType(nt)
+        n = g.addNewNode(nt.__name__)
+
+        if nt == SampleNodeV4:
+            # initialize list attribute with values to create a conflict with V5
+            n.paramA.value = [{'a': 0, 'b': [1.0, 2.0]}]
+
+        nodes.append(n)
+
     graphFile = os.path.join(tempfile.mkdtemp(), "test_description_conflict.mg")
     g.save(graphFile)
-    internalFolder = n.internalFolder
-    nodeName = n.name
 
-    # replace SampleNodeV1 by SampleNodeV2
-    # 'SampleNodeV1' is still registered but implementation has changed
-    meshroom.core.nodesDesc[SampleNodeV1.__name__] = SampleNodeV2
+    # reload file as-is, ensure no compatibility issue is detected (no CompatibilityNode instances)
+    g = loadGraph(graphFile)
+    assert all(isinstance(n, Node) for n in g.nodes)
+
+    # offset node types register to create description conflicts
+    # each node type name now reference the next one's implementation
+    for i, nt in enumerate(nodeTypes[:-1]):
+        meshroom.core.nodesDesc[nt.__name__] = nodeTypes[i+1]
 
     # reload file
     g = loadGraph(graphFile)
     os.remove(graphFile)
 
-    assert len(g.nodes) == 1
-    n = g.node(nodeName)
-    # Node description clashes between what has been saved
-    assert isinstance(n, CompatibilityNode)
-    assert n.issue == CompatibilityIssue.DescriptionConflict
-    assert len(n.attributes) == 3
-    assert hasattr(n, "input")
-    assert not hasattr(n, "in")
-    assert n.internalFolder == internalFolder
+    assert len(g.nodes) == len(nodes)
+    for srcNode in nodes:
+        nodeName = srcNode.name
+        compatNode = g.node(srcNode.name)
+        # Node description clashes between what has been saved
+        assert isinstance(compatNode, CompatibilityNode)
+        assert srcNode.internalFolder == compatNode.internalFolder
 
-    # perform upgrade
-    g.upgradeNode(nodeName)
-    n = g.node(nodeName)
+        # case by case description conflict verification
+        if isinstance(srcNode.nodeDesc, SampleNodeV1):
+            # V1 => V2: 'input' has been renamed to 'in'
+            assert len(compatNode.attributes) == 3
+            assert hasattr(compatNode, "input")
+            assert not hasattr(compatNode, "in")
 
-    assert isinstance(n, Node)
-    assert not hasattr(n, "input")
-    assert hasattr(n, "in")
-    # check uid has changed (not the same set of attributes)
-    assert n.internalFolder != internalFolder
-    unregisterNodeType(SampleNodeV1)
+            # perform upgrade
+            upgradedNode = g.upgradeNode(nodeName)[0]
+            assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV2)
+
+            assert not hasattr(upgradedNode, "input")
+            assert hasattr(upgradedNode, "in")
+            # check uid has changed (not the same set of attributes)
+            assert upgradedNode.internalFolder != srcNode.internalFolder
+
+        elif isinstance(srcNode.nodeDesc, SampleNodeV2):
+            # V2 => V3: 'paramA' has been removed'
+            assert len(compatNode.attributes) == 3
+            assert hasattr(compatNode, "paramA")
+
+            # perform upgrade
+            upgradedNode = g.upgradeNode(nodeName)[0]
+            assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV3)
+
+            assert not hasattr(upgradedNode, "paramA")
+            # check uid is identical (paramA not part of uid)
+            assert upgradedNode.internalFolder == srcNode.internalFolder
+
+        elif isinstance(srcNode.nodeDesc, SampleNodeV3):
+            # V3 => V4: 'paramA' has been added
+            assert len(compatNode.attributes) == 2
+            assert not hasattr(compatNode, "paramA")
+
+            # perform upgrade
+            upgradedNode = g.upgradeNode(nodeName)[0]
+            assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV4)
+
+            assert hasattr(upgradedNode, "paramA")
+            assert isinstance(upgradedNode.paramA.attributeDesc, desc.ListAttribute)
+            # paramA child attributes invalidate UID
+            assert upgradedNode.internalFolder != srcNode.internalFolder
+
+        elif isinstance(srcNode.nodeDesc, SampleNodeV4):
+            # V4 => V5: 'paramA' elementDesc has changed from SampleGroupV1 to SampleGroupV2
+            assert len(compatNode.attributes) == 3
+            assert hasattr(compatNode, "paramA")
+            groupAttribute = compatNode.paramA.attributeDesc.elementDesc
+
+            assert isinstance(groupAttribute, desc.GroupAttribute)
+            # check that Compatibility node respect SampleGroupV1 description
+            for elt in groupAttribute.groupDesc:
+                assert isinstance(elt, next(a for a in SampleGroupV1 if a.name == elt.name).__class__)
+
+            # perform upgrade
+            upgradedNode = g.upgradeNode(nodeName)[0]
+            assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV5)
+
+            assert hasattr(upgradedNode, "paramA")
+            # parameter was incompatible, value could not be restored
+            assert upgradedNode.paramA.isDefault
+            assert upgradedNode.internalFolder != srcNode.internalFolder
+        else:
+            raise ValueError("Unexpected node type: " + srcNode.nodeType)
+
+    # restore original node types
+    meshroom.core.nodesDesc = originalNodeTypes
 
 
 def test_upgradeAllNodes():

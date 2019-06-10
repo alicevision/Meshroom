@@ -40,12 +40,15 @@ FloatingPane {
                 columnSpacing: 6
                 rowSpacing: 3
 
-                Label { text: "Points"; padding: 2 }
+                MaterialLabel { font.family: MaterialIcons.fontFamily; text: MaterialIcons.grain; padding: 2 }
                 RowLayout {
                     Slider {
-                        Layout.fillWidth: true; from: 0; to: 10; stepSize: 0.1
+                        Layout.fillWidth: true; from: 0; to: 5; stepSize: 0.1
                         value: Viewer3DSettings.pointSize
                         onValueChanged: Viewer3DSettings.pointSize = value
+                        ToolTip.text: "Point Size: " + value.toFixed(2)
+                        ToolTip.visible: hovered || pressed
+                        ToolTip.delay: 150
                     }
                     MaterialToolButton {
                         text: MaterialIcons.center_focus_strong
@@ -57,7 +60,7 @@ FloatingPane {
                     }
 
                 }
-                Label { text: "Cameras"; padding: 2 }
+                MaterialLabel { font.family: MaterialIcons.fontFamily; text: MaterialIcons.videocam; padding: 2 }
                 Slider {
                     value: Viewer3DSettings.cameraScale
                     from: 0
@@ -66,6 +69,9 @@ FloatingPane {
                     Layout.fillWidth: true
                     padding: 0
                     onMoved: Viewer3DSettings.cameraScale = value
+                    ToolTip.text: "Camera Scale: " + value.toFixed(2)
+                    ToolTip.visible: hovered || pressed
+                    ToolTip.delay: 150
                 }
                 Flow {
                     Layout.columnSpan: 2
@@ -283,9 +289,7 @@ FloatingPane {
                             }
                             MenuItem {
                                 text: "Copy Path"
-                                // hidden TextEdit to copy to clipboard
-                                TextEdit { id: fullpath; visible: false; text: Filepath.normpath(model.source) }
-                                onTriggered: { fullpath.selectAll(); fullpath.copy(); }
+                                onTriggered: Clipboard.setText(Filepath.normpath(model.source))
                             }
                             MenuSeparator {}
                             MenuItem {

@@ -21,7 +21,10 @@ Item {
     // signals
     signal workspaceMoved()
     signal workspaceClicked()
+
     signal nodeDoubleClicked(var mouse, var node)
+    signal computeRequest(var node)
+    signal submitRequest(var node)
 
     // trigger initial fit() after initialization
     // (ensure GraphEditor has its final size)
@@ -341,14 +344,14 @@ Item {
                 MenuItem {
                     text: "Compute"
                     enabled: !uigraph.computing && !root.readOnly && nodeMenu.canComputeNode
-                    onTriggered: uigraph.execute(nodeMenu.currentNode)
+                    onTriggered: computeRequest(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Submit"
                     enabled: !uigraph.computing && !root.readOnly && nodeMenu.canComputeNode
                     visible: uigraph.canSubmit
                     height: visible ? implicitHeight : 0
-                    onTriggered: uigraph.submit(nodeMenu.currentNode)
+                    onTriggered: submitRequest(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Open Folder"

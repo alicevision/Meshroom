@@ -2,8 +2,10 @@
 # coding:utf-8
 import logging
 import os
+import time
 from enum import Enum
-from threading import Thread
+from threading import Thread, Event
+from multiprocessing.pool import ThreadPool
 
 from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
 
@@ -14,6 +16,61 @@ from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode, Posit
 from meshroom.core import submitters
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
+
+
+class FilesModTimePollerThread(QObject):
+    """
+    Thread responsible for non-blocking polling of last modification times of a list of files.
+    Uses a Python ThreadPool internally to split tasks on multiple threads.
+    """
+    timesAvailable = Signal(list)
+
+    def __init__(self, parent=None):
+        super(FilesModTimePollerThread, self).__init__(parent)
+        self._thread = None
+        self._threadPool = ThreadPool(4)
+        self._stopFlag = Event()
+        self._refreshInterval = 5  # refresh interval in seconds
+        self._files = []
+
+    def start(self, files):
+        """ Start polling thread.
+
+        Args:
+            files: the list of files to monitor
+        """
+        if self._thread:
+            # thread already running, return
+            return
+        if not files:
+            # file list is empty
+            return
+        self._stopFlag.clear()
+        self._files = files or []
+        self._thread = Thread(target=self.run)
+        self._thread.start()
+
+    def stop(self):
+        """ Request polling thread to stop. """
+        if not self._thread:
+            return
+        self._stopFlag.set()
+        self._thread.join()
+        self._thread = None
+
+    @staticmethod
+    def getFileLastModTime(f):
+        """ Return 'mtime' of the file if it exists, -1 otherwise. """
+        try:
+            return os.path.getmtime(f)
+        except OSError:
+            return -1
+
+    def run(self):
+        """ Poll watched files for last modification time. """
+        while not self._stopFlag.wait(self._refreshInterval):
+            times = self._threadPool.map(FilesModTimePollerThread.getFileLastModTime, self._files)
+            self.timesAvailable.emit(times)
 
 
 class ChunksMonitor(QObject):
@@ -29,52 +86,69 @@ class ChunksMonitor(QObject):
     def __init__(self, chunks=(), parent=None):
         super(ChunksMonitor, self).__init__(parent)
         self.lastModificationRecords = dict()
+        self._filesTimePoller = FilesModTimePollerThread(parent=self)
+        self._filesTimePoller.timesAvailable.connect(self.compareFilesTimes)
+        self._pollerOutdated = False
         self.setChunks(chunks)
-        # Check status files every x seconds
-        # TODO: adapt frequency according to graph compute status
-        self.startTimer(5000)
 
     def setChunks(self, chunks):
         """ Set the list of chunks to monitor. """
+        self._filesTimePoller.stop()
         self.clear()
         for chunk in chunks:
-            f = chunk.statusFile
-            # Store a record of {chunk: status file last modification}
-            self.lastModificationRecords[chunk] = self.getFileLastModTime(f)
+            # initialize last modification times to current time for all chunks
+            self.lastModificationRecords[chunk] = time.time()
             # For local use, handle statusChanged emitted directly from the node chunk
             chunk.statusChanged.connect(self.onChunkStatusChanged)
+        self._pollerOutdated = True
         self.chunkStatusChanged.emit(None, -1)
+        self._filesTimePoller.start(self.statusFiles)
+        self._pollerOutdated = False
+
+    def stop(self):
+        """ Stop the status files monitoring. """
+        self._filesTimePoller.stop()
 
     def clear(self):
-        """ Clear the list of monitored chunks """
-        for ch in self.lastModificationRecords:
-            ch.statusChanged.disconnect(self.onChunkStatusChanged)
+        """ Clear the list of monitored chunks. """
+        for chunk in self.lastModificationRecords:
+            chunk.statusChanged.disconnect(self.onChunkStatusChanged)
         self.lastModificationRecords.clear()
-
-    def timerEvent(self, evt):
-        self.checkFileTimes()
 
     def onChunkStatusChanged(self):
         """ React to change of status coming from the NodeChunk itself. """
         chunk = self.sender()
         assert chunk in self.lastModificationRecords
-        # Update record entry for this file so that it's up-to-date on next timerEvent
-        self.lastModificationRecords[chunk] = self.getFileLastModTime(chunk.statusFile)
+        # update record entry for this file so that it's up-to-date on next timerEvent
+        # use current time instead of actual file's mtime to limit filesystem requests
+        self.lastModificationRecords[chunk] = time.time()
         self.chunkStatusChanged.emit(chunk, chunk.status.status)
 
-    @staticmethod
-    def getFileLastModTime(f):
-        """ Return 'mtime' of the file if it exists, -1 otherwise. """
-        return os.path.getmtime(f) if os.path.exists(f) else -1
+    @property
+    def statusFiles(self):
+        """ Get status file paths from current chunks. """
+        return [c.statusFile for c in self.lastModificationRecords.keys()]
 
-    def checkFileTimes(self):
-        """ Check status files last modification time and compare with stored value """
-        for chunk, t in self.lastModificationRecords.items():
-            lastMod = self.getFileLastModTime(chunk.statusFile)
-            if lastMod != t:
-                self.lastModificationRecords[chunk] = lastMod
+    def compareFilesTimes(self, times):
+        """
+        Compare previous file modification times with results from last poll.
+        Trigger chunk status update if file was modified since.
+
+        Args:
+            times: the last modification times for currently monitored files.
+        """
+        if self._pollerOutdated:
+            return
+
+        newRecords = dict(zip(self.lastModificationRecords.keys(), times))
+        for chunk, previousTime in self.lastModificationRecords.items():
+            lastModTime = newRecords.get(chunk, -1)
+            # update chunk status if:
+            #  - last modification time is more recent than previous record
+            #  - file is no more available (-1)
+            if lastModTime > previousTime or (lastModTime == -1 != previousTime):
+                self.lastModificationRecords[chunk] = lastModTime
                 chunk.updateStatusFromCache()
-                logging.debug("Status for node {} changed: {}".format(chunk.node, chunk.status.status))
 
     chunkStatusChanged = Signal(NodeChunk, int)
 
@@ -244,6 +318,11 @@ class UIGraph(QObject):
         self._sortedDFSChunks.clear()
         self._undoStack.clear()
 
+    def stopChildThreads(self):
+        """ Stop all child threads. """
+        self.stopExecution()
+        self._chunksMonitor.stop()
+
     def load(self, filepath):
         g = Graph('')
         g.load(filepath)
@@ -257,7 +336,11 @@ class UIGraph(QObject):
 
     @Slot(QUrl)
     def saveAs(self, url):
-        self._graph.save(url.toLocalFile())
+        localFile = url.toLocalFile()
+        # ensure file is saved with ".mg" extension
+        if os.path.splitext(localFile)[-1] != ".mg":
+            localFile += ".mg"
+        self._graph.save(localFile)
         self._undoStack.setClean()
 
     @Slot()

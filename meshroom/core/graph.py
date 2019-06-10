@@ -1078,6 +1078,7 @@ def loadGraph(filepath):
     """
     graph = Graph("")
     graph.load(filepath)
+    graph.update()
     return graph
 
 

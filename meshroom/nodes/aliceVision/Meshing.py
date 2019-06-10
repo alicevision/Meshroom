@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 from meshroom.core import desc
 
@@ -211,6 +211,14 @@ class Meshing(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.BoolParam(
+            name='saveRawDensePointCloud',
+            label='Save Raw Dense Point Cloud',
+            description='Save dense point cloud before cut and filtering.',
+            value=False,
+            uid=[],
+            advanced=True,
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
@@ -225,17 +233,16 @@ class Meshing(desc.CommandLineNode):
     outputs = [
         desc.File(
             name="output",
-            label="Output mesh",
+            label="Output Dense Point Cloud",
+            description="Output dense point cloud with visibilities (SfMData file format).",
+            value="{cache}/{nodeType}/{uid0}/densePointCloud.abc",
+            uid=[],
+        ),
+            desc.File(
+            name="outputMesh",
+            label="Output Mesh",
             description="Output mesh (OBJ file format).",
             value="{cache}/{nodeType}/{uid0}/mesh.obj",
             uid=[],
-            ),
-        desc.File(
-            name="outputDenseReconstruction",
-            label="Output reconstruction",
-            description="Output dense reconstruction (BIN file format).",
-            value="{cache}/{nodeType}/{uid0}/denseReconstruction.bin",
-            uid=[],
-            group="",
-            ),
+        ),
     ]

@@ -139,24 +139,66 @@ ApplicationWindow {
         onRejected: closed(Platform.Dialog.Rejected)
     }
 
-    MessageDialog {
-        id: unsavedComputeDialog
+    Item {
+        id: computeManager
 
-        canCopy: false
-        icon.text: MaterialIcons.warning
-        preset: "Warning"
-        title: "Unsaved Project"
-        text: "Data will be computed in the default cache folder if project remains unsaved."
-        detailedText: "Default cache folder: " + _reconstruction.graph.cacheDir
-        helperText: "Save project first?"
-        standardButtons: Dialog.Discard | Dialog.Cancel | Dialog.Save
-        Component.onCompleted: {
-            // set up discard button text
-            standardButton(Dialog.Discard).text = "Continue without Saving"
+        property bool warnIfUnsaved: true
+
+        // evaluate if global reconstruction computation can be started
+        property bool canStartComputation: _reconstruction.viewpoints.count >= 2      // at least 2 images
+                                           && !_reconstruction.computing              // computation is not started
+                                           && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
+
+        // evaluate if graph computation can be submitted externally
+        property bool canSubmit: _reconstruction.canSubmit                            // current setup allows to compute externally
+                                 && canStartComputation                               // can be computed
+                                 && _reconstruction.graph.filepath                    // graph is saved on disk
+
+        function compute(node, force) {
+            if(!force && warnIfUnsaved && !_reconstruction.graph.filepath)
+            {
+                unsavedComputeDialog.currentNode = node;
+                unsavedComputeDialog.open();
+            }
+            else
+                _reconstruction.execute(node);
         }
 
-        onDiscarded: { close(); _reconstruction.execute(null) }
-        onAccepted: saveAsAction.trigger()
+        function submit(node) {
+            _reconstruction.submit(node);
+        }
+
+
+        MessageDialog {
+            id: unsavedComputeDialog
+
+            property var currentNode: null
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "Unsaved Project"
+            text: "Data will be computed in the default cache folder if project remains unsaved."
+            detailedText: "Default cache folder: " + _reconstruction.graph.cacheDir
+            helperText: "Save project first?"
+            standardButtons: Dialog.Discard | Dialog.Cancel | Dialog.Save
+
+            CheckBox {
+                Layout.alignment: Qt.AlignRight
+                text: "Don't ask again for this session"
+                padding: 0
+                onToggled: computeManager.warnIfUnsaved = !checked
+            }
+
+            Component.onCompleted: {
+                // set up discard button text
+                standardButton(Dialog.Discard).text = "Continue without Saving"
+            }
+
+            onDiscarded: { close(); computeManager.compute(currentNode, true) }
+            onAccepted: saveAsAction.trigger()
+        }
     }
 
     Platform.FileDialog {
@@ -418,16 +460,6 @@ ApplicationWindow {
                 Item { Layout.fillWidth: true }
 
                 Row {
-                    // evaluate if global reconstruction computation can be started
-                    property bool canStartComputation: _reconstruction.viewpoints.count >= 2      // at least 2 images
-                                                       && !_reconstruction.computing              // computation is not started
-                                                       && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
-
-                    // evaluate if graph computation can be submitted externally
-                    property bool canSubmit: _reconstruction.canSubmit                            // current setup allows to compute externally
-                                             && canStartComputation                               // can be computed
-                                             && _reconstruction.graph.filepath                    // graph is saved on disk
-
                     // disable controls if graph is executed externally
                     enabled: !_reconstruction.computingExternally
                     Layout.alignment: Qt.AlignHCenter
@@ -438,13 +470,8 @@ ApplicationWindow {
                         palette.button: enabled ? buttonColor : disabledPalette.button
                         palette.window: enabled ? buttonColor : disabledPalette.window
                         palette.buttonText: enabled ? "white" : disabledPalette.buttonText
-                        enabled: parent.canStartComputation
-                        onClicked: {
-                            if(!_reconstruction.graph.filepath)
-                                unsavedComputeDialog.open()
-                            else
-                                _reconstruction.execute(null)
-                        }
+                        enabled: computeManager.canStartComputation
+                        onClicked: computeManager.compute(null)
                     }
                     Button {
                         text: "Stop"
@@ -454,9 +481,9 @@ ApplicationWindow {
                     Item { width: 20; height: 1 }
                     Button {
                         visible: _reconstruction.canSubmit
-                        enabled: parent.canSubmit
+                        enabled: computeManager.canSubmit
                         text: "Submit"
-                        onClicked: _reconstruction.submit(null)
+                        onClicked: computeManager.submit(null)
                     }
                 }
                 Item { Layout.fillWidth: true; Layout.fillHeight: true }
@@ -573,6 +600,8 @@ ApplicationWindow {
                             }
                         }
                     }
+                    onComputeRequest: computeManager.compute(node)
+                    onSubmitRequest: computeManager.submit(node)
                 }
             }
 

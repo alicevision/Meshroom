@@ -19,29 +19,23 @@ ListView {
 
     implicitHeight: contentHeight
 
-    clip: true
     spacing: 2
+    clip: true
     ScrollBar.vertical: ScrollBar { id: scrollBar }
 
-    model: SortFilterDelegateModel {
+    model: attributes
 
-        model: attributes
-        filterRole: GraphEditorSettings.showAdvancedAttributes ? "" : "advanced"
-        filterValue: false
+    delegate: Loader {
+        active: !object.desc.advanced || GraphEditorSettings.showAdvancedAttributes
+        visible: active
+        height: item ? item.implicitHeight : -spacing // compensate for spacing if item is hidden
 
-        function modelData(item, roleName) {
-            return item.model.object.desc[roleName]
-        }
-
-        Component {
-            id: delegateComponent
-            AttributeItemDelegate {
-                width: ListView.view.width - scrollBar.width
-                readOnly: root.readOnly
-                labelWidth: root.labelWidth
-                attribute: object
-                onDoubleClicked: root.attributeDoubleClicked(mouse, attr)
-            }
+        sourceComponent: AttributeItemDelegate {
+            width: root.width - scrollBar.width
+            readOnly: root.readOnly
+            labelWidth: root.labelWidth
+            attribute: object
+            onDoubleClicked: root.attributeDoubleClicked(mouse, attr)
         }
     }
 

@@ -14,7 +14,9 @@ Entity {
     property real translateSpeed: 75.0
     property real tiltSpeed: 500.0
     property real panSpeed: 500.0
-    property bool moving: pressed || (actionAlt.active && keyboardHandler._pressed)
+    readonly property bool moving: actionLMB.active
+    readonly property bool panning: (keyboardHandler._pressed && actionLMB.active && actionShift.active) || actionMMB.active
+    readonly property bool zooming: keyboardHandler._pressed && actionRMB.active && actionAlt.active
     property alias focus: keyboardHandler.focus
     readonly property bool pickingActive: actionControl.active && keyboardHandler._pressed
     property alias rotationSpeed: trackball.rotationSpeed
@@ -44,7 +46,8 @@ Entity {
         sourceDevice: mouseSourceDevice
         onPressed: {
             _pressed = true;
-            currentPosition = lastPosition = Qt.point(mouse.x, mouse.y);
+            currentPosition.x = lastPosition.x = mouse.x;
+            currentPosition.y = lastPosition.y = mouse.y;
             mousePressed(mouse);
         }
         onReleased: {
@@ -52,7 +55,7 @@ Entity {
             mouseReleased(mouse);
         }
         onClicked: mouseClicked(mouse)
-        onPositionChanged: { currentPosition = Qt.point(mouse.x, mouse.y) }
+        onPositionChanged: { currentPosition.x = mouse.x; currentPosition.y = mouse.y }
         onDoubleClicked: mouseDoubleClicked(mouse)
         onWheel: {
             var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.2;
@@ -158,19 +161,19 @@ Entity {
     components: [
         FrameAction {
             onTriggered: {
-                if(actionMMB.active || (actionLMB.active && actionShift.active)) { // translate
+                if(panning) { // translate
                     var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
                     var tx = axisMX.value * root.translateSpeed * d;
                     var ty = axisMY.value * root.translateSpeed * d;
                     root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt))
                     return;
                 }
-                if(actionLMB.active){ // trackball rotation
+                if(moving){ // trackball rotation
                     trackball.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition, dt);
                     mouseHandler.lastPosition = mouseHandler.currentPosition;
                     return;
                 }
-                if(actionAlt.active && actionRMB.active) { // zoom with alt + RMD
+                if(zooming) { // zoom with alt + RMD
                     var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.1;
                     var tz = axisMX.value * root.translateSpeed * d;
                     root.camera.translate(Qt.vector3d(0, 0, tz).times(dt), Camera.DontTranslateViewCenter)

@@ -1,3 +1,4 @@
+import QtQuick 2.9
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
 
@@ -6,7 +7,34 @@ import Utils 1.0
 Entity {
     id: root
 
+    /// Enable debug mode (show cache entity with a scale applied)
+    property bool debug: false
+
     enabled: false // disabled entity
+
+    components: [
+        Transform {
+            id: transform
+            scale: 1
+        }
+    ]
+
+    StateGroup {
+        states: [
+            State {
+                when: root.debug
+                name: "debug"
+                PropertyChanges {
+                    target: root
+                    enabled: true
+                }
+                PropertyChanges {
+                    target: transform
+                    scale: 0.2
+                }
+            }
+        ]
+    }
 
     property int cacheSize: 2
     property var mediaCache: {[]}
@@ -27,7 +55,7 @@ Entity {
             return false;
         if(contains(source))
             return true;
-        // console.debug("[cache] add: " + source)
+        if(debug) { console.log("[cache] add: " + source); }
         mediaCache[source] = object;
         object.parent = root;
         // remove oldest entry in cache
@@ -43,10 +71,11 @@ Entity {
 
         var obj = mediaCache[source];
         delete mediaCache[source];
-        // console.debug("[cache] pop: " + source)
+        if(debug) { console.log("[cache] pop: " + source); }
         // delete cached obj if file does not exist on disk anymore
         if(!Filepath.exists(source))
         {
+            if(debug){ console.log("[cache] destroy: " + source); }
             obj.destroy();
             obj = undefined;
         }

@@ -7,7 +7,7 @@ from meshroom.core import desc
 class CameraRigCalibration(desc.CommandLineNode):
     commandLine = 'aliceVision_rigCalibration {allParams}'
 
-    category = "Utils"
+    category = 'Utils'
 
     inputs = [
         desc.File(

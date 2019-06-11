@@ -94,7 +94,7 @@ class CameraInit(desc.CommandLineNode):
 
     size = desc.DynamicNodeSize('viewpoints')
 
-    category = "Sparse Reconstruction"
+    category = 'Sparse Reconstruction'
 
     inputs = [
         desc.ListAttribute(

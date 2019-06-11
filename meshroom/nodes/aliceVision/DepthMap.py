@@ -10,7 +10,7 @@ class DepthMap(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=3)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
-    category = "Dense Reconstruction"
+    category = 'Dense Reconstruction'
 
     inputs = [
         desc.File(

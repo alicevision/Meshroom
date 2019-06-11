@@ -9,7 +9,7 @@ class FeatureExtraction(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
-    category = "Sparse Reconstruction"
+    category = 'Sparse Reconstruction'
 
     inputs = [
         desc.File(

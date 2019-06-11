@@ -9,7 +9,7 @@ class Meshing(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
-    category = "Dense Reconstruction"
+    category = 'Dense Reconstruction'
 
     inputs = [
         desc.File(

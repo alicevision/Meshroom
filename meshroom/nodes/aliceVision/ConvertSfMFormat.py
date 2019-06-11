@@ -7,7 +7,7 @@ class ConvertSfMFormat(desc.CommandLineNode):
     commandLine = 'aliceVision_convertSfMFormat {allParams}'
     size = desc.DynamicNodeSize('input')
 
-    category = "Utils"
+    category = 'Utils'
     
     inputs = [
         desc.File(

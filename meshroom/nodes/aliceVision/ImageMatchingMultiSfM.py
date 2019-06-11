@@ -9,7 +9,7 @@ class ImageMatchingMultiSfM(desc.CommandLineNode):
     # use both SfM inputs to define Node's size
     size = desc.MultiDynamicNodeSize(['input', 'inputB'])
 
-    category = "Sparse Reconstruction"
+    category = 'Sparse Reconstruction'
 
     inputs = [
         desc.File(

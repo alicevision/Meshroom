@@ -6,7 +6,7 @@ from meshroom.core import desc
 class MeshDenoising(desc.CommandLineNode):
     commandLine = 'aliceVision_meshDenoising {allParams}'
 
-    category = "Mesh Post-Processing"
+    category = 'Mesh Post-Processing'
 
     inputs = [
         desc.File(

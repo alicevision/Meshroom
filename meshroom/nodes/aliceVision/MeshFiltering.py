@@ -6,7 +6,7 @@ from meshroom.core import desc
 class MeshFiltering(desc.CommandLineNode):
     commandLine = 'aliceVision_meshFiltering {allParams}'
 
-    category = "Dense Reconstruction"
+    category = 'Dense Reconstruction'
 
     inputs = [
         desc.File(

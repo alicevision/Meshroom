@@ -6,7 +6,7 @@ from meshroom.core import desc
 class ExportAnimatedCamera(desc.CommandLineNode):
     commandLine = 'aliceVision_exportAnimatedCamera {allParams}'
 
-    category = "Utils"
+    category = 'Utils'
 
     inputs = [
         desc.File(

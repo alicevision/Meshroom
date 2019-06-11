@@ -9,7 +9,7 @@ class PrepareDenseScene(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
-    category = "Dense Reconstruction"
+    category = 'Dense Reconstruction'
 
     inputs = [
         desc.File(

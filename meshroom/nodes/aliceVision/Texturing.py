@@ -124,7 +124,7 @@ class Texturing(desc.CommandLineNode):
             name='bestScoreThreshold',
             label='Best Score Threshold',
             description='''(0.0 to disable filtering based on threshold to relative best score)''',
-            value=0.0,
+            value=0.1,
             range=(0.0, 1.0, 0.01),
             uid=[0],
             advanced=True,

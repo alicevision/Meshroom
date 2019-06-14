@@ -120,6 +120,24 @@ class DepthMap(desc.CommandLineNode):
             advanced=True,
         ),
 
+        desc.FloatParam(
+            name='sgmP1',
+            label='SGM: P1',
+            description='Semi Global Matching: P1.',
+            value=10.0,
+            range=(0.0, 255.0, 0.5),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.FloatParam(
+            name='sgmP2',
+            label='SGM: P2',
+            description='Semi Global Matching: P2 weight.',
+            value=20.0,
+            range=(-255.0, 255.0, 0.5),
+            uid=[0],
+            advanced=True,
+        ),
         desc.IntParam(
             name='sgmMaxDepths',
             label='SGM: Max Depths',
@@ -143,7 +161,15 @@ class DepthMap(desc.CommandLineNode):
             label='SGM: Use SfM Landmarks',
             description='Semi Global Matching: Use landmarks from SfM to define the ranges for the plane sweeping.',
             value=True,
-            uid=[],
+            uid=[0],
+            advanced=True,
+        ),
+        desc.StringParam(
+            name='sgmFilteringAxes',
+            label='SGM: Filtering Axes',
+            description="Semi Global Matching: Define axes for the filtering of the similarity volume.",
+            value='YX',
+            uid=[0],
             advanced=True,
         ),
         desc.IntParam( 

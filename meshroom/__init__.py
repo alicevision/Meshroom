@@ -15,7 +15,7 @@ if not isFrozen:
     if os.path.exists(headFilepath):
         with open(headFilepath, "r") as headFile:
             data = headFile.readlines()
-            branchName = data[0].split('/')[-1]
+            branchName = data[0].split('/')[-1].strip()
             __version_name__ += "-" + branchName
 
 # Allow override from env variable

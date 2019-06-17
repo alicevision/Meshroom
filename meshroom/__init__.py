@@ -1,22 +1,25 @@
 __version__ = "2019.1.0"
+__version_name__ = __version__
 
 import os
-scriptPath = os.path.dirname(os.path.abspath( __file__ ))
-headFilepath = os.path.join(scriptPath, "../.git/HEAD")
-# If we are in a release, the git history will not exist.
-# If we are in development, we declare the name of the git development branch in the version name
-if os.path.exists(headFilepath):
-    with open (headFilepath, "r") as headFile:
-        data = headFile.readlines()
-        branchName = data[0].split('/')[-1]
-        # Add git branch name to the Meshroom version name
-        __version__ = __version__ + "-" + branchName
-
-# Allow override from env variable
-__version__ = os.environ.get("REZ_MESHROOM_VERSION", __version__)
-
+import sys
 import logging
 from enum import Enum
+
+# sys.frozen is initialized by cx_Freeze and identifies a release package
+isFrozen = getattr(sys, "frozen", False)
+if not isFrozen:
+    # development mode: add git branch name (if any) to __version_name__
+    scriptPath = os.path.dirname(os.path.abspath(__file__))
+    headFilepath = os.path.join(scriptPath, "../.git/HEAD")
+    if os.path.exists(headFilepath):
+        with open(headFilepath, "r") as headFile:
+            data = headFile.readlines()
+            branchName = data[0].split('/')[-1]
+            __version_name__ += "-" + branchName
+
+# Allow override from env variable
+__version_name__ = os.environ.get("REZ_MESHROOM_VERSION", __version_name__)
 
 
 class Backend(Enum):
@@ -55,9 +58,6 @@ def setupEnvironment():
        COPYING.md  # Meshroom COPYING file
     """
 
-    import os
-    import sys
-
     def addToEnvPath(var, val, index=-1):
         """
         Add paths to the given environment variable.
@@ -75,8 +75,6 @@ def setupEnvironment():
         paths[index:index] = val
         os.environ[var] = os.pathsep.join(paths)
 
-    # sys.frozen is initialized by cx_Freeze
-    isFrozen = getattr(sys, "frozen", False)
     # setup root directory (override possible by setting "MESHROOM_INSTALL_DIR" environment variable)
     rootDir = os.path.dirname(sys.executable) if isFrozen else os.environ.get("MESHROOM_INSTALL_DIR", None)
 

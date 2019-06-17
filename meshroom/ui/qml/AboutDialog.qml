@@ -111,7 +111,7 @@ Dialog {
                 font.pointSize: 10
             }
             Label {
-                text: "2018 AliceVision contributors"
+                text: "2010-2019 AliceVision contributors"
             }
         }
 

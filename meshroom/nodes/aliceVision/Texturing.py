@@ -182,7 +182,7 @@ class Texturing(desc.CommandLineNode):
             name='outputTextures',
             label='Output Textures',
             description='Folder for output mesh: OBJ, material and texture files.',
-            value=desc.Node.internalFolder + 'texture_*.png',
+            value=desc.Node.internalFolder + 'texture_*.{outputTextureFileTypeValue}',
             uid=[],
             group='',
             ),

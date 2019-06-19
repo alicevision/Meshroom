@@ -55,6 +55,14 @@ class PrepareDenseScene(desc.CommandLineNode):
             uid=[0],
             advanced=True
         ),
+        desc.BoolParam(
+            name='evCorrection',
+            label='Correct images exposure',
+            description='Apply a correction on images Exposure Value',
+            value=False,
+            uid=[0],
+            advanced=True
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

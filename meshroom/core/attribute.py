@@ -414,7 +414,9 @@ class GroupAttribute(Attribute):
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault}
 
     def getValueStr(self):
-        return self.attributeDesc.joinChar.join([v.getValueStr() for v in self._value.objects.values()])
+        # sort values based on child attributes group description order
+        sortedSubValues = [self._value.get(attr.name).getValueStr() for attr in self.attributeDesc.groupDesc]
+        return self.attributeDesc.joinChar.join(sortedSubValues)
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

@@ -61,7 +61,7 @@ class MeshroomApp(QApplication):
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
         self.setAttribute(Qt.AA_EnableHighDpiScaling)
-        self.setApplicationVersion(meshroom.__version__)
+        self.setApplicationVersion(meshroom.__version_name__)
 
         font = self.font()
         font.setPointSize(9)

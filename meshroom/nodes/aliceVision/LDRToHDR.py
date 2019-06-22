@@ -6,6 +6,8 @@ from meshroom.core import desc
 class LDRToHDR(desc.CommandLineNode):
     commandLine = 'aliceVision_convertLDRToHDR {allParams}'
 
+    category = 'Utils'
+
     inputs = [
         desc.File(
             name='input',

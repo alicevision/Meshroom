@@ -99,6 +99,16 @@ class Texturing(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.ChoiceParam(
+            name='processColorspace',
+            label='Process Colorspace',
+            description="Colorspace for the texturing internal computation (does not impact the output file colorspace).",
+            value='sRGB',
+            values=('sRGB', 'LAB', 'XYZ'),
+            exclusive=True,
+            uid=[0],
+            advanced=True,
+        ),
         desc.IntParam(
             name='multiBandDownscale',
             label='Multi Band Downscale',

@@ -161,19 +161,27 @@ class Reconstruction(UIGraph):
 
     def __init__(self, graphFilepath='', parent=None):
         super(Reconstruction, self).__init__(graphFilepath, parent)
-        self._buildingIntrinsics = False
-        self._cameraInit = None
-        self._cameraInits = QObjectListModel(parent=self)
-        self._texturing = None
-        self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
-        self.graphChanged.connect(self.onGraphChanged)
-        self._liveSfmManager = LiveSfmManager(self)
 
-        # SfM result
+        # initialize member variables for key steps of the 3D reconstruction pipeline
+
+        # - CameraInit
+        self._cameraInit = None                            # current CameraInit node
+        self._cameraInits = QObjectListModel(parent=self)  # all CameraInit nodes
+        self._buildingIntrinsics = False
+        self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
+
+        # - SfM
         self._sfm = None
         self._views = None
         self._poses = None
         self._selectedViewId = None
+        self._liveSfmManager = LiveSfmManager(self)
+
+        # - Texturing
+        self._texturing = None
+
+        # react to internal graph changes to update those variables
+        self.graphChanged.connect(self.onGraphChanged)
 
         if graphFilepath:
             self.onGraphChanged()

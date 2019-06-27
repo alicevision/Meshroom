@@ -170,6 +170,10 @@ class Reconstruction(UIGraph):
         self._buildingIntrinsics = False
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
 
+        # - Feature Extraction
+        self._featureExtraction = None
+        self.cameraInitChanged.connect(self.updateFeatureExtraction)
+
         # - SfM
         self._sfm = None
         self._views = None
@@ -219,6 +223,7 @@ class Reconstruction(UIGraph):
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
+        self.featureExtraction = None
         self.sfm = None
         self.texturing = None
         self.updateCameraInits()
@@ -256,6 +261,10 @@ class Reconstruction(UIGraph):
     def setCameraInitIndex(self, idx):
         camInit = self._cameraInits[idx] if self._cameraInits else None
         self.cameraInit = camInit
+
+    def updateFeatureExtraction(self):
+        """ Set the current FeatureExtraction node based on the current CameraInit node. """
+        self.featureExtraction = self.lastNodeOfType('FeatureExtraction', self.cameraInit) if self.cameraInit else None
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
@@ -561,6 +570,10 @@ class Reconstruction(UIGraph):
 
     sfmChanged = Signal()
     sfm = Property(QObject, getSfm, setSfm, notify=sfmChanged)
+
+    featureExtractionChanged = Signal()
+    featureExtraction = makeProperty(QObject, "_featureExtraction", featureExtractionChanged, resetOnDestroy=True)
+
     sfmReportChanged = Signal()
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)

@@ -138,7 +138,7 @@ Panel {
             Layout.fillWidth: true
             width: childrenRect.width
             position: TabBar.Footer
-            currentIndex: 1
+            currentIndex: 0
             TabButton {
                 text: "Attributes"
                 width: implicitWidth

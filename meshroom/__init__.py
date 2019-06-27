@@ -67,6 +67,9 @@ def setupEnvironment():
             val (str or list of str): the path(s) to add
             index (int): insertion index
         """
+        if not val:
+            return
+
         paths = os.environ.get(var, "").split(os.pathsep)
 
         if not isinstance(val, (list, tuple)):
@@ -108,3 +111,5 @@ def setupEnvironment():
             if key not in os.environ and os.path.exists(value):
                 logging.info("Set {}: {}".format(key, value))
                 os.environ[key] = value
+    else:
+        addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))

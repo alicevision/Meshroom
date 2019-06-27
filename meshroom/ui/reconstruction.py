@@ -164,7 +164,7 @@ class Reconstruction(UIGraph):
         self._buildingIntrinsics = False
         self._cameraInit = None
         self._cameraInits = QObjectListModel(parent=self)
-        self._endNode = None
+        self._texturing = None
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
         self.graphChanged.connect(self.onGraphChanged)
         self._liveSfmManager = LiveSfmManager(self)
@@ -212,7 +212,7 @@ class Reconstruction(UIGraph):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
         self.sfm = None
-        self.endNode = None
+        self.texturing = None
         self.updateCameraInits()
         if not self._graph:
             return
@@ -493,21 +493,8 @@ class Reconstruction(UIGraph):
             self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
             self._sfm.destroyed.disconnect(self._unsetSfm)
         self._setSfm(node)
-        self.setEndNode(self.lastNodeOfType("Texturing", self._sfm, Status.SUCCESS))
 
-    def setEndNode(self, node=None):
-        if self._endNode == node:
-            return
-        if self._endNode:
-            try:
-                self._endNode.destroyed.disconnect(self.setEndNode)
-            except RuntimeError:
-                # self._endNode might have been destroyed at this point, causing PySide2 to throw a RuntimeError
-                pass
-        self._endNode = node
-        if self._endNode:
-            self._endNode.destroyed.connect(self.setEndNode)
-        self.endNodeChanged.emit()
+        self.texturing = self.lastNodeOfType("Texturing", self._sfm, Status.SUCCESS)
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):
@@ -570,8 +557,8 @@ class Reconstruction(UIGraph):
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(Node, Node)
-    endNodeChanged = Signal()
-    endNode = Property(QObject, lambda self: self._endNode, setEndNode, notify=endNodeChanged)
+    texturingChanged = Signal()
+    texturing = makeProperty(QObject, "_texturing", notify=texturingChanged)
 
     nbCameras = Property(int, reconstructedCamerasCount, notify=sfmReportChanged)
 

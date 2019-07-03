@@ -101,7 +101,8 @@ else:
     graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
     cameraInit = getOnlyNodeOfType(graph, 'CameraInit')
 
-views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
+if not (views and intrinsics):
+    views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
 cameraInit.viewpoints.value = views
 cameraInit.intrinsics.value = intrinsics
 

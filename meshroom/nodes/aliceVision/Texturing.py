@@ -1,4 +1,4 @@
-__version__ = "4.0"
+__version__ = "5.0"
 
 from meshroom.core import desc
 
@@ -96,6 +96,16 @@ class Texturing(desc.CommandLineNode):
             label='Use Score',
             description='Use triangles scores for multiband blending.',
             value=True,
+            uid=[0],
+            advanced=True,
+        ),
+        desc.ChoiceParam(
+            name='processColorspace',
+            label='Process Colorspace',
+            description="Colorspace for the texturing internal computation (does not impact the output file colorspace).",
+            value='sRGB',
+            values=('sRGB', 'LAB', 'XYZ'),
+            exclusive=True,
             uid=[0],
             advanced=True,
         ),

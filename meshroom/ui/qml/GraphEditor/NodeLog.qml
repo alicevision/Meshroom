@@ -72,6 +72,26 @@ FocusScope {
                     color: Common.getChunkColor(parent.chunk)
                 }
             }
+
+            Button {
+                text: MaterialIcons.center_focus_strong
+                width: parent.width
+                ToolTip.text: "Select Running Chunk"
+                ToolTip.visible: hovered
+                font.family: MaterialIcons.fontFamily
+                anchors.bottom: chunksLV.bottom
+                onClicked: {
+                    for(var child in chunksLV.contentItem.children) {
+                        // make sure child object is a chunk
+                        if (chunksLV.contentItem.children[child].chunk != undefined) {
+                            if (chunksLV.contentItem.children[child].chunk.statusName == "RUNNING") {
+                                chunksLV.forceActiveFocus()
+                                chunksLV.currentIndex = chunksLV.contentItem.children[child].text
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         ColumnLayout {

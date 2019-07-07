@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 from meshroom.core import desc
 
@@ -51,6 +51,14 @@ class PrepareDenseScene(desc.CommandLineNode):
             name='saveMatricesTxtFiles',
             label='Save Matrices Text Files',
             description='Save projections and intrinsics information in text files.',
+            value=False,
+            uid=[0],
+            advanced=True
+        ),
+        desc.BoolParam(
+            name='evCorrection',
+            label='Correct images exposure',
+            description='Apply a correction on images Exposure Value',
             value=False,
             uid=[0],
             advanced=True

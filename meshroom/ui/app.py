@@ -9,6 +9,7 @@ from PySide2.QtWidgets import QApplication
 import meshroom
 from meshroom.core import nodesDesc
 from meshroom.ui import components
+from meshroom.ui.components.clipboard import ClipboardHelper
 from meshroom.ui.components.filepath import FilepathHelper
 from meshroom.ui.components.scene3D import Scene3DHelper
 from meshroom.ui.palette import PaletteManager
@@ -60,7 +61,7 @@ class MeshroomApp(QApplication):
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
         self.setAttribute(Qt.AA_EnableHighDpiScaling)
-        self.setApplicationVersion(meshroom.__version__)
+        self.setApplicationVersion(meshroom.__version_name__)
 
         font = self.font()
         font.setPointSize(9)
@@ -84,17 +85,25 @@ class MeshroomApp(QApplication):
 
         # expose available node types that can be instantiated
         self.engine.rootContext().setContextProperty("_nodeTypes", sorted(nodesDesc.keys()))
+
+        # instantiate Reconstruction object
         r = Reconstruction(parent=self)
         self.engine.rootContext().setContextProperty("_reconstruction", r)
-        pm = PaletteManager(self.engine, parent=self)
-        self.engine.rootContext().setContextProperty("_PaletteManager", pm)
-        fpHelper = FilepathHelper(parent=self)
-        self.engine.rootContext().setContextProperty("Filepath", fpHelper)
-        scene3DHelper = Scene3DHelper(parent=self)
-        self.engine.rootContext().setContextProperty("Scene3DHelper", scene3DHelper)
+
+        # those helpers should be available from QML Utils module as singletons, but:
+        #  - qmlRegisterUncreatableType is not yet available in PySide2
+        #  - declaring them as singleton in qmldir file causes random crash at exit
+        # => expose them as context properties instead
+        self.engine.rootContext().setContextProperty("Filepath", FilepathHelper(parent=self))
+        self.engine.rootContext().setContextProperty("Scene3DHelper", Scene3DHelper(parent=self))
+        self.engine.rootContext().setContextProperty("Clipboard", ClipboardHelper(parent=self))
+
+        # additional context properties
+        self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
-        # Request any potential computation to stop on exit
-        self.aboutToQuit.connect(r.stopExecution)
+
+        # request any potential computation to stop on exit
+        self.aboutToQuit.connect(r.stopChildThreads)
 
         parser = argparse.ArgumentParser(prog=args[0], description='Launch Meshroom UI.')
         parser.add_argument('--project', metavar='MESHROOM_FILE', type=str, required=False,

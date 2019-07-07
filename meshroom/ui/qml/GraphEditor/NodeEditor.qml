@@ -96,7 +96,7 @@ Panel {
                         }
                         Label {
                             color: Qt.lighter(palette.mid, 1.2)
-                            text: "Select a Node to edit its Attributes"
+                            text: "Select a Node to access its Details"
                         }
                     }
                 }
@@ -128,27 +128,29 @@ Panel {
                             node: root.node
                         }
                     }
-                    TabBar {
-                        id: tabBar
-
-                        Layout.fillWidth: true
-                        width: childrenRect.width
-                        position: TabBar.Footer
-                        TabButton {
-                            text: "Attributes"
-                            width: implicitWidth
-                            padding: 4
-                            leftPadding: 8
-                            rightPadding: leftPadding
-                        }
-                        TabButton {
-                            text: "Log"
-                            width: implicitWidth
-                            leftPadding: 8
-                            rightPadding: leftPadding
-                        }
-                    }
                 }
+            }
+        }
+
+        TabBar {
+            id: tabBar
+
+            Layout.fillWidth: true
+            width: childrenRect.width
+            position: TabBar.Footer
+            currentIndex: 0
+            TabButton {
+                text: "Attributes"
+                width: implicitWidth
+                padding: 4
+                leftPadding: 8
+                rightPadding: leftPadding
+            }
+            TabButton {
+                text: "Log"
+                width: implicitWidth
+                leftPadding: 8
+                rightPadding: leftPadding
             }
         }
     }

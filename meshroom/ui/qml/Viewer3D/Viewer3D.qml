@@ -134,8 +134,8 @@ FocusScope {
                     width: root.width
                     height: root.height
                 }
-                rotationSpeed: 10
-                trackballSize: 0.4
+                rotationSpeed: 16
+                trackballSize: 0.9
 
                 camera: mainCamera
                 focus: scene3D.activeFocus

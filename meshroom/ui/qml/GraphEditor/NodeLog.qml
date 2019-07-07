@@ -76,6 +76,7 @@ FocusScope {
             Button {
                 text: MaterialIcons.center_focus_strong
                 width: parent.width
+                visible: node.globalStatus == "RUNNING" // only show when node is running
                 ToolTip.text: "Select Running Chunk"
                 ToolTip.visible: hovered
                 font.family: MaterialIcons.fontFamily

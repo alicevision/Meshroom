@@ -22,6 +22,7 @@ Item {
     property bool loading: false
 
     onSourceChanged: loadSource()
+    onAutoReloadChanged: loadSource()
     onVisibleChanged: if(visible) loadSource()
 
     RowLayout {
@@ -307,11 +308,10 @@ Item {
 
     // Auto-reload current file timer
     Timer {
+        id: reloadTimer
         running: root.autoReload
         interval: root.autoReloadInterval
-        repeat: true
-        // reload file on start and stop
-        onRunningChanged: loadSource()
+        repeat: false // timer is restarted in request's callback (see loadSource)
         onTriggered: loadSource()
     }
 
@@ -333,6 +333,9 @@ Item {
             if(xhr.readyState === XMLHttpRequest.DONE) {
                 textView.setText(xhr.status === 200 ? xhr.responseText : "");
                 loading = false;
+                // re-trigger reload source file
+                if(autoReload)
+                    reloadTimer.restart();
             }
         };
         xhr.send();

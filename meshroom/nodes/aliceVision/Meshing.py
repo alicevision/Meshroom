@@ -210,6 +210,13 @@ class Meshing(desc.CommandLineNode):
             advanced=True,
         ),
         desc.BoolParam(
+            name='colorizeOutput',
+            label='Colorize Output',
+            description='Whether to colorize output dense point cloud and mesh.',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='saveRawDensePointCloud',
             label='Save Raw Dense Point Cloud',
             description='Save dense point cloud before cut and filtering.',

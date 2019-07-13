@@ -76,8 +76,8 @@ FocusScope {
             Button {
                 text: MaterialIcons.center_focus_strong
                 width: parent.width
-                visible: (node.globalStatus == "RUNNING") && (node.chunks.count > 1) // only show when node is running and has multiple chunks
-                ToolTip.text: "Select Running Chunk"
+                visible: (node.globalStatus == "RUNNING" || node.globalStatus == "ERROR") && (node.chunks.count > 1) // only show when node is running or has error and has multiple chunks
+                ToolTip.text: node.globalStatus == "ERROR" ? "Select Chunk With Error" : "Select Running Chunk"
                 ToolTip.visible: hovered
                 font.family: MaterialIcons.fontFamily
                 anchors.bottom: chunksLV.bottom
@@ -89,7 +89,7 @@ FocusScope {
                         for(var child in chunksLV.contentItem.children) {
                             // make sure child object is a chunk
                             if (chunksLV.contentItem.children[child].chunk != undefined) {
-                                if (chunksLV.contentItem.children[child].chunk.statusName == "RUNNING") {
+                                if (chunksLV.contentItem.children[child].chunk.statusName == node.globalStatus) {
                                     chunkIndex = chunksLV.contentItem.children[child].text
                                     foundChunk = true
                                 }

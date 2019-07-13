@@ -82,15 +82,27 @@ FocusScope {
                 font.family: MaterialIcons.fontFamily
                 anchors.bottom: chunksLV.bottom
                 onClicked: {
-                    for(var child in chunksLV.contentItem.children) {
-                        // make sure child object is a chunk
-                        if (chunksLV.contentItem.children[child].chunk != undefined) {
-                            if (chunksLV.contentItem.children[child].chunk.statusName == "RUNNING") {
-                                chunksLV.forceActiveFocus()
-                                chunksLV.currentIndex = chunksLV.contentItem.children[child].text
+                    let chunkIndex = 0;
+                    let foundChunk = false;
+                    // cycle through the listview until the chunk is found
+                    while (!foundChunk) {
+                        for(var child in chunksLV.contentItem.children) {
+                            // make sure child object is a chunk
+                            if (chunksLV.contentItem.children[child].chunk != undefined) {
+                                if (chunksLV.contentItem.children[child].chunk.statusName == "RUNNING") {
+                                    chunkIndex = chunksLV.contentItem.children[child].text
+                                    foundChunk = true
+                                }
                             }
                         }
+                        if (!foundChunk) {
+                            chunkIndex += 1
+                            chunksLV.positionViewAtIndex(chunkIndex, ListView.Visible)
+                        }
                     }
+                    chunksLV.forceActiveFocus()
+                    chunksLV.positionViewAtIndex(chunkIndex, ListView.Beginning)
+                    chunksLV.currentIndex = chunkIndex
                 }
             }
         }

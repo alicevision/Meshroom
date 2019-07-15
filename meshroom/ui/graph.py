@@ -306,8 +306,12 @@ class UIGraph(QObject):
         if self._sortedDFSChunks.objectList() == chunks:
             return
         self._sortedDFSChunks.setObjectList(chunks)
-        # Update the list of monitored chunks
-        self._chunksMonitor.setChunks(self._sortedDFSChunks)
+        # provide ChunkMonitor with the update list of chunks
+        self.updateChunkMonitor(self._sortedDFSChunks)
+
+    def updateChunkMonitor(self, chunks):
+        """ Update the list of chunks for status files monitoring. """
+        self._chunksMonitor.setChunks(chunks)
 
     def clear(self):
         if self._graph:
@@ -342,6 +346,9 @@ class UIGraph(QObject):
             localFile += ".mg"
         self._graph.save(localFile)
         self._undoStack.setClean()
+        # saving file on disk impacts cache folder location
+        # => force re-evaluation of monitored status files paths
+        self.updateChunkMonitor(self._sortedDFSChunks)
 
     @Slot()
     def save(self):

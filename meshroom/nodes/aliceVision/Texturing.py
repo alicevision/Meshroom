@@ -92,6 +92,14 @@ class Texturing(desc.CommandLineNode):
             advanced=True,
         ),
         desc.BoolParam(
+            name='correctEV',
+            label='Correct Exposure',
+            description='Uniformize images exposure values.',
+            value=False,
+            uid=[0],
+            advanced=True,
+        ),
+        desc.BoolParam(
             name='useScore',
             label='Use Score',
             description='Use triangles scores for multiband blending.',

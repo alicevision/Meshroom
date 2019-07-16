@@ -77,10 +77,10 @@ class DepthMap(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
-            name='sgmMaxSide',
+            name='sgmMaxSideXY',
             label='SGM: Max Side',
             description='Semi Global Matching: Max side in pixels used to automatically decide for sgmScale/sgmStep if not defined.',
-            value=200,
+            value=700,
             range=(-1, 1000, 1),
             uid=[0],
         ),

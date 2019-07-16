@@ -62,7 +62,11 @@ Entity {
             },
             State {
                 name: "Textured"
-                PropertyChanges { target: m; material: diffuseMap ? textured : solid }
+                PropertyChanges {
+                    target: m;
+                    // "textured" material resolution order: diffuse map > vertex color data >  no color info
+                    material: diffuseMap ? textured : (Scene3DHelper.vertexColorCount(root.parent) ? colored : solid)
+                }
             }
         ]
     }
@@ -78,6 +82,11 @@ Entity {
         shininess: root.shininess
         specular: root.specular
         diffuse: root.diffuseColor
+    }
+
+    PerVertexColorMaterial {
+        id: colored
+        objectName: "VertexColorMaterial"
     }
 
     DiffuseSpecularMaterial {

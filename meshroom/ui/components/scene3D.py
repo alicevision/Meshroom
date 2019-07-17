@@ -45,6 +45,13 @@ class Scene3DHelper(QObject):
             count += sum([attr.count() for attr in geo.attributes() if attr.name() == "vertexPosition"])
         return count / 3
 
+    @Slot(Qt3DCore.QEntity, result=int)
+    def vertexColorCount(self, entity):
+        count = 0
+        for geo in entity.findChildren(Qt3DRender.QGeometry):
+            count += sum([attr.count() for attr in geo.attributes() if attr.name() == "vertexColor"])
+        return count
+
 
 class TrackballController(QObject):
     """

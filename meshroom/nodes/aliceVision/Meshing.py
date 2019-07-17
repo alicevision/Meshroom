@@ -210,6 +210,13 @@ class Meshing(desc.CommandLineNode):
             advanced=True,
         ),
         desc.BoolParam(
+            name='colorizeOutput',
+            label='Colorize Output',
+            description='Whether to colorize output dense point cloud and mesh.',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='saveRawDensePointCloud',
             label='Save Raw Dense Point Cloud',
             description='Save dense point cloud before cut and filtering.',
@@ -230,17 +237,17 @@ class Meshing(desc.CommandLineNode):
 
     outputs = [
         desc.File(
-            name="output",
-            label="Output Dense Point Cloud",
-            description="Output dense point cloud with visibilities (SfMData file format).",
-            value="{cache}/{nodeType}/{uid0}/densePointCloud.abc",
-            uid=[],
-        ),
-            desc.File(
             name="outputMesh",
             label="Output Mesh",
             description="Output mesh (OBJ file format).",
             value="{cache}/{nodeType}/{uid0}/mesh.obj",
+            uid=[],
+        ),
+        desc.File(
+            name="output",
+            label="Output Dense Point Cloud",
+            description="Output dense point cloud with visibilities (SfMData file format).",
+            value="{cache}/{nodeType}/{uid0}/densePointCloud.abc",
             uid=[],
         ),
     ]

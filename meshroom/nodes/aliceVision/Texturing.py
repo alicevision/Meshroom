@@ -42,7 +42,7 @@ class Texturing(desc.CommandLineNode):
             name='downscale',
             label='Texture Downscale',
             description='''Texture downscale factor''',
-            value=2,
+            value=1,
             values=(1, 2, 4, 8),
             exclusive=True,
             uid=[0],

@@ -538,6 +538,11 @@ class UIGraph(QObject):
             for node in nodes:
                 self.upgradeNode(node)
 
+    @Slot()
+    def forceNodesStatusUpdate(self):
+        """ Force re-evaluation of graph's nodes status. """
+        self._graph.updateStatusFromCache(force=True)
+
     @Slot(Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):
         if isinstance(value, QJsonValue):

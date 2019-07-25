@@ -133,8 +133,8 @@ Item {
 
             // Load reconstructed model
             Button {
-                readonly property var outputAttribute: _reconstruction.endNode ? _reconstruction.endNode.attribute("outputMesh") : null
-                readonly property bool outputReady: outputAttribute && _reconstruction.endNode.globalStatus === "SUCCESS"
+                readonly property var outputAttribute: _reconstruction.texturing ? _reconstruction.texturing.attribute("outputMesh") : null
+                readonly property bool outputReady: outputAttribute && _reconstruction.texturing.globalStatus === "SUCCESS"
                 readonly property int outputMediaIndex: viewer3D.library.find(outputAttribute)
 
                 text: "Load Model"
@@ -142,7 +142,7 @@ Item {
                 anchors.bottomMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: outputReady && outputMediaIndex == -1
-                onClicked: viewer3D.view(_reconstruction.endNode.attribute("outputMesh"))
+                onClicked: viewer3D.view(_reconstruction.texturing.attribute("outputMesh"))
             }
         }
     }

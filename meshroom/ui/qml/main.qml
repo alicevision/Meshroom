@@ -595,6 +595,14 @@ ApplicationWindow {
                         {
                             _reconstruction.sfm = node;
                         }
+                        else if(node.nodeType === "FeatureExtraction")
+                        {
+                            _reconstruction.featureExtraction = node;
+                        }
+                        else if(node.nodeType === "CameraInit")
+                        {
+                            _reconstruction.cameraInit = node;
+                        }
                         for(var i=0; i < node.attributes.count; ++i)
                         {
                             var attr = node.attributes.at(i)

@@ -4,7 +4,7 @@ import logging
 import os
 import time
 from enum import Enum
-from threading import Thread, Event
+from threading import Thread, Event, Lock
 from multiprocessing.pool import ThreadPool
 
 from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
@@ -28,12 +28,13 @@ class FilesModTimePollerThread(QObject):
     def __init__(self, parent=None):
         super(FilesModTimePollerThread, self).__init__(parent)
         self._thread = None
+        self._mutex = Lock()
         self._threadPool = ThreadPool(4)
         self._stopFlag = Event()
         self._refreshInterval = 5  # refresh interval in seconds
         self._files = []
 
-    def start(self, files):
+    def start(self, files=None):
         """ Start polling thread.
 
         Args:
@@ -42,13 +43,19 @@ class FilesModTimePollerThread(QObject):
         if self._thread:
             # thread already running, return
             return
-        if not files:
-            # file list is empty
-            return
         self._stopFlag.clear()
         self._files = files or []
         self._thread = Thread(target=self.run)
         self._thread.start()
+
+    def setFiles(self, files):
+        """ Set the list of files to monitor
+
+        Args:
+            files: the list of files to monitor
+        """
+        with self._mutex:
+            self._files = files
 
     def stop(self):
         """ Request polling thread to stop. """
@@ -69,8 +76,12 @@ class FilesModTimePollerThread(QObject):
     def run(self):
         """ Poll watched files for last modification time. """
         while not self._stopFlag.wait(self._refreshInterval):
-            times = self._threadPool.map(FilesModTimePollerThread.getFileLastModTime, self._files)
-            self.timesAvailable.emit(times)
+            with self._mutex:
+                files = list(self._files)
+            times = self._threadPool.map(FilesModTimePollerThread.getFileLastModTime, files)
+            with self._mutex:
+                if files == self._files:
+                    self.timesAvailable.emit(times)
 
 
 class ChunksMonitor(QObject):
@@ -85,49 +96,25 @@ class ChunksMonitor(QObject):
     """
     def __init__(self, chunks=(), parent=None):
         super(ChunksMonitor, self).__init__(parent)
-        self.lastModificationRecords = dict()
+        self.chunks = []
         self._filesTimePoller = FilesModTimePollerThread(parent=self)
         self._filesTimePoller.timesAvailable.connect(self.compareFilesTimes)
-        self._pollerOutdated = False
+        self._filesTimePoller.start()
         self.setChunks(chunks)
 
     def setChunks(self, chunks):
         """ Set the list of chunks to monitor. """
-        self._filesTimePoller.stop()
-        self.clear()
-        for chunk in chunks:
-            # initialize last modification times to current time for all chunks
-            self.lastModificationRecords[chunk] = time.time()
-            # For local use, handle statusChanged emitted directly from the node chunk
-            chunk.statusChanged.connect(self.onChunkStatusChanged)
-        self._pollerOutdated = True
-        self.chunkStatusChanged.emit(None, -1)
-        self._filesTimePoller.start(self.statusFiles)
-        self._pollerOutdated = False
+        self.chunks = chunks
+        self._filesTimePoller.setFiles(self.statusFiles)
 
     def stop(self):
         """ Stop the status files monitoring. """
         self._filesTimePoller.stop()
 
-    def clear(self):
-        """ Clear the list of monitored chunks. """
-        for chunk in self.lastModificationRecords:
-            chunk.statusChanged.disconnect(self.onChunkStatusChanged)
-        self.lastModificationRecords.clear()
-
-    def onChunkStatusChanged(self):
-        """ React to change of status coming from the NodeChunk itself. """
-        chunk = self.sender()
-        assert chunk in self.lastModificationRecords
-        # update record entry for this file so that it's up-to-date on next timerEvent
-        # use current time instead of actual file's mtime to limit filesystem requests
-        self.lastModificationRecords[chunk] = time.time()
-        self.chunkStatusChanged.emit(chunk, chunk.status.status)
-
     @property
     def statusFiles(self):
         """ Get status file paths from current chunks. """
-        return [c.statusFile for c in self.lastModificationRecords.keys()]
+        return [c.statusFile for c in self.chunks]
 
     def compareFilesTimes(self, times):
         """
@@ -137,20 +124,11 @@ class ChunksMonitor(QObject):
         Args:
             times: the last modification times for currently monitored files.
         """
-        if self._pollerOutdated:
-            return
-
-        newRecords = dict(zip(self.lastModificationRecords.keys(), times))
-        for chunk, previousTime in self.lastModificationRecords.items():
-            lastModTime = newRecords.get(chunk, -1)
-            # update chunk status if:
-            #  - last modification time is more recent than previous record
-            #  - file is no more available (-1)
-            if lastModTime > previousTime or (lastModTime == -1 != previousTime):
-                self.lastModificationRecords[chunk] = lastModTime
+        newRecords = dict(zip(self.chunks, times))
+        for chunk, fileModTime in newRecords.items():
+            # update chunk status if last modification time has changed since previous record
+            if fileModTime != chunk.statusFileLastModTime:
                 chunk.updateStatusFromCache()
-
-    chunkStatusChanged = Signal(NodeChunk, int)
 
 
 class GraphLayout(QObject):
@@ -270,7 +248,6 @@ class UIGraph(QObject):
         self._graph = Graph('', self)
         self._modificationCount = 0
         self._chunksMonitor = ChunksMonitor(parent=self)
-        self._chunksMonitor.chunkStatusChanged.connect(self.onChunkStatusChanged)
         self._computeThread = Thread()
         self._running = self._submitted = False
         self._sortedDFSChunks = QObjectListModel(parent=self)
@@ -305,9 +282,15 @@ class UIGraph(QObject):
         # Nothing has changed, return
         if self._sortedDFSChunks.objectList() == chunks:
             return
+        for chunk in self._sortedDFSChunks:
+            chunk.statusChanged.disconnect(self.updateGraphComputingStatus)
         self._sortedDFSChunks.setObjectList(chunks)
+        for chunk in self._sortedDFSChunks:
+            chunk.statusChanged.connect(self.updateGraphComputingStatus)
         # provide ChunkMonitor with the update list of chunks
         self.updateChunkMonitor(self._sortedDFSChunks)
+        # update graph computing status based on the new list of NodeChunks
+        self.updateGraphComputingStatus()
 
     def updateChunkMonitor(self, chunks):
         """ Update the list of chunks for status files monitoring. """
@@ -393,7 +376,7 @@ class UIGraph(QObject):
         node = [node] if node else None
         submitGraph(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
 
-    def onChunkStatusChanged(self, chunk, status):
+    def updateGraphComputingStatus(self):
         # update graph computing status
         running = any([ch.status.status == Status.RUNNING for ch in self._sortedDFSChunks])
         submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])
@@ -556,6 +539,11 @@ class UIGraph(QObject):
             nodes = [n for n in self._graph._compatibilityNodes.values() if n.canUpgrade]
             for node in nodes:
                 self.upgradeNode(node)
+
+    @Slot()
+    def forceNodesStatusUpdate(self):
+        """ Force re-evaluation of graph's nodes status. """
+        self._graph.updateStatusFromCache(force=True)
 
     @Slot(Attribute, QJsonValue)
     def appendAttribute(self, attribute, value=QJsonValue()):

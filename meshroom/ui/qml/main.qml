@@ -561,6 +561,11 @@ ApplicationWindow {
                                 enabled: !_reconstruction.computingLocally
                                 onTriggered: _reconstruction.graph.clearSubmittedNodes()
                             }
+                            MenuItem {
+                                text: "Refresh Nodes Status"
+                                enabled: !_reconstruction.computingLocally
+                                onTriggered: _reconstruction.forceNodesStatusUpdate()
+                            }
                             Menu {
                                 title: "Advanced"
                                 MenuItem {

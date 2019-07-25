@@ -283,12 +283,14 @@ class UIGraph(QObject):
         if self._sortedDFSChunks.objectList() == chunks:
             return
         for chunk in self._sortedDFSChunks:
-            chunk.statusChanged.disconnect(self.onChunkStatusChanged)
+            chunk.statusChanged.disconnect(self.updateGraphComputingStatus)
         self._sortedDFSChunks.setObjectList(chunks)
         for chunk in self._sortedDFSChunks:
-            chunk.statusChanged.connect(self.onChunkStatusChanged)
+            chunk.statusChanged.connect(self.updateGraphComputingStatus)
         # provide ChunkMonitor with the update list of chunks
         self.updateChunkMonitor(self._sortedDFSChunks)
+        # update graph computing status based on the new list of NodeChunks
+        self.updateGraphComputingStatus()
 
     def updateChunkMonitor(self, chunks):
         """ Update the list of chunks for status files monitoring. """
@@ -374,7 +376,7 @@ class UIGraph(QObject):
         node = [node] if node else None
         submitGraph(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
 
-    def onChunkStatusChanged(self):
+    def updateGraphComputingStatus(self):
         # update graph computing status
         running = any([ch.status.status == Status.RUNNING for ch in self._sortedDFSChunks])
         submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])

@@ -89,8 +89,15 @@ FocusScope {
                     // only set text file viewer source when ListView is fully ready
                     // (either empty or fully populated with a valid currentChunk)
                     // to avoid going through an empty url when switching between two nodes
+
                     if(!chunksLV.count || chunksLV.currentChunk)
-                        textFileViewer.source = Filepath.stringToUrl(currentFile);
+                        logComponentLoader.source = Filepath.stringToUrl(currentFile);
+
+                    if(currentItem.fileProperty === "statisticsFile") {
+                        logComponentLoader.componentNb = 1
+                    } else {
+                        logComponentLoader.componentNb = 0
+                    }
                 }
 
                 TabButton {
@@ -111,12 +118,36 @@ FocusScope {
                 }
             }
 
-            TextFileViewer {
-                id: textFileViewer
+            Loader {
+                id: logComponentLoader
+                clip: true
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                autoReload: chunksLV.currentChunk !== undefined && chunksLV.currentChunk.statusName === "RUNNING"
-                // source is set in fileSelector
+                property int componentNb: 0
+                property url source
+                sourceComponent: componentNb === 0 ? textFileViewerComponent : statViewerComponent
+            }
+
+            Component {
+                id: textFileViewerComponent
+                TextFileViewer {
+                    id: textFileViewer
+                    source: logComponentLoader.source
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    autoReload: chunksLV.currentChunk !== undefined && chunksLV.currentChunk.statusName === "RUNNING"
+                    // source is set in fileSelector
+                }
+            }
+
+            Component {
+                id: statViewerComponent
+                StatViewer {
+                    id: statViewer
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    source: logComponentLoader.source
+                }
             }
         }
     }

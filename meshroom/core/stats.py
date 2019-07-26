@@ -31,7 +31,8 @@ class ComputerStatistics:
     def __init__(self):
         # TODO: init
         self.nbCores = 0
-        self.cpuFreq = 0
+        self.cpuFreq = psutil.cpu_freq().max
+        self.ramTotal = psutil.virtual_memory().total / 1024/1024/1024
         self.ramAvailable = 0  # GB
         self.vramAvailable = 0  # GB
         self.swapAvailable = 0

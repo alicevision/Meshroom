@@ -285,6 +285,7 @@ class NodeChunk(BaseObject):
             # ask and wait for the stats thread to stop
             self.statThread.stopRequest()
             self.statThread.join()
+            self.statistics = stats.Statistics()
             del runningProcesses[self.name]
 
         self.upgradeStatusTo(Status.SUCCESS)

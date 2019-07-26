@@ -195,6 +195,7 @@ class Statistics:
         self.computer = ComputerStatistics()
         self.process = ProcStatistics()
         self.times = []
+        self.interval = 5
 
     def update(self, proc):
         '''
@@ -213,6 +214,7 @@ class Statistics:
             'computer': self.computer.toDict(),
             'process': self.process.toDict(),
             'times': self.times,
+            'interval': self.interval
             }
 
     def fromDict(self, d):
@@ -248,7 +250,7 @@ class StatisticsThread(threading.Thread):
         try:
             while True:
                 self.updateStats()
-                if self._stopFlag.wait(60):
+                if self._stopFlag.wait(self.statistics.interval):
                     # stopFlag has been set
                     # update stats one last time and exit main loop
                     if self.proc.is_running():

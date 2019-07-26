@@ -1,9 +1,13 @@
 from collections import defaultdict
+from distutils import spawn
+from subprocess import Popen, PIPE
+import xml.etree.ElementTree as ET
 import logging
 import psutil
 import time
 import threading
-
+import platform
+import os
 
 def bytes2human(n):
     """
@@ -32,6 +36,31 @@ class ComputerStatistics:
         self.vramAvailable = 0  # GB
         self.swapAvailable = 0
 
+        if platform.system() == "Windows":
+            # If the platform is Windows and nvidia-smi
+            # could not be found from the environment path,
+            # try to find it from system drive with default installation path
+            self.nvidia_smi = spawn.find_executable('nvidia-smi')
+            if self.nvidia_smi is None:
+                self.nvidia_smi = "%s\\Program Files\\NVIDIA Corporation\\NVSMI\\nvidia-smi.exe" % os.environ['systemdrive']
+        else:
+            self.nvidia_smi = "nvidia-smi"
+
+        try:
+            p = Popen([self.nvidia_smi, "-q", "-x"], stdout=PIPE)
+            xmlGpu, stdError = p.communicate()
+
+            gpuTree = ET.fromstring(xmlGpu)
+
+            gpuMemoryUsage = gpuTree[4].find('fb_memory_usage')
+
+            self.gpuMemoryTotal = gpuMemoryUsage[0].text.split(" ")[0]
+            self.gpuName = gpuTree[4].find('product_name').text
+
+
+        except:
+            pass
+
         self.curves = defaultdict(list)
 
     def _addKV(self, k, v):
@@ -50,6 +79,21 @@ class ComputerStatistics:
         self._addKV('swapUsage', psutil.swap_memory().percent)
         self._addKV('vramUsage', 0)
         self._addKV('ioCounters', psutil.disk_io_counters())
+        self.updateGpu()
+
+    def updateGpu(self):
+        try:
+            p = Popen([self.nvidia_smi, "-q", "-x"], stdout=PIPE)
+            xmlGpu, stdError = p.communicate()
+
+            gpuTree = ET.fromstring(xmlGpu)
+
+            self._addKV('gpuMemoryUsed', gpuTree[4].find('fb_memory_usage')[1].text.split(" ")[0])
+            self._addKV('gpuUsed', gpuTree[4].find('utilization')[0].text.split(" ")[0])
+            self._addKV('gpuTemperature', gpuTree[4].find('temperature')[0].text.split(" ")[0])
+
+        except:
+            return
 
     def toDict(self):
         return self.__dict__

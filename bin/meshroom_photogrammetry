@@ -80,6 +80,8 @@ elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json'
     # args.input is a sfmData file: setup pre-calibrated views and intrinsics
     from meshroom.nodes.aliceVision.CameraInit import readSfMData
     views, intrinsics = readSfMData(args.input)
+else:
+    raise RuntimeError(args.input + ': format not supported')
 
 # initialize photogrammetry pipeline
 if args.pipeline:

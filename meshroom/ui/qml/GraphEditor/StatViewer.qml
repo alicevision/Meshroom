@@ -320,16 +320,14 @@ Item {
                 Button {
                     id: toggleCpuBtn
                     Layout.fillWidth: true
-                    height: 30
                     text: "Toggle CPU's"
                     state: "closed"
 
                     onClicked: state === "opened" ? state = "closed" : state = "opened"
 
-                    Text {
+                    MaterialLabel {
                         text: MaterialIcons.arrow_drop_down
-                        font.pixelSize: 24
-                        color: "#eee"
+                        font.pointSize: 14
                         anchors.right: parent.right
                     }
 

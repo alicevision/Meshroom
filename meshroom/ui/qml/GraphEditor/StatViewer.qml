@@ -181,7 +181,7 @@ Item {
         }
 
         for(var q = 0; q < average.length; q++) {
-            average[q] = average[q] / (categories.length-1)
+            average[q] = average[q] / (categories.length)
 
             averageLine.append(q * root.deltaTime, average[q])
         }

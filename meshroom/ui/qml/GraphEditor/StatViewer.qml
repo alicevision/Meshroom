@@ -15,7 +15,7 @@ Item {
     property var sourceModified: undefined
     property var jsonObject
     property int nbReads: 1
-    property var deltaTime: 1
+    property real deltaTime: 1
 
     property var cpuLineSeries: []
     property int nbCores: 0
@@ -64,47 +64,47 @@ Item {
         "#BF360C"
     ]
 
-    onSourceChanged: function() {
+    onSourceChanged: {
+        sourceModified = undefined;
         resetCharts()
         readSourceFile()
     }
 
     Timer {
-        interval: root.deltaTime * 60000; running: true; repeat: true
-        onTriggered: function() {
-            var xhr = new XMLHttpRequest;
-            xhr.open("GET", source);
+        id: reloadTimer
+        interval: root.deltaTime * 60000; running: true; repeat: false
+        onTriggered: readSourceFile()
 
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-
-                    if(sourceModified === undefined || sourceModified < xhr.getResponseHeader('Last-Modified')) {
-                        var jsonString = xhr.responseText;
-
-                        jsonObject= JSON.parse(jsonString);
-                        root.jsonObject = jsonObject;
-                        resetCharts()
-                        sourceModified = xhr.getResponseHeader('Last-Modified')
-                        root.createCharts()
-                    }
-                }
-            };
-            xhr.send();
-        }
     }
 
     function readSourceFile() {
+        if(!Filepath.urlToString(source).endsWith("statistics"))
+            return;
+
         var xhr = new XMLHttpRequest;
         xhr.open("GET", source);
 
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                var jsonString = xhr.responseText;
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {
 
-                jsonObject= JSON.parse(jsonString);
-                root.jsonObject = jsonObject;
+                if(sourceModified === undefined || sourceModified < xhr.getResponseHeader('Last-Modified')) {
+                    var jsonObject;
 
-                root.createCharts()
+                    try {
+                        jsonObject = JSON.parse(xhr.responseText);
+                    }
+                    catch(exc)
+                    {
+                        console.warning("Failed to parse statistics file: " + source)
+                        root.jsonObject = {};
+                        return;
+                    }
+                    root.jsonObject = jsonObject;
+                    resetCharts();
+                    sourceModified = xhr.getResponseHeader('Last-Modified')
+                    root.createCharts();
+                    reloadTimer.restart();
+                }
             }
         };
         xhr.send();
@@ -119,14 +119,11 @@ Item {
     }
 
     function createCharts() {
+        root.deltaTime = jsonObject.interval / 60.0;
         initCpuChart()
         initRamChart()
         initGpuChart()
-
-        root.deltaTime = jsonObject.interval /60
     }
-
-
 
 
 /**************************

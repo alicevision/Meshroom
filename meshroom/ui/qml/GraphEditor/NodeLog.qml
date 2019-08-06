@@ -93,11 +93,6 @@ FocusScope {
                     if(!chunksLV.count || chunksLV.currentChunk)
                         logComponentLoader.source = Filepath.stringToUrl(currentFile);
 
-                    if(currentItem.fileProperty === "statisticsFile") {
-                        logComponentLoader.componentNb = 1
-                    } else {
-                        logComponentLoader.componentNb = 0
-                    }
                 }
 
                 TabButton {
@@ -123,9 +118,8 @@ FocusScope {
                 clip: true
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                property int componentNb: 0
                 property url source
-                sourceComponent: componentNb === 0 ? textFileViewerComponent : statViewerComponent
+                sourceComponent: fileSelector.currentItem.fileProperty === "statisticsFile" ? statViewerComponent : textFileViewerComponent
             }
 
             Component {

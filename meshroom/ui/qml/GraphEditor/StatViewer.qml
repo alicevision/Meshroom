@@ -3,6 +3,7 @@ import QtQuick.Controls 2.3
 import QtCharts 2.2
 import QtQuick.Layouts 1.11
 import Utils 1.0
+import Charts 1.0
 import MaterialIcons 2.2
 
 Item {
@@ -11,13 +12,14 @@ Item {
     implicitWidth: 500
     implicitHeight: 500
 
+    /// Statistics source file
     property url source
+
     property var sourceModified: undefined
     property var jsonObject
     property int nbReads: 1
-    property var deltaTime: 1
+    property real deltaTime: 1
 
-    property var cpuLineSeries: []
     property int nbCores: 0
     property int cpuFrequency: 0
 
@@ -28,6 +30,7 @@ Item {
     property string gpuName
 
     property color textColor: Colors.sysPalette.text
+
 
     readonly property  var colors: [
         "#f44336",
@@ -64,69 +67,66 @@ Item {
         "#BF360C"
     ]
 
-    onSourceChanged: function() {
+    onSourceChanged: {
+        sourceModified = undefined;
         resetCharts()
         readSourceFile()
     }
 
     Timer {
-        interval: root.deltaTime * 60000; running: true; repeat: true
-        onTriggered: function() {
-            var xhr = new XMLHttpRequest;
-            xhr.open("GET", source);
+        id: reloadTimer
+        interval: root.deltaTime * 60000; running: true; repeat: false
+        onTriggered: readSourceFile()
 
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === XMLHttpRequest.DONE) {
-
-                    if(sourceModified === undefined || sourceModified < xhr.getResponseHeader('Last-Modified')) {
-                        var jsonString = xhr.responseText;
-
-                        jsonObject= JSON.parse(jsonString);
-                        root.jsonObject = jsonObject;
-                        resetCharts()
-                        sourceModified = xhr.getResponseHeader('Last-Modified')
-                        root.createCharts()
-                    }
-                }
-            };
-            xhr.send();
-        }
     }
 
     function readSourceFile() {
+        // make sure we are trying to load a statistics file
+        if(!Filepath.urlToString(source).endsWith("statistics"))
+            return;
+
         var xhr = new XMLHttpRequest;
         xhr.open("GET", source);
 
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                var jsonString = xhr.responseText;
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {
 
-                jsonObject= JSON.parse(jsonString);
-                root.jsonObject = jsonObject;
+                if(sourceModified === undefined || sourceModified < xhr.getResponseHeader('Last-Modified')) {
+                    var jsonObject;
 
-                root.createCharts()
+                    try {
+                        jsonObject = JSON.parse(xhr.responseText);
+                    }
+                    catch(exc)
+                    {
+                        console.warning("Failed to parse statistics file: " + source)
+                        root.jsonObject = {};
+                        return;
+                    }
+                    root.jsonObject = jsonObject;
+                    resetCharts();
+                    sourceModified = xhr.getResponseHeader('Last-Modified')
+                    root.createCharts();
+                    reloadTimer.restart();
+                }
             }
         };
         xhr.send();
     }
 
     function resetCharts() {
-        cpuLineSeries = []
+        cpuLegend.clear()
         cpuChart.removeAllSeries()
-        cpuCheckboxModel.clear()
         ramChart.removeAllSeries()
         gpuChart.removeAllSeries()
     }
 
     function createCharts() {
+        root.deltaTime = jsonObject.interval / 60.0;
         initCpuChart()
         initRamChart()
         initGpuChart()
-
-        root.deltaTime = jsonObject.interval /60
     }
-
-
 
 
 /**************************
@@ -134,11 +134,12 @@ Item {
 **************************/
 
     function initCpuChart() {
+
         var categories = []
         var categoryCount = 0
         var category
         do {
-            category = jsonObject.computer.curves["cpuUsage." + categoryCount]
+            category = root.jsonObject.computer.curves["cpuUsage." + categoryCount]
             if(category !== undefined) {
                 categories.push(category)
                 categoryCount++
@@ -153,7 +154,6 @@ Item {
         root.nbReads = categories[0].length-1
 
         for(var j = 0; j < nbCores; j++) {
-            cpuCheckboxModel.append({ name: "CPU" + j, index: j, indicColor: colors[j % colors.length] })
             var lineSerie = cpuChart.createSeries(ChartView.SeriesTypeLine, "CPU" + j, valueAxisX, valueAxisY)
 
             if(categories[j].length === 1) {
@@ -165,11 +165,8 @@ Item {
                 }
             }
             lineSerie.color = colors[j % colors.length]
-
-            root.cpuLineSeries.push(lineSerie)
         }
 
-        cpuCheckboxModel.append({ name: "AVERAGE", index: nbCores, indicColor: colors[0] })
         var averageLine = cpuChart.createSeries(ChartView.SeriesTypeLine, "AVERAGE", valueAxisX, valueAxisY)
         var average = []
 
@@ -184,55 +181,20 @@ Item {
         }
 
         for(var q = 0; q < average.length; q++) {
-            average[q] = average[q] / (categories.length-1)
+            average[q] = average[q] / (categories.length)
 
             averageLine.append(q * root.deltaTime, average[q])
         }
 
-        averageLine.color = colors[0]
-
-        root.cpuLineSeries.push(averageLine)
-    }
-
-    function showCpu(index) {
-        let serie = cpuLineSeries[index]
-        if(!serie.visible) {
-            serie.visible = true
-        }
-    }
-
-    function hideCpu(index) {
-        let serie = cpuLineSeries[index]
-        if(serie.visible) {
-            serie.visible = false
-        }
+        averageLine.color = colors[colors.length-1]
     }
 
     function hideOtherCpu(index) {
-        for(var i = 0; i < cpuLineSeries.length; i++) {
-            cpuLineSeries[i].visible = false
+        for(var i = 0; i < cpuChart.count; i++) {
+            cpuChart.series(i).visible = false;
         }
-
-        cpuLineSeries[i].visible = true
+        cpuChart.series(index).visible = true;
     }
-
-    function higlightCpu(index) {
-        for(var i = 0; i < cpuLineSeries.length; i++) {
-            if(i === index) {
-                cpuLineSeries[i].width = 5.0
-            } else {
-                cpuLineSeries[i].width = 0.2
-            }
-        }
-    }
-
-    function stopHighlightCpu(index) {
-        for(var i = 0; i < cpuLineSeries.length; i++) {
-            cpuLineSeries[i].width = 2.0
-        }
-    }
-
-
 
 
 /**************************
@@ -244,7 +206,7 @@ Item {
 
         var ram = jsonObject.computer.curves.ramUsage
 
-        var ramSerie = ramChart.createSeries(ChartView.SeriesTypeLine, "RAM", valueAxisX2, valueAxisRam)
+        var ramSerie = ramChart.createSeries(ChartView.SeriesTypeLine, "RAM: " + root.ramTotal + "GB", valueAxisX2, valueAxisRam)
 
         if(ram.length === 1) {
             ramSerie.append(0, ram[0] / 100 * root.ramTotal)
@@ -323,16 +285,14 @@ Item {
                 Button {
                     id: toggleCpuBtn
                     Layout.fillWidth: true
-                    height: 30
                     text: "Toggle CPU's"
                     state: "closed"
 
                     onClicked: state === "opened" ? state = "closed" : state = "opened"
 
-                    Text {
+                    MaterialLabel {
                         text: MaterialIcons.arrow_drop_down
-                        font.pixelSize: 24
-                        color: "#eee"
+                        font.pointSize: 14
                         anchors.right: parent.right
                     }
 
@@ -361,111 +321,30 @@ Item {
                         width: parent.width
                         anchors.horizontalCenter: parent.horizontalCenter
 
-                        ButtonGroup {
-                            id: cpuGroup
-                            exclusive: false
-                            checkState: allCPU.checkState
-                        }
 
-                        CheckBox {
-                            width: 80
-                            checked: true
+                        ChartViewCheckBox {
                             id: allCPU
                             text: "ALL"
-                            checkState: cpuGroup.checkState
-
-                            indicator: Rectangle {
-                                width: 20
-                                height: 20
-                                border.color: textColor
-                                border.width: 2
-                                color: "transparent"
-                                anchors.verticalCenter: parent.verticalCenter
-
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 10
-                                    height: allCPU.checkState === 1 ? 4 : 10
-                                    color: allCPU.checkState === 0 ? "transparent" : textColor
+                            color: textColor
+                            checkState: cpuLegend.buttonGroup.checkState
+                            leftPadding: 0
+                            onClicked: {
+                                var _checked = checked;
+                                for(var i = 0; i < cpuChart.count; ++i)
+                                {
+                                    cpuChart.series(i).visible = _checked;
                                 }
                             }
-
-                            leftPadding: indicator.width + 5
-
-                            contentItem: Label {
-                                text: allCPU.text
-                                font: allCPU.font
-                                verticalAlignment: Text.AlignVCenter
-                            }
-
-                            Layout.fillHeight: true
                         }
 
-                        ListModel {
-                            id: cpuCheckboxModel
-                        }
-
-                        Flow {
+                        ChartViewLegend {
+                            id: cpuLegend
                             Layout.fillWidth: true
-
-                            Repeater {
-                                model: cpuCheckboxModel
-
-                                CheckBox {
-                                    width: 80
-                                    checked: true
-                                    text: name
-                                    ButtonGroup.group: cpuGroup
-
-                                    indicator: Rectangle {
-                                        width: 20
-                                        height: 20
-                                        border.color: indicColor
-                                        border.width: 2
-                                        color: "transparent"
-                                        anchors.verticalCenter: parent.verticalCenter
-
-                                        Rectangle {
-                                            anchors.centerIn: parent
-                                            width: 10
-                                            height: parent.parent.checkState === 1 ? 4 : 10
-                                            color: parent.parent.checkState === 0 ? "transparent" : indicColor
-                                        }
-                                    }
-
-                                    leftPadding: indicator.width + 5
-
-                                    contentItem: Label {
-                                        text: name
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-
-                                    onCheckStateChanged: function() {
-                                        if(checkState === 2) {
-                                            root.showCpu(index)
-                                        } else {
-                                            root.hideCpu(index)
-                                        }
-                                    }
-
-                                    onHoveredChanged: function() {
-                                        if(hovered) {
-                                            root.higlightCpu(index)
-                                        } else {
-                                            root.stopHighlightCpu(index)
-                                        }
-                                    }
-
-                                    onDoubleClicked: function() {
-                                        name.checked = false
-                                        root.hideOtherCpu(index)
-                                    }
-                                }
-                            }
+                            Layout.fillHeight: true
+                            chartView: cpuChart
                         }
+
                     }
-
-
                 }
 
                 ChartView {
@@ -473,7 +352,10 @@ Item {
 
                     Layout.fillWidth: true
                     Layout.preferredHeight: width/2
+                    margins.top: 0
+                    margins.bottom: 0
                     antialiasing: true
+
                     legend.visible: false
                     theme: ChartView.ChartThemeLight
                     backgroundColor: "transparent"
@@ -519,15 +401,16 @@ Item {
 
             ColumnLayout {
 
-
                 ChartView {
                     id: ramChart
-
+                    margins.top: 0
+                    margins.bottom: 0
                     Layout.fillWidth: true
                     Layout.preferredHeight: width/2
                     antialiasing: true
                     legend.color: textColor
                     legend.labelColor: textColor
+                    legend.visible: false
                     theme: ChartView.ChartThemeLight
                     backgroundColor: "transparent"
                     plotAreaColor: "transparent"
@@ -590,6 +473,8 @@ Item {
 
                     Layout.fillWidth: true
                     Layout.preferredHeight: width/2
+                    margins.top: 0
+                    margins.bottom: 0
                     antialiasing: true
                     legend.color: textColor
                     legend.labelColor: textColor

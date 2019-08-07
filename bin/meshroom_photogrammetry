@@ -103,8 +103,8 @@ else:
 
 if images:
     views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
-cameraInit.viewpoints.value = views
-cameraInit.intrinsics.value = intrinsics
+    cameraInit.viewpoints.value = views
+    cameraInit.intrinsics.value = intrinsics
 
 if args.overrides:
     import io

@@ -9,7 +9,7 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
-    QT_DIR=/opt/qt/5.11.1/gcc_64 \
+    QT_DIR=/opt/qt/5.13.0/gcc_64 \
     PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 COPY . "${MESHROOM_DEV}"
@@ -52,6 +52,7 @@ RUN source scl_source enable rh-python36 && cd "${MESHROOM_DEV}" && pip install 
 
 # Install Qt (to build plugins)
 WORKDIR /tmp/qt
+# Qt version in specified in docker/qt-installer-noninteractive.qs
 RUN curl -LO http://download.qt.io/official_releases/online_installers/qt-unified-linux-x64-online.run && \
     chmod u+x qt-unified-linux-x64-online.run && \
     ./qt-unified-linux-x64-online.run --verbose --platform minimal --script "${MESHROOM_DEV}/docker/qt-installer-noninteractive.qs" && \

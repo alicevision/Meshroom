@@ -7,13 +7,18 @@ class LDRToHDR(desc.CommandLineNode):
     commandLine = 'aliceVision_convertLDRToHDR {allParams}'
 
     inputs = [
-        desc.File(
-            name='input',
-            label='Input',
-            description="List of LDR images or a folder containing them ",
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name='inputFolder',
+                label='Input File/Folder',
+                description="Folder containing LDR images",
             value='',
             uid=[0],
             ),
+            name="input",
+            label="Input Files or Folders",
+            description='Folders containing LDR images.',
+        ),
         desc.ChoiceParam(
             name='calibrationMethod',
             label='Calibration Method',

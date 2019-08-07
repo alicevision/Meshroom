@@ -111,9 +111,9 @@ class LDRToHDR(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output',
-            description="Output HDR image path.",
-            value=desc.Node.internalFolder + 'hdr.exr',
+            label='Output Folder',
+            description="Output folder for HDR images",
+            value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(

@@ -73,15 +73,16 @@ views, intrinsics = [], []
 # Build image files list from inputImages arguments
 images = [f for f in args.inputImages if multiview.isImageFile(f)]
 
-if os.path.isdir(args.input):
-    # args.input is a folder: extend images list with images in that folder
-    images += multiview.findImageFiles(args.input)
-elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json', '.sfm'):
-    # args.input is a sfmData file: setup pre-calibrated views and intrinsics
-    from meshroom.nodes.aliceVision.CameraInit import readSfMData
-    views, intrinsics = readSfMData(args.input)
-else:
-    raise RuntimeError(args.input + ': format not supported')
+if args.input:
+    if os.path.isdir(args.input):
+        # args.input is a folder: extend images list with images in that folder
+        images += multiview.findImageFiles(args.input)
+    elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json', '.sfm'):
+        # args.input is a sfmData file: setup pre-calibrated views and intrinsics
+        from meshroom.nodes.aliceVision.CameraInit import readSfMData
+        views, intrinsics = readSfMData(args.input)
+    else:
+        raise RuntimeError(args.input + ': format not supported.')
 
 # initialize photogrammetry pipeline
 if args.pipeline:

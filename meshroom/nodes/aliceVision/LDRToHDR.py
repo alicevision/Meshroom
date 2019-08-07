@@ -19,6 +19,13 @@ class LDRToHDR(desc.CommandLineNode):
             label="Input Files or Folders",
             description='Folders containing LDR images.',
         ),
+        desc.BoolParam(
+            name='fisheyeLens',
+            label='Fisheye Lens',
+            description="Check if fisheye lens",
+            value=True,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='calibrationMethod',
             label='Calibration Method',

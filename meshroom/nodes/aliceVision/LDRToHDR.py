@@ -59,7 +59,7 @@ class LDRToHDR(desc.CommandLineNode):
             description="Weight function used to calibrate camera response \n"
                         " * default \n"
                         " * gaussian \n"
-                        " * triangle \n""
+                        " * triangle \n"
                         " * plateau",
             value='default',
             values=['default', 'gaussian', 'triangle', 'plateau'],
@@ -69,7 +69,7 @@ class LDRToHDR(desc.CommandLineNode):
         desc.ChoiceParam(
             name='fusionWeight',
             label='Fusion Weight',
-            description="Weight function used to fuse all LDR images together \n""
+            description="Weight function used to fuse all LDR images together \n"
                         " *  gaussian \n"
                         " * triangle \n" 
                         " * plateau",

@@ -13,7 +13,7 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     PATH="${PATH}:${MESHROOM_BUNDLE}"
 
 # Workaround for qmlAlembic/qtAliceVision builds: fuse lib/lib64 folders
-RUN cp -rf "${AV_INSTALL}/lib/*" "${AV_INSTALL}/lib64" && rm -rf "${AV_INSTALL}/lib" && ln -s "${AV_INSTALL}/lib64" "${AV_INSTALL}/lib"
+RUN cp -rf ${AV_INSTALL}/lib/* ${AV_INSTALL}/lib64 && rm -rf ${AV_INSTALL}/lib && ln -s ${AV_INSTALL}/lib64 ${AV_INSTALL}/lib
 
 # Install libs needed by Qt
 RUN yum install -y \

@@ -85,9 +85,7 @@ ExternalProject_Add(${QTALICEVISION_TARGET}
       SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/qtAliceVision
       BINARY_DIR ${BUILD_DIR}/qtAliceVision_build
       INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
-      LIST_SEPARATOR , # ExternalProject_Add preprocess the CONFIGURE_COMMAND and replaces the usual ";" list separator, so we use another one.
-                       # See https://stackoverflow.com/questions/45414507/pass-a-list-of-prefix-paths-to-externalproject-add-in-cmake-args
-      CONFIGURE_COMMAND ${CMAKE_COMMAND} ${CMAKE_CORE_BUILD_FLAGS} ${ALEMBIC_CMAKE_FLAGS} -DCMAKE_PREFIX_PATH:PATH=${QT_DIR},${ALICEVISION_ROOT} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> <SOURCE_DIR>
+      CONFIGURE_COMMAND ${CMAKE_COMMAND} ${CMAKE_CORE_BUILD_FLAGS} ${ALEMBIC_CMAKE_FLAGS} -DCMAKE_PREFIX_PATH:PATH=${QT_DIR}$<SEMICOLON>${ALICEVISION_ROOT} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> <SOURCE_DIR>
       )
 endif()
 

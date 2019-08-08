@@ -60,3 +60,11 @@ This plugin also provides a QML Qt3D Entity to load depthmaps files stored in EX
 QT_PLUGIN_PATH=/path/to/QtOIIO/install
 QML2_IMPORT_PATH=/path/to/QtOIIO/install/qml
 ```
+
+#### [QtAliceVision](https://github.com/alicevision/QtAliceVision)
+Use AliceVision to load and visualize intermediate reconstruction files.
+```
+QML2_IMPORT_PATH=/path/to/qtAliceVision/install/qml
+```
+
+

@@ -22,7 +22,9 @@ class LDRToHDR(desc.CommandLineNode):
         desc.BoolParam(
             name='fisheyeLens',
             label='Fisheye Lens',
-            description="Check if fisheye lens",
+            description="Enable if a fisheye lens has been used.\n "
+                        "This will improve the estimation of the Camera's Response Function by considering only the pixels in the center of the image\n"
+                        "and thus ignore undefined/noisy pixels outside the circle defined by the fisheye lens.",
             value=True,
             uid=[0],
         ),
@@ -57,7 +59,7 @@ class LDRToHDR(desc.CommandLineNode):
             name='calibrationWeight',
             label='Calibration Weight',
             description="Weight function used to calibrate camera response \n"
-                        " * default \n"
+                        " * default (automatically selected according to the calibrationMethod) \n"
                         " * gaussian \n"
                         " * triangle \n"
                         " * plateau",
@@ -70,7 +72,7 @@ class LDRToHDR(desc.CommandLineNode):
             name='fusionWeight',
             label='Fusion Weight',
             description="Weight function used to fuse all LDR images together \n"
-                        " *  gaussian \n"
+                        " * gaussian \n"
                         " * triangle \n" 
                         " * plateau",
             value='gaussian',

@@ -46,14 +46,14 @@ Controller.prototype.ComponentSelectionPageCallback = function() {
     widget.deselectAll();
 
     // widget.selectComponent("qt");
-    // widget.selectComponent("qt.qt5.5111");
-    widget.selectComponent("qt.qt5.5111.gcc_64");
-    // widget.selectComponent("qt.qt5.5111.qtscript");
-    // widget.selectComponent("qt.qt5.5111.qtscript.gcc_64");
-    // widget.selectComponent("qt.qt5.5111.qtwebengine");
-    // widget.selectComponent("qt.qt5.5111.qtwebengine.gcc_64");
-    // widget.selectComponent("qt.qt5.5111.qtwebglplugin");
-    // widget.selectComponent("qt.qt5.5111.qtwebglplugin.gcc_64");
+    // widget.selectComponent("qt.qt5.5130");
+    widget.selectComponent("qt.qt5.5130.gcc_64");
+    // widget.selectComponent("qt.qt5.5130.qtscript");
+    // widget.selectComponent("qt.qt5.5130.qtscript.gcc_64");
+    // widget.selectComponent("qt.qt5.5130.qtwebengine");
+    // widget.selectComponent("qt.qt5.5130.qtwebengine.gcc_64");
+    // widget.selectComponent("qt.qt5.5130.qtwebglplugin");
+    // widget.selectComponent("qt.qt5.5130.qtwebglplugin.gcc_64");
     // widget.selectComponent("qt.tools");
 
     gui.clickButton(buttons.NextButton);

@@ -379,6 +379,7 @@ class Node(object):
     outputs = []
     size = StaticNodeSize(1)
     parallelization = None
+    category = 'Utils'
 
     def __init__(self):
         pass

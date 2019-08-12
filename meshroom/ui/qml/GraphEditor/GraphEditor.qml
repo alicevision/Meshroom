@@ -130,6 +130,59 @@ Item {
             }
         }
 
+        // menuItemDelegate is wrapped in a component so it can be used in both the searchbar and sub-menus
+        Component {
+            id: menuItemDelegateComponent
+            MenuItem {
+                id: menuItemDelegate
+                font.pointSize: 8
+                padding: 3
+            
+                // Hide items that does not match the filter text
+                visible: modelData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
+                // Reset menu currentIndex if highlighted items gets filtered out
+                onVisibleChanged: if(highlighted) newNodeMenu.currentIndex = 0
+                text: modelData
+                // Forward key events to the search bar to continue typing seamlessly
+                // even if this delegate took the activeFocus due to mouse hovering
+                Keys.forwardTo: [searchBar.textField]
+                Keys.onPressed: {
+                    event.accepted = false;
+                    switch(event.key) {
+                        case Qt.Key_Return:
+                        case Qt.Key_Enter:
+                            // create node on validation (Enter/Return keys)
+                            newNodeMenu.createNode(modelData);
+                            event.accepted = true;
+                            break;
+                        case Qt.Key_Up:
+                        case Qt.Key_Down:
+                        case Qt.Key_Left:
+                        case Qt.Key_Right:
+                            break; // ignore if arrow key was pressed to let the menu be controlled
+                        default:
+                            console.warn("switching focus");
+                            searchBar.forceActiveFocus();
+                    }
+                }
+                // Create node on mouse click
+                onClicked: newNodeMenu.createNode(modelData)
+            
+                states: [
+                    State {
+                        // Additional property setting when the MenuItem is not visible
+                        when: !visible
+                        name: "invisible"
+                        PropertyChanges {
+                            target: menuItemDelegate
+                            height: 0 // make sure the item is no visible by setting height to 0
+                            focusPolicy: Qt.NoFocus // don't grab focus when not visible
+                        }
+                    }
+                ]
+            }
+        }
+
         // Contextual Menu for creating new nodes
         // TODO: add filtering + validate on 'Enter'
         Menu {
@@ -153,58 +206,8 @@ Item {
             {
                 // add node via the proper command in uigraph
                 var node = uigraph.addNewNode(nodeType, spawnPosition)
+                newNodeMenu.close()
                 selectNode(node)
-            }
-
-            Component {
-                id: menuItemComponent
-                MenuItem {
-                    id: menuItemDelegate
-                    font.pointSize: 8;
-                    padding: 3
-                    width: parent.width
-                    property string nameData: null
-                    // Hide items that does not match the filter text
-                    visible: nameData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
-                    text: nameData
-                    background: Item {
-                        Rectangle {
-                            anchors.fill: parent
-                            color: menuItemDelegate.highlighted ? palette.highlight : "transparent"
-                            MouseArea {
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                anchors.fill: parent
-                                hoverEnabled: true 
-                                onContainsMouseChanged: menuItemDelegate.highlighted = containsMouse
-
-                                onClicked: {
-                                    if (mouse.button & Qt.LeftButton) {
-                                        // Create node on left mouse click
-                                        newNodeMenu.createNode(nameData)
-                                        newNodeMenu.close()
-                                    }
-                                    if (mouse.button & Qt.RightButton) {
-                                        newNodeInfoMenu.nodeType = nameData;
-                                        newNodeInfoMenu.popup()
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    states: [
-                        State {
-                            // Additional property setting when the MenuItem is not visible
-                            when: !visible
-                            name: "invisible"
-                            PropertyChanges {
-                                target: menuItemDelegate
-                                height: 0 // make sure the item is no visible by setting height to 0
-                                focusPolicy: Qt.NoFocus // don't grab focus when not visible
-                            }
-                        }
-                    ]
-                }
             }
 
             onVisibleChanged: {
@@ -219,20 +222,26 @@ Item {
             SearchBar {
                 id: searchBar
                 width: parent.width
-                fixFocus: true
             }
-
-            MenuSeparator { visible:false } // Adds a small gap under the searchbar for aesthetic reasons
+            
+            // Adds a small gap under the searchbar for aesthetic reasons
+            MenuSeparator { 
+                visible: false
+                focusPolicy: Qt.NoFocus
+                // Sometimes this steals the activeFocus from the searchbar
+                onFocusChanged: {
+                    if (focus && searchBar.text != "") {
+                        searchBar.forceActiveFocus()
+                    }
+                }
+            } 
 
             Repeater {
                 id: nodeMenuRepeater
                 model: searchBar.text != "" ? Object.keys(root.nodeTypesModel) : undefined
 
                 // Create Menu items from available items
-                delegate: Loader {
-                    sourceComponent: { menuItemComponent }
-                    onLoaded: { item.nameData = modelData; }
-                }
+                delegate: menuItemDelegateComponent
             }
             
             // Dynamically add the menu categories
@@ -242,31 +251,15 @@ Item {
                 onObjectRemoved: newNodeMenu.removeMenu(object)  
                 delegate: Menu {  
                     title: modelData
-                    Repeater {
-                        model: newNodeMenu.parseCategories()[modelData]
-        
-                        // Create Menu items from available items
-                        delegate: Loader {
-                            sourceComponent: { menuItemComponent }
-                            onLoaded: { item.nameData = modelData; }
-                        }
+                    id: newNodeSubMenu
+
+                    Instantiator { 
+                        model: newNodeMenu.visible && newNodeSubMenu.activeFocus ? newNodeMenu.parseCategories()[modelData] : undefined
+                        onObjectAdded: newNodeSubMenu.insertItem(index, object) 
+                        onObjectRemoved: newNodeSubMenu.removeItem(object)  
+                        delegate: menuItemDelegateComponent
                     }
                 }  
-            }
-        }
-
-        Menu {
-            id: newNodeInfoMenu
-
-            property string nodeType
-
-            MenuItem {
-                text: "Add"
-
-                onClicked: {
-                    newNodeMenu.createNode(newNodeInfoMenu.nodeType)
-                    newNodeMenu.close()
-                }
             }
         }
 

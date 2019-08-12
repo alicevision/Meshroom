@@ -8,11 +8,8 @@ import MaterialIcons 2.2
  * Basic SearchBar component with an appropriate icon and a TextField.
  */
 FocusScope {
-    id: root
-
     property alias textField: field
     property alias text: field.text
-    property bool fixFocus: false
 
     implicitHeight: childrenRect.height
     Keys.forwardTo: [field]
@@ -23,12 +20,6 @@ FocusScope {
 
     function clear() {
         field.clear()
-    }
-
-    onActiveFocusChanged: {
-        if ((fixFocus) && (!activeFocus) && (field.hovered)) {
-            field.forceActiveFocus()
-        }
     }
 
     RowLayout {
@@ -43,14 +34,6 @@ FocusScope {
             focus: true
             Layout.fillWidth: true
             selectByMouse: true
-
-            Keys.onPressed: {
-                if ((root.fixFocus) && (text != "")) {
-                    forceActiveFocus()
-                }
-            }
         }
     }
 }
-
-

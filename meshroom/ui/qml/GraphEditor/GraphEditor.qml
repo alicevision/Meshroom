@@ -211,11 +211,18 @@ Item {
             }
 
             onVisibleChanged: {
-                if(visible) {
+                if (visible) {
                     // when menu is shown, clear the searchbar
                     searchBar.clear()
                     searchBar.focus = false;
                     newNodeMenu.forceActiveFocus()
+                }
+            }
+
+            onActiveFocusChanged: {
+                // The current index must be reset after the searchbar loses focus and has text
+                if (activeFocus && searchBar.text != "") {
+                    currentIndex = 2
                 }
             }
 

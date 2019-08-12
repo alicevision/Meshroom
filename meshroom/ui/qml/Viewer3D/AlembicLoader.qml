@@ -11,6 +11,7 @@ import Qt3D.Extras 2.1
 AlembicEntity {
     id: root
 
+    property bool cameraPickingEnabled: true
     // filter out non-reconstructed cameras
     skipHidden: true
 
@@ -52,9 +53,13 @@ AlembicEntity {
                 },
                 ObjectPicker {
                     id: cameraPicker
-                    enabled: root.enabled
-                    onClicked: _reconstruction.selectedViewId = camSelector.viewId
-                }
+                    onPressed: pick.accepted = cameraPickingEnabled
+                    onReleased: _reconstruction.selectedViewId = camSelector.viewId
+                },
+                // Qt 5.13: binding cameraPicker.enabled to cameraPickerEnabled
+                //          causes rendering issues when entity gets disabled.
+                //          Use a scale to 0 to disable picking.
+                Transform { scale: cameraPickingEnabled ? 1 : 0 }
             ]
         }
     }

@@ -6,4 +6,5 @@ Group 1.0 Group.qml
 MessageDialog 1.0 MessageDialog.qml
 Panel 1.0 Panel.qml
 SearchBar 1.0 SearchBar.qml
+TabPanel 1.0 TabPanel.qml
 TextFileViewer 1.0 TextFileViewer.qml

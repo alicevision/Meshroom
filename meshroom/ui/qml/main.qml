@@ -540,11 +540,11 @@ ApplicationWindow {
             height: Math.round(parent.height * 0.3)
             visible: settings_UILayout.showGraphEditor
 
-            Panel {
+            TabPanel {
                 id: graphEditorPanel
                 Layout.fillWidth: true
                 padding: 4
-                title: "Graph Editor"
+                tabs: ["Graph Editor", "Task Manager"]
 
                 headerBar: RowLayout {
                     MaterialToolButton {
@@ -583,31 +583,63 @@ ApplicationWindow {
                     }
                 }
 
-
-                GraphEditor {
-                    id: graphEditor
-
+                Loader {
+                    id: mainTabLoader
+                    clip: true
                     anchors.fill: parent
-                    uigraph: _reconstruction
-                    nodeTypesModel: _nodeTypes
-                    readOnly: graphLocked
+                    property var components: [graphEditorComponent, taskManagerComponent]
+                    sourceComponent: components[graphEditorPanel.currentTab]
+                }
 
-                    onNodeDoubleClicked: {
-                        _reconstruction.setActiveNodeOfType(node);
+                Component {
+                    id: graphEditorComponent
+                    GraphEditor {
+                        id: graphEditor
 
-                        for(var i=0; i < node.attributes.count; ++i)
-                        {
-                            var attr = node.attributes.at(i)
-                            if(attr.isOutput
-                               && workspaceView.viewIn3D(attr, mouse))
+                        anchors.fill: parent
+                        uigraph: _reconstruction
+                        nodeTypesModel: _nodeTypes
+                        readOnly: graphLocked
+
+                        onNodeDoubleClicked: {
+                            if(node.nodeType === "StructureFromMotion")
                             {
-                                break;
+                                _reconstruction.sfm = node;
+                            }
+                            else if(node.nodeType === "FeatureExtraction")
+                            {
+                                _reconstruction.featureExtraction = node;
+                            }
+                            else if(node.nodeType === "CameraInit")
+                            {
+                                _reconstruction.cameraInit = node;
+                            }
+                            for(var i=0; i < node.attributes.count; ++i)
+                            {
+                                var attr = node.attributes.at(i)
+                                if(attr.isOutput
+                                   && workspaceView.viewIn3D(attr, mouse))
+                                {
+                                    break;
+                                }
                             }
                         }
+                        onComputeRequest: computeManager.compute(node)
+                        onSubmitRequest: computeManager.submit(node)
                     }
-                    onComputeRequest: computeManager.compute(node)
-                    onSubmitRequest: computeManager.submit(node)
                 }
+
+                Component {
+                    id: taskManagerComponent
+                    TaskManager {
+                        id: taskManager
+                        uigraph: _reconstruction
+                        taskManager: _reconstruction.taskManager
+
+                        anchors.fill: parent
+                    }
+                }
+
             }
 
             NodeEditor {

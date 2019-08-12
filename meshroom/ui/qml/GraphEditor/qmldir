@@ -11,3 +11,4 @@ AttributeItemDelegate 1.0 AttributeItemDelegate.qml
 CompatibilityBadge 1.0 CompatibilityBadge.qml
 CompatibilityManager 1.0 CompatibilityManager.qml
 singleton GraphEditorSettings 1.0 GraphEditorSettings.qml
+TaskManager 1.0 TaskManager.qml

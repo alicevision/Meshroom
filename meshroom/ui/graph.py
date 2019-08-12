@@ -11,7 +11,10 @@ from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QP
 
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
-from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
+from meshroom.core.graph import Graph, Edge, submitGraph
+
+from meshroom.core.taskManager import TaskManager
+
 from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode, Position
 from meshroom.core import submitters
 from meshroom.ui import commands
@@ -246,6 +249,9 @@ class UIGraph(QObject):
         super(UIGraph, self).__init__(parent)
         self._undoStack = commands.UndoStack(self)
         self._graph = Graph('', self)
+
+        self._taskManager = TaskManager(self)
+
         self._modificationCount = 0
         self._chunksMonitor = ChunksMonitor(parent=self)
         self._computeThread = Thread()
@@ -345,16 +351,13 @@ class UIGraph(QObject):
 
     @Slot(Node)
     def execute(self, node=None):
-        if self.computing:
-            return
         nodes = [node] if node else None
-        self._computeThread = Thread(target=self._execute, args=(nodes,))
-        self._computeThread.start()
+        self._taskManager.addNodes(self._graph, nodes)
 
     def _execute(self, nodes):
         self.computeStatusChanged.emit()
         try:
-            executeGraph(self._graph, nodes)
+            self._taskManager.executeGraph(self._graph, nodes)
         except Exception as e:
             logging.error("Error during Graph execution {}".format(e))
         finally:
@@ -365,7 +368,7 @@ class UIGraph(QObject):
         if not self.isComputingLocally():
             return
         self._graph.stopExecution()
-        self._computeThread.join()
+        self._taskManager._thread.join()
         self.computeStatusChanged.emit()
 
     @Slot(Node)
@@ -400,7 +403,7 @@ class UIGraph(QObject):
 
     def isComputingLocally(self):
         """ Whether this graph is being computed locally (i.e computation can be stopped). """
-        return self._computeThread.is_alive()
+        return self._taskManager._thread.is_alive()
 
     def push(self, command):
         """ Try and push the given command to the undo stack.
@@ -576,6 +579,7 @@ class UIGraph(QObject):
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
+    taskManager = Property(TaskManager, lambda self: self._taskManager, constant=True)
     nodes = Property(QObject, lambda self: self._graph.nodes, notify=graphChanged)
     layout = Property(GraphLayout, lambda self: self._layout, constant=True)
 

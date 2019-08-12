@@ -60,8 +60,6 @@ Item {
 
     /// Duplicate a node and optionnally all the following ones
     function duplicateNode(node, duplicateFollowingNodes) {
-        if(root.readOnly)
-            return;
         var nodes = uigraph.duplicateNode(node, duplicateFollowingNodes)
         selectNode(nodes[0])
     }
@@ -120,13 +118,9 @@ Item {
         onClicked: {
             if(mouse.button == Qt.RightButton)
             {
-                if(readOnly)
-                    lockedMenu.popup();
-                else {
-                    // store mouse click position in 'draggable' coordinates as new node spawn position
-                    newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y);
-                    newNodeMenu.popup();
-                }
+                // store mouse click position in 'draggable' coordinates as new node spawn position
+                newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y);
+                newNodeMenu.popup();
             }
         }
 
@@ -281,12 +275,12 @@ Item {
 
                 MenuItem {
                     text: "Compute"
-                    enabled: !uigraph.computing && !root.readOnly && nodeMenu.canComputeNode
+                    enabled: nodeMenu.canComputeNode
                     onTriggered: computeRequest(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Submit"
-                    enabled: !uigraph.computing && !root.readOnly && nodeMenu.canComputeNode
+                    enabled: nodeMenu.canComputeNode
                     visible: uigraph.canSubmit
                     height: visible ? implicitHeight : 0
                     onTriggered: submitRequest(nodeMenu.currentNode)
@@ -298,7 +292,7 @@ Item {
                 MenuSeparator {}
                 MenuItem {
                     text: "Duplicate Node" + (duplicateFollowingButton.hovered ? "s From Here" : "")
-                    enabled: !root.readOnly
+                    enabled: true
                     onTriggered: duplicateNode(nodeMenu.currentNode, false)
                     MaterialToolButton {
                         id: duplicateFollowingButton
@@ -313,7 +307,27 @@ Item {
                 }
                 MenuItem {
                     text: "Remove Node" + (removeFollowingButton.hovered ? "s From Here" : "")
-                    enabled: !root.readOnly
+                    enabled: {
+                        if(! _reconstruction.computing) {
+                            return true;
+                        }
+
+                        if(uigraph.taskManager.nodes.contains(uigraph.selectedNode)) {
+                                return false;
+                        } else {
+                            if(uigraph.selectedNode.globalStatus == "SUCCESS") {
+                                var nodes = uigraph.graph.onlyNodesFromNode(uigraph.selectedNode);
+                                for(var i = 0; i < nodes.length; i++) {
+                                    if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+
+                        return true;
+                    }
+
                     onTriggered: uigraph.removeNode(nodeMenu.currentNode)
                     MaterialToolButton {
                         id: removeFollowingButton
@@ -329,7 +343,26 @@ Item {
                 MenuSeparator {}
                 MenuItem {
                     text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
-                    enabled: !root.readOnly
+                    enabled: {
+                        if(! _reconstruction.computing) {
+                            return true;
+                        }
+
+                        if(uigraph.taskManager.nodes.contains(uigraph.selectedNode)) {
+                                return false;
+                        } else {
+                            if(uigraph.selectedNode.globalStatus == "SUCCESS") {
+                                var nodes = uigraph.graph.onlyNodesFromNode(uigraph.selectedNode);
+                                for(var i = 0; i < nodes.length; i++) {
+                                    if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+
+                        return true;
+                    }
 
                     function showConfirmationDialog(deleteFollowing) {
                         var obj = deleteDataDialog.createObject(root,

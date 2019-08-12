@@ -21,7 +21,8 @@ ApplicationWindow {
     visible: true
 
     /// Whether graph is currently locked and therefore read-only
-    readonly property bool graphLocked: _reconstruction.computing && GraphEditorSettings.lockOnCompute
+    readonly property bool graphLocked: _reconstruction.computing
+
 
     title: {
         var t = _reconstruction.graph.filepath || "Untitled"
@@ -568,17 +569,6 @@ ApplicationWindow {
                                 enabled: !_reconstruction.computingLocally
                                 onTriggered: _reconstruction.forceNodesStatusUpdate()
                             }
-                            Menu {
-                                title: "Advanced"
-                                MenuItem {
-                                    text: "Lock on Compute"
-                                    ToolTip.text: "Lock Graph when computing. This should only be disabled for advanced usage."
-                                    ToolTip.visible: hovered
-                                    checkable: true
-                                    checked: GraphEditorSettings.lockOnCompute
-                                    onClicked: GraphEditorSettings.lockOnCompute = !GraphEditorSettings.lockOnCompute
-                                }
-                            }
                         }
                     }
                 }
@@ -646,7 +636,27 @@ ApplicationWindow {
                 width: Math.round(parent.width * 0.3)
                 node: _reconstruction.selectedNode
                 // Make NodeEditor readOnly when computing
-                readOnly: graphLocked
+//                readOnly: graphLocked
+                readOnly: {
+                    if(! _reconstruction.computing) {
+                        return false;
+                    }
+
+                    if(_reconstruction.taskManager.nodes.contains(_reconstruction.selectedNode)) {
+                            return true;
+                    } else {
+                        if(_reconstruction.selectedNode.globalStatus == "SUCCESS") {
+                            var nodes = _reconstruction.graph.onlyNodesFromNode(_reconstruction.selectedNode);
+                            for(var i = 0; i < nodes.length; i++) {
+                                if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+
+                    return false;
+                }
                 onAttributeDoubleClicked: workspaceView.viewIn3D(attribute, mouse)
                 onUpgradeRequest: {
                     var n = _reconstruction.upgradeNode(node);

@@ -225,6 +225,9 @@ class NodeChunk(BaseObject):
         if newStatus.value <= self.status.status.value:
             print('WARNING: downgrade status on node "{}" from {} to {}'.format(self.name, self.status.status,
                                                                                 newStatus))
+
+        if(newStatus == Status.SUBMITTED):
+            self.status = StatusData(self.node.name, self.node.nodeType, self.node.packageName, self.node.packageVersion)
         if execMode is not None:
             self.status.execMode = execMode
             self.execModeNameChanged.emit()
@@ -282,7 +285,8 @@ class NodeChunk(BaseObject):
         try:
             self.node.nodeDesc.processChunk(self)
         except Exception as e:
-            self.upgradeStatusTo(Status.ERROR)
+            if self.status.status != Status.STOPPED:
+                self.upgradeStatusTo(Status.ERROR)
             raise
         except (KeyboardInterrupt, SystemError, GeneratorExit) as e:
             self.upgradeStatusTo(Status.STOPPED)
@@ -313,6 +317,9 @@ class NodeChunk(BaseObject):
     statusFile = Property(str, statusFile.fget, notify=nodeFolderChanged)
     logFile = Property(str, logFile.fget, notify=nodeFolderChanged)
     statisticsFile = Property(str, statisticsFile.fget, notify=nodeFolderChanged)
+
+    nodeName = Property(str, lambda self: self.node.name, constant=True)
+    statusNodeName = Property(str, lambda self: self.status.nodeName, constant=True)
 
 
 # simple structure for storing node position

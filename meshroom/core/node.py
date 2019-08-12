@@ -259,6 +259,15 @@ class NodeChunk(BaseObject):
     def isAlreadySubmitted(self):
         return self.status.status in (Status.SUBMITTED, Status.RUNNING)
 
+    def isAlreadySubmittedOrFinished(self):
+        return self.status.status in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS)
+
+    def isFinishedOrRunning(self):
+        return self.status.status in (Status.SUCCESS, Status.RUNNING)
+
+    def isStopped(self):
+        return self.status.status == Status.STOPPED
+
     def process(self, forceCompute=False):
         if not forceCompute and self.status.status == Status.SUCCESS:
             print("Node chunk already computed:", self.name)
@@ -290,6 +299,7 @@ class NodeChunk(BaseObject):
         self.upgradeStatusTo(Status.SUCCESS)
 
     def stopProcess(self):
+        self.upgradeStatusTo(Status.STOPPED)
         self.node.nodeDesc.stopProcess(self)
 
     statusChanged = Signal()
@@ -514,6 +524,18 @@ class BaseNode(BaseObject):
             if chunk.isAlreadySubmitted():
                 return True
         return False
+
+    def isAlreadySubmittedOrFinished(self):
+        for chunk in self._chunks:
+            if not chunk.isAlreadySubmittedOrFinished():
+                return False
+        return True
+
+    def isFinishedOrRunning(self):
+        for chunk in self._chunks:
+            if not chunk.isFinishedOrRunning():
+                return False
+        return True
 
     def alreadySubmittedChunks(self):
         return [ch for ch in self._chunks if ch.isAlreadySubmitted()]

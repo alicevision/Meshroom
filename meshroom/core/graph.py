@@ -1090,54 +1090,6 @@ def getAlreadySubmittedChunks(nodes):
                 out.append(chunk)
     return out
 
-
-def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
-    """
-    """
-    if forceCompute:
-        nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
-    else:
-        nodes, edges = graph.dfsToProcess(startNodes=toNodes)
-        chunksInConflict = getAlreadySubmittedChunks(nodes)
-
-        if chunksInConflict:
-            chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
-            chunksName = [node.name for node in chunksInConflict]
-            msg = 'WARNING: Some nodes are already submitted with status: {}\nNodes: {}'.format(
-                  ', '.join(chunksStatus),
-                  ', '.join(chunksName)
-                  )
-            if forceStatus:
-                print(msg)
-            else:
-                raise RuntimeError(msg)
-
-    print('Nodes to execute: ', str([n.name for n in nodes]))
-
-    for node in nodes:
-        node.beginSequence(forceCompute)
-
-    for n, node in enumerate(nodes):
-        try:
-            multiChunks = len(node.chunks) > 1
-            for c, chunk in enumerate(node.chunks):
-                if multiChunks:
-                    print('\n[{node}/{nbNodes}]({chunk}/{nbChunks}) {nodeName}'.format(
-                        node=n+1, nbNodes=len(nodes),
-                        chunk=c+1, nbChunks=len(node.chunks), nodeName=node.nodeType))
-                else:
-                    print('\n[{node}/{nbNodes}] {nodeName}'.format(
-                        node=n + 1, nbNodes=len(nodes), nodeName=node.nodeType))
-                chunk.process(forceCompute)
-        except Exception as e:
-            logging.error("Error on node computation: {}".format(e))
-            graph.clearSubmittedNodes()
-            raise
-
-    for node in nodes:
-        node.endSequence()
-
-
 def submitGraph(graph, submitter, toNodes=None):
     nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
     flowEdges = graph.flowEdges(startNodes=toNodes)

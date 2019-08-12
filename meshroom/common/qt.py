@@ -216,6 +216,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
     def reset(self, objects):
         self.setObjectList(objects)
 
+    @QtCore.Slot(QtCore.QObject, result=bool)
     def contains(self, obj):
         """ Returns true if the list contains an occurrence of object;
         otherwise returns false.

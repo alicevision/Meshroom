@@ -884,6 +884,21 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=[startNode], reverse=True)
         return nodes, edges
 
+    @Slot(Node, result="QVariantList")
+    def onlyNodesFromNode(self, startNode, filterType=None):
+        nodes = []
+        edges = []
+        visitor = Visitor()
+
+        def discoverVertex(vertex, graph):
+            if not filterType or vertex.nodeType == filterType:
+                nodes.append(vertex)
+
+        visitor.discoverVertex = discoverVertex
+        visitor.examineEdge = lambda edge, graph: edges.append(edge)
+        self.dfs(visitor=visitor, startNodes=[startNode], reverse=True)
+        return nodes
+
     def _applyExpr(self):
         with GraphModification(self):
             for node in self._nodes:

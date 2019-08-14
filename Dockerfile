@@ -1,6 +1,6 @@
 ARG CUDA_TAG=8.0
 ARG OS_TAG=7
-FROM alicevision/alicevision:centos${OS_TAG}-cuda${CUDA_TAG}
+FROM alicevision/alicevision:2.2.0-centos${OS_TAG}-cuda${CUDA_TAG}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 # Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
@@ -46,12 +46,9 @@ COPY . "${MESHROOM_DEV}"
 RUN source scl_source enable rh-python36 && cd "${MESHROOM_DEV}" && pip install -r dev_requirements.txt -r requirements.txt && python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
     find ${MESHROOM_BUNDLE} -name "*Qt5Web*" -delete && \
     find ${MESHROOM_BUNDLE} -name "*Qt5Designer*" -delete && \
-    rm ${MESHROOM_BUNDLE}/lib/PySide2/libclang.so* && \
     rm -rf ${MESHROOM_BUNDLE}/lib/PySide2/typesystems/ ${MESHROOM_BUNDLE}/lib/PySide2/examples/ ${MESHROOM_BUNDLE}/lib/PySide2/include/ ${MESHROOM_BUNDLE}/lib/PySide2/Qt/translations/ ${MESHROOM_BUNDLE}/lib/PySide2/Qt/resources/ && \
-    rm ${MESHROOM_BUNDLE}/lib/PySide2/libQt5* && \
     rm ${MESHROOM_BUNDLE}/lib/PySide2/QtWeb* && \
-    rm ${MESHROOM_BUNDLE}/lib/PySide2/libicu* && \
-    rm ${MESHROOM_BUNDLE}/lib/PySide2/pyside2-lupdate ${MESHROOM_BUNDLE}/lib/PySide2/pyside2-rcc ${MESHROOM_BUNDLE}/lib/PySide2/shiboken2
+    rm ${MESHROOM_BUNDLE}/lib/PySide2/pyside2-lupdate ${MESHROOM_BUNDLE}/lib/PySide2/pyside2-rcc
 
 # Install Qt (to build plugins)
 WORKDIR /tmp/qt

@@ -1,4 +1,4 @@
-__version__ = "2019.1.0"
+__version__ = "2019.2.0"
 __version_name__ = __version__
 
 import os

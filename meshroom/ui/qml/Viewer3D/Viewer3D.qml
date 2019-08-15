@@ -171,7 +171,7 @@ FocusScope {
                 RenderSettings {
                     pickingSettings.pickMethod: PickingSettings.PrimitivePicking  // enables point/edge/triangle picking
                     pickingSettings.pickResultMode: PickingSettings.NearestPick
-                    renderPolicy: RenderSettings.OnDemand
+                    renderPolicy: RenderSettings.Always
 
                     activeFrameGraph: RenderSurfaceSelector {
                         // Use the whole viewport

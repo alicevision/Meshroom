@@ -561,6 +561,11 @@ ApplicationWindow {
                                 enabled: !_reconstruction.computingLocally
                                 onTriggered: _reconstruction.graph.clearSubmittedNodes()
                             }
+                            MenuItem {
+                                text: "Refresh Nodes Status"
+                                enabled: !_reconstruction.computingLocally
+                                onTriggered: _reconstruction.forceNodesStatusUpdate()
+                            }
                             Menu {
                                 title: "Advanced"
                                 MenuItem {
@@ -589,6 +594,14 @@ ApplicationWindow {
                         if(node.nodeType === "StructureFromMotion")
                         {
                             _reconstruction.sfm = node;
+                        }
+                        else if(node.nodeType === "FeatureExtraction")
+                        {
+                            _reconstruction.featureExtraction = node;
+                        }
+                        else if(node.nodeType === "CameraInit")
+                        {
+                            _reconstruction.cameraInit = node;
                         }
                         for(var i=0; i < node.attributes.count; ++i)
                         {

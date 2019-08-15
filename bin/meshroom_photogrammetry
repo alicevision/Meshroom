@@ -73,13 +73,16 @@ views, intrinsics = [], []
 # Build image files list from inputImages arguments
 images = [f for f in args.inputImages if multiview.isImageFile(f)]
 
-if os.path.isdir(args.input):
-    # args.input is a folder: extend images list with images in that folder
-    images += multiview.findImageFiles(args.input)
-elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json', '.sfm'):
-    # args.input is a sfmData file: setup pre-calibrated views and intrinsics
-    from meshroom.nodes.aliceVision.CameraInit import readSfMData
-    views, intrinsics = readSfMData(args.input)
+if args.input:
+    if os.path.isdir(args.input):
+        # args.input is a folder: extend images list with images in that folder
+        images += multiview.findImageFiles(args.input)
+    elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json', '.sfm'):
+        # args.input is a sfmData file: setup pre-calibrated views and intrinsics
+        from meshroom.nodes.aliceVision.CameraInit import readSfMData
+        views, intrinsics = readSfMData(args.input)
+    else:
+        raise RuntimeError(args.input + ': format not supported.')
 
 # initialize photogrammetry pipeline
 if args.pipeline:
@@ -89,6 +92,9 @@ if args.pipeline:
     # reset graph inputs
     cameraInit.viewpoints.resetValue()
     cameraInit.intrinsics.resetValue()
+    # add views and intrinsics (if any) read from args.input
+    cameraInit.viewpoints.extend(views)
+    cameraInit.intrinsics.extend(intrinsics)
 
     if not graph.canComputeLeaves:
         raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")
@@ -101,9 +107,10 @@ else:
     graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
     cameraInit = getOnlyNodeOfType(graph, 'CameraInit')
 
-views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
-cameraInit.viewpoints.value = views
-cameraInit.intrinsics.value = intrinsics
+if images:
+    views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
+    cameraInit.viewpoints.value = views
+    cameraInit.intrinsics.value = intrinsics
 
 if args.overrides:
     import io

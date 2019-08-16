@@ -30,5 +30,3 @@ congratulate the author, etc. using the github comments.
 
 7. After approval, one of the developers with commit approval to the official main repository
 will merge your fixes into the "develop" branch.
-
-8. If not already the case, your name will be added to the [contributors list](CONTRIBUTORS.md).

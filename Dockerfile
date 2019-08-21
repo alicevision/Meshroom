@@ -37,13 +37,14 @@ RUN yum install -y \
         xcb-util-image
 
 # Install Python3
-RUN yum install -y centos-release-scl
-RUN yum install -y rh-python36
+RUN yum install -y centos-release-scl && yum install -y rh-python36
 
 COPY . "${MESHROOM_DEV}"
 
+WORKDIR "${MESHROOM_DEV}"
+
 # Install Meshroom requirements and freeze bundle
-RUN source scl_source enable rh-python36 && cd "${MESHROOM_DEV}" && pip install -r dev_requirements.txt -r requirements.txt && python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
+RUN source scl_source enable rh-python36 && pip install -r dev_requirements.txt -r requirements.txt && python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
     find ${MESHROOM_BUNDLE} -name "*Qt5Web*" -delete && \
     find ${MESHROOM_BUNDLE} -name "*Qt5Designer*" -delete && \
     rm -rf ${MESHROOM_BUNDLE}/lib/PySide2/typesystems/ ${MESHROOM_BUNDLE}/lib/PySide2/examples/ ${MESHROOM_BUNDLE}/lib/PySide2/include/ ${MESHROOM_BUNDLE}/lib/PySide2/Qt/translations/ ${MESHROOM_BUNDLE}/lib/PySide2/Qt/resources/ && \

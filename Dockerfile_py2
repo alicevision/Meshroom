@@ -1,4 +1,4 @@
-ARG CUDA_TAG=8.0
+ARG CUDA_TAG=7.0
 ARG OS_TAG=7
 FROM alicevision/alicevision:2.2.0-centos${OS_TAG}-cuda${CUDA_TAG}
 LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"

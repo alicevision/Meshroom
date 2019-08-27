@@ -224,7 +224,6 @@ Item {
                 property var currentEdge: null
                 MenuItem {
                     text: "Remove"
-                    enabled: !root.readOnly
                     onTriggered: uigraph.removeEdge(edgeMenu.currentEdge)
                 }
             }
@@ -253,7 +252,23 @@ Item {
                     point2x: dst.nodeItem.x + dstAnchor.x
                     point2y: dst.nodeItem.y + dstAnchor.y
                     onPressed: {
-                        if(event.button == Qt.RightButton)
+                        var canEdit = true
+                        if(_reconstruction.computing) {
+                            if(uigraph.taskManager.nodes.contains(edge.dst.node)) {
+                                    canEdit = false;
+                            } else {
+                                if(object.globalStatus == "SUCCESS") {
+                                    var nodes = uigraph.graph.onlyNodesFromNode(edge.dst.node);
+                                    for(var i = 0; i < nodes.length; i++) {
+                                        if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
+                                            canEdit = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if(canEdit && event.button == Qt.RightButton)
                         {
                             if(!root.readOnly && event.modifiers & Qt.AltModifier) {
                                 uigraph.removeEdge(edge)
@@ -348,7 +363,7 @@ Item {
                             return true;
                         }
 
-                        if(uigraph.taskManager.nodes.contains(uigraph.selectedNode)) {
+                        if(uigraph.taskManager.nodes.contains(uigraph.selectedNode) || ["SUBMITTED", "RUNNING"].includes(_reconstruction.selectedNode.globalStatus)) {
                                 return false;
                         } else {
                             if(uigraph.selectedNode.globalStatus == "SUCCESS") {
@@ -425,7 +440,26 @@ Item {
 
                     node: object
                     width: uigraph.layout.nodeWidth
-                    readOnly: root.readOnly
+                    readOnly: {
+                        if(! uigraph.computing) {
+                            return false;
+                        }
+
+                        if(object.globalStatus == "SUCCESS") {
+                            var nodes = uigraph.graph.onlyNodesFromNode(object);
+                            for(var i = 0; i < nodes.length; i++) {
+                                if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
+                                    return true;
+                                }
+                            }
+                        } else if(["SUBMITTED", "RUNNING"].includes(object.globalStatus)) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+
+                        return false;
+                    }
                     selected: uigraph.selectedNode === node
                     hovered: uigraph.hoveredNode === node
                     onSelectedChanged: if(selected) forceActiveFocus()

@@ -352,7 +352,7 @@ class UIGraph(QObject):
     @Slot(Node)
     def execute(self, node=None):
         nodes = [node] if node else None
-        self._taskManager.addNodes(self._graph, nodes)
+        self._taskManager.compute(self._graph, nodes, self)
 
     def _execute(self, nodes):
         self.computeStatusChanged.emit()
@@ -382,7 +382,7 @@ class UIGraph(QObject):
         """
         self.save()  # graph must be saved before being submitted
         node = [node] if node else None
-        submitGraph(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
+        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
 
     def updateGraphComputingStatus(self):
         # update graph computing status
@@ -399,11 +399,11 @@ class UIGraph(QObject):
 
     def isComputingExternally(self):
         """ Whether this graph is being computed externally. """
-        return (self._running or self._submitted) and not self.isComputingLocally()
+        return self._submitted
 
     def isComputingLocally(self):
         """ Whether this graph is being computed locally (i.e computation can be stopped). """
-        return self._taskManager._thread.is_alive()
+        return self._taskManager._thread.isRunning()
 
     def push(self, command):
         """ Try and push the given command to the undo stack.

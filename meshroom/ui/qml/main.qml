@@ -462,7 +462,6 @@ ApplicationWindow {
 
                 Row {
                     // disable controls if graph is executed externally
-                    enabled: !_reconstruction.computingExternally
                     Layout.alignment: Qt.AlignHCenter
 
                     Button {
@@ -471,7 +470,6 @@ ApplicationWindow {
                         palette.button: enabled ? buttonColor : disabledPalette.button
                         palette.window: enabled ? buttonColor : disabledPalette.window
                         palette.buttonText: enabled ? "white" : disabledPalette.buttonText
-                        enabled: computeManager.canStartComputation
                         onClicked: computeManager.compute(null)
                     }
                     Button {
@@ -482,7 +480,6 @@ ApplicationWindow {
                     Item { width: 20; height: 1 }
                     Button {
                         visible: _reconstruction.canSubmit
-                        enabled: computeManager.canSubmit
                         text: "Submit"
                         onClicked: computeManager.submit(null)
                     }
@@ -500,13 +497,6 @@ ApplicationWindow {
                     ToolTip.text: "Compatibility Issues"
                     ToolTip.visible: hovered
                 }
-            }
-
-            Label {
-                text: "Graph is being computed externally"
-                font.italic: true
-                Layout.alignment: Qt.AlignHCenter
-                visible: _reconstruction.computingExternally
             }
 
             // "ProgressBar" reflecting status of all the chunks in the graph, in their process order
@@ -636,23 +626,22 @@ ApplicationWindow {
                 width: Math.round(parent.width * 0.3)
                 node: _reconstruction.selectedNode
                 // Make NodeEditor readOnly when computing
-//                readOnly: graphLocked
                 readOnly: {
                     if(! _reconstruction.computing) {
                         return false;
                     }
 
-                    if(_reconstruction.taskManager.nodes.contains(_reconstruction.selectedNode)) {
-                            return true;
-                    } else {
-                        if(_reconstruction.selectedNode.globalStatus == "SUCCESS") {
-                            var nodes = _reconstruction.graph.onlyNodesFromNode(_reconstruction.selectedNode);
-                            for(var i = 0; i < nodes.length; i++) {
-                                if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
-                                    return true;
-                                }
+                    if(_reconstruction.selectedNode.globalStatus == "SUCCESS") {
+                        var nodes = uigraph.graph.onlyNodesFromNode(_reconstruction.selectedNode);
+                        for(var i = 0; i < nodes.length; i++) {
+                            if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
+                                return true;
                             }
                         }
+                    } else if(["SUBMITTED", "RUNNING"].includes(_reconstruction.selectedNode.globalStatus)) {
+                        return true;
+                    } else {
+                        return false;
                     }
 
                     return false;

@@ -1029,7 +1029,8 @@ class Graph(BaseObject):
     def stopExecution(self):
         """ Request graph execution to be stopped by terminating running chunks"""
         for chunk in self.iterChunksByStatus(Status.RUNNING):
-            chunk.stopProcess()
+            if not chunk.isExtern():
+                chunk.stopProcess()
 
     @Slot()
     def clearSubmittedNodes(self):

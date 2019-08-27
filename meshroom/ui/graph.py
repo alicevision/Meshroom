@@ -154,9 +154,9 @@ class GraphLayout(QObject):
         super(GraphLayout, self).__init__(graph)
         self.graph = graph
         self._depthMode = GraphLayout.DepthMode.MaxDepth
-        self._nodeWidth = 140   # implicit node width
-        self._nodeHeight = 80   # implicit node height
-        self._gridSpacing = 15  # column/line spacing between nodes
+        self._nodeWidth = 100   # implicit node width
+        self._nodeHeight = 120   # implicit node height
+        self._gridSpacing = 40  # column/line spacing between nodes
 
     @Slot(Node, Node, int, int)
     def autoLayout(self, fromNode=None, toNode=None, startX=0, startY=0):

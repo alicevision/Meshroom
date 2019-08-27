@@ -239,8 +239,8 @@ Item {
                 delegate: Edge {
                     property var src: root._attributeToDelegate[edge.src]
                     property var dst: root._attributeToDelegate[edge.dst]
-                    property var srcAnchor: src.nodeItem.mapFromItem(src, src.edgeAnchorPos.x, src.edgeAnchorPos.y)
-                    property var dstAnchor: dst.nodeItem.mapFromItem(dst, dst.edgeAnchorPos.x, dst.edgeAnchorPos.y)
+                    property var srcAnchor: src.nodeItem.mapFromItem(src, src.outputAnchorPos.x, src.outputAnchorPos.y)
+                    property var dstAnchor: dst.nodeItem.mapFromItem(dst, dst.inputAnchorPos.x, dst.inputAnchorPos.y)
 
                     property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge == edge)
 

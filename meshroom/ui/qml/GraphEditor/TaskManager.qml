@@ -23,7 +23,6 @@ Item {
     property int borderWidth: 3
 
     function selectNode(node) {
-        console.info("Node selected")
         uigraph.selectedNode = node
     }
 
@@ -165,8 +164,16 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
+                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: bgColor
+                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        selectNode(object)
+                    }
                 }
             }
             Label {
@@ -175,8 +182,16 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
+                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: bgColor
+                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        selectNode(object)
+                    }
                 }
             }
             Label {
@@ -185,8 +200,16 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
+                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: bgColor
+                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        selectNode(object)
+                    }
                 }
             }
             Label {
@@ -195,8 +218,16 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
+                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: bgColor
+                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        selectNode(object)
+                    }
                 }
             }
             Label {
@@ -205,8 +236,16 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
+                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: bgColor
+                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        selectNode(object)
+                    }
                 }
             }
             Item {
@@ -215,18 +254,32 @@ Item {
                 Layout.preferredHeight: parent.height
 
                     ListView {
+                        id: chunkList
                         width: parent.width
+                        height: parent.height
                         orientation: ListView.Horizontal
                         model: object.chunks
+                        property var node: object
 
                         spacing: 3
 
                         delegate: Label {
                             width: (ListView.view.width / ListView.view.model.count) -3
                             height: RowLayout.view.height
+                            anchors.verticalCenter: parent.verticalCenter
                             background: Rectangle {
                                 color: Colors.getChunkColor(object, {"NONE": bgColor})
                                 radius: 3
+                                border.width: 2
+                                border.color: chunkList.node == uigraph.selectedNode ? Colors.sysPalette.text : Colors.getChunkColor(object, {"NONE": bgColor})
+
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onPressed: {
+                                    selectNode(chunkList.node)
+                                }
                             }
                         }
                     }

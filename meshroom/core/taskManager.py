@@ -155,7 +155,16 @@ class TaskManager(BaseObject):
         self._nodesExtern = []
         self._nodesToProcess = []
 
-
+    def update(self, graph):
+        """
+        Add all the nodes that are being rendered in a renderfarm to the taskmanager when new graph is loaded
+        :param graph:
+        :return:
+        """
+        for node in graph._nodes:
+            if node.isAlreadySubmitted() and node._chunks.size() > 0 and node.isExtern():
+                self._nodes.add(node)
+                self._nodesExtern.append(node)
 
     def submit(self, graph=None, submitter=None, toNodes=None):
         """

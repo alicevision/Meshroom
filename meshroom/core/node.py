@@ -551,6 +551,9 @@ class BaseNode(BaseObject):
     def alreadySubmittedChunks(self):
         return [ch for ch in self._chunks if ch.isAlreadySubmitted()]
 
+    def isExtern(self):
+        return self._chunks.at(0).isExtern()
+
     @Slot()
     def clearSubmittedChunks(self):
         """ Reset all submitted chunks to Status.NONE. This method should be used to clear inconsistent status

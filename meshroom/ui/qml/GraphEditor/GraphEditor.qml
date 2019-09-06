@@ -254,11 +254,11 @@ Item {
                     onPressed: {
                         var canEdit = true
                         if(_reconstruction.computing) {
-                            if(uigraph.taskManager.nodes.contains(edge.dst.node)) {
+                            if(uigraph.taskManager.nodes.contains(edge.src.node)) {
                                     canEdit = false;
                             } else {
                                 if(object.globalStatus == "SUCCESS") {
-                                    var nodes = uigraph.graph.onlyNodesFromNode(edge.dst.node);
+                                    var nodes = uigraph.graph.onlyNodesFromNode(edge.src.node);
                                     for(var i = 0; i < nodes.length; i++) {
                                         if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
                                             canEdit = false;

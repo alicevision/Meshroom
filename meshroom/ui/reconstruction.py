@@ -178,6 +178,7 @@ class Reconstruction(UIGraph):
         self._sfm = None
         self._views = None
         self._poses = None
+        self._solvedIntrinsics = None
         self._selectedViewId = None
         self._liveSfmManager = LiveSfmManager(self)
 
@@ -465,15 +466,16 @@ class Reconstruction(UIGraph):
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
     liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
 
-    def updateViewsAndPoses(self):
+    def updateSfMResults(self):
         """
-        Update internal views and poses based on the current SfM node.
+        Update internal views, poses and solved intrinsics based on the current SfM node.
         """
         if not self._sfm:
             self._views = dict()
             self._poses = dict()
+            self._solvedIntrinsics = dict()
         else:
-            self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
+            self._views, self._poses, self._solvedIntrinsics = self._sfm.nodeDesc.getResults(self._sfm)
         self.sfmReportChanged.emit()
 
     def getSfm(self):
@@ -490,15 +492,15 @@ class Reconstruction(UIGraph):
         See Also: setSfm
         """
         self._sfm = node
-        # Update views and poses and do so each time
+        # Update sfm results and do so each time
         # the status of the SfM node's only chunk changes
-        self.updateViewsAndPoses()
+        self.updateSfMResults()
         if self._sfm:
             # when destroyed, directly use '_setSfm' to bypass
             # disconnection step in 'setSfm' (at this point, 'self._sfm' underlying object
             # has been destroyed and can't be evaluated anymore)
             self._sfm.destroyed.connect(self._unsetSfm)
-            self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
+            self._sfm.chunks[0].statusChanged.connect(self.updateSfMResults)
         self.sfmChanged.emit()
 
     def setSfm(self, node):
@@ -507,7 +509,7 @@ class Reconstruction(UIGraph):
         """
         # disconnect from previous SfM node if any
         if self._sfm:
-            self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
+            self._sfm.chunks[0].statusChanged.disconnect(self.updateSfMResults)
             self._sfm.destroyed.disconnect(self._unsetSfm)
         self._setSfm(node)
 
@@ -564,6 +566,16 @@ class Reconstruction(UIGraph):
         """ Get the number of reconstructed cameras in the current context. """
         return len([v for v in self.getViewpoints() if self.isReconstructed(v)])
 
+    @Slot(QObject, result="QVariant")
+    def getSolvedIntrinsics(self, viewpoint):
+        """ Return viewpoint's solved intrinsics if it has been reconstructed, None otherwise.
+
+        Args:
+            viewpoint: the viewpoint object to instrinsics for.
+        """
+        if not viewpoint:
+            return None
+        return self._solvedIntrinsics.get(str(viewpoint.intrinsicId.value), None)
 
     selectedViewIdChanged = Signal()
     selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)

@@ -20,7 +20,6 @@ FocusScope {
 
     property int renderMode: 2
     property alias library: mediaLibrary
-    property alias inspector: inspector3d
 
     readonly property vector3d defaultCamPosition: Qt.vector3d(12.0, 10.0, -12.0)
     readonly property vector3d defaultCamUpVector: Qt.vector3d(0.0, 1.0, 0.0)
@@ -239,23 +238,6 @@ FocusScope {
         BusyIndicator {
             anchors.centerIn: parent
             running: parent.visible
-        }
-    }
-
-    //  UI Overlay
-    Controls1.SplitView {
-        id: overlaySplitView
-        anchors.fill: parent
-
-        Item { Layout.fillWidth: true; Layout.minimumWidth: parent.width * 0.5  }
-
-        Inspector3D {
-            id: inspector3d
-            width: 200
-            Layout.minimumWidth: 5
-
-            camera: mainCamera
-            mediaLibrary: mediaLibrary
         }
     }
 

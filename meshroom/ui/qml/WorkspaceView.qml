@@ -116,33 +116,47 @@ Item {
             Layout.minimumWidth: 20
             Layout.minimumHeight: 80
 
-            Viewer3D {
-                id: viewer3D
-
+            Controls1.SplitView {
                 anchors.fill: parent
-                inspector.uigraph: reconstruction
+                Viewer3D {
+                    id: viewer3D
 
-                DropArea {
-                    anchors.fill: parent
-                    keys: ["text/uri-list"]
-                    onDropped: {
-                        drop.urls.forEach(function(url){ load3DMedia(url); });
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.minimumWidth: 20
+
+                    DropArea {
+                        anchors.fill: parent
+                        keys: ["text/uri-list"]
+                        onDropped: {
+                            drop.urls.forEach(function(url){ load3DMedia(url); });
+                        }
+                    }
+
+                    // Load reconstructed model
+                    Button {
+                        readonly property var outputAttribute: _reconstruction.texturing ? _reconstruction.texturing.attribute("outputMesh") : null
+                        readonly property bool outputReady: outputAttribute && _reconstruction.texturing.globalStatus === "SUCCESS"
+                        readonly property int outputMediaIndex: viewer3D.library.find(outputAttribute)
+
+                        text: "Load Model"
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 10
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: outputReady && outputMediaIndex == -1
+                        onClicked: viewer3D.view(_reconstruction.texturing.attribute("outputMesh"))
                     }
                 }
-            }
 
-            // Load reconstructed model
-            Button {
-                readonly property var outputAttribute: _reconstruction.texturing ? _reconstruction.texturing.attribute("outputMesh") : null
-                readonly property bool outputReady: outputAttribute && _reconstruction.texturing.globalStatus === "SUCCESS"
-                readonly property int outputMediaIndex: viewer3D.library.find(outputAttribute)
+                // Inspector Panel
+                Inspector3D {
+                    id: inspector3d
+                    width: 200
+                    Layout.minimumWidth: 5
 
-                text: "Load Model"
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 10
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: outputReady && outputMediaIndex == -1
-                onClicked: viewer3D.view(_reconstruction.texturing.attribute("outputMesh"))
+                    mediaLibrary: viewer3D.library
+                    uigraph: reconstruction
+                }
             }
         }
     }

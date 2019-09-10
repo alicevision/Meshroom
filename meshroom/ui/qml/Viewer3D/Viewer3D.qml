@@ -164,7 +164,7 @@ FocusScope {
                 onMouseReleased: {
                     if(moving)
                         return
-                    if(mouse.button == Qt.RightButton)
+                    if(!moved && mouse.button == Qt.RightButton)
                     {
                         contextMenu.popup()
                     }

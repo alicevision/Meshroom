@@ -1,8 +1,18 @@
 from collections import defaultdict
+import subprocess
 import logging
 import psutil
 import time
 import threading
+import platform
+import os
+import sys
+
+if sys.version_info[0] == 2:
+    # On Python 2 use C implementation for performance and to avoid lots of warnings
+    from xml.etree import cElementTree as ET
+else:
+    import xml.etree.ElementTree as ET
 
 
 def bytes2human(n):
@@ -25,14 +35,57 @@ def bytes2human(n):
 
 class ComputerStatistics:
     def __init__(self):
-        # TODO: init
         self.nbCores = 0
         self.cpuFreq = 0
+        self.ramTotal = 0
         self.ramAvailable = 0  # GB
         self.vramAvailable = 0  # GB
         self.swapAvailable = 0
-
+        self.gpuMemoryTotal = 0
+        self.gpuName = ''
         self.curves = defaultdict(list)
+
+        self._isInit = False
+
+    def initOnFirstTime(self):
+        if self._isInit:
+            return
+        self._isInit = True
+
+        self.cpuFreq = psutil.cpu_freq().max
+        self.ramTotal = psutil.virtual_memory().total / 1024/1024/1024
+
+        if platform.system() == "Windows":
+            from distutils import spawn
+            # If the platform is Windows and nvidia-smi
+            # could not be found from the environment path,
+            # try to find it from system drive with default installation path
+            self.nvidia_smi = spawn.find_executable('nvidia-smi')
+            if self.nvidia_smi is None:
+                self.nvidia_smi = "%s\\Program Files\\NVIDIA Corporation\\NVSMI\\nvidia-smi.exe" % os.environ['systemdrive']
+        else:
+            self.nvidia_smi = "nvidia-smi"
+
+        try:
+            p = subprocess.Popen([self.nvidia_smi, "-q", "-x"], stdout=subprocess.PIPE)
+            xmlGpu, stdError = p.communicate()
+
+            smiTree = ET.fromstring(xmlGpu)
+            gpuTree = smiTree.find('gpu')
+
+            try:
+                self.gpuMemoryTotal = gpuTree.find('fb_memory_usage').find('total').text.split(" ")[0]
+            except Exception as e:
+                logging.debug('Failed to get gpuMemoryTotal: "{}".'.format(str(e)))
+                pass
+            try:
+                self.gpuName = gpuTree.find('product_name').text
+            except Exception as e:
+                logging.debug('Failed to get gpuName: "{}".'.format(str(e)))
+                pass
+
+        except Exception as e:
+            logging.debug('Failed to get information from nvidia_smi at init: "{}".'.format(str(e)))
 
     def _addKV(self, k, v):
         if isinstance(v, tuple):
@@ -45,11 +98,41 @@ class ComputerStatistics:
             self.curves[k].append(v)
 
     def update(self):
+        self.initOnFirstTime()
         self._addKV('cpuUsage', psutil.cpu_percent(percpu=True)) # interval=None => non-blocking (percentage since last call)
         self._addKV('ramUsage', psutil.virtual_memory().percent)
         self._addKV('swapUsage', psutil.swap_memory().percent)
         self._addKV('vramUsage', 0)
         self._addKV('ioCounters', psutil.disk_io_counters())
+        self.updateGpu()
+
+    def updateGpu(self):
+        try:
+            p = subprocess.Popen([self.nvidia_smi, "-q", "-x"], stdout=subprocess.PIPE)
+            xmlGpu, stdError = p.communicate()
+
+            smiTree = ET.fromstring(xmlGpu)
+            gpuTree = smiTree.find('gpu')
+
+            try:
+                self._addKV('gpuMemoryUsed', gpuTree.find('fb_memory_usage').find('used').text.split(" ")[0])
+            except Exception as e:
+                logging.debug('Failed to get gpuMemoryUsed: "{}".'.format(str(e)))
+                pass
+            try:
+                self._addKV('gpuUsed', gpuTree.find('utilization').find('gpu_util').text.split(" ")[0])
+            except Exception as e:
+                logging.debug('Failed to get gpuUsed: "{}".'.format(str(e)))
+                pass
+            try:
+                self._addKV('gpuTemperature', gpuTree.find('temperature').find('gpu_temp').text.split(" ")[0])
+            except Exception as e:
+                logging.debug('Failed to get gpuTemperature: "{}".'.format(str(e)))
+                pass
+
+        except Exception as e:
+            logging.debug('Failed to get information from nvidia_smi: "{}".'.format(str(e)))
+            return
 
     def toDict(self):
         return self.__dict__
@@ -145,12 +228,13 @@ class ProcStatistics:
 class Statistics:
     """
     """
-    fileVersion = 1.0
+    fileVersion = 2.0
 
     def __init__(self):
         self.computer = ComputerStatistics()
         self.process = ProcStatistics()
         self.times = []
+        self.interval = 5
 
     def update(self, proc):
         '''
@@ -169,19 +253,28 @@ class Statistics:
             'computer': self.computer.toDict(),
             'process': self.process.toDict(),
             'times': self.times,
+            'interval': self.interval
             }
 
     def fromDict(self, d):
-        version = d.get('fileVersion', 1.0)
+        version = d.get('fileVersion', 0.0)
         if version != self.fileVersion:
-            logging.info('Cannot load statistics, version was {} and we only support {}.'.format(version, self.fileVersion))
-            self.computer = {}
-            self.process = {}
-            self.times = []
-            return
-        self.computer.fromDict(d.get('computer', {}))
-        self.process.fromDict(d.get('process', {}))
-        self.times = d.get('times', [])
+            logging.debug('Statistics: file version was {} and the current version is {}.'.format(version, self.fileVersion))
+        self.computer = {}
+        self.process = {}
+        self.times = []
+        try:
+            self.computer.fromDict(d.get('computer', {}))
+        except Exception as e:
+            logging.debug('Failed while loading statistics: computer: "{}".'.format(str(e)))
+        try:
+            self.process.fromDict(d.get('process', {}))
+        except Exception as e:
+            logging.debug('Failed while loading statistics: process: "{}".'.format(str(e)))
+        try:
+            self.times = d.get('times', [])
+        except Exception as e:
+            logging.debug('Failed while loading statistics: times: "{}".'.format(str(e)))
 
 
 bytesPerGiga = 1024. * 1024. * 1024.
@@ -204,7 +297,7 @@ class StatisticsThread(threading.Thread):
         try:
             while True:
                 self.updateStats()
-                if self._stopFlag.wait(60):
+                if self._stopFlag.wait(self.statistics.interval):
                     # stopFlag has been set
                     # update stats one last time and exit main loop
                     if self.proc.is_running():

@@ -1,13 +1,19 @@
 from collections import defaultdict
-from distutils import spawn
-from subprocess import Popen, PIPE
-import xml.etree.ElementTree as ET
+import subprocess
 import logging
 import psutil
 import time
 import threading
 import platform
 import os
+import sys
+
+if sys.version_info[0] == 2:
+    # On Python 2 use C implementation for performance and to avoid lots of warnings
+    from xml.etree import cElementTree as ET
+else:
+    import xml.etree.ElementTree as ET
+
 
 def bytes2human(n):
     """
@@ -40,6 +46,7 @@ class ComputerStatistics:
         self.gpuName = ''
 
         if platform.system() == "Windows":
+            from distutils import spawn
             # If the platform is Windows and nvidia-smi
             # could not be found from the environment path,
             # try to find it from system drive with default installation path
@@ -50,7 +57,7 @@ class ComputerStatistics:
             self.nvidia_smi = "nvidia-smi"
 
         try:
-            p = Popen([self.nvidia_smi, "-q", "-x"], stdout=PIPE)
+            p = subprocess.Popen([self.nvidia_smi, "-q", "-x"], stdout=subprocess.PIPE)
             xmlGpu, stdError = p.communicate()
 
             smiTree = ET.fromstring(xmlGpu)
@@ -92,7 +99,7 @@ class ComputerStatistics:
 
     def updateGpu(self):
         try:
-            p = Popen([self.nvidia_smi, "-q", "-x"], stdout=PIPE)
+            p = subprocess.Popen([self.nvidia_smi, "-q", "-x"], stdout=subprocess.PIPE)
             xmlGpu, stdError = p.communicate()
 
             smiTree = ET.fromstring(xmlGpu)
@@ -212,7 +219,7 @@ class ProcStatistics:
 class Statistics:
     """
     """
-    fileVersion = 1.0
+    fileVersion = 2.0
 
     def __init__(self):
         self.computer = ComputerStatistics()
@@ -241,16 +248,24 @@ class Statistics:
             }
 
     def fromDict(self, d):
-        version = d.get('fileVersion', 1.0)
+        version = d.get('fileVersion', 0.0)
         if version != self.fileVersion:
-            logging.info('Cannot load statistics, version was {} and we only support {}.'.format(version, self.fileVersion))
-            self.computer = {}
-            self.process = {}
-            self.times = []
-            return
-        self.computer.fromDict(d.get('computer', {}))
-        self.process.fromDict(d.get('process', {}))
-        self.times = d.get('times', [])
+            logging.debug('Statistics: file version was {} and the current version is {}.'.format(version, self.fileVersion))
+        self.computer = {}
+        self.process = {}
+        self.times = []
+        try:
+            self.computer.fromDict(d.get('computer', {}))
+        except Exception as e:
+            logging.debug('Failed while loading statistics: computer: "{}".'.format(str(e)))
+        try:
+            self.process.fromDict(d.get('process', {}))
+        except Exception as e:
+            logging.debug('Failed while loading statistics: process: "{}".'.format(str(e)))
+        try:
+            self.times = d.get('times', [])
+        except Exception as e:
+            logging.debug('Failed while loading statistics: times: "{}".'.format(str(e)))
 
 
 bytesPerGiga = 1024. * 1024. * 1024.

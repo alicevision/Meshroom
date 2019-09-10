@@ -32,15 +32,37 @@ FloatingPane {
 
         Group {
             Layout.fillWidth: true
-            title: "SETTINGS"
+            title: "DISPLAY"
 
             GridLayout {
                 width: parent.width
                 columns: 2
                 columnSpacing: 6
                 rowSpacing: 3
-
-                MaterialLabel { font.family: MaterialIcons.fontFamily; text: MaterialIcons.grain; padding: 2 }
+                Flow {
+                    Layout.columnSpan: 2
+                    Layout.fillWidth: true
+                    spacing: 1
+                    MaterialToolButton {
+                        text: MaterialIcons.grid_on
+                        ToolTip.text: "Display Grid"
+                        checked: Viewer3DSettings.displayGrid
+                        onClicked: Viewer3DSettings.displayGrid = !Viewer3DSettings.displayGrid
+                    }
+                    MaterialToolButton {
+                        text: MaterialIcons.adjust
+                        checked: Viewer3DSettings.displayGizmo
+                        ToolTip.text: "Display Trackball"
+                        onClicked: Viewer3DSettings.displayGizmo = !Viewer3DSettings.displayGizmo
+                    }
+                    MaterialToolButton {
+                        text: MaterialIcons.call_merge
+                        ToolTip.text: "Display Origin"
+                        checked: Viewer3DSettings.displayOrigin
+                        onClicked: Viewer3DSettings.displayOrigin = !Viewer3DSettings.displayOrigin
+                    }
+                }
+                MaterialLabel { text: MaterialIcons.grain; padding: 2 }
                 RowLayout {
                     Slider {
                         Layout.fillWidth: true; from: 0; to: 5; stepSize: 0.1
@@ -60,7 +82,7 @@ FloatingPane {
                     }
 
                 }
-                MaterialLabel { font.family: MaterialIcons.fontFamily; text: MaterialIcons.videocam; padding: 2 }
+                MaterialLabel { text: MaterialIcons.videocam; padding: 2 }
                 Slider {
                     value: Viewer3DSettings.cameraScale
                     from: 0
@@ -73,27 +95,60 @@ FloatingPane {
                     ToolTip.visible: hovered || pressed
                     ToolTip.delay: 150
                 }
+            }
+        }
+
+        Group {
+            Layout.fillWidth: true
+            title: "CAMERA"
+            ColumnLayout {
+                width: parent.width
+
+                // Image/Camera synchronization
                 Flow {
-                    Layout.columnSpan: 2
                     Layout.fillWidth: true
                     spacing: 2
-                    CheckBox {
-                        text: "Grid"
-                        padding: 2
-                        checked: Viewer3DSettings.displayGrid
-                        onClicked: Viewer3DSettings.displayGrid = !Viewer3DSettings.displayGrid
+                    // Synchronization
+                    MaterialToolButton {
+                        id: syncViewpointCamera
+                        enabled: _reconstruction.sfmReport
+                        text: MaterialIcons.linked_camera
+                        ToolTip.text: "Sync with Image Selection"
+                        checked: enabled && Viewer3DSettings.syncViewpointCamera
+                        onClicked: Viewer3DSettings.syncViewpointCamera = !Viewer3DSettings.syncViewpointCamera
                     }
-                    CheckBox {
-                        text: "Gizmo"
-                        padding: 2
-                        checked: Viewer3DSettings.displayGizmo
-                        onClicked: Viewer3DSettings.displayGizmo = !Viewer3DSettings.displayGizmo
+                    // Image Overlay controls
+                    RowLayout {
+                        visible: syncViewpointCamera.enabled && Viewer3DSettings.syncViewpointCamera
+                        spacing: 2
+                        // Activation
+                        MaterialToolButton {
+                            text: MaterialIcons.image
+                            ToolTip.text: "Image Overlay"
+                            checked: Viewer3DSettings.viewpointImageOverlay
+                            onClicked: Viewer3DSettings.viewpointImageOverlay = !Viewer3DSettings.viewpointImageOverlay
+                        }
+                        // Opacity
+                        Slider {
+                            visible: Viewer3DSettings.showViewpointImageOverlay
+                            implicitWidth: 60
+                            from: 0
+                            to: 100
+                            value: Viewer3DSettings.viewpointImageOverlayOpacity * 100
+                            onValueChanged: Viewer3DSettings.viewpointImageOverlayOpacity = value / 100
+                            ToolTip.text: "Image Opacity: " + Viewer3DSettings.viewpointImageOverlayOpacity.toFixed(2)
+                            ToolTip.visible: hovered || pressed
+                            ToolTip.delay: 100
+                        }
                     }
-                    CheckBox {
-                        text: "Origin"
-                        padding: 2
-                        checked: Viewer3DSettings.displayOrigin
-                        onClicked: Viewer3DSettings.displayOrigin = !Viewer3DSettings.displayOrigin
+                    // Image Frame control
+                    MaterialToolButton {
+                        visible: syncViewpointCamera.enabled && Viewer3DSettings.showViewpointImageOverlay
+                        enabled: Viewer3DSettings.syncViewpointCamera
+                        text: MaterialIcons.crop_free
+                        ToolTip.text: "Frame Overlay"
+                        checked: Viewer3DSettings.viewpointImageFrame
+                        onClicked: Viewer3DSettings.viewpointImageFrame = !Viewer3DSettings.viewpointImageFrame
                     }
                 }
             }
@@ -114,7 +169,6 @@ FloatingPane {
                 implicitHeight: parent.height
                 checkable: true
                 checked: true
-                padding: 0
             }
 
             ListView {
@@ -300,21 +354,13 @@ FloatingPane {
                         }
                     }
 
-                    // Media unavailability indicator
-                    MaterialToolButton {
-                        Layout.alignment: Qt.AlignTop
-                        enabled: false
-                        visible: !model.valid
-                        text: MaterialIcons.no_sim
-                        font.pointSize: 10
-                    }
-
                     // Remove media from library button
                     MaterialToolButton {
                         id: removeButton
                         Layout.alignment: Qt.AlignTop
+                        Layout.fillHeight: true
 
-                        visible: !loading
+                        visible: hovered || mouseArea.containsMouse && !loading
                         text: MaterialIcons.clear
                         font.pointSize: 10
                         ToolTip.text: "Remove"

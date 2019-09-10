@@ -6,7 +6,7 @@ import QtQml.Models 2.2
 import QtQuick.Scene3D 2.0
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
-import Qt3D.Extras 2.1
+import Qt3D.Extras 2.10
 import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
 
 import MaterialIcons 2.2
@@ -24,6 +24,9 @@ FocusScope {
     readonly property vector3d defaultCamPosition: Qt.vector3d(12.0, 10.0, -12.0)
     readonly property vector3d defaultCamUpVector: Qt.vector3d(0.0, 1.0, 0.0)
     readonly property vector3d defaultCamViewCenter: Qt.vector3d(0.0, 0.0, 0.0)
+
+    readonly property var viewpoint: _reconstruction.selectedViewpoint
+    readonly property bool doSyncViewpointCamera: Viewer3DSettings.syncViewpointCamera && (viewpoint && viewpoint.isReconstructed)
 
     // functions
     function resetCameraPosition() {
@@ -88,6 +91,7 @@ FocusScope {
             Camera {
                 id: mainCamera
                 projectionType: CameraLens.PerspectiveProjection
+                enabled: cameraSelector.camera == mainCamera
                 fieldOfView: 45
                 nearPlane : 0.01
                 farPlane : 10000.0
@@ -113,10 +117,17 @@ FocusScope {
                 }
             }
 
+            ViewpointCamera {
+                id: viewpointCamera
+                enabled: cameraSelector.camera === camera
+                viewpoint: root.viewpoint
+                camera.aspectRatio: width/height
+            }
+
             TrackballGizmo {
                 beamRadius: 4.0/root.height
                 alpha: cameraController.moving ? 1.0 : 0.7
-                enabled: Viewer3DSettings.displayGizmo
+                enabled: Viewer3DSettings.displayGizmo && cameraSelector.camera == mainCamera
                 xColor: Colors.red
                 yColor: Colors.green
                 zColor: Colors.blue
@@ -129,6 +140,8 @@ FocusScope {
 
             DefaultCameraController {
                 id: cameraController
+                enabled: cameraSelector.camera == mainCamera
+
                 windowSize {
                     width: root.width
                     height: root.height
@@ -178,7 +191,7 @@ FocusScope {
                             normalizedRect: Qt.rect(0.0, 0.0, 1.0, 1.0)
                             CameraSelector {
                                 id: cameraSelector
-                                camera: mainCamera
+                                camera: doSyncViewpointCamera ? viewpointCamera.camera : mainCamera
                                 FrustumCulling {
                                     ClearBuffers {
                                         clearColor: "transparent"
@@ -225,6 +238,24 @@ FocusScope {
             }
             Locator3D { enabled: Viewer3DSettings.displayOrigin }
             Grid3D { enabled: Viewer3DSettings.displayGrid }
+        }
+    }
+
+    // Image overlay when navigating reconstructed cameras
+    Loader {
+        id: imageOverlayLoader
+        anchors.fill: parent
+
+        active: doSyncViewpointCamera
+        visible: Viewer3DSettings.showViewpointImageOverlay
+
+        sourceComponent: ImageOverlay {
+            id: imageOverlay
+            source: root.viewpoint.undistortedImageSource
+            imageRatio: root.viewpoint.orientedImageSize.width / root.viewpoint.orientedImageSize.height
+            uvCenterOffset: root.viewpoint.uvCenterOffset
+            showFrame: Viewer3DSettings.showViewpointImageFrame
+            imageOpacity: Viewer3DSettings.viewpointImageOverlayOpacity
         }
     }
 

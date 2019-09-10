@@ -3,6 +3,40 @@
 For algorithmic changes related to the photogrammetric pipeline, 
 please refer to [AliceVision changelog](https://github.com/alicevision/AliceVision/blob/develop/CHANGES.md).
 
+
+## Release 2019.2.0 (2019.08.08)
+
+Based on [AliceVision 2.2.0](https://github.com/alicevision/AliceVision/tree/v2.2.0).
+
+Release Notes Summary:
+
+ - Visualisation: New visualization module of the features extraction. [PR](https://github.com/alicevision/meshroom/pull/539), [New QtAliceVision](https://github.com/alicevision/QtAliceVision)
+ - Support for RAW image files.
+ - Texturing: Largely improve the Texturing quality.
+ - Texturing: Speed improvements.
+ - Texturing: Add support for UDIM.
+ - Meshing: Export the dense point cloud in Alembic.
+ - Meshing: New option to export the full raw dense point cloud (with all 3D points candidates before cut and filtering).
+ - Meshing: Adds an option to export color data per vertex and MeshFiltering correctly preserves colors.
+
+Full Release Notes:
+
+ - Move to PySide2 / Qt 5.13
+ - SfMDataIO: Change root nodes (XForms instead of untyped objects) of Alembic SfMData for better interoperability with other 3D graphics applications (in particular Blender and Houdini).
+ - Improve performance of log display and node status update. [PR](https://github.com/alicevision/meshroom/pull/466) [PR](https://github.com/alicevision/meshroom/pull/548)
+ - Viewer3D: Add support for vertex-colored meshes. [PR](https://github.com/alicevision/meshroom/pull/550)
+ - New pipeline input for meshroom_photogrammetry command line and minor fixes to the input arguments. [PR](https://github.com/alicevision/meshroom/pull/567) [PR](https://github.com/alicevision/meshroom/pull/577)
+ - New arguments to meshroom. [PR](https://github.com/alicevision/meshroom/pull/413)
+ - HDR: New HDR module for the fusion of multiple LDR images.
+ - PrepareDenseScene: Add experimental option to correct Exposure Values (EV) of input images to uniformize dataset exposures.
+ - FeatureExtraction: Include CCTag in the release binaries both on Linux and Windows.
+ - ConvertSfMFormat: Enable to use simple regular expressions in the image white list of the ConvertSfMFormat. This enables to filter out cameras based on their filename.
+
+For more details see all PR merged: https://github.com/alicevision/meshroom/milestone/9
+See [AliceVision 2.2.0 Release Notes](https://github.com/alicevision/AliceVision/blob/v2.2.0/CHANGES.md)
+for more details about algorithmic changes.
+
+
 ## Release 2019.1.0 (2019.02.27)
 
 Based on [AliceVision 2.1.0](https://github.com/alicevision/AliceVision/tree/v2.1.0).

@@ -275,7 +275,7 @@ Entity {
 
             components: [
                 ObjectPicker {
-                    enabled: parent.enabled && pickingEnabled
+                    enabled: mediaLoader.enabled && pickingEnabled
                     hoverEnabled: false
                     onPressed: root.pressed(pick)
                 }

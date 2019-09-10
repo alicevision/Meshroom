@@ -1150,9 +1150,15 @@ def submitGraph(graph, submitter, toNodes=None):
     logging.info("Nodes to process: {}".format(edgesToProcess))
     logging.info("Edges to process: {}".format(edgesToProcess))
 
-    sub = meshroom.core.submitters.get(submitter, None)
+    sub = None
+    if submitter:
+        sub = meshroom.core.submitters.get(submitter, None)
+    elif len(meshroom.core.submitters) == 1:
+        # if only one submitter available use it
+        sub = meshroom.core.submitters.values()[0]
     if sub is None:
-        raise RuntimeError("Unknown Submitter : " + submitter)
+        raise RuntimeError("Unknown Submitter: '{submitter}'. Available submitters are: '{allSubmitters}'.".format(
+            submitter=submitter, allSubmitters=str(meshroom.core.submitters.keys())))
 
     try:
         res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath)

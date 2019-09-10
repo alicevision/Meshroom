@@ -1,5 +1,7 @@
 # ![Meshroom - 3D Reconstruction Software](/docs/logo/banner-meshroom.png)
 
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2997/badge)](https://bestpractices.coreinfrastructure.org/projects/2997)
+
 Meshroom is a free, open-source 3D Reconstruction Software based on the [AliceVision](https://github.com/alicevision/AliceVision) Photogrammetric Computer Vision framework.
 
 Learn more details about the pipeline on [AliceVision website](http://alicevision.github.io).

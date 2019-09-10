@@ -43,9 +43,13 @@ AlembicEntity {
         Entity {
             id: camSelector
             property string viewId
+            // Qt 5.13: binding cameraPicker.enabled to cameraPickerEnabled
+            //          causes rendering issues when entity gets disabled.
+            //          set CuboidMesh extent to 0 to disable picking.
+            property real extent: cameraPickingEnabled ? 0.2 : 0
 
             components: [
-                CuboidMesh { xExtent: 0.2; yExtent: 0.2; zExtent: 0.2;},
+                CuboidMesh { xExtent: parent.extent; yExtent: xExtent; zExtent: xExtent },
                 PhongMaterial{
                     id: mat
                     ambient: viewId === _reconstruction.selectedViewId ? activePalette.highlight : "#CCC"
@@ -55,11 +59,7 @@ AlembicEntity {
                     id: cameraPicker
                     onPressed: pick.accepted = cameraPickingEnabled
                     onReleased: _reconstruction.selectedViewId = camSelector.viewId
-                },
-                // Qt 5.13: binding cameraPicker.enabled to cameraPickerEnabled
-                //          causes rendering issues when entity gets disabled.
-                //          Use a scale to 0 to disable picking.
-                Transform { scale: cameraPickingEnabled ? 1 : 0 }
+                }
             ]
         }
     }

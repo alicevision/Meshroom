@@ -35,15 +35,25 @@ def bytes2human(n):
 
 class ComputerStatistics:
     def __init__(self):
-        # TODO: init
         self.nbCores = 0
-        self.cpuFreq = psutil.cpu_freq().max
-        self.ramTotal = psutil.virtual_memory().total / 1024/1024/1024
+        self.cpuFreq = 0
+        self.ramTotal = 0
         self.ramAvailable = 0  # GB
         self.vramAvailable = 0  # GB
         self.swapAvailable = 0
         self.gpuMemoryTotal = 0
         self.gpuName = ''
+        self.curves = defaultdict(list)
+
+        self._isInit = False
+
+    def initOnFirstTime(self):
+        if self._isInit:
+            return
+        self._isInit = True
+
+        self.cpuFreq = psutil.cpu_freq().max
+        self.ramTotal = psutil.virtual_memory().total / 1024/1024/1024
 
         if platform.system() == "Windows":
             from distutils import spawn
@@ -77,8 +87,6 @@ class ComputerStatistics:
         except Exception as e:
             logging.debug('Failed to get information from nvidia_smi at init: "{}".'.format(str(e)))
 
-        self.curves = defaultdict(list)
-
     def _addKV(self, k, v):
         if isinstance(v, tuple):
             for ki, vi in v._asdict().items():
@@ -90,6 +98,7 @@ class ComputerStatistics:
             self.curves[k].append(v)
 
     def update(self):
+        self.initOnFirstTime()
         self._addKV('cpuUsage', psutil.cpu_percent(percpu=True)) # interval=None => non-blocking (percentage since last call)
         self._addKV('ramUsage', psutil.virtual_memory().percent)
         self._addKV('swapUsage', psutil.swap_memory().percent)

@@ -17,6 +17,8 @@ Item {
 
     property var sourceModified: undefined
     property var jsonObject
+    property real fileVersion: 0.0
+
     property int nbReads: 1
     property real deltaTime: 1
 
@@ -24,6 +26,7 @@ Item {
     property int cpuFrequency: 0
 
     property int ramTotal
+    property string ramLabel: "RAM: "
 
     property int gpuTotalMemory
     property int gpuMaxAxis: 100
@@ -127,6 +130,7 @@ Item {
 
     function createCharts() {
         root.deltaTime = getPropertyWithDefault(jsonObject, 'interval', 30) / 60.0;
+        root.fileVersion = getPropertyWithDefault(jsonObject, 'fileVersion', 0.0)
         initCpuChart()
         initRamChart()
         initGpuChart()
@@ -207,11 +211,21 @@ Item {
 
     function initRamChart() {
 
-        root.ramTotal = getPropertyWithDefault(jsonObject.computer, 'ramTotal', 1)
-
         var ram = getPropertyWithDefault(jsonObject.computer.curves, 'ramUsage', -1)
 
-        var ramSerie = ramChart.createSeries(ChartView.SeriesTypeLine, "RAM: " + root.ramTotal + "GB", valueAxisX2, valueAxisRam)
+        root.ramTotal = getPropertyWithDefault(jsonObject.computer, 'ramTotal', -1)
+        root.ramLabel = "RAM: "
+        if(root.ramTotal <= 0)
+        {
+            var maxRamPeak = 0
+            for(var i = 0; i < ram.length; i++) {
+                maxRamPeak = Math.max(maxRamPeak, ram[i])
+            }
+            root.ramTotal = maxRamPeak
+            root.ramLabel = "RAM Max Peak: "
+        }
+
+        var ramSerie = ramChart.createSeries(ChartView.SeriesTypeLine, root.ramLabel + root.ramTotal + "GB", valueAxisX2, valueAxisRam)
 
         if(ram.length === 1) {
             // Create 2 entries if we have only one input value to create a segment that can be display
@@ -222,7 +236,6 @@ Item {
                 ramSerie.append(i * root.deltaTime, ram[i])
             }
         }
-
         ramSerie.color = colors[10]
     }
 
@@ -419,7 +432,7 @@ Item {
                     plotAreaColor: "transparent"
                     titleColor: textColor
 
-                    title: "RAM: " + root.ramTotal + "GB"
+                    title: root.ramLabel + root.ramTotal + "GB"
 
                     ValueAxis {
                         id: valueAxisY2
@@ -486,7 +499,8 @@ Item {
                     plotAreaColor: "transparent"
                     titleColor: textColor
 
-                    title: "GPU: " + root.gpuName + ", " + root.gpuTotalMemory + "MB"
+                    visible: (root.fileVersion >= 2.0)  // No GPU information was collected before stats 2.0 fileVersion
+                    title: (root.gpuName || root.gpuTotalMemory) ? ("GPU: " + root.gpuName + ", " + root.gpuTotalMemory + "MB") : "No GPU"
 
                     ValueAxis {
                         id: valueAxisY3

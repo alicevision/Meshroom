@@ -73,6 +73,13 @@ Item {
         readSourceFile()
     }
 
+    function getPropertyWithDefault(prop, name, defaultValue) {
+        if(prop.hasOwnProperty(name)) {
+            return prop[name];
+        }
+        return defaultValue;
+    }
+
     Timer {
         id: reloadTimer
         interval: root.deltaTime * 60000; running: true; repeat: false
@@ -92,10 +99,8 @@ Item {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {
 
                 if(sourceModified === undefined || sourceModified < xhr.getResponseHeader('Last-Modified')) {
-                    var jsonObject;
-
                     try {
-                        jsonObject = JSON.parse(xhr.responseText);
+                        root.jsonObject = JSON.parse(xhr.responseText);
                     }
                     catch(exc)
                     {
@@ -103,7 +108,6 @@ Item {
                         root.jsonObject = {};
                         return;
                     }
-                    root.jsonObject = jsonObject;
                     resetCharts();
                     sourceModified = xhr.getResponseHeader('Last-Modified')
                     root.createCharts();
@@ -122,7 +126,7 @@ Item {
     }
 
     function createCharts() {
-        root.deltaTime = jsonObject.interval / 60.0;
+        root.deltaTime = getPropertyWithDefault(jsonObject, 'interval', 30) / 60.0;
         initCpuChart()
         initRamChart()
         initGpuChart()
@@ -139,7 +143,7 @@ Item {
         var categoryCount = 0
         var category
         do {
-            category = root.jsonObject.computer.curves["cpuUsage." + categoryCount]
+            category = jsonObject.computer.curves["cpuUsage." + categoryCount]
             if(category !== undefined) {
                 categories.push(category)
                 categoryCount++
@@ -149,7 +153,7 @@ Item {
         var nbCores = categories.length
         root.nbCores = nbCores
 
-        root.cpuFrequency = jsonObject.computer.cpuFreq
+        root.cpuFrequency = getPropertyWithDefault(jsonObject.computer, 'cpuFreq', -1)
 
         root.nbReads = categories[0].length-1
 
@@ -202,37 +206,37 @@ Item {
 **************************/
 
     function initRamChart() {
-        root.ramTotal = jsonObject.computer.ramTotal
 
-        var ram = jsonObject.computer.curves.ramUsage
+        root.ramTotal = getPropertyWithDefault(jsonObject.computer, 'ramTotal', 1)
+
+        var ram = getPropertyWithDefault(jsonObject.computer.curves, 'ramUsage', -1)
 
         var ramSerie = ramChart.createSeries(ChartView.SeriesTypeLine, "RAM: " + root.ramTotal + "GB", valueAxisX2, valueAxisRam)
 
         if(ram.length === 1) {
-            ramSerie.append(0, ram[0] / 100 * root.ramTotal)
-            ramSerie.append(root.deltaTime, ram[0] / 100 * root.ramTotal)
+            // Create 2 entries if we have only one input value to create a segment that can be display
+            ramSerie.append(0, ram[0])
+            ramSerie.append(root.deltaTime, ram[0])
         } else {
             for(var i = 0; i < ram.length; i++) {
-                ramSerie.append(i * root.deltaTime, ram[i] / 100 * root.ramTotal)
+                ramSerie.append(i * root.deltaTime, ram[i])
             }
         }
 
         ramSerie.color = colors[10]
     }
 
-
-
 /**************************
 ***         GPU         ***
 **************************/
 
     function initGpuChart() {
-        root.gpuTotalMemory = jsonObject.computer.gpuMemoryTotal
-        root.gpuName = jsonObject.computer.gpuName
+        root.gpuTotalMemory = getPropertyWithDefault(jsonObject.computer, 'gpuMemoryTotal', 0)
+        root.gpuName = getPropertyWithDefault(jsonObject.computer, 'gpuName', '')
 
-        var gpuUsedMemory = jsonObject.computer.curves.gpuMemoryUsed
-        var gpuUsed = jsonObject.computer.curves.gpuUsed
-        var gpuTemperature = jsonObject.computer.curves.gpuTemperature
+        var gpuUsedMemory = getPropertyWithDefault(jsonObject.computer.curves, 'gpuMemoryUsed', 0)
+        var gpuUsed = getPropertyWithDefault(jsonObject.computer.curves, 'gpuUsed', 0)
+        var gpuTemperature = getPropertyWithDefault(jsonObject.computer.curves, 'gpuTemperature', 0)
 
         var gpuUsedSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "GPU", valueAxisX3, valueAxisY3)
         var gpuUsedMemorySerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Memory", valueAxisX3, valueAxisY3)
@@ -259,7 +263,6 @@ Item {
             }
         }
     }
-
 
 
 /**************************

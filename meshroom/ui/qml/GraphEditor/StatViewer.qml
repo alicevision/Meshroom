@@ -122,6 +122,7 @@ Item {
     }
 
     function resetCharts() {
+        root.fileVersion = 0.0
         cpuLegend.clear()
         cpuChart.removeAllSeries()
         ramChart.removeAllSeries()
@@ -378,6 +379,7 @@ Item {
                     plotAreaColor: "transparent"
                     titleColor: textColor
 
+                    visible: (root.fileVersion > 0.0)  // only visible if we have valid information
                     title: "CPU: " + root.nbCores + " cores, " + root.cpuFrequency + "Hz"
 
                     ValueAxis {
@@ -432,6 +434,7 @@ Item {
                     plotAreaColor: "transparent"
                     titleColor: textColor
 
+                    visible: (root.fileVersion > 0.0)  // only visible if we have valid information
                     title: root.ramLabel + root.ramTotal + "GB"
 
                     ValueAxis {

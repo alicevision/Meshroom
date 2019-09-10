@@ -36,6 +36,8 @@ class ComputerStatistics:
         self.ramAvailable = 0  # GB
         self.vramAvailable = 0  # GB
         self.swapAvailable = 0
+        self.gpuMemoryTotal = 0
+        self.gpuName = ''
 
         if platform.system() == "Windows":
             # If the platform is Windows and nvidia-smi
@@ -51,16 +53,22 @@ class ComputerStatistics:
             p = Popen([self.nvidia_smi, "-q", "-x"], stdout=PIPE)
             xmlGpu, stdError = p.communicate()
 
-            gpuTree = ET.fromstring(xmlGpu)
+            smiTree = ET.fromstring(xmlGpu)
+            gpuTree = smiTree.find('gpu')
 
-            gpuMemoryUsage = gpuTree[4].find('fb_memory_usage')
+            try:
+                self.gpuMemoryTotal = gpuTree.find('fb_memory_usage').find('total').text.split(" ")[0]
+            except Exception as e:
+                logging.debug('Failed to get gpuMemoryTotal: "{}".'.format(str(e)))
+                pass
+            try:
+                self.gpuName = gpuTree.find('product_name').text
+            except Exception as e:
+                logging.debug('Failed to get gpuName: "{}".'.format(str(e)))
+                pass
 
-            self.gpuMemoryTotal = gpuMemoryUsage[0].text.split(" ")[0]
-            self.gpuName = gpuTree[4].find('product_name').text
-
-
-        except:
-            pass
+        except Exception as e:
+            logging.debug('Failed to get information from nvidia_smi at init: "{}".'.format(str(e)))
 
         self.curves = defaultdict(list)
 
@@ -87,13 +95,27 @@ class ComputerStatistics:
             p = Popen([self.nvidia_smi, "-q", "-x"], stdout=PIPE)
             xmlGpu, stdError = p.communicate()
 
-            gpuTree = ET.fromstring(xmlGpu)
+            smiTree = ET.fromstring(xmlGpu)
+            gpuTree = smiTree.find('gpu')
 
-            self._addKV('gpuMemoryUsed', gpuTree[4].find('fb_memory_usage')[1].text.split(" ")[0])
-            self._addKV('gpuUsed', gpuTree[4].find('utilization')[0].text.split(" ")[0])
-            self._addKV('gpuTemperature', gpuTree[4].find('temperature')[0].text.split(" ")[0])
+            try:
+                self._addKV('gpuMemoryUsed', gpuTree.find('fb_memory_usage').find('used').text.split(" ")[0])
+            except Exception as e:
+                logging.debug('Failed to get gpuMemoryUsed: "{}".'.format(str(e)))
+                pass
+            try:
+                self._addKV('gpuUsed', gpuTree.find('utilization').find('gpu_util').text.split(" ")[0])
+            except Exception as e:
+                logging.debug('Failed to get gpuUsed: "{}".'.format(str(e)))
+                pass
+            try:
+                self._addKV('gpuTemperature', gpuTree.find('temperature').find('gpu_temp').text.split(" ")[0])
+            except Exception as e:
+                logging.debug('Failed to get gpuTemperature: "{}".'.format(str(e)))
+                pass
 
-        except:
+        except Exception as e:
+            logging.debug('Failed to get information from nvidia_smi: "{}".'.format(str(e)))
             return
 
     def toDict(self):

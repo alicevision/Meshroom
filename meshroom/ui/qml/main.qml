@@ -603,6 +603,10 @@ ApplicationWindow {
                         {
                             _reconstruction.cameraInit = node;
                         }
+                        else if(node.nodeType === "PrepareDenseScene")
+                        {
+                            _reconstruction.prepareDenseScene = node;
+                        }
                         for(var i=0; i < node.attributes.count; ++i)
                         {
                             var attr = node.attributes.at(i)

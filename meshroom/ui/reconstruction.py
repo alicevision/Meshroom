@@ -182,6 +182,9 @@ class Reconstruction(UIGraph):
         self._selectedViewId = None
         self._liveSfmManager = LiveSfmManager(self)
 
+        # - Prepare Dense Scene (undistorted images)
+        self._prepareDenseScene = None
+
         # - Texturing
         self._texturing = None
 
@@ -226,6 +229,7 @@ class Reconstruction(UIGraph):
         self._liveSfmManager.reset()
         self.featureExtraction = None
         self.sfm = None
+        self.prepareDenseScene = None
         self.texturing = None
         self.updateCameraInits()
         if not self._graph:
@@ -514,6 +518,7 @@ class Reconstruction(UIGraph):
         self._setSfm(node)
 
         self.texturing = self.lastNodeOfType("Texturing", self._sfm, Status.SUCCESS)
+        self.prepareDenseScene = self.lastNodeOfType("PrepareDenseScene", self._sfm, Status.SUCCESS)
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):
@@ -560,7 +565,17 @@ class Reconstruction(UIGraph):
         if viewId == self._selectedViewId:
             return
         self._selectedViewId = viewId
+        vp = None
+        if self.viewpoints:
+            vp = next((v for v in self.viewpoints if str(v.viewId.value) == self._selectedViewId), None)
+        self.setSelectedViewpoint(vp)
         self.selectedViewIdChanged.emit()
+
+    def setSelectedViewpoint(self, viewpointAttribute):
+        if self._selectedViewpoint:
+            # Reconstruction has ownership of Viewpoint object - destroy it when not needed anymore
+            self._selectedViewpoint.deleteLater()
+        self._selectedViewpoint = ViewpointWrapper(viewpointAttribute, self) if viewpointAttribute else None
 
     def reconstructedCamerasCount(self):
         """ Get the number of reconstructed cameras in the current context. """
@@ -590,6 +605,8 @@ class Reconstruction(UIGraph):
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(Node, Node)
+    prepareDenseSceneChanged = Signal()
+    prepareDenseScene = makeProperty(QObject, "_prepareDenseScene", notify=prepareDenseSceneChanged, resetOnDestroy=True)
     texturingChanged = Signal()
     texturing = makeProperty(QObject, "_texturing", notify=texturingChanged)
 

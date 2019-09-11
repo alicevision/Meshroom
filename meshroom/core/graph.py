@@ -908,6 +908,29 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=[startNode], reverse=True)
         return nodes
 
+    @Slot(Node, result=int)
+    def canSubmitOrCompute(self, startNode):
+        print("canSubmitOrCompute: " + startNode.getName())
+
+        if startNode.isAlreadySubmittedOrFinished():
+            return 0
+
+        class SCVisitor(Visitor):
+            canCompute = True
+            canSubmit = True
+
+            def discoverVertex(self, vertex, graph):
+                if vertex.isAlreadySubmitted():
+                    print("vertex.isAlreadySubmitted: " + vertex.getName())
+                    self.canSubmit = False
+                    if vertex.isExtern():
+                        self.canCompute = False
+        visitor = SCVisitor()
+        self.dfs(visitor=visitor, startNodes=[startNode])
+        print(visitor.canCompute + (2 * visitor.canSubmit))
+        return visitor.canCompute + (2 * visitor.canSubmit)
+
+
     def _applyExpr(self):
         with GraphModification(self):
             for node in self._nodes:

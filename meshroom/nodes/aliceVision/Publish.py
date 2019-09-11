@@ -41,9 +41,8 @@ class Publish(desc.Node):
         return paths
 
     def processChunk(self, chunk):
-        print("Publish")
         if not chunk.node.inputFiles:
-            print("Nothing to publish")
+            chunk.log.add('Nothing to publish', 'warning')
             return
         if not chunk.node.output.value:
             return
@@ -51,13 +50,15 @@ class Publish(desc.Node):
         outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
         if not outFiles:
-            raise RuntimeError("Publish: input files listed, but nothing to publish. "
-                               "Listed input files: {}".format(chunk.node.inputFiles.value))
+            error = 'Publish: input files listed, but nothing to publish'
+            chunk.log.add(error, 'error')
+            chunk.log.add('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+            raise RuntimeError(error)
 
         if not os.path.exists(chunk.node.output.value):
             os.mkdir(chunk.node.output.value)
 
         for iFile, oFile in outFiles.items():
-            print('Publish file', iFile, 'into', oFile)
+            chunk.log.add('Publish file {} into {}'.format(iFile, oFile))
             shutil.copyfile(iFile, oFile)
-        print('Publish end')
+        chunk.log.add('Publish end')

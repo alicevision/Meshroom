@@ -666,6 +666,18 @@ class Reconstruction(UIGraph):
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
     liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
 
+    @Slot(QObject)
+    def setActiveNodeOfType(self, node):
+        """ Set node as the active node of its type. """
+        if node.nodeType == "StructureFromMotion":
+            self.sfm = node
+        elif node.nodeType == "FeatureExtraction":
+            self.featureExtraction = node
+        elif node.nodeType == "CameraInit":
+            self.cameraInit = node
+        elif node.nodeType == "PrepareDenseScene":
+            self.prepareDenseScene = node
+
     def updateSfMResults(self):
         """
         Update internal views, poses and solved intrinsics based on the current SfM node.

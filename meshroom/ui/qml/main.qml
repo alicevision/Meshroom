@@ -581,7 +581,6 @@ ApplicationWindow {
                         anchors.fill: parent
                         uigraph: _reconstruction
                         nodeTypesModel: _nodeTypes
-                        readOnly: graphLocked
 
                         onNodeDoubleClicked: {
                             if(node.nodeType === "StructureFromMotion")

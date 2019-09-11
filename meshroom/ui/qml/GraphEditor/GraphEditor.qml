@@ -14,7 +14,6 @@ Item {
     property variant uigraph: null  /// Meshroom ui graph (UIGraph)
     readonly property variant graph: uigraph ? uigraph.graph : null  /// core graph contained in ui graph
     property variant nodeTypesModel: null  /// the list of node types that can be instantiated
-    property bool readOnly: false
 
     property var _attributeToDelegate: ({})
 
@@ -270,7 +269,7 @@ Item {
 
                         if(canEdit && event.button == Qt.RightButton)
                         {
-                            if(!root.readOnly && event.modifiers & Qt.AltModifier) {
+                            if(event.modifiers & Qt.AltModifier) {
                                 uigraph.removeEdge(edge)
                             }
                             else {
@@ -493,8 +492,6 @@ Item {
                     onExited: uigraph.hoveredNode = null
 
                     Keys.onDeletePressed: {
-                        if(root.readOnly)
-                            return;
                         if(event.modifiers == Qt.AltModifier)
                             uigraph.removeNodesFrom(node)
                         else

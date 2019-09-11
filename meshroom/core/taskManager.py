@@ -122,8 +122,6 @@ class TaskManager(BaseObject):
                 if not node.isAlreadySubmittedOrFinished():
                     nodes.append(node)
 
-        logging.info('Nodes to execute: ', str([n.name for n in nodes]))
-
         for node in nodes:
             node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
             node.beginSequence(forceCompute)

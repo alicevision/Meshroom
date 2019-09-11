@@ -87,9 +87,11 @@ RowLayout {
                     drag.accepted = false
                 }
                 inputDropArea.acceptableDrop = drag.accepted
+                drag.source.dropAccepted = drag.accepted
             }
             onExited: {
                 acceptableDrop = false
+                drag.source.dropAccepted = false
             }
 
             onDropped: {
@@ -105,21 +107,15 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: attribute.isOutput
             readonly property alias isList: root.isList
-            anchors.centerIn: root.state == "DraggingInput" ? undefined : parent
+            property bool dragAccepted: false
+            anchors.verticalCenter: parent
+            anchors.horizontalCenter: parent
             width: 4
             height: 4
             Drag.keys: [inputDragTarget.objectName]
             Drag.active: inputConnectMA.drag.active
             Drag.hotSpot.x: width*0.5
             Drag.hotSpot.y: height*0.5
-            anchors.onCenterInChanged: {
-                // snap inputDragTarget to current mouse position in inputConnectMA
-                if(anchors.centerIn == undefined) {
-                    var pos = mapFromItem(inputConnectMA, inputConnectMA.mouseX, inputConnectMA.mouseY)
-                    x = pos.x
-                    y = pos.y
-                }
-            }
         }
 
         MouseArea {
@@ -216,8 +212,12 @@ RowLayout {
                     drag.accepted = false
                 }
                 outputDropArea.acceptableDrop = drag.accepted
+                drag.source.dropAccepted = drag.accepted
             }
-            onExited: acceptableDrop = false
+            onExited: {
+                acceptableDrop = false
+                drag.source.dropAccepted = false
+            }
 
             onDropped: {
                 _reconstruction.addEdge(outputDragTarget.attribute, drag.source.attribute)
@@ -232,20 +232,15 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: attribute.isOutput
             readonly property alias isList: root.isList
-            anchors.centerIn: root.state == "DraggingOutput" ? undefined : parent
+            property bool dropAccepted: false
+            anchors.horizontalCenter: parent
+            anchors.verticalCenter: parent
             width: 4
             height: 4
             Drag.keys: [outputDragTarget.objectName]
             Drag.active: outputConnectMA.drag.active
             Drag.hotSpot.x: width*0.5
             Drag.hotSpot.y: height*0.5
-            anchors.onCenterInChanged: {
-                if(anchors.centerIn == undefined) {
-                    var pos = mapFromItem(outputConnectMA, outputConnectMA.mouseX, outputConnectMA.mouseY)
-                    x = pos.x
-                    y = pos.y
-                }
-            }
         }
 
         MouseArea {
@@ -283,22 +278,66 @@ RowLayout {
     states: [
         State {
             name: ""
+            AnchorChanges {
+                target: outputDragTarget
+                anchors.horizontalCenter: outputAnchor
+                anchors.verticalCenter: outputAnchor
+            }
+            AnchorChanges {
+                target: inputDragTarget
+                anchors.horizontalCenter: intputAnchor
+                anchors.verticalCenter: intputAnchor
+            }
+            PropertyChanges {
+                target: inputDragTarget
+                x: 0
+                y: 0
+            }
+            PropertyChanges {
+                target: outputDragTarget
+                x: 0
+                y: 0
+            }
         },
 
         State {
             name: "DraggingInput"
+            AnchorChanges {
+                target: inputDragTarget
+                anchors.horizontalCenter: undefined
+                anchors.verticalCenter: undefined
+            }
             PropertyChanges {
                 target: inputConnectEdge
                 z: 100
                 visible: true
             }
+            StateChangeScript {
+                script: {
+                    var pos = inputDragTarget.mapFromItem(inputConnectMA, inputConnectMA.mouseX, inputConnectMA.mouseY);
+                    inputDragTarget.x = pos.x - inputDragTarget.width/2;
+                    inputDragTarget.y = pos.y - inputDragTarget.height/2;
+                }
+            }
         },
         State {
             name: "DraggingOutput"
+            AnchorChanges {
+                target: outputDragTarget
+                anchors.horizontalCenter: undefined
+                anchors.verticalCenter: undefined
+            }
             PropertyChanges {
                 target: outputConnectEdge
                 z: 100
                 visible: true
+            }
+            StateChangeScript {
+                script: {
+                    var pos = outputDragTarget.mapFromItem(outputConnectMA, outputConnectMA.mouseX, outputConnectMA.mouseY);
+                    outputDragTarget.x = pos.x - outputDragTarget.width/2;
+                    outputDragTarget.y = pos.y - outputDragTarget.height/2;
+                }
             }
         }
     ]

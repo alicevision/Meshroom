@@ -127,6 +127,81 @@ class StatusData:
         self.sessionUid = d.get('sessionUid', '')
 
 
+class LogManager:
+    supportedLevels = ['info', 'warning', 'error']
+    dateTimeFormatting = '%H:%M:%S.%f'
+
+    def __init__(self, chunk):
+        self.chunk = chunk
+        self.chunk.statusChanged.connect(self.clear)
+        self.progressBar = False
+        self.cleared = False
+
+    def clear(self):
+        if self.chunk.statusName == 'RUNNING' and not self.cleared:
+            open(self.chunk.logFile, 'w').close()
+            self.cleared = True
+        # When the node gets ran again after error the log needs to be cleared
+        if self.chunk.statusName == 'ERROR':
+            self.cleared = False
+            self.progressBar = False
+
+    def waitUntilCleared(self):
+        while not self.cleared:
+            time.sleep(0.01)
+
+    def add(self, message, level='info'):
+        assert not self.progressBar
+        self.waitUntilCleared()
+        
+        if level not in self.supportedLevels:
+            self.add('Level "{}" is not supported'.format(level), 'warning')
+        else:
+            with open(self.chunk.logFile, 'a') as f:
+                f.write('[{}][{}] {}\n'.format(datetime.datetime.now().strftime(self.dateTimeFormatting), level, message))
+                f.close()
+
+    def makeProgressBar(self, end, message=''):
+        assert end > 0
+        assert not self.progressBar
+        self.waitUntilCleared()
+
+        self.progressEnd = end
+        self.currentProgressTics = 0
+        
+        with open(self.chunk.logFile, 'a') as f:
+            if message:
+                f.write(message+'\n')
+            f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
+            f.write('|----|----|----|----|----|----|----|----|----|----|\n')
+            f.close()
+
+        self.progressBar = True
+
+    def updateProgressBar(self, value):
+        assert self.progressBar
+        assert value <= self.progressEnd
+        self.waitUntilCleared()
+
+        tics = round((value/self.progressEnd)*51)
+
+        with open(self.chunk.logFile, 'a') as f:
+            for i in range(tics-self.currentProgressTics):
+                f.write('*')
+            f.close()
+
+        self.currentProgressTics = tics
+
+    def completeProgressBar(self):
+        assert self.progressBar
+
+        with open(self.chunk.logFile, 'a') as f:
+            f.write('\n')
+            f.close()
+
+        self.progressBar = False
+
+
 runningProcesses = {}
 
 
@@ -142,6 +217,7 @@ class NodeChunk(BaseObject):
         super(NodeChunk, self).__init__(parent)
         self.node = node
         self.range = range
+        self.log = LogManager(self)
         self.status = StatusData(node.name, node.nodeType, node.packageName, node.packageVersion)
         self.statistics = stats.Statistics()
         self.statusFileLastModTime = -1

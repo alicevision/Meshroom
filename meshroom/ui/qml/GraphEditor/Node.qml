@@ -10,9 +10,9 @@ Item {
     property variant node
     property bool readOnly: false
     property color baseColor: defaultColor
-    property color shadowColor: "black"
+    property color shadowColor: "#cc000000"
     readonly property bool isCompatibilityNode: node.hasOwnProperty("compatibilityIssue")
-    readonly property color defaultColor: isCompatibilityNode ? "#444" : "#607D8B"
+    readonly property color defaultColor: isCompatibilityNode ? "#444" : "#34495e" // "#607D8B"
     property bool selected: false
     property bool hovered: false
 
@@ -44,14 +44,6 @@ Item {
     Column {
         width: parent.width
 
-        Label {
-            width: parent.width
-            padding: 4
-            text: node.label
-            color: Colors.sysPalette.text
-            font.pointSize: 7
-        }
-
         MouseArea {
             width: parent.width
             height: body.height
@@ -77,134 +69,161 @@ Item {
                 border.width: 2.5
                 border.color: root.selected ? activePalette.highlight : Qt.darker(activePalette.highlight, 1.5)
                 opacity: 0.9
-                radius: 2
+                radius: background.radius
                 color: "transparent"
             }
 
             Rectangle {
                 id: background
                 anchors.fill: parent
+
                 color: activePalette.base
                 layer.enabled: true
-                layer.effect: DropShadow { radius: 2; color: shadowColor }
+                layer.effect: DropShadow { radius: 3; color: shadowColor }
+                radius: 3
             }
 
             Column {
                 id: body
                 width: parent.width
 
-                Item {
+                Rectangle {
                     id: stateView
                     width: parent.width
-                    height: 15
+                    height: 20
+                    color: root.baseColor
+                    radius: background.radius
+
+                    Rectangle {
+                        width: parent.width
+                        height: parent.radius
+                        y: -parent.radius
+                        anchors.bottom: parent.bottom
+                        color: parent.color
+                    }
 
                     RowLayout {
+                        width: parent.width
                         spacing: 0
 
-                        MaterialLabel {
-                            id: ghostIcon
-                            visible: node.chunks.count > 0 && node.globalStatus !== "NONE" && node.chunks.at(0).statusNodeName !== node.name
-                            padding: 2
-                            text: MaterialIcons.layers //MaterialIcons.all_inclusive
-                            font.pointSize: 8
-                            color: Colors.sysPalette.text
+                        Label {
+                            width: parent.width
+                            padding: 4
+                            text: node.label
+                            color: "#fff" //Colors.sysPalette.text
+                            font.pointSize: 7
+                        }
 
-                            MouseArea {
-                                height: parent.height
-                                width: parent.width
-                                hoverEnabled: true
+                        RowLayout {
+                            anchors.right: parent.right
+                            width: 50
+                            spacing: 0
 
-                                property bool showTooltip: false
+                            MaterialLabel {
+                                id: ghostIcon
+                                visible: node.chunks.count > 0 && node.globalStatus !== "NONE" && node.chunks.at(0).statusNodeName !== node.name
+                                padding: 2
+                                text: MaterialIcons.layers //MaterialIcons.all_inclusive
+                                font.pointSize: 8
+                                color: Colors.sysPalette.text
+
+                                MouseArea {
+                                    height: parent.height
+                                    width: parent.width
+                                    hoverEnabled: true
+
+                                    property bool showTooltip: false
 
 
-                                onEntered: {
-                                    ghostIcon.color = Colors.cyan
-                                    showTooltip = true
-                                }
-
-                                onExited: {
-                                    ghostIcon.color = Colors.sysPalette.text
-                                    showTooltip = false
-                                }
-
-                                ToolTip {
-                                    delay: 800
-                                    visible: parent.showTooltip
-                                    text: node.chunks.count > 0 ? "This node has the same values as <b>" + node.chunks.at(0).statusNodeName + "</b>" : "This node is a duplicate"
-
-                                    onVisibleChanged: {
-                                        text = node.chunks.count > 0 ? "This node has the same values as <b>" + node.chunks.at(0).statusNodeName + "</b>" : "This node is a duplicate"
+                                    onEntered: {
+                                        ghostIcon.color = Colors.cyan
+                                        showTooltip = true
                                     }
-                                }
 
+                                    onExited: {
+                                        ghostIcon.color = Colors.sysPalette.text
+                                        showTooltip = false
+                                    }
+
+                                    ToolTip {
+                                        delay: 800
+                                        visible: parent.showTooltip
+                                        text: node.chunks.count > 0 ? "This node has the same values as <b>" + node.chunks.at(0).statusNodeName + "</b>" : "This node is a duplicate"
+
+                                        onVisibleChanged: {
+                                            text = node.chunks.count > 0 ? "This node has the same values as <b>" + node.chunks.at(0).statusNodeName + "</b>" : "This node is a duplicate"
+                                        }
+                                    }
+
+                                }
                             }
-                        }
 
-                        MaterialLabel {
-                            id: cloudIcon
-                            visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.chunks.at(0).execModeName === "EXTERN"
-                            padding: 2
-                            text: MaterialIcons.cloud
-                            font.pointSize: 8
+                            MaterialLabel {
+                                id: cloudIcon
+                                visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.chunks.at(0).execModeName === "EXTERN"
+                                padding: 2
+                                text: MaterialIcons.cloud
+                                font.pointSize: 8
 
-                            MouseArea {
-                                height: parent.height
-                                width: parent.width
-                                hoverEnabled: true
+                                MouseArea {
+                                    height: parent.height
+                                    width: parent.width
+                                    hoverEnabled: true
 
-                                property bool showTooltip: false
+                                    property bool showTooltip: false
 
 
-                                onEntered: {
-                                    cloudIcon.color = Colors.cyan
-                                    showTooltip = true
+                                    onEntered: {
+                                        cloudIcon.color = Colors.cyan
+                                        showTooltip = true
+                                    }
+
+                                    onExited: {
+                                        cloudIcon.color = Colors.sysPalette.text
+                                        showTooltip = false
+                                    }
+
+                                    ToolTip {
+                                        delay: 800
+                                        visible: parent.showTooltip
+                                        text: "This nodes is being computed externally"
+                                    }
+
                                 }
-
-                                onExited: {
-                                    cloudIcon.color = Colors.sysPalette.text
-                                    showTooltip = false
-                                }
-
-                                ToolTip {
-                                    delay: 800
-                                    visible: parent.showTooltip
-                                    text: "This nodes is being computed externally"
-                                }
-
                             }
-                        }
 
-                        MaterialLabel {
-                            id: lockIcon
-                            visible: root.readOnly
-                            padding: 2
-                            text: MaterialIcons.lock
-                            font.pointSize: 8
+                            MaterialLabel {
+                                id: lockIcon
+                                visible: root.readOnly
+                                padding: 2
+                                text: MaterialIcons.lock
+                                font.pointSize: 8
 
-                            MouseArea {
-                                height: parent.height
-                                width: parent.width
-                                hoverEnabled: true
+                                MouseArea {
+                                    height: parent.height
+                                    width: parent.width
+                                    hoverEnabled: true
 
-                                property bool showTooltip: false
+                                    property bool showTooltip: false
 
 
-                                onEntered: {
-                                    lockIcon.color = Colors.red
-                                    showTooltip = true
+                                    onEntered: {
+                                        lockIcon.color = Colors.red
+                                        showTooltip = true
+                                    }
+
+                                    onExited: {
+                                        lockIcon.color = Colors.sysPalette.text
+                                        showTooltip = false
+                                    }
+
+                                    ToolTip {
+                                        delay: 800
+                                        visible: parent.showTooltip
+                                        text: "<b>Locked</b><br/>This node cannot be edited at the moment"
+                                    }
+
                                 }
-
-                                onExited: {
-                                    lockIcon.color = Colors.sysPalette.text
-                                    showTooltip = false
-                                }
-
-                                ToolTip {
-                                    delay: 800
-                                    visible: parent.showTooltip
-                                    text: "<b>Locked</b><br/>This node cannot be edited at the moment"
-                                }
-
                             }
                         }
                     }
@@ -262,7 +281,7 @@ Item {
                     Column {
                         width: parent.width
                         spacing: 1
-                        bottomPadding: 1
+                        bottomPadding: 2
 
                         Column {
                             id: outputs

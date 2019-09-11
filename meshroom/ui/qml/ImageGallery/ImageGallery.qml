@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import QtQml.Models 2.2
 
+import Controls 1.0
 import Utils 1.0
 
 /**
@@ -29,6 +30,42 @@ Panel {
     title: "Images"
     implicitWidth: (root.defaultCellSize + 2) * 2
 
+    headerBar: RowLayout {
+        MaterialToolButton {
+            text: MaterialIcons.more_vert
+            font.pointSize: 11
+            padding: 2
+            onClicked: graphEditorMenu.open()
+            Menu {
+                id: graphEditorMenu
+                y: parent.height
+                x: -width + parent.width
+                MenuItem {
+                    text: "Edit Sensor Database..."
+                    onTriggered: {
+                        sensorDBDialog.open()
+                    }
+                }
+
+                Menu {
+                    title: "Advanced"
+                    Action {
+                        id: displayViewIdsAction
+                        text: "Display View IDs"
+                        checkable: true
+                    }
+                }
+            }
+        }
+    }
+
+    SensorDBDialog {
+        id: sensorDBDialog
+        sensorDatabase: Filepath.stringToUrl(cameraInit.attribute("sensorDatabase").value)
+        readOnly: _reconstruction.computing
+        onUpdateIntrinsicsRequest: _reconstruction.rebuildIntrinsics(cameraInit)
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 4
@@ -39,7 +76,7 @@ Panel {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            ScrollBar.vertical: ScrollBar {}
+            ScrollBar.vertical: ScrollBar { minimumSize: 0.05 }
 
             focus: true
             clip: true
@@ -71,7 +108,7 @@ Panel {
 
                 // override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName) {
-                    var value = item.model.object.value.get(roleName).value
+                    var value = item.model.object.childAttribute(roleName).value
                     if(roleName == sortRole)
                         return Filepath.basename(value)
                     else
@@ -79,11 +116,13 @@ Panel {
                 }
 
                 delegate: ImageDelegate {
+                    id: imageDelegate
 
                     viewpoint: object.value
                     width: grid.cellWidth
                     height: grid.cellHeight
                     readOnly: root.readOnly
+                    displayViewId: displayViewIdsAction.checked
 
                     isCurrentItem: GridView.isCurrentItem
 
@@ -107,46 +146,47 @@ Panel {
                     onRemoveRequest: sendRemoveRequest()
                     Keys.onDeletePressed: sendRemoveRequest()
 
-                    Row {
+                    RowLayout {
                         anchors.top: parent.top
+                        anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.margins: 4
+                        anchors.margins: 2
                         spacing: 2
 
                         property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
-                        property bool noMetadata: valid && !_reconstruction.hasMetadata(model.object)
-                        property bool noIntrinsic: valid  && !_reconstruction.hasValidIntrinsic(model.object)
                         property bool inViews: valid && _reconstruction.sfmReport && _reconstruction.isInViews(object)
 
-                        // Missing metadata indicator
+                        // Camera Initialization indicator
+                        IntrinsicsIndicator {
+                            intrinsic: parent.valid ? _reconstruction.getIntrinsic(object) : null
+                            metadata: imageDelegate.metadata
+                        }
+
+                        // Rig indicator
                         Loader {
-                            active: parent.noMetadata
-                            visible: active
-                            sourceComponent: MaterialLabel {
-                                text: MaterialIcons.info_outline
-                                color: "#FF9800"
-                                ToolTip.text: "No Metadata"
+                            id: rigIndicator
+                            property int rigId: parent.valid ? object.childAttribute("rigId").value : -1
+                            active: rigId >= 0
+                            sourceComponent: ImageBadge {
+                                property int rigSubPoseId: model.object.childAttribute("subPoseId").value
+                                text: MaterialIcons.link
+                                ToolTip.text: "<b>Rig: Initialized</b><br>" +
+                                              "Rig ID: " + rigIndicator.rigId + " <br>" +
+                                              "SubPose: " + rigSubPoseId
                             }
                         }
-                        // Unknown camera instrinsics indicator
-                        Loader {
-                            active: parent.noIntrinsic
-                            visible: active
-                            sourceComponent: MaterialLabel {
-                                text: MaterialIcons.camera
-                                color: "#FF9800"
-                                ToolTip.text: "No Camera Instrinsic Parameters (missing Metadata?)"
-                            }
-                        }
+
+                        Item { Layout.fillWidth: true }
+
                         // Reconstruction status indicator
                         Loader {
                             active: parent.inViews
                             visible: active
-                            sourceComponent: MaterialLabel {
-                                property bool reconstructed: _reconstruction.isReconstructed(model.object)
-                                text: reconstructed ? MaterialIcons.check_circle : MaterialIcons.remove_circle
-                                color: reconstructed ? "#4CAF50" : "#F44336"
-                                ToolTip.text: reconstructed ? "Reconstructed" : "Not Reconstructed"
+                            sourceComponent: ImageBadge {
+                                property bool reconstructed: _reconstruction.sfmReport && _reconstruction.isReconstructed(model.object)
+                                text: reconstructed ? MaterialIcons.videocam : MaterialIcons.videocam_off
+                                color: reconstructed ? Colors.green : Colors.red
+                                ToolTip.text: "<b>Camera: " + (reconstructed ? "" : "Not ") + "Reconstructed</b>"
                             }
                         }
                     }
@@ -279,20 +319,27 @@ Panel {
     }
 
     footerContent: RowLayout {
-        anchors.fill: parent
 
         // Image count
-        Label {
+        RowLayout {
             Layout.fillWidth: true
-            text: grid.model.count + " image" + (grid.model.count > 1 ? "s" : "") + (_reconstruction.nbCameras > 0 ? " / " + _reconstruction.nbCameras + " camera" + (_reconstruction.nbCameras > 1 ? "s": "") : "")
-            elide: Text.ElideRight
+            spacing: 8
+            RowLayout {
+                MaterialLabel { text: MaterialIcons.image }
+                Label { text: grid.model.count }
+            }
+            RowLayout {
+                visible: _reconstruction.cameraInit && _reconstruction.nbCameras
+                MaterialLabel { text: MaterialIcons.videocam }
+                Label { text: _reconstruction.cameraInit ? _reconstruction.nbCameras : 0 }
+            }
         }
 
+        Item { Layout.fillHeight: true; Layout.fillWidth: true }
+
         // Thumbnail size icon and slider
-        Label {
+        MaterialLabel {
             text: MaterialIcons.photo_size_select_large
-            font.family: MaterialIcons.fontFamily
-            font.pixelSize: 13
         }
         Slider {
             id: thumbnailSizeSlider
@@ -300,7 +347,6 @@ Panel {
             value: defaultCellSize
             to: 250
             implicitWidth: 70
-            height: parent.height
         }
     }
 

@@ -41,7 +41,7 @@ class PlatformExecutable(Executable):
 build_exe_options = {
     # include dynamically loaded plugins
     "packages": ["meshroom.nodes", "meshroom.submitters"],
-    "include_files": ['COPYING.md']
+    "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md"]
 }
 
 if platform.system() == PlatformExecutable.Linux:
@@ -113,6 +113,11 @@ meshroomPhotog = PlatformExecutable(
     "bin/meshroom_photogrammetry"
 )
 
+meshroomCompute = PlatformExecutable(
+    "bin/meshroom_compute"
+)
+
+
 setup(
     name="Meshroom",
     description="Meshroom",
@@ -127,5 +132,5 @@ setup(
     ],
     version=meshroom.__version__,
     options={"build_exe": build_exe_options},
-    executables=[meshroomExe, meshroomPhotog],
+    executables=[meshroomExe, meshroomPhotog, meshroomCompute],
 )

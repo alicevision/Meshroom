@@ -72,3 +72,9 @@ class FilepathHelper(QObject):
     def stringToUrl(self, path):
         """ Convert a path (string) to a QUrl using 'QUrl.fromLocalFile' method """
         return QUrl.fromLocalFile(path)
+
+    @Slot(str, result=str)
+    @Slot(QUrl, result=str)
+    def normpath(self, path):
+        """ Returns native normalized path """
+        return os.path.normpath(self.asStr(path))

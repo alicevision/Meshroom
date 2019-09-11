@@ -1,31 +1,37 @@
 # Multiview pipeline version
-__version__ = "1.0"
+__version__ = "2.2"
 
 import os
-import fnmatch
-import re
 
 from meshroom.core.graph import Graph, GraphModification
 
-
-def findFiles(folder, patterns):
-    rules = [re.compile(fnmatch.translate(pattern), re.IGNORECASE) for pattern in patterns]
-    outFiles = []
-    for name in os.listdir(folder):
-        for rule in rules:
-            if rule.match(name):
-                filepath = os.path.join(folder, name)
-                outFiles.append(filepath)
-                break
-    return outFiles
+# Supported image extensions
+imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr', '.rw2', '.cr2', '.nef', '.arw')
 
 
-def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), output=''):
+def isImageFile(filepath):
+    """ Return whether filepath is a path to an image file supported by Meshroom. """
+    return os.path.splitext(filepath)[1].lower() in imageExtensions
+
+
+def findImageFiles(folder):
+    """
+    Return all files that are images in 'folder' based on their extensions.
+
+    Args:
+        folder (str): the folder to look into
+
+    Returns:
+        list: the list of image files.
+    """
+    return [os.path.join(folder, filename) for filename in os.listdir(folder) if isImageFile(filename)]
+
+
+def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output=''):
     """
     Create a new Graph with a complete photogrammetry pipeline.
 
     Args:
-        inputFolder (str, optional): folder containing image files
         inputImages (list of str, optional): list of image file paths
         inputViewpoints (list of Viewpoint, optional): list of Viewpoints
         output (str, optional): the path to export reconstructed model to
@@ -37,13 +43,9 @@ def photogrammetry(inputFolder='', inputImages=(), inputViewpoints=(), output=''
     with GraphModification(graph):
         sfmNodes, mvsNodes = photogrammetryPipeline(graph)
         cameraInit = sfmNodes[0]
-        if inputFolder:
-            images = findFiles(inputFolder, ['*.jpg', '*.png'])
-            cameraInit.viewpoints.extend([{'path': image} for image in images])
-        if inputImages:
-            cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
-        if inputViewpoints:
-            cameraInit.viewpoints.extend(inputViewpoints)
+        cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        cameraInit.viewpoints.extend(inputViewpoints)
+        cameraInit.intrinsics.extend(inputIntrinsics)
 
     if output:
         texturing = mvsNodes[-1]
@@ -121,27 +123,25 @@ def mvsPipeline(graph, sfm=None):
 
     prepareDenseScene = graph.addNewNode('PrepareDenseScene',
                                          input=sfm.output if sfm else "")
-    cameraConnection = graph.addNewNode('CameraConnection',
-                                        ini=prepareDenseScene.ini)
     depthMap = graph.addNewNode('DepthMap',
-                                ini=cameraConnection.ini)
+                                input=prepareDenseScene.input,
+                                imagesFolder=prepareDenseScene.output)
     depthMapFilter = graph.addNewNode('DepthMapFilter',
-                                      depthMapFolder=depthMap.output,
-                                      ini=depthMap.ini)
+                                      input=depthMap.input,
+                                      depthMapsFolder=depthMap.output)
     meshing = graph.addNewNode('Meshing',
-                               depthMapFolder=depthMapFilter.depthMapFolder,
-                               depthMapFilterFolder=depthMapFilter.output,
-                               ini=depthMapFilter.ini)
+                               input=depthMapFilter.input,
+                               depthMapsFolder=depthMapFilter.depthMapsFolder,
+                               depthMapsFilterFolder=depthMapFilter.output)
     meshFiltering = graph.addNewNode('MeshFiltering',
-                               input=meshing.output)
+                                     inputMesh=meshing.outputMesh)
     texturing = graph.addNewNode('Texturing',
-                                 ini=meshing.ini,
-                                 inputDenseReconstruction=meshing.outputDenseReconstruction,
-                                 inputMesh=meshFiltering.output)
+                                 input=meshing.output,
+                                 imagesFolder=depthMap.imagesFolder,
+                                 inputMesh=meshFiltering.outputMesh)
 
     return [
         prepareDenseScene,
-        cameraConnection,
         depthMap,
         depthMapFilter,
         meshing,

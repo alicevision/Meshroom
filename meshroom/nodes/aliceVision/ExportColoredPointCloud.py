@@ -2,8 +2,9 @@ __version__ = "1.0"
 
 from meshroom.core import desc
 
-class ExportUndistortedImages(desc.CommandLineNode):
-    commandLine = 'aliceVision_exportUndistortedImages {allParams}'
+
+class ExportColoredPointCloud(desc.CommandLineNode):
+    commandLine = 'aliceVision_exportColoredPointCloud {allParams}'
 
     inputs = [
         desc.File(
@@ -14,15 +15,6 @@ class ExportUndistortedImages(desc.CommandLineNode):
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='outputFileType',
-            label='Output File Type',
-            description='Output file type for the undistorted images.',
-            value='exr',
-            values=['jpg', 'png', 'tif', 'exr'],
-            exclusive=True,
-            uid=[0],
-        ),
-        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='Verbosity level (fatal, error, warning, info, debug, trace).',
@@ -30,15 +22,15 @@ class ExportUndistortedImages(desc.CommandLineNode):
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
-            description='Output folder for the undistorted images.',
-            value=desc.Node.internalFolder,
+            label='Output Point Cloud Filepath',
+            description='Output point cloud with visibilities as SfMData file.',
+            value="{cache}/{nodeType}/{uid0}/pointCloud.abc",
             uid=[],
         ),
     ]

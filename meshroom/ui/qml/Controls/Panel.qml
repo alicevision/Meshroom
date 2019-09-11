@@ -23,14 +23,12 @@ Page {
 
     QtObject {
         id: m
-        property int headerHeight: 24
-        property int footerHeight: 22
         property int hPadding: 6
-        property int vPadding: 2
+        property int vPadding: 4
         readonly property color paneBackgroundColor: Qt.darker(root.palette.window, 1.15)
     }
 
-    padding: 2
+    padding: 1
 
 
     header: Pane {
@@ -39,30 +37,28 @@ Page {
         leftPadding: m.hPadding; rightPadding: m.hPadding
         background: Rectangle { color: m.paneBackgroundColor }
 
-        Item { // Fix the height of the underlying RowLayout
-            implicitHeight: m.headerHeight
+        RowLayout {
             width: parent.width
-            RowLayout {
-                anchors.fill: parent
 
-                // Icon
-                Item {
-                    id: iconPlaceHolder
-                    width: childrenRect.width
-                    height: childrenRect.height
-                    Layout.alignment: Qt.AlignVCenter
-                    visible: icon != ""
-                }
-
-                // Title
-                Label {
-                    text: root.title
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                }
-                //
-                Row { id: headerLayout }
+            // Icon
+            Item {
+                id: iconPlaceHolder
+                width: childrenRect.width
+                height: childrenRect.height
+                Layout.alignment: Qt.AlignVCenter
+                visible: icon != ""
             }
+
+            // Title
+            Label {
+                text: root.title
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                topPadding: m.vPadding
+                bottomPadding: m.vPadding
+            }
+            //
+            Row { id: headerLayout }
         }
     }
 
@@ -74,10 +70,9 @@ Page {
         background: Rectangle { color: m.paneBackgroundColor }
 
         // Content place holder
-        Item {
+        RowLayout {
             id: footerLayout
             width: parent.width
-            implicitHeight: m.footerHeight
         }
     }
 }

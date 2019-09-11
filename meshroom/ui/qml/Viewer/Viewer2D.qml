@@ -77,7 +77,38 @@ FocusScope {
 
             visible: image.status === Image.Loading
         }
+
+        // FeatureViewer: display view extracted feature points
+        // note: requires QtAliceVision plugin - use a Loader to evaluate plugin avaibility at runtime
+        Loader {
+            id: featuresViewerLoader
+
+            active: displayFeatures.checked
+
+            // handle rotation/position based on available metadata
+            rotation: {
+                var orientation = metadata ? metadata["Orientation"] : 0
+                switch(orientation) {
+                    case "6": return 90;
+                    case "8": return -90;
+                    default: return 0;
+                }
+            }
+            x: rotation === 90 ? image.paintedWidth : 0
+            y: rotation === -90 ? image.paintedHeight : 0
+
+            Component.onCompleted: {
+                // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                setSource("FeaturesViewer.qml", {
+                    'active':  Qt.binding(function() { return displayFeatures.checked; }),
+                    'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                    'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
+                    'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
+                })
+            }
+        }
     }
+
 
     // Busy indicator
     BusyIndicator {
@@ -147,6 +178,21 @@ FocusScope {
         metadata: visible ? root.metadata : {}
     }
 
+
+    Loader {
+        id: featuresOverlay
+        anchors.bottom: bottomToolbar.top
+        anchors.left: parent.left
+        anchors.margins: 2
+        active: displayFeatures.checked
+
+        sourceComponent: FeaturesInfoOverlay {
+            featureExtractionNode: _reconstruction.featureExtraction
+            pluginStatus: featuresViewerLoader.status
+            featuresViewer: featuresViewerLoader.item
+        }
+    }
+
     FloatingPane {
         id: bottomToolbar
         anchors.bottom: parent.bottom
@@ -162,6 +208,13 @@ FocusScope {
             Label {
                 text: (image.status == Image.Ready ? image.scale.toFixed(2) : "1.00") + "x"
                 state: "xsmall"
+            }
+            MaterialToolButton {
+                id: displayFeatures
+                font.pointSize: 11
+                ToolTip.text: "Display Features"
+                checkable: true
+                text: MaterialIcons.scatter_plot
             }
 
             Item {

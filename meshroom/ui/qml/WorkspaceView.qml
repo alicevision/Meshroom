@@ -155,6 +155,7 @@ Item {
                     Layout.minimumWidth: 5
 
                     mediaLibrary: viewer3D.library
+                    camera: viewer3D.mainCamera
                     uigraph: reconstruction
                 }
             }

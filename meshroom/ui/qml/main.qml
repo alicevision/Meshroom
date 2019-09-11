@@ -163,10 +163,13 @@ ApplicationWindow {
             }
             else
                 _reconstruction.execute(node);
+
+            nodeEditor.updateNodeStatus()
         }
 
         function submit(node) {
             _reconstruction.submit(node);
+            nodeEditor.updateNodeStatus()
         }
 
 
@@ -627,28 +630,36 @@ ApplicationWindow {
             }
 
             NodeEditor {
+                id: nodeEditor
                 width: Math.round(parent.width * 0.3)
                 node: _reconstruction.selectedNode
+                property bool computing: _reconstruction.computing
                 // Make NodeEditor readOnly when computing
-                readOnly: {
+                readOnly: false
+                onNodeChanged: { updateNodeStatus() }
+                onComputingChanged: { updateNodeStatus() }
+
+                function updateNodeStatus() {
                     if(! _reconstruction.computing) {
-                        return false;
+                        readOnly = false;
+                        return;
                     }
 
-                    if(_reconstruction.selectedNode.globalStatus == "SUCCESS") {
-                        var nodes = uigraph.graph.onlyNodesFromNode(_reconstruction.selectedNode);
+                    if(node.globalStatus === "SUCCESS") {
+                        var nodes = _reconstruction.graph.onlyNodesFromNode(node);
                         for(var i = 0; i < nodes.length; i++) {
                             if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
-                                return true;
+                                readOnly = true;
+                                return;
                             }
                         }
-                    } else if(["SUBMITTED", "RUNNING"].includes(_reconstruction.selectedNode.globalStatus)) {
-                        return true;
+                        readOnly = false;
+                    } else if(["SUBMITTED", "RUNNING"].includes(node.globalStatus)) {
+                        readOnly = true;
                     } else {
-                        return false;
+                        readOnly = false;
                     }
 
-                    return false;
                 }
                 onAttributeDoubleClicked: workspaceView.viewIn3D(attribute, mouse)
                 onUpgradeRequest: {

@@ -226,7 +226,7 @@ FloatingPane {
                     }
                     onDoubleClicked: {
                         model.visible = true;
-                        camera.viewEntity(root.mediaLibrary.entityAt(index));
+                        nodeActivated(model.attribute.node);
                     }
 
                     RowLayout {

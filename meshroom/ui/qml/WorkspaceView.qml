@@ -157,6 +157,7 @@ Item {
                     mediaLibrary: viewer3D.library
                     camera: viewer3D.mainCamera
                     uigraph: reconstruction
+                    onNodeActivated: _reconstruction.setActiveNodeOfType(node)
                 }
             }
         }

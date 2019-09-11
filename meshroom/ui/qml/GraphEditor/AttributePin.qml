@@ -149,6 +149,7 @@ RowLayout {
             point2x: parent.width / 2
             point2y: parent.width / 2
             color: nameLabel.color
+            thickness: outputDragTarget.dropAccepted ? 2 : 1
         }
     }
 
@@ -186,7 +187,7 @@ RowLayout {
         color: {
             if(outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
                 return nameLabel.palette.highlight
-            return "white"
+            return attribute.isOutput ? "white" : "#75a0bd"
         }
 
         DropArea {
@@ -272,6 +273,7 @@ RowLayout {
             point2x: outputDragTarget.x + outputDragTarget.width/2
             point2y: outputDragTarget.y + outputDragTarget.height/2
             color: nameLabel.color
+            thickness: outputDragTarget.dropAccepted ? 2 : 1
         }
     }
 

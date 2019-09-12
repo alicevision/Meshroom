@@ -905,7 +905,7 @@ class Graph(BaseObject):
     def asString(self):
         return str(self.toDict())
 
-    def save(self, filepath=None):
+    def save(self, filepath=None, fileLink=True):
         path = filepath or self._filepath
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
@@ -929,7 +929,7 @@ class Graph(BaseObject):
         with open(path, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
 
-        if path != self._filepath:
+        if path != self._filepath and fileLink:
             self._setFilepath(path)
 
     def _setFilepath(self, filepath):
@@ -939,7 +939,9 @@ class Graph(BaseObject):
         Args:
             filepath: the graph file path
         """
-        assert os.path.isfile(filepath)
+        if not os.path.isfile(filepath):
+            self._unsetFilepath()
+            return
 
         if self._filepath == filepath:
             return
@@ -949,6 +951,12 @@ class Graph(BaseObject):
         #  * graph name if the basename of the graph file
         self.name = os.path.splitext(os.path.basename(filepath))[0]
         self.cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
+        self.filepathChanged.emit()
+
+    def _unsetFilepath(self):
+        self._filepath = ""
+        self.name = ""
+        self.cacheDir = meshroom.core.defaultCacheFolder
         self.filepathChanged.emit()
 
     def updateInternals(self, startNodes=None, force=False):

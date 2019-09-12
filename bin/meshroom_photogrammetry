@@ -38,7 +38,7 @@ parser.add_argument('--cache', metavar='FOLDER', type=str,
                          'If not set, the default cache folder will be used: ' + meshroom.core.defaultCacheFolder)
 
 parser.add_argument('--save', metavar='FILE', type=str, required=False,
-                    help='Save the configured Meshroom project to a file.')
+                    help='Save the configured Meshroom graph to a project file. It will setup the cache folder accordingly if not explicitly changed by --cache.')
 
 parser.add_argument('--compute', metavar='<yes/no>', type=lambda x: bool(distutils.util.strtobool(x)), default=True, required=False,
                     help='You can set it to <no/false/0> to disable the computation.')
@@ -130,12 +130,12 @@ if args.scale > 0:
     for node in graph.nodesByType('DepthMap'):
         node.downscale.value = args.scale
 
-if args.save:
-    graph.save(args.save)
-    print('File successfully saved:', args.save)
-
 # setup cache directory
 graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder
+
+if args.save:
+    graph.save(args.save, fileLink=not bool(args.cache))
+    print('File successfully saved: "{}"'.format(args.save))
 
 if not args.output:
     print('No output set, results will be available in the cache folder: "{}"'.format(graph.cacheDir))

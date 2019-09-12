@@ -2,6 +2,7 @@
 import argparse
 import os
 import sys
+import distutils.util
 
 import meshroom
 meshroom.setupEnvironment()
@@ -10,7 +11,7 @@ import meshroom.core.graph
 from meshroom import multiview
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
-parser.add_argument('--input', metavar='FOLDER_OR_SFM', type=str,
+parser.add_argument('-i', '--input', metavar='FOLDER_OR_SFM', type=str,
                     default='',
                     help='Input folder containing images or file (.sfm or .json) '
                          'with images paths and optionally predefined camera intrinsics.')
@@ -27,7 +28,7 @@ parser.add_argument('--pipeline', metavar='MESHROOM_FILE', type=str, required=Fa
 parser.add_argument('--overrides', metavar='SETTINGS', type=str, default=None,
                     help='A JSON file containing the graph parameters override.')
 
-parser.add_argument('--output', metavar='FOLDER', type=str, required=False,
+parser.add_argument('-o', '--output', metavar='FOLDER', type=str, required=False,
                     help='Output folder where results should be copied to. '
                          'If not set, results will have to be retrieved directly from the cache folder.')
 
@@ -37,7 +38,10 @@ parser.add_argument('--cache', metavar='FOLDER', type=str,
                          'If not set, the default cache folder will be used: ' + meshroom.core.defaultCacheFolder)
 
 parser.add_argument('--save', metavar='FILE', type=str, required=False,
-                    help='Save the configured Meshroom project to a file (instead of running it).')
+                    help='Save the configured Meshroom project to a file.')
+
+parser.add_argument('--compute', metavar='<yes/no>', type=lambda x: bool(distutils.util.strtobool(x)), default=True, required=False,
+                    help='You can set it to <no/false/0> to disable the computation.')
 
 parser.add_argument('--scale', type=int, default=-1,
                     choices=[-1, 1, 2, 4, 8, 16],
@@ -129,16 +133,16 @@ if args.scale > 0:
 if args.save:
     graph.save(args.save)
     print('File successfully saved:', args.save)
-    sys.exit(0)
 
 # setup cache directory
 graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder
 
 if not args.output:
-    print('No output set, results will be available in {}'.format(graph.cacheDir))
+    print('No output set, results will be available in the cache folder: "{}"'.format(graph.cacheDir))
 
 # find end nodes (None will compute all graph)
 toNodes = graph.findNodes(args.toNode) if args.toNode else None
 
-# start computation
-meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
+if args.compute:
+    # start computation
+    meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)

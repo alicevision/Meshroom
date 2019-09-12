@@ -566,66 +566,52 @@ ApplicationWindow {
                     }
                 }
 
-//                Loader {
-//                    id: mainTabLoader
-//                    clip: true
-//                    anchors.fill: parent
-//                    property var components: [graphEditorComponent, taskManagerComponent]
-//                    sourceComponent: components[graphEditorPanel.currentTab]
-//                }
+                GraphEditor {
+                    id: graphEditor
 
-//                Component {
-//                    id: graphEditorComponent
-                    GraphEditor {
-                        id: graphEditor
+                    visible: graphEditorPanel.currentTab === 0
 
-                        visible: graphEditorPanel.currentTab === 0
+                    anchors.fill: parent
+                    uigraph: _reconstruction
+                    nodeTypesModel: _nodeTypes
 
-                        anchors.fill: parent
-                        uigraph: _reconstruction
-                        nodeTypesModel: _nodeTypes
-
-                        onNodeDoubleClicked: {
-                            if(node.nodeType === "StructureFromMotion")
+                    onNodeDoubleClicked: {
+                        if(node.nodeType === "StructureFromMotion")
+                        {
+                            _reconstruction.sfm = node;
+                        }
+                        else if(node.nodeType === "FeatureExtraction")
+                        {
+                            _reconstruction.featureExtraction = node;
+                        }
+                        else if(node.nodeType === "CameraInit")
+                        {
+                            _reconstruction.cameraInit = node;
+                        }
+                        for(var i=0; i < node.attributes.count; ++i)
+                        {
+                            var attr = node.attributes.at(i)
+                            if(attr.isOutput
+                               && workspaceView.viewIn3D(attr, mouse))
                             {
-                                _reconstruction.sfm = node;
-                            }
-                            else if(node.nodeType === "FeatureExtraction")
-                            {
-                                _reconstruction.featureExtraction = node;
-                            }
-                            else if(node.nodeType === "CameraInit")
-                            {
-                                _reconstruction.cameraInit = node;
-                            }
-                            for(var i=0; i < node.attributes.count; ++i)
-                            {
-                                var attr = node.attributes.at(i)
-                                if(attr.isOutput
-                                   && workspaceView.viewIn3D(attr, mouse))
-                                {
-                                    break;
-                                }
+                                break;
                             }
                         }
-                        onComputeRequest: computeManager.compute(node)
-                        onSubmitRequest: computeManager.submit(node)
                     }
-//                }
+                    onComputeRequest: computeManager.compute(node)
+                    onSubmitRequest: computeManager.submit(node)
+                }
 
-//                Component {
-//                    id: taskManagerComponent
-                    TaskManager {
-                        id: taskManager
+                TaskManager {
+                    id: taskManager
 
-                        visible: graphEditorPanel.currentTab === 1
+                    visible: graphEditorPanel.currentTab === 1
 
-                        uigraph: _reconstruction
-                        taskManager: _reconstruction.taskManager
+                    uigraph: _reconstruction
+                    taskManager: _reconstruction.taskManager
 
-                        anchors.fill: parent
-                    }
-//                }
+                    anchors.fill: parent
+                }
 
             }
 

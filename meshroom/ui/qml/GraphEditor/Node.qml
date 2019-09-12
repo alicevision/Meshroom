@@ -77,7 +77,7 @@ Item {
                 id: background
                 anchors.fill: parent
 
-                color: activePalette.base
+                color: Qt.lighter(activePalette.base, 1.3)
                 layer.enabled: true
                 layer.effect: DropShadow { radius: 3; color: shadowColor }
                 radius: 3
@@ -270,7 +270,7 @@ Item {
                         id: innerRect
                         width: parent.width - 6
                         height: parent.height
-                        color: Colors.sysPalette.window
+                        color: background.color
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
 

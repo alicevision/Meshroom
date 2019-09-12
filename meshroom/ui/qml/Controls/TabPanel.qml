@@ -15,36 +15,31 @@ Page {
 
     QtObject {
         id: m
-        property int hPadding: 6
-        property int vPadding: 4
-        property int topPadding: 4
         readonly property color paneBackgroundColor: Qt.darker(root.palette.window, 1.15)
     }
-
-    padding: 1
-
+    padding: 0
 
     header: Pane {
         id: headerPane
-        topPadding: m.topPadding; bottomPadding: m.vPadding
-        leftPadding: m.hPadding; rightPadding: m.hPadding
+        padding: 0
         background: Rectangle { color: m.paneBackgroundColor }
 
         RowLayout {
             width: parent.width
+            spacing: 0
 
             TabBar {
                 id: mainTabBar
+                padding: 4
                 Layout.fillWidth: true
                 onCurrentIndexChanged: root.currentTab = currentIndex
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: -4
 
                 Repeater {
                     model: root.tabs
 
                     TabButton {
                         text: modelData
+                        y: mainTabBar.padding
                         padding: 4
                         width: 150
                         background: Rectangle {
@@ -87,8 +82,6 @@ Page {
 
     footer: Pane {
         id: footerPane
-        topPadding: m.vPadding; bottomPadding: m.vPadding
-        leftPadding: m.hPadding; rightPadding: m.hPadding
         visible: footerLayout.children.length > 0
         background: Rectangle { color: m.paneBackgroundColor }
 

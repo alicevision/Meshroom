@@ -108,8 +108,8 @@ RowLayout {
             readonly property bool isOutput: attribute.isOutput
             readonly property alias isList: root.isList
             property bool dragAccepted: false
-            anchors.verticalCenter: parent
-            anchors.horizontalCenter: parent
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.horizontalCenter: parent.horizontalCenter
             width: 4
             height: 4
             Drag.keys: [inputDragTarget.objectName]
@@ -233,8 +233,8 @@ RowLayout {
             readonly property bool isOutput: attribute.isOutput
             readonly property alias isList: root.isList
             property bool dropAccepted: false
-            anchors.horizontalCenter: parent
-            anchors.verticalCenter: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
             width: 4
             height: 4
             Drag.keys: [outputDragTarget.objectName]

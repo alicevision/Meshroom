@@ -115,7 +115,6 @@ Item {
                         }
 
                         RowLayout {
-                            anchors.right: parent.right
                             width: 50
                             spacing: 0
 
@@ -133,7 +132,6 @@ Item {
                                     hoverEnabled: true
 
                                     property bool showTooltip: false
-
 
                                     onEntered: {
                                         ghostIcon.color = Colors.cyan
@@ -351,7 +349,6 @@ Item {
                         }
                     }
                 }
-
             }
 
             // CompatibilityBadge icon for CompatibilityNodes
@@ -369,43 +366,5 @@ Item {
                 }
             }
         }
-
-
     }
-
-    state: collapseGroup.checkedButton.type
-    onStateChanged: console.info(state)
-
-    states: [
-        State {
-            name: "showAll"
-            PropertyChanges {
-                target: outputLoader
-                active: object.isOutput
-            }
-        },
-
-        State {
-            name: "showConnected"
-        },
-        State {
-            name: "hideAll"
-            PropertyChanges {
-                target: outputLoader
-                active: false
-            }
-            PropertyChanges {
-                target: nodeAttributes
-                height: childrenRect.height
-            }
-            PropertyChanges {
-                target: outputs
-                visible: false
-            }
-            PropertyChanges {
-                target: inputs
-                visible: false
-            }
-        }
-    ]
 }

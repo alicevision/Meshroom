@@ -148,13 +148,11 @@ Item {
                                     ToolTip {
                                         delay: 800
                                         visible: parent.showTooltip
-                                        text: node.chunks.count > 0 ? "This node has the same values as <b>" + node.chunks.at(0).statusNodeName + "</b>" : "This node is a duplicate"
-
+                                        text: ""
                                         onVisibleChanged: {
-                                            text = node.chunks.count > 0 ? "This node has the same values as <b>" + node.chunks.at(0).statusNodeName + "</b>" : "This node is a duplicate"
+                                            text = "The data associated to this node has been computed by the other node: <b>" + node.nameToLabel(node.chunks.at(0).statusNodeName) + "</b>."
                                         }
                                     }
-
                                 }
                             }
 

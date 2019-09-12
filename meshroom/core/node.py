@@ -391,7 +391,15 @@ class BaseNode(BaseObject):
         Returns:
             str: the high-level label of this node
         """
-        t, idx = self._name.split("_")
+        return self.nameToLabel(self._name)
+
+    @Slot(str, result=str)
+    def nameToLabel(self, name):
+        """
+        Returns:
+            str: the high-level label from the technical node name
+        """
+        t, idx = name.split("_")
         return "{}{}".format(t, idx if int(idx) > 1 else "")
 
     @property

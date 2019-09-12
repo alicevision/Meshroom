@@ -151,7 +151,9 @@ class Attribute(BaseObject):
     @property
     def isLink(self):
         """ Whether the attribute is a link to another attribute. """
-        return self.node.graph and self.isInput and self in self.node.graph.edges.keys()
+        # Note: Need to test self.node.graph.edges before accessing to edges.keys() to avoid errors in particular conditions.
+        #       For instance: open a scene, modify something and close without saving it.
+        return self.node.graph and self.isInput and self.node.graph.edges and self in self.node.graph.edges.keys()
 
     @staticmethod
     def isLinkExpression(value):

@@ -234,7 +234,15 @@ class Graph(BaseObject):
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)
-    def load(self, filepath):
+    def load(self, filepath, fileLink=True):
+        """
+        Load a meshroom graph ".mg" file.
+
+        Args:
+            filepath: project filepath to load
+            fileLink: Setup link to the project file, like setup cacheDir, keep filepath for save, etc.
+                      This option allows to disable it, to only load the project file as a template
+        """
         self.clear()
         with open(filepath) as jsonFile:
             fileData = json.load(jsonFile)
@@ -265,8 +273,9 @@ class Graph(BaseObject):
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
 
-        # Update filepath related members
-        self._setFilepath(filepath)
+        if fileLink:
+            # Update filepath related members
+            self._setFilepath(filepath)
 
         # Create graph edges by resolving attributes expressions
         self._applyExpr()

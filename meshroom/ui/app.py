@@ -56,6 +56,18 @@ class MeshroomApp(QApplication):
     """ Meshroom UI Application. """
     def __init__(self, args):
         QtArgs = [args[0], '-style', 'fusion'] + args[1:]  # force Fusion style by default
+
+        parser = argparse.ArgumentParser(prog=args[0], description='Launch Meshroom UI.', add_help=True)
+
+        parser.add_argument('input', metavar='INPUT', type=str, nargs='?',
+                            help='Meshroom project file (e.g. myProject.mg) or folder with images to reconstruct.')
+        parser.add_argument('--project', metavar='MESHROOM_FILE', type=str, required=False,
+                            help='Meshroom project file (e.g. myProject.mg).')
+        parser.add_argument('--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
+                            help='Override the default Meshroom pipeline with this external graph.')
+
+        args = parser.parse_args(args[1:])
+
         super(MeshroomApp, self).__init__(QtArgs)
 
         self.setOrganizationName('AliceVision')
@@ -105,12 +117,24 @@ class MeshroomApp(QApplication):
         # request any potential computation to stop on exit
         self.aboutToQuit.connect(r.stopChildThreads)
 
-        parser = argparse.ArgumentParser(prog=args[0], description='Launch Meshroom UI.')
-        parser.add_argument('--project', metavar='MESHROOM_FILE', type=str, required=False,
-                            help='Meshroom project file (e.g. myProject.mg).')
-        args = parser.parse_args(args[1:])
+        if args.pipeline:
+            # the pipeline from the command line has the priority
+            r.setDefaultPipeline(args.pipeline)
+        else:
+            # consider the environment variable
+            defaultPipeline = os.environ.get("MESHROOM_DEFAULT_PIPELINE", "")
+            if defaultPipeline:
+                r.setDefaultPipeline(args.pipeline)
+
         if args.project:
-            r.loadUrl(QUrl.fromLocalFile(args.project))
+            r.load(args.project)
+
+        if args.input:
+            if os.path.isfile(args.input):
+                # we assume that it is an ".mg" file.
+                r.load(args.input)
+            elif os.path.isdir(args.input):
+                r.importImagesFromFolder(args.input)
 
         self.engine.load(os.path.normpath(url))
 

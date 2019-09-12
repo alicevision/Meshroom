@@ -254,6 +254,7 @@ class UIGraph(QObject):
         self._layout = GraphLayout(self)
         self._selectedNode = None
         self._hoveredNode = None
+        self._defaultPipelineFilepath = None
         if filepath:
             self.load(filepath)
 
@@ -310,9 +311,13 @@ class UIGraph(QObject):
         self.stopExecution()
         self._chunksMonitor.stop()
 
-    def load(self, filepath):
+    def setDefaultPipeline(self, pipelineFilepath):
+        self._defaultPipelineFilepath = pipelineFilepath
+        self._graph.load(pipelineFilepath, fileLink=False)
+
+    def load(self, filepath, fileLink=True):
         g = Graph('')
-        g.load(filepath)
+        g.load(filepath, fileLink)
         if not os.path.exists(g.cacheDir):
             os.mkdir(g.cacheDir)
         self.setGraph(g)

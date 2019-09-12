@@ -195,11 +195,16 @@ class Reconstruction(UIGraph):
     @Slot()
     def new(self):
         """ Create a new photogrammetry pipeline. """
-        self.setGraph(multiview.photogrammetry())
+        if self._defaultPipelineFilepath:
+            # use the user-provided default photogrammetry project file
+            self.load(self._defaultPipelineFilepath, fileLink=False)
+        else:
+            # default photogrammetry pipeline
+            self.setGraph(multiview.photogrammetry())
 
-    def load(self, filepath):
+    def load(self, filepath, fileLink=True):
         try:
-            super(Reconstruction, self).load(filepath)
+            super(Reconstruction, self).load(filepath, fileLink)
             # warn about pre-release projects being automatically upgraded
             if Version(self._graph.fileReleaseVersion).major == "0":
                 self.warning.emit(Message(
@@ -344,7 +349,7 @@ class Reconstruction(UIGraph):
         Fetching urls from dropEvent is generally expensive in QML/JS (bug ?).
         This method allows to reduce process time by doing it on Python side.
         """
-        self.importImages(self.getImageFilesFromDrop(drop), cameraInit)
+        self.importImagesAsync(self.getImageFilesFromDrop(drop), cameraInit)
 
     @staticmethod
     def getImageFilesFromDrop(drop):
@@ -359,7 +364,15 @@ class Reconstruction(UIGraph):
                 images.append(localFile)
         return images
 
-    def importImages(self, images, cameraInit):
+    def importImagesFromFolder(self, path):
+        images = []
+        if os.path.isdir(path):  # get folder content
+            images.extend(multiview.findImageFiles(path))
+        elif multiview.isImageFile(path):
+            images.append(path)
+        self.buildIntrinsics(self.cameraInit, images)
+
+    def importImagesAsync(self, images, cameraInit):
         """ Add the given list of images to the Reconstruction. """
         # Start the process of updating views and intrinsics
         self.runAsync(self.buildIntrinsics, args=(cameraInit, images,))

@@ -25,7 +25,7 @@ ApplicationWindow {
 
 
     title: {
-        var t = _reconstruction.graph.filepath || "Untitled"
+        var t = (_reconstruction.graph && _reconstruction.graph.filepath) ? _reconstruction.graph.filepath : "Untitled"
         if(!_reconstruction.undoStack.clean)
             t += "*"
         t += " - " + Qt.application.name + " " + Qt.application.version
@@ -327,7 +327,7 @@ ApplicationWindow {
                 id: saveAction
                 text: "Save"
                 shortcut: "Ctrl+S"
-                enabled: !_reconstruction.graph.filepath || !_reconstruction.undoStack.clean
+                enabled: _reconstruction.graph && (!_reconstruction.graph.filepath || !_reconstruction.undoStack.clean)
                 onTriggered: _reconstruction.graph.filepath ? _reconstruction.save() : saveFileDialog.open()
             }
             Action {

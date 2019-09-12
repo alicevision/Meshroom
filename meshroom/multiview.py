@@ -47,11 +47,12 @@ def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=l
         cameraInit.viewpoints.extend(inputViewpoints)
         cameraInit.intrinsics.extend(inputIntrinsics)
 
-    if output:
-        texturing = mvsNodes[-1]
-        graph.addNewNode('Publish', output=output, inputFiles=[texturing.outputMesh,
-                                                               texturing.outputMaterial,
-                                                               texturing.outputTextures])
+        if output:
+            texturing = mvsNodes[-1]
+            graph.addNewNode('Publish', output=output, inputFiles=[texturing.outputMesh,
+                                                                   texturing.outputMaterial,
+                                                                   texturing.outputTextures])
+
     return graph
 
 

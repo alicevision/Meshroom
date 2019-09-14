@@ -128,21 +128,39 @@ class StatusData:
 
 
 class LogManager:
-    supportedLevels = ['info', 'warning', 'error']
-    dateTimeFormatting = '%H:%M:%S.%f'
+    dateTimeFormatting = '%H:%M:%S'
 
     def __init__(self, chunk):
         self.chunk = chunk
         self.chunk.statusChanged.connect(self.clear)
         self.progressBar = False
         self.cleared = False
+        self.logger = logging.getLogger(chunk.node.getName())
 
-    def clear(self):
+    class Formatter(logging.Formatter):
+        def format(self, record):
+            # Make level name lower case
+            record.levelname = record.levelname.lower()
+            return logging.Formatter.format(self, record)
+
+    def configureLogger(self):
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
+        handler = logging.FileHandler(self.chunk.logFile)
+        formatter = self.Formatter('[%(asctime)s.%(msecs)03d][%(levelname)s] %(message)s', self.dateTimeFormatting)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
+    def clear(self): 
         if self.chunk.statusName == 'RUNNING' and not self.cleared:
             open(self.chunk.logFile, 'w').close()
+            self.configureLogger()
             self.cleared = True
-        # When the node gets ran again after error the log needs to be cleared
-        if self.chunk.statusName == 'ERROR':
+        # When the node gets ran again the log needs to be cleared
+        elif self.chunk.statusName in ['ERROR', 'SUCCESS']:
+            for handler in self.logger.handlers[:]:
+                # Stops the file being locked
+                handler.close()
             self.cleared = False
             self.progressBar = False
 
@@ -150,16 +168,11 @@ class LogManager:
         while not self.cleared:
             time.sleep(0.01)
 
-    def add(self, message, level='info'):
+    def add(self, message, level=logging.INFO):
         assert not self.progressBar
         self.waitUntilCleared()
         
-        if level not in self.supportedLevels:
-            self.add('Level "{}" is not supported'.format(level), 'warning')
-        else:
-            with open(self.chunk.logFile, 'a') as f:
-                f.write('[{}][{}] {}\n'.format(datetime.datetime.now().strftime(self.dateTimeFormatting), level, message))
-                f.close()
+        self.logger.log(level, message)
 
     def makeProgressBar(self, end, message=''):
         assert end > 0
@@ -168,6 +181,7 @@ class LogManager:
 
         self.progressEnd = end
         self.currentProgressTics = 0
+        self.progressBar = True
         
         with open(self.chunk.logFile, 'a') as f:
             if message:
@@ -175,8 +189,6 @@ class LogManager:
             f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
             f.write('|----|----|----|----|----|----|----|----|----|----|\n')
             f.close()
-
-        self.progressBar = True
 
     def updateProgressBar(self, value):
         assert self.progressBar

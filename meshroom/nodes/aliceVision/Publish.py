@@ -6,6 +6,7 @@ from meshroom.core import desc
 import shutil
 import glob
 import os
+import logging
 
 
 class Publish(desc.Node):
@@ -42,7 +43,7 @@ class Publish(desc.Node):
 
     def processChunk(self, chunk):
         if not chunk.node.inputFiles:
-            chunk.log.add('Nothing to publish', 'warning')
+            chunk.log.add('Nothing to publish', logging.WARNING)
             return
         if not chunk.node.output.value:
             return
@@ -51,7 +52,7 @@ class Publish(desc.Node):
 
         if not outFiles:
             error = 'Publish: input files listed, but nothing to publish'
-            chunk.log.add(error, 'error')
+            chunk.log.add(error, logging.ERROR)
             chunk.log.add('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
             raise RuntimeError(error)
 

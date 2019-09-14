@@ -31,6 +31,15 @@ class Publish(desc.Node):
             description="",
             value="",
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='''verbosity level (critical, error, warning, info, debug).''',
+            value='info',
+            values=['critical', 'error', 'warning', 'info', 'debug'],
+            exclusive=True,
+            uid=[],
             ),
         ]
 
@@ -42,6 +51,8 @@ class Publish(desc.Node):
         return paths
 
     def processChunk(self, chunk):
+        chunk.log.logger.setLevel(chunk.log.textToLevel(chunk.node.verboseLevel.value))
+        
         if not chunk.node.inputFiles:
             chunk.log.add('Nothing to publish', logging.WARNING)
             return

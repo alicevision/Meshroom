@@ -170,6 +170,8 @@ class Reconstruction(UIGraph):
         self._buildingIntrinsics = False
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
 
+        self.importImagesFailed.connect(self.onImportImagesFailed)
+
         # - Feature Extraction
         self._featureExtraction = None
         self.cameraInitChanged.connect(self.updateFeatureExtraction)
@@ -344,25 +346,64 @@ class Reconstruction(UIGraph):
         Fetching urls from dropEvent is generally expensive in QML/JS (bug ?).
         This method allows to reduce process time by doing it on Python side.
         """
-        self.importImages(self.getImageFilesFromDrop(drop), cameraInit)
+        images, urls = self.getImageFilesFromDrop(drop)
+        if not images:
+            extensions = set([os.path.splitext(url)[1] for url in urls])
+            self.error.emit(
+                Message(
+                    "No Recognized Image",
+                    "No recognized image file in the {} dropped files".format(len(urls)),
+                    "File extensions: " + ', '.join(extensions)
+                )
+            )
+            return
+        self.importImages(images, cameraInit)
 
     @staticmethod
     def getImageFilesFromDrop(drop):
+        """
+
+        Args:
+            drop:
+
+        Returns:
+            <images, otherFiles> List of recognized images and list of other files
+        """
         urls = drop.property("urls")
         # Build the list of images paths
         images = []
+        otherFiles = []
         for url in urls:
             localFile = url.toLocalFile()
             if os.path.isdir(localFile):  # get folder content
                 images.extend(multiview.findImageFiles(localFile))
             elif multiview.isImageFile(localFile):
                 images.append(localFile)
-        return images
+            else:
+                otherFiles.append(localFile)
+        return images, otherFiles
 
     def importImages(self, images, cameraInit):
         """ Add the given list of images to the Reconstruction. """
         # Start the process of updating views and intrinsics
-        self.runAsync(self.buildIntrinsics, args=(cameraInit, images,))
+        logging.debug("Import images: " + str(images))
+        self.runAsync(self.importImagesSync, args=(images, cameraInit,))
+
+    def importImagesSync(self, images, cameraInit):
+        try:
+            self.buildIntrinsics(cameraInit, images)
+        except Exception as e:
+            self.importImagesFailed.emit(str(e))
+
+    @Slot()
+    def onImportImagesFailed(self, msg):
+        self.error.emit(
+            Message(
+                "Failed to Import Images",
+                "You probably have a corrupted image within the images that you are trying to import.",
+                ""  # msg
+            )
+        )
 
     def buildIntrinsics(self, cameraInit, additionalViews, rebuild=False):
         """
@@ -397,14 +438,14 @@ class Reconstruction(UIGraph):
             self.setBuildingIntrinsics(True)
             # Retrieve the list of updated viewpoints and intrinsics
             views, intrinsics = cameraInitCopy.nodeDesc.buildIntrinsics(cameraInitCopy, additionalViews)
-        except Exception:
-            import traceback
-            logging.error("Error while building intrinsics : {}".format(traceback.format_exc()))
+        except Exception as e:
+            logging.error("Error while building intrinsics: {}".format(str(e)))
+            raise
+        finally:
+            # Delete the duplicate
+            cameraInitCopy.deleteLater()
+            self.setBuildingIntrinsics(False)
 
-        # Delete the duplicate
-        cameraInitCopy.deleteLater()
-
-        self.setBuildingIntrinsics(False)
         # always emit intrinsicsBuilt signal to inform listeners
         # in other threads that computation is over
         self.intrinsicsBuilt.emit(cameraInit, views, intrinsics, rebuild)
@@ -460,6 +501,7 @@ class Reconstruction(UIGraph):
     cameraInitIndex = Property(int, getCameraInitIndex, setCameraInitIndex, notify=cameraInitChanged)
     viewpoints = Property(QObject, getViewpoints, notify=cameraInitChanged)
     cameraInits = Property(QObject, lambda self: self._cameraInits, constant=True)
+    importImagesFailed = Signal(str)
     intrinsicsBuilt = Signal(QObject, list, list, bool)
     buildingIntrinsicsChanged = Signal()
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)

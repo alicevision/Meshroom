@@ -168,12 +168,6 @@ class LogManager:
         while not self.cleared:
             time.sleep(0.01)
 
-    def add(self, message, level=logging.INFO):
-        assert not self.progressBar
-        self.waitUntilCleared()
-        
-        self.logger.log(level, message)
-
     def makeProgressBar(self, end, message=''):
         assert end > 0
         assert not self.progressBar
@@ -187,7 +181,11 @@ class LogManager:
             if message:
                 f.write(message+'\n')
             f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
-            f.write('|----|----|----|----|----|----|----|----|----|----|\n')
+            f.write('|----|----|----|----|----|----|----|----|----|----|\n\n')
+            if message:
+                self.progressBarPosition = f.tell()-14
+            else:
+                self.progressBarPosition = f.tell()-7
             f.close()
 
     def updateProgressBar(self, value):
@@ -197,19 +195,18 @@ class LogManager:
 
         tics = round((value/self.progressEnd)*51)
 
-        with open(self.chunk.logFile, 'a') as f:
+        with open(self.chunk.logFile, 'r+') as f:
+            text = f.read()
             for i in range(tics-self.currentProgressTics):
-                f.write('*')
+                text = text[:self.progressBarPosition]+'*'+text[self.progressBarPosition:]
+            f.seek(0)
+            f.write(text)
             f.close()
 
         self.currentProgressTics = tics
 
     def completeProgressBar(self):
         assert self.progressBar
-
-        with open(self.chunk.logFile, 'a') as f:
-            f.write('\n')
-            f.close()
 
         self.progressBar = False
 
@@ -237,7 +234,7 @@ class NodeChunk(BaseObject):
         super(NodeChunk, self).__init__(parent)
         self.node = node
         self.range = range
-        self.log = LogManager(self)
+        self.logManager = LogManager(self)
         self.status = StatusData(node.name, node.nodeType, node.packageName, node.packageVersion)
         self.statistics = stats.Statistics()
         self.statusFileLastModTime = -1
@@ -259,6 +256,10 @@ class NodeChunk(BaseObject):
     @property
     def statusName(self):
         return self.status.status.name
+
+    @property
+    def logger(self):
+        return self.logManager.logger
 
     @property
     def execModeName(self):

@@ -6,7 +6,6 @@ from meshroom.core import desc
 import shutil
 import glob
 import os
-import logging
 
 
 class Publish(desc.Node):
@@ -51,10 +50,11 @@ class Publish(desc.Node):
         return paths
 
     def processChunk(self, chunk):
-        chunk.log.logger.setLevel(chunk.log.textToLevel(chunk.node.verboseLevel.value))
+        chunk.logManager.waitUntilCleared()
+        chunk.logger.setLevel(chunk.logManager.textToLevel(chunk.node.verboseLevel.value))
         
         if not chunk.node.inputFiles:
-            chunk.log.add('Nothing to publish', logging.WARNING)
+            chunk.logger.warning('Nothing to publish')
             return
         if not chunk.node.output.value:
             return
@@ -63,14 +63,14 @@ class Publish(desc.Node):
 
         if not outFiles:
             error = 'Publish: input files listed, but nothing to publish'
-            chunk.log.add(error, logging.ERROR)
-            chunk.log.add('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+            chunk.logger.error(error)
+            chunk.logger.info('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
             raise RuntimeError(error)
 
         if not os.path.exists(chunk.node.output.value):
             os.mkdir(chunk.node.output.value)
 
         for iFile, oFile in outFiles.items():
-            chunk.log.add('Publish file {} into {}'.format(iFile, oFile))
+            chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
             shutil.copyfile(iFile, oFile)
-        chunk.log.add('Publish end')
+        chunk.logger.info('Publish end')

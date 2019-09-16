@@ -89,8 +89,10 @@ FocusScope {
                     // only set text file viewer source when ListView is fully ready
                     // (either empty or fully populated with a valid currentChunk)
                     // to avoid going through an empty url when switching between two nodes
+
                     if(!chunksLV.count || chunksLV.currentChunk)
-                        textFileViewer.source = Filepath.stringToUrl(currentFile);
+                        logComponentLoader.source = Filepath.stringToUrl(currentFile);
+
                 }
 
                 TabButton {
@@ -111,12 +113,35 @@ FocusScope {
                 }
             }
 
-            TextFileViewer {
-                id: textFileViewer
+            Loader {
+                id: logComponentLoader
+                clip: true
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                autoReload: chunksLV.currentChunk !== undefined && chunksLV.currentChunk.statusName === "RUNNING"
-                // source is set in fileSelector
+                property url source
+                sourceComponent: fileSelector.currentItem.fileProperty === "statisticsFile" ? statViewerComponent : textFileViewerComponent
+            }
+
+            Component {
+                id: textFileViewerComponent
+                TextFileViewer {
+                    id: textFileViewer
+                    source: logComponentLoader.source
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    autoReload: chunksLV.currentChunk !== undefined && chunksLV.currentChunk.statusName === "RUNNING"
+                    // source is set in fileSelector
+                }
+            }
+
+            Component {
+                id: statViewerComponent
+                StatViewer {
+                    id: statViewer
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    source: logComponentLoader.source
+                }
             }
         }
     }

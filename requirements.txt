@@ -3,3 +3,7 @@ psutil
 enum34;python_version<"3.4"
 PySide2==5.13.0
 markdown==2.6.11
+numpy
+Pillow
+Imath
+OpenEXR

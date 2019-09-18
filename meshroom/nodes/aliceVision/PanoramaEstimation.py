@@ -6,8 +6,8 @@ import os
 from meshroom.core import desc
 
 
-class Panorama(desc.CommandLineNode):
-    commandLine = 'aliceVision_panorama {allParams}'
+class PanoramaEstimation(desc.CommandLineNode):
+    commandLine = 'aliceVision_panoramaEstimation {allParams}'
     size = desc.DynamicNodeSize('input')
 
     inputs = [
@@ -53,6 +53,14 @@ class Panorama(desc.CommandLineNode):
             uid=[0],
             joinChar=',',
         ),
+        desc.IntParam(
+            name='orientation',
+            label='Orientation',
+            description='Orientation',
+            value=0,
+            range=(0, 6, 1),
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='rotationAveraging',
             label='Rotation Averaging Method',
@@ -63,6 +71,7 @@ class Panorama(desc.CommandLineNode):
             value='L2_minimization',
             exclusive=True,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='relativeRotation',
@@ -74,6 +83,7 @@ class Panorama(desc.CommandLineNode):
             value='essential_matrix',
             exclusive=True,
             uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='lockAllIntrinsics',
@@ -83,6 +93,7 @@ class Panorama(desc.CommandLineNode):
                         'This may be helpful if the input cameras are already fully calibrated.',
             value=False,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -92,7 +103,7 @@ class Panorama(desc.CommandLineNode):
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -107,7 +118,7 @@ class Panorama(desc.CommandLineNode):
             name='outSfMDataFilename',
             label='Output SfMData File',
             description='Path to the output sfmdata file',
-            value=desc.Node.internalFolder + 'SfmData.abc',
+            value=desc.Node.internalFolder + 'sfmData.abc',
             uid=[],
         ),
     ]

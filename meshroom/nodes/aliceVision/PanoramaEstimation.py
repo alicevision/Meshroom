@@ -60,6 +60,7 @@ class PanoramaEstimation(desc.CommandLineNode):
             value=0,
             range=(0, 6, 1),
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='rotationAveraging',

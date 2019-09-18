@@ -55,8 +55,8 @@ class PanoramaStitching(desc.CommandLineNode):
              name='transitionSize',
              label='Transition Size',
              description='Size of the transition between images (in pixels).',
-             value=10.0,
-             range=(0.0, 100.0, 1.0),
+             value=100.0,
+             range=(0.0, 500.0, 1.0),
              uid=[0],
          ),
          desc.IntParam(

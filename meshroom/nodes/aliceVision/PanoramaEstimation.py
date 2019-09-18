@@ -87,6 +87,13 @@ class PanoramaEstimation(desc.CommandLineNode):
             advanced=True,
         ),
         desc.BoolParam(
+            name='refine',
+            label='Refine',
+            description='Refine camera relative poses, points and optionally internal camera parameter',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='lockAllIntrinsics',
             label='Force Lock of All Intrinsic Camera Parameters.',
             description='Force to keep constant all the intrinsics parameters of the cameras (focal length, \n'
@@ -94,7 +101,6 @@ class PanoramaEstimation(desc.CommandLineNode):
                         'This may be helpful if the input cameras are already fully calibrated.',
             value=False,
             uid=[0],
-            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

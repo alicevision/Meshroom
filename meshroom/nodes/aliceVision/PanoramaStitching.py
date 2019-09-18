@@ -59,15 +59,24 @@ class PanoramaStitching(desc.CommandLineNode):
              range=(0.0, 100.0, 1.0),
              uid=[0],
          ),
-        desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='Verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
-            exclusive=True,
-            uid=[],
-        )
+         desc.IntParam(
+             name='maxNbImages',
+             label='Max Nb Images',
+             description='Max number of images to merge.',
+             value=0,
+             range=(0, 80, 1),
+             uid=[0],
+             advanced=True,
+         ),
+         desc.ChoiceParam(
+             name='verboseLevel',
+             label='Verbose Level',
+             description='Verbosity level (fatal, error, warning, info, debug, trace).',
+             value='info',
+             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+             exclusive=True,
+             uid=[],
+         ),
     ]
 
     outputs = [

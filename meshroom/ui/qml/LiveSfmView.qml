@@ -4,6 +4,8 @@ import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import Qt.labs.platform 1.0 as Platform // for FileDialog
 
+import Controls 1.0
+
 /**
  * LiveSfMView provides controls for setting up and starting a live reconstruction.
  */

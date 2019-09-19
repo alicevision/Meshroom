@@ -118,7 +118,7 @@ class EdgeMouseArea(QQuickItem):
     containsMouse = Property(float, getContainsMouse, notify=containsMouseChanged)
     acceptedButtons = Property(int,
                                lambda self: super(EdgeMouseArea, self).acceptedMouseButtons,
-                               lambda self, value: super(EdgeMouseArea, self).setAcceptedMouseButtons(value))
+                               lambda self, value: super(EdgeMouseArea, self).setAcceptedMouseButtons(Qt.MouseButtons(value)))
 
     pressed = Signal(MouseEvent)
     released = Signal(MouseEvent)

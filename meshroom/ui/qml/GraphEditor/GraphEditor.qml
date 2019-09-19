@@ -2,6 +2,7 @@ import QtQuick 2.7
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 import Controls 1.0
+import Utils 1.0
 import MaterialIcons 2.2
 
 /**
@@ -14,14 +15,16 @@ Item {
     readonly property variant graph: uigraph ? uigraph.graph : null  /// core graph contained in ui graph
     property variant nodeTypesModel: null  /// the list of node types that can be instantiated
     property bool readOnly: false
-    property variant selectedNode: null
 
     property var _attributeToDelegate: ({})
 
     // signals
     signal workspaceMoved()
     signal workspaceClicked()
-    signal nodeDoubleClicked(var node)
+
+    signal nodeDoubleClicked(var mouse, var node)
+    signal computeRequest(var node)
+    signal submitRequest(var node)
 
     // trigger initial fit() after initialization
     // (ensure GraphEditor has its final size)
@@ -52,11 +55,13 @@ Item {
     /// Select node delegate
     function selectNode(node)
     {
-        root.selectedNode = node
+        uigraph.selectedNode = node
     }
 
     /// Duplicate a node and optionnally all the following ones
     function duplicateNode(node, duplicateFollowingNodes) {
+        if(root.readOnly)
+            return;
         var nodes = uigraph.duplicateNode(node, duplicateFollowingNodes)
         selectNode(nodes[0])
     }
@@ -80,6 +85,8 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         drag.threshold: 0
+        cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
+
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
             var scale = draggable.scale * zoomFactor
@@ -113,9 +120,13 @@ Item {
         onClicked: {
             if(mouse.button == Qt.RightButton)
             {
-                // store mouse click position in 'draggable' coordinates as new node spawn position
-                newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
-                newNodeMenu.popup()
+                if(readOnly)
+                    lockedMenu.popup();
+                else {
+                    // store mouse click position in 'draggable' coordinates as new node spawn position
+                    newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y);
+                    newNodeMenu.popup();
+                }
             }
         }
 
@@ -136,18 +147,14 @@ Item {
                 if(visible) {
                     // when menu is shown,
                     // clear and give focus to the TextField filter
-                    filterTextField.clear()
-                    filterTextField.forceActiveFocus()
+                    searchBar.clear()
+                    searchBar.forceActiveFocus()
                 }
             }
 
-            TextField {
-                id: filterTextField
-                selectByMouse: true
+            SearchBar {
+                id: searchBar
                 width: parent.width
-                // ensure down arrow give focus to the first MenuItem
-                // (without this, we have to pressed the down key twice to do so)
-                Keys.onDownPressed: nextItemInFocusChain().forceActiveFocus()
             }
 
             Repeater {
@@ -158,24 +165,28 @@ Item {
                     id: menuItemDelegate
                     font.pointSize: 8
                     padding: 3
+
                     // Hide items that does not match the filter text
-                    visible: modelData.toLowerCase().indexOf(filterTextField.text.toLocaleLowerCase()) > -1
+                    visible: modelData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
+                    // Reset menu currentIndex if highlighted items gets filtered out
+                    onVisibleChanged: if(highlighted) newNodeMenu.currentIndex = 0
                     text: modelData
+                    // Forward key events to the search bar to continue typing seamlessly
+                    // even if this delegate took the activeFocus due to mouse hovering
+                    Keys.forwardTo: [searchBar.textField]
                     Keys.onPressed: {
+                        event.accepted = false;
                         switch(event.key)
                         {
                         case Qt.Key_Return:
                         case Qt.Key_Enter:
                             // create node on validation (Enter/Return keys)
-                            newNodeMenu.createNode(modelData)
-                            newNodeMenu.dismiss()
-                            break;
-                        case Qt.Key_Home:
-                            // give focus back to filter
-                            filterTextField.forceActiveFocus()
+                            newNodeMenu.createNode(modelData);
+                            newNodeMenu.close();
+                            event.accepted = true;
                             break;
                         default:
-                            break;
+                            searchBar.textField.forceActiveFocus();
                         }
                     }
                     // Create node on mouse click
@@ -194,6 +205,17 @@ Item {
                         }
                     ]
                 }
+            }
+        }
+
+        // Informative contextual menu when graph is read-only
+        Menu {
+            id: lockedMenu
+            MenuItem {
+                id: item
+                font.pointSize: 8
+                enabled: false
+                text: "Computing - Graph is Locked!"
             }
         }
 
@@ -259,13 +281,15 @@ Item {
 
                 MenuItem {
                     text: "Compute"
-                    enabled: !root.readOnly && nodeMenu.canComputeNode
-                    onTriggered: uigraph.execute(nodeMenu.currentNode)
+                    enabled: !uigraph.computing && !root.readOnly && nodeMenu.canComputeNode
+                    onTriggered: computeRequest(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Submit"
-                    enabled: !root.readOnly && nodeMenu.canComputeNode
-                    onTriggered: uigraph.submit(nodeMenu.currentNode)
+                    enabled: !uigraph.computing && !root.readOnly && nodeMenu.canComputeNode
+                    visible: uigraph.canSubmit
+                    height: visible ? implicitHeight : 0
+                    onTriggered: submitRequest(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Open Folder"
@@ -273,23 +297,84 @@ Item {
                 }
                 MenuSeparator {}
                 MenuItem {
-                    text: "Duplicate"
+                    text: "Duplicate Node" + (duplicateFollowingButton.hovered ? "s From Here" : "")
+                    enabled: !root.readOnly
                     onTriggered: duplicateNode(nodeMenu.currentNode, false)
+                    MaterialToolButton {
+                        id: duplicateFollowingButton
+                        height: parent.height
+                        anchors { right: parent.right; rightMargin: parent.padding }
+                        text: MaterialIcons.fast_forward
+                        onClicked: {
+                            duplicateNode(nodeMenu.currentNode, true);
+                            nodeMenu.close();
+                        }
+                    }
                 }
                 MenuItem {
-                    text: "Duplicate From Here"
-                    onTriggered: duplicateNode(nodeMenu.currentNode, true)
+                    text: "Remove Node" + (removeFollowingButton.hovered ? "s From Here" : "")
+                    enabled: !root.readOnly
+                    onTriggered: uigraph.removeNode(nodeMenu.currentNode)
+                    MaterialToolButton {
+                        id: removeFollowingButton
+                        height: parent.height
+                        anchors { right: parent.right; rightMargin: parent.padding }
+                        text: MaterialIcons.fast_forward
+                        onClicked: {
+                            uigraph.removeNodesFrom(nodeMenu.currentNode);
+                            nodeMenu.close();
+                        }
+                    }
                 }
                 MenuSeparator {}
                 MenuItem {
-                    text: "Clear Data"
+                    text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
                     enabled: !root.readOnly
-                    onTriggered: nodeMenu.currentNode.clearData()
-                }
-                MenuItem {
-                    text: "Delete Node"
-                    enabled: !root.readOnly
-                    onTriggered: uigraph.removeNode(nodeMenu.currentNode)
+
+                    function showConfirmationDialog(deleteFollowing) {
+                        var obj = deleteDataDialog.createObject(root,
+                                           {
+                                               "node": nodeMenu.currentNode,
+                                               "deleteFollowing": deleteFollowing
+                                           });
+                        obj.open()
+                        nodeMenu.close();
+                    }
+
+                    onTriggered: showConfirmationDialog(false)
+
+                    MaterialToolButton {
+                        id: deleteFollowingButton
+                        anchors { right: parent.right; rightMargin: parent.padding }
+                        height: parent.height
+                        text: MaterialIcons.fast_forward
+                        onClicked: parent.showConfirmationDialog(true)
+                    }
+
+                    // Confirmation dialog for node cache deletion
+                    Component {
+                        id: deleteDataDialog
+                        MessageDialog  {
+                            property var node
+                            property bool deleteFollowing: false
+
+                            focus: true
+                            modal: false
+                            header.visible: false
+
+                            text: "Delete Data computed by '" + node.label + (deleteFollowing ?  "' and following Nodes?" : "'?")
+                            helperText: "Warning: This operation can not be undone."
+                            standardButtons: Dialog.Yes | Dialog.Cancel
+
+                            onAccepted: {
+                                if(deleteFollowing)
+                                    graph.clearDataFrom(node);
+                                else
+                                    node.clearData();
+                            }
+                            onClosed: destroy()
+                        }
+                    }
                 }
             }
 
@@ -308,7 +393,8 @@ Item {
                     node: object
                     width: uigraph.layout.nodeWidth
                     readOnly: root.readOnly
-                    selected: root.selectedNode == node
+                    selected: uigraph.selectedNode === node
+                    hovered: uigraph.hoveredNode === node
                     onSelectedChanged: if(selected) forceActiveFocus()
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
@@ -328,11 +414,21 @@ Item {
                         }
                     }
 
-                    onDoubleClicked: root.nodeDoubleClicked(node)
+                    onDoubleClicked: root.nodeDoubleClicked(mouse, node)
 
                     onMoved: uigraph.moveNode(node, position)
 
-                    Keys.onDeletePressed: uigraph.removeNode(node)
+                    onEntered: uigraph.hoveredNode = node
+                    onExited: uigraph.hoveredNode = null
+
+                    Keys.onDeletePressed: {
+                        if(root.readOnly)
+                            return;
+                        if(event.modifiers == Qt.AltModifier)
+                            uigraph.removeNodesFrom(node)
+                        else
+                            uigraph.removeNode(node)
+                    }
 
                     Behavior on x {
                         enabled: animatePosition

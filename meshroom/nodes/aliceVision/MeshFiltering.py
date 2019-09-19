@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 
@@ -8,8 +8,8 @@ class MeshFiltering(desc.CommandLineNode):
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
+            name='inputMesh',
+            label='Input Mesh',
             description='''Input Mesh (OBJ file format).''',
             value='',
             uid=[0],
@@ -26,13 +26,13 @@ class MeshFiltering(desc.CommandLineNode):
             name='keepLargestMeshOnly',
             label='Keep Only the Largest Mesh',
             description='Keep only the largest connected triangles group.',
-            value=True,
+            value=False,
             uid=[0],
             ),
         desc.IntParam(
             name='iterations',
-            label='Nb Iterations',
-            description='',
+            label='Smoothing Iterations',
+            description='Number of smoothing iterations',
             value=5,
             range=(0, 50, 1),
             uid=[0],
@@ -44,6 +44,7 @@ class MeshFiltering(desc.CommandLineNode):
             value=1.0,
             range=(0.0, 10.0, 0.1),
             uid=[0],
+            advanced=True,
             ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -58,8 +59,8 @@ class MeshFiltering(desc.CommandLineNode):
 
     outputs = [
         desc.File(
-            name='output',
-            label='Output',
+            name='outputMesh',
+            label='Output Mesh',
             description='''Output mesh (OBJ file format).''',
             value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],

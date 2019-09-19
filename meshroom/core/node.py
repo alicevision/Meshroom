@@ -144,6 +144,7 @@ class NodeChunk(BaseObject):
         self.range = range
         self.status = StatusData(node.name, node.nodeType, node.packageName, node.packageVersion)
         self.statistics = stats.Statistics()
+        self.statusFileLastModTime = -1
         self._subprocess = None
         # notify update in filepaths when node's internal folder changes
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
@@ -175,11 +176,13 @@ class NodeChunk(BaseObject):
         oldStatus = self.status.status
         # No status file => reset status to Status.None
         if not os.path.exists(statusFile):
+            self.statusFileLastModTime = -1
             self.status.reset()
         else:
             with open(statusFile, 'r') as jsonFile:
                 statusData = json.load(jsonFile)
             self.status.fromDict(statusData)
+            self.statusFileLastModTime = os.path.getmtime(statusFile)
         if oldStatus != self.status.status:
             self.statusChanged.emit()
 
@@ -282,6 +285,7 @@ class NodeChunk(BaseObject):
             # ask and wait for the stats thread to stop
             self.statThread.stopRequest()
             self.statThread.join()
+            self.statistics = stats.Statistics()
             del runningProcesses[self.name]
 
         self.upgradeStatusTo(Status.SUCCESS)
@@ -337,8 +341,8 @@ class BaseNode(BaseObject):
         self.packageName = self.packageVersion = ""
         self._internalFolder = ""
 
-        self._name = None  # type: str
-        self.graph = None  # type: Graph
+        self._name = None
+        self.graph = None
         self.dirty = True  # whether this node's outputs must be re-evaluated on next Graph update
         self._chunks = ListModel(parent=self)
         self._uids = dict()
@@ -361,6 +365,14 @@ class BaseNode(BaseObject):
 
     def getName(self):
         return self._name
+
+    def getLabel(self):
+        """
+        Returns:
+            str: the high-level label of this node
+        """
+        t, idx = self._name.split("_")
+        return "{}{}".format(t, idx if int(idx) > 1 else "")
 
     @property
     def packageFullName(self):
@@ -450,7 +462,7 @@ class BaseNode(BaseObject):
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             self._cmdVars[name + 'Value'] = str(v)
 
-            if v is not None and v is not '':
+            if v:
                 self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
                                                           ' ' + self._cmdVars[name]
 
@@ -469,7 +481,7 @@ class BaseNode(BaseObject):
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
             self._cmdVars[name + 'Value'] = str(v)
 
-            if v is not None and v is not '':
+            if v:
                 self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
                                                           ' ' + self._cmdVars[name]
 
@@ -592,15 +604,30 @@ class BaseNode(BaseObject):
     def endSequence(self):
         pass
 
-    def getStatus(self):
-        return self.status
+    def getGlobalStatus(self):
+        """
+        Get node global status based on the status of its chunks.
+
+        Returns:
+            Status: the node global status
+        """
+        chunksStatus = [chunk.status.status for chunk in self._chunks]
+
+        anyOf = (Status.ERROR, Status.STOPPED, Status.KILLED,
+                 Status.RUNNING, Status.SUBMITTED)
+        allOf = (Status.SUCCESS,)
+
+        for status in anyOf:
+            if any(s == status for s in chunksStatus):
+                return status
+        for status in allOf:
+            if all(s == status for s in chunksStatus):
+                return status
+
+        return Status.NONE
 
     def getChunks(self):
         return self._chunks
-
-    @property
-    def statusNames(self):
-        return [s.status.name for s in self.status]
 
     def getSize(self):
         return self._size
@@ -615,6 +642,7 @@ class BaseNode(BaseObject):
         return self.name
 
     name = Property(str, getName, constant=True)
+    label = Property(str, getLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     positionChanged = Signal()
     position = Property(Variant, position.fget, position.fset, notify=positionChanged)
@@ -630,6 +658,8 @@ class BaseNode(BaseObject):
     chunks = Property(Variant, getChunks, notify=chunksChanged)
     sizeChanged = Signal()
     size = Property(int, getSize, notify=sizeChanged)
+    globalStatusChanged = Signal()
+    globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
 
 
 class Node(BaseNode):
@@ -689,6 +719,8 @@ class Node(BaseNode):
                 ranges = self.nodeDesc.parallelization.getRanges(self)
                 if len(ranges) != len(self._chunks):
                     self._chunks.setObjectList([NodeChunk(self, range) for range in ranges])
+                    for c in self._chunks:
+                        c.statusChanged.connect(self.globalStatusChanged)
                 else:
                     for chunk, range in zip(self._chunks, ranges):
                         chunk.range = range
@@ -699,6 +731,7 @@ class Node(BaseNode):
         else:
             if len(self._chunks) != 1:
                 self._chunks.setObjectList([NodeChunk(self, desc.Range())])
+                self._chunks[0].statusChanged.connect(self.globalStatusChanged)
             else:
                 self._chunks[0].range = desc.Range()
 
@@ -746,6 +779,7 @@ class CompatibilityNode(BaseNode):
             # store attributes that could be used during node upgrade
             if matchDesc:
                 self._commonInputs.append(attrName)
+
         # create outputs attributes
         for attrName, value in self.outputs.items():
             self._addAttribute(attrName, value, True)
@@ -813,7 +847,7 @@ class CompatibilityNode(BaseNode):
         Try to find a matching attribute description in refAttributes for given attribute 'name' and 'value'.
 
         Args:
-            refAttributes ([Attribute]): reference Attributes to look for a description
+            refAttributes ([desc.Attribute]): reference Attributes to look for a description
             name (str): attribute's name
             value: attribute's value
 
@@ -822,13 +856,12 @@ class CompatibilityNode(BaseNode):
         """
         # from original node description based on attribute's name
         attrDesc = next((d for d in refAttributes if d.name == name), None)
-        if attrDesc:
-            # ensure value is valid for this description
-            try:
-                attrDesc.validateValue(value)
-            except ValueError:
-                attrDesc = None
-        return attrDesc
+        # consider this value matches description:
+        #  - if it's a serialized link expression (no proper value to set/evaluate)
+        #  - or if it passes the 'matchDescription' test
+        if attrDesc and (Attribute.isLinkExpression(value) or attrDesc.matchDescription(value)):
+            return attrDesc
+        return None
 
     def _addAttribute(self, name, val, isOutput):
         """
@@ -953,23 +986,31 @@ def nodeFactory(nodeDict, name=None):
             compatibilityIssue = CompatibilityIssue.VersionConflict
         # in other cases, check attributes compatibility between serialized node and its description
         else:
-            descAttrNames = set([attr.name for attr in nodeDesc.inputs + nodeDesc.outputs])
-            attrNames = set([name for name in list(inputs.keys()) + list(outputs.keys())])
-            if attrNames != descAttrNames:
+            # check that the node has the exact same set of inputs/outputs as its description
+            if sorted([attr.name for attr in nodeDesc.inputs]) != sorted(inputs.keys()) or \
+                    sorted([attr.name for attr in nodeDesc.outputs]) != sorted(outputs.keys()):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
+            # verify that all inputs match their descriptions
+            for attrName, value in inputs.items():
+                if not CompatibilityNode.attributeDescFromName(nodeDesc.inputs, attrName, value):
+                    compatibilityIssue = CompatibilityIssue.DescriptionConflict
+                    break
+            # verify that all outputs match their descriptions
+            for attrName, value in outputs.items():
+                if not CompatibilityNode.attributeDescFromName(nodeDesc.outputs, attrName, value):
+                    compatibilityIssue = CompatibilityIssue.DescriptionConflict
+                    break
 
-    # no compatibility issues: instantiate a Node
     if compatibilityIssue is None:
-        n = Node(nodeType, position, **inputs)
-    # otherwise, instantiate a CompatibilityNode
+        node = Node(nodeType, position, **inputs)
     else:
         logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
-        n = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)
+        node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)
         # retro-compatibility: no internal folder saved
         # can't spawn meaningful CompatibilityNode with precomputed outputs
         # => automatically try to perform node upgrade
         if not internalFolder and nodeDesc:
             logging.warning("No serialized output data: performing automatic upgrade on '{}'".format(name))
-            n = n.upgrade()
+            node = node.upgrade()
 
-    return n
+    return node

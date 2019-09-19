@@ -1,4 +1,4 @@
-from meshroom.common import BaseObject, Property, Variant
+from meshroom.common import BaseObject, Property, Variant, VariantList
 from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import collections
@@ -11,7 +11,7 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, uid, group):
+    def __init__(self, name, label, description, value, advanced, uid, group):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
@@ -19,6 +19,7 @@ class Attribute(BaseObject):
         self._value = value
         self._uid = uid
         self._group = group
+        self._advanced = advanced
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
@@ -26,48 +27,92 @@ class Attribute(BaseObject):
     value = Property(Variant, lambda self: self._value, constant=True)
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
+    advanced = Property(bool, lambda self: self._advanced, constant=True)
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
+        """ Return validated/conformed 'value'.
+
+        Raises:
+            ValueError: if value does not have the proper type
+        """
         return value
+
+    def matchDescription(self, value):
+        """ Returns whether the value perfectly match attribute's description. """
+        try:
+            self.validateValue(value)
+        except ValueError:
+            return False
+        return True
 
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, name, label, description, group='allParams', joinChar=' '):
+    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, joinChar=' '):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced)
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def validateValue(self, value):
-        if not isinstance(value, collections.Iterable):
-            raise ValueError('ListAttribute only supports iterable input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        if not isinstance(value, (list, tuple)):
+            raise ValueError('ListAttribute only supports list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
+
+    def matchDescription(self, value):
+        """ Check that 'value' content matches ListAttribute's element description. """
+        if not super(ListAttribute, self).matchDescription(value):
+            return False
+        # list must be homogeneous: only test first element
+        if value:
+            return self._elementDesc.matchDescription(value[0])
+        return True
 
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group='allParams', joinChar=' '):
+    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, joinChar=' '):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def validateValue(self, value):
+        """ Ensure value is a dictionary with keys compatible with the group description. """
         if not isinstance(value, dict):
             raise ValueError('GroupAttribute only supports dict input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
+        if invalidKeys:
+            raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
         return value
+
+    def matchDescription(self, value):
+        """
+        Check that 'value' contains the exact same set of keys as GroupAttribute's group description
+        and that every child value match corresponding child attribute description.
+        """
+        if not super(GroupAttribute, self).matchDescription(value):
+            return False
+        attrMap = {attr.name: attr for attr in self._groupDesc}
+        # must have the exact same child attributes
+        if sorted(value.keys()) != sorted(attrMap.keys()):
+            return False
+        for k, v in value.items():
+            # each child value must match corresponding child attribute description
+            if not attrMap[k].matchDescription(v):
+                return False
+        return True
 
     def retrieveChildrenUids(self):
         allUids = []
@@ -82,15 +127,15 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group):
-        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group, advanced):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
 
 class File(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams'):
-        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False):
+        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):
@@ -101,12 +146,12 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams'):
-        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False):
+        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         try:
-            return bool(value)
+            return bool(int(value)) # int cast is useful to handle string values ('0', '1')
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
@@ -114,9 +159,9 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams'):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False):
         self._range = range
-        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
@@ -127,15 +172,15 @@ class IntParam(Param):
         except:
             raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
-    range = Property(Variant, lambda self: self._range, constant=True)
+    range = Property(VariantList, lambda self: self._range, constant=True)
 
 
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams'):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False):
         self._range = range
-        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         try:
@@ -143,19 +188,19 @@ class FloatParam(Param):
         except:
             raise ValueError('FloatParam only supports float value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
-    range = Property(Variant, lambda self: self._range, constant=True)
+    range = Property(VariantList, lambda self: self._range, constant=True)
 
 
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' '):
+    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False):
         assert values
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
         self._valueType = type(self._values[0])  # cast to value type
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def conformValue(self, val):
         """ Conform 'val' to the correct type and check for its validity """
@@ -172,7 +217,7 @@ class ChoiceParam(Param):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
-    values = Property(Variant, lambda self: self._values, constant=True)
+    values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
@@ -180,8 +225,8 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams'):
-        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False):
+        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):
@@ -224,7 +269,8 @@ class Range:
             "rangeStart": self.start,
             "rangeEnd": self.end,
             "rangeLast": self.last,
-            "rangeBlockSize": self.effectiveBlockSize,
+            "rangeBlockSize": self.blockSize,
+            "rangeEffectiveBlockSize": self.effectiveBlockSize,
             "rangeFullSize": self.fullSize,
             }
 

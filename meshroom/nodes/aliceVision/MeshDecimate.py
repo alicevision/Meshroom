@@ -57,6 +57,7 @@ class MeshDecimate(desc.CommandLineNode):
                         'and the convention change from one software to another.',
             value=False,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

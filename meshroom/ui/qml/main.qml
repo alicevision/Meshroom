@@ -20,6 +20,9 @@ ApplicationWindow {
     minimumHeight: 500
     visible: true
 
+    /// Whether graph is currently locked and therefore read-only
+    readonly property bool graphLocked: _reconstruction.computing && GraphEditorSettings.lockOnCompute
+
     title: {
         var t = _reconstruction.graph.filepath || "Untitled"
         if(!_reconstruction.undoStack.clean)
@@ -27,10 +30,6 @@ ApplicationWindow {
         t += " - " + Qt.application.name + " " + Qt.application.version
         return t
     }
-
-    property variant node: null
-    // supported 3D files extensions
-    readonly property var _3dFileExtensions: ['.obj', '.abc']
 
     onClosing: {
         // make sure document is saved before exiting application
@@ -140,24 +139,66 @@ ApplicationWindow {
         onRejected: closed(Platform.Dialog.Rejected)
     }
 
-    MessageDialog {
-        id: unsavedComputeDialog
+    Item {
+        id: computeManager
 
-        canCopy: false
-        icon.text: MaterialIcons.warning
-        preset: "Warning"
-        title: "Unsaved Project"
-        text: "Data will be computed in the default cache folder if project remains unsaved."
-        detailedText: "Default cache folder: " + _reconstruction.graph.cacheDir
-        helperText: "Save project first?"
-        standardButtons: Dialog.Discard | Dialog.Cancel | Dialog.Save
-        Component.onCompleted: {
-            // set up discard button text
-            standardButton(Dialog.Discard).text = "Continue without Saving"
+        property bool warnIfUnsaved: true
+
+        // evaluate if global reconstruction computation can be started
+        property bool canStartComputation: _reconstruction.viewpoints.count >= 2      // at least 2 images
+                                           && !_reconstruction.computing              // computation is not started
+                                           && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
+
+        // evaluate if graph computation can be submitted externally
+        property bool canSubmit: _reconstruction.canSubmit                            // current setup allows to compute externally
+                                 && canStartComputation                               // can be computed
+                                 && _reconstruction.graph.filepath                    // graph is saved on disk
+
+        function compute(node, force) {
+            if(!force && warnIfUnsaved && !_reconstruction.graph.filepath)
+            {
+                unsavedComputeDialog.currentNode = node;
+                unsavedComputeDialog.open();
+            }
+            else
+                _reconstruction.execute(node);
         }
 
-        onDiscarded: { close(); _reconstruction.execute(null) }
-        onAccepted: saveAsAction.trigger()
+        function submit(node) {
+            _reconstruction.submit(node);
+        }
+
+
+        MessageDialog {
+            id: unsavedComputeDialog
+
+            property var currentNode: null
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "Unsaved Project"
+            text: "Data will be computed in the default cache folder if project remains unsaved."
+            detailedText: "Default cache folder: " + _reconstruction.graph.cacheDir
+            helperText: "Save project first?"
+            standardButtons: Dialog.Discard | Dialog.Cancel | Dialog.Save
+
+            CheckBox {
+                Layout.alignment: Qt.AlignRight
+                text: "Don't ask again for this session"
+                padding: 0
+                onToggled: computeManager.warnIfUnsaved = !checked
+            }
+
+            Component.onCompleted: {
+                // set up discard button text
+                standardButton(Dialog.Discard).text = "Continue without Saving"
+            }
+
+            onDiscarded: { close(); computeManager.compute(currentNode, true) }
+            onAccepted: saveAsAction.trigger()
+        }
     }
 
     Platform.FileDialog {
@@ -211,30 +252,23 @@ ApplicationWindow {
         return true
     }
 
-    Dialog {
+    MessageDialog {
         // Popup displayed while the application
         // is busy building intrinsics while importing images
         id: buildingIntrinsicsDialog
         modal: true
-        x: _window.width / 2 - width/2
-        y: _window.height / 2 - height/2
         visible: _reconstruction.buildingIntrinsics
         closePolicy: Popup.NoAutoClose
-        title: "Import Images"
-        padding: 15
+        title: "Initializing Cameras"
+        icon.text: MaterialIcons.camera
+        icon.font.pointSize: 10
+        canCopy: false
+        standardButtons: Dialog.NoButton
 
-        ColumnLayout {
-            anchors.fill: parent
-            Label {
-                text: "Extracting images metadata... "
-                horizontalAlignment: Text.AlignHCenter
-
-                Layout.fillWidth: true
-            }
-            ProgressBar {
-                indeterminate: true
-                Layout.fillWidth: true
-            }
+        detailedText:  "Extracting images metadata and creating Camera intrinsics..."
+        ProgressBar {
+            indeterminate: true
+            Layout.fillWidth: true
         }
     }
 
@@ -253,7 +287,7 @@ ApplicationWindow {
         property string tooltip: 'Undo "' +_reconstruction.undoStack.undoText +'"'
         text: "Undo"
         shortcut: "Ctrl+Z"
-        enabled: _reconstruction.undoStack.canUndo && !_reconstruction.computing
+        enabled: _reconstruction.undoStack.canUndo && !graphLocked
         onTriggered: _reconstruction.undoStack.undo()
     }
     Action {
@@ -262,7 +296,7 @@ ApplicationWindow {
         property string tooltip: 'Redo "' +_reconstruction.undoStack.redoText +'"'
         text: "Redo"
         shortcut: "Ctrl+Shift+Z"
-        enabled: _reconstruction.undoStack.canRedo && !_reconstruction.computing
+        enabled: _reconstruction.undoStack.canRedo && !graphLocked
         onTriggered: _reconstruction.undoStack.redo()
     }
 
@@ -426,16 +460,6 @@ ApplicationWindow {
                 Item { Layout.fillWidth: true }
 
                 Row {
-                    // evaluate if global reconstruction computation can be started
-                    property bool canStartComputation: _reconstruction.viewpoints.count >= 2      // at least 2 images
-                                                       && !_reconstruction.computing              // computation is not started
-                                                       && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
-
-                    // evaluate if graph computation can be submitted externally
-                    property bool canSubmit: _reconstruction.canSubmit                            // current setup allows to compute externally
-                                             && canStartComputation                               // can be computed
-                                             && _reconstruction.graph.filepath                    // graph is saved on disk
-
                     // disable controls if graph is executed externally
                     enabled: !_reconstruction.computingExternally
                     Layout.alignment: Qt.AlignHCenter
@@ -446,13 +470,8 @@ ApplicationWindow {
                         palette.button: enabled ? buttonColor : disabledPalette.button
                         palette.window: enabled ? buttonColor : disabledPalette.window
                         palette.buttonText: enabled ? "white" : disabledPalette.buttonText
-                        enabled: parent.canStartComputation
-                        onClicked: {
-                            if(!_reconstruction.graph.filepath)
-                                unsavedComputeDialog.open()
-                            else
-                                _reconstruction.execute(null)
-                        }
+                        enabled: computeManager.canStartComputation
+                        onClicked: computeManager.compute(null)
                     }
                     Button {
                         text: "Stop"
@@ -462,9 +481,9 @@ ApplicationWindow {
                     Item { width: 20; height: 1 }
                     Button {
                         visible: _reconstruction.canSubmit
-                        enabled: parent.canSubmit
+                        enabled: computeManager.canSubmit
                         text: "Submit"
-                        onClicked: _reconstruction.submit(null)
+                        onClicked: computeManager.submit(null)
                     }
                 }
                 Item { Layout.fillWidth: true; Layout.fillHeight: true }
@@ -504,75 +523,110 @@ ApplicationWindow {
                 Layout.minimumHeight: 50
                 reconstruction: _reconstruction
                 readOnly: _reconstruction.computing
+
+                function viewIn3D(attribute, mouse) {
+                    var loaded = viewer3D.view(attribute);
+                    // solo media if Control modifier was held
+                    if(loaded && mouse && mouse.modifiers & Qt.ControlModifier)
+                        viewer3D.solo(attribute);
+                    return loaded;
+                }
             }
         }
 
-        Panel {
-            Layout.fillWidth: true
-            Layout.fillHeight: false
-            padding: 0
+        Controls1.SplitView {
+            orientation: Qt.Horizontal
+            width: parent.width
             height: Math.round(parent.height * 0.3)
-            title: "Graph Editor"
             visible: settings_UILayout.showGraphEditor
 
-            Controls1.SplitView {
-                orientation: Qt.Horizontal
-                anchors.fill: parent
+            Panel {
+                id: graphEditorPanel
+                Layout.fillWidth: true
+                padding: 4
+                title: "Graph Editor"
 
-                Item {
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
-                    Layout.margins: 2
-
-                    GraphEditor {
-                        id: graphEditor
-
-                        anchors.fill: parent
-                        uigraph: _reconstruction
-                        nodeTypesModel: _nodeTypes
-                        readOnly: _reconstruction.computing
-
-                        onNodeDoubleClicked: {
-                            if(node.nodeType == "StructureFromMotion")
-                            {
-                                _reconstruction.sfm = node
-                                return
+                headerBar: RowLayout {
+                    MaterialToolButton {
+                        text: MaterialIcons.more_vert
+                        font.pointSize: 11
+                        padding: 2
+                        onClicked: graphEditorMenu.open()
+                        Menu {
+                            id: graphEditorMenu
+                            y: parent.height
+                            x: -width + parent.width
+                            MenuItem {
+                                text: "Clear Pending Status"
+                                enabled: !_reconstruction.computingLocally
+                                onTriggered: _reconstruction.graph.clearSubmittedNodes()
                             }
-                            for(var i=0; i < node.attributes.count; ++i)
-                            {
-                                var attr = node.attributes.at(i)
-                                if(attr.isOutput
-                                   && attr.desc.type === "File"
-                                   && _3dFileExtensions.indexOf(Filepath.extension(attr.value)) > - 1 )
-                                  {
-                                    workspaceView.load3DMedia(Filepath.stringToUrl(attr.value))
-                                    break // only load first model found
-                                  }
+                            MenuItem {
+                                text: "Refresh Nodes Status"
+                                enabled: !_reconstruction.computingLocally
+                                onTriggered: _reconstruction.forceNodesStatusUpdate()
                             }
-                        }
-                    }
-                }
-                Item {
-                    implicitHeight: Math.round(parent.height * 0.2)
-                    implicitWidth: Math.round(parent.width * 0.3)
-
-                    Loader {
-                        anchors.fill: parent
-                        anchors.margins: 2
-                        active: graphEditor.selectedNode != null
-                        sourceComponent: Component {
-                            AttributeEditor {
-                                node: graphEditor.selectedNode
-                                // Make AttributeEditor readOnly when computing
-                                readOnly: _reconstruction.computing
-
-                                onUpgradeRequest: {
-                                    var n = _reconstruction.upgradeNode(node)
-                                    graphEditor.selectNode(n)
+                            Menu {
+                                title: "Advanced"
+                                MenuItem {
+                                    text: "Lock on Compute"
+                                    ToolTip.text: "Lock Graph when computing. This should only be disabled for advanced usage."
+                                    ToolTip.visible: hovered
+                                    checkable: true
+                                    checked: GraphEditorSettings.lockOnCompute
+                                    onClicked: GraphEditorSettings.lockOnCompute = !GraphEditorSettings.lockOnCompute
                                 }
                             }
                         }
                     }
+                }
+
+
+                GraphEditor {
+                    id: graphEditor
+
+                    anchors.fill: parent
+                    uigraph: _reconstruction
+                    nodeTypesModel: _nodeTypes
+                    readOnly: graphLocked
+
+                    onNodeDoubleClicked: {
+                        if(node.nodeType === "StructureFromMotion")
+                        {
+                            _reconstruction.sfm = node;
+                        }
+                        else if(node.nodeType === "FeatureExtraction")
+                        {
+                            _reconstruction.featureExtraction = node;
+                        }
+                        else if(node.nodeType === "CameraInit")
+                        {
+                            _reconstruction.cameraInit = node;
+                        }
+                        for(var i=0; i < node.attributes.count; ++i)
+                        {
+                            var attr = node.attributes.at(i)
+                            if(attr.isOutput
+                               && workspaceView.viewIn3D(attr, mouse))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    onComputeRequest: computeManager.compute(node)
+                    onSubmitRequest: computeManager.submit(node)
+                }
+            }
+
+            NodeEditor {
+                width: Math.round(parent.width * 0.3)
+                node: _reconstruction.selectedNode
+                // Make NodeEditor readOnly when computing
+                readOnly: graphLocked
+                onAttributeDoubleClicked: workspaceView.viewIn3D(attribute, mouse)
+                onUpgradeRequest: {
+                    var n = _reconstruction.upgradeNode(node);
+                    _reconstruction.selectedNode = n;
                 }
             }
         }

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import argparse
+import os
+import sys
 
 import meshroom
 meshroom.setupEnvironment()
@@ -8,26 +10,44 @@ import meshroom.core.graph
 from meshroom import multiview
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
-parser.add_argument('--input', metavar='FOLDER', type=str,
+parser.add_argument('--input', metavar='FOLDER_OR_SFM', type=str,
                     default='',
-                    help='Input folder or json file.')
+                    help='Input folder containing images or file (.sfm or .json) '
+                         'with images paths and optionally predefined camera intrinsics.')
 parser.add_argument('--inputImages', metavar='IMAGES', type=str, nargs='*',
+                    default=[],
                     help='Input images.')
-parser.add_argument('--output', metavar='FOLDER', type=str, required=True,
-                    help='Output folder.')
 
-parser.add_argument('--save', metavar='FOLDER', type=str, required=False,
-                    help='Save the workflow to a meshroom files (instead of running it).')
+parser.add_argument('--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
+                    help='Meshroom file containing a pre-configured photogrammetry pipeline to run on input images. '
+                         'If not set, the default photogrammetry pipeline will be used. '
+                         'Requirements: the graph must contain one CameraInit node, '
+                         'and one Publish node if --output is set.')
 
-parser.add_argument('--scale', type=int, default=2,
-                    help='Downscale factor for MVS steps. Possible values are: 1, 2, 4, 8, 16.')
+parser.add_argument('--overrides', metavar='SETTINGS', type=str, default=None,
+                    help='A JSON file containing the graph parameters override.')
+
+parser.add_argument('--output', metavar='FOLDER', type=str, required=False,
+                    help='Output folder where results should be copied to. '
+                         'If not set, results will have to be retrieved directly from the cache folder.')
+
+parser.add_argument('--cache', metavar='FOLDER', type=str,
+                    default=None,
+                    help='Custom cache folder to write computation results. '
+                         'If not set, the default cache folder will be used: ' + meshroom.core.defaultCacheFolder)
+
+parser.add_argument('--save', metavar='FILE', type=str, required=False,
+                    help='Save the configured Meshroom project to a file (instead of running it).')
+
+parser.add_argument('--scale', type=int, default=-1,
+                    choices=[-1, 1, 2, 4, 8, 16],
+                    help='Downscale factor override for DepthMap estimation. '
+                         'By default (-1): use pipeline default value.')
 
 parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
                     default=None,
                     help='Process the node(s) with its dependencies.')
-parser.add_argument('--cache', metavar='FOLDER', type=str,
-                    default=None,
-                    help='Choose a custom cache folder')
+
 parser.add_argument('--forceStatus', help='Force computation if status is RUNNING or SUBMITTED.',
                     action='store_true')
 parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
@@ -35,31 +55,90 @@ parser.add_argument('--forceCompute', help='Compute in all cases even if already
 
 args = parser.parse_args()
 
-if not args.output and not args.save:
-    print('Nothing to do. You need to set --output or --save.')
-    exit(1)
+
+def getOnlyNodeOfType(g, nodeType):
+    """ Helper function to get a node of 'nodeType' in the graph 'g' and raise if no or multiple candidates. """
+    nodes = g.nodesByType(nodeType)
+    if len(nodes) != 1:
+        raise RuntimeError("meshroom_photogrammetry requires a pipeline graph with exactly one '{}' node, {} found."
+                           .format(nodeType, len(nodes)))
+    return nodes[0]
+
 
 if not args.input and not args.inputImages:
     print('Nothing to compute. You need to set --input or --inputImages.')
-    exit(1)
+    sys.exit(1)
 
-graph = multiview.photogrammetry(inputFolder=args.input, inputImages=args.inputImages, output=args.output)
-graph.findNode('DepthMap_1').downscale.value = args.scale
+views, intrinsics = [], []
+# Build image files list from inputImages arguments
+images = [f for f in args.inputImages if multiview.isImageFile(f)]
+
+if args.input:
+    if os.path.isdir(args.input):
+        # args.input is a folder: extend images list with images in that folder
+        images += multiview.findImageFiles(args.input)
+    elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json', '.sfm'):
+        # args.input is a sfmData file: setup pre-calibrated views and intrinsics
+        from meshroom.nodes.aliceVision.CameraInit import readSfMData
+        views, intrinsics = readSfMData(args.input)
+    else:
+        raise RuntimeError(args.input + ': format not supported.')
+
+# initialize photogrammetry pipeline
+if args.pipeline:
+    # custom pipeline
+    graph = meshroom.core.graph.loadGraph(args.pipeline)
+    cameraInit = getOnlyNodeOfType(graph, 'CameraInit')
+    # reset graph inputs
+    cameraInit.viewpoints.resetValue()
+    cameraInit.intrinsics.resetValue()
+    # add views and intrinsics (if any) read from args.input
+    cameraInit.viewpoints.extend(views)
+    cameraInit.intrinsics.extend(intrinsics)
+
+    if not graph.canComputeLeaves:
+        raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")
+
+    if args.output:
+        publish = getOnlyNodeOfType(graph, 'Publish')
+        publish.output.value = args.output
+else:
+    # default pipeline
+    graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
+    cameraInit = getOnlyNodeOfType(graph, 'CameraInit')
+
+if images:
+    views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
+    cameraInit.viewpoints.value = views
+    cameraInit.intrinsics.value = intrinsics
+
+if args.overrides:
+    import io
+    import json
+    with io.open(args.overrides, 'r', encoding='utf-8', errors='ignore') as f:
+        data = json.load(f)
+        for nodeName, overrides in data.items():
+            for attrName, value in overrides.items():
+                graph.findNode(nodeName).attribute(attrName).value = value
+
+# setup DepthMap downscaling
+if args.scale > 0:
+    for node in graph.nodesByType('DepthMap'):
+        node.downscale.value = args.scale
 
 if args.save:
     graph.save(args.save)
     print('File successfully saved:', args.save)
-    exit(0)
+    sys.exit(0)
 
-if args.cache:
-    graph.cacheDir = args.cache
+# setup cache directory
+graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder
 
-if not graph.cacheDir:
-    graph.cacheDir = meshroom.core.defaultCacheFolder
+if not args.output:
+    print('No output set, results will be available in {}'.format(graph.cacheDir))
 
-toNodes = None
-if args.toNode:
-    toNodes = graph.findNodes(args.toNode)
+# find end nodes (None will compute all graph)
+toNodes = graph.findNodes(args.toNode) if args.toNode else None
 
+# start computation
 meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
-

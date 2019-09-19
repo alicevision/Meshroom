@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # coding:utf-8
+import os
+import tempfile
+
 import meshroom.multiview
+from meshroom.core.graph import loadGraph
+from meshroom.core.node import Node
 
 
 def test_multiviewPipeline():
@@ -83,3 +88,14 @@ def test_multiviewPipeline():
                 for uidIndex in attr.desc.uid:
                     assert attr.uid(uidIndex) == otherAttr.uid(uidIndex)
 
+    # test serialization/deserialization
+    for graph in [graph1, graph2, graph3, graph4]:
+        filename = tempfile.mktemp()
+        graph.save(filename)
+        loadedGraph = loadGraph(filename)
+        os.remove(filename)
+        # check that all nodes have been properly de-serialized
+        #  - same node set
+        assert sorted([n.name for n in loadedGraph.nodes]) == sorted([n.name for n in graph.nodes])
+        #  - no compatibility issues
+        assert all(isinstance(n, Node) for n in loadedGraph.nodes)

@@ -1,0 +1,4 @@
+module ImageGallery
+
+ImageGallery 1.0 ImageGallery.qml
+ImageDelegate 1.0 ImageDelegate.qml

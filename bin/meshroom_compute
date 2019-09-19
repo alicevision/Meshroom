@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import sys
 
 import meshroom
 meshroom.setupEnvironment()
@@ -47,7 +48,7 @@ if args.node:
         for chunk in chunks:
             if chunk.status.status in submittedStatuses:
                 print('Error: Node is already submitted with status "{}". See file: "{}"'.format(chunk.status.status.name, chunk.statusFile))
-                # exit(-1)
+                # sys.exit(-1)
     if args.iteration != -1:
         chunk = node.chunks[args.iteration]
         chunk.process(args.forceCompute)
@@ -56,7 +57,7 @@ if args.node:
 else:
     if args.iteration != -1:
         print('Error: "--iteration" only make sense when used with "--node".')
-        exit(-1)
+        sys.exit(-1)
     toNodes = None
     if args.toNode:
         toNodes = graph.findNodes([args.toNode])

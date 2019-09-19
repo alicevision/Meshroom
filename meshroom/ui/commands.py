@@ -168,10 +168,10 @@ class DuplicateNodeCommand(GraphCommand):
 class SetAttributeCommand(GraphCommand):
     def __init__(self, graph, attribute, value, parent=None):
         super(SetAttributeCommand, self).__init__(graph, parent)
-        self.attrName = attribute.fullName()
+        self.attrName = attribute.getFullName()
         self.value = value
         self.oldValue = attribute.getExportValue()
-        self.setText("Set Attribute '{}'".format(attribute.fullName()))
+        self.setText("Set Attribute '{}'".format(attribute.getFullName()))
 
     def redoImpl(self):
         if self.value == self.oldValue:
@@ -186,8 +186,8 @@ class SetAttributeCommand(GraphCommand):
 class AddEdgeCommand(GraphCommand):
     def __init__(self, graph, src, dst, parent=None):
         super(AddEdgeCommand, self).__init__(graph, parent)
-        self.srcAttr = src.fullName()
-        self.dstAttr = dst.fullName()
+        self.srcAttr = src.getFullName()
+        self.dstAttr = dst.getFullName()
         self.setText("Connect '{}'->'{}'".format(self.srcAttr, self.dstAttr))
 
     def redoImpl(self):
@@ -201,8 +201,8 @@ class AddEdgeCommand(GraphCommand):
 class RemoveEdgeCommand(GraphCommand):
     def __init__(self, graph, edge, parent=None):
         super(RemoveEdgeCommand, self).__init__(graph, parent)
-        self.srcAttr = edge.src.fullName()
-        self.dstAttr = edge.dst.fullName()
+        self.srcAttr = edge.src.getFullName()
+        self.dstAttr = edge.dst.getFullName()
         self.setText("Disconnect '{}'->'{}'".format(self.srcAttr, self.dstAttr))
 
     def redoImpl(self):
@@ -218,7 +218,7 @@ class ListAttributeAppendCommand(GraphCommand):
     def __init__(self, graph, listAttribute, value, parent=None):
         super(ListAttributeAppendCommand, self).__init__(graph, parent)
         assert isinstance(listAttribute, ListAttribute)
-        self.attrName = listAttribute.fullName()
+        self.attrName = listAttribute.getFullName()
         self.index = None
         self.count = 1
         self.value = value if value else None
@@ -244,10 +244,10 @@ class ListAttributeRemoveCommand(GraphCommand):
         super(ListAttributeRemoveCommand, self).__init__(graph, parent)
         listAttribute = attribute.root
         assert isinstance(listAttribute, ListAttribute)
-        self.listAttrName = listAttribute.fullName()
+        self.listAttrName = listAttribute.getFullName()
         self.index = listAttribute.index(attribute)
         self.value = attribute.getExportValue()
-        self.setText("Remove {}".format(attribute.fullName()))
+        self.setText("Remove {}".format(attribute.getFullName()))
 
     def redoImpl(self):
         listAttribute = self.graph.attribute(self.listAttrName)

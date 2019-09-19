@@ -4,7 +4,7 @@ import collections
 import re
 import weakref
 
-from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel
+from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, pyCompatibility, hashValue
 
 
@@ -71,17 +71,17 @@ class Attribute(BaseObject):
     def absoluteName(self):
         return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self._name)
 
-    def fullName(self):
+    def getFullName(self):
         """ Name inside the Graph: nodeName.name """
         if isinstance(self.root, ListAttribute):
-            return '{}[{}]'.format(self.root.fullName(), self.root.index(self))
+            return '{}[{}]'.format(self.root.getFullName(), self.root.index(self))
         elif isinstance(self.root, GroupAttribute):
-            return '{}.{}'.format(self.root.fullName(), self._name)
+            return '{}.{}'.format(self.root.getFullName(), self._name)
         return '{}.{}'.format(self.node.name, self._name)
 
     def asLinkExpr(self):
         """ Return link expression for this Attribute """
-        return "{" + self.fullName() + "}"
+        return "{" + self.getFullName() + "}"
 
     def getName(self):
         """ Attribute name """
@@ -209,6 +209,7 @@ class Attribute(BaseObject):
         return self._value
 
     name = Property(str, getName, constant=True)
+    fullName = Property(str, getFullName, constant=True)
     label = Property(str, getLabel, constant=True)
     type = Property(str, getType, constant=True)
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
@@ -218,6 +219,8 @@ class Attribute(BaseObject):
     isLinkChanged = Signal()
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
+    linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
+    node = Property(BaseObject, node.fget, constant=True)
 
 
 def raiseIfLink(func):
@@ -368,6 +371,22 @@ class GroupAttribute(Attribute):
         for key, value in exportedValue.items():
             self._value.get(key).value = value
 
+    @Slot(str, result=Attribute)
+    def childAttribute(self, key):
+        """
+        Get child attribute by name or None if none was found.
+
+        Args:
+            key (str): the name of the child attribute
+
+        Returns:
+            Attribute: the child attribute or None
+        """
+        try:
+            return self._value.get(key)
+        except KeyError:
+            return None
+
     def uid(self, uidIndex):
         uids = []
         for k, v in self._value.items():
@@ -395,7 +414,9 @@ class GroupAttribute(Attribute):
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault}
 
     def getValueStr(self):
-        return self.attributeDesc.joinChar.join([v.getValueStr() for v in self._value.objects.values()])
+        # sort values based on child attributes group description order
+        sortedSubValues = [self._value.get(attr.name).getValueStr() for attr in self.attributeDesc.groupDesc]
+        return self.attributeDesc.joinChar.join(sortedSubValues)
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

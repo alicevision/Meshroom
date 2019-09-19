@@ -332,7 +332,12 @@ class ViewpointWrapper(QObject):
         uvPP = QVector2D(float(pp[0]) / self.imageSize.width(), float(pp[1]) / self.imageSize.height())
         # convert to offset
         offset = uvPP - QVector2D(0.5, 0.5)
-        return offset if self.orientation == 1 else -offset
+        # apply orientation to principal point correction
+        if self.orientation == 6:
+            offset = QVector2D(-offset.y(), offset.x())
+        elif self.orientation == 8:
+            offset = QVector2D(offset.y(), -offset.x())
+        return offset
 
     @Property(type=float, notify=sfmParamsChanged)
     def fieldOfView(self):

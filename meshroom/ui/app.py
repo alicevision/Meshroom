@@ -61,9 +61,13 @@ class MeshroomApp(QApplication):
 
         parser.add_argument('input', metavar='INPUT', type=str, nargs='?',
                             help='Meshroom project file (e.g. myProject.mg) or folder with images to reconstruct.')
-        parser.add_argument('--project', metavar='MESHROOM_FILE', type=str, required=False,
+        parser.add_argument('-i', '--import', metavar='IMAGES/FOLDERS', type=str, nargs='*',
+                            help='Import images or folder with images to reconstruct.')
+        parser.add_argument('-I', '--importRecursive', metavar='FOLDERS', type=str, nargs='*',
+                            help='Import images to reconstruct from specified folder and sub-folders.')
+        parser.add_argument('-p', '--project', metavar='MESHROOM_FILE', type=str, required=False,
                             help='Meshroom project file (e.g. myProject.mg).')
-        parser.add_argument('--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
+        parser.add_argument('-P', '--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
                             help='Override the default Meshroom pipeline with this external graph.')
 
         args = parser.parse_args(args[1:])
@@ -126,6 +130,19 @@ class MeshroomApp(QApplication):
             if defaultPipeline:
                 r.setDefaultPipeline(args.pipeline)
 
+        if args.input:
+            if not os.path.isfile(args.input) and not os.path.isdir(args.input):
+                raise RuntimeError(
+                    "Meshroom Command Line Error: 'INPUT' argument should be a Meshroom project file (.mg) or a folder with input images.\n"
+                    "Invalid value: '{}'".format(args.input))
+        if args.project and not os.path.isfile(args.project):
+            raise RuntimeError(
+                "Meshroom Command Line Error: '--project' argument should be a Meshroom project file (.mg).\n"
+                "Invalid value: '{}'".format(args.project))
+
+        if args.project and args.input and not os.path.isdir(args.input):
+            raise RuntimeError("Meshroom Command Line Error: 'INPUT' and '--project' arguments cannot both load a Meshroom project file (.mg).")
+
         if args.project:
             r.load(args.project)
 
@@ -134,7 +151,14 @@ class MeshroomApp(QApplication):
                 # we assume that it is an ".mg" file.
                 r.load(args.input)
             elif os.path.isdir(args.input):
-                r.importImagesFromFolder(args.input)
+                r.importImagesFromFolder(args.input, recursive=False)
+
+        # import is a python keyword, so we have to access the attribute by a string
+        if getattr(args, "import", None):
+            r.importImagesFromFolder(getattr(args, "import"), recursive=False)
+
+        if args.importRecursive:
+            r.importImagesFromFolder(args.importRecursive, recursive=True)
 
         self.engine.load(os.path.normpath(url))
 

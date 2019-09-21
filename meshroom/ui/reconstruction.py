@@ -364,13 +364,27 @@ class Reconstruction(UIGraph):
                 images.append(localFile)
         return images
 
-    def importImagesFromFolder(self, path):
+    def importImagesFromFolder(self, path, recursive=False):
+        """
+
+        Args:
+            path: A path to a folder or file or a list of files/folders
+            recursive: List files in folders recursively.
+
+        """
         images = []
-        if os.path.isdir(path):  # get folder content
-            images.extend(multiview.findImageFiles(path))
-        elif multiview.isImageFile(path):
-            images.append(path)
-        self.buildIntrinsics(self.cameraInit, images)
+        paths = []
+        if isinstance(path, (list, tuple)):
+            paths = path
+        else:
+            paths.append(path)
+        for p in paths:
+            if os.path.isdir(p):  # get folder content
+                images.extend(multiview.findImageFiles(p, recursive))
+            elif multiview.isImageFile(p):
+                images.append(p)
+        if images:
+            self.buildIntrinsics(self.cameraInit, images)
 
     def importImagesAsync(self, images, cameraInit):
         """ Add the given list of images to the Reconstruction. """

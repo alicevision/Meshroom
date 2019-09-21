@@ -37,35 +37,28 @@ Item {
             background: Rectangle { color: Qt.darker(Colors.sysPalette.window, 1.2) }
             Column {
                 height: parent.height
-                ToolButton {
+                spacing: 1
+                MaterialToolButton {
                     text: MaterialIcons.refresh
                     ToolTip.text: "Reload"
-                    ToolTip.visible: hovered
-                    font.family: MaterialIcons.fontFamily
                     onClicked: loadSource()
                 }
-                ToolButton {
+                MaterialToolButton {
                     text: MaterialIcons.vertical_align_top
                     ToolTip.text: "Scroll to Top"
-                    ToolTip.visible: hovered
-                    font.family: MaterialIcons.fontFamily
                     onClicked: textView.positionViewAtBeginning()
                 }
-                ToolButton {
+                MaterialToolButton {
                     id: autoscroll
                     text: MaterialIcons.vertical_align_bottom
                     ToolTip.text: "Scroll to Bottom"
-                    ToolTip.visible: hovered
-                    font.family: MaterialIcons.fontFamily
                     onClicked: textView.positionViewAtEnd()
                     checkable: false
                     checked: textView.atYEnd
                 }
-                ToolButton {
+                MaterialToolButton {
                     text: MaterialIcons.assignment
                     ToolTip.text: "Copy"
-                    ToolTip.visible: hovered
-                    font.family: MaterialIcons.fontFamily
                     onClicked: copySubMenu.open()
                     Menu {
                         id: copySubMenu
@@ -88,11 +81,9 @@ Item {
                          }
                     }
                 }
-                ToolButton {
+                MaterialToolButton {
                     text: MaterialIcons.open_in_new
                     ToolTip.text: "Open Externally"
-                    ToolTip.visible: hovered
-                    font.family: MaterialIcons.fontFamily
                     enabled: root.source !== ""
                     onClicked: Qt.openUrlExternally(root.source)
                 }

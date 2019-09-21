@@ -216,6 +216,8 @@ ApplicationWindow {
 
     DepthMapsViewerDialog {
         id: depthMapsViewerDialog
+
+        viewIn3D: workspaceView.load3DMedia
     }
 
     // Check if document has been saved

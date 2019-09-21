@@ -12,6 +12,7 @@ Dialog {
     id: root
 
     property var node
+    property var viewIn3D
 
     x: parent.width / 2 - width / 2
     width: 1200
@@ -56,10 +57,6 @@ Dialog {
                     target: root
                     onNodeChanged: { imageListViewer.imgs = root.node.searchForFiles(".exr") }
                 }
-
-                onCurrentImgChanged: {
-                    console.warn(currentImg)
-                }
             }
         }
 
@@ -73,6 +70,14 @@ Dialog {
                 width: 200
                 anchors.fill: parent
                 source: imageListViewer.currentImg
+            }
+
+            Button {
+                text: "Add To 3D Scene"
+
+                onClicked: {
+                    root.viewIn3D(imageListViewer.currentImg)
+                }
             }
         }
     }

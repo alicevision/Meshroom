@@ -214,6 +214,10 @@ ApplicationWindow {
         id: aboutDialog
     }
 
+    DepthMapsViewerDialog {
+        id: depthMapsViewerDialog
+    }
+
     // Check if document has been saved
     function ensureSaved(callback)
     {
@@ -602,6 +606,11 @@ ApplicationWindow {
                         else if(node.nodeType === "CameraInit")
                         {
                             _reconstruction.cameraInit = node;
+                        }
+                        else if(node.nodeType === "DepthMap" || node.nodeType === "DepthMapFilter")
+                        {
+                            depthMapsViewerDialog.node = node
+                            depthMapsViewerDialog.open()
                         }
                         for(var i=0; i < node.attributes.count; ++i)
                         {

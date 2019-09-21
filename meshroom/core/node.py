@@ -638,6 +638,19 @@ class BaseNode(BaseObject):
         self._size = value
         self.sizeChanged.emit()
 
+    @Slot(str, result='QVariantList')
+    def searchForFiles(self, extension=''):
+        path = self.internalFolder
+        files = []
+        try:
+            for f in os.listdir(path):
+                filePath = os.path.join(path, f)
+                if os.path.isfile(filePath) and f.endswith(extension):
+                    files.append({'path': filePath, 'name': f})
+        except FileNotFoundError:
+            pass
+        return files
+
     def __repr__(self):
         return self.name
 

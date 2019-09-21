@@ -197,14 +197,14 @@ class Reconstruction(UIGraph):
         """ Create a new photogrammetry pipeline. """
         if self._defaultPipelineFilepath:
             # use the user-provided default photogrammetry project file
-            self.load(self._defaultPipelineFilepath, fileLink=False)
+            self.load(self._defaultPipelineFilepath, setupFileRef=False)
         else:
             # default photogrammetry pipeline
             self.setGraph(multiview.photogrammetry())
 
-    def load(self, filepath, fileLink=True):
+    def load(self, filepath, setupFileRef=True):
         try:
-            super(Reconstruction, self).load(filepath, fileLink)
+            super(Reconstruction, self).load(filepath, setupFileRef)
             # warn about pre-release projects being automatically upgraded
             if Version(self._graph.fileReleaseVersion).major == "0":
                 self.warning.emit(Message(

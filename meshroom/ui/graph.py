@@ -313,11 +313,11 @@ class UIGraph(QObject):
 
     def setDefaultPipeline(self, pipelineFilepath):
         self._defaultPipelineFilepath = pipelineFilepath
-        self._graph.load(pipelineFilepath, fileLink=False)
+        self._graph.load(pipelineFilepath, setupFileRef=False)
 
-    def load(self, filepath, fileLink=True):
+    def load(self, filepath, setupFileRef=True):
         g = Graph('')
-        g.load(filepath, fileLink)
+        g.load(filepath, setupFileRef)
         if not os.path.exists(g.cacheDir):
             os.mkdir(g.cacheDir)
         self.setGraph(g)

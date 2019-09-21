@@ -44,6 +44,14 @@ class FeatureExtraction(desc.CommandLineNode):
             uid=[],
             advanced=True
         ),
+        desc.IntParam(
+            name='maxThreads',
+            label='Max Nb Threads',
+            description='Specifies the maximum number of threads to run simultaneously (0 for automatic mode).',
+            value=0,
+            range=(0, 24, 1),
+            uid=[]
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

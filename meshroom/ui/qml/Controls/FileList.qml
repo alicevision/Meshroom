@@ -3,13 +3,14 @@ import QtQuick.Controls 2.4
 import QtQuick.Layouts 1.11
 import Utils 1.0
 
-// Read-only list of images
+// Read-only list of files
 FocusScope {
     id: root
 
-    property var imgs
-    property string currentImg
+    property var files
+    property string currentFile: 'file:///'+list.currentItem.path
 
+    width: parent.width
     height: parent.height
 
     function forceActiveFocus() {
@@ -21,13 +22,13 @@ FocusScope {
 
         Rectangle {
             id: rect
-            width: 500
-            height: 100
+            width: parent.width-10
+            height: nameLabel.height
             color: Qt.darker(activePalette.window, 1.1)
             border.color: Qt.darker(activePalette.highlight)
             border.width: listItemMA.containsMouse ? 2 : 0
 
-            property alias filepath: pathLabel.text
+            property string path: modelData.path
             
             MouseArea {
                 id: listItemMA
@@ -39,30 +40,10 @@ FocusScope {
                         list.currentIndex = index
                 }
 
-                RowLayout {
+                Label { 
+                    id: nameLabel
+                    text: modelData.name
                     width: parent.width
-                    height: parent.height
-
-                    Column {
-                        Label { 
-                            text: modelData.name
-                            width: parent.width-100
-                        }
-                        Label { 
-                            id: pathLabel
-                            text: modelData.path 
-                            width: parent.width-100
-                        }
-                    }
-                    Image {
-                        Layout.alignment: Qt.AlignRight
-                        Layout.margins: 5
-                        source: modelData.path 
-                        sourceSize.width: 90
-                        asynchronous: true
-                        autoTransform: true
-                        fillMode: Image.PreserveAspectFit
-                    }
                 }
             }
         }
@@ -72,16 +53,12 @@ FocusScope {
         id: list
 
         height: parent.height
-        width: 510
+        width: parent.width
         focus: true
         clip: true
         highlightFollowsCurrentItem: true
         keyNavigationEnabled: true
         currentIndex: 0  
-        
-        onCurrentItemChanged: {
-            root.currentImg = 'file:///'+currentItem.filepath
-        }
 
         highlight: Component {
             Rectangle {
@@ -98,7 +75,7 @@ FocusScope {
             minimumSize: 0.05 
         }
 
-        model: imgs
+        model: files
         delegate: listItemDelegate
     }
 }

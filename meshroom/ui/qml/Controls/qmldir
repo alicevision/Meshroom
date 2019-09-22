@@ -7,4 +7,4 @@ MessageDialog 1.0 MessageDialog.qml
 Panel 1.0 Panel.qml
 SearchBar 1.0 SearchBar.qml
 TextFileViewer 1.0 TextFileViewer.qml
-ImageListViewer 1.0 ImageListViewer.qml
+FileList 1.0 FileList.qml

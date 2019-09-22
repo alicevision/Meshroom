@@ -15,9 +15,9 @@ Dialog {
     property var viewIn3D
 
     x: parent.width / 2 - width / 2
-    width: 1200
     y: parent.height / 2 - height / 2
-    height: 700
+    width: parent.width / 1.5
+    height: parent.height / 1.5
 
     // Fade in transition
     enter: Transition {
@@ -25,7 +25,7 @@ Dialog {
     }
 
     modal: true
-    closePolicy: Dialog.CloseOnEscape | Dialog.CloseOnPressOutside
+    closePolicy: Dialog.CloseOnEscape
     padding: 30
 
     header: Pane {
@@ -40,43 +40,64 @@ Dialog {
         }
     }
 
-    RowLayout {
-        width: parent.width
+    Row {
+        width: parent.width/4
         height: parent.height
-        spacing: 6
 
-        Row {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+        Column {
+            width: parent.width
+            height: parent.height
+            
+            MaterialToolButton {
+                text: MaterialIcons.refresh
+                ToolTip.text: "Reload"
+                onClicked: { fileList.files = root.node.searchForFiles(".exr") }
+            }
 
-            ImageListViewer {
-                id: imageListViewer
+            FileList {
+                id: fileList
+
+                width: parent.width
+                height: parent.height-20
 
                 // Update images list when node is double clicked
                 Connections {
                     target: root
-                    onNodeChanged: { imageListViewer.imgs = root.node.searchForFiles(".exr") }
+                    onNodeChanged: { fileList.files = root.node.searchForFiles(".exr") }
                 }
             }
         }
+    }
 
-        Row {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+    Row {
+        width: parent.width/(4/3)
+        height: parent.height
+        anchors.right: parent.right
+
+        Column {
+            width: parent.width
+            height: parent.height-20
 
             Viewer2D {
                 id: viewer2D
-                height: 200
-                width: 200
                 anchors.fill: parent
-                source: imageListViewer.currentImg
+                source: fileList.currentFile
+
+                Rectangle {
+                    z: -1
+                    anchors.fill: parent
+                    color: Qt.darker(activePalette.base, 1.1)
+                }
             }
 
             Button {
                 text: "Add To 3D Scene"
 
+                anchors.top: viewer2D.bottom
+                anchors.right: parent.right
+
                 onClicked: {
-                    root.viewIn3D(imageListViewer.currentImg)
+                    root.viewIn3D(fileList.currentFile)
                 }
             }
         }

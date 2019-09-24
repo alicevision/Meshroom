@@ -9,7 +9,9 @@ FocusScope {
     id: root
 
     clip: true
+
     property url source
+    property url realSource
     property var metadata
 
     function clear()
@@ -26,6 +28,18 @@ FocusScope {
         }
     }
 
+    onSourceChanged: {
+        realSource = getImageFile(imageType.type)
+    }
+
+    Binding {
+        target: _reconstruction.onDepthMapChanged
+
+        value: {
+            realSource = getImageFile(imageType.type)
+        }
+    }
+
     // functions
     function fit() {
         if(image.status != Image.Ready)
@@ -33,6 +47,18 @@ FocusScope {
         image.scale = Math.min(root.width/image.width, root.height/image.height)
         image.x = Math.max((root.width-image.width*image.scale)*0.5, 0)
         image.y = Math.max((root.height-image.height*image.scale)*0.5, 0)
+    }
+
+    function getImageFile(type) {
+        var withExtension
+        if (type == "nmodMap") {
+            withExtension = type + ".png";
+        } else if (type == "image") {
+            return root.source;
+        } else {
+            withExtension = type + ".exr";
+        }
+        return "file:///"+_reconstruction.depthMap.internalFolder+"/"+_reconstruction.selectedViewId+"_"+withExtension;
     }
 
     // context menu
@@ -56,7 +82,7 @@ FocusScope {
         fillMode: Image.PreserveAspectFit
         autoTransform: true
         onWidthChanged: if(status==Image.Ready) fit()
-        source: root.source
+        source: root.realSource
         onStatusChanged: {
             // update cache source when image is loaded
             if(status === Image.Ready)
@@ -160,7 +186,7 @@ FocusScope {
             font.pointSize: 8
             readOnly: true
             selectByMouse: true
-            text: Filepath.urlToString(source)
+            text: Filepath.urlToString(realSource)
         }
     }
 
@@ -224,6 +250,18 @@ FocusScope {
                     text: image.sourceSize.width + "x" + image.sourceSize.height
                     anchors.centerIn: parent
                     elide: Text.ElideMiddle
+                }
+            }
+
+            ComboBox {
+                id: imageType
+
+                property var types: ["image", "depthMap", "simMap", "nmodMap"]
+                property string type: types[currentIndex]
+
+                model: types
+                onCurrentIndexChanged: {
+                    root.realSource = root.getImageFile(type)
                 }
             }
 

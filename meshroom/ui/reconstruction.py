@@ -181,6 +181,9 @@ class Reconstruction(UIGraph):
         self._selectedViewId = None
         self._liveSfmManager = LiveSfmManager(self)
 
+        # - Depth Map
+        self._depthMap = None
+
         # - Texturing
         self._texturing = None
 
@@ -225,6 +228,7 @@ class Reconstruction(UIGraph):
         self._liveSfmManager.reset()
         self.featureExtraction = None
         self.sfm = None
+        self.depthMap = None
         self.texturing = None
         self.updateCameraInits()
         if not self._graph:
@@ -578,6 +582,10 @@ class Reconstruction(UIGraph):
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(Node, Node)
+
+    depthMapChanged = Signal()
+    depthMap = makeProperty(QObject, "_depthMap", depthMapChanged, resetOnDestroy=True)
+    
     texturingChanged = Signal()
     texturing = makeProperty(QObject, "_texturing", notify=texturingChanged)
 

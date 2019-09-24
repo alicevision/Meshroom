@@ -603,6 +603,10 @@ ApplicationWindow {
                         {
                             _reconstruction.cameraInit = node;
                         }
+                        else if(node.nodeType === "DepthMap" || node.nodeType === "DepthMapFilter")
+                        {
+                            _reconstruction.depthMap = node;
+                        }
                         for(var i=0; i < node.attributes.count; ++i)
                         {
                             var attr = node.attributes.at(i)

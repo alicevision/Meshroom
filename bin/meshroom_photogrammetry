@@ -28,6 +28,9 @@ parser.add_argument('--pipeline', metavar='MESHROOM_FILE', type=str, required=Fa
 parser.add_argument('--overrides', metavar='SETTINGS', type=str, default=None,
                     help='A JSON file containing the graph parameters override.')
 
+parser.add_argument('--paramOverrides', metavar='NODETYPE:param=value NODEINSTANCE.param=value', type=str, default=None, nargs='*',
+                    help='Override specific parameters directly from the command line (by node type or by node names).')
+
 parser.add_argument('-o', '--output', metavar='FOLDER', type=str, required=False,
                     help='Output folder where results should be copied to. '
                          'If not set, results will have to be retrieved directly from the cache folder.')
@@ -124,6 +127,29 @@ if args.overrides:
         for nodeName, overrides in data.items():
             for attrName, value in overrides.items():
                 graph.findNode(nodeName).attribute(attrName).value = value
+
+if args.paramOverrides:
+    print("\n")
+    import re
+    reExtract = re.compile('(\w+)([:.])(\w+)=(.*)')
+    for p in args.paramOverrides:
+        result = reExtract.match(p)
+        if not result:
+            raise ValueError('Invalid param override: ' + str(p))
+        node, t, param, value = result.groups()
+        if t == ':':
+            nodesByType = graph.nodesByType(node)
+            if not nodesByType:
+                raise ValueError('No node with the type "{}" in the scene.'.format(node))
+            for n in nodesByType:
+                print('Overrides {node}.{param}={value}'.format(node=node, param=param, value=value))
+                n.attribute(param).value = value
+        elif t == '.':
+            print('Overrides {node}.{param}={value}'.format(node=node, param=param, value=value))
+            graph.findNode(node).attribute(param).value = value
+        else:
+            raise ValueError('Invalid param override: ' + str(p))
+    print("\n")
 
 # setup DepthMap downscaling
 if args.scale > 0:

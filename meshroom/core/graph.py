@@ -234,14 +234,14 @@ class Graph(BaseObject):
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)
-    def load(self, filepath, setupFileRef=True):
+    def load(self, filepath, setupProjectFile=True):
         """
         Load a meshroom graph ".mg" file.
 
         Args:
             filepath: project filepath to load
-            setupFileRef: Setup reference to the project file, like setup cacheDir, keep filepath for save, etc.
-                          This option allows to disable it, to only load the project file as a template.
+            setupProjectFile: Store the reference to the project file and setup the cache directory.
+                              If false, it only loads the graph of the project file as a template.
         """
         self.clear()
         with open(filepath) as jsonFile:
@@ -273,7 +273,7 @@ class Graph(BaseObject):
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
 
-        if setupFileRef:
+        if setupProjectFile:
             # Update filepath related members
             self._setFilepath(filepath)
 
@@ -905,7 +905,7 @@ class Graph(BaseObject):
     def asString(self):
         return str(self.toDict())
 
-    def save(self, filepath=None, setupFileRef=True):
+    def save(self, filepath=None, setupProjectFile=True):
         path = filepath or self._filepath
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
@@ -929,7 +929,7 @@ class Graph(BaseObject):
         with open(path, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
 
-        if path != self._filepath and setupFileRef:
+        if path != self._filepath and setupProjectFile:
             self._setFilepath(path)
 
     def _setFilepath(self, filepath):

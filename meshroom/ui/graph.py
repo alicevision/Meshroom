@@ -313,11 +313,11 @@ class UIGraph(QObject):
 
     def setDefaultPipeline(self, pipelineFilepath):
         self._defaultPipelineFilepath = pipelineFilepath
-        self._graph.load(pipelineFilepath, setupFileRef=False)
+        self._graph.load(pipelineFilepath, setupProjectFile=False)
 
-    def load(self, filepath, setupFileRef=True):
+    def load(self, filepath, setupProjectFile=True):
         g = Graph('')
-        g.load(filepath, setupFileRef)
+        g.load(filepath, setupProjectFile)
         if not os.path.exists(g.cacheDir):
             os.mkdir(g.cacheDir)
         self.setGraph(g)
@@ -372,7 +372,7 @@ class UIGraph(QObject):
     def submit(self, node=None):
         """ Submit the graph to the default Submitter.
         If a node is specified, submit this node and its uncomputed predecessors.
-        Otherwise, submit the whole 
+        Otherwise, submit the whole
 
         Notes:
             Default submitter is specified using the MESHROOM_DEFAULT_SUBMITTER environment variable.

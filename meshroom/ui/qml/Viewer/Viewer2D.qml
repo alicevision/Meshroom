@@ -13,6 +13,7 @@ FocusScope {
     property url source
     property url realSource
     property var metadata
+    property var viewIn3D
 
     function clear()
     {
@@ -51,14 +52,11 @@ FocusScope {
 
     function getImageFile(type) {
         var withExtension
-        if (type == "nmodMap") {
-            withExtension = type + ".png";
-        } else if (type == "image") {
+        if (type == "image") {
             return root.source;
         } else {
-            withExtension = type + ".exr";
+            return "file:///"+_reconstruction.depthMap.internalFolder+"/"+_reconstruction.selectedViewId+"_"+type+".exr";
         }
-        return "file:///"+_reconstruction.depthMap.internalFolder+"/"+_reconstruction.selectedViewId+"_"+withExtension;
     }
 
     // context menu
@@ -176,17 +174,27 @@ FocusScope {
     FloatingPane {
         id: topToolbar
         width: parent.width
+        height: depthMapNodeName.height+8
         radius: 0
         padding: 4
         // selectable filepath to source image
         TextField {
-            width: parent.width
+            width: parent.width-depthMapNodeName.width-5
             padding: 0
+            anchors.right: depthMapNodeName.left
+            anchors.rightMargin: 5
             background: Item {}
             font.pointSize: 8
             readOnly: true
             selectByMouse: true
             text: Filepath.urlToString(realSource)
+        }
+        // show which depthmap node is active
+        Label {
+            id: depthMapNodeName
+            text: _reconstruction.depthMap.name
+            anchors.right: parent.right
+            visible: imageType.type != "image"
         }
     }
 
@@ -243,6 +251,16 @@ FocusScope {
                 text: MaterialIcons.scatter_plot
             }
 
+            MaterialToolButton {
+                font.pointSize: 11
+                ToolTip.text: "View Depth Map in 3D (" + _reconstruction.depthMap.name + ")"
+                text: MaterialIcons.input
+
+                onClicked: {
+                    root.viewIn3D(root.getImageFile("depthMap"))
+                }
+            }
+
             Item {
                 Layout.fillWidth: true
                 Label {
@@ -256,7 +274,7 @@ FocusScope {
             ComboBox {
                 id: imageType
 
-                property var types: ["image", "depthMap", "simMap", "nmodMap"]
+                property var types: ["image", "depthMap", "simMap"]
                 property string type: types[currentIndex]
 
                 model: types

@@ -80,6 +80,8 @@ views, intrinsics = [], []
 # Build image files list from inputImages arguments
 images = []
 
+hasSearchedForImages = False
+
 if args.input:
     if len(args.input) == 1 and os.path.isfile(args.input[0]) and os.path.splitext(args.input[0])[-1] in ('.json', '.sfm'):
         # args.input is a sfmData file: setup pre-calibrated views and intrinsics
@@ -87,9 +89,15 @@ if args.input:
         views, intrinsics = readSfMData(args.input[0])
     else:
         images += multiview.findImageFiles(args.input, recursive=False)
+        hasSearchedForImages = True
 
 if args.inputRecursive:
     images += multiview.findImageFiles(args.inputRecursive, recursive=True)
+    hasSearchedForImages = True
+
+if hasSearchedForImages and not images:
+    print("No image found")
+    exit(-1)
 
 # initialize photogrammetry pipeline
 if args.pipeline:

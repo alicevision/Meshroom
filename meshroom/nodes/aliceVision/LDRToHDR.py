@@ -11,18 +11,18 @@ class LDRToHDR(desc.CommandLineNode):
             elementDesc=desc.File(
                 name='inputFolder',
                 label='Input File/Folder',
-                description="Folder containing LDR images",
+                description="LDR image or folder of LDR images.",
                 value='',
                 uid=[0],
                 ),
             name="input",
             label="Input Files or Folders",
-            description='Folders containing LDR images.',
+            description='LDR images or folders of LDR images.',
         ),
         desc.BoolParam(
             name='fisheyeLens',
             label='Fisheye Lens',
-            description="Enable if a fisheye lens has been used.\n "
+            description="True if a fisheye lens has been used.\n"
                         "This will improve the estimation of the Camera's Response Function by considering only the pixels in the center of the image\n"
                         "and thus ignore undefined/noisy pixels outside the circle defined by the fisheye lens.",
             value=True,
@@ -51,7 +51,7 @@ class LDRToHDR(desc.CommandLineNode):
         desc.StringParam(
             name='targetExposureImage',
             label='Target Exposure Image',
-            description="LDR image(s) name(s) at the target exposure for the output HDR image(s) to be centered.",
+            description="LDR image(s) name(s) specifying the target exposure to center HDR output image(s).",
             value='',
             uid=[0],
         ),
@@ -103,7 +103,7 @@ class LDRToHDR(desc.CommandLineNode):
         desc.File(
             name='recoverPath',
             label='Output Recovered Files',
-            description="(debug) Folder for recovered LDR images at target exposures.",
+            description="(debug) Folder to store recovered LDR images at target exposures, with inverted camera function.",
             advanced=True,
             value='',
             uid=[],
@@ -114,14 +114,14 @@ class LDRToHDR(desc.CommandLineNode):
         desc.File(
             name='output',
             label='Output Folder',
-            description="Output folder for HDR images",
+            description="Output folder to store HDR images",
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name='outputResponse',
             label='Output Response',
-            description="Output response function path.",
+            description="Path to store output response function of the camera.",
             value=desc.Node.internalFolder + 'response.csv',
             uid=[],
         ),

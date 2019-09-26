@@ -399,11 +399,16 @@ class Reconstruction(UIGraph):
     @Slot()
     def new(self):
         """ Create a new photogrammetry pipeline. """
-        self.setGraph(multiview.photogrammetry())
+        if self._defaultPipelineFilepath:
+            # use the user-provided default photogrammetry project file
+            self.load(self._defaultPipelineFilepath, setupProjectFile=False)
+        else:
+            # default photogrammetry pipeline
+            self.setGraph(multiview.photogrammetry())
 
-    def load(self, filepath):
+    def load(self, filepath, setupProjectFile=True):
         try:
-            super(Reconstruction, self).load(filepath)
+            super(Reconstruction, self).load(filepath, setupProjectFile)
             # warn about pre-release projects being automatically upgraded
             if Version(self._graph.fileReleaseVersion).major == "0":
                 self.warning.emit(Message(
@@ -550,7 +555,7 @@ class Reconstruction(UIGraph):
         Fetching urls from dropEvent is generally expensive in QML/JS (bug ?).
         This method allows to reduce process time by doing it on Python side.
         """
-        self.importImages(self.getImageFilesFromDrop(drop), cameraInit)
+        self.importImagesAsync(self.getImageFilesFromDrop(drop), cameraInit)
 
     @staticmethod
     def getImageFilesFromDrop(drop):
@@ -565,7 +570,29 @@ class Reconstruction(UIGraph):
                 images.append(localFile)
         return images
 
-    def importImages(self, images, cameraInit):
+    def importImagesFromFolder(self, path, recursive=False):
+        """
+
+        Args:
+            path: A path to a folder or file or a list of files/folders
+            recursive: List files in folders recursively.
+
+        """
+        images = []
+        paths = []
+        if isinstance(path, (list, tuple)):
+            paths = path
+        else:
+            paths.append(path)
+        for p in paths:
+            if os.path.isdir(p):  # get folder content
+                images.extend(multiview.findImageFiles(p, recursive))
+            elif multiview.isImageFile(p):
+                images.append(p)
+        if images:
+            self.buildIntrinsics(self.cameraInit, images)
+
+    def importImagesAsync(self, images, cameraInit):
         """ Add the given list of images to the Reconstruction. """
         # Start the process of updating views and intrinsics
         self.runAsync(self.buildIntrinsics, args=(cameraInit, images,))

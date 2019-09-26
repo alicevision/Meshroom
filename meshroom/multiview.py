@@ -19,20 +19,31 @@ def findImageFiles(folder, recursive=False):
     Return all files that are images in 'folder' based on their extensions.
 
     Args:
-        folder (str): the folder to look into
+        folder (str): folder to look into or list of folder/files
 
     Returns:
-        list: the list of image files.
+        list: the list of image files with a supported extension.
     """
-    if recursive:
-        output = []
-        for root, directories, files in os.walk(folder):
-            for filename in files:
-                if isImageFile(filename):
-                    output.append(os.path.join(root, filename))
-        return output
+    inputFolders = []
+    if isinstance(folder, (list, tuple)):
+        inputFolders = folder
     else:
-         return [os.path.join(folder, filename) for filename in os.listdir(folder) if isImageFile(filename)]
+        inputFolders.append(folder)
+
+    output = []
+    for currentFolder in inputFolders:
+        if os.path.isfile(currentFolder):
+            if isImageFile(currentFolder):
+                output.append(currentFolder)
+            continue
+        if recursive:
+            for root, directories, files in os.walk(currentFolder):
+                for filename in files:
+                    if isImageFile(filename):
+                        output.append(os.path.join(root, filename))
+        else:
+             output.extend([os.path.join(currentFolder, filename) for filename in os.listdir(currentFolder) if isImageFile(filename)])
+    return output
 
 
 def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output=''):

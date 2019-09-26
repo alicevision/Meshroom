@@ -11,15 +11,15 @@ import meshroom.core.graph
 from meshroom import multiview
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry pipeline.')
-parser.add_argument('-i', '--input', metavar='FOLDER_OR_SFM', type=str,
-                    default='',
-                    help='Input folder containing images or file (.sfm or .json) '
-                         'with images paths and optionally predefined camera intrinsics.')
-parser.add_argument('--inputImages', metavar='IMAGES', type=str, nargs='*',
+parser.add_argument('-i', '--input', metavar='SFM/FOLDERS/IMAGES', type=str, nargs='*',
                     default=[],
-                    help='Input images.')
+                    help='Input folder containing images or folders of images or file (.sfm or .json) '
+                         'with images paths and optionally predefined camera intrinsics.')
+parser.add_argument('-I', '--inputRecursive', metavar='FOLDERS/IMAGES', type=str, nargs='*',
+                    default=[],
+                    help='Input folders containing all images recursively.')
 
-parser.add_argument('--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
+parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
                     help='Meshroom file containing a pre-configured photogrammetry pipeline to run on input images. '
                          'If not set, the default photogrammetry pipeline will be used. '
                          'Requirements: the graph must contain one CameraInit node, '
@@ -72,24 +72,24 @@ def getOnlyNodeOfType(g, nodeType):
     return nodes[0]
 
 
-if not args.input and not args.inputImages:
-    print('Nothing to compute. You need to set --input or --inputImages.')
+if not args.input and not args.inputRecursive:
+    print('Nothing to compute. You need to set --input or --inputRecursive.')
     sys.exit(1)
 
 views, intrinsics = [], []
 # Build image files list from inputImages arguments
-images = [f for f in args.inputImages if multiview.isImageFile(f)]
+images = []
 
 if args.input:
-    if os.path.isdir(args.input):
-        # args.input is a folder: extend images list with images in that folder
-        images += multiview.findImageFiles(args.input)
-    elif os.path.isfile(args.input) and os.path.splitext(args.input)[-1] in ('.json', '.sfm'):
+    if len(args.input) == 1 and os.path.isfile(args.input[0]) and os.path.splitext(args.input[0])[-1] in ('.json', '.sfm'):
         # args.input is a sfmData file: setup pre-calibrated views and intrinsics
         from meshroom.nodes.aliceVision.CameraInit import readSfMData
-        views, intrinsics = readSfMData(args.input)
+        views, intrinsics = readSfMData(args.input[0])
     else:
-        raise RuntimeError(args.input + ': format not supported.')
+        images += multiview.findImageFiles(args.input, recursive=False)
+
+if args.inputRecursive:
+    images += multiview.findImageFiles(args.inputRecursive, recursive=True)
 
 # initialize photogrammetry pipeline
 if args.pipeline:

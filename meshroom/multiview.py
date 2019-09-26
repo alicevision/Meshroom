@@ -14,17 +14,36 @@ def isImageFile(filepath):
     return os.path.splitext(filepath)[1].lower() in imageExtensions
 
 
-def findImageFiles(folder):
+def findImageFiles(folder, recursive=False):
     """
     Return all files that are images in 'folder' based on their extensions.
 
     Args:
-        folder (str): the folder to look into
+        folder (str): folder to look into or list of folder/files
 
     Returns:
-        list: the list of image files.
+        list: the list of image files with a supported extension.
     """
-    return [os.path.join(folder, filename) for filename in os.listdir(folder) if isImageFile(filename)]
+    inputFolders = []
+    if isinstance(folder, (list, tuple)):
+        inputFolders = folder
+    else:
+        inputFolders.append(folder)
+
+    output = []
+    for currentFolder in inputFolders:
+        if os.path.isfile(currentFolder):
+            if isImageFile(currentFolder):
+                output.append(currentFolder)
+            continue
+        if recursive:
+            for root, directories, files in os.walk(currentFolder):
+                for filename in files:
+                    if isImageFile(filename):
+                        output.append(os.path.join(root, filename))
+        else:
+             output.extend([os.path.join(currentFolder, filename) for filename in os.listdir(currentFolder) if isImageFile(filename)])
+    return output
 
 
 def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output=''):
@@ -47,11 +66,12 @@ def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=l
         cameraInit.viewpoints.extend(inputViewpoints)
         cameraInit.intrinsics.extend(inputIntrinsics)
 
-    if output:
-        texturing = mvsNodes[-1]
-        graph.addNewNode('Publish', output=output, inputFiles=[texturing.outputMesh,
-                                                               texturing.outputMaterial,
-                                                               texturing.outputTextures])
+        if output:
+            texturing = mvsNodes[-1]
+            graph.addNewNode('Publish', output=output, inputFiles=[texturing.outputMesh,
+                                                                   texturing.outputMaterial,
+                                                                   texturing.outputTextures])
+
     return graph
 
 

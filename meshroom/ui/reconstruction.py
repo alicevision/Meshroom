@@ -1,8 +1,11 @@
+import json
 import logging
+import math
 import os
 from threading import Thread
 
-from PySide2.QtCore import QObject, Slot, Property, Signal
+from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF
+from PySide2.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
 
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
@@ -154,6 +157,202 @@ class LiveSfmManager(QObject):
     folder = Property(str, lambda self: self._folder, notify=folderChanged)
 
 
+class ViewpointWrapper(QObject):
+    """
+    ViewpointWrapper is a high-level object that wraps an input image in the context of a Reconstruction.
+    It exposes the attributes of the image and its corresponding camera when reconstructed.
+    """
+
+    initialParamsChanged = Signal()
+    sfmParamsChanged = Signal()
+    denseSceneParamsChanged = Signal()
+    internalChanged = Signal()
+
+    def __init__(self, viewpointAttribute, reconstruction):
+        """
+        Viewpoint constructor
+
+        Args:
+            viewpointAttribute (GroupAttribute): viewpoint attribute
+            reconstruction (Reconstruction): owner reconstruction of this Viewpoint
+        """
+        super(ViewpointWrapper, self).__init__(parent=reconstruction)
+        self._viewpoint = viewpointAttribute
+        self._reconstruction = reconstruction
+
+        # CameraInit
+        self._initialIntrinsics = None
+        # StructureFromMotion
+        self._T = None  # translation
+        self._R = None  # rotation
+        self._solvedIntrinsics = {}
+        self._reconstructed = False
+        # PrepareDenseScene
+        self._undistortedImagePath = ''
+
+        # update internally cached variables
+        self._updateInitialParams()
+        self._updateSfMParams()
+        self._updateDenseSceneParams()
+
+        # trigger internal members updates when reconstruction members changes
+        self._reconstruction.cameraInitChanged.connect(self._updateInitialParams)
+        self._reconstruction.sfmReportChanged.connect(self._updateSfMParams)
+        self._reconstruction.prepareDenseSceneChanged.connect(self._updateDenseSceneParams)
+
+    def _updateInitialParams(self):
+        """ Update internal members depending on CameraInit. """
+        if not self._reconstruction.cameraInit:
+            self.initialIntrinsics = None
+            self._metadata = {}
+        else:
+            self._initialIntrinsics = self._reconstruction.getIntrinsic(self._viewpoint)
+            self._metadata = json.loads(self._viewpoint.metadata.value)
+        self.initialParamsChanged.emit()
+
+    def _updateSfMParams(self):
+        """ Update internal members depending on StructureFromMotion. """
+        if not self._reconstruction.sfm:
+            self._T = None
+            self._R = None
+            self._solvedIntrinsics = {}
+            self._reconstructed = False
+        else:
+            self._solvedIntrinsics = self._reconstruction.getSolvedIntrinsics(self._viewpoint)
+            self._R, self._T = self._reconstruction.getPoseRT(self._viewpoint)
+            self._reconstructed = self._R is not None
+        self.sfmParamsChanged.emit()
+
+    def _updateDenseSceneParams(self):
+        """ Update internal members depending on PrepareDenseScene. """
+        # undistorted image path
+        if not self._reconstruction.prepareDenseScene:
+            self._undistortedImagePath = ''
+        else:
+            filename = "{}.{}".format(self._viewpoint.viewId.value, self._reconstruction.prepareDenseScene.outputFileType.value)
+            self._undistortedImagePath = os.path.join(self._reconstruction.prepareDenseScene.output.value, filename)
+        self.denseSceneParamsChanged.emit()
+
+    @Property(type=QObject, constant=True)
+    def attribute(self):
+        """ Get the underlying Viewpoint attribute wrapped by this Viewpoint. """
+        return self._viewpoint
+
+    @Property(type="QVariant", notify=initialParamsChanged)
+    def initialIntrinsics(self):
+        """ Get viewpoint's initial intrinsics. """
+        return self._initialIntrinsics
+
+    @Property(type="QVariant", notify=initialParamsChanged)
+    def metadata(self):
+        """ Get image metadata. """
+        return self._metadata
+
+    @Property(type=QSizeF, notify=initialParamsChanged)
+    def imageSize(self):
+        """ Get image size (width as the largest dimension). """
+        if not self._initialIntrinsics:
+            return QSizeF(0, 0)
+        return QSizeF(self._initialIntrinsics.width.value, self._initialIntrinsics.height.value)
+
+    @Property(type=int, notify=initialParamsChanged)
+    def orientation(self):
+        """ Get image orientation based on its metadata. """
+        return int(self.metadata.get("Orientation", 1))
+
+    @Property(type=QSizeF, notify=initialParamsChanged)
+    def orientedImageSize(self):
+        """ Get image size taking into account its orientation. """
+        if self.orientation in (6, 8):
+            return QSizeF(self.imageSize.height(), self.imageSize.width())
+        else:
+            return self.imageSize
+
+    @Property(type=bool, notify=sfmParamsChanged)
+    def isReconstructed(self):
+        """ Return whether this viewpoint corresponds to a reconstructed camera. """
+        return self._reconstructed
+
+    @Property(type="QVariant", notify=sfmParamsChanged)
+    def solvedIntrinsics(self):
+        return self._solvedIntrinsics
+
+    @Property(type=QVector3D, notify=sfmParamsChanged)
+    def translation(self):
+        """ Get the camera translation as a 3D vector. """
+        if self._T is None:
+            return None
+        return QVector3D(*self._T)
+
+    @Property(type=QQuaternion, notify=sfmParamsChanged)
+    def rotation(self):
+        """ Get the camera rotation as a quaternion. """
+        if self._R is None:
+            return None
+
+        rot = QMatrix3x3([
+            self._R[0], -self._R[1], -self._R[2],
+            self._R[3], -self._R[4], -self._R[5],
+            self._R[6], -self._R[7], -self._R[8]]
+        )
+
+        return QQuaternion.fromRotationMatrix(rot)
+
+    @Property(type=QMatrix4x4, notify=sfmParamsChanged)
+    def pose(self):
+        """ Get the camera pose of 'viewpoint' as a 4x4 matrix. """
+        if self._R is None or self._T is None:
+            return None
+
+        # convert transform matrix for Qt
+        return QMatrix4x4(
+            self._R[0], -self._R[1], -self._R[2], self._T[0],
+            self._R[3], -self._R[4], -self._R[5], self._T[1],
+            self._R[6], -self._R[7], -self._R[8], self._T[2],
+            0,          0,           0,           1
+        )
+
+    @Property(type=QVector3D, notify=sfmParamsChanged)
+    def upVector(self):
+        """ Get camera up vector according to its orientation. """
+        if self.orientation == 6:
+            return QVector3D(-1.0, 0.0, 0.0)
+        elif self.orientation == 8:
+            return QVector3D(1.0, 0.0, 0.0)
+        else:
+            return QVector3D(0.0, 1.0, 0.0)
+
+    @Property(type=QVector2D, notify=sfmParamsChanged)
+    def uvCenterOffset(self):
+        """ Get UV offset corresponding to the camera principal point. """
+        if not self.solvedIntrinsics:
+            return None
+        pp = self.solvedIntrinsics["principalPoint"]
+        # compute principal point offset in UV space
+        uvPP = QVector2D(float(pp[0]) / self.imageSize.width(), float(pp[1]) / self.imageSize.height())
+        # convert to offset
+        offset = uvPP - QVector2D(0.5, 0.5)
+        # apply orientation to principal point correction
+        if self.orientation == 6:
+            offset = QVector2D(-offset.y(), offset.x())
+        elif self.orientation == 8:
+            offset = QVector2D(offset.y(), -offset.x())
+        return offset
+
+    @Property(type=float, notify=sfmParamsChanged)
+    def fieldOfView(self):
+        """ Get camera vertical field of view in degrees. """
+        if not self.solvedIntrinsics:
+            return None
+        pxFocalLength = float(self.solvedIntrinsics["pxFocalLength"])
+        return 2.0 * math.atan(self.orientedImageSize.height() / (2.0 * pxFocalLength)) * 180 / math.pi
+
+    @Property(type=QUrl, notify=denseSceneParamsChanged)
+    def undistortedImageSource(self):
+        """ Get path to undistorted image source if available. """
+        return QUrl.fromLocalFile(self._undistortedImagePath)
+
+
 class Reconstruction(UIGraph):
     """
     Specialization of a UIGraph designed to manage a 3D reconstruction.
@@ -178,8 +377,13 @@ class Reconstruction(UIGraph):
         self._sfm = None
         self._views = None
         self._poses = None
+        self._solvedIntrinsics = None
         self._selectedViewId = None
+        self._selectedViewpoint = None
         self._liveSfmManager = LiveSfmManager(self)
+
+        # - Prepare Dense Scene (undistorted images)
+        self._prepareDenseScene = None
 
         # - Depth Map
         self._depthMap = None
@@ -198,11 +402,16 @@ class Reconstruction(UIGraph):
     @Slot()
     def new(self):
         """ Create a new photogrammetry pipeline. """
-        self.setGraph(multiview.photogrammetry())
+        if self._defaultPipelineFilepath:
+            # use the user-provided default photogrammetry project file
+            self.load(self._defaultPipelineFilepath, setupProjectFile=False)
+        else:
+            # default photogrammetry pipeline
+            self.setGraph(multiview.photogrammetry())
 
-    def load(self, filepath):
+    def load(self, filepath, setupProjectFile=True):
         try:
-            super(Reconstruction, self).load(filepath)
+            super(Reconstruction, self).load(filepath, setupProjectFile)
             # warn about pre-release projects being automatically upgraded
             if Version(self._graph.fileReleaseVersion).major == "0":
                 self.warning.emit(Message(
@@ -226,8 +435,10 @@ class Reconstruction(UIGraph):
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
+        self.selectedViewId = "-1"
         self.featureExtraction = None
         self.sfm = None
+        self.prepareDenseScene = None
         self.depthMap = None
         self.texturing = None
         self.updateCameraInits()
@@ -348,7 +559,7 @@ class Reconstruction(UIGraph):
         Fetching urls from dropEvent is generally expensive in QML/JS (bug ?).
         This method allows to reduce process time by doing it on Python side.
         """
-        self.importImages(self.getImageFilesFromDrop(drop), cameraInit)
+        self.importImagesAsync(self.getImageFilesFromDrop(drop), cameraInit)
 
     @staticmethod
     def getImageFilesFromDrop(drop):
@@ -363,7 +574,29 @@ class Reconstruction(UIGraph):
                 images.append(localFile)
         return images
 
-    def importImages(self, images, cameraInit):
+    def importImagesFromFolder(self, path, recursive=False):
+        """
+
+        Args:
+            path: A path to a folder or file or a list of files/folders
+            recursive: List files in folders recursively.
+
+        """
+        images = []
+        paths = []
+        if isinstance(path, (list, tuple)):
+            paths = path
+        else:
+            paths.append(path)
+        for p in paths:
+            if os.path.isdir(p):  # get folder content
+                images.extend(multiview.findImageFiles(p, recursive))
+            elif multiview.isImageFile(p):
+                images.append(p)
+        if images:
+            self.buildIntrinsics(self.cameraInit, images)
+
+    def importImagesAsync(self, images, cameraInit):
         """ Add the given list of images to the Reconstruction. """
         # Start the process of updating views and intrinsics
         self.runAsync(self.buildIntrinsics, args=(cameraInit, images,))
@@ -469,15 +702,30 @@ class Reconstruction(UIGraph):
     buildingIntrinsics = Property(bool, lambda self: self._buildingIntrinsics, notify=buildingIntrinsicsChanged)
     liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
 
-    def updateViewsAndPoses(self):
+    @Slot(QObject)
+    def setActiveNodeOfType(self, node):
+        """ Set node as the active node of its type. """
+        if node.nodeType == "StructureFromMotion":
+            self.sfm = node
+        elif node.nodeType == "FeatureExtraction":
+            self.featureExtraction = node
+        elif node.nodeType == "CameraInit":
+            self.cameraInit = node
+        elif node.nodeType == "PrepareDenseScene":
+            self.prepareDenseScene = node
+        elif node.nodeType == "DepthMap" or node.nodeType == "DepthMapFilter":
+            self.depthMap = node
+
+    def updateSfMResults(self):
         """
-        Update internal views and poses based on the current SfM node.
+        Update internal views, poses and solved intrinsics based on the current SfM node.
         """
         if not self._sfm:
             self._views = dict()
             self._poses = dict()
+            self._solvedIntrinsics = dict()
         else:
-            self._views, self._poses = self._sfm.nodeDesc.getViewsAndPoses(self._sfm)
+            self._views, self._poses, self._solvedIntrinsics = self._sfm.nodeDesc.getResults(self._sfm)
         self.sfmReportChanged.emit()
 
     def getSfm(self):
@@ -494,15 +742,15 @@ class Reconstruction(UIGraph):
         See Also: setSfm
         """
         self._sfm = node
-        # Update views and poses and do so each time
+        # Update sfm results and do so each time
         # the status of the SfM node's only chunk changes
-        self.updateViewsAndPoses()
+        self.updateSfMResults()
         if self._sfm:
             # when destroyed, directly use '_setSfm' to bypass
             # disconnection step in 'setSfm' (at this point, 'self._sfm' underlying object
             # has been destroyed and can't be evaluated anymore)
             self._sfm.destroyed.connect(self._unsetSfm)
-            self._sfm.chunks[0].statusChanged.connect(self.updateViewsAndPoses)
+            self._sfm.chunks[0].statusChanged.connect(self.updateSfMResults)
         self.sfmChanged.emit()
 
     def setSfm(self, node):
@@ -511,11 +759,12 @@ class Reconstruction(UIGraph):
         """
         # disconnect from previous SfM node if any
         if self._sfm:
-            self._sfm.chunks[0].statusChanged.disconnect(self.updateViewsAndPoses)
+            self._sfm.chunks[0].statusChanged.disconnect(self.updateSfMResults)
             self._sfm.destroyed.disconnect(self._unsetSfm)
         self._setSfm(node)
 
         self.texturing = self.lastNodeOfType("Texturing", self._sfm, Status.SUCCESS)
+        self.prepareDenseScene = self.lastNodeOfType("PrepareDenseScene", self._sfm, Status.SUCCESS)
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):
@@ -562,15 +811,59 @@ class Reconstruction(UIGraph):
         if viewId == self._selectedViewId:
             return
         self._selectedViewId = viewId
+        vp = None
+        if self.viewpoints:
+            vp = next((v for v in self.viewpoints if str(v.viewId.value) == self._selectedViewId), None)
+        self.setSelectedViewpoint(vp)
         self.selectedViewIdChanged.emit()
+
+    def setSelectedViewpoint(self, viewpointAttribute):
+        if self._selectedViewpoint:
+            # Reconstruction has ownership of Viewpoint object - destroy it when not needed anymore
+            self._selectedViewpoint.deleteLater()
+        self._selectedViewpoint = ViewpointWrapper(viewpointAttribute, self) if viewpointAttribute else None
 
     def reconstructedCamerasCount(self):
         """ Get the number of reconstructed cameras in the current context. """
         return len([v for v in self.getViewpoints() if self.isReconstructed(v)])
 
+    @Slot(QObject, result="QVariant")
+    def getSolvedIntrinsics(self, viewpoint):
+        """ Return viewpoint's solved intrinsics if it has been reconstructed, None otherwise.
+
+        Args:
+            viewpoint: the viewpoint object to instrinsics for.
+        """
+        if not viewpoint:
+            return None
+        return self._solvedIntrinsics.get(str(viewpoint.intrinsicId.value), None)
+
+    def getPoseRT(self, viewpoint):
+        """ Get the camera pose as rotation and translation of the given viewpoint.
+
+        Args:
+            viewpoint: the viewpoint attribute to consider.
+        Returns:
+            R, T: the rotation and translation as lists of floats
+        """
+        if not viewpoint:
+            return None, None
+        view = self._views.get(str(viewpoint.viewId.value), None)
+        if not view:
+            return None, None
+        pose = self._poses.get(view.get('poseId', -1), None)
+        if not pose:
+            return None, None
+
+        pose = pose["transform"]
+        R = [float(i) for i in pose["rotation"]]
+        T = [float(i) for i in pose["center"]]
+
+        return R, T
 
     selectedViewIdChanged = Signal()
     selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)
+    selectedViewpoint = Property(ViewpointWrapper, lambda self: self._selectedViewpoint, notify=selectedViewIdChanged)
 
     sfmChanged = Signal()
     sfm = Property(QObject, getSfm, setSfm, notify=sfmChanged)
@@ -582,10 +875,13 @@ class Reconstruction(UIGraph):
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(Node, Node)
+    
+    prepareDenseSceneChanged = Signal()
+    prepareDenseScene = makeProperty(QObject, "_prepareDenseScene", notify=prepareDenseSceneChanged, resetOnDestroy=True)
 
     depthMapChanged = Signal()
     depthMap = makeProperty(QObject, "_depthMap", depthMapChanged, resetOnDestroy=True)
-    
+
     texturingChanged = Signal()
     texturing = makeProperty(QObject, "_texturing", notify=texturingChanged)
 

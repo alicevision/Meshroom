@@ -234,7 +234,15 @@ class Graph(BaseObject):
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)
-    def load(self, filepath):
+    def load(self, filepath, setupProjectFile=True):
+        """
+        Load a meshroom graph ".mg" file.
+
+        Args:
+            filepath: project filepath to load
+            setupProjectFile: Store the reference to the project file and setup the cache directory.
+                              If false, it only loads the graph of the project file as a template.
+        """
         self.clear()
         with open(filepath) as jsonFile:
             fileData = json.load(jsonFile)
@@ -265,8 +273,9 @@ class Graph(BaseObject):
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
 
-        # Update filepath related members
-        self._setFilepath(filepath)
+        if setupProjectFile:
+            # Update filepath related members
+            self._setFilepath(filepath)
 
         # Create graph edges by resolving attributes expressions
         self._applyExpr()
@@ -896,7 +905,7 @@ class Graph(BaseObject):
     def asString(self):
         return str(self.toDict())
 
-    def save(self, filepath=None):
+    def save(self, filepath=None, setupProjectFile=True):
         path = filepath or self._filepath
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
@@ -920,7 +929,7 @@ class Graph(BaseObject):
         with open(path, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
 
-        if path != self._filepath:
+        if path != self._filepath and setupProjectFile:
             self._setFilepath(path)
 
     def _setFilepath(self, filepath):
@@ -930,7 +939,9 @@ class Graph(BaseObject):
         Args:
             filepath: the graph file path
         """
-        assert os.path.isfile(filepath)
+        if not os.path.isfile(filepath):
+            self._unsetFilepath()
+            return
 
         if self._filepath == filepath:
             return
@@ -940,6 +951,12 @@ class Graph(BaseObject):
         #  * graph name if the basename of the graph file
         self.name = os.path.splitext(os.path.basename(filepath))[0]
         self.cacheDir = os.path.join(os.path.abspath(os.path.dirname(filepath)), meshroom.core.cacheFolderName)
+        self.filepathChanged.emit()
+
+    def _unsetFilepath(self):
+        self._filepath = ""
+        self.name = ""
+        self.cacheDir = meshroom.core.defaultCacheFolder
         self.filepathChanged.emit()
 
     def updateInternals(self, startNodes=None, force=False):

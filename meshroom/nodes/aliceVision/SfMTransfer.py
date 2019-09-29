@@ -3,8 +3,8 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class SfMAlignment(desc.CommandLineNode):
-    commandLine = 'aliceVision_utils_sfmAlignment {allParams}'
+class SfMTransfer(desc.CommandLineNode):
+    commandLine = 'aliceVision_utils_sfmTransfer {allParams}'
     size = desc.DynamicNodeSize('input')
 
     inputs = [
@@ -18,21 +18,19 @@ class SfMAlignment(desc.CommandLineNode):
         desc.File(
             name='reference',
             label='Reference',
-            description='''Path to the scene used as the reference coordinate system.''',
+            description='''Path to the scene used as the reference to retrieve resolved poses and intrinsics.''',
             value='',
             uid=[0],
         ),
         desc.ChoiceParam(
             name='method',
-            label='Alignment Method',
-            description="Alignment Method:\n"
-                " * from_cameras_viewid: Align cameras with same view Id\n"
-                " * from_cameras_poseid: Align cameras with same pose Id\n"
-                " * from_cameras_filepath: Align cameras with a filepath matching, using 'fileMatchingPattern'\n"
-                " * from_cameras_metadata: Align cameras with matching metadata, using 'metadataMatchingList'\n"
-                " * from_markers: Align from markers with the same Id\n",
-            value='from_cameras_viewid',
-            values=['from_cameras_viewid', 'from_cameras_poseid', 'from_cameras_filepath', 'from_cameras_metadata', 'from_markers'],
+            label='Matching Method',
+            description="Matching Method:\n"
+                " * from_viewid: Align cameras with same view Id\n"
+                " * from_filepath: Align cameras with a filepath matching, using 'fileMatchingPattern'\n"
+                " * from_metadata: Align cameras with matching metadata, using 'metadataMatchingList'\n",
+            value='from_viewid',
+            values=['from_viewid', 'from_filepath', 'from_metadata'],
             exclusive=True,
             uid=[0],
         ),
@@ -61,23 +59,16 @@ class SfMAlignment(desc.CommandLineNode):
             description='List of metadata that should match to create the correspondences. If the list is empty, the default value will be used: ["Make", "Model", "Exif:BodySerialNumber", "Exif:LensSerialNumber"].',
         ),
         desc.BoolParam(
-            name='applyScale',
-            label='Scale',
-            description='Apply scale transformation.',
+            name='transferPoses',
+            label='Poses',
+            description='Transfer poses.',
             value=True,
             uid=[0]
         ),
         desc.BoolParam(
-            name='applyRotation',
-            label='Rotation',
-            description='Apply rotation transformation.',
-            value=True,
-            uid=[0]
-        ),
-        desc.BoolParam(
-            name='applyTranslation',
-            label='Translation',
-            description='Apply translation transformation.',
+            name='transferIntrinsics',
+            label='Intrinsics',
+            description='Transfer cameras intrinsics.',
             value=True,
             uid=[0]
         ),
@@ -96,8 +87,8 @@ class SfMAlignment(desc.CommandLineNode):
         desc.File(
             name='output',
             label='Output',
-            description='''Aligned SfMData file .''',
-            value=desc.Node.internalFolder + 'alignedSfM.abc',
+            description='SfMData file.',
+            value=desc.Node.internalFolder + 'sfmData.abc',
             uid=[],
         ),
     ]

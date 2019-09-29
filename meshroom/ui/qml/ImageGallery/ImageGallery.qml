@@ -35,9 +35,11 @@ Panel {
             text: MaterialIcons.more_vert
             font.pointSize: 11
             padding: 2
-            onClicked: graphEditorMenu.open()
+            checkable: true
+            checked: galleryMenu.visible
+            onClicked: galleryMenu.open()
             Menu {
-                id: graphEditorMenu
+                id: galleryMenu
                 y: parent.height
                 x: -width + parent.width
                 MenuItem {

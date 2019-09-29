@@ -24,7 +24,7 @@ Item {
     // Available render modes
     readonly property var renderModes: [ // Can't use ListModel because of MaterialIcons expressions
                          {"name": "Solid", "icon": MaterialIcons.crop_din },
-                         {"name": "Wireframe", "icon": MaterialIcons.grid_on },
+                         {"name": "Wireframe", "icon": MaterialIcons.details },
                          {"name": "Textured", "icon": MaterialIcons.texture },
                      ]
     // Current render mode
@@ -39,4 +39,11 @@ Item {
     property bool displayGrid: true
     property bool displayGizmo: true
     property bool displayOrigin: false
+    // Camera
+    property bool syncViewpointCamera: false
+    property bool viewpointImageOverlay: true
+    property real viewpointImageOverlayOpacity: 0.5
+    readonly property bool showViewpointImageOverlay: syncViewpointCamera && viewpointImageOverlay
+    property bool viewpointImageFrame: false
+    readonly property bool showViewpointImageFrame: syncViewpointCamera && viewpointImageFrame
 }

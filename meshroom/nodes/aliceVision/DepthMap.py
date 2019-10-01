@@ -62,7 +62,7 @@ class DepthMap(desc.CommandLineNode):
         ),
         desc.IntParam(
             name='sgmStepXY',
-            label='SGM: Step',
+            label='SGM: Step XY',
             description='Semi Global Matching: Step used to compute the similarity volume on X and Y axis.',
             value=-1,
             range=(-1, 10, 1),
@@ -70,7 +70,7 @@ class DepthMap(desc.CommandLineNode):
         ),
         desc.IntParam(
             name='sgmStepZ',
-            label='SGM: Step',
+            label='SGM: Step Z',
             description='Semi Global Matching: Step used to compute the similarity volume on Z axis.',
             value=-1,
             range=(-1, 10, 1),

@@ -47,7 +47,7 @@ class StructureFromMotion(desc.CommandLineNode):
             label='Describer Types',
             description='Describer types used to describe an image.',
             value=['sift'],
-            values=['akaze', 'akaze_liop', 'akaze_mldb', 'sift', 'sift_float', 'sift_upright', 'akaze_ocv', 'brisk_ocv', 'sift_ocv', 'surf_ocv','cctag3', 'cctag4'],
+            values=['akaze', 'akaze_liop', 'akaze_mldb', 'sift', 'sift_float', 'sift_upright', 'akaze_ocv', 'brisk_ocv', 'sift_ocv', 'surf_ocv', 'cctag3', 'cctag4'],
             exclusive=False,
             uid=[0],
             joinChar=',',

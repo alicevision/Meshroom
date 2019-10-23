@@ -168,7 +168,7 @@ if args.scale > 0:
 graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder
 
 if args.save:
-    graph.save(args.save, setupFileRef=not bool(args.cache))
+    graph.save(args.save, setupProjectFile=not bool(args.cache))
     print('File successfully saved: "{}"'.format(args.save))
 
 if not args.output:

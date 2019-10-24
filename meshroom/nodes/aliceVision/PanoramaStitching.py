@@ -28,6 +28,14 @@ class PanoramaStitching(desc.CommandLineNode):
             uid=[0],
             group='', # not part of allParams, as this is not a parameter for the command line
         ),
+        desc.IntParam(
+            name='panoramaWidth',
+            label='Panorama Width',
+            description='Panorama width (pixels). 0 For automatic size',
+            value=1000,
+            range=(0, 50000, 1000),
+            uid=[0]
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

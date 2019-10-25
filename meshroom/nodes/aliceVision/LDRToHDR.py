@@ -6,9 +6,23 @@ import os
 from meshroom.core import desc
 
 
+class DividedInputNodeSize(desc.DynamicNodeSize):
+    """
+    The LDR2HDR will reduce the amount of views in the SfMData.
+    This class converts the number of LDR input views into the number of HDR output views.
+    """
+    def __init__(self, param, divParam):
+        super(DividedInputNodeSize, self).__init__(param)
+        self._divParam = divParam
+    def computeSize(self, node):
+        s = super(DividedInputNodeSize, self).computeSize(node)
+        divParam = node.attribute(self._divParam)
+        return s / divParam.value
+
+
 class LDRToHDR(desc.CommandLineNode):
     commandLine = 'aliceVision_convertLDRToHDR {allParams}'
-    size = desc.DynamicNodeSize('input')
+    size = DividedInputNodeSize('input', 'groupSize')
 
     inputs = [
         desc.File(

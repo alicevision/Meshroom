@@ -267,19 +267,20 @@ class StructureFromMotion(desc.CommandLineNode):
     ]
 
     @staticmethod
-    def getViewsAndPoses(node):
+    def getResults(node):
         """
-        Parse SfM result and return views and poses as two dict with viewId and poseId as keys.
+        Parse SfM result and return views, poses and intrinsics as three dicts with viewId, poseId and intrinsicId as keys.
         """
         reportFile = node.outputViewsAndPoses.value
         if not os.path.exists(reportFile):
-            return {}, {}
+            return {}, {}, {}
 
         with open(reportFile) as jsonFile:
             report = json.load(jsonFile)
 
         views = dict()
         poses = dict()
+        intrinsics = dict()
 
         for view in report['views']:
             views[view['viewId']] = view
@@ -287,4 +288,7 @@ class StructureFromMotion(desc.CommandLineNode):
         for pose in report['poses']:
             poses[pose['poseId']] = pose['pose']
 
-        return views, poses
+        for intrinsic in report['intrinsics']:
+            intrinsics[intrinsic['intrinsicId']] = intrinsic
+
+        return views, poses, intrinsics

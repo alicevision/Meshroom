@@ -42,7 +42,16 @@ class FeatureExtraction(desc.CommandLineNode):
             description='Use only CPU feature extraction.',
             value=True,
             uid=[],
-            advanced=True
+            advanced=True,
+        ),
+        desc.IntParam(
+            name='maxThreads',
+            label='Max Nb Threads',
+            description='Specifies the maximum number of threads to run simultaneously (0 for automatic mode).',
+            value=0,
+            range=(0, 24, 1),
+            uid=[],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

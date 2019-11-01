@@ -184,12 +184,12 @@ class CameraInit(desc.CommandLineNode):
             self.createViewpointsFile(node, additionalViews)
             cmd = self.buildCommandLine(node.chunks[0])
             # logging.debug(' - commandLine:', cmd)
-            subprocess = psutil.Popen(cmd, stdout=None, stderr=None, shell=True)
-            stdout, stderr = subprocess.communicate()
-            subprocess.wait()
-            if subprocess.returncode != 0:
-                raise RuntimeError('CameraInit failed with error code {}. Command was: "{}"'.format(
-                    subprocess.returncode, cmd)
+            proc = psutil.Popen(cmd, stdout=None, stderr=None, shell=True)
+            stdout, stderr = proc.communicate()
+            proc.wait()
+            if proc.returncode != 0:
+                raise RuntimeError('CameraInit failed with error code {}.\nCommand was: "{}".\n'.format(
+                    proc.returncode, cmd)
                 )
 
             # Reload result of aliceVision_cameraInit

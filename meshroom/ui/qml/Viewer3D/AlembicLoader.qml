@@ -43,9 +43,13 @@ AlembicEntity {
         Entity {
             id: camSelector
             property string viewId
+            // Qt 5.13: binding cameraPicker.enabled to cameraPickerEnabled
+            //          causes rendering issues when entity gets disabled.
+            //          set CuboidMesh extent to 0 to disable picking.
+            property real extent: cameraPickingEnabled ? 0.2 : 0
 
             components: [
-                CuboidMesh { xExtent: 0.2; yExtent: 0.2; zExtent: 0.2;},
+                CuboidMesh { xExtent: parent.extent; yExtent: xExtent; zExtent: xExtent },
                 PhongMaterial{
                     id: mat
                     ambient: viewId === _reconstruction.selectedViewId ? activePalette.highlight : "#CCC"
@@ -53,14 +57,22 @@ AlembicEntity {
                 },
                 ObjectPicker {
                     id: cameraPicker
-                    onPressed: pick.accepted = cameraPickingEnabled
-                    onReleased: _reconstruction.selectedViewId = camSelector.viewId
-                },
-                // Qt 5.13: binding cameraPicker.enabled to cameraPickerEnabled
-                //          causes rendering issues when entity gets disabled.
-                //          Use a scale to 0 to disable picking.
-                Transform { scale: cameraPickingEnabled ? 1 : 0 }
+                    property point pos
+                    onPressed: {
+                        pos = pick.position;
+                        pick.accepted = (pick.buttons & Qt.LeftButton) && cameraPickingEnabled
+                    }
+                    onReleased: {
+                        const delta = Qt.point(Math.abs(pos.x - pick.position.x), Math.abs(pos.y - pick.position.y));
+                        // only trigger picking when mouse has not moved between press and release
+                        if(delta.x + delta.y < 4)
+                        {
+                            _reconstruction.selectedViewId = camSelector.viewId;
+                        }
+                    }
+                }
             ]
         }
+
     }
 }

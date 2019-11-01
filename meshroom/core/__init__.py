@@ -240,7 +240,7 @@ def loadAllNodes(folder):
             nodeTypes = loadNodes(folder, package)
             for nodeType in nodeTypes:
                 registerNodeType(nodeType)
-            print('Plugins loaded: ', ', '.join([nodeType.__name__ for nodeType in nodeTypes]))
+            logging.debug('Plugins loaded: ', ', '.join([nodeType.__name__ for nodeType in nodeTypes]))
 
 
 def registerSubmitter(s):

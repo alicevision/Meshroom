@@ -22,6 +22,12 @@ The goal of photogrammetry is to reverse this process.
 
 See the [presentation of the pipeline steps](http://alicevision.github.io/#photogrammetry).
 
+
+## Manual
+
+https://meshroom-manual.readthedocs.io
+
+
 ## Tutorials
 
 * [Meshroom: Open Source 3D Reconstruction Software](https://www.youtube.com/watch?v=v_O6tYKQEBA) by [Mikros Image](http://www.mikrosimage.com)
@@ -44,6 +50,7 @@ Overall presentation of the protogrammetry practice with Meshroom and detailed p
 
 Presentation of the Meshroom software with a focus on using it for Match Moving.
 
+
 ## License
 
 The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
@@ -59,6 +66,7 @@ git clone --recursive git://github.com/alicevision/meshroom
 cd meshroom
 pip install -r requirements.txt
 ```
+
 
 ## Start Meshroom
 

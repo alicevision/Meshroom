@@ -574,6 +574,8 @@ ApplicationWindow {
                         font.pointSize: 11
                         padding: 2
                         onClicked: graphEditorMenu.open()
+                        checkable: true
+                        checked: graphEditorMenu.visible
                         Menu {
                             id: graphEditorMenu
                             y: parent.height
@@ -613,18 +615,8 @@ ApplicationWindow {
                     readOnly: graphLocked
 
                     onNodeDoubleClicked: {
-                        if(node.nodeType === "StructureFromMotion")
-                        {
-                            _reconstruction.sfm = node;
-                        }
-                        else if(node.nodeType === "FeatureExtraction")
-                        {
-                            _reconstruction.featureExtraction = node;
-                        }
-                        else if(node.nodeType === "CameraInit")
-                        {
-                            _reconstruction.cameraInit = node;
-                        }
+                        _reconstruction.setActiveNodeOfType(node);
+
                         for(var i=0; i < node.attributes.count; ++i)
                         {
                             var attr = node.attributes.at(i)

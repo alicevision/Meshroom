@@ -401,12 +401,15 @@ class Reconstruction(UIGraph):
     @Slot()
     def new(self):
         """ Create a new photogrammetry pipeline. """
-        if self._defaultPipelineFilepath:
-            # use the user-provided default photogrammetry project file
-            self.load(self._defaultPipelineFilepath, setupProjectFile=False)
-        else:
+        if self._defaultPipeline.lower() == "photogrammetry":
             # default photogrammetry pipeline
             self.setGraph(multiview.photogrammetry())
+        elif self._defaultPipeline.lower() == "hdri":
+            # default hdri pipeline
+            self.setGraph(multiview.hdri())
+        else:
+            # use the user-provided default photogrammetry project file
+            self.load(self._defaultPipeline, setupProjectFile=False)
 
     def load(self, filepath, setupProjectFile=True):
         try:
@@ -590,9 +593,11 @@ class Reconstruction(UIGraph):
                 images.extend(multiview.findImageFiles(localFile))
             elif multiview.isImageFile(localFile):
                 images.append(localFile)
-            else:
-                otherFiles.append(localFile)
-        return images, otherFiles
+            elif multiview.isVideoFile(localFile):
+                images.append(localFile)
+            elif multiview.isPanoramaFile(localFile):
+                pass
+        return images
 
     def importImagesFromFolder(self, path, recursive=False):
         """

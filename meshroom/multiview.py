@@ -6,12 +6,26 @@ import os
 from meshroom.core.graph import Graph, GraphModification
 
 # Supported image extensions
-imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr', '.rw2', '.cr2', '.nef', '.arw', '.dng')
-
+imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr', '.rw2', '.cr2', '.nef', '.arw')
+videoExtensions = ('.avi', '.mov', '.qt',
+                   '.mkv', '.webm',
+                   '.mp4', '.mpg', '.mpeg', '.m2v', '.m4v',
+                   '.wmv',
+                   '.ogv', '.ogg',
+                   '.mxf')
+panoramaExtensions = ('.xml')
 
 def isImageFile(filepath):
     """ Return whether filepath is a path to an image file supported by Meshroom. """
     return os.path.splitext(filepath)[1].lower() in imageExtensions
+
+def isVideoFile(filepath):
+    """ Return whether filepath is a path to a video file supported by Meshroom. """
+    return os.path.splitext(filepath)[1].lower() in videoExtensions
+
+def isPanoramaFile(filepath):
+    """ Return whether filepath is a path to a panorama info file supported by Meshroom. """
+    return os.path.splitext(filepath)[1].lower() in panoramaExtensions
 
 
 def findImageFiles(folder, recursive=False):
@@ -44,6 +58,80 @@ def findImageFiles(folder, recursive=False):
         else:
              output.extend([os.path.join(currentFolder, filename) for filename in os.listdir(currentFolder) if isImageFile(filename)])
     return output
+
+
+def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output=''):
+    """
+    Create a new Graph with a complete HDRI pipeline.
+
+    Args:
+        inputImages (list of str, optional): list of image file paths
+        inputViewpoints (list of Viewpoint, optional): list of Viewpoints
+        output (str, optional): the path to export reconstructed model to
+
+    Returns:
+        Graph: the created graph
+    """
+    graph = Graph('HDRI')
+    with GraphModification(graph):
+        nodes = hdriPipeline(graph)
+        cameraInit = nodes[0]
+        cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        cameraInit.viewpoints.extend(inputViewpoints)
+        cameraInit.intrinsics.extend(inputIntrinsics)
+
+        if output:
+            stitching = nodes[-1]
+            graph.addNewNode('Publish', output=output, inputFiles=[stitching.output])
+
+    return graph
+
+
+def hdriPipeline(graph):
+    """
+    Instantiate an HDRI pipeline inside 'graph'.
+    Args:
+        graph (Graph/UIGraph): the graph in which nodes should be instantiated
+
+    Returns:
+        list of Node: the created nodes
+    """
+    cameraInit = graph.addNewNode('CameraInit')
+
+    ldr2hdr = graph.addNewNode('LDRToHDR',
+                               input=cameraInit.output)
+
+    featureExtraction = graph.addNewNode('FeatureExtraction',
+                                         input=ldr2hdr.outSfMDataFilename)
+    imageMatching = graph.addNewNode('ImageMatching',
+                                     input=featureExtraction.input,
+                                     featuresFolders=[featureExtraction.output])
+    featureMatching = graph.addNewNode('FeatureMatching',
+                                       input=imageMatching.input,
+                                       featuresFolders=imageMatching.featuresFolders,
+                                       imagePairsList=imageMatching.output)
+
+    panoramaExternalInfo = graph.addNewNode('PanoramaExternalInfo',
+                                     input=ldr2hdr.input)
+
+    panoramaEstimation = graph.addNewNode('PanoramaEstimation',
+                                           input=panoramaExternalInfo.outSfMDataFilename,
+                                           featuresFolders=featureMatching.featuresFolders,
+                                           matchesFolders=[featureMatching.output])
+
+    panoramaStitching = graph.addNewNode('PanoramaStitching',
+                                        input=panoramaEstimation.outSfMDataFilename)
+
+    return [
+        cameraInit,
+        featureExtraction,
+        imageMatching,
+        featureMatching,
+        panoramaExternalInfo,
+        panoramaEstimation,
+        panoramaStitching,
+    ]
+
 
 
 def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output=''):

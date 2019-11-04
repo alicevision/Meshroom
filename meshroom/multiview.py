@@ -13,22 +13,46 @@ videoExtensions = ('.avi', '.mov', '.qt',
                    '.wmv',
                    '.ogv', '.ogg',
                    '.mxf')
-panoramaExtensions = ('.xml')
-
-def isImageFile(filepath):
-    """ Return whether filepath is a path to an image file supported by Meshroom. """
-    return os.path.splitext(filepath)[1].lower() in imageExtensions
-
-def isVideoFile(filepath):
-    """ Return whether filepath is a path to a video file supported by Meshroom. """
-    return os.path.splitext(filepath)[1].lower() in videoExtensions
-
-def isPanoramaFile(filepath):
-    """ Return whether filepath is a path to a panorama info file supported by Meshroom. """
-    return os.path.splitext(filepath)[1].lower() in panoramaExtensions
+panoramaInfoExtensions = ('.xml')
 
 
-def findImageFiles(folder, recursive=False):
+def hasExtension(filepath, extensions):
+    """ Return whether filepath is one of the following extensions. """
+    return os.path.splitext(filepath)[1].lower() in extensions
+
+
+class FilesByType:
+    def __init__(self):
+        self.images = []
+        self.videos = []
+        self.panoramaInfo = []
+        self.other = []
+
+    def __bool__(self):
+        return self.images or self.videos or self.panoramaInfo
+
+    def extend(self, other):
+        self.images.extend(other.images)
+        self.videos.extend(other.videos)
+        self.panoramaInfo.extend(other.panoramaInfo)
+        self.other.extend(other.other)
+
+    def addFile(self, file):
+        if hasExtension(file, imageExtensions):
+            self.images.append(file)
+        elif hasExtension(file, videoExtensions):
+            self.videos.append(file)
+        elif hasExtension(file, panoramaInfoExtensions):
+            self.panoramaInfo.append(file)
+        else:
+            self.other.append(file)
+
+    def addFiles(self, files):
+        for file in files:
+            self.addFile(file)
+
+
+def findFilesByTypeInFolder(folder, recursive=False):
     """
     Return all files that are images in 'folder' based on their extensions.
 
@@ -44,19 +68,17 @@ def findImageFiles(folder, recursive=False):
     else:
         inputFolders.append(folder)
 
-    output = []
+    output = FilesByType()
     for currentFolder in inputFolders:
         if os.path.isfile(currentFolder):
-            if isImageFile(currentFolder):
-                output.append(currentFolder)
+            output.addFile(currentFolder)
             continue
         if recursive:
             for root, directories, files in os.walk(currentFolder):
                 for filename in files:
-                    if isImageFile(filename):
-                        output.append(os.path.join(root, filename))
+                    output.addFile(os.path.join(root, filename))
         else:
-             output.extend([os.path.join(currentFolder, filename) for filename in os.listdir(currentFolder) if isImageFile(filename)])
+            output.addFiles([os.path.join(currentFolder, filename) for filename in os.listdir(currentFolder)])
     return output
 
 

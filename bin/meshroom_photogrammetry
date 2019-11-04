@@ -78,7 +78,7 @@ if not args.input and not args.inputRecursive:
 
 views, intrinsics = [], []
 # Build image files list from inputImages arguments
-images = []
+filesByType = multiview.FilesByType()
 
 hasSearchedForImages = False
 
@@ -88,14 +88,14 @@ if args.input:
         from meshroom.nodes.aliceVision.CameraInit import readSfMData
         views, intrinsics = readSfMData(args.input[0])
     else:
-        images += multiview.findImageFiles(args.input, recursive=False)
+        filesByType.extend(multiview.findFilesByTypeInFolder(args.input, recursive=False))
         hasSearchedForImages = True
 
 if args.inputRecursive:
-    images += multiview.findImageFiles(args.inputRecursive, recursive=True)
+    filesByType.extend(multiview.findFilesByTypeInFolder(args.inputRecursive, recursive=True))
     hasSearchedForImages = True
 
-if hasSearchedForImages and not images:
+if hasSearchedForImages and not filesByType.images:
     print("No image found")
     exit(-1)
 
@@ -122,8 +122,8 @@ else:
     graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
     cameraInit = getOnlyNodeOfType(graph, 'CameraInit')
 
-if images:
-    views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, images)
+if filesByType.images:
+    views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, filesByType.images)
     cameraInit.viewpoints.value = views
     cameraInit.intrinsics.value = intrinsics
 

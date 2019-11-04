@@ -225,7 +225,7 @@ class Meshing(desc.CommandLineNode):
             advanced=True,
         ),
         desc.ChoiceParam(
-            name='outputDensePointCloudFileType',
+            name='outputSfMDataFilename',
             label='Dense Point Cloud File Type',
             description='Dense Point Cloud File Type',
             value='abc',
@@ -256,7 +256,7 @@ class Meshing(desc.CommandLineNode):
             name="output",
             label="Output Dense Point Cloud",
             description="Output dense point cloud with visibilities.",
-			value=desc.Node.internalFolder + 'densePointCloud.{outputDensePointCloudFileTypeValue}',
+			value=desc.Node.internalFolder + 'densePointCloud.{outputSfMDataFilenameValue}',
             uid=[],
         ),
     ]

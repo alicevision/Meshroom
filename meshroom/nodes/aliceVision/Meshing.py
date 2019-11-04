@@ -256,7 +256,7 @@ class Meshing(desc.CommandLineNode):
             name="output",
             label="Output Dense Point Cloud",
             description="Output dense point cloud with visibilities.",
-			value=desc.Node.internalFolder + 'densePointCloud.{outputSfMDataFilenameValue}',
+            value=desc.Node.internalFolder + 'densePointCloud.{outputSfMDataFilenameValue}',
             uid=[],
         ),
     ]

@@ -249,7 +249,7 @@ class Meshing(desc.CommandLineNode):
             name="outputMesh",
             label="Output Mesh",
             description="Output mesh (OBJ file format).",
-            value="{cache}/{nodeType}/{uid0}/mesh.obj",
+            value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],
         ),
         desc.File(

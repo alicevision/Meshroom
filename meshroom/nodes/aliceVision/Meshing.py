@@ -4,7 +4,7 @@ from meshroom.core import desc
 
 
 class Meshing(desc.CommandLineNode):
-    commandLine = 'aliceVision_meshing {allParams}'
+    commandLine = 'aliceVision_meshing --input {inputValue} --depthMapsFolder {depthMapsFolderValue} --depthMapsFilterFolder {depthMapsFilterFolderValue} --estimateSpaceFromSfM {estimateSpaceFromSfMValue} --estimateSpaceMinObservations	{estimateSpaceMinObservationsValue} --estimateSpaceMinObservationAngle {estimateSpaceMinObservationAngleValue} --maxInputPoints {maxInputPointsValue} --maxPoints {maxPointsValue} --maxPointsPerVoxel {maxPointsPerVoxelValue} --minStep {minStepValue} --partitioning	{partitioningValue} --repartition {repartitionValue} --angleFactor {angleFactorValue} --simFactor {simFactorValue} --pixSizeMarginInitCoef {pixSizeMarginInitCoefValue} --pixSizeMarginFinalCoef {pixSizeMarginFinalCoefValue} --voteMarginFactor {voteMarginFactorValue} --contributeMarginFactor {contributeMarginFactorValue} --simGaussianSizeInit {simGaussianSizeInitValue} --simGaussianSize {simGaussianSizeValue} --minAngleThreshold {minAngleThresholdValue} --refineFuse {refineFuseValue} --addLandmarksToTheDensePointCloud {addLandmarksToTheDensePointCloudValue} --colorizeOutput {colorizeOutputValue} --saveRawDensePointCloud {saveRawDensePointCloudValue} --outputMesh {outputMeshValue} --output	{outputValue} --verboseLevel {verboseLevelValue}'
 
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
@@ -252,7 +252,7 @@ class Meshing(desc.CommandLineNode):
             value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],
         ),
-        desc.File(
+		desc.File(
             name="output",
             label="Output Dense Point Cloud",
             description="Output dense point cloud with visibilities (SfMData file format).",

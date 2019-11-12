@@ -32,15 +32,6 @@ class LDRToHDR(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
-        desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='Verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
-            exclusive=True,
-            uid=[],
-        ),
         desc.IntParam(
             name='groupSize',
             label='Exposure bracket count',
@@ -56,6 +47,80 @@ class LDRToHDR(desc.CommandLineNode):
             value=1.0,
             range=(0.0, 1.0, 0.01),
             uid=[0],
+        ),
+        desc.BoolParam(
+            name='fisheyeLens',
+            label='Fisheye Lens',
+            description="Enable if a fisheye lens has been used.\n "
+                        "This will improve the estimation of the Camera's Response Function by considering only the pixels in the center of the image\n"
+                        "and thus ignore undefined/noisy pixels outside the circle defined by the fisheye lens.",
+            value=False,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='calibrationMethod',
+            label='Calibration Method',
+            description="Method used for camera calibration \n"
+                        " * linear \n"
+                        " * robertson \n"
+                        " * debevec \n"
+                        " * grossberg",
+            values=['linear', 'robertson', 'debevec', 'grossberg'],
+            value='linear',
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='calibrationWeight',
+            label='Calibration Weight',
+            description="Weight function used to calibrate camera response \n"
+                        " * default (automatically selected according to the calibrationMethod) \n"
+                        " * gaussian \n"
+                        " * triangle \n"
+                        " * plateau",
+            value='default',
+            values=['default', 'gaussian', 'triangle', 'plateau'],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='fusionWeight',
+            label='Fusion Weight',
+            description="Weight function used to fuse all LDR images together \n"
+                        " * gaussian \n"
+                        " * triangle \n"
+                        " * plateau",
+            value='gaussian',
+            values=['gaussian', 'triangle', 'plateau'],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='calibrationNbPoints',
+            label='Calibration Nb Points',
+            description='Internal number of points used for calibration.',
+            value=0,
+            range=(0, 10000000, 1000),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.IntParam(
+            name='channelQuantizationPower',
+            label='Channel Quantization Power',
+            description='Quantization level like 8 bits or 10 bits.',
+            value=10,
+            range=(8, 14, 1),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='Verbosity level (fatal, error, warning, info, debug, trace).',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[],
         ),
     ]
 

@@ -6,8 +6,8 @@ import os
 from meshroom.core import desc
 
 
-class PanoramaStitching(desc.CommandLineNode):
-    commandLine = 'aliceVision_panoramaStitching {allParams}'
+class PanoramaWarping(desc.CommandLineNode):
+    commandLine = 'aliceVision_panoramaWarping {allParams}'
     size = desc.DynamicNodeSize('input')
 
     inputs = [
@@ -17,16 +17,6 @@ class PanoramaStitching(desc.CommandLineNode):
             description="SfM Data File",
             value='',
             uid=[0],
-        ),
-        desc.ChoiceParam(
-            name='outputFileType',
-            label='Output File Type',
-            description='Output file type for the undistorted images.',
-            value='exr',
-            values=['jpg', 'png', 'tif', 'exr'],
-            exclusive=True,
-            uid=[0],
-            group='', # not part of allParams, as this is not a parameter for the command line
         ),
         desc.IntParam(
             name='panoramaWidth',
@@ -50,9 +40,9 @@ class PanoramaStitching(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Panorama',
+            label='Output directory',
             description='',
-            value=desc.Node.internalFolder + 'panorama.{outputFileTypeValue}',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
     ]

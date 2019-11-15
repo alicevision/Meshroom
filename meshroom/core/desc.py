@@ -11,7 +11,7 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, uid, group, formatter):
+    def __init__(self, name, label, description, value, advanced, semantic, uid, group, formatter):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
@@ -20,6 +20,7 @@ class Attribute(BaseObject):
         self._uid = uid
         self._group = group
         self._advanced = advanced
+        self._semantic = semantic
         self._formatter = formatter or self._defaultFormatter
 
     name = Property(str, lambda self: self._name, constant=True)
@@ -29,6 +30,7 @@ class Attribute(BaseObject):
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
     advanced = Property(bool, lambda self: self._advanced, constant=True)
+    semantic = Property(str, lambda self: self._semantic, constant=True)
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
@@ -66,13 +68,13 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, joinChar=' ', formatter=None):
+    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, semantic='', joinChar=' ', formatter=None):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced, formatter=formatter)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced, semantic=semantic, formatter=formatter)
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
@@ -102,13 +104,13 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, joinChar=' ', formatter=None):
+    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, semantic='', joinChar=' ', formatter=None):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, formatter=formatter)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, semantic=semantic, formatter=formatter)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
@@ -166,15 +168,15 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group, advanced, formatter=None):
-        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, formatter=formatter)
+    def __init__(self, name, label, description, value, uid, group, advanced, semantic='', formatter=None):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
 
 
 class File(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, formatter=None):
-        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, formatter=formatter)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', formatter=None):
+        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):
@@ -185,8 +187,8 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, formatter=None):
-        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, formatter=formatter)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', formatter=None):
+        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         try:
@@ -198,9 +200,9 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, formatter=None):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', formatter=None):
         self._range = range
-        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, formatter=formatter)
+        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
@@ -217,9 +219,9 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, formatter=None):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', formatter=None):
         self._range = range
-        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, formatter=formatter)
+        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         try:
@@ -233,13 +235,13 @@ class FloatParam(Param):
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, formatter=None):
+    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, semantic='', formatter=None):
         assert values
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
         self._valueType = type(self._values[0])  # cast to value type
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, formatter=formatter)
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
 
     def conformValue(self, val):
         """ Conform 'val' to the correct type and check for its validity """
@@ -264,8 +266,8 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, formatter=None):
-        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, formatter=formatter)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', formatter=None):
+        super(StringParam, self).__init__(name=name, label=label, description=description,value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):

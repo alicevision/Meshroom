@@ -17,6 +17,13 @@ class FeatureExtraction(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+        desc.File(
+            name='masksFolder',
+            label='Masks Folder',
+            description='Use masks to filter features. Filename should be the same or the image uid.',
+            value='',
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='describerTypes',
             label='Describer Types',

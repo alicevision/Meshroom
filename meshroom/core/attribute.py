@@ -191,13 +191,8 @@ class Attribute(BaseObject):
             return self.desc.value
         return self._value
 
-    def getValueStr(self):
-        if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
-            assert(isinstance(self.value, collections.Sequence) and not isinstance(self.value, pyCompatibility.basestring))
-            return self.attributeDesc.joinChar.join(self.value)
-        if isinstance(self.attributeDesc, (desc.StringParam, desc.File)):
-            return '"{}"'.format(self.value)
-        return str(self.value)
+    def format(self):
+        return self.desc.format(self.value)
 
     def defaultValue(self):
         return self.desc.value
@@ -332,11 +327,6 @@ class ListAttribute(Attribute):
         else:
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value if not attr.isDefault]
 
-    def getValueStr(self):
-        if isinstance(self.value, ListModel):
-            return self.attributeDesc.joinChar.join([v.getValueStr() for v in self.value])
-        return super(ListAttribute, self).getValueStr()
-
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
@@ -412,11 +402,6 @@ class GroupAttribute(Attribute):
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items()}
         else:
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault}
-
-    def getValueStr(self):
-        # sort values based on child attributes group description order
-        sortedSubValues = [self._value.get(attr.name).getValueStr() for attr in self.attributeDesc.groupDesc]
-        return self.attributeDesc.joinChar.join(sortedSubValues)
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

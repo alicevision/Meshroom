@@ -453,18 +453,19 @@ class BaseNode(BaseObject):
         for uidIndex, value in self._uids.items():
             self._cmdVars['uid{}'.format(uidIndex)] = value
 
+        def populate(cmdVars, group, name, value):
+            cmdVars[name] = '--{name} {value}'.format(name=name, value=value)
+            cmdVars[name + 'Value'] = str(v)
+            if v:
+                cmdVars[group] = cmdVars.get(group, '') + ' ' + cmdVars[name]
+
         # Evaluate input params
-        for name, attr in self._attributes.objects.items():
+        for _, attr in self._attributes.objects.items():
             if attr.isOutput:
                 continue  # skip outputs
-            v = attr.getValueStr()
-
-            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-            self._cmdVars[name + 'Value'] = str(v)
-
-            if v:
-                self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
-                                                          ' ' + self._cmdVars[name]
+            group_name_values = attr.format()
+            for group, name, v in group_name_values:
+                populate(self._cmdVars, group, name, v)
 
         # For updating output attributes invalidation values
         cmdVarsNoCache = self._cmdVars.copy()
@@ -476,14 +477,9 @@ class BaseNode(BaseObject):
                 continue  # skip inputs
             attr.value = attr.attributeDesc.value.format(**self._cmdVars)
             attr._invalidationValue = attr.attributeDesc.value.format(**cmdVarsNoCache)
-            v = attr.getValueStr()
-
-            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-            self._cmdVars[name + 'Value'] = str(v)
-
-            if v:
-                self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
-                                                          ' ' + self._cmdVars[name]
+            group_name_values = attr.format()
+            for group, name, v in group_name_values:
+                populate(self._cmdVars, group, name, v)
 
     @property
     def isParallelized(self):

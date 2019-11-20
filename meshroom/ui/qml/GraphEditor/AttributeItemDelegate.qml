@@ -371,34 +371,61 @@ RowLayout {
 
         Component {
             id: color_hue_component
-            Slider {
-                readonly property int stepDecimalCount: 2
-                readonly property real formattedValue: value.toFixed(stepDecimalCount)
-                enabled: root.editable
-                value: attribute.value
-                from: 0
-                to: 1
-                stepSize: 0.01
-                snapMode: Slider.SnapAlways
-                onPressedChanged: {
-                    if(!pressed)
-                        _reconstruction.setAttribute(attribute, formattedValue)
+            RowLayout {
+                TextField {
+                    implicitWidth: 100
+                    enabled: root.editable
+                    // cast value to string to avoid intrusive scientific notations on numbers
+                    property string displayValue: String(slider.pressed ? slider.formattedValue : attribute.value)
+                    text: displayValue
+                    selectByMouse: true
+                    validator: DoubleValidator {
+                        locale: 'C'  // use '.' decimal separator disregarding the system locale
+                    }
+                    onEditingFinished: setTextFieldAttribute(text)
+                    onAccepted: setTextFieldAttribute(text)
+                    Component.onDestruction: {
+                        if(activeFocus)
+                            setTextFieldAttribute(text)
+                    }
                 }
+                Rectangle {
+                    height: slider.height
+                    width: height
+                    color: Qt.hsla(slider.pressed ? slider.formattedValue : attribute.value, 1, 0.5, 1)
+                }
+                Slider {
+                    Layout.fillWidth: true
 
-                background: ShaderEffect {
-                    width: control.availableWidth
-                    height: control.availableHeight
-                    blending: false
-                    fragmentShader: "
-                        varying mediump vec2 qt_TexCoord0;
-                        vec3 hsv2rgb(vec3 c) {
-                            vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-                            vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-                            return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-                        }
-                        void main() {
-                            gl_FragColor = vec4(hsv2rgb(vec3(qt_TexCoord0.x, 1.0, 1.0)), 1.0);
-                        }"
+                    id: slider
+                    readonly property int stepDecimalCount: 2
+                    readonly property real formattedValue: value.toFixed(stepDecimalCount)
+                    enabled: root.editable
+                    value: attribute.value
+                    from: 0
+                    to: 1
+                    stepSize: 0.01
+                    snapMode: Slider.SnapAlways
+                    onPressedChanged: {
+                        if(!pressed)
+                            _reconstruction.setAttribute(attribute, formattedValue)
+                    }
+
+                    background: ShaderEffect {
+                        width: control.availableWidth
+                        height: control.availableHeight
+                        blending: false
+                        fragmentShader: "
+                            varying mediump vec2 qt_TexCoord0;
+                            vec3 hsv2rgb(vec3 c) {
+                                vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                            }
+                            void main() {
+                                gl_FragColor = vec4(hsv2rgb(vec3(qt_TexCoord0.x, 1.0, 1.0)), 1.0);
+                            }"
+                    }
                 }
             }
         }

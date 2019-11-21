@@ -29,7 +29,11 @@ class ImageMasking(desc.CommandLineNode):
         desc.GroupAttribute(
             name="hsv",
             label="HSV Parameters",
-            description="",
+            description="""Values to select:
+            - Green: default values
+            - White: Tolerance = 1, minSaturation = 0, maxSaturation = 0.1, minValue = 0.8, maxValue = 1
+            - Black: Tolerance = 1, minSaturation = 0, maxSaturation = 0.1, minValue = 0, maxValue = 0.2
+            """,
             formatter=desc.GroupAttribute.prefixFormatter,
             joinChar='-',
             groupDesc=[
@@ -86,8 +90,9 @@ class ImageMasking(desc.CommandLineNode):
         desc.BoolParam(
             name='invert',
             label='Invert',
-            description='Invert the selected area.',
-            value=False,
+            description='''If ticked, the selected area is ignored.
+            If not, only the selected area is considered.''',
+            value=True,
             uid=[0]
         ),
         desc.IntParam(

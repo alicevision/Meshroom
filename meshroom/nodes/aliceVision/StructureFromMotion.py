@@ -198,14 +198,35 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.IntParam(
+            name='rigMinNbCamerasForCalibration',
+            label='Min Nb Cameras For Rig Calibration',
+            description='Minimal number of cameras to start the calibration of the rig',
+            value=20,
+            range=(1, 50, 1),
+            uid=[0],
+            advanced=True,
+        ),
         desc.BoolParam(
             name='lockAllIntrinsics',
-            label='Force Lock of All Intrinsic Camera Parameters.',
+            label='Force Lock of All Intrinsic Camera Parameters',
             description='Force to keep constant all the intrinsics parameters of the cameras (focal length, \n'
                         'principal point, distortion if any) during the reconstruction.\n'
                         'This may be helpful if the input cameras are already fully calibrated.',
             value=False,
             uid=[0],
+        ),
+        desc.IntParam(
+            name='minNbCamerasToRefinePrincipalPoint',
+            label='Min Nb Cameras To Refine Principal Point',
+            description='Minimal number of cameras to refine the principal point of the cameras (one of the intrinsic parameters of the camera). '
+                        'If we do not have enough cameras, the principal point in consider is considered in the center of the image. '
+                        'If minNbCamerasToRefinePrincipalPoint<=0, the principal point is never refined. '
+                        'If minNbCamerasToRefinePrincipalPoint==1, the principal point is always refined.',
+            value=3,
+            range=(0, 20, 1),
+            uid=[0],
+            advanced=True,
         ),
         desc.File(
             name='initialPairA',

@@ -28,6 +28,13 @@ class PanoramaCompositing(desc.CommandLineNode):
             uid=[0],
             group='', # not part of allParams, as this is not a parameter for the command line
         ),
+        desc.BoolParam(
+            name='multiband',
+            label='Use Multiband',
+            description='Use multi band algorithm for compositing',
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

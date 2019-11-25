@@ -182,10 +182,13 @@ class LogManager:
                 f.write(message+'\n')
             f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
             f.write('|----|----|----|----|----|----|----|----|----|----|\n\n')
-            if message:
-                self.progressBarPosition = f.tell()-14
-            else:
-                self.progressBarPosition = f.tell()-7
+            
+            f.close()
+            
+        with open(self.chunk.logFile, 'r') as f:
+            content = f.read()
+            self.progressBarPosition = content.rfind('\n')
+            
             f.close()
 
     def updateProgressBar(self, value):

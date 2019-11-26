@@ -81,7 +81,7 @@ class PanoramaEstimation(desc.CommandLineNode):
                         " * from essential matrix\n"
                         " * from homography matrix",
             values=['essential_matrix', 'homography_matrix'],
-            value='essential_matrix',
+            value='homography_matrix',
             exclusive=True,
             uid=[0],
             advanced=True,
@@ -90,7 +90,7 @@ class PanoramaEstimation(desc.CommandLineNode):
             name='refine',
             label='Refine',
             description='Refine camera relative poses, points and optionally internal camera parameter',
-            value=False,
+            value=True,
             uid=[0],
         ),
         desc.BoolParam(

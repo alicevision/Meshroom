@@ -133,8 +133,13 @@ class SketchfabUpload(desc.Node):
     def resolvedPaths(self, inputFiles):
         paths = []
         for inputFile in inputFiles:
-            for f in glob.glob(inputFile.value):
-                paths.append(f)
+            if os.path.isdir(inputFile.value):
+                for path, subdirs, files in os.walk(inputFile.value):
+                    for name in files:
+                        paths.append(os.path.join(path, name))
+            else:
+                for f in glob.glob(inputFile.value):
+                    paths.append(f)
         return paths
     
     def upload(self, apiToken, modelFile, data, chunk):
@@ -188,6 +193,7 @@ class SketchfabUpload(desc.Node):
         for file in files:
             zf.write(file, os.path.basename(file))
         zf.close()
+        chunk.logger.debug('Files added to zip: {}'.format(str(files)))
         chunk.logger.info('Successfully created {}'.format(uploadFile))
         
         fileSize = os.path.getsize(uploadFile)/1000000

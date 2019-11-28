@@ -98,11 +98,18 @@ class SketchfabUpload(desc.Node):
             value='',
             uid=[0],
         ),
-        desc.StringParam(
+        desc.ChoiceParam(
             name='license',
             label='License',
             description='License label.',
             value='CC Attribution',
+            values=['CC Attribution',
+                    'CC Attribution-ShareAlike',
+                    'CC Attribution-NoDerivs',
+                    'CC Attribution-NonCommercial',
+                    'CC Attribution-NonCommercial-ShareAlike',
+                    'CC Attribution-NonCommercial-NoDerivs'],
+            exclusive=True,
             uid=[0],
         ),
         desc.BoolParam(
@@ -117,6 +124,20 @@ class SketchfabUpload(desc.Node):
             label='Inspectable',
             description='Allow 2D view in model inspector.',
             value=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='isPrivate',
+            label='Private',
+            description='Requires a pro account.',
+            value=False,
+            uid=[0],
+        ),
+        desc.StringParam(
+            name='password',
+            label='Password',
+            description='Requires a pro account.',
+            value='',
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -179,13 +200,18 @@ class SketchfabUpload(desc.Node):
         if chunk.node.apiToken.value == '':
             chunk.logger.error('Need API token.')
             raise RuntimeError()
+
         data = {
             'name': chunk.node.title.value,
             'description': chunk.node.description.value,
             'license': chunk.node.license.value,
             'isPublished': chunk.node.isPublished.value,
-            'isInspectable': chunk.node.isInspectable.value
+            'isInspectable': chunk.node.isInspectable.value,
+            'private': chunk.node.isPrivate.value,
+            'password': chunk.node.password.value
         }
+        chunk.logger.debug('Data to be sent: {}'.format(str(data)))
+        
         # pack files into .zip to reduce file size and simplify process
         uploadFile = os.path.join(chunk.node.internalFolder, 'temp.zip')
         files = self.resolvedPaths(chunk.node.inputFiles.value)

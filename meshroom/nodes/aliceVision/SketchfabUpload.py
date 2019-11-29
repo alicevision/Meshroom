@@ -13,10 +13,12 @@ class BufferReader(io.BytesIO): # object to call the callback while the file is 
     def __init__(self, buf=b'',
                  callback=None,
                  cb_args=(),
-                 cb_kwargs={}):
+                 cb_kwargs={},
+                 stopped=None):
         self._callback = callback
         self._cb_args = cb_args
         self._cb_kwargs = cb_kwargs
+        self._stopped = stopped
         self._progress = 0
         self._len = len(buf)
         io.BytesIO.__init__(self, buf)
@@ -36,6 +38,9 @@ class BufferReader(io.BytesIO): # object to call the callback while the file is 
                 self._callback(*self._cb_args, **self._cb_kwargs)
             except Exception as e: # catches exception from the callback
                 self._cb_kwargs['logManager'].logger.warning('Error at callback: {}'.format(e))
+
+        if self._stopped():
+            raise RuntimeError('Node stopped by user')
         return chunk
 
 def progressUpdate(size=None, progress=None, logManager=None):
@@ -59,23 +64,6 @@ class SketchfabUpload(desc.Node):
             label="Input Files",
             description="Input Files to export.",
             group="",
-        ),
-        desc.ChoiceParam(
-            name='maxSize',
-            label='Maximum Upload Size',
-            description='The maximum upload size in MB.',
-            value=50,
-            values=(50, 200, 500),
-            exclusive=True,
-            uid=[0],
-            advanced=True,
-        ),
-        desc.BoolParam(
-            name='limitSize',
-            label='Limit Upload Size',
-            description='Change maximum download size in advanced attributes.',
-            value=True,
-            uid=[0],
         ),
         desc.StringParam(
             name='apiToken',
@@ -167,24 +155,27 @@ class SketchfabUpload(desc.Node):
         modelEndpoint = 'https://api.sketchfab.com/v3/models'
         f = open(modelFile, 'rb')
         file = {'modelFile': (os.path.basename(modelFile), f.read()), **data}
+        f.close()
         (files, contentType) = requests.packages.urllib3.filepost.encode_multipart_formdata(file)
         headers = {'Authorization': 'Token {}'.format(apiToken), 'Content-Type': contentType}
-        body = BufferReader(files, progressUpdate, cb_kwargs={'logManager': chunk.logManager})
+        body = BufferReader(files, progressUpdate, cb_kwargs={'logManager': chunk.logManager}, stopped=self.stopped)
         chunk.logger.info('Uploading...')
         try:
             r = requests.post(
                 modelEndpoint, **{'data': body, 'headers': headers})
-            f.close()
             chunk.logManager.completeProgressBar()
         except requests.exceptions.RequestException as e:
-            f.close()
             chunk.logger.error(u'An error occured: {}'.format(e))
             raise RuntimeError() 
         if r.status_code != requests.codes.created:
             chunk.logger.error(u'Upload failed with error: {}'.format(r.json()))
             raise RuntimeError()
 
+    def stopped(self):
+        return self._stopped
+
     def processChunk(self, chunk):
+        self._stopped = False
         chunk.logManager.waitUntilCleared()
         chunk.logger.setLevel(chunk.logManager.textToLevel(chunk.node.verboseLevel.value))
         
@@ -201,32 +192,40 @@ class SketchfabUpload(desc.Node):
             chunk.logger.error('Need API token.')
             raise RuntimeError()
 
-        data = {
-            'name': chunk.node.title.value,
-            'description': chunk.node.description.value,
-            'license': chunk.node.license.value,
-            'isPublished': chunk.node.isPublished.value,
-            'isInspectable': chunk.node.isInspectable.value,
-            'private': chunk.node.isPrivate.value,
-            'password': chunk.node.password.value
-        }
-        chunk.logger.debug('Data to be sent: {}'.format(str(data)))
-        
-        # pack files into .zip to reduce file size and simplify process
-        uploadFile = os.path.join(chunk.node.internalFolder, 'temp.zip')
-        files = self.resolvedPaths(chunk.node.inputFiles.value)
-        zf = zipfile.ZipFile(uploadFile, 'w')
-        for file in files:
-            zf.write(file, os.path.basename(file))
-        zf.close()
-        chunk.logger.debug('Files added to zip: {}'.format(str(files)))
-        chunk.logger.info('Successfully created {}'.format(uploadFile))
-        
-        fileSize = os.path.getsize(uploadFile)/1000000
-        chunk.logger.info('File size: {}MB'.format(fileSize))
-        if chunk.node.limitSize.value and fileSize > chunk.node.maxSize.value:
-            chunk.logger.error('File too big.')
+        try:
+            data = {
+                'name': chunk.node.title.value,
+                'description': chunk.node.description.value,
+                'license': chunk.node.license.value,
+                'isPublished': chunk.node.isPublished.value,
+                'isInspectable': chunk.node.isInspectable.value,
+                'private': chunk.node.isPrivate.value,
+                'password': chunk.node.password.value
+            }
+            chunk.logger.debug('Data to be sent: {}'.format(str(data)))
+            
+            # pack files into .zip to reduce file size and simplify process
+            uploadFile = os.path.join(chunk.node.internalFolder, 'temp.zip')
+            files = self.resolvedPaths(chunk.node.inputFiles.value)
+            zf = zipfile.ZipFile(uploadFile, 'w')
+            for file in files:
+                zf.write(file, os.path.basename(file))
+            zf.close()
+            chunk.logger.debug('Files added to zip: {}'.format(str(files)))
+            chunk.logger.debug('Created {}'.format(uploadFile))
+            
+            fileSize = os.path.getsize(uploadFile)/1000000
+            chunk.logger.info('File size: {}MB'.format(fileSize))
+
+            self.upload(chunk.node.apiToken.value, uploadFile, data, chunk)
+            chunk.logger.info('Upload successful. Your model is being processed on Sketchfab. It may take some time to show up on your "models" page.')
+        except Exception as e:
+            chunk.logger.error(e)
             raise RuntimeError()
-        
-        self.upload(chunk.node.apiToken.value, uploadFile, data, chunk)
-        chunk.logger.info('Upload successful. Your model is being processed on Sketchfab. It may take some time to show up on your "models" page.')
+        finally:
+            if os.path.isfile(uploadFile):
+                os.remove(uploadFile)
+                chunk.logger.debug('Deleted {}'.format(uploadFile))
+
+    def stopProcess(self, chunk):
+        self._stopped = True

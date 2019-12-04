@@ -154,7 +154,8 @@ class SketchfabUpload(desc.Node):
     def upload(self, apiToken, modelFile, data, chunk):
         modelEndpoint = 'https://api.sketchfab.com/v3/models'
         f = open(modelFile, 'rb')
-        file = {'modelFile': (os.path.basename(modelFile), f.read()), **data}
+        file = {'modelFile': (os.path.basename(modelFile), f.read())}
+        file.update(data)
         f.close()
         (files, contentType) = requests.packages.urllib3.filepost.encode_multipart_formdata(file)
         headers = {'Authorization': 'Token {}'.format(apiToken), 'Content-Type': contentType}

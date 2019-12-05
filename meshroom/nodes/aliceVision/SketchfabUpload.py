@@ -100,6 +100,46 @@ class SketchfabUpload(desc.Node):
             exclusive=True,
             uid=[0],
         ),
+        desc.ListAttribute(
+            elementDesc=desc.StringParam(
+                name='tag',
+                label='Tag',
+                description='Tag cannot be longer than 48 characters.',
+                value='',
+                uid=[0],
+            ),
+            name="tags",
+            label="Tags",
+            description="Maximum of 42 separate tags.",
+            group="",
+        ),
+        desc.ChoiceParam(
+            name='category',
+            label='Category',
+            description='Maximum of 2 categories.',
+            value='none',
+            values=['none',
+                    'animals-pets',
+                    'architecture',
+                    'art-abstract',
+                    'cars-vehicles',
+                    'characters-creatures',
+                    'cultural-heritage-history',
+                    'electronics-gadgets',
+                    'fashion-style',
+                    'food-drink',
+                    'furniture-home',
+                    'music',
+                    'nature-plants',
+                    'news-politics',
+                    'people',
+                    'places-travel',
+                    'science-technology',
+                    'sports-fitness',
+                    'weapons-military'],
+            exclusive=True,
+            uid=[0],
+        ),
         desc.BoolParam(
             name='isPublished',
             label='Publish',
@@ -138,18 +178,6 @@ class SketchfabUpload(desc.Node):
             uid=[],
         ),
     ]
-
-    def resolvedPaths(self, inputFiles):
-        paths = []
-        for inputFile in inputFiles:
-            if os.path.isdir(inputFile.value):
-                for path, subdirs, files in os.walk(inputFile.value):
-                    for name in files:
-                        paths.append(os.path.join(path, name))
-            else:
-                for f in glob.glob(inputFile.value):
-                    paths.append(f)
-        return paths
     
     def upload(self, apiToken, modelFile, data, chunk):
         modelEndpoint = 'https://api.sketchfab.com/v3/models'
@@ -172,6 +200,18 @@ class SketchfabUpload(desc.Node):
             chunk.logger.error(u'Upload failed with error: {}'.format(r.json()))
             raise RuntimeError()
 
+    def resolvedPaths(self, inputFiles):
+        paths = []
+        for inputFile in inputFiles:
+            if os.path.isdir(inputFile.value):
+                for path, subdirs, files in os.walk(inputFile.value):
+                    for name in files:
+                        paths.append(os.path.join(path, name))
+            else:
+                for f in glob.glob(inputFile.value):
+                    paths.append(f)
+        return paths
+
     def stopped(self):
         return self._stopped
 
@@ -183,14 +223,21 @@ class SketchfabUpload(desc.Node):
         if not chunk.node.inputFiles:
             chunk.logger.warning('Nothing to upload')
             return
+        if chunk.node.apiToken.value == '':
+            chunk.logger.error('Need API token.')
+            raise RuntimeError()
         if len(chunk.node.title.value) > 48:
             chunk.logger.error('Title cannot be longer than 48 characters.')
             raise RuntimeError()
         if len(chunk.node.description.value) > 1024:
             chunk.logger.error('Description cannot be longer than 1024 characters.')
             raise RuntimeError()
-        if chunk.node.apiToken.value == '':
-            chunk.logger.error('Need API token.')
+        tags = [ i.value for i in chunk.node.tags.value.values() ]
+        if all(len(i) > 48 for i in tags) and len(tags) > 0:
+            chunk.logger.error('Tags cannot be longer than 48 characters.')
+            raise RuntimeError()
+        if len(tags) > 42:
+            chunk.logger.error('Maximum of 42 separate tags.')
             raise RuntimeError()
 
         try:
@@ -198,11 +245,14 @@ class SketchfabUpload(desc.Node):
                 'name': chunk.node.title.value,
                 'description': chunk.node.description.value,
                 'license': chunk.node.license.value,
+                'tags': str(tags),
                 'isPublished': chunk.node.isPublished.value,
                 'isInspectable': chunk.node.isInspectable.value,
                 'private': chunk.node.isPrivate.value,
                 'password': chunk.node.password.value
             }
+            if chunk.node.category.value != 'none':
+                data.update({'categories': chunk.node.category.value})
             chunk.logger.debug('Data to be sent: {}'.format(str(data)))
             
             # pack files into .zip to reduce file size and simplify process

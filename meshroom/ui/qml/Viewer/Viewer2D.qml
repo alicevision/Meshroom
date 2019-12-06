@@ -11,7 +11,6 @@ FocusScope {
     clip: true
 
     property url source
-    property url realSource
     property var metadata
     property var viewIn3D
 
@@ -29,18 +28,6 @@ FocusScope {
         }
     }
 
-    onSourceChanged: {
-        realSource = getImageFile(imageType.type)
-    }
-
-    Binding {
-        target: _reconstruction.onDepthMapChanged
-
-        value: {
-            realSource = getImageFile(imageType.type)
-        }
-    }
-
     // functions
     function fit() {
         if(image.status != Image.Ready)
@@ -51,11 +38,10 @@ FocusScope {
     }
 
     function getImageFile(type) {
-        var withExtension
         if (type == "image") {
             return root.source;
         } else {
-            return "file:///"+_reconstruction.depthMap.internalFolder+"/"+_reconstruction.selectedViewId+"_"+type+".exr";
+            return "file:///"+_reconstruction.depthMap.internalFolder+_reconstruction.selectedViewId+"_"+type+".exr";
         }
     }
 
@@ -80,7 +66,7 @@ FocusScope {
         fillMode: Image.PreserveAspectFit
         autoTransform: true
         onWidthChanged: if(status==Image.Ready) fit()
-        source: root.realSource
+        source: getImageFile(imageType.type)
         onStatusChanged: {
             // update cache source when image is loaded
             if(status === Image.Ready)
@@ -187,13 +173,14 @@ FocusScope {
             font.pointSize: 8
             readOnly: true
             selectByMouse: true
-            text: Filepath.urlToString(realSource)
+            text: Filepath.urlToString(image.source)
         }
         // show which depthmap node is active
         Label {
             id: depthMapNodeName
             text: _reconstruction.depthMap.name
             anchors.right: parent.right
+            font.pointSize: 8
             visible: imageType.type != "image"
         }
     }
@@ -278,9 +265,6 @@ FocusScope {
                 property string type: types[currentIndex]
 
                 model: types
-                onCurrentIndexChanged: {
-                    root.realSource = root.getImageFile(type)
-                }
             }
 
             ToolButton {

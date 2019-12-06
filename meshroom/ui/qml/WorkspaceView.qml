@@ -81,7 +81,7 @@ Item {
             title: "Image Viewer"
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.minimumWidth: 275
+            Layout.minimumWidth: 325
             Viewer2D {
                 id: viewer2D
                 anchors.fill: parent

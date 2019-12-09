@@ -57,6 +57,13 @@ class LDRToHDR(desc.CommandLineNode):
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='calibrationRefineExposures',
+            label='Refine Exposures',
+            description="Refine exposures provided by metadata (shutter speed, f-number, iso). Only available for 'laguerre' calibration method.",
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='calibrationMethod',
             label='Calibration Method',
@@ -64,8 +71,9 @@ class LDRToHDR(desc.CommandLineNode):
                         " * linear \n"
                         " * robertson \n"
                         " * debevec \n"
-                        " * grossberg",
-            values=['linear', 'robertson', 'debevec', 'grossberg'],
+                        " * grossberg \n"
+                        " * laguerre",
+            values=['linear', 'robertson', 'debevec', 'grossberg', 'laguerre'],
             value='linear',
             exclusive=True,
             uid=[0],
@@ -101,6 +109,15 @@ class LDRToHDR(desc.CommandLineNode):
             description='Internal number of points used for calibration.',
             value=0,
             range=(0, 10000000, 1000),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.IntParam(
+            name='calibrationDownscale',
+            label='Calibration Downscale',
+            description='Scaling factor applied to images before calibration of the response function to reduce the impact of misalignment.',
+            value=4,
+            range=(1, 16, 1),
             uid=[0],
             advanced=True,
         ),

@@ -141,8 +141,11 @@ def hdriPipeline(graph):
                                            featuresFolders=featureMatching.featuresFolders,
                                            matchesFolders=[featureMatching.output])
 
-    panoramaStitching = graph.addNewNode('PanoramaStitching',
+    panoramaWarping = graph.addNewNode('PanoramaWarping',
                                         input=panoramaEstimation.outSfMDataFilename)
+
+    panoramaCompositing = graph.addNewNode('PanoramaCompositing',
+                                        input=panoramaWarping.output)
 
     return [
         cameraInit,
@@ -151,7 +154,8 @@ def hdriPipeline(graph):
         featureMatching,
         panoramaExternalInfo,
         panoramaEstimation,
-        panoramaStitching,
+        panoramaWarping,
+        panoramaCompositing,
     ]
 
 

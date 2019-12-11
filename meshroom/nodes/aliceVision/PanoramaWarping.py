@@ -22,7 +22,7 @@ class PanoramaWarping(desc.CommandLineNode):
             name='panoramaWidth',
             label='Panorama Width',
             description='Panorama width (pixels). 0 For automatic size',
-            value=1000,
+            value=10000,
             range=(0, 50000, 1000),
             uid=[0]
         ),

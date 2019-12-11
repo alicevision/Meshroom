@@ -32,7 +32,7 @@ class PanoramaCompositing(desc.CommandLineNode):
             name='multiband',
             label='Use Multiband',
             description='Use multi band algorithm for compositing',
-            value=False,
+            value=True,
             uid=[0],
         ),
         desc.ChoiceParam(

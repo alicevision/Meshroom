@@ -64,6 +64,13 @@ class LDRToHDR(desc.CommandLineNode):
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='byPass',
+            label='bypass convert',
+            description="Bypass HDR creation and use the medium bracket as the source for the next steps",
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='calibrationMethod',
             label='Calibration Method',

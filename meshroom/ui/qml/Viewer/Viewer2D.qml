@@ -2,6 +2,7 @@ import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
+import AliceVision 1.0 as AliceVision
 
 import Controls 1.0
 
@@ -109,7 +110,19 @@ FocusScope {
         }
     }
 
+/*
+    Loader {
+        id: imageViewerLoader
+        active: true
+        anchors.fill: parent
 
+        Component.onCompleted: {
+            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+            setSource("ImageViewer.qml", {
+            })
+        }
+    }
+    */
     // Busy indicator
     BusyIndicator {
         anchors.centerIn: parent
@@ -244,4 +257,9 @@ FocusScope {
             }
         }
     }
+    ImageViewer {
+        anchors.fill: parent
+        source: root.source
+    }
+
 }

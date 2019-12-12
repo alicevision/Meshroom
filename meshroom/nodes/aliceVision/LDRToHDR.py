@@ -41,11 +41,37 @@ class LDRToHDR(desc.CommandLineNode):
             uid=[0]
         ),
         desc.FloatParam(
-            name='expandDynamicRange',
-            label='Expand Dynamic Range',
-            description='float value between 0 and 1 to correct clamped high values in dynamic range: use 0 for no correction, 0.5 for interior lighting and 1 for outdoor lighting.',
+            name='highlightCorrectionFactor',
+            label='Highlights correction',
+            description='Pixels saturated in all input images have a partial information about their real luminance.\n'
+                        'We only know that the value should be >= to the standard hdr fusion.\n'
+                        'This parameters allows to perform a post-processing step to put saturated pixels to a constant '
+                        'value defined by the `highlightsMaxLuminance` parameter.\n'
+                        'This parameter is float to enable to weight this correction.',
             value=1.0,
             range=(0.0, 1.0, 0.01),
+            uid=[0],
+        ),
+        desc.FloatParam(
+            name='highlightTargetLux',
+            label='Highlight Target Luminance (Lux)',
+            description='This is an arbitrary target value (in Lux) used to replace the unknown luminance value of the saturated pixels.\n'
+                        '\n'
+                        'Some Outdoor Reference Light Levels:\n'
+                        ' * 120,000 lux : Brightest sunlight\n'
+                        ' * 110,000 lux : Bright sunlight\n'
+                        ' * 20,000 lux : Shade illuminated by entire clear blue sky, midday\n'
+                        ' * 1,000 lux : Typical overcast day, midday\n'
+                        ' * 400 lux : Sunrise or sunset on a clear day\n'
+                        ' * 40 lux : Fully overcast, sunset/sunrise\n'
+                        '\n'
+                        'Some Indoor Reference Light Levels:\n'
+                        ' * 20000 lux : Max Usually Used Indoor\n'
+                        ' * 750 lux : Supermarkets\n'
+                        ' * 500 lux : Office Work\n'
+                        ' * 150 lux : Home\n',
+            value=120000.0,
+            range=(1000.0, 150000.0, 1.0),
             uid=[0],
         ),
         desc.BoolParam(

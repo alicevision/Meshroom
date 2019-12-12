@@ -1,4 +1,4 @@
-import DepthMapEntity 2.0
+import DepthMapEntity 2.1
 
 /**
  * Support for Depth Map files (EXR) in Qt3d.

@@ -221,6 +221,7 @@ FocusScope {
                 // Picking to set focus point (camera view center)
                 // Only activate it when a double click may happen or when the 'Control' key is pressed
                 pickingEnabled: cameraController.pickingActive || doubleClickTimer.running
+                camera: cameraSelector.camera
 
                 components: [
                     Transform {

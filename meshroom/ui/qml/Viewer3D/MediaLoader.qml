@@ -1,7 +1,7 @@
 import QtQuick 2.9
 import Qt3D.Core 2.1
 import Qt3D.Render 2.1
-import Qt3D.Extras 2.1
+import Qt3D.Extras 2.10
 import QtQuick.Scene3D 2.0
 import "Materials"
 import Utils 1.0
@@ -19,6 +19,9 @@ import Utils 1.0
     property int status: SceneLoader.None
     property var object: null
     property int renderMode
+
+    /// Scene's current camera
+    property Camera camera: null
 
     property bool cached: false
 
@@ -44,7 +47,7 @@ import Utils 1.0
 
         switch(Filepath.extension(source)) {
             case ".abc": if(Viewer3DSettings.supportAlembic) component = abcLoaderEntityComponent; break;
-            case ".exr": if(Viewer3DSettings.supportDepthMap) component = depthMapLoaderComponent; break;
+            case ".exr": if(Viewer3DSettings.supportDepthMap) component = exrLoaderComponent; break;
             case ".obj":
             default: component = sceneLoaderEntityComponent; break;
         }
@@ -103,14 +106,31 @@ import Utils 1.0
     }
 
     Component {
-        id: depthMapLoaderComponent
+        id: exrLoaderComponent
         MediaLoaderEntity {
-            id: depthMapLoaderEntity
+            id: exrLoaderEntity
             Component.onCompleted: {
-                var obj = Viewer3DSettings.depthMapLoaderComp.createObject(depthMapLoaderEntity, {
-                                               'source': source
-                                           });
-                faceCount = Scene3DHelper.faceCount(obj);
+                // EXR loading strategy:
+                //   - [1] as a depth map
+                var obj = Viewer3DSettings.depthMapLoaderComp.createObject(
+                            exrLoaderEntity, {
+                                'source': source
+                            });
+
+                if(obj.status === SceneLoader.Ready)
+                {
+                    faceCount = Scene3DHelper.faceCount(obj);
+                    root.status = SceneLoader.Ready;
+                    return;
+                }
+
+                //   - [2] as an environment map
+                obj.destroy()
+                obj = Qt.createComponent("EnvironmentMapEntity.qml").createObject(
+                            exrLoaderEntity, {
+                                'source': source,
+                                'position': Qt.binding(function() { return root.camera.position })
+                            });
                 root.status = SceneLoader.Ready;
             }
         }

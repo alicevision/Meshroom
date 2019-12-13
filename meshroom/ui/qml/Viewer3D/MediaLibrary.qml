@@ -16,6 +16,9 @@ Entity {
     property bool pickingEnabled: false
     readonly property alias count: instantiator.count // number of instantiated media delegates
 
+    /// Camera to consider for positionning
+    property Camera camera: null
+
     /// True while at least one media is being loaded
     readonly property bool loading: {
         for(var i=0; i<m.mediaModel.count; ++i) {
@@ -173,6 +176,7 @@ Entity {
             // source based on currentSource + "requested" property
             readonly property string finalSource: model.requested ? currentSource : ""
 
+            camera: root.camera
             renderMode: root.renderMode
             enabled: visible
 

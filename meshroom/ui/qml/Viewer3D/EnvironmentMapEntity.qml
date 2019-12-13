@@ -22,6 +22,8 @@ Entity {
     property alias rings: sphereMesh.rings
     /// Position of the sphere
     property alias position: transform.translation
+    /// Texture loading status
+    property alias status: textureLoader.status
 
     components: [
         SphereMesh {
@@ -39,6 +41,7 @@ Entity {
             shininess: 0
             specular: "#000"
             diffuse: TextureLoader {
+                id: textureLoader
                 magnificationFilter: Texture.Linear
                 mirrored: true
                 source: root.source

@@ -125,13 +125,16 @@ import Utils 1.0
                 }
 
                 //   - [2] as an environment map
-                obj.destroy()
+                obj.destroy();
+                root.status = SceneLoader.Loading;
                 obj = Qt.createComponent("EnvironmentMapEntity.qml").createObject(
                             exrLoaderEntity, {
                                 'source': source,
                                 'position': Qt.binding(function() { return root.camera.position })
                             });
-                root.status = SceneLoader.Ready;
+                obj.statusChanged.connect(function() {
+                    root.status = obj.status;
+                });
             }
         }
     }

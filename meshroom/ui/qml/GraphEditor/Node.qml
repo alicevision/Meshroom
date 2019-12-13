@@ -41,6 +41,14 @@ Item {
         }
     }
 
+    // Whether an attribute can be displayed as an attribute pin on the node
+    function isDisplayableAsPin(attribute) {
+        // ATM, only File attributes are meant to be connected
+        // TODO: review this if we want to connect something else
+        return attribute.type == "File"
+               || (attribute.type == "ListAttribute" && attribute.desc.elementDesc.type == "File")
+    }
+
     MouseArea {
         width: parent.width
         height: body.height
@@ -115,8 +123,7 @@ Item {
                     Repeater {
                         model: node.attributes
                         delegate: Loader {
-                            active: !object.isOutput && object.type == "File"
-                                    || (object.type == "ListAttribute" && object.desc.elementDesc.type == "File") // TODO: review this
+                            active: !object.isOutput && isDisplayableAsPin(object)
                             width: inputs.width
 
                             sourceComponent: AttributePin {
@@ -142,7 +149,7 @@ Item {
                         model: node.attributes
 
                         delegate: Loader {
-                            active: object.isOutput
+                            active: object.isOutput && isDisplayableAsPin(object)
                             anchors.right: parent.right
                             width: outputs.width
 

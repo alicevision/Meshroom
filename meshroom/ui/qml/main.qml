@@ -524,6 +524,13 @@ ApplicationWindow {
                 reconstruction: _reconstruction
                 readOnly: _reconstruction.computing
 
+                function viewAttribute(attribute, mouse) {
+                    let viewable = false;
+                    viewable = workspaceView.viewIn2D(attribute);
+                    viewable |= workspaceView.viewIn3D(attribute, mouse);
+                    return viewable;
+                }
+
                 function viewIn3D(attribute, mouse) {
                     var loaded = viewer3D.view(attribute);
                     // solo media if Control modifier was held
@@ -531,6 +538,7 @@ ApplicationWindow {
                         viewer3D.solo(attribute);
                     return loaded;
                 }
+
                 function viewIn2D(attribute) {
                     var imageExts = ['.exr', '.jpg', '.tif', '.png'];
                     var ext = Filepath.extension(attribute.value);
@@ -617,20 +625,12 @@ ApplicationWindow {
                     onNodeDoubleClicked: {
                         _reconstruction.setActiveNodeOfType(node);
 
+                        let viewable = false;
                         for(var i=0; i < node.attributes.count; ++i)
                         {
                             var attr = node.attributes.at(i)
-                            if(attr.isOutput)
-                            {
-                                if(workspaceView.viewIn2D(attr))
-                                {
-                                    break;
-                                }
-                                if(workspaceView.viewIn3D(attr, mouse))
-                                {
-                                    break;
-                                }
-                            }
+                            if(attr.isOutput && workspaceView.viewAttribute(attr))
+                                break;
                         }
                     }
                     onComputeRequest: computeManager.compute(node)
@@ -644,14 +644,7 @@ ApplicationWindow {
                 // Make NodeEditor readOnly when computing
                 readOnly: graphLocked
                 onAttributeDoubleClicked: {
-                    if(workspaceView.viewIn2D(attribute))
-                    {
-                        return;
-                    }
-                    if(workspaceView.viewIn3D(attribute, mouse))
-                    {
-                        return;
-                    }
+                     workspaceView.viewAttribute(attribute);
                 }
                 onUpgradeRequest: {
                     var n = _reconstruction.upgradeNode(node);

@@ -383,7 +383,26 @@ class Node(object):
     def __init__(self):
         pass
 
-    def updateInternals(self, node):
+    @classmethod
+    def update(cls, node):
+        """ Method call before node's internal update on invalidation.
+
+        Args:
+            node: the BaseNode instance being updated
+        See Also:
+            BaseNode.updateInternals
+        """
+        pass
+
+    @classmethod
+    def postUpdate(cls, node):
+        """ Method call after node's internal update on invalidation.
+
+        Args:
+            node: the BaseNode instance being updated
+        See Also:
+            NodeBase.updateInternals
+        """
         pass
 
     def stopProcess(self, chunk):

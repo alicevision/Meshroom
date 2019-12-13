@@ -25,6 +25,19 @@ class PanoramaExternalInfo(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name='matchesFolder',
+                label='Matches Folder',
+                description="",
+                value='',
+                uid=[0],
+            ),
+            name='matchesFolders',
+            label='Matches Folders',
+            description="Folder(s) in which computed matches are stored. (WORKAROUND for valid Tractor graph submission)",
+            group='forDependencyOnly',
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

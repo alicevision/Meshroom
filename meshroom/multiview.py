@@ -135,7 +135,9 @@ def hdriPipeline(graph):
                                        imagePairsList=imageMatching.output)
 
     panoramaExternalInfo = graph.addNewNode('PanoramaExternalInfo',
-                                     input=ldr2hdr.outSfMDataFilename)
+                                     input=ldr2hdr.outSfMDataFilename,
+                                     matchesFolders=[featureMatching.output]  # Workaround for tractor submission with a fake dependency
+                                     )
 
     panoramaEstimation = graph.addNewNode('PanoramaEstimation',
                                            input=panoramaExternalInfo.outSfMDataFilename,

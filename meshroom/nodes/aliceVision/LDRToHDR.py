@@ -17,6 +17,8 @@ class DividedInputNodeSize(desc.DynamicNodeSize):
     def computeSize(self, node):
         s = super(DividedInputNodeSize, self).computeSize(node)
         divParam = node.attribute(self._divParam)
+        if divParam.value == 0:
+            return s
         return s / divParam.value
 
 

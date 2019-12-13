@@ -22,7 +22,7 @@ class DividedInputNodeSize(desc.DynamicNodeSize):
 
 class LDRToHDR(desc.CommandLineNode):
     commandLine = 'aliceVision_convertLDRToHDR {allParams}'
-    size = DividedInputNodeSize('input', 'groupSize')
+    size = DividedInputNodeSize('input', 'nbBrackets')
 
     inputs = [
         desc.File(
@@ -33,19 +33,19 @@ class LDRToHDR(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
-            name='groupSize',
-            label='Exposure bracket count',
-            description='Number of exposure brackets used per HDR image',
-            value=3,
-            range=(0, 10, 1),
+            name='nbBrackets',
+            label='Number of Brackets',
+            description='Number of exposure brackets per HDR image.',
+            value=0,
+            range=(0, 15, 1),
             uid=[0]
         ),
         desc.FloatParam(
             name='highlightCorrectionFactor',
-            label='Highlights correction',
+            label='Highlights Correction',
             description='Pixels saturated in all input images have a partial information about their real luminance.\n'
                         'We only know that the value should be >= to the standard hdr fusion.\n'
-                        'This parameters allows to perform a post-processing step to put saturated pixels to a constant '
+                        'This parameter allows to perform a post-processing step to put saturated pixels to a constant '
                         'value defined by the `highlightsMaxLuminance` parameter.\n'
                         'This parameter is float to enable to weight this correction.',
             value=1.0,

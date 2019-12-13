@@ -59,6 +59,13 @@ parser.add_argument('--forceStatus', help='Force computation if status is RUNNIN
 parser.add_argument('--forceCompute', help='Compute in all cases even if already computed.',
                     action='store_true')
 
+parser.add_argument('--submit', help='Submit on renderfarm instead of local computation.',
+                    action='store_true')
+parser.add_argument('--submitter',
+                    type=str,
+                    default='SimpleFarm',
+                    help='Execute job with a specific submitter.')
+
 args = parser.parse_args()
 
 
@@ -179,6 +186,11 @@ if not args.output:
 # find end nodes (None will compute all graph)
 toNodes = graph.findNodes(args.toNode) if args.toNode else None
 
-if args.compute:
+if args.submit:
+    if not args.save:
+        raise ValueError('Need to save the project to file to submit on renderfarm.')
+    # submit on renderfarm
+    meshroom.core.graph.submit(args.save, args.submitter, toNode=toNodes)
+elif args.compute:
     # start computation
     meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)

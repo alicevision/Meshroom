@@ -107,7 +107,7 @@ class LDRToHDR(desc.CommandLineNode):
                         " * grossberg \n"
                         " * laguerre",
             values=['linear', 'robertson', 'debevec', 'grossberg', 'laguerre'],
-            value='linear',
+            value='debevec',
             exclusive=True,
             uid=[0],
         ),

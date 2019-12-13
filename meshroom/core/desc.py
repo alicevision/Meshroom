@@ -318,13 +318,14 @@ class DynamicNodeSize(object):
 
     def computeSize(self, node):
         param = node.attribute(self._param)
-        assert param.isInput
         # Link: use linked node's size
         if param.isLink:
             return param.getLinkParam().node.size
         # ListAttribute: use list size
         if isinstance(param.desc, ListAttribute):
             return len(param)
+        if isinstance(param.desc, IntParam):
+            return param.value
         return 1
 
 

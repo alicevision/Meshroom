@@ -105,80 +105,84 @@ if hasSearchedForImages and not filesByType.images:
     print("No image found")
     exit(-1)
 
-# initialize photogrammetry pipeline
-if args.pipeline.lower() == "photogrammetry":
-    # default photogrammetry pipeline
-    graph = multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
-elif args.pipeline.lower() == "hdri":
-    # default hdri pipeline
-    graph = multiview.hdri(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output)
-else:
-    # custom pipeline
-    graph = meshroom.core.graph.loadGraph(args.pipeline)
+graph = multiview.Graph(name=args.pipeline)
 
-cameraInit = getOnlyNodeOfType(graph, 'CameraInit')
-# reset graph inputs
-cameraInit.viewpoints.resetValue()
-cameraInit.intrinsics.resetValue()
-# add views and intrinsics (if any) read from args.input
-cameraInit.viewpoints.extend(views)
-cameraInit.intrinsics.extend(intrinsics)
+with multiview.GraphModification(graph):
+    # initialize photogrammetry pipeline
+    if args.pipeline.lower() == "photogrammetry":
+        # default photogrammetry pipeline
+        multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
+    elif args.pipeline.lower() == "hdri":
+        # default hdri pipeline
+        graph = multiview.hdri(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
+    else:
+        # custom pipeline
+        graph.load(args.pipeline)
+        # graph.update()
 
-if not graph.canComputeLeaves:
-    raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")
+    cameraInit = getOnlyNodeOfType(graph, 'CameraInit')
+    # reset graph inputs
+    cameraInit.viewpoints.resetValue()
+    cameraInit.intrinsics.resetValue()
+    # add views and intrinsics (if any) read from args.input
+    cameraInit.viewpoints.extend(views)
+    cameraInit.intrinsics.extend(intrinsics)
 
-if args.output:
-    publish = getOnlyNodeOfType(graph, 'Publish')
-    publish.output.value = args.output
+    if not graph.canComputeLeaves:
+        raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")
 
-if filesByType.images:
-    views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, filesByType.images)
-    cameraInit.viewpoints.value = views
-    cameraInit.intrinsics.value = intrinsics
+    if args.output:
+        publish = getOnlyNodeOfType(graph, 'Publish')
+        publish.output.value = args.output
 
-if args.overrides:
-    import io
-    import json
-    with io.open(args.overrides, 'r', encoding='utf-8', errors='ignore') as f:
-        data = json.load(f)
-        for nodeName, overrides in data.items():
-            for attrName, value in overrides.items():
-                graph.findNode(nodeName).attribute(attrName).value = value
+    if filesByType.images:
+        views, intrinsics = cameraInit.nodeDesc.buildIntrinsics(cameraInit, filesByType.images)
+        cameraInit.viewpoints.value = views
+        cameraInit.intrinsics.value = intrinsics
 
-if args.paramOverrides:
-    print("\n")
-    import re
-    reExtract = re.compile('(\w+)([:.])(\w+)=(.*)')
-    for p in args.paramOverrides:
-        result = reExtract.match(p)
-        if not result:
-            raise ValueError('Invalid param override: ' + str(p))
-        node, t, param, value = result.groups()
-        if t == ':':
-            nodesByType = graph.nodesByType(node)
-            if not nodesByType:
-                raise ValueError('No node with the type "{}" in the scene.'.format(node))
-            for n in nodesByType:
+    if args.overrides:
+        import io
+        import json
+        with io.open(args.overrides, 'r', encoding='utf-8', errors='ignore') as f:
+            data = json.load(f)
+            for nodeName, overrides in data.items():
+                for attrName, value in overrides.items():
+                    graph.findNode(nodeName).attribute(attrName).value = value
+
+    if args.paramOverrides:
+        print("\n")
+        import re
+        reExtract = re.compile('(\w+)([:.])(\w+)=(.*)')
+        for p in args.paramOverrides:
+            result = reExtract.match(p)
+            if not result:
+                raise ValueError('Invalid param override: ' + str(p))
+            node, t, param, value = result.groups()
+            if t == ':':
+                nodesByType = graph.nodesByType(node)
+                if not nodesByType:
+                    raise ValueError('No node with the type "{}" in the scene.'.format(node))
+                for n in nodesByType:
+                    print('Overrides {node}.{param}={value}'.format(node=node, param=param, value=value))
+                    n.attribute(param).value = value
+            elif t == '.':
                 print('Overrides {node}.{param}={value}'.format(node=node, param=param, value=value))
-                n.attribute(param).value = value
-        elif t == '.':
-            print('Overrides {node}.{param}={value}'.format(node=node, param=param, value=value))
-            graph.findNode(node).attribute(param).value = value
-        else:
-            raise ValueError('Invalid param override: ' + str(p))
-    print("\n")
+                graph.findNode(node).attribute(param).value = value
+            else:
+                raise ValueError('Invalid param override: ' + str(p))
+        print("\n")
 
-# setup DepthMap downscaling
-if args.scale > 0:
-    for node in graph.nodesByType('DepthMap'):
-        node.downscale.value = args.scale
+    # setup DepthMap downscaling
+    if args.scale > 0:
+        for node in graph.nodesByType('DepthMap'):
+            node.downscale.value = args.scale
 
-# setup cache directory
-graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder
+    # setup cache directory
+    graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder
 
-if args.save:
-    graph.save(args.save, setupProjectFile=not bool(args.cache))
-    print('File successfully saved: "{}"'.format(args.save))
+    if args.save:
+        graph.save(args.save, setupProjectFile=not bool(args.cache))
+        print('File successfully saved: "{}"'.format(args.save))
 
 if not args.output:
     print('No output set, results will be available in the cache folder: "{}"'.format(graph.cacheDir))

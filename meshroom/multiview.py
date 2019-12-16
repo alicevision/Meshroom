@@ -82,7 +82,7 @@ def findFilesByTypeInFolder(folder, recursive=False):
     return output
 
 
-def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output=''):
+def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output='', graph=None):
     """
     Create a new Graph with a complete HDRI pipeline.
 
@@ -94,7 +94,8 @@ def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), out
     Returns:
         Graph: the created graph
     """
-    graph = Graph('HDRI')
+    if not graph:
+        graph = Graph('HDRI')
     with GraphModification(graph):
         nodes = hdriPipeline(graph)
         cameraInit = nodes[0]
@@ -163,7 +164,7 @@ def hdriPipeline(graph):
 
 
 
-def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output=''):
+def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output='', graph=None):
     """
     Create a new Graph with a complete photogrammetry pipeline.
 
@@ -175,7 +176,8 @@ def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=l
     Returns:
         Graph: the created graph
     """
-    graph = Graph('Photogrammetry')
+    if not graph:
+        graph = Graph('Photogrammetry')
     with GraphModification(graph):
         sfmNodes, mvsNodes = photogrammetryPipeline(graph)
         cameraInit = sfmNodes[0]

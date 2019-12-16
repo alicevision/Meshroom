@@ -32,7 +32,7 @@ class PanoramaCompositing(desc.CommandLineNode):
             name='compositerType',
             label='Compositer Type',
             description='Which compositer should be used to blend images',
-            value=['multiband'],
+            value='multiband',
             values=['replace', 'alpha', 'multiband'],
             exclusive=True,
             uid=[0]

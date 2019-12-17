@@ -21,8 +21,8 @@ class ImageMasking(desc.CommandLineNode):
             name='algorithm',
             label='Algorithm',
             description='',
-            value='hsv',
-            values=['hsv'],
+            value='HSV',
+            values=['HSV', 'AutoGrayscaleThreshold'],
             exclusive=True,
             uid=[0],
         ),
@@ -109,6 +109,20 @@ class ImageMasking(desc.CommandLineNode):
             value=0,
             range=(0, 50, 1),
             uid=[0]
+        ),
+        desc.File(
+            name='depthMapFolder',
+            label='Depth Mask Folder',
+            description='''Depth Mask Folder''',
+            value='',
+            uid=[0],
+        ),
+        desc.File(
+            name='depthMapExp',
+            label='Depth Mask Expression',
+            description='''Depth Mask Expression, like "{inputFolder}/{stem}-depth.{ext}".''',
+            value='',
+            uid=[0],
         ),
         desc.ChoiceParam(
             name='verboseLevel',

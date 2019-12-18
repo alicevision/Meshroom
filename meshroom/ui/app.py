@@ -70,11 +70,12 @@ class MeshroomApp(QApplication):
 
         args = parser.parse_args(args[1:])
 
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+
         super(MeshroomApp, self).__init__(QtArgs)
 
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
-        self.setAttribute(Qt.AA_EnableHighDpiScaling)
         self.setApplicationVersion(meshroom.__version_name__)
 
         font = self.font()

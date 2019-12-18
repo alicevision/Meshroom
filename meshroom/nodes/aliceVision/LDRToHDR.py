@@ -26,6 +26,9 @@ class LDRToHDR(desc.CommandLineNode):
     commandLine = 'aliceVision_convertLDRToHDR {allParams}'
     size = DividedInputNodeSize('input', 'nbBrackets')
 
+    cpu = desc.Level.INTENSIVE
+    ram = desc.Level.NORMAL
+
     inputs = [
         desc.File(
             name='input',

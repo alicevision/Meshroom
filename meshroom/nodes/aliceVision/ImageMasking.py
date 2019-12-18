@@ -118,7 +118,7 @@ class ImageMasking(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
-        desc.File(
+        desc.StringParam(
             name='depthMapExp',
             label='Depth Mask Expression',
             description='''Depth Mask Expression, like "{inputFolder}/{stem}-depth.{ext}".''',

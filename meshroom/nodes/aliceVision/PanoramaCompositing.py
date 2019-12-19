@@ -38,6 +38,16 @@ class PanoramaCompositing(desc.CommandLineNode):
             uid=[0]
         ),
         desc.ChoiceParam(
+            name='overlayType',
+            label='Overlay Type',
+            description='Which overlay to display on top of panorama for debug',
+            value='none',
+            values=['none', 'borders', 'seams'],
+            exclusive=True,
+            advanced=True,
+            uid=[0]
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='Verbosity level (fatal, error, warning, info, debug, trace).',

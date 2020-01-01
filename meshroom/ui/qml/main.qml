@@ -214,6 +214,14 @@ ApplicationWindow {
         id: aboutDialog
     }
 
+    MaskDialog {
+        id: maskDialog
+
+        masking: Masking
+        cacheFolder: _reconstruction.graph.cacheDir + "/Masks"
+        viewpoints: _reconstruction.viewpoints
+    }
+
     // Check if document has been saved
     function ensureSaved(callback)
     {
@@ -349,6 +357,14 @@ ApplicationWindow {
                 action: redoAction
                 ToolTip.visible: hovered
                 ToolTip.text: redoAction.tooltip
+            }
+            MenuItem {
+                text: "Masks"
+
+                onClicked: {
+                    maskDialog.currentIndex = 0
+                    maskDialog.open()
+                }
             }
         }
         Menu {

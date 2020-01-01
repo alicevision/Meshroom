@@ -12,6 +12,7 @@ from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
 from meshroom.ui.components.filepath import FilepathHelper
 from meshroom.ui.components.scene3D import Scene3DHelper
+from meshroom.ui.mask import Masking
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
@@ -100,6 +101,7 @@ class MeshroomApp(QApplication):
 
         # additional context properties
         self.engine.rootContext().setContextProperty("_PaletteManager", PaletteManager(self.engine, parent=self))
+        self.engine.rootContext().setContextProperty("Masking", Masking(parent=self))
         self.engine.rootContext().setContextProperty("MeshroomApp", self)
 
         # request any potential computation to stop on exit

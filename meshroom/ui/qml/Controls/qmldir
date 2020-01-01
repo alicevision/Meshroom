@@ -7,3 +7,5 @@ MessageDialog 1.0 MessageDialog.qml
 Panel 1.0 Panel.qml
 SearchBar 1.0 SearchBar.qml
 TextFileViewer 1.0 TextFileViewer.qml
+CropRectangle 1.0 CropRectangle.qml
+PaintCanvas 1.0 PaintCanvas.qml

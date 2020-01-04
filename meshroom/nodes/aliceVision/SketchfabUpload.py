@@ -116,7 +116,7 @@ class SketchfabUpload(desc.Node):
         desc.ChoiceParam(
             name='category',
             label='Category',
-            description='Maximum of 2 categories.',
+            description='Adding categories helps improve the discoverability of your model.',
             value='none',
             values=['none',
                     'animals-pets',

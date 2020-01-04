@@ -2,7 +2,6 @@ import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
-
 import Controls 1.0
 
 FocusScope {
@@ -41,7 +40,7 @@ FocusScope {
         if (type == "image") {
             return root.source;
         } else {
-            return "file:///"+_reconstruction.depthMap.internalFolder+_reconstruction.selectedViewId+"_"+type+".exr";
+            return Filepath.stringToUrl(_reconstruction.depthMap.internalFolder+_reconstruction.selectedViewId+"_"+type+".exr");
         }
     }
 

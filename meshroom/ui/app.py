@@ -65,16 +65,17 @@ class MeshroomApp(QApplication):
                             help='Import images or folder with images to reconstruct.')
         parser.add_argument('-I', '--importRecursive', metavar='FOLDERS', type=str, nargs='*',
                             help='Import images to reconstruct from specified folder and sub-folders.')
-        parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE', type=str, required=False,
+        parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE/photogrammetry/hdri', type=str, default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
                             help='Override the default Meshroom pipeline with this external graph.')
 
         args = parser.parse_args(args[1:])
+
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 
         super(MeshroomApp, self).__init__(QtArgs)
 
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
-        self.setAttribute(Qt.AA_EnableHighDpiScaling)
         self.setApplicationVersion(meshroom.__version_name__)
 
         font = self.font()
@@ -101,7 +102,7 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("_nodeTypes", sorted(nodesDesc.keys()))
 
         # instantiate Reconstruction object
-        r = Reconstruction(parent=self)
+        r = Reconstruction(defaultPipeline=args.pipeline, parent=self)
         self.engine.rootContext().setContextProperty("_reconstruction", r)
 
         # those helpers should be available from QML Utils module as singletons, but:
@@ -119,15 +120,6 @@ class MeshroomApp(QApplication):
         # request any potential computation to stop on exit
         self.aboutToQuit.connect(r.stopChildThreads)
 
-        if args.pipeline:
-            # the pipeline from the command line has the priority
-            r.setDefaultPipeline(args.pipeline)
-        else:
-            # consider the environment variable
-            defaultPipeline = os.environ.get("MESHROOM_DEFAULT_PIPELINE", "")
-            if defaultPipeline:
-                r.setDefaultPipeline(args.pipeline)
-
         if args.project and not os.path.isfile(args.project):
             raise RuntimeError(
                 "Meshroom Command Line Error: 'PROJECT' argument should be a Meshroom project file (.mg).\n"
@@ -135,6 +127,8 @@ class MeshroomApp(QApplication):
 
         if args.project:
             r.load(args.project)
+        else:
+            r.new()
 
         # import is a python keyword, so we have to access the attribute by a string
         if getattr(args, "import", None):

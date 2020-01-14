@@ -10,7 +10,7 @@ from PySide2.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVecto
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
-from meshroom.core.node import Node, Status
+from meshroom.core.node import Node, Status, Position
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
 
@@ -102,7 +102,7 @@ class LiveSfmManager(QObject):
         to include those images to the reconstruction.
         """
         # Get all new images in the watched folder
-        imagesInFolder = multiview.findImageFiles(self._folder)
+        imagesInFolder = multiview.findFilesByTypeInFolder(self._folder)
         newImages = set(imagesInFolder).difference(self.allImages)
         for imagePath in newImages:
             # print('[LiveSfmManager] New image file : {}'.format(imagePath))
@@ -207,7 +207,7 @@ class ViewpointWrapper(QObject):
             self._metadata = {}
         else:
             self._initialIntrinsics = self._reconstruction.getIntrinsic(self._viewpoint)
-            self._metadata = json.loads(self._viewpoint.metadata.value)
+            self._metadata = json.loads(self._viewpoint.metadata.value) if self._viewpoint.metadata.value else {}
         self.initialParamsChanged.emit()
 
     def _updateSfMParams(self):
@@ -358,8 +358,8 @@ class Reconstruction(UIGraph):
     Specialization of a UIGraph designed to manage a 3D reconstruction.
     """
 
-    def __init__(self, graphFilepath='', parent=None):
-        super(Reconstruction, self).__init__(graphFilepath, parent)
+    def __init__(self, defaultPipeline='', parent=None):
+        super(Reconstruction, self).__init__(parent)
 
         # initialize member variables for key steps of the 3D reconstruction pipeline
 
@@ -393,20 +393,23 @@ class Reconstruction(UIGraph):
         # react to internal graph changes to update those variables
         self.graphChanged.connect(self.onGraphChanged)
 
-        if graphFilepath:
-            self.onGraphChanged()
-        else:
-            self.new()
+        self.setDefaultPipeline(defaultPipeline)
+
+    def setDefaultPipeline(self, defaultPipeline):
+        self._defaultPipeline = defaultPipeline
 
     @Slot()
     def new(self):
         """ Create a new photogrammetry pipeline. """
-        if self._defaultPipelineFilepath:
-            # use the user-provided default photogrammetry project file
-            self.load(self._defaultPipelineFilepath, setupProjectFile=False)
-        else:
+        if self._defaultPipeline.lower() == "photogrammetry":
             # default photogrammetry pipeline
             self.setGraph(multiview.photogrammetry())
+        elif self._defaultPipeline.lower() == "hdri":
+            # default hdri pipeline
+            self.setGraph(multiview.hdri())
+        else:
+            # use the user-provided default photogrammetry project file
+            self.load(self._defaultPipeline, setupProjectFile=False)
 
     def load(self, filepath, setupProjectFile=True):
         try:
@@ -557,21 +560,67 @@ class Reconstruction(UIGraph):
         Fetching urls from dropEvent is generally expensive in QML/JS (bug ?).
         This method allows to reduce process time by doing it on Python side.
         """
-        images, urls = self.getImageFilesFromDrop(drop)
-        if not images:
-            extensions = set([os.path.splitext(url)[1] for url in urls])
-            self.error.emit(
+        filesByType = self.getFilesByTypeFromDrop(drop)
+        if filesByType.images:
+            self.importImagesAsync(filesByType.images, cameraInit)
+        if filesByType.videos:
+            boundingBox = self.layout.boundingBox()
+            keyframeNode = self.addNewNode("KeyframeSelection", position=Position(boundingBox[0], boundingBox[1] + boundingBox[3]))
+            keyframeNode.mediaPaths.value = filesByType.videos
+            if len(filesByType.videos) == 1:
+                newVideoNodeMessage = "New node '{}' added for the input video.".format(keyframeNode.getLabel())
+            else:
+                newVideoNodeMessage = "New node '{}' added for a rig of {} synchronized cameras.".format(keyframeNode.getLabel(), len(filesByType.videos))
+            self.info.emit(
                 Message(
-                    "No Recognized Image",
-                    "No recognized image file in the {} dropped files".format(len(urls)),
-                    "File extensions: " + ', '.join(extensions)
+                    "Video Input",
+                    newVideoNodeMessage,
+                    "Warning: You need to manually compute the KeyframeSelection node \n"
+                    "and then reimport the created images into Meshroom for the reconstruction.\n\n"
+                    "If you know the Camera Make/Model, it is highly recommended to declare them in the Node."
+                ))
+
+        if filesByType.panoramaInfo:
+            if len(filesByType.panoramaInfo) > 1:
+                self.error.emit(
+                    Message(
+                        "Multiple XML files in input",
+                        "Ignore the xml Panorama files:\n\n'{}'.".format(',\n'.join(filesByType.panoramaInfo)),
+                        "",
+                    ))
+            else:
+                panoramaExternalInfoNodes = self.graph.nodesByType('PanoramaExternalInfo')
+                for panoramaInfoFile in filesByType.panoramaInfo:
+                    for panoramaInfoNode in panoramaExternalInfoNodes:
+                        panoramaInfoNode.attribute('config').value = panoramaInfoFile
+                if panoramaExternalInfoNodes:
+                    self.info.emit(
+                        Message(
+                            "Panorama XML",
+                            "XML file declared on PanoramaExternalInfo node",
+                            "XML file '{}' set on node '{}'".format(','.join(filesByType.panoramaInfo), ','.join([n.getLabel() for n in panoramaExternalInfoNodes])),
+                        ))
+                else:
+                    self.error.emit(
+                        Message(
+                            "No PanoramaExternalInfo Node",
+                            "No PanoramaExternalInfo Node to set the Panorama file:\n'{}'.".format(','.join(filesByType.panoramaInfo)),
+                            "",
+                        ))
+
+        if not filesByType.images and not filesByType.videos and not filesByType.panoramaInfo:
+            if filesByType.other:
+                extensions = set([os.path.splitext(url)[1] for url in filesByType.other])
+                self.error.emit(
+                    Message(
+                        "No Recognized Input File",
+                        "No recognized input file in the {} dropped files".format(len(filesByType.other)),
+                        "Unknown file extensions: " + ', '.join(extensions)
+                    )
                 )
-            )
-            return
-        self.importImagesAsync(images, cameraInit)
 
     @staticmethod
-    def getImageFilesFromDrop(drop):
+    def getFilesByTypeFromDrop(drop):
         """
 
         Args:
@@ -582,17 +631,14 @@ class Reconstruction(UIGraph):
         """
         urls = drop.property("urls")
         # Build the list of images paths
-        images = []
-        otherFiles = []
+        filesByType = multiview.FilesByType()
         for url in urls:
             localFile = url.toLocalFile()
             if os.path.isdir(localFile):  # get folder content
-                images.extend(multiview.findImageFiles(localFile))
-            elif multiview.isImageFile(localFile):
-                images.append(localFile)
+                filesByType.extend(multiview.findFilesByTypeInFolder(localFile))
             else:
-                otherFiles.append(localFile)
-        return images, otherFiles
+                filesByType.addFile(localFile)
+        return filesByType
 
     def importImagesFromFolder(self, path, recursive=False):
         """
@@ -610,7 +656,7 @@ class Reconstruction(UIGraph):
             paths.append(path)
         for p in paths:
             if os.path.isdir(p):  # get folder content
-                images.extend(multiview.findImageFiles(p, recursive))
+                images.extend(multiview.findFilesByTypeInFolder(p, recursive))
             elif multiview.isImageFile(p):
                 images.append(p)
         if images:

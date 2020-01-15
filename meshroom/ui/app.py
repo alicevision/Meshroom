@@ -65,6 +65,8 @@ class MeshroomApp(QApplication):
                             help='Import images or folder with images to reconstruct.')
         parser.add_argument('-I', '--importRecursive', metavar='FOLDERS', type=str, nargs='*',
                             help='Import images to reconstruct from specified folder and sub-folders.')
+        parser.add_argument('-s', '--save', metavar='PROJECT.mg', type=str, default='',
+                            help='Save the created scene.')
         parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE/photogrammetry/hdri', type=str, default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
                             help='Override the default Meshroom pipeline with this external graph.')
 
@@ -136,6 +138,20 @@ class MeshroomApp(QApplication):
 
         if args.importRecursive:
             r.importImagesFromFolder(args.importRecursive, recursive=True)
+
+        if args.save:
+            if os.path.isfile(args.save):
+                raise RuntimeError(
+                    "Meshroom Command Line Error: Cannot save the new Meshroom project as the file (.mg) already exists.\n"
+                    "Invalid value: '{}'".format(args.save))
+            projectFolder = os.path.dirname(args.save)
+            if not os.path.isdir(projectFolder):
+                if not os.path.isdir(os.path.dirname(projectFolder)):
+                    raise RuntimeError(
+                        "Meshroom Command Line Error: Cannot save the new Meshroom project file (.mg) as the parent of the folder does not exists.\n"
+                        "Invalid value: '{}'".format(args.save))
+                os.mkdir(projectFolder)
+            r.saveAs(args.save)
 
         self.engine.load(os.path.normpath(url))
 

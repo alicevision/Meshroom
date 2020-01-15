@@ -648,19 +648,9 @@ class Reconstruction(UIGraph):
             recursive: List files in folders recursively.
 
         """
-        images = []
-        paths = []
-        if isinstance(path, (list, tuple)):
-            paths = path
-        else:
-            paths.append(path)
-        for p in paths:
-            if os.path.isdir(p):  # get folder content
-                images.extend(multiview.findFilesByTypeInFolder(p, recursive))
-            elif multiview.isImageFile(p):
-                images.append(p)
-        if images:
-            self.buildIntrinsics(self.cameraInit, images)
+        filesByType = multiview.findFilesByTypeInFolder(path, recursive)
+        if filesByType.images:
+            self.buildIntrinsics(self.cameraInit, filesByType.images)
 
     def importImagesAsync(self, images, cameraInit):
         """ Add the given list of images to the Reconstruction. """

@@ -154,7 +154,6 @@ class Texturing(desc.CommandLineNode):
             description='Uniformize images exposure values.',
             value=False,
             uid=[0],
-            advanced=True,
         ),
         desc.BoolParam(
             name='forceVisibleByAllVertices',

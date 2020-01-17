@@ -69,8 +69,20 @@ class MeshroomApp(QApplication):
                             help='Save the created scene.')
         parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE/photogrammetry/hdri', type=str, default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
                             help='Override the default Meshroom pipeline with this external graph.')
+        parser.add_argument("--verbose", help="Verbosity level", default='warning',
+                            choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
 
         args = parser.parse_args(args[1:])
+
+        logStringToPython = {
+            'fatal': logging.FATAL,
+            'error': logging.ERROR,
+            'warning': logging.WARNING,
+            'info': logging.INFO,
+            'debug': logging.DEBUG,
+            'trace': logging.DEBUG,
+        }
+        logging.getLogger().setLevel(logStringToPython[args.verbose])
 
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 

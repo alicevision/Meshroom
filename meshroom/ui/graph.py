@@ -322,7 +322,10 @@ class UIGraph(QObject):
 
     @Slot(QUrl)
     def saveAs(self, url):
-        localFile = url.toLocalFile()
+        if isinstance(url, (str)):
+            localFile = url
+        else:
+            localFile = url.toLocalFile()
         # ensure file is saved with ".mg" extension
         if os.path.splitext(localFile)[-1] != ".mg":
             localFile += ".mg"

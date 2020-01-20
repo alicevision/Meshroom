@@ -73,12 +73,20 @@ def findFilesByTypeInFolder(folder, recursive=False):
         if os.path.isfile(currentFolder):
             output.addFile(currentFolder)
             continue
-        if recursive:
-            for root, directories, files in os.walk(currentFolder):
-                for filename in files:
-                    output.addFile(os.path.join(root, filename))
+        elif os.path.isdir(currentFolder):
+            if recursive:
+                for root, directories, files in os.walk(currentFolder):
+                    for filename in files:
+                        output.addFile(os.path.join(root, filename))
+            else:
+                output.addFiles([os.path.join(currentFolder, filename) for filename in os.listdir(currentFolder)])
         else:
-            output.addFiles([os.path.join(currentFolder, filename) for filename in os.listdir(currentFolder)])
+            # if not a diretory or a file, it may be an expression
+            import glob
+            paths = glob.glob(currentFolder)
+            filesByType = findFilesByTypeInFolder(paths, recursive=recursive)
+            output.extend(filesByType)
+
     return output
 
 

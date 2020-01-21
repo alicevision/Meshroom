@@ -29,6 +29,18 @@ class PrepareDenseScene(desc.CommandLineNode):
             label="Images Folders",
             description='Use images from specific folder(s). Filename should be the same or the image uid.',
         ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="masksFolder",
+                label="Masks Folder",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="masksFolders",
+            label="Masks Folders",
+            description='Use masks from specific folder(s). Filename should be the same or the image uid.',
+        ),
         desc.ChoiceParam(
             name='outputFileType',
             label='Output File Type',

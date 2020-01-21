@@ -359,13 +359,14 @@ class DynamicNodeSize(object):
 
     def computeSize(self, node):
         param = node.attribute(self._param)
-        assert param.isInput
         # Link: use linked node's size
         if param.isLink:
             return param.getLinkParam().node.size
         # ListAttribute: use list size
         if isinstance(param.desc, ListAttribute):
             return len(param)
+        if isinstance(param.desc, IntParam):
+            return param.value
         return 1
 
 
@@ -424,7 +425,26 @@ class Node(object):
     def __init__(self):
         pass
 
-    def updateInternals(self, node):
+    @classmethod
+    def update(cls, node):
+        """ Method call before node's internal update on invalidation.
+
+        Args:
+            node: the BaseNode instance being updated
+        See Also:
+            BaseNode.updateInternals
+        """
+        pass
+
+    @classmethod
+    def postUpdate(cls, node):
+        """ Method call after node's internal update on invalidation.
+
+        Args:
+            node: the BaseNode instance being updated
+        See Also:
+            NodeBase.updateInternals
+        """
         pass
 
     def stopProcess(self, chunk):

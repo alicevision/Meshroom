@@ -186,7 +186,7 @@ class CameraInit(desc.CommandLineNode):
             # logging.debug(' - commandLine:', cmd)
             proc = psutil.Popen(cmd, stdout=None, stderr=None, shell=True)
             stdout, stderr = proc.communicate()
-            proc.wait()
+            # proc.wait()
             if proc.returncode != 0:
                 raise RuntimeError('CameraInit failed with error code {}.\nCommand was: "{}".\n'.format(
                     proc.returncode, cmd)

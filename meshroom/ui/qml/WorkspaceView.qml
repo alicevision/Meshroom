@@ -81,10 +81,12 @@ Item {
             title: "Image Viewer"
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.minimumWidth: 40
+            Layout.minimumWidth: 325
             Viewer2D {
                 id: viewer2D
                 anchors.fill: parent
+
+                viewIn3D: root.load3DMedia
 
                 Connections {
                     target: imageGallery

@@ -2,15 +2,16 @@ import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
-
 import Controls 1.0
 
 FocusScope {
     id: root
 
     clip: true
+
     property url source
     property var metadata
+    property var viewIn3D
 
     function clear()
     {
@@ -35,6 +36,14 @@ FocusScope {
         image.y = Math.max((root.height-image.height*image.scale)*0.5, 0)
     }
 
+    function getImageFile(type) {
+        if (type == "image") {
+            return root.source;
+        } else {
+            return Filepath.stringToUrl(_reconstruction.depthMap.internalFolder+_reconstruction.selectedViewId+"_"+type+".exr");
+        }
+    }
+
     // context menu
     property Component contextMenu: Menu {
         MenuItem {
@@ -56,7 +65,7 @@ FocusScope {
         fillMode: Image.PreserveAspectFit
         autoTransform: true
         onWidthChanged: if(status==Image.Ready) fit()
-        source: root.source
+        source: getImageFile(imageType.type)
         onStatusChanged: {
             // update cache source when image is loaded
             if(status === Image.Ready)
@@ -150,17 +159,28 @@ FocusScope {
     FloatingPane {
         id: topToolbar
         width: parent.width
+        height: depthMapNodeName.height+8
         radius: 0
         padding: 4
         // selectable filepath to source image
         TextField {
-            width: parent.width
+            width: parent.width-depthMapNodeName.width-5
             padding: 0
+            anchors.right: depthMapNodeName.left
+            anchors.rightMargin: 5
             background: Item {}
             font.pointSize: 8
             readOnly: true
             selectByMouse: true
-            text: Filepath.urlToString(source)
+            text: Filepath.urlToString(image.source)
+        }
+        // show which depthmap node is active
+        Label {
+            id: depthMapNodeName
+            text: _reconstruction.depthMap.name
+            anchors.right: parent.right
+            font.pointSize: 8
+            visible: imageType.type != "image"
         }
     }
 
@@ -217,6 +237,16 @@ FocusScope {
                 text: MaterialIcons.scatter_plot
             }
 
+            MaterialToolButton {
+                font.pointSize: 11
+                ToolTip.text: "View Depth Map in 3D (" + _reconstruction.depthMap.name + ")"
+                text: MaterialIcons.input
+
+                onClicked: {
+                    root.viewIn3D(root.getImageFile("depthMap"))
+                }
+            }
+
             Item {
                 Layout.fillWidth: true
                 Label {
@@ -225,6 +255,15 @@ FocusScope {
                     anchors.centerIn: parent
                     elide: Text.ElideMiddle
                 }
+            }
+
+            ComboBox {
+                id: imageType
+
+                property var types: ["image", "depthMap", "simMap"]
+                property string type: types[currentIndex]
+
+                model: types
             }
 
             ToolButton {

@@ -117,6 +117,15 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
+            name='minNumberOfMatches',
+            label='Minimum Number of Matches',
+            description='Minimum number of matches per image pair (and per feature type). \n'
+                        'This can be useful to have a meaningful reconstruction with accurate keypoints. 0 means no limit.',
+            value=0,
+            range=(0, 50000, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
             name='minInputTrackLength',
             label='Min Input Track Length',
             description='Minimum track length in input of SfM',

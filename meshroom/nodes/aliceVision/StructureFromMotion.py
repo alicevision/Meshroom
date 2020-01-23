@@ -207,6 +207,14 @@ class StructureFromMotion(desc.CommandLineNode):
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='filterTrackForks',
+            label='Filter Track Forks',
+            description='Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n'
+                        'lead to multiple features in the same image for a single track. \n',
+            value=True,
+            uid=[0],
+        ),
         desc.File(
             name='initialPairA',
             label='Initial Pair A',

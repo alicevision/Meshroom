@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "1.1"
 
 import os
 from meshroom.core import desc
@@ -27,6 +27,15 @@ class ImageMatching(desc.CommandLineNode):
             name="featuresFolders",
             label="Features Folders",
             description="Folder(s) containing the extracted features and descriptors."
+        ),
+        desc.ChoiceParam(
+            name='method',
+            label='Method',
+            description='Method used to select the image pairs to match.',
+            value='VocabularyTree',
+            values=['VocabularyTree', 'Sequential', 'SequentialAndVocabularyTree','Exhaustive','Frustum'],
+            exclusive=True,
+            uid=[0],
         ),
         desc.File(
             name='tree',
@@ -65,6 +74,15 @@ class ImageMatching(desc.CommandLineNode):
             name='nbMatches',
             label='Nb Matches',
             description='The number of matches to retrieve for each image (If 0 it will retrieve all the matches).',
+            value=50,
+            range=(0, 1000, 1),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.IntParam(
+            name='nbNeighbors',
+            label='Nb Neighbors',
+            description='The number of neighbors to retrieve for each image (If 0 it will retrieve all the neighbors).',
             value=50,
             range=(0, 1000, 1),
             uid=[0],

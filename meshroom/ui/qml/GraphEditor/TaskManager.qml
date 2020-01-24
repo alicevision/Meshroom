@@ -265,7 +265,7 @@ Item {
 
                         delegate: Label {
                             width: (ListView.view.width / ListView.view.model.count) -3
-                            height: RowLayout.view.height
+                            height: ListView.view.height
                             anchors.verticalCenter: parent.verticalCenter
                             background: Rectangle {
                                 color: Colors.getChunkColor(object, {"NONE": bgColor})

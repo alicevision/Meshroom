@@ -16,7 +16,7 @@ MessageDialog {
     // alias to underlying compatibilityNodes model
     readonly property var nodesModel: uigraph.graph.compatibilityNodes
     // the total number of compatibility issues
-    readonly property int issueCount: nodesModel.count
+    readonly property int issueCount: (nodesModel != undefined) ? nodesModel.count : 0
     // the number of CompatibilityNodes that can be upgraded
     readonly property int upgradableCount: {
         var count = 0

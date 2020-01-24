@@ -39,9 +39,10 @@ FocusScope {
     function getImageFile(type) {
         if (type == "image") {
             return root.source;
-        } else {
-            return Filepath.stringToUrl(_reconstruction.depthMap.internalFolder+_reconstruction.selectedViewId+"_"+type+".exr");
+        } else if (_reconstruction.depthMap != undefined && _reconstruction.selectedViewId >= 0) {
+            return Filepath.stringToUrl(_reconstruction.depthMap.internalFolder+_reconstruction.selectedViewId+"_"+type+"Map.exr");
         }
+        return "";
     }
 
     // context menu
@@ -237,16 +238,6 @@ FocusScope {
                 text: MaterialIcons.scatter_plot
             }
 
-            MaterialToolButton {
-                font.pointSize: 11
-                ToolTip.text: "View Depth Map in 3D (" + _reconstruction.depthMap.name + ")"
-                text: MaterialIcons.input
-
-                onClicked: {
-                    root.viewIn3D(root.getImageFile("depthMap"))
-                }
-            }
-
             Item {
                 Layout.fillWidth: true
                 Label {
@@ -259,11 +250,27 @@ FocusScope {
 
             ComboBox {
                 id: imageType
+                // set min size to 5 characters + one margin for the combobox
+                Layout.minimumWidth: 6.0 * Qt.application.font.pixelSize
+                Layout.preferredWidth: Layout.minimumWidth
+                // Layout.preferredWidth: 6.0 * Qt.application.font.pixelSize
+                // Layout.minimumWidth: 6.0 * Qt.application.font.pixelSize
 
-                property var types: ["image", "depthMap", "simMap"]
+                property var types: ["image", "depth", "sim"]
                 property string type: types[currentIndex]
 
                 model: types
+            }
+
+            MaterialToolButton {
+                font.pointSize: 11
+                enabled: _reconstruction.depthMap != undefined
+                ToolTip.text: "View Depth Map in 3D (" + (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.name : "No DepthMap Node Selected") + ")"
+                text: MaterialIcons.input
+
+                onClicked: {
+                    root.viewIn3D(root.getImageFile("depth"))
+                }
             }
 
             ToolButton {

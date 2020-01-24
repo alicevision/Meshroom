@@ -232,7 +232,7 @@ class SketchfabUpload(desc.Node):
         if len(chunk.node.description.value) > 1024:
             chunk.logger.error('Description cannot be longer than 1024 characters.')
             raise RuntimeError()
-        tags = [ i.value for i in chunk.node.tags.value.values() ]
+        tags = [ i.value.replace(' ', '-') for i in chunk.node.tags.value.values() ]
         if all(len(i) > 48 for i in tags) and len(tags) > 0:
             chunk.logger.error('Tags cannot be longer than 48 characters.')
             raise RuntimeError()
@@ -264,9 +264,7 @@ class SketchfabUpload(desc.Node):
             zf.close()
             chunk.logger.debug('Files added to zip: {}'.format(str(files)))
             chunk.logger.debug('Created {}'.format(uploadFile))
-            
-            fileSize = os.path.getsize(uploadFile)/1000000
-            chunk.logger.info('File size: {}MB'.format(fileSize))
+            chunk.logger.info('File size: {}MB'.format(round(os.path.getsize(uploadFile)/(1024*1024), 3)))
 
             self.upload(chunk.node.apiToken.value, uploadFile, data, chunk)
             chunk.logger.info('Upload successful. Your model is being processed on Sketchfab. It may take some time to show up on your "models" page.')

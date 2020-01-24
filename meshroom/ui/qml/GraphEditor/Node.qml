@@ -2,36 +2,53 @@ import QtQuick 2.9
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 import QtGraphicalEffects 1.0
+
 import Utils 1.0
 import MaterialIcons 2.2
 
+
+/**
+ * Visual representation of a Graph Node.
+ */
 Item {
     id: root
+
+    /// The underlying Node object
     property variant node
+    /// Whether the node can be modified
     property bool readOnly: false
-    property color baseColor: defaultColor
-    property color shadowColor: "#cc000000"
+    /// Whether the node is in compatibility mode
     readonly property bool isCompatibilityNode: node.hasOwnProperty("compatibilityIssue")
-    readonly property color defaultColor: isCompatibilityNode ? "#444" : "#34495e" // "#607D8B"
+    /// Mouse related states
     property bool selected: false
     property bool hovered: false
+    /// Styling
+    property color shadowColor: "#cc000000"
+    readonly property color defaultColor: isCompatibilityNode ? "#444" : activePalette.base
+    property color baseColor: defaultColor
 
+    // Mouse interaction related signals
     signal pressed(var mouse)
     signal doubleClicked(var mouse)
     signal moved(var position)
     signal entered()
     signal exited()
+
+    /// Emitted when child attribute pins are created
     signal attributePinCreated(var attribute, var pin)
+    /// Emitted when child attribute pins are deleted
     signal attributePinDeleted(var attribute, var pin)
 
-    implicitHeight: childrenRect.height
+    // use node name as object name to simplify debugging
     objectName: node.name
-
-    SystemPalette { id: activePalette }
 
     // initialize position with node coordinates
     x: root.node.x
     y: root.node.y
+
+    implicitHeight: childrenRect.height
+
+    SystemPalette { id: activePalette }
 
     Connections {
         target: root.node
@@ -41,9 +58,9 @@ Item {
             root.y = root.node.y
         }
     }
-    Column {
-        width: parent.width
 
+
+    // Main Layout
         MouseArea {
             width: parent.width
             height: body.height
@@ -58,8 +75,12 @@ Item {
             onExited: root.exited()
             drag.onActiveChanged: {
                 if(!drag.active)
-                    root.moved(Qt.point(root.x, root.y))
+                {
+                    root.moved(Qt.point(root.x, root.y));
+                }
             }
+
+            cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
             // Selection border
             Rectangle {
@@ -73,159 +94,93 @@ Item {
                 color: "transparent"
             }
 
+            // Background
             Rectangle {
                 id: background
                 anchors.fill: parent
-
-                color: Qt.lighter(activePalette.base, 1.3)
+                color: Qt.lighter(activePalette.base, 1.4)
                 layer.enabled: true
                 layer.effect: DropShadow { radius: 3; color: shadowColor }
                 radius: 3
+                opacity: 0.7
             }
 
+            // Data Layout
             Column {
                 id: body
                 width: parent.width
 
+                // Header
                 Rectangle {
-                    id: stateView
+                    id: header
                     width: parent.width
-                    height: 20
-                    color: root.baseColor
+                    height: headerLayout.height
+                    color: root.selected ? activePalette.highlight : root.baseColor
                     radius: background.radius
 
+                    // Fill header's bottom radius
                     Rectangle {
                         width: parent.width
                         height: parent.radius
-                        y: -parent.radius
                         anchors.bottom: parent.bottom
                         color: parent.color
+                        z: -1
                     }
 
+                    // Header Layout
                     RowLayout {
+                        id: headerLayout
                         width: parent.width
                         spacing: 0
 
+                        // Node Name
                         Label {
-                            width: parent.width
-                            padding: 4
+                            Layout.fillWidth: true
                             text: node.label
-                            color: "#fff" //Colors.sysPalette.text
-                            font.pointSize: 7
+                            padding: 4
+                            color: root.selected ? "white" : activePalette.text
+                            elide: Text.ElideMiddle
+                            font.pointSize: 8
                         }
 
+                        // Node State icons
                         RowLayout {
-                            width: 50
-                            spacing: 0
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignRight
+                            Layout.rightMargin: 2
+                            spacing: 2
 
-                            MaterialLabel {
-                                id: ghostIcon
+                            // Data sharing indicator
+                            MaterialToolButton {
                                 visible: node.chunks.count > 0 && node.globalStatus !== "NONE" && node.chunks.at(0).statusNodeName !== node.name
+                                text: MaterialIcons.layers
+                                font.pointSize: 7
                                 padding: 2
-                                text: MaterialIcons.layers //MaterialIcons.all_inclusive
-                                font.pointSize: 8
-                                color: Colors.sysPalette.text
-
-                                MouseArea {
-                                    height: parent.height
-                                    width: parent.width
-                                    hoverEnabled: true
-
-                                    property bool showTooltip: false
-
-                                    onEntered: {
-                                        ghostIcon.color = Colors.cyan
-                                        showTooltip = true
-                                    }
-
-                                    onExited: {
-                                        ghostIcon.color = Colors.sysPalette.text
-                                        showTooltip = false
-                                    }
-
-                                    ToolTip {
-                                        delay: 800
-                                        visible: parent.showTooltip
-                                        text: ""
-                                        onVisibleChanged: {
-                                            text = "The data associated to this node has been computed by the other node: <b>" + node.nameToLabel(node.chunks.at(0).statusNodeName) + "</b>."
-                                        }
-                                    }
-                                }
+                                palette.text: Colors.sysPalette.text
+                                ToolTip.text: visible ? "Data has been computed by <b>" + node.nameToLabel(node.chunks.at(0).statusNodeName) + "</b>" : ""
                             }
 
+                            // Submitted externally indicator
                             MaterialLabel {
-                                id: cloudIcon
                                 visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.chunks.at(0).execModeName === "EXTERN"
-                                padding: 2
                                 text: MaterialIcons.cloud
-                                font.pointSize: 8
-
-                                MouseArea {
-                                    height: parent.height
-                                    width: parent.width
-                                    hoverEnabled: true
-
-                                    property bool showTooltip: false
-
-
-                                    onEntered: {
-                                        cloudIcon.color = Colors.cyan
-                                        showTooltip = true
-                                    }
-
-                                    onExited: {
-                                        cloudIcon.color = Colors.sysPalette.text
-                                        showTooltip = false
-                                    }
-
-                                    ToolTip {
-                                        delay: 800
-                                        visible: parent.showTooltip
-                                        text: "This nodes is being computed externally"
-                                    }
-
-                                }
+                                padding: 2
+                                font.pointSize: 7
+                                palette.text: Colors.sysPalette.text
+                                ToolTip.text: "Computed Externally"
                             }
 
+                            // Lock indicator
                             MaterialLabel {
-                                id: lockIcon
                                 visible: root.readOnly
-                                padding: 2
                                 text: MaterialIcons.lock
-                                font.pointSize: 8
-
-                                MouseArea {
-                                    height: parent.height
-                                    width: parent.width
-                                    hoverEnabled: true
-
-                                    property bool showTooltip: false
-
-
-                                    onEntered: {
-                                        lockIcon.color = Colors.red
-                                        showTooltip = true
-                                    }
-
-                                    onExited: {
-                                        lockIcon.color = Colors.sysPalette.text
-                                        showTooltip = false
-                                    }
-
-                                    ToolTip {
-                                        delay: 800
-                                        visible: parent.showTooltip
-                                        text: "<b>Locked</b><br/>This node cannot be edited at the moment"
-                                    }
-
-                                }
+                                padding: 2
+                                font.pointSize: 7
+                                palette.text: "red"
+                                ToolTip.text: "Locked"
                             }
                         }
                     }
-
-
-
                 }
 
                 // Node Chunks
@@ -242,7 +197,8 @@ Item {
                     }
                 }
 
-                Item { width: 1; height: 2}
+                // Vertical Spacer
+                Item { width: parent.width; height: 2 }
 
                 // Input/Output Attributes
                 Item {
@@ -330,5 +286,5 @@ Item {
                 }
             }
         }
-    }
+
 }

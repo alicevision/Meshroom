@@ -389,6 +389,7 @@ class Reconstruction(UIGraph):
 
         # - Depth Map
         self._depthMap = None
+        self.cameraInitChanged.connect(self.updateDepthMapNode)
 
         # - Texturing
         self._texturing = None
@@ -485,6 +486,10 @@ class Reconstruction(UIGraph):
     def updateFeatureExtraction(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
         self.featureExtraction = self.lastNodeOfType('FeatureExtraction', self.cameraInit) if self.cameraInit else None
+
+    def updateDepthMapNode(self):
+        """ Set the current FeatureExtraction node based on the current CameraInit node. """
+        self.depthMap = self.lastNodeOfType('DepthMapFilter', self.cameraInit) if self.cameraInit else None
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """

@@ -585,6 +585,7 @@ class Graph(BaseObject):
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
+        srcAttr.hasOutputConnectionsChanged.emit()
         return edge
 
     def addEdges(self, *edges):
@@ -596,10 +597,11 @@ class Graph(BaseObject):
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
             raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.getFullName()))
-        self.edges.pop(dstAttr)
+        edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
+        edge.src.hasOutputConnectionsChanged.emit()
 
     def getDepth(self, node, minimal=False):
         """ Return node's depth in this Graph.

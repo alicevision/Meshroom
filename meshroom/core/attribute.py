@@ -153,7 +153,10 @@ class Attribute(BaseObject):
         """ Whether the attribute is a link to another attribute. """
         # Note: Need to test self.node.graph.edges before accessing to edges.keys() to avoid errors in particular conditions.
         #       For instance: open a scene, modify something and close without saving it.
-        return self.node.graph and self.isInput and self.node.graph.edges and self in self.node.graph.edges.keys()
+        if not self.node.graph or not self.node.graph.edges or not self.isInput:
+            return False
+
+        return self in self.node.graph.edges.keys()
 
     @staticmethod
     def isLinkExpression(value):
@@ -165,6 +168,14 @@ class Attribute(BaseObject):
 
     def getLinkParam(self):
         return self.node.graph.edge(self).src if self.isLink else None
+
+    @property
+    def hasOutputConnections(self):
+        """ Whether the attribute has output connections, i.e is the source of at least one edge. """
+        # safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return False
+        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
     def _applyExpr(self):
         """
@@ -220,6 +231,8 @@ class Attribute(BaseObject):
     isOutput = Property(bool, isOutput.fget, constant=True)
     isLinkChanged = Signal()
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
+    hasOutputConnectionsChanged = Signal()
+    hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     node = Property(BaseObject, node.fget, constant=True)

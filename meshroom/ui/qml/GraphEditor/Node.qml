@@ -244,45 +244,24 @@ Item {
 
                 Item { width: 1; height: 2}
 
+                // Input/Output Attributes
                 Item {
                     id: nodeAttributes
-                    width: parent.width + 6
+                    width: parent.width - 2
                     height: childrenRect.height
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    MouseArea {
-                        id: disabledRect
-                        visible: root.readOnly
-                        width: parent.width - 6
-                        height: parent.height
-                        anchors.leftMargin: -6
-
-                        Rectangle {
-                            anchors.fill: parent
-                            color: Colors.sysPalette.window
-                            opacity: 0.5
-                        }
-
-                        z:10
-                    }
-
-                    Rectangle {
-                        id: innerRect
-                        width: parent.width - 6
-                        height: parent.height
-                        color: background.color
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
+                    enabled: !root.readOnly && !root.isCompatibilityNode
 
                     Column {
                         width: parent.width
-                        spacing: 1
+                        spacing: 5
                         bottomPadding: 2
 
                         Column {
                             id: outputs
                             width: parent.width
-                            spacing: 1
+                            spacing: 3
                             Repeater {
                                 model: node.attributes
 
@@ -292,19 +271,10 @@ Item {
                                     anchors.right: parent.right
                                     width: outputs.width
 
-                                    Rectangle {
-                                        width: innerRect.width
-                                        height: parent.height
-                                        color: Colors.sysPalette.base
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                    }
-
                                     sourceComponent: AttributePin {
                                         id: outPin
                                         nodeItem: root
                                         attribute: object
-
-//                                        parentVisualised: root.visualize
 
                                         readOnly: root.readOnly
                                         onPressed: root.pressed(mouse)
@@ -318,7 +288,7 @@ Item {
                         Column {
                             id: inputs
                             width: parent.width
-                            spacing: 1
+                            spacing: 3
                             Repeater {
                                 model: node.attributes
                                 delegate: Loader {
@@ -326,12 +296,6 @@ Item {
                                             || (object.type == "ListAttribute" && object.desc.elementDesc.type == "File") // TODO: review this
                                     width: inputs.width
 
-                                    Rectangle {
-                                        width: innerRect.width
-                                        height: parent.height
-                                        color: Colors.sysPalette.base
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                    }
 
                                     sourceComponent: AttributePin {
                                         id: inPin

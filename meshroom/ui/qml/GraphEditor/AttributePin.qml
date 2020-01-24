@@ -13,6 +13,8 @@ RowLayout {
     property var nodeItem
     property var attribute
     property bool readOnly: false
+    /// Whether to display an output pin for input attribute
+    property bool displayOutputPinForInput: true
 
     // position of the anchor for attaching and edge to this attribute pin
     readonly property point inputAnchorPos: Qt.point(inputAnchor.x + inputAnchor.width/2,
@@ -31,7 +33,7 @@ RowLayout {
 
     objectName: attribute.name + "."
     layoutDirection: Qt.LeftToRight
-    spacing: 2
+    spacing: 3
 
     // Instantiate empty Items for each child attribute
     Repeater {
@@ -48,17 +50,25 @@ RowLayout {
         visible: !attribute.isOutput
         id: inputAnchor
 
-        width: 7
+        width: 8
         height: width
         radius: isList ? 0 : width/2
         Layout.alignment: Qt.AlignVCenter
-        border.color: "#3e3e3e"
-        color: {
-            if(inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop))
-                return nameLabel.palette.highlight
-            else if(attribute.isLink)
-                return "#3e3e3e"
-            return "white"
+
+        border.color:  Colors.sysPalette.mid
+        color: Colors.sysPalette.base
+
+
+        Rectangle {
+            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || attribute.isLink
+            radius: isList ? 0 : 2
+            anchors.fill: parent
+            anchors.margins: 2
+            color: {
+                if(inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop))
+                    return Colors.sysPalette.highlight
+                return Colors.sysPalette.text
+            }
         }
 
         DropArea {
@@ -70,7 +80,7 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: -2
             // add horizontal negative margins according to the current layout
-            anchors.rightMargin: -root.width * 0.45
+            anchors.rightMargin: -root.width * 0.3
 
             keys: [inputDragTarget.objectName]
             onEntered: {
@@ -87,7 +97,6 @@ RowLayout {
                     drag.accepted = false
                 }
                 inputDropArea.acceptableDrop = drag.accepted
-                drag.source.dropAccepted = drag.accepted
             }
             onExited: {
                 acceptableDrop = false
@@ -156,7 +165,7 @@ RowLayout {
     Item {
         id: nameContainer
         Layout.fillWidth: true
-        implicitHeight: 10
+        implicitHeight: childrenRect.height
 
         Label {
             id: nameLabel
@@ -165,26 +174,38 @@ RowLayout {
             text: attribute.name
             elide: hovered ? Text.ElideNone : Text.ElideMiddle
             width: hovered ? contentWidth : parent.width
-            font.pointSize: 5
+            font.pointSize: 7
             horizontalAlignment: attribute.isOutput ? Text.AlignRight : Text.AlignLeft
             anchors.right: attribute.isOutput ? parent.right : undefined
             rightPadding: 0
-            color: hovered ? Colors.sysPalette.highlight : Colors.sysPalette.text
+            color: hovered ? palette.highlight : palette.text
         }
     }
+
 
     Rectangle {
         id: outputAnchor
 
-        width: 7
+        visible: displayOutputPinForInput || attribute.isOutput
+        width: 8
         height: width
-        radius: isList ? 0 : width/2
+        radius: isList ? 0 : width / 2
+
         Layout.alignment: Qt.AlignVCenter
-        border.color: "#3e3e3e"
-        color: {
-            if(outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
-                return nameLabel.palette.highlight
-            return attribute.isOutput ? "white" : "#75a0bd"
+
+        border.color: Colors.sysPalette.mid
+        color: Colors.sysPalette.base
+
+        Rectangle {
+            visible: attribute.hasOutputConnections
+            radius: isList ? 0 : 2
+            anchors.fill: parent
+            anchors.margins: 2
+            color: {
+                if(outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
+                    return Colors.sysPalette.highlight
+                return Colors.sysPalette.text
+            }
         }
 
         DropArea {
@@ -196,7 +217,7 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: -2
             // add horizontal negative margins according to the current layout
-            anchors.leftMargin: attribute.isOutput ? -root.width * 0.9 : -root.width * 0.42
+            anchors.leftMargin: -root.width * 0.2
 
             keys: [outputDragTarget.objectName]
             onEntered: {
@@ -212,11 +233,9 @@ RowLayout {
                     drag.accepted = false
                 }
                 outputDropArea.acceptableDrop = drag.accepted
-                drag.source.dropAccepted = drag.accepted
             }
             onExited: {
                 acceptableDrop = false
-                drag.source.dropAccepted = false
             }
 
             onDropped: {
@@ -252,12 +271,10 @@ RowLayout {
             anchors.margins: outputDropArea.anchors.margins
             anchors.leftMargin: outputDropArea.anchors.leftMargin
             anchors.rightMargin: outputDropArea.anchors.rightMargin
-            onPressed: {
-                root.pressed(mouse)
-            }
-            onReleased: {
-                outputDragTarget.Drag.drop()
-            }
+
+            onPressed: root.pressed(mouse)
+            onReleased: outputDragTarget.Drag.drop()
+
             hoverEnabled: true
         }
 
@@ -280,13 +297,13 @@ RowLayout {
             name: ""
             AnchorChanges {
                 target: outputDragTarget
-                anchors.horizontalCenter: outputAnchor
-                anchors.verticalCenter: outputAnchor
+                anchors.horizontalCenter: outputAnchor.horizontalCenter
+                anchors.verticalCenter: outputAnchor.verticalCenter
             }
             AnchorChanges {
                 target: inputDragTarget
-                anchors.horizontalCenter: intputAnchor
-                anchors.verticalCenter: intputAnchor
+                anchors.horizontalCenter: inputAnchor.horizontalCenter
+                anchors.verticalCenter: inputAnchor.verticalCenter
             }
             PropertyChanges {
                 target: inputDragTarget

@@ -178,7 +178,7 @@ FocusScope {
         // show which depthmap node is active
         Label {
             id: depthMapNodeName
-            text: _reconstruction.depthMap.name
+            text: _reconstruction.depthMap.label
             anchors.right: parent.right
             font.pointSize: 8
             visible: imageType.type != "image"
@@ -265,7 +265,7 @@ FocusScope {
             MaterialToolButton {
                 font.pointSize: 11
                 enabled: _reconstruction.depthMap != undefined
-                ToolTip.text: "View Depth Map in 3D (" + (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.name : "No DepthMap Node Selected") + ")"
+                ToolTip.text: "View Depth Map in 3D (" + (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "No DepthMap Node Selected") + ")"
                 text: MaterialIcons.input
 
                 onClicked: {

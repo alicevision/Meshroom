@@ -226,7 +226,7 @@ class NodeChunk(BaseObject):
             print('WARNING: downgrade status on node "{}" from {} to {}'.format(self.name, self.status.status,
                                                                                 newStatus))
 
-        if(newStatus == Status.SUBMITTED):
+        if newStatus == Status.SUBMITTED:
             self.status = StatusData(self.node.name, self.node.nodeType, self.node.packageName, self.node.packageVersion)
         if execMode is not None:
             self.status.execMode = execMode
@@ -556,10 +556,8 @@ class BaseNode(BaseObject):
         return True
 
     def isFinishedOrRunning(self):
-        for chunk in self._chunks:
-            if not chunk.isFinishedOrRunning():
-                return False
-        return True
+        """ Return True if all chunks of this Node is either finished or running, False otherwise. """
+        return all(chunk.isFinishedOrRunning() for chunk in self._chunks)
 
     def alreadySubmittedChunks(self):
         return [ch for ch in self._chunks if ch.isAlreadySubmitted()]

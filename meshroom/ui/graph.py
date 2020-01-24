@@ -351,7 +351,7 @@ class UIGraph(QObject):
     @Slot(Node)
     def execute(self, node=None):
         nodes = [node] if node else None
-        self._taskManager.compute(self._graph, nodes, self)
+        self._taskManager.compute(self._graph, nodes)
 
     def _execute(self, nodes):
         self.computeStatusChanged.emit()

@@ -9,6 +9,7 @@ from multiprocessing.pool import ThreadPool
 
 from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
 
+from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge, submitGraph
@@ -245,7 +246,7 @@ class UIGraph(QObject):
     UIGraph exposes undoable methods on its graph and computation in a separate thread.
     It also provides a monitoring of all its computation units (NodeChunks).
     """
-    def __init__(self, filepath='', parent=None):
+    def __init__(self, parent=None):
         super(UIGraph, self).__init__(parent)
         self._undoStack = commands.UndoStack(self)
         self._graph = Graph('', self)
@@ -260,9 +261,6 @@ class UIGraph(QObject):
         self._layout = GraphLayout(self)
         self._selectedNode = None
         self._hoveredNode = None
-        self._defaultPipelineFilepath = None
-        if filepath:
-            self.load(filepath)
 
     def setGraph(self, g):
         """ Set the internal graph. """
@@ -319,10 +317,6 @@ class UIGraph(QObject):
         self.stopExecution()
         self._chunksMonitor.stop()
 
-    def setDefaultPipeline(self, pipelineFilepath):
-        self._defaultPipelineFilepath = pipelineFilepath
-        self._graph.load(pipelineFilepath, setupProjectFile=False)
-
     def load(self, filepath, setupProjectFile=True):
         g = Graph('')
         g.load(filepath, setupProjectFile)
@@ -336,7 +330,10 @@ class UIGraph(QObject):
 
     @Slot(QUrl)
     def saveAs(self, url):
-        localFile = url.toLocalFile()
+        if isinstance(url, (str)):
+            localFile = url
+        else:
+            localFile = url.toLocalFile()
         # ensure file is saved with ".mg" extension
         if os.path.splitext(localFile)[-1] != ".mg":
             localFile += ".mg"

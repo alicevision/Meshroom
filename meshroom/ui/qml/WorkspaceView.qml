@@ -23,7 +23,7 @@ Item {
     readonly property variant cameraInits: _reconstruction.cameraInits
     property bool readOnly: false
     readonly property Viewer3D viewer3D: viewer3D
-
+    readonly property Viewer2D viewer2D: viewer2D
 
     implicitWidth: 300
     implicitHeight: 400

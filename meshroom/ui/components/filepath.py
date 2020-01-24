@@ -78,3 +78,14 @@ class FilepathHelper(QObject):
     def normpath(self, path):
         """ Returns native normalized path """
         return os.path.normpath(self.asStr(path))
+
+    @Slot(str, result=str)
+    @Slot(QUrl, result=str)
+    def globFirst(self, path):
+        """ Returns the first from a list of paths matching a pathname pattern. """
+        import glob
+        fileList = glob.glob(self.asStr(path))
+        fileList.sort()
+        if fileList:
+          return fileList[0]
+        return ""

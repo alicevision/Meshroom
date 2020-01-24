@@ -260,10 +260,7 @@ meshroomFolder = os.path.dirname(os.path.dirname(__file__))
 # - Nodes
 loadAllNodes(folder=os.path.join(meshroomFolder, 'nodes'))
 # - Submitters
-subs = loadSubmitters(meshroomFolder, 'submitters')
-# -  additional 3rd party submitters
-if "MESHROOM_SUBMITTERS_PATH" in os.environ:
-    subs += loadSubmitters(os.environ["MESHROOM_SUBMITTERS_PATH"], 'submitters')
+subs = loadSubmitters(os.environ.get("MESHROOM_SUBMITTERS_PATH", meshroomFolder), 'submitters')
 
 for sub in subs:
     registerSubmitter(sub())

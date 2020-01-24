@@ -502,6 +502,11 @@ class BaseNode(BaseObject):
         for name, attr in self._attributes.objects.items():
             if attr.isInput:
                 continue  # skip inputs
+
+            # Only consider File attributes for command output parameters
+            if not isinstance(attr.attributeDesc, desc.File):
+                continue
+
             attr.value = attr.attributeDesc.value.format(**self._cmdVars)
             attr._invalidationValue = attr.attributeDesc.value.format(**cmdVarsNoCache)
             v = attr.getValueStr()
@@ -599,6 +604,8 @@ class BaseNode(BaseObject):
         Args:
             cacheDir (str): (optional) override graph's cache directory with custom path
         """
+        if self.nodeDesc:
+            self.nodeDesc.update(self)
         # Update chunks splitting
         self._updateChunks()
         # Retrieve current internal folder (if possible)
@@ -613,6 +620,8 @@ class BaseNode(BaseObject):
         }
         self._computeUids()
         self._buildCmdVars()
+        if self.nodeDesc:
+            self.nodeDesc.postUpdate(self)
         # Notify internal folder change if needed
         if self.internalFolder != folder:
             self.internalFolderChanged.emit()

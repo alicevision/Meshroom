@@ -10,7 +10,7 @@ class Texturing(desc.CommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='Dense SfMData',
             description='SfMData file.',
             value='',
             uid=[0],
@@ -24,7 +24,7 @@ class Texturing(desc.CommandLineNode):
         ),
         desc.File(
             name='inputMesh',
-            label='Other Input Mesh',
+            label='Mesh',
             description='Optional input mesh to texture. By default, it will texture the result of the reconstruction.',
             value='',
             uid=[0],
@@ -197,31 +197,31 @@ class Texturing(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Folder for output mesh: OBJ, material and texture files.',
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name='outputMesh',
-            label='Output Mesh',
-            description='Folder for output mesh: OBJ, material and texture files.',
+            label='Mesh',
+            description='Output Mesh file.',
             value=desc.Node.internalFolder + 'texturedMesh.obj',
             uid=[],
             group='',
             ),
         desc.File(
             name='outputMaterial',
-            label='Output Material',
-            description='Folder for output mesh: OBJ, material and texture files.',
+            label='Material',
+            description='Output Material file.',
             value=desc.Node.internalFolder + 'texturedMesh.mtl',
             uid=[],
             group='',
             ),
         desc.File(
             name='outputTextures',
-            label='Output Textures',
-            description='Folder for output mesh: OBJ, material and texture files.',
+            label='Textures',
+            description='Output Texture files.',
             value=desc.Node.internalFolder + 'texture_*.{outputTextureFileTypeValue}',
             uid=[],
             group='',

@@ -13,7 +13,7 @@ class DepthMap(desc.CommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfMData',
             description='SfMData file.',
             value='',
             uid=[0],

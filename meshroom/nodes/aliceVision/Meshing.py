@@ -12,14 +12,14 @@ class Meshing(desc.CommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfmData',
             description='SfMData file.',
             value='',
             uid=[0],
         ),
         desc.File(
             name="depthMapsFolder",
-            label='Depth Maps Folder',
+            label='DepthMaps Folder',
             description='Input depth maps folder',
             value='',
             uid=[0],
@@ -238,14 +238,14 @@ class Meshing(desc.CommandLineNode):
     outputs = [
         desc.File(
             name="outputMesh",
-            label="Output Mesh",
+            label="Mesh",
             description="Output mesh (OBJ file format).",
             value="{cache}/{nodeType}/{uid0}/mesh.obj",
             uid=[],
         ),
         desc.File(
             name="output",
-            label="Output Dense Point Cloud",
+            label="Dense SfMData",
             description="Output dense point cloud with visibilities (SfMData file format).",
             value="{cache}/{nodeType}/{uid0}/densePointCloud.abc",
             uid=[],

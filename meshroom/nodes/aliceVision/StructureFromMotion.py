@@ -13,7 +13,7 @@ class StructureFromMotion(desc.CommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfMData',
             description='SfMData file.',
             value='',
             uid=[0],
@@ -245,14 +245,14 @@ class StructureFromMotion(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output SfMData File',
+            label='SfMData',
             description='Path to the output sfmdata file',
             value=desc.Node.internalFolder + 'sfm.abc',
             uid=[],
         ),
         desc.File(
             name='outputViewsAndPoses',
-            label='Output SfMData File',
+            label='Views and Poses',
             description='''Path to the output sfmdata file with cameras (views and poses).''',
             value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],

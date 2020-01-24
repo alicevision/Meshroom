@@ -12,7 +12,7 @@ class FeatureExtraction(desc.CommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfMData',
             description='SfMData file.',
             value='',
             uid=[0],
@@ -67,7 +67,7 @@ class FeatureExtraction(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Features Folder',
             description='Output path for the features and descriptors files (*.feat, *.desc).',
             value=desc.Node.internalFolder,
             uid=[],

@@ -13,14 +13,14 @@ class DepthMapFilter(desc.CommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfMData',
             description='SfMData file.',
             value='',
             uid=[0],
         ),    
         desc.File(
             name="depthMapsFolder",
-            label="Depth Maps Folder",
+            label="DepthMaps Folder",
             description="Input depth maps folder",
             value="",
             uid=[0],
@@ -108,7 +108,7 @@ class DepthMapFilter(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output',
+            label='Filtered DepthMaps Folder',
             description='Output folder for generated depth maps.',
             value=desc.Node.internalFolder,
             uid=[],

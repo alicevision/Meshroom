@@ -12,7 +12,7 @@ class PrepareDenseScene(desc.CommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfMData',
             description='''SfMData file.''',
             value='',
             uid=[0],
@@ -77,14 +77,14 @@ class PrepareDenseScene(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output',
+            label='Images Folder',
             description='''Output folder.''',
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name='outputUndistorted',
-            label='Undistorted images',
+            label='Undistorted Images',
             description='List of undistorted images.',
             value=desc.Node.internalFolder + '*.{outputFileTypeValue}',
             uid=[],

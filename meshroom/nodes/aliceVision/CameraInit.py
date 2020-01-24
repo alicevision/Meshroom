@@ -153,7 +153,7 @@ class CameraInit(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output SfMData File',
+            label='SfMData',
             description='''Output SfMData.''',
             value=desc.Node.internalFolder + 'cameraInit.sfm',
             uid=[],

@@ -488,7 +488,7 @@ class Reconstruction(UIGraph):
         self.featureExtraction = self.lastNodeOfType('FeatureExtraction', self.cameraInit) if self.cameraInit else None
 
     def updateDepthMapNode(self):
-        """ Set the current FeatureExtraction node based on the current CameraInit node. """
+        """ Set the current DepthMap node based on the current CameraInit node. """
         self.depthMap = self.lastNodeOfType('DepthMapFilter', self.cameraInit) if self.cameraInit else None
 
     def lastSfmNode(self):

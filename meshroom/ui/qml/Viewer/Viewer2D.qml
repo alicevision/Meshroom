@@ -253,7 +253,8 @@ FocusScope {
                 // set min size to 5 characters + one margin for the combobox
                 Layout.minimumWidth: 6.0 * Qt.application.font.pixelSize
                 Layout.preferredWidth: Layout.minimumWidth
-
+                flat: true
+                
                 property var types: ["image", "depth", "sim"]
                 property string type: types[currentIndex]
 

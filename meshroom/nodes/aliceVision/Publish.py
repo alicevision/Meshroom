@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-__version__ = "1.1"
+__version__ = "1.2"
 
 from meshroom.core import desc
 import shutil
@@ -30,6 +30,15 @@ class Publish(desc.Node):
             description="",
             value="",
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='''verbosity level (critical, error, warning, info, debug).''',
+            value='info',
+            values=['critical', 'error', 'warning', 'info', 'debug'],
+            exclusive=True,
+            uid=[],
             ),
         ]
 
@@ -41,9 +50,11 @@ class Publish(desc.Node):
         return paths
 
     def processChunk(self, chunk):
-        print("Publish")
+        chunk.logManager.waitUntilCleared()
+        chunk.logger.setLevel(chunk.logManager.textToLevel(chunk.node.verboseLevel.value))
+        
         if not chunk.node.inputFiles:
-            print("Nothing to publish")
+            chunk.logger.warning('Nothing to publish')
             return
         if not chunk.node.output.value:
             return
@@ -51,13 +62,15 @@ class Publish(desc.Node):
         outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
         if not outFiles:
-            raise RuntimeError("Publish: input files listed, but nothing to publish. "
-                               "Listed input files: {}".format(chunk.node.inputFiles.value))
+            error = 'Publish: input files listed, but nothing to publish'
+            chunk.logger.error(error)
+            chunk.logger.info('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+            raise RuntimeError(error)
 
         if not os.path.exists(chunk.node.output.value):
             os.mkdir(chunk.node.output.value)
 
         for iFile, oFile in outFiles.items():
-            print('Publish file', iFile, 'into', oFile)
+            chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
             shutil.copyfile(iFile, oFile)
-        print('Publish end')
+        chunk.logger.info('Publish end')

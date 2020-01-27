@@ -86,9 +86,9 @@ def loadPlugins(folder, packageName, classType):
                 errors.append('  * {}: {}'.format(pluginName, str(e)))
 
     if errors:
-        logging.warning('== The following plugins could not be loaded ==\n'
-                        '{}\n'
-                        .format('\n'.join(errors)))
+        logging.warning('== The following "{package}" plugins could not be loaded ==\n'
+                        '{errorMsg}\n'
+                        .format(package=packageName, errorMsg='\n'.join(errors)))
     return pluginTypes
 
 

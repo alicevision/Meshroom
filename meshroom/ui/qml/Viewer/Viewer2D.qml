@@ -160,7 +160,6 @@ FocusScope {
     FloatingPane {
         id: topToolbar
         width: parent.width
-        height: depthMapNodeName.height+8
         radius: 0
         padding: 4
 

@@ -163,25 +163,31 @@ FocusScope {
         height: depthMapNodeName.height+8
         radius: 0
         padding: 4
-        // selectable filepath to source image
-        TextField {
-            width: parent.width-depthMapNodeName.width-5
-            padding: 0
-            anchors.right: depthMapNodeName.left
-            anchors.rightMargin: 5
-            background: Item {}
-            font.pointSize: 8
-            readOnly: true
-            selectByMouse: true
-            text: Filepath.urlToString(image.source)
-        }
-        // show which depthmap node is active
-        Label {
-            id: depthMapNodeName
-            text: _reconstruction.depthMap.label
-            anchors.right: parent.right
-            font.pointSize: 8
-            visible: imageType.type != "image"
+
+        RowLayout {
+            anchors.fill: parent
+            // selectable filepath to source image
+            TextField {
+                padding: 0
+                background: Item {}
+                horizontalAlignment: TextInput.AlignLeft
+                Layout.fillWidth: true
+                font.pointSize: 8
+                readOnly: true
+                selectByMouse: true
+                text: Filepath.urlToString(image.source)
+            }
+            // show which depthmap node is active
+            Label {
+                id: depthMapNodeName
+                visible: imageType.type != "image"
+                text: _reconstruction.depthMap.label
+                font.pointSize: 8
+
+                horizontalAlignment: TextInput.AlignLeft
+                Layout.fillWidth: false
+                Layout.preferredWidth: contentWidth
+            }
         }
     }
 

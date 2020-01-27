@@ -55,10 +55,7 @@ FocusScope {
         Component {
             id: statViewerComponent
             Item {
-
                 id: statusViewer
-                Layout.fillWidth: true
-                Layout.fillHeight: true
                 property url source: componentLoader.source
                 property var lastModified: undefined
 
@@ -120,26 +117,46 @@ FocusScope {
                 ListView {
                     id: statusListView
                     anchors.fill: parent
-                    // spacing: 3
+                    spacing: 3
                     model: statusListModel
 
                     delegate: Rectangle {
                         color: activePalette.window
-                        width: childrenRect.width
+                        width: parent.width
                         height: childrenRect.height
                         RowLayout {
-                            Label {
-                                text: key
-                                padding: 4
-                                leftPadding: 6
+                            width: parent.width
+                            Rectangle {
+                                id: statusKey
+                                anchors.margins: 2
+                                // height: statusValue.height
+                                color: Qt.darker(activePalette.window, 1.1)
                                 Layout.preferredWidth: sizeHandle.x
-                                elide: Text.ElideRight
-                                background: Rectangle { color: Qt.darker(activePalette.window, 1.1) }
+                                Layout.minimumWidth: 10.0 * Qt.application.font.pixelSize
+                                Layout.maximumWidth: 15.0 * Qt.application.font.pixelSize
+                                Layout.fillWidth: false
+                                Layout.fillHeight: true
+                                Label {
+                                    text: key
+                                    anchors.fill: parent
+                                    anchors.top: parent.top
+                                    topPadding: 4
+                                    leftPadding: 6
+                                    verticalAlignment: TextEdit.AlignTop
+                                    elide: Text.ElideRight
+                                }
                             }
                             TextArea {
+                                id: statusValue
                                 text: value
+                                anchors.margins: 2
                                 Layout.fillWidth: true
                                 wrapMode: Label.WrapAtWordBoundaryOrAnywhere
+                                textFormat: TextEdit.PlainText
+
+                                readOnly: true
+                                selectByMouse: true
+                                background: Rectangle { anchors.fill: parent; color: Qt.darker(activePalette.window, 1.05) }
                             }
                         }
                     }

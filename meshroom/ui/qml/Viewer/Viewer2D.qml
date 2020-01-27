@@ -179,8 +179,8 @@ FocusScope {
             // show which depthmap node is active
             Label {
                 id: depthMapNodeName
-                visible: imageType.type != "image"
-                text: _reconstruction.depthMap.label
+                visible: (_reconstruction.depthMap != undefined) && (imageType.type != "image")
+                text: (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "")
                 font.pointSize: 8
 
                 horizontalAlignment: TextInput.AlignLeft
@@ -264,6 +264,7 @@ FocusScope {
                 property string type: types[currentIndex]
 
                 model: types
+                enabled: _reconstruction.depthMap != undefined
             }
 
             MaterialToolButton {

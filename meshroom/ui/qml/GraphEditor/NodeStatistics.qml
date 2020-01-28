@@ -39,7 +39,7 @@ FocusScope {
             Layout.fillHeight: true
             property url source
 
-            property string currentFile: chunksLV.currentChunk ? chunksLV.currentChunk["logFile"] : ""
+            property string currentFile: chunksLV.currentChunk ? chunksLV.currentChunk["statisticsFile"] : ""
             onCurrentFileChanged: {
                 // only set text file viewer source when ListView is fully ready
                 // (either empty or fully populated with a valid currentChunk)
@@ -47,21 +47,18 @@ FocusScope {
 
                 if(!chunksLV.count || chunksLV.currentChunk)
                     componentLoader.source = Filepath.stringToUrl(currentFile);
-
             }
 
-            sourceComponent: textFileViewerComponent
+            sourceComponent: statViewerComponent
         }
 
         Component {
-            id: textFileViewerComponent
-            TextFileViewer {
-                id: textFileViewer
-                source: componentLoader.source
+            id: statViewerComponent
+            StatViewer {
+                id: statViewer
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                autoReload: chunksLV.currentChunk !== undefined && chunksLV.currentChunk.statusName === "RUNNING"
-                // source is set in fileSelector
+                source: componentLoader.source
             }
         }
     }

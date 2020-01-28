@@ -19,6 +19,15 @@ Panel {
     signal attributeDoubleClicked(var mouse, var attribute)
     signal upgradeRequest()
 
+    Item {
+        id: m
+        property int chunkCurrentIndex: 0
+    }
+
+    onNodeChanged: {
+        m.chunkCurrentIndex = 0  // Needed to avoid invalid state of ChunksListView
+    }
+
     title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" : "")
     icon: MaterialLabel { text: MaterialIcons.tune }
 
@@ -113,7 +122,6 @@ Panel {
                         currentIndex: tabBar.currentIndex
 
                         AttributeEditor {
-                            Layout.fillWidth: true
                             attributes: root.node.attributes
                             readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: root.attributeDoubleClicked(mouse, attribute)
@@ -122,10 +130,23 @@ Panel {
 
                         NodeLog {
                             id: nodeLog
-
-                            Layout.fillHeight: true
-                            Layout.fillWidth: true
                             node: root.node
+                            chunkCurrentIndex: m.chunkCurrentIndex
+                            onChangeCurrentChunk: { m.chunkCurrentIndex = chunkIndex }
+                        }
+
+                        NodeStatistics {
+                            id: nodeStatistics
+                            node: root.node
+                            chunkCurrentIndex: m.chunkCurrentIndex
+                            onChangeCurrentChunk: { m.chunkCurrentIndex = chunkIndex }
+                        }
+
+                        NodeStatus {
+                            id: nodeStatus
+                            node: root.node
+                            chunkCurrentIndex: m.chunkCurrentIndex
+                            onChangeCurrentChunk: { m.chunkCurrentIndex = chunkIndex }
                         }
                     }
                 }
@@ -148,6 +169,18 @@ Panel {
             }
             TabButton {
                 text: "Log"
+                width: implicitWidth
+                leftPadding: 8
+                rightPadding: leftPadding
+            }
+            TabButton {
+                text: "Statistics"
+                width: implicitWidth
+                leftPadding: 8
+                rightPadding: leftPadding
+            }
+            TabButton {
+                text: "Status"
                 width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding

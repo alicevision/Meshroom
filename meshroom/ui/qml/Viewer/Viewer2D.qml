@@ -2,15 +2,16 @@ import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
-
 import Controls 1.0
 
 FocusScope {
     id: root
 
     clip: true
+
     property url source
     property var metadata
+    property var viewIn3D
 
     function clear()
     {
@@ -35,6 +36,15 @@ FocusScope {
         image.y = Math.max((root.height-image.height*image.scale)*0.5, 0)
     }
 
+    function getImageFile(type) {
+        if (type == "image") {
+            return root.source;
+        } else if (_reconstruction.depthMap != undefined && _reconstruction.selectedViewId >= 0) {
+            return Filepath.stringToUrl(_reconstruction.depthMap.internalFolder+_reconstruction.selectedViewId+"_"+type+"Map.exr");
+        }
+        return "";
+    }
+
     // context menu
     property Component contextMenu: Menu {
         MenuItem {
@@ -56,7 +66,7 @@ FocusScope {
         fillMode: Image.PreserveAspectFit
         autoTransform: true
         onWidthChanged: if(status==Image.Ready) fit()
-        source: root.source
+        source: getImageFile(imageType.type)
         onStatusChanged: {
             // update cache source when image is loaded
             if(status === Image.Ready)
@@ -152,15 +162,31 @@ FocusScope {
         width: parent.width
         radius: 0
         padding: 4
-        // selectable filepath to source image
-        TextField {
-            width: parent.width
-            padding: 0
-            background: Item {}
-            font.pointSize: 8
-            readOnly: true
-            selectByMouse: true
-            text: Filepath.urlToString(source)
+
+        RowLayout {
+            anchors.fill: parent
+            // selectable filepath to source image
+            TextField {
+                padding: 0
+                background: Item {}
+                horizontalAlignment: TextInput.AlignLeft
+                Layout.fillWidth: true
+                font.pointSize: 8
+                readOnly: true
+                selectByMouse: true
+                text: Filepath.urlToString(image.source)
+            }
+            // show which depthmap node is active
+            Label {
+                id: depthMapNodeName
+                visible: (_reconstruction.depthMap != undefined) && (imageType.type != "image")
+                text: (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "")
+                font.pointSize: 8
+
+                horizontalAlignment: TextInput.AlignLeft
+                Layout.fillWidth: false
+                Layout.preferredWidth: contentWidth
+            }
         }
     }
 
@@ -224,6 +250,31 @@ FocusScope {
                     text: image.sourceSize.width + "x" + image.sourceSize.height
                     anchors.centerIn: parent
                     elide: Text.ElideMiddle
+                }
+            }
+
+            ComboBox {
+                id: imageType
+                // set min size to 5 characters + one margin for the combobox
+                Layout.minimumWidth: 6.0 * Qt.application.font.pixelSize
+                Layout.preferredWidth: Layout.minimumWidth
+                flat: true
+                
+                property var types: ["image", "depth", "sim"]
+                property string type: types[currentIndex]
+
+                model: types
+                enabled: _reconstruction.depthMap != undefined
+            }
+
+            MaterialToolButton {
+                font.pointSize: 11
+                enabled: _reconstruction.depthMap != undefined
+                ToolTip.text: "View Depth Map in 3D (" + (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "No DepthMap Node Selected") + ")"
+                text: MaterialIcons.input
+
+                onClicked: {
+                    root.viewIn3D(root.getImageFile("depth"))
                 }
             }
 

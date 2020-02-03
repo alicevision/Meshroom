@@ -387,6 +387,10 @@ class Reconstruction(UIGraph):
         # - Prepare Dense Scene (undistorted images)
         self._prepareDenseScene = None
 
+        # - Depth Map
+        self._depthMap = None
+        self.cameraInitChanged.connect(self.updateDepthMapNode)
+
         # - Texturing
         self._texturing = None
 
@@ -441,6 +445,7 @@ class Reconstruction(UIGraph):
         self.featureExtraction = None
         self.sfm = None
         self.prepareDenseScene = None
+        self.depthMap = None
         self.texturing = None
         self.updateCameraInits()
         if not self._graph:
@@ -481,6 +486,10 @@ class Reconstruction(UIGraph):
     def updateFeatureExtraction(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
         self.featureExtraction = self.lastNodeOfType('FeatureExtraction', self.cameraInit) if self.cameraInit else None
+
+    def updateDepthMapNode(self):
+        """ Set the current FeatureExtraction node based on the current CameraInit node. """
+        self.depthMap = self.lastNodeOfType('DepthMapFilter', self.cameraInit) if self.cameraInit else None
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
@@ -787,6 +796,8 @@ class Reconstruction(UIGraph):
             self.cameraInit = node
         elif node.nodeType == "PrepareDenseScene":
             self.prepareDenseScene = node
+        elif node.nodeType in ("DepthMap", "DepthMapFilter"):
+            self.depthMap = node
 
     def updateSfMResults(self):
         """
@@ -947,8 +958,13 @@ class Reconstruction(UIGraph):
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(Node, Node)
+
     prepareDenseSceneChanged = Signal()
     prepareDenseScene = makeProperty(QObject, "_prepareDenseScene", notify=prepareDenseSceneChanged, resetOnDestroy=True)
+
+    depthMapChanged = Signal()
+    depthMap = makeProperty(QObject, "_depthMap", depthMapChanged, resetOnDestroy=True)
+
     texturingChanged = Signal()
     texturing = makeProperty(QObject, "_texturing", notify=texturingChanged)
 

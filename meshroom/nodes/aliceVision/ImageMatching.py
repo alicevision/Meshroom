@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "1.1"
 
 import os
 from meshroom.core import desc
@@ -28,16 +28,25 @@ class ImageMatching(desc.CommandLineNode):
             label="Features Folders",
             description="Folder(s) containing the extracted features and descriptors."
         ),
+        desc.ChoiceParam(
+            name='method',
+            label='Method',
+            description='Method used to select the image pairs to match.',
+            value='VocabularyTree',
+            values=['VocabularyTree', 'Sequential', 'SequentialAndVocabularyTree','Exhaustive','Frustum'],
+            exclusive=True,
+            uid=[0],
+        ),
         desc.File(
             name='tree',
-            label='Tree',
+            label='Voc Tree: Tree',
             description='Input name for the vocabulary tree file.',
             value=os.environ.get('ALICEVISION_VOCTREE', ''),
             uid=[],
         ),
         desc.File(
             name='weights',
-            label='Weights',
+            label='Voc Tree: Weights',
             description='Input name for the weight file, if not provided the weights will be computed on the database built with the provided set.',
             value='',
             uid=[0],
@@ -45,7 +54,7 @@ class ImageMatching(desc.CommandLineNode):
         ),
         desc.IntParam(
             name='minNbImages',
-            label='Minimal Number of Images',
+            label='Voc Tree: Minimal Number of Images',
             description='Minimal number of images to use the vocabulary tree. If we have less features than this threshold, we will compute all matching combinations.',
             value=200,
             range=(0, 500, 1),
@@ -54,7 +63,7 @@ class ImageMatching(desc.CommandLineNode):
         ),
         desc.IntParam(
             name='maxDescriptors',
-            label='Max Descriptors',
+            label='Voc Tree: Max Descriptors',
             description='Limit the number of descriptors you load per image. Zero means no limit.',
             value=500,
             range=(0, 100000, 1),
@@ -63,8 +72,17 @@ class ImageMatching(desc.CommandLineNode):
         ),
         desc.IntParam(
             name='nbMatches',
-            label='Nb Matches',
+            label='Voc Tree: Nb Matches',
             description='The number of matches to retrieve for each image (If 0 it will retrieve all the matches).',
+            value=50,
+            range=(0, 1000, 1),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.IntParam(
+            name='nbNeighbors',
+            label='Sequential: Nb Neighbors',
+            description='The number of neighbors to retrieve for each image (If 0 it will retrieve all the neighbors).',
             value=50,
             range=(0, 1000, 1),
             uid=[0],

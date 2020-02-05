@@ -1,10 +1,11 @@
 __version__ = "2019.2.0"
 __version_name__ = __version__
 
+from distutils import util
+from enum import Enum
+import logging
 import os
 import sys
-import logging
-from enum import Enum
 
 # sys.frozen is initialized by cx_Freeze and identifies a release package
 isFrozen = getattr(sys, "frozen", False)
@@ -20,6 +21,8 @@ if not isFrozen:
 
 # Allow override from env variable
 __version_name__ = os.environ.get("REZ_MESHROOM_VERSION", __version_name__)
+
+useMultiChunks = util.strtobool(os.environ.get("MESHROOM_USE_MULTI_CHUNKS", "True"))
 
 
 class Backend(Enum):

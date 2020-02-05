@@ -592,7 +592,7 @@ class BaseNode(BaseObject):
 
     @property
     def isParallelized(self):
-        return bool(self.nodeDesc.parallelization)
+        return bool(self.nodeDesc.parallelization) if meshroom.useMultiChunks else False
 
     @property
     def nbParallelizationBlocks(self):

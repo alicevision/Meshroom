@@ -29,12 +29,17 @@ class FeatureMatching(desc.CommandLineNode):
             label="Features Folders",
             description="Folder(s) containing the extracted features and descriptors."
         ),
-        desc.File(
-            name='imagePairsList',
-            label='Image Pairs List',
-            description='Path to a file which contains the list of image pairs to match.',
-            value='',
-            uid=[0],
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name='imagePairsList',
+                label='Image Pairs List',
+                description='Path to a file which contains the list of image pairs to match.',
+                value='',
+                uid=[0],
+            ),
+            name="imagePairsLists",
+            label="Image Pairs List",
+            description="Path(s) to one or more files which contain the list of image pairs to match."
         ),
         desc.ChoiceParam(
             name='describerTypes',

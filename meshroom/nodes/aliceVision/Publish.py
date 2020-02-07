@@ -50,27 +50,29 @@ class Publish(desc.Node):
         return paths
 
     def processChunk(self, chunk):
-        chunk.logManager.waitUntilCleared()
-        chunk.logger.setLevel(chunk.logManager.textToLevel(chunk.node.verboseLevel.value))
-        
-        if not chunk.node.inputFiles:
-            chunk.logger.warning('Nothing to publish')
-            return
-        if not chunk.node.output.value:
-            return
+        try:
+            chunk.logManager.start(chunk.node.verboseLevel.value)
+            
+            if not chunk.node.inputFiles:
+                chunk.logger.warning('Nothing to publish')
+                return
+            if not chunk.node.output.value:
+                return
 
-        outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
+            outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
-        if not outFiles:
-            error = 'Publish: input files listed, but nothing to publish'
-            chunk.logger.error(error)
-            chunk.logger.info('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
-            raise RuntimeError(error)
+            if not outFiles:
+                error = 'Publish: input files listed, but nothing to publish'
+                chunk.logger.error(error)
+                chunk.logger.info('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+                raise RuntimeError(error)
 
-        if not os.path.exists(chunk.node.output.value):
-            os.mkdir(chunk.node.output.value)
+            if not os.path.exists(chunk.node.output.value):
+                os.mkdir(chunk.node.output.value)
 
-        for iFile, oFile in outFiles.items():
-            chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
-            shutil.copyfile(iFile, oFile)
-        chunk.logger.info('Publish end')
+            for iFile, oFile in outFiles.items():
+                chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
+                shutil.copyfile(iFile, oFile)
+            chunk.logger.info('Publish end')
+        finally:
+            chunk.logManager.end()

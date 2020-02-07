@@ -217,9 +217,8 @@ class SketchfabUpload(desc.Node):
 
     def processChunk(self, chunk):
         self._stopped = False
-        chunk.logManager.waitUntilCleared()
         chunk.logger.setLevel(chunk.logManager.textToLevel(chunk.node.verboseLevel.value))
-        
+
         if not chunk.node.inputFiles:
             chunk.logger.warning('Nothing to upload')
             return

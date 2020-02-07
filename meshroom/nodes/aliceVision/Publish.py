@@ -50,9 +50,8 @@ class Publish(desc.Node):
         return paths
 
     def processChunk(self, chunk):
-        chunk.logManager.waitUntilCleared()
         chunk.logger.setLevel(chunk.logManager.textToLevel(chunk.node.verboseLevel.value))
-        
+
         if not chunk.node.inputFiles:
             chunk.logger.warning('Nothing to publish')
             return

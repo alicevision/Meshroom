@@ -470,7 +470,7 @@ class CommandLineNode(Node):
             if not alreadyInEnv:
                 cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get('REZ_ENV'), packageFullName=chunk.node.packageFullName)
         cmdSuffix = ''
-        if chunk.range:
+        if chunk.node.isParallelized:
             cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 

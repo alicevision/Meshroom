@@ -117,6 +117,15 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
+            name='minNumberOfMatches',
+            label='Minimum Number of Matches',
+            description='Minimum number of matches per image pair (and per feature type). \n'
+                        'This can be useful to have a meaningful reconstruction with accurate keypoints. 0 means no limit.',
+            value=0,
+            range=(0, 50000, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
             name='minInputTrackLength',
             label='Min Input Track Length',
             description='Minimum track length in input of SfM',
@@ -227,6 +236,14 @@ class StructureFromMotion(desc.CommandLineNode):
             range=(0, 20, 1),
             uid=[0],
             advanced=True,
+        ),
+        desc.BoolParam(
+            name='filterTrackForks',
+            label='Filter Track Forks',
+            description='Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n'
+                        'lead to multiple features in the same image for a single track. \n',
+            value=True,
+            uid=[0],
         ),
         desc.File(
             name='initialPairA',

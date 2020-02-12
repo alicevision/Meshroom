@@ -116,6 +116,16 @@ class FeatureMatching(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.FloatParam(
+            name='knownPosesGeometricErrorMax',
+            label='Known Poses Geometric Error Max',
+            description='Maximum error (in pixels) allowed for features matching guided by geometric information from known camera poses.\n'
+                        'If set to 0 it lets the ACRansac select an optimal value.',
+            value=5.0,
+            range=(0.0, 100.0, 1.0),
+            uid=[0],
+            advanced=True,
+        ),
         desc.IntParam(
             name='maxMatches',
             label='Max Matches',
@@ -137,6 +147,14 @@ class FeatureMatching(desc.CommandLineNode):
             name='guidedMatching',
             label='Guided Matching',
             description='the found model to improve the pairwise correspondences.',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='matchFromKnownCameraPoses',
+            label='Match From Known Camera Poses',
+            description='Enable the usage of geometric information from known camera poses to guide the feature matching.\n'
+                        'If some cameras have unknown poses (so there is no geometric prior), the standard feature matching will be performed.',
             value=False,
             uid=[0],
         ),

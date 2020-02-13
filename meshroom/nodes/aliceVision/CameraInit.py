@@ -26,6 +26,8 @@ Intrinsic = [
     desc.ChoiceParam(name="type", label="Camera Type", description="Camera Type", value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'equidistant_r3'], exclusive=True, uid=[0]),
     desc.IntParam(name="width", label="Width", description="Image Width", value=0, uid=[], range=(0, 10000, 1)),
     desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[], range=(0, 10000, 1)),
+    desc.FloatParam(name="sensorWidth", label="Sensor Width", description="Sensor Width (mm)", value=36, uid=[], range=(0, 1000, 1)),
+    desc.FloatParam(name="sensorHeight", label="Sensor Height", description="Sensor Height (mm)", value=24, uid=[], range=(0, 1000, 1)),
     desc.StringParam(name="serialNumber", label="Serial Number", description="Device Serial Number (camera and lens combined)", value="", uid=[]),
     desc.GroupAttribute(name="principalPoint", label="Principal Point", description="", groupDesc=[
         desc.FloatParam(name="x", label="x", description="", value=0, uid=[], range=(0, 10000, 1)),

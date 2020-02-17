@@ -34,6 +34,18 @@ SampleGroupV2 = [
     )
 ]
 
+#SampleGroupV3 is SampleGroupV2 with one more int parameter
+SampleGroupV3 = [
+    desc.IntParam(name="a", label="a", description="", value=0, uid=[0], range=None),
+    desc.IntParam(name="notInSampleGroupV2", label="notInSampleGroupV2", description="", value=0, uid=[0], range=None),
+    desc.ListAttribute(
+        name="b",
+        elementDesc=desc.GroupAttribute(name="p", label="", description="", groupDesc=SampleGroupV1),
+        label="b",
+        description="",
+    )
+]
+
 
 class SampleNodeV1(desc.Node):
     """ Version 1 Sample Node """
@@ -103,6 +115,21 @@ class SampleNodeV5(desc.Node):
         desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
     ]
 
+class SampleNodeV6(desc.Node):
+    """
+    Changes from V5:
+        * 'paramA' elementDesc has changed from SampleGroupV2 to SampleGroupV3
+    """
+    inputs = [
+        desc.File(name='in', label='Input', description='', value='', uid=[0]),
+        desc.ListAttribute(name='paramA', label='ParamA',
+                           elementDesc=desc.GroupAttribute(
+                               groupDesc=SampleGroupV3, name='gA', label='gA', description=''),
+                           description='')
+    ]
+    outputs = [
+        desc.File(name='output', label='Output', description='', value=desc.Node.internalFolder, uid=[])
+    ]
 
 def test_unknown_node_type():
     """
@@ -289,3 +316,48 @@ def test_upgradeAllNodes():
     assert n2Name in g.compatibilityNodes.keys()
 
     unregisterNodeType(SampleNodeV1)
+
+def test_conformUpgrade():
+    registerNodeType(SampleNodeV5)
+    registerNodeType(SampleNodeV6)
+
+    g = Graph('')
+    n1 = g.addNewNode("SampleNodeV5")
+    n1.paramA.value = [{'a': 0, 'b': [{'a': 0, 'b': [1.0, 2.0]}, {'a': 1, 'b': [1.0, 2.0]}]}]
+    n1Name = n1.name
+    graphFile = os.path.join(tempfile.mkdtemp(), "test_conform_upgrade.mg")
+    g.save(graphFile)
+
+    # replace SampleNodeV5 by SampleNodeV6
+    meshroom.core.nodesDesc[SampleNodeV5.__name__] = SampleNodeV6
+
+    # reload file
+    g = loadGraph(graphFile)
+    os.remove(graphFile)
+
+    # node is a CompatibilityNode
+    assert len(g.compatibilityNodes) == 1
+    assert g.node(n1Name).canUpgrade
+
+    # upgrade all upgradable nodes
+    g.upgradeAllNodes()
+
+    # only the node with an unknown type has not been upgraded
+    assert len(g.compatibilityNodes) == 0
+
+    upgradedNode = g.node(n1Name)
+
+    # check upgrade
+    assert isinstance(upgradedNode, Node) and isinstance(upgradedNode.nodeDesc, SampleNodeV6)
+
+    # check conformation
+    assert len(upgradedNode.paramA.value) == 1
+
+    unregisterNodeType(SampleNodeV5)
+    unregisterNodeType(SampleNodeV6)
+
+
+
+
+
+

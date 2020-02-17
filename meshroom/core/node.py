@@ -880,14 +880,9 @@ class CompatibilityNode(BaseNode):
         self.splitCount = self.parallelization.get("split", 1)
         self.setSize(self.parallelization.get("size", 1))
 
-        # inputs matching current type description
-        self._commonInputs = []
         # create input attributes
         for attrName, value in self._inputs.items():
-            matchDesc = self._addAttribute(attrName, value, False)
-            # store attributes that could be used during node upgrade
-            if matchDesc:
-                self._commonInputs.append(attrName)
+            self._addAttribute(attrName, value, False)
 
         # create outputs attributes
         for attrName, value in self.outputs.items():
@@ -951,7 +946,7 @@ class CompatibilityNode(BaseNode):
         return desc.StringParam(**params)
 
     @staticmethod
-    def attributeDescFromName(refAttributes, name, value):
+    def attributeDescFromName(refAttributes, name, value, conform=False):
         """
         Try to find a matching attribute description in refAttributes for given attribute 'name' and 'value'.
 
@@ -968,8 +963,9 @@ class CompatibilityNode(BaseNode):
         # consider this value matches description:
         #  - if it's a serialized link expression (no proper value to set/evaluate)
         #  - or if it passes the 'matchDescription' test
-        if attrDesc and (Attribute.isLinkExpression(value) or attrDesc.matchDescription(value)):
+        if attrDesc and (Attribute.isLinkExpression(value) or attrDesc.matchDescription(value, conform)):
             return attrDesc
+
         return None
 
     def _addAttribute(self, name, val, isOutput):
@@ -1043,8 +1039,16 @@ class CompatibilityNode(BaseNode):
         if not self.canUpgrade:
             raise NodeUpgradeError(self.name, "no matching node type")
         # TODO: use upgrade method of node description if available
+
+        # inputs matching current type description
+        commonInputs = []
+        for attrName, value in self._inputs.items():
+            if self.attributeDescFromName(self.nodeDesc.inputs, attrName, value, conform=True):
+                # store attributes that could be used during node upgrade
+                commonInputs.append(attrName)
+
         return Node(self.nodeType, position=self.position,
-                    **{key: value for key, value in self.inputs.items() if key in self._commonInputs})
+                    **{key: value for key, value in self.inputs.items() if key in commonInputs})
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)

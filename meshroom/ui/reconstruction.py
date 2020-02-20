@@ -403,6 +403,10 @@ class Reconstruction(UIGraph):
         self._ldr2hdr = None
         self.cameraInitChanged.connect(self.updateLdr2hdrNode)
 
+        # - PanoramaInit
+        self._panoramaInit = None
+        self.cameraInitChanged.connect(self.updatePanoramaInitNode)
+
         # react to internal graph changes to update those variables
         self.graphChanged.connect(self.onGraphChanged)
 
@@ -461,6 +465,7 @@ class Reconstruction(UIGraph):
         self.texturing = None
         self.ldr2hdr = None
         self.hdrCameraInit = None
+        self.panoramaInit = None
         self.updateCameraInits()
         if not self._graph:
             return
@@ -526,6 +531,10 @@ class Reconstruction(UIGraph):
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
         self.hdrCameraInit = tmpCameraInit
+
+    def updatePanoramaInitNode(self):
+        """ Set the current FeatureExtraction node based on the current CameraInit node. """
+        self.panoramaInit = self.lastNodeOfType('PanoramaInit', self.cameraInit) if self.cameraInit else None
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
@@ -836,6 +845,8 @@ class Reconstruction(UIGraph):
             self.prepareDenseScene = node
         elif node.nodeType in ("DepthMap", "DepthMapFilter"):
             self.depthMap = node
+        elif node.nodeType == "PanoramaInit":
+            self.panoramaInit = node
 
     def updateSfMResults(self):
         """
@@ -1008,6 +1019,9 @@ class Reconstruction(UIGraph):
 
     ldr2hdrChanged = Signal()
     ldr2hdr = makeProperty(QObject, "_ldr2hdr", notify=ldr2hdrChanged, resetOnDestroy=True)
+
+    panoramaInitChanged = Signal()
+    panoramaInit = makeProperty(QObject, "_panoramaInit", notify=panoramaInitChanged, resetOnDestroy=True)
 
     nbCameras = Property(int, reconstructedCamerasCount, notify=sfmReportChanged)
 

@@ -13,6 +13,8 @@ FocusScope {
     property var metadata
     property var viewIn3D
 
+    property bool useFloatImageViewer: !forceQtImageViewerAction.checked && (floatImageViewerLoader.status != Component.Error) // qtAliceVision plugin should be check before
+
     function clear()
     {
         source = ''
@@ -29,11 +31,11 @@ FocusScope {
 
     // functions
     function fit() {
-        if(image.status != Image.Ready)
+        if(imageViewerWrapper.currentImageViewer.status != Image.Ready)
             return;
-        image.scale = Math.min(root.width/image.width, root.height/image.height)
-        image.x = Math.max((root.width-image.width*image.scale)*0.5, 0)
-        image.y = Math.max((root.height-image.height*image.scale)*0.5, 0)
+        imageViewerWrapper.scale = Math.min(imageViewerWrapper.width/imageViewerWrapper.currentImageViewer.width, imageViewerWrapper.height/imageViewerWrapper.currentImageViewer.height)
+        imageViewerWrapper.x = Math.max((imageViewerWrapper.width-imageViewerWrapper.width*imageViewerWrapper.scale)*0.5, 0)
+        imageViewerWrapper.y = Math.max((imageViewerWrapper.height-imageViewerWrapper.height*imageViewerWrapper.scale)*0.5, 0)
     }
 
     function getImageFile(type) {
@@ -53,39 +55,75 @@ FocusScope {
         }
         MenuItem {
             text: "Zoom 100%"
-            onTriggered: image.scale = 1
+            onTriggered: {
+                imageViewerWrapper.scale = 1
+                imageViewerWrapper.x = Math.max((imageViewerWrapper.width-imageViewerWrapper.width*imageViewerWrapper.scale)*0.5, 0)
+                imageViewerWrapper.y = Math.max((imageViewerWrapper.height-imageViewerWrapper.height*imageViewerWrapper.scale)*0.5, 0)
+            }
         }
     }
 
-    // Main Image
-    Image {
-        id: image
+    // Image
+    Item {
+        id: imageViewerWrapper
         transformOrigin: Item.TopLeft
-        asynchronous: true
-        smooth: false
-        fillMode: Image.PreserveAspectFit
-        autoTransform: true
-        onWidthChanged: if(status==Image.Ready) fit()
-        source: getImageFile(imageType.type)
-        onStatusChanged: {
-            // update cache source when image is loaded
-            if(status === Image.Ready)
-                cache.source = source
+        width: parent.width
+        height: parent.height
+
+        property var currentImageViewer : qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
+
+        // qtAliceVision Viewer
+        Loader {
+            id: floatImageViewerLoader
+            active: root.useFloatImageViewer
+            anchors.centerIn: parent
+
+            Component.onCompleted: {
+                // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                setSource("FloatImage.qml", {
+                    'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
+                    'gamma': Qt.binding(function() { return imageToolbar.gammaValue; }),
+                    'offset': Qt.binding(function() { return imageToolbar.offsetValue; }),
+                    'channelModeString': Qt.binding(function() { return imageToolbar.channelModeValue; }),
+                })
+            }
+
         }
 
-        // Image cache of the last loaded image
-        // Only visible when the main one is loading, to keep an image
-        // displayed at all time and smoothen transitions
-        Image {
-            id: cache
+        // Qt or qtOIIO Viewer
+        Loader {
+            id: qtImageViewerLoader
+            active: !root.useFloatImageViewer
+            anchors.centerIn: parent
+            sourceComponent: Image {
+                id: qtImageViewer
+                asynchronous: true
+                smooth: false
+                fillMode: Image.PreserveAspectFit
+                autoTransform: true
+                onWidthChanged: if(status==Image.Ready) fit()
+                source: getImageFile(imageType.type)
+                onStatusChanged: {
+                    // update cache source when image is loaded
+                    if(status === Image.Ready)
+                        qtImageViewerCache.source = source
+                }
 
-            anchors.fill: parent
-            asynchronous: true
-            smooth: parent.smooth
-            fillMode: parent.fillMode
-            autoTransform: parent.autoTransform
+                // Image cache of the last loaded image
+                // Only visible when the main one is loading, to keep an image
+                // displayed at all time and smoothen transitions
+                Image {
+                    id: qtImageViewerCache
 
-            visible: image.status === Image.Loading
+                    anchors.fill: parent
+                    asynchronous: true
+                    smooth: parent.smooth
+                    fillMode: parent.fillMode
+                    autoTransform: parent.autoTransform
+
+                    visible: qtImageViewer.status === Image.Loading
+                }
+            }
         }
 
         // FeatureViewer: display view extracted feature points
@@ -104,8 +142,8 @@ FocusScope {
                     default: return 0;
                 }
             }
-            x: rotation === 90 ? image.paintedWidth : 0
-            y: rotation === -90 ? image.paintedHeight : 0
+            x: rotation === 90 ? imageViewerWrapper.currentImageViewer.paintedWidth : 0
+            y: rotation === -90 ? imageViewerWrapper.currentImageViewer.paintedHeight : 0
 
             Component.onCompleted: {
                 // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
@@ -124,18 +162,18 @@ FocusScope {
     BusyIndicator {
         anchors.centerIn: parent
         // running property binding seems broken, only dynamic binding assignment works
-        Component.onCompleted: running = Qt.binding(function() { return image.status === Image.Loading })
+        Component.onCompleted: running = Qt.binding(function() { return imageViewerWrapper.currentImageViewer.status === Image.Loading })
     }
-
     // mouse area
+
     MouseArea {
         anchors.fill: parent
         property double factor: 1.2
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onPressed: {
-            image.forceActiveFocus()
+            imageViewerWrapper.forceActiveFocus()
             if(mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
-                drag.target = image // start drag
+                drag.target = imageViewerWrapper // start drag
         }
         onReleased: {
             drag.target = undefined // stop drag
@@ -148,44 +186,63 @@ FocusScope {
         }
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
-            if(Math.min(image.width*image.scale*zoomFactor, image.height*image.scale*zoomFactor) < 10)
+            if(Math.min(imageViewerWrapper.width*imageViewerWrapper.scale*zoomFactor, imageViewerWrapper.height*imageViewerWrapper.scale*zoomFactor) < 10)
                 return
-            var point = mapToItem(image, wheel.x, wheel.y)
-            image.x += (1-zoomFactor) * point.x * image.scale
-            image.y += (1-zoomFactor) * point.y * image.scale
-            image.scale *= zoomFactor
+            var point = mapToItem(imageViewerWrapper, wheel.x, wheel.y)
+            imageViewerWrapper.x += (1-zoomFactor) * point.x * imageViewerWrapper.scale
+            imageViewerWrapper.y += (1-zoomFactor) * point.y * imageViewerWrapper.scale
+            imageViewerWrapper.scale *= zoomFactor
         }
     }
 
-    FloatingPane {
+    ColumnLayout {
         id: topToolbar
+        anchors.top: parent.top
+        anchors.margins: 0
         width: parent.width
-        radius: 0
-        padding: 4
+        spacing: 0
 
-        RowLayout {
-            anchors.fill: parent
-            // selectable filepath to source image
-            TextField {
-                padding: 0
-                background: Item {}
-                horizontalAlignment: TextInput.AlignLeft
-                Layout.fillWidth: true
-                font.pointSize: 8
-                readOnly: true
-                selectByMouse: true
-                text: Filepath.urlToString(image.source)
-            }
-            // show which depthmap node is active
-            Label {
-                id: depthMapNodeName
-                visible: (_reconstruction.depthMap != undefined) && (imageType.type != "image")
-                text: (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "")
-                font.pointSize: 8
+        ImageToolbar {
+            id: imageToolbar
+            anchors.margins: 0
+            visible: displayImageToolBarAction.checked && displayImageToolBarAction.enabled
+            Layout.fillWidth: true
+        }
 
-                horizontalAlignment: TextInput.AlignLeft
-                Layout.fillWidth: false
-                Layout.preferredWidth: contentWidth
+        FloatingPane {
+            id: imagePathToolbar
+            anchors.margins: 0
+            radius: 0
+            padding: 4
+            visible: displayImagePathAction.checked
+            Layout.fillWidth: true
+
+            RowLayout {
+                anchors.fill: parent
+
+                // selectable filepath to source image
+                TextField {
+                    padding: 0
+                    background: Item {}
+                    horizontalAlignment: TextInput.AlignLeft
+                    Layout.fillWidth: true
+                    font.pointSize: 8
+                    readOnly: true
+                    selectByMouse: true
+                    text: Filepath.urlToString(getImageFile(imageType.type))
+                }
+
+                // show which depthmap node is active
+                Label {
+                    id: depthMapNodeName
+                    visible: (_reconstruction.depthMap != undefined) && (imageType.type != "image")
+                    text: (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "")
+                    font.pointSize: 8
+
+                    horizontalAlignment: TextInput.AlignLeft
+                    Layout.fillWidth: false
+                    Layout.preferredWidth: contentWidth
+                }
             }
         }
     }
@@ -232,7 +289,7 @@ FocusScope {
 
             // zoom label
             Label {
-                text: (image.status == Image.Ready ? image.scale.toFixed(2) : "1.00") + "x"
+                text: (imageViewerWrapper.currentImageViewer.status == Image.Ready ? imageViewerWrapper.scale.toFixed(2) : "1.00") + "x"
                 state: "xsmall"
             }
             MaterialToolButton {
@@ -247,7 +304,7 @@ FocusScope {
                 Layout.fillWidth: true
                 Label {
                     id: resolutionLabel
-                    text: image.sourceSize.width + "x" + image.sourceSize.height
+                    text: imageViewerWrapper.currentImageViewer.sourceSize.width + "x" + imageViewerWrapper.currentImageViewer.sourceSize.height
                     anchors.centerIn: parent
                     elide: Text.ElideMiddle
                 }

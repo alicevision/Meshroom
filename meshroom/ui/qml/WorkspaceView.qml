@@ -82,6 +82,42 @@ Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
             Layout.minimumWidth: 280
+
+            headerBar: RowLayout {
+                MaterialToolButton {
+                    text: MaterialIcons.more_vert
+                    font.pointSize: 11
+                    padding: 2
+                    checkable: true
+                    checked: imageViewerMenu.visible
+                    onClicked: imageViewerMenu.open()
+                    Menu {
+                        id: imageViewerMenu
+                        y: parent.height
+                        x: -width + parent.width
+                        Action {
+                            id: displayImageToolBarAction
+                            text: "Display Image Toolbar"
+                            checkable: true
+                            checked: false
+                            enabled: viewer2D.useFloatImageViewer
+                        }
+                        Action {
+                            id: displayImagePathAction
+                            text: "Display Image Path"
+                            checkable: true
+                            checked: true
+                        }
+                        Action {
+                            id: forceQtImageViewerAction
+                            text: "Force Qt Image Viewer"
+                            checkable: true
+                            checked: false
+                        }
+                    }
+                }
+            }
+
             Viewer2D {
                 id: viewer2D
                 anchors.fill: parent

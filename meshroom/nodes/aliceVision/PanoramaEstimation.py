@@ -97,9 +97,10 @@ class PanoramaEstimation(desc.CommandLineNode):
             label='Relative Rotation Method',
             description="Method for relative rotation :\n"
                         " * from essential matrix\n"
-                        " * from homography matrix",
+                        " * from homography matrix\n"
+                        " * from rotation matrix",
             values=['essential_matrix', 'homography_matrix', 'rotation_matrix'],
-            value='homography_matrix',
+            value='rotation_matrix',
             exclusive=True,
             uid=[0],
             advanced=True,

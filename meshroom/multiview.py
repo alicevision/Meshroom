@@ -134,7 +134,7 @@ def hdriPipeline(graph):
 
     featureExtraction = graph.addNewNode('FeatureExtraction',
                                          input=ldr2hdr.outSfMDataFilename)
-    featureExtraction.describerPreset.value = 'ultra'
+    featureExtraction.describerPreset.value = 'high'
     imageMatching = graph.addNewNode('ImageMatching',
                                      input=featureExtraction.input,
                                      featuresFolders=[featureExtraction.output])

@@ -38,8 +38,13 @@ class Attribute(BaseObject):
         """
         return value
 
-    def matchDescription(self, value):
-        """ Returns whether the value perfectly match attribute's description. """
+    def matchDescription(self, value, conform=False):
+        """ Returns whether the value perfectly match attribute's description.
+
+        Args:
+            value: the value
+            conform: try to adapt value to match the description
+        """
         try:
             self.validateValue(value)
         except ValueError:
@@ -66,13 +71,13 @@ class ListAttribute(Attribute):
             raise ValueError('ListAttribute only supports list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
-    def matchDescription(self, value):
+    def matchDescription(self, value, conform=False):
         """ Check that 'value' content matches ListAttribute's element description. """
-        if not super(ListAttribute, self).matchDescription(value):
+        if not super(ListAttribute, self).matchDescription(value, conform):
             return False
         # list must be homogeneous: only test first element
         if value:
-            return self._elementDesc.matchDescription(value[0])
+            return self._elementDesc.matchDescription(value[0], conform)
         return True
 
 
@@ -97,20 +102,32 @@ class GroupAttribute(Attribute):
             raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
         return value
 
-    def matchDescription(self, value):
+    def matchDescription(self, value, conform=False):
         """
         Check that 'value' contains the exact same set of keys as GroupAttribute's group description
         and that every child value match corresponding child attribute description.
+
+        Args:
+            value: the value
+            conform: remove entries that don't exist in the description.
         """
         if not super(GroupAttribute, self).matchDescription(value):
             return False
         attrMap = {attr.name: attr for attr in self._groupDesc}
-        # must have the exact same child attributes
-        if sorted(value.keys()) != sorted(attrMap.keys()):
-            return False
+
+        if conform:
+            # remove invalid keys
+            invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
+            for k in invalidKeys:
+                del self._groupDesc[k]
+        else:
+            # must have the exact same child attributes
+            if sorted(value.keys()) != sorted(attrMap.keys()):
+                return False
+
         for k, v in value.items():
             # each child value must match corresponding child attribute description
-            if not attrMap[k].matchDescription(v):
+            if not attrMap[k].matchDescription(v, conform):
                 return False
         return True
 

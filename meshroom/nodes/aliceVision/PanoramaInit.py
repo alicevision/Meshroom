@@ -6,8 +6,8 @@ import os
 from meshroom.core import desc
 
 
-class PanoramaExternalInfo(desc.CommandLineNode):
-    commandLine = 'aliceVision_panoramaExternalInfo {allParams}'
+class PanoramaInit(desc.CommandLineNode):
+    commandLine = 'aliceVision_panoramaInit {allParams}'
     size = desc.DynamicNodeSize('input')
 
     inputs = [
@@ -27,16 +27,16 @@ class PanoramaExternalInfo(desc.CommandLineNode):
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
-                name='matchesFolder',
-                label='Matches Folder',
+                name='dependency',
+                label='',
                 description="",
                 value='',
-                uid=[0],
+                uid=[],
             ),
-            name='matchesFolders',
-            label='Matches Folders',
-            description="Folder(s) in which computed matches are stored. (WORKAROUND for valid Tractor graph submission)",
-            group='forDependencyOnly',
+            name='dependency',
+            label='Dependency',
+            description="Folder(s) in which computed features are stored. (WORKAROUND for valid Tractor graph submission)",
+            group='forDependencyOnly',  # not a command line argument
         ),
         desc.ChoiceParam(
             name='verboseLevel',

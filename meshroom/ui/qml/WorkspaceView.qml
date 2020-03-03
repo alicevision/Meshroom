@@ -100,6 +100,7 @@ Item {
                             text: "Use HDR Image Viewer"
                             checkable: true
                             checked: false
+                            enabled: viewer2D.floatViewerAvailable
 
                             // tooltip: "Floating Point Image Viewer allows to visualize image with the full color dynamic. It is useful for HDR or RAW visualization. (Requires a plugin)"
                         }

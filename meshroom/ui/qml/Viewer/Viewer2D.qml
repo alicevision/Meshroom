@@ -13,6 +13,8 @@ FocusScope {
     property var metadata
     property var viewIn3D
 
+    property Component floatViewerComp: Qt.createComponent("FloatImage.qml", imageViewerWrapper)
+    readonly property bool floatViewerAvailable: floatViewerComp.status === Component.Ready
     property bool useFloatImageViewer: false
 
     function clear()
@@ -81,6 +83,9 @@ FocusScope {
 
             Component.onCompleted: {
                 // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                // Note: It does not work to use previously created component,
+                //       so we re-create it with setSource.
+                // floatViewerComp.createObject(floatImageViewerLoader, {
                 setSource("FloatImage.qml", {
                     'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
                     'gamma': Qt.binding(function() { return imageToolbar.gammaValue; }),

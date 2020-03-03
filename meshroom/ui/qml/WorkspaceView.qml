@@ -97,13 +97,15 @@ Item {
                         x: -width + parent.width
                         Action {
                             id: useFloatImageViewerAction
-                            text: "Use Floating Point Image Viewer"
+                            text: "Use HDR Image Viewer"
                             checkable: true
                             checked: false
+
+                            // tooltip: "Floating Point Image Viewer allows to visualize image with the full color dynamic. It is useful for HDR or RAW visualization. (Requires a plugin)"
                         }
                         Action {
                             id: displayImageToolBarAction
-                            text: "Display Image Toolbar"
+                            text: "Display HDR Toolbar"
                             checkable: true
                             checked: true
                             enabled: useFloatImageViewerAction.checked

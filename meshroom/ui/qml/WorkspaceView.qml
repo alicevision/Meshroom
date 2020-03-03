@@ -96,23 +96,23 @@ Item {
                         y: parent.height
                         x: -width + parent.width
                         Action {
+                            id: useFloatImageViewerAction
+                            text: "Use Floating Point Image Viewer"
+                            checkable: true
+                            checked: false
+                        }
+                        Action {
                             id: displayImageToolBarAction
                             text: "Display Image Toolbar"
                             checkable: true
-                            checked: false
-                            enabled: viewer2D.useFloatImageViewer
+                            checked: true
+                            enabled: useFloatImageViewerAction.checked
                         }
                         Action {
                             id: displayImagePathAction
                             text: "Display Image Path"
                             checkable: true
                             checked: true
-                        }
-                        Action {
-                            id: forceQtImageViewerAction
-                            text: "Force Qt Image Viewer"
-                            checkable: true
-                            checked: false
                         }
                     }
                 }
@@ -121,6 +121,7 @@ Item {
             Viewer2D {
                 id: viewer2D
                 anchors.fill: parent
+                useFloatImageViewer: useFloatImageViewerAction.checked
 
                 viewIn3D: root.load3DMedia
 

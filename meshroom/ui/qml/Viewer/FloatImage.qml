@@ -42,4 +42,13 @@ AliceVision.FloatImageViewer {
         }
     }
     clearBeforeLoad: true
+
+    property alias containsMouse: mouseArea.containsMouse
+    property alias mouseX: mouseArea.mouseX
+    property alias mouseY: mouseArea.mouseY
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        hoverEnabled: true
+    }
 }

@@ -13,7 +13,7 @@ FocusScope {
     property var metadata
     property var viewIn3D
 
-    property bool useFloatImageViewer: !forceQtImageViewerAction.checked && (floatImageViewerLoader.status != Component.Error) // qtAliceVision plugin should be check before
+    property bool useFloatImageViewer: false
 
     function clear()
     {
@@ -72,10 +72,11 @@ FocusScope {
 
         property var currentImageViewer : qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
 
-        // qtAliceVision Viewer
+        // qtAliceVision Image Viewer
         Loader {
             id: floatImageViewerLoader
             active: root.useFloatImageViewer
+            visible: (floatImageViewerLoader.status === Loader.Ready)
             anchors.centerIn: parent
 
             Component.onCompleted: {
@@ -87,13 +88,12 @@ FocusScope {
                     'channelModeString': Qt.binding(function() { return imageToolbar.channelModeValue; }),
                 })
             }
-
         }
 
-        // Qt or qtOIIO Viewer
+        // Simple QML Image Viewer (using Qt or qtOIIO to load images)
         Loader {
             id: qtImageViewerLoader
-            active: !root.useFloatImageViewer
+            active: (!root.useFloatImageViewer) || (floatImageViewerLoader.status === Loader.Error)
             anchors.centerIn: parent
             sourceComponent: Image {
                 id: qtImageViewer
@@ -142,8 +142,8 @@ FocusScope {
                     default: return 0;
                 }
             }
-            x: rotation === 90 ? imageViewerWrapper.currentImageViewer.paintedWidth : 0
-            y: rotation === -90 ? imageViewerWrapper.currentImageViewer.paintedHeight : 0
+            x: (imageViewerWrapper.currentImageViewer && rotation === 90) ? imageViewerWrapper.currentImageViewer.paintedWidth : 0
+            y: (imageViewerWrapper.currentImageViewer && rotation === -90) ? imageViewerWrapper.currentImageViewer.paintedHeight : 0
 
             Component.onCompleted: {
                 // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
@@ -157,15 +157,18 @@ FocusScope {
         }
     }
 
-
     // Busy indicator
     BusyIndicator {
         anchors.centerIn: parent
         // running property binding seems broken, only dynamic binding assignment works
-        Component.onCompleted: running = Qt.binding(function() { return imageViewerWrapper.currentImageViewer.status === Image.Loading })
+        Component.onCompleted: {
+            running = Qt.binding(function() { return imageViewerWrapper.currentImageViewer && imageViewerWrapper.currentImageViewer.status === Image.Loading })
+        }
+        // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker
+        visible: running
     }
-    // mouse area
 
+    // mouse area
     MouseArea {
         anchors.fill: parent
         property double factor: 1.2
@@ -207,6 +210,21 @@ FocusScope {
             anchors.margins: 0
             visible: displayImageToolBarAction.checked && displayImageToolBarAction.enabled
             Layout.fillWidth: true
+            colorRGBA: {
+                if(!floatImageViewerLoader.item ||
+                   floatImageViewerLoader.item.status !== Image.Ready)
+                {
+                    return null;
+                }
+                if(floatImageViewerLoader.item.containsMouse == false)
+                {
+                    // console.warn("floatImageViewerLoader: does not contain mouse");
+                    return null;
+                }
+                var pix = floatImageViewerLoader.item.pixelValueAt(Math.floor(floatImageViewerLoader.item.mouseX), Math.floor(floatImageViewerLoader.item.mouseY));
+                // console.warn("floatImageViewerLoader: pixel value at (" << floatImageViewerLoader.item.mouseX << "," << floatImageViewerLoader.item.mouseY << "): ", pix);
+                return pix;
+            }
         }
 
         FloatingPane {
@@ -289,7 +307,7 @@ FocusScope {
 
             // zoom label
             Label {
-                text: (imageViewerWrapper.currentImageViewer.status == Image.Ready ? imageViewerWrapper.scale.toFixed(2) : "1.00") + "x"
+                text: ((imageViewerWrapper.currentImageViewer && (imageViewerWrapper.currentImageViewer.status == Image.Ready)) ? imageViewerWrapper.scale.toFixed(2) : "1.00") + "x"
                 state: "xsmall"
             }
             MaterialToolButton {
@@ -304,7 +322,7 @@ FocusScope {
                 Layout.fillWidth: true
                 Label {
                     id: resolutionLabel
-                    text: imageViewerWrapper.currentImageViewer.sourceSize.width + "x" + imageViewerWrapper.currentImageViewer.sourceSize.height
+                    text: imageViewerWrapper.currentImageViewer ? (imageViewerWrapper.currentImageViewer.sourceSize.width + "x" + imageViewerWrapper.currentImageViewer.sourceSize.height) : ""
                     anchors.centerIn: parent
                     elide: Text.ElideMiddle
                 }

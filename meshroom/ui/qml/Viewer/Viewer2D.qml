@@ -101,7 +101,7 @@ FocusScope {
         anchors.fill: parent
 
         ImageToolbar {
-            id: imageToolbar
+            id: hdrImageToolbar
             anchors.margins: 0
             visible: displayImageToolBarAction.checked && displayImageToolBarAction.enabled
             Layout.fillWidth: true
@@ -158,9 +158,9 @@ FocusScope {
                         // floatViewerComp.createObject(floatImageViewerLoader, {
                         setSource("FloatImage.qml", {
                             'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
-                            'gamma': Qt.binding(function() { return imageToolbar.gammaValue; }),
-                            'offset': Qt.binding(function() { return imageToolbar.offsetValue; }),
-                            'channelModeString': Qt.binding(function() { return imageToolbar.channelModeValue; }),
+                            'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
+                            'offset': Qt.binding(function() { return hdrImageToolbar.offsetValue; }),
+                            'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
                         })
                     }
                 }
@@ -315,6 +315,7 @@ FocusScope {
                 }
                 FloatingPane {
                     id: bottomToolbar
+                    padding: 4
                     Layout.fillWidth: true
                     Layout.preferredHeight: childrenRect.height
 
@@ -337,7 +338,7 @@ FocusScope {
                             id: displayHDR
                             font.pointSize: 20
                             padding: 0
-                            ToolTip.text: "HDR Floating Point Viewer"
+                            ToolTip.text: "High-Dynamic-Range Image Viewer"
                             text: MaterialIcons.hdr_on
                             checkable: true
                             checked: false

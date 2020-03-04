@@ -96,20 +96,11 @@ Item {
                         y: parent.height
                         x: -width + parent.width
                         Action {
-                            id: useFloatImageViewerAction
-                            text: "Use HDR Image Viewer"
-                            checkable: true
-                            checked: false
-                            enabled: viewer2D.floatViewerAvailable
-
-                            // tooltip: "Floating Point Image Viewer allows to visualize image with the full color dynamic. It is useful for HDR or RAW visualization. (Requires a plugin)"
-                        }
-                        Action {
                             id: displayImageToolBarAction
                             text: "Display HDR Toolbar"
                             checkable: true
                             checked: true
-                            enabled: useFloatImageViewerAction.checked
+                            enabled: viewer2D.useFloatImageViewer
                         }
                         Action {
                             id: displayImagePathAction
@@ -124,7 +115,6 @@ Item {
             Viewer2D {
                 id: viewer2D
                 anchors.fill: parent
-                useFloatImageViewer: useFloatImageViewerAction.checked
 
                 viewIn3D: root.load3DMedia
 

@@ -13,7 +13,7 @@ FocusScope {
     property var metadata
     property var viewIn3D
 
-    property Component floatViewerComp: Qt.createComponent("FloatImage.qml", imageViewerWrapper)
+    property Component floatViewerComp: Qt.createComponent("FloatImage.qml", imgContainer)
     readonly property bool floatViewerAvailable: floatViewerComp.status === Component.Ready
     property bool useFloatImageViewer: false
 
@@ -33,11 +33,11 @@ FocusScope {
 
     // functions
     function fit() {
-        if(imageViewerWrapper.currentImageViewer.status != Image.Ready)
+        if(imgContainer.image.status != Image.Ready)
             return;
-        imageViewerWrapper.scale = Math.min(imageViewerWrapper.width/imageViewerWrapper.currentImageViewer.width, imageViewerWrapper.height/imageViewerWrapper.currentImageViewer.height)
-        imageViewerWrapper.x = Math.max((imageViewerWrapper.width-imageViewerWrapper.width*imageViewerWrapper.scale)*0.5, 0)
-        imageViewerWrapper.y = Math.max((imageViewerWrapper.height-imageViewerWrapper.height*imageViewerWrapper.scale)*0.5, 0)
+        imgContainer.scale = Math.min(imgContainer.width/imgContainer.image.width, imgContainer.height/imgContainer.image.height)
+        imgContainer.x = Math.max((imgContainer.width-imgContainer.width*imgContainer.scale)*0.5, 0)
+        imgContainer.y = Math.max((imgContainer.height-imgContainer.height*imgContainer.scale)*0.5, 0)
     }
 
     function getImageFile(type) {
@@ -58,21 +58,21 @@ FocusScope {
         MenuItem {
             text: "Zoom 100%"
             onTriggered: {
-                imageViewerWrapper.scale = 1
-                imageViewerWrapper.x = Math.max((imageViewerWrapper.width-imageViewerWrapper.width*imageViewerWrapper.scale)*0.5, 0)
-                imageViewerWrapper.y = Math.max((imageViewerWrapper.height-imageViewerWrapper.height*imageViewerWrapper.scale)*0.5, 0)
+                imgContainer.scale = 1
+                imgContainer.x = Math.max((imgContainer.width-imgContainer.width*imgContainer.scale)*0.5, 0)
+                imgContainer.y = Math.max((imgContainer.height-imgContainer.height*imgContainer.scale)*0.5, 0)
             }
         }
     }
 
     // Image
     Item {
-        id: imageViewerWrapper
+        id: imgContainer
         transformOrigin: Item.TopLeft
         width: parent.width
         height: parent.height
 
-        property var currentImageViewer : qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
+        property var image: qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
 
         // qtAliceVision Image Viewer
         Loader {
@@ -147,8 +147,8 @@ FocusScope {
                     default: return 0;
                 }
             }
-            x: (imageViewerWrapper.currentImageViewer && rotation === 90) ? imageViewerWrapper.currentImageViewer.paintedWidth : 0
-            y: (imageViewerWrapper.currentImageViewer && rotation === -90) ? imageViewerWrapper.currentImageViewer.paintedHeight : 0
+            x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
+            y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
 
             Component.onCompleted: {
                 // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
@@ -167,7 +167,7 @@ FocusScope {
         anchors.centerIn: parent
         // running property binding seems broken, only dynamic binding assignment works
         Component.onCompleted: {
-            running = Qt.binding(function() { return imageViewerWrapper.currentImageViewer && imageViewerWrapper.currentImageViewer.status === Image.Loading })
+            running = Qt.binding(function() { return imgContainer.image && imgContainer.image.status === Image.Loading })
         }
         // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker
         visible: running
@@ -179,9 +179,9 @@ FocusScope {
         property double factor: 1.2
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         onPressed: {
-            imageViewerWrapper.forceActiveFocus()
+            imgContainer.forceActiveFocus()
             if(mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
-                drag.target = imageViewerWrapper // start drag
+                drag.target = imgContainer // start drag
         }
         onReleased: {
             drag.target = undefined // stop drag
@@ -194,12 +194,12 @@ FocusScope {
         }
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
-            if(Math.min(imageViewerWrapper.width*imageViewerWrapper.scale*zoomFactor, imageViewerWrapper.height*imageViewerWrapper.scale*zoomFactor) < 10)
+            if(Math.min(imgContainer.width, imgContainer.image.height) * imgContainer.scale * zoomFactor < 10)
                 return
-            var point = mapToItem(imageViewerWrapper, wheel.x, wheel.y)
-            imageViewerWrapper.x += (1-zoomFactor) * point.x * imageViewerWrapper.scale
-            imageViewerWrapper.y += (1-zoomFactor) * point.y * imageViewerWrapper.scale
-            imageViewerWrapper.scale *= zoomFactor
+            var point = mapToItem(imgContainer, wheel.x, wheel.y)
+            imgContainer.x += (1-zoomFactor) * point.x * imgContainer.scale
+            imgContainer.y += (1-zoomFactor) * point.y * imgContainer.scale
+            imgContainer.scale *= zoomFactor
         }
     }
 
@@ -312,7 +312,7 @@ FocusScope {
 
             // zoom label
             Label {
-                text: ((imageViewerWrapper.currentImageViewer && (imageViewerWrapper.currentImageViewer.status == Image.Ready)) ? imageViewerWrapper.scale.toFixed(2) : "1.00") + "x"
+                text: ((imgContainer.image && (imgContainer.image.status == Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
                 state: "xsmall"
             }
             MaterialToolButton {
@@ -327,7 +327,7 @@ FocusScope {
                 Layout.fillWidth: true
                 Label {
                     id: resolutionLabel
-                    text: imageViewerWrapper.currentImageViewer ? (imageViewerWrapper.currentImageViewer.sourceSize.width + "x" + imageViewerWrapper.currentImageViewer.sourceSize.height) : ""
+                    text: imgContainer.image ? (imgContainer.image.sourceSize.width + "x" + imgContainer.image.sourceSize.height) : ""
                     anchors.centerIn: parent
                     elide: Text.ElideMiddle
                 }

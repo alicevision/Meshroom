@@ -578,6 +578,20 @@ ApplicationWindow {
 
                 headerBar: RowLayout {
                     MaterialToolButton {
+                        text: MaterialIcons.refresh
+                        ToolTip.text: "Refresh Nodes Status"
+                        ToolTip.visible: hovered
+                        font.pointSize: 11
+                        padding: 2
+                        onClicked: {
+                            updatingStatus = true
+                            _reconstruction.forceNodesStatusUpdate()
+                            updatingStatus = false
+                        }
+                        property bool updatingStatus: false
+                        enabled: !updatingStatus && !_reconstruction.computingLocally
+                    }
+                    MaterialToolButton {
                         text: MaterialIcons.more_vert
                         font.pointSize: 11
                         padding: 2
@@ -592,11 +606,6 @@ ApplicationWindow {
                                 text: "Clear Pending Status"
                                 enabled: !_reconstruction.computingLocally
                                 onTriggered: _reconstruction.graph.clearSubmittedNodes()
-                            }
-                            MenuItem {
-                                text: "Refresh Nodes Status"
-                                enabled: !_reconstruction.computingLocally
-                                onTriggered: _reconstruction.forceNodesStatusUpdate()
                             }
                             Menu {
                                 title: "Advanced"

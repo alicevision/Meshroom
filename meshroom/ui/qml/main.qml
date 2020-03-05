@@ -314,6 +314,17 @@ ApplicationWindow {
                 shortcut: "Ctrl+N"
                 onTriggered: ensureSaved(function() { _reconstruction.new() })
             }
+            Menu {
+                title: "New Pipeline"
+                Action {
+                    text: "Photogrammetry"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetry") })
+                }
+                Action {
+                    text: "HDRI"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("hdri") })
+                }
+            }
             Action {
                 text: "Open"
                 shortcut: "Ctrl+O"

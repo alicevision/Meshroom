@@ -403,17 +403,19 @@ class Reconstruction(UIGraph):
         self._defaultPipeline = defaultPipeline
 
     @Slot()
-    def new(self):
+    @Slot(str)
+    def new(self, pipeline=None):
+        p = pipeline if pipeline != None else self._defaultPipeline
         """ Create a new photogrammetry pipeline. """
-        if self._defaultPipeline.lower() == "photogrammetry":
+        if p.lower() == "photogrammetry":
             # default photogrammetry pipeline
             self.setGraph(multiview.photogrammetry())
-        elif self._defaultPipeline.lower() == "hdri":
+        elif p.lower() == "hdri":
             # default hdri pipeline
             self.setGraph(multiview.hdri())
         else:
             # use the user-provided default photogrammetry project file
-            self.load(self._defaultPipeline, setupProjectFile=False)
+            self.load(p, setupProjectFile=False)
 
     def load(self, filepath, setupProjectFile=True):
         try:

@@ -340,8 +340,12 @@ Panel {
         Item { Layout.fillHeight: true; Layout.fillWidth: true }
 
         // Thumbnail size icon and slider
-        MaterialLabel {
+        MaterialToolButton {
             text: MaterialIcons.photo_size_select_large
+            padding: 0
+            anchors.margins: 0
+            font.pointSize: 11
+            onClicked: { thumbnailSizeSlider.value = defaultCellSize; }
         }
         Slider {
             id: thumbnailSizeSlider

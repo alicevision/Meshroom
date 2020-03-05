@@ -243,7 +243,7 @@ FocusScope {
                 FloatingPane {
                     id: imagePathToolbar
                     Layout.fillWidth: true
-                    // Layout.fillHeight: true
+                    Layout.fillHeight: false
                     Layout.preferredHeight: childrenRect.height
                     visible: displayImagePathAction.checked
 
@@ -329,44 +329,54 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayAlphaBackground
-                            font.pointSize: 11
                             ToolTip.text: "Alpha Background"
-                            checkable: true
                             text: MaterialIcons.texture
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
                         }
                         MaterialToolButton {
                             id: displayHDR
-                            font.pointSize: 20
-                            padding: 0
                             ToolTip.text: "High-Dynamic-Range Image Viewer"
                             text: MaterialIcons.hdr_on
+                            // larger font but smaller padding,
+                            // so it is visually similar.
+                            font.pointSize: 20
+                            padding: 0
+                            Layout.minimumWidth: 0
                             checkable: true
                             checked: false
                             enabled: root.floatViewerAvailable
                         }
                         MaterialToolButton {
                             id: displayFeatures
-                            font.pointSize: 11
                             ToolTip.text: "Display Features"
-                            checkable: true
                             text: MaterialIcons.scatter_plot
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
                         }
 
-                        Item {
+                        Label {
+                            id: resolutionLabel
                             Layout.fillWidth: true
-                            Label {
-                                id: resolutionLabel
-                                text: imgContainer.image ? (imgContainer.image.sourceSize.width + "x" + imgContainer.image.sourceSize.height) : ""
-                                anchors.centerIn: parent
-                                elide: Text.ElideMiddle
-                            }
+                            text: imgContainer.image ? (imgContainer.image.sourceSize.width + "x" + imgContainer.image.sourceSize.height) : ""
+                            
+                            elide: Text.ElideRight
+                            horizontalAlignment: Text.AlignHCenter
+                            /*Rectangle {
+                                anchors.fill: parent
+                                color: "blue"
+                            }*/
                         }
 
                         ComboBox {
                             id: imageType
                             // set min size to 5 characters + one margin for the combobox
-                            Layout.minimumWidth: 6.0 * Qt.application.font.pixelSize
-                            Layout.preferredWidth: Layout.minimumWidth
+                            clip: true
+                            Layout.minimumWidth: 0
+                            Layout.preferredWidth: 6.0 * Qt.application.font.pixelSize
                             flat: true
                             
                             property var types: ["image", "depth", "sim"]
@@ -377,19 +387,19 @@ FocusScope {
                         }
 
                         MaterialToolButton {
-                            font.pointSize: 11
                             enabled: _reconstruction.depthMap != undefined
                             ToolTip.text: "View Depth Map in 3D (" + (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "No DepthMap Node Selected") + ")"
                             text: MaterialIcons.input
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
 
                             onClicked: {
                                 root.viewIn3D(root.getImageFile("depth"))
                             }
                         }
 
-                        ToolButton {
+                        MaterialToolButton {
                             id: metadataCB
-                            padding: 3
 
                             font.family: MaterialIcons.fontFamily
                             text: MaterialIcons.info_outline
@@ -397,7 +407,8 @@ FocusScope {
                             ToolTip.text: "Image Metadata"
                             ToolTip.visible: hovered
 
-                            font.pointSize: 12
+                            font.pointSize: 14
+                            padding: 2
                             smooth: false
                             flat: true
                             checkable: enabled

@@ -81,7 +81,7 @@ Item {
             title: "Image Viewer"
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.minimumWidth: 280
+            Layout.minimumWidth: 50
 
             headerBar: RowLayout {
                 MaterialToolButton {

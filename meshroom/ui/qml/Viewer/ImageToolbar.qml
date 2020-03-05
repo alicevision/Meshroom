@@ -117,8 +117,8 @@ FloatingPane {
             Slider {
                 id: gammaCtrl
                 Layout.fillWidth: true
-                from: 0
-                to: 3
+                from: 0.01
+                to: 4
                 value: 1
                 stepSize: 0.01
             }

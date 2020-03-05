@@ -100,7 +100,7 @@ FocusScope {
     ColumnLayout {
         anchors.fill: parent
 
-        ImageToolbar {
+        HdrImageToolbar {
             id: hdrImageToolbar
             anchors.margins: 0
             visible: displayImageToolBarAction.checked && displayImageToolBarAction.enabled

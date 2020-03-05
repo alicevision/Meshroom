@@ -326,6 +326,22 @@ FocusScope {
                         Label {
                             text: ((imgContainer.image && (imgContainer.image.status == Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
                             state: "xsmall"
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: {
+                                    if(mouse.button & Qt.LeftButton) {
+                                        fit()
+                                    }
+                                    else if(mouse.button & Qt.RightButton) {
+                                        var menu = contextMenu.createObject(root);
+                                        var point = mapToItem(root, mouse.x, mouse.y)
+                                        menu.x = point.x;
+                                        menu.y = point.y;
+                                        menu.open()
+                                    }
+                                }
+                            }
                         }
                         MaterialToolButton {
                             id: displayAlphaBackground

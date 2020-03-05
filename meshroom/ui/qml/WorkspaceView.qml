@@ -64,9 +64,9 @@ Item {
                 Layout.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
-                cameraInit: _reconstruction.cameraInit
+                cameraInit: reconstruction.cameraInit
+                hdrCameraInit: reconstruction.hdrCameraInit
                 currentIndex: reconstruction.cameraInitIndex
-                onCurrentIndexChanged: reconstruction.cameraInitIndex = currentIndex
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
             }

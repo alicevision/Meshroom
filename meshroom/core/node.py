@@ -549,6 +549,23 @@ class BaseNode(BaseObject):
             self._uids[uidIndex] = hashValue(uidAttributes)
 
     def _buildCmdVars(self):
+        def _buildAttributeCmdVars(cmdVars, name, attr):
+            if attr.attributeDesc.group != None:
+                # if there is a valid command line "group"
+                v = attr.getValueStr()
+                cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+                cmdVars[name + 'Value'] = str(v)
+
+                if v:
+                    cmdVars[attr.attributeDesc.group] = cmdVars.get(attr.attributeDesc.group, '') + \
+                                                              ' ' + cmdVars[name]
+            elif isinstance(attr, GroupAttribute):
+                assert isinstance(attr.value, DictModel)
+                # if the GroupAttribute is not set in a single command line argument,
+                # the sub-attributes may need to be exposed individually
+                for v in attr._value:
+                    _buildAttributeCmdVars(cmdVars, v.name, v)
+
         """ Generate command variables using input attributes and resolved output attributes names and values. """
         for uidIndex, value in self._uids.items():
             self._cmdVars['uid{}'.format(uidIndex)] = value
@@ -557,14 +574,7 @@ class BaseNode(BaseObject):
         for name, attr in self._attributes.objects.items():
             if attr.isOutput:
                 continue  # skip outputs
-            v = attr.getValueStr()
-
-            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-            self._cmdVars[name + 'Value'] = str(v)
-
-            if v:
-                self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
-                                                          ' ' + self._cmdVars[name]
+            _buildAttributeCmdVars(self._cmdVars, name, attr)
 
         # For updating output attributes invalidation values
         cmdVarsNoCache = self._cmdVars.copy()

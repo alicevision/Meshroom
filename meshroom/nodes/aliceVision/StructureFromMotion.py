@@ -62,6 +62,18 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.ChoiceParam(
+            name='observationConstraint',
+            label='Observation Constraint',
+            description='Observation contraint mode used in the optimization:\n'
+                        ' * Basic: Use standard reprojection error in pixel coordinates\n'
+                        ' * Scale: Use reprojection error in pixel coordinates but relative to the feature scale',
+            value='Basic',
+            values=['Basic', 'Scale'],
+            exclusive=True,
+            uid=[0],
+            advanced=True,
+        ),
         desc.IntParam(
             name='localizerEstimatorMaxIterations',
             label='Localizer Max Ransac Iterations',

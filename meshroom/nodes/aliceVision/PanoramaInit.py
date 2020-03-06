@@ -51,16 +51,17 @@ class PanoramaInit(desc.CommandLineNode):
             description="Center of the Fisheye circle (XY offset to the center in pixels).",
             groupDesc=[
                 desc.FloatParam(
-                    name="x", label="x", description="",
+                    name="fisheyeCenterOffset_x", label="x", description="X Offset in pixels",
                     value=0.0,
                     uid=[0],
                     range=(-1000.0, 10000.0, 1.0)),
                 desc.FloatParam(
-                    name="y", label="y", description="",
+                    name="fisheyeCenterOffset_y", label="y", description="Y Offset in pixels",
                     value=0.0,
                     uid=[0],
                     range=(-1000.0, 10000.0, 1.0)),
                 ],
+            group=None,  # skip group from command line
         ),
         desc.FloatParam(
             name='fisheyeRadius',

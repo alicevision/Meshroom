@@ -242,14 +242,14 @@ FocusScope {
                     anchors.centerIn: parent
                     active: (_reconstruction.panoramaInit && displayFisheyeCircleLoader.checked)
                     sourceComponent: CircleGizmo {
-                        x: _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.x").value
-                        y: _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.y").value
+                        x: _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
+                        y: _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
                         radius: (imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (_reconstruction.panoramaInit.attribute("fisheyeRadius").value * 0.01)
                         border.width: Math.max(1, (3.0 / imgContainer.scale))
 
                         onMoved: {
-                            _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.x"), x)
-                            _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.y"), y)
+                            _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x"), x)
+                            _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y"), y)
                         }
                     }
                 }

@@ -135,6 +135,7 @@ ApplicationWindow {
         onAccepted: {
             _reconstruction.saveAs(file)
             closed(Platform.Dialog.Accepted)
+            MeshroomApp.addRecentProjectFile(file.toString())
         }
         onRejected: closed(Platform.Dialog.Rejected)
     }
@@ -207,6 +208,7 @@ ApplicationWindow {
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
             _reconstruction.loadUrl(file.toString())
+            MeshroomApp.addRecentProjectFile(file.toString())
         }
     }
 
@@ -326,9 +328,44 @@ ApplicationWindow {
                 }
             }
             Action {
+                id: openActionItem
                 text: "Open"
                 shortcut: "Ctrl+O"
                 onTriggered: ensureSaved(function() { openFileDialog.open() })
+            }
+            Menu {
+                id: openRecentMenu
+                title: "Open Recent"
+                enabled: recentFilesMenuItems.model != undefined && recentFilesMenuItems.model.length > 0
+                property int maxWidth: 1000
+                property int fullWidth: {
+                    var result = 0;
+                    for (var i = 0; i < count; ++i) {
+                        var item = itemAt(i);
+                        result = Math.max(item.implicitWidth + item.padding * 2, result);
+                    }
+                    return result;
+                }
+                implicitWidth: fullWidth
+                Repeater {
+                    id: recentFilesMenuItems
+                    model: MeshroomApp.recentProjectFiles
+                    MenuItem {
+                        onTriggered: ensureSaved(function() {
+                            openRecentMenu.dismiss();
+                            _reconstruction.load(modelData);
+                            MeshroomApp.addRecentProjectFile(modelData);
+                        })
+                        
+                        text: fileTextMetrics.elidedText
+                        TextMetrics {
+                            id: fileTextMetrics
+                            text: modelData
+                            elide: Text.ElideLeft
+                            elideWidth: openRecentMenu.maxWidth
+                        }
+                    }
+                }
             }
             Action {
                 id: saveAction

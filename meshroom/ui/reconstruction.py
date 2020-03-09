@@ -426,6 +426,7 @@ class Reconstruction(UIGraph):
             # use the user-provided default photogrammetry project file
             self.load(p, setupProjectFile=False)
 
+    @Slot(str)
     def load(self, filepath, setupProjectFile=True):
         try:
             super(Reconstruction, self).load(filepath, setupProjectFile)

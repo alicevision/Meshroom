@@ -208,7 +208,9 @@ class ViewpointWrapper(QObject):
             self._metadata = {}
         else:
             self._initialIntrinsics = self._reconstruction.getIntrinsic(self._viewpoint)
-            self._metadata = json.loads(self._viewpoint.metadata.value) if self._viewpoint.metadata.value else {}
+            self._metadata = json.loads(self._viewpoint.metadata.value) if self._viewpoint.metadata.value else None
+            if not self._metadata:
+                self._metadata = {}
         self.initialParamsChanged.emit()
 
     def _updateSfMParams(self):

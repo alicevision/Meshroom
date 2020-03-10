@@ -237,10 +237,20 @@ RowLayout {
                     selectByMouse: true
                     validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
-                    onAccepted: setTextFieldAttribute(text)
+                    onAccepted: {
+                        setTextFieldAttribute(text)
+                        // When the text is too long, display the left part
+                        // (with the most important values and cut the floating point details)
+                        ensureVisible(0)
+                    }
                     Component.onDestruction: {
                         if(activeFocus)
                             setTextFieldAttribute(text)
+                    }
+                    Component.onCompleted: {
+                        // When the text is too long, display the left part
+                        // (with the most important values and cut the floating point details)
+                        ensureVisible(0)
                     }
                 }
 

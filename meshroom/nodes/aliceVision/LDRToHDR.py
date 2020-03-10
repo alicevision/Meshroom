@@ -194,7 +194,7 @@ class LDRToHDR(desc.CommandLineNode):
             name='outSfMDataFilename',
             label='Output SfMData File',
             description='Path to the output sfmdata file',
-            value=desc.Node.internalFolder + 'sfmData.abc',
+            value=desc.Node.internalFolder + 'sfmData.sfm',
             uid=[],
         )
     ]

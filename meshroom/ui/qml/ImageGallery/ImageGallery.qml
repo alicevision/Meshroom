@@ -16,19 +16,30 @@ Panel {
 
     property variant cameraInits
     property variant cameraInit
+    property variant hdrCameraInit
     readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
     property int defaultCellSize: 160
     property int currentIndex: 0
     property bool readOnly: false
-    readonly property variant viewpoints: cameraInit.attribute('viewpoints').value
 
     signal removeImageRequest(var attribute)
     signal filesDropped(var drop, var augmentSfm)
 
     title: "Images"
     implicitWidth: (root.defaultCellSize + 2) * 2
+
+    function changeCurrentIndex(newIndex) {
+        _reconstruction.cameraInitIndex = newIndex
+    }
+
+    QtObject {
+        id: m
+        property variant currentCameraInit: displayHDR.checked ? _reconstruction.hdrCameraInit : root.cameraInit
+        property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
+        property bool readOnly: root.readOnly || displayHDR.checked
+    }
 
     headerBar: RowLayout {
         MaterialToolButton {
@@ -99,7 +110,7 @@ Panel {
 
             model: SortFilterDelegateModel {
                 id: sortedModel
-                model: _reconstruction.viewpoints
+                model: m.viewpoints
                 sortRole: "path"
                 // TODO: provide filtering on reconstruction status
                 // filterRole: _reconstruction.sfmReport ? "reconstructed" : ""
@@ -123,7 +134,7 @@ Panel {
                     viewpoint: object.value
                     width: grid.cellWidth
                     height: grid.cellHeight
-                    readOnly: root.readOnly
+                    readOnly: m.readOnly
                     displayViewId: displayViewIdsAction.checked
 
                     isCurrentItem: GridView.isCurrentItem
@@ -202,9 +213,9 @@ Panel {
                 {
                     event.accepted = true
                     if(event.key == Qt.Key_Right)
-                        root.currentIndex = Math.min(root.cameraInits.count - 1, root.currentIndex + 1)
+                        root.changeCurrentIndex(Math.min(root.cameraInits.count - 1, root.currentIndex + 1))
                     else if(event.key == Qt.Key_Left)
-                        root.currentIndex = Math.max(0, root.currentIndex - 1)
+                        root.changeCurrentIndex(Math.max(0, root.currentIndex - 1))
                 }
             }
 
@@ -227,7 +238,7 @@ Panel {
             DropArea {
                 id: dropArea
                 anchors.fill: parent
-                enabled: !root.readOnly
+                enabled: !m.readOnly
                 keys: ["text/uri-list"]
                 // TODO: onEntered: call specific method to filter files based on extension
                 onDropped: {
@@ -274,7 +285,7 @@ Panel {
                         text: "Augment Reconstruction"
                         font.bold: true
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        visible: viewpoints.count > 0
+                        visible: m.viewpoints ? m.viewpoints.count > 0 : false
                         background: Rectangle {
                             color: parent.hovered ? palette.highlight : palette.window
                             opacity: 0.8
@@ -299,14 +310,13 @@ Panel {
                 enabled: nodesCB.currentIndex > 0
                 onClicked: nodesCB.decrementCurrentIndex()
             }
-            Label { text: "Group " }
+            Label { id: groupLabel; text: "Group " }
             ComboBox {
                 id: nodesCB
                 model: root.cameraInits.count
                 implicitWidth: 40
                 currentIndex: root.currentIndex
-                onActivated: root.currentIndex = currentIndex
-
+                onActivated: root.changeCurrentIndex(currentIndex)
             }
             Label { text: "/ " + (root.cameraInits.count - 1) }
             ToolButton {
@@ -337,11 +347,35 @@ Panel {
             }
         }
 
+        MaterialToolButton {
+            id: displayHDR
+            font.pointSize: 20
+            padding: 0
+            anchors.margins: 0
+            implicitHeight: 14
+            ToolTip.text: "Visualize HDR images"
+            text: MaterialIcons.hdr_on
+            visible: _reconstruction.ldr2hdr
+            enabled: visible && _reconstruction.ldr2hdr.isComputed()
+            onEnabledChanged: {
+                // Reset the toggle to avoid getting stuck
+                // with the HDR node checked but disabled.
+                checked = false;
+            }
+            checkable: true
+            checked: false
+            onClicked: { _reconstruction.setupLDRToHDRCameraInit(); }
+        }
+
         Item { Layout.fillHeight: true; Layout.fillWidth: true }
 
         // Thumbnail size icon and slider
-        MaterialLabel {
+        MaterialToolButton {
             text: MaterialIcons.photo_size_select_large
+            padding: 0
+            anchors.margins: 0
+            font.pointSize: 11
+            onClicked: { thumbnailSizeSlider.value = defaultCellSize; }
         }
         Slider {
             id: thumbnailSizeSlider

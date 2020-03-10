@@ -606,6 +606,10 @@ class BaseNode(BaseObject):
                 return False
         return True
 
+    @Slot(result=bool)
+    def isComputed(self):
+        return self.hasStatus(Status.SUCCESS)
+
     @Slot()
     def clearData(self):
         """ Delete this Node internal folder.

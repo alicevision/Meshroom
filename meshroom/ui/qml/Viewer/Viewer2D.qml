@@ -13,9 +13,9 @@ FocusScope {
     property var metadata
     property var viewIn3D
 
-    property Component floatViewerComp: Qt.createComponent("FloatImage.qml", imageViewerWrapper)
+    property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
     readonly property bool floatViewerAvailable: floatViewerComp.status === Component.Ready
-    property bool useFloatImageViewer: false
+    property alias useFloatImageViewer: displayHDR.checked
 
     function clear()
     {
@@ -31,13 +31,45 @@ FocusScope {
         }
     }
 
+    // mouse area
+    MouseArea {
+        anchors.fill: parent
+        property double factor: 1.2
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        onPressed: {
+            imgContainer.forceActiveFocus()
+            if(mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
+                drag.target = imgContainer // start drag
+        }
+        onReleased: {
+            drag.target = undefined // stop drag
+            if(mouse.button & Qt.RightButton) {
+                var menu = contextMenu.createObject(root);
+                menu.x = mouse.x;
+                menu.y = mouse.y;
+                menu.open()
+            }
+        }
+        onWheel: {
+            var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
+            if(Math.min(imgContainer.width, imgContainer.image.height) * imgContainer.scale * zoomFactor < 10)
+                return
+            var point = mapToItem(imgContainer, wheel.x, wheel.y)
+            imgContainer.x += (1-zoomFactor) * point.x * imgContainer.scale
+            imgContainer.y += (1-zoomFactor) * point.y * imgContainer.scale
+            imgContainer.scale *= zoomFactor
+        }
+    }
+
     // functions
     function fit() {
-        if(imageViewerWrapper.currentImageViewer.status != Image.Ready)
+        if(imgContainer.image.status != Image.Ready)
             return;
-        imageViewerWrapper.scale = Math.min(imageViewerWrapper.width/imageViewerWrapper.currentImageViewer.width, imageViewerWrapper.height/imageViewerWrapper.currentImageViewer.height)
-        imageViewerWrapper.x = Math.max((imageViewerWrapper.width-imageViewerWrapper.width*imageViewerWrapper.scale)*0.5, 0)
-        imageViewerWrapper.y = Math.max((imageViewerWrapper.height-imageViewerWrapper.height*imageViewerWrapper.scale)*0.5, 0)
+        imgContainer.scale = Math.min(imgLayout.width / imgContainer.image.width, root.height / imgContainer.image.height)
+        imgContainer.x = Math.max((imgLayout.width - imgContainer.image.width * imgContainer.scale)*0.5, 0)
+        imgContainer.y = Math.max((imgLayout.height - imgContainer.image.height * imgContainer.scale)*0.5, 0)
+        // console.warn("fit: imgLayout.width: " + imgContainer.scale + ", imgContainer.image.width: " + imgContainer.image.width)
+        // console.warn("fit: imgContainer.scale: " + imgContainer.scale + ", x: " + imgContainer.x + ", y: " + imgContainer.y)
     }
 
     function getImageFile(type) {
@@ -58,160 +90,18 @@ FocusScope {
         MenuItem {
             text: "Zoom 100%"
             onTriggered: {
-                imageViewerWrapper.scale = 1
-                imageViewerWrapper.x = Math.max((imageViewerWrapper.width-imageViewerWrapper.width*imageViewerWrapper.scale)*0.5, 0)
-                imageViewerWrapper.y = Math.max((imageViewerWrapper.height-imageViewerWrapper.height*imageViewerWrapper.scale)*0.5, 0)
+                imgContainer.scale = 1
+                imgContainer.x = Math.max((imgLayout.width-imgContainer.width*imgContainer.scale)*0.5, 0)
+                imgContainer.y = Math.max((imgLayout.height-imgContainer.height*imgContainer.scale)*0.5, 0)
             }
-        }
-    }
-
-    // Image
-    Item {
-        id: imageViewerWrapper
-        transformOrigin: Item.TopLeft
-        width: parent.width
-        height: parent.height
-
-        property var currentImageViewer : qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
-
-        // qtAliceVision Image Viewer
-        Loader {
-            id: floatImageViewerLoader
-            active: root.useFloatImageViewer
-            visible: (floatImageViewerLoader.status === Loader.Ready)
-            anchors.centerIn: parent
-
-            Component.onCompleted: {
-                // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-                // Note: It does not work to use previously created component,
-                //       so we re-create it with setSource.
-                // floatViewerComp.createObject(floatImageViewerLoader, {
-                setSource("FloatImage.qml", {
-                    'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
-                    'gamma': Qt.binding(function() { return imageToolbar.gammaValue; }),
-                    'offset': Qt.binding(function() { return imageToolbar.offsetValue; }),
-                    'channelModeString': Qt.binding(function() { return imageToolbar.channelModeValue; }),
-                })
-            }
-        }
-
-        // Simple QML Image Viewer (using Qt or qtOIIO to load images)
-        Loader {
-            id: qtImageViewerLoader
-            active: (!root.useFloatImageViewer) || (floatImageViewerLoader.status === Loader.Error)
-            anchors.centerIn: parent
-            sourceComponent: Image {
-                id: qtImageViewer
-                asynchronous: true
-                smooth: false
-                fillMode: Image.PreserveAspectFit
-                autoTransform: true
-                onWidthChanged: if(status==Image.Ready) fit()
-                source: getImageFile(imageType.type)
-                onStatusChanged: {
-                    // update cache source when image is loaded
-                    if(status === Image.Ready)
-                        qtImageViewerCache.source = source
-                }
-
-                // Image cache of the last loaded image
-                // Only visible when the main one is loading, to keep an image
-                // displayed at all time and smoothen transitions
-                Image {
-                    id: qtImageViewerCache
-
-                    anchors.fill: parent
-                    asynchronous: true
-                    smooth: parent.smooth
-                    fillMode: parent.fillMode
-                    autoTransform: parent.autoTransform
-
-                    visible: qtImageViewer.status === Image.Loading
-                }
-            }
-        }
-
-        // FeatureViewer: display view extracted feature points
-        // note: requires QtAliceVision plugin - use a Loader to evaluate plugin avaibility at runtime
-        Loader {
-            id: featuresViewerLoader
-
-            active: displayFeatures.checked
-
-            // handle rotation/position based on available metadata
-            rotation: {
-                var orientation = metadata ? metadata["Orientation"] : 0
-                switch(orientation) {
-                    case "6": return 90;
-                    case "8": return -90;
-                    default: return 0;
-                }
-            }
-            x: (imageViewerWrapper.currentImageViewer && rotation === 90) ? imageViewerWrapper.currentImageViewer.paintedWidth : 0
-            y: (imageViewerWrapper.currentImageViewer && rotation === -90) ? imageViewerWrapper.currentImageViewer.paintedHeight : 0
-
-            Component.onCompleted: {
-                // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-                setSource("FeaturesViewer.qml", {
-                    'active':  Qt.binding(function() { return displayFeatures.checked; }),
-                    'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                    'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
-                    'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
-                })
-            }
-        }
-    }
-
-    // Busy indicator
-    BusyIndicator {
-        anchors.centerIn: parent
-        // running property binding seems broken, only dynamic binding assignment works
-        Component.onCompleted: {
-            running = Qt.binding(function() { return imageViewerWrapper.currentImageViewer && imageViewerWrapper.currentImageViewer.status === Image.Loading })
-        }
-        // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker
-        visible: running
-    }
-
-    // mouse area
-    MouseArea {
-        anchors.fill: parent
-        property double factor: 1.2
-        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-        onPressed: {
-            imageViewerWrapper.forceActiveFocus()
-            if(mouse.button & Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
-                drag.target = imageViewerWrapper // start drag
-        }
-        onReleased: {
-            drag.target = undefined // stop drag
-            if(mouse.button & Qt.RightButton) {
-                var menu = contextMenu.createObject(root);
-                menu.x = mouse.x;
-                menu.y = mouse.y;
-                menu.open()
-            }
-        }
-        onWheel: {
-            var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
-            if(Math.min(imageViewerWrapper.width*imageViewerWrapper.scale*zoomFactor, imageViewerWrapper.height*imageViewerWrapper.scale*zoomFactor) < 10)
-                return
-            var point = mapToItem(imageViewerWrapper, wheel.x, wheel.y)
-            imageViewerWrapper.x += (1-zoomFactor) * point.x * imageViewerWrapper.scale
-            imageViewerWrapper.y += (1-zoomFactor) * point.y * imageViewerWrapper.scale
-            imageViewerWrapper.scale *= zoomFactor
         }
     }
 
     ColumnLayout {
-        id: topToolbar
-        anchors.top: parent.top
-        anchors.margins: 0
-        width: parent.width
-        spacing: 0
+        anchors.fill: parent
 
-        ImageToolbar {
-            id: imageToolbar
+        HdrImageToolbar {
+            id: hdrImageToolbar
             anchors.margins: 0
             visible: displayImageToolBarAction.checked && displayImageToolBarAction.enabled
             Layout.fillWidth: true
@@ -232,147 +122,328 @@ FocusScope {
             }
         }
 
-        FloatingPane {
-            id: imagePathToolbar
-            anchors.margins: 0
-            radius: 0
-            padding: 4
-            visible: displayImagePathAction.checked
+        // Image
+        Item {
+            id: imgLayout
             Layout.fillWidth: true
-
-            RowLayout {
+            Layout.fillHeight: true
+            clip: true
+            Image {
+                id: alphaBackground
                 anchors.fill: parent
-
-                // selectable filepath to source image
-                TextField {
-                    padding: 0
-                    background: Item {}
-                    horizontalAlignment: TextInput.AlignLeft
-                    Layout.fillWidth: true
-                    font.pointSize: 8
-                    readOnly: true
-                    selectByMouse: true
-                    text: Filepath.urlToString(getImageFile(imageType.type))
-                }
-
-                // show which depthmap node is active
-                Label {
-                    id: depthMapNodeName
-                    visible: (_reconstruction.depthMap != undefined) && (imageType.type != "image")
-                    text: (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "")
-                    font.pointSize: 8
-
-                    horizontalAlignment: TextInput.AlignLeft
-                    Layout.fillWidth: false
-                    Layout.preferredWidth: contentWidth
-                }
-            }
-        }
-    }
-
-    // Image Metadata overlay Pane
-    ImageMetadataView {
-        width: 350
-        anchors {
-            top: topToolbar.bottom
-            right: parent.right
-            bottom: bottomToolbar.top
-        }
-
-        visible: metadataCB.checked
-        // only load metadata model if visible
-        metadata: visible ? root.metadata : {}
-    }
-
-
-    Loader {
-        id: featuresOverlay
-        anchors.bottom: bottomToolbar.top
-        anchors.left: parent.left
-        anchors.margins: 2
-        active: displayFeatures.checked
-
-        sourceComponent: FeaturesInfoOverlay {
-            featureExtractionNode: _reconstruction.featureExtraction
-            pluginStatus: featuresViewerLoader.status
-            featuresViewer: featuresViewerLoader.item
-        }
-    }
-
-    FloatingPane {
-        id: bottomToolbar
-        anchors.bottom: parent.bottom
-        anchors.margins: 0
-        width: parent.width
-        topPadding: 2
-        bottomPadding: topPadding
-
-        RowLayout {
-            anchors.fill: parent
-
-            // zoom label
-            Label {
-                text: ((imageViewerWrapper.currentImageViewer && (imageViewerWrapper.currentImageViewer.status == Image.Ready)) ? imageViewerWrapper.scale.toFixed(2) : "1.00") + "x"
-                state: "xsmall"
-            }
-            MaterialToolButton {
-                id: displayFeatures
-                font.pointSize: 11
-                ToolTip.text: "Display Features"
-                checkable: true
-                text: MaterialIcons.scatter_plot
+                visible: displayAlphaBackground.checked
+                fillMode: Image.Tile
+                horizontalAlignment: Image.AlignLeft
+                verticalAlignment: Image.AlignTop
+                source: "../../img/checkerboard_light.png"
+                scale: 4
+                smooth: false
             }
 
             Item {
-                Layout.fillWidth: true
-                Label {
-                    id: resolutionLabel
-                    text: imageViewerWrapper.currentImageViewer ? (imageViewerWrapper.currentImageViewer.sourceSize.width + "x" + imageViewerWrapper.currentImageViewer.sourceSize.height) : ""
+                id: imgContainer
+                transformOrigin: Item.TopLeft
+
+                // qtAliceVision Image Viewer
+                Loader {
+                    id: floatImageViewerLoader
+                    active: root.useFloatImageViewer
+                    visible: (floatImageViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
-                    elide: Text.ElideMiddle
+
+                    Component.onCompleted: {
+                        // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                        // Note: It does not work to use previously created component,
+                        //       so we re-create it with setSource.
+                        // floatViewerComp.createObject(floatImageViewerLoader, {
+                        setSource("FloatImage.qml", {
+                            'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
+                            'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
+                            'offset': Qt.binding(function() { return hdrImageToolbar.offsetValue; }),
+                            'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
+                        })
+                    }
+                }
+
+                // Simple QML Image Viewer (using Qt or qtOIIO to load images)
+                Loader {
+                    id: qtImageViewerLoader
+                    active: (!root.useFloatImageViewer) || (floatImageViewerLoader.status === Loader.Error)
+                    anchors.centerIn: parent
+                    sourceComponent: Image {
+                        id: qtImageViewer
+                        asynchronous: true
+                        smooth: false
+                        fillMode: Image.PreserveAspectFit
+                        autoTransform: true
+                        onWidthChanged: if(status==Image.Ready) fit()
+                        source: getImageFile(imageType.type)
+                        onStatusChanged: {
+                            // update cache source when image is loaded
+                            if(status === Image.Ready)
+                                qtImageViewerCache.source = source
+                        }
+
+                        // Image cache of the last loaded image
+                        // Only visible when the main one is loading, to keep an image
+                        // displayed at all time and smoothen transitions
+                        Image {
+                            id: qtImageViewerCache
+
+                            anchors.fill: parent
+                            asynchronous: true
+                            smooth: parent.smooth
+                            fillMode: parent.fillMode
+                            autoTransform: parent.autoTransform
+
+                            visible: qtImageViewer.status === Image.Loading
+                        }
+                    }
+                }
+
+                property var image: qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
+                width: image ? image.width : 1
+                height: image ? image.height : 1
+                scale: 1.0
+
+                // FeatureViewer: display view extracted feature points
+                // note: requires QtAliceVision plugin - use a Loader to evaluate plugin avaibility at runtime
+                Loader {
+                    id: featuresViewerLoader
+
+                    active: displayFeatures.checked
+
+                    // handle rotation/position based on available metadata
+                    rotation: {
+                        var orientation = metadata ? metadata["Orientation"] : 0
+                        switch(orientation) {
+                            case "6": return 90;
+                            case "8": return -90;
+                            default: return 0;
+                        }
+                    }
+                    x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
+                    y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
+
+                    Component.onCompleted: {
+                        // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                        setSource("FeaturesViewer.qml", {
+                            'active':  Qt.binding(function() { return displayFeatures.checked; }),
+                            'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                            'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
+                            'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
+                        })
+                    }
                 }
             }
 
-            ComboBox {
-                id: imageType
-                // set min size to 5 characters + one margin for the combobox
-                Layout.minimumWidth: 6.0 * Qt.application.font.pixelSize
-                Layout.preferredWidth: Layout.minimumWidth
-                flat: true
-                
-                property var types: ["image", "depth", "sim"]
-                property string type: types[currentIndex]
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: 0
+                FloatingPane {
+                    id: imagePathToolbar
+                    Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    Layout.preferredHeight: childrenRect.height
+                    visible: displayImagePathAction.checked
 
-                model: types
-                enabled: _reconstruction.depthMap != undefined
-            }
+                    RowLayout {
+                        width: parent.width
+                        height: childrenRect.height
 
-            MaterialToolButton {
-                font.pointSize: 11
-                enabled: _reconstruction.depthMap != undefined
-                ToolTip.text: "View Depth Map in 3D (" + (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "No DepthMap Node Selected") + ")"
-                text: MaterialIcons.input
+                        // selectable filepath to source image
+                        TextField {
+                            padding: 0
+                            background: Item {}
+                            horizontalAlignment: TextInput.AlignLeft
+                            Layout.fillWidth: true
+                            height: contentHeight
+                            font.pointSize: 8
+                            readOnly: true
+                            selectByMouse: true
+                            text: Filepath.urlToString(getImageFile(imageType.type))
+                        }
 
-                onClicked: {
-                    root.viewIn3D(root.getImageFile("depth"))
+                        // show which depthmap node is active
+                        Label {
+                            id: depthMapNodeName
+                            visible: (_reconstruction.depthMap != undefined) && (imageType.type != "image")
+                            text: (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "")
+                            font.pointSize: 8
+
+                            horizontalAlignment: TextInput.AlignLeft
+                            Layout.fillWidth: false
+                            Layout.preferredWidth: contentWidth
+                            height: contentHeight
+                        }
+                    }
                 }
-            }
+                Item {
+                    id: imgPlaceholder
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
 
-            ToolButton {
-                id: metadataCB
-                padding: 3
+                    // Image Metadata overlay Pane
+                    ImageMetadataView {
+                        width: 350
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                            bottom: parent.bottom
+                        }
 
-                font.family: MaterialIcons.fontFamily
-                text: MaterialIcons.info_outline
+                        visible: metadataCB.checked
+                        // only load metadata model if visible
+                        metadata: visible ? root.metadata : {}
+                    }
 
-                ToolTip.text: "Image Metadata"
-                ToolTip.visible: hovered
+                    Loader {
+                        id: featuresOverlay
+                        anchors {
+                            bottom: parent.bottom
+                            left: parent.left
+                            margins: 2
+                        }
+                        active: displayFeatures.checked
 
-                font.pointSize: 12
-                smooth: false
-                flat: true
-                checkable: enabled
+                        sourceComponent: FeaturesInfoOverlay {
+                            featureExtractionNode: _reconstruction.featureExtraction
+                            pluginStatus: featuresViewerLoader.status
+                            featuresViewer: featuresViewerLoader.item
+                        }
+                    }
+                }
+                FloatingPane {
+                    id: bottomToolbar
+                    padding: 4
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: childrenRect.height
+
+                    RowLayout {
+                        anchors.fill: parent
+
+                        // zoom label
+                        Label {
+                            text: ((imgContainer.image && (imgContainer.image.status == Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
+                            state: "xsmall"
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: {
+                                    if(mouse.button & Qt.LeftButton) {
+                                        fit()
+                                    }
+                                    else if(mouse.button & Qt.RightButton) {
+                                        var menu = contextMenu.createObject(root);
+                                        var point = mapToItem(root, mouse.x, mouse.y)
+                                        menu.x = point.x;
+                                        menu.y = point.y;
+                                        menu.open()
+                                    }
+                                }
+                            }
+                        }
+                        MaterialToolButton {
+                            id: displayAlphaBackground
+                            ToolTip.text: "Alpha Background"
+                            text: MaterialIcons.texture
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                        }
+                        MaterialToolButton {
+                            id: displayHDR
+                            ToolTip.text: "High-Dynamic-Range Image Viewer"
+                            text: MaterialIcons.hdr_on
+                            // larger font but smaller padding,
+                            // so it is visually similar.
+                            font.pointSize: 20
+                            padding: 0
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
+                            enabled: root.floatViewerAvailable
+                        }
+                        MaterialToolButton {
+                            id: displayFeatures
+                            ToolTip.text: "Display Features"
+                            text: MaterialIcons.scatter_plot
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
+                        }
+
+                        Label {
+                            id: resolutionLabel
+                            Layout.fillWidth: true
+                            text: imgContainer.image ? (imgContainer.image.sourceSize.width + "x" + imgContainer.image.sourceSize.height) : ""
+                            
+                            elide: Text.ElideRight
+                            horizontalAlignment: Text.AlignHCenter
+                            /*Rectangle {
+                                anchors.fill: parent
+                                color: "blue"
+                            }*/
+                        }
+
+                        ComboBox {
+                            id: imageType
+                            // set min size to 5 characters + one margin for the combobox
+                            clip: true
+                            Layout.minimumWidth: 0
+                            Layout.preferredWidth: 6.0 * Qt.application.font.pixelSize
+                            flat: true
+                            
+                            property var types: ["image", "depth", "sim"]
+                            property string type: enabled ? types[currentIndex] : types[0]
+
+                            model: types
+                            enabled: _reconstruction.depthMap != undefined
+                        }
+
+                        MaterialToolButton {
+                            enabled: _reconstruction.depthMap != undefined
+                            ToolTip.text: "View Depth Map in 3D (" + (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "No DepthMap Node Selected") + ")"
+                            text: MaterialIcons.input
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+
+                            onClicked: {
+                                root.viewIn3D(root.getImageFile("depth"))
+                            }
+                        }
+
+                        MaterialToolButton {
+                            id: metadataCB
+
+                            font.family: MaterialIcons.fontFamily
+                            text: MaterialIcons.info_outline
+
+                            ToolTip.text: "Image Metadata"
+                            ToolTip.visible: hovered
+
+                            font.pointSize: 14
+                            padding: 2
+                            smooth: false
+                            flat: true
+                            checkable: enabled
+                            enabled: _reconstruction.selectedViewId >= 0
+                        }
+                    }
+                }
             }
         }
+    }
+
+    // Busy indicator
+    BusyIndicator {
+        anchors.centerIn: parent
+        // running property binding seems broken, only dynamic binding assignment works
+        Component.onCompleted: {
+            running = Qt.binding(function() { return imgContainer.image && imgContainer.image.status === Image.Loading })
+        }
+        // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker
+        visible: running
     }
 }

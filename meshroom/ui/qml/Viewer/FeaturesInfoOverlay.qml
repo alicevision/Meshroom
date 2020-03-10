@@ -46,8 +46,8 @@ FloatingPane {
                                 id: displayModeCB
                                 flat: true
                                 Layout.fillWidth: true
-                                model: featuresViewer.displayModes
-                                onActivated: featuresViewer.displayMode = currentIndex
+                                model: root.featuresViewer.displayModes
+                                onActivated: root.featuresViewer.displayMode = currentIndex
                             }
                         }
                     }
@@ -67,12 +67,12 @@ FloatingPane {
             implicitHeight: contentHeight
             implicitWidth: contentItem.childrenRect.width
 
-            model: featuresViewer !== null ? featuresViewer.model : 0
+            model: root.featuresViewer !== null ? root.featuresViewer.model : 0
 
             delegate: RowLayout {
                 id: featureType
 
-                property var viewer: featuresViewer.itemAt(index)
+                property var viewer: root.featuresViewer.itemAt(index)
                 spacing: 4
 
                 // Visibility toogle
@@ -86,10 +86,10 @@ FloatingPane {
                 ColorChart {
                     implicitWidth: 12
                     implicitHeight: implicitWidth
-                    colors: featuresViewer.colors
+                    colors: root.featuresViewer.colors
                     currentIndex: featureType.viewer.colorIndex
-                    // offset FeaturesViewer color set when changing the color of one feature type
-                    onColorPicked: featuresViewer.colorOffset = colorIndex - index
+                    // offset featuresViewer color set when changing the color of one feature type
+                    onColorPicked: root.featuresViewer.colorOffset = colorIndex - index
                 }
                 // Feature type name
                 Label {

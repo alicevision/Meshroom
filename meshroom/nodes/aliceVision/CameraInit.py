@@ -160,6 +160,9 @@ class CameraInit(desc.CommandLineNode):
         ),
     ]
 
+    def readSfMData(self, sfmFile):
+        return readSfMData(sfmFile)
+
     def buildIntrinsics(self, node, additionalViews=()):
         """ Build intrinsics from node current views and optional additional views
 

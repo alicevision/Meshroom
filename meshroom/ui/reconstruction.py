@@ -7,6 +7,7 @@ from threading import Thread
 from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF
 from PySide2.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
 
+import meshroom.core
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
@@ -207,7 +208,9 @@ class ViewpointWrapper(QObject):
             self._metadata = {}
         else:
             self._initialIntrinsics = self._reconstruction.getIntrinsic(self._viewpoint)
-            self._metadata = json.loads(self._viewpoint.metadata.value) if self._viewpoint.metadata.value else {}
+            self._metadata = json.loads(self._viewpoint.metadata.value) if self._viewpoint.metadata.value else None
+            if not self._metadata:
+                self._metadata = {}
         self.initialParamsChanged.emit()
 
     def _updateSfMParams(self):
@@ -369,6 +372,8 @@ class Reconstruction(UIGraph):
         self._buildingIntrinsics = False
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
 
+        self._hdrCameraInit = None
+
         self.importImagesFailed.connect(self.onImportImagesFailed)
 
         # - Feature Extraction
@@ -394,6 +399,10 @@ class Reconstruction(UIGraph):
         # - Texturing
         self._texturing = None
 
+        # - LDR2HDR
+        self._ldr2hdr = None
+        self.cameraInitChanged.connect(self.updateLdr2hdrNode)
+
         # react to internal graph changes to update those variables
         self.graphChanged.connect(self.onGraphChanged)
 
@@ -403,18 +412,21 @@ class Reconstruction(UIGraph):
         self._defaultPipeline = defaultPipeline
 
     @Slot()
-    def new(self):
+    @Slot(str)
+    def new(self, pipeline=None):
+        p = pipeline if pipeline != None else self._defaultPipeline
         """ Create a new photogrammetry pipeline. """
-        if self._defaultPipeline.lower() == "photogrammetry":
+        if p.lower() == "photogrammetry":
             # default photogrammetry pipeline
             self.setGraph(multiview.photogrammetry())
-        elif self._defaultPipeline.lower() == "hdri":
+        elif p.lower() == "hdri":
             # default hdri pipeline
             self.setGraph(multiview.hdri())
         else:
             # use the user-provided default photogrammetry project file
-            self.load(self._defaultPipeline, setupProjectFile=False)
+            self.load(p, setupProjectFile=False)
 
+    @Slot(str)
     def load(self, filepath, setupProjectFile=True):
         try:
             super(Reconstruction, self).load(filepath, setupProjectFile)
@@ -447,6 +459,8 @@ class Reconstruction(UIGraph):
         self.prepareDenseScene = None
         self.depthMap = None
         self.texturing = None
+        self.ldr2hdr = None
+        self.hdrCameraInit = None
         self.updateCameraInits()
         if not self._graph:
             return
@@ -476,6 +490,10 @@ class Reconstruction(UIGraph):
 
     def getCameraInitIndex(self):
         if not self._cameraInit:
+            # No CameraInit node
+            return -1
+        if not self._cameraInit.graph:
+            # The CameraInit node is a temporary one not attached to a graph
             return -1
         return self._cameraInits.indexOf(self._cameraInit)
 
@@ -490,6 +508,24 @@ class Reconstruction(UIGraph):
     def updateDepthMapNode(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
         self.depthMap = self.lastNodeOfType('DepthMapFilter', self.cameraInit) if self.cameraInit else None
+
+    def updateLdr2hdrNode(self):
+        """ Set the current LDR2HDR node based on the current CameraInit node. """
+        self.ldr2hdr = self.lastNodeOfType('LDRToHDR', self.cameraInit) if self.cameraInit else None
+
+    @Slot()
+    def setupLDRToHDRCameraInit(self):
+        if not self.ldr2hdr:
+            self.hdrCameraInit = Node("CameraInit")
+            return
+        sfmFile = self.ldr2hdr.attribute("outSfMDataFilename").value
+        if not sfmFile or not os.path.isfile(sfmFile):
+            self.hdrCameraInit = Node("CameraInit")
+            return
+        nodeDesc = meshroom.core.nodesDesc["CameraInit"]()
+        views, intrinsics = nodeDesc.readSfMData(sfmFile)
+        tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
+        self.hdrCameraInit = tmpCameraInit
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
@@ -776,6 +812,8 @@ class Reconstruction(UIGraph):
 
     cameraInitChanged = Signal()
     cameraInit = makeProperty(QObject, "_cameraInit", cameraInitChanged, resetOnDestroy=True)
+    hdrCameraInitChanged = Signal()
+    hdrCameraInit = makeProperty(QObject, "_hdrCameraInit", hdrCameraInitChanged, resetOnDestroy=True)
     cameraInitIndex = Property(int, getCameraInitIndex, setCameraInitIndex, notify=cameraInitChanged)
     viewpoints = Property(QObject, getViewpoints, notify=cameraInitChanged)
     cameraInits = Property(QObject, lambda self: self._cameraInits, constant=True)
@@ -967,6 +1005,9 @@ class Reconstruction(UIGraph):
 
     texturingChanged = Signal()
     texturing = makeProperty(QObject, "_texturing", notify=texturingChanged)
+
+    ldr2hdrChanged = Signal()
+    ldr2hdr = makeProperty(QObject, "_ldr2hdr", notify=ldr2hdrChanged, resetOnDestroy=True)
 
     nbCameras = Property(int, reconstructedCamerasCount, notify=sfmReportChanged)
 

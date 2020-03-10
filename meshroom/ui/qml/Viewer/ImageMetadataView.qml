@@ -44,7 +44,7 @@ FloatingPane {
     function getGPSCoordinates(metadata)
     {
         // GPS data available
-        if(metadata["GPS:Longitude"] != undefined && metadata["GPS:Latitude"] != undefined)
+        if(metadata && metadata["GPS:Longitude"] != undefined && metadata["GPS:Latitude"] != undefined)
         {
             var latitude = gpsMetadataToCoordinates(metadata["GPS:Latitude"], metadata["GPS:LatitudeRef"])
             var longitude = gpsMetadataToCoordinates(metadata["GPS:Longitude"], metadata["GPS:LongitudeRef"])

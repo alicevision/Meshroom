@@ -228,7 +228,6 @@ FocusScope {
                     Component.onCompleted: {
                         // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                         setSource("FeaturesViewer.qml", {
-                            'active':  Qt.binding(function() { return displayFeatures.checked; }),
                             'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
                             'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
                             'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
@@ -295,6 +294,33 @@ FocusScope {
                         visible: metadataCB.checked
                         // only load metadata model if visible
                         metadata: visible ? root.metadata : {}
+                    }
+
+                    Loader {
+                        id: msfmData
+                        active: displaySfmStatsView.checked
+
+                        Component.onCompleted: {
+                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                            // so it can fail safely if the c++ plugin is not available
+                            setSource("MSfMData.qml", {
+                                'sfmDataPath': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.sfm.attribute("output").value); }),
+                            })
+                        }
+                    }
+                    Loader {
+                        id: sfmStatsView
+                        anchors.fill: parent
+                        active: msfmData.status === Loader.Ready && displaySfmStatsView.checked
+
+                        Component.onCompleted: {
+                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                            // so it can fail safely if the c++ plugin is not available
+                            setSource("SfmStatsView.qml", {
+                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                'msfmData': Qt.binding(function() { return msfmData.item; }),
+                            })
+                        }
                     }
 
                     Loader {
@@ -415,6 +441,26 @@ FocusScope {
                         }
 
                         MaterialToolButton {
+                            id: displaySfmStatsView
+
+                            font.family: MaterialIcons.fontFamily
+                            text: MaterialIcons.assessment
+
+                            ToolTip.text: "StructureFromMotion Statistics"
+                            ToolTip.visible: hovered
+
+                            font.pointSize: 14
+                            padding: 2
+                            smooth: false
+                            flat: true
+                            checkable: enabled
+                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed() && _reconstruction.selectedViewId >= 0
+                            onCheckedChanged: {
+                                if(checked == true)
+                                    metadataCB.checked = false
+                            }
+                        }
+                        MaterialToolButton {
                             id: metadataCB
 
                             font.family: MaterialIcons.fontFamily
@@ -429,7 +475,12 @@ FocusScope {
                             flat: true
                             checkable: enabled
                             enabled: _reconstruction.selectedViewId >= 0
+                            onCheckedChanged: {
+                                if(checked == true)
+                                    displaySfmStatsView.checked = false
+                            }
                         }
+
                     }
                 }
             }

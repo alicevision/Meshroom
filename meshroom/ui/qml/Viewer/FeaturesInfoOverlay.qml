@@ -93,11 +93,11 @@ FloatingPane {
                 }
                 // Feature type name
                 Label {
-                    text: featureType.viewer.describerType + (featureType.viewer.loading ? "" : ": " + featureType.viewer.features.length)
+                    text: featureType.viewer.describerType + (featureType.viewer.loadingFeatures ? "" : ": " + featureType.viewer.features.length)
                 }
                 // Feature loading status
                 Loader {
-                    active: featureType.viewer.loading
+                    active: featureType.viewer.loadingFeatures
                     sourceComponent: BusyIndicator {
                         padding: 0
                         implicitWidth: 12

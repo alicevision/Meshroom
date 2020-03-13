@@ -69,7 +69,7 @@ class MeshDenoising(desc.CommandLineNode):
             label='Mesh Update Method',
             description='Mesh Update Method\n'
                         ' * ITERATIVE_UPDATE (default): ShapeUp styled iterative solver \n'
-                        ' * POISSON_UPDATE: Poisson-based update from [Want et al. 2015]',
+                        ' * POISSON_UPDATE: Poisson-based update from [Wang et al. 2015] "Rolling guidance normal filter for geometric processing"',
             value=0,
             values=(0, 1),
             exclusive=True,

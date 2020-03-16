@@ -430,10 +430,10 @@ class Reconstruction(UIGraph):
             # use the user-provided default photogrammetry project file
             self.load(p, setupProjectFile=False)
 
-    @Slot(str)
+    @Slot(str, result=bool)
     def load(self, filepath, setupProjectFile=True):
         try:
-            super(Reconstruction, self).load(filepath, setupProjectFile)
+            status = super(Reconstruction, self).loadGraph(filepath, setupProjectFile)
             # warn about pre-release projects being automatically upgraded
             if Version(self._graph.fileReleaseVersion).major == "0":
                 self.warning.emit(Message(
@@ -442,17 +442,41 @@ class Reconstruction(UIGraph):
                     "Data might have been lost in the process.",
                     "Open it with the corresponding version of Meshroom to recover your data."
                 ))
+            return status
+        except FileNotFoundError as e:
+            self.error.emit(
+                Message(
+                    "No Such File",
+                    "Error While Loading '{}': No Such File.".format(os.path.basename(filepath)),
+                    ""
+                )
+            )
+            logging.error("Error while loading '{}': No Such File.".format(os.path.basename(filepath)))
+            return False
         except Exception as e:
             import traceback
             trace = traceback.format_exc()
             self.error.emit(
                 Message(
-                    "Error while loading {}".format(os.path.basename(filepath)),
-                    "An unexpected error has occurred",
+                    "Error While Loading Project File",
+                    "An unexpected error has occurred while loading file: '{}'".format(os.path.basename(filepath)),
                     trace
                 )
             )
             logging.error(trace)
+            return False
+
+    @Slot(QUrl, result=bool)
+    def loadUrl(self, url):
+        if isinstance(url, (QUrl)):
+            # depending how the QUrl has been initialized,
+            # toLocalFile() may return the local path or an empty string
+            localFile = url.toLocalFile()
+            if not localFile:
+                localFile = url.toString()
+        else:
+            localFile = url
+        return self.load(localFile)
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """

@@ -207,8 +207,10 @@ ApplicationWindow {
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
-            _reconstruction.loadUrl(file.toString())
-            MeshroomApp.addRecentProjectFile(file.toString())
+            if(_reconstruction.loadUrl(file))
+            {
+                MeshroomApp.addRecentProjectFile(file.toString())
+            }
         }
     }
 
@@ -353,8 +355,14 @@ ApplicationWindow {
                     MenuItem {
                         onTriggered: ensureSaved(function() {
                             openRecentMenu.dismiss();
-                            _reconstruction.load(modelData);
-                            MeshroomApp.addRecentProjectFile(modelData);
+                            if(_reconstruction.loadUrl(modelData))
+                            {
+                                MeshroomApp.addRecentProjectFile(modelData);
+                            }
+                            else
+                            {
+                                MeshroomApp.removeRecentProjectFile(modelData);
+                            }
                         })
                         
                         text: fileTextMetrics.elidedText

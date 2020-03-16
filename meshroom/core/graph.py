@@ -280,6 +280,8 @@ class Graph(BaseObject):
         # Create graph edges by resolving attributes expressions
         self._applyExpr()
 
+        return True
+
     @property
     def updateEnabled(self):
         return self._updateEnabled

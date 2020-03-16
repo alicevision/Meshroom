@@ -75,7 +75,7 @@ FloatingPane {
                 property var viewer: root.featuresViewer.itemAt(index)
                 spacing: 4
 
-                // Visibility toogle
+                // Visibility toggle
                 MaterialToolButton {
                     text: featureType.viewer.visible ? MaterialIcons.visibility : MaterialIcons.visibility_off
                     onClicked: featureType.viewer.visible = !featureType.viewer.visible

@@ -219,6 +219,7 @@ class SketchfabUpload(desc.Node):
         try:
             self._stopped = False
             chunk.logManager.start(chunk.node.verboseLevel.value)
+            uploadFile = ''
         
             if not chunk.node.inputFiles:
                 chunk.logger.warning('Nothing to upload')

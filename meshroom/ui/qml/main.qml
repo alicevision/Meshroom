@@ -715,7 +715,7 @@ ApplicationWindow {
                         for(var i=0; i < node.attributes.count; ++i)
                         {
                             var attr = node.attributes.at(i)
-                            if(attr.isOutput && workspaceView.viewAttribute(attr))
+                            if(attr.isOutput && workspaceView.viewAttribute(attr, mouse))
                                 break;
                         }
                     }

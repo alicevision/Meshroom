@@ -4,7 +4,10 @@ import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.1
 import QtQuick.Window 2.3
 import QtQml.Models 2.2
+
 import Qt.labs.platform 1.0 as Platform
+import QtQuick.Dialogs 1.3
+
 import Qt.labs.settings 1.0
 import GraphEditor 1.0
 import MaterialIcons 2.2
@@ -202,7 +205,7 @@ ApplicationWindow {
         }
     }
 
-    Platform.FileDialog {
+    FileDialog {
         id: openFileDialog
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
@@ -211,6 +214,18 @@ ApplicationWindow {
             {
                 MeshroomApp.addRecentProjectFile(file.toString())
             }
+        }
+    }
+
+    FileDialog {
+        id: importFilesDialog
+        title: "Import Images"
+        selectExisting: true
+        selectMultiple: true
+        nameFilters: []
+        onAccepted: {
+            console.warn("importFilesDialog fileUrls: " + importFilesDialog.fileUrls)
+            _reconstruction.importImagesUrls(importFilesDialog.fileUrls)
         }
     }
 
@@ -374,6 +389,12 @@ ApplicationWindow {
                         }
                     }
                 }
+            }
+            Action {
+                id: importActionItem
+                text: "Import Images"
+                shortcut: "Ctrl+I"
+                onTriggered: importFilesDialog.open()
             }
             Action {
                 id: saveAction

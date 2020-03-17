@@ -331,7 +331,7 @@ FocusScope {
                             left: parent.left
                             margins: 2
                         }
-                        active: displayFeatures.checked
+                        active: displayFeatures.checked && featuresViewerLoader.status === Loader.Ready
 
                         sourceComponent: FeaturesInfoOverlay {
                             featureExtractionNode: _reconstruction.featureExtraction

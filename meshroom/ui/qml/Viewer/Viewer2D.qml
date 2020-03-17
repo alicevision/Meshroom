@@ -151,17 +151,21 @@ FocusScope {
                     visible: (floatImageViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
 
-                    Component.onCompleted: {
-                        // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-                        // Note: It does not work to use previously created component,
-                        //       so we re-create it with setSource.
-                        // floatViewerComp.createObject(floatImageViewerLoader, {
-                        setSource("FloatImage.qml", {
-                            'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
-                            'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
-                            'offset': Qt.binding(function() { return hdrImageToolbar.offsetValue; }),
-                            'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
-                        })
+                    onActiveChanged: {
+                        if(active) {
+                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                            // Note: It does not work to use previously created component, so we re-create it with setSource.
+                            // floatViewerComp.createObject(floatImageViewerLoader, {
+                            setSource("FloatImage.qml", {
+                                'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
+                                'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
+                                'offset': Qt.binding(function() { return hdrImageToolbar.offsetValue; }),
+                                'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
+                            })
+                        } else {
+                            // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                            setSource("", {})
+                        }
                     }
                 }
 
@@ -207,7 +211,7 @@ FocusScope {
                 scale: 1.0
 
                 // FeatureViewer: display view extracted feature points
-                // note: requires QtAliceVision plugin - use a Loader to evaluate plugin avaibility at runtime
+                // note: requires QtAliceVision plugin - use a Loader to evaluate plugin availability at runtime
                 Loader {
                     id: featuresViewerLoader
 
@@ -225,14 +229,19 @@ FocusScope {
                     x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
                     y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
 
-                    Component.onCompleted: {
-                        // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-                        setSource("FeaturesViewer.qml", {
-                            'active':  Qt.binding(function() { return displayFeatures.checked; }),
-                            'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                            'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
-                            'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
-                        })
+                    onActiveChanged: {
+                        if(active) {
+                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                            setSource("FeaturesViewer.qml", {
+                                'active':  Qt.binding(function() { return displayFeatures.checked; }),
+                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
+                                'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
+                            })
+                        } else {
+                            // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                            setSource("", {})
+                        }
                     }
                 }
 

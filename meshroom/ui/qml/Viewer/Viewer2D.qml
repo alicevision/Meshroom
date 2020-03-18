@@ -260,6 +260,9 @@ FocusScope {
                             _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x"), x)
                             _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y"), y)
                         }
+                        onIncrementRadius: {
+                            _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeRadius"), _reconstruction.panoramaInit.attribute("fisheyeRadius").value + radiusOffset)
+                        }
                     }
                 }
             }

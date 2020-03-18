@@ -4,6 +4,7 @@ Rectangle {
     id: root
 
     signal moved()
+    signal incrementRadius(real radiusOffset)
 
     width: radius * 2
     height: width
@@ -32,21 +33,30 @@ Rectangle {
     MouseArea {
         id: mArea
         anchors.fill: parent
-        cursorShape: Qt.OpenHandCursor
+        cursorShape: controlModifierEnabled ? Qt.SizeBDiagCursor : (pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor)
+        property bool controlModifierEnabled: false
+        onPositionChanged: {
+            mArea.controlModifierEnabled = (mouse.modifiers & Qt.ControlModifier)
+        }
         acceptedButtons: Qt.LeftButton
         hoverEnabled: true
         drag.target: parent
 
-        drag.onActiveChanged:
-        {
-            if(!drag.active)
-            {
-                cursorShape = Qt.OpenHandCursor;
+        drag.onActiveChanged: {
+            if(!drag.active) {
                 moved();
             }
-            else
-            {
-                cursorShape = Qt.ClosedHandCursor;
+        }
+        onPressed: {
+            forceActiveFocus();
+        }
+        onWheel: {
+            mArea.controlModifierEnabled = (wheel.modifiers & Qt.ControlModifier)
+            if (wheel.modifiers & Qt.ControlModifier) {
+                incrementRadius(wheel.angleDelta.y / 120.0);
+                wheel.accepted = true;
+            } else {
+                wheel.accepted = false;
             }
         }
     }

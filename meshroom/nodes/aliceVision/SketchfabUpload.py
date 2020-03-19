@@ -216,31 +216,31 @@ class SketchfabUpload(desc.Node):
         return self._stopped
 
     def processChunk(self, chunk):
-        self._stopped = False
-        chunk.logManager.waitUntilCleared()
-        chunk.logger.setLevel(chunk.logManager.textToLevel(chunk.node.verboseLevel.value))
-        
-        if not chunk.node.inputFiles:
-            chunk.logger.warning('Nothing to upload')
-            return
-        if chunk.node.apiToken.value == '':
-            chunk.logger.error('Need API token.')
-            raise RuntimeError()
-        if len(chunk.node.title.value) > 48:
-            chunk.logger.error('Title cannot be longer than 48 characters.')
-            raise RuntimeError()
-        if len(chunk.node.description.value) > 1024:
-            chunk.logger.error('Description cannot be longer than 1024 characters.')
-            raise RuntimeError()
-        tags = [ i.value.replace(' ', '-') for i in chunk.node.tags.value.values() ]
-        if all(len(i) > 48 for i in tags) and len(tags) > 0:
-            chunk.logger.error('Tags cannot be longer than 48 characters.')
-            raise RuntimeError()
-        if len(tags) > 42:
-            chunk.logger.error('Maximum of 42 separate tags.')
-            raise RuntimeError()
-
         try:
+            self._stopped = False
+            chunk.logManager.start(chunk.node.verboseLevel.value)
+            uploadFile = ''
+        
+            if not chunk.node.inputFiles:
+                chunk.logger.warning('Nothing to upload')
+                return
+            if chunk.node.apiToken.value == '':
+                chunk.logger.error('Need API token.')
+                raise RuntimeError()
+            if len(chunk.node.title.value) > 48:
+                chunk.logger.error('Title cannot be longer than 48 characters.')
+                raise RuntimeError()
+            if len(chunk.node.description.value) > 1024:
+                chunk.logger.error('Description cannot be longer than 1024 characters.')
+                raise RuntimeError()
+            tags = [ i.value.replace(' ', '-') for i in chunk.node.tags.value.values() ]
+            if all(len(i) > 48 for i in tags) and len(tags) > 0:
+                chunk.logger.error('Tags cannot be longer than 48 characters.')
+                raise RuntimeError()
+            if len(tags) > 42:
+                chunk.logger.error('Maximum of 42 separate tags.')
+                raise RuntimeError()
+
             data = {
                 'name': chunk.node.title.value,
                 'description': chunk.node.description.value,
@@ -275,6 +275,8 @@ class SketchfabUpload(desc.Node):
             if os.path.isfile(uploadFile):
                 os.remove(uploadFile)
                 chunk.logger.debug('Deleted {}'.format(uploadFile))
+
+            chunk.logManager.end()
 
     def stopProcess(self, chunk):
         self._stopped = True

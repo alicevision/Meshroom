@@ -253,7 +253,8 @@ FocusScope {
                     sourceComponent: CircleGizmo {
                         x: _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
                         y: _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
-                        radius: (imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (_reconstruction.panoramaInit.attribute("fisheyeRadius").value * 0.01)
+                        property real fisheyeRadius: _reconstruction.panoramaInit.attribute("fisheyeRadius").value
+                        radius: (imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (fisheyeRadius * 0.01)
                         border.width: Math.max(1, (3.0 / imgContainer.scale))
 
                         onMoved: {
@@ -411,8 +412,8 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
-                            enabled: _reconstruction.panoramaInit
-                            visible: enabled
+                            enabled: _reconstruction.panoramaInit && _reconstruction.panoramaInit.attribute("useFisheye").value
+                            visible: _reconstruction.panoramaInit
                         }
 
                         Label {

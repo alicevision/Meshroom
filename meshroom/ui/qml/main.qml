@@ -343,6 +343,10 @@ ApplicationWindow {
                     text: "HDRI"
                     onTriggered: ensureSaved(function() { _reconstruction.new("hdri") })
                 }
+                Action {
+                    text: "HDRI Fisheye"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("hdriFisheye") })
+                }
             }
             Action {
                 id: openActionItem

@@ -426,6 +426,9 @@ class Reconstruction(UIGraph):
         elif p.lower() == "hdri":
             # default hdri pipeline
             self.setGraph(multiview.hdri())
+        elif p.lower() == "hdrifisheye":
+            # default hdri pipeline
+            self.setGraph(multiview.hdriFisheye())
         else:
             # use the user-provided default photogrammetry project file
             self.load(p, setupProjectFile=False)

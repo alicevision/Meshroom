@@ -117,6 +117,16 @@ def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), out
 
     return graph
 
+def hdriFisheye(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output='', graph=None):
+    if not graph:
+        graph = Graph('HDRI-Fisheye')
+    with GraphModification(graph):
+        hdri(inputImages, inputViewpoints, inputIntrinsics, output, graph)
+        for ldrToHdr in graph.nodesByType("LDRToHDR"):
+            ldrToHdr.attribute("fisheyeLens").value = True
+        for panoramaInit in graph.nodesByType("PanoramaInit"):
+            panoramaInit.attribute("useFisheye").value = True
+    return graph
 
 def hdriPipeline(graph):
     """

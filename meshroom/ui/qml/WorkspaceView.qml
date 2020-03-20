@@ -64,9 +64,9 @@ Item {
                 Layout.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
-                cameraInit: _reconstruction.cameraInit
+                cameraInit: reconstruction.cameraInit
+                hdrCameraInit: reconstruction.hdrCameraInit
                 currentIndex: reconstruction.cameraInitIndex
-                onCurrentIndexChanged: reconstruction.cameraInitIndex = currentIndex
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
             }
@@ -81,7 +81,37 @@ Item {
             title: "Image Viewer"
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.minimumWidth: 280
+            Layout.minimumWidth: 50
+
+            headerBar: RowLayout {
+                MaterialToolButton {
+                    text: MaterialIcons.more_vert
+                    font.pointSize: 11
+                    padding: 2
+                    checkable: true
+                    checked: imageViewerMenu.visible
+                    onClicked: imageViewerMenu.open()
+                    Menu {
+                        id: imageViewerMenu
+                        y: parent.height
+                        x: -width + parent.width
+                        Action {
+                            id: displayImageToolBarAction
+                            text: "Display HDR Toolbar"
+                            checkable: true
+                            checked: true
+                            enabled: viewer2D.useFloatImageViewer
+                        }
+                        Action {
+                            id: displayImagePathAction
+                            text: "Display Image Path"
+                            checkable: true
+                            checked: true
+                        }
+                    }
+                }
+            }
+
             Viewer2D {
                 id: viewer2D
                 anchors.fill: parent

@@ -2,7 +2,7 @@ import logging
 import os
 import argparse
 
-from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, qInstallMessageHandler, QtMsgType
+from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, Signal, qInstallMessageHandler, QtMsgType, QSettings
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
@@ -141,6 +141,7 @@ class MeshroomApp(QApplication):
 
         if args.project:
             r.load(args.project)
+            self.addRecentProjectFile(args.project)
         else:
             r.new()
 
@@ -164,8 +165,51 @@ class MeshroomApp(QApplication):
                         "Invalid value: '{}'".format(args.save))
                 os.mkdir(projectFolder)
             r.saveAs(args.save)
+            self.addRecentProjectFile(args.save)
 
         self.engine.load(os.path.normpath(url))
+
+    def _recentProjectFiles(self):
+        projects = []
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        size = settings.beginReadArray("Projects")
+        for i in range(size):
+            settings.setArrayIndex(i)
+            p = settings.value("filepath")
+            if p:
+                projects.append(p)
+        settings.endArray()
+        return projects
+
+    @Slot(str)
+    def addRecentProjectFile(self, projectFile):
+        projectFile = QUrl(projectFile).path()
+        projects = self._recentProjectFiles()
+
+        # remove duplicates while preserving order
+        from collections import OrderedDict
+        uniqueProjects = OrderedDict.fromkeys(projects)
+        projects = list(uniqueProjects)
+        # remove previous usage of the value
+        if projectFile in uniqueProjects:
+            projects.remove(projectFile)
+        # add the new value in the first place
+        projects.insert(0, projectFile)
+
+        # keep only the 10 first elements
+        projects = projects[0:20]
+
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        size = settings.beginWriteArray("Projects")
+        for i, p in enumerate(projects):
+            settings.setArrayIndex(i)
+            settings.setValue("filepath", p)
+        settings.endArray()
+        settings.sync()
+
+        self.recentProjectFilesChanged.emit()
 
     @Slot(str, result=str)
     def markdownToHtml(self, md):
@@ -216,3 +260,7 @@ class MeshroomApp(QApplication):
                 "onlineUrl": "https://raw.githubusercontent.com/alicevision/AliceVision/develop/COPYING.md"
             }
         ]
+
+    recentProjectFilesChanged = Signal()
+    recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
+

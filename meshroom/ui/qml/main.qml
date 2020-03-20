@@ -24,7 +24,7 @@ ApplicationWindow {
     readonly property bool graphLocked: _reconstruction.computing && GraphEditorSettings.lockOnCompute
 
     title: {
-        var t = _reconstruction.graph.filepath || "Untitled"
+        var t = (_reconstruction.graph && _reconstruction.graph.filepath) ? _reconstruction.graph.filepath : "Untitled"
         if(!_reconstruction.undoStack.clean)
             t += "*"
         t += " - " + Qt.application.name + " " + Qt.application.version
@@ -135,6 +135,7 @@ ApplicationWindow {
         onAccepted: {
             _reconstruction.saveAs(file)
             closed(Platform.Dialog.Accepted)
+            MeshroomApp.addRecentProjectFile(file.toString())
         }
         onRejected: closed(Platform.Dialog.Rejected)
     }
@@ -207,6 +208,7 @@ ApplicationWindow {
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
             _reconstruction.loadUrl(file.toString())
+            MeshroomApp.addRecentProjectFile(file.toString())
         }
     }
 
@@ -314,16 +316,62 @@ ApplicationWindow {
                 shortcut: "Ctrl+N"
                 onTriggered: ensureSaved(function() { _reconstruction.new() })
             }
+            Menu {
+                title: "New Pipeline"
+                Action {
+                    text: "Photogrammetry"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetry") })
+                }
+                Action {
+                    text: "HDRI"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("hdri") })
+                }
+            }
             Action {
+                id: openActionItem
                 text: "Open"
                 shortcut: "Ctrl+O"
                 onTriggered: ensureSaved(function() { openFileDialog.open() })
+            }
+            Menu {
+                id: openRecentMenu
+                title: "Open Recent"
+                enabled: recentFilesMenuItems.model != undefined && recentFilesMenuItems.model.length > 0
+                property int maxWidth: 1000
+                property int fullWidth: {
+                    var result = 0;
+                    for (var i = 0; i < count; ++i) {
+                        var item = itemAt(i);
+                        result = Math.max(item.implicitWidth + item.padding * 2, result);
+                    }
+                    return result;
+                }
+                implicitWidth: fullWidth
+                Repeater {
+                    id: recentFilesMenuItems
+                    model: MeshroomApp.recentProjectFiles
+                    MenuItem {
+                        onTriggered: ensureSaved(function() {
+                            openRecentMenu.dismiss();
+                            _reconstruction.load(modelData);
+                            MeshroomApp.addRecentProjectFile(modelData);
+                        })
+                        
+                        text: fileTextMetrics.elidedText
+                        TextMetrics {
+                            id: fileTextMetrics
+                            text: modelData
+                            elide: Text.ElideLeft
+                            elideWidth: openRecentMenu.maxWidth
+                        }
+                    }
+                }
             }
             Action {
                 id: saveAction
                 text: "Save"
                 shortcut: "Ctrl+S"
-                enabled: !_reconstruction.graph.filepath || !_reconstruction.undoStack.clean
+                enabled: (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean
                 onTriggered: _reconstruction.graph.filepath ? _reconstruction.save() : saveFileDialog.open()
             }
             Action {
@@ -578,6 +626,20 @@ ApplicationWindow {
 
                 headerBar: RowLayout {
                     MaterialToolButton {
+                        text: MaterialIcons.refresh
+                        ToolTip.text: "Refresh Nodes Status"
+                        ToolTip.visible: hovered
+                        font.pointSize: 11
+                        padding: 2
+                        onClicked: {
+                            updatingStatus = true
+                            _reconstruction.forceNodesStatusUpdate()
+                            updatingStatus = false
+                        }
+                        property bool updatingStatus: false
+                        enabled: !updatingStatus && !_reconstruction.computingLocally
+                    }
+                    MaterialToolButton {
                         text: MaterialIcons.more_vert
                         font.pointSize: 11
                         padding: 2
@@ -592,11 +654,6 @@ ApplicationWindow {
                                 text: "Clear Pending Status"
                                 enabled: !_reconstruction.computingLocally
                                 onTriggered: _reconstruction.graph.clearSubmittedNodes()
-                            }
-                            MenuItem {
-                                text: "Refresh Nodes Status"
-                                enabled: !_reconstruction.computingLocally
-                                onTriggered: _reconstruction.forceNodesStatusUpdate()
                             }
                             Menu {
                                 title: "Advanced"

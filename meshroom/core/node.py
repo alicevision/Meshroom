@@ -132,9 +132,6 @@ class LogManager:
 
     def __init__(self, chunk):
         self.chunk = chunk
-        self.chunk.statusChanged.connect(self.clear)
-        self.progressBar = False
-        self.cleared = False
         self.logger = logging.getLogger(chunk.node.getName())
 
     class Formatter(logging.Formatter):
@@ -151,27 +148,22 @@ class LogManager:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
-    def clear(self): 
-        if self.chunk.statusName == 'RUNNING' and not self.cleared:
-            open(self.chunk.logFile, 'w').close()
-            self.configureLogger()
-            self.cleared = True
-        # When the node gets ran again the log needs to be cleared
-        elif self.chunk.statusName in ['ERROR', 'SUCCESS']:
-            for handler in self.logger.handlers[:]:
-                # Stops the file being locked
-                handler.close()
-            self.cleared = False
-            self.progressBar = False
+    def start(self, level):
+        # Clear log file
+        open(self.chunk.logFile, 'w').close()
+        
+        self.configureLogger()
+        self.logger.setLevel(self.textToLevel(level))
+        self.progressBar = False
 
-    def waitUntilCleared(self):
-        while not self.cleared:
-            time.sleep(0.01)
+    def end(self):
+        for handler in self.logger.handlers[:]:
+            # Stops the file being locked
+            handler.close()
 
     def makeProgressBar(self, end, message=''):
         assert end > 0
         assert not self.progressBar
-        self.waitUntilCleared()
 
         self.progressEnd = end
         self.currentProgressTics = 0
@@ -194,7 +186,6 @@ class LogManager:
     def updateProgressBar(self, value):
         assert self.progressBar
         assert value <= self.progressEnd
-        self.waitUntilCleared()
 
         tics = round((value/self.progressEnd)*51)
 
@@ -602,6 +593,10 @@ class BaseNode(BaseObject):
                 return False
         return True
 
+    @Slot(result=bool)
+    def isComputed(self):
+        return self.hasStatus(Status.SUCCESS)
+
     @Slot()
     def clearData(self):
         """ Delete this Node internal folder.
@@ -876,14 +871,9 @@ class CompatibilityNode(BaseNode):
         self.splitCount = self.parallelization.get("split", 1)
         self.setSize(self.parallelization.get("size", 1))
 
-        # inputs matching current type description
-        self._commonInputs = []
         # create input attributes
         for attrName, value in self._inputs.items():
-            matchDesc = self._addAttribute(attrName, value, False)
-            # store attributes that could be used during node upgrade
-            if matchDesc:
-                self._commonInputs.append(attrName)
+            self._addAttribute(attrName, value, False)
 
         # create outputs attributes
         for attrName, value in self.outputs.items():
@@ -947,7 +937,7 @@ class CompatibilityNode(BaseNode):
         return desc.StringParam(**params)
 
     @staticmethod
-    def attributeDescFromName(refAttributes, name, value):
+    def attributeDescFromName(refAttributes, name, value, conform=False):
         """
         Try to find a matching attribute description in refAttributes for given attribute 'name' and 'value'.
 
@@ -964,8 +954,9 @@ class CompatibilityNode(BaseNode):
         # consider this value matches description:
         #  - if it's a serialized link expression (no proper value to set/evaluate)
         #  - or if it passes the 'matchDescription' test
-        if attrDesc and (Attribute.isLinkExpression(value) or attrDesc.matchDescription(value)):
+        if attrDesc and (Attribute.isLinkExpression(value) or attrDesc.matchDescription(value, conform)):
             return attrDesc
+
         return None
 
     def _addAttribute(self, name, val, isOutput):
@@ -1039,8 +1030,16 @@ class CompatibilityNode(BaseNode):
         if not self.canUpgrade:
             raise NodeUpgradeError(self.name, "no matching node type")
         # TODO: use upgrade method of node description if available
+
+        # inputs matching current type description
+        commonInputs = []
+        for attrName, value in self._inputs.items():
+            if self.attributeDescFromName(self.nodeDesc.inputs, attrName, value, conform=True):
+                # store attributes that could be used during node upgrade
+                commonInputs.append(attrName)
+
         return Node(self.nodeType, position=self.position,
-                    **{key: value for key, value in self.inputs.items() if key in self._commonInputs})
+                    **{key: value for key, value in self.inputs.items() if key in commonInputs})
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)

@@ -353,10 +353,10 @@ Panel {
             padding: 0
             anchors.margins: 0
             implicitHeight: 14
-            ToolTip.text: "Visualize HDR images"
+            ToolTip.text: "Visualize HDR images: " + (_reconstruction.ldr2hdr ? _reconstruction.ldr2hdr.label : "No Node")
             text: MaterialIcons.hdr_on
             visible: _reconstruction.ldr2hdr
-            enabled: visible && _reconstruction.ldr2hdr.isComputed()
+            enabled: _reconstruction.ldr2hdr && _reconstruction.ldr2hdr.isComputed
             onEnabledChanged: {
                 // Reset the toggle to avoid getting stuck
                 // with the HDR node checked but disabled.

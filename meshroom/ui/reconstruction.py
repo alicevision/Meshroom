@@ -886,6 +886,8 @@ class Reconstruction(UIGraph):
             self.prepareDenseScene = node
         elif node.nodeType in ("DepthMap", "DepthMapFilter"):
             self.depthMap = node
+        elif node.nodeType == "LDRToHDR":
+            self.ldr2hdr = node
         elif node.nodeType == "PanoramaInit":
             self.panoramaInit = node
 

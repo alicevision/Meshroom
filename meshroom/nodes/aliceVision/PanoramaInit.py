@@ -45,6 +45,13 @@ class PanoramaInit(desc.CommandLineNode):
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='estimateFisheyeCircle',
+            label='Estimate Fisheye Circle',
+            description='Automatically estimate the Fisheye Circle center and radius instead of using user values.',
+            value=True,
+            uid=[0],
+        ),
         desc.GroupAttribute(
             name="fisheyeCenterOffset",
             label="Fisheye Center",

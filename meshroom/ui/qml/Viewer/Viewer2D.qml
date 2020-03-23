@@ -249,20 +249,31 @@ FocusScope {
                 // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
                 Loader {
                     anchors.centerIn: parent
-                    active: (_reconstruction.panoramaInit && displayFisheyeCircleLoader.checked)
+                    active: (displayFisheyeCircleLoader.checked && _reconstruction.panoramaInit)
                     sourceComponent: CircleGizmo {
-                        x: _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
-                        y: _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
-                        property real fisheyeRadius: _reconstruction.panoramaInit.attribute("fisheyeRadius").value
-                        radius: (imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (fisheyeRadius * 0.01)
-                        border.width: Math.max(1, (3.0 / imgContainer.scale))
+                        property bool useAuto: _reconstruction.panoramaInit.attribute("estimateFisheyeCircle").value
+                        readOnly: useAuto
+                        visible: (!useAuto) || _reconstruction.panoramaInit.isComputed
+                        property real userFisheyeRadius: _reconstruction.panoramaInit.attribute("fisheyeRadius").value
+                        property variant fisheyeAutoParams: _reconstruction.getAutoFisheyeCircle(_reconstruction.panoramaInit)
 
+                        x: useAuto ? (fisheyeAutoParams.x - imgContainer.image.width * 0.5) : _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
+                        y: useAuto ? (fisheyeAutoParams.y - imgContainer.image.height * 0.5) : _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
+                        radius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
+
+                        border.width: Math.max(1, (3.0 / imgContainer.scale))
                         onMoved: {
-                            _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x"), x)
-                            _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y"), y)
+                            if(!useAuto)
+                            {
+                                _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x"), x)
+                                _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y"), y)
+                            }
                         }
                         onIncrementRadius: {
-                            _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeRadius"), _reconstruction.panoramaInit.attribute("fisheyeRadius").value + radiusOffset)
+                            if(!useAuto)
+                            {
+                                _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeRadius"), _reconstruction.panoramaInit.attribute("fisheyeRadius").value + radiusOffset)
+                            }
                         }
                     }
                 }
@@ -406,7 +417,7 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayFisheyeCircleLoader
-                            ToolTip.text: "Display Fisheye Circle"
+                            ToolTip.text: "Display Fisheye Circle: " + (_reconstruction.panoramaInit ? _reconstruction.panoramaInit.label : "No Node")
                             text: MaterialIcons.panorama_fish_eye
                             font.pointSize: 11
                             Layout.minimumWidth: 0

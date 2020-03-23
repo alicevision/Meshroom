@@ -559,6 +559,29 @@ class Reconstruction(UIGraph):
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
         self.hdrCameraInit = tmpCameraInit
 
+    @Slot(QObject, result=QVector3D)
+    def getAutoFisheyeCircle(self, panoramaInit):
+        if not panoramaInit or not panoramaInit.isComputed:
+            return QVector3D(0.0, 0.0, 0.0)
+        if not panoramaInit.attribute("estimateFisheyeCircle").value:
+            return QVector3D(0.0, 0.0, 0.0)
+
+        sfmFile = panoramaInit.attribute('outSfMDataFilename').value
+        if not os.path.exists(sfmFile):
+            return QVector3D(0.0, 0.0, 0.0)
+        import io  # use io.open for Python2/3 compatibility (allow to specify encoding + errors handling)
+        # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
+        with io.open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
+            data = json.load(f)
+
+        intrinsics = data.get('intrinsics', [])
+        if len(intrinsics) == 0:
+            return QVector3D(0.0, 0.0, 0.0)
+        intrinsic = intrinsics[0]
+
+        res = QVector3D(float(intrinsic.get("fisheyeCenterX", 0.0)),  float(intrinsic.get("fisheyeCenterY", 0.0)), float(intrinsic.get("fisheyeRadius", 0.0)))
+        return res
+
     def updatePanoramaInitNode(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
         self.panoramaInit = self.lastNodeOfType('PanoramaInit', self.cameraInit) if self.cameraInit else None

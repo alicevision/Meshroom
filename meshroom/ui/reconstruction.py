@@ -579,7 +579,9 @@ class Reconstruction(UIGraph):
             return QVector3D(0.0, 0.0, 0.0)
         intrinsic = intrinsics[0]
 
-        res = QVector3D(float(intrinsic.get("fisheyeCenterX", 0.0)),  float(intrinsic.get("fisheyeCenterY", 0.0)), float(intrinsic.get("fisheyeRadius", 0.0)))
+        res = QVector3D(float(intrinsic.get("fisheyeCenterX", 0.0)) - float(intrinsic.get("width", 0.0)) * 0.5,
+                        float(intrinsic.get("fisheyeCenterY", 0.0)) - float(intrinsic.get("height", 0.0)) * 0.5,
+                        float(intrinsic.get("fisheyeRadius", 0.0)))
         return res
 
     def updatePanoramaInitNode(self):

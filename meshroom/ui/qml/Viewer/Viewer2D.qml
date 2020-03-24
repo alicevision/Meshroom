@@ -250,6 +250,17 @@ FocusScope {
                 Loader {
                     anchors.centerIn: parent
                     active: (displayFisheyeCircleLoader.checked && _reconstruction.panoramaInit)
+
+                    // handle rotation/position based on available metadata
+                    rotation: {
+                        var orientation = metadata ? metadata["Orientation"] : 0
+                        switch(orientation) {
+                            case "6": return 90;
+                            case "8": return -90;
+                            default: return 0;
+                        }
+                    }
+
                     sourceComponent: CircleGizmo {
                         property bool useAuto: _reconstruction.panoramaInit.attribute("estimateFisheyeCircle").value
                         readOnly: useAuto
@@ -257,8 +268,8 @@ FocusScope {
                         property real userFisheyeRadius: _reconstruction.panoramaInit.attribute("fisheyeRadius").value
                         property variant fisheyeAutoParams: _reconstruction.getAutoFisheyeCircle(_reconstruction.panoramaInit)
 
-                        x: useAuto ? (fisheyeAutoParams.x - imgContainer.image.width * 0.5) : _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
-                        y: useAuto ? (fisheyeAutoParams.y - imgContainer.image.height * 0.5) : _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
+                        x: useAuto ? fisheyeAutoParams.x : _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
+                        y: useAuto ? fisheyeAutoParams.y : _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
                         radius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
 
                         border.width: Math.max(1, (3.0 / imgContainer.scale))

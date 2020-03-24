@@ -14,17 +14,31 @@ Rectangle {
     border.width: 5
     border.color: readOnly ? "green" : "yellow"
 
+    /*
+    // visualize top-left corner for debugging purpose
     Rectangle {
-        color: parent.color
-        anchors.centerIn: parent
-        width: 20
-        height: 2
+        color: "red"
+        width: 500
+        height: 50
     }
     Rectangle {
-        color: parent.color
+        color: "red"
+        width: 50
+        height: 500
+    }
+    */
+    // Cross to visualize the circle center
+    Rectangle {
+        color: parent.border.color
         anchors.centerIn: parent
-        width: 2
-        height: 20
+        width: parent.width * 0.2
+        height: parent.border.width * 0.5
+    }
+    Rectangle {
+        color: parent.border.color
+        anchors.centerIn: parent
+        width: parent.border.width * 0.5
+        height: parent.height * 0.2
     }
 
     Behavior on x {

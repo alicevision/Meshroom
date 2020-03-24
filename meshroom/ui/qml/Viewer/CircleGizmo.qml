@@ -59,37 +59,41 @@ Rectangle {
         }
     }
 
-    MouseArea {
-        id: mArea
-        enabled: !root.readOnly
+    Loader {
         anchors.fill: parent
-        cursorShape: root.readOnly ? Qt.ArrowCursor : (controlModifierEnabled ? Qt.SizeBDiagCursor : (pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor))
-        propagateComposedEvents: true
+        active: !root.readOnly
 
-        property bool controlModifierEnabled: false
-        onPositionChanged: {
-            mArea.controlModifierEnabled = (mouse.modifiers & Qt.ControlModifier)
-            mouse.accepted = false;
-        }
-        acceptedButtons: Qt.LeftButton
-        hoverEnabled: true
-        drag.target: parent
+        sourceComponent: MouseArea {
+            id: mArea
+            anchors.fill: parent
+            cursorShape: root.readOnly ? Qt.ArrowCursor : (controlModifierEnabled ? Qt.SizeBDiagCursor : (pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor))
+            propagateComposedEvents: true
 
-        drag.onActiveChanged: {
-            if(!drag.active) {
-                moved();
+            property bool controlModifierEnabled: false
+            onPositionChanged: {
+                mArea.controlModifierEnabled = (mouse.modifiers & Qt.ControlModifier)
+                mouse.accepted = false;
             }
-        }
-        onPressed: {
-            forceActiveFocus();
-        }
-        onWheel: {
-            mArea.controlModifierEnabled = (wheel.modifiers & Qt.ControlModifier)
-            if (wheel.modifiers & Qt.ControlModifier) {
-                incrementRadius(wheel.angleDelta.y / 120.0);
-                wheel.accepted = true;
-            } else {
-                wheel.accepted = false;
+            acceptedButtons: Qt.LeftButton
+            hoverEnabled: true
+            drag.target: root
+
+            drag.onActiveChanged: {
+                if(!drag.active) {
+                    moved();
+                }
+            }
+            onPressed: {
+                forceActiveFocus();
+            }
+            onWheel: {
+                mArea.controlModifierEnabled = (wheel.modifiers & Qt.ControlModifier)
+                if (wheel.modifiers & Qt.ControlModifier) {
+                    incrementRadius(wheel.angleDelta.y / 120.0);
+                    wheel.accepted = true;
+                } else {
+                    wheel.accepted = false;
+                }
             }
         }
     }

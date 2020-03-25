@@ -33,6 +33,40 @@ def bytes2human(n):
     return '%.2f B' % (n)
 
 
+class Benchmark:
+    """
+    A simple test to determine the performance of the cpu,
+    useful for calculating the eta.
+
+    It only runs the benchmark once.
+    A lower result is better.
+
+    Result is accessed via: Benchmark()
+    """
+    result = None
+    def __new__(cls):
+        if Benchmark.result is None:
+            Benchmark.result = (cls.run() / psutil.cpu_count(logical=False)) / cls.smtFactor()
+        return cls.result
+
+    @staticmethod
+    def run(): 
+        timer = time.perf_counter()
+        for n in range(2500): # Calculate the factorials of an arbitrary amount of numbers
+            factorial = 1
+            for i in range(1,int(n)+1):
+                factorial = factorial * i
+        t = time.perf_counter()-timer
+        return t
+
+    @staticmethod
+    def smtFactor():
+        if psutil.cpu_count() != psutil.cpu_count(logical=False):
+            # Simultaneous multithreading enabled
+            return 1.3 # SMT usually increases performance per physical core by about 30%
+        return 1
+    
+
 class ComputerStatistics:
     def __init__(self):
         self.nbCores = 0

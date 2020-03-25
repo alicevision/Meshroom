@@ -3,6 +3,7 @@
 import logging
 import os
 import time
+import datetime
 from enum import Enum
 from threading import Thread, Event, Lock
 from multiprocessing.pool import ThreadPool
@@ -255,6 +256,7 @@ class UIGraph(QObject):
         self._layout = GraphLayout(self)
         self._selectedNode = None
         self._hoveredNode = None
+        self._startTime = None
 
     def setGraph(self, g):
         """ Set the internal graph. """
@@ -347,6 +349,7 @@ class UIGraph(QObject):
         nodes = [node] if node else None
         self._computeThread = Thread(target=self._execute, args=(nodes,))
         self._computeThread.start()
+        self._startTime = time.time()
 
     def _execute(self, nodes):
         self.computeStatusChanged.emit()
@@ -386,6 +389,23 @@ class UIGraph(QObject):
             self._running = running
             self._submitted = submitted
             self.computeStatusChanged.emit()
+
+    @Slot(result=str)
+    def getETA(self):
+        """ Estimate the time of completion and format it into 'hours:minutes:seconds'. """
+        print(str(dir(self._cameraInit)))
+        timer = time.time()
+        totalEstimation = 0
+        for chunk in self._sortedDFSChunks:
+            if chunk.status.status == Status.SUCCESS:
+                totalEstimation += chunk.status.elapsedTime
+            elif chunk.status.status == Status.RUNNING:
+                totalEstimation += chunk.node.nodeDesc.getEstimatedTime(chunk, self)
+
+        estimation = round(totalEstimation - (time.time() - self._startTime))
+        if estimation < 0:
+            estimation = 0
+        return str(datetime.timedelta(seconds=estimation))
 
     def isComputing(self):
         """ Whether is graph is being computed, either locally or externally. """

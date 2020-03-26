@@ -474,6 +474,9 @@ class BaseNode(BaseObject):
         t, idx = self._name.split("_")
         return "{}{}".format(t, idx if int(idx) > 1 else "")
 
+    def getDocumentation(self):
+        return self.nodeDesc.documentation
+
     @property
     def packageFullName(self):
         return '-'.join([self.packageName, self.packageVersion])
@@ -766,6 +769,7 @@ class BaseNode(BaseObject):
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
+    documentation = Property(str, getDocumentation, constant=True)
     positionChanged = Signal()
     position = Property(Variant, position.fget, position.fset, notify=positionChanged)
     x = Property(float, lambda self: self._position.x, notify=positionChanged)

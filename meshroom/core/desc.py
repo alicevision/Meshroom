@@ -397,6 +397,7 @@ class Node(object):
     outputs = []
     size = StaticNodeSize(1)
     parallelization = None
+    documentation = ''
 
     def __init__(self):
         pass

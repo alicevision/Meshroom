@@ -9,6 +9,10 @@ class ImageProcessing(desc.CommandLineNode):
     # parallelization = desc.Parallelization(blockSize=40)
     # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    documentation = '''
+Convert or apply filtering to the input images.
+'''
+
     inputs = [
         desc.File(
             name='input',
@@ -20,8 +24,8 @@ class ImageProcessing(desc.CommandLineNode):
         desc.ChoiceParam(
             name='extension',
             label='File Extension',
-            description='File Extension.',
-            value='',
+            description='File Extension. If empty, use the input file type.',
+            value='exr',
             values=['', 'exr', 'jpg', 'tiff', 'png'],
             exclusive=True,
             uid=[0],
@@ -30,6 +34,13 @@ class ImageProcessing(desc.CommandLineNode):
             name='reconstructedViewsOnly',
             label='Only Reconstructed Views',
             description='Process Only Reconstructed Views',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='keepImageFilename',
+            label='Keep Image Filename',
+            description='Keep Image Filename instead of using View UID.',
             value=False,
             uid=[0],
         ),

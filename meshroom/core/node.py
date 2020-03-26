@@ -132,9 +132,6 @@ class LogManager:
 
     def __init__(self, chunk):
         self.chunk = chunk
-        self.chunk.statusChanged.connect(self.clear)
-        self.progressBar = False
-        self.cleared = False
         self.logger = logging.getLogger(chunk.node.getName())
 
     class Formatter(logging.Formatter):
@@ -151,27 +148,22 @@ class LogManager:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
-    def clear(self): 
-        if self.chunk.statusName == 'RUNNING' and not self.cleared:
-            open(self.chunk.logFile, 'w').close()
-            self.configureLogger()
-            self.cleared = True
-        # When the node gets ran again the log needs to be cleared
-        elif self.chunk.statusName in ['ERROR', 'SUCCESS']:
-            for handler in self.logger.handlers[:]:
-                # Stops the file being locked
-                handler.close()
-            self.cleared = False
-            self.progressBar = False
+    def start(self, level):
+        # Clear log file
+        open(self.chunk.logFile, 'w').close()
+        
+        self.configureLogger()
+        self.logger.setLevel(self.textToLevel(level))
+        self.progressBar = False
 
-    def waitUntilCleared(self):
-        while not self.cleared:
-            time.sleep(0.01)
+    def end(self):
+        for handler in self.logger.handlers[:]:
+            # Stops the file being locked
+            handler.close()
 
     def makeProgressBar(self, end, message=''):
         assert end > 0
         assert not self.progressBar
-        self.waitUntilCleared()
 
         self.progressEnd = end
         self.currentProgressTics = 0
@@ -194,7 +186,6 @@ class LogManager:
     def updateProgressBar(self, value):
         assert self.progressBar
         assert value <= self.progressEnd
-        self.waitUntilCleared()
 
         tics = round((value/self.progressEnd)*51)
 

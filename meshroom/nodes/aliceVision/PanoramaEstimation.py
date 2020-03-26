@@ -53,15 +53,6 @@ class PanoramaEstimation(desc.CommandLineNode):
             uid=[0],
             joinChar=',',
         ),
-        desc.IntParam(
-            name='orientation',
-            label='Orientation',
-            description='Orientation',
-            value=0,
-            range=(0, 6, 1),
-            uid=[0],
-            advanced=True,
-        ),
         desc.FloatParam(
             name='offsetLongitude',
             label='Longitude offset (deg.)',

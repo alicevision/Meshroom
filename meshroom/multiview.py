@@ -152,7 +152,8 @@ def hdriPipeline(graph):
 
     imageMatching = graph.addNewNode('ImageMatching',
                                      input=panoramaInit.outSfMDataFilename,
-                                     featuresFolders=[featureExtraction.output])
+                                     featuresFolders=[featureExtraction.output],
+                                     method='FrustumOrVocabularyTree')
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=imageMatching.input,
                                        featuresFolders=imageMatching.featuresFolders,

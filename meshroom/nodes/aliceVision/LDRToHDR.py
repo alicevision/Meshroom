@@ -29,6 +29,17 @@ class LDRToHDR(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.NORMAL
 
+    documentation='''
+This node fuse LDR (Low Dynamic Range) images with multi-bracketing into HDR (High Dynamic Range) images.
+
+It is done in 2 steps:
+
+1/ Estimation of the Camera Response Function (CRF)
+
+2/ HDR fusion relying on the CRF
+
+'''
+
     inputs = [
         desc.File(
             name='input',
@@ -40,7 +51,7 @@ class LDRToHDR(desc.CommandLineNode):
         desc.IntParam(
             name='userNbBrackets',
             label='Number of Brackets',
-            description='Number of exposure brackets per HDR image (0 for automatic).',
+            description='Number of exposure brackets per HDR image (0 for automatic detection).',
             value=0,
             range=(0, 15, 1),
             uid=[0],
@@ -111,17 +122,18 @@ class LDRToHDR(desc.CommandLineNode):
             description="Bypass HDR creation and use the medium bracket as the source for the next steps",
             value=False,
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='calibrationMethod',
             label='Calibration Method',
             description="Method used for camera calibration \n"
-                        " * linear \n"
-                        " * robertson \n"
-                        " * debevec \n"
-                        " * grossberg \n"
-                        " * laguerre",
-            values=['linear', 'robertson', 'debevec', 'grossberg', 'laguerre'],
+                        " * Linear: Disable the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear. \n"
+                        " * Debevec: This is the standard method for HDR calibration. \n"
+                        " * Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision. \n"
+                        " * Laguerre: Simple but robust method estimating the minimal number of parameters. \n"
+                        " * Robertson: First method for HDR calibration in the literature. \n",
+            values=['linear', 'debevec', 'grossberg', 'laguerre', 'robertson'],
             value='debevec',
             exclusive=True,
             uid=[0],
@@ -142,7 +154,7 @@ class LDRToHDR(desc.CommandLineNode):
         desc.ChoiceParam(
             name='fusionWeight',
             label='Fusion Weight',
-            description="Weight function used to fuse all LDR images together \n"
+            description="Weight function used to fuse all LDR images together:\n"
                         " * gaussian \n"
                         " * triangle \n"
                         " * plateau",

@@ -9,6 +9,26 @@ class FeatureExtraction(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    documentation = '''
+This node extracts distinctive groups of pixels that are, to some extent, invariant to changing camera viewpoints during image acquisition.
+Hence, a feature in the scene should have similar feature descriptions in all images.
+
+This node implements multiple methods:
+ * **SIFT**
+The most standard method. This is the default and recommended value for all use cases.
+ * **AKAZE**
+AKAZE can be interesting solution to extract features in challenging condition. It could be able to match wider angle than SIFT but has drawbacks.
+It may extract to many features, the repartition is not always good.
+It is known to be good on challenging surfaces such as skin.
+ * **CCTAG**
+CCTag is a marker type with 3 or 4 crowns. You can put markers in the scene during the shooting session to automatically re-orient and re-scale the scene to a known size.
+It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enough white margin around your CCTags.
+
+
+## Online
+[https://alicevision.org/#photogrammetry/natural_feature_extraction](https://alicevision.org/#photogrammetry/natural_feature_extraction)
+'''
+
     inputs = [
         desc.File(
             name='input',

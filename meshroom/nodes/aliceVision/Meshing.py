@@ -9,6 +9,17 @@ class Meshing(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
+    documentation = '''
+This node creates a dense geometric surface representation of the scene.
+
+First, it fuses all the depth maps into a global dense point cloud with an adaptive resolution.
+It then performs a 3D Delaunay tetrahedralization and a voting procedure is done to compute weights on cells and weights on facets connecting the cells.
+A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents the extracted mesh surface.
+
+## Online
+[https://alicevision.org/#photogrammetry/meshing](https://alicevision.org/#photogrammetry/meshing)
+'''
+
     inputs = [
         desc.File(
             name='input',

@@ -10,6 +10,10 @@ class PanoramaWarping(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaWarping {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    documentation = '''
+Compute the image warping for each input image in the panorama coordinate system.
+'''
+
     inputs = [
         desc.File(
             name='input',
@@ -21,7 +25,8 @@ class PanoramaWarping(desc.CommandLineNode):
         desc.IntParam(
             name='panoramaWidth',
             label='Panorama Width',
-            description='Panorama width (pixels). 0 For automatic size',
+            description='Panorama Width (in pixels).\n'
+                        'Set 0 to let the software choose the size automatically, so that on average the input resolution is kept (to limit over/under sampling).',
             value=10000,
             range=(0, 50000, 1000),
             uid=[0]

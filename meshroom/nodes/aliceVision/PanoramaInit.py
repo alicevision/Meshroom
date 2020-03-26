@@ -10,6 +10,18 @@ class PanoramaInit(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaInit {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    documentation = '''
+This node allows to setup the Panorama:
+
+1/ Enables the initialization the cameras from known position in an XML file (provided by
+["Roundshot VR Drive"](https://www.roundshot.com/xml_1/internet/fr/application/d394/d395/f396.cfm) ).
+
+2/ Enables to setup Full Fisheye Optics (to use an Equirectangular camera model).
+
+3/ To automatically detects the Fisheye Circle (radius + center) in input images or manually adjust it.
+
+'''
+
     inputs = [
         desc.File(
             name='input',

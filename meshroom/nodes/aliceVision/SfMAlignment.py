@@ -7,6 +7,18 @@ class SfMAlignment(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmAlignment {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    documentation = '''
+This node allows to change the coordinate system of one SfM scene to align it on another one.
+
+The alignment can be based on:
+ * from_cameras_viewid: Align cameras in both SfM on the specified viewId
+ * from_cameras_poseid: Align cameras in both SfM on the specified poseId
+ * from_cameras_filepath: Align cameras with a filepath matching, using 'fileMatchingPattern'
+ * from_cameras_metadata: Align cameras with matching metadata, using 'metadataMatchingList'
+ * from_markers: Align from markers with the same Id
+
+'''
+
     inputs = [
         desc.File(
             name='input',

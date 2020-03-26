@@ -8,6 +8,28 @@ class ImageMatching(desc.CommandLineNode):
     commandLine = 'aliceVision_imageMatching {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    documentation = '''
+The goal of this node is to select the image pairs to match. The ambition is to find the images that are looking to the same areas of the scene.
+Thanks to this node, the FeatureMatching node will only compute the matches between the selected image pairs.
+
+It provides multiple methods:
+ * **VocabularyTree**
+It uses image retrieval techniques to find images that share some content without the cost of resolving all feature matches in details.
+Each image is represented in a compact image descriptor which allows to compute the distance between all images descriptors very efficiently.
+If your scene contains less than "Voc Tree: Minimal Number of Images", all image pairs will be selected.
+ * **Sequential**
+If your input is a video sequence, you can use this option to link images between them over time.
+ * **SequentialAndVocabularyTree**
+Combines sequential approach with Voc Tree to enable connections between keyframes at different times.
+ * **Exhaustive**
+Export all image pairs.
+ * **Frustum**
+If images have known poses, computes the intersection between cameras frustums to create the list of image pairs.
+
+## Online
+[https://alicevision.org/#photogrammetry/image_matching](https://alicevision.org/#photogrammetry/image_matching)
+'''
+
     inputs = [
         desc.File(
             name='input',

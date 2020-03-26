@@ -695,22 +695,22 @@ class Reconstruction(UIGraph):
                         "",
                     ))
             else:
-                panoramaExternalInfoNodes = self.graph.nodesByType('PanoramaExternalInfo')
+                panoramaInitNodes = self.graph.nodesByType('PanoramaInit')
                 for panoramaInfoFile in filesByType.panoramaInfo:
-                    for panoramaInfoNode in panoramaExternalInfoNodes:
-                        panoramaInfoNode.attribute('config').value = panoramaInfoFile
-                if panoramaExternalInfoNodes:
+                    for panoramaInitNode in panoramaInitNodes:
+                        panoramaInitNode.attribute('config').value = panoramaInfoFile
+                if panoramaInitNodes:
                     self.info.emit(
                         Message(
                             "Panorama XML",
-                            "XML file declared on PanoramaExternalInfo node",
-                            "XML file '{}' set on node '{}'".format(','.join(filesByType.panoramaInfo), ','.join([n.getLabel() for n in panoramaExternalInfoNodes])),
+                            "XML file declared on PanoramaInit node",
+                            "XML file '{}' set on node '{}'".format(','.join(filesByType.panoramaInfo), ','.join([n.getLabel() for n in panoramaInitNodes])),
                         ))
                 else:
                     self.error.emit(
                         Message(
-                            "No PanoramaExternalInfo Node",
-                            "No PanoramaExternalInfo Node to set the Panorama file:\n'{}'.".format(','.join(filesByType.panoramaInfo)),
+                            "No PanoramaInit Node",
+                            "No PanoramaInit Node to set the Panorama file:\n'{}'.".format(','.join(filesByType.panoramaInfo)),
                             "",
                         ))
 

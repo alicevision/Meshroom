@@ -40,8 +40,8 @@ Intrinsic = [
                      " * radial1: Pinhole camera with one radial distortion parameter\n"
                      " * radial3: Pinhole camera with 3 radial distortion parameters\n"
                      " * brown: Pinhole camera with 3 radial and 2 tangential distortion parameters\n"
-                     " * fisheye4: Pinhole camera with 4 distortion parameters suited for fisheye optics (like 120° FoV)\n"
-                     " * equidistant_r3: Non-projective camera model suited for full-fisheye optics (like 180° FoV)\n",
+                     " * fisheye4: Pinhole camera with 4 distortion parameters suited for fisheye optics (like 120deg FoV)\n"
+                     " * equidistant_r3: Non-projective camera model suited for full-fisheye optics (like 180deg FoV)\n",
                      value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'equidistant_r3'], exclusive=True, uid=[0]),
     desc.IntParam(name="width", label="Width", description="Image Width", value=0, uid=[], range=(0, 10000, 1)),
     desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[], range=(0, 10000, 1)),

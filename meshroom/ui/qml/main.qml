@@ -533,6 +533,17 @@ ApplicationWindow {
                         text: "Submit"
                         onClicked: computeManager.submit(null)
                     }
+
+                    Label {
+                        visible: _reconstruction.computing 
+                        
+                        Timer {
+                            interval: 1000 
+                            running: _reconstruction.computing 
+                            repeat: true
+                            onTriggered: parent.text = "ETA: " + _reconstruction.getETA()
+                        }
+                    }
                 }
                 Item { Layout.fillWidth: true; Layout.fillHeight: true }
 

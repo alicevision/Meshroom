@@ -424,7 +424,7 @@ class Node(object):
         pass
 
     def getEstimatedTime(self, chunk, reconstruction):
-        return 1 # each chunk is estimated to take 1 second by default
+        return 0 # each chunk is estimated to take 0 seconds by default
 
     def stopProcess(self, chunk):
         raise NotImplementedError('No stopProcess implementation on node: {}'.format(chunk.node.name))

@@ -6,7 +6,7 @@ import psutil
 import shutil
 import tempfile
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 Viewpoint = [
@@ -236,6 +236,11 @@ class CameraInit(desc.CommandLineNode):
         if chunk.node.viewpointsFile:
             cmd += ' --input "{}"'.format(chunk.node.viewpointsFile)
         return cmd
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 0.264686577 # Calculated by (time taken / number of images) / benchmark
+        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        return factor*stats.Benchmark()*amount
 
     def processChunk(self, chunk):
         self.createViewpointsFile(chunk.node)

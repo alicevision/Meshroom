@@ -3,7 +3,7 @@ __version__ = "2.0"
 import json
 import os
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class StructureFromMotion(desc.CommandLineNode):
@@ -309,3 +309,8 @@ class StructureFromMotion(desc.CommandLineNode):
             intrinsics[intrinsic['intrinsicId']] = intrinsic
 
         return views, poses, intrinsics
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 7.23926197e-7 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
+        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        return factor*stats.Benchmark()*pixels*amount

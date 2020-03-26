@@ -869,16 +869,17 @@ class Graph(BaseObject):
                 flowEdges.append(link)
         return flowEdges
 
-    def nodesFromNode(self, startNode, filterType=None):
+    def nodesFromNode(self, startNode, filterType=None, toLeaves=True):
         """
-        Return the node chain from startNode to the graph leaves.
+        Return the node chain from startNode to the graph leaves or roots.
 
         Args:
             startNode (Node): the node to start the visit from.
             filterType (str): (optional) only return the nodes of the given type
                               (does not stop the visit, this is a post-process only)
+            toLeaves (bool): (optional) whether the node chain is the leaves or the roots of the graph
         Returns:
-            The list of nodes from startNode to the graph leaves following edges.
+            The list of nodes from startNode to the graph leaves or roots following edges.
         """
         nodes = []
         edges = []
@@ -890,7 +891,7 @@ class Graph(BaseObject):
 
         visitor.discoverVertex = discoverVertex
         visitor.examineEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=[startNode], reverse=True)
+        self.dfs(visitor=visitor, startNodes=[startNode], reverse=toLeaves)
         return nodes, edges
 
     def _applyExpr(self):

@@ -506,7 +506,7 @@ class Reconstruction(UIGraph):
         self.featureExtraction = self.lastNodeOfType('FeatureExtraction', self.cameraInit) if self.cameraInit else None
 
     def updateDepthMapNode(self):
-        """ Set the current FeatureExtraction node based on the current CameraInit node. """
+        """ Set the current DepthMap node based on the current CameraInit node. """
         self.depthMap = self.lastNodeOfType('DepthMapFilter', self.cameraInit) if self.cameraInit else None
 
     def updateLdr2hdrNode(self):
@@ -947,6 +947,19 @@ class Reconstruction(UIGraph):
     def reconstructedCamerasCount(self):
         """ Get the number of reconstructed cameras in the current context. """
         return len([v for v in self.getViewpoints() if self.isReconstructed(v)])
+
+    def imagesStatisticsForNode(self, node):
+        """ Get the average amount of images per chunk and average pixels for all images for a given node """
+        cameraInits = self._graph.nodesFromNode(node, "CameraInit", False)[0]
+        viewpointsAmount = sum(len(cameraInit.viewpoints.value) for cameraInit in cameraInits)
+        amount = viewpointsAmount / len(node.chunks)
+        totalPixels = 0
+        for cameraInit in cameraInits:
+            for viewpoint in cameraInit.viewpoints.value:
+                intrinsic = next((i for i in cameraInit.intrinsics.value if i.intrinsicId.value == viewpoint.intrinsicId.value)).value
+                totalPixels += intrinsic.get('width').value * intrinsic.get('height').value
+        pixels = totalPixels / viewpointsAmount
+        return amount, pixels
 
     @Slot(QObject, result="QVariant")
     def getSolvedIntrinsics(self, viewpoint):

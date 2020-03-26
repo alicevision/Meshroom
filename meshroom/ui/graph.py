@@ -14,8 +14,8 @@ from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
-from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode, Position
-from meshroom.core import submitters
+from meshroom.core.node import NodeChunk, Node, Status, StatusData, CompatibilityNode, Position
+from meshroom.core import stats, submitters
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
 
@@ -347,6 +347,7 @@ class UIGraph(QObject):
         if self.computing:
             return
         nodes = [node] if node else None
+        stats.Benchmark() # Run the benchmark (if it has not already been ran) before the computation starts
         self._computeThread = Thread(target=self._execute, args=(nodes,))
         self._computeThread.start()
         self._startTime = time.time()
@@ -393,15 +394,15 @@ class UIGraph(QObject):
     @Slot(result=str)
     def getETA(self):
         """ Estimate the time of completion and format it into 'hours:minutes:seconds'. """
-        print(str(dir(self._cameraInit)))
         timer = time.time()
         totalEstimation = 0
         for chunk in self._sortedDFSChunks:
-            if chunk.status.status == Status.SUCCESS:
-                totalEstimation += chunk.status.elapsedTime
-            elif chunk.status.status == Status.RUNNING:
+            if chunk.status.status in (Status.SUCCESS, Status.ERROR):
+                chunkStartTime = (datetime.datetime.strptime(chunk.status.startDateTime, StatusData.dateTimeFormatting)-datetime.datetime(1970,1,1)).total_seconds()
+                if self._startTime - chunkStartTime <= 0: # make sure the chunk has been computed after the computation started
+                    totalEstimation += chunk.status.elapsedTime
+            elif chunk.status.status in (Status.RUNNING, Status.SUBMITTED):
                 totalEstimation += chunk.node.nodeDesc.getEstimatedTime(chunk, self)
-
         estimation = round(totalEstimation - (time.time() - self._startTime))
         if estimation < 0:
             estimation = 0

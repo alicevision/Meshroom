@@ -533,17 +533,6 @@ ApplicationWindow {
                         text: "Submit"
                         onClicked: computeManager.submit(null)
                     }
-
-                    Label {
-                        visible: _reconstruction.computing 
-                        
-                        Timer {
-                            interval: 1000 
-                            running: _reconstruction.computing 
-                            repeat: true
-                            onTriggered: parent.text = "ETA: " + _reconstruction.getETA()
-                        }
-                    }
                 }
                 Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
@@ -557,6 +546,20 @@ ApplicationWindow {
                     onClicked: compatibilityManager.open()
                     ToolTip.text: "Compatibility Issues"
                     ToolTip.visible: hovered
+                }
+
+                Label {
+                    height: parent.height
+                    verticalAlignment: Text.AlignVCenter
+                    visible: _reconstruction.computing 
+                    anchors.right: parent.right
+                    
+                    Timer {
+                        interval: 1000 
+                        running: _reconstruction.computing 
+                        repeat: true
+                        onTriggered: parent.text = "ETA: " + _reconstruction.getETA()
+                    }
                 }
             }
 

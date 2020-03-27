@@ -7,6 +7,7 @@ import json
 import zipfile
 import requests
 import io
+import time
 
 
 class BufferReader(io.BytesIO): # object to call the callback while the file is being uploaded
@@ -14,10 +15,12 @@ class BufferReader(io.BytesIO): # object to call the callback while the file is 
                  callback=None,
                  cb_args=(),
                  cb_kwargs={},
+                 updateStats=None,
                  stopped=None):
         self._callback = callback
         self._cb_args = cb_args
         self._cb_kwargs = cb_kwargs
+        self._updateStats = updateStats
         self._stopped = stopped
         self._progress = 0
         self._len = len(buf)
@@ -38,6 +41,8 @@ class BufferReader(io.BytesIO): # object to call the callback while the file is 
                 self._callback(*self._cb_args, **self._cb_kwargs)
             except Exception as e: # catches exception from the callback
                 self._cb_kwargs['logManager'].logger.warning('Error at callback: {}'.format(e))
+        if self._updateStats:
+            self._updateStats(self._len, self._progress)
 
         if self._stopped():
             raise RuntimeError('Node stopped by user')
@@ -51,6 +56,7 @@ def progressUpdate(size=None, progress=None, logManager=None):
 
 class SketchfabUpload(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
+
     inputs = [
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -187,7 +193,7 @@ class SketchfabUpload(desc.Node):
         f.close()
         (files, contentType) = requests.packages.urllib3.filepost.encode_multipart_formdata(file)
         headers = {'Authorization': 'Token {}'.format(apiToken), 'Content-Type': contentType}
-        body = BufferReader(files, progressUpdate, cb_kwargs={'logManager': chunk.logManager}, stopped=self.stopped)
+        body = BufferReader(files, progressUpdate, cb_kwargs={'logManager': chunk.logManager}, updateStats=self.updateUploadStatistics, stopped=self.stopped)
         chunk.logger.info('Uploading...')
         try:
             r = requests.post(
@@ -219,6 +225,9 @@ class SketchfabUpload(desc.Node):
         try:
             self._stopped = False
             chunk.logManager.start(chunk.node.verboseLevel.value)
+            self._startTime = time.time()
+            self._progressMeasuredAt = self._startTime
+            self._progress = 0
             uploadFile = ''
         
             if not chunk.node.inputFiles:
@@ -277,6 +286,18 @@ class SketchfabUpload(desc.Node):
                 chunk.logger.debug('Deleted {}'.format(uploadFile))
 
             chunk.logManager.end()
+
+    def updateUploadStatistics(self, size, amount):
+        self._progressMeasuredAt = time.time()
+        if amount <= 0: # prevent division by 0
+            amount = 1
+        self._progress = size / amount
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        if chunk.statusName == 'RUNNING':
+            return self._progress * (self._progressMeasuredAt - self._startTime)
+        else:
+            return 0
 
     def stopProcess(self, chunk):
         self._stopped = True

@@ -1,6 +1,6 @@
 __version__ = "1.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class MeshResampling(desc.CommandLineNode):
@@ -84,3 +84,8 @@ class MeshResampling(desc.CommandLineNode):
             uid=[],
             ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 8.079297209750893e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
+        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        return factor*stats.Benchmark()*pixels*amount

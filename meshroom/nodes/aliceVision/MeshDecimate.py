@@ -1,6 +1,6 @@
 __version__ = "1.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class MeshDecimate(desc.CommandLineNode):
@@ -79,3 +79,8 @@ class MeshDecimate(desc.CommandLineNode):
             uid=[],
             ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 3.242753813629812e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
+        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        return factor*stats.Benchmark()*pixels*amount

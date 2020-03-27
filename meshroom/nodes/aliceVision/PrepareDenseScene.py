@@ -1,6 +1,6 @@
 __version__ = "3.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class PrepareDenseScene(desc.CommandLineNode):
@@ -92,3 +92,8 @@ class PrepareDenseScene(desc.CommandLineNode):
             advanced=True
             ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 3.5434794307875456e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
+        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        return factor*stats.Benchmark()*pixels*amount

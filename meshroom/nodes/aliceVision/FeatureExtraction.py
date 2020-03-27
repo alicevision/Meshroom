@@ -75,6 +75,6 @@ class FeatureExtraction(desc.CommandLineNode):
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 9.199e-07 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
+        factor = 1.216368273112215e-05 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
         amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
         return factor*stats.Benchmark()*pixels*amount

@@ -1,6 +1,6 @@
 __version__ = "3.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class Meshing(desc.CommandLineNode):
@@ -251,3 +251,8 @@ class Meshing(desc.CommandLineNode):
             uid=[],
         ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 5.4768095591487445e-05 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
+        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        return factor*stats.Benchmark()*pixels*amount

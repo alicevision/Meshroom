@@ -311,6 +311,6 @@ class StructureFromMotion(desc.CommandLineNode):
         return views, poses, intrinsics
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 7.23926197e-7 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
+        factor = 9.436268413444888e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
         amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
         return factor*stats.Benchmark()*pixels*amount

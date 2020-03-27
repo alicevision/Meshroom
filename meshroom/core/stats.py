@@ -3,6 +3,7 @@ import subprocess
 import logging
 import psutil
 import time
+import timeit
 import threading
 import platform
 import os
@@ -46,18 +47,19 @@ class Benchmark:
     result = None
     def __new__(cls):
         if Benchmark.result is None:
-            Benchmark.result = (cls.run() / psutil.cpu_count(logical=False)) / cls.smtFactor()
+            Benchmark.result = cls.run()
         return cls.result
 
-    @staticmethod
-    def run(): 
-        timer = time.perf_counter()
-        for n in range(2500): # Calculate the factorials of an arbitrary amount of numbers
-            factorial = 1
-            for i in range(1,int(n)+1):
-                factorial = factorial * i
-        t = time.perf_counter()-timer
-        return t
+    @classmethod
+    def run(cls): 
+        benchmark = """
+for n in range(1000): # Calculate the factorials of an arbitrary amount of numbers
+    factorial = 1
+    for i in range(1, int(n)+1):
+        factorial = factorial * i
+"""
+        t = timeit.timeit(benchmark, number=1)
+        return (t / psutil.cpu_count(logical=False)) / cls.smtFactor()
 
     @staticmethod
     def smtFactor():

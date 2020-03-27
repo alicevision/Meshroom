@@ -1,6 +1,6 @@
 __version__ = "5.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class Texturing(desc.CommandLineNode):
@@ -235,3 +235,8 @@ class Texturing(desc.CommandLineNode):
             group='',
             ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 2.9496699741919386e-05 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
+        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        return factor*stats.Benchmark()*pixels*amount

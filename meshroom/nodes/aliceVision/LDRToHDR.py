@@ -64,7 +64,6 @@ It is done in 2 steps:
             value=0,
             range=(0, 10, 1),
             uid=[],
-            advanced=True,
         ),
         desc.FloatParam(
             name='highlightCorrectionFactor',

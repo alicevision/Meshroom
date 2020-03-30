@@ -64,7 +64,6 @@ Estimate relative camera rotations between input images.
             value=0.0,
             range=(-180.0, 180.0, 1.0),
             uid=[0],
-            advanced=True,
         ),
         desc.FloatParam(
             name='offsetLatitude',
@@ -73,7 +72,6 @@ Estimate relative camera rotations between input images.
             value=0.0,
             range=(-90.0, 90.0, 1.0),
             uid=[0],
-            advanced=True,
         ),
         desc.ChoiceParam(
             name='rotationAveraging',

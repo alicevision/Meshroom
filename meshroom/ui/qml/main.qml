@@ -210,9 +210,9 @@ ApplicationWindow {
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
-            if(_reconstruction.loadUrl(file))
+            if(_reconstruction.loadUrl(fileUrl))
             {
-                MeshroomApp.addRecentProjectFile(file.toString())
+                MeshroomApp.addRecentProjectFile(fileUrl.toString())
             }
         }
     }

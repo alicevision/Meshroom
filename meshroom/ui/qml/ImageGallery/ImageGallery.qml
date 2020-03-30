@@ -357,7 +357,7 @@ Panel {
             text: MaterialIcons.hdr_on
             visible: _reconstruction.ldr2hdr
             enabled: _reconstruction.ldr2hdr && _reconstruction.ldr2hdr.isComputed
-            property string nodeID: _reconstruction.ldr2hdr.label + _reconstruction.ldr2hdr.isComputed
+            property string nodeID: _reconstruction.ldr2hdr ? (_reconstruction.ldr2hdr.label + _reconstruction.ldr2hdr.isComputed) : ""
             onNodeIDChanged: {
                 if(checked)
                 {

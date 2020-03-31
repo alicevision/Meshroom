@@ -98,7 +98,6 @@ FloatingPane {
                 id: residualLegend
                 chartView: residualChart
             }
-
         }
     }
 

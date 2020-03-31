@@ -12,6 +12,8 @@ Repeater {
 
     /// ViewID to display the features of
     property int viewId
+    /// SfMData to display the data of SfM
+    property var sfmData
     /// Folder containing the features files
     property string folder
     /// The list of describer types to load
@@ -35,6 +37,7 @@ Repeater {
         viewId: root.viewId
         color: root.colors[colorIndex]
         displayMode: root.displayMode
+        msfmData: root.sfmData
     }
 
 }

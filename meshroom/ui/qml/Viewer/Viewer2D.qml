@@ -231,6 +231,7 @@ FocusScope {
                             'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
                             'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
                             'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
+                            'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
                         })
                     }
                 }
@@ -297,8 +298,8 @@ FocusScope {
                     }
 
                     Loader {
-                        id: msfmData
-                        active: displaySfmStatsView.checked
+                        id: msfmDataLoader
+                        active: displaySfmStatsView.checked || displayFeatures.checked || displaySfmDataGlobalStats.checked
 
                         Component.onCompleted: {
                             // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
@@ -311,14 +312,27 @@ FocusScope {
                     Loader {
                         id: sfmStatsView
                         anchors.fill: parent
-                        active: msfmData.status === Loader.Ready && displaySfmStatsView.checked
+                        active: msfmDataLoader.status === Loader.Ready && displaySfmStatsView.checked
 
                         Component.onCompleted: {
                             // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
                             // so it can fail safely if the c++ plugin is not available
                             setSource("SfmStatsView.qml", {
+                                'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
                                 'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                                'msfmData': Qt.binding(function() { return msfmData.item; }),
+                            })
+                        }
+                    }
+                    Loader {
+                        id: sfmGlobalStats
+                        anchors.fill: parent
+                        active: msfmDataLoader.status === Loader.Ready && displaySfmDataGlobalStats.checked
+
+                        Component.onCompleted: {
+                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                            // so it can fail safely if the c++ plugin is not available
+                            setSource("SfmGlobalStats.qml", {
+                                'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
                             })
                         }
                     }
@@ -457,7 +471,33 @@ FocusScope {
                             enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed() && _reconstruction.selectedViewId >= 0
                             onCheckedChanged: {
                                 if(checked == true)
+                                {
+                                    displaySfmDataGlobalStats.checked = false
                                     metadataCB.checked = false
+                                }
+                            }
+                        }
+                        MaterialToolButton {
+                            id: displaySfmDataGlobalStats
+
+                            font.family: MaterialIcons.fontFamily
+                            text: MaterialIcons.language
+
+                            ToolTip.text: "StructureFromMotion Global Statistics"
+                            ToolTip.visible: hovered
+
+                            font.pointSize: 14
+                            padding: 2
+                            smooth: false
+                            flat: true
+                            checkable: enabled
+                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed()
+                            onCheckedChanged: {
+                                if(checked == true)
+                                {
+                                    displaySfmStatsView.checked = false
+                                    metadataCB.checked = false
+                                }
                             }
                         }
                         MaterialToolButton {
@@ -477,7 +517,10 @@ FocusScope {
                             enabled: _reconstruction.selectedViewId >= 0
                             onCheckedChanged: {
                                 if(checked == true)
+                                {
+                                    displaySfmDataGlobalStats.checked = false
                                     displaySfmStatsView.checked = false
+                                }
                             }
                         }
 

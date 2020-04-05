@@ -225,14 +225,19 @@ FocusScope {
                     x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
                     y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
 
-                    Component.onCompleted: {
-                        // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-                        setSource("FeaturesViewer.qml", {
-                            'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                            'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
-                            'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
-                            'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
-                        })
+                    onActiveChanged: {
+                        if(active) {
+                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                            setSource("FeaturesViewer.qml", {
+                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
+                                'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
+                                'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
+                            })
+                        } else {
+                            // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                            setSource("", {})
+                        }
                     }
                 }
             }

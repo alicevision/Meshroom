@@ -47,6 +47,7 @@ FloatingPane {
                                 flat: true
                                 Layout.fillWidth: true
                                 model: root.featuresViewer.displayModes
+                                currentIndex: root.featuresViewer.displayMode
                                 onActivated: root.featuresViewer.displayMode = currentIndex
                             }
                         }
@@ -73,15 +74,39 @@ FloatingPane {
                 id: featureType
 
                 property var viewer: root.featuresViewer.itemAt(index)
+
                 spacing: 4
 
-                // Visibility toogle
+                // Features visibility toogle (features)
                 MaterialToolButton {
-                    text: featureType.viewer.visible ? MaterialIcons.visibility : MaterialIcons.visibility_off
-                    onClicked: featureType.viewer.visible = !featureType.viewer.visible
+                    id: featuresVisibilityButton
+                    checkable: true
+                    checked: true
+                    text: featuresVisibilityButton.checked ? MaterialIcons.visibility : MaterialIcons.visibility_off
+                    onClicked: {
+                        console.warn("featuresVisibilityButton.checked: " + featuresVisibilityButton.checked)
+                        featureType.viewer.displayfeatures = featuresVisibilityButton.checked;
+                    }
                     font.pointSize: 10
                     opacity: featureType.viewer.visible ? 1.0 : 0.6
                 }
+
+                // Landmarks visibility toogle (sfmData)
+                MaterialToolButton {
+                    id: landmarksVisibilityButton
+                    checkable: true
+                    checked: true
+                    text: checked ? MaterialIcons.location_on : MaterialIcons.location_off
+                    onClicked: {
+                        console.warn("landmarksVisibilityButton.checked: " + landmarksVisibilityButton.checked)
+                        featureType.viewer.displayLandmarks = landmarksVisibilityButton.checked;
+                    }
+                    font.pointSize: 10
+                    // checkable: enabled
+                    // enabled: landmarks !== false
+                    // opacity: featureType.viewer.visible ? 1.0 : 0.6
+                }
+
                 // ColorChart picker
                 ColorChart {
                     implicitWidth: 12
@@ -89,7 +114,7 @@ FloatingPane {
                     colors: root.featuresViewer.colors
                     currentIndex: featureType.viewer.colorIndex
                     // offset featuresViewer color set when changing the color of one feature type
-                    onColorPicked: root.featuresViewer.colorOffset = colorIndex - index
+                    onColorPicked: featureType.viewer.colorOffset = colorIndex - index
                 }
                 // Feature type name
                 Label {
@@ -105,6 +130,7 @@ FloatingPane {
                         running: true
                     }
                 }
+
             }
         }
     }

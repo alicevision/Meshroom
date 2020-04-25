@@ -605,7 +605,14 @@ class Reconstruction(UIGraph):
         Fetching urls from dropEvent is generally expensive in QML/JS (bug ?).
         This method allows to reduce process time by doing it on Python side.
         """
-        filesByType = self.getFilesByTypeFromDrop(drop)
+        urls = drop.property("urls")
+        return self.handleFilesUrls(urls, cameraInit)
+
+    @Slot("QList<QUrl>", Node)
+    def handleFilesUrls(self, urls, cameraInit):
+        """ Handle generic urls aiming to add images to the Reconstruction.
+        """
+        filesByType = self.getFilesByTypeFromUrls(urls)
         if filesByType.images:
             self.importImagesAsync(filesByType.images, cameraInit)
         if filesByType.videos:
@@ -665,16 +672,15 @@ class Reconstruction(UIGraph):
                 )
 
     @staticmethod
-    def getFilesByTypeFromDrop(drop):
+    def getFilesByTypeFromUrls(urls):
         """
 
         Args:
-            drop:
+            urls:
 
         Returns:
             <images, otherFiles> List of recognized images and list of other files
         """
-        urls = drop.property("urls")
         # Build the list of images paths
         filesByType = multiview.FilesByType()
         for url in urls:

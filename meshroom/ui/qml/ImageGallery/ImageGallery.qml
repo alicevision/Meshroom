@@ -309,7 +309,7 @@ Panel {
                         text: "Augment Reconstruction"
                         font.bold: true
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        visible: m.viewpoints ? m.viewpoints.count > 0 : false
+                        visible: _reconstruction.sfm && _reconstruction.viewpoints ? _reconstruction.viewpoints.count >= 2 : false
                         background: Rectangle {
                             color: parent.hovered ? palette.highlight : palette.window
                             opacity: 0.8

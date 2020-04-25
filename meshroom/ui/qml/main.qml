@@ -422,7 +422,7 @@ ApplicationWindow {
                 id: addFilesAugmentAction
                 text: "Add Images (Augment)..."
                 shortcut: "Ctrl+Shift+I"
-                enabled: computeManager.canStartComputation
+                enabled: _reconstruction.sfm && _reconstruction.viewpoints ? _reconstruction.viewpoints.count >= 2 : false
                 onTriggered: addFileAugmentDialog.open()
             }
             MenuSeparator { }

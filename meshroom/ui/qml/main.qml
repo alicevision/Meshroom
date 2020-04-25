@@ -1,6 +1,7 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.3
 import QtQuick.Controls 1.4 as Controls1 // For SplitView
+import QtQuick.Dialogs 1.1
 import QtQuick.Layouts 1.1
 import QtQuick.Window 2.3
 import QtQml.Models 2.2
@@ -136,6 +137,36 @@ ApplicationWindow {
             _reconstruction.saveAs(file)
             closed(Platform.Dialog.Accepted)
             MeshroomApp.addRecentProjectFile(file.toString())
+        }
+        onRejected: closed(Platform.Dialog.Rejected)
+    }
+
+    FileDialog {
+        id: addFileDialog
+
+        signal closed(var result)
+
+        title: "Add Images"
+        nameFilters: ["Images (*.jpg *.jpeg *.tif *.tiff *.png *.exr *.rw2 *.cr2 *.nef *.arw)"]
+        selectMultiple: true
+        onAccepted: {
+            _reconstruction.handleFilesUrls(fileUrls, _reconstruction.cameraInit)
+            closed(Platform.Dialog.Accepted)
+        }
+        onRejected: closed(Platform.Dialog.Rejected)
+    }
+
+    FileDialog {
+        id: addFileAugmentDialog
+
+        signal closed(var result)
+
+        title: "Add Images (Augment)"
+        nameFilters: ["Images (*.jpg *.jpeg *.tif *.tiff *.png *.exr *.rw2 *.cr2 *.nef *.arw)"]
+        selectMultiple: true
+        onAccepted: {
+            _reconstruction.handleFilesUrls(fileUrls, null)
+            closed(Platform.Dialog.Accepted)
         }
         onRejected: closed(Platform.Dialog.Rejected)
     }
@@ -379,6 +410,20 @@ ApplicationWindow {
                 text: "Save As..."
                 shortcut: "Ctrl+Shift+S"
                 onTriggered: saveFileDialog.open()
+            }
+            MenuSeparator { }
+            Action {
+                id: addFilesAction
+                text: "Add Images..."
+                shortcut: "Ctrl+I"
+                onTriggered: addFileDialog.open()
+            }
+            Action {
+                id: addFilesAugmentAction
+                text: "Add Images (Augment)..."
+                shortcut: "Ctrl+Shift+I"
+                enabled: computeManager.canStartComputation
+                onTriggered: addFileAugmentDialog.open()
             }
             MenuSeparator { }
             Action {

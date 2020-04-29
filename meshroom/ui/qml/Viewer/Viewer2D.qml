@@ -231,7 +231,8 @@ FocusScope {
                             setSource("FeaturesViewer.qml", {
                                 'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
                                 'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
-                                'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
+                                'featureFolder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
+                                'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
                                 'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
                             })
                         } else {
@@ -311,6 +312,18 @@ FocusScope {
                             // so it can fail safely if the c++ plugin is not available
                             setSource("MSfMData.qml", {
                                 'sfmDataPath': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.sfm.attribute("output").value); }),
+                            })
+                        }
+                    }
+                    Loader {
+                        id: mtracksLoader
+                        active: displayFeatures.checked // || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
+
+                        Component.onCompleted: {
+                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                            // so it can fail safely if the c++ plugin is not available
+                            setSource("MTracks.qml", {
+                                'matchingFolder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureMatching.attribute("output").value); }),
                             })
                         }
                     }

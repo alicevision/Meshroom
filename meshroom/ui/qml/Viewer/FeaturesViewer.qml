@@ -15,7 +15,9 @@ Repeater {
     /// SfMData to display the data of SfM
     property var sfmData
     /// Folder containing the features files
-    property string folder
+    property string featureFolder
+    /// Folder containing the matches files
+    property var tracks
     /// The list of describer types to load
     property alias describerTypes: root.model
     /// List of available display modes
@@ -32,7 +34,8 @@ Repeater {
         readonly property int colorIndex: (index + colorOffset) % root.colors.length
         property int colorOffset: 0
         describerType: modelData
-        folder: root.folder
+        featureFolder: root.featureFolder
+        mtracks: root.tracks
         viewId: root.viewId
         color: root.colors[colorIndex]
         landmarkColor: Colors.red

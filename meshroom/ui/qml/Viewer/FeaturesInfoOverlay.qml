@@ -18,7 +18,6 @@ FloatingPane {
     property var featureExtractionNode: null
 
     ColumnLayout {
-
         // Header
         RowLayout {
             // FeatureExtraction node name
@@ -77,12 +76,12 @@ FloatingPane {
 
                 spacing: 4
 
-                // Features visibility toogle (features)
+                // Features visibility toogle
                 MaterialToolButton {
                     id: featuresVisibilityButton
                     checkable: true
                     checked: true
-                    text: featuresVisibilityButton.checked ? MaterialIcons.visibility : MaterialIcons.visibility_off
+                    text: MaterialIcons.center_focus_strong
                     onClicked: {
                         console.warn("featuresVisibilityButton.checked: " + featuresVisibilityButton.checked)
                         featureType.viewer.displayfeatures = featuresVisibilityButton.checked;
@@ -91,20 +90,30 @@ FloatingPane {
                     opacity: featureType.viewer.visible ? 1.0 : 0.6
                 }
 
-                // Landmarks visibility toogle (sfmData)
+                // Tracks visibility toogle
+                MaterialToolButton {
+                    id: tracksVisibilityButton
+                    checkable: true
+                    checked: true
+                    text: MaterialIcons.timeline
+                    onClicked: {
+                        console.warn("tracksVisibilityButton.checked: " + tracksVisibilityButton.checked)
+                        featureType.viewer.displayTracks = tracksVisibilityButton.checked;
+                    }
+                    font.pointSize: 10
+                }
+
+                // Landmarks visibility toogle
                 MaterialToolButton {
                     id: landmarksVisibilityButton
                     checkable: true
                     checked: true
-                    text: checked ? MaterialIcons.location_on : MaterialIcons.location_off
+                    text: MaterialIcons.fiber_manual_record
                     onClicked: {
                         console.warn("landmarksVisibilityButton.checked: " + landmarksVisibilityButton.checked)
                         featureType.viewer.displayLandmarks = landmarksVisibilityButton.checked;
                     }
                     font.pointSize: 10
-                    // checkable: enabled
-                    // enabled: landmarks !== false
-                    // opacity: featureType.viewer.visible ? 1.0 : 0.6
                 }
 
                 // ColorChart picker
@@ -118,7 +127,7 @@ FloatingPane {
                 }
                 // Feature type name
                 Label {
-                    text: featureType.viewer.describerType + (featureType.viewer.loadingFeatures ? "" : ": " + featureType.viewer.features.length)
+                    text: featureType.viewer.describerType + (featureType.viewer.loadingFeatures ? "" : ": " + featureType.viewer.features.length + " / " + featureType.viewer.nbTracks + " / " + featureType.viewer.nbLandmarks )
                 }
                 // Feature loading status
                 Loader {

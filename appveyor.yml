@@ -1,7 +1,6 @@
 image: Visual Studio 2019
 environment:
-  matrix:
-    - PYTHON: "C:\\Python38-x64"
+  PYTHON: "C:\\Python38-x64"
 
 install:
   - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"

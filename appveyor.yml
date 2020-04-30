@@ -14,6 +14,7 @@ test_script:
 
 after_test:
   - "python setup.py build"
-  
+  - 7z a meshroomWin64snapshot%APPVEYOR_PULL_REQUEST_HEAD_COMMIT% ./build/*
+
 artifacts:
- - path: build
+ - path: build/*.zip

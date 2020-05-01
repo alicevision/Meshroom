@@ -5,7 +5,8 @@ environment:
 install:
   - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "pip install -r requirements.txt -r dev_requirements.txt --timeout 45"
-  - "python meshroom/__init__.py"
+  - "python meshroom/__init__.py setupEnvironment"
+  - "python meshroom/__init__.py setupEnvironment()"
 
 build: off
 

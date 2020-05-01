@@ -7,7 +7,8 @@ install:
   - cmake .
   - "pip install -r requirements.txt -r dev_requirements.txt --timeout 45"
 
-build: off
+build:
+  project: meshroom.sln
 
 test_script:
   - "pytest tests/"

@@ -4,7 +4,7 @@ environment:
 
 install:
   - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - git submodule update --init --recursive
+  - cmake .
   - "pip install -r requirements.txt -r dev_requirements.txt --timeout 45"
 
 build: off

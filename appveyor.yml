@@ -4,11 +4,10 @@ environment:
 
 install:
   - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - cmake .
   - "pip install -r requirements.txt -r dev_requirements.txt --timeout 45"
+  - "python meshroom/__init__.py"
 
-build:
-  project: meshroom.sln
+build: off
 
 test_script:
   - "pytest tests/"

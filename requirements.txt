@@ -5,4 +5,4 @@ PySide2==5.14.1
 markdown==2.6.11
 requests==2.22.0
 NumPy>=1.18.1
-PyMeshFix>= 0.13.4
+PyMeshFix>=0.13.4

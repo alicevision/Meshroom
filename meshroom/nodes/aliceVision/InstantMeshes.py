@@ -1,32 +1,5 @@
-# Instant Meshes node plugin for Meshroom
-#
-# Meshroom plugin v.0.1-0.4 by Jörg Dittmer (https://github.com/djoerg) 02-03.2020,
+# Instant Meshes plugin v.0.1-0.4 by Jörg Dittmer (https://github.com/djoerg) 02-03.2020,
 # based on the plugin by natowi (https://github.com/natowi) 11.2019
-# Meshroom plugin license: Mozilla Public License Version 2.0
-#
-# Credits
-# -------
-#
-# Pre-compiled binaries for Instant Meshes can be downloaded from https://github.com/wjakob/instant-meshes
-# Instant Meshes, created by  Wenzel Jakob, Marco Tarini, Daniele Panozzo, Olga Sorkine-Hornung
-#
-# This code uses the PyMeshFix wrapper from the open source project PyVista. 
-# See: https://www.pyvista.org/
-#
-#    Sullivan et al., (2019). PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization
-#    Toolkit (VTK). Journal of Open Source Software, 4(37), 1450, https://doi.org/10.21105/joss.01450
-# 
-# Special thanks to Alex Kaszynski (@akaszynski) for providing the new PyVista version 0.13.4 with easer
-# usage of the meshfix wrapper and optional dependencies.
-#
-#
-# Original MeshFix was developed by Marco Attene.
-# See: https://github.com/MarcoAttene/MeshFix-V2.1
-# Copyright:
-#    MeshFix is
-#    Copyright(C) 2010: IMATI-GE / CNR                                       
-#    All rights reserved.    
-# 
 #
 # Wavefront OBJ format load/save routine is inspired by James Gregson's blog post: 
 # http://jamesgregson.ca/loadsave-wavefront-obj-files-in-python.html

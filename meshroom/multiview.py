@@ -6,7 +6,10 @@ import os
 from meshroom.core.graph import Graph, GraphModification
 
 # Supported image extensions
-imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr', '.rw2', '.cr2', '.nef', '.arw')
+imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr',
+                   '.rw2', '.cr2', '.nef', '.arw',
+                   '.dpx',
+                   )
 videoExtensions = ('.avi', '.mov', '.qt',
                    '.mkv', '.webm',
                    '.mp4', '.mpg', '.mpeg', '.m2v', '.m4v',

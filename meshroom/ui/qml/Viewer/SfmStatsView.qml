@@ -21,6 +21,7 @@ FloatingPane {
     property int viewId
     property color textColor: Colors.sysPalette.text
 
+    visible: (_reconstruction.sfm && _reconstruction.sfm.isComputed()) ? root.visible : false
     clip: true
     padding: 4
 

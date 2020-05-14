@@ -388,6 +388,8 @@ FocusScope {
                             // so it can fail safely if the c++ plugin is not available
                             setSource("SfmGlobalStats.qml", {
                                 'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
+                                'mTracks': Qt.binding(function() { return mtracksLoader.item; }),
+
                             })
                         }
                     }

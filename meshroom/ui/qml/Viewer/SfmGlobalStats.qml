@@ -17,8 +17,10 @@ FloatingPane {
     id: root
 
     property var msfmData
+    property var mTracks
     property color textColor: Colors.sysPalette.text
 
+    visible: (_reconstruction.sfm && _reconstruction.sfm.isComputed()) ? root.visible : false
     clip: true
     padding: 4
 
@@ -259,12 +261,6 @@ FloatingPane {
             name: "Landmarks"
         }
         LineSeries {
-            id: featuresPerViewLineSerie
-            axisX: landmarksPerViewValueAxisX
-            axisY: landmarksPerViewValueAxisY
-            name: "Features"
-        }
-        LineSeries {
             id: tracksPerViewLineSerie
             axisX: landmarksPerViewValueAxisX
             axisY: landmarksPerViewValueAxisY
@@ -308,11 +304,11 @@ FloatingPane {
     // Stats from the sfmData
     AliceVision.MSfMDataStats {
         id: sfmDataStat
-        msfmData: (root.visible && root.msfmData && root.msfmData.status === AliceVision.MSfMData.Ready) ? root.msfmData : null
-        onStatsChanged: {
-            console.warn("QML AliceVision.MSfMDataStats statsChanged: " + sfmDataStat.msfmData);
+        msfmData: root.msfmData
+        mTracks: root.mTracks
+
+        onAxisChanged: {
             fillLandmarksPerViewSerie(landmarksPerViewLineSerie);
-            fillFeaturesPerViewSerie(featuresPerViewLineSerie);
             fillTracksPerViewSerie(tracksPerViewLineSerie);
             fillResidualsMinPerViewSerie(residualsMinPerViewLineSerie);
             fillResidualsMaxPerViewSerie(residualsMaxPerViewLineSerie);
@@ -326,7 +322,6 @@ FloatingPane {
             fillObservationsLengthsMedianPerViewSerie(observationsLengthsMedianPerViewLineSerie);
             fillObservationsLengthsFirstQuartilePerViewSerie(observationsLengthsFirstQuartilePerViewLineSerie);
             fillObservationsLengthsThirdQuartilePerViewSerie(observationsLengthsThirdQuartilePerViewLineSerie);
-
         }
     }
 }

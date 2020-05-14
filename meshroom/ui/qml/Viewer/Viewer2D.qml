@@ -305,7 +305,26 @@ FocusScope {
 
                     Loader {
                         id: msfmDataLoader
-                        active: displaySfmStatsView.checked || displayFeatures.checked || displaySfmDataGlobalStats.checked
+                        //active: _reconstruction.sfm && _reconstruction.sfm.isComputed()
+
+                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
+                        property var activeNode: _reconstruction.sfm
+
+                        active: false
+                        // It takes time to load tracks, so keep them looaded, if we may use it again.
+                        // If we load another node, we can trash them (to eventually load the new node data).
+                        onIsUsedChanged: {
+                            if(!active && isUsed && activeNode)
+                                active = true;
+                        }
+                        onActiveNodeChanged: {
+                            if(!isUsed)
+                                active = false;
+                            else if(!activeNode)
+                                active = false;
+                            else
+                                active = true;
+                        }
 
                         Component.onCompleted: {
                             // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
@@ -317,7 +336,25 @@ FocusScope {
                     }
                     Loader {
                         id: mtracksLoader
-                        active: displayFeatures.checked // || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
+                        // active: _reconstruction.featureMatching
+
+                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
+                        property var activeNode: _reconstruction.featureMatching
+                        active: false
+                        // It takes time to load tracks, so keep them looaded, if we may use it again.
+                        // If we load another node, we can trash them (to eventually load the new node data).
+                        onIsUsedChanged: {
+                            if(!active && isUsed && activeNode)
+                                active = true;
+                        }
+                        onActiveNodeChanged: {
+                            if(!isUsed)
+                                active = false;
+                            else if(!activeNode)
+                                active = false;
+                            else
+                                active = true;
+                        }
 
                         Component.onCompleted: {
                             // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource

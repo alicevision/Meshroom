@@ -259,8 +259,8 @@ FocusScope {
                             // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             setSource("FeaturesViewer.qml", {
                                 'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                                'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
-                                'featureFolder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
+                                'model': Qt.binding(function() { return _reconstruction.featureExtraction ? _reconstruction.featureExtraction.attribute("describerTypes").value : ""; }),
+                                'featureFolder': Qt.binding(function() { return _reconstruction.featureExtraction ? Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value) : ""; }),
                                 'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
                                 'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
                             })
@@ -334,22 +334,29 @@ FocusScope {
 
                     Loader {
                         id: msfmDataLoader
-                        //active: _reconstruction.sfm && _reconstruction.sfm.isComputed()
+                        // active: _reconstruction.sfm && _reconstruction.sfm.isComputed()
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
                         property var activeNode: _reconstruction.sfm
+                        property bool isComputed: activeNode && activeNode.isComputed()
 
                         active: false
                         // It takes time to load tracks, so keep them looaded, if we may use it again.
                         // If we load another node, we can trash them (to eventually load the new node data).
                         onIsUsedChanged: {
-                            if(!active && isUsed && activeNode)
+                            if(!active && isUsed && isComputed)
+                                active = true;
+                        }
+                        onIsComputedChanged: {
+                            if(!isComputed)
+                                active = false;
+                            if(!active && isUsed)
                                 active = true;
                         }
                         onActiveNodeChanged: {
                             if(!isUsed)
                                 active = false;
-                            else if(!activeNode)
+                            else if(!isComputed)
                                 active = false;
                             else
                                 active = true;
@@ -359,7 +366,7 @@ FocusScope {
                             // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
                             // so it can fail safely if the c++ plugin is not available
                             setSource("MSfMData.qml", {
-                                'sfmDataPath': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.sfm.attribute("output").value); }),
+                                'sfmDataPath': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); }),
                             })
                         }
                     }
@@ -369,17 +376,26 @@ FocusScope {
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
                         property var activeNode: _reconstruction.featureMatching
+                        property bool isComputed: activeNode && activeNode.isComputed()
+
                         active: false
                         // It takes time to load tracks, so keep them looaded, if we may use it again.
                         // If we load another node, we can trash them (to eventually load the new node data).
                         onIsUsedChanged: {
-                            if(!active && isUsed && activeNode)
+                            if(!active && isUsed && isComputed)
+                                active = true;
+                        }
+                        onIsComputedChanged: {
+                            if(!isComputed)
+                                active = false;
+                            if(!active && isUsed)
                                 active = true;
                         }
                         onActiveNodeChanged: {
+                            console.warn("mtracksLoader.onActiveNodeChanged, activeNode: " + activeNode)
                             if(!isUsed)
                                 active = false;
-                            else if(!activeNode)
+                            else if(!isComputed)
                                 active = false;
                             else
                                 active = true;
@@ -389,7 +405,7 @@ FocusScope {
                             // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
                             // so it can fail safely if the c++ plugin is not available
                             setSource("MTracks.qml", {
-                                'matchingFolder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureMatching.attribute("output").value); }),
+                                'matchingFolder': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); }),
                             })
                         }
                     }

@@ -22,7 +22,7 @@ FloatingPane {
         RowLayout {
             // FeatureExtraction node name
             Label {
-                text: featureExtractionNode.label
+                text: featureExtractionNode ? featureExtractionNode.label : ""
                 Layout.fillWidth: true
             }
             // Settings menu
@@ -127,7 +127,14 @@ FloatingPane {
                 }
                 // Feature type name
                 Label {
-                    text: featureType.viewer.describerType + (featureType.viewer.loadingFeatures ? "" : ": " + featureType.viewer.features.length + " / " + featureType.viewer.nbTracks + " / " + featureType.viewer.nbLandmarks )
+                    text: {
+                        if(featureType.viewer.loadingFeatures)
+                            return  featureType.viewer.describerType;
+                        return featureType.viewer.describerType + ": " +
+                                featureType.viewer.features.length + " / " +
+                                (featureType.viewer.haveValidTracks ? featureType.viewer.nbTracks  : " - ") + " / " +
+                                (featureType.viewer.haveValidLandmarks ? featureType.viewer.nbLandmarks : " - ");
+                    }
                 }
                 // Feature loading status
                 Loader {

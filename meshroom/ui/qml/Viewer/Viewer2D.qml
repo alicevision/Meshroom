@@ -17,6 +17,35 @@ FocusScope {
     readonly property bool floatViewerAvailable: floatViewerComp.status === Component.Ready
     property alias useFloatImageViewer: displayHDR.checked
 
+    property string loadingModules: {
+        var res = ""
+        if(imgContainer.image.status === Image.Loading)
+            res += " Image";
+        if(featuresViewerLoader.status === Loader.Ready)
+        {
+            for (var i = 0; i < featuresViewerLoader.item.count; ++i) {
+                if(featuresViewerLoader.item.itemAt(i).loadingFeatures)
+                {
+                    res += " Features";
+                    break;
+                }
+            }
+        }
+        if(msfmDataLoader.status === Loader.Ready)
+        {
+            if(msfmDataLoader.item.status === MSfMData.Loading)
+            {
+                res += " SfMData";
+            }
+        }
+        if(mtracksLoader.status === Loader.Ready)
+        {
+            if(mtracksLoader.item.status === MTracks.Loading)
+                res += " Tracks";
+        }
+        return res;
+    }
+
     function clear()
     {
         source = ''
@@ -421,7 +450,7 @@ FocusScope {
 
                         // zoom label
                         Label {
-                            text: ((imgContainer.image && (imgContainer.image.status == Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
+                            text: ((imgContainer.image && (imgContainer.image.status === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
                             state: "xsmall"
                             MouseArea {
                                 anchors.fill: parent
@@ -470,7 +499,6 @@ FocusScope {
                             checkable: true
                             checked: false
                         }
-
                         Label {
                             id: resolutionLabel
                             Layout.fillWidth: true
@@ -534,6 +562,7 @@ FocusScope {
                                 }
                             }
                         }
+
                         MaterialToolButton {
                             id: displaySfmDataGlobalStats
 

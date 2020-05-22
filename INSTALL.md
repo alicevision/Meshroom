@@ -46,6 +46,24 @@ Additional Qt plugins can be built to extend Meshroom UI features. They can be f
 though they might get better integration in the future.
 Note that they are optional but highly recommended.
 
+For Windows, there may be problems setting `QML2_IMPORT_PATH` to contain multiple paths. The easiest approach may be to duplicate what is done for the binary release. This has a directory structure like this:
+
+```
+qtPlugins
++---imageformats
+\---qml
+    +---AlembicEntity
+    +---AliceVision
+    \---DepthMapEntity
+```
+
+and then set 
+
+```
+set QT_PLUGIN_PATH=<PATH TO>\qtPlugins
+set QML2_IMPORT_PATH=%QT_PLUGIN_PATH%\qml
+```
+
 #### [QmlAlembic](https://github.com/alicevision/qmlAlembic)
 Adds support for Alembic file loading in Meshroom's 3D viewport. Allows to visualize sparse reconstruction results
 (point cloud and cameras).

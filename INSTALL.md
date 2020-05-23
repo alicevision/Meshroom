@@ -46,7 +46,7 @@ Additional Qt plugins can be built to extend Meshroom UI features. They can be f
 though they might get better integration in the future.
 Note that they are optional but highly recommended.
 
-For Windows, there is a bug reported in QT 5.14.2 that `QML2_IMPORT_PATH` does not work for some users when it contains multiple paths.
+For Windows, there is a [bug](https://bugreports.qt.io/browse/QTBUG-84390) reported in QT 5.14.2 that `QML2_IMPORT_PATH` does not work for some users when it contains multiple paths.
 
 The quickest work around for this issue is to copy the QML plugins to the following directory structure:
 

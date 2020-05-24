@@ -102,6 +102,10 @@ class StatusData:
         self.endDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
 
     @property
+    def startDateTimeSeconds(self):
+        return (datetime.datetime.strptime(self.startDateTime, self.dateTimeFormatting)-datetime.datetime(1970,1,1,1)).total_seconds()
+
+    @property
     def elapsedTimeStr(self):
         return str(datetime.timedelta(seconds=self.elapsedTime))
 

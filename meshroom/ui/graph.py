@@ -391,22 +391,42 @@ class UIGraph(QObject):
             self._submitted = submitted
             self.computeStatusChanged.emit()
 
-    @Slot(result=str)
-    def getETA(self):
+    @Slot(QObject, result=str)
+    def getETA(self, chunks):
         """ Estimate the time of completion and format it into 'hours:minutes:seconds'. """
         timer = time.time()
         totalEstimation = 0
-        for chunk in self._sortedDFSChunks:
+        for chunk in chunks:
             if chunk.status.status in (Status.SUCCESS, Status.ERROR):
-                chunkStartTime = (datetime.datetime.strptime(chunk.status.startDateTime, StatusData.dateTimeFormatting)-datetime.datetime(1970,1,1)).total_seconds()
-                if self._startTime - chunkStartTime <= 0: # make sure the chunk has been computed after the computation started
+                if self._startTime - chunk.status.startDateTimeSeconds <= 0: # make sure the chunk has been computed after the computation started
                     totalEstimation += chunk.status.elapsedTime
             elif chunk.status.status in (Status.RUNNING, Status.SUBMITTED):
                 totalEstimation += chunk.node.nodeDesc.getEstimatedTime(chunk, self)
-        estimation = round(totalEstimation - (time.time() - self._startTime))
+        if len(chunks[0].node.chunks) == len(chunks):
+            if chunks[0].status.startDateTime == "":
+                estimation = round(totalEstimation)
+            else:
+                estimation = round(totalEstimation - (time.time() - chunks[0].status.startDateTimeSeconds))
+        else:    
+            estimation = round(totalEstimation - (time.time() - self._startTime))
         if estimation < 0:
             estimation = 0
         return str(datetime.timedelta(seconds=estimation))
+
+    @Slot(QObject, result=str)
+    def getDiskUsage(self, chunks):
+        totalUsage = 0
+        nodesChecked = []
+        for chunk in chunks:
+            if chunk.node._name not in nodesChecked:
+                nodesChecked.append(chunk.node._name)
+                for dirpath, dirnames, filenames in os.walk(chunk.node.internalFolder):
+                    for f in filenames:
+                        fp = os.path.join(dirpath, f)
+                        # skip if it is symbolic link
+                        if not os.path.islink(fp):
+                            totalUsage += os.path.getsize(fp)
+        return stats.bytes2human(totalUsage)
 
     def isComputing(self):
         """ Whether is graph is being computed, either locally or externally. """
@@ -603,7 +623,7 @@ class UIGraph(QObject):
     computingLocally = Property(bool, isComputingLocally, notify=computeStatusChanged)
     canSubmit = Property(bool, lambda self: len(submitters), constant=True)
 
-    sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, constant=True)
+    sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, notify=graphChanged)
     lockedChanged = Signal()
 
     selectedNodeChanged = Signal()

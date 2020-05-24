@@ -376,6 +376,30 @@ Item {
                         }
                     }
                 }
+                Label {
+                    visible: nodeMenu.currentNode.globalStatus == "RUNNING" || nodeMenu.currentNode.globalStatus == "SUBMITTED"
+                    height: visible ? 12 : 0
+                    Timer {
+                        interval: 1000 
+                        triggeredOnStart: true
+                        running: parent.visible 
+                        repeat: true
+                        onTriggered: parent.text = "ETA: " + _reconstruction.getETA(nodeMenu.currentNode.chunks)
+                    }
+                }
+                Label {
+                    id: diskUsageLabel
+                    visible: nodeMenu.currentNode.globalStatus != "NONE"
+                    height: visible ? 12 : 0
+                    verticalAlignment: Text.AlignVCenter
+                    Timer {
+                        interval: 1000 
+                        triggeredOnStart: true
+                        running: parent.visible 
+                        repeat: true
+                        onTriggered: parent.text = "Disk Usage: " + _reconstruction.getDiskUsage(nodeMenu.currentNode.chunks)
+                    }
+                }
             }
 
             // Nodes

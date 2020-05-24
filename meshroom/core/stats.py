@@ -19,9 +19,9 @@ else:
 def bytes2human(n):
     """
     >>> bytes2human(10000)
-    '9.8 K/s'
+    '9.77 KB'
     >>> bytes2human(100001221)
-    '95.4 M/s'
+    '95.37 MB'
     """
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
@@ -30,7 +30,7 @@ def bytes2human(n):
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
-            return '%.2f %s' % (value, s)
+            return '%.2f %sB' % (value, s)
     return '%.2f B' % (n)
 
 

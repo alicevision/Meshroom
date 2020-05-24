@@ -551,14 +551,25 @@ ApplicationWindow {
                 Label {
                     height: parent.height
                     verticalAlignment: Text.AlignVCenter
-                    visible: _reconstruction.computing 
-                    anchors.right: parent.right
-                    
+                    visible: _reconstruction.computing
                     Timer {
                         interval: 1000 
+                        triggeredOnStart: true
+                        running: parent.visible
+                        repeat: true
+                        onTriggered: parent.text = "ETA: " + _reconstruction.getETA(_reconstruction.sortedDFSChunks)
+                    }
+                }
+                Label {
+                    height: parent.height
+                    verticalAlignment: Text.AlignVCenter
+                    text: "Disk Usage: " + _reconstruction.getDiskUsage(_reconstruction.sortedDFSChunks)
+                    Timer {
+                        interval: 1000 
+                        triggeredOnStart: true
                         running: _reconstruction.computing 
                         repeat: true
-                        onTriggered: parent.text = "ETA: " + _reconstruction.getETA()
+                        onTriggered: parent.text = "Disk Usage: " + _reconstruction.getDiskUsage(_reconstruction.sortedDFSChunks)
                     }
                 }
             }

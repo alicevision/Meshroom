@@ -952,12 +952,18 @@ class Reconstruction(UIGraph):
         """ Get the average amount of images per chunk and average pixels for all images for a given node """
         cameraInits = self._graph.nodesFromNode(node, "CameraInit", False)[0]
         viewpointsAmount = sum(len(cameraInit.viewpoints.value) for cameraInit in cameraInits)
-        amount = viewpointsAmount / len(node.chunks)
+        reconstructedViewpointsAmount = 0
         totalPixels = 0
         for cameraInit in cameraInits:
             for viewpoint in cameraInit.viewpoints.value:
                 intrinsic = next((i for i in cameraInit.intrinsics.value if i.intrinsicId.value == viewpoint.intrinsicId.value)).value
                 totalPixels += intrinsic.get('width').value * intrinsic.get('height').value
+                if self.isReconstructed(viewpoint):
+                    reconstructedViewpointsAmount += 1
+        if reconstructedViewpointsAmount > 0:
+            amount = reconstructedViewpointsAmount / len(node.chunks)
+        else:
+            amount = viewpointsAmount / len(node.chunks)
         pixels = totalPixels / viewpointsAmount
         return amount, pixels
 

@@ -48,6 +48,7 @@ class StructureFromMotion(desc.CommandLineNode):
             description='Describer types used to describe an image.',
             value=['sift'],
             values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            timeFactor=[-1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
             exclusive=False,
             uid=[0],
             joinChar=',',
@@ -313,4 +314,9 @@ class StructureFromMotion(desc.CommandLineNode):
     def getEstimatedTime(self, chunk, reconstruction):
         factor = 9.436268413444888e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
         amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
-        return factor*stats.Benchmark()*pixels*amount
+        featureExtractions = reconstruction._graph.nodesFromNode(chunk.node, "FeatureExtraction", False)[0]
+        featureExtractionFactors = []
+        for featureExtraction in featureExtractions:
+            featureExtractionFactors.append([0.17, 0.55, 1, 3.59, 5.78][featureExtraction.describerPreset.attributeDesc._values.index(featureExtraction.describerPreset.value)])
+        featureExtractionFactor = sum(featureExtractionFactors)/len(featureExtractionFactors) # average describer preset factor for all feature extraction nodes linked to this node
+        return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount*featureExtractionFactor)

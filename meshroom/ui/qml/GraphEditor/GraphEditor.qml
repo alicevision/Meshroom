@@ -377,7 +377,7 @@ Item {
                     }
                 }
                 Label {
-                    visible: nodeMenu.currentNode.globalStatus == "RUNNING" || nodeMenu.currentNode.globalStatus == "SUBMITTED"
+                    visible: (nodeMenu.currentNode.globalStatus == "RUNNING" || nodeMenu.currentNode.globalStatus == "SUBMITTED") && nodeMenu.visible  
                     height: visible ? 12 : 0
                     Timer {
                         interval: 1000 
@@ -389,7 +389,7 @@ Item {
                 }
                 Label {
                     id: diskUsageLabel
-                    visible: nodeMenu.currentNode.globalStatus != "NONE"
+                    visible: nodeMenu.currentNode.globalStatus != "NONE" && nodeMenu.visible 
                     height: visible ? 12 : 0
                     verticalAlignment: Text.AlignVCenter
                     Timer {

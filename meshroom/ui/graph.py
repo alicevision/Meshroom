@@ -422,10 +422,10 @@ class UIGraph(QObject):
                 nodesChecked.append(chunk.node._name)
                 for dirpath, dirnames, filenames in os.walk(chunk.node.internalFolder):
                     for f in filenames:
-                        fp = os.path.join(dirpath, f)
-                        # skip if it is symbolic link
-                        if not os.path.islink(fp):
-                            totalUsage += os.path.getsize(fp)
+                        try:
+                            totalUsage += os.path.getsize(os.path.join(dirpath, f))
+                        except FileNotFoundError:
+                            pass
         return stats.bytes2human(totalUsage)
 
     def isComputing(self):

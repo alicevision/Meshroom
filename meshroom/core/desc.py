@@ -11,12 +11,13 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, uid, group):
+    def __init__(self, name, label, description, value, timeFactor, advanced, uid, group):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
         self._description = description
         self._value = value
+        self._timeFactor = timeFactor
         self._uid = uid
         self._group = group
         self._advanced = advanced
@@ -51,6 +52,9 @@ class Attribute(BaseObject):
             return False
         return True
 
+    def getModifiedTime(self, defaultTime, value):
+        return defaultTime
+
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
@@ -60,7 +64,7 @@ class ListAttribute(Attribute):
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], timeFactor=None, uid=(), group=group, advanced=advanced)
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
@@ -89,7 +93,7 @@ class GroupAttribute(Attribute):
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, timeFactor=None, uid=(), group=group, advanced=advanced)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
@@ -144,15 +148,15 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group, advanced):
-        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
+    def __init__(self, name, label, description, value, uid, group, advanced, timeFactor):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, timeFactor=timeFactor)
 
 
 class File(Attribute):
     """
     """
     def __init__(self, name, label, description, value, uid, group='allParams', advanced=False):
-        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
+        super(File, self).__init__(name=name, label=label, description=description, value=value, timeFactor=None, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):
@@ -163,8 +167,8 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False):
-        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
+    def __init__(self, name, label, description, value, uid, group='allParams', timeFactor=None, advanced=False):
+        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, timeFactor=timeFactor, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         try:
@@ -172,13 +176,19 @@ class BoolParam(Param):
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
+    def getModifiedTime(self, defaultTime, value):
+        if self._timeFactor and value != self._value:
+            return self._timeFactor * defaultTime
+        else:
+            return defaultTime
+
 
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', timeFactor=None, advanced=False):
         self._range = range
-        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
+        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, timeFactor=timeFactor, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
@@ -191,13 +201,19 @@ class IntParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
+    def getModifiedTime(self, defaultTime, value):
+        if self._timeFactor:
+            return (((value - self._value) * self._timeFactor) + 1) * defaultTime
+        else:
+            return defaultTime
+
 
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', timeFactor=None, advanced=False):
         self._range = range
-        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
+        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, timeFactor=timeFactor, uid=uid, group=group, advanced=advanced)
 
     def validateValue(self, value):
         try:
@@ -207,17 +223,24 @@ class FloatParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
+    def getModifiedTime(self, defaultTime, value):
+        if self._timeFactor:
+            return (((value - self._value) * self._timeFactor) + 1) * defaultTime
+        else:
+            return defaultTime
+
 
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False):
+    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', timeFactor=None, joinChar=' ', advanced=False):
         assert values
         self._values = values
+        #self._timeFactor = timeFactor
         self._exclusive = exclusive
         self._joinChar = joinChar
         self._valueType = type(self._values[0])  # cast to value type
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, timeFactor=timeFactor, uid=uid, group=group, advanced=advanced)
 
     def conformValue(self, val):
         """ Conform 'val' to the correct type and check for its validity """
@@ -234,6 +257,23 @@ class ChoiceParam(Param):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
+    def getModifiedTime(self, defaultTime, value):
+        if self._timeFactor:
+            if self._exclusive:
+                return self._timeFactor[self._values.index(value)] * defaultTime
+            else:
+                newTime = defaultTime
+                for v in value:
+                    factor = self._timeFactor[self._values.index(v)]
+                    if factor > 0:
+                        newTime += factor * defaultTime
+                for i in range(len(self._timeFactor)):
+                    if self._timeFactor[i] < 0 and self._values[i] not in value:
+                        newTime += self._timeFactor[i] * defaultTime
+                return newTime
+        else:
+            return defaultTime
+    
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
@@ -243,7 +283,7 @@ class StringParam(Param):
     """
     """
     def __init__(self, name, label, description, value, uid, group='allParams', advanced=False):
-        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced)
+        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, timeFactor=None)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):

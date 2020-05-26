@@ -296,8 +296,7 @@ class SketchfabUpload(desc.Node):
     def getEstimatedTime(self, chunk, reconstruction):
         if chunk.statusName == 'RUNNING':
             return self._progress * (self._progressMeasuredAt - self._startTime)
-        else:
-            return 0
+        return 0
 
     def stopProcess(self, chunk):
         self._stopped = True

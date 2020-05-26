@@ -179,8 +179,7 @@ class BoolParam(Param):
     def getModifiedTime(self, defaultTime, value):
         if self._timeFactor and value != self._value:
             return self._timeFactor * defaultTime
-        else:
-            return defaultTime
+        return defaultTime
 
 
 class IntParam(Param):
@@ -204,8 +203,7 @@ class IntParam(Param):
     def getModifiedTime(self, defaultTime, value):
         if self._timeFactor:
             return (((value - self._value) * self._timeFactor) + 1) * defaultTime
-        else:
-            return defaultTime
+        return defaultTime
 
 
 class FloatParam(Param):
@@ -226,8 +224,7 @@ class FloatParam(Param):
     def getModifiedTime(self, defaultTime, value):
         if self._timeFactor:
             return (((value - self._value) * self._timeFactor) + 1) * defaultTime
-        else:
-            return defaultTime
+        return defaultTime
 
 
 class ChoiceParam(Param):
@@ -261,18 +258,16 @@ class ChoiceParam(Param):
         if self._timeFactor:
             if self._exclusive:
                 return self._timeFactor[self._values.index(value)] * defaultTime
-            else:
-                newTime = defaultTime
-                for v in value:
-                    factor = self._timeFactor[self._values.index(v)]
-                    if factor > 0:
-                        newTime += factor * defaultTime
-                for i in range(len(self._timeFactor)):
-                    if self._timeFactor[i] < 0 and self._values[i] not in value:
-                        newTime += self._timeFactor[i] * defaultTime
-                return newTime
-        else:
-            return defaultTime
+            newTime = defaultTime
+            for v in value:
+                factor = self._timeFactor[self._values.index(v)]
+                if factor > 0:
+                    newTime += factor * defaultTime
+            for i in range(len(self._timeFactor)):
+                if self._timeFactor[i] < 0 and self._values[i] not in value:
+                    newTime += self._timeFactor[i] * defaultTime
+            return newTime
+        return defaultTime
     
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)

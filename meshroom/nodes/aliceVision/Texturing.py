@@ -30,9 +30,9 @@ class Texturing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='textureSize',
-            label='Texture Size',
-            description='''Output texture size''',
+            name='textureWidth',
+            label='Texture Width',
+            description='''Output texture width''',
             value=8192,
             values=(1024, 2048, 4096, 8192, 16384),
             exclusive=True,

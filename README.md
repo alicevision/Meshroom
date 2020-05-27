@@ -60,14 +60,6 @@ The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 See [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
 
-Get the source code and install runtime requirements:
-```bash
-git clone --recursive git://github.com/alicevision/meshroom
-cd meshroom
-pip install -r requirements.txt
-```
-
-
 ## Start Meshroom
 
 You need to have [AliceVision](https://github.com/alicevision/AliceVision) installation in your PATH (and LD_LIBRARY_PATH on Linux/macOS).

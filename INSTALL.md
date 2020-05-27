@@ -2,6 +2,13 @@
 This guide will help you setup a development environment to launch and contribute to Meshroom.
 
 ## Requirements
+
+### Meshroom Source
+
+```bash
+git clone --recursive git://github.com/alicevision/meshroom
+```
+
 ### AliceVision
 Meshroom relies on the [AliceVision](https://github.com/alicevision/AliceVision) framework. AliceVision's binaries must
 be in the path while running Meshroom.
@@ -32,6 +39,7 @@ ALICEVISION_VOCTREE=/path/to/voctree
 
 To install all the requirements for runtime, development and packaging, simply run:
 ```bash
+cd meshroom
 pip install -r requirements.txt -r dev_requirements.txt
 ```
 > Note: `dev_requirements` is only related to testing and packaging. It is not mandatory to run Meshroom.
@@ -46,45 +54,53 @@ Additional Qt plugins can be built to extend Meshroom UI features. They can be f
 though they might get better integration in the future.
 Note that they are optional but highly recommended.
 
-For Windows, there is a [bug](https://bugreports.qt.io/browse/QTBUG-84390) reported in QT 5.14.2 that `QML2_IMPORT_PATH` does not work for some users when it contains multiple paths.
+The Qt QML plugins will be searched for in the paths specified in `QML2_IMPORT_PATH`. You can set this to each of the `qml` directories of the plugins, seperated by the OS path seperator- `;` for Windows, `:` for \*nix. Do **not** add quote marks to these paths. 
 
-The quickest work around for this issue is to copy the QML plugins to the following directory structure:
+Qt plugins will instead be searched for in `QT_PLUGIN_PATH`. 
 
-```
-qtPlugins
-+---imageformats
-\---qml
-    +---AlembicEntity
-    +---AliceVision
-    \---DepthMapEntity
-```
-
-and then set 
-
-```
-set QT_PLUGIN_PATH=<PATH TO>\qtPlugins
-set QML2_IMPORT_PATH=%QT_PLUGIN_PATH%\qml
-```
 
 #### [QmlAlembic](https://github.com/alicevision/qmlAlembic)
 Adds support for Alembic file loading in Meshroom's 3D viewport. Allows to visualize sparse reconstruction results
 (point cloud and cameras).
+
+Windows:
 ```
-QML2_IMPORT_PATH=/path/to/qmlAlembic/install/qml
+set QML2_IMPORT_PATH=c:\path\to\qmlAlembic\install\qml;%QML2_IMPORT_PATH%
+```
+
+Linux:
+```bash
+export QML2_IMPORT_PATH=/path/to/qmlAlembic/install/qml:${QML2_IMPORT_PATH}
 ```
 
 #### [QtOIIO](https://github.com/alicevision/QtOIIO)
 Use OpenImageIO as backend to load images in Qt. Allow to visualize RAW/EXR images in Meshroom.
 This plugin also provides a QML Qt3D Entity to load depthmaps files stored in EXR format.
+
+Windows:
 ```
-QT_PLUGIN_PATH=/path/to/QtOIIO/install
-QML2_IMPORT_PATH=/path/to/QtOIIO/install/qml
+set QT_PLUGIN_PATH=c:\path\to\QtOIIO\install;%QT_PLUGIN_PATH%
+set QML2_IMPORT_PATH=c:\path\to\QtOIIO\install\qml;%QML2_IMPORT_PATH%
 ```
+
+Linux:
+```bash
+export QT_PLUGIN_PATH=/path/to/QtOIIO/install:${QT_PLUGIN_PATH}
+export QML2_IMPORT_PATH=/path/to/QtOIIO/install/qml:${QML2_IMPORT_PATH}
+```
+
 
 #### [QtAliceVision](https://github.com/alicevision/QtAliceVision)
 Use AliceVision to load and visualize intermediate reconstruction files.
+
+Windows:
 ```
-QML2_IMPORT_PATH=/path/to/qtAliceVision/install/qml
+set QML2_IMPORT_PATH=c:\path\to\qtAliceVision\install\qml;%QML2_IMPORT_PATH%
+```
+
+Linux
+```bash
+export QML2_IMPORT_PATH=/path/to/qtAliceVision/install/qml:${QML2_IMPORT_PATH}
 ```
 
 

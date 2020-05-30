@@ -19,6 +19,7 @@ FloatingPane {
 
     clip: true
     padding: 4
+    anchors.rightMargin: 0
 
     /**
      * Convert GPS metadata to degree coordinates.

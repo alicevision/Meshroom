@@ -18,6 +18,8 @@ Page {
     property alias headerBar: headerLayout.data
     property alias footerContent: footerLayout.data
     property alias icon: iconPlaceHolder.data
+    property alias loading: loadingIndicator.running
+    property alias loadingText: loadingLabal.text
 
     clip: true
 
@@ -46,18 +48,37 @@ Page {
                 width: childrenRect.width
                 height: childrenRect.height
                 Layout.alignment: Qt.AlignVCenter
-                visible: icon != ""
+                visible: icon !== ""
             }
 
             // Title
             Label {
                 text: root.title
-                Layout.fillWidth: true
                 elide: Text.ElideRight
                 topPadding: m.vPadding
                 bottomPadding: m.vPadding
             }
-            //
+            Item {
+                width: 10
+            }
+            // Feature loading status
+            BusyIndicator {
+                id: loadingIndicator
+                padding: 0
+                implicitWidth: 12
+                implicitHeight: 12
+                running: false
+            }
+            Label {
+                id: loadingLabal
+                text: ""
+                font.italic: true
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+
+            // Header menu
             Row { id: headerLayout }
         }
     }

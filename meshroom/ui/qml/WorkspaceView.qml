@@ -82,6 +82,8 @@ Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
             Layout.minimumWidth: 50
+            loading: viewer2D.loadingModules.length > 0
+            loadingText: loading ? "Loading " + viewer2D.loadingModules : ""
 
             headerBar: RowLayout {
                 MaterialToolButton {

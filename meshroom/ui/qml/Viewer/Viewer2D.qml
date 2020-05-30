@@ -17,6 +17,35 @@ FocusScope {
     readonly property bool floatViewerAvailable: floatViewerComp.status === Component.Ready
     property alias useFloatImageViewer: displayHDR.checked
 
+    property string loadingModules: {
+        var res = ""
+        if(imgContainer.image.status === Image.Loading)
+            res += " Image";
+        if(featuresViewerLoader.status === Loader.Ready)
+        {
+            for (var i = 0; i < featuresViewerLoader.item.count; ++i) {
+                if(featuresViewerLoader.item.itemAt(i).loadingFeatures)
+                {
+                    res += " Features";
+                    break;
+                }
+            }
+        }
+        if(msfmDataLoader.status === Loader.Ready)
+        {
+            if(msfmDataLoader.item.status === MSfMData.Loading)
+            {
+                res += " SfMData";
+            }
+        }
+        if(mtracksLoader.status === Loader.Ready)
+        {
+            if(mtracksLoader.item.status === MTracks.Loading)
+                res += " Tracks";
+        }
+        return res;
+    }
+
     function clear()
     {
         source = ''
@@ -225,14 +254,20 @@ FocusScope {
                     x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
                     y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
 
-                    Component.onCompleted: {
-                        // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-                        setSource("FeaturesViewer.qml", {
-                            'active':  Qt.binding(function() { return displayFeatures.checked; }),
-                            'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                            'model': Qt.binding(function() { return _reconstruction.featureExtraction.attribute("describerTypes").value; }),
-                            'folder': Qt.binding(function() { return Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value); }),
-                        })
+                    onActiveChanged: {
+                        if(active) {
+                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                            setSource("FeaturesViewer.qml", {
+                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                'model': Qt.binding(function() { return _reconstruction.featureExtraction ? _reconstruction.featureExtraction.attribute("describerTypes").value : ""; }),
+                                'featureFolder': Qt.binding(function() { return _reconstruction.featureExtraction ? Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value) : ""; }),
+                                'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
+                                'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
+                            })
+                        } else {
+                            // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                            setSource("", {})
+                        }
                     }
                 }
             }
@@ -298,6 +333,113 @@ FocusScope {
                     }
 
                     Loader {
+                        id: msfmDataLoader
+                        // active: _reconstruction.sfm && _reconstruction.sfm.isComputed()
+
+                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
+                        property var activeNode: _reconstruction.sfm
+                        property bool isComputed: activeNode && activeNode.isComputed()
+
+                        active: false
+                        // It takes time to load tracks, so keep them looaded, if we may use it again.
+                        // If we load another node, we can trash them (to eventually load the new node data).
+                        onIsUsedChanged: {
+                            if(!active && isUsed && isComputed)
+                                active = true;
+                        }
+                        onIsComputedChanged: {
+                            if(!isComputed)
+                                active = false;
+                            if(!active && isUsed)
+                                active = true;
+                        }
+                        onActiveNodeChanged: {
+                            if(!isUsed)
+                                active = false;
+                            else if(!isComputed)
+                                active = false;
+                            else
+                                active = true;
+                        }
+
+                        Component.onCompleted: {
+                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                            // so it can fail safely if the c++ plugin is not available
+                            setSource("MSfMData.qml", {
+                                'sfmDataPath': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); }),
+                            })
+                        }
+                    }
+                    Loader {
+                        id: mtracksLoader
+                        // active: _reconstruction.featureMatching
+
+                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
+                        property var activeNode: _reconstruction.featureMatching
+                        property bool isComputed: activeNode && activeNode.isComputed()
+
+                        active: false
+                        // It takes time to load tracks, so keep them looaded, if we may use it again.
+                        // If we load another node, we can trash them (to eventually load the new node data).
+                        onIsUsedChanged: {
+                            if(!active && isUsed && isComputed)
+                                active = true;
+                        }
+                        onIsComputedChanged: {
+                            if(!isComputed)
+                                active = false;
+                            if(!active && isUsed)
+                                active = true;
+                        }
+                        onActiveNodeChanged: {
+                            console.warn("mtracksLoader.onActiveNodeChanged, activeNode: " + activeNode)
+                            if(!isUsed)
+                                active = false;
+                            else if(!isComputed)
+                                active = false;
+                            else
+                                active = true;
+                        }
+
+                        Component.onCompleted: {
+                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                            // so it can fail safely if the c++ plugin is not available
+                            setSource("MTracks.qml", {
+                                'matchingFolder': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); }),
+                            })
+                        }
+                    }
+                    Loader {
+                        id: sfmStatsView
+                        anchors.fill: parent
+                        active: msfmDataLoader.status === Loader.Ready && displaySfmStatsView.checked
+
+                        Component.onCompleted: {
+                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                            // so it can fail safely if the c++ plugin is not available
+                            setSource("SfmStatsView.qml", {
+                                'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
+                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                            })
+                        }
+                    }
+                    Loader {
+                        id: sfmGlobalStats
+                        anchors.fill: parent
+                        active: msfmDataLoader.status === Loader.Ready && displaySfmDataGlobalStats.checked
+
+                        Component.onCompleted: {
+                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                            // so it can fail safely if the c++ plugin is not available
+                            setSource("SfmGlobalStats.qml", {
+                                'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
+                                'mTracks': Qt.binding(function() { return mtracksLoader.item; }),
+
+                            })
+                        }
+                    }
+
+                    Loader {
                         id: featuresOverlay
                         anchors {
                             bottom: parent.bottom
@@ -324,7 +466,7 @@ FocusScope {
 
                         // zoom label
                         Label {
-                            text: ((imgContainer.image && (imgContainer.image.status == Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
+                            text: ((imgContainer.image && (imgContainer.image.status === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
                             state: "xsmall"
                             MouseArea {
                                 anchors.fill: parent
@@ -373,7 +515,6 @@ FocusScope {
                             checkable: true
                             checked: false
                         }
-
                         Label {
                             id: resolutionLabel
                             Layout.fillWidth: true
@@ -415,6 +556,53 @@ FocusScope {
                         }
 
                         MaterialToolButton {
+                            id: displaySfmStatsView
+
+                            font.family: MaterialIcons.fontFamily
+                            text: MaterialIcons.assessment
+
+                            ToolTip.text: "StructureFromMotion Statistics"
+                            ToolTip.visible: hovered
+
+                            font.pointSize: 14
+                            padding: 2
+                            smooth: false
+                            flat: true
+                            checkable: enabled
+                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed() && _reconstruction.selectedViewId >= 0
+                            onCheckedChanged: {
+                                if(checked == true)
+                                {
+                                    displaySfmDataGlobalStats.checked = false
+                                    metadataCB.checked = false
+                                }
+                            }
+                        }
+
+                        MaterialToolButton {
+                            id: displaySfmDataGlobalStats
+
+                            font.family: MaterialIcons.fontFamily
+                            text: MaterialIcons.language
+
+                            ToolTip.text: "StructureFromMotion Global Statistics"
+                            ToolTip.visible: hovered
+
+                            font.pointSize: 14
+                            padding: 2
+                            smooth: false
+                            flat: true
+                            checkable: enabled
+                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed()
+                            onCheckedChanged: {
+                                if(checked == true)
+                                {
+                                    displaySfmStatsView.checked = false
+                                    metadataCB.checked = false
+                                }
+                            }
+                        }
+                        MaterialToolButton {
                             id: metadataCB
 
                             font.family: MaterialIcons.fontFamily
@@ -429,7 +617,15 @@ FocusScope {
                             flat: true
                             checkable: enabled
                             enabled: _reconstruction.selectedViewId >= 0
+                            onCheckedChanged: {
+                                if(checked == true)
+                                {
+                                    displaySfmDataGlobalStats.checked = false
+                                    displaySfmStatsView.checked = false
+                                }
+                            }
                         }
+
                     }
                 }
             }

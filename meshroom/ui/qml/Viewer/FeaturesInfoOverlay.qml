@@ -18,12 +18,11 @@ FloatingPane {
     property var featureExtractionNode: null
 
     ColumnLayout {
-
         // Header
         RowLayout {
             // FeatureExtraction node name
             Label {
-                text: featureExtractionNode.label
+                text: featureExtractionNode ? featureExtractionNode.label : ""
                 Layout.fillWidth: true
             }
             // Settings menu
@@ -47,6 +46,7 @@ FloatingPane {
                                 flat: true
                                 Layout.fillWidth: true
                                 model: root.featuresViewer.displayModes
+                                currentIndex: root.featuresViewer.displayMode
                                 onActivated: root.featuresViewer.displayMode = currentIndex
                             }
                         }
@@ -73,15 +73,49 @@ FloatingPane {
                 id: featureType
 
                 property var viewer: root.featuresViewer.itemAt(index)
+
                 spacing: 4
 
-                // Visibility toggle
+                // Features visibility toggle
                 MaterialToolButton {
-                    text: featureType.viewer.visible ? MaterialIcons.visibility : MaterialIcons.visibility_off
-                    onClicked: featureType.viewer.visible = !featureType.viewer.visible
+                    id: featuresVisibilityButton
+                    checkable: true
+                    checked: true
+                    text: MaterialIcons.center_focus_strong
+                    onClicked: {
+                        console.warn("featuresVisibilityButton.checked: " + featuresVisibilityButton.checked)
+                        featureType.viewer.displayfeatures = featuresVisibilityButton.checked;
+                    }
                     font.pointSize: 10
                     opacity: featureType.viewer.visible ? 1.0 : 0.6
                 }
+
+                // Tracks visibility toogle
+                MaterialToolButton {
+                    id: tracksVisibilityButton
+                    checkable: true
+                    checked: true
+                    text: MaterialIcons.timeline
+                    onClicked: {
+                        console.warn("tracksVisibilityButton.checked: " + tracksVisibilityButton.checked)
+                        featureType.viewer.displayTracks = tracksVisibilityButton.checked;
+                    }
+                    font.pointSize: 10
+                }
+
+                // Landmarks visibility toogle
+                MaterialToolButton {
+                    id: landmarksVisibilityButton
+                    checkable: true
+                    checked: true
+                    text: MaterialIcons.fiber_manual_record
+                    onClicked: {
+                        console.warn("landmarksVisibilityButton.checked: " + landmarksVisibilityButton.checked)
+                        featureType.viewer.displayLandmarks = landmarksVisibilityButton.checked;
+                    }
+                    font.pointSize: 10
+                }
+
                 // ColorChart picker
                 ColorChart {
                     implicitWidth: 12
@@ -89,15 +123,22 @@ FloatingPane {
                     colors: root.featuresViewer.colors
                     currentIndex: featureType.viewer.colorIndex
                     // offset featuresViewer color set when changing the color of one feature type
-                    onColorPicked: root.featuresViewer.colorOffset = colorIndex - index
+                    onColorPicked: featureType.viewer.colorOffset = colorIndex - index
                 }
                 // Feature type name
                 Label {
-                    text: featureType.viewer.describerType + (featureType.viewer.loading ? "" : ": " + featureType.viewer.features.length)
+                    text: {
+                        if(featureType.viewer.loadingFeatures)
+                            return  featureType.viewer.describerType;
+                        return featureType.viewer.describerType + ": " +
+                                featureType.viewer.features.length + " / " +
+                                (featureType.viewer.haveValidTracks ? featureType.viewer.nbTracks  : " - ") + " / " +
+                                (featureType.viewer.haveValidLandmarks ? featureType.viewer.nbLandmarks : " - ");
+                    }
                 }
                 // Feature loading status
                 Loader {
-                    active: featureType.viewer.loading
+                    active: featureType.viewer.loadingFeatures
                     sourceComponent: BusyIndicator {
                         padding: 0
                         implicitWidth: 12
@@ -105,6 +146,7 @@ FloatingPane {
                         running: true
                     }
                 }
+
             }
         }
     }

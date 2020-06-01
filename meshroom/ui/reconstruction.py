@@ -380,6 +380,10 @@ class Reconstruction(UIGraph):
         self._featureExtraction = None
         self.cameraInitChanged.connect(self.updateFeatureExtraction)
 
+        # - Feature Matching
+        self._featureMatching = None
+        self.cameraInitChanged.connect(self.updateFeatureMatching)
+
         # - SfM
         self._sfm = None
         self._views = None
@@ -486,6 +490,7 @@ class Reconstruction(UIGraph):
         self._liveSfmManager.reset()
         self.selectedViewId = "-1"
         self.featureExtraction = None
+        self.featureMatching = None
         self.sfm = None
         self.prepareDenseScene = None
         self.depthMap = None
@@ -536,6 +541,10 @@ class Reconstruction(UIGraph):
     def updateFeatureExtraction(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
         self.featureExtraction = self.lastNodeOfType('FeatureExtraction', self.cameraInit) if self.cameraInit else None
+
+    def updateFeatureMatching(self):
+        """ Set the current FeatureMatching node based on the current CameraInit node. """
+        self.featureMatching = self.lastNodeOfType('FeatureMatching', self.cameraInit) if self.cameraInit else None
 
     def updateDepthMapNode(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
@@ -905,6 +914,8 @@ class Reconstruction(UIGraph):
             self.sfm = node
         elif node.nodeType == "FeatureExtraction":
             self.featureExtraction = node
+        elif node.nodeType == "FeatureMatching":
+            self.featureMatching = node
         elif node.nodeType == "CameraInit":
             self.cameraInit = node
         elif node.nodeType == "PrepareDenseScene":
@@ -1070,6 +1081,9 @@ class Reconstruction(UIGraph):
 
     featureExtractionChanged = Signal()
     featureExtraction = makeProperty(QObject, "_featureExtraction", featureExtractionChanged, resetOnDestroy=True)
+
+    featureMatchingChanged = Signal()
+    featureMatching = makeProperty(QObject, "_featureMatching", featureMatchingChanged, resetOnDestroy=True)
 
     sfmReportChanged = Signal()
     # convenient property for QML binding re-evaluation when sfm report changes

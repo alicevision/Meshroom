@@ -1,0 +1,62 @@
+ARG AV_VERSION
+ARG CUDA_VERSION=9.0
+ARG OS_VERSION=7
+FROM alicevision/alicevision:${AV_VERSION}-centos${OS_VERSION}-cuda${CUDA_VERSION}
+LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
+
+# Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
+# docker run -it --runtime=nvidia meshroom
+
+ENV MESHROOM_DEV=/opt/Meshroom \
+    MESHROOM_BUILD=/tmp/Meshroom_build \
+    QT_DIR=/opt/Qt5.14.1/5.14.1/gcc_64 \
+    QT_CI_LOGIN=alicevisionjunk@gmail.com \
+    QT_CI_PASSWORD=azerty1.
+
+# Workaround for qmlAlembic/qtAliceVision builds: fuse lib/lib64 folders
+RUN cp -rf ${AV_INSTALL}/lib/* ${AV_INSTALL}/lib64 && rm -rf ${AV_INSTALL}/lib && ln -s ${AV_INSTALL}/lib64 ${AV_INSTALL}/lib
+
+# Install libs needed by Qt
+RUN yum install -y \
+        flex \
+        fontconfig \
+        freetype \
+        glib2 \
+        libICE \
+        libX11 \
+        libxcb \
+        libXext \
+        libXi \
+        libXrender \
+        libSM \
+        libXt-devel \
+        libGLU-devel \
+        mesa-libOSMesa-devel \
+        mesa-libGL-devel \
+        mesa-libGLU-devel \
+        xcb-util-keysyms \
+        xcb-util-image \
+        libxkbcommon-x11
+
+# Install Python3
+RUN yum install -y centos-release-scl && yum install -y rh-python36 && source scl_source enable rh-python36 && pip install --upgrade pip
+
+
+COPY ./*requirements.txt ./setup.py "${MESHROOM_DEV}/"
+
+# Install Meshroom requirements and freeze bundle
+WORKDIR "${MESHROOM_DEV}"
+RUN source scl_source enable rh-python36 && pip install -r dev_requirements.txt -r requirements.txt
+
+COPY ./docker/qt-installer-noninteractive.qs "${MESHROOM_DEV}/docker/"
+
+# Install Qt (to build plugins)
+ENV QT_VERSION_A=5.14 \
+    QT_VERSION_B=5.14.1
+WORKDIR /tmp/qt
+RUN wget https://download.qt.io/archive/qt/${QT_VERSION_A}/${QT_VERSION_B}/qt-opensource-linux-x64-${QT_VERSION_B}.run && \
+    chmod +x qt-opensource-linux-x64-${QT_VERSION_B}.run && \
+    ./qt-opensource-linux-x64-${QT_VERSION_B}.run --verbose --platform minimal --script "${MESHROOM_DEV}/docker/qt-installer-noninteractive.qs" && \
+    rm qt-opensource-linux-x64-${QT_VERSION_B}.run
+
+

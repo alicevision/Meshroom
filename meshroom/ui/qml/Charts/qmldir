@@ -2,3 +2,4 @@ module Charts
 
 ChartViewLegend 1.0 ChartViewLegend.qml
 ChartViewCheckBox 1.0 ChartViewCheckBox.qml
+InteractiveChartView 1.0 InteractiveChartView.qml

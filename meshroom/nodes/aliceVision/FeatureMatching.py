@@ -77,12 +77,13 @@ class FeatureMatching(desc.CommandLineNode):
             label='Geometric Filter Type',
             description='Geometric validation method to filter features matches: \n'
                         ' * fundamental_matrix\n'
+                        ' * fundamental_with_distortion\n'
                         ' * essential_matrix\n'
                         ' * homography_matrix\n'
                         ' * homography_growing\n'
                         ' * no_filtering',
             value='fundamental_matrix',
-            values=['fundamental_matrix', 'essential_matrix', 'homography_matrix', 'homography_growing', 'no_filtering'],
+            values=['fundamental_matrix', 'fundamental_with_distortion', 'essential_matrix', 'homography_matrix', 'homography_growing', 'no_filtering'],
             exclusive=True,
             uid=[0],
             advanced=True,

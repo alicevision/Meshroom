@@ -64,6 +64,13 @@ class ImageProcessing(desc.CommandLineNode):
             range=(0, 10, 1),
             uid=[0],
         ),
+        desc.BoolParam(
+            name='fillHoles',
+            label='Fill holes',
+            description='Fill holes.',
+            value=False,
+            uid=[0],
+        ),
         desc.IntParam(
             name='sharpenWidth',
             label='Sharpen Width',

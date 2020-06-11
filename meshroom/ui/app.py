@@ -184,7 +184,7 @@ class MeshroomApp(QApplication):
 
     @Slot(str)
     def addRecentProjectFile(self, projectFile):
-        projectFile = QUrl(projectFile).path()
+        projectFile = QUrl(projectFile).toLocalFile()
         projects = self._recentProjectFiles()
 
         # remove duplicates while preserving order

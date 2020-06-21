@@ -214,9 +214,6 @@ ApplicationWindow {
 
     PreferencesDialog {
         id: preferencesDialog
-
-        nodes: _nodeAttributes
-        test: _nodeTypes
     }
 
     AboutDialog {

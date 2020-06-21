@@ -10,6 +10,8 @@ import GraphEditor 1.0
 Dialog {
     id: root
 
+    property string currentNode: ""
+
     x: parent.width / 2 - width / 2
     y: parent.height / 2 - height / 2
     width: parent.width * 0.9
@@ -24,11 +26,6 @@ Dialog {
     closePolicy: Dialog.CloseOnEscape | Dialog.CloseOnPressOutside
     padding: 30
     topPadding: 30
-
-    property variant nodes: null
-    property variant test: null
-
-    property string currentNode: ""
 
     header: Pane {
         background: Item {}
@@ -57,30 +54,88 @@ Dialog {
             currentIndex: tabBar.currentIndex
             
             Row {
-                ListView {
-                    height: 300
-                    width: 310
-                    model: Object.keys(_preferences.attributeOverrides)
-
-                    delegate: Button {
-                        text: modelData
-                        onClicked: root.currentNode = modelData
+                Column {
+                    MaterialToolButton {
+                        text: MaterialIcons.add
+                        onClicked: addNodeMenu.popup()
+                        Menu {
+                            id: addNodeMenu
+                            Repeater {
+                                model: _preferences.unusedNodes
+                                delegate: MenuItem {
+                                    text: modelData
+                                    onClicked: {
+                                        _preferences.addNodeOverride(modelData)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ListView {
+                        height: 600
+                        width: 310
+                        model: Object.keys(_preferences.attributeOverrides)
+                        clip: true
+                        ScrollBar.vertical: ScrollBar { id: nodesScrollBar }
+                        
+                        delegate: Rectangle {
+                            property string node: modelData
+                            color: nodeListMA.containsMouse || nodeListRemoveButton.hovered ? activePalette.highlight : root.currentNode == modelData ? activePalette.dark : activePalette.button
+                            width: parent.width
+                            height: 15
+                            Label {
+                                text: parent.node
+                            }
+                            MouseArea {
+                                id: nodeListMA
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: root.currentNode = parent.node
+                            }
+                            MaterialToolButton {
+                                id: nodeListRemoveButton
+                                text: MaterialIcons.remove
+                                width: parent.height
+                                height: width
+                                anchors.right: parent.right
+                                visible: nodeListMA.containsMouse || hovered
+                                onClicked: _preferences.removeNodeOverride(parent.node)
+                            }
+                        }
                     }
                 }
 
-                ListView {
-                    height: 300
-                    width: 310
-                    spacing: 2
-                    clip: true
-                    ScrollBar.vertical: ScrollBar { id: scrollBar }
-                    model: _preferences.attributeOverrides[root.currentNode]
-                    delegate: AttributeItemDelegate {
-                        updatePreferences: true
-                        nodeName: root.currentNode
-                        width: 300
-                        labelWidth: 100
-                        attribute: modelData
+                Column {
+                    MaterialToolButton {
+                        text: MaterialIcons.add
+                        onClicked: addAttributeMenu.popup()
+                        Menu {
+                            id: addAttributeMenu
+                            Repeater {
+                                model: _preferences.getUnusedAttributes(root.currentNode)
+                                delegate: MenuItem {
+                                    text: modelData.name
+                                    onClicked: {
+                                        _preferences.addAttributeOverride(root.currentNode, modelData.name, modelData.value)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ListView {
+                        height: 300
+                        width: 310
+                        spacing: 2
+                        clip: true
+                        ScrollBar.vertical: ScrollBar { id: attributesScrollBar }
+                        model: _preferences.attributeOverrides[root.currentNode]
+                        delegate: AttributeItemDelegate {
+                            updatePreferences: true
+                            nodeName: root.currentNode
+                            width: 300
+                            labelWidth: 100
+                            attribute: modelData
+                        }
                     }
                 }
             }

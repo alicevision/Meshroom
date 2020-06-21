@@ -212,6 +212,13 @@ ApplicationWindow {
         }
     }
 
+    PreferencesDialog {
+        id: preferencesDialog
+
+        nodes: _nodeAttributes
+        test: _nodeTypes
+    }
+
     AboutDialog {
         id: aboutDialog
     }
@@ -397,6 +404,11 @@ ApplicationWindow {
                 action: redoAction
                 ToolTip.visible: hovered
                 ToolTip.text: redoAction.tooltip
+            }
+            Action {
+                text: "Preferences"
+                onTriggered: preferencesDialog.open()
+                shortcut: "F2"
             }
         }
         Menu {

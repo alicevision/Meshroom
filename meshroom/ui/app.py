@@ -14,6 +14,7 @@ from meshroom.ui.components.filepath import FilepathHelper
 from meshroom.ui.components.scene3D import Scene3DHelper
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.reconstruction import Reconstruction
+from meshroom.ui.preferences import Preferences
 from meshroom.ui.utils import QmlInstantEngine
 
 
@@ -118,6 +119,10 @@ class MeshroomApp(QApplication):
         # instantiate Reconstruction object
         r = Reconstruction(defaultPipeline=args.pipeline, parent=self)
         self.engine.rootContext().setContextProperty("_reconstruction", r)
+
+        # instantiate Preferences object
+        preferences = Preferences(self)
+        self.engine.rootContext().setContextProperty("_preferences", preferences)
 
         # those helpers should be available from QML Utils module as singletons, but:
         #  - qmlRegisterUncreatableType is not yet available in PySide2

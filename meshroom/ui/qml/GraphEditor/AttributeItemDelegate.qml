@@ -11,12 +11,14 @@ RowLayout {
     id: root
 
     property variant attribute: null
+    property string nodeName: ""
+    property bool updatePreferences: false
     property bool readOnly: false // whether the attribute's value can be modified
 
     property alias label: parameterLabel  // accessor to the internal Label (attribute's name)
     property int labelWidth               // shortcut to set the fixed size of the Label
 
-    readonly property bool editable: !attribute.isOutput && !attribute.isLink && !readOnly
+    readonly property bool editable: !object.isOutput && !object.isLink && !readOnly
 
     signal doubleClicked(var mouse, var attr)
 
@@ -38,12 +40,12 @@ RowLayout {
 
                 Layout.fillHeight: true
                 Layout.fillWidth: true
-                horizontalAlignment: attribute.isOutput ? Qt.AlignRight : Qt.AlignLeft
+                horizontalAlignment: object.isOutput ? Qt.AlignRight : Qt.AlignLeft
                 elide: Label.ElideRight
                 padding: 5
                 wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
-                text: attribute.label
+                text: object.label
 
                 // Tooltip hint with attribute's description
                 ToolTip.text: "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.desc.description)
@@ -67,12 +69,12 @@ RowLayout {
                     property Component menuComp: Menu {
                         id: paramMenu
 
-                        property bool isFileAttribute: attribute.type == "File"
-                        property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.value)
+                        property bool isFileAttribute: object.type == "File"
+                        property bool isFilepath: isFileAttribute && Filepath.isFile(object.value)
 
                         MenuItem {
                             text: "Reset To Default Value"
-                            enabled: root.editable && !attribute.isDefault
+                            enabled: root.editable && !object.isDefault
                             onTriggered: _reconstruction.resetAttribute(attribute)
                         }
 
@@ -85,15 +87,15 @@ RowLayout {
                             visible: paramMenu.isFileAttribute
                             height: visible ? implicitHeight : 0
                             text: paramMenu.isFilepath ? "Open Containing Folder" : "Open Folder"
-                            onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(attribute.value)) :
-                                                              Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                            onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(object.value)) :
+                                                              Qt.openUrlExternally(Filepath.stringToUrl(object.value))
                         }
 
                         MenuItem {
                             visible: paramMenu.isFilepath
                             height: visible ? implicitHeight : 0
                             text: "Open File"
-                            onClicked: Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                            onClicked: Qt.openUrlExternally(Filepath.stringToUrl(object.value))
                         }
                     }
 
@@ -109,7 +111,7 @@ RowLayout {
                 }
             }
             MaterialLabel {
-                visible: attribute.desc.advanced
+                visible: object.desc.advanced
                 text: MaterialIcons.build
                 color: palette.mid
                 font.pointSize: 8
@@ -118,22 +120,30 @@ RowLayout {
         }
     }
 
+    function setAttribute(value) {
+        if (root.updatePreferences) {
+            _preferences.addAttributeOverride(root.nodeName, object.name, value)
+        } else {
+            _reconstruction.setAttribute(root.attribute, value)
+        }
+    }
+
     function setTextFieldAttribute(value)
     {
         // editingFinished called even when TextField is readonly
         if(!editable)
             return
-        switch(attribute.type)
+        switch(object.type)
         {
         case "IntParam":
         case "FloatParam":
-            _reconstruction.setAttribute(root.attribute, Number(value))
+            setAttribute(Number(value))
             break;
         case "File":
-            _reconstruction.setAttribute(root.attribute, value)
+            setAttribute(value)
             break;
         default:
-            _reconstruction.setAttribute(root.attribute, value.trim())
+            setAttribute(value.trim())
         }
     }
 
@@ -141,9 +151,9 @@ RowLayout {
         Layout.fillWidth: true
 
         sourceComponent: {
-            switch(attribute.type)
+            switch(object.type)
             {
-            case "ChoiceParam": return attribute.desc.exclusive ? comboBox_component : multiChoice_component
+            case "ChoiceParam": return object.desc.exclusive ? comboBox_component : multiChoice_component
             case "IntParam": return slider_component
             case "FloatParam": return slider_component
             case "BoolParam": return checkbox_component
@@ -157,7 +167,7 @@ RowLayout {
             id: textField_component
             TextField {
                 readOnly: !root.editable
-                text: attribute.value
+                text: object.value
                 selectByMouse: true
                 onEditingFinished: setTextFieldAttribute(text)
                 onAccepted: {
@@ -186,12 +196,12 @@ RowLayout {
             ComboBox {
                 id: combo
                 enabled: root.editable
-                model: attribute.desc.values
-                Component.onCompleted: currentIndex = find(attribute.value)
-                onActivated: _reconstruction.setAttribute(attribute, currentText)
+                model: object.desc.values
+                Component.onCompleted: currentIndex = find(object.value)
+                onActivated: setAttribute(currentText)
                 Connections {
                     target: attribute
-                    onValueChanged: combo.currentIndex = combo.find(attribute.value)
+                    onValueChanged: combo.currentIndex = combo.find(object.value)
                 }
             }
         }
@@ -201,16 +211,16 @@ RowLayout {
             Flow {
                 Repeater {
                     id: checkbox_repeater
-                    model: attribute.desc.values
+                    model: object.desc.values
                     delegate: CheckBox {
                         enabled: root.editable
                         text: modelData
-                        checked: attribute.value.indexOf(modelData) >= 0
+                        checked: object.value.indexOf(modelData) >= 0
                         onToggled: {
-                            var t = attribute.value
+                            var t = object.value
                             if(!checked) { t.splice(t.indexOf(modelData), 1) } // remove element
                             else { t.push(modelData) }                         // add element
-                            _reconstruction.setAttribute(attribute, t)
+                            setAttribute(t)
                         }
                     }
                 }
@@ -232,10 +242,10 @@ RowLayout {
                     Layout.fillWidth: !slider.active
                     enabled: root.editable
                     // cast value to string to avoid intrusive scientific notations on numbers
-                    property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : attribute.value)
+                    property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : object.value)
                     text: displayValue
                     selectByMouse: true
-                    validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
+                    validator: object.type == "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: {
                         setTextFieldAttribute(text)
@@ -257,20 +267,20 @@ RowLayout {
                 Loader {
                     id: slider
                     Layout.fillWidth: true
-                    active: attribute.desc.range.length === 3
+                    active: object.desc.range.length === 3
                     sourceComponent: Slider {
                         readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
                         readonly property real formattedValue: value.toFixed(stepDecimalCount)
                         enabled: root.editable
-                        value: attribute.value
-                        from: attribute.desc.range[0]
-                        to: attribute.desc.range[1]
-                        stepSize: attribute.desc.range[2]
+                        value: object.value
+                        from: object.desc.range[0]
+                        to: object.desc.range[1]
+                        stepSize: object.desc.range[2]
                         snapMode: Slider.SnapAlways
 
                         onPressedChanged: {
                             if(!pressed)
-                                _reconstruction.setAttribute(attribute, formattedValue)
+                                setAttribute(formattedValue)
                         }
                     }
                 }
@@ -283,8 +293,8 @@ RowLayout {
             Row {
                 CheckBox {
                     enabled: root.editable
-                    checked: attribute.value
-                    onToggled: _reconstruction.setAttribute(attribute, !attribute.value)
+                    checked: object.value
+                    onToggled: setAttribute(!object.value)
                 }
             }
         }
@@ -304,7 +314,7 @@ RowLayout {
                     }
                     Label {
                         Layout.alignment: Qt.AlignVCenter
-                        text: attribute.value.count + " elements"
+                        text: object.value.count + " elements"
                     }
                     ToolButton {
                         text: MaterialIcons.add_circle_outline
@@ -317,7 +327,7 @@ RowLayout {
                 }
                 ListView {
                     id: lv
-                    model: listAttribute_layout.expanded ? attribute.value : undefined
+                    model: listAttribute_layout.expanded ? object.value : undefined
                     visible: model != undefined && count > 0
                     implicitHeight: Math.min(contentHeight, 300)
                     Layout.fillWidth: true
@@ -366,7 +376,7 @@ RowLayout {
                 Component.onCompleted:  {
                     var cpt = Qt.createComponent("AttributeEditor.qml");
                     var obj = cpt.createObject(groupItem,
-                                               {'attributes': Qt.binding(function() { return attribute.value }),
+                                               {'attributes': Qt.binding(function() { return object.value }),
                                                 'readOnly': Qt.binding(function() { return root.readOnly }),
                                                 'labelWidth': 100, // reduce label width for children (space gain)
                                                })

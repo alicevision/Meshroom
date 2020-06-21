@@ -8,7 +8,7 @@ from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, Di
 from meshroom.core import desc, pyCompatibility, hashValue
 
 
-def attributeFactory(description, value, isOutput, node, root=None, parent=None):
+def attributeFactory(description, value, isOutput, node=None, root=None, parent=None):
     """
     Create an Attribute based on description type.
 
@@ -51,7 +51,7 @@ class Attribute(BaseObject):
         super(Attribute, self).__init__(parent)
         self._name = attributeDesc.name
         self._root = None if root is None else weakref.ref(root)
-        self._node = weakref.ref(node)
+        self._node = None if node is None else weakref.ref(node)
         self.attributeDesc = attributeDesc
         self._isOutput = isOutput
         self._value = attributeDesc.value
@@ -122,8 +122,9 @@ class Attribute(BaseObject):
         self._value = ""
 
     def requestGraphUpdate(self):
-        if self.node.graph:
-            self.node.graph.markNodesDirty(self.node)
+        if self._node:
+            if self.node.graph:
+                self.node.graph.markNodesDirty(self.node)
 
     @property
     def isOutput(self):
@@ -152,6 +153,8 @@ class Attribute(BaseObject):
     def isLink(self):
         """ Whether the attribute is a link to another attribute. """
         # note: directly use self.node.graph._edges to avoid using the property that may become invalid at some point
+        if not self._node:
+            return False
         return self.node.graph and self.isInput and self in self.node.graph._edges.keys()
 
     @staticmethod

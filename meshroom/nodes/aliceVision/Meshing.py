@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "4.0"
 
 from meshroom.core import desc
 
@@ -20,14 +20,7 @@ class Meshing(desc.CommandLineNode):
         desc.File(
             name="depthMapsFolder",
             label='Depth Maps Folder',
-            description='Input depth maps folder',
-            value='',
-            uid=[0],
-        ),
-        desc.File(
-            name="depthMapsFilterFolder",
-            label='Filtered Depth Maps Folder',
-            description='Input filtered depth maps folder',
+            description='Input depth maps folder.',
             value='',
             uid=[0],
         ),

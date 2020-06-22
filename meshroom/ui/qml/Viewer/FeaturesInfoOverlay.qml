@@ -83,7 +83,6 @@ FloatingPane {
                     checked: true
                     text: MaterialIcons.center_focus_strong
                     onClicked: {
-                        console.warn("featuresVisibilityButton.checked: " + featuresVisibilityButton.checked)
                         featureType.viewer.displayfeatures = featuresVisibilityButton.checked;
                     }
                     font.pointSize: 10
@@ -97,7 +96,6 @@ FloatingPane {
                     checked: true
                     text: MaterialIcons.timeline
                     onClicked: {
-                        console.warn("tracksVisibilityButton.checked: " + tracksVisibilityButton.checked)
                         featureType.viewer.displayTracks = tracksVisibilityButton.checked;
                     }
                     font.pointSize: 10
@@ -110,7 +108,6 @@ FloatingPane {
                     checked: true
                     text: MaterialIcons.fiber_manual_record
                     onClicked: {
-                        console.warn("landmarksVisibilityButton.checked: " + landmarksVisibilityButton.checked)
                         featureType.viewer.displayLandmarks = landmarksVisibilityButton.checked;
                     }
                     font.pointSize: 10

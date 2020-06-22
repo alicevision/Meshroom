@@ -77,13 +77,16 @@ FloatingPane {
             for(var key in metadata)
             {
                 var entry = {}
-                entry["raw"] = key
                 // split on ":" to get group and key
-                var sKey = key.split(":", 2)
-                if(sKey.length === 2)
+                var i = key.lastIndexOf(":")
+                if(i == -1)
                 {
-                    entry["group"] = sKey[0]
-                    entry["key"] = sKey[1]
+                    i = key.lastIndexOf("/")
+                }
+                if(i != -1)
+                {
+                    entry["group"] = key.substr(0, i)
+                    entry["key"] = key.substr(i+1)
                 }
                 else
                 {

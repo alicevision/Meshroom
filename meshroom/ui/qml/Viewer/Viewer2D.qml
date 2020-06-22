@@ -440,7 +440,6 @@ FocusScope {
                                 active = true;
                         }
                         onActiveNodeChanged: {
-                            console.warn("mtracksLoader.onActiveNodeChanged, activeNode: " + activeNode)
                             if(!isUsed)
                                 active = false;
                             else if(!isComputed)

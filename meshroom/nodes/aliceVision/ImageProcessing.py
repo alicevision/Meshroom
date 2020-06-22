@@ -13,14 +13,14 @@ class ImageProcessing(desc.CommandLineNode):
         desc.File(
             name='input',
             label='Input',
-            description='SfMData file.',
+            description='SfMData file input, image filenames or regex(es) on the image file path.\nsupported regex: \'#\' matches a single digit, \'@\' one or more digits, \'?\' one character and \'*\' zero or more.',
             value='',
             uid=[0],
         ),
         desc.ChoiceParam(
             name='extension',
-            label='File Extension',
-            description='File Extension.',
+            label='Output File Extension',
+            description='Output Image File Extension.',
             value='',
             values=['', 'exr', 'jpg', 'tiff', 'png'],
             exclusive=True,

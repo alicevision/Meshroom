@@ -777,7 +777,7 @@ class BaseNode(BaseObject):
     size = Property(int, getSize, notify=sizeChanged)
     globalStatusChanged = Signal()
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
-    isComputed = Property(bool, lambda self: self._isComputed(), notify=globalStatusChanged)
+    isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
 
 
 class Node(BaseNode):

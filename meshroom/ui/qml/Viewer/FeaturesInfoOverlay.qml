@@ -16,6 +16,7 @@ FloatingPane {
     property int pluginStatus: Loader.Null
     property Item featuresViewer: null
     property var featureExtractionNode: null
+    property var mfeatures: null
 
     ColumnLayout {
         // Header
@@ -73,7 +74,7 @@ FloatingPane {
                 id: featureType
 
                 property var viewer: root.featuresViewer.itemAt(index)
-
+                property var mfeatures: root.mfeatures
                 spacing: 4
 
                 // Features visibility toogle
@@ -127,18 +128,19 @@ FloatingPane {
                 }
                 // Feature type name
                 Label {
+                    property var mdescfeatures : featureType.viewer.mdescFeatures
                     text: {
-                        if(featureType.viewer.loadingFeatures)
+                        if(featureType.mfeatures.loadingFeatures || mdescfeatures === null)
                             return  featureType.viewer.describerType;
                         return featureType.viewer.describerType + ": " +
-                                featureType.viewer.features.length + " / " +
-                                (featureType.viewer.haveValidTracks ? featureType.viewer.nbTracks  : " - ") + " / " +
-                                (featureType.viewer.haveValidLandmarks ? featureType.viewer.nbLandmarks : " - ");
+                                mdescfeatures.features.length + " / " +
+                                (featureType.mfeatures.haveValidTracks ? mdescfeatures.nbTracks : " - ") + " / " +
+                                (featureType.mfeatures.haveValidLandmarks ? mdescfeatures.nbLandmarks : " - ");
                     }
                 }
                 // Feature loading status
                 Loader {
-                    active: featureType.viewer.loadingFeatures
+                    active: featureType.mfeatures.loadingFeatures
                     sourceComponent: BusyIndicator {
                         padding: 0
                         implicitWidth: 12

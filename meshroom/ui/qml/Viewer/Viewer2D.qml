@@ -19,12 +19,12 @@ FocusScope {
 
     property string loadingModules: {
         var res = ""
-        if(imgContainer.image.status === Image.Loading)
+        if(imgContainer.image && imgContainer.image.status === Image.Loading)
             res += " Image";
-        if(featuresViewerLoader.status === Loader.Ready)
+        if(featuresViewerLoader.item && featuresViewerLoader.status === Loader.Ready)
         {
             for (var i = 0; i < featuresViewerLoader.item.count; ++i) {
-                if(featuresViewerLoader.item.itemAt(i).loadingFeatures)
+                if(featuresViewerLoader.item.itemAt(i).mdescFeatures.loadingFeatures)
                 {
                     res += " Features";
                     break;
@@ -33,14 +33,14 @@ FocusScope {
         }
         if(msfmDataLoader.status === Loader.Ready)
         {
-            if(msfmDataLoader.item.status === MSfMData.Loading)
+            if(msfmDataLoader.item && msfmDataLoader.item.status === MSfMData.Loading)
             {
                 res += " SfMData";
             }
         }
         if(mtracksLoader.status === Loader.Ready)
         {
-            if(mtracksLoader.item.status === MTracks.Loading)
+            if(mtracksLoader.item && mtracksLoader.item.status === MTracks.Loading)
                 res += " Tracks";
         }
         return res;
@@ -253,16 +253,12 @@ FocusScope {
                     }
                     x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
                     y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
-
+                   
                     onActiveChanged: {
                         if(active) {
                             // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             setSource("FeaturesViewer.qml", {
-                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                                'model': Qt.binding(function() { return _reconstruction.featureExtraction ? _reconstruction.featureExtraction.attribute("describerTypes").value : ""; }),
-                                'featureFolder': Qt.binding(function() { return _reconstruction.featureExtraction ? Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value) : ""; }),
-                                'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
-                                'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
+                                'mfeatures': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null; })
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -332,11 +328,26 @@ FocusScope {
                         metadata: visible ? root.metadata : {}
                     }
 
+                    Loader { 
+                        id: mfeaturesLoader
+                        // active: mfeaturesLoader.status === Loader.Ready 
+                      
+                        Component.onCompleted: {
+                            setSource("MFeaturesData.qml", {
+                            'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                            'describerTypes': Qt.binding(function() { return _reconstruction.featureExtraction ? _reconstruction.featureExtraction.attribute("describerTypes").value : ""; }),
+                            'featureFolder': Qt.binding(function() { return _reconstruction.featureExtraction ? Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value) : ""; }),
+                            'mtracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
+                            'msfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),                            
+                            })
+                        }
+                    }
+
                     Loader {
                         id: msfmDataLoader
                         // active: _reconstruction.sfm && _reconstruction.sfm.isComputed()
 
-                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
+                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked || mfeaturesLoader
                         property var activeNode: _reconstruction.sfm
                         property bool isComputed: activeNode && activeNode.isComputed()
 
@@ -366,7 +377,7 @@ FocusScope {
                             // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
                             // so it can fail safely if the c++ plugin is not available
                             setSource("MSfMData.qml", {
-                                'sfmDataPath': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); }),
+                                'sfmDataPath': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); })
                             })
                         }
                     }
@@ -374,7 +385,7 @@ FocusScope {
                         id: mtracksLoader
                         // active: _reconstruction.featureMatching
 
-                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
+                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked || mfeaturesLoader
                         property var activeNode: _reconstruction.featureMatching
                         property bool isComputed: activeNode && activeNode.isComputed()
 
@@ -452,6 +463,7 @@ FocusScope {
                             featureExtractionNode: _reconstruction.featureExtraction
                             pluginStatus: featuresViewerLoader.status
                             featuresViewer: featuresViewerLoader.item
+                            mfeatures: mfeaturesLoader.item
                         }
                     }
                 }

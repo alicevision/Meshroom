@@ -256,8 +256,8 @@ FocusScope {
                    
                     onActiveChanged: {
                         if(active) {
-                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-                            setSource("FeaturesViewer.qml", {
+                            // instantiate and initialize FeaturesViewer(s) component(s) dynamically using Loader.setSource
+                            setSource("FeaturesViewers.qml", {
                                 'mfeatures': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null; })
                             })
                         } else {
@@ -333,7 +333,7 @@ FocusScope {
                         // active: mfeaturesLoader.status === Loader.Ready 
                       
                         Component.onCompleted: {
-                            setSource("MFeaturesData.qml", {
+                            setSource("MFeatures.qml", {
                             'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
                             'describerTypes': Qt.binding(function() { return _reconstruction.featureExtraction ? _reconstruction.featureExtraction.attribute("describerTypes").value : ""; }),
                             'featureFolder': Qt.binding(function() { return _reconstruction.featureExtraction ? Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value) : ""; }),
@@ -445,7 +445,6 @@ FocusScope {
                             setSource("SfmGlobalStats.qml", {
                                 'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
                                 'mTracks': Qt.binding(function() { return mtracksLoader.item; }),
-
                             })
                         }
                     }

@@ -11,6 +11,7 @@ import Utils 1.0
 Repeater {
     id: root
 
+    /// MFeatures instance
     property var mfeatures
     /// List of available display modes
     readonly property var displayModes: ['Points', 'Squares', 'Oriented Squares']

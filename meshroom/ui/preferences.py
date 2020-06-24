@@ -68,7 +68,6 @@ class Preferences(QObject):
     @Slot(str, str, "QVariant")
     def addAttributeOverride(self, nodeName, attributeName, value):
         settings = self.getAttributeSettings(nodeName)
-        print(str(value))
         settings.setValue(attributeName, value)
         self.attributeOverridesChanged.emit()
 

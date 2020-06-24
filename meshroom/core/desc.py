@@ -187,9 +187,9 @@ class IntParam(Param):
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
         try:
-            return long(value)  # Python 2
+            return long(float(value))  # Python 2
         except NameError:
-            return int(value)   # Python 3
+            return int(float(value))   # Python 3
         except:
             raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 

@@ -424,7 +424,7 @@ FocusScope {
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
                         property var activeNode: _reconstruction.featureMatching
-                        property bool isComputed: activeNode && activeNode.isComputed()
+                        property bool isComputed: activeNode && activeNode.isComputed
 
                         active: false
                         // It takes time to load tracks, so keep them looaded, if we may use it again.

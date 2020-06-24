@@ -1,6 +1,7 @@
 import QtQuick 2.9
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
+import Qt.labs.settings 1.0
 import Utils 1.0
 import MaterialIcons 2.2
 import GraphEditor 1.0
@@ -14,8 +15,8 @@ Dialog {
 
     x: parent.width / 2 - width / 2
     y: parent.height / 2 - height / 2
-    width: parent.width * 0.9
-    height: parent.height * 0.9
+    width: parent.width * 0.5
+    height: parent.height * 0.5
 
     // Fade in transition
     enter: Transition {
@@ -41,100 +42,159 @@ Dialog {
         }
     }
 
-    ColumnLayout {
+    Column {
+        anchors.fill: parent
         TabBar {
             id: tabBar
 
             TabButton {
-                text: "Node Defaults"
+                text: "General"
+            }
+
+            TabButton {
+                text: "Node Default Attribute Value Overrides"
+                width: implicitWidth
             }
         }
 
-        StackLayout {
-            currentIndex: tabBar.currentIndex
-            
-            Row {
+        Rectangle {
+            color: Qt.darker(activePalette.window, 1.15)
+            width: parent.width
+            height: parent.height - tabBar.height
+            StackLayout {
+                currentIndex: tabBar.currentIndex
+                anchors.fill: parent
+
+                // General settings
                 Column {
-                    MaterialToolButton {
-                        text: MaterialIcons.add
-                        onClicked: addNodeMenu.popup()
-                        Menu {
-                            id: addNodeMenu
-                            Repeater {
-                                model: _preferences.unusedNodes
-                                delegate: MenuItem {
-                                    text: modelData
-                                    onClicked: {
-                                        _preferences.addNodeOverride(modelData)
-                                    }
-                                }
-                            }
-                        }
+                    Settings {
+                        category: "General"
+                        property alias defaultPalette: defaultPaletteCB.currentIndex
                     }
-                    ListView {
-                        height: 600
-                        width: 310
-                        model: Object.keys(_preferences.attributeOverrides)
-                        clip: true
-                        ScrollBar.vertical: ScrollBar { id: nodesScrollBar }
-                        
-                        delegate: Rectangle {
-                            property string node: modelData
-                            color: nodeListMA.containsMouse || nodeListRemoveButton.hovered ? activePalette.highlight : root.currentNode == modelData ? activePalette.dark : activePalette.button
-                            width: parent.width
-                            height: 15
-                            Label {
-                                text: parent.node
-                            }
-                            MouseArea {
-                                id: nodeListMA
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                onClicked: root.currentNode = parent.node
-                            }
-                            MaterialToolButton {
-                                id: nodeListRemoveButton
-                                text: MaterialIcons.remove
-                                width: parent.height
-                                height: width
-                                anchors.right: parent.right
-                                visible: nodeListMA.containsMouse || hovered
-                                onClicked: _preferences.removeNodeOverride(parent.node)
-                            }
+                    Grid {
+                        columns: 2
+                        columnSpacing: 10
+                        padding: columnSpacing
+                        verticalItemAlignment: Grid.AlignVCenter
+                        Label {
+                            text: "Default Palette"
+                        }
+                        ComboBox {
+                            id: defaultPaletteCB
+                            model: ["Dark", "Light"]
                         }
                     }
                 }
 
-                Column {
-                    MaterialToolButton {
-                        text: MaterialIcons.add
-                        onClicked: addAttributeMenu.popup()
-                        Menu {
-                            id: addAttributeMenu
-                            Repeater {
-                                model: _preferences.getUnusedAttributes(root.currentNode)
-                                delegate: MenuItem {
-                                    text: modelData.name
-                                    onClicked: {
-                                        _preferences.addAttributeOverride(root.currentNode, modelData.name, modelData.value)
+                // Node default attribute overrides
+                Row {
+                    anchors.fill: parent
+                    Column {
+                        width: parent.width / 2
+                        height: parent.height
+                        Label {
+                            text: "Nodes"
+                        }
+                        MaterialToolButton {
+                            id: nodeOverrideAddButton
+                            text: MaterialIcons.add
+                            width: parent.width
+                            onClicked: addNodeMenu.popup()
+                            Menu {
+                                id: addNodeMenu
+                                Repeater {
+                                    model: _preferences.unusedNodes
+                                    delegate: MenuItem {
+                                        text: modelData
+                                        onClicked: {
+                                            root.currentNode = modelData
+                                            _preferences.addNodeOverride(modelData)
+                                        }
                                     }
                                 }
                             }
                         }
+                        ListView {
+                            width: parent.width
+                            height: parent.height - nodeOverrideAddButton.height
+                            model: Object.keys(_preferences.attributeOverrides)
+                            clip: true
+                            ScrollBar.vertical: ScrollBar { id: nodesScrollBar }
+                            
+                            delegate: Rectangle {
+                                property string node: modelData
+                                color: nodeListMA.containsMouse || nodeOverrideRemoveButton.hovered ? activePalette.highlight : root.currentNode == modelData ? Qt.darker(activePalette.base, 1.1) : "transparent"
+                                width: parent.width - nodesScrollBar.width
+                                height: 15
+                                Label {
+                                    text: parent.node
+                                }
+                                MouseArea {
+                                    id: nodeListMA
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: root.currentNode = parent.node
+                                }
+                                MaterialToolButton {
+                                    id: nodeOverrideRemoveButton
+                                    text: MaterialIcons.remove
+                                    width: parent.height
+                                    height: width
+                                    anchors.right: parent.right
+                                    visible: nodeListMA.containsMouse || hovered
+                                    onClicked: _preferences.removeNodeOverride(parent.node)
+                                }
+                            }
+                        }
                     }
-                    ListView {
-                        height: 300
-                        width: 310
-                        spacing: 2
-                        clip: true
-                        ScrollBar.vertical: ScrollBar { id: attributesScrollBar }
-                        model: _preferences.attributeOverrides[root.currentNode]
-                        delegate: AttributeItemDelegate {
-                            updatePreferences: true
-                            nodeName: root.currentNode
-                            width: 300
-                            labelWidth: 100
-                            attribute: modelData
+
+                    Column {
+                        width: parent.width / 2
+                        height: parent.height
+                        Label {
+                            text: "Attributes"
+                        }
+                        MaterialToolButton {
+                            id: attributeOverrideAddButton
+                            text: MaterialIcons.add
+                            width: parent.width
+                            onClicked: addAttributeMenu.popup()
+                            Menu {
+                                id: addAttributeMenu
+                                Repeater {
+                                    model: _preferences.getUnusedAttributes(root.currentNode, _preferences.attributeOverrides)
+                                    delegate: MenuItem {
+                                        text: modelData.name
+                                        onClicked: {
+                                            _preferences.addAttributeOverride(root.currentNode, modelData.name, modelData.value)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ListView {
+                            width: parent.width
+                            height: parent.height - attributeOverrideAddButton.height
+                            spacing: 2
+                            clip: true
+                            ScrollBar.vertical: ScrollBar { id: attributesScrollBar }
+                            model: _preferences.attributeOverrides[root.currentNode]
+                            delegate: Row {
+                                width: parent.width
+                                height: AttributeItemDelegate.height
+                                AttributeItemDelegate {
+                                    updatePreferences: true
+                                    nodeName: root.currentNode
+                                    width: parent.width - attributeOverrideRemoveButton.width
+                                    labelWidth: 180
+                                    attribute: parent.modelData
+                                }
+                                MaterialToolButton {
+                                    id: attributeOverrideRemoveButton
+                                    text: MaterialIcons.remove
+                                    onClicked: _preferences.removeAttributeOverride(root.currentNode, object.name)
+                                }
+                            }
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-from PySide2.QtCore import QObject, Qt, Slot, Property, Signal
+from PySide2.QtCore import QObject, Qt, Slot, Property, Signal, QSettings
 from PySide2.QtGui import QPalette, QColor
 from PySide2.QtWidgets import QApplication
 
@@ -42,7 +42,11 @@ class PaletteManager(QObject):
 
         self.darkPalette = darkPalette
         self.defaultPalette = QApplication.instance().palette()
-        self.togglePalette()
+
+        settings = QSettings()
+        settings.beginGroup("General")
+        if settings.value("defaultPalette") == 0: # default palette is set to "Dark"
+            self.togglePalette()
 
     @Slot()
     def togglePalette(self):

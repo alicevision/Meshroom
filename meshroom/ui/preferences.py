@@ -1,12 +1,12 @@
-from PySide2.QtCore import QSettings
+from PySide2.QtCore import QObject, Slot, Property, Signal, QSettings
 
 import meshroom
-from meshroom.common import BaseObject, Property, Variant, VariantList, Signal, ListModel, Slot
-from meshroom.core import nodesDesc
+from meshroom.common.qt import QObjectListModel
+from meshroom.core import nodesDesc, desc
 from meshroom.core.attribute import attributeFactory
 
 
-class Preferences(BaseObject):
+class Preferences(QObject):
     """ Manage Preferences. """
 
     def __init__(self, parent=None):
@@ -24,7 +24,7 @@ class Preferences(BaseObject):
         settings = self.getAttributeSettings()
         for g in settings.childGroups():
             settings.beginGroup(g)
-            nodesDict[g] = ListModel(parent=self)
+            nodesDict[g] = QObjectListModel(parent=self)
             for a in settings.childKeys():
                 if a != "__placeholder__":
                     value = settings.value(a)
@@ -65,9 +65,10 @@ class Preferences(BaseObject):
                 unusedNodes.append(n)
         return unusedNodes
 
-    @Slot(str, str, Variant)
+    @Slot(str, str, "QVariant")
     def addAttributeOverride(self, nodeName, attributeName, value):
         settings = self.getAttributeSettings(nodeName)
+        print(str(value))
         settings.setValue(attributeName, value)
         self.attributeOverridesChanged.emit()
 
@@ -77,18 +78,18 @@ class Preferences(BaseObject):
         settings.remove(attributeName)
         self.attributeOverridesChanged.emit()
 
-    @Slot(str, result=VariantList)
+    @Slot(str, result="QVariantList")
     def getUnusedAttributes(self, nodeName):
         unusedAttributes = []
         usedAttributes = [ a._name for a in self.getAttributeOverrides(nodeName) ]
         try:
             for a in nodesDesc[nodeName].inputs:
-                if a._name not in usedAttributes:
+                if a._name not in usedAttributes and not isinstance(a, (desc.ListAttribute, desc.GroupAttribute)):
                     unusedAttributes.append(a)
         except KeyError:
             return []
         return unusedAttributes
 
     attributeOverridesChanged = Signal()
-    attributeOverrides = Property(Variant, _attributes, notify=attributeOverridesChanged)
-    unusedNodes = Property(VariantList, getUnusedNodes, notify=attributeOverridesChanged)
+    attributeOverrides = Property("QVariant", _attributes, notify=attributeOverridesChanged)
+    unusedNodes = Property("QVariantList", getUnusedNodes, notify=attributeOverridesChanged)

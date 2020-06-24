@@ -356,6 +356,32 @@ class ViewpointWrapper(QObject):
         return QUrl.fromLocalFile(self._undistortedImagePath)
 
 
+def parseSfMJsonFile(sfmJsonFile):
+    """
+    Parse the SfM Json file and return views, poses and intrinsics as three dicts with viewId, poseId and intrinsicId as keys.
+    """
+    if not os.path.exists(sfmJsonFile):
+        return {}, {}, {}
+
+    with open(sfmJsonFile) as jsonFile:
+        report = json.load(jsonFile)
+
+    views = dict()
+    poses = dict()
+    intrinsics = dict()
+
+    for view in report['views']:
+        views[view['viewId']] = view
+
+    for pose in report['poses']:
+        poses[pose['poseId']] = pose['pose']
+
+    for intrinsic in report['intrinsics']:
+        intrinsics[intrinsic['intrinsicId']] = intrinsic
+
+    return views, poses, intrinsics
+
+
 class Reconstruction(UIGraph):
     """
     Specialization of a UIGraph designed to manage a 3D reconstruction.
@@ -503,6 +529,9 @@ class Reconstruction(UIGraph):
             return
 
         self.setSfm(self.lastSfmNode())
+
+        if not self.sfm:
+            self.sfm = self.lastNodeOfType("PanoramaEstimation", self._cameraInit, Status.SUCCESS)
 
         # TODO: listen specifically for cameraInit creation/deletion
         self._graph.nodes.countChanged.connect(self.updateCameraInits)
@@ -763,7 +792,7 @@ class Reconstruction(UIGraph):
             recursive: List files in folders recursively.
 
         """
-        logging.warning("importImagesFromFolder: " + str(path))
+        logging.debug("importImagesFromFolder: " + str(path))
         filesByType = multiview.findFilesByTypeInFolder(path, recursive)
         if filesByType.images:
             self.buildIntrinsics(self.cameraInit, filesByType.images)
@@ -910,7 +939,7 @@ class Reconstruction(UIGraph):
     @Slot(QObject)
     def setActiveNodeOfType(self, node):
         """ Set node as the active node of its type. """
-        if node.nodeType == "StructureFromMotion":
+        if node.nodeType == "StructureFromMotion" or node.nodeType == "PanoramaEstimation":
             self.sfm = node
         elif node.nodeType == "FeatureExtraction":
             self.featureExtraction = node
@@ -936,7 +965,7 @@ class Reconstruction(UIGraph):
             self._poses = dict()
             self._solvedIntrinsics = dict()
         else:
-            self._views, self._poses, self._solvedIntrinsics = self._sfm.nodeDesc.getResults(self._sfm)
+            self._views, self._poses, self._solvedIntrinsics = parseSfMJsonFile(self._sfm.outputViewsAndPoses.value)
         self.sfmReportChanged.emit()
 
     def getSfm(self):

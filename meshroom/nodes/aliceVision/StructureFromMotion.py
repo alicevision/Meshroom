@@ -347,30 +347,3 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             uid=[],
         ),
     ]
-
-    @staticmethod
-    def getResults(node):
-        """
-        Parse SfM result and return views, poses and intrinsics as three dicts with viewId, poseId and intrinsicId as keys.
-        """
-        reportFile = node.outputViewsAndPoses.value
-        if not os.path.exists(reportFile):
-            return {}, {}, {}
-
-        with open(reportFile) as jsonFile:
-            report = json.load(jsonFile)
-
-        views = dict()
-        poses = dict()
-        intrinsics = dict()
-
-        for view in report['views']:
-            views[view['viewId']] = view
-
-        for pose in report['poses']:
-            poses[pose['poseId']] = pose['pose']
-
-        for intrinsic in report['intrinsics']:
-            intrinsics[intrinsic['intrinsicId']] = intrinsic
-
-        return views, poses, intrinsics

@@ -168,7 +168,7 @@ def hdriPipeline(graph):
                                            matchesFolders=[featureMatching.output])
 
     panoramaWarping = graph.addNewNode('PanoramaWarping',
-                                        input=panoramaEstimation.outSfMDataFilename)
+                                        input=panoramaEstimation.output)
 
     panoramaCompositing = graph.addNewNode('PanoramaCompositing',
                                         input=panoramaWarping.output)

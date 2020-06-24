@@ -10,13 +10,13 @@ import Utils 1.0
 Repeater {
     id: root
 
-    /// ViewID to display the features of
+    /// ViewID to display the features of a specific view
     property int viewId
     /// SfMData to display the data of SfM
     property var sfmData
     /// Folder containing the features files
     property string featureFolder
-    /// Folder containing the matches files
+    /// Tracks object loading all the matches files
     property var tracks
     /// The list of describer types to load
     property alias describerTypes: root.model

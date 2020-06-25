@@ -7,7 +7,9 @@ from meshroom.core.attribute import attributeFactory
 
 
 class Preferences(QObject):
-    """ Manage Preferences. """
+    """ 
+    Manage preferences that cannot be handled in QML.
+    """
 
     def __init__(self, parent=None):
         super(Preferences, self).__init__(parent)
@@ -19,7 +21,7 @@ class Preferences(QObject):
             settings.beginGroup(nodeName)
         return settings
 
-    def _attributes(self):
+    def _attributeOverrides(self):
         nodesDict = {}
         settings = self.getAttributeSettings()
         for g in settings.childGroups():
@@ -39,7 +41,7 @@ class Preferences(QObject):
 
     def getAttributeOverrides(self, nodeName):
         try:
-            return self._attributes()[nodeName]
+            return self._attributeOverrides()[nodeName]
         except KeyError:
             return []
 
@@ -59,7 +61,7 @@ class Preferences(QObject):
 
     def getUnusedNodes(self):
         unusedNodes = []
-        usedNodes = self._attributes().keys()
+        usedNodes = self._attributeOverrides().keys()
         for n in nodesDesc.keys():
             if n not in usedNodes:
                 unusedNodes.append(n)
@@ -90,5 +92,5 @@ class Preferences(QObject):
         return unusedAttributes
 
     attributeOverridesChanged = Signal()
-    attributeOverrides = Property("QVariant", _attributes, notify=attributeOverridesChanged)
+    attributeOverrides = Property("QVariant", _attributeOverrides, notify=attributeOverridesChanged)
     unusedNodes = Property("QVariantList", getUnusedNodes, notify=attributeOverridesChanged)

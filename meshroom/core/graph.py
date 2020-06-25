@@ -453,10 +453,10 @@ class Graph(BaseObject):
         Returns:
              The newly created node.
         """
-        # Apply default attribute value overrides set in preferences 
+        # Apply default attribute value overrides set in preferences
         for a in Preferences().getAttributeOverrides(nodeType):
             kwargs[a._name] = a._value
-        
+
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 

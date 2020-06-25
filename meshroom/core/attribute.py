@@ -122,9 +122,8 @@ class Attribute(BaseObject):
         self._value = ""
 
     def requestGraphUpdate(self):
-        if self._node:
-            if self.node.graph:
-                self.node.graph.markNodesDirty(self.node)
+        if self._node and self.node.graph:
+            self.node.graph.markNodesDirty(self.node)
 
     @property
     def isOutput(self):
@@ -153,9 +152,7 @@ class Attribute(BaseObject):
     def isLink(self):
         """ Whether the attribute is a link to another attribute. """
         # note: directly use self.node.graph._edges to avoid using the property that may become invalid at some point
-        if not self._node:
-            return False
-        return self.node.graph and self.isInput and self in self.node.graph._edges.keys()
+        return self._node and self.node.graph and self.isInput and self in self.node.graph._edges.keys()
 
     @staticmethod
     def isLinkExpression(value):

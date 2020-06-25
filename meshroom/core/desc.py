@@ -1,10 +1,12 @@
-from meshroom.common import BaseObject, Property, Variant, VariantList
-from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import collections
 import math
 import os
 import psutil
+import distutils.util
+
+from meshroom.common import BaseObject, Property, Variant, VariantList
+from meshroom.core import pyCompatibility
 
 
 class Attribute(BaseObject):
@@ -168,11 +170,9 @@ class BoolParam(Param):
 
     def validateValue(self, value):
         try:
-            if value == 'true':
-                return True
-            elif value == 'false':
-                return False
-            return bool(int(value)) # int cast is useful to handle string values ('0', '1')
+            if isinstance(value, bool):
+                return value
+            return bool(distutils.util.strtobool(value)) # int cast is useful to handle string values ('0', '1')
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 

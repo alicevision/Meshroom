@@ -17,6 +17,18 @@ class ImageProcessing(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="imagesFolder",
+                label="Images Folder",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="inputFolders",
+            label="Images input Folders",
+            description='Use images from specific folder(s).',
+        ),
         desc.ChoiceParam(
             name='extension',
             label='Output File Extension',
@@ -166,6 +178,14 @@ class ImageProcessing(desc.CommandLineNode):
             label='Output sfmData',
             description='Output sfmData.',
             value=desc.Node.internalFolder + 'sfmData.abc',
+            uid=[],
+        ),
+        desc.File(
+            name='outputFolder',
+            label='Output Images Folder',
+            description='Output Images Folder.',
+            value=desc.Node.internalFolder,
+            group='',  # do not export on the command line
             uid=[],
         ),
     ]

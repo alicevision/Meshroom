@@ -35,6 +35,7 @@ ListView {
             readOnly: root.readOnly
             labelWidth: root.labelWidth
             attribute: object
+            onValueChanged: _reconstruction.setAttribute(object, value)
             onDoubleClicked: root.attributeDoubleClicked(mouse, attr)
         }
     }

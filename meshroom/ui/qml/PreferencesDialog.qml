@@ -183,11 +183,10 @@ Dialog {
                                 width: parent.width
                                 height: AttributeItemDelegate.height
                                 AttributeItemDelegate {
-                                    updatePreferences: true
-                                    nodeName: root.currentNode
                                     width: parent.width - attributeOverrideRemoveButton.width
                                     labelWidth: 180
-                                    attribute: parent.modelData
+                                    attribute: object
+                                    onValueChanged: _preferences.addAttributeOverride(root.currentNode, object.name, value)
                                 }
                                 MaterialToolButton {
                                     id: attributeOverrideRemoveButton

@@ -11,15 +11,14 @@ RowLayout {
     id: root
 
     property variant attribute: null
-    property string nodeName: ""
-    property bool updatePreferences: false
     property bool readOnly: false // whether the attribute's value can be modified
 
     property alias label: parameterLabel  // accessor to the internal Label (attribute's name)
     property int labelWidth               // shortcut to set the fixed size of the Label
 
-    readonly property bool editable: !object.isOutput && !object.isLink && !readOnly
+    readonly property bool editable: !root.attribute.isOutput && !root.attribute.isLink && !readOnly
 
+    signal valueChanged(var value)
     signal doubleClicked(var mouse, var attr)
 
     spacing: 2
@@ -40,23 +39,23 @@ RowLayout {
 
                 Layout.fillHeight: true
                 Layout.fillWidth: true
-                horizontalAlignment: object.isOutput ? Qt.AlignRight : Qt.AlignLeft
+                horizontalAlignment: root.attribute.isOutput ? Qt.AlignRight : Qt.AlignLeft
                 elide: Label.ElideRight
                 padding: 5
                 wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
-                text: object.label
+                text: root.attribute.label
 
                 // Tooltip hint with attribute's description
-                ToolTip.text: "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.desc.description)
+                ToolTip.text: "<b>" + root.attribute.desc.name + "</b><br>" + Format.plainToHtml(root.attribute.desc.description)
                 ToolTip.visible: parameterMA.containsMouse
                 ToolTip.delay: 800
 
                 // make label bold if attribute's value is not the default one
-                font.bold: !object.isOutput && !object.isDefault
+                font.bold: !root.attribute.isOutput && !root.attribute.isDefault
 
                 // make label italic if attribute is a link
-                font.italic: object.isLink
+                font.italic: root.attribute.isLink
 
 
                 MouseArea {
@@ -69,12 +68,12 @@ RowLayout {
                     property Component menuComp: Menu {
                         id: paramMenu
 
-                        property bool isFileAttribute: object.type == "File"
-                        property bool isFilepath: isFileAttribute && Filepath.isFile(object.value)
+                        property bool isFileAttribute: root.attribute.type == "File"
+                        property bool isFilepath: isFileAttribute && Filepath.isFile(root.attribute.value)
 
                         MenuItem {
                             text: "Reset To Default Value"
-                            enabled: root.editable && !object.isDefault
+                            enabled: root.editable && !root.attribute.isDefault
                             onTriggered: _reconstruction.resetAttribute(attribute)
                         }
 
@@ -87,15 +86,15 @@ RowLayout {
                             visible: paramMenu.isFileAttribute
                             height: visible ? implicitHeight : 0
                             text: paramMenu.isFilepath ? "Open Containing Folder" : "Open Folder"
-                            onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(object.value)) :
-                                                              Qt.openUrlExternally(Filepath.stringToUrl(object.value))
+                            onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(root.attribute.value)) :
+                                                              Qt.openUrlExternally(Filepath.stringToUrl(root.attribute.value))
                         }
 
                         MenuItem {
                             visible: paramMenu.isFilepath
                             height: visible ? implicitHeight : 0
                             text: "Open File"
-                            onClicked: Qt.openUrlExternally(Filepath.stringToUrl(object.value))
+                            onClicked: Qt.openUrlExternally(Filepath.stringToUrl(root.attribute.value))
                         }
                     }
 
@@ -111,7 +110,7 @@ RowLayout {
                 }
             }
             MaterialLabel {
-                visible: object.desc.advanced
+                visible: root.attribute.desc.advanced
                 text: MaterialIcons.build
                 color: palette.mid
                 font.pointSize: 8
@@ -120,30 +119,22 @@ RowLayout {
         }
     }
 
-    function setAttribute(value) {
-        if (root.updatePreferences) {
-            _preferences.addAttributeOverride(root.nodeName, object.name, value)
-        } else {
-            _reconstruction.setAttribute(root.attribute, value)
-        }
-    }
-
     function setTextFieldAttribute(value)
     {
         // editingFinished called even when TextField is readonly
         if(!editable)
             return
-        switch(object.type)
+        switch(root.attribute.type)
         {
         case "IntParam":
         case "FloatParam":
-            setAttribute(Number(value))
+            root.valueChanged(Number(value))
             break;
         case "File":
-            setAttribute(value)
+            root.valueChanged(value)
             break;
         default:
-            setAttribute(value.trim())
+            root.valueChanged(value.trim())
         }
     }
 
@@ -151,9 +142,9 @@ RowLayout {
         Layout.fillWidth: true
 
         sourceComponent: {
-            switch(object.type)
+            switch(root.attribute.type)
             {
-            case "ChoiceParam": return object.desc.exclusive ? comboBox_component : multiChoice_component
+            case "ChoiceParam": return root.attribute.desc.exclusive ? comboBox_component : multiChoice_component
             case "IntParam": return slider_component
             case "FloatParam": return slider_component
             case "BoolParam": return checkbox_component
@@ -167,7 +158,7 @@ RowLayout {
             id: textField_component
             TextField {
                 readOnly: !root.editable
-                text: object.value
+                text: root.attribute.value
                 selectByMouse: true
                 onEditingFinished: setTextFieldAttribute(text)
                 onAccepted: {
@@ -196,12 +187,12 @@ RowLayout {
             ComboBox {
                 id: combo
                 enabled: root.editable
-                model: object.desc.values
-                Component.onCompleted: currentIndex = find(object.value)
-                onActivated: setAttribute(currentText)
+                model: root.attribute.desc.values
+                Component.onCompleted: currentIndex = find(root.attribute.value)
+                onActivated: root.valueChanged(currentText)
                 Connections {
                     target: attribute
-                    onValueChanged: combo.currentIndex = combo.find(object.value)
+                    onValueChanged: combo.currentIndex = combo.find(root.attribute.value)
                 }
             }
         }
@@ -211,16 +202,16 @@ RowLayout {
             Flow {
                 Repeater {
                     id: checkbox_repeater
-                    model: object.desc.values
+                    model: root.attribute.desc.values
                     delegate: CheckBox {
                         enabled: root.editable
                         text: modelData
-                        checked: object.value.indexOf(modelData) >= 0
+                        checked: root.attribute.value.indexOf(modelData) >= 0
                         onToggled: {
-                            var t = object.value
+                            var t = root.attribute.value
                             if(!checked) { t.splice(t.indexOf(modelData), 1) } // remove element
                             else { t.push(modelData) }                         // add element
-                            setAttribute(t)
+                            root.valueChanged(t)
                         }
                     }
                 }
@@ -242,10 +233,10 @@ RowLayout {
                     Layout.fillWidth: !slider.active
                     enabled: root.editable
                     // cast value to string to avoid intrusive scientific notations on numbers
-                    property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : object.value)
+                    property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : root.attribute.value)
                     text: displayValue
                     selectByMouse: true
-                    validator: object.type == "FloatParam" ? doubleValidator : intValidator
+                    validator: root.attribute.type == "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: {
                         setTextFieldAttribute(text)
@@ -267,20 +258,20 @@ RowLayout {
                 Loader {
                     id: slider
                     Layout.fillWidth: true
-                    active: object.desc.range.length === 3
+                    active: root.attribute.desc.range.length === 3
                     sourceComponent: Slider {
                         readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
                         readonly property real formattedValue: value.toFixed(stepDecimalCount)
                         enabled: root.editable
-                        value: object.value
-                        from: object.desc.range[0]
-                        to: object.desc.range[1]
-                        stepSize: object.desc.range[2]
+                        value: root.attribute.value
+                        from: root.attribute.desc.range[0]
+                        to: root.attribute.desc.range[1]
+                        stepSize: root.attribute.desc.range[2]
                         snapMode: Slider.SnapAlways
 
                         onPressedChanged: {
                             if(!pressed)
-                                setAttribute(formattedValue)
+                                root.valueChanged(formattedValue)
                         }
                     }
                 }
@@ -293,8 +284,8 @@ RowLayout {
             Row {
                 CheckBox {
                     enabled: root.editable
-                    checked: object.value
-                    onToggled: setAttribute(!object.value)
+                    checked: root.attribute.value
+                    onToggled: root.valueChanged(!root.attribute.value)
                 }
             }
         }
@@ -314,7 +305,7 @@ RowLayout {
                     }
                     Label {
                         Layout.alignment: Qt.AlignVCenter
-                        text: object.value.count + " elements"
+                        text: root.attribute.value.count + " elements"
                     }
                     ToolButton {
                         text: MaterialIcons.add_circle_outline
@@ -327,7 +318,7 @@ RowLayout {
                 }
                 ListView {
                     id: lv
-                    model: listAttribute_layout.expanded ? object.value : undefined
+                    model: listAttribute_layout.expanded ? root.attribute.value : undefined
                     visible: model != undefined && count > 0
                     implicitHeight: Math.min(contentHeight, 300)
                     Layout.fillWidth: true
@@ -376,7 +367,7 @@ RowLayout {
                 Component.onCompleted:  {
                     var cpt = Qt.createComponent("AttributeEditor.qml");
                     var obj = cpt.createObject(groupItem,
-                                               {'attributes': Qt.binding(function() { return object.value }),
+                                               {'attributes': Qt.binding(function() { return root.attribute.value }),
                                                 'readOnly': Qt.binding(function() { return root.readOnly }),
                                                 'labelWidth': 100, // reduce label width for children (space gain)
                                                })

@@ -402,6 +402,7 @@ ApplicationWindow {
                 ToolTip.visible: hovered
                 ToolTip.text: redoAction.tooltip
             }
+            MenuSeparator {}
             Action {
                 text: "Preferences"
                 onTriggered: preferencesDialog.open()

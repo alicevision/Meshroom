@@ -45,7 +45,7 @@ class PaletteManager(QObject):
 
         settings = QSettings()
         settings.beginGroup("General")
-        if settings.value("defaultPalette") == 0: # default palette is set to "Dark"
+        if settings.value("defaultPalette", defaultValue=0) == 0: # default palette is set to "Dark"
             self.togglePalette()
 
     @Slot()

@@ -93,7 +93,9 @@ Dialog {
                         width: parent.width / 2
                         height: parent.height
                         Label {
+                            id: nodesListLabel
                             text: "Nodes"
+                            padding: 5
                         }
                         MaterialToolButton {
                             id: nodeOverrideAddButton
@@ -106,6 +108,8 @@ Dialog {
                                     model: _preferences.unusedNodes
                                     delegate: MenuItem {
                                         text: modelData
+                                        font.pointSize: 8
+                                        padding: 3
                                         onClicked: {
                                             root.currentNode = modelData
                                             _preferences.addNodeOverride(modelData)
@@ -116,18 +120,19 @@ Dialog {
                         }
                         ListView {
                             width: parent.width
-                            height: parent.height - nodeOverrideAddButton.height
+                            height: parent.height - nodesListLabel.height - nodeOverrideAddButton.height
                             model: Object.keys(_preferences.attributeOverrides)
                             clip: true
                             ScrollBar.vertical: ScrollBar { id: nodesScrollBar }
                             
                             delegate: Rectangle {
                                 property string node: modelData
-                                color: nodeListMA.containsMouse || nodeOverrideRemoveButton.hovered ? activePalette.highlight : root.currentNode == modelData ? Qt.darker(activePalette.base, 1.1) : "transparent"
+                                color: root.currentNode == modelData ? activePalette.highlight : nodeListMA.containsMouse || nodeOverrideRemoveButton.hovered ? activePalette.mid : "transparent"
                                 width: parent.width - nodesScrollBar.width
-                                height: 15
+                                height: 25
                                 Label {
                                     text: parent.node
+                                    padding: 5
                                 }
                                 MouseArea {
                                     id: nodeListMA
@@ -152,7 +157,9 @@ Dialog {
                         width: parent.width / 2
                         height: parent.height
                         Label {
+                            id: attributesListLabel
                             text: "Attributes"
+                            padding: 5
                         }
                         MaterialToolButton {
                             id: attributeOverrideAddButton
@@ -165,6 +172,8 @@ Dialog {
                                     model: _preferences.getUnusedAttributes(root.currentNode, _preferences.attributeOverrides)
                                     delegate: MenuItem {
                                         text: modelData.name
+                                        font.pointSize: 8
+                                        padding: 3
                                         onClicked: {
                                             _preferences.addAttributeOverride(root.currentNode, modelData.name, modelData.value)
                                         }
@@ -174,13 +183,13 @@ Dialog {
                         }
                         ListView {
                             width: parent.width
-                            height: parent.height - attributeOverrideAddButton.height
+                            height: parent.height - attributesListLabel.height - attributeOverrideAddButton.height
                             spacing: 2
                             clip: true
                             ScrollBar.vertical: ScrollBar { id: attributesScrollBar }
                             model: _preferences.attributeOverrides[root.currentNode]
                             delegate: Row {
-                                width: parent.width
+                                width: parent.width - attributesScrollBar.width
                                 height: AttributeItemDelegate.height
                                 AttributeItemDelegate {
                                     width: parent.width - attributeOverrideRemoveButton.width

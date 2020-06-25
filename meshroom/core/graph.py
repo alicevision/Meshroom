@@ -17,7 +17,6 @@ from meshroom.core import Version, pyCompatibility
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.exception import StopGraphVisit, StopBranchVisit
 from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
-from meshroom.ui.preferences import Preferences
 
 # Replace default encoder to support Enums
 
@@ -453,10 +452,6 @@ class Graph(BaseObject):
         Returns:
              The newly created node.
         """
-        # Apply default attribute value overrides set in preferences
-        for a in Preferences().getAttributeOverrides(nodeType):
-            kwargs[a._name] = a._value
-
         if name and name in self._nodes.keys():
             name = self._createUniqueNodeName(name)
 

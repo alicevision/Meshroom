@@ -19,6 +19,7 @@ from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListMod
 from meshroom.core import desc, stats, hashValue, pyCompatibility, nodeVersion, Version
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
+from meshroom.ui.preferences import Preferences
 
 
 def getWritingFilepath(filepath):
@@ -790,6 +791,10 @@ class Node(BaseNode):
         for attr in self._attributes:
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)
+
+        # Apply default attribute value overrides set in preferences
+        for a in Preferences().getAttributeOverrides(nodeType):
+            self.attribute(a._name).value = a._value
 
         # initialize attribute values
         for k, v in kwargs.items():

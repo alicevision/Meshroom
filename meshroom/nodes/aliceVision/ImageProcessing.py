@@ -53,9 +53,9 @@ class ImageProcessing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.FloatParam(
-            name='downscale',
-            label='Downscale',
-            description='Downscale.',
+            name='scaleFactor',
+            label='ScaleFactor',
+            description='Scale Factor.',
             value=1.0,
             range=(0.0, 1.0, 0.01),
             uid=[0],

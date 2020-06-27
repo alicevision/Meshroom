@@ -115,7 +115,7 @@ class ImageProcessing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
-            name='BilateralFilterDistance',
+            name='bilateralFilterDistance',
             label='Bilateral Filter Distance',
             description='Diameter of each pixel neighborhood that is used during bilateral filtering.\nCould be very slow for large filters, so it is recommended to use 5.',
             value=0,
@@ -123,7 +123,7 @@ class ImageProcessing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.FloatParam(
-            name='BilateralFilterSigmaSpace',
+            name='bilateralFilterSigmaSpace',
             label='Bilateral Filter Sigma Space',
             description='Bilateral Filter sigma in the coordinate space.',
             value=0.0,
@@ -131,7 +131,7 @@ class ImageProcessing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.FloatParam(
-            name='BilateralFilterSigmaColor',
+            name='bilateralFilterSigmaColor',
             label='Bilateral Filter Sigma Color Space',
             description='Bilateral Filter sigma in the color space.',
             value=0.0,
@@ -139,14 +139,14 @@ class ImageProcessing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.BoolParam(
-            name='ClaheFilter',
+            name='claheFilter',
             label='Clahe Filter',
             description='Use Contrast Limited Adaptive Histogram Equalization (CLAHE) Filter.',
             value=False,
             uid=[0],
         ),
         desc.FloatParam(
-            name='ClaheClipLimit',
+            name='claheClipLimit',
             label='Clahe Clip Limit.',
             description='Sets Threshold For Contrast Limiting.',
             value=40.0,
@@ -154,7 +154,7 @@ class ImageProcessing(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
-            name='ClaheTileGridSize',
+            name='claheTileGridSize',
             label='Clahe Tile Grid Size.',
             description='Sets Size Of Grid For Histogram Equalization. Input Image Will Be Divided Into Equally Sized Rectangular Tiles.',
             value=8,

@@ -149,8 +149,8 @@ class ImageProcessing(desc.CommandLineNode):
             name='claheClipLimit',
             label='Clahe Clip Limit.',
             description='Sets Threshold For Contrast Limiting.',
-            value=40.0,
-            range=(0.0, 80.0, 1.0),
+            value=4.0,
+            range=(0.0, 8.0, 1.0),
             uid=[0],
         ),
         desc.IntParam(

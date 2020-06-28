@@ -18,7 +18,9 @@ FocusScope {
     property alias useFloatImageViewer: displayHDR.checked
 
     property string loadingModules: {
-        var res = ""
+        if(!imgContainer.image)
+            return "";
+        var res = "";
         if(imgContainer.image.status === Image.Loading)
             res += " Image";
         if(featuresViewerLoader.status === Loader.Ready)

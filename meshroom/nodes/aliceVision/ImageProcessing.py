@@ -2,6 +2,8 @@ __version__ = "1.1"
 
 from meshroom.core import desc
 
+import os.path
+
 
 class ImageProcessing(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_imageProcessing {allParams}'
@@ -181,7 +183,7 @@ Convert or apply filtering to the input images.
             name='outSfMData',
             label='Output sfmData',
             description='Output sfmData.',
-            value=desc.Node.internalFolder + 'sfmData.abc',
+            value=lambda attr: (desc.Node.internalFolder + 'sfmData' + os.path.splitext(attr.node.input.value)[1]) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
             uid=[],
         ),
         desc.File(
@@ -189,6 +191,14 @@ Convert or apply filtering to the input images.
             label='Output Images Folder',
             description='Output Images Folder.',
             value=desc.Node.internalFolder,
+            group='',  # do not export on the command line
+            uid=[],
+        ),
+        desc.File(
+            name='outputImages',
+            label='Output Images',
+            description='Output Image Files.',
+            value=lambda attr: desc.Node.internalFolder + '*.' + (attr.node.extension.value or '*'),
             group='',  # do not export on the command line
             uid=[],
         ),

@@ -51,10 +51,10 @@ It is done in 2 steps:
         desc.IntParam(
             name='userNbBrackets',
             label='Number of Brackets',
-            description='Number of exposure brackets per HDR image (0 for automatic detection).',
+            description='Manually set the number of exposure brackets per HDR image. Set 0 for automatic detection.',
             value=0,
             range=(0, 15, 1),
-            uid=[0],
+            uid=[],
             group='user',  # not used directly on the command line
         ),
         desc.IntParam(
@@ -63,7 +63,7 @@ It is done in 2 steps:
             description='Number of exposure brackets used per HDR image. It is detected automatically from input Viewpoints metadata if "userNbBrackets" is 0, else it is equal to "userNbBrackets".',
             value=0,
             range=(0, 10, 1),
-            uid=[],
+            uid=[0],
         ),
         desc.FloatParam(
             name='highlightCorrectionFactor',
@@ -258,13 +258,16 @@ It is done in 2 steps:
         exposureGroups.append(exposures)
         exposures = None
         bracketSizes = set()
-        for expGroup in exposureGroups:
-            bracketSizes.add(len(expGroup))
-        if len(bracketSizes) == 1:
-            node.nbBrackets.value = bracketSizes.pop()
-            # logging.info("[LDRToHDR] nb bracket size:" + str(node.nbBrackets.value))
+        if len(exposureGroups) == 1:
+            node.nbBrackets.value = 1
         else:
-            node.nbBrackets.value = 0
+            for expGroup in exposureGroups:
+                bracketSizes.add(len(expGroup))
+            if len(bracketSizes) == 1:
+                node.nbBrackets.value = bracketSizes.pop()
+                # logging.info("[LDRToHDR] nb bracket size:" + str(node.nbBrackets.value))
+            else:
+                node.nbBrackets.value = 0
         # logging.info("[LDRToHDR] Update end")
 
 

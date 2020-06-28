@@ -107,12 +107,46 @@ Estimate relative camera rotations between input images.
         ),
         desc.BoolParam(
             name='lockAllIntrinsics',
-            label='Force Lock of All Intrinsic Camera Parameters.',
+            label='Force Lock of All Intrinsics',
             description='Force to keep constant all the intrinsics parameters of the cameras (focal length, \n'
                         'principal point, distortion if any) during the reconstruction.\n'
                         'This may be helpful if the input cameras are already fully calibrated.',
             value=False,
             uid=[0],
+        ),
+        desc.FloatParam(
+            name='maxAngleToPrior',
+            label='Max Angle To Priors (deg.)',
+            description='''Maximal angle allowed regarding the input prior (in degrees).''',
+            value=5.0,
+            range=(0.0, 360.0, 1.0),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.FloatParam(
+            name='maxAngularError',
+            label='Max Angular Error (deg.)',
+            description='''Maximal angular error in global rotation averging (in degrees).''',
+            value=100.0,
+            range=(0.0, 360.0, 1.0),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.BoolParam(
+            name='intermediateRefineWithFocal',
+            label='Intermediate Refine: Focal',
+            description='Intermediate refine with rotation and focal length only.',
+            value=False,
+            uid=[0],
+            advanced=True,
+        ),
+        desc.BoolParam(
+            name='intermediateRefineWithFocalDist',
+            label='Intermediate Refine: Focal And Distortion',
+            description='Intermediate refine with rotation, focal length and distortion.',
+            value=False,
+            uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

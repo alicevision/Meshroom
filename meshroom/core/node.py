@@ -583,8 +583,9 @@ class BaseNode(BaseObject):
             if not isinstance(attr.attributeDesc, desc.File):
                 continue
 
-            attr.value = attr.attributeDesc.value.format(**self._cmdVars)
-            attr._invalidationValue = attr.attributeDesc.value.format(**cmdVarsNoCache)
+            defaultValue = attr.defaultValue()
+            attr.value = defaultValue.format(**self._cmdVars)
+            attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
             v = attr.getValueStr()
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)

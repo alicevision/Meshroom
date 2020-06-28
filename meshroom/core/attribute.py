@@ -3,6 +3,7 @@
 import collections
 import re
 import weakref
+import types
 
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, pyCompatibility, hashValue
@@ -189,7 +190,7 @@ class Attribute(BaseObject):
         if self.isLink:
             return self.getLinkParam().asLinkExpr()
         if self.isOutput:
-            return self.desc.value
+            return self.defaultValue()
         return self._value
 
     def getValueStr(self):
@@ -201,6 +202,8 @@ class Attribute(BaseObject):
         return str(self.value)
 
     def defaultValue(self):
+        if isinstance(self.desc.value, types.FunctionType):
+            return self.desc.value(self)
         return self.desc.value
 
     def _isDefault(self):

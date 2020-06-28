@@ -50,13 +50,6 @@ Convert or apply filtering to the input images.
             uid=[0],
         ),
         desc.BoolParam(
-            name='keepImageFilename',
-            label='Keep Image Filename',
-            description='Keep Image Filename instead of using View UID.',
-            value=False,
-            uid=[0],
-        ),
-        desc.BoolParam(
             name='exposureCompensation',
             label='Exposure Compensation',
             description='Exposure Compensation',

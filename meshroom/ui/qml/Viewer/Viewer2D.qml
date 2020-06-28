@@ -382,7 +382,7 @@ FocusScope {
 
                     Loader {
                         id: msfmDataLoader
-                        // active: _reconstruction.sfm && _reconstruction.sfm.isComputed()
+                        // active: _reconstruction.sfm && _reconstruction.sfm.isComputed
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
                         property var activeNode: _reconstruction.sfm
@@ -628,7 +628,7 @@ FocusScope {
                             smooth: false
                             flat: true
                             checkable: enabled
-                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed() && _reconstruction.selectedViewId >= 0
+                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed && _reconstruction.selectedViewId >= 0
                             onCheckedChanged: {
                                 if(checked == true)
                                 {
@@ -652,7 +652,7 @@ FocusScope {
                             smooth: false
                             flat: true
                             checkable: enabled
-                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed()
+                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed
                             onCheckedChanged: {
                                 if(checked == true)
                                 {

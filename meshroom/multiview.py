@@ -146,8 +146,9 @@ def hdriPipeline(graph):
                                input=cameraInit.output)
 
     featureExtraction = graph.addNewNode('FeatureExtraction',
-                                         input=ldr2hdr.outSfMDataFilename)
-    featureExtraction.describerPreset.value = 'high'
+                                         input=ldr2hdr.outSfMDataFilename,
+                                         describerPreset='high')
+
     panoramaInit = graph.addNewNode('PanoramaInit',
                                      input=featureExtraction.input,
                                      dependency=[featureExtraction.output]  # Workaround for tractor submission with a fake dependency
@@ -157,6 +158,7 @@ def hdriPipeline(graph):
                                      input=panoramaInit.outSfMDataFilename,
                                      featuresFolders=[featureExtraction.output],
                                      method='FrustumOrVocabularyTree')
+
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=imageMatching.input,
                                        featuresFolders=imageMatching.featuresFolders,
@@ -167,11 +169,20 @@ def hdriPipeline(graph):
                                            featuresFolders=featureMatching.featuresFolders,
                                            matchesFolders=[featureMatching.output])
 
+    panoramaOrientation = graph.addNewNode('SfMTransform',
+                                           input=panoramaEstimation.output,
+                                           method='from_single_camera')
+
     panoramaWarping = graph.addNewNode('PanoramaWarping',
-                                        input=panoramaEstimation.output)
+                                       input=panoramaOrientation.output)
 
     panoramaCompositing = graph.addNewNode('PanoramaCompositing',
-                                        input=panoramaWarping.output)
+                                           input=panoramaWarping.output)
+
+    imageProcessing = graph.addNewNode('ImageProcessing',
+                                       input=panoramaCompositing.output,
+                                       fillHoles=True,
+                                       extension='exr')
 
     return [
         cameraInit,
@@ -180,8 +191,10 @@ def hdriPipeline(graph):
         imageMatching,
         featureMatching,
         panoramaEstimation,
+        panoramaOrientation,
         panoramaWarping,
         panoramaCompositing,
+        imageProcessing,
     ]
 
 

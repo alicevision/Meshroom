@@ -25,8 +25,8 @@ Convert or apply filtering to the input images.
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
-                name="imagesFolder",
-                label="Images Folder",
+                name="inputFolder",
+                label="input Folder",
                 description="",
                 value="",
                 uid=[0],
@@ -101,11 +101,18 @@ Convert or apply filtering to the input images.
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='sharpen',
+            label='Sharpen',
+            description='Use sharpen.',
+            value=False,
+            uid=[0],
+        ),
         desc.IntParam(
             name='sharpenWidth',
             label='Sharpen Width',
             description='Sharpen Width.',
-            value=1,
+            value=3,
             range=(1, 9, 2),
             uid=[0],
         ),

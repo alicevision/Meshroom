@@ -584,8 +584,13 @@ class BaseNode(BaseObject):
                 continue
 
             defaultValue = attr.defaultValue()
-            attr.value = defaultValue.format(**self._cmdVars)
-            attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
+            try:
+                attr.value = defaultValue.format(**self._cmdVars)
+                attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
+            except KeyError as e:
+                logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+            except ValueError as e:
+                logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
             v = attr.getValueStr()
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)

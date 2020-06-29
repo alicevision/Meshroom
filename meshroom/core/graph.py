@@ -273,12 +273,13 @@ class Graph(BaseObject):
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
 
-        if setupProjectFile:
-            # Update filepath related members
-            self._setFilepath(filepath)
+            # Create graph edges by resolving attributes expressions
+            self._applyExpr()
 
-        # Create graph edges by resolving attributes expressions
-        self._applyExpr()
+            if setupProjectFile:
+                # Update filepath related members
+                # Note: needs to be done at the end as it will trigger an updateInternals.
+                self._setFilepath(filepath)
 
         return True
 
@@ -871,13 +872,13 @@ class Graph(BaseObject):
                 flowEdges.append(link)
         return flowEdges
 
-    def nodesFromNode(self, startNode, filterType=None):
+    def nodesFromNode(self, startNode, filterTypes=None):
         """
         Return the node chain from startNode to the graph leaves.
 
         Args:
             startNode (Node): the node to start the visit from.
-            filterType (str): (optional) only return the nodes of the given type
+            filterTypes (str list): (optional) only return the nodes of the given types
                               (does not stop the visit, this is a post-process only)
         Returns:
             The list of nodes from startNode to the graph leaves following edges.
@@ -887,7 +888,7 @@ class Graph(BaseObject):
         visitor = Visitor()
 
         def discoverVertex(vertex, graph):
-            if not filterType or vertex.nodeType == filterType:
+            if not filterTypes or vertex.nodeType in filterTypes:
                 nodes.append(vertex)
 
         visitor.discoverVertex = discoverVertex

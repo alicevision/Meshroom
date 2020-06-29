@@ -1,4 +1,4 @@
-__version__ = "1.1"
+__version__ = "2.0"
 
 from meshroom.core import desc
 
@@ -183,22 +183,22 @@ Convert or apply filtering to the input images.
             name='outSfMData',
             label='Output sfmData',
             description='Output sfmData.',
-            value=lambda attr: (desc.Node.internalFolder + 'sfmData' + os.path.splitext(attr.node.input.value)[1]) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
+            value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
             uid=[],
+            group='',  # do not export on the command line
         ),
         desc.File(
-            name='outputFolder',
-            label='Output Images Folder',
+            name='output',
+            label='Output Folder',
             description='Output Images Folder.',
             value=desc.Node.internalFolder,
-            group='',  # do not export on the command line
             uid=[],
         ),
         desc.File(
             name='outputImages',
             label='Output Images',
             description='Output Image Files.',
-            value=lambda attr: desc.Node.internalFolder + '*.' + (attr.node.extension.value or '*'),
+            value=lambda attr: desc.Node.internalFolder + os.path.basename(attr.node.input.value) if (os.path.splitext(attr.node.input.value)[1] not in ['', '.abc', '.sfm']) else (desc.Node.internalFolder + '*.' + (attr.node.extension.value or '*')),
             group='',  # do not export on the command line
             uid=[],
         ),

@@ -169,7 +169,7 @@ Estimate relative camera rotations between input images.
         ),
         desc.File(
             name='outputViewsAndPoses',
-            label='Output SfMData File',
+            label='Output Poses',
             description='''Path to the output sfmdata file with cameras (views and poses).''',
             value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],

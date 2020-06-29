@@ -334,7 +334,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         ),
         desc.File(
             name='outputViewsAndPoses',
-            label='Output SfMData File',
+            label='Output Poses',
             description='''Path to the output sfmdata file with cameras (views and poses).''',
             value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],

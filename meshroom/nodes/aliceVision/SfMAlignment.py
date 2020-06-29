@@ -1,6 +1,8 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
+
+import os.path
 
 
 class SfMAlignment(desc.CommandLineNode):
@@ -107,9 +109,16 @@ The alignment can be based on:
     outputs = [
         desc.File(
             name='output',
-            label='Output',
-            description='''Aligned SfMData file .''',
-            value=desc.Node.internalFolder + 'alignedSfM.abc',
+            label='Output SfMData File',
+            description='SfMData file.',
+            value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or 'sfmData') + '.abc',
+            uid=[],
+        ),
+        desc.File(
+            name='outputViewsAndPoses',
+            label='Output Poses',
+            description='''Path to the output sfmdata file with cameras (views and poses).''',
+            value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],
         ),
     ]

@@ -35,6 +35,18 @@ Convert or apply filtering to the input images.
             label="Images input Folders",
             description='Use images from specific folder(s).',
         ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="metadataFolder",
+                label="Metadata Folder",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="metadataFolders",
+            label="Metadata input Folders",
+            description='Use images metadata from specific folder(s).',
+        ),
         desc.ChoiceParam(
             name='extension',
             label='Output File Extension',

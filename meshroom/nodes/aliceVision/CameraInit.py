@@ -151,6 +151,29 @@ class CameraInit(desc.CommandLineNode):
             advanced= True
         ),
         desc.ChoiceParam(
+            name='viewIdMethod',
+            label='ViewId Method',
+            description="Allows to choose the way the viewID is generated:\n"
+                        " * metadata : Generate viewId from image metadata.\n"
+                        " * filename : Generate viewId from file names using regex.",
+            value='metadata',
+            values=['metadata', 'filename'],
+            exclusive=True,
+            uid=[0],
+            advanced= True
+        ),
+        desc.StringParam(
+            name='viewIdRegex',
+            label='ViewId Regex',
+            description='Regex used to catch number used as viewId in filename.'
+                        'You should capture specific parts of the filename with parenthesis to define matching elements. (only number will works)\n'
+                        'Some examples of patterns:\n'
+                        ' - Match the longest number at the end of filename (default value): ".*?(\d+)"\n'
+                        ' - Match the first number found in filename : "(\d+).*"\n',
+            value='.*?(\d+)',
+            uid=[0],
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='''verbosity level (fatal, error, warning, info, debug, trace).''',

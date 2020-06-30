@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
 import collections
+import copy
 import re
 import weakref
 import types
@@ -55,7 +56,7 @@ class Attribute(BaseObject):
         self._node = weakref.ref(node)
         self.attributeDesc = attributeDesc
         self._isOutput = isOutput
-        self._value = attributeDesc.value
+        self._value = copy.copy(attributeDesc.value)
         self._label = attributeDesc.label
 
         # invalidation value for output attributes
@@ -204,7 +205,8 @@ class Attribute(BaseObject):
     def defaultValue(self):
         if isinstance(self.desc.value, types.FunctionType):
             return self.desc.value(self)
-        return self.desc.value
+        # Need to force a copy, for the case where the value is a list (avoid reference to the desc value)
+        return copy.copy(self.desc.value)
 
     def _isDefault(self):
         return self._value == self.defaultValue()

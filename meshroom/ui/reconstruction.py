@@ -440,6 +440,10 @@ class Reconstruction(UIGraph):
         self._panoramaInit = None
         self.cameraInitChanged.connect(self.updatePanoramaInitNode)
 
+        # - PanoramaInit
+        self._sfmTransform = None
+        self.cameraInitChanged.connect(self.updateSfMTransformNode)
+
         # react to internal graph changes to update those variables
         self.graphChanged.connect(self.onGraphChanged)
 
@@ -527,6 +531,7 @@ class Reconstruction(UIGraph):
         self.ldr2hdr = None
         self.hdrCameraInit = None
         self.panoramaInit = None
+        self.sfmTransform = None
         self.updateCameraInits()
         if not self._graph:
             return
@@ -625,6 +630,10 @@ class Reconstruction(UIGraph):
     def updatePanoramaInitNode(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
         self.panoramaInit = self.lastNodeOfType(["PanoramaInit"], self.cameraInit) if self.cameraInit else None
+
+    def updateSfMTransformNode(self):
+        """ Set the current SfMTransform node based on the current CameraInit node. """
+        self.sfmTransform = self.lastNodeOfType(["SfMTransform"], self.cameraInit) if self.cameraInit else None
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
@@ -941,7 +950,8 @@ class Reconstruction(UIGraph):
         """ Set node as the active node of its type. """
         if node.nodeType in sfmHolderNodeTypes:
             self.sfm = node
-        elif node.nodeType == "FeatureExtraction":
+
+        if node.nodeType == "FeatureExtraction":
             self.featureExtraction = node
         elif node.nodeType == "FeatureMatching":
             self.featureMatching = node
@@ -955,6 +965,8 @@ class Reconstruction(UIGraph):
             self.ldr2hdr = node
         elif node.nodeType == "PanoramaInit":
             self.panoramaInit = node
+        elif node.nodeType == "SfMTransform":
+            self.sfmTransform = node
 
     def updateSfMResults(self):
         """
@@ -1126,13 +1138,16 @@ class Reconstruction(UIGraph):
     depthMap = makeProperty(QObject, "_depthMap", depthMapChanged, resetOnDestroy=True)
 
     texturingChanged = Signal()
-    texturing = makeProperty(QObject, "_texturing", notify=texturingChanged)
+    texturing = makeProperty(QObject, "_texturing", notify=texturingChanged, resetOnDestroy=True)
 
     ldr2hdrChanged = Signal()
     ldr2hdr = makeProperty(QObject, "_ldr2hdr", notify=ldr2hdrChanged, resetOnDestroy=True)
 
     panoramaInitChanged = Signal()
     panoramaInit = makeProperty(QObject, "_panoramaInit", notify=panoramaInitChanged, resetOnDestroy=True)
+
+    sfmTransformChanged = Signal()
+    sfmTransform = makeProperty(QObject, "_sfmTransform", notify=sfmTransformChanged, resetOnDestroy=True)
 
     nbCameras = Property(int, reconstructedCamerasCount, notify=sfmReportChanged)
 

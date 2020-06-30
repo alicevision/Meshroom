@@ -137,7 +137,7 @@ class CameraInit(desc.CommandLineNode):
             value='folder',
             exclusive=True,
             uid=[0],
-            advanced=True
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='allowedCameraModels',
@@ -148,7 +148,7 @@ class CameraInit(desc.CommandLineNode):
             exclusive=False,
             uid=[0],
             joinChar=',',
-            advanced= True
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='viewIdMethod',
@@ -160,7 +160,7 @@ class CameraInit(desc.CommandLineNode):
             values=['metadata', 'filename'],
             exclusive=True,
             uid=[0],
-            advanced= True
+            advanced=True,
         ),
         desc.StringParam(
             name='viewIdRegex',
@@ -172,6 +172,7 @@ class CameraInit(desc.CommandLineNode):
                         ' - Match the first number found in filename : "(\d+).*"\n',
             value='.*?(\d+)',
             uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

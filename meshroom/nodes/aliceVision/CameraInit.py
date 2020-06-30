@@ -140,6 +140,17 @@ class CameraInit(desc.CommandLineNode):
             advanced=True
         ),
         desc.ChoiceParam(
+            name='allowedCameraModels',
+            label='Allowed Camera Models',
+            description='the Camera Models that can be attributed.',
+            value=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
+            values=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
+            exclusive=False,
+            uid=[0],
+            joinChar=',',
+            advanced= True
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='''verbosity level (fatal, error, warning, info, debug, trace).''',

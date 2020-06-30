@@ -141,6 +141,11 @@ def hdriPipeline(graph):
         list of Node: the created nodes
     """
     cameraInit = graph.addNewNode('CameraInit')
+    try:
+        # fisheye4 does not work well in the ParoramaEstimation, so here we avoid to use it.
+        cameraInit.attribute('allowedCameraModels').value.remove("fisheye4")
+    except ValueError:
+        pass
 
     ldr2hdr = graph.addNewNode('LDRToHDR',
                                input=cameraInit.output)

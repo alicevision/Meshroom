@@ -20,6 +20,8 @@ Panel {
     readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
+    readonly property int centerViewId: (_reconstruction && _reconstruction.sfmTransform) ? parseInt(_reconstruction.sfmTransform.attribute("transformation").value) : 0
+
     property int defaultCellSize: 160
     property int currentIndex: 0
     property bool readOnly: false
@@ -186,6 +188,16 @@ Panel {
                                 ToolTip.text: "<b>Rig: Initialized</b><br>" +
                                               "Rig ID: " + rigIndicator.rigId + " <br>" +
                                               "SubPose: " + rigSubPoseId
+                            }
+                        }
+
+                        // Center of SfMTransform
+                        Loader {
+                            id: sfmTransformIndicator
+                            active: (viewpoint.get("viewId").value == centerViewId)
+                            sourceComponent: ImageBadge {
+                                text: MaterialIcons.gamepad
+                                ToolTip.text: "Camera used to define the center of the scene."
                             }
                         }
 

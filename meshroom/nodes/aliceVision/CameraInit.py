@@ -137,7 +137,42 @@ class CameraInit(desc.CommandLineNode):
             value='folder',
             exclusive=True,
             uid=[0],
-            advanced=True
+            advanced=True,
+        ),
+        desc.ChoiceParam(
+            name='allowedCameraModels',
+            label='Allowed Camera Models',
+            description='the Camera Models that can be attributed.',
+            value=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
+            values=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
+            exclusive=False,
+            uid=[0],
+            joinChar=',',
+            advanced=True,
+        ),
+        desc.ChoiceParam(
+            name='viewIdMethod',
+            label='ViewId Method',
+            description="Allows to choose the way the viewID is generated:\n"
+                        " * metadata : Generate viewId from image metadata.\n"
+                        " * filename : Generate viewId from file names using regex.",
+            value='metadata',
+            values=['metadata', 'filename'],
+            exclusive=True,
+            uid=[0],
+            advanced=True,
+        ),
+        desc.StringParam(
+            name='viewIdRegex',
+            label='ViewId Regex',
+            description='Regex used to catch number used as viewId in filename.'
+                        'You should capture specific parts of the filename with parenthesis to define matching elements. (only number will works)\n'
+                        'Some examples of patterns:\n'
+                        ' - Match the longest number at the end of filename (default value): ".*?(\d+)"\n'
+                        ' - Match the first number found in filename : "(\d+).*"\n',
+            value='.*?(\d+)',
+            uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

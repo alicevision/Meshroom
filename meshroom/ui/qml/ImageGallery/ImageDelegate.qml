@@ -56,6 +56,11 @@ Item {
                 enabled: !root.readOnly
                 onClicked: removeRequest()
             }
+            MenuItem {
+                text: "Define As Center Image"
+                enabled: !root.readOnly && _viewpoint.viewId != -1 && _reconstruction && _reconstruction.sfmTransform
+                onClicked: _reconstruction.sfmTransform.attribute("transformation").value = _viewpoint.viewId.toString()
+            }
         }
 
         ColumnLayout {

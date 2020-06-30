@@ -382,6 +382,9 @@ def parseSfMJsonFile(sfmJsonFile):
     return views, poses, intrinsics
 
 
+sfmHolderNodeTypes = ["StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform", "SfMAlignment"]
+
+
 class Reconstruction(UIGraph):
     """
     Specialization of a UIGraph designed to manage a 3D reconstruction.
@@ -530,9 +533,6 @@ class Reconstruction(UIGraph):
 
         self.setSfm(self.lastSfmNode())
 
-        if not self.sfm:
-            self.sfm = self.lastNodeOfType("PanoramaEstimation", self._cameraInit, Status.SUCCESS)
-
         # TODO: listen specifically for cameraInit creation/deletion
         self._graph.nodes.countChanged.connect(self.updateCameraInits)
 
@@ -569,19 +569,19 @@ class Reconstruction(UIGraph):
 
     def updateFeatureExtraction(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
-        self.featureExtraction = self.lastNodeOfType('FeatureExtraction', self.cameraInit) if self.cameraInit else None
+        self.featureExtraction = self.lastNodeOfType(['FeatureExtraction'], self.cameraInit) if self.cameraInit else None
 
     def updateFeatureMatching(self):
         """ Set the current FeatureMatching node based on the current CameraInit node. """
-        self.featureMatching = self.lastNodeOfType('FeatureMatching', self.cameraInit) if self.cameraInit else None
+        self.featureMatching = self.lastNodeOfType(['FeatureMatching'], self.cameraInit) if self.cameraInit else None
 
     def updateDepthMapNode(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
-        self.depthMap = self.lastNodeOfType('DepthMapFilter', self.cameraInit) if self.cameraInit else None
+        self.depthMap = self.lastNodeOfType(['DepthMapFilter'], self.cameraInit) if self.cameraInit else None
 
     def updateLdr2hdrNode(self):
         """ Set the current LDR2HDR node based on the current CameraInit node. """
-        self.ldr2hdr = self.lastNodeOfType('LDRToHDR', self.cameraInit) if self.cameraInit else None
+        self.ldr2hdr = self.lastNodeOfType(['LDRToHDR'], self.cameraInit) if self.cameraInit else None
 
     @Slot()
     def setupLDRToHDRCameraInit(self):
@@ -624,19 +624,19 @@ class Reconstruction(UIGraph):
 
     def updatePanoramaInitNode(self):
         """ Set the current FeatureExtraction node based on the current CameraInit node. """
-        self.panoramaInit = self.lastNodeOfType('PanoramaInit', self.cameraInit) if self.cameraInit else None
+        self.panoramaInit = self.lastNodeOfType(["PanoramaInit"], self.cameraInit) if self.cameraInit else None
 
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
-        return self.lastNodeOfType("StructureFromMotion", self._cameraInit, Status.SUCCESS)
+        return self.lastNodeOfType(sfmHolderNodeTypes, self._cameraInit, Status.SUCCESS)
 
-    def lastNodeOfType(self, nodeType, startNode, preferredStatus=None):
+    def lastNodeOfType(self, nodeTypes, startNode, preferredStatus=None):
         """
         Returns the last node of the given type starting from 'startNode'.
         If 'preferredStatus' is specified, the last node with this status will be considered in priority.
 
         Args:
-            nodeType (str): the node type
+            nodeTypes (str list): the node types
             startNode (Node): the node to start from
             preferredStatus (Status): (optional) the node status to prioritize
 
@@ -645,7 +645,7 @@ class Reconstruction(UIGraph):
         """
         if not startNode:
             return None
-        nodes = self._graph.nodesFromNode(startNode, nodeType)[0]
+        nodes = self._graph.nodesFromNode(startNode, nodeTypes)[0]
         if not nodes:
             return None
         node = nodes[-1]
@@ -939,7 +939,7 @@ class Reconstruction(UIGraph):
     @Slot(QObject)
     def setActiveNodeOfType(self, node):
         """ Set node as the active node of its type. """
-        if node.nodeType == "StructureFromMotion" or node.nodeType == "PanoramaEstimation":
+        if node.nodeType in sfmHolderNodeTypes:
             self.sfm = node
         elif node.nodeType == "FeatureExtraction":
             self.featureExtraction = node
@@ -960,7 +960,7 @@ class Reconstruction(UIGraph):
         """
         Update internal views, poses and solved intrinsics based on the current SfM node.
         """
-        if not self._sfm:
+        if not self._sfm or ('outputViewsAndPoses' not in self._sfm.getAttributes().keys()):
             self._views = dict()
             self._poses = dict()
             self._solvedIntrinsics = dict()
@@ -1003,8 +1003,8 @@ class Reconstruction(UIGraph):
             self._sfm.destroyed.disconnect(self._unsetSfm)
         self._setSfm(node)
 
-        self.texturing = self.lastNodeOfType("Texturing", self._sfm, Status.SUCCESS)
-        self.prepareDenseScene = self.lastNodeOfType("PrepareDenseScene", self._sfm, Status.SUCCESS)
+        self.texturing = self.lastNodeOfType(["Texturing"], self._sfm, Status.SUCCESS)
+        self.prepareDenseScene = self.lastNodeOfType(["PrepareDenseScene"], self._sfm, Status.SUCCESS)
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):

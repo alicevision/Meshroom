@@ -178,7 +178,7 @@ Convert or apply filtering to the input images.
             ),
             desc.FloatParam(
                 name='claheClipLimit',
-                label='Clip Limit.',
+                label='Clip Limit',
                 description='Sets Threshold For Contrast Limiting.',
                 value=4.0,
                 range=(0.0, 8.0, 1.0),
@@ -186,10 +186,54 @@ Convert or apply filtering to the input images.
             ),
             desc.IntParam(
                 name='claheTileGridSize',
-                label='Tile Grid Size.',
+                label='Tile Grid Size',
                 description='Sets Size Of Grid For Histogram Equalization. Input Image Will Be Divided Into Equally Sized Rectangular Tiles.',
                 value=8,
                 range=(4, 64, 4),
+                uid=[0],
+            ),
+        ]),
+        desc.GroupAttribute(name="noiseFilter", label="Noise Filter", description="Noise Filtering Parameters.", joinChar=":", groupDesc=[
+            desc.BoolParam(
+                name='noiseEnabled',
+                label='Enable',
+                description='Add Noise.',
+                value=False,
+                uid=[0],
+            ),
+            desc.ChoiceParam(
+                name='noiseMethod',
+                label='Method',
+                description=" * method: There are several noise types to choose from:\n"
+                            " * uniform: adds noise values uninformly distributed on range [A,B).\n"
+                            " * gaussian: adds Gaussian (normal distribution) noise values with mean value A and standard deviation B.\n"
+                            " * salt: changes to value A a portion of pixels given by B.\n",
+                value='uniform',
+                values=['uniform', 'gaussian', 'salt'],
+                exclusive=True,
+                uid=[0],
+            ),
+            desc.FloatParam(
+                name='noiseA',
+                label='A',
+                description='Parameter that have a different interpretation depending on the method chosen.',
+                value=0.0,
+                range=(0.0, 1.0, 0.0001),
+                uid=[0],
+            ),
+            desc.FloatParam(
+                name='noiseB',
+                label='B',
+                description='Parameter that have a different interpretation depending on the method chosen.',
+                value=1.0,
+                range=(0.0, 1.0, 0.0001),
+                uid=[0],
+            ),
+            desc.BoolParam(
+                name='noiseMono',
+                label='Mono',
+                description='If is Checked, a single noise value will be applied to all channels otherwise a separate noise value will be computed for each channel.',
+                value=True,
                 uid=[0],
             ),
         ]),

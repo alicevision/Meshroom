@@ -15,6 +15,12 @@ from meshroom.core.node import Node, Status, Position
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
 
+# Python2 compatibility
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
 
 class Message(QObject):
     """ Simple structure wrapping a high-level message. """

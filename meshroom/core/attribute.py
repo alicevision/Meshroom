@@ -164,8 +164,15 @@ class Attribute(BaseObject):
         """
         return isinstance(value, pyCompatibility.basestring) and Attribute.stringIsLinkRe.match(value)
 
-    def getLinkParam(self):
-        return self.node.graph.edge(self).src if self.isLink else None
+    def getLinkParam(self, recursive=False):
+        if not self.isLink:
+            return None
+        linkParam = self.node.graph.edge(self).src
+        if not recursive:
+            return linkParam
+        if linkParam.isLink:
+            return linkParam.getLinkParam(recursive)
+        return linkParam
 
     def _applyExpr(self):
         """

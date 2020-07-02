@@ -12,7 +12,7 @@ def findMetadata(d, keys, defaultValue):
         k = key.lower()
         if v != None:
             return v
-        for dk, dv in d:
+        for dk, dv in d.iteritems():
             dkm = dk.lower().replace(" ", "")
             if dkm == key.lower():
                 return dv

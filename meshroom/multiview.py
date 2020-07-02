@@ -115,8 +115,8 @@ def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), out
         cameraInit.intrinsics.extend(inputIntrinsics)
 
         if output:
-            stitching = nodes[-1]
-            graph.addNewNode('Publish', output=output, inputFiles=[stitching.output])
+            imageProcessing = nodes[-1]
+            graph.addNewNode('Publish', output=output, inputFiles=[imageProcessing.outputImages])
 
     return graph
 

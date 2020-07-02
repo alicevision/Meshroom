@@ -5,6 +5,23 @@ import os
 
 from meshroom.core import desc
 
+def findMetadata(d, keys, defaultValue):
+    v = None
+    for key in keys:
+        v = d.get(key, None)
+        k = key.lower()
+        if v != None:
+            return v
+        for dk, dv in d:
+            dkm = dk.lower().replace(" ", "")
+            if dkm == key.lower():
+                return dv
+            dkm = dkm.split(":")[-1]
+            dkm = dkm.split("/")[-1]
+            if dkm == k:
+                return dv
+    return defaultValue
+
 
 class DividedInputNodeSize(desc.DynamicNodeSize):
     """
@@ -237,12 +254,13 @@ It is done in 2 steps:
                 node.nbBrackets.value = 0
                 return
             d = json.loads(jsonMetadata)
-            fnumber = d.get("FNumber", d.get("Exif:ApertureValue", ""))
-            shutterSpeed = d.get("Exif:ShutterSpeedValue", "") # also "ExposureTime"?
-            iso = d.get("Exif:ISOSpeedRatings", "")
+            fnumber = findMetadata(d, ["FNumber", "Exif:ApertureValue", "ApertureValue", "Aperture"], "")
+            shutterSpeed = findMetadata(d, ["Exif:ShutterSpeedValue", "ShutterSpeedValue", "ShutterSpeed"], "")
+            iso = findMetadata(d, ["Exif:ISOSpeedRatings", "ISOSpeedRatings", "ISO"], "")
             if not fnumber and not shutterSpeed:
-                # if one image without shutter or fnumber, we cannot found the number of brackets
-                node.nbBrackets.value = 0
+                # If one image without shutter or fnumber, we cannot found the number of brackets.
+                # We assume that there is no multi-bracketing, so nothing to do.
+                node.nbBrackets.value = 1
                 return
             inputs.append((viewpoint.path.value, (fnumber, shutterSpeed, iso)))
         inputs.sort()

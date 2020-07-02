@@ -125,8 +125,6 @@ def hdriFisheye(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list
         graph = Graph('HDRI-Fisheye')
     with GraphModification(graph):
         hdri(inputImages, inputViewpoints, inputIntrinsics, output, graph)
-        for ldrToHdr in graph.nodesByType("LDRToHDR"):
-            ldrToHdr.attribute("fisheyeLens").value = True
         for panoramaInit in graph.nodesByType("PanoramaInit"):
             panoramaInit.attribute("useFisheye").value = True
     return graph
@@ -147,11 +145,19 @@ def hdriPipeline(graph):
     except ValueError:
         pass
 
-    ldr2hdr = graph.addNewNode('LDRToHDR',
+    ldr2hdrSampling = graph.addNewNode('LdrToHdrSampling',
                                input=cameraInit.output)
 
+    ldr2hdrCalibration = graph.addNewNode('LdrToHdrCalibration',
+                               input=ldr2hdrSampling.input,
+                               samples=ldr2hdrSampling.output)
+
+    ldr2hdrMerge = graph.addNewNode('LdrToHdrMerge',
+                               input=ldr2hdrCalibration.input,
+                               response=ldr2hdrCalibration.response)
+
     featureExtraction = graph.addNewNode('FeatureExtraction',
-                                         input=ldr2hdr.outSfMDataFilename,
+                                         input=ldr2hdrMerge.outSfMDataFilename,
                                          describerPreset='high')
 
     panoramaInit = graph.addNewNode('PanoramaInit',

@@ -5,6 +5,7 @@ import json
 import psutil
 import shutil
 import tempfile
+import logging
 
 from meshroom.core import desc
 
@@ -257,7 +258,7 @@ The metadata needed are:
             os.makedirs(os.path.join(tmpCache, node.internalFolder))
             self.createViewpointsFile(node, additionalViews)
             cmd = self.buildCommandLine(node.chunks[0])
-            # logging.debug(' - commandLine:', cmd)
+            logging.debug(' - commandLine:', cmd)
             proc = psutil.Popen(cmd, stdout=None, stderr=None, shell=True)
             stdout, stderr = proc.communicate()
             # proc.wait()
@@ -270,10 +271,13 @@ The metadata needed are:
             cameraInitSfM = node.output.value
             return readSfMData(cameraInitSfM)
 
-        except Exception:
+        except Exception as e:
+            logging.debug("[CameraInit] Error while building intrinsics: {}".format(str(e)))
             raise
         finally:
-            shutil.rmtree(tmpCache)
+            if os.path.exists(tmpCache):
+                logging.debug("[CameraInit] Remove temp files in: {}".format(tmpCache))
+                shutil.rmtree(tmpCache)
 
     def createViewpointsFile(self, node, additionalViews=()):
         node.viewpointsFile = ""

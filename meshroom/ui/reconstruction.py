@@ -592,7 +592,7 @@ class Reconstruction(UIGraph):
 
     def updateLdr2hdrNode(self):
         """ Set the current LDR2HDR node based on the current CameraInit node. """
-        self.ldr2hdr = self.lastNodeOfType(['LDRToHDR'], self.cameraInit) if self.cameraInit else None
+        self.ldr2hdr = self.lastNodeOfType(['LdrToHdrMerge'], self.cameraInit) if self.cameraInit else None
 
     @Slot()
     def setupLDRToHDRCameraInit(self):
@@ -967,7 +967,7 @@ class Reconstruction(UIGraph):
             self.prepareDenseScene = node
         elif node.nodeType in ("DepthMap", "DepthMapFilter"):
             self.depthMap = node
-        elif node.nodeType == "LDRToHDR":
+        elif node.nodeType == "LdrToHdrMerge":
             self.ldr2hdr = node
         elif node.nodeType == "PanoramaInit":
             self.panoramaInit = node

@@ -5,6 +5,7 @@ import os
 
 from meshroom.core import desc
 
+
 def findMetadata(d, keys, defaultValue):
     v = None
     for key in keys:
@@ -23,11 +24,27 @@ def findMetadata(d, keys, defaultValue):
     return defaultValue
 
 
+class DividedInputNodeSize(desc.DynamicNodeSize):
+    """
+    The LDR2HDR will reduce the amount of views in the SfMData.
+    This class converts the number of LDR input views into the number of HDR output views.
+    """
+    def __init__(self, param, divParam):
+        super(DividedInputNodeSize, self).__init__(param)
+        self._divParam = divParam
+    def computeSize(self, node):
+        s = super(DividedInputNodeSize, self).computeSize(node)
+        divParam = node.attribute(self._divParam)
+        if divParam.value == 0:
+            return s
+        return s / divParam.value
+
+
 class LdrToHdrSampling(desc.CommandLineNode):
     commandLine = 'aliceVision_LdrToHdrSampling {allParams}'
-    size = desc.DynamicNodeSize('input')
-    #parallelization = desc.Parallelization(blockSize=40)
-    #commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
+    size = DividedInputNodeSize('input', 'nbBrackets')
+    parallelization = desc.Parallelization(blockSize=2)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     documentation = '''
     Sample pixels from Low range images for HDR creation
@@ -64,7 +81,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
             description="Bypass HDR creation and use the medium bracket as the source for the next steps",
             value=False,
             uid=[0],
-            advanced=True,
+            group='internal',
         ),
         desc.IntParam(
             name='channelQuantizationPower',
@@ -96,6 +113,11 @@ class LdrToHdrSampling(desc.CommandLineNode):
         ),
     ]
 
+    def processChunk(self, chunk):
+        if chunk.node.byPass.value:
+            return
+        super(LdrToHdrSampling, self).processChunk(chunk)
+
     @classmethod
     def update(cls, node):
         if not isinstance(node.nodeDesc, cls):
@@ -108,7 +130,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
             node.nbBrackets.value = node.userNbBrackets.value
             return
         # logging.info("[LDRToHDR] Update start: version:" + str(node.packageVersion))
-        cameraInitOutput = node.input.getLinkParam()
+        cameraInitOutput = node.input.getLinkParam(recursive=True)
         if not cameraInitOutput:
             node.nbBrackets.value = 0
             return

@@ -23,28 +23,11 @@ def findMetadata(d, keys, defaultValue):
     return defaultValue
 
 
-
-class DividedInputNodeSize(desc.DynamicNodeSize):
-    """
-    The LDR2HDR will reduce the amount of views in the SfMData.
-    This class converts the number of LDR input views into the number of HDR output views.
-    """
-    def __init__(self, param, divParam):
-        super(DividedInputNodeSize, self).__init__(param)
-        self._divParam = divParam
-    def computeSize(self, node):
-        s = super(DividedInputNodeSize, self).computeSize(node)
-        divParam = node.attribute(self._divParam)
-        if divParam.value == 0:
-            return s
-        return s / divParam.value
-
-
 class LdrToHdrMerge(desc.CommandLineNode):
     commandLine = 'aliceVision_LdrToHdrMerge {allParams}'
-    size = DividedInputNodeSize('input', 'nbBrackets')
-    #parallelization = desc.Parallelization(blockSize=40)
-    #commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
+    size = desc.DynamicNodeSize('input')
+    parallelization = desc.Parallelization(blockSize=2)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     documentation = '''
     Calibrate LDR to HDR response curve from samples
@@ -97,7 +80,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
         desc.BoolParam(
             name='byPass',
             label='bypass convert',
-            description="Bypass HDR creation and use the medium bracket as the source for the next steps",
+            description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
             uid=[0],
             advanced=True,
@@ -110,6 +93,40 @@ class LdrToHdrMerge(desc.CommandLineNode):
             range=(8, 14, 1),
             uid=[0],
             advanced=True,
+        ),
+        desc.FloatParam(
+            name='highlightCorrectionFactor',
+            label='Highlights Correction',
+            description='Pixels saturated in all input images have a partial information about their real luminance.\n'
+                        'We only know that the value should be >= to the standard hdr fusion.\n'
+                        'This parameter allows to perform a post-processing step to put saturated pixels to a constant '
+                        'value defined by the `highlightsMaxLuminance` parameter.\n'
+                        'This parameter is float to enable to weight this correction.',
+            value=1.0,
+            range=(0.0, 1.0, 0.01),
+            uid=[0],
+        ),
+        desc.FloatParam(
+            name='highlightTargetLux',
+            label='Highlight Target Luminance (Lux)',
+            description='This is an arbitrary target value (in Lux) used to replace the unknown luminance value of the saturated pixels.\n'
+                        '\n'
+                        'Some Outdoor Reference Light Levels:\n'
+                        ' * 120,000 lux : Brightest sunlight\n'
+                        ' * 110,000 lux : Bright sunlight\n'
+                        ' * 20,000 lux : Shade illuminated by entire clear blue sky, midday\n'
+                        ' * 1,000 lux : Typical overcast day, midday\n'
+                        ' * 400 lux : Sunrise or sunset on a clear day\n'
+                        ' * 40 lux : Fully overcast, sunset/sunrise\n'
+                        '\n'
+                        'Some Indoor Reference Light Levels:\n'
+                        ' * 20000 lux : Max Usually Used Indoor\n'
+                        ' * 750 lux : Supermarkets\n'
+                        ' * 500 lux : Office Work\n'
+                        ' * 150 lux : Home\n',
+            value=120000.0,
+            range=(1000.0, 150000.0, 1.0),
+            uid=[0],
         ),
         desc.ChoiceParam(
             name='verboseLevel',

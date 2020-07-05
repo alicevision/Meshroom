@@ -20,8 +20,15 @@ Multiple cameras are contributing to the low frequencies and only the best one c
     inputs = [
         desc.File(
             name='input',
-            label='Input',
-            description="Panorama Warping result",
+            label='Input SfMData',
+            description="Input SfMData.",
+            value='',
+            uid=[0],
+        ),
+        desc.File(
+            name='warpingFolder',
+            label='Warping Folder',
+            description="Panorama Warping results",
             value='',
             uid=[0],
         ),

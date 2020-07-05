@@ -188,7 +188,8 @@ def hdriPipeline(graph):
                                        input=panoramaOrientation.output)
 
     panoramaCompositing = graph.addNewNode('PanoramaCompositing',
-                                           input=panoramaWarping.output)
+                                           input=panoramaWarping.input,
+                                           warpingFolder=panoramaWarping.output)
 
     imageProcessing = graph.addNewNode('ImageProcessing',
                                        input=panoramaCompositing.output,

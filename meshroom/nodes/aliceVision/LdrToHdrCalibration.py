@@ -91,20 +91,23 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             range=(0, 10, 1),
             uid=[],
         ),
-        desc.BoolParam(
-            name='byPass',
-            label='bypass convert',
-            description="Bypass HDR creation and use the medium bracket as the source for the next steps",
-            value=False,
-            uid=[0],
-            advanced=True,
-        ),
         desc.IntParam(
             name='channelQuantizationPower',
             label='Channel Quantization Power',
             description='Quantization level like 8 bits or 10 bits.',
             value=10,
             range=(8, 14, 1),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.IntParam(
+            name='maxTotalPoints',
+            label='Max Number of Points',
+            description='Max number of points selected by the sampling strategy.\n''
+                        'This ensures that this sampling step will extract a number of pixels values\n'
+                        'that the calibration step can manage (in term of computation time and memory usage).',
+            value=1000000,
+            range=(8, 10000000, 1000),
             uid=[0],
             advanced=True,
         ),
@@ -145,9 +148,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
         if not cameraInitOutput:
             node.nbBrackets.value = 0
             return
-        print("LdrToHdrCalib cameraInitOutput: " + str(cameraInitOutput))
         viewpoints = cameraInitOutput.node.viewpoints.value
-        print("LdrToHdrCalib viewpoints: " + str(viewpoints))
 
         # logging.info("[LDRToHDR] Update start: nb viewpoints:" + str(len(viewpoints)))
         inputs = []

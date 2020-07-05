@@ -2,15 +2,15 @@ __version__ = "1.1"
 
 from meshroom.core import desc
 
+import os.path
+
 
 class PanoramaPrepareImages(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaPrepareImages {allParams}'
     size = desc.DynamicNodeSize('input')
-    # parallelization = desc.Parallelization(blockSize=40)
-    # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     documentation = '''
-Prepare images for panorama Estimation
+Prepare images for Panorama pipeline: ensures that images orientations are coherent.
 '''
 
     inputs = [
@@ -34,10 +34,10 @@ Prepare images for panorama Estimation
 
     outputs = [
         desc.File(
-            name='outSfMData',
+            name='output',
             label='Output sfmData',
             description='Output sfmData.',
-            value=desc.Node.internalFolder + 'sfmData.abc',
+            value=lambda attr: desc.Node.internalFolder + os.path.basename(attr.node.input.value),
             uid=[],
         ),
     ]

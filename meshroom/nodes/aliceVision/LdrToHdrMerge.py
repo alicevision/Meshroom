@@ -99,7 +99,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
             label='Highlights Correction',
             description='Pixels saturated in all input images have a partial information about their real luminance.\n'
                         'We only know that the value should be >= to the standard hdr fusion.\n'
-                        'This parameter allows to perform a post-processing step to put saturated pixels to a constant '
+                        'This parameter allows to perform a post-processing step to put saturated pixels to a constant\n'
                         'value defined by the `highlightsMaxLuminance` parameter.\n'
                         'This parameter is float to enable to weight this correction.',
             value=1.0,
@@ -165,6 +165,9 @@ class LdrToHdrMerge(desc.CommandLineNode):
         if not cameraInitOutput:
             node.nbBrackets.value = 0
             return
+        if not cameraInitOutput.node.hasAttribute('viewpoints'):
+            if cameraInitOutput.node.hasAttribute('input'):
+                cameraInitOutput = cameraInitOutput.node.input.getLinkParam(recursive=True)
         viewpoints = cameraInitOutput.node.viewpoints.value
 
         # logging.info("[LDRToHDR] Update start: nb viewpoints:" + str(len(viewpoints)))

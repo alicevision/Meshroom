@@ -103,7 +103,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
         desc.IntParam(
             name='maxTotalPoints',
             label='Max Number of Points',
-            description='Max number of points selected by the sampling strategy.\n''
+            description='Max number of points selected by the sampling strategy.\n'
                         'This ensures that this sampling step will extract a number of pixels values\n'
                         'that the calibration step can manage (in term of computation time and memory usage).',
             value=1000000,
@@ -148,6 +148,9 @@ class LdrToHdrCalibration(desc.CommandLineNode):
         if not cameraInitOutput:
             node.nbBrackets.value = 0
             return
+        if not cameraInitOutput.node.hasAttribute('viewpoints'):
+            if cameraInitOutput.node.hasAttribute('input'):
+                cameraInitOutput = cameraInitOutput.node.input.getLinkParam(recursive=True)
         viewpoints = cameraInitOutput.node.viewpoints.value
 
         # logging.info("[LDRToHDR] Update start: nb viewpoints:" + str(len(viewpoints)))

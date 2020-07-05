@@ -498,6 +498,9 @@ class BaseNode(BaseObject):
     def getAttributes(self):
         return self._attributes
 
+    def hasAttribute(self, name):
+        return name in self._attributes.keys()
+
     def _applyExpr(self):
         for attr in self._attributes:
             attr._applyExpr()

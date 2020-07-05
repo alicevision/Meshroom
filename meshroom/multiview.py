@@ -145,8 +145,11 @@ def hdriPipeline(graph):
     except ValueError:
         pass
 
-    ldr2hdrSampling = graph.addNewNode('LdrToHdrSampling',
+    panoramaPrepareImages = graph.addNewNode('PanoramaPrepareImages',
                                input=cameraInit.output)
+
+    ldr2hdrSampling = graph.addNewNode('LdrToHdrSampling',
+                               input=panoramaPrepareImages.output)
 
     ldr2hdrCalibration = graph.addNewNode('LdrToHdrCalibration',
                                input=ldr2hdrSampling.input,

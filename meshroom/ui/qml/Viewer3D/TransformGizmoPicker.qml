@@ -9,21 +9,25 @@ ObjectPicker {
     id: root
     hoverEnabled: true
     property bool isPressed : false
+    property MouseHandler mouseController
+    property var objectMaterial
+    property color objectBaseColor
+    
     signal pickedChanged(bool picked)
 
     onPressed: {
         root.isPressed = true
         pickedChanged(true)
-        mouseHandler.currentPosition = mouseHandler.lastPosition = pick.position
+        mouseController.currentPosition = mouseController.lastPosition = pick.position
     }
     onEntered: {
-        material.ambient = "white"
+        objectMaterial.ambient = "white"
     }
     onExited: {
-        if(!isPressed) material.ambient = baseColor
+        if(!isPressed) objectMaterial.ambient = objectBaseColor
     }
     onReleased: {
-        material.ambient = baseColor
+        objectMaterial.ambient = objectBaseColor
         root.isPressed = false
         pickedChanged(false)
     }

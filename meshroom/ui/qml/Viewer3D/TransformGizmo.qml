@@ -212,20 +212,13 @@ Entity {
             }
             property real lineRadius: 0.015
 
-            PhongMaterial {
-                id: material
-                ambient: baseColor
-                shininess: 0.2
-            }
-
             // SCALE ENTITY
             Entity {
                 id: scaleEntity
-                components: [material]
 
                 Entity {
                     id: axisCylinder
-                    components: [cylinderMesh, cylinderTransform, material]
+                    components: [cylinderMesh, cylinderTransform, scaleMaterial]
 
                     CylinderMesh {
                         id: cylinderMesh
@@ -262,7 +255,7 @@ Entity {
 
                 Entity {
                     id: axisScaleBox
-                    components: [cubeScaleMesh, cubeScaleTransform, material, scalePicker]
+                    components: [cubeScaleMesh, cubeScaleTransform, scaleMaterial, scalePicker]
 
                     CuboidMesh {
                         id: cubeScaleMesh
@@ -297,8 +290,17 @@ Entity {
                     }
                 }
 
+                PhongMaterial {
+                    id: scaleMaterial
+                    ambient: baseColor
+                }
+
                 TransformGizmoPicker { 
-                    id: scalePicker 
+                    id: scalePicker
+                    mouseController : mouseHandler
+                    objectMaterial : scaleMaterial
+                    objectBaseColor : baseColor
+                    
                     onPickedChanged: {
                         root.pickedChanged(picked)
                     }
@@ -308,7 +310,7 @@ Entity {
             // POSITION ENTITY
             Entity {
                 id: positionEntity
-                components: [coneMesh, coneTransform, material, positionPicker]
+                components: [coneMesh, coneTransform, positionMaterial, positionPicker]
 
                 ConeMesh {
                     id: coneMesh
@@ -344,9 +346,17 @@ Entity {
                         return m
                     }
                 }
+                PhongMaterial {
+                    id: positionMaterial
+                    ambient: baseColor
+                }
 
                 TransformGizmoPicker { 
-                    id: positionPicker 
+                    id: positionPicker
+                    mouseController : mouseHandler
+                    objectMaterial : positionMaterial
+                    objectBaseColor : baseColor
+
                     onPickedChanged: {
                         root.pickedChanged(picked)
                     }
@@ -356,7 +366,7 @@ Entity {
             // ROTATION ENTITY
             Entity {
                 id: rotationEntity
-                components: [torusMesh, torusTransform, material, rotationPicker]
+                components: [torusMesh, torusTransform, rotationMaterial, rotationPicker]
 
                 TorusMesh {
                     id: torusMesh
@@ -378,8 +388,17 @@ Entity {
                         return m
                     }
                 }
+                PhongMaterial {
+                    id: rotationMaterial
+                    ambient: baseColor
+                }
+
                 TransformGizmoPicker { 
-                    id: rotationPicker 
+                    id: rotationPicker
+                    mouseController: mouseHandler
+                    objectMaterial: rotationMaterial
+                    objectBaseColor: baseColor
+
                     onPickedChanged: {
                         root.pickedChanged(picked)
                     }

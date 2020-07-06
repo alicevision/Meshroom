@@ -18,6 +18,114 @@ Entity {
         Z
     }
 
+    /***** QUATERNIONS *****/
+
+    function multiplyQuaternion(q1, q2) {
+        return Qt.quaternion(
+            q1.scalar * q2.scalar - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z,
+            q1.scalar * q2.x + q1.x * q2.scalar + q1.y * q2.z - q1.z * q2.y,
+            q1.scalar * q2.y + q1.y * q2.scalar + q1.z * q2.x - q1.x * q2.z,
+            q1.scalar * q2.z + q1.z * q2.scalar + q1.x * q2.y - q1.y * q2.x
+        )
+    }
+
+    function dotQuaternion(q) {
+        return (((q.x * q.x) + (q.y * q.y)) + (q.z * q.z)) + (q.scalar * q.scalar)
+    }
+
+    function normalizeQuaternion(q) {
+        const dot = dotQuaternion(q)
+        const inv = 1.0 / (Math.sqrt(dot))
+        return Qt.quaternion(q.scalar * inv, q.x * inv, q.y * inv, q.z * inv)
+    }
+
+    function quaternionFromAxisAngle(vec3, degree) {
+        const rad = degree * Math.PI/180
+        const factor = Math.sin(rad/2) // Used for the quaternion computation
+
+        // Compute the quaternion
+        const x = vec3.x * factor
+        const y = vec3.y * factor
+        const z = vec3.z * factor
+        const w = Math.cos(rad/2)
+
+        return normalizeQuaternion(Qt.quaternion(w, x, y, z))
+    }
+
+    function quaternionToRotationMatrix(q) {
+        const w = q.scalar
+        const x = q.x
+        const y = q.y
+        const z = q.z
+
+        return Qt.matrix4x4(
+            w*w + x*x - y*y - z*z, 2*(x*y - w*z), 2*(w*y + x*z), 0,
+            2*(x*y + w*z), w*w - x*x + y*y - z*z, 2*(y*z - w*x), 0,
+            2*(x*z - w*y), 2*(w*x + y*z), w*w - x*x - y*y + z*z, 0,
+            0,             0,             0,                     1
+        )
+    }
+    
+    /***** GENERIC MATRIX TRANSFORMATIONS *****/
+
+    function decomposeModelMatrixFromTransform(transform) {
+        const posMat = Qt.matrix4x4()
+        posMat.translate(transform.translation)
+        const rotMat = quaternionToRotationMatrix(transform.rotation)
+        const scaleMat = Qt.matrix4x4()
+        scaleMat.scale(transform.scale3D)
+
+        return { position: posMat, rotation: rotMat, scale: scaleMat }
+    }
+
+    function localTranslate(transform, translateVec) {
+        const modelMat = decomposeModelMatrixFromTransform(transform)
+
+        // Compute the translation transformation matrix 
+        const translationMat = Qt.matrix4x4()
+        translationMat.translate(translateVec)
+
+        // Compute the new model matrix (POSITION * ROTATION * TRANSLATE * SCALE) and set it to the Transform
+        const mat = modelMat.position.times(modelMat.rotation.times(translationMat.times(modelMat.scale)))
+        transform.setMatrix(mat)       
+    }
+
+    function localRotate(transform, axis, degree) {
+        const modelMat = decomposeModelMatrixFromTransform(transform) 
+        
+        // Compute the transformation quaternion from axis and angle in degrees
+        let vec3
+        switch(axis) {
+            case TransformGizmo.Axis.X: vec3 = Qt.vector3d(1,0,0); break
+            case TransformGizmo.Axis.Y: vec3 = Qt.vector3d(0,1,0); break
+            case TransformGizmo.Axis.Z: vec3 = Qt.vector3d(0,0,1); break
+        }
+        const transformQuat = quaternionFromAxisAngle(vec3, degree)
+
+        // Get rotation quaternion of the current model matrix
+        const initRotQuat = transform.rotation
+        // Compute the new rotation quaternion and then calculate the matrix
+        const newRotQuat = multiplyQuaternion(initRotQuat, transformQuat) // Order is important
+        const newRotationMat = quaternionToRotationMatrix(newRotQuat)
+
+        // Compute the new model matrix (POSITION * NEW_COMPUTED_ROTATION * SCALE) and set it to the Transform
+        const mat = modelMat.position.times(newRotationMat.times(modelMat.scale))
+        transform.setMatrix(mat)
+    }
+
+    function localScale(transform, scaleVec) {
+        const modelMat = decomposeModelMatrixFromTransform(transform)
+
+        // Update the scale matrix
+        modelMat.scale.m11 += scaleVec.x
+        modelMat.scale.m22 += scaleVec.y
+        modelMat.scale.m33 += scaleVec.z
+
+        // Compute the new model matrix (POSITION * ROTATION * SCALE) and set it to the Transform
+        const mat = modelMat.position.times(modelMat.rotation.times(modelMat.scale))
+        transform.setMatrix(mat)
+    }
+
     Transform {
         id: gizmoTransform
         scale: {

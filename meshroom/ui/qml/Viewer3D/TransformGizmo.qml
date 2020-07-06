@@ -9,8 +9,14 @@ Entity {
     id: root
     property real gizmoScale: 0.15
     property Camera camera
+    readonly property Transform objectTransform : Transform {}
+    
+    signal pickedChanged(bool picked)
 
-    components: [gizmoTransform]
+    components: [gizmoDisplayTransform, mouseHandler]
+
+
+    /***** ENUM *****/
 
     enum Axis {
         X,
@@ -126,10 +132,43 @@ Entity {
         transform.setMatrix(mat)
     }
 
+    /***** SPECIFIC MATRIX TRANSFORMATIONS (using local vars) *****/
+
+    function doTranslation(translateVec) {
+        localTranslate(gizmoDisplayTransform, translateVec) // Update gizmo matrix
+        localTranslate(objectTransform, translateVec) // Update object matrix
+    }
+
+    function doRotation(axis, degree) {
+        localRotate(gizmoDisplayTransform, axis, degree) // Update gizmo matrix
+        localRotate(objectTransform, axis, degree) // Update object matrix
+    }
+
+    function doScale(scaleVec) {
+        localScale(objectTransform, scaleVec) // Update object matrix
+    }
+
+    /***** DEVICES *****/
+
+    MouseDevice { id: mouseSourceDevice }
+
+    MouseHandler {
+        id: mouseHandler
+        sourceDevice: mouseSourceDevice
+        property point lastPosition
+        property point currentPosition
+        onPositionChanged: {
+            currentPosition.x = mouse.x
+            currentPosition.y = mouse.y
+        }
+    }
+
+    /***** GIZMO'S BASIC COMPONENTS *****/
+
     Transform {
-        id: gizmoTransform
+        id: gizmoDisplayTransform
         scale: {
-            return root.gizmoScale * (camera.position.minus(gizmoTransform.translation)).length()
+            return root.gizmoScale * (camera.position.minus(gizmoDisplayTransform.translation)).length()
         }
     }
 
@@ -223,7 +262,7 @@ Entity {
 
                 Entity {
                     id: axisScaleBox
-                    components: [cubeScaleMesh, cubeScaleTransform, material]
+                    components: [cubeScaleMesh, cubeScaleTransform, material, scalePicker]
 
                     CuboidMesh {
                         id: cubeScaleMesh
@@ -256,13 +295,20 @@ Entity {
                             return m
                         }
                     }
-                } 
+                }
+
+                TransformGizmoPicker { 
+                    id: scalePicker 
+                    onPickedChanged: {
+                        root.pickedChanged(picked)
+                    }
+                }
             }
 
             // POSITION ENTITY
             Entity {
                 id: positionEntity
-                components: [coneMesh, coneTransform, material]
+                components: [coneMesh, coneTransform, material, positionPicker]
 
                 ConeMesh {
                     id: coneMesh
@@ -298,12 +344,19 @@ Entity {
                         return m
                     }
                 }
+
+                TransformGizmoPicker { 
+                    id: positionPicker 
+                    onPickedChanged: {
+                        root.pickedChanged(picked)
+                    }
+                }
             }
 
             // ROTATION ENTITY
             Entity {
                 id: rotationEntity
-                components: [torusMesh, torusTransform, material]
+                components: [torusMesh, torusTransform, material, rotationPicker]
 
                 TorusMesh {
                     id: torusMesh
@@ -323,6 +376,60 @@ Entity {
                             case TransformGizmo.Axis.Z: m.scale(Qt.vector3d(1-2*scaleDiff, 1-2*scaleDiff, 1-2*scaleDiff)); break
                         }
                         return m
+                    }
+                }
+                TransformGizmoPicker { 
+                    id: rotationPicker 
+                    onPickedChanged: {
+                        root.pickedChanged(picked)
+                    }
+                }
+            }
+
+            FrameAction {
+                onTriggered: {
+                    // POSITION PICKER
+                    if (positionPicker.isPressed) {
+                        const offsetX = mouseHandler.currentPosition.x - mouseHandler.lastPosition.x
+                        const offsetY = mouseHandler.currentPosition.y - mouseHandler.lastPosition.y
+
+                        let pickedAxis
+                        switch(axis) {
+                            case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
+                            case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
+                            case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
+                        }
+
+                        doTranslation(pickedAxis.times(0.01*offsetX - 0.01*offsetY))
+                        mouseHandler.lastPosition = mouseHandler.currentPosition
+                        return
+                    }
+                    if (rotationPicker.isPressed) {
+                        const offsetX = mouseHandler.currentPosition.x - mouseHandler.lastPosition.x
+                        const offsetY = mouseHandler.currentPosition.y - mouseHandler.lastPosition.y
+                        // const offset = 0.1*offsetX - 0.1*offsetY
+                        const offset = 1
+
+                        doRotation(axis, offset)
+                        mouseHandler.lastPosition = mouseHandler.currentPosition
+                        return
+                    }
+                    if (scalePicker.isPressed) {
+                        const offsetX = mouseHandler.currentPosition.x - mouseHandler.lastPosition.x
+                        const offsetY = mouseHandler.currentPosition.y - mouseHandler.lastPosition.y
+                        // const offset = 0.1*offsetX - 0.1*offsetY
+                        const offset = 0.05
+
+                        let pickedAxis
+                        switch(axis) {
+                            case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
+                            case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
+                            case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
+                        }
+
+                        doScale(pickedAxis.times(offset))
+                        mouseHandler.lastPosition = mouseHandler.currentPosition
+                        return    
                     }
                 }
             }

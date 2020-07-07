@@ -7,21 +7,27 @@ import Qt3D.Logic 2.0
 
 Entity {
     id: root
-    property real gizmoScale: 0.15
+    property real gizmoScale: 0.20
     property Camera camera
     readonly property Transform objectTransform : Transform {}
     
-    signal pickedChanged(bool picked)
+    signal pickedChanged(bool pressed)
 
     components: [gizmoDisplayTransform, mouseHandler]
 
 
-    /***** ENUM *****/
+    /***** ENUMS *****/
 
     enum Axis {
         X,
         Y,
         Z
+    }
+
+    enum Type {
+        POSITION,
+        ROTATION,
+        SCALE
     }
 
     /***** QUATERNIONS *****/
@@ -297,12 +303,15 @@ Entity {
 
                 TransformGizmoPicker { 
                     id: scalePicker
-                    mouseController : mouseHandler
-                    objectMaterial : scaleMaterial
-                    objectBaseColor : baseColor
-                    
+                    mouseController: mouseHandler
+                    gizmoMaterial: scaleMaterial
+                    gizmoBaseColor: baseColor
+                    gizmoAxis: axis
+                    gizmoType: TransformGizmo.Type.SCALE
+
                     onPickedChanged: {
-                        root.pickedChanged(picked)
+                        root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
+                        transformHandler.objectPicker = picker.isPressed ? picker : null // Pass the picker to the global FrameAction
                     }
                 }
             }
@@ -353,12 +362,15 @@ Entity {
 
                 TransformGizmoPicker { 
                     id: positionPicker
-                    mouseController : mouseHandler
-                    objectMaterial : positionMaterial
-                    objectBaseColor : baseColor
+                    mouseController: mouseHandler
+                    gizmoMaterial: positionMaterial
+                    gizmoBaseColor: baseColor
+                    gizmoAxis: axis
+                    gizmoType: TransformGizmo.Type.POSITION
 
                     onPickedChanged: {
-                        root.pickedChanged(picked)
+                        root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
+                        transformHandler.objectPicker = picker.isPressed ? picker : null // Pass the picker to the global FrameAction
                     }
                 }
             }
@@ -396,24 +408,33 @@ Entity {
                 TransformGizmoPicker { 
                     id: rotationPicker
                     mouseController: mouseHandler
-                    objectMaterial: rotationMaterial
-                    objectBaseColor: baseColor
+                    gizmoMaterial: rotationMaterial
+                    gizmoBaseColor: baseColor
+                    gizmoAxis: axis
+                    gizmoType: TransformGizmo.Type.ROTATION
 
                     onPickedChanged: {
-                        root.pickedChanged(picked)
+                        root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
+                        transformHandler.objectPicker = picker.isPressed ? picker : null // Pass the picker to the global FrameAction
                     }
                 }
             }
+        }
+    }
 
-            FrameAction {
-                onTriggered: {
-                    // POSITION PICKER
-                    if (positionPicker.isPressed) {
+    FrameAction {
+        id: transformHandler
+        property var objectPicker: null
+
+        onTriggered: {
+            if (objectPicker) {
+                switch(objectPicker.gizmoType) {
+                    case TransformGizmo.Type.POSITION: {
                         const offsetX = mouseHandler.currentPosition.x - mouseHandler.lastPosition.x
                         const offsetY = mouseHandler.currentPosition.y - mouseHandler.lastPosition.y
 
                         let pickedAxis
-                        switch(axis) {
+                        switch(objectPicker.gizmoAxis) {
                             case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
                             case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
                             case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
@@ -423,24 +444,26 @@ Entity {
                         mouseHandler.lastPosition = mouseHandler.currentPosition
                         return
                     }
-                    if (rotationPicker.isPressed) {
+
+                    case TransformGizmo.Type.ROTATION: {
                         const offsetX = mouseHandler.currentPosition.x - mouseHandler.lastPosition.x
                         const offsetY = mouseHandler.currentPosition.y - mouseHandler.lastPosition.y
                         // const offset = 0.1*offsetX - 0.1*offsetY
                         const offset = 1
 
-                        doRotation(axis, offset)
+                        doRotation(objectPicker.gizmoAxis, offset)
                         mouseHandler.lastPosition = mouseHandler.currentPosition
                         return
                     }
-                    if (scalePicker.isPressed) {
+
+                    case TransformGizmo.Type.SCALE: {
                         const offsetX = mouseHandler.currentPosition.x - mouseHandler.lastPosition.x
                         const offsetY = mouseHandler.currentPosition.y - mouseHandler.lastPosition.y
                         // const offset = 0.1*offsetX - 0.1*offsetY
                         const offset = 0.05
 
                         let pickedAxis
-                        switch(axis) {
+                        switch(objectPicker.gizmoAxis) {
                             case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
                             case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
                             case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
@@ -448,7 +471,7 @@ Entity {
 
                         doScale(pickedAxis.times(offset))
                         mouseHandler.lastPosition = mouseHandler.currentPosition
-                        return    
+                        return      
                     }
                 }
             }

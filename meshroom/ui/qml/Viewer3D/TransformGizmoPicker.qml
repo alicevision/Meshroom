@@ -7,28 +7,31 @@ import Qt3D.Logic 2.0
 
 ObjectPicker {
     id: root
-    hoverEnabled: true
     property bool isPressed : false
     property MouseHandler mouseController
-    property var objectMaterial
-    property color objectBaseColor
+    property var gizmoMaterial
+    property color gizmoBaseColor
+    property int gizmoAxis
+    property int gizmoType
     
-    signal pickedChanged(bool picked)
+    signal pickedChanged(var picker)
+    
+    hoverEnabled: true
 
     onPressed: {
         root.isPressed = true
-        pickedChanged(true)
+        pickedChanged(this)
         mouseController.currentPosition = mouseController.lastPosition = pick.position
     }
     onEntered: {
-        objectMaterial.ambient = "white"
+        gizmoMaterial.ambient = "white"
     }
     onExited: {
-        if(!isPressed) objectMaterial.ambient = objectBaseColor
+        if(!isPressed) gizmoMaterial.ambient = gizmoBaseColor
     }
     onReleased: {
-        objectMaterial.ambient = objectBaseColor
+        gizmoMaterial.ambient = gizmoBaseColor
         root.isPressed = false
-        pickedChanged(false)
+        pickedChanged(this)
     }
 }

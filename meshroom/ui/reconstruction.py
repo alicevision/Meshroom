@@ -8,6 +8,7 @@ from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF
 from PySide2.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
 
 import meshroom.core
+import meshroom.common
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
@@ -196,6 +197,7 @@ class ViewpointWrapper(QObject):
         self._reconstructed = False
         # PrepareDenseScene
         self._undistortedImagePath = ''
+        self._activeNode_PrepareDenseScene = self._reconstruction.activeNodes.get("PrepareDenseScene")
 
         # update internally cached variables
         self._updateInitialParams()
@@ -205,7 +207,7 @@ class ViewpointWrapper(QObject):
         # trigger internal members updates when reconstruction members changes
         self._reconstruction.cameraInitChanged.connect(self._updateInitialParams)
         self._reconstruction.sfmReportChanged.connect(self._updateSfMParams)
-        self._reconstruction.prepareDenseSceneChanged.connect(self._updateDenseSceneParams)
+        self._activeNode_PrepareDenseScene.nodeChanged.connect(self._updateDenseSceneParams)
 
     def _updateInitialParams(self):
         """ Update internal members depending on CameraInit. """
@@ -235,11 +237,11 @@ class ViewpointWrapper(QObject):
     def _updateDenseSceneParams(self):
         """ Update internal members depending on PrepareDenseScene. """
         # undistorted image path
-        if not self._reconstruction.prepareDenseScene:
+        if not self._activeNode_PrepareDenseScene.node:
             self._undistortedImagePath = ''
         else:
-            filename = "{}.{}".format(self._viewpoint.viewId.value, self._reconstruction.prepareDenseScene.outputFileType.value)
-            self._undistortedImagePath = os.path.join(self._reconstruction.prepareDenseScene.output.value, filename)
+            filename = "{}.{}".format(self._viewpoint.viewId.value, self._activeNode_PrepareDenseScene.node.outputFileType.value)
+            self._undistortedImagePath = os.path.join(self._activeNode_PrepareDenseScene.node.output.value, filename)
         self.denseSceneParamsChanged.emit()
 
     @Property(type=QObject, constant=True)
@@ -388,18 +390,37 @@ def parseSfMJsonFile(sfmJsonFile):
     return views, poses, intrinsics
 
 
-sfmHolderNodeTypes = ["StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform", "SfMAlignment"]
+class ActiveNode(QObject):
+    """
+    Hold one active node for a given NodeType.
+    """
+    def __init__(self, nodeType, parent=None):
+        super(ActiveNode, self).__init__(parent)
+        self.nodeType = nodeType
+        self._node = None
+
+    nodeChanged = Signal()
+    node = makeProperty(QObject, "_node", nodeChanged, resetOnDestroy=True)
 
 
 class Reconstruction(UIGraph):
     """
     Specialization of a UIGraph designed to manage a 3D reconstruction.
     """
+    activeNodeCategories = {
+        "sfm": ["StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform",
+                "SfMAlignment"],
+        "undistort": ["PrepareDenseScene", "PanoramaWarping"],
+        "allDepthMap": ["DepthMap", "DepthMapFilter"],
+    }
 
     def __init__(self, defaultPipeline='', parent=None):
         super(Reconstruction, self).__init__(parent)
 
         # initialize member variables for key steps of the 3D reconstruction pipeline
+
+        self._activeNodes = meshroom.common.DictModel(keyAttrName="nodeType")
+        self.initActiveNodes()
 
         # - CameraInit
         self._cameraInit = None                            # current CameraInit node
@@ -407,17 +428,11 @@ class Reconstruction(UIGraph):
         self._buildingIntrinsics = False
         self.intrinsicsBuilt.connect(self.onIntrinsicsAvailable)
 
-        self._hdrCameraInit = None
+        self.cameraInitChanged.connect(self.onCameraInitChanged)
+
+        self._tempCameraInit = None
 
         self.importImagesFailed.connect(self.onImportImagesFailed)
-
-        # - Feature Extraction
-        self._featureExtraction = None
-        self.cameraInitChanged.connect(self.updateFeatureExtraction)
-
-        # - Feature Matching
-        self._featureMatching = None
-        self.cameraInitChanged.connect(self.updateFeatureMatching)
 
         # - SfM
         self._sfm = None
@@ -428,28 +443,6 @@ class Reconstruction(UIGraph):
         self._selectedViewpoint = None
         self._liveSfmManager = LiveSfmManager(self)
 
-        # - Prepare Dense Scene (undistorted images)
-        self._prepareDenseScene = None
-
-        # - Depth Map
-        self._depthMap = None
-        self.cameraInitChanged.connect(self.updateDepthMapNode)
-
-        # - Texturing
-        self._texturing = None
-
-        # - LDR2HDR
-        self._ldr2hdr = None
-        self.cameraInitChanged.connect(self.updateLdr2hdrNode)
-
-        # - PanoramaInit
-        self._panoramaInit = None
-        self.cameraInitChanged.connect(self.updatePanoramaInitNode)
-
-        # - PanoramaInit
-        self._sfmTransform = None
-        self.cameraInitChanged.connect(self.updateSfMTransformNode)
-
         # react to internal graph changes to update those variables
         self.graphChanged.connect(self.onGraphChanged)
 
@@ -457,6 +450,18 @@ class Reconstruction(UIGraph):
 
     def setDefaultPipeline(self, defaultPipeline):
         self._defaultPipeline = defaultPipeline
+
+    def initActiveNodes(self):
+        # Create all possible entries
+        for category, _ in self.activeNodeCategories.iteritems():
+            self._activeNodes.add(ActiveNode(category, self))
+        for nodeType, _ in meshroom.core.nodesDesc.iteritems():
+            self._activeNodes.add(ActiveNode(nodeType, self))
+
+    def onCameraInitChanged(self):
+        # Update active nodes when CameraInit changes
+        nodes = self._graph.nodesFromNode(self._cameraInit)[0]
+        self.setActiveNodes(nodes)
 
     @Slot()
     @Slot(str)
@@ -528,16 +533,8 @@ class Reconstruction(UIGraph):
         """ React to the change of the internal graph. """
         self._liveSfmManager.reset()
         self.selectedViewId = "-1"
-        self.featureExtraction = None
-        self.featureMatching = None
         self.sfm = None
-        self.prepareDenseScene = None
-        self.depthMap = None
-        self.texturing = None
-        self.ldr2hdr = None
-        self.hdrCameraInit = None
-        self.panoramaInit = None
-        self.sfmTransform = None
+        self.tempCameraInit = None
         self.updateCameraInits()
         if not self._graph:
             return
@@ -578,35 +575,23 @@ class Reconstruction(UIGraph):
         camInit = self._cameraInits[idx] if self._cameraInits else None
         self.cameraInit = camInit
 
-    def updateFeatureExtraction(self):
-        """ Set the current FeatureExtraction node based on the current CameraInit node. """
-        self.featureExtraction = self.lastNodeOfType(['FeatureExtraction'], self.cameraInit) if self.cameraInit else None
-
-    def updateFeatureMatching(self):
-        """ Set the current FeatureMatching node based on the current CameraInit node. """
-        self.featureMatching = self.lastNodeOfType(['FeatureMatching'], self.cameraInit) if self.cameraInit else None
-
-    def updateDepthMapNode(self):
-        """ Set the current FeatureExtraction node based on the current CameraInit node. """
-        self.depthMap = self.lastNodeOfType(['DepthMapFilter'], self.cameraInit) if self.cameraInit else None
-
-    def updateLdr2hdrNode(self):
-        """ Set the current LDR2HDR node based on the current CameraInit node. """
-        self.ldr2hdr = self.lastNodeOfType(['LdrToHdrMerge'], self.cameraInit) if self.cameraInit else None
-
     @Slot()
-    def setupLDRToHDRCameraInit(self):
-        if not self.ldr2hdr:
-            self.hdrCameraInit = Node("CameraInit")
+    def clearTempCameraInit(self):
+        self.tempCameraInit = None
+
+    @Slot(QObject, str)
+    def setupTempCameraInit(self, node, attrName):
+        if not node or not attrName:
+            self.tempCameraInit = None
             return
-        sfmFile = self.ldr2hdr.attribute("outSfMDataFilename").value
+        sfmFile = node.attribute(attrName).value
         if not sfmFile or not os.path.isfile(sfmFile):
-            self.hdrCameraInit = Node("CameraInit")
+            self.tempCameraInit = None
             return
         nodeDesc = meshroom.core.nodesDesc["CameraInit"]()
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
-        self.hdrCameraInit = tmpCameraInit
+        self.tempCameraInit = tmpCameraInit
 
     @Slot(QObject, result=QVector3D)
     def getAutoFisheyeCircle(self, panoramaInit):
@@ -633,17 +618,9 @@ class Reconstruction(UIGraph):
                         float(intrinsic.get("fisheyeCircleRadius", 0.0)))
         return res
 
-    def updatePanoramaInitNode(self):
-        """ Set the current FeatureExtraction node based on the current CameraInit node. """
-        self.panoramaInit = self.lastNodeOfType(["PanoramaInit"], self.cameraInit) if self.cameraInit else None
-
-    def updateSfMTransformNode(self):
-        """ Set the current SfMTransform node based on the current CameraInit node. """
-        self.sfmTransform = self.lastNodeOfType(["SfMTransform"], self.cameraInit) if self.cameraInit else None
-
     def lastSfmNode(self):
         """ Retrieve the last SfM node from the initial CameraInit node. """
-        return self.lastNodeOfType(sfmHolderNodeTypes, self._cameraInit, Status.SUCCESS)
+        return self.lastNodeOfType(self.activeNodeCategories['sfm'], self._cameraInit, Status.SUCCESS)
 
     def lastNodeOfType(self, nodeTypes, startNode, preferredStatus=None):
         """
@@ -938,10 +915,11 @@ class Reconstruction(UIGraph):
         self._buildingIntrinsics = value
         self.buildingIntrinsicsChanged.emit()
 
+    activeNodes = makeProperty(QObject, "_activeNodes", resetOnDestroy=True)
     cameraInitChanged = Signal()
     cameraInit = makeProperty(QObject, "_cameraInit", cameraInitChanged, resetOnDestroy=True)
-    hdrCameraInitChanged = Signal()
-    hdrCameraInit = makeProperty(QObject, "_hdrCameraInit", hdrCameraInitChanged, resetOnDestroy=True)
+    tempCameraInitChanged = Signal()
+    tempCameraInit = makeProperty(QObject, "_tempCameraInit", tempCameraInitChanged, resetOnDestroy=True)
     cameraInitIndex = Property(int, getCameraInitIndex, setCameraInitIndex, notify=cameraInitChanged)
     viewpoints = Property(QObject, getViewpoints, notify=cameraInitChanged)
     cameraInits = Property(QObject, lambda self: self._cameraInits, constant=True)
@@ -952,27 +930,30 @@ class Reconstruction(UIGraph):
     liveSfmManager = Property(QObject, lambda self: self._liveSfmManager, constant=True)
 
     @Slot(QObject)
-    def setActiveNodeOfType(self, node):
+    def setActiveNode(self, node):
         """ Set node as the active node of its type. """
-        if node.nodeType in sfmHolderNodeTypes:
-            self.sfm = node
+        for category, nodeTypes in self.activeNodeCategories.iteritems():
+            if node.nodeType in nodeTypes:
+                self.activeNodes.get(category).node = node
+                if category == 'sfm':
+                    self.setSfm(node)
+        self.activeNodes.get(node.nodeType).node = node
 
-        if node.nodeType == "FeatureExtraction":
-            self.featureExtraction = node
-        elif node.nodeType == "FeatureMatching":
-            self.featureMatching = node
-        elif node.nodeType == "CameraInit":
-            self.cameraInit = node
-        elif node.nodeType == "PrepareDenseScene":
-            self.prepareDenseScene = node
-        elif node.nodeType in ("DepthMap", "DepthMapFilter"):
-            self.depthMap = node
-        elif node.nodeType == "LdrToHdrMerge":
-            self.ldr2hdr = node
-        elif node.nodeType == "PanoramaInit":
-            self.panoramaInit = node
-        elif node.nodeType == "SfMTransform":
-            self.sfmTransform = node
+    @Slot(QObject)
+    def setActiveNodes(self, nodes):
+        """ Set node as the active node of its type. """
+        # Setup the active node per category only once, on the last one
+        nodesByCategory = {}
+        for node in nodes:
+            for category, nodeTypes in self.activeNodeCategories.iteritems():
+                if node.nodeType in nodeTypes:
+                    nodesByCategory[category] = node
+        for category, node in nodesByCategory.iteritems():
+            self.activeNodes.get(category).node = node
+            if category == 'sfm':
+                self.setSfm(node)
+        for node in nodes:
+            self.activeNodes.get(node.nodeType).node = node
 
     def updateSfMResults(self):
         """
@@ -1020,9 +1001,6 @@ class Reconstruction(UIGraph):
             self._sfm.chunks[0].statusChanged.disconnect(self.updateSfMResults)
             self._sfm.destroyed.disconnect(self._unsetSfm)
         self._setSfm(node)
-
-        self.texturing = self.lastNodeOfType(["Texturing"], self._sfm, Status.SUCCESS)
-        self.prepareDenseScene = self.lastNodeOfType(["PrepareDenseScene"], self._sfm, Status.SUCCESS)
 
     @Slot(QObject, result=bool)
     def isInViews(self, viewpoint):
@@ -1129,34 +1107,10 @@ class Reconstruction(UIGraph):
     sfmChanged = Signal()
     sfm = Property(QObject, getSfm, setSfm, notify=sfmChanged)
 
-    featureExtractionChanged = Signal()
-    featureExtraction = makeProperty(QObject, "_featureExtraction", featureExtractionChanged, resetOnDestroy=True)
-
-    featureMatchingChanged = Signal()
-    featureMatching = makeProperty(QObject, "_featureMatching", featureMatchingChanged, resetOnDestroy=True)
-
     sfmReportChanged = Signal()
     # convenient property for QML binding re-evaluation when sfm report changes
     sfmReport = Property(bool, lambda self: len(self._poses) > 0, notify=sfmReportChanged)
     sfmAugmented = Signal(Node, Node)
-
-    prepareDenseSceneChanged = Signal()
-    prepareDenseScene = makeProperty(QObject, "_prepareDenseScene", notify=prepareDenseSceneChanged, resetOnDestroy=True)
-
-    depthMapChanged = Signal()
-    depthMap = makeProperty(QObject, "_depthMap", depthMapChanged, resetOnDestroy=True)
-
-    texturingChanged = Signal()
-    texturing = makeProperty(QObject, "_texturing", notify=texturingChanged, resetOnDestroy=True)
-
-    ldr2hdrChanged = Signal()
-    ldr2hdr = makeProperty(QObject, "_ldr2hdr", notify=ldr2hdrChanged, resetOnDestroy=True)
-
-    panoramaInitChanged = Signal()
-    panoramaInit = makeProperty(QObject, "_panoramaInit", notify=panoramaInitChanged, resetOnDestroy=True)
-
-    sfmTransformChanged = Signal()
-    sfmTransform = makeProperty(QObject, "_sfmTransform", notify=sfmTransformChanged, resetOnDestroy=True)
 
     nbCameras = Property(int, reconstructedCamerasCount, notify=sfmReportChanged)
 

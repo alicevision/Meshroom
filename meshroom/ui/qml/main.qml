@@ -703,7 +703,6 @@ ApplicationWindow {
                     }
                 }
 
-
                 GraphEditor {
                     id: graphEditor
 
@@ -713,7 +712,7 @@ ApplicationWindow {
                     readOnly: graphLocked
 
                     onNodeDoubleClicked: {
-                        _reconstruction.setActiveNodeOfType(node);
+                        _reconstruction.setActiveNode(node);
 
                         let viewable = false;
                         for(var i=0; i < node.attributes.count; ++i)

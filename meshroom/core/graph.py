@@ -881,7 +881,7 @@ class Graph(BaseObject):
             filterTypes (str list): (optional) only return the nodes of the given types
                               (does not stop the visit, this is a post-process only)
         Returns:
-            The list of nodes from startNode to the graph leaves following edges.
+            The list of nodes and edges, from startNode to the graph leaves following edges.
         """
         nodes = []
         edges = []

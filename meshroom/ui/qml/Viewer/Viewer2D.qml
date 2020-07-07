@@ -104,10 +104,11 @@ FocusScope {
     }
 
     function getImageFile(type) {
+        var depthMapNode = _reconstruction.activeNodes.get('allDepthMap').node;
         if (type == "image") {
             return root.source;
-        } else if (_reconstruction.depthMap != undefined && _reconstruction.selectedViewId >= 0) {
-            return Filepath.stringToUrl(_reconstruction.depthMap.internalFolder+_reconstruction.selectedViewId+"_"+type+"Map.exr");
+        } else if (depthMapNode != undefined && _reconstruction.selectedViewId >= 0) {
+            return Filepath.stringToUrl(depthMapNode.internalFolder+_reconstruction.selectedViewId+"_"+type+"Map.exr");
         }
         return "";
     }
@@ -245,8 +246,8 @@ FocusScope {
                 // note: requires QtAliceVision plugin - use a Loader to evaluate plugin availability at runtime
                 Loader {
                     id: featuresViewerLoader
-
                     active: displayFeatures.checked
+                    property var activeNode: _reconstruction.activeNodes.get("FeatureExtraction").node
 
                     // handle rotation/position based on available metadata
                     rotation: {
@@ -265,8 +266,8 @@ FocusScope {
                             // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             setSource("FeaturesViewer.qml", {
                                 'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                                'model': Qt.binding(function() { return _reconstruction.featureExtraction ? _reconstruction.featureExtraction.attribute("describerTypes").value : ""; }),
-                                'featureFolder': Qt.binding(function() { return _reconstruction.featureExtraction ? Filepath.stringToUrl(_reconstruction.featureExtraction.attribute("output").value) : ""; }),
+                                'model': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : ""; }),
+                                'featureFolder': Qt.binding(function() { return activeNode ? Filepath.stringToUrl(activeNode.attribute("output").value) : ""; }),
                                 'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
                                 'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
                             })
@@ -281,7 +282,8 @@ FocusScope {
                 // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
                 Loader {
                     anchors.centerIn: parent
-                    active: (displayFisheyeCircleLoader.checked && _reconstruction.panoramaInit)
+                    property var activeNode: _reconstruction.activeNodes.get("PanoramaInit").node
+                    active: (displayFisheyeCircleLoader.checked && activeNode)
 
                     // handle rotation/position based on available metadata
                     rotation: {
@@ -294,28 +296,28 @@ FocusScope {
                     }
 
                     sourceComponent: CircleGizmo {
-                        property bool useAuto: _reconstruction.panoramaInit.attribute("estimateFisheyeCircle").value
+                        property bool useAuto: activeNode.attribute("estimateFisheyeCircle").value
                         readOnly: useAuto
-                        visible: (!useAuto) || _reconstruction.panoramaInit.isComputed
-                        property real userFisheyeRadius: _reconstruction.panoramaInit.attribute("fisheyeRadius").value
-                        property variant fisheyeAutoParams: _reconstruction.getAutoFisheyeCircle(_reconstruction.panoramaInit)
+                        visible: (!useAuto) || activeNode.isComputed
+                        property real userFisheyeRadius: activeNode.attribute("fisheyeRadius").value
+                        property variant fisheyeAutoParams: _reconstruction.getAutoFisheyeCircle(activeNode)
 
-                        x: useAuto ? fisheyeAutoParams.x : _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
-                        y: useAuto ? fisheyeAutoParams.y : _reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
+                        x: useAuto ? fisheyeAutoParams.x : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
+                        y: useAuto ? fisheyeAutoParams.y : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
                         radius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
 
                         border.width: Math.max(1, (3.0 / imgContainer.scale))
                         onMoved: {
                             if(!useAuto)
                             {
-                                _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x"), x)
-                                _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y"), y)
+                                _reconstruction.setAttribute(activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x"), x)
+                                _reconstruction.setAttribute(activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y"), y)
                             }
                         }
                         onIncrementRadius: {
                             if(!useAuto)
                             {
-                                _reconstruction.setAttribute(_reconstruction.panoramaInit.attribute("fisheyeRadius"), _reconstruction.panoramaInit.attribute("fisheyeRadius").value + radiusOffset)
+                                _reconstruction.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
                             }
                         }
                     }
@@ -352,8 +354,9 @@ FocusScope {
                         // show which depthmap node is active
                         Label {
                             id: depthMapNodeName
-                            visible: (_reconstruction.depthMap != undefined) && (imageType.type != "image")
-                            text: (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "")
+                            property var activeNode: _reconstruction.activeNodes.get("allDepthMap").node
+                            visible: (activeNode != undefined) && (imageType.type != "image")
+                            text: (activeNode != undefined ? activeNode.label : "")
                             font.pointSize: 8
 
                             horizontalAlignment: TextInput.AlignLeft
@@ -422,10 +425,9 @@ FocusScope {
                     }
                     Loader {
                         id: mtracksLoader
-                        // active: _reconstruction.featureMatching
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
-                        property var activeNode: _reconstruction.featureMatching
+                        property var activeNode: _reconstruction.activeNodes.get('FeatureMatching').node
                         property bool isComputed: activeNode && activeNode.isComputed
 
                         active: false
@@ -498,7 +500,7 @@ FocusScope {
                         active: displayFeatures.checked && featuresViewerLoader.status === Loader.Ready
 
                         sourceComponent: FeaturesInfoOverlay {
-                            featureExtractionNode: _reconstruction.featureExtraction
+                            featureExtractionNode: _reconstruction.activeNodes.get('FeatureExtraction').node
                             pluginStatus: featuresViewerLoader.status
                             featuresViewer: featuresViewerLoader.item
                         }
@@ -514,9 +516,8 @@ FocusScope {
                         anchors.fill: parent
 
                         // zoom label
-                        Label {
+                        MLabel {
                             text: ((imgContainer.image && (imgContainer.image.status === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
-                            state: "xsmall"
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -533,6 +534,7 @@ FocusScope {
                                     }
                                 }
                             }
+                            ToolTip.text: "Zoom"
                         }
                         MaterialToolButton {
                             id: displayAlphaBackground
@@ -566,31 +568,30 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayFisheyeCircleLoader
-                            ToolTip.text: "Display Fisheye Circle: " + (_reconstruction.panoramaInit ? _reconstruction.panoramaInit.label : "No Node")
-                            text: MaterialIcons.panorama_fish_eye
+                            property var activeNode: _reconstruction.activeNodes.get('PanoramaInit').node
+                            ToolTip.text: "Display Fisheye Circle: " + (activeNode ? activeNode.label : "No Node")
+                            text: MaterialIcons.vignette
+                            // text: MaterialIcons.panorama_fish_eye
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
-                            enabled: _reconstruction.panoramaInit && _reconstruction.panoramaInit.attribute("useFisheye").value
-                            visible: _reconstruction.panoramaInit
+                            enabled: activeNode && activeNode.attribute("useFisheye").value
+                            visible: activeNode
                         }
 
                         Label {
                             id: resolutionLabel
                             Layout.fillWidth: true
-                            text: imgContainer.image ? (imgContainer.image.sourceSize.width + "x" + imgContainer.image.sourceSize.height) : ""
+                            text: (imgContainer.image && imgContainer.image.sourceSize.width > 0) ? (imgContainer.image.sourceSize.width + "x" + imgContainer.image.sourceSize.height) : ""
                             
                             elide: Text.ElideRight
                             horizontalAlignment: Text.AlignHCenter
-                            /*Rectangle {
-                                anchors.fill: parent
-                                color: "blue"
-                            }*/
                         }
 
                         ComboBox {
                             id: imageType
+                            property var activeNode: _reconstruction.activeNodes.get('allDepthMap').node
                             // set min size to 5 characters + one margin for the combobox
                             clip: true
                             Layout.minimumWidth: 0
@@ -601,12 +602,13 @@ FocusScope {
                             property string type: enabled ? types[currentIndex] : types[0]
 
                             model: types
-                            enabled: _reconstruction.depthMap != undefined
+                            enabled: activeNode
                         }
 
                         MaterialToolButton {
-                            enabled: _reconstruction.depthMap != undefined
-                            ToolTip.text: "View Depth Map in 3D (" + (_reconstruction.depthMap != undefined ? _reconstruction.depthMap.label : "No DepthMap Node Selected") + ")"
+                            property var activeNode: _reconstruction.activeNodes.get('allDepthMap').node
+                            enabled: activeNode
+                            ToolTip.text: "View Depth Map in 3D (" + (activeNode ? activeNode.label : "No DepthMap Node Selected") + ")"
                             text: MaterialIcons.input
                             font.pointSize: 11
                             Layout.minimumWidth: 0
@@ -618,6 +620,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displaySfmStatsView
+                            property var activeNode: _reconstruction.activeNodes.get('sfm').node
 
                             font.family: MaterialIcons.fontFamily
                             text: MaterialIcons.assessment
@@ -630,10 +633,9 @@ FocusScope {
                             smooth: false
                             flat: true
                             checkable: enabled
-                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed && _reconstruction.selectedViewId >= 0
+                            enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId >= 0
                             onCheckedChanged: {
-                                if(checked == true)
-                                {
+                                if(checked == true) {
                                     displaySfmDataGlobalStats.checked = false
                                     metadataCB.checked = false
                                 }
@@ -642,6 +644,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displaySfmDataGlobalStats
+                            property var activeNode: _reconstruction.activeNodes.get('sfm').node
 
                             font.family: MaterialIcons.fontFamily
                             text: MaterialIcons.language
@@ -654,10 +657,9 @@ FocusScope {
                             smooth: false
                             flat: true
                             checkable: enabled
-                            enabled: _reconstruction.sfm && _reconstruction.sfm.isComputed
+                            enabled: activeNode && activeNode.isComputed
                             onCheckedChanged: {
-                                if(checked == true)
-                                {
+                                if(checked == true) {
                                     displaySfmStatsView.checked = false
                                     metadataCB.checked = false
                                 }

@@ -58,8 +58,9 @@ Item {
             }
             MenuItem {
                 text: "Define As Center Image"
-                enabled: !root.readOnly && _viewpoint.viewId != -1 && _reconstruction && _reconstruction.sfmTransform
-                onClicked: _reconstruction.sfmTransform.attribute("transformation").value = _viewpoint.viewId.toString()
+                property var activeNode: _reconstruction.activeNodes.get("SfMTransform").node
+                enabled: !root.readOnly && _viewpoint.viewId != -1 && _reconstruction && activeNode
+                onClicked: activeNode.attribute("transformation").value = _viewpoint.viewId.toString()
             }
         }
 

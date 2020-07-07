@@ -1083,7 +1083,10 @@ class Reconstruction(UIGraph):
 
     def reconstructedCamerasCount(self):
         """ Get the number of reconstructed cameras in the current context. """
-        return len([v for v in self.getViewpoints() if self.isReconstructed(v)])
+        viewpoints = self.getViewpoints()
+        if not viewpoints:
+            return 0
+        return len([v for v in viewpoints if self.isReconstructed(v)])
 
     @Slot(QObject, result="QVariant")
     def getSolvedIntrinsics(self, viewpoint):

@@ -13,6 +13,8 @@ ObjectPicker {
     property color gizmoBaseColor
     property int gizmoAxis
     property int gizmoType
+    property point screenPoint
+    property var decomposedObjectModelMat
     
     signal pickedChanged(var picker)
     
@@ -21,6 +23,7 @@ ObjectPicker {
     onPressed: {
         root.isPressed = true
         pickedChanged(this)
+        screenPoint = pick.position
         mouseController.currentPosition = mouseController.lastPosition = pick.position
     }
     onEntered: {

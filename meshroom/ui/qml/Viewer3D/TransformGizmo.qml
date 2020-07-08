@@ -80,26 +80,28 @@ Entity {
     
     /***** GENERIC MATRIX TRANSFORMATIONS *****/
 
-    function decomposeModelMatrixFromTransform(transform) {
+    function decomposeModelMatrixFromTransformations(translation, rotation, scale3D) {
         const posMat = Qt.matrix4x4()
-        posMat.translate(transform.translation)
-        const rotMat = quaternionToRotationMatrix(transform.rotation)
+        posMat.translate(translation)
+        const rotMat = quaternionToRotationMatrix(rotation)
         const scaleMat = Qt.matrix4x4()
-        scaleMat.scale(transform.scale3D)
+        scaleMat.scale(scale3D)
 
         return { position: posMat, rotation: rotMat, scale: scaleMat }
     }
 
-    function localTranslate(transform, translateVec) {
-        const modelMat = decomposeModelMatrixFromTransform(transform)
+    function decomposeModelMatrixFromTransform(transform) {
+        return decomposeModelMatrixFromTransformations(transform.translation, transform.rotation, transform.scale3D)
+    }
 
+    function localTranslateFrom(transform, initialDecomposedModelMat, translateVec) {
         // Compute the translation transformation matrix 
         const translationMat = Qt.matrix4x4()
         translationMat.translate(translateVec)
 
         // Compute the new model matrix (POSITION * ROTATION * TRANSLATE * SCALE) and set it to the Transform
-        const mat = modelMat.position.times(modelMat.rotation.times(translationMat.times(modelMat.scale)))
-        transform.setMatrix(mat)       
+        const mat = initialDecomposedModelMat.position.times(initialDecomposedModelMat.rotation.times(translationMat.times(initialDecomposedModelMat.scale)))
+        transform.setMatrix(mat)
     }
 
     function localRotate(transform, axis, degree) {
@@ -140,9 +142,9 @@ Entity {
 
     /***** SPECIFIC MATRIX TRANSFORMATIONS (using local vars) *****/
 
-    function doTranslation(translateVec) {
-        localTranslate(gizmoDisplayTransform, translateVec) // Update gizmo matrix
-        localTranslate(objectTransform, translateVec) // Update object matrix
+    function doTranslation(initialDecomposedModelMat, translateVec) {
+        localTranslateFrom(gizmoDisplayTransform, initialDecomposedModelMat, translateVec) // Update gizmo matrix
+        localTranslateFrom(objectTransform, initialDecomposedModelMat, translateVec) // Update object matrix
     }
 
     function doRotation(axis, degree) {
@@ -369,6 +371,7 @@ Entity {
                     gizmoType: TransformGizmo.Type.POSITION
 
                     onPickedChanged: {
+                        this.decomposedObjectModelMat = decomposeModelMatrixFromTransformations(objectTransform.translation, objectTransform.rotation, objectTransform.scale3D) // Save the current transformations
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
                         transformHandler.objectPicker = picker.isPressed ? picker : null // Pass the picker to the global FrameAction
                     }
@@ -430,9 +433,7 @@ Entity {
             if (objectPicker) {
                 switch(objectPicker.gizmoType) {
                     case TransformGizmo.Type.POSITION: {
-                        const offsetX = mouseHandler.currentPosition.x - mouseHandler.lastPosition.x
-                        const offsetY = mouseHandler.currentPosition.y - mouseHandler.lastPosition.y
-
+                        // Get the corresponding axis translation
                         let pickedAxis
                         switch(objectPicker.gizmoAxis) {
                             case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
@@ -440,8 +441,27 @@ Entity {
                             case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
                         }
 
-                        doTranslation(pickedAxis.times(0.01*offsetX - 0.01*offsetY))
-                        mouseHandler.lastPosition = mouseHandler.currentPosition
+                        const sensibility = 0.02
+
+                        // Compute the current vector PickedPoint -> CurrentMousePoint
+                        const pickedPosition = objectPicker.screenPoint
+                        const mouseVector = Qt.vector2d(mouseHandler.currentPosition.x - pickedPosition.x, -(mouseHandler.currentPosition.y - pickedPosition.y))
+
+                        // Transform the positive picked axis vector from world coord to viewport coord
+                        const viewMatrix = camera.transform.matrix.inverted()
+                        const gizmoLocalPointOnAxis = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 1))
+                        const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
+                        const projectedPointOnAxis = camera.projectionMatrix.times(viewMatrix.times(gizmoLocalPointOnAxis))
+                        const projectedCenter = camera.projectionMatrix.times(viewMatrix.times(gizmoCenterPoint))
+                        const projectedAxisVector = Qt.vector2d(projectedPointOnAxis.x/projectedPointOnAxis.w - projectedCenter.x/projectedCenter.w, projectedPointOnAxis.y/projectedPointOnAxis.w - projectedCenter.y/projectedCenter.w)
+
+                        // Get the cosinus of the angle from the projectedAxisVector to the mouseVector
+                        const cosAngle = projectedAxisVector.dotProduct(mouseVector) / (projectedAxisVector.length() * mouseVector.length())
+                        const offset = cosAngle * mouseVector.length() * sensibility
+
+                        // If the mouse is not at the same spot as the pickedPoint, we do translation
+                        if (offset) doTranslation(objectPicker.decomposedObjectModelMat, pickedAxis.times(offset)) // Do a translation from the initial Object Model Matrix when we picked the gizmo
+
                         return
                     }
 

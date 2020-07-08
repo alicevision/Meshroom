@@ -106,22 +106,22 @@ Entity {
         return { position: posMat, rotation: rotMat, scale: scaleMat }
     }
 
-    function decomposeModelMatrixFromTransform(transform) {
-        return decomposeModelMatrixFromTransformations(transform.translation, transform.rotation, transform.scale3D)
+    function decomposeModelMatrixFromTransform(transformQtInstance) {
+        return decomposeModelMatrixFromTransformations(transformQtInstance.translation, transformQtInstance.rotation, transformQtInstance.scale3D)
     }
 
-    function localTranslateFrom(transform, initialDecomposedModelMat, translateVec) {
+    function localTranslateFrom(transformQtInstance, initialDecomposedModelMat, translateVec) {
         // Compute the translation transformation matrix 
         const translationMat = Qt.matrix4x4()
         translationMat.translate(translateVec)
 
         // Compute the new model matrix (POSITION * ROTATION * TRANSLATE * SCALE) and set it to the Transform
         const mat = initialDecomposedModelMat.position.times(initialDecomposedModelMat.rotation.times(translationMat.times(initialDecomposedModelMat.scale)))
-        transform.setMatrix(mat)
+        transformQtInstance.setMatrix(mat)
     }
 
-    function localRotate(transform, axis, degree) {
-        const modelMat = decomposeModelMatrixFromTransform(transform) 
+    function localRotate(transformQtInstance, axis, degree) {
+        const modelMat = decomposeModelMatrixFromTransform(transformQtInstance) 
         
         // Compute the transformation quaternion from axis and angle in degrees
         let vec3
@@ -133,17 +133,17 @@ Entity {
         const transformQuat = quaternionFromAxisAngle(vec3, degree)
 
         // Get rotation quaternion of the current model matrix
-        const initRotQuat = transform.rotation
+        const initRotQuat = transformQtInstance.rotation
         // Compute the new rotation quaternion and then calculate the matrix
         const newRotQuat = multiplyQuaternion(initRotQuat, transformQuat) // Order is important
         const newRotationMat = quaternionToRotationMatrix(newRotQuat)
 
         // Compute the new model matrix (POSITION * NEW_COMPUTED_ROTATION * SCALE) and set it to the Transform
         const mat = modelMat.position.times(newRotationMat.times(modelMat.scale))
-        transform.setMatrix(mat)
+        transformQtInstance.setMatrix(mat)
     }
 
-    function localScale(transform, initialDecomposedModelMat, scaleVec) {
+    function localScale(transformQtInstance, initialDecomposedModelMat, scaleVec) {
         // Make a copy of the scale matrix (otherwise, it is a reference and it does not work as expected)
         // Unfortunately, we have to proceed like this because, in QML, Qt.matrix4x4(Qt.matrix4x4) does not work
         const scaleMat = Qt.matrix4x4()
@@ -156,7 +156,7 @@ Entity {
 
         // Compute the new model matrix (POSITION * ROTATION * SCALE) and set it to the Transform
         const mat = initialDecomposedModelMat.position.times(initialDecomposedModelMat.rotation.times(scaleMat))
-        transform.setMatrix(mat)
+        transformQtInstance.setMatrix(mat)
     }
 
     /***** SPECIFIC MATRIX TRANSFORMATIONS (using local vars) *****/
@@ -437,6 +437,7 @@ Entity {
                     gizmoType: TransformGizmo.Type.ROTATION
 
                     onPickedChanged: {
+                        this.decomposedObjectModelMat = decomposeModelMatrixFromTransformations(objectTransform.translation, objectTransform.rotation, objectTransform.scale3D) // Save the current transformations
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
                         transformHandler.objectPicker = picker.isPressed ? picker : null // Pass the picker to the global FrameAction
                     }

@@ -9,6 +9,7 @@ Entity {
     id: root
     property real gizmoScale: 0.20
     property Camera camera
+    property var windowSize
     readonly property Transform objectTransform : Transform {}
     
     signal pickedChanged(bool pressed)
@@ -80,6 +81,21 @@ Entity {
     
     /***** GENERIC MATRIX TRANSFORMATIONS *****/
 
+    function pointFromWorldToScreen(point, camera, windowSize) {
+        // Transform the point from World Coord to Normalized Device Coord
+        const viewMatrix = camera.transform.matrix.inverted()
+        const projectedPoint = camera.projectionMatrix.times(viewMatrix.times(point))
+        const projectedPoint2D = Qt.vector2d(projectedPoint.x/projectedPoint.w, projectedPoint.y/projectedPoint.w)
+
+        // Transform the point from Normalized Device Coord to Screen Coord
+        const screenPoint2D = Qt.vector2d(
+            parseInt((projectedPoint2D.x + 1) * windowSize.width / 2),
+            parseInt((projectedPoint2D.y - 1) * windowSize.height / -2)
+        )
+
+        return screenPoint2D
+    }
+
     function decomposeModelMatrixFromTransformations(translation, rotation, scale3D) {
         const posMat = Qt.matrix4x4()
         posMat.translate(translation)
@@ -127,16 +143,19 @@ Entity {
         transform.setMatrix(mat)
     }
 
-    function localScale(transform, scaleVec) {
-        const modelMat = decomposeModelMatrixFromTransform(transform)
+    function localScale(transform, initialDecomposedModelMat, scaleVec) {
+        // Make a copy of the scale matrix (otherwise, it is a reference and it does not work as expected)
+        // Unfortunately, we have to proceed like this because, in QML, Qt.matrix4x4(Qt.matrix4x4) does not work
+        const scaleMat = Qt.matrix4x4()
+        scaleMat.scale(Qt.vector3d(initialDecomposedModelMat.scale.m11, initialDecomposedModelMat.scale.m22, initialDecomposedModelMat.scale.m33))
 
-        // Update the scale matrix
-        modelMat.scale.m11 += scaleVec.x
-        modelMat.scale.m22 += scaleVec.y
-        modelMat.scale.m33 += scaleVec.z
+        // Update the scale matrix copy
+        scaleMat.m11 += scaleVec.x
+        scaleMat.m22 += scaleVec.y
+        scaleMat.m33 += scaleVec.z
 
         // Compute the new model matrix (POSITION * ROTATION * SCALE) and set it to the Transform
-        const mat = modelMat.position.times(modelMat.rotation.times(modelMat.scale))
+        const mat = initialDecomposedModelMat.position.times(initialDecomposedModelMat.rotation.times(scaleMat))
         transform.setMatrix(mat)
     }
 
@@ -152,8 +171,8 @@ Entity {
         localRotate(objectTransform, axis, degree) // Update object matrix
     }
 
-    function doScale(scaleVec) {
-        localScale(objectTransform, scaleVec) // Update object matrix
+    function doScale(initialDecomposedModelMat, scaleVec) {
+        localScale(objectTransform, initialDecomposedModelMat, scaleVec) // Update object matrix
     }
 
     /***** DEVICES *****/
@@ -312,6 +331,7 @@ Entity {
                     gizmoType: TransformGizmo.Type.SCALE
 
                     onPickedChanged: {
+                        this.decomposedObjectModelMat = decomposeModelMatrixFromTransformations(objectTransform.translation, objectTransform.rotation, objectTransform.scale3D) // Save the current transformations
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
                         transformHandler.objectPicker = picker.isPressed ? picker : null // Pass the picker to the global FrameAction
                     }
@@ -440,14 +460,13 @@ Entity {
                             case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
                             case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
                         }
-
                         const sensibility = 0.02
 
                         // Compute the current vector PickedPoint -> CurrentMousePoint
                         const pickedPosition = objectPicker.screenPoint
                         const mouseVector = Qt.vector2d(mouseHandler.currentPosition.x - pickedPosition.x, -(mouseHandler.currentPosition.y - pickedPosition.y))
 
-                        // Transform the positive picked axis vector from world coord to viewport coord
+                        // Transform the positive picked axis vector from World Coord to Normalized Device Coord
                         const viewMatrix = camera.transform.matrix.inverted()
                         const gizmoLocalPointOnAxis = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 1))
                         const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
@@ -477,21 +496,29 @@ Entity {
                     }
 
                     case TransformGizmo.Type.SCALE: {
-                        const offsetX = mouseHandler.currentPosition.x - mouseHandler.lastPosition.x
-                        const offsetY = mouseHandler.currentPosition.y - mouseHandler.lastPosition.y
-                        // const offset = 0.1*offsetX - 0.1*offsetY
-                        const offset = 0.05
-
+                        // Get the corresponding axis scale
                         let pickedAxis
                         switch(objectPicker.gizmoAxis) {
                             case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
                             case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
                             case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
                         }
+                        const sensibility = 0.05
 
-                        doScale(pickedAxis.times(offset))
-                        mouseHandler.lastPosition = mouseHandler.currentPosition
-                        return      
+                        // Get Screen Coordinates of the gizmo center
+                        const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
+                        const screenCenter2D = pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
+
+                        // Compute the scale unit
+                        const scaleUnit = screenCenter2D.minus(Qt.vector2d(objectPicker.screenPoint.x, objectPicker.screenPoint.y)).length()
+
+                        // Compute the current vector screenCenter2D -> CurrentMousePoint
+                        const mouseVector = Qt.vector2d(mouseHandler.currentPosition.x - screenCenter2D.x, -(mouseHandler.currentPosition.y - screenCenter2D.y))
+                        let offset = (mouseVector.length() - scaleUnit) * sensibility
+                        offset = (offset < 0) ? offset * 3 : offset // Used to make it more sensible when we want to reduce the scale (because the action field is shorter)
+
+                        if (offset) doScale(objectPicker.decomposedObjectModelMat, pickedAxis.times(offset))
+                        return
                     }
                 }
             }

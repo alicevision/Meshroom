@@ -466,16 +466,15 @@ Entity {
                         const pickedPosition = objectPicker.screenPoint
                         const mouseVector = Qt.vector2d(mouseHandler.currentPosition.x - pickedPosition.x, -(mouseHandler.currentPosition.y - pickedPosition.y))
 
-                        // Transform the positive picked axis vector from World Coord to Normalized Device Coord
-                        const viewMatrix = camera.transform.matrix.inverted()
+                        // Transform the positive picked axis vector from World Coord to Screen Coord
                         const gizmoLocalPointOnAxis = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 1))
                         const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
-                        const projectedPointOnAxis = camera.projectionMatrix.times(viewMatrix.times(gizmoLocalPointOnAxis))
-                        const projectedCenter = camera.projectionMatrix.times(viewMatrix.times(gizmoCenterPoint))
-                        const projectedAxisVector = Qt.vector2d(projectedPointOnAxis.x/projectedPointOnAxis.w - projectedCenter.x/projectedCenter.w, projectedPointOnAxis.y/projectedPointOnAxis.w - projectedCenter.y/projectedCenter.w)
+                        const screenPoint2D = pointFromWorldToScreen(gizmoLocalPointOnAxis, camera, windowSize)
+                        const screenCenter2D = pointFromWorldToScreen(gizmoCenterPoint, camera, windowSize)
+                        const screenAxisVector = Qt.vector2d(screenPoint2D.x - screenCenter2D.x, -(screenPoint2D.y - screenCenter2D.y))
 
-                        // Get the cosinus of the angle from the projectedAxisVector to the mouseVector
-                        const cosAngle = projectedAxisVector.dotProduct(mouseVector) / (projectedAxisVector.length() * mouseVector.length())
+                        // Get the cosinus of the angle from the screenAxisVector to the mouseVector
+                        const cosAngle = screenAxisVector.dotProduct(mouseVector) / (screenAxisVector.length() * mouseVector.length())
                         const offset = cosAngle * mouseVector.length() * sensibility
 
                         // If the mouse is not at the same spot as the pickedPoint, we do translation

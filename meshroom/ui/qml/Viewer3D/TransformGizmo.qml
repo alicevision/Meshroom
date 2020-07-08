@@ -105,20 +105,20 @@ Entity {
 
         const rotQuat = Qt.quaternion(rotation.scalar, rotation.x, rotation.y, rotation.z)
 
-        return { position: posMat, rotation: rotMat, scale: scaleMat, quaternion: rotQuat }
+        return { positionMat: posMat, rotationMat: rotMat, scaleMat: scaleMat, quaternion: rotQuat }
     }
 
     function decomposeModelMatrixFromTransform(transformQtInstance) {
         return decomposeModelMatrixFromTransformations(transformQtInstance.translation, transformQtInstance.rotation, transformQtInstance.scale3D)
     }
 
-    function localTranslateFrom(transformQtInstance, initialDecomposedModelMat, translateVec) {
+    function localTranslate(transformQtInstance, initialDecomposedModelMat, translateVec) {
         // Compute the translation transformation matrix 
         const translationMat = Qt.matrix4x4()
         translationMat.translate(translateVec)
 
         // Compute the new model matrix (POSITION * ROTATION * TRANSLATE * SCALE) and set it to the Transform
-        const mat = initialDecomposedModelMat.position.times(initialDecomposedModelMat.rotation.times(translationMat.times(initialDecomposedModelMat.scale)))
+        const mat = initialDecomposedModelMat.positionMat.times(initialDecomposedModelMat.rotationMat.times(translationMat.times(initialDecomposedModelMat.scaleMat)))
         transformQtInstance.setMatrix(mat)
     }
 
@@ -133,7 +133,7 @@ Entity {
         const newRotationMat = quaternionToRotationMatrix(newRotQuat)
 
         // Compute the new model matrix (POSITION * NEW_COMPUTED_ROTATION * SCALE) and set it to the Transform
-        const mat = initialDecomposedModelMat.position.times(newRotationMat.times(initialDecomposedModelMat.scale))
+        const mat = initialDecomposedModelMat.positionMat.times(newRotationMat.times(initialDecomposedModelMat.scaleMat))
         transformQtInstance.setMatrix(mat)
     }
 
@@ -141,7 +141,7 @@ Entity {
         // Make a copy of the scale matrix (otherwise, it is a reference and it does not work as expected)
         // Unfortunately, we have to proceed like this because, in QML, Qt.matrix4x4(Qt.matrix4x4) does not work
         const scaleMat = Qt.matrix4x4()
-        scaleMat.scale(Qt.vector3d(initialDecomposedModelMat.scale.m11, initialDecomposedModelMat.scale.m22, initialDecomposedModelMat.scale.m33))
+        scaleMat.scale(Qt.vector3d(initialDecomposedModelMat.scaleMat.m11, initialDecomposedModelMat.scaleMat.m22, initialDecomposedModelMat.scaleMat.m33))
 
         // Update the scale matrix copy
         scaleMat.m11 += scaleVec.x
@@ -149,15 +149,15 @@ Entity {
         scaleMat.m33 += scaleVec.z
 
         // Compute the new model matrix (POSITION * ROTATION * SCALE) and set it to the Transform
-        const mat = initialDecomposedModelMat.position.times(initialDecomposedModelMat.rotation.times(scaleMat))
+        const mat = initialDecomposedModelMat.positionMat.times(initialDecomposedModelMat.rotationMat.times(scaleMat))
         transformQtInstance.setMatrix(mat)
     }
 
     /***** SPECIFIC MATRIX TRANSFORMATIONS (using local vars) *****/
 
     function doTranslation(initialDecomposedModelMat, translateVec) {
-        localTranslateFrom(gizmoDisplayTransform, initialDecomposedModelMat, translateVec) // Update gizmo matrix
-        localTranslateFrom(objectTransform, initialDecomposedModelMat, translateVec) // Update object matrix
+        localTranslate(gizmoDisplayTransform, initialDecomposedModelMat, translateVec) // Update gizmo matrix
+        localTranslate(objectTransform, initialDecomposedModelMat, translateVec) // Update object matrix
     }
 
     function doRotation(initialDecomposedModelMat, axis, degree) {
@@ -176,7 +176,6 @@ Entity {
     MouseHandler {
         id: mouseHandler
         sourceDevice: mouseSourceDevice
-        property point lastPosition
         property point currentPosition
         onPositionChanged: {
             currentPosition.x = mouse.x
@@ -226,9 +225,9 @@ Entity {
             }
             property color baseColor: {
                 switch(axis) {
-                    case TransformGizmo.Axis.X: return "#e63b55"
-                    case TransformGizmo.Axis.Y: return "#83c414"
-                    case TransformGizmo.Axis.Z: return "#3387e2"
+                    case TransformGizmo.Axis.X: return "#e63b55" // Red
+                    case TransformGizmo.Axis.Y: return "#83c414" // Green
+                    case TransformGizmo.Axis.Z: return "#3387e2" // Blue
                 }
             }
             property real lineRadius: 0.015

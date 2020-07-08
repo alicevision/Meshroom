@@ -24,7 +24,7 @@ ObjectPicker {
         root.isPressed = true
         pickedChanged(this)
         screenPoint = pick.position
-        mouseController.currentPosition = mouseController.lastPosition = pick.position
+        mouseController.currentPosition = pick.position
     }
     onEntered: {
         gizmoMaterial.ambient = "white"

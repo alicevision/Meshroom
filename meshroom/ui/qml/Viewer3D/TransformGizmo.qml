@@ -103,7 +103,9 @@ Entity {
         const scaleMat = Qt.matrix4x4()
         scaleMat.scale(scale3D)
 
-        return { position: posMat, rotation: rotMat, scale: scaleMat }
+        const rotQuat = Qt.quaternion(rotation.scalar, rotation.x, rotation.y, rotation.z)
+
+        return { position: posMat, rotation: rotMat, scale: scaleMat, quaternion: rotQuat }
     }
 
     function decomposeModelMatrixFromTransform(transformQtInstance) {
@@ -120,26 +122,18 @@ Entity {
         transformQtInstance.setMatrix(mat)
     }
 
-    function localRotate(transformQtInstance, axis, degree) {
-        const modelMat = decomposeModelMatrixFromTransform(transformQtInstance) 
-        
+    function localRotate(transformQtInstance, initialDecomposedModelMat, axis, degree) {       
         // Compute the transformation quaternion from axis and angle in degrees
-        let vec3
-        switch(axis) {
-            case TransformGizmo.Axis.X: vec3 = Qt.vector3d(1,0,0); break
-            case TransformGizmo.Axis.Y: vec3 = Qt.vector3d(0,1,0); break
-            case TransformGizmo.Axis.Z: vec3 = Qt.vector3d(0,0,1); break
-        }
-        const transformQuat = quaternionFromAxisAngle(vec3, degree)
+        const transformQuat = quaternionFromAxisAngle(axis, degree)
 
         // Get rotation quaternion of the current model matrix
-        const initRotQuat = transformQtInstance.rotation
+        const initRotQuat = initialDecomposedModelMat.quaternion
         // Compute the new rotation quaternion and then calculate the matrix
         const newRotQuat = multiplyQuaternion(initRotQuat, transformQuat) // Order is important
         const newRotationMat = quaternionToRotationMatrix(newRotQuat)
 
         // Compute the new model matrix (POSITION * NEW_COMPUTED_ROTATION * SCALE) and set it to the Transform
-        const mat = modelMat.position.times(newRotationMat.times(modelMat.scale))
+        const mat = initialDecomposedModelMat.position.times(newRotationMat.times(initialDecomposedModelMat.scale))
         transformQtInstance.setMatrix(mat)
     }
 
@@ -166,9 +160,9 @@ Entity {
         localTranslateFrom(objectTransform, initialDecomposedModelMat, translateVec) // Update object matrix
     }
 
-    function doRotation(axis, degree) {
-        localRotate(gizmoDisplayTransform, axis, degree) // Update gizmo matrix
-        localRotate(objectTransform, axis, degree) // Update object matrix
+    function doRotation(initialDecomposedModelMat, axis, degree) {
+        localRotate(gizmoDisplayTransform, initialDecomposedModelMat, axis, degree) // Update gizmo matrix
+        localRotate(objectTransform, initialDecomposedModelMat, axis, degree) // Update object matrix
     }
 
     function doScale(initialDecomposedModelMat, scaleVec) {
@@ -452,15 +446,16 @@ Entity {
 
         onTriggered: {
             if (objectPicker) {
+
+                let pickedAxis
+                switch(objectPicker.gizmoAxis) {
+                    case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
+                    case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
+                    case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
+                }
+
                 switch(objectPicker.gizmoType) {
                     case TransformGizmo.Type.POSITION: {
-                        // Get the corresponding axis translation
-                        let pickedAxis
-                        switch(objectPicker.gizmoAxis) {
-                            case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
-                            case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
-                            case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
-                        }
                         const sensibility = 0.02
 
                         // Compute the current vector PickedPoint -> CurrentMousePoint
@@ -485,24 +480,29 @@ Entity {
                     }
 
                     case TransformGizmo.Type.ROTATION: {
-                        const offsetX = mouseHandler.currentPosition.x - mouseHandler.lastPosition.x
-                        const offsetY = mouseHandler.currentPosition.y - mouseHandler.lastPosition.y
-                        // const offset = 0.1*offsetX - 0.1*offsetY
-                        const offset = 1
+                        // Get Screen Coordinates of the gizmo center
+                        const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
+                        const screenCenter2D = pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
 
-                        doRotation(objectPicker.gizmoAxis, offset)
-                        mouseHandler.lastPosition = mouseHandler.currentPosition
+                        // Get the vector screenCenter2D -> PickedPoint
+                        const originalVector = Qt.vector2d(objectPicker.screenPoint.x - screenCenter2D.x, -(objectPicker.screenPoint.y - screenCenter2D.y))
+
+                        // Compute the current vector screenCenter2D -> CurrentMousePoint
+                        const mouseVector = Qt.vector2d(mouseHandler.currentPosition.x - screenCenter2D.x, -(mouseHandler.currentPosition.y - screenCenter2D.y))
+
+                        // Get the angle from the originalVector to the mouseVector
+                        const angle = Math.atan2(-originalVector.y*mouseVector.x + originalVector.x*mouseVector.y, originalVector.x*mouseVector.x + originalVector.y*mouseVector.y) * 180 / Math.PI
+
+                        // Get the orientation of the gizmo in function of the camera
+                        const gizmoLocalAxisVector = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 0))
+                        const gizmoToCameraVector = camera.position.toVector4d().minus(gizmoCenterPoint)
+                        const orientation = gizmoLocalAxisVector.dotProduct(gizmoToCameraVector) > 0 ? 1 : -1
+
+                        if (angle !== 0) doRotation(objectPicker.decomposedObjectModelMat, pickedAxis, angle*orientation)
                         return
                     }
 
                     case TransformGizmo.Type.SCALE: {
-                        // Get the corresponding axis scale
-                        let pickedAxis
-                        switch(objectPicker.gizmoAxis) {
-                            case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
-                            case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
-                            case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
-                        }
                         const sensibility = 0.05
 
                         // Get Screen Coordinates of the gizmo center

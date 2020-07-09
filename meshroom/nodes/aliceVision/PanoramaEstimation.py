@@ -118,7 +118,7 @@ Estimate relative camera rotations between input images.
             name='maxAngleToPrior',
             label='Max Angle To Priors (deg.)',
             description='''Maximal angle allowed regarding the input prior (in degrees).''',
-            value=5.0,
+            value=20.0,
             range=(0.0, 360.0, 1.0),
             uid=[0],
             advanced=True,

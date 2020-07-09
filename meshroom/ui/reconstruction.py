@@ -550,6 +550,7 @@ class Reconstruction(UIGraph):
         thread.start()
         return thread
 
+    @Slot(QObject)
     def getViewpoints(self):
         """ Return the Viewpoints model. """
         # TODO: handle multiple Viewpoints models

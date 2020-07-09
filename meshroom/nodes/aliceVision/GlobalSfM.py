@@ -104,16 +104,23 @@ It is known to be faster but less robust to challenging datasets than the Increm
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
-            description='',
-            value=desc.Node.internalFolder,
+            label='Output SfMData File',
+            description='Path to the output sfmdata file',
+            value=desc.Node.internalFolder + 'sfm.abc',
             uid=[],
         ),
         desc.File(
-            name='outSfMDataFilename',
-            label='Output SfMData File',
-            description='Path to the output sfmdata file',
-            value=desc.Node.internalFolder + 'SfmData.abc',
+            name='outputViewsAndPoses',
+            label='Output Poses',
+            description='''Path to the output sfmdata file with cameras (views and poses).''',
+            value=desc.Node.internalFolder + 'cameras.sfm',
+            uid=[],
+        ),
+        desc.File(
+            name='extraInfoFolder',
+            label='Output Folder',
+            description='Folder for intermediate reconstruction files and additional reconstruction information files.',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
     ]

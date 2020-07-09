@@ -160,7 +160,7 @@ def hdriPipeline(graph):
                                response=ldr2hdrCalibration.response)
 
     featureExtraction = graph.addNewNode('FeatureExtraction',
-                                         input=ldr2hdrMerge.outSfMDataFilename,
+                                         input=ldr2hdrMerge.outSfMData,
                                          describerPreset='high')
 
     panoramaInit = graph.addNewNode('PanoramaInit',

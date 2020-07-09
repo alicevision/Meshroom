@@ -141,7 +141,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
 
     outputs = [
         desc.File(
-            name='outSfMDataFilename',
+            name='outSfMData',
             label='Output SfMData File',
             description='Path to the output sfmdata file',
             value=desc.Node.internalFolder + 'sfmData.sfm',

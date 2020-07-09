@@ -601,7 +601,7 @@ class Reconstruction(UIGraph):
         if not panoramaInit.attribute("estimateFisheyeCircle").value:
             return QVector3D(0.0, 0.0, 0.0)
 
-        sfmFile = panoramaInit.attribute('outSfMDataFilename').value
+        sfmFile = panoramaInit.attribute('outSfMData').value
         if not os.path.exists(sfmFile):
             return QVector3D(0.0, 0.0, 0.0)
         import io  # use io.open for Python2/3 compatibility (allow to specify encoding + errors handling)

@@ -103,7 +103,7 @@ This node allows to setup the Panorama:
 
     outputs = [
         desc.File(
-            name='outSfMDataFilename',
+            name='outSfMData',
             label='Output SfMData File',
             description='Path to the output sfmdata file',
             value=desc.Node.internalFolder + 'sfmData.sfm',

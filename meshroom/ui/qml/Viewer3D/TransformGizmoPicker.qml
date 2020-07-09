@@ -21,10 +21,11 @@ ObjectPicker {
     hoverEnabled: true
 
     onPressed: {
+        mouseController.enabled = true
+        mouseController.objectPicker = this
         root.isPressed = true
-        pickedChanged(this)
         screenPoint = pick.position
-        mouseController.currentPosition = pick.position
+        pickedChanged(this)
     }
     onEntered: {
         gizmoMaterial.ambient = "white"
@@ -35,6 +36,8 @@ ObjectPicker {
     onReleased: {
         gizmoMaterial.ambient = gizmoBaseColor
         root.isPressed = false
+        mouseController.objectPicker = null
+        mouseController.enabled = false
         pickedChanged(this)
     }
 }

@@ -7,14 +7,15 @@ import Qt3D.Logic 2.0
 
 Entity {
     id: root
-    property real gizmoScale: 0.20
+    property real gizmoScale: 0.15
     property Camera camera
     property var windowSize
+    property var frontLayerComponent
     readonly property Transform objectTransform : Transform {}
     
     signal pickedChanged(bool pressed)
 
-    components: [gizmoDisplayTransform, mouseHandler]
+    components: [gizmoDisplayTransform, mouseHandler, frontLayerComponent]
 
 
     /***** ENUMS *****/
@@ -194,7 +195,7 @@ Entity {
 
     Entity {
         id: centerSphereEntity
-        components: [centerSphereMesh, centerSphereMaterial]
+        components: [centerSphereMesh, centerSphereMaterial, frontLayerComponent]
 
         SphereMesh {
             id: centerSphereMesh
@@ -238,7 +239,7 @@ Entity {
 
                 Entity {
                     id: axisCylinder
-                    components: [cylinderMesh, cylinderTransform, scaleMaterial]
+                    components: [cylinderMesh, cylinderTransform, scaleMaterial, frontLayerComponent]
 
                     CylinderMesh {
                         id: cylinderMesh
@@ -275,7 +276,7 @@ Entity {
 
                 Entity {
                     id: axisScaleBox
-                    components: [cubeScaleMesh, cubeScaleTransform, scaleMaterial, scalePicker]
+                    components: [cubeScaleMesh, cubeScaleTransform, scaleMaterial, scalePicker, frontLayerComponent]
 
                     CuboidMesh {
                         id: cubeScaleMesh
@@ -334,7 +335,7 @@ Entity {
             // POSITION ENTITY
             Entity {
                 id: positionEntity
-                components: [coneMesh, coneTransform, positionMaterial, positionPicker]
+                components: [coneMesh, coneTransform, positionMaterial, positionPicker, frontLayerComponent]
 
                 ConeMesh {
                     id: coneMesh
@@ -394,7 +395,7 @@ Entity {
             // ROTATION ENTITY
             Entity {
                 id: rotationEntity
-                components: [torusMesh, torusTransform, rotationMaterial, rotationPicker]
+                components: [torusMesh, torusTransform, rotationMaterial, rotationPicker, frontLayerComponent]
 
                 TorusMesh {
                     id: torusMesh

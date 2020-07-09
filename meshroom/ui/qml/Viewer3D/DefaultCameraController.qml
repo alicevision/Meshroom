@@ -23,6 +23,8 @@ Entity {
     property alias windowSize: trackball.windowSize
     property alias trackballSize: trackball.trackballSize
 
+    property bool loseMouseFocus: false // Must be changed by other entities when they want to take mouse focus
+
     readonly property alias pressed: mouseHandler._pressed
     signal mousePressed(var mouse)
     signal mouseReleased(var mouse, var moved)
@@ -166,6 +168,8 @@ Entity {
     components: [
         FrameAction {
             onTriggered: {
+                if(loseMouseFocus) return
+
                 if(panning) { // translate
                     var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
                     var tx = axisMX.value * root.translateSpeed * d;

@@ -207,6 +207,17 @@ FocusScope {
                                             ]
                                         }
                                     }
+                                    LayerFilter {
+                                        filterMode: LayerFilter.DiscardAnyMatchingLayers
+                                        layers: Layer {id: drawOnFront}
+                                    }
+                                    LayerFilter {
+                                        filterMode: LayerFilter.AcceptAnyMatchingLayers
+                                        layers: [drawOnFront]
+                                        RenderStateSet {
+                                            renderStates: DepthTest { depthFunction: DepthTest.Equal }
+                                        }
+                                    }
                                 }
                             }
                         }

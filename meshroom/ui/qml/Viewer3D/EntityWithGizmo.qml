@@ -9,6 +9,7 @@ Entity {
     id: root
     property DefaultCameraController cameraController
     property Layer frontLayerComponent
+    property var window
 
     readonly property Camera camera : cameraController.camera
     readonly property var windowSize: cameraController.windowSize
@@ -25,6 +26,7 @@ Entity {
         camera: root.camera
         windowSize: root.windowSize
         frontLayerComponent: root.frontLayerComponent
+        window: root.window
         onPickedChanged: {
             root.pickedChanged(pressed)
         }

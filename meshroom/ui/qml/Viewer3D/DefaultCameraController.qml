@@ -46,7 +46,7 @@ Entity {
         property point lastPosition
         property point currentPosition
         property bool hasMoved
-        sourceDevice: mouseSourceDevice
+        sourceDevice: loseMouseFocus ? null : mouseSourceDevice
         onPressed: {
             _pressed = true;
             currentPosition.x = lastPosition.x = mouse.x;
@@ -168,8 +168,6 @@ Entity {
     components: [
         FrameAction {
             onTriggered: {
-                if(loseMouseFocus) return
-
                 if(panning) { // translate
                     var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
                     var tx = axisMX.value * root.translateSpeed * d;

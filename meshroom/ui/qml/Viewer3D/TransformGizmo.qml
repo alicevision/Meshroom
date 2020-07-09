@@ -4,6 +4,7 @@ import Qt3D.Input 2.0
 import Qt3D.Extras 2.10
 import QtQuick 2.9
 import Qt3D.Logic 2.0
+import QtQuick.Controls 2.3
 
 Entity {
     id: root
@@ -11,6 +12,7 @@ Entity {
     property Camera camera
     property var windowSize
     property var frontLayerComponent
+    property var window
     readonly property Transform objectTransform : Transform {}
     
     signal pickedChanged(bool pressed)
@@ -170,6 +172,28 @@ Entity {
         localScale(objectTransform, initialDecomposedModelMat, scaleVec) // Update object matrix
     }
 
+    function resetTranslation() {
+        gizmoDisplayTransform.translation = Qt.vector3d(0,0,0)
+        objectTransform.translation = Qt.vector3d(0,0,0)
+    }
+
+    function resetRotation() {
+        gizmoDisplayTransform.rotation = Qt.quaternion(1,0,0,0)
+        objectTransform.rotation = Qt.quaternion(1,0,0,0)
+    }
+
+    function resetScale() {
+        objectTransform.scale3D = Qt.vector3d(1,1,1)
+    }
+
+    function resetATransformType(transformType) {
+        switch(transformType) {
+            case TransformGizmo.Type.POSITION: resetTranslation(); break
+            case TransformGizmo.Type.ROTATION: resetRotation(); break
+            case TransformGizmo.Type.SCALE: resetScale(); break
+        }
+    }
+
     /***** DEVICES *****/
 
     MouseDevice { id: mouseSourceDevice }
@@ -178,9 +202,37 @@ Entity {
         id: mouseHandler
         sourceDevice: mouseSourceDevice
         property point currentPosition
+        property var objectPicker: null
+
         onPositionChanged: {
             currentPosition.x = mouse.x
             currentPosition.y = mouse.y
+        }
+        onReleased: {
+            if(objectPicker && mouse.button == Qt.RightButton) {
+                resetMenu.updateTypeBeforePopup(objectPicker.gizmoType)
+                resetMenu.popup(window)
+            }
+        }
+    }
+
+    Menu {
+        id: resetMenu
+        property int transformType
+        property string transformTypeToDisplay
+
+        function updateTypeBeforePopup(type) {
+            resetMenu.transformType = type
+            switch(type) {
+                case TransformGizmo.Type.POSITION: resetMenu.transformTypeToDisplay = "position"; break
+                case TransformGizmo.Type.ROTATION: resetMenu.transformTypeToDisplay = "rotation"; break
+                case TransformGizmo.Type.SCALE: resetMenu.transformTypeToDisplay = "scale"; break
+            }    
+        }
+
+        MenuItem {
+            text: `Reset ${resetMenu.transformTypeToDisplay}?`
+            onTriggered: resetATransformType(resetMenu.transformType)
         }
     }
 
@@ -327,6 +379,7 @@ Entity {
                     onPickedChanged: {
                         this.decomposedObjectModelMat = decomposeModelMatrixFromTransformations(objectTransform.translation, objectTransform.rotation, objectTransform.scale3D) // Save the current transformations
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
+                        mouseHandler.objectPicker = picker.isPressed ? picker : null // Set the objectPicker of the mouseHandler
                         transformHandler.objectPicker = picker.isPressed ? picker : null // Pass the picker to the global FrameAction
                     }
                 }
@@ -387,6 +440,7 @@ Entity {
                     onPickedChanged: {
                         this.decomposedObjectModelMat = decomposeModelMatrixFromTransformations(objectTransform.translation, objectTransform.rotation, objectTransform.scale3D) // Save the current transformations
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
+                        mouseHandler.objectPicker = picker.isPressed ? picker : null // Set the objectPicker of the mouseHandler
                         transformHandler.objectPicker = picker.isPressed ? picker : null // Pass the picker to the global FrameAction
                     }
                 }
@@ -433,6 +487,7 @@ Entity {
                     onPickedChanged: {
                         this.decomposedObjectModelMat = decomposeModelMatrixFromTransformations(objectTransform.translation, objectTransform.rotation, objectTransform.scale3D) // Save the current transformations
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
+                        mouseHandler.objectPicker = picker.isPressed ? picker : null // Set the objectPicker of the mouseHandler
                         transformHandler.objectPicker = picker.isPressed ? picker : null // Pass the picker to the global FrameAction
                     }
                 }

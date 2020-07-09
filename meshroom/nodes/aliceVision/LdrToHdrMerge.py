@@ -48,6 +48,14 @@ class LdrToHdrMerge(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+        desc.IntParam(
+            name='offsetRefBracketIndex',
+            label='Offset Ref Bracket Index',
+            description='Zero to use the center bracket. +N to use a more exposed bracket or -N to use a less exposed backet.',
+            value=0,
+            range=(-4, 4, 1),
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='fusionWeight',
             label='Fusion Weight',

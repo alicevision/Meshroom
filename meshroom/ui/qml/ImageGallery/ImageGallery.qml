@@ -396,7 +396,7 @@ Panel {
             function open() {
                 if(imageProcessing.checked)
                     imageProcessing.checked = false;
-                _reconstruction.setupTempCameraInit(activeNode, "outSfMDataFilename");
+                _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
             }
             function close() {
                     _reconstruction.clearTempCameraInit();

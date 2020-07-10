@@ -62,6 +62,30 @@ Entity {
         onPositionChanged: {
             currentPosition.x = mouse.x;
             currentPosition.y = mouse.y;
+
+            const dt = 0.02
+
+            if(panning) { // translate
+                var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
+                var tx = axisMX.value * root.translateSpeed * d;
+                var ty = axisMY.value * root.translateSpeed * d;
+                mouseHandler.hasMoved = true;
+                root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt));
+                return;
+            }
+            if(moving){ // trackball rotation
+                trackball.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition, dt);
+                mouseHandler.lastPosition = mouseHandler.currentPosition;
+                mouseHandler.hasMoved = true;
+                return;
+            }
+            if(zooming) { // zoom with alt + RMD
+                var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.1;
+                var tz = axisMX.value * root.translateSpeed * d;
+                mouseHandler.hasMoved = true;
+                root.camera.translate(Qt.vector3d(0, 0, tz).times(dt), Camera.DontTranslateViewCenter)
+                return;
+            }
         }
         onDoubleClicked: mouseDoubleClicked(mouse)
         onWheel: {
@@ -164,32 +188,4 @@ Entity {
             }
         ]
     }
-
-    components: [
-        FrameAction {
-            onTriggered: {
-                if(panning) { // translate
-                    var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
-                    var tx = axisMX.value * root.translateSpeed * d;
-                    var ty = axisMY.value * root.translateSpeed * d;
-                    mouseHandler.hasMoved = true;
-                    root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt));
-                    return;
-                }
-                if(moving){ // trackball rotation
-                    trackball.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition, dt);
-                    mouseHandler.lastPosition = mouseHandler.currentPosition;
-                    mouseHandler.hasMoved = true;
-                    return;
-                }
-                if(zooming) { // zoom with alt + RMD
-                    var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.1;
-                    var tz = axisMX.value * root.translateSpeed * d;
-                    mouseHandler.hasMoved = true;
-                    root.camera.translate(Qt.vector3d(0, 0, tz).times(dt), Camera.DontTranslateViewCenter)
-                    return;
-                }
-            }
-        }
-    ]
 }

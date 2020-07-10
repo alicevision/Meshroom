@@ -3,6 +3,7 @@ import logging
 import math
 import os
 from threading import Thread
+from collections import Iterable
 
 from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF
 from PySide2.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
@@ -1063,7 +1064,8 @@ class Reconstruction(UIGraph):
     def reconstructedCamerasCount(self):
         """ Get the number of reconstructed cameras in the current context. """
         viewpoints = self.getViewpoints()
-        if not viewpoints:
+        # Check that the object is iterable to avoid error with undefined Qt Property
+        if not isinstance(viewpoints, Iterable):
             return 0
         return len([v for v in viewpoints if self.isReconstructed(v)])
 

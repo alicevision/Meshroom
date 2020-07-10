@@ -52,7 +52,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
             name='offsetRefBracketIndex',
             label='Offset Ref Bracket Index',
             description='Zero to use the center bracket. +N to use a more exposed bracket or -N to use a less exposed backet.',
-            value=0,
+            value=1,
             range=(-4, 4, 1),
             uid=[0],
         ),

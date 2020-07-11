@@ -967,6 +967,28 @@ class Reconstruction(UIGraph):
         pixels = totalPixels / viewpointsAmount
         return amount, pixels
 
+    def weightedAverageTimeFactorForExternalAttribute(self, node, nodeType, attributeName, timeFactor):
+        """ Return a factor weighted by the amount of pixels contributed by each node.
+
+        Args:
+            node: the node object to search from.
+            nodeType (str): the type of node to search for.
+            attributeName: name of the attribute to apply the factor to.
+            timeFactor: the time factor to apply to the attribute.
+        """
+        nodes = self._graph.nodesFromNode(node, nodeType, False)[0]
+        weights = []
+        factors = []
+        for n in nodes:
+            amount, pixels = self.imagesStatisticsForNode(n)
+            weights.append(amount*pixels)
+            attribute = n.attribute(attributeName)
+            factors.append(attribute.attributeDesc.getModifiedTime(1, attribute.value, timeFactor))
+        factor = 0
+        for w, f in zip(weights, factors):
+            factor += (w / sum(weights)) * f
+        return factor
+
     @Slot(QObject, result="QVariant")
     def getSolvedIntrinsics(self, viewpoint):
         """ Return viewpoint's solved intrinsics if it has been reconstructed, None otherwise.

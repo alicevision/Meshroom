@@ -52,7 +52,7 @@ class Attribute(BaseObject):
             return False
         return True
 
-    def getModifiedTime(self, defaultTime, value):
+    def getModifiedTime(self, defaultTime, value, timeFactor):
         return defaultTime
 
 
@@ -176,9 +176,9 @@ class BoolParam(Param):
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
-    def getModifiedTime(self, defaultTime, value):
-        if self._timeFactor and value != self._value:
-            return self._timeFactor * defaultTime
+    def getModifiedTime(self, defaultTime, value, timeFactor):
+        if timeFactor and value != self._value:
+            return timeFactor * defaultTime
         return defaultTime
 
 
@@ -200,9 +200,9 @@ class IntParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
-    def getModifiedTime(self, defaultTime, value):
-        if self._timeFactor:
-            return (((value - self._value) * self._timeFactor) + 1) * defaultTime
+    def getModifiedTime(self, defaultTime, value, timeFactor):
+        if timeFactor:
+            return (((value - self._value) * timeFactor) + 1) * defaultTime
         return defaultTime
 
 
@@ -221,9 +221,9 @@ class FloatParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
-    def getModifiedTime(self, defaultTime, value):
-        if self._timeFactor:
-            return (((value - self._value) * self._timeFactor) + 1) * defaultTime
+    def getModifiedTime(self, defaultTime, value, timeFactor):
+        if timeFactor:
+            return IntParam.getModifiedTime(self, defaultTime, value, timeFactor)
         return defaultTime
 
 
@@ -233,7 +233,6 @@ class ChoiceParam(Param):
     def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', timeFactor=None, joinChar=' ', advanced=False):
         assert values
         self._values = values
-        #self._timeFactor = timeFactor
         self._exclusive = exclusive
         self._joinChar = joinChar
         self._valueType = type(self._values[0])  # cast to value type
@@ -254,18 +253,18 @@ class ChoiceParam(Param):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
-    def getModifiedTime(self, defaultTime, value):
-        if self._timeFactor:
+    def getModifiedTime(self, defaultTime, value, timeFactor):
+        if timeFactor:
             if self._exclusive:
-                return self._timeFactor[self._values.index(value)] * defaultTime
+                return timeFactor[self._values.index(value)] * defaultTime
             newTime = defaultTime
-            for v in value:
-                factor = self._timeFactor[self._values.index(v)]
+            for v in value: # positive factors
+                factor = timeFactor[self._values.index(v)]
                 if factor > 0:
                     newTime += factor * defaultTime
-            for i in range(len(self._timeFactor)):
-                if self._timeFactor[i] < 0 and self._values[i] not in value:
-                    newTime += self._timeFactor[i] * defaultTime
+            for i in range(len(timeFactor)): # negative factors
+                if timeFactor[i] < 0 and self._values[i] not in value:
+                    newTime += timeFactor[i] * defaultTime
             return newTime
         return defaultTime
     

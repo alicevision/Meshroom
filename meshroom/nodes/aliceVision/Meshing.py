@@ -255,4 +255,5 @@ class Meshing(desc.CommandLineNode):
     def getEstimatedTime(self, chunk, reconstruction):
         factor = 5.4768095591487445e-05 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
         amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
-        return factor*stats.Benchmark()*pixels*amount
+        depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [2.75, 1, 0.25, 0.1, 0.04])
+        return factor*stats.Benchmark()*pixels*amount*depthMapFactor

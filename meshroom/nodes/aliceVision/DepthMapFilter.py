@@ -118,4 +118,5 @@ class DepthMapFilter(desc.CommandLineNode):
     def getEstimatedTime(self, chunk, reconstruction):
         factor = 3.457227060534254e-05 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
         amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
-        return factor*stats.Benchmark()*pixels*amount
+        depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [4, 1, 0.25, 0.1, 0.02])
+        return factor*stats.Benchmark()*pixels*amount*depthMapFactor

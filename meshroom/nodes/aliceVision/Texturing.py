@@ -44,6 +44,7 @@ class Texturing(desc.CommandLineNode):
             description='''Texture downscale factor''',
             value=1,
             values=(1, 2, 4, 8),
+            timeFactor=[1, 0.9, 0.875, 0.85],
             exclusive=True,
             uid=[0],
         ),
@@ -239,4 +240,5 @@ class Texturing(desc.CommandLineNode):
     def getEstimatedTime(self, chunk, reconstruction):
         factor = 2.9496699741919386e-05 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
         amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
-        return factor*stats.Benchmark()*pixels*amount
+        depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [1.1, 1, 0.7, 0.6, 0.4])
+        return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount*depthMapFactor)

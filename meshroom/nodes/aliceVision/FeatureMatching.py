@@ -190,9 +190,5 @@ class FeatureMatching(desc.CommandLineNode):
     def getEstimatedTime(self, chunk, reconstruction):
         factor = 9.307023776842771e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
         amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
-        featureExtractions = reconstruction._graph.nodesFromNode(chunk.node, "FeatureExtraction", False)[0]
-        featureExtractionFactors = []
-        for featureExtraction in featureExtractions:
-            featureExtractionFactors.append([0.1, 0.5, 1, 5.25, 28][featureExtraction.describerPreset.attributeDesc._values.index(featureExtraction.describerPreset.value)])
-        featureExtractionFactor = sum(featureExtractionFactors)/len(featureExtractionFactors) # average describer preset factor for all feature extraction nodes linked to this node
+        featureExtractionFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'FeatureExtraction', 'describerPreset', [0.1, 0.5, 1, 5.25, 28])
         return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount*featureExtractionFactor)

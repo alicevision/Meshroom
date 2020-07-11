@@ -31,6 +31,7 @@ class DepthMap(desc.CommandLineNode):
             description='Image downscale factor.',
             value=2,
             values=[1, 2, 4, 8, 16],
+            timeFactor=[4, 1, 0.45, 0.3, 0.25],
             exclusive=True,
             uid=[0],
         ),
@@ -207,4 +208,4 @@ class DepthMap(desc.CommandLineNode):
     def getEstimatedTime(self, chunk, reconstruction):
         factor = 0.00012604775942269352 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
         amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
-        return factor*stats.Benchmark()*pixels*amount
+        return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount)

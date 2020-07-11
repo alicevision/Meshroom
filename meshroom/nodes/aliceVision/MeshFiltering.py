@@ -70,4 +70,5 @@ class MeshFiltering(desc.CommandLineNode):
     def getEstimatedTime(self, chunk, reconstruction):
         factor = 2.1002201185508473e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
         amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
-        return factor*stats.Benchmark()*pixels*amount
+        depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [3.15, 1, 0.2, 0.05, 0.01])
+        return factor*stats.Benchmark()*pixels*amount*depthMapFactor

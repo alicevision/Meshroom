@@ -748,7 +748,7 @@ class BaseNode(BaseObject):
 
     def getTotalTime(self, defaultTime):
         for attr in self._attributes:
-            defaultTime = attr.attributeDesc.getModifiedTime(defaultTime, attr.value)
+            defaultTime = attr.attributeDesc.getModifiedTime(defaultTime, attr.value, attr.attributeDesc._timeFactor)
         return defaultTime
 
     def __repr__(self):

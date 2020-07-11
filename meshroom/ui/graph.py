@@ -256,7 +256,6 @@ class UIGraph(QObject):
         self._layout = GraphLayout(self)
         self._selectedNode = None
         self._hoveredNode = None
-        self._startTime = None
 
     def setGraph(self, g):
         """ Set the internal graph. """
@@ -350,7 +349,6 @@ class UIGraph(QObject):
         stats.Benchmark() # Run the benchmark (if it has not already been ran) before the computation starts
         self._computeThread = Thread(target=self._execute, args=(nodes,))
         self._computeThread.start()
-        self._startTime = time.time()
 
     def _execute(self, nodes):
         self.computeStatusChanged.emit()
@@ -394,21 +392,15 @@ class UIGraph(QObject):
     @Slot(QObject, result=str)
     def getETA(self, chunks):
         """ Estimate the time of completion and format it into 'hours:minutes:seconds'. """
-        timer = time.time()
         totalEstimation = 0
+        startTime = time.time()
         for chunk in chunks:
-            if chunk.status.status in (Status.SUCCESS, Status.ERROR):
-                if self._startTime - chunk.status.startDateTimeSeconds <= 0: # make sure the chunk has been computed after the computation started
-                    totalEstimation += chunk.status.elapsedTime
-            elif chunk.status.status in (Status.RUNNING, Status.SUBMITTED):
+            if chunk.status.status in (Status.RUNNING, Status.SUBMITTED):
                 totalEstimation += chunk.node.nodeDesc.getEstimatedTime(chunk, self)
-        if len(chunks[0].node.chunks) == len(chunks):
-            if chunks[0].status.startDateTime == "":
-                estimation = round(totalEstimation)
-            else:
-                estimation = round(totalEstimation - (time.time() - chunks[0].status.startDateTimeSeconds))
-        else:    
-            estimation = round(totalEstimation - (time.time() - self._startTime))
+                if chunk.status.status == Status.RUNNING and chunk.status.startDateTimeSeconds < startTime:
+                    startTime = chunk.status.startDateTimeSeconds
+
+        estimation = round(totalEstimation - (time.time() - startTime))
         if estimation < 0:
             estimation = 0
         return str(datetime.timedelta(seconds=estimation))

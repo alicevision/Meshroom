@@ -1,11 +1,10 @@
-from __future__ import print_function
-
 __version__ = "1.2"
 
-from meshroom.core import desc
 import shutil
 import glob
 import os
+
+from meshroom.core import desc
 
 
 class Publish(desc.Node):

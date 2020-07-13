@@ -15,7 +15,6 @@ if sys.version_info[0] == 2:
 else:
     import xml.etree.ElementTree as ET
 
-
 def bytes2human(n):
     """
     >>> bytes2human(10000)
@@ -37,7 +36,7 @@ def bytes2human(n):
 class Benchmark:
     """
     A simple test to determine the performance of the cpu,
-    useful for calculating the eta.
+    useful for calculating the estimated computation time.
 
     It only runs the benchmark once.
     A lower result is better.
@@ -51,7 +50,7 @@ class Benchmark:
         return cls.result
 
     @classmethod
-    def run(cls): 
+    def run(cls):
         benchmark = """
 for n in range(1000): # Calculate the factorials of an arbitrary amount of numbers
     factorial = 1
@@ -67,7 +66,7 @@ for n in range(1000): # Calculate the factorials of an arbitrary amount of numbe
             # Simultaneous multithreading enabled
             return 1.3 # SMT usually increases performance per physical core by about 30%
         return 1
-    
+
 
 class ComputerStatistics:
     def __init__(self):

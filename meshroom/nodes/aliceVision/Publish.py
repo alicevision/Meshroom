@@ -51,7 +51,7 @@ class Publish(desc.Node):
     def processChunk(self, chunk):
         try:
             chunk.logManager.start(chunk.node.verboseLevel.value)
-            
+
             if not chunk.node.inputFiles:
                 chunk.logger.warning('Nothing to publish')
                 return

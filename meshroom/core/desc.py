@@ -262,12 +262,12 @@ class ChoiceParam(Param):
                 factor = timeFactor[self._values.index(v)]
                 if factor > 0:
                     newTime += factor * defaultTime
-            for i in range(len(timeFactor)): # negative factors
-                if timeFactor[i] < 0 and self._values[i] not in value:
-                    newTime += timeFactor[i] * defaultTime
+            for f, v in zip(timeFactor, self._values): # negative factors
+                if f < 0 and v not in value:
+                    newTime += f * defaultTime
             return newTime
         return defaultTime
-    
+
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)

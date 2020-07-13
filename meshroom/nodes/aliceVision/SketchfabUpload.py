@@ -176,7 +176,7 @@ class SketchfabUpload(desc.Node):
             uid=[],
         ),
     ]
-    
+
     def upload(self, apiToken, modelFile, data, chunk):
         modelEndpoint = 'https://api.sketchfab.com/v3/models'
         f = open(modelFile, 'rb')
@@ -219,7 +219,7 @@ class SketchfabUpload(desc.Node):
             self._progressMeasuredAt = self._startTime
             self._progress = 0
             uploadFile = ''
-        
+
             if not chunk.node.inputFiles:
                 chunk.logger.warning('Nothing to upload')
                 return
@@ -248,9 +248,9 @@ class SketchfabUpload(desc.Node):
             if chunk.node.category.value != 'none':
                 data.update({'categories': chunk.node.category.value})
             chunk.logger.debug('Data to be sent: '+str(data))
-            
+
             # pack files into .zip to reduce file size and simplify process
-            uploadFile = os.path.join(chunk.node.internalFolder, 
+            uploadFile = os.path.join(chunk.node.internalFolder,
                 'Meshroom_{}.zip'.format("".join(x for x in chunk.node.title.value if x.isalnum()))) # use title in the file name for clarity, removing any non-alphanumeric characters
             files = self.resolvedPaths(chunk.node.inputFiles.value)
             chunk.logger.debug('Files to write: '+str(files))

@@ -949,7 +949,7 @@ class Reconstruction(UIGraph):
         return len([v for v in self.getViewpoints() if self.isReconstructed(v)])
 
     def imagesStatisticsForNode(self, node):
-        """ Get the average amount of images per chunk and average pixels for all images for a given node """
+        """ Get the average amount of images per chunk and average pixels for all images for a given node. """
         cameraInits = self._graph.nodesFromNode(node, "CameraInit", False)[0]
         viewpointsAmount = sum(len(cameraInit.viewpoints.value) for cameraInit in cameraInits)
         reconstructedViewpointsAmount = 0

@@ -14,7 +14,7 @@ from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
-from meshroom.core.node import NodeChunk, Node, Status, StatusData, CompatibilityNode, Position
+from meshroom.core.node import Node, Status, CompatibilityNode, Position
 from meshroom.core import stats, submitters
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty

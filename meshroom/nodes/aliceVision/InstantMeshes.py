@@ -1,28 +1,95 @@
-# Instant Meshes plugin v.0.1-0.4 by Jörg Dittmer (https://github.com/djoerg) 02-03.2020,
+# Instant Meshes plugin v.0.1-0.4 by Jörg Dittmer (https://github.com/djoerg) 2020-03,
+# Log implementation by TigerVersusT (https://github.com/TigerVersusT) 2020-05,
 # based on the plugin by natowi (https://github.com/natowi) 11.2019
 #
 # Wavefront OBJ format load/save routine is inspired by James Gregson's blog post: 
 # http://jamesgregson.ca/loadsave-wavefront-obj-files-in-python.html
 #
 
-__version__ = "0.4"
+__version__ = "0.4.1"
 
-from meshroom.core import desc
+from meshroom.core import desc, node
 
 import os
+import logging
 import numpy as np
 from pymeshfix import _meshfix
 
 from typing import List, Tuple
-        
+
+class InstantMeshesLogManager(node.LogManager):
+    """ inherit the original logManager to handle debug messages, saving messages into debug file  """
+
+    def __init__(self, chunk):
+        super(InstantMeshesLogManager, self).__init__(chunk)
+
+    # return the debug file path
+    def debugFile(self):
+        return os.path.join(self.chunk.node.graph.cacheDir, self.chunk.node.internalFolder, 'debug')
+
+    # reload the following functions to adapt to the debug file
+    def configureLogger(self):
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
+        handler = logging.FileHandler(self.debugFile())
+        formatter = self.Formatter('[%(asctime)s.%(msecs)03d][%(levelname)s] %(message)s', self.dateTimeFormatting)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
+    def start(self, level):
+        # Clear log file
+        open(self.debugFile(), 'w').close()
+
+        self.configureLogger()
+        self.logger.setLevel(self.textToLevel(level))
+        self.progressBar = False
+
+    def makeProgressBar(self, end, message=''):
+        assert end > 0
+        assert not self.progressBar
+
+        self.progressEnd = end
+        self.currentProgressTics = 0
+        self.progressBar = True
+
+        with open(self.debugFile(), 'a') as f:
+            if message:
+                f.write(message + '\n')
+            f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
+            f.write('|----|----|----|----|----|----|----|----|----|----|\n\n')
+
+            f.close()
+
+        with open(self.debugFile(), 'r') as f:
+            content = f.read()
+            self.progressBarPosition = content.rfind('\n')
+
+            f.close()
+
+    def updateProgressBar(self, value):
+        assert self.progressBar
+        assert value <= self.progressEnd
+
+        tics = round((value / self.progressEnd) * 51)
+
+        with open(self.debugFile(), 'r+') as f:
+            text = f.read()
+            for i in range(tics - self.currentProgressTics):
+                text = text[:self.progressBarPosition] + '*' + text[self.progressBarPosition:]
+            f.seek(0)
+            f.write(text)
+            f.close()
+
+        self.currentProgressTics = tics
+
+# global variable to access log manager
+g_log : InstantMeshesLogManager
 
 class InstantMeshes(desc.CommandLineNode):
     commandLine = 'external_instantMeshes {inputMeshValue} -S {smoothValue} %params% -o {outputInstantMeshesValue}'
 
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
-
-# documentation = '''Instant Meshes is an auto-retopology tool that can be used to remesh a surface into an isotropic triangular or quad-dominant mesh.'''
 
     inputs = [
         desc.File(
@@ -132,23 +199,29 @@ class InstantMeshes(desc.CommandLineNode):
     
     def processChunk(self, chunk):
         """Processes one Chunk, converts Obj format and optionaly fixes self-intersections."""
-        print("processChunk")
+        global g_log
+        g_log = InstantMeshesLogManager(chunk)
+        g_log.start('debug')
+
+        g_log.logger.info('processChunk')
         
         # executes commandline running Instant Meshes
         desc.CommandLineNode.processChunk(self, chunk)
         
         # load Instant Meshes output Obj file
         mesh = Mesh.createFromFile(chunk.node.outputInstantMeshes.value)
-        print("Mesh loaded")
+        g_log.logger.info("Mesh loaded")
         
         # fix self-intersections by utilizing MeshFix tool by Marco Attene
         if chunk.node.fixMesh.value:
             mesh.fixSelfIntersections()
-            print("Mesh fixed")
+            g_log.logger.info("Mesh fixed")
             
         # save Meshroom compliant Obj file
         mesh.save(chunk.node.outputMesh.value)
-        print("Mesh saved")
+        g_log.logger.info("Mesh saved")
+
+        g_log.end()
 
         
 
@@ -209,7 +282,7 @@ class Mesh(object):
         try:
             method = getattr(self, methodname)
         except AttributeError:
-            print("Loading file type '." +ext+ "' not implemented yet!")
+            g_log.logger.error("Loading file type '." +ext+ "' not implemented yet!")
             raise
         
         method(filename) # calls loadXxx() method on instance
@@ -270,7 +343,7 @@ class Mesh(object):
         try:
             method = getattr(self, methodname)
         except AttributeError:
-            print("Saving file type '." +ext+ "' not implemented yet!")
+            g_log.logger.error("Saving file type '." +ext+ "' not implemented yet!")
             raise
         
         method(filename, texcoords, normals)  # calls saveXxx() method on instance
@@ -309,7 +382,7 @@ class Mesh(object):
                     
                     
             # write faces
-            print("Saving poly count: " + str(len(self.faces)))
+            g_log.logger.info("Saving poly count: " + str(len(self.faces)))
                                 
             for pid in range(0, len(self.faces)):                    
                 pstr = 'f'

@@ -8,3 +8,4 @@ Format 1.0 format.js
 # singleton Clipboard 1.0 Clipboard.qml
 # singleton Filepath 1.0 Filepath.qml
 # singleton Scene3DHelper 1.0 Scene3DHelper.qml
+# singleton Transformations3DHelper 1.0 Transformations3DHelper.qml

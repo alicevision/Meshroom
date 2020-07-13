@@ -5,6 +5,7 @@ import Qt3D.Extras 2.10
 import QtQuick 2.9
 import Qt3D.Logic 2.0
 import QtQuick.Controls 2.3
+import Utils 1.0
 
 Entity {
     id: root
@@ -34,142 +35,20 @@ Entity {
         SCALE
     }
 
-    /***** QUATERNIONS *****/
+    /***** TRANSFORMATIONS (using local vars) *****/
 
-    function multiplyQuaternion(q1, q2) {
-        return Qt.quaternion(
-            q1.scalar * q2.scalar - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z,
-            q1.scalar * q2.x + q1.x * q2.scalar + q1.y * q2.z - q1.z * q2.y,
-            q1.scalar * q2.y + q1.y * q2.scalar + q1.z * q2.x - q1.x * q2.z,
-            q1.scalar * q2.z + q1.z * q2.scalar + q1.x * q2.y - q1.y * q2.x
-        )
+    function doRelativeTranslation(initialModelMatrix, translateVec) {
+        Transformations3DHelper.relativeLocalTranslate(gizmoDisplayTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, translateVec) // Update gizmo matrix
+        Transformations3DHelper.relativeLocalTranslate(objectTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, translateVec) // Update object matrix
     }
 
-    function dotQuaternion(q) {
-        return (((q.x * q.x) + (q.y * q.y)) + (q.z * q.z)) + (q.scalar * q.scalar)
+    function doRelativeRotation(initialModelMatrix, axis, degree) {
+        Transformations3DHelper.relativeLocalRotate(gizmoDisplayTransform, initialModelMatrix.position, initialModelMatrix.quaternion, initialModelMatrix.scale, axis, degree) // Update gizmo matrix
+        Transformations3DHelper.relativeLocalRotate(objectTransform, initialModelMatrix.position, initialModelMatrix.quaternion, initialModelMatrix.scale, axis, degree) // Update object matrix
     }
 
-    function normalizeQuaternion(q) {
-        const dot = dotQuaternion(q)
-        const inv = 1.0 / (Math.sqrt(dot))
-        return Qt.quaternion(q.scalar * inv, q.x * inv, q.y * inv, q.z * inv)
-    }
-
-    function quaternionFromAxisAngle(vec3, degree) {
-        const rad = degree * Math.PI/180
-        const factor = Math.sin(rad/2) // Used for the quaternion computation
-
-        // Compute the quaternion
-        const x = vec3.x * factor
-        const y = vec3.y * factor
-        const z = vec3.z * factor
-        const w = Math.cos(rad/2)
-
-        return normalizeQuaternion(Qt.quaternion(w, x, y, z))
-    }
-
-    function quaternionToRotationMatrix(q) {
-        const w = q.scalar
-        const x = q.x
-        const y = q.y
-        const z = q.z
-
-        return Qt.matrix4x4(
-            w*w + x*x - y*y - z*z, 2*(x*y - w*z), 2*(w*y + x*z), 0,
-            2*(x*y + w*z), w*w - x*x + y*y - z*z, 2*(y*z - w*x), 0,
-            2*(x*z - w*y), 2*(w*x + y*z), w*w - x*x - y*y + z*z, 0,
-            0,             0,             0,                     1
-        )
-    }
-    
-    /***** GENERIC MATRIX TRANSFORMATIONS *****/
-
-    function pointFromWorldToScreen(point, camera, windowSize) {
-        // Transform the point from World Coord to Normalized Device Coord
-        const viewMatrix = camera.transform.matrix.inverted()
-        const projectedPoint = camera.projectionMatrix.times(viewMatrix.times(point))
-        const projectedPoint2D = Qt.vector2d(projectedPoint.x/projectedPoint.w, projectedPoint.y/projectedPoint.w)
-
-        // Transform the point from Normalized Device Coord to Screen Coord
-        const screenPoint2D = Qt.vector2d(
-            parseInt((projectedPoint2D.x + 1) * windowSize.width / 2),
-            parseInt((projectedPoint2D.y - 1) * windowSize.height / -2)
-        )
-
-        return screenPoint2D
-    }
-
-    function decomposeModelMatrixFromTransformations(translation, rotation, scale3D) {
-        const posMat = Qt.matrix4x4()
-        posMat.translate(translation)
-        const rotMat = quaternionToRotationMatrix(rotation)
-        const scaleMat = Qt.matrix4x4()
-        scaleMat.scale(scale3D)
-
-        const rotQuat = Qt.quaternion(rotation.scalar, rotation.x, rotation.y, rotation.z)
-
-        return { positionMat: posMat, rotationMat: rotMat, scaleMat: scaleMat, quaternion: rotQuat }
-    }
-
-    function decomposeModelMatrixFromTransform(transformQtInstance) {
-        return decomposeModelMatrixFromTransformations(transformQtInstance.translation, transformQtInstance.rotation, transformQtInstance.scale3D)
-    }
-
-    function localTranslate(transformQtInstance, initialDecomposedModelMat, translateVec) {
-        // Compute the translation transformation matrix 
-        const translationMat = Qt.matrix4x4()
-        translationMat.translate(translateVec)
-
-        // Compute the new model matrix (POSITION * ROTATION * TRANSLATE * SCALE) and set it to the Transform
-        const mat = initialDecomposedModelMat.positionMat.times(initialDecomposedModelMat.rotationMat.times(translationMat.times(initialDecomposedModelMat.scaleMat)))
-        transformQtInstance.setMatrix(mat)
-    }
-
-    function localRotate(transformQtInstance, initialDecomposedModelMat, axis, degree) {       
-        // Compute the transformation quaternion from axis and angle in degrees
-        const transformQuat = quaternionFromAxisAngle(axis, degree)
-
-        // Get rotation quaternion of the current model matrix
-        const initRotQuat = initialDecomposedModelMat.quaternion
-        // Compute the new rotation quaternion and then calculate the matrix
-        const newRotQuat = multiplyQuaternion(initRotQuat, transformQuat) // Order is important
-        const newRotationMat = quaternionToRotationMatrix(newRotQuat)
-
-        // Compute the new model matrix (POSITION * NEW_COMPUTED_ROTATION * SCALE) and set it to the Transform
-        const mat = initialDecomposedModelMat.positionMat.times(newRotationMat.times(initialDecomposedModelMat.scaleMat))
-        transformQtInstance.setMatrix(mat)
-    }
-
-    function localScale(transformQtInstance, initialDecomposedModelMat, scaleVec) {
-        // Make a copy of the scale matrix (otherwise, it is a reference and it does not work as expected)
-        // Unfortunately, we have to proceed like this because, in QML, Qt.matrix4x4(Qt.matrix4x4) does not work
-        const scaleMat = Qt.matrix4x4()
-        scaleMat.scale(Qt.vector3d(initialDecomposedModelMat.scaleMat.m11, initialDecomposedModelMat.scaleMat.m22, initialDecomposedModelMat.scaleMat.m33))
-
-        // Update the scale matrix copy
-        scaleMat.m11 += scaleVec.x
-        scaleMat.m22 += scaleVec.y
-        scaleMat.m33 += scaleVec.z
-
-        // Compute the new model matrix (POSITION * ROTATION * SCALE) and set it to the Transform
-        const mat = initialDecomposedModelMat.positionMat.times(initialDecomposedModelMat.rotationMat.times(scaleMat))
-        transformQtInstance.setMatrix(mat)
-    }
-
-    /***** SPECIFIC MATRIX TRANSFORMATIONS (using local vars) *****/
-
-    function doTranslation(initialDecomposedModelMat, translateVec) {
-        localTranslate(gizmoDisplayTransform, initialDecomposedModelMat, translateVec) // Update gizmo matrix
-        localTranslate(objectTransform, initialDecomposedModelMat, translateVec) // Update object matrix
-    }
-
-    function doRotation(initialDecomposedModelMat, axis, degree) {
-        localRotate(gizmoDisplayTransform, initialDecomposedModelMat, axis, degree) // Update gizmo matrix
-        localRotate(objectTransform, initialDecomposedModelMat, axis, degree) // Update object matrix
-    }
-
-    function doScale(initialDecomposedModelMat, scaleVec) {
-        localScale(objectTransform, initialDecomposedModelMat, scaleVec) // Update object matrix
+    function doRelativeScale(initialModelMatrix, scaleVec) {
+        Transformations3DHelper.relativeLocalScale(objectTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, scaleVec) // Update object matrix
     }
 
     function resetTranslation() {
@@ -225,8 +104,8 @@ Entity {
                         // Transform the positive picked axis vector from World Coord to Screen Coord
                         const gizmoLocalPointOnAxis = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 1))
                         const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
-                        const screenPoint2D = pointFromWorldToScreen(gizmoLocalPointOnAxis, camera, windowSize)
-                        const screenCenter2D = pointFromWorldToScreen(gizmoCenterPoint, camera, windowSize)
+                        const screenPoint2D = Transformations3DHelper.pointFromWorldToScreen(gizmoLocalPointOnAxis, camera, windowSize)
+                        const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, windowSize)
                         const screenAxisVector = Qt.vector2d(screenPoint2D.x - screenCenter2D.x, -(screenPoint2D.y - screenCenter2D.y))
 
                         // Get the cosinus of the angle from the screenAxisVector to the mouseVector
@@ -234,7 +113,7 @@ Entity {
                         const offset = cosAngle * mouseVector.length() * sensibility
 
                         // If the mouse is not at the same spot as the pickedPoint, we do translation
-                        if (offset) doTranslation(objectPicker.decomposedObjectModelMat, pickedAxis.times(offset)) // Do a translation from the initial Object Model Matrix when we picked the gizmo
+                        if (offset) doRelativeTranslation(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a translation from the initial Object Model Matrix when we picked the gizmo
 
                         return
                     }
@@ -242,7 +121,7 @@ Entity {
                     case TransformGizmo.Type.ROTATION: {
                         // Get Screen Coordinates of the gizmo center
                         const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
-                        const screenCenter2D = pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
+                        const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
 
                         // Get the vector screenCenter2D -> PickedPoint
                         const originalVector = Qt.vector2d(objectPicker.screenPoint.x - screenCenter2D.x, -(objectPicker.screenPoint.y - screenCenter2D.y))
@@ -258,7 +137,7 @@ Entity {
                         const gizmoToCameraVector = camera.position.toVector4d().minus(gizmoCenterPoint)
                         const orientation = gizmoLocalAxisVector.dotProduct(gizmoToCameraVector) > 0 ? 1 : -1
 
-                        if (angle !== 0) doRotation(objectPicker.decomposedObjectModelMat, pickedAxis, angle*orientation)
+                        if (angle !== 0) doRelativeRotation(objectPicker.modelMatrix, pickedAxis, angle*orientation)
                         return
                     }
 
@@ -267,7 +146,7 @@ Entity {
 
                         // Get Screen Coordinates of the gizmo center
                         const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
-                        const screenCenter2D = pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
+                        const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
 
                         // Compute the scale unit
                         const scaleUnit = screenCenter2D.minus(Qt.vector2d(objectPicker.screenPoint.x, objectPicker.screenPoint.y)).length()
@@ -277,7 +156,7 @@ Entity {
                         let offset = (mouseVector.length() - scaleUnit) * sensibility
                         offset = (offset < 0) ? offset * 3 : offset // Used to make it more sensible when we want to reduce the scale (because the action field is shorter)
 
-                        if (offset) doScale(objectPicker.decomposedObjectModelMat, pickedAxis.times(offset))
+                        if (offset) doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset))
                         return
                     }
                 }
@@ -450,7 +329,7 @@ Entity {
                     gizmoType: TransformGizmo.Type.SCALE
 
                     onPickedChanged: {
-                        this.decomposedObjectModelMat = decomposeModelMatrixFromTransformations(objectTransform.translation, objectTransform.rotation, objectTransform.scale3D) // Save the current transformations
+                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
                     }
                 }
@@ -509,7 +388,8 @@ Entity {
                     gizmoType: TransformGizmo.Type.POSITION
 
                     onPickedChanged: {
-                        this.decomposedObjectModelMat = decomposeModelMatrixFromTransformations(objectTransform.translation, objectTransform.rotation, objectTransform.scale3D) // Save the current transformations
+                        // this.modelMatrix = copyMatrix(objectTransform.matrix) // Save the current transformations
+                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
                     }
                 }
@@ -554,7 +434,7 @@ Entity {
                     gizmoType: TransformGizmo.Type.ROTATION
 
                     onPickedChanged: {
-                        this.decomposedObjectModelMat = decomposeModelMatrixFromTransformations(objectTransform.translation, objectTransform.rotation, objectTransform.scale3D) // Save the current transformations
+                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
                     }
                 }

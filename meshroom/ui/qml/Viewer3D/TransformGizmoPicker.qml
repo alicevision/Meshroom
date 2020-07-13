@@ -14,7 +14,7 @@ ObjectPicker {
     property int gizmoAxis
     property int gizmoType
     property point screenPoint
-    property var decomposedObjectModelMat
+    property var modelMatrix
     
     signal pickedChanged(var picker)
     

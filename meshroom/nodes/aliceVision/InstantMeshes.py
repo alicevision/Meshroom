@@ -171,6 +171,7 @@ class InstantMeshes(desc.CommandLineNode):
                         "         (Of course, you CAN use the Publish node to export it.)",
             value=desc.Node.internalFolder + 'mesh_im.obj',
             uid=[],
+            advanced=True,
             ),
 
     ]

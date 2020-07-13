@@ -8,7 +8,7 @@ import requests
 import io
 import time
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class BufferReader(io.BytesIO): # object to call the callback while the file is being uploaded
@@ -192,11 +192,9 @@ class SketchfabUpload(desc.Node):
                 modelEndpoint, **{'data': body, 'headers': headers})
             chunk.logManager.completeProgressBar()
         except requests.exceptions.RequestException as e:
-            chunk.logger.error(u'An error occured: {}'.format(e))
-            raise RuntimeError() 
+            raise RuntimeError(u'An error occured: {}'.format(e)) 
         if r.status_code != requests.codes.created:
-            chunk.logger.error(u'Upload failed with error: {}'.format(r.json()))
-            raise RuntimeError()
+            raise RuntimeError(u'Upload failed with error: {}'.format(r.json()))
 
     def resolvedPaths(self, inputFiles):
         paths = []
@@ -226,21 +224,16 @@ class SketchfabUpload(desc.Node):
                 chunk.logger.warning('Nothing to upload')
                 return
             if chunk.node.apiToken.value == '':
-                chunk.logger.error('Need API token.')
-                raise RuntimeError()
+                raise RuntimeError('Need API token.')
             if len(chunk.node.title.value) > 48:
-                chunk.logger.error('Title cannot be longer than 48 characters.')
-                raise RuntimeError()
+                raise RuntimeError('Title cannot be longer than 48 characters.')
             if len(chunk.node.description.value) > 1024:
-                chunk.logger.error('Description cannot be longer than 1024 characters.')
-                raise RuntimeError()
+                raise RuntimeError('Description cannot be longer than 1024 characters.')
             tags = [ i.value.replace(' ', '-') for i in chunk.node.tags.value.values() ]
             if all(len(i) > 48 for i in tags) and len(tags) > 0:
-                chunk.logger.error('Tags cannot be longer than 48 characters.')
-                raise RuntimeError()
+                raise RuntimeError('Tags cannot be longer than 48 characters.')
             if len(tags) > 42:
-                chunk.logger.error('Maximum of 42 separate tags.')
-                raise RuntimeError()
+                raise RuntimeError('Maximum of 42 separate tags.')
 
             data = {
                 'name': chunk.node.title.value,
@@ -269,13 +262,13 @@ class SketchfabUpload(desc.Node):
                     zf.write(file, os.path.basename(file))
             zf.close()
             chunk.logger.debug('Created file: '+uploadFile)
-            chunk.logger.info('File size: {}MB'.format(round(os.path.getsize(uploadFile)/(1024*1024), 3)))
+            chunk.logger.info('File size: '+stats.bytes2human(os.path.getsize(uploadFile)))
 
             self.upload(chunk.node.apiToken.value, uploadFile, data, chunk)
             chunk.logger.info('Upload successful. Your model is being processed on Sketchfab. It may take some time to show up on your "models" page.')
         except Exception as e:
             chunk.logger.error(e)
-            raise RuntimeError()
+            raise e
         finally:
             if os.path.isfile(uploadFile):
                 os.remove(uploadFile)

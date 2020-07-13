@@ -56,15 +56,14 @@ class Publish(desc.Node):
                 chunk.logger.warning('Nothing to publish')
                 return
             if not chunk.node.output.value:
+                chunk.logger.warning('No output folder set')
                 return
 
             outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
             if not outFiles:
-                error = 'Publish: input files listed, but nothing to publish'
-                chunk.logger.error(error)
-                chunk.logger.info('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
-                raise RuntimeError(error)
+                chunk.logger.debug('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+                raise RuntimeError('Publish: input files listed, but nothing to publish')
 
             if not os.path.exists(chunk.node.output.value):
                 os.mkdir(chunk.node.output.value)
@@ -73,5 +72,8 @@ class Publish(desc.Node):
                 chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
                 shutil.copyfile(iFile, oFile)
             chunk.logger.info('Publish end')
+        except Exception as e:
+            chunk.logger.error(e)
+            raise e
         finally:
             chunk.logManager.end()

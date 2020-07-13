@@ -226,6 +226,15 @@ class Meshing(desc.CommandLineNode):
             exclusive=True,
             uid=[],
         ),
+        desc.FloatParam(
+            name='forceTEdgeDelta',
+            label='Force T Edge Delta',
+            description='0 to disable force T edge in graphcut. Threshold for emptiness/fullness variation.',
+            value=0.1,
+            range=(0.0, 1.0, 0.01),
+            uid=[0],
+            advanced=True,
+        )
     ]
 
     outputs = [

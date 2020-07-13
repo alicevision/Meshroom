@@ -90,6 +90,8 @@ class InstantMeshes(desc.CommandLineNode):
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
 
+# documentation = '''Instant Meshes is an auto-retopology tool that can be used to remesh a surface into an isotropic triangular or quad-dominant mesh.'''
+
     inputs = [
         desc.File(
             name="inputMesh", label='Input Mesh',

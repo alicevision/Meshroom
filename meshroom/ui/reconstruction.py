@@ -13,7 +13,7 @@ import meshroom.common
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
-from meshroom.core.node import Node, Status, Position
+from meshroom.core.node import Node, CompatibilityNode, Status, Position
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
 
@@ -955,7 +955,8 @@ class Reconstruction(UIGraph):
             if category == 'sfm':
                 self.setSfm(node)
         for node in nodes:
-            self.activeNodes.get(node.nodeType).node = node
+            if not isinstance(node, CompatibilityNode):
+                self.activeNodes.get(node.nodeType).node = node
 
     def updateSfMResults(self):
         """

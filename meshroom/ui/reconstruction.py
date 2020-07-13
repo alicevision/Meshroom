@@ -454,9 +454,9 @@ class Reconstruction(UIGraph):
 
     def initActiveNodes(self):
         # Create all possible entries
-        for category, _ in self.activeNodeCategories.iteritems():
+        for category, _ in self.activeNodeCategories.items():
             self._activeNodes.add(ActiveNode(category, self))
-        for nodeType, _ in meshroom.core.nodesDesc.iteritems():
+        for nodeType, _ in meshroom.core.nodesDesc.items():
             self._activeNodes.add(ActiveNode(nodeType, self))
 
     def onCameraInitChanged(self):
@@ -934,7 +934,7 @@ class Reconstruction(UIGraph):
     @Slot(QObject)
     def setActiveNode(self, node):
         """ Set node as the active node of its type. """
-        for category, nodeTypes in self.activeNodeCategories.iteritems():
+        for category, nodeTypes in self.activeNodeCategories.items():
             if node.nodeType in nodeTypes:
                 self.activeNodes.get(category).node = node
                 if category == 'sfm':
@@ -947,10 +947,10 @@ class Reconstruction(UIGraph):
         # Setup the active node per category only once, on the last one
         nodesByCategory = {}
         for node in nodes:
-            for category, nodeTypes in self.activeNodeCategories.iteritems():
+            for category, nodeTypes in self.activeNodeCategories.items():
                 if node.nodeType in nodeTypes:
                     nodesByCategory[category] = node
-        for category, node in nodesByCategory.iteritems():
+        for category, node in nodesByCategory.items():
             self.activeNodes.get(category).node = node
             if category == 'sfm':
                 self.setSfm(node)

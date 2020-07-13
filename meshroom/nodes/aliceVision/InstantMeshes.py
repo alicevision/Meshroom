@@ -1,10 +1,9 @@
 # Instant Meshes plugin v.0.1-0.4 by Jörg Dittmer (https://github.com/djoerg) 2020-03,
 # Log implementation by TigerVersusT (https://github.com/TigerVersusT) 2020-05,
-# based on the plugin by natowi (https://github.com/natowi) 11.2019
+# based on the plugin by natowi (https://github.com/natowi) 2019-11
 #
 # Wavefront OBJ format load/save routine is inspired by James Gregson's blog post: 
 # http://jamesgregson.ca/loadsave-wavefront-obj-files-in-python.html
-#
 
 __version__ = "0.4.1"
 
@@ -422,5 +421,3 @@ class Mesh(object):
         v, f = tmesh.return_arrays()
         self.vertices = v.tolist()
         self.faces = f.tolist()
-                
-        

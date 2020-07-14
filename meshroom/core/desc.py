@@ -1,7 +1,7 @@
 from meshroom.common import BaseObject, Property, Variant, VariantList
 from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
-import collections
+import collections.abc
 import math
 import os
 import psutil
@@ -230,7 +230,7 @@ class ChoiceParam(Param):
         if self.exclusive:
             return self.conformValue(value)
 
-        if not isinstance(value, collections.Iterable):
+        if not isinstance(value, collections.abc.Iterable):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 

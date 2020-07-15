@@ -14,9 +14,29 @@ Entity {
     property var windowSize
     property var frontLayerComponent
     property var window
-    readonly property Transform objectTransform : Transform {}
+
+    readonly property Transform objectTransform : Transform {
+        translation: gizmoDisplayTransform.translation
+        rotation: gizmoDisplayTransform.rotation
+        scale3D: Qt.vector3d(1,1,1)
+    }
+    readonly property var updateTransformations: function updateTransformations(translation, rotation, scale) {
+        const gizmoModelMat = Transformations3DHelper.computeModelMatrixWithEuler(translation, rotation, Qt.vector3d(1,1,1))
+        gizmoDisplayTransform.setMatrix(gizmoModelMat) // Update gizmo matrix and translation/rotation of the object (with binding)
+        objectTransform.scale3D = scale // Update the scale of the object
+    }
     
     signal pickedChanged(bool pressed)
+    signal gizmoChanged(var translation, var rotation, var scale)
+
+    function emitGizmoChanged() {
+        const translation = gizmoDisplayTransform.translation // Position in space
+        const rotation = Qt.vector3d(gizmoDisplayTransform.rotationX, gizmoDisplayTransform.rotationY, gizmoDisplayTransform.rotationZ) // Euler angles
+        const scale = objectTransform.scale3D // Scale of the object
+
+        updateTransformations(translation, rotation, scale) // Optional: just to make sure the absolute values work well
+        gizmoChanged(translation, rotation, scale)
+    }
 
     components: [gizmoDisplayTransform, mouseHandler, frontLayerComponent]
 
@@ -38,31 +58,27 @@ Entity {
     /***** TRANSFORMATIONS (using local vars) *****/
 
     function doRelativeTranslation(initialModelMatrix, translateVec) {
-        Transformations3DHelper.relativeLocalTranslate(gizmoDisplayTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, translateVec) // Update gizmo matrix
-        Transformations3DHelper.relativeLocalTranslate(objectTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, translateVec) // Update object matrix
+        Transformations3DHelper.relativeLocalTranslate(gizmoDisplayTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, translateVec) // Update gizmo matrix and object matrix with binding
     }
 
     function doRelativeRotation(initialModelMatrix, axis, degree) {
-        Transformations3DHelper.relativeLocalRotate(gizmoDisplayTransform, initialModelMatrix.position, initialModelMatrix.quaternion, initialModelMatrix.scale, axis, degree) // Update gizmo matrix
-        Transformations3DHelper.relativeLocalRotate(objectTransform, initialModelMatrix.position, initialModelMatrix.quaternion, initialModelMatrix.scale, axis, degree) // Update object matrix
+        Transformations3DHelper.relativeLocalRotate(gizmoDisplayTransform, initialModelMatrix.position, initialModelMatrix.quaternion, initialModelMatrix.scale, axis, degree) // Update gizmo matrix and object matrix with binding
     }
 
     function doRelativeScale(initialModelMatrix, scaleVec) {
-        Transformations3DHelper.relativeLocalScale(objectTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, scaleVec) // Update object matrix
+        Transformations3DHelper.relativeLocalScale(objectTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, scaleVec) // Update only object matrix
     }
 
     function resetTranslation() {
-        gizmoDisplayTransform.translation = Qt.vector3d(0,0,0)
-        objectTransform.translation = Qt.vector3d(0,0,0)
+        gizmoDisplayTransform.translation = Qt.vector3d(0,0,0) // Reset gizmo matrix and object matrix with binding
     }
 
     function resetRotation() {
-        gizmoDisplayTransform.rotation = Qt.quaternion(1,0,0,0)
-        objectTransform.rotation = Qt.quaternion(1,0,0,0)
+        gizmoDisplayTransform.rotation = Qt.quaternion(1,0,0,0) // Reset gizmo matrix and object matrix with binding
     }
 
     function resetScale() {
-        objectTransform.scale3D = Qt.vector3d(1,1,1)
+        objectTransform.scale3D = Qt.vector3d(1,1,1) // Reset only object matrix
     }
 
     function resetATransformType(transformType) {
@@ -71,6 +87,7 @@ Entity {
             case TransformGizmo.Type.ROTATION: resetRotation(); break
             case TransformGizmo.Type.SCALE: resetScale(); break
         }
+        emitGizmoChanged()
     }
 
     /***** DEVICES *****/
@@ -84,7 +101,7 @@ Entity {
         property bool enabled: false
 
         onPositionChanged: {
-            if (objectPicker) {
+            if (objectPicker && objectPicker.button === Qt.LeftButton) {
                 // Get the selected axis
                 let pickedAxis
                 switch(objectPicker.gizmoAxis) {
@@ -137,7 +154,8 @@ Entity {
                         const gizmoToCameraVector = camera.position.toVector4d().minus(gizmoCenterPoint)
                         const orientation = gizmoLocalAxisVector.dotProduct(gizmoToCameraVector) > 0 ? 1 : -1
 
-                        if (angle !== 0) doRelativeRotation(objectPicker.modelMatrix, pickedAxis, angle*orientation)
+                        if (angle !== 0) doRelativeRotation(objectPicker.modelMatrix, pickedAxis, angle*orientation) // Do a rotation from the initial Object Model Matrix when we picked the gizmo
+
                         return
                     }
 
@@ -156,16 +174,21 @@ Entity {
                         let offset = (mouseVector.length() - scaleUnit) * sensibility
                         offset = (offset < 0) ? offset * 3 : offset // Used to make it more sensible when we want to reduce the scale (because the action field is shorter)
 
-                        if (offset) doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset))
+                        if (offset) doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a scale from the initial Object Model Matrix when we picked the gizmo
+                        
                         return
                     }
                 }
             }
-        }
-        onReleased: {
-            if(objectPicker && mouse.button === Qt.RightButton) {
+
+            if(objectPicker && objectPicker.button === Qt.RightButton) {
                 resetMenu.updateTypeBeforePopup(objectPicker.gizmoType)
                 resetMenu.popup(window)
+            }
+        }
+        onReleased: {
+            if(objectPicker && mouse.button === Qt.LeftButton) {
+                emitGizmoChanged()
             }
         }
     }

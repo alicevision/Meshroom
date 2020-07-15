@@ -14,8 +14,10 @@ Entity {
     readonly property Camera camera : cameraController.camera
     readonly property var windowSize: cameraController.windowSize
     readonly property alias objectTransform : transformGizmo.objectTransform // The Transform the object should use
+    readonly property alias updateTransformations: transformGizmo.updateTransformations // Function to update the transformations
     
     signal pickedChanged(bool pressed)
+    signal gizmoChanged(var translation, var rotation, var scale)
 
     onPickedChanged: {
         cameraController.loseMouseFocus = pressed // Notify the camera if the transform takes/releases the focus
@@ -29,6 +31,9 @@ Entity {
         window: root.window
         onPickedChanged: {
             root.pickedChanged(pressed)
+        }
+        onGizmoChanged: {
+            root.gizmoChanged(translation, rotation, scale)
         }
     }
 }

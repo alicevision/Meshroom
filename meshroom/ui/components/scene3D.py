@@ -188,6 +188,29 @@ class Transformations3DHelper(QObject):
 
         return { "position": posMat, "rotation": rotMat, "scale": scaleMat, "quaternion": decomposition.get("quaternion") }
 
+    @Slot(QVector3D, QVector3D, QVector3D, result=QMatrix4x4)
+    def computeModelMatrixWithEuler(self, translation, rotation, scale):
+        """ Compute a model matrix from three Vector3D.
+            Args:
+                translation (QVector3D): position in space (x, y, z)
+                rotation (QVector3D): Euler angles in degrees (x, y, z)
+                scale (QVector3D): scale of the object (x, y, z)
+            Returns:
+                QMatrix4x4: corresponding model matrix
+        """
+        posMat = QMatrix4x4()
+        posMat.translate(translation)
+
+        quaternion = QQuaternion.fromEulerAngles(rotation)
+        rotMat = self.quaternionToRotationMatrix(quaternion)
+
+        scaleMat = QMatrix4x4()
+        scaleMat.scale(scale)
+
+        modelMat = posMat * rotMat * scaleMat
+
+        return modelMat
+
 
     #---------- "Private" Methods ----------#
 

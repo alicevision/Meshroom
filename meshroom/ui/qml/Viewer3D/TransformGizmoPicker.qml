@@ -15,6 +15,7 @@ ObjectPicker {
     property int gizmoType
     property point screenPoint
     property var modelMatrix
+    property int button
     
     signal pickedChanged(var picker)
     
@@ -25,6 +26,7 @@ ObjectPicker {
         mouseController.objectPicker = this
         root.isPressed = true
         screenPoint = pick.position
+        button = pick.button
         pickedChanged(this)
     }
     onEntered: {

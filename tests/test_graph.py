@@ -180,7 +180,7 @@ def test_graph_reverse_dfs():
     nodes = graph.nodesFromNode(B)[0]
     assert set(nodes) == {B, D, C, E, F}
     # Get all nodes of type AppendText from B
-    nodes = graph.nodesFromNode(B, filterType='AppendText')[0]
+    nodes = graph.nodesFromNode(B, filterTypes=['AppendText'])[0]
     assert set(nodes) == {B, D, C, F}
     # Get all nodes from C (order guaranteed)
     nodes = graph.nodesFromNode(C)[0]

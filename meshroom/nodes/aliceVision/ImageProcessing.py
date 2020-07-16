@@ -1,6 +1,8 @@
-__version__ = "1.1"
+__version__ = "2.0"
 
 from meshroom.core import desc
+
+import os.path
 
 
 class ImageProcessing(desc.CommandLineNode):
@@ -8,6 +10,10 @@ class ImageProcessing(desc.CommandLineNode):
     size = desc.DynamicNodeSize('input')
     # parallelization = desc.Parallelization(blockSize=40)
     # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
+
+    documentation = '''
+Convert or apply filtering to the input images.
+'''
 
     inputs = [
         desc.File(
@@ -177,14 +183,22 @@ class ImageProcessing(desc.CommandLineNode):
             name='outSfMData',
             label='Output sfmData',
             description='Output sfmData.',
-            value=desc.Node.internalFolder + 'sfmData.abc',
+            value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
+            uid=[],
+            group='',  # do not export on the command line
+        ),
+        desc.File(
+            name='output',
+            label='Output Folder',
+            description='Output Images Folder.',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
-            name='outputFolder',
-            label='Output Images Folder',
-            description='Output Images Folder.',
-            value=desc.Node.internalFolder,
+            name='outputImages',
+            label='Output Images',
+            description='Output Image Files.',
+            value=lambda attr: desc.Node.internalFolder + os.path.basename(attr.node.input.value) if (os.path.splitext(attr.node.input.value)[1] not in ['', '.abc', '.sfm']) else (desc.Node.internalFolder + '*.' + (attr.node.extension.value or '*')),
             group='',  # do not export on the command line
             uid=[],
         ),

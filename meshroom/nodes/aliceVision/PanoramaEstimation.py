@@ -10,6 +10,10 @@ class PanoramaEstimation(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaEstimation {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    documentation = '''
+Estimate relative camera rotations between input images.
+'''
+
     inputs = [
         desc.File(
             name='input',
@@ -53,15 +57,6 @@ class PanoramaEstimation(desc.CommandLineNode):
             uid=[0],
             joinChar=',',
         ),
-        desc.IntParam(
-            name='orientation',
-            label='Orientation',
-            description='Orientation',
-            value=0,
-            range=(0, 6, 1),
-            uid=[0],
-            advanced=True,
-        ),
         desc.FloatParam(
             name='offsetLongitude',
             label='Longitude offset (deg.)',
@@ -69,7 +64,6 @@ class PanoramaEstimation(desc.CommandLineNode):
             value=0.0,
             range=(-180.0, 180.0, 1.0),
             uid=[0],
-            advanced=True,
         ),
         desc.FloatParam(
             name='offsetLatitude',
@@ -78,7 +72,6 @@ class PanoramaEstimation(desc.CommandLineNode):
             value=0.0,
             range=(-90.0, 90.0, 1.0),
             uid=[0],
-            advanced=True,
         ),
         desc.ChoiceParam(
             name='rotationAveraging',
@@ -97,9 +90,10 @@ class PanoramaEstimation(desc.CommandLineNode):
             label='Relative Rotation Method',
             description="Method for relative rotation :\n"
                         " * from essential matrix\n"
-                        " * from homography matrix",
-            values=['essential_matrix', 'homography_matrix'],
-            value='homography_matrix',
+                        " * from homography matrix\n"
+                        " * from rotation matrix",
+            values=['essential_matrix', 'homography_matrix', 'rotation_matrix'],
+            value='rotation_matrix',
             exclusive=True,
             uid=[0],
             advanced=True,
@@ -113,12 +107,46 @@ class PanoramaEstimation(desc.CommandLineNode):
         ),
         desc.BoolParam(
             name='lockAllIntrinsics',
-            label='Force Lock of All Intrinsic Camera Parameters.',
+            label='Force Lock of All Intrinsics',
             description='Force to keep constant all the intrinsics parameters of the cameras (focal length, \n'
                         'principal point, distortion if any) during the reconstruction.\n'
                         'This may be helpful if the input cameras are already fully calibrated.',
             value=False,
             uid=[0],
+        ),
+        desc.FloatParam(
+            name='maxAngleToPrior',
+            label='Max Angle To Priors (deg.)',
+            description='''Maximal angle allowed regarding the input prior (in degrees).''',
+            value=20.0,
+            range=(0.0, 360.0, 1.0),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.FloatParam(
+            name='maxAngularError',
+            label='Max Angular Error (deg.)',
+            description='''Maximal angular error in global rotation averging (in degrees).''',
+            value=100.0,
+            range=(0.0, 360.0, 1.0),
+            uid=[0],
+            advanced=True,
+        ),
+        desc.BoolParam(
+            name='intermediateRefineWithFocal',
+            label='Intermediate Refine: Focal',
+            description='Intermediate refine with rotation and focal length only.',
+            value=False,
+            uid=[0],
+            advanced=True,
+        ),
+        desc.BoolParam(
+            name='intermediateRefineWithFocalDist',
+            label='Intermediate Refine: Focal And Distortion',
+            description='Intermediate refine with rotation, focal length and distortion.',
+            value=False,
+            uid=[0],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -134,16 +162,16 @@ class PanoramaEstimation(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
-            description='',
-            value=desc.Node.internalFolder,
+            label='Output SfMData File',
+            description='Path to the output sfmdata file',
+            value=desc.Node.internalFolder + 'panorama.abc',
             uid=[],
         ),
         desc.File(
-            name='outSfMDataFilename',
-            label='Output SfMData File',
-            description='Path to the output sfmdata file',
-            value=desc.Node.internalFolder + 'sfmData.abc',
+            name='outputViewsAndPoses',
+            label='Output Poses',
+            description='''Path to the output sfmdata file with cameras (views and poses).''',
+            value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],
         ),
     ]

@@ -1,5 +1,6 @@
 # packaging
-cx_Freeze==5.1.1
+cx_Freeze
+# use cx_Freeze==5.1.1 for Python-2
 
 # testing
 pytest

@@ -148,6 +148,12 @@ Panel {
                             chunkCurrentIndex: m.chunkCurrentIndex
                             onChangeCurrentChunk: { m.chunkCurrentIndex = chunkIndex }
                         }
+
+                        NodeDocumentation {
+                            id: nodeDocumentation
+                            Layout.fillWidth: true
+                            node: root.node
+                        }
                     }
                 }
             }
@@ -181,6 +187,12 @@ Panel {
             }
             TabButton {
                 text: "Status"
+                width: implicitWidth
+                leftPadding: 8
+                rightPadding: leftPadding
+            }
+            TabButton {
+                text: "Documentation"
                 width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding

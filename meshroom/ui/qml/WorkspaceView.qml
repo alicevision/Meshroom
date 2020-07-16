@@ -65,7 +65,7 @@ Item {
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
                 cameraInit: reconstruction.cameraInit
-                hdrCameraInit: reconstruction.hdrCameraInit
+                tempCameraInit: reconstruction.tempCameraInit
                 currentIndex: reconstruction.cameraInitIndex
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
@@ -191,7 +191,7 @@ Item {
                     mediaLibrary: viewer3D.library
                     camera: viewer3D.mainCamera
                     uigraph: reconstruction
-                    onNodeActivated: _reconstruction.setActiveNodeOfType(node)
+                    onNodeActivated: _reconstruction.setActiveNode(node)
                 }
             }
         }

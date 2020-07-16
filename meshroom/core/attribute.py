@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # coding:utf-8
+import copy
 import re
 import weakref
+import types
 
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, pyCompatibility, hashValue
@@ -53,7 +55,7 @@ class Attribute(BaseObject):
         self._node = weakref.ref(node)
         self.attributeDesc = attributeDesc
         self._isOutput = isOutput
-        self._value = attributeDesc.value
+        self._value = copy.copy(attributeDesc.value)
         self._label = attributeDesc.label
 
         # invalidation value for output attributes
@@ -161,8 +163,15 @@ class Attribute(BaseObject):
         """
         return isinstance(value, pyCompatibility.basestring) and Attribute.stringIsLinkRe.match(value)
 
-    def getLinkParam(self):
-        return self.node.graph.edge(self).src if self.isLink else None
+    def getLinkParam(self, recursive=False):
+        if not self.isLink:
+            return None
+        linkParam = self.node.graph.edge(self).src
+        if not recursive:
+            return linkParam
+        if linkParam.isLink:
+            return linkParam.getLinkParam(recursive)
+        return linkParam
 
     def _applyExpr(self):
         """
@@ -188,7 +197,7 @@ class Attribute(BaseObject):
         if self.isLink:
             return self.getLinkParam().asLinkExpr()
         if self.isOutput:
-            return self.desc.value
+            return self.defaultValue()
         return self._value
 
     def getValueStr(self):
@@ -200,7 +209,10 @@ class Attribute(BaseObject):
         return str(self.value)
 
     def defaultValue(self):
-        return self.desc.value
+        if isinstance(self.desc.value, types.FunctionType):
+            return self.desc.value(self)
+        # Need to force a copy, for the case where the value is a list (avoid reference to the desc value)
+        return copy.copy(self.desc.value)
 
     def _isDefault(self):
         return self._value == self.defaultValue()

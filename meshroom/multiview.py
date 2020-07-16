@@ -93,7 +93,7 @@ def findFilesByTypeInFolder(folder, recursive=False):
     return output
 
 
-def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output='', graph=None):
+def hdri(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
     """
     Create a new Graph with a complete HDRI pipeline.
 
@@ -110,9 +110,12 @@ def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), out
     with GraphModification(graph):
         nodes = hdriPipeline(graph)
         cameraInit = nodes[0]
-        cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
-        cameraInit.viewpoints.extend(inputViewpoints)
-        cameraInit.intrinsics.extend(inputIntrinsics)
+        if inputImages:
+            cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        if inputViewpoints:
+            cameraInit.viewpoints.extend(inputViewpoints)
+        if inputIntrinsics:
+            cameraInit.intrinsics.extend(inputIntrinsics)
 
         if output:
             imageProcessing = nodes[-1]
@@ -120,7 +123,7 @@ def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), out
 
     return graph
 
-def hdriFisheye(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output='', graph=None):
+def hdriFisheye(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
     if not graph:
         graph = Graph('HDRI-Fisheye')
     with GraphModification(graph):

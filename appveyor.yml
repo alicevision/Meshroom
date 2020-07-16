@@ -1,7 +1,6 @@
-
+image: Visual Studio 2019
 environment:
-  matrix:
-    - PYTHON: "C:\\Python36-x64"
+  PYTHON: "C:\\Python38-x64"
 
 install:
   - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
@@ -14,3 +13,7 @@ test_script:
 
 after_test:
   - "python setup.py build"
+  - 7z a meshroomWin64snapshot%APPVEYOR_PULL_REQUEST_HEAD_COMMIT%.zip ./build/*
+
+artifacts:
+ - path: meshroomWin64*.zip

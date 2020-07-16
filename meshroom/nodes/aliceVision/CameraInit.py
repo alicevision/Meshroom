@@ -5,6 +5,7 @@ import json
 import psutil
 import shutil
 import tempfile
+import logging
 
 from meshroom.core import desc
 
@@ -16,18 +17,39 @@ Viewpoint = [
     desc.IntParam(name="intrinsicId", label="Intrinsic", description="Internal Camera Parameters", value=-1, uid=[0], range=None),
     desc.IntParam(name="rigId", label="Rig", description="Rig Parameters", value=-1, uid=[0], range=None),
     desc.IntParam(name="subPoseId", label="Rig Sub-Pose", description="Rig Sub-Pose Parameters", value=-1, uid=[0], range=None),
-    desc.StringParam(name="metadata", label="Image Metadata", description="", value="", uid=[], advanced=True),
+    desc.StringParam(name="metadata", label="Image Metadata",
+                     description="The configuration of the Viewpoints is based on the images metadata.\n"
+                                 "The important ones are:\n"
+                     " * Focal Length: the focal length in mm.\n"
+                     " * Make and Model: this information allows to convert the focal in mm into a focal length in pixel using an embedded sensor database.\n"
+                     " * Serial Number: allows to uniquely identify a device so multiple devices with the same Make, Model can be differentiated and their internal parameters are optimized separately.",
+                     value="", uid=[], advanced=True),
 ]
 
 Intrinsic = [
     desc.IntParam(name="intrinsicId", label="Id", description="Intrinsic UID", value=-1, uid=[0], range=None),
-    desc.FloatParam(name="pxInitialFocalLength", label="Initial Focal Length", description="Initial Guess on the Focal Length", value=-1.0, uid=[0], range=None),
-    desc.FloatParam(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length", value=-1.0, uid=[0], range=None),
-    desc.ChoiceParam(name="type", label="Camera Type", description="Camera Type", value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4'], exclusive=True, uid=[0]),
+    desc.FloatParam(name="pxInitialFocalLength", label="Initial Focal Length",
+                    description="Initial Guess on the Focal Length (in pixels). \n"
+                    "When we have an initial value from EXIF, this value is not accurate but cannot be wrong. \n"
+                    "So this value is used to limit the range of possible values in the optimization. \n"
+                    "If you put -1, this value will not be used and the focal length will not be bounded.",
+                    value=-1.0, uid=[0], range=None),
+    desc.FloatParam(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length (in pixels)", value=-1.0, uid=[0], range=None),
+    desc.ChoiceParam(name="type", label="Camera Type",
+                     description="Mathematical Model used to represent a camera:\n"
+                     " * pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
+                     " * radial1: Pinhole camera with one radial distortion parameter\n"
+                     " * radial3: Pinhole camera with 3 radial distortion parameters\n"
+                     " * brown: Pinhole camera with 3 radial and 2 tangential distortion parameters\n"
+                     " * fisheye4: Pinhole camera with 4 distortion parameters suited for fisheye optics (like 120deg FoV)\n"
+                     " * equidistant_r3: Non-projective camera model suited for full-fisheye optics (like 180deg FoV)\n",
+                     value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'equidistant_r3'], exclusive=True, uid=[0]),
     desc.IntParam(name="width", label="Width", description="Image Width", value=0, uid=[], range=(0, 10000, 1)),
     desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[], range=(0, 10000, 1)),
-    desc.StringParam(name="serialNumber", label="Serial Number", description="Device Serial Number (camera and lens combined)", value="", uid=[]),
-    desc.GroupAttribute(name="principalPoint", label="Principal Point", description="", groupDesc=[
+    desc.FloatParam(name="sensorWidth", label="Sensor Width", description="Sensor Width (mm)", value=36, uid=[], range=(0, 1000, 1)),
+    desc.FloatParam(name="sensorHeight", label="Sensor Height", description="Sensor Height (mm)", value=24, uid=[], range=(0, 1000, 1)),
+    desc.StringParam(name="serialNumber", label="Serial Number", description="Device Serial Number (Camera UID and Lens UID combined)", value="", uid=[]),
+    desc.GroupAttribute(name="principalPoint", label="Principal Point", description="Position of the Optical Center in the Image (i.e. the sensor surface).", groupDesc=[
         desc.FloatParam(name="x", label="x", description="", value=0, uid=[], range=(0, 10000, 1)),
         desc.FloatParam(name="y", label="y", description="", value=0, uid=[], range=(0, 10000, 1)),
         ]),
@@ -93,6 +115,21 @@ class CameraInit(desc.CommandLineNode):
     commandLine = 'aliceVision_cameraInit {allParams} --allowSingleView 1' # don't throw an error if there is only one image
 
     size = desc.DynamicNodeSize('viewpoints')
+
+    documentation = '''
+This node describes your dataset. It lists the Viewpoints candidates, the guess about the type of optic, the initial focal length
+and which images are sharing the same internal camera parameters, as well as potential cameras rigs.
+
+When you import new images into Meshroom, this node is automatically configured from the analysis of the image metadata.
+The software can support images without any metadata but it is recommended to have them for robustness.
+
+### Metadata
+Metadata allows images to be grouped together and provides an initialization of the focal length (in pixel unit).
+The metadata needed are:
+ * **Focal Length**: the focal length in mm.
+ * **Make** & **Model**: this information allows to convert the focal in mm into a focal length in pixel using an embedded sensor database.
+ * **Serial Number**: allows to uniquely identify a device so multiple devices with the same Make, Model can be differentiated and their internal parameters are optimized separately (in the photogrammetry case).
+'''
 
     inputs = [
         desc.ListAttribute(
@@ -221,7 +258,7 @@ class CameraInit(desc.CommandLineNode):
             os.makedirs(os.path.join(tmpCache, node.internalFolder))
             self.createViewpointsFile(node, additionalViews)
             cmd = self.buildCommandLine(node.chunks[0])
-            # logging.debug(' - commandLine:', cmd)
+            logging.debug(' - commandLine: {}'.format(cmd))
             proc = psutil.Popen(cmd, stdout=None, stderr=None, shell=True)
             stdout, stderr = proc.communicate()
             # proc.wait()
@@ -234,10 +271,13 @@ class CameraInit(desc.CommandLineNode):
             cameraInitSfM = node.output.value
             return readSfMData(cameraInitSfM)
 
-        except Exception:
+        except Exception as e:
+            logging.debug("[CameraInit] Error while building intrinsics: {}".format(str(e)))
             raise
         finally:
-            shutil.rmtree(tmpCache)
+            if os.path.exists(tmpCache):
+                logging.debug("[CameraInit] Remove temp files in: {}".format(tmpCache))
+                shutil.rmtree(tmpCache)
 
     def createViewpointsFile(self, node, additionalViews=()):
         node.viewpointsFile = ""

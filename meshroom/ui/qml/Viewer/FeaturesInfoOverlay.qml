@@ -76,7 +76,7 @@ FloatingPane {
 
                 spacing: 4
 
-                // Features visibility toogle
+                // Features visibility toggle
                 MaterialToolButton {
                     id: featuresVisibilityButton
                     checkable: true

@@ -4,7 +4,7 @@ import QtQuick.Layouts 1.12
 /**
  * ImageOverlay enables to display a Viewpoint image on top of a 3D View.
  * It takes the principal point correction into account and handle image ratio to
- * correclty fit or crop according to original image ratio and parent Item ratio.
+ * correctly fit or crop according to original image ratio and parent Item ratio.
  */
 Item {
     id: root

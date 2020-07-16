@@ -309,16 +309,14 @@ class UIGraph(QObject):
         self.stopExecution()
         self._chunksMonitor.stop()
 
-    def load(self, filepath, setupProjectFile=True):
+    @Slot(str, result=bool)
+    def loadGraph(self, filepath, setupProjectFile=True):
         g = Graph('')
-        g.load(filepath, setupProjectFile)
+        status = g.load(filepath, setupProjectFile)
         if not os.path.exists(g.cacheDir):
             os.mkdir(g.cacheDir)
         self.setGraph(g)
-
-    @Slot(QUrl)
-    def loadUrl(self, url):
-        self.load(url.toLocalFile())
+        return status
 
     @Slot(QUrl)
     def saveAs(self, url):

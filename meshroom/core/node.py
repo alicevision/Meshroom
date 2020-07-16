@@ -547,7 +547,7 @@ class BaseNode(BaseObject):
 
     def _buildCmdVars(self):
         def _buildAttributeCmdVars(cmdVars, name, attr):
-            if attr.attributeDesc.group != None:
+            if attr.attributeDesc.group is not None:
                 # if there is a valid command line "group"
                 v = attr.getValueStr()
                 cmdVars[name] = '--{name} {value}'.format(name=name, value=v)

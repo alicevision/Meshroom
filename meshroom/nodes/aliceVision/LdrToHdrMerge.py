@@ -1,7 +1,6 @@
 __version__ = "2.0"
 
 import json
-import os
 
 from meshroom.core import desc
 
@@ -10,7 +9,7 @@ def findMetadata(d, keys, defaultValue):
     for key in keys:
         v = d.get(key, None)
         k = key.lower()
-        if v != None:
+        if v is not None:
             return v
         for dk, dv in d.iteritems():
             dkm = dk.lower().replace(" ", "")

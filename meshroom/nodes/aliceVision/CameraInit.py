@@ -258,7 +258,7 @@ The metadata needed are:
             os.makedirs(os.path.join(tmpCache, node.internalFolder))
             self.createViewpointsFile(node, additionalViews)
             cmd = self.buildCommandLine(node.chunks[0])
-            logging.debug(' - commandLine:', cmd)
+            logging.debug(' - commandLine: {}'.format(cmd))
             proc = psutil.Popen(cmd, stdout=None, stderr=None, shell=True)
             stdout, stderr = proc.communicate()
             # proc.wait()

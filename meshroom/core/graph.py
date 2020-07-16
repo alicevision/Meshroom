@@ -561,7 +561,7 @@ class Graph(BaseObject):
         candidates = self.findNodeCandidates('^' + nodeExpr)
         if not candidates:
             raise KeyError('No node candidate for "{}"'.format(nodeExpr))
-        elif len(candidates) > 1:
+        if len(candidates) > 1:
             raise KeyError('Multiple node candidates for "{}": {}'.format(nodeExpr, str([c.name for c in candidates])))
         return candidates[0]
 
@@ -681,11 +681,11 @@ class Graph(BaseObject):
                 # (u,v) is a tree edge
                 self.dfsVisit(v, visitor, colors, nodeChildren, longestPathFirst)  # TODO: avoid recursion
             elif colors[v] == GRAY:
+                # (u,v) is a back edge
                 visitor.backEdge((u, v), self)
-                pass  # (u,v) is a back edge
             elif colors[v] == BLACK:
+                # (u,v) is a cross or forward edge
                 visitor.forwardOrCrossEdge((u, v), self)
-                pass  # (u,v) is a cross or forward edge
             visitor.finishEdge((u, v), self)
         colors[u] = BLACK
         visitor.finishVertex(u, self)
@@ -740,8 +740,7 @@ class Graph(BaseObject):
         def finishEdge(edge, graph):
             if edge[0].hasStatus(Status.SUCCESS) or edge[1].hasStatus(Status.SUCCESS):
                 return
-            else:
-                edges.append(edge)
+            edges.append(edge)
 
         visitor.finishVertex = finishVertex
         visitor.finishEdge = finishEdge

@@ -1,7 +1,6 @@
 __version__ = "2.0"
 
 import json
-import os
 
 from meshroom.core import desc
 

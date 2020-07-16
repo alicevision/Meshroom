@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding:utf-8
-import collections
 import copy
 import re
 import weakref
@@ -203,7 +202,7 @@ class Attribute(BaseObject):
 
     def getValueStr(self):
         if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
-            assert(isinstance(self.value, collections.Sequence) and not isinstance(self.value, pyCompatibility.basestring))
+            assert(isinstance(self.value, pyCompatibility.Sequence) and not isinstance(self.value, pyCompatibility.basestring))
             return self.attributeDesc.joinChar.join(self.value)
         if isinstance(self.attributeDesc, (desc.StringParam, desc.File)):
             return '"{}"'.format(self.value)

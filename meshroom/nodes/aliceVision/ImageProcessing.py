@@ -4,7 +4,24 @@ from meshroom.core import desc
 
 import os.path
 
-
+def outputImagesValueFunct(attr):
+    basename = os.path.basename(attr.node.input.value)
+    fileStem = os.path.splitext(basename)[0]
+    inputExt = os.path.splitext(basename)[1]
+    outputExt =  ('.' + attr.node.extension.value) if attr.node.extension.value else None
+    
+    if inputExt in ['.abc', '.sfm']:
+        return desc.Node.internalFolder + '*' + (outputExt or '.*')
+    elif inputExt :
+        return desc.Node.internalFolder + fileStem + (outputExt or inputExt)
+    else:
+        if '*' in fileStem:
+            # Assume the input fileStem is a regular expression to files
+            return desc.Node.internalFolder + fileStem + (outputExt or '.*')
+        else:
+            # No extension mean it is a folder path
+            return desc.Node.internalFolder + fileStem + '/' + (outputExt or '.*')
+    
 class ImageProcessing(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_imageProcessing {allParams}'
     size = desc.DynamicNodeSize('input')
@@ -278,7 +295,8 @@ Convert or apply filtering to the input images.
             name='outputImages',
             label='Output Images',
             description='Output Image Files.',
-            value=lambda attr: desc.Node.internalFolder + os.path.basename(attr.node.input.value) if (os.path.splitext(attr.node.input.value)[1] not in ['', '.abc', '.sfm']) else (desc.Node.internalFolder + '*.' + (attr.node.extension.value or '*')),
+            # value=lambda attr: desc.Node.internalFolder + os.path.splitext(attr.node.input.value)[0] + (('.' + attr.node.extension.value) if attr.node.extension.value else os.path.splitext(attr.node.input.value)[1]) if (os.path.splitext(attr.node.input.value)[1] not in ['', '.abc', '.sfm']) else (desc.Node.internalFolder + '*.' + (attr.node.extension.value or '*')),
+            value= outputImagesValueFunct,
             group='',  # do not export on the command line
             uid=[],
         ),

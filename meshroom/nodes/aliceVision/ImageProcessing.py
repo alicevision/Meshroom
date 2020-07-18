@@ -69,7 +69,6 @@ Convert or apply filtering to the input images.
             name="metadataFolders",
             label="Metadata input Folders",
             description='Use images metadata from specific folder(s).',
-            advanced=True,
         ),
         desc.ChoiceParam(
             name='extension',
@@ -267,9 +266,8 @@ Convert or apply filtering to the input images.
                 value='rgba',
                 values=['rgba', 'rgb', 'grayscale'],
                 exclusive=True,
-                advanced=True,
                 uid=[0],
-            ),
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

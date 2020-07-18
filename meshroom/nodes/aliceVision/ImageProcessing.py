@@ -301,7 +301,6 @@ Convert or apply filtering to the input images.
             name='outputImages',
             label='Output Images',
             description='Output Image Files.',
-            # value=lambda attr: desc.Node.internalFolder + os.path.splitext(attr.node.input.value)[0] + (('.' + attr.node.extension.value) if attr.node.extension.value else os.path.splitext(attr.node.input.value)[1]) if (os.path.splitext(attr.node.input.value)[1] not in ['', '.abc', '.sfm']) else (desc.Node.internalFolder + '*.' + (attr.node.extension.value or '*')),
             value= outputImagesValueFunct,
             group='',  # do not export on the command line
             uid=[],

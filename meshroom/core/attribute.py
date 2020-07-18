@@ -4,6 +4,7 @@ import copy
 import re
 import weakref
 import types
+import logging
 
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, pyCompatibility, hashValue
@@ -190,7 +191,10 @@ class Attribute(BaseObject):
             # value is a link to another attribute
             link = v[1:-1]
             linkNode, linkAttr = link.split('.')
-            g.addEdge(g.node(linkNode).attribute(linkAttr), self)
+            try:
+                g.addEdge(g.node(linkNode).attribute(linkAttr), self)
+            except KeyError as err:
+                logging.warning('Connect Attribute from Expression failed.\nExpression: "{exp}"\nError: "{err}".'.format(exp=v, err=err))
             self.resetValue()
 
     def getExportValue(self):

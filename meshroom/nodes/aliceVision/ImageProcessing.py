@@ -9,19 +9,25 @@ def outputImagesValueFunct(attr):
     fileStem = os.path.splitext(basename)[0]
     inputExt = os.path.splitext(basename)[1]
     outputExt =  ('.' + attr.node.extension.value) if attr.node.extension.value else None
-    
+
     if inputExt in ['.abc', '.sfm']:
+        # If we have an SfM in input
         return desc.Node.internalFolder + '*' + (outputExt or '.*')
-    elif inputExt :
+
+    if inputExt:
+        # if we have one or multiple files in input
         return desc.Node.internalFolder + fileStem + (outputExt or inputExt)
-    else:
-        if '*' in fileStem:
-            # Assume the input fileStem is a regular expression to files
-            return desc.Node.internalFolder + fileStem + (outputExt or '.*')
-        else:
-            # No extension mean it is a folder path
-            return desc.Node.internalFolder + fileStem + '/' + (outputExt or '.*')
-    
+
+    if '*' in fileStem:
+        # The fileStem of the input param is a regular expression,
+        # so even if there is no file extension,
+        # we consider that the expression represents files.
+        return desc.Node.internalFolder + fileStem + (outputExt or '.*')
+
+    # No extension and no expression means that the input param is a folder path
+    return desc.Node.internalFolder + '*' + (outputExt or '.*')
+
+
 class ImageProcessing(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_imageProcessing {allParams}'
     size = desc.DynamicNodeSize('input')

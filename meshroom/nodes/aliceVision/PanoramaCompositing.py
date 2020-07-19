@@ -10,11 +10,25 @@ class PanoramaCompositing(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaCompositing {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    documentation = '''
+Once the images have been transformed geometrically (in PanoramaWarping),
+they have to be fused together in a single panorama image which looks like a single photography.
+The Multi-band Blending method provides the best quality. It averages the pixel values using multiple bands in the frequency domain.
+Multiple cameras are contributing to the low frequencies and only the best one contributes to the high frequencies.
+'''
+
     inputs = [
         desc.File(
             name='input',
-            label='Input',
-            description="Panorama Warping result",
+            label='Input SfMData',
+            description="Input SfMData.",
+            value='',
+            uid=[0],
+        ),
+        desc.File(
+            name='warpingFolder',
+            label='Warping Folder',
+            description="Panorama Warping results",
             value='',
             uid=[0],
         ),
@@ -31,10 +45,26 @@ class PanoramaCompositing(desc.CommandLineNode):
         desc.ChoiceParam(
             name='compositerType',
             label='Compositer Type',
-            description='Which compositer should be used to blend images',
+            description='Which compositer should be used to blend images:\n'
+                        ' * multiband: high quality transition by fusing images by frequency bands\n'
+                        ' * replace: debug option with straight transitions\n'
+                        ' * alpha: debug option with linear transitions\n',
             value='multiband',
             values=['replace', 'alpha', 'multiband'],
             exclusive=True,
+            uid=[0]
+        ),
+        desc.ChoiceParam(
+            name='overlayType',
+            label='Overlay Type',
+            description='Overlay on top of panorama to analyze transitions:\n'
+                        ' * none: no overlay\n'
+                        ' * borders: display image borders\n'
+                        ' * seams: display transitions between images\n',
+            value='none',
+            values=['none', 'borders', 'seams'],
+            exclusive=True,
+            advanced=True,
             uid=[0]
         ),
         desc.ChoiceParam(

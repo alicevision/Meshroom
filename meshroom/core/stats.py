@@ -303,7 +303,7 @@ class StatisticsThread(threading.Thread):
                     if self.proc.is_running():
                         self.updateStats()
                     return
-        except (KeyboardInterrupt, SystemError, GeneratorExit):
+        except (KeyboardInterrupt, SystemError, GeneratorExit, psutil.NoSuchProcess):
             pass
 
     def stopRequest(self):

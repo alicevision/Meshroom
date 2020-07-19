@@ -6,7 +6,12 @@ from meshroom.core import desc
 class ConvertSfMFormat(desc.CommandLineNode):
     commandLine = 'aliceVision_convertSfMFormat {allParams}'
     size = desc.DynamicNodeSize('input')
-    
+
+    documentation = '''
+Convert an SfM scene from one file format to another.
+It can also be used to remove specific parts of from an SfM scene (like filter all 3D landmarks or filter 2D observations).
+'''
+
     inputs = [
         desc.File(
             name='input',

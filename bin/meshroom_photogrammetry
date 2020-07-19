@@ -114,7 +114,10 @@ with multiview.GraphModification(graph):
         multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
     elif args.pipeline.lower() == "hdri":
         # default hdri pipeline
-        graph = multiview.hdri(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
+        multiview.hdri(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
+    elif args.pipeline.lower() == "hdrifisheye":
+        # default hdriFisheye pipeline
+        multiview.hdriFisheye(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
     else:
         # custom pipeline
         graph.load(args.pipeline)

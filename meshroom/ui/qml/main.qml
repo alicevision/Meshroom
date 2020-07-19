@@ -4,7 +4,10 @@ import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.1
 import QtQuick.Window 2.3
 import QtQml.Models 2.2
+
 import Qt.labs.platform 1.0 as Platform
+import QtQuick.Dialogs 1.3
+
 import Qt.labs.settings 1.0
 import GraphEditor 1.0
 import MaterialIcons 2.2
@@ -202,13 +205,27 @@ ApplicationWindow {
         }
     }
 
-    Platform.FileDialog {
+    FileDialog {
         id: openFileDialog
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
-            _reconstruction.loadUrl(file.toString())
-            MeshroomApp.addRecentProjectFile(file.toString())
+            if(_reconstruction.loadUrl(fileUrl))
+            {
+                MeshroomApp.addRecentProjectFile(fileUrl.toString())
+            }
+        }
+    }
+
+    FileDialog {
+        id: importFilesDialog
+        title: "Import Images"
+        selectExisting: true
+        selectMultiple: true
+        nameFilters: []
+        onAccepted: {
+            console.warn("importFilesDialog fileUrls: " + importFilesDialog.fileUrls)
+            _reconstruction.importImagesUrls(importFilesDialog.fileUrls)
         }
     }
 
@@ -326,6 +343,10 @@ ApplicationWindow {
                     text: "HDRI"
                     onTriggered: ensureSaved(function() { _reconstruction.new("hdri") })
                 }
+                Action {
+                    text: "HDRI Fisheye"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("hdriFisheye") })
+                }
             }
             Action {
                 id: openActionItem
@@ -353,8 +374,14 @@ ApplicationWindow {
                     MenuItem {
                         onTriggered: ensureSaved(function() {
                             openRecentMenu.dismiss();
-                            _reconstruction.load(modelData);
-                            MeshroomApp.addRecentProjectFile(modelData);
+                            if(_reconstruction.loadUrl(modelData))
+                            {
+                                MeshroomApp.addRecentProjectFile(modelData);
+                            }
+                            else
+                            {
+                                MeshroomApp.removeRecentProjectFile(modelData);
+                            }
                         })
                         
                         text: fileTextMetrics.elidedText
@@ -366,6 +393,12 @@ ApplicationWindow {
                         }
                     }
                 }
+            }
+            Action {
+                id: importActionItem
+                text: "Import Images"
+                shortcut: "Ctrl+I"
+                onTriggered: importFilesDialog.open()
             }
             Action {
                 id: saveAction
@@ -670,7 +703,6 @@ ApplicationWindow {
                     }
                 }
 
-
                 GraphEditor {
                     id: graphEditor
 
@@ -680,13 +712,13 @@ ApplicationWindow {
                     readOnly: graphLocked
 
                     onNodeDoubleClicked: {
-                        _reconstruction.setActiveNodeOfType(node);
+                        _reconstruction.setActiveNode(node);
 
                         let viewable = false;
                         for(var i=0; i < node.attributes.count; ++i)
                         {
                             var attr = node.attributes.at(i)
-                            if(attr.isOutput && workspaceView.viewAttribute(attr))
+                            if(attr.isOutput && workspaceView.viewAttribute(attr, mouse))
                                 break;
                         }
                     }

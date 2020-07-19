@@ -8,6 +8,8 @@ from PySide2.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import nodesDesc
+from meshroom.core import pyCompatibility
+
 from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
 from meshroom.ui.components.filepath import FilepathHelper
@@ -183,8 +185,19 @@ class MeshroomApp(QApplication):
         return projects
 
     @Slot(str)
+    @Slot(QUrl)
     def addRecentProjectFile(self, projectFile):
-        projectFile = QUrl(projectFile).toLocalFile()
+        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+            raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
+        if isinstance(projectFile, QUrl):
+            projectFileNorm = projectFile.toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = projectFile.toString()
+        else:
+            projectFileNorm = QUrl(projectFile).toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
+
         projects = self._recentProjectFiles()
 
         # remove duplicates while preserving order
@@ -192,13 +205,50 @@ class MeshroomApp(QApplication):
         uniqueProjects = OrderedDict.fromkeys(projects)
         projects = list(uniqueProjects)
         # remove previous usage of the value
-        if projectFile in uniqueProjects:
-            projects.remove(projectFile)
+        if projectFileNorm in uniqueProjects:
+            projects.remove(projectFileNorm)
         # add the new value in the first place
-        projects.insert(0, projectFile)
+        projects.insert(0, projectFileNorm)
 
         # keep only the 10 first elements
         projects = projects[0:20]
+
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        size = settings.beginWriteArray("Projects")
+        for i, p in enumerate(projects):
+            settings.setArrayIndex(i)
+            settings.setValue("filepath", p)
+        settings.endArray()
+        settings.sync()
+
+        self.recentProjectFilesChanged.emit()
+
+    @Slot(str)
+    @Slot(QUrl)
+    def removeRecentProjectFile(self, projectFile):
+        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+            raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
+        if isinstance(projectFile, QUrl):
+            projectFileNorm = projectFile.toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = projectFile.toString()
+        else:
+            projectFileNorm = QUrl(projectFile).toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
+
+        projects = self._recentProjectFiles()
+
+        # remove duplicates while preserving order
+        from collections import OrderedDict
+        uniqueProjects = OrderedDict.fromkeys(projects)
+        projects = list(uniqueProjects)
+        # remove previous usage of the value
+        if projectFileNorm not in uniqueProjects:
+            return
+
+        projects.remove(projectFileNorm)
 
         settings = QSettings()
         settings.beginGroup("RecentFiles")

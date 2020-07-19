@@ -8,6 +8,30 @@ class ImageMatching(desc.CommandLineNode):
     commandLine = 'aliceVision_imageMatching {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    documentation = '''
+The goal of this node is to select the image pairs to match. The ambition is to find the images that are looking to the same areas of the scene.
+Thanks to this node, the FeatureMatching node will only compute the matches between the selected image pairs.
+
+It provides multiple methods:
+ * **VocabularyTree**
+It uses image retrieval techniques to find images that share some content without the cost of resolving all feature matches in details.
+Each image is represented in a compact image descriptor which allows to compute the distance between all images descriptors very efficiently.
+If your scene contains less than "Voc Tree: Minimal Number of Images", all image pairs will be selected.
+ * **Sequential**
+If your input is a video sequence, you can use this option to link images between them over time.
+ * **SequentialAndVocabularyTree**
+Combines sequential approach with Voc Tree to enable connections between keyframes at different times.
+ * **Exhaustive**
+Export all image pairs.
+ * **Frustum**
+If images have known poses, computes the intersection between cameras frustums to create the list of image pairs.
+ * **FrustumOrVocabularyTree**
+If images have known poses, use frustum intersection else use VocabularuTree.
+
+## Online
+[https://alicevision.org/#photogrammetry/image_matching](https://alicevision.org/#photogrammetry/image_matching)
+'''
+
     inputs = [
         desc.File(
             name='input',
@@ -31,9 +55,17 @@ class ImageMatching(desc.CommandLineNode):
         desc.ChoiceParam(
             name='method',
             label='Method',
-            description='Method used to select the image pairs to match.',
+            description='Method used to select the image pairs to match:\n'
+            ' * VocabularyTree:  It uses image retrieval techniques to find images that share some content without the cost of resolving all \n'
+            'feature matches in details. Each image is represented in a compact image descriptor which allows to compute the distance between all \n'
+            'images descriptors very efficiently. If your scene contains less than "Voc Tree: Minimal Number of Images", all image pairs will be selected.\n'
+            ' * Sequential: If your input is a video sequence, you can use this option to link images between them over time.\n'
+            ' * SequentialAndVocabularyTree:  Combines sequential approach with VocTree to enable connections between keyframes at different times.\n'
+            ' * Exhaustive: Export all image pairs.\n'
+            ' * Frustum: If images have known poses, computes the intersection between cameras frustums to create the list of image pairs.\n'
+            ' * FrustumOrVocabularyTree: If images have known poses, use frustum intersection else use VocabularyTree.\n',
             value='VocabularyTree',
-            values=['VocabularyTree', 'Sequential', 'SequentialAndVocabularyTree','Exhaustive','Frustum'],
+            values=['VocabularyTree', 'Sequential', 'SequentialAndVocabularyTree', 'Exhaustive', 'Frustum', 'FrustumOrVocabularyTree'],
             exclusive=True,
             uid=[0],
         ),

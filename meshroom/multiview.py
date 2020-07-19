@@ -143,7 +143,7 @@ def findFilesByTypeInFolder(folder, recursive=False):
     return output
 
 
-def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output='', graph=None):
+def hdri(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
     """
     Create a new Graph with a complete HDRI pipeline.
 
@@ -160,16 +160,27 @@ def hdri(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), out
     with GraphModification(graph):
         nodes = hdriPipeline(graph)
         cameraInit = nodes[0]
-        cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
-        cameraInit.viewpoints.extend(inputViewpoints)
-        cameraInit.intrinsics.extend(inputIntrinsics)
+        if inputImages:
+            cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        if inputViewpoints:
+            cameraInit.viewpoints.extend(inputViewpoints)
+        if inputIntrinsics:
+            cameraInit.intrinsics.extend(inputIntrinsics)
 
         if output:
-            stitching = nodes[-1]
-            graph.addNewNode('Publish', output=output, inputFiles=[stitching.output])
+            imageProcessing = nodes[-1]
+            graph.addNewNode('Publish', output=output, inputFiles=[imageProcessing.outputImages])
 
     return graph
 
+def hdriFisheye(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
+    if not graph:
+        graph = Graph('HDRI-Fisheye')
+    with GraphModification(graph):
+        hdri(inputImages, inputViewpoints, inputIntrinsics, output, graph)
+        for panoramaInit in graph.nodesByType("PanoramaInit"):
+            panoramaInit.attribute("useFisheye").value = True
+    return graph
 
 def hdriPipeline(graph):
     """
@@ -181,46 +192,77 @@ def hdriPipeline(graph):
         list of Node: the created nodes
     """
     cameraInit = graph.addNewNode('CameraInit')
+    try:
+        # fisheye4 does not work well in the ParoramaEstimation, so here we avoid to use it.
+        cameraInit.attribute('allowedCameraModels').value.remove("fisheye4")
+    except ValueError:
+        pass
 
-    ldr2hdr = graph.addNewNode('LDRToHDR',
+    panoramaPrepareImages = graph.addNewNode('PanoramaPrepareImages',
                                input=cameraInit.output)
 
+    ldr2hdrSampling = graph.addNewNode('LdrToHdrSampling',
+                               input=panoramaPrepareImages.output)
+
+    ldr2hdrCalibration = graph.addNewNode('LdrToHdrCalibration',
+                               input=ldr2hdrSampling.input,
+                               samples=ldr2hdrSampling.output)
+
+    ldr2hdrMerge = graph.addNewNode('LdrToHdrMerge',
+                               input=ldr2hdrCalibration.input,
+                               response=ldr2hdrCalibration.response)
+
     featureExtraction = graph.addNewNode('FeatureExtraction',
-                                         input=ldr2hdr.outSfMDataFilename)
-    featureExtraction.describerPreset.value = 'ultra'
-    imageMatching = graph.addNewNode('ImageMatching',
+                                         input=ldr2hdrMerge.outSfMData,
+                                         describerPreset='high')
+
+    panoramaInit = graph.addNewNode('PanoramaInit',
                                      input=featureExtraction.input,
-                                     featuresFolders=[featureExtraction.output])
+                                     dependency=[featureExtraction.output]  # Workaround for tractor submission with a fake dependency
+                                     )
+
+    imageMatching = graph.addNewNode('ImageMatching',
+                                     input=panoramaInit.outSfMData,
+                                     featuresFolders=[featureExtraction.output],
+                                     method='FrustumOrVocabularyTree')
+
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=imageMatching.input,
                                        featuresFolders=imageMatching.featuresFolders,
                                        imagePairsList=imageMatching.output)
 
-    panoramaExternalInfo = graph.addNewNode('PanoramaExternalInfo',
-                                     input=ldr2hdr.outSfMDataFilename,
-                                     matchesFolders=[featureMatching.output]  # Workaround for tractor submission with a fake dependency
-                                     )
-
     panoramaEstimation = graph.addNewNode('PanoramaEstimation',
-                                           input=panoramaExternalInfo.outSfMDataFilename,
+                                           input=featureMatching.input,
                                            featuresFolders=featureMatching.featuresFolders,
                                            matchesFolders=[featureMatching.output])
 
+    panoramaOrientation = graph.addNewNode('SfMTransform',
+                                           input=panoramaEstimation.output,
+                                           method='from_single_camera')
+
     panoramaWarping = graph.addNewNode('PanoramaWarping',
-                                        input=panoramaEstimation.outSfMDataFilename)
+                                       input=panoramaOrientation.output)
 
     panoramaCompositing = graph.addNewNode('PanoramaCompositing',
-                                        input=panoramaWarping.output)
+                                           input=panoramaWarping.input,
+                                           warpingFolder=panoramaWarping.output)
+
+    imageProcessing = graph.addNewNode('ImageProcessing',
+                                       input=panoramaCompositing.output,
+                                       fillHoles=True,
+                                       extension='exr')
 
     return [
         cameraInit,
         featureExtraction,
+        panoramaInit,
         imageMatching,
         featureMatching,
-        panoramaExternalInfo,
         panoramaEstimation,
+        panoramaOrientation,
         panoramaWarping,
         panoramaCompositing,
+        imageProcessing,
     ]
 
 

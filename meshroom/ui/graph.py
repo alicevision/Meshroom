@@ -194,6 +194,30 @@ class GraphLayout(QObject):
         """ Perform auto-layout on the whole graph. """
         self.autoLayout()
 
+    def positionBoundingBox(self, nodes=None):
+        """
+        Return bounding box for a set of nodes as (x, y, width, height).
+
+        Args:
+            nodes (list of Node): the list of nodes or the whole graph if None
+
+        Returns:
+            list of int: the resulting bounding box (x, y, width, height)
+        """
+        if nodes is None:
+            nodes = self.graph.nodes.values()
+        first = nodes[0]
+        bbox = [first.x, first.y, first.x, first.y]
+        for n in nodes:
+            bbox[0] = min(bbox[0], n.x)
+            bbox[1] = min(bbox[1], n.y)
+            bbox[2] = max(bbox[2], n.x)
+            bbox[3] = max(bbox[3], n.y)
+
+        bbox[2] -= bbox[0]
+        bbox[3] -= bbox[1]
+        return bbox
+
     def boundingBox(self, nodes=None):
         """
         Return bounding box for a set of nodes as (x, y, width, height).
@@ -202,22 +226,12 @@ class GraphLayout(QObject):
             nodes (list of Node): the list of nodes or the whole graph if None
 
         Returns:
-            tuple of int: the resulting bounding box (x, y, width, height)
+            list of int: the resulting bounding box (x, y, width, height)
         """
-        if nodes is None:
-            nodes = self.graph.nodes.values()
-        first = nodes[0]
-        bbox = [first.x, first.y, first.x + self._nodeWidth, first.y + self._nodeHeight]
-        for n in nodes:
-            bbox[0] = min(bbox[0], n.x)
-            bbox[1] = min(bbox[1], n.y)
-            bbox[2] = max(bbox[2], n.x + self._nodeWidth)
-            bbox[3] = max(bbox[3], n.y + self._nodeHeight)
-
-        bbox[2] -= bbox[0]
-        bbox[3] -= bbox[1]
-
-        return tuple(bbox)
+        bbox = self.positionBoundingBox(nodes)
+        bbox[2] += self._nodeWidth
+        bbox[3] += self._nodeHeight
+        return bbox
 
     def setDepthMode(self, mode):
         """ Set node depth mode to use. """
@@ -267,7 +281,14 @@ class UIGraph(QObject):
         # perform auto-layout if graph does not provide nodes positions
         if Graph.IO.Features.NodesPositions not in self._graph.fileFeatures:
             self._layout.reset()
-            self._undoStack.clear()  # clear undo-stack after layout
+            # clear undo-stack after layout
+            self._undoStack.clear()
+        else:
+            bbox = self._layout.positionBoundingBox()
+            if bbox[2] == 0 and bbox[3] == 0:
+                self._layout.reset()
+                # clear undo-stack after layout
+                self._undoStack.clear()
         self.graphChanged.emit()
 
     def onGraphUpdated(self):
@@ -309,16 +330,14 @@ class UIGraph(QObject):
         self.stopExecution()
         self._chunksMonitor.stop()
 
-    def load(self, filepath, setupProjectFile=True):
+    @Slot(str, result=bool)
+    def loadGraph(self, filepath, setupProjectFile=True):
         g = Graph('')
-        g.load(filepath, setupProjectFile)
+        status = g.load(filepath, setupProjectFile)
         if not os.path.exists(g.cacheDir):
             os.mkdir(g.cacheDir)
         self.setGraph(g)
-
-    @Slot(QUrl)
-    def loadUrl(self, url):
-        self.load(url.toLocalFile())
+        return status
 
     @Slot(QUrl)
     def saveAs(self, url):

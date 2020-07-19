@@ -6,16 +6,66 @@ import os
 from meshroom.core.graph import Graph, GraphModification
 
 # Supported image extensions
-imageExtensions = ('.jpg', '.jpeg', '.tif', '.tiff', '.png', '.exr',
-                   '.rw2', '.cr2', '.nef', '.arw',
-                   '.dpx',
-                   )
-videoExtensions = ('.avi', '.mov', '.qt',
-                   '.mkv', '.webm',
-                   '.mp4', '.mpg', '.mpeg', '.m2v', '.m4v',
-                   '.wmv',
-                   '.ogv', '.ogg',
-                   '.mxf')
+imageExtensions = (
+    # bmp:
+    '.bmp',
+    # cineon:
+    '.cin',
+    # dds
+    'dds'
+    # dpx:
+    '.dpx',
+    # gif:
+    '.gif',
+    # hdr:
+    '.hdr', '.rgbe',
+    # ico:
+    '.ico',
+    # iff:
+    '.iff', '.z',
+    # jpeg:
+    '.jpg', '.jpe', '.jpeg', '.jif', '.jfif', '.jfi',
+    # jpeg2000:
+    '.jp2', '.j2k', '.j2c',
+    # openexr:
+    '.exr', '.sxr', '.mxr',
+    # png:
+    '.png',
+    # pnm:
+    '.ppm', '.pgm', '.pbm', '.pnm', '.pfm',
+    # psd:
+    '.psd', '.pdd', '.psb',
+    # ptex:
+    '.ptex', '.ptx',
+    # raw:
+    '.bay', '.bmq', '.cr2', '.cr3', '.crw', '.cs1', '.dc2', '.dcr', '.dng', '.erf', '.fff', '.k25', '.kdc', '.mdc', '.mos', '.mrw', '.nef', '.orf', '.pef', '.pxn', '.raf', '.raw', '.rdc', '.sr2', '.srf', '.x3f', '.arw', '.3fr', '.cine', '.ia', '.kc2', '.mef', '.nrw', '.qtk', '.rw2', '.sti', '.rwl', '.srw', '.drf', '.dsc', '.cap', '.iiq', '.rwz',
+    # rla:
+    '.rla',
+    # sgi:
+    '.sgi', '.rgb', '.rgba', '.bw', '.int', '.inta',
+    # socket:
+    '.socket',
+    # softimage:
+    '.pic',
+    # tiff:
+    '.tiff', '.tif', '.tx', '.env', '.sm', '.vsm',
+    # targa:
+    '.tga', '.tpic',
+    # webp:
+    'webp',
+    # zfile:
+    '.zfile',
+    # osl:
+    '.osl', '.oso', '.oslgroup', '.oslbody',
+    )
+videoExtensions = (
+    '.avi', '.mov', '.qt',
+    '.mkv', '.webm',
+    '.mp4', '.mpg', '.mpeg', '.m2v', '.m4v',
+    '.wmv',
+    '.ogv', '.ogg',
+    '.mxf',
+    )
 panoramaInfoExtensions = ('.xml')
 
 

@@ -14,16 +14,15 @@ Entity {
     property var windowSize
     property var frontLayerComponent
     property var window
-
-    readonly property Transform objectTransform : Transform {
+    property bool focusGizmoPriority: false // If true, it is used to give the priority to the current transformation (and not to a upper-level binding)
+    property Transform gizmoDisplayTransform: Transform {
+        id: gizmoDisplayTransform
+        scale: root.gizmoScale * (camera.position.minus(gizmoDisplayTransform.translation)).length()
+    }
+    property Transform objectTransform : Transform {
         translation: gizmoDisplayTransform.translation
         rotation: gizmoDisplayTransform.rotation
         scale3D: Qt.vector3d(1,1,1)
-    }
-    readonly property var updateTransformations: function updateTransformations(translation, rotation, scale) {
-        const gizmoModelMat = Transformations3DHelper.computeModelMatrixWithEuler(translation, rotation, Qt.vector3d(1,1,1))
-        gizmoDisplayTransform.setMatrix(gizmoModelMat) // Update gizmo matrix and translation/rotation of the object (with binding)
-        objectTransform.scale3D = scale // Update the scale of the object
     }
     
     signal pickedChanged(bool pressed)
@@ -34,8 +33,8 @@ Entity {
         const rotation = Qt.vector3d(gizmoDisplayTransform.rotationX, gizmoDisplayTransform.rotationY, gizmoDisplayTransform.rotationZ) // Euler angles
         const scale = objectTransform.scale3D // Scale of the object
 
-        updateTransformations(translation, rotation, scale) // Optional: just to make sure the absolute values work well
         gizmoChanged(translation, rotation, scale)
+        root.focusGizmoPriority = false
     }
 
     components: [gizmoDisplayTransform, mouseHandler, frontLayerComponent]
@@ -70,15 +69,26 @@ Entity {
     }
 
     function resetTranslation() {
-        gizmoDisplayTransform.translation = Qt.vector3d(0,0,0) // Reset gizmo matrix and object matrix with binding
+        // We have to make the opposite translation because we cannot override gizmoDisplayTransform.translation (because it can be used in upper-level binding)
+        // The object translation will also be updated because of the binding
+        const modelMat = Transformations3DHelper.modelMatrixToMatrices(gizmoDisplayTransform.matrix)
+        doRelativeTranslation(modelMat, gizmoDisplayTransform.translation.times(-1))
     }
 
     function resetRotation() {
+        // Here, we can change the rotation property (but not rotationX, rotationY and rotationZ because they can be used in upper-level bindings)
         gizmoDisplayTransform.rotation = Qt.quaternion(1,0,0,0) // Reset gizmo matrix and object matrix with binding
     }
 
     function resetScale() {
-        objectTransform.scale3D = Qt.vector3d(1,1,1) // Reset only object matrix
+        // We have to make the difference scale to 1 because we cannot override objectTransform.scale3D (because it can be used in upper-level binding)
+        const modelMat = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix)
+        const scaleDiff = Qt.vector3d(
+            -(objectTransform.scale3D.x - 1),
+            -(objectTransform.scale3D.y - 1),
+            -(objectTransform.scale3D.z - 1)
+        )
+        doRelativeScale(modelMat, scaleDiff)
     }
 
     function resetATransformType(transformType) {
@@ -102,6 +112,8 @@ Entity {
 
         onPositionChanged: {
             if (objectPicker && objectPicker.button === Qt.LeftButton) {
+                root.focusGizmoPriority = true
+
                 // Get the selected axis
                 let pickedAxis
                 switch(objectPicker.gizmoAxis) {
@@ -188,6 +200,7 @@ Entity {
         }
         onReleased: {
             if(objectPicker && mouse.button === Qt.LeftButton) {
+                objectPicker = null // To prevent going again in the onPositionChanged
                 emitGizmoChanged()
             }
         }
@@ -214,11 +227,6 @@ Entity {
     }
 
     /***** GIZMO'S BASIC COMPONENTS *****/
-
-    Transform {
-        id: gizmoDisplayTransform
-        scale: root.gizmoScale * (camera.position.minus(gizmoDisplayTransform.translation)).length()
-    }
 
     Entity {
         id: centerSphereEntity

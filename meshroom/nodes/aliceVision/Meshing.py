@@ -36,6 +36,101 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             uid=[0],
         ),
         desc.BoolParam(
+            name='useBoundingBox',
+            label='Custom Bounding Box',
+            description='Edit the meshing bounding box. If enabled, it takes priority over the Estimate From SfM option. Parameters can be adjusted in advanced settings.',
+            value=False,
+            uid=[0],
+            group=''
+        ),
+        desc.GroupAttribute(
+            name="boundingBox",
+            label="Bounding Box Settings",
+            description="Translation, rotation and scale of the bounding box.",
+            groupDesc=[
+                desc.GroupAttribute(
+                    name="bboxTranslation",
+                    label="Translation",
+                    description="Position in space.",
+                    groupDesc=[
+                        desc.FloatParam(
+                            name="x", label="x", description="X Offset",
+                            value=0.0,
+                            uid=[0],
+                            range=(-20.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="y", label="y", description="Y Offset",
+                            value=0.0,
+                            uid=[0],
+                            range=(-20.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="z", label="z", description="Z Offset",
+                            value=0.0,
+                            uid=[0],
+                            range=(-20.0, 20.0, 0.01)
+                        )
+                    ],
+                    joinChar=","
+                ),
+                desc.GroupAttribute(
+                    name="bboxRotation",
+                    label="Euler Rotation",
+                    description="Rotation in Euler degrees.",
+                    groupDesc=[
+                        desc.FloatParam(
+                            name="x", label="x", description="Euler X Rotation",
+                            value=0.0,
+                            uid=[0],
+                            range=(-90.0, 90.0, 1)
+                        ),
+                        desc.FloatParam(
+                            name="y", label="y", description="Euler Y Rotation",
+                            value=0.0,
+                            uid=[0],
+                            range=(-180.0, 180.0, 1)
+                        ),
+                        desc.FloatParam(
+                            name="z", label="z", description="Euler Z Rotation",
+                            value=0.0,
+                            uid=[0],
+                            range=(-180.0, 180.0, 1)
+                        )
+                    ],
+                    joinChar=","
+                ),
+                desc.GroupAttribute(
+                    name="bboxScale",
+                    label="Scale",
+                    description="Scale of the bounding box.",
+                    groupDesc=[
+                        desc.FloatParam(
+                            name="x", label="x", description="X Scale",
+                            value=1.0,
+                            uid=[0],
+                            range=(0.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="y", label="y", description="Y Scale",
+                            value=1.0,
+                            uid=[0],
+                            range=(0.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="z", label="z", description="Z Scale",
+                            value=1.0,
+                            uid=[0],
+                            range=(0.0, 20.0, 0.01)
+                        )
+                    ],
+                    joinChar=","
+                )
+            ],
+            joinChar=",",
+            advanced=True
+        ),
+        desc.BoolParam(
             name='estimateSpaceFromSfM',
             label='Estimate Space From SfM',
             description='Estimate the 3d space from the SfM',

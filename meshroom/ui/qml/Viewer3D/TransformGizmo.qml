@@ -69,10 +69,16 @@ Entity {
     }
 
     function resetTranslation() {
-        // We have to make the opposite translation because we cannot override gizmoDisplayTransform.translation (because it can be used in upper-level binding)
-        // The object translation will also be updated because of the binding
-        const modelMat = Transformations3DHelper.modelMatrixToMatrices(gizmoDisplayTransform.matrix)
-        doRelativeTranslation(modelMat, gizmoDisplayTransform.translation.times(-1))
+        // We have to reset the translation inside the matrix because we cannot override gizmoDisplayTransform.translation (because it can be used in upper-level binding)
+        // The object matrix will also be updated because of the binding with the translation property
+        const mat = gizmoDisplayTransform.matrix
+        const newMat = Qt.matrix4x4(
+            mat.m11, mat.m12, mat.m13, 0,
+            mat.m21, mat.m22, mat.m23, 0,
+            mat.m31, mat.m32, mat.m33, 0,
+            mat.m41, mat.m42, mat.m43, 1
+        )
+        gizmoDisplayTransform.setMatrix(newMat)
     }
 
     function resetRotation() {
@@ -214,14 +220,14 @@ Entity {
         function updateTypeBeforePopup(type) {
             resetMenu.transformType = type
             switch(type) {
-                case TransformGizmo.Type.POSITION: resetMenu.transformTypeToDisplay = "position"; break
-                case TransformGizmo.Type.ROTATION: resetMenu.transformTypeToDisplay = "rotation"; break
-                case TransformGizmo.Type.SCALE: resetMenu.transformTypeToDisplay = "scale"; break
+                case TransformGizmo.Type.POSITION: resetMenu.transformTypeToDisplay = "Translation"; break
+                case TransformGizmo.Type.ROTATION: resetMenu.transformTypeToDisplay = "Rotation"; break
+                case TransformGizmo.Type.SCALE: resetMenu.transformTypeToDisplay = "Scale"; break
             }    
         }
 
         MenuItem {
-            text: `Reset ${resetMenu.transformTypeToDisplay}?`
+            text: `Reset ${resetMenu.transformTypeToDisplay}`
             onTriggered: resetATransformType(resetMenu.transformType)
         }
     }

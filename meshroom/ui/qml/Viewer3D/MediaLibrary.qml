@@ -16,6 +16,11 @@ Entity {
     property bool pickingEnabled: false
     readonly property alias count: instantiator.count // number of instantiated media delegates
 
+    // For TransformGizmo in BoundingBox
+    property DefaultCameraController sceneCameraController
+    property Layer frontLayerComponent
+    property var window
+
     /// Camera to consider for positionning
     property Camera camera: null
 
@@ -41,6 +46,8 @@ Entity {
             "valid": true,
             "label": "",
             "visible": true,
+            "hasTransform": false,
+            "displayTransform": true,
             "section": "",
             "attribute": null,
             "entity": null,
@@ -149,6 +156,21 @@ Entity {
         delegate: MediaLoader {
             id: mediaLoader
 
+            property var currentNode: model.attribute ? model.attribute.node : null
+            property string nodeType: currentNode ? currentNode.nodeType: null
+            property bool hasTransform: {
+                if(nodeType !== "Meshing") // Cannot have a Transform
+                    return false
+                const value = currentNode ? currentNode.attribute("useBoundingBox").value : null
+                if (value !== null)
+                    mediaLoader.hasTransformPropertyChanged(value)
+                return value
+            }
+            property bool displayTransform: model.displayTransform
+
+            signal hasTransformPropertyChanged(bool transform)
+            onHasTransformPropertyChanged: model.hasTransform = transform
+
             // whether MediaLoader has been fully instantiated by the NodeInstantiator
             property bool fullyInstantiated: false
 
@@ -186,6 +208,23 @@ Entity {
                 model: attribute
                 delegate: Entity { objectName: "DestructionWatcher [" + attribute.toString() + "]" }
                 onObjectRemoved: remove(idx)
+            }
+
+            // BoundingBox: display bounding box for meshing computation
+            // note: use a NodeInstantiator to evaluate if the current node is a MESHING node and if the checkbox is active
+            NodeInstantiator {
+                id: boundingBoxInstantiator
+                property var currentNode: mediaLoader.currentNode
+                active: currentNode.nodeType === "Meshing" && currentNode.attribute("useBoundingBox").value
+                model: 1
+
+                MeshingBoundingBox {
+                    sceneCameraController: root.sceneCameraController
+                    frontLayerComponent: root.frontLayerComponent
+                    window: root.window
+                    currentMeshingNode: boundingBoxInstantiator.currentNode
+                    enabled: mediaLoader.displayTransform
+                }
             }
 
             // 'visible' property drives media loading request
@@ -227,6 +266,8 @@ Entity {
                 // if external media failed to open, remove element from model
                 if(!attribute && !object)
                     remove(index)
+                // tell the model if it has a Transform (Gizmo)
+                model.hasTransform = hasTransform
             }
 
             onCurrentSourceChanged: {

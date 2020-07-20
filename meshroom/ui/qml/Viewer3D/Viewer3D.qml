@@ -139,63 +139,6 @@ FocusScope {
                 }
             }
 
-            // BoundingBox: display bounding box for meshing computation
-            // note: use a NodeInstantiator to evaluate if a Meshing node exists at runtime
-            NodeInstantiator {
-                id: boundingBoxInstantiator
-                property var activeNode: _reconstruction.activeNodes.get("Meshing").node
-                active: activeNode && activeNode.attribute("useBoundingBox").value
-                model: 1
-
-                EntityWithGizmo {
-                    id: boundingBoxEntity
-                    sceneCameraController: cameraController
-                    frontLayerComponent: drawOnFront
-                    window: root
-                    enabled: boundingBoxVisibility.checked
-
-                    // Update node meshing slider values when the gizmo has changed: translation, rotation, scale
-                    transformGizmo.onGizmoChanged: {
-                        _reconstruction.setAttribute(boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxTranslation.x"), translation.x)
-                        _reconstruction.setAttribute(boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxTranslation.y"), translation.y)
-                        _reconstruction.setAttribute(boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxTranslation.z"), translation.z)
-
-                        _reconstruction.setAttribute(boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxRotation.x"), rotation.x)
-                        _reconstruction.setAttribute(boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxRotation.y"), rotation.y)
-                        _reconstruction.setAttribute(boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxRotation.z"), rotation.z)
-
-                        _reconstruction.setAttribute(boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxScale.x"), scale.x)
-                        _reconstruction.setAttribute(boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxScale.y"), scale.y)
-                        _reconstruction.setAttribute(boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxScale.z"), scale.z)
-                    }
-
-                    // Automatically evalutate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
-                    // When the gizmo has changed (with mouse), the new values are set to the node, the priority is given back to the node and the Transform is re-evaluated once with those values.
-                    property var nodeTranslation : Qt.vector3d(
-                        boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxTranslation.x").value,
-                        boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxTranslation.y").value,
-                        boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxTranslation.z").value
-                    )
-                    property var nodeRotationX: boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxRotation.x").value
-                    property var nodeRotationY: boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxRotation.y").value
-                    property var nodeRotationZ: boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxRotation.z").value
-                    property var nodeScale: Qt.vector3d(
-                        boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxScale.x").value,
-                        boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxScale.y").value,
-                        boundingBoxInstantiator.activeNode.attribute("boundingBox.bboxScale.z").value
-                    )
-
-                    transformGizmo.gizmoDisplayTransform.translation: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.translation : nodeTranslation
-                    transformGizmo.gizmoDisplayTransform.rotationX: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationX : nodeRotationX
-                    transformGizmo.gizmoDisplayTransform.rotationY: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationY : nodeRotationY
-                    transformGizmo.gizmoDisplayTransform.rotationZ: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationZ : nodeRotationZ
-                    transformGizmo.objectTransform.scale3D: transformGizmo.focusGizmoPriority ? transformGizmo.objectTransform.scale3D : nodeScale
-
-                    // The entity
-                    BoundingBox { transform: boundingBoxEntity.objectTransform }
-                }
-            }
-
             DefaultCameraController {
                 id: cameraController
                 enabled: cameraSelector.camera == mainCamera
@@ -291,6 +234,11 @@ FocusScope {
                 pickingEnabled: cameraController.pickingActive || doubleClickTimer.running
                 camera: cameraSelector.camera
 
+                // Used for TransformGizmo in BoundingBox
+                sceneCameraController: cameraController
+                frontLayerComponent: drawOnFront
+                window: root
+
                 components: [
                     Transform {
                         id: transform
@@ -359,21 +307,6 @@ FocusScope {
                     checkable: !checked // hack to disabled check on toggle
                 }
             }
-        }
-    }
-
-    FloatingPane {
-        anchors.bottom: root.bottom
-        anchors.right: root.right
-        padding: 4
-        visible: boundingBoxInstantiator.active
-
-        MaterialToolButton {
-            id: boundingBoxVisibility
-            text: MaterialIcons.transform
-            ToolTip.text: "Show BoundingBox"
-            font.pointSize: 11
-            checked: true
         }
     }
 

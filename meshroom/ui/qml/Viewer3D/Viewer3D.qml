@@ -215,7 +215,7 @@ FocusScope {
                                         filterMode: LayerFilter.AcceptAnyMatchingLayers
                                         layers: [drawOnFront]
                                         RenderStateSet {
-                                            renderStates: DepthTest { depthFunction: DepthTest.Equal }
+                                            renderStates: DepthTest { depthFunction: DepthTest.GreaterOrEqual }
                                         }
                                     }
                                 }

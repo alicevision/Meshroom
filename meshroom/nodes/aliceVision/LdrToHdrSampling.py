@@ -118,6 +118,13 @@ class LdrToHdrSampling(desc.CommandLineNode):
             uid=[0],
             advanced=True,
         ),
+        desc.BoolParam(
+            name='debug',
+            label='Export Debug Files',
+            description="Export debug files to analyze the sampling strategy.",
+            value=False,
+            uid=[],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

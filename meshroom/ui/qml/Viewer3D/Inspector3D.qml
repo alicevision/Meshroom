@@ -284,19 +284,19 @@ FloatingPane {
                             }
                         }
 
-                        // Transform visibility (bbox for meshing)
+                        // BoundingBox visibility (if meshing node)
                         MaterialToolButton {
-                            visible: model.hasTransform
+                            visible: model.hasBoundingBox
                             enabled: model.visible
                             Layout.alignment: Qt.AlignTop
                             Layout.fillHeight: true
                             text: MaterialIcons.transform
                             font.pointSize: 10
-                            ToolTip.text: model.displayTransform ? "Hide BBox" : "Show BBox"
+                            ToolTip.text: model.displayBoundingBox ? "Hide BBox" : "Show BBox"
                             flat: true
-                            opacity: model.visible ? (model.displayTransform ? 1.0 : 0.6) : 0.6
+                            opacity: model.visible ? (model.displayBoundingBox ? 1.0 : 0.6) : 0.6
                             onClicked: {
-                                model.displayTransform = !model.displayTransform
+                                model.displayBoundingBox = !model.displayBoundingBox
                             }
                         }
 

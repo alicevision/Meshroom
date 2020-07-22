@@ -9,7 +9,7 @@ import Utils 1.0
 
 Entity {
     id: root
-    property real gizmoScale: 0.15
+    readonly property alias gizmoScale: gizmoScaleLookSlider.value
     property Camera camera
     property var windowSize
     property var frontLayerComponent
@@ -87,11 +87,15 @@ Entity {
             mat.m41, mat.m42, mat.m43, 1
         )
         gizmoDisplayTransform.setMatrix(newMat)
+
+        emitGizmoChanged()
     }
 
     function resetRotation() {
         // Here, we can change the rotation property (but not rotationX, rotationY and rotationZ because they can be used in upper-level bindings)
         gizmoDisplayTransform.rotation = Qt.quaternion(1,0,0,0) // Reset gizmo matrix and object matrix with binding
+
+        emitGizmoChanged()
     }
 
     function resetScale() {
@@ -103,14 +107,7 @@ Entity {
             -(objectTransform.scale3D.z - 1)
         )
         doRelativeScale(modelMat, scaleDiff)
-    }
 
-    function resetATransformType(transformType) {
-        switch(transformType) {
-            case TransformGizmo.Type.POSITION: resetTranslation(); break
-            case TransformGizmo.Type.ROTATION: resetRotation(); break
-            case TransformGizmo.Type.SCALE: resetScale(); break
-        }
         emitGizmoChanged()
     }
 
@@ -182,7 +179,6 @@ Entity {
             }
 
             if(objectPicker && objectPicker.button === Qt.RightButton) {
-                resetMenu.updateTypeBeforePopup(objectPicker.gizmoType)
                 resetMenu.popup(window)
             }
         }
@@ -196,21 +192,41 @@ Entity {
 
     Menu {
         id: resetMenu
-        property int transformType
-        property string transformTypeToDisplay
-
-        function updateTypeBeforePopup(type) {
-            resetMenu.transformType = type
-            switch(type) {
-                case TransformGizmo.Type.POSITION: resetMenu.transformTypeToDisplay = "Translation"; break
-                case TransformGizmo.Type.ROTATION: resetMenu.transformTypeToDisplay = "Rotation"; break
-                case TransformGizmo.Type.SCALE: resetMenu.transformTypeToDisplay = "Scale"; break
-            }    
-        }
 
         MenuItem {
-            text: `Reset ${resetMenu.transformTypeToDisplay}`
-            onTriggered: resetATransformType(resetMenu.transformType)
+            text: `Reset Translation`
+            onTriggered: resetTranslation()
+        }
+        MenuItem {
+            text: `Reset Rotation`
+            onTriggered: resetRotation()
+        }
+        MenuItem {
+            text: `Reset Scale`
+            onTriggered: resetScale()
+        }
+        MenuItem {
+            text: `Reset All`
+            onTriggered: {
+                resetTranslation()
+                resetRotation()
+                resetScale()
+            }
+        }
+        MenuItem {
+            text: "Gizmo Scale Look"
+            Slider {
+                id: gizmoScaleLookSlider
+                anchors.right: parent.right
+                anchors.rightMargin: 10
+                height: parent.height
+                width: parent.width * 0.40
+
+                from: 0.06
+                to: 0.30
+                stepSize: 0.01
+                value: 0.15
+            }
         }
     }
 

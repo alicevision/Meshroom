@@ -211,6 +211,35 @@ class Transformations3DHelper(QObject):
 
         return modelMat
 
+    @Slot(QVector3D, QMatrix4x4, Qt3DRender.QCamera, QSize, result=float)
+    def computeScaleUnitFromModelMatrix(self, axis, modelMat, camera, windowSize):
+        """ Compute the length of the screen projected vector axis unit transformed by the model matrix.
+            Args:
+                axis (QVector3D): chosen axis ((1,0,0) or (0,1,0) or (0,0,1))
+                modelMat (QMatrix4x4): model matrix used for the transformation
+                camera (QCamera): camera viewing the scene
+                windowSize (QSize): size of the window in pixels
+            Returns:
+                float: length (in pixels)
+        """
+        decomposition = self.decomposeModelMatrix(modelMat)
+
+        posMat = QMatrix4x4()
+        posMat.translate(decomposition.get("translation"))
+
+        rotMat = self.quaternionToRotationMatrix(decomposition.get("quaternion"))
+
+        unitScaleModelMat = posMat * rotMat * QMatrix4x4()
+
+        worldCenterPoint = unitScaleModelMat.map(QVector4D(0,0,0,1))
+        worldAxisUnitPoint = unitScaleModelMat.map(QVector4D(axis.x(),axis.y(),axis.z(),1))
+        screenCenter2D = self.pointFromWorldToScreen(worldCenterPoint, camera, windowSize)
+        screenAxisUnitPoint2D = self.pointFromWorldToScreen(worldAxisUnitPoint, camera, windowSize)
+
+        screenVector = QVector2D(screenAxisUnitPoint2D.x() - screenCenter2D.x(), -(screenAxisUnitPoint2D.y() - screenCenter2D.y()))
+
+        value = screenVector.length()
+        return value if (value and value > 10) else 10 # Threshold to avoid problems in extreme case
 
     #---------- "Private" Methods ----------#
 

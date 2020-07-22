@@ -15,6 +15,7 @@ ObjectPicker {
     property int gizmoType
     property point screenPoint
     property var modelMatrix
+    property real scaleUnit
     property int button
     
     signal pickedChanged(var picker)

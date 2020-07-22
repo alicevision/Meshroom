@@ -54,6 +54,14 @@ Entity {
         SCALE
     }
 
+    function convertAxisEnum(axis) {
+        switch(axis) {
+            case TransformGizmo.Axis.X: return Qt.vector3d(1,0,0)
+            case TransformGizmo.Axis.Y: return Qt.vector3d(0,1,0)
+            case TransformGizmo.Axis.Z: return Qt.vector3d(0,0,1)
+        }
+    }
+
     /***** TRANSFORMATIONS (using local vars) *****/
 
     function doRelativeTranslation(initialModelMatrix, translateVec) {
@@ -121,81 +129,55 @@ Entity {
                 root.focusGizmoPriority = true
 
                 // Get the selected axis
-                let pickedAxis
-                switch(objectPicker.gizmoAxis) {
-                    case TransformGizmo.Axis.X: pickedAxis = Qt.vector3d(1,0,0); break
-                    case TransformGizmo.Axis.Y: pickedAxis = Qt.vector3d(0,1,0); break
-                    case TransformGizmo.Axis.Z: pickedAxis = Qt.vector3d(0,0,1); break
+                const pickedAxis = convertAxisEnum(objectPicker.gizmoAxis)
+
+                // If it is a TRANSLATION or a SCALE
+                if(objectPicker.gizmoType === TransformGizmo.Type.POSITION || objectPicker.gizmoType === TransformGizmo.Type.SCALE) {
+                    // Compute the current vector PickedPoint -> CurrentMousePoint
+                    const pickedPosition = objectPicker.screenPoint
+                    const mouseVector = Qt.vector2d(mouse.x - pickedPosition.x, -(mouse.y - pickedPosition.y))
+
+                    // Transform the positive picked axis vector from World Coord to Screen Coord
+                    const gizmoLocalPointOnAxis = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 1))
+                    const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
+                    const screenPoint2D = Transformations3DHelper.pointFromWorldToScreen(gizmoLocalPointOnAxis, camera, windowSize)
+                    const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, windowSize)
+                    const screenAxisVector = Qt.vector2d(screenPoint2D.x - screenCenter2D.x, -(screenPoint2D.y - screenCenter2D.y))
+
+                    // Get the cosinus of the angle from the screenAxisVector to the mouseVector
+                    const cosAngle = screenAxisVector.dotProduct(mouseVector) / (screenAxisVector.length() * mouseVector.length())
+                    const offset = cosAngle * mouseVector.length() / objectPicker.scaleUnit
+
+                    // Do the transformation
+                    if(objectPicker.gizmoType === TransformGizmo.Type.POSITION && offset !== 0)
+                        doRelativeTranslation(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a translation from the initial Object Model Matrix when we picked the gizmo
+                    else if (objectPicker.gizmoType === TransformGizmo.Type.SCALE && offset !== 0)
+                        doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a scale from the initial Object Model Matrix when we picked the gizmo
+
+                    return
                 }
+                else if(objectPicker.gizmoType === TransformGizmo.Type.ROTATION) {
+                    // Get Screen Coordinates of the gizmo center
+                    const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
+                    const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
 
-                switch(objectPicker.gizmoType) {
-                    case TransformGizmo.Type.POSITION: {
-                        const sensibility = 0.02
+                    // Get the vector screenCenter2D -> PickedPoint
+                    const originalVector = Qt.vector2d(objectPicker.screenPoint.x - screenCenter2D.x, -(objectPicker.screenPoint.y - screenCenter2D.y))
 
-                        // Compute the current vector PickedPoint -> CurrentMousePoint
-                        const pickedPosition = objectPicker.screenPoint
-                        const mouseVector = Qt.vector2d(mouse.x - pickedPosition.x, -(mouse.y - pickedPosition.y))
+                    // Compute the current vector screenCenter2D -> CurrentMousePoint
+                    const mouseVector = Qt.vector2d(mouse.x - screenCenter2D.x, -(mouse.y - screenCenter2D.y))
 
-                        // Transform the positive picked axis vector from World Coord to Screen Coord
-                        const gizmoLocalPointOnAxis = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 1))
-                        const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
-                        const screenPoint2D = Transformations3DHelper.pointFromWorldToScreen(gizmoLocalPointOnAxis, camera, windowSize)
-                        const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, windowSize)
-                        const screenAxisVector = Qt.vector2d(screenPoint2D.x - screenCenter2D.x, -(screenPoint2D.y - screenCenter2D.y))
+                    // Get the angle from the originalVector to the mouseVector
+                    const angle = Math.atan2(-originalVector.y*mouseVector.x + originalVector.x*mouseVector.y, originalVector.x*mouseVector.x + originalVector.y*mouseVector.y) * 180 / Math.PI
 
-                        // Get the cosinus of the angle from the screenAxisVector to the mouseVector
-                        const cosAngle = screenAxisVector.dotProduct(mouseVector) / (screenAxisVector.length() * mouseVector.length())
-                        const offset = cosAngle * mouseVector.length() * sensibility
+                    // Get the orientation of the gizmo in function of the camera
+                    const gizmoLocalAxisVector = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 0))
+                    const gizmoToCameraVector = camera.position.toVector4d().minus(gizmoCenterPoint)
+                    const orientation = gizmoLocalAxisVector.dotProduct(gizmoToCameraVector) > 0 ? 1 : -1
 
-                        // If the mouse is not at the same spot as the pickedPoint, we do translation
-                        if (offset) doRelativeTranslation(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a translation from the initial Object Model Matrix when we picked the gizmo
+                    if (angle !== 0) doRelativeRotation(objectPicker.modelMatrix, pickedAxis, angle*orientation) // Do a rotation from the initial Object Model Matrix when we picked the gizmo
 
-                        return
-                    }
-
-                    case TransformGizmo.Type.ROTATION: {
-                        // Get Screen Coordinates of the gizmo center
-                        const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
-                        const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
-
-                        // Get the vector screenCenter2D -> PickedPoint
-                        const originalVector = Qt.vector2d(objectPicker.screenPoint.x - screenCenter2D.x, -(objectPicker.screenPoint.y - screenCenter2D.y))
-
-                        // Compute the current vector screenCenter2D -> CurrentMousePoint
-                        const mouseVector = Qt.vector2d(mouse.x - screenCenter2D.x, -(mouse.y - screenCenter2D.y))
-
-                        // Get the angle from the originalVector to the mouseVector
-                        const angle = Math.atan2(-originalVector.y*mouseVector.x + originalVector.x*mouseVector.y, originalVector.x*mouseVector.x + originalVector.y*mouseVector.y) * 180 / Math.PI
-
-                        // Get the orientation of the gizmo in function of the camera
-                        const gizmoLocalAxisVector = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 0))
-                        const gizmoToCameraVector = camera.position.toVector4d().minus(gizmoCenterPoint)
-                        const orientation = gizmoLocalAxisVector.dotProduct(gizmoToCameraVector) > 0 ? 1 : -1
-
-                        if (angle !== 0) doRelativeRotation(objectPicker.modelMatrix, pickedAxis, angle*orientation) // Do a rotation from the initial Object Model Matrix when we picked the gizmo
-
-                        return
-                    }
-
-                    case TransformGizmo.Type.SCALE: {
-                        const sensibility = 0.05
-
-                        // Get Screen Coordinates of the gizmo center
-                        const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
-                        const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
-
-                        // Compute the scale unit
-                        const scaleUnit = screenCenter2D.minus(Qt.vector2d(objectPicker.screenPoint.x, objectPicker.screenPoint.y)).length()
-
-                        // Compute the current vector screenCenter2D -> CurrentMousePoint
-                        const mouseVector = Qt.vector2d(mouse.x - screenCenter2D.x, -(mouse.y - screenCenter2D.y))
-                        let offset = (mouseVector.length() - scaleUnit) * sensibility
-                        offset = (offset < 0) ? offset * 3 : offset // Used to make it more sensible when we want to reduce the scale (because the action field is shorter)
-
-                        if (offset) doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a scale from the initial Object Model Matrix when we picked the gizmo
-                        
-                        return
-                    }
+                    return
                 }
             }
 
@@ -272,7 +254,7 @@ Entity {
                     case TransformGizmo.Axis.Z: return "#3387e2" // Blue
                 }
             }
-            property real lineRadius: 0.015
+            property real lineRadius: 0.011
 
             // SCALE ENTITY
             Entity {
@@ -321,7 +303,7 @@ Entity {
 
                     CuboidMesh {
                         id: cubeScaleMesh
-                        property real edge: 0.07
+                        property real edge: 0.06
                         xExtent: edge
                         yExtent: edge
                         zExtent: edge
@@ -366,7 +348,8 @@ Entity {
                     gizmoType: TransformGizmo.Type.SCALE
 
                     onPickedChanged: {
-                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations
+                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations of the OBJECT
+                        this.scaleUnit = Transformations3DHelper.computeScaleUnitFromModelMatrix(convertAxisEnum(gizmoAxis), gizmoDisplayTransform.matrix, camera, root.windowSize) // Compute a scale unit at picking time
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
                     }
                 }
@@ -379,11 +362,11 @@ Entity {
 
                 ConeMesh {
                     id: coneMesh
-                    bottomRadius : 0.04
+                    bottomRadius : 0.035
                     topRadius : 0.001
                     hasBottomEndcap : true
                     hasTopEndcap : true
-                    length : 0.15
+                    length : 0.13
                     rings : 2
                     slices : 8
                 }
@@ -425,8 +408,8 @@ Entity {
                     gizmoType: TransformGizmo.Type.POSITION
 
                     onPickedChanged: {
-                        // this.modelMatrix = copyMatrix(objectTransform.matrix) // Save the current transformations
-                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations
+                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations of the OBJECT
+                        this.scaleUnit = Transformations3DHelper.computeScaleUnitFromModelMatrix(convertAxisEnum(gizmoAxis), gizmoDisplayTransform.matrix, camera, root.windowSize) // Compute a scale unit at picking time
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
                     }
                 }
@@ -471,7 +454,7 @@ Entity {
                     gizmoType: TransformGizmo.Type.ROTATION
 
                     onPickedChanged: {
-                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations
+                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations of the OBJECT
                         root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
                     }
                 }

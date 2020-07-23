@@ -300,6 +300,22 @@ FloatingPane {
                             }
                         }
 
+                        // Transform visibility (if SfMTransform node)
+                        MaterialToolButton {
+                            visible: model.hasTransform
+                            enabled: model.visible
+                            Layout.alignment: Qt.AlignTop
+                            Layout.fillHeight: true
+                            text: MaterialIcons._3d_rotation
+                            font.pointSize: 10
+                            ToolTip.text: model.displayTransform ? "Hide Gizmo" : "Show Gizmo"
+                            flat: true
+                            opacity: model.visible ? (model.displayTransform ? 1.0 : 0.6) : 0.6
+                            onClicked: {
+                                model.displayTransform = !model.displayTransform
+                            }
+                        }
+
                         // Media label and info
                         Item {
                             implicitHeight: childrenRect.height

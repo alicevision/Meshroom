@@ -48,6 +48,8 @@ Entity {
             "visible": true,
             "hasBoundingBox": false, // for Meshing node only
             "displayBoundingBox": true, // for Meshing node only
+            "hasTransform": false, // for SfMTransform node only
+            "displayTransform": true, // for SfMTransform node only
             "section": "",
             "attribute": null,
             "entity": null,
@@ -160,7 +162,7 @@ Entity {
             property var currentNode: model.attribute ? model.attribute.node : null
             property string nodeType: currentNode ? currentNode.nodeType: null
 
-            // Specific properties to the Meshing node (declared and initialiazed for every MediaLoader anyway)
+            // Specific properties to the Meshing node (declared and initialized for every MediaLoader anyway)
             property bool hasBoundingBox: {
                 if(nodeType === "Meshing") { // Can have a BoundingBox 
                     const value = currentNode.attribute("useBoundingBox") ? currentNode.attribute("useBoundingBox").value : false
@@ -170,6 +172,17 @@ Entity {
                 return false
             }
             property bool displayBoundingBox: model.displayBoundingBox
+
+            // Specific properties to the SfMTransform node (declared and initialized for every MediaLoader anyway)
+            property bool hasTransform: {
+                if(nodeType === "SfMTransform") { // Can have a Transform 
+                    const value = currentNode.attribute("method") ? currentNode.attribute("method").value === "manual" : false
+                    model.hasTransform = value
+                    return value
+                }
+                return false
+            }
+            property bool displayTransform: model.displayTransform
 
             // whether MediaLoader has been fully instantiated by the NodeInstantiator
             property bool fullyInstantiated: false
@@ -224,6 +237,23 @@ Entity {
                     window: root.window
                     currentMeshingNode: boundingBoxInstantiator.currentNode
                     enabled: mediaLoader.displayBoundingBox
+                }
+            }
+
+            // Transform: display a TransformGizmo for SfMTransform node only
+            // note: use a NodeInstantiator to evaluate if the current node is a SfMTransform node and if the transform mode is set to Manual
+            NodeInstantiator {
+                id: sfmTransformGizmoInstantiator
+                property var currentNode: mediaLoader.currentNode
+                active: mediaLoader.hasTransform
+                model: 1
+
+                SfMTransformGizmo {
+                    sceneCameraController: root.sceneCameraController
+                    frontLayerComponent: root.frontLayerComponent
+                    window: root.window
+                    currentSfMTransformNode: sfmTransformGizmoInstantiator.currentNode
+                    enabled: mediaLoader.displayTransform
                 }
             }
 

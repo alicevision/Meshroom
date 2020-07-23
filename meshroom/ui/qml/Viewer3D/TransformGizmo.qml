@@ -14,6 +14,7 @@ Entity {
     property var windowSize
     property var frontLayerComponent
     property var window
+    property bool uniformScale: false // by default, the scale is not uniform
     property bool focusGizmoPriority: false // If true, it is used to give the priority to the current transformation (and not to a upper-level binding)
     property Transform gizmoDisplayTransform: Transform {
         id: gizmoDisplayTransform
@@ -146,10 +147,15 @@ Entity {
                     const offset = cosAngle * mouseVector.length() / objectPicker.scaleUnit
 
                     // Do the transformation
-                    if(objectPicker.gizmoType === TransformGizmo.Type.POSITION && offset !== 0)
+                    if(objectPicker.gizmoType === TransformGizmo.Type.POSITION && offset !== 0) {   
                         doRelativeTranslation(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a translation from the initial Object Model Matrix when we picked the gizmo
-                    else if (objectPicker.gizmoType === TransformGizmo.Type.SCALE && offset !== 0)
-                        doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a scale from the initial Object Model Matrix when we picked the gizmo
+                    }
+                    else if(objectPicker.gizmoType === TransformGizmo.Type.SCALE && offset !== 0) {
+                        if(root.uniformScale)
+                            doRelativeScale(objectPicker.modelMatrix, Qt.vector3d(1,1,1).times(offset)) // Do a uniform scale from the initial Object Model Matrix when we picked the gizmo
+                        else
+                            doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a scale on one axis from the initial Object Model Matrix when we picked the gizmo
+                    }
 
                     return
                 }

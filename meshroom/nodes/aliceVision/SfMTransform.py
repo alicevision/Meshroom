@@ -34,12 +34,13 @@ The transformation can be based on:
             label='Transformation Method',
             description="Transformation method:\n"
                         " * transformation: Apply a given transformation\n"
+                        " * manual: Apply the gizmo transformation\n"
                         " * auto_from_cameras: Use cameras\n"
                         " * auto_from_landmarks: Use landmarks\n"
                         " * from_single_camera: Use a specific camera as the origin of the coordinate system\n"
                         " * from_markers: Align specific markers to custom coordinates",
             value='auto_from_landmarks',
-            values=['transformation', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_markers'],
+            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_markers'],
             exclusive=True,
             uid=[0],
         ),
@@ -51,6 +52,75 @@ The transformation can be based on:
                         " * from_single_camera: Camera UID or image filename",
             value='',
             uid=[0],
+        ),
+        desc.GroupAttribute(
+            name="transformGizmo",
+            label="Transform Gizmo Settings",
+            description="Translation, rotation and scale defined by the gizmo.",
+            groupDesc=[
+                desc.GroupAttribute(
+                    name="gizmoTranslation",
+                    label="Translation",
+                    description="Translation in space.",
+                    groupDesc=[
+                        desc.FloatParam(
+                            name="x", label="x", description="X Offset",
+                            value=0.0,
+                            uid=[0],
+                            range=(-20.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="y", label="y", description="Y Offset",
+                            value=0.0,
+                            uid=[0],
+                            range=(-20.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="z", label="z", description="Z Offset",
+                            value=0.0,
+                            uid=[0],
+                            range=(-20.0, 20.0, 0.01)
+                        )
+                    ],
+                    joinChar=","
+                ),
+                desc.GroupAttribute(
+                    name="gizmoRotation",
+                    label="Euler Rotation",
+                    description="Rotation in Euler degrees.",
+                    groupDesc=[
+                        desc.FloatParam(
+                            name="x", label="x", description="Euler X Rotation",
+                            value=0.0,
+                            uid=[0],
+                            range=(-90.0, 90.0, 1)
+                        ),
+                        desc.FloatParam(
+                            name="y", label="y", description="Euler Y Rotation",
+                            value=0.0,
+                            uid=[0],
+                            range=(-180.0, 180.0, 1)
+                        ),
+                        desc.FloatParam(
+                            name="z", label="z", description="Euler Z Rotation",
+                            value=0.0,
+                            uid=[0],
+                            range=(-180.0, 180.0, 1)
+                        )
+                    ],
+                    joinChar=","
+                ),
+                desc.FloatParam(
+                    name="gizmoScale", 
+                    label="Scale", 
+                    description="Uniform Scale.",
+                    value=1.0,
+                    uid=[0],
+                    range=(0.0, 20.0, 0.01)
+                )
+            ],
+            joinChar=",",
+            advanced=True
         ),
         desc.ChoiceParam(
             name='landmarksDescriberTypes',

@@ -541,21 +541,22 @@ class BaseNode(BaseObject):
         """ Compute node uids by combining associated attributes' uids. """
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             # uid is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this uid
-            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes]
+            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes if a.enabled]
             uidAttributes.sort()
             self._uids[uidIndex] = hashValue(uidAttributes)
 
     def _buildCmdVars(self):
         def _buildAttributeCmdVars(cmdVars, name, attr):
             if attr.attributeDesc.group is not None:
-                # if there is a valid command line "group"
-                v = attr.getValueStr()
-                cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-                cmdVars[name + 'Value'] = str(v)
+                if attr.enabled:
+                    # if there is a valid command line "group"
+                    v = attr.getValueStr()
+                    cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+                    cmdVars[name + 'Value'] = str(v)
 
-                if v:
-                    cmdVars[attr.attributeDesc.group] = cmdVars.get(attr.attributeDesc.group, '') + \
-                                                              ' ' + cmdVars[name]
+                    if v:
+                        cmdVars[attr.attributeDesc.group] = cmdVars.get(attr.attributeDesc.group, '') + \
+                                                                ' ' + cmdVars[name]
             elif isinstance(attr, GroupAttribute):
                 assert isinstance(attr.value, DictModel)
                 # if the GroupAttribute is not set in a single command line argument,
@@ -678,6 +679,10 @@ class BaseNode(BaseObject):
         """
         if self.nodeDesc:
             self.nodeDesc.update(self)
+
+        for attr in self._attributes:
+            attr.updateInternals()
+
         # Update chunks splitting
         self._updateChunks()
         # Retrieve current internal folder (if possible)

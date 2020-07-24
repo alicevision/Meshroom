@@ -58,6 +58,7 @@ class Attribute(BaseObject):
         self._isOutput = isOutput
         self._value = copy.copy(attributeDesc.value)
         self._label = attributeDesc.label
+        self._enabled = True
 
         # invalidation value for output attributes
         self._invalidationValue = ""
@@ -94,6 +95,15 @@ class Attribute(BaseObject):
 
     def getLabel(self):
         return self._label
+
+    def getEnabled(self):
+        return self._enabled
+
+    def setEnabled(self, v):
+        if self._enabled == v:
+            return
+        self._enabled = v
+        self.enabledChanged.emit()
 
     def _get_value(self):
         return self.getLinkParam().value if self.isLink else self._value
@@ -224,6 +234,12 @@ class Attribute(BaseObject):
     def getPrimitiveValue(self, exportDefault=True):
         return self._value
 
+    def updateInternals(self):
+        if isinstance(self.desc.enabled, types.FunctionType):
+            self.setEnabled(self.desc.enabled(self.node))
+        else:
+            self.setEnabled(self.attributeDesc.enabled)
+
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
     label = Property(str, getLabel, constant=True)
@@ -237,6 +253,8 @@ class Attribute(BaseObject):
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     node = Property(BaseObject, node.fget, constant=True)
+    enabledChanged = Signal()
+    enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
 
 
 def raiseIfLink(func):

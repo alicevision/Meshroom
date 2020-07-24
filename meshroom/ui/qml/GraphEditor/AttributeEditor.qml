@@ -26,7 +26,7 @@ ListView {
     model: attributes
 
     delegate: Loader {
-        active: !object.desc.advanced || GraphEditorSettings.showAdvancedAttributes
+        active: object.enabled && (!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)
         visible: active
         height: item ? item.implicitHeight : -spacing // compensate for spacing if item is hidden
 

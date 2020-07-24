@@ -34,7 +34,7 @@ The transformation can be based on:
             label='Transformation Method',
             description="Transformation method:\n"
                         " * transformation: Apply a given transformation\n"
-                        " * manual: Apply the gizmo transformation\n"
+                        " * manual: Apply the gizmo transformation (show the transformed input)\n"
                         " * auto_from_cameras: Use cameras\n"
                         " * auto_from_landmarks: Use landmarks\n"
                         " * from_single_camera: Use a specific camera as the origin of the coordinate system\n"

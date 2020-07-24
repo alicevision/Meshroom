@@ -11,8 +11,11 @@ Entity {
     property var window
     property var currentSfMTransformNode: null
     enabled: true
+    
+    readonly property alias objectTransform: sfmTranformGizmoEntity.objectTransform // The Transform the object should use
 
     EntityWithGizmo {
+        id: sfmTranformGizmoEntity
         sceneCameraController: root.sceneCameraController
         frontLayerComponent: root.frontLayerComponent
         window: root.window

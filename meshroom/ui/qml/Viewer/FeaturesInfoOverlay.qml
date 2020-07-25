@@ -128,7 +128,7 @@ FloatingPane {
                         if(featureType.viewer.loadingFeatures)
                             return  featureType.viewer.describerType;
                         return featureType.viewer.describerType + ": " +
-                                featureType.viewer.features.length + " / " +
+                                ((featureExtractionNode && featureExtractionNode.isComputed) ? featureType.viewer.features.length : " - ") + " / " +
                                 (featureType.viewer.haveValidTracks ? featureType.viewer.nbTracks  : " - ") + " / " +
                                 (featureType.viewer.haveValidLandmarks ? featureType.viewer.nbLandmarks : " - ");
                     }

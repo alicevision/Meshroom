@@ -14,8 +14,27 @@ FocusScope {
     property var viewIn3D
 
     property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
-    readonly property bool floatViewerAvailable: floatViewerComp.status === Component.Ready
     property alias useFloatImageViewer: displayHDR.checked
+
+    Loader {
+        id: aliceVisionPluginLoader
+        active: true
+        source: "TestAliceVisionPlugin.qml"
+    }
+    Loader {
+        id: oiioPluginLoader
+        active: true
+        source: "TestOIIOPlugin.qml"
+    }
+    readonly property bool aliceVisionPluginAvailable: aliceVisionPluginLoader.status === Component.Ready
+    readonly property bool oiioPluginAvailable: oiioPluginLoader.status === Component.Ready
+
+    Component.onCompleted: {
+        if(!aliceVisionPluginAvailable)
+            console.warn("Missing plugin qtAliceVision.")
+        if(!oiioPluginAvailable)
+            console.warn("Missing plugin qtOIIO.")
+    }
 
     property string loadingModules: {
         if(!imgContainer.image)
@@ -23,7 +42,7 @@ FocusScope {
         var res = "";
         if(imgContainer.image.status === Image.Loading)
             res += " Image";
-        if(featuresViewerLoader.status === Loader.Ready)
+        if(featuresViewerLoader.status === Loader.Ready && featuresViewerLoader.item)
         {
             for (var i = 0; i < featuresViewerLoader.item.count; ++i) {
                 if(featuresViewerLoader.item.itemAt(i).loadingFeatures)
@@ -33,17 +52,17 @@ FocusScope {
                 }
             }
         }
+        if(mtracksLoader.status === Loader.Ready)
+        {
+            if(mtracksLoader.item.status === MTracks.Loading)
+                res += " Tracks";
+        }
         if(msfmDataLoader.status === Loader.Ready)
         {
             if(msfmDataLoader.item.status === MSfMData.Loading)
             {
                 res += " SfMData";
             }
-        }
-        if(mtracksLoader.status === Loader.Ready)
-        {
-            if(mtracksLoader.item.status === MTracks.Loading)
-                res += " Tracks";
         }
         return res;
     }
@@ -179,7 +198,7 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 Loader {
                     id: floatImageViewerLoader
-                    active: root.useFloatImageViewer
+                    active: root.aliceVisionPluginAvailable && root.useFloatImageViewer
                     visible: (floatImageViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
 
@@ -204,7 +223,7 @@ FocusScope {
                 // Simple QML Image Viewer (using Qt or qtOIIO to load images)
                 Loader {
                     id: qtImageViewerLoader
-                    active: (!root.useFloatImageViewer) || (floatImageViewerLoader.status === Loader.Error)
+                    active: !floatImageViewerLoader.active
                     anchors.centerIn: parent
                     sourceComponent: Image {
                         id: qtImageViewer
@@ -354,9 +373,9 @@ FocusScope {
                         // show which depthmap node is active
                         Label {
                             id: depthMapNodeName
-                            property var activeNode: _reconstruction.activeNodes.get("allDepthMap").node
-                            visible: (activeNode != undefined) && (imageType.type != "image")
-                            text: (activeNode != undefined ? activeNode.label : "")
+                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get("allDepthMap").node : null
+                            visible: (imageType.type != "image") && activeNode
+                            text: activeNode ? activeNode.label : ""
                             font.pointSize: 8
 
                             horizontalAlignment: TextInput.AlignLeft
@@ -387,77 +406,105 @@ FocusScope {
 
                     Loader {
                         id: msfmDataLoader
-                        // active: _reconstruction.sfm && _reconstruction.sfm.isComputed
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
-                        property var activeNode: _reconstruction.sfm
+                        property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
                         property bool isComputed: activeNode && activeNode.isComputed
+                        property string filepath: Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : "")
 
                         active: false
                         // It takes time to load tracks, so keep them looaded, if we may use it again.
                         // If we load another node, we can trash them (to eventually load the new node data).
                         onIsUsedChanged: {
                             if(!active && isUsed && isComputed)
+                            {
                                 active = true;
+                            }
                         }
                         onIsComputedChanged: {
                             if(!isComputed)
+                            {
                                 active = false;
-                            if(!active && isUsed)
+                            }
+                            else if(!active && isUsed)
+                            {
                                 active = true;
+                            }
                         }
                         onActiveNodeChanged: {
                             if(!isUsed)
+                            {
                                 active = false;
+                            }
                             else if(!isComputed)
+                            {
                                 active = false;
+                            }
                             else
+                            {
                                 active = true;
+                            }
                         }
 
-                        Component.onCompleted: {
-                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
-                            // so it can fail safely if the c++ plugin is not available
-                            setSource("MSfMData.qml", {
-                                'sfmDataPath': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); }),
-                            })
+                        onActiveChanged: {
+                            if(active) {
+                                // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                                // so it can fail safely if the c++ plugin is not available
+                                setSource("MSfMData.qml", {
+                                    'sfmDataPath': Qt.binding(function() { return filepath; }),
+                                })
+                            } else {
+                                // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                                setSource("", {})
+                            }
                         }
                     }
                     Loader {
                         id: mtracksLoader
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
-                        property var activeNode: _reconstruction.activeNodes.get('FeatureMatching').node
+                        property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('FeatureMatching').node : null
                         property bool isComputed: activeNode && activeNode.isComputed
 
                         active: false
                         // It takes time to load tracks, so keep them looaded, if we may use it again.
                         // If we load another node, we can trash them (to eventually load the new node data).
                         onIsUsedChanged: {
-                            if(!active && isUsed && isComputed)
+                            if(!active && isUsed && isComputed) {
                                 active = true;
+                            }
                         }
                         onIsComputedChanged: {
-                            if(!isComputed)
+                            if(!isComputed) {
                                 active = false;
-                            if(!active && isUsed)
+                            }
+                            else if(!active && isUsed) {
                                 active = true;
+                            }
                         }
                         onActiveNodeChanged: {
-                            if(!isUsed)
+                            if(!isUsed) {
                                 active = false;
-                            else if(!isComputed)
+                            }
+                            else if(!isComputed) {
                                 active = false;
-                            else
+                            }
+                            else {
                                 active = true;
+                            }
                         }
 
-                        Component.onCompleted: {
-                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
-                            // so it can fail safely if the c++ plugin is not available
-                            setSource("MTracks.qml", {
-                                'matchingFolder': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); }),
-                            })
+                        onActiveChanged: {
+                            if(active) {
+                                // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
+                                // so it can fail safely if the c++ plugin is not available
+                                setSource("MTracks.qml", {
+                                    'matchingFolder': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); }),
+                                })
+                            } else {
+                                // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                                setSource("", {})
+                            }
                         }
                     }
                     Loader {
@@ -497,7 +544,7 @@ FocusScope {
                             left: parent.left
                             margins: 2
                         }
-                        active: displayFeatures.checked && featuresViewerLoader.status === Loader.Ready
+                        active: root.aliceVisionPluginAvailable && displayFeatures.checked && featuresViewerLoader.status === Loader.Ready
 
                         sourceComponent: FeaturesInfoOverlay {
                             featureExtractionNode: _reconstruction.activeNodes.get('FeatureExtraction').node
@@ -555,7 +602,7 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
-                            enabled: root.floatViewerAvailable
+                            enabled: root.aliceVisionPluginAvailable
                         }
                         MaterialToolButton {
                             id: displayFeatures
@@ -565,6 +612,7 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
+                            enabled: root.aliceVisionPluginAvailable
                         }
                         MaterialToolButton {
                             id: displayFisheyeCircleLoader
@@ -591,7 +639,7 @@ FocusScope {
 
                         ComboBox {
                             id: imageType
-                            property var activeNode: _reconstruction.activeNodes.get('allDepthMap').node
+                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
                             // set min size to 5 characters + one margin for the combobox
                             clip: true
                             Layout.minimumWidth: 0
@@ -606,7 +654,7 @@ FocusScope {
                         }
 
                         MaterialToolButton {
-                            property var activeNode: _reconstruction.activeNodes.get('allDepthMap').node
+                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
                             enabled: activeNode
                             ToolTip.text: "View Depth Map in 3D (" + (activeNode ? activeNode.label : "No DepthMap Node Selected") + ")"
                             text: MaterialIcons.input
@@ -620,7 +668,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displaySfmStatsView
-                            property var activeNode: _reconstruction.activeNodes.get('sfm').node
+                            property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
 
                             font.family: MaterialIcons.fontFamily
                             text: MaterialIcons.assessment
@@ -644,7 +692,7 @@ FocusScope {
 
                         MaterialToolButton {
                             id: displaySfmDataGlobalStats
-                            property var activeNode: _reconstruction.activeNodes.get('sfm').node
+                            property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
 
                             font.family: MaterialIcons.fontFamily
                             text: MaterialIcons.language

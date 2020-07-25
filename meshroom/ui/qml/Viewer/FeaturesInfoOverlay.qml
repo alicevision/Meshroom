@@ -45,8 +45,8 @@ FloatingPane {
                                 id: displayModeCB
                                 flat: true
                                 Layout.fillWidth: true
-                                model: root.featuresViewer.displayModes
-                                currentIndex: root.featuresViewer.displayMode
+                                model: root.featuresViewer ? root.featuresViewer.displayModes : null
+                                currentIndex: root.featuresViewer ? root.featuresViewer.displayMode : 0
                                 onActivated: root.featuresViewer.displayMode = currentIndex
                             }
                         }

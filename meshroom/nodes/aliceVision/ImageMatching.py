@@ -1,4 +1,4 @@
-__version__ = "1.1"
+__version__ = "2.0"
 
 import os
 from meshroom.core import desc
@@ -75,6 +75,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             description='Input name for the vocabulary tree file.',
             value=os.environ.get('ALICEVISION_VOCTREE', ''),
             uid=[],
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.File(
             name='weights',
@@ -83,6 +84,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             value='',
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.IntParam(
             name='minNbImages',
@@ -92,6 +94,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             range=(0, 500, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.IntParam(
             name='maxDescriptors',
@@ -101,6 +104,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             range=(0, 100000, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.IntParam(
             name='nbMatches',
@@ -110,6 +114,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             range=(0, 1000, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.IntParam(
             name='nbNeighbors',
@@ -119,6 +124,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             range=(0, 1000, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'Sequential' in node.method.value,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

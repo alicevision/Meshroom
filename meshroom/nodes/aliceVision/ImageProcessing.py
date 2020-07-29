@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 from meshroom.core import desc
 
@@ -126,7 +126,7 @@ Convert or apply filtering to the input images.
         ),
         desc.GroupAttribute(name="sharpenFilter", label="Sharpen Filter", description="Sharpen Filtering Parameters.", joinChar=":", groupDesc=[
             desc.BoolParam(
-                name='enabled',
+                name='sharpenFilterEnabled',
                 label='Enable',
                 description='Use sharpen.',
                 value=False,
@@ -139,6 +139,7 @@ Convert or apply filtering to the input images.
                 value=3,
                 range=(1, 9, 2),
                 uid=[0],
+                enabled=lambda node: node.sharpenFilter.sharpenFilterEnabled.value,
             ),
             desc.FloatParam(
                 name='contrast',
@@ -147,6 +148,7 @@ Convert or apply filtering to the input images.
                 value=1.0,
                 range=(0.0, 100.0, 0.1),
                 uid=[0],
+                enabled=lambda node: node.sharpenFilter.sharpenFilterEnabled.value,
             ),
             desc.FloatParam(
                 name='threshold',
@@ -155,6 +157,7 @@ Convert or apply filtering to the input images.
                 value=0.0,
                 range=(0.0, 1.0, 0.01),
                 uid=[0],
+                enabled=lambda node: node.sharpenFilter.sharpenFilterEnabled.value,
             ),
         ]),
         desc.GroupAttribute(name="bilateralFilter", label="Bilateral Filter", description="Bilateral Filtering Parameters.", joinChar=":", groupDesc=[
@@ -172,6 +175,7 @@ Convert or apply filtering to the input images.
                 value=0,
                 range=(0, 9, 1),
                 uid=[0],
+                enabled=lambda node: node.bilateralFilter.bilateralFilterEnabled.value,
             ),
             desc.FloatParam(
                 name='bilateralFilterSigmaSpace',
@@ -180,6 +184,7 @@ Convert or apply filtering to the input images.
                 value=0.0,
                 range=(0.0, 150.0, 0.01),
                 uid=[0],
+                enabled=lambda node: node.bilateralFilter.bilateralFilterEnabled.value,
             ),
             desc.FloatParam(
                 name='bilateralFilterSigmaColor',
@@ -188,6 +193,7 @@ Convert or apply filtering to the input images.
                 value=0.0,
                 range=(0.0, 150.0, 0.01),
                 uid=[0],
+                enabled=lambda node: node.bilateralFilter.bilateralFilterEnabled.value,
             ),
         ]),
         desc.GroupAttribute(name="claheFilter", label="Clahe Filter", description="Clahe Filtering Parameters.", joinChar=":", groupDesc=[
@@ -205,6 +211,7 @@ Convert or apply filtering to the input images.
                 value=4.0,
                 range=(0.0, 8.0, 1.0),
                 uid=[0],
+                enabled=lambda node: node.claheFilter.claheEnabled.value,
             ),
             desc.IntParam(
                 name='claheTileGridSize',
@@ -213,6 +220,7 @@ Convert or apply filtering to the input images.
                 value=8,
                 range=(4, 64, 4),
                 uid=[0],
+                enabled=lambda node: node.claheFilter.claheEnabled.value,
             ),
         ]),
         desc.GroupAttribute(name="noiseFilter", label="Noise Filter", description="Noise Filtering Parameters.", joinChar=":", groupDesc=[
@@ -234,6 +242,7 @@ Convert or apply filtering to the input images.
                 values=['uniform', 'gaussian', 'salt'],
                 exclusive=True,
                 uid=[0],
+                enabled=lambda node: node.noiseFilter.noiseEnabled.value,
             ),
             desc.FloatParam(
                 name='noiseA',
@@ -242,6 +251,7 @@ Convert or apply filtering to the input images.
                 value=0.0,
                 range=(0.0, 1.0, 0.0001),
                 uid=[0],
+                enabled=lambda node: node.noiseFilter.noiseEnabled.value,
             ),
             desc.FloatParam(
                 name='noiseB',
@@ -250,6 +260,7 @@ Convert or apply filtering to the input images.
                 value=1.0,
                 range=(0.0, 1.0, 0.0001),
                 uid=[0],
+                enabled=lambda node: node.noiseFilter.noiseEnabled.value,
             ),
             desc.BoolParam(
                 name='noiseMono',
@@ -257,6 +268,7 @@ Convert or apply filtering to the input images.
                 description='If is Checked, a single noise value will be applied to all channels otherwise a separate noise value will be computed for each channel.',
                 value=True,
                 uid=[0],
+                enabled=lambda node: node.noiseFilter.noiseEnabled.value,
             ),
         ]),
         desc.ChoiceParam(

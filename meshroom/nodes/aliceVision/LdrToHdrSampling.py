@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 import json
 
@@ -76,11 +76,12 @@ class LdrToHdrSampling(desc.CommandLineNode):
         ),
         desc.BoolParam(
             name='byPass',
-            label='bypass convert',
+            label='Bypass',
             description="Bypass HDR creation and use the medium bracket as the source for the next steps",
             value=False,
             uid=[0],
             group='internal',
+            enabled= lambda node: node.nbBrackets.value != 1,
         ),
         desc.IntParam(
             name='channelQuantizationPower',
@@ -90,6 +91,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
             range=(8, 14, 1),
             uid=[0],
             advanced=True,
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name='blockSize',
@@ -99,6 +101,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
             range=(8, 1024, 1),
             uid=[0],
             advanced=True,
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name='radius',
@@ -108,6 +111,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
             range=(0, 10, 1),
             uid=[0],
             advanced=True,
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name='maxCountSample',
@@ -117,6 +121,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
             range=(10, 1000, 10),
             uid=[0],
             advanced=True,
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.BoolParam(
             name='debug',
@@ -124,6 +129,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
             description="Export debug files to analyze the sampling strategy.",
             value=False,
             uid=[],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -147,7 +153,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
     ]
 
     def processChunk(self, chunk):
-        if chunk.node.byPass.value:
+        if chunk.node.nbBrackets.value == 1 or chunk.node.byPass.value:
             return
         super(LdrToHdrSampling, self).processChunk(chunk)
 

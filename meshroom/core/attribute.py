@@ -58,6 +58,7 @@ class Attribute(BaseObject):
         self._isOutput = isOutput
         self._value = copy.copy(attributeDesc.value)
         self._label = attributeDesc.label
+        self._enabled = True
 
         # invalidation value for output attributes
         self._invalidationValue = ""
@@ -94,6 +95,21 @@ class Attribute(BaseObject):
 
     def getLabel(self):
         return self._label
+
+    def getEnabled(self):
+        if isinstance(self.desc.enabled, types.FunctionType):
+            try:
+                return self.desc.enabled(self.node)
+            except:
+                # Node implementation may fail due to version mismatch
+                return True
+        return self.attributeDesc.enabled
+
+    def setEnabled(self, v):
+        if self._enabled == v:
+            return
+        self._enabled = v
+        self.enabledChanged.emit()
 
     def _get_value(self):
         return self.getLinkParam().value if self.isLink else self._value
@@ -224,6 +240,11 @@ class Attribute(BaseObject):
     def getPrimitiveValue(self, exportDefault=True):
         return self._value
 
+    def updateInternals(self):
+        # Emit if the enable status has changed
+        self.setEnabled(self.getEnabled())
+
+
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
     label = Property(str, getLabel, constant=True)
@@ -237,6 +258,8 @@ class Attribute(BaseObject):
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     node = Property(BaseObject, node.fget, constant=True)
+    enabledChanged = Signal()
+    enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
 
 
 def raiseIfLink(func):
@@ -353,6 +376,11 @@ class ListAttribute(Attribute):
             return self.attributeDesc.joinChar.join([v.getValueStr() for v in self.value])
         return super(ListAttribute, self).getValueStr()
 
+    def updateInternals(self):
+        super(ListAttribute, self).updateInternals()
+        for attr in self._value:
+            attr.updateInternals()
+
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
@@ -433,6 +461,11 @@ class GroupAttribute(Attribute):
         # sort values based on child attributes group description order
         sortedSubValues = [self._value.get(attr.name).getValueStr() for attr in self.attributeDesc.groupDesc]
         return self.attributeDesc.joinChar.join(sortedSubValues)
+
+    def updateInternals(self):
+        super(GroupAttribute, self).updateInternals()
+        for attr in self._value:
+            attr.updateInternals()
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

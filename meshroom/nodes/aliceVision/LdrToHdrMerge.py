@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 import json
 
@@ -48,26 +48,6 @@ class LdrToHdrMerge(desc.CommandLineNode):
             uid=[0],
         ),
         desc.IntParam(
-            name='offsetRefBracketIndex',
-            label='Offset Ref Bracket Index',
-            description='Zero to use the center bracket. +N to use a more exposed bracket or -N to use a less exposed backet.',
-            value=1,
-            range=(-4, 4, 1),
-            uid=[0],
-        ),
-        desc.ChoiceParam(
-            name='fusionWeight',
-            label='Fusion Weight',
-            description="Weight function used to fuse all LDR images together:\n"
-                        " * gaussian \n"
-                        " * triangle \n"
-                        " * plateau",
-            value='gaussian',
-            values=['gaussian', 'triangle', 'plateau'],
-            exclusive=True,
-            uid=[0],
-        ),
-        desc.IntParam(
             name='userNbBrackets',
             label='Number of Brackets',
             description='Number of exposure brackets per HDR image (0 for automatic detection).',
@@ -84,13 +64,35 @@ class LdrToHdrMerge(desc.CommandLineNode):
             range=(0, 10, 1),
             uid=[],
         ),
+        desc.IntParam(
+            name='offsetRefBracketIndex',
+            label='Offset Ref Bracket Index',
+            description='Zero to use the center bracket. +N to use a more exposed bracket or -N to use a less exposed backet.',
+            value=1,
+            range=(-4, 4, 1),
+            uid=[0],
+            enabled= lambda node: node.nbBrackets.value != 1,
+        ),
         desc.BoolParam(
             name='byPass',
-            label='bypass convert',
+            label='Bypass',
             description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
             uid=[0],
-            advanced=True,
+            enabled= lambda node: node.nbBrackets.value != 1,
+        ),
+        desc.ChoiceParam(
+            name='fusionWeight',
+            label='Fusion Weight',
+            description="Weight function used to fuse all LDR images together:\n"
+                        " * gaussian \n"
+                        " * triangle \n"
+                        " * plateau",
+            value='gaussian',
+            values=['gaussian', 'triangle', 'plateau'],
+            exclusive=True,
+            uid=[0],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name='channelQuantizationPower',
@@ -100,6 +102,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
             range=(8, 14, 1),
             uid=[0],
             advanced=True,
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.FloatParam(
             name='highlightCorrectionFactor',
@@ -112,6 +115,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
             value=1.0,
             range=(0.0, 1.0, 0.01),
             uid=[0],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.FloatParam(
             name='highlightTargetLux',
@@ -134,6 +138,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
             value=120000.0,
             range=(1000.0, 150000.0, 1.0),
             uid=[0],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value and node.highlightCorrectionFactor.value != 0,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

@@ -41,6 +41,9 @@ class PlatformExecutable(Executable):
 build_exe_options = {
     # include dynamically loaded plugins
     "packages": ["meshroom.nodes", "meshroom.submitters"],
+    "includes": [
+        "idna.idnadata",  # Dependency needed by SketchfabUpload node, but not detected by cx_Freeze
+    ],
     "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md"]
 }
 

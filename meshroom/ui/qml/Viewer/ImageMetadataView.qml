@@ -19,6 +19,7 @@ FloatingPane {
 
     clip: true
     padding: 4
+    anchors.rightMargin: 0
 
     /**
      * Convert GPS metadata to degree coordinates.
@@ -44,7 +45,7 @@ FloatingPane {
     function getGPSCoordinates(metadata)
     {
         // GPS data available
-        if(metadata["GPS:Longitude"] != undefined && metadata["GPS:Latitude"] != undefined)
+        if(metadata && metadata["GPS:Longitude"] != undefined && metadata["GPS:Latitude"] != undefined)
         {
             var latitude = gpsMetadataToCoordinates(metadata["GPS:Latitude"], metadata["GPS:LatitudeRef"])
             var longitude = gpsMetadataToCoordinates(metadata["GPS:Longitude"], metadata["GPS:LongitudeRef"])
@@ -76,13 +77,16 @@ FloatingPane {
             for(var key in metadata)
             {
                 var entry = {}
-                entry["raw"] = key
                 // split on ":" to get group and key
-                var sKey = key.split(":", 2)
-                if(sKey.length === 2)
+                var i = key.lastIndexOf(":")
+                if(i == -1)
                 {
-                    entry["group"] = sKey[0]
-                    entry["key"] = sKey[1]
+                    i = key.lastIndexOf("/")
+                }
+                if(i != -1)
+                {
+                    entry["group"] = key.substr(0, i)
+                    entry["key"] = key.substr(i+1)
                 }
                 else
                 {

@@ -235,12 +235,26 @@ RowLayout {
                     property string displayValue: String(slider.active && slider.item.pressed ? slider.item.formattedValue : attribute.value)
                     text: displayValue
                     selectByMouse: true
+                    // Note: Use autoScroll as a workaround for alignment
+                    // When the value change keep the text align to the left to be able to read the most important part
+                    // of the number. When we are editing (item is in focus), the content should follow the editing.
+                    autoScroll: activeFocus
                     validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
-                    onAccepted: setTextFieldAttribute(text)
+                    onAccepted: {
+                        setTextFieldAttribute(text)
+                        // When the text is too long, display the left part
+                        // (with the most important values and cut the floating point details)
+                        ensureVisible(0)
+                    }
                     Component.onDestruction: {
                         if(activeFocus)
                             setTextFieldAttribute(text)
+                    }
+                    Component.onCompleted: {
+                        // When the text is too long, display the left part
+                        // (with the most important values and cut the floating point details)
+                        ensureVisible(0)
                     }
                 }
 
@@ -356,7 +370,7 @@ RowLayout {
                 Component.onCompleted:  {
                     var cpt = Qt.createComponent("AttributeEditor.qml");
                     var obj = cpt.createObject(groupItem,
-                                               {'attributes': Qt.binding(function() { return attribute.value }),
+                                               {'model': Qt.binding(function() { return attribute.value }),
                                                 'readOnly': Qt.binding(function() { return root.readOnly }),
                                                 'labelWidth': 100, // reduce label width for children (space gain)
                                                })

@@ -9,6 +9,10 @@ class PrepareDenseScene(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    documentation = '''
+This node export undistorted images so the depth map and texturing can be computed on Pinhole images without distortion.
+'''
+
     inputs = [
         desc.File(
             name='input',

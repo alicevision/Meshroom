@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # coding:utf-8
-import collections
+import copy
 import re
 import weakref
+import types
+import logging
 
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, pyCompatibility, hashValue
@@ -54,8 +56,9 @@ class Attribute(BaseObject):
         self._node = weakref.ref(node)
         self.attributeDesc = attributeDesc
         self._isOutput = isOutput
-        self._value = attributeDesc.value
+        self._value = copy.copy(attributeDesc.value)
         self._label = attributeDesc.label
+        self._enabled = True
 
         # invalidation value for output attributes
         self._invalidationValue = ""
@@ -92,6 +95,21 @@ class Attribute(BaseObject):
 
     def getLabel(self):
         return self._label
+
+    def getEnabled(self):
+        if isinstance(self.desc.enabled, types.FunctionType):
+            try:
+                return self.desc.enabled(self.node)
+            except:
+                # Node implementation may fail due to version mismatch
+                return True
+        return self.attributeDesc.enabled
+
+    def setEnabled(self, v):
+        if self._enabled == v:
+            return
+        self._enabled = v
+        self.enabledChanged.emit()
 
     def _get_value(self):
         return self.getLinkParam().value if self.isLink else self._value
@@ -151,10 +169,8 @@ class Attribute(BaseObject):
     @property
     def isLink(self):
         """ Whether the attribute is a link to another attribute. """
-        # Note: Need to test self.node.graph.edges before accessing to edges.keys() to avoid errors in particular conditions.
-        #       For instance: open a scene, modify something and close without saving it.
-        if not self.node.graph or not self.node.graph.edges or not self.isInput:
-            return False
+        # note: directly use self.node.graph._edges to avoid using the property that may become invalid at some point
+        return self.node.graph and self.isInput and self in self.node.graph._edges.keys()
 
         return self in self.node.graph.edges.keys()
 
@@ -166,8 +182,15 @@ class Attribute(BaseObject):
         """
         return isinstance(value, pyCompatibility.basestring) and Attribute.stringIsLinkRe.match(value)
 
-    def getLinkParam(self):
-        return self.node.graph.edge(self).src if self.isLink else None
+    def getLinkParam(self, recursive=False):
+        if not self.isLink:
+            return None
+        linkParam = self.node.graph.edge(self).src
+        if not recursive:
+            return linkParam
+        if linkParam.isLink:
+            return linkParam.getLinkParam(recursive)
+        return linkParam
 
     @property
     def hasOutputConnections(self):
@@ -194,32 +217,43 @@ class Attribute(BaseObject):
             # value is a link to another attribute
             link = v[1:-1]
             linkNode, linkAttr = link.split('.')
-            g.addEdge(g.node(linkNode).attribute(linkAttr), self)
+            try:
+                g.addEdge(g.node(linkNode).attribute(linkAttr), self)
+            except KeyError as err:
+                logging.warning('Connect Attribute from Expression failed.\nExpression: "{exp}"\nError: "{err}".'.format(exp=v, err=err))
             self.resetValue()
 
     def getExportValue(self):
         if self.isLink:
             return self.getLinkParam().asLinkExpr()
         if self.isOutput:
-            return self.desc.value
+            return self.defaultValue()
         return self._value
 
     def getValueStr(self):
         if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
-            assert(isinstance(self.value, collections.Sequence) and not isinstance(self.value, pyCompatibility.basestring))
+            assert(isinstance(self.value, pyCompatibility.Sequence) and not isinstance(self.value, pyCompatibility.basestring))
             return self.attributeDesc.joinChar.join(self.value)
         if isinstance(self.attributeDesc, (desc.StringParam, desc.File)):
             return '"{}"'.format(self.value)
         return str(self.value)
 
     def defaultValue(self):
-        return self.desc.value
+        if isinstance(self.desc.value, types.FunctionType):
+            return self.desc.value(self)
+        # Need to force a copy, for the case where the value is a list (avoid reference to the desc value)
+        return copy.copy(self.desc.value)
 
     def _isDefault(self):
         return self._value == self.defaultValue()
 
     def getPrimitiveValue(self, exportDefault=True):
         return self._value
+
+    def updateInternals(self):
+        # Emit if the enable status has changed
+        self.setEnabled(self.getEnabled())
+
 
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
@@ -236,6 +270,8 @@ class Attribute(BaseObject):
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     node = Property(BaseObject, node.fget, constant=True)
+    enabledChanged = Signal()
+    enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
 
 
 def raiseIfLink(func):
@@ -352,6 +388,11 @@ class ListAttribute(Attribute):
             return self.attributeDesc.joinChar.join([v.getValueStr() for v in self.value])
         return super(ListAttribute, self).getValueStr()
 
+    def updateInternals(self):
+        super(ListAttribute, self).updateInternals()
+        for attr in self._value:
+            attr.updateInternals()
+
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
@@ -432,6 +473,11 @@ class GroupAttribute(Attribute):
         # sort values based on child attributes group description order
         sortedSubValues = [self._value.get(attr.name).getValueStr() for attr in self.attributeDesc.groupDesc]
         return self.attributeDesc.joinChar.join(sortedSubValues)
+
+    def updateInternals(self):
+        super(GroupAttribute, self).updateInternals()
+        for attr in self._value:
+            attr.updateInternals()
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

@@ -6,6 +6,11 @@ from meshroom.core import desc
 class MeshDenoising(desc.CommandLineNode):
     commandLine = 'aliceVision_meshDenoising {allParams}'
 
+    documentation = '''
+This experimental node allows to reduce noise from a Mesh.
+for now, the parameters are difficult to control and vary a lot from one dataset to another.
+'''
+
     inputs = [
         desc.File(
             name='input',
@@ -69,7 +74,7 @@ class MeshDenoising(desc.CommandLineNode):
             label='Mesh Update Method',
             description='Mesh Update Method\n'
                         ' * ITERATIVE_UPDATE (default): ShapeUp styled iterative solver \n'
-                        ' * POISSON_UPDATE: Poisson-based update from [Want et al. 2015]',
+                        ' * POISSON_UPDATE: Poisson-based update from [Wang et al. 2015] "Rolling guidance normal filter for geometric processing"',
             value=0,
             values=(0, 1),
             exclusive=True,

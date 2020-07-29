@@ -273,12 +273,15 @@ class Graph(BaseObject):
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
 
-        if setupProjectFile:
-            # Update filepath related members
-            self._setFilepath(filepath)
+            # Create graph edges by resolving attributes expressions
+            self._applyExpr()
 
-        # Create graph edges by resolving attributes expressions
-        self._applyExpr()
+            if setupProjectFile:
+                # Update filepath related members
+                # Note: needs to be done at the end as it will trigger an updateInternals.
+                self._setFilepath(filepath)
+
+        return True
 
     @property
     def updateEnabled(self):
@@ -558,7 +561,7 @@ class Graph(BaseObject):
         candidates = self.findNodeCandidates('^' + nodeExpr)
         if not candidates:
             raise KeyError('No node candidate for "{}"'.format(nodeExpr))
-        elif len(candidates) > 1:
+        if len(candidates) > 1:
             raise KeyError('Multiple node candidates for "{}": {}'.format(nodeExpr, str([c.name for c in candidates])))
         return candidates[0]
 
@@ -680,11 +683,11 @@ class Graph(BaseObject):
                 # (u,v) is a tree edge
                 self.dfsVisit(v, visitor, colors, nodeChildren, longestPathFirst)  # TODO: avoid recursion
             elif colors[v] == GRAY:
+                # (u,v) is a back edge
                 visitor.backEdge((u, v), self)
-                pass  # (u,v) is a back edge
             elif colors[v] == BLACK:
+                # (u,v) is a cross or forward edge
                 visitor.forwardOrCrossEdge((u, v), self)
-                pass  # (u,v) is a cross or forward edge
             visitor.finishEdge((u, v), self)
         colors[u] = BLACK
         visitor.finishVertex(u, self)
@@ -739,8 +742,7 @@ class Graph(BaseObject):
         def finishEdge(edge, graph):
             if edge[0].hasStatus(Status.SUCCESS) or edge[1].hasStatus(Status.SUCCESS):
                 return
-            else:
-                edges.append(edge)
+            edges.append(edge)
 
         visitor.finishVertex = finishVertex
         visitor.finishEdge = finishEdge
@@ -871,23 +873,23 @@ class Graph(BaseObject):
                 flowEdges.append(link)
         return flowEdges
 
-    def nodesFromNode(self, startNode, filterType=None):
+    def nodesFromNode(self, startNode, filterTypes=None):
         """
         Return the node chain from startNode to the graph leaves.
 
         Args:
             startNode (Node): the node to start the visit from.
-            filterType (str): (optional) only return the nodes of the given type
+            filterTypes (str list): (optional) only return the nodes of the given types
                               (does not stop the visit, this is a post-process only)
         Returns:
-            The list of nodes from startNode to the graph leaves following edges.
+            The list of nodes and edges, from startNode to the graph leaves following edges.
         """
         nodes = []
         edges = []
         visitor = Visitor()
 
         def discoverVertex(vertex, graph):
-            if not filterType or vertex.nodeType == filterType:
+            if not filterTypes or vertex.nodeType in filterTypes:
                 nodes.append(vertex)
 
         visitor.discoverVertex = discoverVertex

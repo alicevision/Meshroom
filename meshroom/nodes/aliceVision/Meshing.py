@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "5.0"
 
 from meshroom.core import desc
 
@@ -8,6 +8,17 @@ class Meshing(desc.CommandLineNode):
 
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
+
+    documentation = '''
+This node creates a dense geometric surface representation of the scene.
+
+First, it fuses all the depth maps into a global dense point cloud with an adaptive resolution.
+It then performs a 3D Delaunay tetrahedralization and a voting procedure is done to compute weights on cells and weights on facets connecting the cells.
+A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents the extracted mesh surface.
+
+## Online
+[https://alicevision.org/#photogrammetry/meshing](https://alicevision.org/#photogrammetry/meshing)
+'''
 
     inputs = [
         desc.File(
@@ -19,15 +30,8 @@ class Meshing(desc.CommandLineNode):
         ),
         desc.File(
             name="depthMapsFolder",
-            label='DepthMaps Folder',
-            description='Input depth maps folder',
-            value='',
-            uid=[0],
-        ),
-        desc.File(
-            name="depthMapsFilterFolder",
-            label='Filtered Depth Maps Folder',
-            description='Input filtered depth maps folder',
+            label='Depth Maps Folder',
+            description='Input depth maps folder.',
             value='',
             uid=[0],
         ),
@@ -47,6 +51,7 @@ class Meshing(desc.CommandLineNode):
             range=(0, 100, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: node.estimateSpaceFromSfM.value,
         ),
         desc.FloatParam(
             name='estimateSpaceMinObservationAngle',
@@ -55,6 +60,7 @@ class Meshing(desc.CommandLineNode):
             value=10,
             range=(0, 120, 1),
             uid=[0],
+            enabled=lambda node: node.estimateSpaceFromSfM.value,
         ),
         desc.IntParam(
             name='maxInputPoints',

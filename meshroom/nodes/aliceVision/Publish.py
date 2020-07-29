@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-__version__ = "1.1"
+__version__ = "1.2"
 
 from meshroom.core import desc
 import shutil
@@ -10,6 +10,11 @@ import os
 
 class Publish(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
+
+    documentation = '''
+This node allows to copy files into a specific folder.
+'''
+
     inputs = [
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -30,6 +35,15 @@ class Publish(desc.Node):
             description="",
             value="",
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='''verbosity level (critical, error, warning, info, debug).''',
+            value='info',
+            values=['critical', 'error', 'warning', 'info', 'debug'],
+            exclusive=True,
+            uid=[],
             ),
         ]
 
@@ -41,23 +55,29 @@ class Publish(desc.Node):
         return paths
 
     def processChunk(self, chunk):
-        print("Publish")
-        if not chunk.node.inputFiles:
-            print("Nothing to publish")
-            return
-        if not chunk.node.output.value:
-            return
+        try:
+            chunk.logManager.start(chunk.node.verboseLevel.value)
+            
+            if not chunk.node.inputFiles:
+                chunk.logger.warning('Nothing to publish')
+                return
+            if not chunk.node.output.value:
+                return
 
-        outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
+            outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
-        if not outFiles:
-            raise RuntimeError("Publish: input files listed, but nothing to publish. "
-                               "Listed input files: {}".format(chunk.node.inputFiles.value))
+            if not outFiles:
+                error = 'Publish: input files listed, but nothing to publish'
+                chunk.logger.error(error)
+                chunk.logger.info('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+                raise RuntimeError(error)
 
-        if not os.path.exists(chunk.node.output.value):
-            os.mkdir(chunk.node.output.value)
+            if not os.path.exists(chunk.node.output.value):
+                os.mkdir(chunk.node.output.value)
 
-        for iFile, oFile in outFiles.items():
-            print('Publish file', iFile, 'into', oFile)
-            shutil.copyfile(iFile, oFile)
-        print('Publish end')
+            for iFile, oFile in outFiles.items():
+                chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
+                shutil.copyfile(iFile, oFile)
+            chunk.logger.info('Publish end')
+        finally:
+            chunk.logManager.end()

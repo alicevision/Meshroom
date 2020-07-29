@@ -1,11 +1,25 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
+
+import os.path
 
 
 class SfMAlignment(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmAlignment {allParams}'
     size = desc.DynamicNodeSize('input')
+
+    documentation = '''
+This node allows to change the coordinate system of one SfM scene to align it on another one.
+
+The alignment can be based on:
+ * from_cameras_viewid: Align cameras in both SfM on the specified viewId
+ * from_cameras_poseid: Align cameras in both SfM on the specified poseId
+ * from_cameras_filepath: Align cameras with a filepath matching, using 'fileMatchingPattern'
+ * from_cameras_metadata: Align cameras with matching metadata, using 'metadataMatchingList'
+ * from_markers: Align from markers with the same Id
+
+'''
 
     inputs = [
         desc.File(
@@ -95,9 +109,16 @@ class SfMAlignment(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output',
-            description='''Aligned SfMData file .''',
-            value=desc.Node.internalFolder + 'alignedSfM.abc',
+            label='Output SfMData File',
+            description='SfMData file.',
+            value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or 'sfmData') + '.abc',
+            uid=[],
+        ),
+        desc.File(
+            name='outputViewsAndPoses',
+            label='Output Poses',
+            description='''Path to the output sfmdata file with cameras (views and poses).''',
+            value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],
         ),
     ]

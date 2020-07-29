@@ -16,19 +16,32 @@ Panel {
 
     property variant cameraInits
     property variant cameraInit
+    property variant tempCameraInit
     readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
+    readonly property int centerViewId: (_reconstruction && _reconstruction.sfmTransform) ? parseInt(_reconstruction.sfmTransform.attribute("transformation").value) : 0
+
     property int defaultCellSize: 160
     property int currentIndex: 0
     property bool readOnly: false
-    readonly property variant viewpoints: cameraInit.attribute('viewpoints').value
 
     signal removeImageRequest(var attribute)
     signal filesDropped(var drop, var augmentSfm)
 
     title: "Images"
     implicitWidth: (root.defaultCellSize + 2) * 2
+
+    function changeCurrentIndex(newIndex) {
+        _reconstruction.cameraInitIndex = newIndex
+    }
+
+    QtObject {
+        id: m
+        property variant currentCameraInit: _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
+        property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
+        property bool readOnly: root.readOnly || displayHDR.checked
+    }
 
     headerBar: RowLayout {
         MaterialToolButton {
@@ -99,7 +112,7 @@ Panel {
 
             model: SortFilterDelegateModel {
                 id: sortedModel
-                model: _reconstruction.viewpoints
+                model: m.viewpoints
                 sortRole: "path"
                 // TODO: provide filtering on reconstruction status
                 // filterRole: _reconstruction.sfmReport ? "reconstructed" : ""
@@ -123,7 +136,7 @@ Panel {
                     viewpoint: object.value
                     width: grid.cellWidth
                     height: grid.cellHeight
-                    readOnly: root.readOnly
+                    readOnly: m.readOnly
                     displayViewId: displayViewIdsAction.checked
 
                     isCurrentItem: GridView.isCurrentItem
@@ -178,6 +191,16 @@ Panel {
                             }
                         }
 
+                        // Center of SfMTransform
+                        Loader {
+                            id: sfmTransformIndicator
+                            active: viewpoint && (viewpoint.get("viewId").value == centerViewId)
+                            sourceComponent: ImageBadge {
+                                text: MaterialIcons.gamepad
+                                ToolTip.text: "Camera used to define the center of the scene."
+                            }
+                        }
+
                         Item { Layout.fillWidth: true }
 
                         // Reconstruction status indicator
@@ -202,9 +225,9 @@ Panel {
                 {
                     event.accepted = true
                     if(event.key == Qt.Key_Right)
-                        root.currentIndex = Math.min(root.cameraInits.count - 1, root.currentIndex + 1)
+                        root.changeCurrentIndex(Math.min(root.cameraInits.count - 1, root.currentIndex + 1))
                     else if(event.key == Qt.Key_Left)
-                        root.currentIndex = Math.max(0, root.currentIndex - 1)
+                        root.changeCurrentIndex(Math.max(0, root.currentIndex - 1))
                 }
             }
 
@@ -227,7 +250,7 @@ Panel {
             DropArea {
                 id: dropArea
                 anchors.fill: parent
-                enabled: !root.readOnly
+                enabled: !m.readOnly
                 keys: ["text/uri-list"]
                 // TODO: onEntered: call specific method to filter files based on extension
                 onDropped: {
@@ -274,7 +297,7 @@ Panel {
                         text: "Augment Reconstruction"
                         font.bold: true
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        visible: viewpoints.count > 0
+                        visible: m.viewpoints ? m.viewpoints.count > 0 : false
                         background: Rectangle {
                             color: parent.hovered ? palette.highlight : palette.window
                             opacity: 0.8
@@ -299,14 +322,13 @@ Panel {
                 enabled: nodesCB.currentIndex > 0
                 onClicked: nodesCB.decrementCurrentIndex()
             }
-            Label { text: "Group " }
+            Label { id: groupLabel; text: "Group " }
             ComboBox {
                 id: nodesCB
                 model: root.cameraInits.count
                 implicitWidth: 40
                 currentIndex: root.currentIndex
-                onActivated: root.currentIndex = currentIndex
-
+                onActivated: root.changeCurrentIndex(currentIndex)
             }
             Label { text: "/ " + (root.cameraInits.count - 1) }
             ToolButton {
@@ -321,27 +343,118 @@ Panel {
     }
 
     footerContent: RowLayout {
-
-        // Image count
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            RowLayout {
-                MaterialLabel { text: MaterialIcons.image }
-                Label { text: grid.model.count }
-            }
-            RowLayout {
-                visible: _reconstruction.cameraInit && _reconstruction.nbCameras
-                MaterialLabel { text: MaterialIcons.videocam }
-                Label { text: _reconstruction.cameraInit ? _reconstruction.nbCameras : 0 }
-            }
+        // Images count
+        MaterialToolLabel {
+            ToolTip.text: grid.model.count + " Input Images"
+            iconText: MaterialIcons.image
+            label: grid.model.count.toString()
+            // enabled: grid.model.count > 0
+            // margin: 4
+        }
+        // cameras count
+        MaterialToolLabel {
+            ToolTip.text: label + " Estimated Cameras"
+            iconText: MaterialIcons.videocam
+            label: _reconstruction ? _reconstruction.nbCameras.toString() : "0"
+            // margin: 4
+            // enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
         }
 
         Item { Layout.fillHeight: true; Layout.fillWidth: true }
 
+        MaterialToolLabelButton {
+            id: displayHDR
+            property var activeNode: _reconstruction.activeNodes.get("LdrToHdrMerge").node
+            ToolTip.text: "Visualize HDR images: " + (activeNode ? activeNode.label : "No Node")
+            iconText: MaterialIcons.filter
+            label: activeNode ? activeNode.attribute("nbBrackets").value : ""
+            visible: activeNode
+            enabled: activeNode && activeNode.isComputed
+            property string nodeID: activeNode ? (activeNode.label + activeNode.isComputed) : ""
+            onNodeIDChanged: {
+                if(checked) {
+                    open();
+                }
+            }
+            onEnabledChanged: {
+                // Reset the toggle to avoid getting stuck
+                // with the HDR node checked but disabled.
+                if(checked) {
+                    checked = false;
+                    close();
+                }
+            }
+            checkable: true
+            checked: false
+            onClicked: {
+                if(checked) {
+                    open();
+                } else {
+                    close();
+                }
+            }
+            function open() {
+                if(imageProcessing.checked)
+                    imageProcessing.checked = false;
+                _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
+            }
+            function close() {
+                    _reconstruction.clearTempCameraInit();
+            }
+        }
+
+        MaterialToolButton {
+            id: imageProcessing
+            property var activeNode: _reconstruction.activeNodes.get("ImageProcessing").node
+            font.pointSize: 15
+            padding: 0
+            ToolTip.text: "Preprocessed Images: " + (activeNode ? activeNode.label : "No Node")
+            text: MaterialIcons.wallpaper
+            visible: activeNode && activeNode.attribute("outSfMData").value
+            enabled: activeNode && activeNode.isComputed
+            property string nodeID: activeNode ? (activeNode.label + activeNode.isComputed) : ""
+            onNodeIDChanged: {
+                if(checked) {
+                    open();
+                }
+            }
+            onEnabledChanged: {
+                // Reset the toggle to avoid getting stuck
+                // with the HDR node checked but disabled.
+                if(checked) {
+                    checked = false;
+                    close();
+                }
+            }
+            checkable: true
+            checked: false
+            onClicked: {
+                if(checked) {
+                    open();
+                } else {
+                    close();
+                }
+            }
+            function open() {
+                if(displayHDR.checked)
+                    displayHDR.checked = false;
+                _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
+            }
+            function close() {
+                    _reconstruction.clearTempCameraInit();
+            }
+        }
+
+        Item { Layout.fillHeight: true; width: 1 }
+
         // Thumbnail size icon and slider
-        MaterialLabel {
+        MaterialToolButton {
             text: MaterialIcons.photo_size_select_large
+            ToolTip.text: "Thumbnails Scale"
+            padding: 0
+            anchors.margins: 0
+            font.pointSize: 11
+            onClicked: { thumbnailSizeSlider.value = defaultCellSize; }
         }
         Slider {
             id: thumbnailSizeSlider
@@ -351,5 +464,4 @@ Panel {
             implicitWidth: 70
         }
     }
-
 }

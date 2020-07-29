@@ -44,9 +44,10 @@ Item {
 
     // Load reconstruction's current SfM file
     function viewSfM() {
-        if(!reconstruction.sfm)
+        var activeNode = _reconstruction.activeNodes.get('sfm').node;
+        if(!activeNode)
             return;
-        viewer3D.view(reconstruction.sfm.attribute('output'));
+        viewer3D.view(activeNode.attribute('output'));
     }
 
     SystemPalette { id: activePalette }
@@ -64,9 +65,9 @@ Item {
                 Layout.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
-                cameraInit: _reconstruction.cameraInit
+                cameraInit: reconstruction.cameraInit
+                tempCameraInit: reconstruction.tempCameraInit
                 currentIndex: reconstruction.cameraInitIndex
-                onCurrentIndexChanged: reconstruction.cameraInitIndex = currentIndex
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
             }
@@ -81,10 +82,44 @@ Item {
             title: "Image Viewer"
             Layout.fillHeight: true
             Layout.fillWidth: true
-            Layout.minimumWidth: 40
+            Layout.minimumWidth: 50
+            loading: viewer2D.loadingModules.length > 0
+            loadingText: loading ? "Loading " + viewer2D.loadingModules : ""
+
+            headerBar: RowLayout {
+                MaterialToolButton {
+                    text: MaterialIcons.more_vert
+                    font.pointSize: 11
+                    padding: 2
+                    checkable: true
+                    checked: imageViewerMenu.visible
+                    onClicked: imageViewerMenu.open()
+                    Menu {
+                        id: imageViewerMenu
+                        y: parent.height
+                        x: -width + parent.width
+                        Action {
+                            id: displayImageToolBarAction
+                            text: "Display HDR Toolbar"
+                            checkable: true
+                            checked: true
+                            enabled: viewer2D.useFloatImageViewer
+                        }
+                        Action {
+                            id: displayImagePathAction
+                            text: "Display Image Path"
+                            checkable: true
+                            checked: true
+                        }
+                    }
+                }
+            }
+
             Viewer2D {
                 id: viewer2D
                 anchors.fill: parent
+
+                viewIn3D: root.load3DMedia
 
                 Connections {
                     target: imageGallery
@@ -157,7 +192,7 @@ Item {
                     mediaLibrary: viewer3D.library
                     camera: viewer3D.mainCamera
                     uigraph: reconstruction
-                    onNodeActivated: _reconstruction.setActiveNodeOfType(node)
+                    onNodeActivated: _reconstruction.setActiveNode(node)
                 }
             }
         }

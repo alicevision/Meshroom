@@ -10,31 +10,37 @@ import Utils 1.0
 Repeater {
     id: root
 
-    /// ViewID to display the features of
+    /// ViewID to display the features of a specific view
     property int viewId
+    /// SfMData to display the data of SfM
+    property var sfmData
     /// Folder containing the features files
-    property string folder
+    property string featureFolder
+    /// Tracks object loading all the matches files
+    property var tracks
     /// The list of describer types to load
     property alias describerTypes: root.model
     /// List of available display modes
     readonly property var displayModes: ['Points', 'Squares', 'Oriented Squares']
     /// Current display mode index
-    property int displayMode: 0
+    property int displayMode: 2
     /// The list of colors used for displaying several describers
-    property var colors: [Colors.blue, Colors.red, Colors.yellow, Colors.green, Colors.orange, Colors.cyan, Colors.pink, Colors.lime]
-    /// Offset the color list
-    property int colorOffset: 0
+    property var colors: [Colors.blue, Colors.green, Colors.yellow, Colors.orange, Colors.cyan, Colors.pink, Colors.lime] //, Colors.red
 
     model: root.describerTypes
 
     // instantiate one FeaturesViewer by describer type
     delegate: AliceVision.FeaturesViewer {
-        readonly property int colorIndex: (index+root.colorOffset)%root.colors.length
+        readonly property int colorIndex: (index + colorOffset) % root.colors.length
+        property int colorOffset: 0
         describerType: modelData
-        folder: root.folder
+        featureFolder: root.featureFolder
+        mtracks: root.tracks
         viewId: root.viewId
         color: root.colors[colorIndex]
+        landmarkColor: Colors.red
         displayMode: root.displayMode
+        msfmData: root.sfmData
     }
 
 }

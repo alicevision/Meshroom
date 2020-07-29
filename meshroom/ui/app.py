@@ -2,12 +2,14 @@ import logging
 import os
 import argparse
 
-from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, qInstallMessageHandler, QtMsgType
+from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, Signal, qInstallMessageHandler, QtMsgType, QSettings
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import nodesDesc
+from meshroom.core import pyCompatibility
+
 from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
 from meshroom.ui.components.filepath import FilepathHelper
@@ -141,6 +143,7 @@ class MeshroomApp(QApplication):
 
         if args.project:
             r.load(args.project)
+            self.addRecentProjectFile(args.project)
         else:
             r.new()
 
@@ -164,8 +167,99 @@ class MeshroomApp(QApplication):
                         "Invalid value: '{}'".format(args.save))
                 os.mkdir(projectFolder)
             r.saveAs(args.save)
+            self.addRecentProjectFile(args.save)
 
         self.engine.load(os.path.normpath(url))
+
+    def _recentProjectFiles(self):
+        projects = []
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        size = settings.beginReadArray("Projects")
+        for i in range(size):
+            settings.setArrayIndex(i)
+            p = settings.value("filepath")
+            if p:
+                projects.append(p)
+        settings.endArray()
+        return projects
+
+    @Slot(str)
+    @Slot(QUrl)
+    def addRecentProjectFile(self, projectFile):
+        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+            raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
+        if isinstance(projectFile, QUrl):
+            projectFileNorm = projectFile.toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = projectFile.toString()
+        else:
+            projectFileNorm = QUrl(projectFile).toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
+
+        projects = self._recentProjectFiles()
+
+        # remove duplicates while preserving order
+        from collections import OrderedDict
+        uniqueProjects = OrderedDict.fromkeys(projects)
+        projects = list(uniqueProjects)
+        # remove previous usage of the value
+        if projectFileNorm in uniqueProjects:
+            projects.remove(projectFileNorm)
+        # add the new value in the first place
+        projects.insert(0, projectFileNorm)
+
+        # keep only the 10 first elements
+        projects = projects[0:20]
+
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        size = settings.beginWriteArray("Projects")
+        for i, p in enumerate(projects):
+            settings.setArrayIndex(i)
+            settings.setValue("filepath", p)
+        settings.endArray()
+        settings.sync()
+
+        self.recentProjectFilesChanged.emit()
+
+    @Slot(str)
+    @Slot(QUrl)
+    def removeRecentProjectFile(self, projectFile):
+        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+            raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
+        if isinstance(projectFile, QUrl):
+            projectFileNorm = projectFile.toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = projectFile.toString()
+        else:
+            projectFileNorm = QUrl(projectFile).toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
+
+        projects = self._recentProjectFiles()
+
+        # remove duplicates while preserving order
+        from collections import OrderedDict
+        uniqueProjects = OrderedDict.fromkeys(projects)
+        projects = list(uniqueProjects)
+        # remove previous usage of the value
+        if projectFileNorm not in uniqueProjects:
+            return
+
+        projects.remove(projectFileNorm)
+
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        size = settings.beginWriteArray("Projects")
+        for i, p in enumerate(projects):
+            settings.setArrayIndex(i)
+            settings.setValue("filepath", p)
+        settings.endArray()
+        settings.sync()
+
+        self.recentProjectFilesChanged.emit()
 
     @Slot(str, result=str)
     def markdownToHtml(self, md):
@@ -216,3 +310,7 @@ class MeshroomApp(QApplication):
                 "onlineUrl": "https://raw.githubusercontent.com/alicevision/AliceVision/develop/COPYING.md"
             }
         ]
+
+    recentProjectFilesChanged = Signal()
+    recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
+

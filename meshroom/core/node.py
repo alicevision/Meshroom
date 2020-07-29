@@ -547,8 +547,8 @@ class BaseNode(BaseObject):
 
     def _buildCmdVars(self):
         def _buildAttributeCmdVars(cmdVars, name, attr):
-            if attr.attributeDesc.group is not None:
-                if attr.enabled:
+            if attr.enabled:
+                if attr.attributeDesc.group is not None:
                     # if there is a valid command line "group"
                     v = attr.getValueStr()
                     cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
@@ -557,12 +557,12 @@ class BaseNode(BaseObject):
                     if v:
                         cmdVars[attr.attributeDesc.group] = cmdVars.get(attr.attributeDesc.group, '') + \
                                                                 ' ' + cmdVars[name]
-            elif isinstance(attr, GroupAttribute):
-                assert isinstance(attr.value, DictModel)
-                # if the GroupAttribute is not set in a single command line argument,
-                # the sub-attributes may need to be exposed individually
-                for v in attr._value:
-                    _buildAttributeCmdVars(cmdVars, v.name, v)
+                elif isinstance(attr, GroupAttribute):
+                    assert isinstance(attr.value, DictModel)
+                    # if the GroupAttribute is not set in a single command line argument,
+                    # the sub-attributes may need to be exposed individually
+                    for v in attr._value:
+                        _buildAttributeCmdVars(cmdVars, v.name, v)
 
         """ Generate command variables using input attributes and resolved output attributes names and values. """
         for uidIndex, value in self._uids.items():

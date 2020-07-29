@@ -97,7 +97,9 @@ class Attribute(BaseObject):
         return self._label
 
     def getEnabled(self):
-        return self._enabled
+        if isinstance(self.desc.enabled, types.FunctionType):
+            return self.desc.enabled(self.node)
+        return self.attributeDesc.enabled
 
     def setEnabled(self, v):
         if self._enabled == v:
@@ -235,10 +237,9 @@ class Attribute(BaseObject):
         return self._value
 
     def updateInternals(self):
-        if isinstance(self.desc.enabled, types.FunctionType):
-            self.setEnabled(self.desc.enabled(self.node))
-        else:
-            self.setEnabled(self.attributeDesc.enabled)
+        # Emit if the enable status has changed
+        self.setEnabled(self.getEnabled())
+
 
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
@@ -371,6 +372,11 @@ class ListAttribute(Attribute):
             return self.attributeDesc.joinChar.join([v.getValueStr() for v in self.value])
         return super(ListAttribute, self).getValueStr()
 
+    def updateInternals(self):
+        super(ListAttribute, self).updateInternals()
+        for attr in self._value:
+            attr.updateInternals()
+
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
@@ -451,6 +457,11 @@ class GroupAttribute(Attribute):
         # sort values based on child attributes group description order
         sortedSubValues = [self._value.get(attr.name).getValueStr() for attr in self.attributeDesc.groupDesc]
         return self.attributeDesc.joinChar.join(sortedSubValues)
+
+    def updateInternals(self):
+        super(GroupAttribute, self).updateInternals()
+        for attr in self._value:
+            attr.updateInternals()
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

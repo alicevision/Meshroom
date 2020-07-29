@@ -213,7 +213,7 @@ class ViewpointWrapper(QObject):
     def _updateInitialParams(self):
         """ Update internal members depending on CameraInit. """
         if not self._reconstruction.cameraInit:
-            self.initialIntrinsics = None
+            self._initialIntrinsics = None
             self._metadata = {}
         else:
             self._initialIntrinsics = self._reconstruction.getIntrinsic(self._viewpoint)

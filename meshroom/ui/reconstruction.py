@@ -217,7 +217,11 @@ class ViewpointWrapper(QObject):
             self._metadata = {}
         else:
             self._initialIntrinsics = self._reconstruction.getIntrinsic(self._viewpoint)
-            self._metadata = json.loads(self._viewpoint.metadata.value) if self._viewpoint.metadata.value else None
+            try:
+                self._metadata = json.loads(self._viewpoint.metadata.value) if self._viewpoint.metadata.value else None
+            except Exception as e:
+                logging.warning("Failed to parse Viewpoint metadata: '{}', '{}'".format(str(e), str(self._viewpoint.metadata.value)))
+                self._metadata = {}
             if not self._metadata:
                 self._metadata = {}
         self.initialParamsChanged.emit()

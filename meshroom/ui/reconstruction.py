@@ -947,6 +947,8 @@ class Reconstruction(UIGraph):
         # Setup the active node per category only once, on the last one
         nodesByCategory = {}
         for node in nodes:
+            if node is None:
+                continue
             for category, nodeTypes in self.activeNodeCategories.items():
                 if node.nodeType in nodeTypes:
                     nodesByCategory[category] = node
@@ -955,6 +957,8 @@ class Reconstruction(UIGraph):
             if category == 'sfm':
                 self.setSfm(node)
         for node in nodes:
+            if node is None:
+                continue
             if not isinstance(node, CompatibilityNode):
                 self.activeNodes.get(node.nodeType).node = node
 

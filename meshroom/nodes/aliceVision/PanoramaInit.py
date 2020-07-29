@@ -45,7 +45,7 @@ This node allows to setup the Panorama:
             name='dependency',
             label='Dependency',
             description="Folder(s) in which computed features are stored. (WORKAROUND for valid Tractor graph submission)",
-            group='forDependencyOnly',  # not a command line argument
+            group='forDependencyOnly', # not a command line argument
         ),
         desc.BoolParam(
             name='useFisheye',
@@ -60,6 +60,7 @@ This node allows to setup the Panorama:
             description='Automatically estimate the Fisheye Circle center and radius instead of using user values.',
             value=True,
             uid=[0],
+            enabled=lambda node: node.useFisheye.value,
         ),
         desc.GroupAttribute(
             name="fisheyeCenterOffset",
@@ -77,7 +78,8 @@ This node allows to setup the Panorama:
                     uid=[0],
                     range=(-1000.0, 10000.0, 1.0)),
                 ],
-            group=None,  # skip group from command line
+            group=None, # skip group from command line
+            enabled=lambda node: node.useFisheye.value and not node.estimateFisheyeCircle.value,
         ),
         desc.FloatParam(
             name='fisheyeRadius',
@@ -86,6 +88,7 @@ This node allows to setup the Panorama:
             value=96.0,
             range=(0.0, 150.0, 0.01),
             uid=[0],
+            enabled=lambda node: node.useFisheye.value and not node.estimateFisheyeCircle.value,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

@@ -210,6 +210,7 @@ The metadata needed are:
             value='.*?(\d+)',
             uid=[0],
             advanced=True,
+            enabled=lambda node: node.viewIdMethod.value == 'filename',
         ),
         desc.ChoiceParam(
             name='verboseLevel',

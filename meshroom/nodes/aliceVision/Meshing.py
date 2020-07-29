@@ -51,6 +51,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             range=(0, 100, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: node.estimateSpaceFromSfM.value,
         ),
         desc.FloatParam(
             name='estimateSpaceMinObservationAngle',
@@ -59,6 +60,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             value=10,
             range=(0, 120, 1),
             uid=[0],
+            enabled=lambda node: node.estimateSpaceFromSfM.value,
         ),
         desc.IntParam(
             name='maxInputPoints',

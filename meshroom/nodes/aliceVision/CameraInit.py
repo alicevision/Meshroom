@@ -159,7 +159,8 @@ The metadata needed are:
             description='Empirical value for the field of view in degree.',
             value=45.0,
             range=(0, 180.0, 1),
-            uid=[0],
+            uid=[],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='groupCameraFallback',
@@ -173,7 +174,7 @@ The metadata needed are:
             values=['global', 'folder', 'image'],
             value='folder',
             exclusive=True,
-            uid=[0],
+            uid=[],
             advanced=True,
         ),
         desc.ChoiceParam(
@@ -183,7 +184,7 @@ The metadata needed are:
             value=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
             values=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
             exclusive=False,
-            uid=[0],
+            uid=[],
             joinChar=',',
             advanced=True,
         ),
@@ -196,7 +197,7 @@ The metadata needed are:
             value='metadata',
             values=['metadata', 'filename'],
             exclusive=True,
-            uid=[0],
+            uid=[],
             advanced=True,
         ),
         desc.StringParam(
@@ -208,7 +209,7 @@ The metadata needed are:
                         ' - Match the longest number at the end of filename (default value): ".*?(\d+)"\n'
                         ' - Match the first number found in filename : "(\d+).*"\n',
             value='.*?(\d+)',
-            uid=[0],
+            uid=[],
             advanced=True,
             enabled=lambda node: node.viewIdMethod.value == 'filename',
         ),

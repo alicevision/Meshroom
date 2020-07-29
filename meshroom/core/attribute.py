@@ -98,7 +98,11 @@ class Attribute(BaseObject):
 
     def getEnabled(self):
         if isinstance(self.desc.enabled, types.FunctionType):
-            return self.desc.enabled(self.node)
+            try:
+                return self.desc.enabled(self.node)
+            except:
+                # Node implementation may fail due to version mismatch
+                return True
         return self.attributeDesc.enabled
 
     def setEnabled(self, v):

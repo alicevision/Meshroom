@@ -44,9 +44,10 @@ Item {
 
     // Load reconstruction's current SfM file
     function viewSfM() {
-        if(!reconstruction.sfm)
+        var activeNode = _reconstruction.activeNodes.get('sfm').node;
+        if(!activeNode)
             return;
-        viewer3D.view(reconstruction.sfm.attribute('output'));
+        viewer3D.view(activeNode.attribute('output'));
     }
 
     SystemPalette { id: activePalette }

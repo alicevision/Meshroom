@@ -213,11 +213,15 @@ class ViewpointWrapper(QObject):
     def _updateInitialParams(self):
         """ Update internal members depending on CameraInit. """
         if not self._reconstruction.cameraInit:
-            self.initialIntrinsics = None
+            self._initialIntrinsics = None
             self._metadata = {}
         else:
             self._initialIntrinsics = self._reconstruction.getIntrinsic(self._viewpoint)
-            self._metadata = json.loads(self._viewpoint.metadata.value) if self._viewpoint.metadata.value else None
+            try:
+                self._metadata = json.loads(self._viewpoint.metadata.value) if self._viewpoint.metadata.value else None
+            except Exception as e:
+                logging.warning("Failed to parse Viewpoint metadata: '{}', '{}'".format(str(e), str(self._viewpoint.metadata.value)))
+                self._metadata = {}
             if not self._metadata:
                 self._metadata = {}
         self.initialParamsChanged.emit()
@@ -947,6 +951,8 @@ class Reconstruction(UIGraph):
         # Setup the active node per category only once, on the last one
         nodesByCategory = {}
         for node in nodes:
+            if node is None:
+                continue
             for category, nodeTypes in self.activeNodeCategories.items():
                 if node.nodeType in nodeTypes:
                     nodesByCategory[category] = node
@@ -955,6 +961,8 @@ class Reconstruction(UIGraph):
             if category == 'sfm':
                 self.setSfm(node)
         for node in nodes:
+            if node is None:
+                continue
             if not isinstance(node, CompatibilityNode):
                 self.activeNodes.get(node.nodeType).node = node
 

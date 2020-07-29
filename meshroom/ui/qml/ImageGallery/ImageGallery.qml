@@ -368,7 +368,7 @@ Panel {
             ToolTip.text: "Visualize HDR images: " + (activeNode ? activeNode.label : "No Node")
             iconText: MaterialIcons.filter
             label: activeNode ? activeNode.attribute("nbBrackets").value : ""
-            // visible: activeNode
+            visible: activeNode
             enabled: activeNode && activeNode.isComputed
             property string nodeID: activeNode ? (activeNode.label + activeNode.isComputed) : ""
             onNodeIDChanged: {

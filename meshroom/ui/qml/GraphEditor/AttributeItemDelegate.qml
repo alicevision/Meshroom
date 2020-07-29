@@ -370,7 +370,7 @@ RowLayout {
                 Component.onCompleted:  {
                     var cpt = Qt.createComponent("AttributeEditor.qml");
                     var obj = cpt.createObject(groupItem,
-                                               {'attributes': Qt.binding(function() { return attribute.value }),
+                                               {'model': Qt.binding(function() { return attribute.value }),
                                                 'readOnly': Qt.binding(function() { return root.readOnly }),
                                                 'labelWidth': 100, // reduce label width for children (space gain)
                                                })

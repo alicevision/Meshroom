@@ -122,7 +122,7 @@ Panel {
                         currentIndex: tabBar.currentIndex
 
                         AttributeEditor {
-                            attributes: root.node.attributes
+                            model: root.node.attributes
                             readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: root.attributeDoubleClicked(mouse, attribute)
                             onUpgradeRequest: root.upgradeRequest()

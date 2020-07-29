@@ -10,7 +10,6 @@ import Utils 1.0
 
 ListView {
     id: root
-    property variant attributes: null
     property bool readOnly: false
     property int labelWidth: 180
 
@@ -22,8 +21,6 @@ ListView {
     spacing: 2
     clip: true
     ScrollBar.vertical: ScrollBar { id: scrollBar }
-
-    model: attributes
 
     delegate: Loader {
         active: object.enabled && (!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)

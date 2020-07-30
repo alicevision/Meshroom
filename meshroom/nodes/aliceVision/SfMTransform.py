@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 from meshroom.core import desc
 
@@ -52,14 +52,15 @@ The transformation can be based on:
                         " * from_single_camera: Camera UID or image filename",
             value='',
             uid=[0],
+            enabled=lambda node: node.method.value == "transformation" or node.method.value == "from_single_camera",
         ),
         desc.GroupAttribute(
-            name="transformGizmo",
-            label="Transform Gizmo Settings",
-            description="Translation, rotation and scale defined by the gizmo.",
+            name="manualTransform",
+            label="Manual Transform (Gizmo)",
+            description="Translation, rotation (Euler ZXY) and uniform scale.",
             groupDesc=[
                 desc.GroupAttribute(
-                    name="gizmoTranslation",
+                    name="manualTranslation",
                     label="Translation",
                     description="Translation in space.",
                     groupDesc=[
@@ -85,7 +86,7 @@ The transformation can be based on:
                     joinChar=","
                 ),
                 desc.GroupAttribute(
-                    name="gizmoRotation",
+                    name="manualRotation",
                     label="Euler Rotation",
                     description="Rotation in Euler degrees.",
                     groupDesc=[
@@ -111,7 +112,7 @@ The transformation can be based on:
                     joinChar=","
                 ),
                 desc.FloatParam(
-                    name="gizmoScale", 
+                    name="manualScale", 
                     label="Scale", 
                     description="Uniform Scale.",
                     value=1.0,
@@ -120,7 +121,7 @@ The transformation can be based on:
                 )
             ],
             joinChar=",",
-            advanced=True
+            enabled=lambda node: node.method.value == "manual",
         ),
         desc.ChoiceParam(
             name='landmarksDescriberTypes',
@@ -158,21 +159,24 @@ The transformation can be based on:
             label='Scale',
             description='Apply scale transformation.',
             value=True,
-            uid=[0]
+            uid=[0],
+            enabled=lambda node: node.method.value != "manual",
         ),
         desc.BoolParam(
             name='applyRotation',
             label='Rotation',
             description='Apply rotation transformation.',
             value=True,
-            uid=[0]
+            uid=[0],
+            enabled=lambda node: node.method.value != "manual",
         ),
         desc.BoolParam(
             name='applyTranslation',
             label='Translation',
             description='Apply translation transformation.',
             value=True,
-            uid=[0]
+            uid=[0],
+            enabled=lambda node: node.method.value != "manual",
         ),
         desc.ChoiceParam(
             name='verboseLevel',

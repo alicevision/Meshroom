@@ -1,4 +1,4 @@
-__version__ = "5.0"
+__version__ = "6.0"
 
 from meshroom.core import desc
 
@@ -128,7 +128,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                 )
             ],
             joinChar=",",
-            advanced=True
+            enabled=lambda node: node.useBoundingBox.value,
         ),
         desc.BoolParam(
             name='estimateSpaceFromSfM',

@@ -1,5 +1,5 @@
 import DepthMapEntity 2.1
-import QtQuick 2.7
+import QtQuick 2.15
 
 /**
  * To evaluate if the QtOIIO plugin is available.

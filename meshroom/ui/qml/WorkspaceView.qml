@@ -36,9 +36,9 @@ Item {
 
     Connections {
         target: reconstruction
-        onGraphChanged: viewer3D.clear()
-        onSfmChanged: viewSfM()
-        onSfmReportChanged: viewSfM()
+        function onGraphChanged() { viewer3D.clear() }
+        function onSfmChanged() { viewSfM() }
+        function onSfmReportChanged() { viewSfM() }
     }
     Component.onCompleted: viewSfM()
 
@@ -123,7 +123,7 @@ Item {
 
                 Connections {
                     target: imageGallery
-                    onCurrentItemChanged: {
+                    function onCurrentItemChanged() {
                         viewer2D.source = imageGallery.currentItemSource
                         viewer2D.metadata = imageGallery.currentItemMetadata
                     }

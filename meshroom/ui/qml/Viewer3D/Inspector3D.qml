@@ -185,12 +185,14 @@ FloatingPane {
 
                 Connections {
                     target: uigraph
-                    onSelectedNodeChanged: mediaListView.currentIndex = -1
+                    function onSelectedNodeChanged() {
+                        mediaListView.currentIndex = -1
+                    }
                 }
 
                 Connections {
                     target: mediaLibrary
-                    onLoadRequest: {
+                    function onLoadRequest() {
                         mediaListView.positionViewAtIndex(idx, ListView.Visible);
                     }
                 }

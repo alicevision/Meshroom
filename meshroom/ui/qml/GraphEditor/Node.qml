@@ -35,7 +35,7 @@ Item {
     Connections {
         target: root.node
         // update x,y when node position changes
-        onPositionChanged: {
+        function onPositionChanged() {
             root.x = root.node.x
             root.y = root.node.y
         }

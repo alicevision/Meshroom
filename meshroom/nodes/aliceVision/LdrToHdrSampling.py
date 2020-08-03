@@ -210,7 +210,12 @@ class LdrToHdrSampling(desc.CommandLineNode):
         exposures = None
         bracketSizes = set()
         if len(exposureGroups) == 1:
-            node.nbBrackets.value = 1
+            if len(set(exposureGroups[0])) == 1:
+                # Single exposure and multiple views
+                node.nbBrackets.value = 1
+            else:
+                # Single view and multiple exposures
+                node.nbBrackets.value = len(exposureGroups[0])
         else:
             for expGroup in exposureGroups:
                 bracketSizes.add(len(expGroup))

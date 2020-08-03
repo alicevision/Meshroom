@@ -277,6 +277,10 @@ Entity {
 
                 onCurrentSourceChanged: {
                     updateCacheAndModel(false)
+
+                    // Avoid the bounding box to disappear when we move it after a mesh already computed
+                    if(instantiatedEntity.hasBoundingBox && !currentSource)
+                        model.visible = true
                 }
 
                 onFinalSourceChanged: {

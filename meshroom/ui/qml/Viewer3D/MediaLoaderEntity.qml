@@ -1,5 +1,5 @@
 import QtQuick 2.9
-import Qt3D.Core 2.1
+import Qt3D.Core 2.15
 
 
 /**

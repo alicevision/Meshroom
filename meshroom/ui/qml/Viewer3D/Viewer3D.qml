@@ -4,10 +4,10 @@ import QtQuick.Controls 1.4 as Controls1
 import QtQuick.Layouts 1.3
 import QtQml.Models 2.2
 import QtQuick.Scene3D 2.0
-import Qt3D.Core 2.1
-import Qt3D.Render 2.1
-import Qt3D.Extras 2.10
-import Qt3D.Input 2.1 as Qt3DInput // to avoid clash with Controls2 Action
+import Qt3D.Core 2.15
+import Qt3D.Render 2.15
+import Qt3D.Extras 2.15
+import Qt3D.Input 2.15 as Qt3DInput // to avoid clash with Controls2 Action
 
 import MaterialIcons 2.2
 

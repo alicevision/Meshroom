@@ -552,6 +552,19 @@ FocusScope {
                             featuresViewer: featuresViewerLoader.item
                         }
                     }
+
+                    Loader {
+                        id: ldrHdrCalibrationGraph
+                        anchors.fill: parent
+
+                        property var activeNode: _reconstruction.activeNodes.get('LdrToHdrCalibration').node
+                        active: activeNode && activeNode.isComputed
+                        visible: displayLdrHdrCalibrationGraph.checked
+
+                        sourceComponent: CameraResponseGraph {
+                            ldrHdrCalibrationNode: activeNode
+                        }
+                    }
                 }
                 FloatingPane {
                     id: bottomToolbar
@@ -626,6 +639,25 @@ FocusScope {
                             checked: false
                             enabled: activeNode && activeNode.attribute("useFisheye").value
                             visible: activeNode
+                        }
+
+                        MaterialToolButton {
+                            id: displayLdrHdrCalibrationGraph
+                            property var activeNode: _reconstruction.activeNodes.get("LdrToHdrCalibration").node
+                            property bool isComputed: activeNode && activeNode.isComputed
+                            ToolTip.text: "Display Camera Response Function: " + (activeNode ? activeNode.label : "No Node")
+                            text: MaterialIcons.timeline
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
+                            enabled: activeNode && activeNode.isComputed
+                            visible: activeNode
+
+                            onIsComputedChanged: {
+                                if(!isComputed)
+                                    checked = false
+                            }
                         }
 
                         Label {

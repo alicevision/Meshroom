@@ -7,10 +7,9 @@ import csv
 import os
 
 class CsvData(QObject):
-    """
-    Store data from a CSV file
-    """
+    """Store data from a CSV file."""
     def __init__(self):
+        """Initialize the object without any parameter."""
         super(CsvData, self).__init__()
         self._filepath = ""
         self._data = QObjectListModel(parent=self)  # List of CsvColumn
@@ -43,9 +42,7 @@ class CsvData(QObject):
             self.setReady(True)
 
     def read(self):
-        """
-        Read the CSV file and return a list containing CsvColumn objects
-        """
+        """Read the CSV file and return a list containing CsvColumn objects."""
         if not self._filepath or not self._filepath.endswith(".csv") or not os.path.isfile(self._filepath):
             return []
 
@@ -77,10 +74,9 @@ class CsvData(QObject):
 
 
 class CsvColumn(QObject):
-    """
-    Store content of a CSV column
-    """
+    """Store content of a CSV column."""
     def __init__(self, title=""):
+        """Initialize the object with optional column title parameter."""
         super(CsvColumn, self).__init__()
         self._title = title
         self._content = []
@@ -102,9 +98,7 @@ class CsvColumn(QObject):
 
     @Slot(QtCharts.QXYSeries)
     def fillChartSerie(self, serie):
-        """
-        Fill XYSerie used for displaying QML Chart
-        """
+        """Fill XYSerie used for displaying QML Chart."""
         if not serie:
             return
         serie.clear()

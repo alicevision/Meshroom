@@ -4,6 +4,7 @@ from PySide2.QtCore import QObject, Slot, Signal, Property
 from PySide2.QtCharts import QtCharts
 
 import csv
+import os
 
 class CsvData(QObject):
     """
@@ -45,7 +46,7 @@ class CsvData(QObject):
         """
         Read the CSV file and return a list containing CsvColumn objects
         """
-        if not self._filepath or not self._filepath.endswith(".csv"):
+        if not self._filepath or not self._filepath.endswith(".csv") or not os.path.isfile(self._filepath):
             return []
 
         csvRows = []

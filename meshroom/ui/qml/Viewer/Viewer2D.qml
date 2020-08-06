@@ -558,8 +558,7 @@ FocusScope {
                         anchors.fill: parent
 
                         property var activeNode: _reconstruction.activeNodes.get('LdrToHdrCalibration').node
-                        active: activeNode && activeNode.isComputed
-                        visible: displayLdrHdrCalibrationGraph.checked
+                        active: activeNode && activeNode.isComputed && displayLdrHdrCalibrationGraph.checked
 
                         sourceComponent: CameraResponseGraph {
                             ldrHdrCalibrationNode: activeNode

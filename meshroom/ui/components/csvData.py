@@ -14,6 +14,7 @@ class CsvData(QObject):
         self._filepath = ""
         self._data = QObjectListModel(parent=self)  # List of CsvColumn
         self._ready = False
+        self.filepathChanged.connect(self.updateData)
 
     @Slot(int, result=QObject)
     def getColumn(self, index):
@@ -25,8 +26,8 @@ class CsvData(QObject):
     def setFilepath(self, filepath):
         if self._filepath == filepath:
             return
+        self.setReady(False)
         self._filepath = filepath
-        self.updateData()
         self.filepathChanged.emit()
 
     def setReady(self, ready):
@@ -37,9 +38,11 @@ class CsvData(QObject):
 
     def updateData(self):
         self.setReady(False)
-        self._data.setObjectList(self.read())
-        if not self._data.isEmpty():
-            self.setReady(True)
+        self._data.clear()
+        newColumns = self.read()
+        if newColumns:
+            self._data.setObjectList(newColumns)
+        self.setReady(True)
 
     def read(self):
         """Read the CSV file and return a list containing CsvColumn objects."""

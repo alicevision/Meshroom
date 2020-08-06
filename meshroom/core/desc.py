@@ -4,7 +4,8 @@ from enum import Enum  # available by default in python3. For python2: "pip inst
 import math
 import os
 import psutil
-
+import PySide2
+import ast
 
 class Attribute(BaseObject):
     """
@@ -95,12 +96,26 @@ class GroupAttribute(Attribute):
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def validateValue(self, value):
-        """ Ensure value is a dictionary with keys compatible with the group description. """
-        if not isinstance(value, dict):
-            raise ValueError('GroupAttribute only supports dict input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
-        invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
-        if invalidKeys:
-            raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
+        """ Ensure value is compatible with the group description and convert value if needed. """
+        if isinstance(value, PySide2.QtQml.QJSValue):
+            # If we receive a QJSValue from QML
+            # Warning: it will only work with a single array of values (does not work with array of array, dictionnary)
+            value = ast.literal_eval(value.toString())
+        elif isinstance(value, pyCompatibility.basestring):
+            # Alternative solution to set values from QML is to convert values to JSON string
+            # In this case, it works with all data types
+            value = ast.literal_eval(value)
+
+        if isinstance(value, dict):
+            invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
+            if invalidKeys:
+                raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
+        elif isinstance(value, (list, tuple)):
+            if len(value) != len(self._groupDesc):
+                raise ValueError('Value contains incoherent number of values: desc size: {}, value size: {}'.format(len(self._groupDesc), len(value)))
+        else:
+            raise ValueError('GroupAttribute only supports dict input values (param:{}, value:{}, type:{}) or list/tuple'.format(self.name, value, type(value)))
+
         return value
 
     def matchDescription(self, value, conform=False):

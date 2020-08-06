@@ -43,7 +43,7 @@ class CsvData(QObject):
 
     def read(self):
         """Read the CSV file and return a list containing CsvColumn objects."""
-        if not self._filepath or not self._filepath.endswith(".csv") or not os.path.isfile(self._filepath):
+        if not self._filepath or not self._filepath.lower().endswith(".csv") or not os.path.isfile(self._filepath):
             return []
 
         csvRows = []

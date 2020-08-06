@@ -8,9 +8,9 @@ import os
 
 class CsvData(QObject):
     """Store data from a CSV file."""
-    def __init__(self):
+    def __init__(self, parent=None):
         """Initialize the object without any parameter."""
-        super(CsvData, self).__init__()
+        super(CsvData, self).__init__(parent=parent)
         self._filepath = ""
         self._data = QObjectListModel(parent=self)  # List of CsvColumn
         self._ready = False
@@ -60,7 +60,7 @@ class CsvData(QObject):
         # Create the objects in dataList
         # with the first line elements as objects' title
         for elt in csvRows[0]:
-            dataList.append(CsvColumn(elt))
+            dataList.append(CsvColumn(elt, parent=self._data))
 
         # Populate the content attribute
         for elt in csvRows[1:]:
@@ -78,9 +78,9 @@ class CsvData(QObject):
 
 class CsvColumn(QObject):
     """Store content of a CSV column."""
-    def __init__(self, title=""):
+    def __init__(self, title="", parent=None):
         """Initialize the object with optional column title parameter."""
-        super(CsvColumn, self).__init__()
+        super(CsvColumn, self).__init__(parent=parent)
         self._title = title
         self._content = []
 

@@ -111,7 +111,14 @@ class Transformations3DHelper(QObject):
 
     @Slot(QVector4D, Qt3DRender.QCamera, QSize, result=QVector2D)
     def pointFromWorldToScreen(self, point, camera, windowSize):
-        """ Compute the Screen point corresponding to a World Point. """
+        """ Compute the Screen point corresponding to a World Point.
+            Args:
+                point (QVector4D): point in world coordinates
+                camera (QCamera): camera viewing the scene
+                windowSize (QSize): size of the Scene3D window
+            Returns:
+                QVector2D: point in screen coordinates
+        """
         # Transform the point from World Coord to Normalized Device Coord
         viewMatrix = camera.transform().matrix().inverted()
         projectedPoint = (camera.projectionMatrix() * viewMatrix[0]).map(point)
@@ -130,7 +137,14 @@ class Transformations3DHelper(QObject):
 
     @Slot(Qt3DCore.QTransform, QMatrix4x4, QMatrix4x4, QMatrix4x4, QVector3D)
     def relativeLocalTranslate(self, transformQtInstance, initialPosMat, initialRotMat, initialScaleMat, translateVec):
-        """ Translate the QTransform in its local space relatively to an initial state. """
+        """ Translate the QTransform in its local space relatively to an initial state.
+            Args:
+                transformQtInstance (QTransform): reference to the Transform to modify
+                initialPosMat (QMatrix4x4): initial position matrix
+                initialRotMat (QMatrix4x4): initial rotation matrix
+                initialScaleMat (QMatrix4x4): initial scale matrix
+                translateVec (QVector3D): vector used for the local translation
+        """
         # Compute the translation transformation matrix 
         translationMat = QMatrix4x4()
         translationMat.translate(translateVec)
@@ -141,7 +155,15 @@ class Transformations3DHelper(QObject):
 
     @Slot(Qt3DCore.QTransform, QMatrix4x4, QQuaternion, QMatrix4x4, QVector3D, int)
     def relativeLocalRotate(self, transformQtInstance, initialPosMat, initialRotQuat, initialScaleMat, axis, degree):
-        """ Rotate the QTransform in its local space relatively to an initial state. """    
+        """ Rotate the QTransform in its local space relatively to an initial state.
+            Args:
+                transformQtInstance (QTransform): reference to the Transform to modify
+                initialPosMat (QMatrix4x4): initial position matrix
+                initialRotQuat (QQuaternion): initial rotation quaternion
+                initialScaleMat (QMatrix4x4): initial scale matrix
+                axis (QVector3D): axis to rotate around
+                degree (int): angle of rotation in degree
+        """
         # Compute the transformation quaternion from axis and angle in degrees
         transformQuat = QQuaternion.fromAxisAndAngle(axis, degree)
 
@@ -155,7 +177,14 @@ class Transformations3DHelper(QObject):
 
     @Slot(Qt3DCore.QTransform, QMatrix4x4, QMatrix4x4, QMatrix4x4, QVector3D)
     def relativeLocalScale(self, transformQtInstance, initialPosMat, initialRotMat, initialScaleMat, scaleVec):
-        """ Scale the QTransform in its local space relatively to an initial state. """
+        """ Scale the QTransform in its local space relatively to an initial state.
+            Args:
+                transformQtInstance (QTransform): reference to the Transform to modify
+                initialPosMat (QMatrix4x4): initial position matrix
+                initialRotMat (QMatrix4x4): initial rotation matrix
+                initialScaleMat (QMatrix4x4): initial scale matrix
+                scaleVec (QVector3D): vector used for the relative scale
+        """
         # Make a copy of the scale matrix (otherwise, it is a reference and it does not work as expected)
         scaleMat = self.copyMatrix4x4(initialScaleMat)
 
@@ -175,7 +204,12 @@ class Transformations3DHelper(QObject):
 
     @Slot(QMatrix4x4, result="QVariant")
     def modelMatrixToMatrices(self, modelMat):
-        """ Decompose a model matrix into individual matrices. """
+        """ Decompose a model matrix into individual matrices.
+            Args:
+                modelMat (QMatrix4x4): model matrix to decompose
+            Returns:
+                QVariant: object containing position, rotation and scale matrices + rotation quaternion
+        """
         decomposition = self.decomposeModelMatrix(modelMat)
 
         posMat = QMatrix4x4()
@@ -251,7 +285,12 @@ class Transformations3DHelper(QObject):
         return newMat
 
     def decomposeModelMatrix(self, modelMat):
-        """ Decompose a model matrix into individual component. """
+        """ Decompose a model matrix into individual component.
+            Args:
+                modelMat (QMatrix4x4): model matrix to decompose
+            Returns:
+                QVariant: object containing translation and scale vectors + rotation quaternion
+        """
         translation = modelMat.column(3).toVector3D()
         quaternion = QQuaternion.fromDirection(modelMat.column(2).toVector3D(), modelMat.column(1).toVector3D())
         scale = QVector3D(modelMat.column(0).length(), modelMat.column(1).length(), modelMat.column(2).length())

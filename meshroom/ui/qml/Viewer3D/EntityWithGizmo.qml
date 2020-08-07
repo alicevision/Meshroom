@@ -5,12 +5,19 @@ import Qt3D.Extras 2.10
 import QtQuick 2.9
 import Qt3D.Logic 2.0
 
+/**
+ * Wrapper for TransformGizmo.
+ * Must be instantiated to control an other entity.
+ * The goal is to instantiate the other entity inside this wrapper to gather the object and the gizmo.
+ * objectTranform is the component the other entity should use as a Transform.
+ */
+
 Entity {
     id: root
     property DefaultCameraController sceneCameraController
     property Layer frontLayerComponent
     property var window
-    property alias uniformScale: transformGizmo.uniformScale // by default, if not set, the value is: false
+    property alias uniformScale: transformGizmo.uniformScale // By default, if not set, the value is: false
     property TransformGizmo transformGizmo: TransformGizmo {
         id: transformGizmo
         camera: root.camera

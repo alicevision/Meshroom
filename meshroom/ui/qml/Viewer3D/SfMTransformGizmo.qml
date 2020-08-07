@@ -4,6 +4,10 @@ import Qt3D.Input 2.0
 import Qt3D.Extras 2.10
 import QtQuick 2.9
 
+/**
+ * Gizmo for SfMTransform node.
+ * Uses EntityWithGizmo wrapper because we should not instantiate TransformGizmo alone.
+ */
 Entity {
     id: root
     property DefaultCameraController sceneCameraController
@@ -60,18 +64,21 @@ Entity {
             }
         }
 
-        // Automatically evaluate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
-        // When the gizmo has changed (with mouse), the new values are set to the node, the priority is given back to the node and the Transform is re-evaluated once with those values.
+        // Translation values from node (vector3d because this is the type of QTransform.translation)
         property var nodeTranslation : Qt.vector3d(
             root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.x").value,
             root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.y").value,
             root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.z").value
         )
+        // Rotation values from node (3 separated values because QTransform stores Euler angles like this)
         property var nodeRotationX: root.currentSfMTransformNode.attribute("manualTransform.manualRotation.x").value
         property var nodeRotationY: root.currentSfMTransformNode.attribute("manualTransform.manualRotation.y").value
         property var nodeRotationZ: root.currentSfMTransformNode.attribute("manualTransform.manualRotation.z").value
+        // Scale value from node (simple number because we use uniform scale)
         property var nodeScale: root.currentSfMTransformNode.attribute("manualTransform.manualScale").value
 
+        // Automatically evaluate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
+        // When the gizmo has changed (with mouse), the new values are set to the node, the priority is given back to the node and the Transform is re-evaluated once with those values.
         transformGizmo.gizmoDisplayTransform.translation: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.translation : nodeTranslation
         transformGizmo.gizmoDisplayTransform.rotationX: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationX : nodeRotationX
         transformGizmo.gizmoDisplayTransform.rotationY: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationY : nodeRotationY

@@ -4,6 +4,10 @@ import Qt3D.Input 2.0
 import Qt3D.Extras 2.10
 import QtQuick 2.9
 
+/**
+ * BoundingBox entity for Meshing node. Used to define the area to reconstruct.
+ * Simple box controlled by a gizmo to give easy and visual representation.
+ */
 Entity {
     id: root
     property DefaultCameraController sceneCameraController
@@ -56,22 +60,25 @@ Entity {
             }
         }
 
-        // Automatically evaluate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
-        // When the gizmo has changed (with mouse), the new values are set to the node, the priority is given back to the node and the Transform is re-evaluated once with those values.
+        // Translation values from node (vector3d because this is the type of QTransform.translation)
         property var nodeTranslation : Qt.vector3d(
             root.currentMeshingNode.attribute("boundingBox.bboxTranslation.x").value,
             root.currentMeshingNode.attribute("boundingBox.bboxTranslation.y").value,
             root.currentMeshingNode.attribute("boundingBox.bboxTranslation.z").value
         )
+        // Rotation values from node (3 separated values because QTransform stores Euler angles like this)
         property var nodeRotationX: root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value
         property var nodeRotationY: root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value
         property var nodeRotationZ: root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value
+        // Scale values from node (vector3d because this is the type of QTransform.scale3D)
         property var nodeScale: Qt.vector3d(
             root.currentMeshingNode.attribute("boundingBox.bboxScale.x").value,
             root.currentMeshingNode.attribute("boundingBox.bboxScale.y").value,
             root.currentMeshingNode.attribute("boundingBox.bboxScale.z").value
         )
 
+        // Automatically evaluate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
+        // When the gizmo has changed (with mouse), the new values are set to the node, the priority is given back to the node and the Transform is re-evaluated once with those values.
         transformGizmo.gizmoDisplayTransform.translation: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.translation : nodeTranslation
         transformGizmo.gizmoDisplayTransform.rotationX: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationX : nodeRotationX
         transformGizmo.gizmoDisplayTransform.rotationY: transformGizmo.focusGizmoPriority ? transformGizmo.gizmoDisplayTransform.rotationY : nodeRotationY

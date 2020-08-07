@@ -7,19 +7,27 @@ import Qt3D.Logic 2.0
 import QtQuick.Controls 2.3
 import Utils 1.0
 
+
+/**
+ * Simple transformation gizmo entirely made with Qt3D entities.
+ * Uses Python Transformations3DHelper to compute matrices.
+ * This TransformGizmo entity should only be instantiated in EntityWithGizmo entity which is its wrapper.
+ * It means, to use it for a specified application, make sure to instantiate EntityWithGizmo.
+ */
 Entity {
     id: root
-    readonly property alias gizmoScale: gizmoScaleLookSlider.value
     property Camera camera
     property var windowSize
-    property var frontLayerComponent
+    property Layer frontLayerComponent // Used to draw gizmo on top of everything
     property var window
-    property bool uniformScale: false // by default, the scale is not uniform
+    readonly property alias gizmoScale: gizmoScaleLookSlider.value
+    property bool uniformScale: false // By default, the scale is not uniform
     property bool focusGizmoPriority: false // If true, it is used to give the priority to the current transformation (and not to a upper-level binding)
     property Transform gizmoDisplayTransform: Transform {
         id: gizmoDisplayTransform
-        scale: root.gizmoScale * (camera.position.minus(gizmoDisplayTransform.translation)).length()
+        scale: root.gizmoScale * (camera.position.minus(gizmoDisplayTransform.translation)).length() // The gizmo needs a constant apparent size
     }
+    // Component the object controlled by the gizmo must use
     property Transform objectTransform : Transform {
         translation: gizmoDisplayTransform.translation
         rotation: gizmoDisplayTransform.rotation
@@ -75,21 +83,78 @@ Entity {
 
     /***** TRANSFORMATIONS (using local vars) *****/
 
+    /**
+     * @brief Translate locally the gizmo and the object.
+     *
+     * @remarks
+     *      To make local translation, we need to recompute a new matrix.
+     *      Update gizmoDisplayTransform's matrix and all its properties while avoiding the override of translation property.
+     *      Update objectTransform in the same time thanks to binding on translation property.
+     *
+     * @param initialModelMatrix object containing position, rotation and scale matrices + rotation quaternion
+     * @param translateVec vector3d used to make the local translation
+     */
     function doRelativeTranslation(initialModelMatrix, translateVec) {
-        Transformations3DHelper.relativeLocalTranslate(gizmoDisplayTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, translateVec) // Update gizmo matrix and object matrix with binding
+        Transformations3DHelper.relativeLocalTranslate(
+            gizmoDisplayTransform,
+            initialModelMatrix.position,
+            initialModelMatrix.rotation,
+            initialModelMatrix.scale,
+            translateVec
+        )
     }
 
+    /**
+     * @brief Rotate the gizmo and the object around a specific axis.
+     *
+     * @remarks
+     *      To make local rotation around an axis, we need to recompute a new matrix from a quaternion.
+     *      Update gizmoDisplayTransform's matrix and all its properties while avoiding the override of rotation, rotationX, rotationY and rotationZ properties.
+     *      Update objectTransform in the same time thanks to binding on rotation property.
+     *
+     * @param initialModelMatrix object containing position, rotation and scale matrices + rotation quaternion
+     * @param axis vector3d describing the axis to rotate around
+     * @param degree angle of rotation in degrees
+     */
     function doRelativeRotation(initialModelMatrix, axis, degree) {
-        Transformations3DHelper.relativeLocalRotate(gizmoDisplayTransform, initialModelMatrix.position, initialModelMatrix.quaternion, initialModelMatrix.scale, axis, degree) // Update gizmo matrix and object matrix with binding
+        Transformations3DHelper.relativeLocalRotate(
+            gizmoDisplayTransform,
+            initialModelMatrix.position,
+            initialModelMatrix.quaternion,
+            initialModelMatrix.scale,
+            axis,
+            degree
+        )
     }
 
+    /**
+     * @brief Scale the object relatively to its current scale.
+     *
+     * @remarks
+     *      To change scale of the object, we need to recompute a new matrix to avoid overriding bindings.
+     *      Update objectTransform properties only (gizmoDisplayTransform is not affected).
+     *
+     * @param initialModelMatrix object containing position, rotation and scale matrices + rotation quaternion
+     * @param scaleVec vector3d used to make the relative scale
+     */
     function doRelativeScale(initialModelMatrix, scaleVec) {
-        Transformations3DHelper.relativeLocalScale(objectTransform, initialModelMatrix.position, initialModelMatrix.rotation, initialModelMatrix.scale, scaleVec) // Update only object matrix
+        Transformations3DHelper.relativeLocalScale(
+            objectTransform,
+            initialModelMatrix.position,
+            initialModelMatrix.rotation,
+            initialModelMatrix.scale,
+            scaleVec
+        )
     }
 
+    /**
+     * @brief Reset the translation of the gizmo and the object.
+     *
+     * @remarks
+     *      Update gizmoDisplayTransform's matrix and all its properties while avoiding the override of translation property.
+     *      Update objectTransform in the same time thanks to binding on translation property.
+     */
     function resetTranslation() {
-        // We have to reset the translation inside the matrix because we cannot override gizmoDisplayTransform.translation (because it can be used in upper-level binding)
-        // The object matrix will also be updated because of the binding with the translation property
         const mat = gizmoDisplayTransform.matrix
         const newMat = Qt.matrix4x4(
             mat.m11, mat.m12, mat.m13, 0,
@@ -100,13 +165,30 @@ Entity {
         gizmoDisplayTransform.setMatrix(newMat)
     }
 
+    /**
+     * @brief Reset the rotation of the gizmo and the object.
+     *
+     * @remarks
+     *      Update gizmoDisplayTransform's quaternion while avoiding the override of rotationX, rotationY and rotationZ properties.
+     *      Update objectTransform in the same time thanks to binding on rotation property.
+     *      Here, we can change the rotation property (but not rotationX, rotationY and rotationZ because they can be used in upper-level bindings).
+     *
+     * @note
+     *      We could implement a way of changing the matrix instead of overriding rotation (quaternion) property.
+     */
     function resetRotation() {
-        // Here, we can change the rotation property (but not rotationX, rotationY and rotationZ because they can be used in upper-level bindings)
-        gizmoDisplayTransform.rotation = Qt.quaternion(1,0,0,0) // Reset gizmo matrix and object matrix with binding
+        gizmoDisplayTransform.rotation = Qt.quaternion(1,0,0,0)
     }
 
+    /**
+     * @brief Reset the scale of the object.
+     *
+     * @remarks
+     *      To reset the scale, we make the difference of the current one to 1 and recompute the matrix.
+     *      Like this, we kind of apply an inverse scale transformation.
+     *      It prevents overriding scale3D property (because it can be used in upper-level binding).
+     */
     function resetScale() {
-        // We have to make the difference scale to 1 because we cannot override objectTransform.scale3D (because it can be used in upper-level binding)
         const modelMat = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix)
         const scaleDiff = Qt.vector3d(
             -(objectTransform.scale3D.x - 1),
@@ -133,9 +215,9 @@ Entity {
                 // Get the selected axis
                 const pickedAxis = convertAxisEnum(objectPicker.gizmoAxis)
 
-                // If it is a TRANSLATION or a SCALE
+                // TRANSLATION or SCALE transformation
                 if(objectPicker.gizmoType === TransformGizmo.Type.TRANSLATION || objectPicker.gizmoType === TransformGizmo.Type.SCALE) {
-                    // Compute the current vector PickedPoint -> CurrentMousePoint
+                    // Compute the vector PickedPosition -> CurrentMousePoint
                     const pickedPosition = objectPicker.screenPoint
                     const mouseVector = Qt.vector2d(mouse.x - pickedPosition.x, -(mouse.y - pickedPosition.y))
 
@@ -147,6 +229,7 @@ Entity {
                     const screenAxisVector = Qt.vector2d(screenPoint2D.x - screenCenter2D.x, -(screenPoint2D.y - screenCenter2D.y))
 
                     // Get the cosinus of the angle from the screenAxisVector to the mouseVector
+                    // It will be used as a intensity factor
                     const cosAngle = screenAxisVector.dotProduct(mouseVector) / (screenAxisVector.length() * mouseVector.length())
                     const offset = cosAngle * mouseVector.length() / objectPicker.scaleUnit
 
@@ -163,15 +246,16 @@ Entity {
 
                     return
                 }
+                // ROTATION transformation
                 else if(objectPicker.gizmoType === TransformGizmo.Type.ROTATION) {
                     // Get Screen Coordinates of the gizmo center
                     const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
                     const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
 
-                    // Get the vector screenCenter2D -> PickedPoint
+                    // Get the vector screenCenter2D -> PickedPosition
                     const originalVector = Qt.vector2d(objectPicker.screenPoint.x - screenCenter2D.x, -(objectPicker.screenPoint.y - screenCenter2D.y))
 
-                    // Compute the current vector screenCenter2D -> CurrentMousePoint
+                    // Compute the vector screenCenter2D -> CurrentMousePoint
                     const mouseVector = Qt.vector2d(mouse.x - screenCenter2D.x, -(mouse.y - screenCenter2D.y))
 
                     // Get the angle from the originalVector to the mouseVector
@@ -385,9 +469,12 @@ Entity {
                     gizmoType: TransformGizmo.Type.SCALE
 
                     onPickedChanged: {
-                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations of the OBJECT
-                        this.scaleUnit = Transformations3DHelper.computeScaleUnitFromModelMatrix(convertAxisEnum(gizmoAxis), gizmoDisplayTransform.matrix, camera, root.windowSize) // Compute a scale unit at picking time
-                        root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
+                        // Save the current transformations of the OBJECT
+                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix)
+                        // Compute a scale unit at picking time
+                        this.scaleUnit = Transformations3DHelper.computeScaleUnitFromModelMatrix(convertAxisEnum(gizmoAxis), gizmoDisplayTransform.matrix, camera, root.windowSize)
+                        // Prevent camera transformations
+                        root.pickedChanged(picker.isPressed)
                     }
                 }
             }
@@ -445,9 +532,12 @@ Entity {
                     gizmoType: TransformGizmo.Type.TRANSLATION
 
                     onPickedChanged: {
-                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations of the OBJECT
-                        this.scaleUnit = Transformations3DHelper.computeScaleUnitFromModelMatrix(convertAxisEnum(gizmoAxis), gizmoDisplayTransform.matrix, camera, root.windowSize) // Compute a scale unit at picking time
-                        root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
+                        // Save the current transformations of the OBJECT
+                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix)
+                        // Compute a scale unit at picking time
+                        this.scaleUnit = Transformations3DHelper.computeScaleUnitFromModelMatrix(convertAxisEnum(gizmoAxis), gizmoDisplayTransform.matrix, camera, root.windowSize)
+                        // Prevent camera transformations
+                        root.pickedChanged(picker.isPressed)
                     }
                 }
             }
@@ -491,8 +581,11 @@ Entity {
                     gizmoType: TransformGizmo.Type.ROTATION
 
                     onPickedChanged: {
-                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations of the OBJECT
-                        root.pickedChanged(picker.isPressed) // Used to prevent camera transformations
+                        // Save the current transformations of the OBJECT
+                        this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix)
+                        // No need to compute a scale unit for rotation
+                        // Prevent camera transformations
+                        root.pickedChanged(picker.isPressed)
                     }
                 }
             }

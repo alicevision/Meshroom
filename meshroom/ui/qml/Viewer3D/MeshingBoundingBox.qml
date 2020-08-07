@@ -18,22 +18,45 @@ Entity {
         frontLayerComponent: root.frontLayerComponent
         window: root.window
 
-        // Update node meshing slider values when the gizmo has changed: translation, rotation, scale
+        // Update node meshing slider values when the gizmo has changed: translation, rotation, scale, type
         transformGizmo.onGizmoChanged: {
-            _reconstruction.setAttribute(root.currentMeshingNode.attribute("boundingBox.bboxTranslation.x"), translation.x)
-            _reconstruction.setAttribute(root.currentMeshingNode.attribute("boundingBox.bboxTranslation.y"), translation.y)
-            _reconstruction.setAttribute(root.currentMeshingNode.attribute("boundingBox.bboxTranslation.z"), translation.z)
-
-            _reconstruction.setAttribute(root.currentMeshingNode.attribute("boundingBox.bboxRotation.x"), rotation.x)
-            _reconstruction.setAttribute(root.currentMeshingNode.attribute("boundingBox.bboxRotation.y"), rotation.y)
-            _reconstruction.setAttribute(root.currentMeshingNode.attribute("boundingBox.bboxRotation.z"), rotation.z)
-
-            _reconstruction.setAttribute(root.currentMeshingNode.attribute("boundingBox.bboxScale.x"), scale.x)
-            _reconstruction.setAttribute(root.currentMeshingNode.attribute("boundingBox.bboxScale.y"), scale.y)
-            _reconstruction.setAttribute(root.currentMeshingNode.attribute("boundingBox.bboxScale.z"), scale.z)
+            switch(type) {
+                case TransformGizmo.Type.TRANSLATION: {
+                    _reconstruction.setAttribute(
+                        root.currentMeshingNode.attribute("boundingBox.bboxTranslation"),
+                        JSON.stringify([translation.x, translation.y, translation.z])
+                    )
+                    break
+                }
+                case TransformGizmo.Type.ROTATION: {
+                    _reconstruction.setAttribute(
+                        root.currentMeshingNode.attribute("boundingBox.bboxRotation"),
+                        JSON.stringify([rotation.x, rotation.y, rotation.z])
+                    )
+                    break
+                }
+                case TransformGizmo.Type.SCALE: {
+                    _reconstruction.setAttribute(
+                        root.currentMeshingNode.attribute("boundingBox.bboxScale"),
+                        JSON.stringify([scale.x, scale.y, scale.z])
+                    )
+                    break
+                }
+                case TransformGizmo.Type.ALL: {
+                    _reconstruction.setAttribute(
+                        root.currentMeshingNode.attribute("boundingBox"),
+                        JSON.stringify([
+                            [translation.x, translation.y, translation.z],
+                            [rotation.x, rotation.y, rotation.z],
+                            [scale.x, scale.y, scale.z]
+                        ])
+                    )
+                    break
+                }
+            }
         }
 
-        // Automatically evalutate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
+        // Automatically evaluate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
         // When the gizmo has changed (with mouse), the new values are set to the node, the priority is given back to the node and the Transform is re-evaluated once with those values.
         property var nodeTranslation : Qt.vector3d(
             root.currentMeshingNode.attribute("boundingBox.bboxTranslation.x").value,

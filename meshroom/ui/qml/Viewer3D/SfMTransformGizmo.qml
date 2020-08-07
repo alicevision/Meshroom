@@ -21,21 +21,46 @@ Entity {
         window: root.window
         uniformScale: true // We want to make uniform scale transformations
 
-        // Update node SfMTransform slider values when the gizmo has changed: translation, rotation, scale
+        // Update node SfMTransform slider values when the gizmo has changed: translation, rotation, scale, type
         transformGizmo.onGizmoChanged: {
-            _reconstruction.setAttribute(root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.x"), translation.x)
-            _reconstruction.setAttribute(root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.y"), translation.y)
-            _reconstruction.setAttribute(root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.z"), translation.z)
-
-            _reconstruction.setAttribute(root.currentSfMTransformNode.attribute("manualTransform.manualRotation.x"), rotation.x)
-            _reconstruction.setAttribute(root.currentSfMTransformNode.attribute("manualTransform.manualRotation.y"), rotation.y)
-            _reconstruction.setAttribute(root.currentSfMTransformNode.attribute("manualTransform.manualRotation.z"), rotation.z)
-
-            // Only one scale is needed since the scale is uniform
-            _reconstruction.setAttribute(root.currentSfMTransformNode.attribute("manualTransform.manualScale"), scale.x)
+            switch(type) {
+                case TransformGizmo.Type.TRANSLATION: {
+                    _reconstruction.setAttribute(
+                        root.currentSfMTransformNode.attribute("manualTransform.manualTranslation"),
+                        JSON.stringify([translation.x, translation.y, translation.z])
+                    )
+                    break
+                }
+                case TransformGizmo.Type.ROTATION: {
+                    _reconstruction.setAttribute(
+                        root.currentSfMTransformNode.attribute("manualTransform.manualRotation"),
+                        JSON.stringify([rotation.x, rotation.y, rotation.z])
+                    )
+                    break
+                }
+                case TransformGizmo.Type.SCALE: {
+                    // Only one scale is needed since the scale is uniform
+                    _reconstruction.setAttribute(
+                        root.currentSfMTransformNode.attribute("manualTransform.manualScale"),
+                        scale.x
+                    )
+                    break
+                }
+                case TransformGizmo.Type.ALL: {
+                    _reconstruction.setAttribute(
+                        root.currentSfMTransformNode.attribute("manualTransform"),
+                        JSON.stringify([
+                            [translation.x, translation.y, translation.z],
+                            [rotation.x, rotation.y, rotation.z],
+                            scale.x
+                        ])
+                    )
+                    break
+                }
+            }
         }
 
-        // Automatically evalutate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
+        // Automatically evaluate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
         // When the gizmo has changed (with mouse), the new values are set to the node, the priority is given back to the node and the Transform is re-evaluated once with those values.
         property var nodeTranslation : Qt.vector3d(
             root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.x").value,

@@ -72,7 +72,7 @@ class ListAttribute(Attribute):
         if isinstance(value, PySide2.QtQml.QJSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
             raise ValueError("ListAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
-        elif isinstance(value, pyCompatibility.basestring):
+        if isinstance(value, pyCompatibility.basestring):
             # Alternative solution to set values from QML is to convert values to JSON string
             # In this case, it works with all data types
             value = ast.literal_eval(value)
@@ -108,7 +108,7 @@ class GroupAttribute(Attribute):
         if isinstance(value, PySide2.QtQml.QJSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
             raise ValueError("GroupAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
-        elif isinstance(value, pyCompatibility.basestring):
+        if isinstance(value, pyCompatibility.basestring):
             # Alternative solution to set values from QML is to convert values to JSON string
             # In this case, it works with all data types
             value = ast.literal_eval(value)

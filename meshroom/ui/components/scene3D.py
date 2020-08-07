@@ -107,7 +107,7 @@ class TrackballController(QObject):
 
 class Transformations3DHelper(QObject):
 
-    #---------- Exposed to QML ----------#
+    # ---------- Exposed to QML ---------- #
 
     @Slot(QVector4D, Qt3DRender.QCamera, QSize, result=QVector2D)
     def pointFromWorldToScreen(self, point, camera, windowSize):
@@ -186,7 +186,7 @@ class Transformations3DHelper(QObject):
         scaleMat = QMatrix4x4()
         scaleMat.scale(decomposition.get("scale"))
 
-        return { "position": posMat, "rotation": rotMat, "scale": scaleMat, "quaternion": decomposition.get("quaternion") }
+        return {"position": posMat, "rotation": rotMat, "scale": scaleMat, "quaternion": decomposition.get("quaternion")}
 
     @Slot(QVector3D, QVector3D, QVector3D, result=QMatrix4x4)
     def computeModelMatrixWithEuler(self, translation, rotation, scale):
@@ -239,9 +239,9 @@ class Transformations3DHelper(QObject):
         screenVector = QVector2D(screenAxisUnitPoint2D.x() - screenCenter2D.x(), -(screenAxisUnitPoint2D.y() - screenCenter2D.y()))
 
         value = screenVector.length()
-        return value if (value and value > 10) else 10 # Threshold to avoid problems in extreme case
+        return value if (value and value > 10) else 10  # Threshold to avoid problems in extreme case
 
-    #---------- "Private" Methods ----------#
+    # ---------- "Private" Methods ---------- #
 
     def copyMatrix4x4(self, mat):
         """ Make a deep copy of a QMatrix4x4. """
@@ -256,14 +256,14 @@ class Transformations3DHelper(QObject):
         quaternion = QQuaternion.fromDirection(modelMat.column(2).toVector3D(), modelMat.column(1).toVector3D())
         scale = QVector3D(modelMat.column(0).length(), modelMat.column(1).length(), modelMat.column(2).length())
 
-        return { "translation": translation, "quaternion": quaternion, "scale": scale }
+        return {"translation": translation, "quaternion": quaternion, "scale": scale}
 
     def quaternionToRotationMatrix(self, q):
         """ Return a rotation matrix from a quaternion. """
         rotMat3x3 = q.toRotationMatrix()
         return QMatrix4x4(
-            rotMat3x3(0,0), rotMat3x3(0,1), rotMat3x3(0,2), 0,
-            rotMat3x3(1,0), rotMat3x3(1,1), rotMat3x3(1,2), 0,
-            rotMat3x3(2,0), rotMat3x3(2,1), rotMat3x3(2,2), 0,
-            0,              0,              0,              1
+            rotMat3x3(0, 0), rotMat3x3(0, 1), rotMat3x3(0, 2), 0,
+            rotMat3x3(1, 0), rotMat3x3(1, 1), rotMat3x3(1, 2), 0,
+            rotMat3x3(2, 0), rotMat3x3(2, 1), rotMat3x3(2, 2), 0,
+            0,               0,               0,               1
         )

@@ -27,14 +27,14 @@ Entity {
     }
     
     signal pickedChanged(bool pressed)
-    signal gizmoChanged(var translation, var rotation, var scale)
+    signal gizmoChanged(var translation, var rotation, var scale, int type)
 
-    function emitGizmoChanged() {
+    function emitGizmoChanged(type) {
         const translation = gizmoDisplayTransform.translation // Position in space
         const rotation = Qt.vector3d(gizmoDisplayTransform.rotationX, gizmoDisplayTransform.rotationY, gizmoDisplayTransform.rotationZ) // Euler angles
         const scale = objectTransform.scale3D // Scale of the object
 
-        gizmoChanged(translation, rotation, scale)
+        gizmoChanged(translation, rotation, scale, type)
         root.focusGizmoPriority = false
     }
 
@@ -50,9 +50,10 @@ Entity {
     }
 
     enum Type {
-        POSITION,
+        TRANSLATION,
         ROTATION,
-        SCALE
+        SCALE,
+        ALL
     }
 
     function convertAxisEnum(axis) {
@@ -60,6 +61,15 @@ Entity {
             case TransformGizmo.Axis.X: return Qt.vector3d(1,0,0)
             case TransformGizmo.Axis.Y: return Qt.vector3d(0,1,0)
             case TransformGizmo.Axis.Z: return Qt.vector3d(0,0,1)
+        }
+    }
+
+    function convertTypeEnum(type) {
+        switch(type) {
+            case TransformGizmo.Type.TRANSLATION: return "TRANSLATION"
+            case TransformGizmo.Type.ROTATION: return "ROTATION"
+            case TransformGizmo.Type.SCALE: return "SCALE"
+            case TransformGizmo.Type.ALL: return "ALL"
         }
     }
 
@@ -88,15 +98,11 @@ Entity {
             mat.m41, mat.m42, mat.m43, 1
         )
         gizmoDisplayTransform.setMatrix(newMat)
-
-        emitGizmoChanged()
     }
 
     function resetRotation() {
         // Here, we can change the rotation property (but not rotationX, rotationY and rotationZ because they can be used in upper-level bindings)
         gizmoDisplayTransform.rotation = Qt.quaternion(1,0,0,0) // Reset gizmo matrix and object matrix with binding
-
-        emitGizmoChanged()
     }
 
     function resetScale() {
@@ -108,8 +114,6 @@ Entity {
             -(objectTransform.scale3D.z - 1)
         )
         doRelativeScale(modelMat, scaleDiff)
-
-        emitGizmoChanged()
     }
 
     /***** DEVICES *****/
@@ -130,7 +134,7 @@ Entity {
                 const pickedAxis = convertAxisEnum(objectPicker.gizmoAxis)
 
                 // If it is a TRANSLATION or a SCALE
-                if(objectPicker.gizmoType === TransformGizmo.Type.POSITION || objectPicker.gizmoType === TransformGizmo.Type.SCALE) {
+                if(objectPicker.gizmoType === TransformGizmo.Type.TRANSLATION || objectPicker.gizmoType === TransformGizmo.Type.SCALE) {
                     // Compute the current vector PickedPoint -> CurrentMousePoint
                     const pickedPosition = objectPicker.screenPoint
                     const mouseVector = Qt.vector2d(mouse.x - pickedPosition.x, -(mouse.y - pickedPosition.y))
@@ -147,7 +151,7 @@ Entity {
                     const offset = cosAngle * mouseVector.length() / objectPicker.scaleUnit
 
                     // Do the transformation
-                    if(objectPicker.gizmoType === TransformGizmo.Type.POSITION && offset !== 0) {   
+                    if(objectPicker.gizmoType === TransformGizmo.Type.TRANSLATION && offset !== 0) {
                         doRelativeTranslation(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a translation from the initial Object Model Matrix when we picked the gizmo
                     }
                     else if(objectPicker.gizmoType === TransformGizmo.Type.SCALE && offset !== 0) {
@@ -190,8 +194,9 @@ Entity {
         }
         onReleased: {
             if(objectPicker && mouse.button === Qt.LeftButton) {
+                const type = objectPicker.gizmoType
                 objectPicker = null // To prevent going again in the onPositionChanged
-                emitGizmoChanged()
+                emitGizmoChanged(type)
             }
         }
     }
@@ -200,23 +205,33 @@ Entity {
         id: resetMenu
 
         MenuItem {
-            text: `Reset Translation`
-            onTriggered: resetTranslation()
+            text: "Reset Translation"
+            onTriggered: {
+                resetTranslation()
+                emitGizmoChanged(TransformGizmo.Type.TRANSLATION)
+            }
         }
         MenuItem {
-            text: `Reset Rotation`
-            onTriggered: resetRotation()
+            text: "Reset Rotation"
+            onTriggered: {
+                resetRotation()
+                emitGizmoChanged(TransformGizmo.Type.ROTATION)
+            }
         }
         MenuItem {
-            text: `Reset Scale`
-            onTriggered: resetScale()
+            text: "Reset Scale"
+            onTriggered: {
+                resetScale()
+                emitGizmoChanged(TransformGizmo.Type.SCALE)
+            }
         }
         MenuItem {
-            text: `Reset All`
+            text: "Reset All"
             onTriggered: {
                 resetTranslation()
                 resetRotation()
                 resetScale()
+                emitGizmoChanged(TransformGizmo.Type.ALL)
             }
         }
         MenuItem {
@@ -377,7 +392,7 @@ Entity {
                 }
             }
 
-            // POSITION ENTITY
+            // TRANSLATION ENTITY
             Entity {
                 id: positionEntity
                 components: [coneMesh, coneTransform, positionMaterial, positionPicker, frontLayerComponent]
@@ -427,7 +442,7 @@ Entity {
                     gizmoMaterial: positionMaterial
                     gizmoBaseColor: baseColor
                     gizmoAxis: axis
-                    gizmoType: TransformGizmo.Type.POSITION
+                    gizmoType: TransformGizmo.Type.TRANSLATION
 
                     onPickedChanged: {
                         this.modelMatrix = Transformations3DHelper.modelMatrixToMatrices(objectTransform.matrix) // Save the current transformations of the OBJECT

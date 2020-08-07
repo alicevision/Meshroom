@@ -300,8 +300,8 @@ class ListAttribute(Attribute):
             self._value = value
         # New value
         else:
-            self.desc.validateValue(value)
-            self.extend(value)
+            newValue = self.desc.validateValue(value)
+            self.extend(newValue)
         self.requestGraphUpdate()
 
     @raiseIfLink
@@ -413,13 +413,13 @@ class GroupAttribute(Attribute):
         value = self.desc.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
-            for key, v in exportedValue.items():
+            for key, v in value.items():
                 self._value.get(key).value = v
         elif isinstance(value, (list, tuple)):
             for attrDesc, v in zip(self.desc._groupDesc, value):
                 self._value.get(attrDesc.name).value = v
         else:
-            raise AttributeError("Failed to set on GroupAttribute: {}".format(str(exportedValue)))
+            raise AttributeError("Failed to set on GroupAttribute: {}".format(str(value)))
 
     @Slot(str, result=Attribute)
     def childAttribute(self, key):

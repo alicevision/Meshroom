@@ -33,12 +33,12 @@ class Attribute(BaseObject):
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
-        """ Return validated/conformed 'value'.
+        """ Return validated/conformed 'value'. Need to be implemented in derived classes.
 
         Raises:
             ValueError: if value does not have the proper type
         """
-        return value
+        raise NotImplementedError("Attribute.validateValue is an abstract function that should be implemented in the derived class.")
 
     def matchDescription(self, value, conform=False):
         """ Returns whether the value perfectly match attribute's description.
@@ -69,6 +69,14 @@ class ListAttribute(Attribute):
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def validateValue(self, value):
+        if isinstance(value, PySide2.QtQml.QJSValue):
+            # Note: we could use isArray(), property("length").toInt() to retrieve all values
+            raise ValueError("ListAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
+        elif isinstance(value, pyCompatibility.basestring):
+            # Alternative solution to set values from QML is to convert values to JSON string
+            # In this case, it works with all data types
+            value = ast.literal_eval(value)
+
         if not isinstance(value, (list, tuple)):
             raise ValueError('ListAttribute only supports list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
@@ -98,9 +106,8 @@ class GroupAttribute(Attribute):
     def validateValue(self, value):
         """ Ensure value is compatible with the group description and convert value if needed. """
         if isinstance(value, PySide2.QtQml.QJSValue):
-            # If we receive a QJSValue from QML
-            # Warning: it will only work with a single array of values (does not work with array of array, dictionnary)
-            value = ast.literal_eval(value.toString())
+            # Note: we could use isArray(), property("length").toInt() to retrieve all values
+            raise ValueError("GroupAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
         elif isinstance(value, pyCompatibility.basestring):
             # Alternative solution to set values from QML is to convert values to JSON string
             # In this case, it works with all data types
@@ -114,7 +121,7 @@ class GroupAttribute(Attribute):
             if len(value) != len(self._groupDesc):
                 raise ValueError('Value contains incoherent number of values: desc size: {}, value size: {}'.format(len(self._groupDesc), len(value)))
         else:
-            raise ValueError('GroupAttribute only supports dict input values (param:{}, value:{}, type:{}) or list/tuple'.format(self.name, value, type(value)))
+            raise ValueError('GroupAttribute only supports dict/list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
         return value
 
@@ -184,7 +191,7 @@ class BoolParam(Param):
 
     def validateValue(self, value):
         try:
-            return bool(int(value)) # int cast is useful to handle string values ('0', '1')
+            return bool(int(value))  # int cast is useful to handle string values ('0', '1')
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 

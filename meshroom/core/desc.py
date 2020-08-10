@@ -1,10 +1,9 @@
-from meshroom.common import BaseObject, Property, Variant, VariantList
+from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue
 from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import math
 import os
 import psutil
-import PySide2
 import ast
 
 class Attribute(BaseObject):
@@ -69,7 +68,7 @@ class ListAttribute(Attribute):
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def validateValue(self, value):
-        if isinstance(value, PySide2.QtQml.QJSValue):
+        if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
             raise ValueError("ListAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
         if isinstance(value, pyCompatibility.basestring):
@@ -105,7 +104,7 @@ class GroupAttribute(Attribute):
 
     def validateValue(self, value):
         """ Ensure value is compatible with the group description and convert value if needed. """
-        if isinstance(value, PySide2.QtQml.QJSValue):
+        if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
             raise ValueError("GroupAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
         if isinstance(value, pyCompatibility.basestring):

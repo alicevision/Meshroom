@@ -16,7 +16,7 @@ Item {
     /// The underlying Node object
     property variant node
     /// Whether the node can be modified
-    property bool readOnly: false
+    property bool readOnly: node.locked
     /// Whether the node is in compatibility mode
     readonly property bool isCompatibilityNode: node.hasOwnProperty("compatibilityIssue")
     /// Mouse related states

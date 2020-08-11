@@ -873,7 +873,7 @@ class Graph(BaseObject):
                 flowEdges.append(link)
         return flowEdges
 
-    def nodesFromNode(self, startNode, filterTypes=None):
+    def nodesFromNode(self, startNode, filterTypes=None, reverse=True):
         """
         Return the node chain from startNode to the graph leaves.
 
@@ -881,6 +881,9 @@ class Graph(BaseObject):
             startNode (Node): the node to start the visit from.
             filterTypes (str list): (optional) only return the nodes of the given types
                               (does not stop the visit, this is a post-process only)
+            reverse (bool): (optional) direction of visit.
+                            True is for getting nodes depending on the startNode.
+                            False is for getting nodes required for the startNode.
         Returns:
             The list of nodes and edges, from startNode to the graph leaves following edges.
         """
@@ -894,22 +897,15 @@ class Graph(BaseObject):
 
         visitor.discoverVertex = discoverVertex
         visitor.examineEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=[startNode], reverse=True)
+        self.dfs(visitor=visitor, startNodes=[startNode], reverse=reverse)
         return nodes, edges
 
-    @Slot(Node, result="QVariantList")
-    def onlyNodesFromNode(self, startNode, filterType=None):
-        nodes = []
-        edges = []
-        visitor = Visitor()
+    def nodesDependingOnNode(self, startNode, filterTypes=None):
+        nodes, edges = self.nodesFromNode(startNode, filterTypes=filterTypes, reverse=True)
+        return nodes
 
-        def discoverVertex(vertex, graph):
-            if not filterType or vertex.nodeType == filterType:
-                nodes.append(vertex)
-
-        visitor.discoverVertex = discoverVertex
-        visitor.examineEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=[startNode], reverse=True)
+    def nodesRequiredForNode(self, startNode, filterTypes=None):
+        nodes, edges = self.nodesFromNode(startNode, filterTypes=filterTypes, reverse=False)
         return nodes
 
     @Slot(Node, result=int)

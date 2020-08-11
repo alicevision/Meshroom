@@ -251,21 +251,7 @@ Item {
                     point2x: dst.nodeItem.x + dstAnchor.x
                     point2y: dst.nodeItem.y + dstAnchor.y
                     onPressed: {
-                        var canEdit = true
-                        if(_reconstruction.computing) {
-                            if(uigraph.taskManager.nodes.contains(edge.src.node)) {
-                                    canEdit = false;
-                            } else {
-                                if(object.globalStatus == "SUCCESS") {
-                                    var nodes = uigraph.graph.onlyNodesFromNode(edge.src.node);
-                                    for(var i = 0; i < nodes.length; i++) {
-                                        if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
-                                            canEdit = false;
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        const canEdit = !edge.src.node.locked
 
                         if(canEdit && event.button == Qt.RightButton)
                         {
@@ -325,27 +311,7 @@ Item {
                 }
                 MenuItem {
                     text: "Remove Node" + (removeFollowingButton.hovered ? "s From Here" : "")
-                    enabled: {
-                        if(! _reconstruction.computing) {
-                            return true;
-                        }
-
-                        if(uigraph.taskManager.nodes.contains(uigraph.selectedNode)) {
-                                return false;
-                        } else {
-                            if(uigraph.selectedNode.globalStatus == "SUCCESS") {
-                                var nodes = uigraph.graph.onlyNodesFromNode(uigraph.selectedNode);
-                                for(var i = 0; i < nodes.length; i++) {
-                                    if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
-                                        return false;
-                                    }
-                                }
-                            }
-                        }
-
-                        return true;
-                    }
-
+                    enabled: nodeMenu.currentNode ? !nodeMenu.currentNode.locked : false
                     onTriggered: uigraph.removeNode(nodeMenu.currentNode)
                     MaterialToolButton {
                         id: removeFollowingButton
@@ -361,26 +327,7 @@ Item {
                 MenuSeparator {}
                 MenuItem {
                     text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
-                    enabled: {
-                        if(! _reconstruction.computing) {
-                            return true;
-                        }
-
-                        if(uigraph.taskManager.nodes.contains(uigraph.selectedNode) || ["SUBMITTED", "RUNNING"].includes(_reconstruction.selectedNode.globalStatus)) {
-                                return false;
-                        } else {
-                            if(uigraph.selectedNode.globalStatus == "SUCCESS") {
-                                var nodes = uigraph.graph.onlyNodesFromNode(uigraph.selectedNode);
-                                for(var i = 0; i < nodes.length; i++) {
-                                    if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
-                                        return false;
-                                    }
-                                }
-                            }
-                        }
-
-                        return true;
-                    }
+                    enabled: nodeMenu.currentNode ? !nodeMenu.currentNode.locked : false
 
                     function showConfirmationDialog(deleteFollowing) {
                         var obj = deleteDataDialog.createObject(root,
@@ -443,26 +390,7 @@ Item {
 
                     node: object
                     width: uigraph.layout.nodeWidth
-                    readOnly: {
-                        if(! uigraph.computing) {
-                            return false;
-                        }
 
-                        if(object.globalStatus == "SUCCESS") {
-                            var nodes = uigraph.graph.onlyNodesFromNode(object);
-                            for(var i = 0; i < nodes.length; i++) {
-                                if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
-                                    return true;
-                                }
-                            }
-                        } else if(["SUBMITTED", "RUNNING"].includes(object.globalStatus)) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-
-                        return false;
-                    }
                     selected: uigraph.selectedNode === node
                     hovered: uigraph.hoveredNode === node
                     onSelectedChanged: if(selected) forceActiveFocus()

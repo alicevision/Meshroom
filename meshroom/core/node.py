@@ -462,6 +462,9 @@ class BaseNode(BaseObject):
         self._position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
+        self._locked = False
+
+        self.globalStatusChanged.connect(self.updateLocked)
 
     def __getattr__(self, k):
         try:
@@ -813,6 +816,55 @@ class BaseNode(BaseObject):
     def __repr__(self):
         return self.name
 
+    def getLocked(self):
+        return self._locked
+
+    def setLocked(self, lock):
+        if self._locked == lock:
+            return
+        self._locked = lock
+        self.lockedChanged.emit()
+
+    def updateLocked(self):
+        currentStatus = self.getGlobalStatus()
+
+        lockedStatus = (Status.RUNNING, Status.SUBMITTED)
+
+        # Unlock required nodes if the current node changes to Error
+        if currentStatus == Status.ERROR:
+            requiredNodes = self.graph.nodesRequiredForNode(self)
+            for node in requiredNodes:
+                node.setLocked(False)
+
+        # Avoid useless travel through nodes
+        # For instance: when loading a scene with successful nodes
+        if not self._locked and currentStatus == Status.SUCCESS:
+            return
+
+        if currentStatus == Status.SUCCESS:
+            # At this moment, the node is necessarily locked because of previous if statement
+            requiredNodes = self.graph.nodesRequiredForNode(self)
+            dependentNodes = self.graph.nodesDependingOnNode(self)
+            stayLocked = None
+
+            # Check if at least one dependentNode is submitted or currently running
+            for node in dependentNodes:
+                if node.getGlobalStatus() in lockedStatus and node._chunks.at(0).statusNodeName == node.name:
+                    stayLocked = True
+                    break
+            if not stayLocked:
+                # Unlock every required node
+                for node in requiredNodes:
+                    node.setLocked(False)
+            return
+        elif currentStatus in lockedStatus:
+            requiredNodes = self.graph.nodesRequiredForNode(self)
+            for node in requiredNodes:
+                node.setLocked(True)
+            return
+
+        self.setLocked(False)
+
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
@@ -834,6 +886,8 @@ class BaseNode(BaseObject):
     globalStatusChanged = Signal()
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
+    lockedChanged = Signal()
+    locked = Property(bool, getLocked, setLocked, notify=lockedChanged)
 
 
 class Node(BaseNode):

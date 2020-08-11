@@ -167,13 +167,10 @@ ApplicationWindow {
             }
             else
                 _reconstruction.execute(node);
-
-            nodeEditor.updateNodeStatus()
         }
 
         function submit(node) {
             _reconstruction.submit(node);
-            nodeEditor.updateNodeStatus()
         }
 
 
@@ -729,32 +726,8 @@ ApplicationWindow {
                 node: _reconstruction.selectedNode
                 property bool computing: _reconstruction.computing
                 // Make NodeEditor readOnly when computing
-                readOnly: false
-                onNodeChanged: { updateNodeStatus() }
-                onComputingChanged: { updateNodeStatus() }
+                readOnly: node.locked
 
-                function updateNodeStatus() {
-                    if(! _reconstruction.computing) {
-                        readOnly = false;
-                        return;
-                    }
-
-                    if(node.globalStatus === "SUCCESS") {
-                        var nodes = _reconstruction.graph.onlyNodesFromNode(node);
-                        for(var i = 0; i < nodes.length; i++) {
-                            if(["SUBMITTED", "RUNNING"].includes(nodes[i].globalStatus) && nodes[i].chunks.at(0).statusNodeName == nodes[i].name) {
-                                readOnly = true;
-                                return;
-                            }
-                        }
-                        readOnly = false;
-                    } else if(["SUBMITTED", "RUNNING"].includes(node.globalStatus)) {
-                        readOnly = true;
-                    } else {
-                        readOnly = false;
-                    }
-
-                }
                 onAttributeDoubleClicked: workspaceView.viewAttribute(attribute, mouse)
                 onUpgradeRequest: {
                     var n = _reconstruction.upgradeNode(node);

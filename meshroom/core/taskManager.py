@@ -132,7 +132,8 @@ class TaskManager(BaseObject):
         :param name:
         :return:
         """
-        self._nodes.pop(name)
+        if self._nodes.contains(name):
+            self._nodes.pop(name)
 
     def clear(self):
         """

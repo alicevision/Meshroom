@@ -434,7 +434,7 @@ class GroupAttribute(Attribute):
     def uid(self, uidIndex):
         uids = []
         for k, v in self._value.items():
-            if uidIndex in v.desc.uid:
+            if v.enabled and uidIndex in v.desc.uid:
                 uids.append(v.uid(uidIndex))
         return hashValue(uids)
 

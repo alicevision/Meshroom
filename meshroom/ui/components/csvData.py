@@ -23,6 +23,10 @@ class CsvData(QObject):
     def getFilepath(self):
         return self._filepath
 
+    @Slot(result=int)
+    def getNbColumns(self):
+        return len(self._data) if self._ready else 0
+
     def setFilepath(self, filepath):
         if self._filepath == filepath:
             return
@@ -42,7 +46,7 @@ class CsvData(QObject):
         newColumns = self.read()
         if newColumns:
             self._data.setObjectList(newColumns)
-        self.setReady(True)
+            self.setReady(True)
 
     def read(self):
         """Read the CSV file and return a list containing CsvColumn objects."""
@@ -73,7 +77,8 @@ class CsvData(QObject):
     filepath = Property(str, getFilepath, setFilepath, notify=filepathChanged)
     readyChanged = Signal()
     ready = Property(bool, lambda self: self._ready, notify=readyChanged)
-    data = Property(QObject, lambda self: self._data, constant=True)
+    data = Property(QObject, lambda self: self._data, notify=readyChanged)
+    nbColumns = Property(int, getNbColumns, notify=readyChanged)
 
 
 class CsvColumn(QObject):

@@ -34,7 +34,24 @@ FloatingPane {
         onWheel: {}
     }
 
-    property bool ready: csvData.ready
+    property bool crfReady: csvData.ready && csvData.nbColumns >= 4
+    onCrfReadyChanged: {
+        if(crfReady)
+        {
+            redCurve.clear()
+            greenCurve.clear()
+            blueCurve.clear()
+            csvData.getColumn(1).fillChartSerie(redCurve)
+            csvData.getColumn(2).fillChartSerie(greenCurve)
+            csvData.getColumn(3).fillChartSerie(blueCurve)
+        }
+        else
+        {
+            redCurve.clear()
+            greenCurve.clear()
+            blueCurve.clear()
+        }
+    }
     Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
@@ -54,8 +71,8 @@ FloatingPane {
                 id: valueAxisX
                 labelFormat: "%i"
                 titleText: "Camera Brightness"
-                min: ready ? csvData.getColumn(0).getFirst() : 0
-                max: ready ? csvData.getColumn(0).getLast() : 1
+                min: crfReady ? csvData.getColumn(0).getFirst() : 0
+                max: crfReady ? csvData.getColumn(0).getLast() : 1
             }
             ValueAxis {
                 id: valueAxisY
@@ -67,30 +84,27 @@ FloatingPane {
             // We cannot use a Repeater with these Components so we need to instantiate them one by one
             // Red curve
             LineSeries {
+                id: redCurve
                 axisX: valueAxisX
                 axisY: valueAxisY
-                name: ready ? csvData.getColumn(1).title : ""
+                name: crfReady ? csvData.getColumn(1).title : ""
                 color: name.toLowerCase()
-
-                Component.onCompleted: if(ready) csvData.getColumn(1).fillChartSerie(this)
             }
             // Green curve
             LineSeries {
+                id: greenCurve
                 axisX: valueAxisX
                 axisY: valueAxisY
-                name: ready ? csvData.getColumn(2).title : ""
+                name: crfReady ? csvData.getColumn(2).title : ""
                 color: name.toLowerCase()
-
-                Component.onCompleted: if(ready) csvData.getColumn(2).fillChartSerie(this)
             }
             // Blue curve
             LineSeries {
+                id: blueCurve
                 axisX: valueAxisX
                 axisY: valueAxisY
-                name: ready ? csvData.getColumn(3).title : ""
+                name: crfReady ? csvData.getColumn(3).title : ""
                 color: name.toLowerCase()
-
-                Component.onCompleted: if(ready) csvData.getColumn(3).fillChartSerie(this)
             }
         }
 

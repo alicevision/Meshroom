@@ -54,6 +54,13 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             exclusive=True,
             uid=[0]
         ),
+        desc.BoolParam(
+            name='useGraphCut',
+            label='Use smart seams',
+            description='Use a graphcut algorithm to select the seams for better compositing',
+            value=True,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='overlayType',
             label='Overlay Type',

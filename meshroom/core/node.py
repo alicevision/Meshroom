@@ -463,6 +463,7 @@ class BaseNode(BaseObject):
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
         self._locked = False
+        self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
 
         self.globalStatusChanged.connect(self.updateLocked)
 
@@ -865,6 +866,17 @@ class BaseNode(BaseObject):
 
         self.setLocked(False)
 
+    def updateDuplicates(self, nodesPerUid):
+        """ Update the list of duplicate nodes (sharing the same uid). """
+        if not nodesPerUid:
+            self._duplicates.clear()
+            self.duplicatesChanged.emit()
+            return
+
+        uid = self._uids.get(0)
+        self._duplicates.setObjectList([node for node in nodesPerUid.get(uid) if node != self])
+        self.duplicatesChanged.emit()
+
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
@@ -888,6 +900,8 @@ class BaseNode(BaseObject):
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
     lockedChanged = Signal()
     locked = Property(bool, getLocked, setLocked, notify=lockedChanged)
+    duplicatesChanged = Signal()
+    duplicates = Property(Variant, lambda self: self._duplicates, notify=duplicatesChanged)
 
 
 class Node(BaseNode):

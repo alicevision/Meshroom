@@ -1009,6 +1009,24 @@ class Graph(BaseObject):
         for node in self._nodes:
             node.updateStatisticsFromCache()
 
+    def updateNodesPerUid(self):
+        """ Update the duplicate nodes (sharing same uid) list of each node. """
+        # First step is to construct a map uid/nodes
+        nodesPerUid = {}
+        for node in self.nodes:
+            uid = node._uids.get(0)
+
+            # We try to add the node to the list corresponding to this uid
+            try:
+                nodesPerUid.get(uid).append(node)
+            # If it fails because the uid is not in the map, we add it
+            except AttributeError:
+                nodesPerUid.update({uid: [node]})
+
+        # Now, update each individual node
+        for node in self.nodes:
+            node.updateDuplicates(nodesPerUid)
+
     def update(self):
         if not self._updateEnabled:
             # To do the update once for multiple changes
@@ -1020,6 +1038,8 @@ class Graph(BaseObject):
             self.updateStatusFromCache()
         for node in self.nodes:
             node.dirty = False
+
+        self.updateNodesPerUid()
 
         # Graph topology has changed
         if self.dirtyTopology:

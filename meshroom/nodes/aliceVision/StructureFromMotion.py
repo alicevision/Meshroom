@@ -283,7 +283,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             label='Filter Track Forks',
             description='Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n'
                         'lead to multiple features in the same image for a single track. \n',
-            value=True,
+            value=False,
             uid=[0],
         ),
         desc.File(

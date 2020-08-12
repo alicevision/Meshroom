@@ -67,6 +67,24 @@ Item {
                || (attribute.type == "ListAttribute" && attribute.desc.elementDesc.type == "File")
     }
 
+    // Used to generate list of node's label sharing the same uid
+    function generateDuplicateList() {
+        let str = "<b>Shares internal folder (data) with:</b>"
+        for(let i = 0; i < node.duplicates.count; ++i) {
+            if(i % 5 === 0)
+                str += "<br>"
+
+            const currentNode = node.duplicates.at(i)
+
+            if(i === node.duplicates.count - 1) {
+                str += currentNode.nameToLabel(currentNode.name)
+                return str
+            }
+
+            str += (currentNode.nameToLabel(currentNode.name) + ", ")
+        }
+        return str
+    }
 
     // Main Layout
     MouseArea {
@@ -159,13 +177,14 @@ Item {
                         spacing: 2
 
                         // Data sharing indicator
-                        MaterialToolButton {
-                            visible: node.chunks.count > 0 && node.globalStatus !== "NONE" && node.chunks.at(0).statusNodeName !== node.name
+                        MaterialLabel {
+                            visible: node.duplicates.count > 0
                             text: MaterialIcons.layers
                             font.pointSize: 7
                             padding: 2
                             palette.text: Colors.sysPalette.text
-                            ToolTip.text: visible ? "Data has been computed by <b>" + node.nameToLabel(node.chunks.at(0).statusNodeName) + "</b>" : ""
+                            ToolTip.text: visible ? generateDuplicateList() : ""
+                            ToolTip.delay: 250
                         }
 
                         // Submitted externally indicator

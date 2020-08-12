@@ -420,6 +420,8 @@ Item {
                     onExited: uigraph.hoveredNode = null
 
                     Keys.onDeletePressed: {
+                        if(node.locked)
+                            return
                         if(event.modifiers == Qt.AltModifier)
                             uigraph.removeNodesFrom(node)
                         else

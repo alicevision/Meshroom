@@ -726,7 +726,7 @@ ApplicationWindow {
                 node: _reconstruction.selectedNode
                 property bool computing: _reconstruction.computing
                 // Make NodeEditor readOnly when computing
-                readOnly: node.locked
+                readOnly: node ? node.locked : false
 
                 onAttributeDoubleClicked: workspaceView.viewAttribute(attribute, mouse)
                 onUpgradeRequest: {

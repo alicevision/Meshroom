@@ -1053,6 +1053,12 @@ class Graph(BaseObject):
                 chunk.stopProcess()
 
     @Slot()
+    def forceUnlockNodes(self):
+        """ Force to unlock all the nodes. """
+        for node in self.nodes:
+            node.setLocked(False)
+
+    @Slot()
     def clearSubmittedNodes(self):
         """ Reset the status of already submitted nodes to Status.NONE """
         for node in self.nodes:

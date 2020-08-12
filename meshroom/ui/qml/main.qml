@@ -679,6 +679,10 @@ ApplicationWindow {
                                 enabled: !_reconstruction.computingLocally
                                 onTriggered: _reconstruction.graph.clearSubmittedNodes()
                             }
+                            MenuItem {
+                                text: "Force Unlock Nodes"
+                                onTriggered: _reconstruction.graph.forceUnlockNodes()
+                            }
                         }
                     }
                 }

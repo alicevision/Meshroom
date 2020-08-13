@@ -177,14 +177,17 @@ Item {
                         spacing: 2
 
                         // Data sharing indicator
-                        MaterialLabel {
+                        MaterialToolButton {
                             visible: node.duplicates.count > 0
                             text: MaterialIcons.layers
                             font.pointSize: 7
                             padding: 2
                             palette.text: Colors.sysPalette.text
-                            ToolTip.text: visible ? generateDuplicateList() : ""
-                            ToolTip.delay: 250
+                            ToolTip.text: visible ? "<b>Shares internal folder (data) with other node(s). Click for details.</b>" : ""
+
+                            onPressed: ToolTip.text = visible ? generateDuplicateList() : ""
+                            onReleased: ToolTip.text = visible ? "<b>Shares internal folder (data) with other node(s). Click for details.</b>" : ""
+                            onCanceled: released()
                         }
 
                         // Submitted externally indicator

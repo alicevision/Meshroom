@@ -868,12 +868,12 @@ class BaseNode(BaseObject):
 
     def updateDuplicates(self, nodesPerUid):
         """ Update the list of duplicate nodes (sharing the same uid). """
-        if not nodesPerUid:
+        uid = self._uids.get(0)
+        if not nodesPerUid or not uid:
             self._duplicates.clear()
             self.duplicatesChanged.emit()
             return
 
-        uid = self._uids.get(0)
         self._duplicates.setObjectList([node for node in nodesPerUid.get(uid) if node != self])
         self.duplicatesChanged.emit()
 

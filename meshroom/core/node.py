@@ -831,8 +831,8 @@ class BaseNode(BaseObject):
 
         lockedStatus = (Status.RUNNING, Status.SUBMITTED)
 
-        # Unlock required nodes if the current node changes to Error
-        if currentStatus == Status.ERROR:
+        # Unlock required nodes if the current node changes to Error or Stopped
+        if currentStatus in (Status.ERROR, Status.STOPPED):
             requiredNodes = self.graph.nodesRequiredForNode(self)
             for node in requiredNodes:
                 node.setLocked(False)

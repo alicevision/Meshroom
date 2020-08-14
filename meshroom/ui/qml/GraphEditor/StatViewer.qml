@@ -439,23 +439,10 @@ Item {
                     title: root.ramLabel + root.ramTotal + "GB"
 
                     ValueAxis {
-                        id: valueAxisY2
+                        id: valueAxisRam
                         min: 0
                         max: 100
                         titleText: "<span style='color: " + textColor + "'>%</span>"
-                        color: textColor
-                        gridLineColor: textColor
-                        minorGridLineColor: textColor
-                        shadesColor: textColor
-                        shadesBorderColor: textColor
-                        labelsColor: textColor
-                    }
-
-                    ValueAxis {
-                        id: valueAxisRam
-                        min: 0
-                        max: root.ramTotal
-                        titleText: "<span style='color: " + textColor + "'>GB</span>"
                         color: textColor
                         gridLineColor: textColor
                         minorGridLineColor: textColor

@@ -1,11 +1,25 @@
-__version__ = "1.1"
+__version__ = "2.0"
 
 from meshroom.core import desc
+
+import os.path
 
 
 class SfMTransform(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmTransform {allParams}'
     size = desc.DynamicNodeSize('input')
+
+    documentation = '''
+This node allows to change the coordinate system of one SfM scene.
+
+The transformation can be based on:
+ * transformation: Apply a given transformation
+ * auto_from_cameras: Fit all cameras into a box [-1,1]
+ * auto_from_landmarks: Fit all landmarks into a box [-1,1]
+ * from_single_camera: Use a specific camera as the origin of the coordinate system
+ * from_markers: Align specific markers to custom coordinates
+
+'''
 
     inputs = [
         desc.File(
@@ -104,9 +118,16 @@ class SfMTransform(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output',
+            label='Output SfMData File',
             description='''Aligned SfMData file .''',
-            value=desc.Node.internalFolder + 'transformedSfM.abc',
+            value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or 'sfmData') + '.abc',
+            uid=[],
+        ),
+        desc.File(
+            name='outputViewsAndPoses',
+            label='Output Poses',
+            description='''Path to the output sfmdata file with cameras (views and poses).''',
+            value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],
         ),
     ]

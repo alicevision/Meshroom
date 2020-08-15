@@ -41,6 +41,10 @@ class BufferReader(io.BytesIO): # object to call the callback while the file is 
 class SketchfabUpload(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
 
+    documentation = '''
+Upload a textured mesh on Sketchfab.
+'''
+
     inputs = [
         desc.ListAttribute(
             elementDesc=desc.File(

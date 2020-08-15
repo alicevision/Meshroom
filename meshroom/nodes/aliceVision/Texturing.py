@@ -7,6 +7,20 @@ class Texturing(desc.CommandLineNode):
     commandLine = 'aliceVision_texturing {allParams}'
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
+
+    documentation = '''
+This node computes the texturing on the mesh.
+
+If the mesh has no associated UV, it automatically computes UV maps.
+
+For each triangle, it uses the visibility information associated to each vertex to retrieve the texture candidates.
+It select the best cameras based on the resolution covering the triangle. Finally it averages the pixel values using multiple bands in the frequency domain.
+Many cameras are contributing to the low frequencies and only the best ones contributes to the high frequencies.
+
+## Online
+[https://alicevision.org/#photogrammetry/texturing](https://alicevision.org/#photogrammetry/texturing)
+'''
+
     inputs = [
         desc.File(
             name='input',

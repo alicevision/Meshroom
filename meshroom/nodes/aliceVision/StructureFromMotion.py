@@ -1,14 +1,64 @@
 __version__ = "2.0"
 
-import json
-import os
-
 from meshroom.core import desc, stats
 
 
 class StructureFromMotion(desc.CommandLineNode):
     commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
+
+    documentation = '''
+This node will analyze feature matches to understand the geometric relationship behind all the 2D observations,
+and infer the rigid scene structure (3D points) with the pose (position and orientation) and internal calibration of all cameras.
+The pipeline is a growing reconstruction process (called incremental SfM): it first computes an initial two-view reconstruction that is iteratively extended by adding new views.
+
+1/ Fuse 2-View Matches into Tracks
+
+It fuses all feature matches between image pairs into tracks. Each track represents a candidate point in space, visible from multiple cameras.
+However, at this step of the pipeline, it still contains many outliers.
+
+2/ Initial Image Pair
+
+It chooses the best initial image pair. This choice is critical for the quality of the final reconstruction.
+It should indeed provide robust matches and contain reliable geometric information.
+So, this image pair should maximize the number of matches and the repartition of the corresponding features in each image.
+But at the same time, the angle between the cameras should also be large enough to provide reliable geometric information.
+
+3/ Initial 2-View Geometry
+
+It computes the fundamental matrix between the 2 images selected and consider that the first one is the origin of the coordinate system.
+
+4/ Triangulate
+
+Now with the pose of the 2 first cameras, it triangulates the corresponding 2D features into 3D points.
+
+5/ Next Best View Selection
+
+After that, it selects all the images that have enough associations with the features that are already reconstructed in 3D.
+
+6/ Estimate New Cameras
+
+Based on these 2D-3D associations it performs the resectioning of each of these new cameras.
+The resectioning is a Perspective-n-Point algorithm (PnP) in a RANSAC framework to find the pose of the camera that validates most of the features associations.
+On each camera, a non-linear minimization is performed to refine the pose.
+
+7/ Triangulate
+
+From these new cameras poses, some tracks become visible by 2 or more resected cameras and it triangulates them.
+
+8/ Optimize
+
+It performs a Bundle Adjustment to refine everything: extrinsics and intrinsics parameters of all cameras as well as the position of all 3D points.
+It filters the results of the Bundle Adjustment by removing all observations that have high reprojection error or insufficient angles between observations.
+
+9/ Loop from 5 to 9
+
+As we have triangulated new points, we get more image candidates for next best views selection and we can iterate from 5 to 9.
+It iterates like that, adding cameras and triangulating new 2D features into 3D points and removing 3D points that became invalidated, until we cannot localize new views.
+
+## Online
+[https://alicevision.org/#photogrammetry/sfm](https://alicevision.org/#photogrammetry/sfm)
+'''
 
     inputs = [
         desc.File(
@@ -59,6 +109,18 @@ class StructureFromMotion(desc.CommandLineNode):
             description='Estimator type used to localize cameras (acransac, ransac, lsmeds, loransac, maxconsensus).',
             value='acransac',
             values=['acransac', 'ransac', 'lsmeds', 'loransac', 'maxconsensus'],
+            exclusive=True,
+            uid=[0],
+            advanced=True,
+        ),
+        desc.ChoiceParam(
+            name='observationConstraint',
+            label='Observation Constraint',
+            description='Observation contraint mode used in the optimization:\n'
+                        ' * Basic: Use standard reprojection error in pixel coordinates\n'
+                        ' * Scale: Use reprojection error in pixel coordinates but relative to the feature scale',
+            value='Basic',
+            values=['Basic', 'Scale'],
             exclusive=True,
             uid=[0],
             advanced=True,
@@ -222,7 +284,7 @@ class StructureFromMotion(desc.CommandLineNode):
             label='Filter Track Forks',
             description='Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n'
                         'lead to multiple features in the same image for a single track. \n',
-            value=True,
+            value=False,
             uid=[0],
         ),
         desc.File(
@@ -270,7 +332,7 @@ class StructureFromMotion(desc.CommandLineNode):
         ),
         desc.File(
             name='outputViewsAndPoses',
-            label='Output SfMData File',
+            label='Output Poses',
             description='''Path to the output sfmdata file with cameras (views and poses).''',
             value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],
@@ -283,33 +345,6 @@ class StructureFromMotion(desc.CommandLineNode):
             uid=[],
         ),
     ]
-
-    @staticmethod
-    def getResults(node):
-        """
-        Parse SfM result and return views, poses and intrinsics as three dicts with viewId, poseId and intrinsicId as keys.
-        """
-        reportFile = node.outputViewsAndPoses.value
-        if not os.path.exists(reportFile):
-            return {}, {}, {}
-
-        with open(reportFile) as jsonFile:
-            report = json.load(jsonFile)
-
-        views = dict()
-        poses = dict()
-        intrinsics = dict()
-
-        for view in report['views']:
-            views[view['viewId']] = view
-
-        for pose in report['poses']:
-            poses[pose['poseId']] = pose['pose']
-
-        for intrinsic in report['intrinsics']:
-            intrinsics[intrinsic['intrinsicId']] = intrinsic
-
-        return views, poses, intrinsics
 
     def getEstimatedTime(self, chunk, reconstruction):
         factor = 9.436268413444888e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)

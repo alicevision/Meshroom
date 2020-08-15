@@ -6,6 +6,7 @@ import Utils 1.0
 import Charts 1.0
 import MaterialIcons 2.2
 
+
 Item {
     id: root
 
@@ -364,7 +365,7 @@ Item {
                     }
                 }
 
-                ChartView {
+                InteractiveChartView {
                     id: cpuChart
 
                     Layout.fillWidth: true
@@ -419,7 +420,7 @@ Item {
 
             ColumnLayout {
 
-                ChartView {
+                InteractiveChartView {
                     id: ramChart
                     margins.top: 0
                     margins.bottom: 0
@@ -487,7 +488,7 @@ Item {
             ColumnLayout {
 
 
-                ChartView {
+                InteractiveChartView {
                     id: gpuChart
 
                     Layout.fillWidth: true

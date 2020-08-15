@@ -9,6 +9,11 @@ from meshroom.core import desc, stats
 
 class Publish(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
+
+    documentation = '''
+This node allows to copy files into a specific folder.
+'''
+
     inputs = [
         desc.ListAttribute(
             elementDesc=desc.File(

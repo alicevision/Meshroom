@@ -9,6 +9,10 @@ class MeshDecimate(desc.CommandLineNode):
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
 
+    documentation = '''
+This node allows to reduce the density of the Mesh.
+'''
+
     inputs = [
         desc.File(
             name="input",

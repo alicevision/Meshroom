@@ -44,9 +44,10 @@ Item {
 
     // Load reconstruction's current SfM file
     function viewSfM() {
-        if(!reconstruction.sfm)
+        var activeNode = _reconstruction.activeNodes.get('sfm').node;
+        if(!activeNode)
             return;
-        viewer3D.view(reconstruction.sfm.attribute('output'));
+        viewer3D.view(activeNode.attribute('output'));
     }
 
     SystemPalette { id: activePalette }
@@ -65,7 +66,7 @@ Item {
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
                 cameraInit: reconstruction.cameraInit
-                hdrCameraInit: reconstruction.hdrCameraInit
+                tempCameraInit: reconstruction.tempCameraInit
                 currentIndex: reconstruction.cameraInitIndex
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
@@ -82,6 +83,8 @@ Item {
             Layout.fillHeight: true
             Layout.fillWidth: true
             Layout.minimumWidth: 50
+            loading: viewer2D.loadingModules.length > 0
+            loadingText: loading ? "Loading " + viewer2D.loadingModules : ""
 
             headerBar: RowLayout {
                 MaterialToolButton {
@@ -189,7 +192,7 @@ Item {
                     mediaLibrary: viewer3D.library
                     camera: viewer3D.mainCamera
                     uigraph: reconstruction
-                    onNodeActivated: _reconstruction.setActiveNodeOfType(node)
+                    onNodeActivated: _reconstruction.setActiveNode(node)
                 }
             }
         }

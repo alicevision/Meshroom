@@ -9,6 +9,10 @@ class MeshResampling(desc.CommandLineNode):
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
 
+    documentation = '''
+This node allows to recompute the mesh surface with a new topology and uniform density.
+'''
+
     inputs = [
         desc.File(
             name="input",

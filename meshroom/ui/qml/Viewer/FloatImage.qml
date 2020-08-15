@@ -50,5 +50,7 @@ AliceVision.FloatImageViewer {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
+        // Do not intercept mouse events, only get the mouse over information
+        acceptedButtons: Qt.NoButton
     }
 }

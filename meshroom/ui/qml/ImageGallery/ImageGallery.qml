@@ -16,10 +16,12 @@ Panel {
 
     property variant cameraInits
     property variant cameraInit
-    property variant hdrCameraInit
+    property variant tempCameraInit
     readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
+    readonly property int centerViewId: (_reconstruction && _reconstruction.sfmTransform) ? parseInt(_reconstruction.sfmTransform.attribute("transformation").value) : 0
+
     property int defaultCellSize: 160
     property int currentIndex: 0
     property bool readOnly: false
@@ -36,7 +38,7 @@ Panel {
 
     QtObject {
         id: m
-        property variant currentCameraInit: displayHDR.checked ? _reconstruction.hdrCameraInit : root.cameraInit
+        property variant currentCameraInit: _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
         property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property bool readOnly: root.readOnly || displayHDR.checked
     }
@@ -189,6 +191,16 @@ Panel {
                             }
                         }
 
+                        // Center of SfMTransform
+                        Loader {
+                            id: sfmTransformIndicator
+                            active: viewpoint && (viewpoint.get("viewId").value == centerViewId)
+                            sourceComponent: ImageBadge {
+                                text: MaterialIcons.gamepad
+                                ToolTip.text: "Camera used to define the center of the scene."
+                            }
+                        }
+
                         Item { Layout.fillWidth: true }
 
                         // Reconstruction status indicator
@@ -331,47 +343,114 @@ Panel {
     }
 
     footerContent: RowLayout {
-
-        // Image count
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            RowLayout {
-                MaterialLabel { text: MaterialIcons.image }
-                Label { text: grid.model.count }
-            }
-            RowLayout {
-                visible: _reconstruction.cameraInit && _reconstruction.nbCameras
-                MaterialLabel { text: MaterialIcons.videocam }
-                Label { text: _reconstruction.cameraInit ? _reconstruction.nbCameras : 0 }
-            }
+        // Images count
+        MaterialToolLabel {
+            ToolTip.text: grid.model.count + " Input Images"
+            iconText: MaterialIcons.image
+            label: grid.model.count.toString()
+            // enabled: grid.model.count > 0
+            // margin: 4
         }
-
-        MaterialToolButton {
-            id: displayHDR
-            font.pointSize: 20
-            padding: 0
-            anchors.margins: 0
-            implicitHeight: 14
-            ToolTip.text: "Visualize HDR images"
-            text: MaterialIcons.hdr_on
-            visible: _reconstruction.ldr2hdr
-            enabled: visible && _reconstruction.ldr2hdr.isComputed()
-            onEnabledChanged: {
-                // Reset the toggle to avoid getting stuck
-                // with the HDR node checked but disabled.
-                checked = false;
-            }
-            checkable: true
-            checked: false
-            onClicked: { _reconstruction.setupLDRToHDRCameraInit(); }
+        // cameras count
+        MaterialToolLabel {
+            ToolTip.text: label + " Estimated Cameras"
+            iconText: MaterialIcons.videocam
+            label: _reconstruction ? _reconstruction.nbCameras.toString() : "0"
+            // margin: 4
+            // enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
         }
 
         Item { Layout.fillHeight: true; Layout.fillWidth: true }
 
+        MaterialToolLabelButton {
+            id: displayHDR
+            property var activeNode: _reconstruction.activeNodes.get("LdrToHdrMerge").node
+            ToolTip.text: "Visualize HDR images: " + (activeNode ? activeNode.label : "No Node")
+            iconText: MaterialIcons.filter
+            label: activeNode ? activeNode.attribute("nbBrackets").value : ""
+            visible: activeNode
+            enabled: activeNode && activeNode.isComputed
+            property string nodeID: activeNode ? (activeNode.label + activeNode.isComputed) : ""
+            onNodeIDChanged: {
+                if(checked) {
+                    open();
+                }
+            }
+            onEnabledChanged: {
+                // Reset the toggle to avoid getting stuck
+                // with the HDR node checked but disabled.
+                if(checked) {
+                    checked = false;
+                    close();
+                }
+            }
+            checkable: true
+            checked: false
+            onClicked: {
+                if(checked) {
+                    open();
+                } else {
+                    close();
+                }
+            }
+            function open() {
+                if(imageProcessing.checked)
+                    imageProcessing.checked = false;
+                _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
+            }
+            function close() {
+                    _reconstruction.clearTempCameraInit();
+            }
+        }
+
+        MaterialToolButton {
+            id: imageProcessing
+            property var activeNode: _reconstruction.activeNodes.get("ImageProcessing").node
+            font.pointSize: 15
+            padding: 0
+            ToolTip.text: "Preprocessed Images: " + (activeNode ? activeNode.label : "No Node")
+            text: MaterialIcons.wallpaper
+            visible: activeNode && activeNode.attribute("outSfMData").value
+            enabled: activeNode && activeNode.isComputed
+            property string nodeID: activeNode ? (activeNode.label + activeNode.isComputed) : ""
+            onNodeIDChanged: {
+                if(checked) {
+                    open();
+                }
+            }
+            onEnabledChanged: {
+                // Reset the toggle to avoid getting stuck
+                // with the HDR node checked but disabled.
+                if(checked) {
+                    checked = false;
+                    close();
+                }
+            }
+            checkable: true
+            checked: false
+            onClicked: {
+                if(checked) {
+                    open();
+                } else {
+                    close();
+                }
+            }
+            function open() {
+                if(displayHDR.checked)
+                    displayHDR.checked = false;
+                _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
+            }
+            function close() {
+                    _reconstruction.clearTempCameraInit();
+            }
+        }
+
+        Item { Layout.fillHeight: true; width: 1 }
+
         // Thumbnail size icon and slider
         MaterialToolButton {
             text: MaterialIcons.photo_size_select_large
+            ToolTip.text: "Thumbnails Scale"
             padding: 0
             anchors.margins: 0
             font.pointSize: 11
@@ -385,5 +464,4 @@ Panel {
             implicitWidth: 70
         }
     }
-
 }

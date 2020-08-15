@@ -412,7 +412,7 @@ class UIGraph(QObject):
         for chunk in chunks:
             if chunk.node._name not in nodesChecked:
                 nodesChecked.append(chunk.node._name)
-                for dirpath, dirnames, filenames in os.walk(chunk.node.internalFolder):
+                for dirpath, _, filenames in os.walk(chunk.node.internalFolder):
                     for f in filenames:
                         try:
                             totalUsage += os.path.getsize(os.path.join(dirpath, f))

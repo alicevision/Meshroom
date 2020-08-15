@@ -4,7 +4,7 @@ import shutil
 import glob
 import os
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class Publish(desc.Node):
@@ -49,31 +49,24 @@ class Publish(desc.Node):
         return paths
 
     def processChunk(self, chunk):
-        try:
-            chunk.logManager.start(chunk.node.verboseLevel.value)
-
+        with stats.Log(chunk) as log:
             if not chunk.node.inputFiles:
-                chunk.logger.warning('Nothing to publish')
+                log.logger.warning('Nothing to publish')
                 return
             if not chunk.node.output.value:
-                chunk.logger.warning('No output folder set')
+                log.logger.warning('No output folder set')
                 return
 
             outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
             if not outFiles:
-                chunk.logger.debug('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+                log.logger.debug('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
                 raise RuntimeError('Publish: input files listed, but nothing to publish')
 
             if not os.path.exists(chunk.node.output.value):
                 os.mkdir(chunk.node.output.value)
 
             for iFile, oFile in outFiles.items():
-                chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
+                log.logger.info('Publish file {} into {}'.format(iFile, oFile))
                 shutil.copyfile(iFile, oFile)
-            chunk.logger.info('Publish end')
-        except Exception as e:
-            chunk.logger.error(e)
-            raise e
-        finally:
-            chunk.logManager.end()
+            log.logger.info('Publish end')

@@ -239,7 +239,7 @@ class CameraInit(desc.CommandLineNode):
 
     def getEstimatedTime(self, chunk, reconstruction):
         factor = 3.610128791565037 # Calculated by (time taken / number of images) / benchmark
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        amount, _ = reconstruction.imagesStatisticsForNode(chunk.node)
         return factor*stats.Benchmark()*amount
 
     def processChunk(self, chunk):

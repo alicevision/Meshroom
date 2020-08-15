@@ -344,3 +344,94 @@ class StatisticsThread(threading.Thread):
     def stopRequest(self):
         """ Request the thread to exit as soon as possible. """
         self._stopFlag.set()
+
+
+class Log:
+    dateTimeFormatting = '%H:%M:%S'
+
+    def __init__(self, chunk):
+        self.chunk = chunk
+
+    class Formatter(logging.Formatter):
+        def format(self, record):
+            # Make level name lower case
+            record.levelname = record.levelname.lower()
+            return logging.Formatter.format(self, record)
+
+    def configureLogger(self):
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
+        handler = logging.FileHandler(self.chunk.logFile)
+        formatter = self.Formatter('[%(asctime)s.%(msecs)03d][%(levelname)s] %(message)s', self.dateTimeFormatting)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
+    def __enter__(self):
+        # Clear log file
+        open(self.chunk.logFile, 'w').close()
+
+        self.logger = logging.getLogger(self.chunk.node.getName())
+        if hasattr(self.chunk.node, 'verboseLevel'):
+            text = self.chunk.node.verboseLevel.value
+            if text == 'critical': lvl = logging.CRITICAL
+            elif text == 'error': lvl = logging.ERROR
+            elif text == 'warning': lvl = logging.WARNING
+            elif text == 'info': lvl = logging.INFO
+            elif text == 'debug': lvl = logging.DEBUG
+            else: lvl = logging.NOTSET
+            self.logger.setLevel(lvl)
+        self.configureLogger()
+
+        self.progressBar = False
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type:
+            self.logger.error('{}: {}'.format(exc_type.__name__, exc_value))
+
+        for handler in self.logger.handlers[:]:
+            # Stops the file being locked
+            handler.close()
+
+    def makeProgressBar(self, end, message=''):
+        assert end > 0
+        assert not self.progressBar
+
+        self.progressEnd = end
+        self.currentProgressTics = 0
+        self.progressBar = True
+
+        with open(self.chunk.logFile, 'a') as f:
+            if message:
+                f.write(message+'\n')
+            f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
+            f.write('|----|----|----|----|----|----|----|----|----|----|\n\n')
+
+        with open(self.chunk.logFile, 'r') as f:
+            content = f.read()
+            # adding to the progress bar in the same place means logging can be used at the same time
+            self.progressBarPosition = content.rfind('\n')
+
+    def updateProgressBar(self, value):
+        assert self.progressBar
+        assert value <= self.progressEnd
+
+        tics = round((value/self.progressEnd)*51)
+        nTicsToAdd = tics-self.currentProgressTics
+        if nTicsToAdd < 1:
+            return
+
+        with open(self.chunk.logFile, 'r+') as f:
+            text = f.read()
+            for i in range(nTicsToAdd):
+                text = text[:self.progressBarPosition]+'*'+text[self.progressBarPosition:]
+            f.seek(0)
+            f.write(text)
+
+        self.currentProgressTics = tics
+
+    def completeProgressBar(self):
+        assert self.progressBar
+
+        self.progressBar = False

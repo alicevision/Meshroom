@@ -317,9 +317,10 @@ Entity {
                             model[prop] = Qt.binding(function() { return object ? object[prop] : 0; });
                         })
                     }
-                    else if(finalSource) {
+                    else if(finalSource && status === Component.Ready) {
                         // source was valid but no loader was created, remove element
-                        remove(index);
+                        // check if component is ready to avoid removing element from the model before adding instance to the node
+                        remove(index)
                     }
                 }
 

@@ -453,6 +453,10 @@ class Reconstruction(UIGraph):
 
         self.setDefaultPipeline(defaultPipeline)
 
+    def clear(self):
+        self.clearActiveNodes()
+        super(Reconstruction, self).clear()
+
     def setDefaultPipeline(self, defaultPipeline):
         self._defaultPipeline = defaultPipeline
 
@@ -462,6 +466,10 @@ class Reconstruction(UIGraph):
             self._activeNodes.add(ActiveNode(category, self))
         for nodeType, _ in meshroom.core.nodesDesc.items():
             self._activeNodes.add(ActiveNode(nodeType, self))
+
+    def clearActiveNodes(self):
+        for key in self._activeNodes.keys():
+            self._activeNodes.get(key).node = None
 
     def onCameraInitChanged(self):
         # Update active nodes when CameraInit changes
@@ -559,7 +567,7 @@ class Reconstruction(UIGraph):
     def getViewpoints(self):
         """ Return the Viewpoints model. """
         # TODO: handle multiple Viewpoints models
-        return self._cameraInit.viewpoints.value if self._cameraInit else None
+        return self._cameraInit.viewpoints.value if self._cameraInit else QObjectListModel(parent=self)
 
     def updateCameraInits(self):
         cameraInits = self._graph.nodesByType("CameraInit", sortedByIndex=True)

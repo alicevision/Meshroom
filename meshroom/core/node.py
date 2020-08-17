@@ -442,6 +442,7 @@ class BaseNode(BaseObject):
         self._position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
+        self._alive = True  # for QML side to know if the node can be used or is going to be deleted
 
     def __getattr__(self, k):
         try:
@@ -525,6 +526,17 @@ class BaseNode(BaseObject):
             return
         self._position = value
         self.positionChanged.emit()
+
+    @property
+    def alive(self):
+        return self._alive
+
+    @alive.setter
+    def alive(self, value):
+        if self._alive == value:
+            return
+        self._alive = value
+        self.aliveChanged.emit()
 
     @property
     def depth(self):
@@ -792,6 +804,8 @@ class BaseNode(BaseObject):
     globalStatusChanged = Signal()
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
+    aliveChanged = Signal()
+    alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)
 
 
 class Node(BaseNode):

@@ -10,7 +10,7 @@ Item {
     property bool readOnly: false
     property color baseColor: defaultColor
     property color shadowColor: "black"
-    readonly property bool isCompatibilityNode: node.hasOwnProperty("compatibilityIssue")
+    readonly property bool isCompatibilityNode: node ? node.hasOwnProperty("compatibilityIssue") : false
     readonly property color defaultColor: isCompatibilityNode ? "#444" : "#607D8B"
     property bool selected: false
     property bool hovered: false
@@ -24,13 +24,13 @@ Item {
     signal attributePinDeleted(var attribute, var pin)
 
     implicitHeight: childrenRect.height
-    objectName: node.name
+    objectName: node ? node.name : ""
 
     SystemPalette { id: activePalette }
 
     // initialize position with node coordinates
-    x: root.node.x
-    y: root.node.y
+    x: root.node ? root.node.x : undefined
+    y: root.node ? root.node.y : undefined
 
     Connections {
         target: root.node
@@ -93,7 +93,7 @@ Item {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 padding: 4
-                text: node.label
+                text: node ? node.label : ""
                 color: "#EEE"
                 font.pointSize: 8
                 background: Rectangle {
@@ -106,7 +106,7 @@ Item {
                 defaultColor: Qt.darker(baseColor, 1.3)
                 implicitHeight: 3
                 width: parent.width
-                model: node.chunks
+                model: node ? node.chunks : undefined
             }
 
             Item { width: 1; height: 2}
@@ -121,7 +121,7 @@ Item {
                     width: parent.width / 2
                     spacing: 1
                     Repeater {
-                        model: node.attributes
+                        model: node ? node.attributes : undefined
                         delegate: Loader {
                             active: !object.isOutput && isDisplayableAsPin(object)
                             width: inputs.width
@@ -146,7 +146,7 @@ Item {
                     anchors.right: parent.right
                     spacing: 1
                     Repeater {
-                        model: node.attributes
+                        model: node ? node.attributes : undefined
 
                         delegate: Loader {
                             active: object.isOutput && isDisplayableAsPin(object)

@@ -16,15 +16,15 @@ RowLayout {
     readonly property point edgeAnchorPos: Qt.point(edgeAnchor.x + edgeAnchor.width/2,
                                                     edgeAnchor.y + edgeAnchor.height/2)
 
-    readonly property bool isList: attribute.type == "ListAttribute"
+    readonly property bool isList: attribute && attribute.type === "ListAttribute"
 
     signal childPinCreated(var childAttribute, var pin)
     signal childPinDeleted(var childAttribute, var pin)
 
     signal pressed(var mouse)
 
-    objectName: attribute.name + "."
-    layoutDirection: attribute.isOutput ? Qt.RightToLeft : Qt.LeftToRight
+    objectName: attribute ? attribute.name + "." : ""
+    layoutDirection: attribute && attribute.isOutput ? Qt.RightToLeft : Qt.LeftToRight
     spacing: 2
 
     // Instantiate empty Items for each child attribute
@@ -49,7 +49,7 @@ RowLayout {
         color: {
             if(connectMA.containsMouse || connectMA.drag.active || (dropArea.containsDrag && dropArea.acceptableDrop))
                 return nameLabel.palette.highlight
-            else if(attribute.isLink)
+            else if(attribute && attribute.isLink)
                 return "#3e3e3e"
             return "white"
         }
@@ -93,7 +93,7 @@ RowLayout {
             objectName: "edgeConnector"
             readonly property alias attribute: root.attribute
             readonly property alias nodeItem: root.nodeItem
-            readonly property bool isOutput: attribute.isOutput
+            readonly property bool isOutput: attribute && attribute.isOutput
             readonly property alias isList: root.isList
             anchors.centerIn: root.state == "Dragging" ? undefined : parent
             width: 4
@@ -155,12 +155,12 @@ RowLayout {
             id: nameLabel
 
             property bool hovered: (connectMA.containsMouse || connectMA.drag.active || dropArea.containsDrag)
-            text: attribute.name
+            text: attribute ? attribute.name : ""
             elide: hovered ? Text.ElideNone : Text.ElideMiddle
             width: hovered ? contentWidth : parent.width
             font.pointSize: 5
-            horizontalAlignment: attribute.isOutput ? Text.AlignRight : Text.AlignLeft
-            anchors.right: attribute.isOutput ? parent.right : undefined
+            horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+            anchors.right: attribute && attribute.isOutput ? parent.right : undefined
 
             background: Rectangle {
                 visible: parent.hovered && metrics.truncated

@@ -203,11 +203,14 @@ Entity {
                 property string rawSource: attribute ? attribute.value : model.source
                 // whether dependencies are statified (applies for output/connected input attributes only)
                 readonly property bool dependencyReady: {
-                    if(attribute && attribute.isOutput)
-                        return attribute.node.globalStatus === "SUCCESS";
-                    if(attribute && attribute.isLink)
-                        return attribute.linkParam.node.globalStatus === "SUCCESS";
-                    return true;
+                    if(!attribute)
+                        // if the node is removed, the attribute will be invalid
+                        return false
+                    if(attribute.isOutput)
+                        return attribute.node.globalStatus === "SUCCESS"
+                    if(attribute.isLink)
+                        return attribute.linkParam.node.globalStatus === "SUCCESS"
+                    return true // is an input param so no dependency
                 }
                 // source based on raw source + dependency status
                 property string currentSource: dependencyReady ? rawSource : ""
@@ -230,8 +233,14 @@ Entity {
                 // Use the object as NodeInstantiator model to be notified of its deletion
                 NodeInstantiator {
                     model: attribute
-                    delegate: Entity { objectName: "DestructionWatcher [" + attribute.toString() + "]" }
-                    onObjectRemoved: remove(idx)
+                    delegate: Entity { objectName: "DestructionWatcher [" + model.toString() + "]" }
+                    onObjectRemoved: remove(index)
+                }
+
+                property bool alive: attribute ? attribute.node.alive : false
+                onAliveChanged: {
+                    if(!alive && index >= 0)
+                          remove(index)
                 }
 
                 // 'visible' property drives media loading request
@@ -267,7 +276,7 @@ Entity {
 
                 Component.onCompleted: {
                     // keep 'source' -> 'entity' reference
-                    m.sourceToEntity[modelSource] = mediaLoader;
+                    m.sourceToEntity[modelSource] = instantiatedEntity;
                     // always request media loading when delegate has been created
                     updateModel(true);
                     // if external media failed to open, remove element from model
@@ -381,7 +390,8 @@ Entity {
         }
 
         onObjectRemoved: {
-            delete m.sourceToEntity[object.modelSource];
+            if(m.sourceToEntity[object.modelSource])
+                delete m.sourceToEntity[object.modelSource]
         }
     }
 }

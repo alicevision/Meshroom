@@ -246,7 +246,7 @@ Entity {
                 }
 
                 function updateCacheAndModel(forceRequest) {
-                    // don't cache explicitely unloaded media
+                    // don't cache explicitly unloaded media
                     if(model.requested && object && dependencyReady) {
                         // cache current object
                         if(cache.add(Filepath.urlToString(mediaLoader.source), object));

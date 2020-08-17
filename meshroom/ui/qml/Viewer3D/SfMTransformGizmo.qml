@@ -66,16 +66,16 @@ Entity {
 
         // Translation values from node (vector3d because this is the type of QTransform.translation)
         property var nodeTranslation : Qt.vector3d(
-            root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.x").value,
-            root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.y").value,
-            root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.z").value
+            root.currentSfMTransformNode ? root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.x").value : 0,
+            root.currentSfMTransformNode ? root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.y").value : 0,
+            root.currentSfMTransformNode ? root.currentSfMTransformNode.attribute("manualTransform.manualTranslation.z").value : 0
         )
         // Rotation values from node (3 separated values because QTransform stores Euler angles like this)
-        property var nodeRotationX: root.currentSfMTransformNode.attribute("manualTransform.manualRotation.x").value
-        property var nodeRotationY: root.currentSfMTransformNode.attribute("manualTransform.manualRotation.y").value
-        property var nodeRotationZ: root.currentSfMTransformNode.attribute("manualTransform.manualRotation.z").value
+        property var nodeRotationX: root.currentSfMTransformNode ? root.currentSfMTransformNode.attribute("manualTransform.manualRotation.x").value : 0
+        property var nodeRotationY: root.currentSfMTransformNode ? root.currentSfMTransformNode.attribute("manualTransform.manualRotation.y").value : 0
+        property var nodeRotationZ: root.currentSfMTransformNode ? root.currentSfMTransformNode.attribute("manualTransform.manualRotation.z").value : 0
         // Scale value from node (simple number because we use uniform scale)
-        property var nodeScale: root.currentSfMTransformNode.attribute("manualTransform.manualScale").value
+        property var nodeScale: root.currentSfMTransformNode ? root.currentSfMTransformNode.attribute("manualTransform.manualScale").value : 1
 
         // Automatically evaluate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.
         // When the gizmo has changed (with mouse), the new values are set to the node, the priority is given back to the node and the Transform is re-evaluated once with those values.

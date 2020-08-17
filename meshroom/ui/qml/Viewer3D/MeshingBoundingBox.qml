@@ -62,19 +62,19 @@ Entity {
 
         // Translation values from node (vector3d because this is the type of QTransform.translation)
         property var nodeTranslation : Qt.vector3d(
-            root.currentMeshingNode.attribute("boundingBox.bboxTranslation.x").value,
-            root.currentMeshingNode.attribute("boundingBox.bboxTranslation.y").value,
-            root.currentMeshingNode.attribute("boundingBox.bboxTranslation.z").value
+            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxTranslation.x").value : 0,
+            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxTranslation.y").value : 0,
+            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxTranslation.z").value : 0
         )
         // Rotation values from node (3 separated values because QTransform stores Euler angles like this)
-        property var nodeRotationX: root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value
-        property var nodeRotationY: root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value
-        property var nodeRotationZ: root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value
+        property var nodeRotationX: root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value : 0
+        property var nodeRotationY: root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value : 0
+        property var nodeRotationZ: root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value : 0
         // Scale values from node (vector3d because this is the type of QTransform.scale3D)
         property var nodeScale: Qt.vector3d(
-            root.currentMeshingNode.attribute("boundingBox.bboxScale.x").value,
-            root.currentMeshingNode.attribute("boundingBox.bboxScale.y").value,
-            root.currentMeshingNode.attribute("boundingBox.bboxScale.z").value
+            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxScale.x").value : 1,
+            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxScale.y").value : 1,
+            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxScale.z").value : 1
         )
 
         // Automatically evaluate the Transform: value is taken from the node OR from the actual modification if the gizmo is moved by mouse.

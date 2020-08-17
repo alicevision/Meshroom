@@ -217,7 +217,7 @@ Entity {
                 // To use only if we want to draw the input source and not the current node output (Warning: to use with caution)
                 // There is maybe a better way to do this to avoid overwritting bindings which should be readonly properties
                 function drawInputSource() {
-                    rawSource = Qt.binding(() => instantiatedEntity.currentNode.attribute("input").value)
+                    rawSource = Qt.binding(() => instantiatedEntity.currentNode ? instantiatedEntity.currentNode.attribute("input").value: "")
                     currentSource = Qt.binding(() => rawSource)
                     finalSource = Qt.binding(() => rawSource)
                 }

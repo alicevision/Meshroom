@@ -9,13 +9,30 @@ import QtQuick.Layouts 1.3
  */
 ToolButton {
     id: control
-    font.family: MaterialIcons.fontFamily
-    padding: 4
-    font.pointSize: 13
+    property alias iconText: icon.text
+    property alias iconSize: icon.font.pointSize
+    property alias label: labelItem.text
+    padding: 0
     ToolTip.visible: ToolTip.text && hovered
     ToolTip.delay: 100
-    Component.onCompleted:  {
-        contentItem.color = Qt.binding(function() { return checked ? palette.highlight : palette.text })
+    width: childrenRect.width
+    height: childrenRect.height
+    contentItem: RowLayout {
+        Layout.margins: 0
+        Label {
+            id: icon
+            font.family: MaterialIcons.fontFamily
+            font.pointSize: 13
+            padding: 0
+            text: ""
+            color: (checked ? palette.highlight : palette.text)
+        }
+        Label {
+            id: labelItem
+            text: ""
+            padding: 0
+            color: (checked ? palette.highlight : palette.text)
+        }
     }
     background: Rectangle {
         color: {

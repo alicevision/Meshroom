@@ -9,6 +9,28 @@ class FeatureMatching(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=20)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    documentation = '''
+This node performs the matching of all features between the candidate image pairs.
+
+It is performed in 2 steps:
+
+ 1/ **Photometric Matches**
+
+It performs the photometric matches between the set of features descriptors from the 2 input images.
+For each feature descriptor on the first image, it looks for the 2 closest descriptors in the second image and uses a relative threshold between them.
+This assumption kill features on repetitive structure but has proved to be a robust criterion.
+
+ 2/ **Geometric Filtering**
+
+It performs a geometric filtering of the photometric match candidates.
+It uses the features positions in the images to make a geometric filtering by using epipolar geometry in an outlier detection framework
+called RANSAC (RANdom SAmple Consensus). It randomly selects a small set of feature correspondences and compute the fundamental (or essential) matrix,
+then it checks the number of features that validates this model and iterate through the RANSAC framework.
+
+## Online
+[https://alicevision.org/#photogrammetry/feature_matching](https://alicevision.org/#photogrammetry/feature_matching)
+'''
+
     inputs = [
         desc.File(
             name='input',

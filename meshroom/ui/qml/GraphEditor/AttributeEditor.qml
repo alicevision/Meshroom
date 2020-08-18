@@ -10,7 +10,6 @@ import Utils 1.0
 
 ListView {
     id: root
-    property variant attributes: null
     property bool readOnly: false
     property int labelWidth: 180
 
@@ -23,10 +22,8 @@ ListView {
     clip: true
     ScrollBar.vertical: ScrollBar { id: scrollBar }
 
-    model: attributes
-
     delegate: Loader {
-        active: !object.desc.advanced || GraphEditorSettings.showAdvancedAttributes
+        active: object.enabled && (!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)
         visible: active
         height: item ? item.implicitHeight : -spacing // compensate for spacing if item is hidden
 

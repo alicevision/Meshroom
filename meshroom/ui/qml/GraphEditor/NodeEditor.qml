@@ -122,7 +122,7 @@ Panel {
                         currentIndex: tabBar.currentIndex
 
                         AttributeEditor {
-                            attributes: root.node.attributes
+                            model: root.node.attributes
                             readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: root.attributeDoubleClicked(mouse, attribute)
                             onUpgradeRequest: root.upgradeRequest()
@@ -147,6 +147,12 @@ Panel {
                             node: root.node
                             chunkCurrentIndex: m.chunkCurrentIndex
                             onChangeCurrentChunk: { m.chunkCurrentIndex = chunkIndex }
+                        }
+
+                        NodeDocumentation {
+                            id: nodeDocumentation
+                            Layout.fillWidth: true
+                            node: root.node
                         }
                     }
                 }
@@ -181,6 +187,12 @@ Panel {
             }
             TabButton {
                 text: "Status"
+                width: implicitWidth
+                leftPadding: 8
+                rightPadding: leftPadding
+            }
+            TabButton {
+                text: "Documentation"
                 width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding

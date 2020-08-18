@@ -1,4 +1,7 @@
 module MaterialIcons
 singleton MaterialIcons 2.2 MaterialIcons.qml
 MaterialToolButton 2.2 MaterialToolButton.qml
+MaterialToolLabelButton 2.2 MaterialToolLabelButton.qml
+MaterialToolLabel 2.2 MaterialToolLabel.qml
 MaterialLabel 2.2 MaterialLabel.qml
+MLabel 2.2 MLabel.qml

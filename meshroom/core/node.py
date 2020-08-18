@@ -466,6 +466,9 @@ class BaseNode(BaseObject):
         t, idx = self._name.split("_")
         return "{}{}".format(t, idx if int(idx) > 1 else "")
 
+    def getDocumentation(self):
+        return self.nodeDesc.documentation
+
     @property
     def packageFullName(self):
         return '-'.join([self.packageName, self.packageVersion])
@@ -495,6 +498,9 @@ class BaseNode(BaseObject):
 
     def getAttributes(self):
         return self._attributes
+
+    def hasAttribute(self, name):
+        return name in self._attributes.keys()
 
     def _applyExpr(self):
         for attr in self._attributes:
@@ -536,11 +542,29 @@ class BaseNode(BaseObject):
         """ Compute node uids by combining associated attributes' uids. """
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             # uid is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this uid
-            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes]
+            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes if a.enabled]
             uidAttributes.sort()
             self._uids[uidIndex] = hashValue(uidAttributes)
 
     def _buildCmdVars(self):
+        def _buildAttributeCmdVars(cmdVars, name, attr):
+            if attr.enabled:
+                if attr.attributeDesc.group is not None:
+                    # if there is a valid command line "group"
+                    v = attr.getValueStr()
+                    cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+                    cmdVars[name + 'Value'] = str(v)
+
+                    if v:
+                        cmdVars[attr.attributeDesc.group] = cmdVars.get(attr.attributeDesc.group, '') + \
+                                                                ' ' + cmdVars[name]
+                elif isinstance(attr, GroupAttribute):
+                    assert isinstance(attr.value, DictModel)
+                    # if the GroupAttribute is not set in a single command line argument,
+                    # the sub-attributes may need to be exposed individually
+                    for v in attr._value:
+                        _buildAttributeCmdVars(cmdVars, v.name, v)
+
         """ Generate command variables using input attributes and resolved output attributes names and values. """
         for uidIndex, value in self._uids.items():
             self._cmdVars['uid{}'.format(uidIndex)] = value
@@ -549,14 +573,7 @@ class BaseNode(BaseObject):
         for name, attr in self._attributes.objects.items():
             if attr.isOutput:
                 continue  # skip outputs
-            v = attr.getValueStr()
-
-            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-            self._cmdVars[name + 'Value'] = str(v)
-
-            if v:
-                self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
-                                                          ' ' + self._cmdVars[name]
+            _buildAttributeCmdVars(self._cmdVars, name, attr)
 
         # For updating output attributes invalidation values
         cmdVarsNoCache = self._cmdVars.copy()
@@ -571,8 +588,14 @@ class BaseNode(BaseObject):
             if not isinstance(attr.attributeDesc, desc.File):
                 continue
 
-            attr.value = attr.attributeDesc.value.format(**self._cmdVars)
-            attr._invalidationValue = attr.attributeDesc.value.format(**cmdVarsNoCache)
+            defaultValue = attr.defaultValue()
+            try:
+                attr.value = defaultValue.format(**self._cmdVars)
+                attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
+            except KeyError as e:
+                logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+            except ValueError as e:
+                logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
             v = attr.getValueStr()
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
@@ -598,8 +621,7 @@ class BaseNode(BaseObject):
                 return False
         return True
 
-    @Slot(result=bool)
-    def isComputed(self):
+    def _isComputed(self):
         return self.hasStatus(Status.SUCCESS)
 
     @Slot()
@@ -658,6 +680,10 @@ class BaseNode(BaseObject):
         """
         if self.nodeDesc:
             self.nodeDesc.update(self)
+
+        for attr in self._attributes:
+            attr.updateInternals()
+
         # Update chunks splitting
         self._updateChunks()
         # Retrieve current internal folder (if possible)
@@ -749,6 +775,7 @@ class BaseNode(BaseObject):
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
+    documentation = Property(str, getDocumentation, constant=True)
     positionChanged = Signal()
     position = Property(Variant, position.fget, position.fset, notify=positionChanged)
     x = Property(float, lambda self: self._position.x, notify=positionChanged)
@@ -765,6 +792,7 @@ class BaseNode(BaseObject):
     size = Property(int, getSize, notify=sizeChanged)
     globalStatusChanged = Signal()
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
+    isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
 
 
 class Node(BaseNode):

@@ -45,8 +45,8 @@ FloatingPane {
                                 id: displayModeCB
                                 flat: true
                                 Layout.fillWidth: true
-                                model: root.featuresViewer.displayModes
-                                currentIndex: root.featuresViewer.displayMode
+                                model: root.featuresViewer ? root.featuresViewer.displayModes : null
+                                currentIndex: root.featuresViewer ? root.featuresViewer.displayMode : 0
                                 onActivated: root.featuresViewer.displayMode = currentIndex
                             }
                         }
@@ -76,7 +76,7 @@ FloatingPane {
 
                 spacing: 4
 
-                // Features visibility toogle
+                // Features visibility toggle
                 MaterialToolButton {
                     id: featuresVisibilityButton
                     checkable: true
@@ -128,7 +128,7 @@ FloatingPane {
                         if(featureType.viewer.loadingFeatures)
                             return  featureType.viewer.describerType;
                         return featureType.viewer.describerType + ": " +
-                                featureType.viewer.features.length + " / " +
+                                ((featureExtractionNode && featureExtractionNode.isComputed) ? featureType.viewer.features.length : " - ") + " / " +
                                 (featureType.viewer.haveValidTracks ? featureType.viewer.nbTracks  : " - ") + " / " +
                                 (featureType.viewer.haveValidLandmarks ? featureType.viewer.nbLandmarks : " - ");
                     }

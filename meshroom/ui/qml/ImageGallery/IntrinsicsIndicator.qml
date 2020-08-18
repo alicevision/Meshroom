@@ -18,13 +18,22 @@ ImageBadge {
     readonly property string distortionModel: intrinsic ? childAttributeValue(intrinsic, "type", "") : ""
     property var metadata: ({})
 
+    function findMetadata(key) {
+        var keyLower = key.toLowerCase()
+        for(var mKey in metadata)
+        {
+            if(mKey.toLowerCase().endsWith(keyLower))
+                return metadata[mKey]
+        }
+        return ""
+    }
     // access useful metadata
-    readonly property var make: metadata["Make"]
-    readonly property var model: metadata["Model"]
-    readonly property var focalLength: metadata["Exif:FocalLength"]
-    readonly property var focalLength35: metadata["Exif:FocalLengthIn35mmFilm"]
-    readonly property var bodySerialNumber: metadata["Exif:BodySerialNumber"]
-    readonly property var lensSerialNumber: metadata["Exif:LensSerialNumber"]
+    readonly property var make: findMetadata("Make")
+    readonly property var model: findMetadata("Model")
+    readonly property var focalLength: findMetadata("FocalLength")
+    readonly property var focalLength35: findMetadata("FocalLengthIn35mmFilm")
+    readonly property var bodySerialNumber: findMetadata("BodySerialNumber")
+    readonly property var lensSerialNumber: findMetadata("LensSerialNumber")
     readonly property var sensorWidth: metadata["AliceVision:SensorWidth"]
     readonly property var sensorWidthEstimation: metadata["AliceVision:SensorWidthEstimation"]
 

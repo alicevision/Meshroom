@@ -136,6 +136,15 @@ class TaskManager(BaseObject):
         if name in self._nodes.keys():
             self._nodes.pop(name)
 
+    def removeNode(self, node):
+        """ Remove node from the Task Manager. """
+        if self._nodes.contains(node):
+            self._nodes.pop(node.name)
+        if node in self._nodesToProcess:
+            self._nodesToProcess.remove(node)
+        if node in self._nodesExtern:
+            self._nodesExtern.remove(node)
+
     def clear(self):
         """
         Remove all the nodes from the taskmanager

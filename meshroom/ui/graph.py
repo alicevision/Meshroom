@@ -390,6 +390,37 @@ class UIGraph(QObject):
         self.computeStatusChanged.emit()
 
     @Slot(Node)
+    def stopNodeComputation(self, node):
+        """ Stop the computation of the node and update all the nodes depending on it. """
+        if not self.isComputingLocally():
+            return
+
+        # Stop the node and wait Task Manager
+        node.stopComputation()
+        self._taskManager._thread.join()
+
+        # If some dependent nodes are submitted, the first one will be in error
+        # Make sure to remove those nodes from the Task Manager list
+        dependentNodes = self._graph.nodesDependingOnNode(node)
+        for node in dependentNodes[1:]:  # exclude current node
+            if node.getGlobalStatus() == Status.ERROR:
+                node.upgradeStatusTo(Status.NONE)
+            self._taskManager.removeNode(node)
+
+        self.computeStatusChanged.emit()
+
+    @Slot(Node)
+    def cancelNodeComputation(self, node):
+        """ Cancel the computation of the node and all the nodes depending on it. """
+        if node.getGlobalStatus() == Status.SUBMITTED:
+            # Current node belongs to this list
+            for node in self._graph.nodesDependingOnNode(node):
+                # Status from SUBMITTED to NONE
+                node.clearSubmittedChunks()
+                # Make sure to remove the node from the Task Manager list
+                self._taskManager.removeNode(node)
+
+    @Slot(Node)
     def submit(self, node=None):
         """ Submit the graph to the default Submitter.
         If a node is specified, submit this node and its uncomputed predecessors.

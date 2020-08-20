@@ -290,6 +290,20 @@ Item {
                     onTriggered: submitRequest(nodeMenu.currentNode)
                 }
                 MenuItem {
+                    text: "Stop Computation"
+                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.globalStatus === "RUNNING" && nodeMenu.currentNode.globalExecMode === "LOCAL" : false
+                    visible: enabled
+                    height: visible ? implicitHeight : 0
+                    onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
+                }
+                MenuItem {
+                    text: "Cancel Computation"
+                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.globalStatus === "SUBMITTED" && nodeMenu.currentNode.globalExecMode === "LOCAL" : false
+                    visible: enabled
+                    height: visible ? implicitHeight : 0
+                    onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)
+                }
+                MenuItem {
                     text: "Open Folder"
                     onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
                 }

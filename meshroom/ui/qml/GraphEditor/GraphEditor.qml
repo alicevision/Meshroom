@@ -271,7 +271,7 @@ Item {
                 id: nodeMenu
                 property var currentNode: null
                 property bool canComputeNode: currentNode != null && uigraph.graph.canCompute(currentNode)
-                //canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot subit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
+                //canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
                 property int canSubmitOrCompute: currentNode != null && uigraph.graph.canSubmitOrCompute(currentNode)
                 onClosed: currentNode = null
 

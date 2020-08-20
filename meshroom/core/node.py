@@ -205,12 +205,18 @@ class LogManager:
         self.progressBar = False
 
     def textToLevel(self, text):
-        if text == 'critical': return logging.CRITICAL
-        elif text == 'error': return logging.ERROR
-        elif text == 'warning': return logging.WARNING
-        elif text == 'info': return logging.INFO
-        elif text == 'debug': return logging.DEBUG
-        else: return logging.NOTSET
+        if text == 'critical':
+            return logging.CRITICAL
+        elif text == 'error':
+            return logging.ERROR
+        elif text == 'warning':
+            return logging.WARNING
+        elif text == 'info':
+            return logging.INFO
+        elif text == 'debug':
+            return logging.DEBUG
+        else:
+            return logging.NOTSET
 
 
 runningProcesses = {}

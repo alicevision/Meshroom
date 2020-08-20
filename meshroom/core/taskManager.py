@@ -84,6 +84,7 @@ class TaskManager(BaseObject):
         self._graph = None
         self._nodes = DictModel(keyAttrName='_name', parent=self)
         self._nodesToProcess = []
+        self._nodesExtern = []
         # internal thread in which local tasks are executed
         self._thread = TaskThread(self)
 
@@ -132,7 +133,7 @@ class TaskManager(BaseObject):
         :param name:
         :return:
         """
-        if self._nodes.contains(name):
+        if name in self._nodes.keys():
             self._nodes.pop(name)
 
     def clear(self):

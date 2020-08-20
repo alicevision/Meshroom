@@ -788,6 +788,12 @@ class BaseNode(BaseObject):
     def endSequence(self):
         pass
 
+    def stopComputation(self):
+        """ Stop the computation of this node. """
+        for chunk in self._chunks.values():
+            if not chunk.isExtern():
+                chunk.stopProcess()
+
     def getGlobalStatus(self):
         """
         Get node global status based on the status of its chunks.

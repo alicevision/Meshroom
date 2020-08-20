@@ -56,9 +56,7 @@ class TaskThread(Thread):
                     chunk.process(self.forceCompute)
                 except Exception as e:
                     if chunk.isStopped():
-                        self._state = State.STOPPED
-                        self._manager._graph.clearSubmittedNodes()
-                        self._manager._nodesToProcess = []
+                        pass
                     else:
                         logging.error("Error on node computation: {}".format(e))
                         nodesToRemove, _ = self._manager._graph.nodesFromNode(node)

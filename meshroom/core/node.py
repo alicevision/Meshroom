@@ -242,6 +242,8 @@ class NodeChunk(BaseObject):
         # notify update in filepaths when node's internal folder changes
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
 
+        self.execModeNameChanged.connect(self.node.globalExecModeChanged)
+
     @property
     def index(self):
         return self.range.iteration
@@ -808,6 +810,10 @@ class BaseNode(BaseObject):
 
         return Status.NONE
 
+    @property
+    def globalExecMode(self):
+        return self._chunks.at(0).execModeName
+
     def getChunks(self):
         return self._chunks
 
@@ -903,6 +909,8 @@ class BaseNode(BaseObject):
     size = Property(int, getSize, notify=sizeChanged)
     globalStatusChanged = Signal()
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
+    globalExecModeChanged = Signal()
+    globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
     lockedChanged = Signal()
     locked = Property(bool, getLocked, setLocked, notify=lockedChanged)

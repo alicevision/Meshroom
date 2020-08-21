@@ -206,10 +206,10 @@ Entity {
                     if(!attribute)
                         // if the node is removed, the attribute will be invalid
                         return false
-                    if(attribute.isOutput)
-                        return attribute.node.globalStatus === "SUCCESS"
-                    if(attribute.isLink)
-                        return attribute.linkParam.node.globalStatus === "SUCCESS"
+
+                    const rootAttribute = attribute.isLink ? attribute.rootLinkParam : attribute
+                    if(rootAttribute.isOutput)
+                        return rootAttribute.node.globalStatus === "SUCCESS"
                     return true // is an input param so no dependency
                 }
                 // source based on raw source + dependency status

@@ -257,6 +257,7 @@ class Attribute(BaseObject):
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
+    rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True), notify=isLinkChanged)
     node = Property(BaseObject, node.fget, constant=True)
     enabledChanged = Signal()
     enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)

@@ -162,7 +162,7 @@ Item {
                     // Node Name
                     Label {
                         Layout.fillWidth: true
-                        text: node.label
+                        text: node ? node.label : ""
                         padding: 4
                         color: root.selected ? "white" : activePalette.text
                         elide: Text.ElideMiddle
@@ -218,7 +218,7 @@ Item {
                defaultColor: Colors.sysPalette.mid
                implicitHeight: 3
                width: parent.width
-               model: node.chunks
+               model: node ? node.chunks : undefined
 
                Rectangle {
                    anchors.fill: parent
@@ -249,7 +249,7 @@ Item {
                         width: parent.width
                         spacing: 3
                         Repeater {
-                            model: node.attributes
+                            model: node ? node.attributes : undefined
 
                             delegate: Loader {
                                 id: outputLoader
@@ -276,7 +276,7 @@ Item {
                         width: parent.width
                         spacing: 3
                         Repeater {
-                            model: node.attributes
+                            model: node ? node.attributes : undefined
                             delegate: Loader {
                                 active: !object.isOutput && isDisplayableAsPin(object)
                                 width: inputs.width

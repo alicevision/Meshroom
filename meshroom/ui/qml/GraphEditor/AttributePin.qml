@@ -58,7 +58,7 @@ RowLayout {
         color: Colors.sysPalette.base
 
         Rectangle {
-            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || attribute.isLink
+            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (attribute && attribute.isLink)
             radius: isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
@@ -169,7 +169,7 @@ RowLayout {
             id: nameLabel
 
             property bool hovered: (inputConnectMA.containsMouse || inputConnectMA.drag.active || inputDropArea.containsDrag || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag)
-            text: attribute.label
+            text: attribute ? attribute.label : ""
             elide: hovered ? Text.ElideNone : Text.ElideMiddle
             width: hovered ? contentWidth : parent.width
             font.pointSize: 7

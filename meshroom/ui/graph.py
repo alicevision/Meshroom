@@ -281,7 +281,11 @@ class UIGraph(QObject):
         if self._graph:
             self.stopExecution()
             self.clear()
+        oldGraph = self._graph
         self._graph = g
+        if oldGraph:
+            oldGraph.deleteLater()
+
         self._graph.updated.connect(self.onGraphUpdated)
         self._graph.update()
         self._taskManager.update(self._graph)
@@ -328,8 +332,7 @@ class UIGraph(QObject):
             self.clearNodeHover()
             self.clearNodeSelection()
             self._taskManager.clear()
-            self._graph.deleteLater()
-            self._graph = None
+            self._graph.clear()
         self._sortedDFSChunks.clear()
         self._undoStack.clear()
 

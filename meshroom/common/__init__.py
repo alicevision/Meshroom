@@ -8,13 +8,14 @@ Property = None
 BaseObject = None
 Variant = None
 VariantList = None
+JSValue = None
 
 if meshroom.backend == meshroom.Backend.PYSIDE:
     # PySide types
-    from .qt import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList
+    from .qt import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList, JSValue
 elif meshroom.backend == meshroom.Backend.STANDALONE:
     # Core types
-    from .core import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList
+    from .core import DictModel, ListModel, Slot, Signal, Property, BaseObject, Variant, VariantList, JSValue
 
 
 class _BaseModel:

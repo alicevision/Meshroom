@@ -18,7 +18,7 @@ Item {
     /// Whether the node can be modified
     property bool readOnly: node.locked
     /// Whether the node is in compatibility mode
-    readonly property bool isCompatibilityNode: node.hasOwnProperty("compatibilityIssue")
+    readonly property bool isCompatibilityNode: node ? node.hasOwnProperty("compatibilityIssue") : false
     /// Mouse related states
     property bool selected: false
     property bool hovered: false
@@ -40,11 +40,11 @@ Item {
     signal attributePinDeleted(var attribute, var pin)
 
     // use node name as object name to simplify debugging
-    objectName: node.name
+    objectName: node ? node.name : ""
 
     // initialize position with node coordinates
-    x: root.node.x
-    y: root.node.y
+    x: root.node ? root.node.x : undefined
+    y: root.node ? root.node.y : undefined
 
     implicitHeight: childrenRect.height
 

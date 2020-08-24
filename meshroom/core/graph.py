@@ -223,8 +223,11 @@ class Graph(BaseObject):
     def clear(self):
         self.header.clear()
         self._compatibilityNodes.clear()
-        self._nodes.clear()
         self._edges.clear()
+        # Tell QML nodes are going to be deleted
+        for node in self._nodes:
+            node.alive = False
+        self._nodes.clear()
 
     @property
     def fileFeatures(self):
@@ -437,6 +440,7 @@ class Graph(BaseObject):
                 self.removeEdge(edge.dst)
                 inEdges[edge.dst.getFullName()] = edge.src.getFullName()
 
+            node.alive = False
             self._nodes.remove(node)
             self.update()
 

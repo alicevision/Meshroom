@@ -150,7 +150,12 @@ class LdrToHdrCalibration(desc.CommandLineNode):
         if not cameraInitOutput.node.hasAttribute('viewpoints'):
             if cameraInitOutput.node.hasAttribute('input'):
                 cameraInitOutput = cameraInitOutput.node.input.getLinkParam(recursive=True)
-        viewpoints = cameraInitOutput.node.viewpoints.value
+        if cameraInitOutput and cameraInitOutput.node and cameraInitOutput.node.hasAttribute('viewpoints'):
+            viewpoints = cameraInitOutput.node.viewpoints.value
+        else:
+            # No connected CameraInit
+            node.nbBrackets.value = 0
+            return
 
         # logging.info("[LDRToHDR] Update start: nb viewpoints:" + str(len(viewpoints)))
         inputs = []
@@ -184,7 +189,12 @@ class LdrToHdrCalibration(desc.CommandLineNode):
         exposures = None
         bracketSizes = set()
         if len(exposureGroups) == 1:
-            node.nbBrackets.value = 1
+            if len(set(exposureGroups[0])) == 1:
+                # Single exposure and multiple views
+                node.nbBrackets.value = 1
+            else:
+                # Single view and multiple exposures
+                node.nbBrackets.value = len(exposureGroups[0])
         else:
             for expGroup in exposureGroups:
                 bracketSizes.add(len(expGroup))

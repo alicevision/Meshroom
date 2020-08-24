@@ -1,4 +1,4 @@
-from PySide2 import QtCore
+from PySide2 import QtCore, QtQml
 import shiboken2
 
 class QObjectListModel(QtCore.QAbstractListModel):
@@ -375,3 +375,4 @@ Property = QtCore.Property
 BaseObject = QtCore.QObject
 Variant = "QVariant"
 VariantList = "QVariantList"
+JSValue = QtQml.QJSValue

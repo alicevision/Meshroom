@@ -23,15 +23,14 @@ RowLayout {
     readonly property point outputAnchorPos: Qt.point(outputAnchor.x + outputAnchor.width/2,
                                                     outputAnchor.y + outputAnchor.height/2)
 
-    readonly property bool isList: attribute.type == "ListAttribute"
+    readonly property bool isList: attribute && attribute.type === "ListAttribute"
 
     signal childPinCreated(var childAttribute, var pin)
     signal childPinDeleted(var childAttribute, var pin)
 
     signal pressed(var mouse)
 
-
-    objectName: attribute.name + "."
+    objectName: attribute ? attribute.name + "." : ""
     layoutDirection: Qt.LeftToRight
     spacing: 3
 
@@ -57,7 +56,6 @@ RowLayout {
 
         border.color:  Colors.sysPalette.mid
         color: Colors.sysPalette.base
-
 
         Rectangle {
             visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || attribute.isLink
@@ -114,7 +112,7 @@ RowLayout {
             readonly property string connectorType: "input"
             readonly property alias attribute: root.attribute
             readonly property alias nodeItem: root.nodeItem
-            readonly property bool isOutput: attribute.isOutput
+            readonly property bool isOutput: attribute && attribute.isOutput
             readonly property alias isList: root.isList
             property bool dragAccepted: false
             anchors.verticalCenter: parent.verticalCenter
@@ -175,8 +173,8 @@ RowLayout {
             elide: hovered ? Text.ElideNone : Text.ElideMiddle
             width: hovered ? contentWidth : parent.width
             font.pointSize: 7
-            horizontalAlignment: attribute.isOutput ? Text.AlignRight : Text.AlignLeft
-            anchors.right: attribute.isOutput ? parent.right : undefined
+            horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
+            anchors.right: attribute && attribute.isOutput ? parent.right : undefined
             rightPadding: 0
             color: hovered ? palette.highlight : palette.text
         }

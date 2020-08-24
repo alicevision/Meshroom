@@ -40,7 +40,12 @@ class TaskThread(Thread):
             if node.isFinishedOrRunning():
                 continue
 
-            multiChunks = len(node.chunks) > 1
+            # if a node does not exist anymore, node.chunks becomes a PySide property
+            try:
+                multiChunks = len(node.chunks) > 1
+            except TypeError:
+                continue
+
             for cId, chunk in enumerate(node.chunks):
                 if chunk.isFinishedOrRunning() or not self.isRunning():
                     continue

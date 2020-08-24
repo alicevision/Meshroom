@@ -499,6 +499,7 @@ class BaseNode(BaseObject):
     def getAttributes(self):
         return self._attributes
 
+    @Slot(str, result=bool)
     def hasAttribute(self, name):
         return name in self._attributes.keys()
 

@@ -22,7 +22,8 @@ FloatingPane {
 
     CsvData {
         id: csvData
-        filepath: ldrHdrCalibrationNode ? ldrHdrCalibrationNode.attribute("response").value : ""
+        property bool hasAttr: (ldrHdrCalibrationNode && ldrHdrCalibrationNode.hasAttribute("response"))
+        filepath: hasAttr ? ldrHdrCalibrationNode.attribute("response").value : ""
     }
 
     // To avoid interaction with components in background
@@ -34,7 +35,8 @@ FloatingPane {
         onWheel: {}
     }
 
-    property bool crfReady: csvData.ready && csvData.nbColumns >= 4
+    // note: We need to use csvData.getNbColumns() slot instead of the csvData.nbColumns property to avoid a crash on linux.
+    property bool crfReady: csvData.ready && (csvData.getNbColumns() >= 4)
     onCrfReadyChanged: {
         if(crfReady)
         {

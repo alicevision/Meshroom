@@ -900,6 +900,22 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=[startNode], reverse=reverse)
         return nodes, edges
 
+    def getInputNodes(self, node, recursive=False):
+        """ Return either the first level input nodes of a node or the whole chain. """
+        if not recursive:
+            return set([edge.src.node for edge in self.edges if edge.dst.node is node])
+
+        inputNodes, edges = self.nodesFromNode(node, filterTypes=None, reverse=False)
+        return inputNodes[1:]  # exclude current node
+
+    def getOutputNodes(self, node, recursive=False):
+        """ Return either the first level output nodes of a node or the whole chain. """
+        if not recursive:
+            return set([edge.dst.node for edge in self.edges if edge.src.node is node])
+
+        outputNodes, edges = self.nodesFromNode(node, filterTypes=None, reverse=True)
+        return outputNodes[1:]  # exclude current node
+
     def nodesDependingOnNode(self, startNode, filterTypes=None):
         nodes, edges = self.nodesFromNode(startNode, filterTypes=filterTypes, reverse=True)
         return nodes

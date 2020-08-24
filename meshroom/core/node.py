@@ -574,6 +574,12 @@ class BaseNode(BaseObject):
     def minDepth(self):
         return self.graph.getDepth(self, minimal=True)
 
+    def getInputNodes(self, recursive=False):
+        return self.graph.getInputNodes(self, recursive=recursive)
+
+    def getOutputNodes(self, recursive=False):
+        return self.graph.getOutputNodes(self, recursive=recursive)
+
     def toDict(self):
         pass
 

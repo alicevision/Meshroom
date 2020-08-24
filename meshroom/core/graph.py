@@ -916,14 +916,6 @@ class Graph(BaseObject):
         outputNodes, edges = self.nodesFromNode(node, filterTypes=None, reverse=True)
         return outputNodes[1:]  # exclude current node
 
-    def nodesDependingOnNode(self, startNode, filterTypes=None):
-        nodes, edges = self.nodesFromNode(startNode, filterTypes=filterTypes, reverse=True)
-        return nodes
-
-    def nodesRequiredForNode(self, startNode, filterTypes=None):
-        nodes, edges = self.nodesFromNode(startNode, filterTypes=filterTypes, reverse=False)
-        return nodes
-
     @Slot(Node, result=int)
     def canSubmitOrCompute(self, startNode):
         if startNode.isAlreadySubmittedOrFinished():

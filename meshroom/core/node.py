@@ -857,8 +857,9 @@ class BaseNode(BaseObject):
 
         # Unlock required nodes if the current node changes to Error or Stopped
         if currentStatus in (Status.ERROR, Status.STOPPED):
-            requiredNodes = self.graph.nodesRequiredForNode(self)
-            for node in requiredNodes:
+            self.setLocked(False)
+            inputNodes = self.getInputNodes(recursive=True)
+            for node in inputNodes:
                 node.setLocked(False)
 
         # Avoid useless travel through nodes
@@ -868,23 +869,25 @@ class BaseNode(BaseObject):
 
         if currentStatus == Status.SUCCESS:
             # At this moment, the node is necessarily locked because of previous if statement
-            requiredNodes = self.graph.nodesRequiredForNode(self)
-            dependentNodes = self.graph.nodesDependingOnNode(self)
+            inputNodes = self.getInputNodes(recursive=True)
+            outputNodes = self.getOutputNodes(recursive=True)
             stayLocked = None
 
             # Check if at least one dependentNode is submitted or currently running
-            for node in dependentNodes:
+            for node in outputNodes:
                 if node.getGlobalStatus() in lockedStatus and node._chunks.at(0).statusNodeName == node.name:
                     stayLocked = True
                     break
             if not stayLocked:
-                # Unlock every required node
-                for node in requiredNodes:
+                self.setLocked(False)
+                # Unlock every input node
+                for node in inputNodes:
                     node.setLocked(False)
             return
         elif currentStatus in lockedStatus:
-            requiredNodes = self.graph.nodesRequiredForNode(self)
-            for node in requiredNodes:
+            self.setLocked(True)
+            inputNodes = self.getInputNodes(recursive=True)
+            for node in inputNodes:
                 node.setLocked(True)
             return
 

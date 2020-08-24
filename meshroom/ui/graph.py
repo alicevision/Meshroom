@@ -401,11 +401,11 @@ class UIGraph(QObject):
 
         # If some dependent nodes are submitted, the first one will be in error
         # Make sure to remove those nodes from the Task Manager list
-        dependentNodes = self._graph.nodesDependingOnNode(node)
-        for node in dependentNodes[1:]:  # exclude current node
-            if node.getGlobalStatus() == Status.ERROR:
-                node.upgradeStatusTo(Status.NONE)
-            self._taskManager.removeNode(node)
+        outputNodes = node.getOutputNodes(recursive=True)
+        for n in outputNodes:
+            if n.getGlobalStatus() == Status.ERROR:
+                n.upgradeStatusTo(Status.NONE)
+            self._taskManager.removeNode(n)
 
         self.computeStatusChanged.emit()
 
@@ -413,12 +413,14 @@ class UIGraph(QObject):
     def cancelNodeComputation(self, node):
         """ Cancel the computation of the node and all the nodes depending on it. """
         if node.getGlobalStatus() == Status.SUBMITTED:
-            # Current node belongs to this list
-            for node in self._graph.nodesDependingOnNode(node):
-                # Status from SUBMITTED to NONE
-                node.clearSubmittedChunks()
-                # Make sure to remove the node from the Task Manager list
-                self._taskManager.removeNode(node)
+            # Status from SUBMITTED to NONE
+            # Make sure to remove the nodes from the Task Manager list
+            node.clearSubmittedChunks()
+            self._taskManager.removeNode(node)
+
+            for n in node.getOutputNodes(recursive=True):
+                n.clearSubmittedChunks()
+                self._taskManager.removeNode(n)
 
     @Slot(Node)
     def submit(self, node=None):

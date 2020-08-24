@@ -203,14 +203,12 @@ Entity {
                 property string rawSource: attribute ? attribute.value : model.source
                 // whether dependencies are statified (applies for output/connected input attributes only)
                 readonly property bool dependencyReady: {
-                    if(!attribute)
-                        // if the node is removed, the attribute will be invalid
-                        return false
-
-                    const rootAttribute = attribute.isLink ? attribute.rootLinkParam : attribute
-                    if(rootAttribute.isOutput)
-                        return rootAttribute.node.globalStatus === "SUCCESS"
-                    return true // is an input param so no dependency
+                    if(attribute) {
+                        const rootAttribute = attribute.isLink ? attribute.rootLinkParam : attribute
+                        if(rootAttribute.isOutput)
+                            return rootAttribute.node.globalStatus === "SUCCESS"
+                    }
+                    return true // is an input param without link (so no dependency) or an external file
                 }
                 // source based on raw source + dependency status
                 property string currentSource: dependencyReady ? rawSource : ""

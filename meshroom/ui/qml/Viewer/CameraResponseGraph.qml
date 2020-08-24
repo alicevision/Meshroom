@@ -36,7 +36,7 @@ FloatingPane {
     }
 
     // note: We need to use csvData.getNbColumns() slot instead of the csvData.nbColumns property to avoid a crash on linux.
-    property bool crfReady: csvData.ready && (csvData.getNbColumns() >= 4)
+    property bool crfReady: csvData && csvData.ready && (csvData.getNbColumns() >= 4)
     onCrfReadyChanged: {
         if(crfReady)
         {

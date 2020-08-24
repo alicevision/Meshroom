@@ -5,6 +5,8 @@ from PySide2.QtCharts import QtCharts
 
 import csv
 import os
+import logging
+
 
 class CsvData(QObject):
     """Store data from a CSV file."""
@@ -20,13 +22,18 @@ class CsvData(QObject):
     def getColumn(self, index):
         return self._data.at(index)
 
+    @Slot(result=str)
     def getFilepath(self):
         return self._filepath
 
     @Slot(result=int)
     def getNbColumns(self):
-        return len(self._data) if self._ready else 0
+        if self._ready:
+            return len(self._data)
+        else:
+            return 0
 
+    @Slot(str)
     def setFilepath(self, filepath):
         if self._filepath == filepath:
             return
@@ -40,6 +47,7 @@ class CsvData(QObject):
         self._ready = ready
         self.readyChanged.emit()
 
+    @Slot()
     def updateData(self):
         self.setReady(False)
         self._data.clear()
@@ -53,23 +61,23 @@ class CsvData(QObject):
         if not self._filepath or not self._filepath.lower().endswith(".csv") or not os.path.isfile(self._filepath):
             return []
 
-        csvRows = []
-        with open(self._filepath, "r") as fp:
-            reader = csv.reader(fp)
-            for row in reader:
-                csvRows.append(row)
-
         dataList = []
-
-        # Create the objects in dataList
-        # with the first line elements as objects' title
-        for elt in csvRows[0]:
-            dataList.append(CsvColumn(elt, parent=self._data))
-
-        # Populate the content attribute
-        for elt in csvRows[1:]:
-            for idx, value in enumerate(elt):
-                dataList[idx].appendValue(value)
+        try:
+            csvRows = []
+            with open(self._filepath, "r") as fp:
+                reader = csv.reader(fp)
+                for row in reader:
+                    csvRows.append(row)
+            # Create the objects in dataList
+            # with the first line elements as objects' title
+            for elt in csvRows[0]:
+                dataList.append(CsvColumn(elt)) # , parent=self._data
+            # Populate the content attribute
+            for elt in csvRows[1:]:
+                for idx, value in enumerate(elt):
+                    dataList[idx].appendValue(value)
+        except Exception as e:
+            logging.error("CsvData: Failed to load file: {}\n{}".format(self._filepath, str(e)))
 
         return dataList
 

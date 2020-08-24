@@ -31,7 +31,7 @@ import Utils 1.0
             return;
         }
 
-        // clear previously created objet if any
+        // clear previously created object if any
         if(object) {
             object.destroy();
             object = null;

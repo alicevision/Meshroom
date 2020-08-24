@@ -275,7 +275,11 @@ class UIGraph(QObject):
         if self._graph:
             self.stopExecution()
             self.clear()
+        oldGraph = self._graph
         self._graph = g
+        if oldGraph:
+            oldGraph.deleteLater()
+
         self._graph.updated.connect(self.onGraphUpdated)
         self._graph.update()
         # perform auto-layout if graph does not provide nodes positions
@@ -320,8 +324,7 @@ class UIGraph(QObject):
         if self._graph:
             self.clearNodeHover()
             self.clearNodeSelection()
-            self._graph.deleteLater()
-            self._graph = None
+            self._graph.clear()
         self._sortedDFSChunks.clear()
         self._undoStack.clear()
 

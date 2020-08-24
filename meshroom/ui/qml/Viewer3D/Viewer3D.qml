@@ -207,6 +207,17 @@ FocusScope {
                                             ]
                                         }
                                     }
+                                    LayerFilter {
+                                        filterMode: LayerFilter.DiscardAnyMatchingLayers
+                                        layers: Layer {id: drawOnFront}
+                                    }
+                                    LayerFilter {
+                                        filterMode: LayerFilter.AcceptAnyMatchingLayers
+                                        layers: [drawOnFront]
+                                        RenderStateSet {
+                                            renderStates: DepthTest { depthFunction: DepthTest.GreaterOrEqual }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -222,6 +233,11 @@ FocusScope {
                 // Only activate it when a double click may happen or when the 'Control' key is pressed
                 pickingEnabled: cameraController.pickingActive || doubleClickTimer.running
                 camera: cameraSelector.camera
+
+                // Used for TransformGizmo in BoundingBox
+                sceneCameraController: cameraController
+                frontLayerComponent: drawOnFront
+                window: root
 
                 components: [
                     Transform {

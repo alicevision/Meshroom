@@ -257,6 +257,7 @@ class Attribute(BaseObject):
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
+    rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True), notify=isLinkChanged)
     node = Property(BaseObject, node.fget, constant=True)
     enabledChanged = Signal()
     enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
@@ -300,8 +301,8 @@ class ListAttribute(Attribute):
             self._value = value
         # New value
         else:
-            self.desc.validateValue(value)
-            self.extend(value)
+            newValue = self.desc.validateValue(value)
+            self.extend(newValue)
         self.requestGraphUpdate()
 
     @raiseIfLink
@@ -410,10 +411,16 @@ class GroupAttribute(Attribute):
                 raise AttributeError(key)
 
     def _set_value(self, exportedValue):
-        self.desc.validateValue(exportedValue)
-        # set individual child attribute values
-        for key, value in exportedValue.items():
-            self._value.get(key).value = value
+        value = self.desc.validateValue(exportedValue)
+        if isinstance(value, dict):
+            # set individual child attribute values
+            for key, v in value.items():
+                self._value.get(key).value = v
+        elif isinstance(value, (list, tuple)):
+            for attrDesc, v in zip(self.desc._groupDesc, value):
+                self._value.get(attrDesc.name).value = v
+        else:
+            raise AttributeError("Failed to set on GroupAttribute: {}".format(str(value)))
 
     @Slot(str, result=Attribute)
     def childAttribute(self, key):

@@ -146,3 +146,4 @@ Property = CoreProperty
 BaseObject = CoreObject
 Variant = object
 VariantList = object
+JSValue = None

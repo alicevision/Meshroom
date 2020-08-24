@@ -240,11 +240,11 @@ Item {
                 id: edgesRepeater
 
                 // delay edges loading after nodes (edges needs attribute pins to be created)
-                model: nodeRepeater.loaded ? root.graph.edges : undefined
+                model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
 
                 delegate: Edge {
-                    property var src: root._attributeToDelegate[edge.src]
-                    property var dst: root._attributeToDelegate[edge.dst]
+                    property var src: edge ? root._attributeToDelegate[edge.src] : undefined
+                    property var dst: edge ? root._attributeToDelegate[edge.dst] : undefined
                     property var srcAnchor: src.nodeItem.mapFromItem(src, src.edgeAnchorPos.x, src.edgeAnchorPos.y)
                     property var dstAnchor: dst.nodeItem.mapFromItem(dst, dst.edgeAnchorPos.x, dst.edgeAnchorPos.y)
 
@@ -382,8 +382,8 @@ Item {
             Repeater {
                 id: nodeRepeater
 
-                model: root.graph.nodes
-                property bool loaded: count === model.count
+                model: root.graph ? root.graph.nodes : undefined
+                property bool loaded: model ? count === model.count : false
 
                 delegate: Node {
                     id: nodeDelegate

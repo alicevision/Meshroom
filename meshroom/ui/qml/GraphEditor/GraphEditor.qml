@@ -291,14 +291,28 @@ Item {
                 }
                 MenuItem {
                     text: "Stop Computation"
-                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.globalStatus === "RUNNING" && nodeMenu.currentNode.globalExecMode === "LOCAL" : false
+                    enabled: {
+                        if(!nodeMenu.currentNode)
+                            return false
+                        // Only locked nodes running in local can be stopped
+                        return nodeMenu.currentNode.locked &&
+                            nodeMenu.currentNode.globalStatus === "RUNNING" &&
+                            nodeMenu.currentNode.globalExecMode === "LOCAL"
+                    }
                     visible: enabled
                     height: visible ? implicitHeight : 0
                     onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Cancel Computation"
-                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.globalStatus === "SUBMITTED" && nodeMenu.currentNode.globalExecMode === "LOCAL" : false
+                    enabled: {
+                        if(!nodeMenu.currentNode)
+                            return false
+                        // Only locked nodes submitted in local can be canceled
+                        return nodeMenu.currentNode.locked &&
+                            nodeMenu.currentNode.globalStatus === "SUBMITTED" &&
+                            nodeMenu.currentNode.globalExecMode === "LOCAL"
+                    }
                     visible: enabled
                     height: visible ? implicitHeight : 0
                     onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)

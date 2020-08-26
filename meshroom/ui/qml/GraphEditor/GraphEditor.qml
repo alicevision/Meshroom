@@ -294,10 +294,12 @@ Item {
                     enabled: {
                         if(!nodeMenu.currentNode)
                             return false
-                        // Only locked nodes running in local can be stopped
+                        // Only locked nodes running in local with the same sessionUid
+                        // as the Meshroom instance can be stopped
                         return nodeMenu.currentNode.locked &&
                             nodeMenu.currentNode.globalStatus === "RUNNING" &&
-                            nodeMenu.currentNode.globalExecMode === "LOCAL"
+                            nodeMenu.currentNode.globalExecMode === "LOCAL" &&
+                            nodeMenu.currentNode.statusInThisSession()
                     }
                     visible: enabled
                     height: visible ? implicitHeight : 0
@@ -308,10 +310,12 @@ Item {
                     enabled: {
                         if(!nodeMenu.currentNode)
                             return false
-                        // Only locked nodes submitted in local can be canceled
+                        // Only locked nodes submitted in local with the same sessionUid
+                        // as the Meshroom instance can be canceled
                         return nodeMenu.currentNode.locked &&
                             nodeMenu.currentNode.globalStatus === "SUBMITTED" &&
-                            nodeMenu.currentNode.globalExecMode === "LOCAL"
+                            nodeMenu.currentNode.globalExecMode === "LOCAL" &&
+                            nodeMenu.currentNode.statusInThisSession()
                     }
                     visible: enabled
                     height: visible ? implicitHeight : 0

@@ -916,6 +916,15 @@ class BaseNode(BaseObject):
         self._duplicates.setObjectList([node for node in nodesPerUid.get(uid) if node != self])
         self.duplicatesChanged.emit()
 
+    @Slot(result=bool)
+    def statusInThisSession(self):
+        if not self._chunks:
+            return False
+        for chunk in self._chunks:
+            if chunk.status.sessionUid != meshroom.core.sessionUid:
+                return False
+        return True
+
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)

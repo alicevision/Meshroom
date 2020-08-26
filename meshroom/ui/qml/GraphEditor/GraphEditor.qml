@@ -291,32 +291,14 @@ Item {
                 }
                 MenuItem {
                     text: "Stop Computation"
-                    enabled: {
-                        if(!nodeMenu.currentNode)
-                            return false
-                        // Only locked nodes running in local with the same sessionUid
-                        // as the Meshroom instance can be stopped
-                        return nodeMenu.currentNode.locked &&
-                            nodeMenu.currentNode.globalStatus === "RUNNING" &&
-                            nodeMenu.currentNode.globalExecMode === "LOCAL" &&
-                            nodeMenu.currentNode.statusInThisSession()
-                    }
+                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.canBeStopped() : false
                     visible: enabled
                     height: visible ? implicitHeight : 0
                     onTriggered: uigraph.stopNodeComputation(nodeMenu.currentNode)
                 }
                 MenuItem {
                     text: "Cancel Computation"
-                    enabled: {
-                        if(!nodeMenu.currentNode)
-                            return false
-                        // Only locked nodes submitted in local with the same sessionUid
-                        // as the Meshroom instance can be canceled
-                        return nodeMenu.currentNode.locked &&
-                            nodeMenu.currentNode.globalStatus === "SUBMITTED" &&
-                            nodeMenu.currentNode.globalExecMode === "LOCAL" &&
-                            nodeMenu.currentNode.statusInThisSession()
-                    }
+                    enabled: nodeMenu.currentNode ? nodeMenu.currentNode.canBeCanceled() : false
                     visible: enabled
                     height: visible ? implicitHeight : 0
                     onTriggered: uigraph.cancelNodeComputation(nodeMenu.currentNode)

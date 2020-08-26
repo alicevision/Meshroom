@@ -91,7 +91,7 @@ class TaskManager(BaseObject):
         # internal thread in which local tasks are executed
         self._thread = TaskThread(self)
 
-    def compute(self, graph=None, toNodes=None, forceCompute=False):
+    def compute(self, graph=None, toNodes=None, forceCompute=False, forceStatus=False):
         """
         Start graph computation, from root nodes to leaves - or nodes in 'toNodes' if specified.
         Computation tasks (NodeChunk) happen in a separate thread (see TaskThread).
@@ -99,6 +99,7 @@ class TaskManager(BaseObject):
         :param graph: the graph to consider.
         :param toNodes: specific leaves, all graph leaves if None.
         :param forceCompute: force the computation despite nodes status.
+        :param forceStatus: force the computation even if some nodes are submitted externally.
         """
         self._graph = graph
 
@@ -113,8 +114,22 @@ class TaskManager(BaseObject):
         if forceCompute:
             nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
         else:
-            allNodes, edges = graph.dfsToProcess(startNodes=toNodes)
-            nodes = [node for node in allNodes if not node.isAlreadySubmittedOrFinished()]
+            nodes, edges = graph.dfsToProcess(startNodes=toNodes)
+            nodes = [node for node in nodes if not self.contains(node)]  # be sure to avoid non-real conflicts
+            chunksInConflict = getAlreadySubmittedChunks(nodes)
+
+            if chunksInConflict:
+                chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
+                chunksName = [node.name for node in chunksInConflict]
+                msg = 'WARNING: Some nodes are already submitted with status: {}\nNodes: {}'.format(
+                      ', '.join(chunksStatus),
+                      ', '.join(chunksName)
+                      )
+
+                if forceStatus:
+                    logging.warning(msg)
+                else:
+                    raise RuntimeError(msg)
 
         for node in nodes:
             node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
@@ -138,6 +153,9 @@ class TaskManager(BaseObject):
         """
         if name in self._nodes.keys():
             self._nodes.pop(name)
+
+    def contains(self, node):
+        return self._nodes.contains(node)
 
     def removeNode(self, node):
         """ Remove node from the Task Manager. """

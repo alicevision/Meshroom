@@ -165,14 +165,78 @@ ApplicationWindow {
                 unsavedComputeDialog.currentNode = node;
                 unsavedComputeDialog.open();
             }
-            else
-                _reconstruction.execute(node);
+            else {
+                try {
+                    _reconstruction.execute(node)
+                }
+                catch (error) {
+                    let msg = error.toString()
+                    msg = msg.split("Error: ")[1] // Remove the QML prefix
+                    computeErrorDialog.openError(msg, node)
+                }
+            }
         }
 
         function submit(node) {
             _reconstruction.submit(node);
         }
 
+        MessageDialog {
+            id: computeErrorDialog
+
+            property int errorId // Used to specify signals' behavior
+            property var currentNode: null
+
+            function openError(msg, node) {
+                // Open specific dialog if the error is related to the following method
+                // There is maybe a better way to handle this
+                if(msg.startsWith("TaskManager.compute()"))
+                    this.setupPendingStatusError(msg, node)
+                else
+                    this.onlyDisplayError(msg)
+
+                this.open()
+            }
+
+            function onlyDisplayError(msg) {
+                errorId = 0
+                text = msg
+
+                standardButtons = Dialog.Ok
+            }
+
+            function setupPendingStatusError(msg, node) {
+                errorId = 1
+                currentNode = node
+                text = msg + "\n\nDo you want to Clear Pending Status and Start Computing?"
+
+                standardButtons = (Dialog.Ok | Dialog.Cancel)
+            }
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "Impossible To Compute"
+            text: ""
+
+            onAccepted: {
+                switch(errorId) {
+                    case 0: {
+                        close()
+                        break
+                    }
+                    case 1: {
+                        close()
+                        _reconstruction.graph.clearSubmittedNodes()
+                        _reconstruction.execute(currentNode)
+                        break
+                    }
+                }
+            }
+
+            onRejected: close()
+        }
 
         MessageDialog {
             id: unsavedComputeDialog

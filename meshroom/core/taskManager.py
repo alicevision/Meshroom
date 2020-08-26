@@ -121,7 +121,7 @@ class TaskManager(BaseObject):
             if chunksInConflict:
                 chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
                 chunksName = [node.name for node in chunksInConflict]
-                msg = 'WARNING: Some nodes are already submitted with status: {}\nNodes: {}'.format(
+                msg = 'TaskManager.compute(): WARNING - Some nodes are already submitted with status: {}\nNodes: {}'.format(
                       ', '.join(chunksStatus),
                       ', '.join(chunksName)
                       )

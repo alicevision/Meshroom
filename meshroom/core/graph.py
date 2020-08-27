@@ -734,10 +734,6 @@ class Graph(BaseObject):
         def finishVertex(vertex, graph):
             chunksToProcess = []
             for chunk in vertex.chunks:
-                if chunk.status.status is Status.SUBMITTED:
-                    logging.warning('Node "{}" is already submitted.'.format(chunk.name))
-                if chunk.status.status is Status.RUNNING:
-                    logging.warning('Node "{}" is already running.'.format(chunk.name))
                 if chunk.status.status is not Status.SUCCESS:
                     chunksToProcess.append(chunk)
             if chunksToProcess:

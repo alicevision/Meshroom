@@ -375,15 +375,6 @@ class UIGraph(QObject):
         nodes = [node] if node else None
         self._taskManager.compute(self._graph, nodes)
 
-    def _execute(self, nodes):
-        self.computeStatusChanged.emit()
-        try:
-            self._taskManager.executeGraph(self._graph, nodes)
-        except Exception as e:
-            logging.error("Error during Graph execution {}".format(e))
-        finally:
-            self.computeStatusChanged.emit()
-
     @Slot()
     def stopExecution(self):
         if not self.isComputingLocally():

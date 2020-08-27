@@ -177,17 +177,30 @@ Item {
                         spacing: 2
 
                         // Data sharing indicator
+                        // Note: for an unknown reason, there are some performance issues with the UI refresh.
+                        // Example: a node duplicated 40 times will be slow while creating another identical node
+                        // (sharing the same uid) will not be as slow. If save, quit and reload, it will become slow.
                         MaterialToolButton {
-                            visible: node.duplicates.count > 0
+                            property string baseText: "<b>Shares internal folder (data) with other node(s). Click for details.</b>"
+                            property string toolTipText: visible ? baseText : ""
+                            visible: node.hasDuplicates
                             text: MaterialIcons.layers
                             font.pointSize: 7
                             padding: 2
                             palette.text: Colors.sysPalette.text
-                            ToolTip.text: visible ? "<b>Shares internal folder (data) with other node(s). Click for details.</b>" : ""
+                            ToolTip.text: toolTipText
 
-                            onPressed: ToolTip.text = visible ? generateDuplicateList() : ""
-                            onReleased: ToolTip.text = visible ? "<b>Shares internal folder (data) with other node(s). Click for details.</b>" : ""
+                            onPressed: { offsetReleased.running = false; toolTipText = visible ? generateDuplicateList() : "" }
+                            onReleased: { toolTipText = "" ; offsetReleased.running = true }
                             onCanceled: released()
+
+                            // Used for a better user experience with the button
+                            // Avoid to change the text too quickly
+                            Timer {
+                                id: offsetReleased
+                                interval: 1000; running: false; repeat: false
+                                onTriggered: parent.toolTipText = visible ? parent.baseText : ""
+                            }
                         }
 
                         // Submitted externally indicator

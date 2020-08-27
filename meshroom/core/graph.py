@@ -1173,14 +1173,6 @@ def loadGraph(filepath):
     return graph
 
 
-def getAlreadySubmittedChunks(nodes):
-    out = []
-    for node in nodes:
-        for chunk in node.chunks:
-            if chunk.isAlreadySubmitted():
-                out.append(chunk)
-    return out
-
 def submitGraph(graph, submitter, toNodes=None):
     nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
     flowEdges = graph.flowEdges(startNodes=toNodes)

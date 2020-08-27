@@ -481,7 +481,7 @@ ApplicationWindow {
             MenuSeparator { }
             Action {
                 text: "Quit"
-                onTriggered: Qt.quit()
+                onTriggered: _window.close()
             }
         }
         Menu {

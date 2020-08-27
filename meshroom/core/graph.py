@@ -1059,7 +1059,7 @@ class Graph(BaseObject):
 
     def markNodesDirty(self, fromNode):
         """
-        Mark all nodes following 'fromNode' as dirty, and request a graph update.
+        Mark all nodes following 'fromNode' as dirty.
         All nodes marked as dirty will get their outputs to be re-evaluated
         during the next graph update.
 
@@ -1072,7 +1072,6 @@ class Graph(BaseObject):
         nodes, edges = self.nodesFromNode(fromNode)
         for node in nodes:
             node.dirty = True
-        self.update()
 
     def stopExecution(self):
         """ Request graph execution to be stopped by terminating running chunks"""

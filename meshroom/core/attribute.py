@@ -142,6 +142,7 @@ class Attribute(BaseObject):
     def requestGraphUpdate(self):
         if self.node.graph:
             self.node.graph.markNodesDirty(self.node)
+            self.node.graph.update()
 
     @property
     def isOutput(self):

@@ -173,8 +173,8 @@ class Signal(object):
                         (s[slotSelf] is slot.__func__)):
                     self._slots.remove(s)
                     break
-        elif isinstance(slot, partial) or '<' in slot.__name__:
-            # If it's a partial or lambda, try to remove directly
+        elif isinstance(slot, (partial, Signal)) or '<' in slot.__name__:
+            # If it's a partial, a Signal or lambda, try to remove directly
             try:
                 self._slots.remove(slot)
             except ValueError:

@@ -121,8 +121,13 @@ class CoreObject(object):
         super(CoreObject, self).__init__()
         self._parent = parent
 
+    def __del__(self):
+        self.destroyed.emit()
+
     def parent(self):
         return self._parent
+
+    destroyed = PySignal.ClassSignal()
 
 
 DictModel = CoreDictModel

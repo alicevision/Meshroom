@@ -1,3 +1,4 @@
+from . import PySignal
 
 class CoreDictModel:
 
@@ -102,20 +103,6 @@ class CoreListModel:
         self._objects[index:index] = iterable
 
 
-class CoreSignal:
-    """ Simple signal/callback implementation """
-    def __init__(self):
-        self._callbacks = set()
-
-    def emit(self, *args):
-        # TODO: check if we really need this in non-UI mode
-        # [cb(*args) for cb in self._callbacks]
-        pass
-
-    def connect(self, func):
-        self._callbacks.add(func)
-
-
 def CoreSlot(*args, **kwargs):
     def slot_decorator(func):
         def func_wrapper(*f_args, **f_kwargs):
@@ -141,7 +128,7 @@ class CoreObject(object):
 DictModel = CoreDictModel
 ListModel = CoreListModel
 Slot = CoreSlot
-Signal = CoreSignal
+Signal = PySignal.ClassSignal
 Property = CoreProperty
 BaseObject = CoreObject
 Variant = object

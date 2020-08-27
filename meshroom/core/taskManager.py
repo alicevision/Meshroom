@@ -155,7 +155,7 @@ class TaskManager(BaseObject):
             self._nodes.pop(name)
 
     def contains(self, node):
-        return self._nodes.contains(node)
+        return node in self._nodes.values()
 
     def removeNode(self, node):
         """ Remove node from the Task Manager. """

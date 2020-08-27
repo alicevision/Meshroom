@@ -862,6 +862,7 @@ class BaseNode(BaseObject):
         self._locked = lock
         self.lockedChanged.emit()
 
+    @Slot()
     def updateLocked(self):
         currentStatus = self.getGlobalStatus()
 

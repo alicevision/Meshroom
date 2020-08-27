@@ -473,6 +473,7 @@ class BaseNode(BaseObject):
         self._alive = True  # for QML side to know if the node can be used or is going to be deleted
         self._locked = False
         self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
+        self._hasDuplicates = False
 
         self.globalStatusChanged.connect(self.updateLocked)
 
@@ -910,12 +911,33 @@ class BaseNode(BaseObject):
         """ Update the list of duplicate nodes (sharing the same uid). """
         uid = self._uids.get(0)
         if not nodesPerUid or not uid:
-            self._duplicates.clear()
-            self.duplicatesChanged.emit()
+            if len(self._duplicates) > 0:
+                self._duplicates.clear()
+                self._hasDuplicates = False
+                self.hasDuplicatesChanged.emit()
             return
 
-        self._duplicates.setObjectList([node for node in nodesPerUid.get(uid) if node != self])
-        self.duplicatesChanged.emit()
+        newList = [node for node in nodesPerUid.get(uid) if node != self]
+
+        # If number of elements in both lists are identical,
+        # we must check if their content is the same
+        if len(newList) == len(self._duplicates):
+            newListName = set([node.name for node in newList])
+            oldListName = set([node.name for node in self._duplicates.values()])
+
+            # If strict equality between both sets,
+            # there is no need to set the new list
+            if newListName == oldListName:
+                return
+
+        # Set the newList
+        self._duplicates.setObjectList(newList)
+        # Emit a specific signal 'hasDuplicates' to avoid extra binding
+        # re-evaluation when the number of duplicates has changed
+        if bool(len(newList)) != self._hasDuplicates:
+            self._hasDuplicates = bool(len(newList))
+            self.hasDuplicatesChanged.emit()
+
 
     def statusInThisSession(self):
         if not self._chunks:
@@ -967,8 +989,9 @@ class BaseNode(BaseObject):
     alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)
     lockedChanged = Signal()
     locked = Property(bool, getLocked, setLocked, notify=lockedChanged)
-    duplicatesChanged = Signal()
-    duplicates = Property(Variant, lambda self: self._duplicates, notify=duplicatesChanged)
+    duplicates = Property(Variant, lambda self: self._duplicates, constant=True)
+    hasDuplicatesChanged = Signal()
+    hasDuplicates = Property(bool, lambda self: self._hasDuplicates, notify=hasDuplicatesChanged)
 
 
 class Node(BaseNode):

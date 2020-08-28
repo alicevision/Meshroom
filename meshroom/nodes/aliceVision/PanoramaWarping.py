@@ -34,6 +34,18 @@ Compute the image warping for each input image in the panorama coordinate system
             range=(0, 50000, 1000),
             uid=[0]
         ),
+        desc.IntParam(
+            name='percentUpscale',
+            label='Upscale ratio',
+            description='Upscale percent\n'
+                        'Only used if panorama Width is set to 0 for automatic choice\n'
+                        'How many percent of the pixels will be upscaled :\n'
+                        'Choose 0 and no pixel will be upscaled compared to its original (input) resolution\n'
+                        'Choose 1000 and all pixel will be upscaled compared to its original (input) resolution\n',
+            value=50,
+            range=(0, 100, 1),
+            uid=[0]
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

@@ -74,6 +74,9 @@ class CoreListModel:
     def __getitem__(self, idx):
         return self._objects[idx]
 
+    def values(self):
+        return self._objects
+
     def setObjectList(self, iterable):
         self.clear()
         self._objects = iterable

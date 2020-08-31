@@ -56,6 +56,15 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             exclusive=True,
             uid=[0],
         ),
+        desc.ChoiceParam(
+            name='normalizationMode',
+            label='Normalization Mode',
+            description='Control the normalization mode of the input images. Default to no normalization',
+            value='None',
+            values=['None', 'Normal', 'Log'],
+            exclusive=True,
+            uid=[0],
+        ),
         desc.BoolParam(
             name='forceCpuExtraction',
             label='Force CPU Extraction',

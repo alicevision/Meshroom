@@ -794,7 +794,7 @@ class BaseNode(BaseObject):
 
     def beginSequence(self, forceCompute=False):
         for chunk in self._chunks:
-            if forceCompute or chunk.status.status != Status.SUCCESS:
+            if forceCompute or (chunk.status.status not in (Status.RUNNING, Status.SUCCESS)):
                 chunk.upgradeStatusTo(Status.SUBMITTED, ExecMode.LOCAL)
 
     def processIteration(self, iteration):

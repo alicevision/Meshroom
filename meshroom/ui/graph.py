@@ -379,8 +379,10 @@ class UIGraph(QObject):
     def stopExecution(self):
         if not self.isComputingLocally():
             return
+        self._taskManager.requestBlockRestart()
         self._graph.stopExecution()
         self._taskManager._thread.join()
+
         self.computeStatusChanged.emit()
 
     @Slot(Node)
@@ -392,16 +394,6 @@ class UIGraph(QObject):
         # Stop the node and wait Task Manager
         node.stopComputation()
         self._taskManager._thread.join()
-
-        # If some dependent nodes are submitted, the first one will be in error
-        # Make sure to remove those nodes from the Task Manager list
-        outputNodes = node.getOutputNodes(recursive=True)
-        for n in outputNodes:
-            if n.getGlobalStatus() == Status.ERROR:
-                n.upgradeStatusTo(Status.NONE)
-            self._taskManager.removeNode(n)
-
-        self.computeStatusChanged.emit()
 
     @Slot(Node)
     def cancelNodeComputation(self, node):

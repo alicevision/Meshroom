@@ -3,7 +3,8 @@ from threading import Thread
 from enum import Enum
 
 import meshroom
-from meshroom.common import BaseObject, DictModel, Property
+from meshroom.common import BaseObject, DictModel, Property, Signal, Slot
+from meshroom.core.node import Status
 
 
 class State(Enum):
@@ -34,6 +35,8 @@ class TaskThread(Thread):
         """ Consume compute tasks. """
         self._state = State.RUNNING
 
+        stopAndRestart = False
+
         for nId, node in enumerate(self._manager._nodesToProcess):
 
             # skip already finished/running nodes
@@ -61,7 +64,8 @@ class TaskThread(Thread):
                     chunk.process(self.forceCompute)
                 except Exception as e:
                     if chunk.isStopped():
-                        pass
+                        stopAndRestart = True
+                        break
                     else:
                         logging.error("Error on node computation: {}".format(e))
                         nodesToRemove, _ = self._manager._graph.nodesFromNode(node)
@@ -74,8 +78,15 @@ class TaskThread(Thread):
                                 pass
                             n.clearSubmittedChunks()
 
-        self._manager._nodesToProcess = []
-        self._state = State.DEAD
+            if stopAndRestart:
+                break
+
+        if stopAndRestart:
+            self._state = State.STOPPED
+            self._manager.restartRequested.emit()
+        else:
+            self._manager._nodesToProcess = []
+            self._state = State.DEAD
 
 
 class TaskManager(BaseObject):
@@ -90,6 +101,60 @@ class TaskManager(BaseObject):
         self._nodesExtern = []
         # internal thread in which local tasks are executed
         self._thread = TaskThread(self)
+
+        self._blockRestart = False
+        self.restartRequested.connect(self.restart)
+
+    def requestBlockRestart(self):
+        """
+        Block computing.
+        Note: should only be used to completely stop computing.
+        """
+        self._blockRestart = True
+
+    def blockRestart(self):
+        """ Avoid the automatic restart of computing. """
+        for node in self._nodesToProcess:
+            if node.getGlobalStatus() in (Status.SUBMITTED, Status.ERROR):
+                node.upgradeStatusTo(Status.NONE)
+                self.removeNode(node, displayList=True)
+
+        self._blockRestart = False
+        self._nodesToProcess = []
+        self._thread._state = State.DEAD
+
+    @Slot()
+    def restart(self):
+        """
+        Restart computing when thread has been stopped.
+        Note: this is done like this to avoid app freezing.
+        """
+        # Make sure to wait the end of the current thread
+        self._thread.join()
+
+        # Avoid restart if thread was globally stopped
+        if self._blockRestart:
+            self.blockRestart()
+            return
+
+        if self._thread._state != State.STOPPED:
+            return
+
+        for node in self._nodesToProcess:
+            if node.getGlobalStatus() == Status.STOPPED:
+                # Remove node from the computing list
+                self.removeNode(node, displayList=False, processList=True)
+
+                # Remove output nodes from display and computing lists
+                outputNodes = node.getOutputNodes(recursive=True)
+                for n in outputNodes:
+                    if n.getGlobalStatus() in (Status.ERROR, Status.SUBMITTED):
+                        n.upgradeStatusTo(Status.NONE)
+                        self.removeNode(n, displayList=True, processList=True)
+
+        # Start a new thread with the remaining nodes to compute
+        self._thread = TaskThread(self)
+        self._thread.start()
 
     def compute(self, graph=None, toNodes=None, forceCompute=False, forceStatus=False):
         """
@@ -116,7 +181,7 @@ class TaskManager(BaseObject):
         else:
             nodes, edges = graph.dfsToProcess(startNodes=toNodes)
             nodes = [node for node in nodes if not self.contains(node)]  # be sure to avoid non-real conflicts
-            chunksInConflict = getAlreadySubmittedChunks(nodes)
+            chunksInConflict = self.getAlreadySubmittedChunks(nodes)
 
             if chunksInConflict:
                 chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
@@ -242,18 +307,19 @@ class TaskManager(BaseObject):
         except Exception as e:
             logging.error("Error on submit : {}".format(e))
 
+    def getAlreadySubmittedChunks(self, nodes):
+        """
+        Check if nodes have already been submitted in another Meshroom instance.
+        :param nodes:
+        :return:
+        """
+        out = []
+        for node in nodes:
+            for chunk in node.chunks:
+                # Already submitted/running chunks in another task manager
+                if chunk.isAlreadySubmitted() and not self.containsNodeName(chunk.statusNodeName):
+                    out.append(chunk)
+        return out
+
     nodes = Property(BaseObject, lambda self: self._nodes, constant=True)
-
-
-def getAlreadySubmittedChunks(nodes):
-    """
-    Check if nodes already have been submitted
-    :param nodes:
-    :return:
-    """
-    out = []
-    for node in nodes:
-        for chunk in node.chunks:
-            if chunk.isAlreadySubmitted():
-                out.append(chunk)
-    return out
+    restartRequested = Signal()

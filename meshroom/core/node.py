@@ -475,7 +475,7 @@ class BaseNode(BaseObject):
         self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
         self._hasDuplicates = False
 
-        self.globalStatusChanged.connect(self.updateLocked)
+        self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)
 
     def __getattr__(self, k):
         try:
@@ -864,6 +864,14 @@ class BaseNode(BaseObject):
         self.lockedChanged.emit()
 
     @Slot()
+    def updateDuplicatesStatusAndLocked(self):
+        """ Update status of duplicate nodes without any latency and update locked. """
+        if self.name == self._chunks.at(0).statusNodeName:
+            for node in self._duplicates:
+                node.updateStatusFromCache()
+
+            self.updateLocked()
+
     def updateLocked(self):
         currentStatus = self.getGlobalStatus()
 

@@ -410,11 +410,11 @@ class UIGraph(QObject):
             # Status from SUBMITTED to NONE
             # Make sure to remove the nodes from the Task Manager list
             node.clearSubmittedChunks()
-            self._taskManager.removeNode(node)
+            self._taskManager.removeNode(node, displayList=True, processList=True)
 
             for n in node.getOutputNodes(recursive=True):
                 n.clearSubmittedChunks()
-                self._taskManager.removeNode(n)
+                self._taskManager.removeNode(n, displayList=True, processList=True)
 
     @Slot(Node)
     def submit(self, node=None):

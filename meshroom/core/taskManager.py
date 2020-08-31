@@ -157,13 +157,26 @@ class TaskManager(BaseObject):
     def contains(self, node):
         return node in self._nodes.values()
 
-    def removeNode(self, node):
-        """ Remove node from the Task Manager. """
-        if self._nodes.contains(node):
+    def containsNodeName(self, name):
+        """ Check if a node with the argument name belongs to the display list. """
+        if name in self._nodes.keys():
+            return True
+        return False
+
+    def removeNode(self, node, displayList=True, processList=False, externList=False):
+        """ Remove node from the Task Manager.
+
+            Args:
+                node (Node): node to remove.
+                displayList (bool): remove from the display list.
+                processList (bool): remove from the nodesToProcess list.
+                externList (bool): remove from the nodesExtern list.
+        """
+        if displayList and self._nodes.contains(node):
             self._nodes.pop(node.name)
-        if node in self._nodesToProcess:
+        if processList and node in self._nodesToProcess:
             self._nodesToProcess.remove(node)
-        if node in self._nodesExtern:
+        if externList and node in self._nodesExtern:
             self._nodesExtern.remove(node)
 
     def clear(self):

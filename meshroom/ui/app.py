@@ -9,6 +9,7 @@ from PySide2.QtWidgets import QApplication
 import meshroom
 from meshroom.core import nodesDesc
 from meshroom.core import pyCompatibility
+from meshroom.core.taskManager import TaskManager
 
 from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
@@ -17,6 +18,7 @@ from meshroom.ui.components.scene3D import Scene3DHelper, Transformations3DHelpe
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
+from meshroom.ui import commands
 
 
 class MessageHandler(object):
@@ -118,7 +120,9 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("_nodeTypes", sorted(nodesDesc.keys()))
 
         # instantiate Reconstruction object
-        r = Reconstruction(defaultPipeline=args.pipeline, parent=self)
+        self._undoStack = commands.UndoStack(self)
+        self._taskManager = TaskManager(self)
+        r = Reconstruction(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
         self.engine.rootContext().setContextProperty("_reconstruction", r)
 
         # those helpers should be available from QML Utils module as singletons, but:

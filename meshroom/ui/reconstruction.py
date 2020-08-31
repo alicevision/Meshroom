@@ -419,8 +419,8 @@ class Reconstruction(UIGraph):
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
     }
 
-    def __init__(self, defaultPipeline='', parent=None):
-        super(Reconstruction, self).__init__(parent)
+    def __init__(self, undoStack, taskManager, defaultPipeline='', parent=None):
+        super(Reconstruction, self).__init__(undoStack, taskManager, parent)
 
         # initialize member variables for key steps of the 3D reconstruction pipeline
 

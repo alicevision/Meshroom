@@ -96,7 +96,8 @@ This node allows to setup the Panorama:
             description='Add a rotation to the input XML given poses.',
             value='None',
             values=['None', 'rotate90', 'rotate180', 'rotate270'],
-            uid=[],
+            exclusive=True,
+            uid=[0]
         ),
         desc.ChoiceParam(
             name='verboseLevel',

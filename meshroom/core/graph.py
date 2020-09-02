@@ -653,6 +653,11 @@ class Graph(BaseObject):
         for u in self._nodes:
             colors[u] = WHITE
 
+        if longestPathFirst and reverse:
+            # Because we have no knowledge of the node's count between a node and its leaves,
+            # it is not possible to handle this case at the moment
+            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and reverse=True are not compatible yet.")
+
         nodes = startNodes or self.getLeaves()
 
         if longestPathFirst:
@@ -873,7 +878,7 @@ class Graph(BaseObject):
                 flowEdges.append(link)
         return flowEdges
 
-    def nodesFromNode(self, startNode, filterTypes=None, reverse=True):
+    def nodesFromNode(self, startNode, filterTypes=None, longestPathFirst=False, reverse=True):
         """
         Return the node chain from startNode to the graph leaves.
 
@@ -881,6 +886,8 @@ class Graph(BaseObject):
             startNode (Node): the node to start the visit from.
             filterTypes (str list): (optional) only return the nodes of the given types
                               (does not stop the visit, this is a post-process only)
+            longestPathFirst (bool): (optional) if multiple paths, nodes belonging to
+                            the longest one will be visited first.
             reverse (bool): (optional) direction of visit.
                             True is for getting nodes depending on the startNode.
                             False is for getting nodes required for the startNode.
@@ -897,7 +904,7 @@ class Graph(BaseObject):
 
         visitor.discoverVertex = discoverVertex
         visitor.examineEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=[startNode], reverse=reverse)
+        self.dfs(visitor=visitor, startNodes=[startNode], longestPathFirst=longestPathFirst, reverse=reverse)
         return nodes, edges
 
     def getInputNodes(self, node, recursive=False):

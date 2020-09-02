@@ -275,6 +275,8 @@ class UIGraph(QObject):
         self._selectedNode = None
         self._hoveredNode = None
 
+        self.computeStatusChanged.connect(self.updateLockedUndoStack)
+
     def setGraph(self, g):
         """ Set the internal graph. """
         if self._graph:
@@ -369,10 +371,18 @@ class UIGraph(QObject):
         self._graph.save()
         self._undoStack.setClean()
 
+    @Slot()
+    def updateLockedUndoStack(self):
+        if self.isComputingLocally():
+            self._undoStack.lockAtThisIndex()
+        else:
+            self._undoStack.unlock()
+
     @Slot(Node)
     def execute(self, node=None):
         nodes = [node] if node else None
         self._taskManager.compute(self._graph, nodes)
+        self.updateLockedUndoStack()  # explicitly call the update while it is already computing
 
     @Slot()
     def stopExecution(self):
@@ -381,8 +391,6 @@ class UIGraph(QObject):
         self._taskManager.requestBlockRestart()
         self._graph.stopExecution()
         self._taskManager._thread.join()
-
-        self.computeStatusChanged.emit()
 
     @Slot(Node)
     def stopNodeComputation(self, node):
@@ -417,6 +425,7 @@ class UIGraph(QObject):
             Default submitter is specified using the MESHROOM_DEFAULT_SUBMITTER environment variable.
         """
         self.save()  # graph must be saved before being submitted
+        self._undoStack.clear()  # the undo stack must be cleared
         node = [node] if node else None
         self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
 

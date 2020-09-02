@@ -23,10 +23,6 @@ ApplicationWindow {
     minimumHeight: 500
     visible: true
 
-    /// Whether graph is currently locked and therefore read-only
-    readonly property bool graphLocked: _reconstruction.computing
-
-
     title: {
         var t = (_reconstruction.graph && _reconstruction.graph.filepath) ? _reconstruction.graph.filepath : "Untitled"
         if(!_reconstruction.undoStack.clean)
@@ -371,7 +367,7 @@ ApplicationWindow {
         property string tooltip: 'Undo "' +_reconstruction.undoStack.undoText +'"'
         text: "Undo"
         shortcut: "Ctrl+Z"
-        enabled: _reconstruction.undoStack.canUndo && !graphLocked
+        enabled: _reconstruction.undoStack.canUndo && _reconstruction.undoStack.isUndoableIndex
         onTriggered: _reconstruction.undoStack.undo()
     }
     Action {
@@ -380,7 +376,7 @@ ApplicationWindow {
         property string tooltip: 'Redo "' +_reconstruction.undoStack.redoText +'"'
         text: "Redo"
         shortcut: "Ctrl+Shift+Z"
-        enabled: _reconstruction.undoStack.canRedo && !graphLocked
+        enabled: _reconstruction.undoStack.canRedo && !_reconstruction.undoStack.lockedRedo
         onTriggered: _reconstruction.undoStack.redo()
     }
 

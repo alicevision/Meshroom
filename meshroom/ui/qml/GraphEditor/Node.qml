@@ -176,6 +176,16 @@ Item {
                         Layout.rightMargin: 2
                         spacing: 2
 
+                        // CompatibilityBadge icon for CompatibilityNodes
+                        Loader {
+                            active: root.isCompatibilityNode
+                            sourceComponent: CompatibilityBadge {
+                                sourceComponent: iconDelegate
+                                canUpgrade: root.node.canUpgrade
+                                issueDetails: root.node.issueDetails
+                            }
+                        }
+
                         // Data sharing indicator
                         // Note: for an unknown reason, there are some performance issues with the UI refresh.
                         // Example: a node duplicated 40 times will be slow while creating another identical node
@@ -309,21 +319,6 @@ Item {
                         }
                     }
                 }
-            }
-        }
-
-        // CompatibilityBadge icon for CompatibilityNodes
-        Loader {
-            active: root.isCompatibilityNode
-            anchors {
-                right: parent.right
-                top: parent.top
-                margins: -4
-            }
-            sourceComponent: CompatibilityBadge {
-                sourceComponent: iconDelegate
-                canUpgrade: root.node.canUpgrade
-                issueDetails: root.node.issueDetails
             }
         }
     }

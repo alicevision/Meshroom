@@ -158,8 +158,8 @@ def test_transitive_reduction():
         assert node.depth == maxDepth
 
 
-def test_graph_reverse_dfs():
-    graph = Graph('Test reverse DFS')
+def test_graph_reverse_nodesFromNode():
+    graph = Graph('Test nodesFromNode(reverse=True)')
 
     #    ------------\
     #   /   ~ C - E - F
@@ -185,6 +185,43 @@ def test_graph_reverse_dfs():
     # Get all nodes from C (order guaranteed)
     nodes = graph.nodesFromNode(C)[0]
     assert nodes == [C, E, F]
+
+
+def test_graph_nodesFromNode():
+    graph = Graph('Test nodesFromNode(reverse=False)')
+
+    #    ------------\
+    #   /   ~ C - E - F
+    # A - B
+    #      ~ D
+    #    G
+
+    G = graph.addNewNode('Ls', input='/tmp')
+    A = graph.addNewNode('Ls', input='/tmp')
+    B = graph.addNewNode('AppendText', inputText=A.output)
+    C = graph.addNewNode('AppendText', inputText=B.output)
+    D = graph.addNewNode('AppendText', input=G.output, inputText=B.output)
+    E = graph.addNewNode('Ls', input=C.output)
+    F = graph.addNewNode('AppendText', input=A.output, inputText=E.output)
+
+    # Get all nodes from A (use set, order not guaranteed)
+    nodes = graph.nodesFromNode(A, reverse=False)[0]
+    assert set(nodes) == {A}
+    # Get all nodes from D
+    nodes = graph.nodesFromNode(D, reverse=False)[0]
+    assert set(nodes) == {A, B, D, G}
+    # Get all nodes from E
+    nodes = graph.nodesFromNode(E, reverse=False)[0]
+    assert set(nodes) == {A, B, C, E}
+    # Get all nodes from F
+    nodes = graph.nodesFromNode(F, reverse=False)[0]
+    assert set(nodes) == {A, B, C, E, F}
+    # Get all nodes of type AppendText from C
+    nodes = graph.nodesFromNode(C, filterTypes=['AppendText'], reverse=False)[0]
+    assert set(nodes) == {B, C}
+    # Get all nodes from D (order guaranteed)
+    nodes = graph.nodesFromNode(D, longestPathFirst=True, reverse=False)[0]
+    assert nodes == [D, B, A, G]
 
 
 def test_graph_nodes_sorting():

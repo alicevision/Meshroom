@@ -166,9 +166,9 @@ ApplicationWindow {
                     _reconstruction.execute(node)
                 }
                 catch (error) {
-                    let msg = error.toString()
-                    msg = msg.split("Error: ")[1] // Remove the QML prefix
-                    computeErrorDialog.openError(msg, node)
+                    const data = ErrorHandler.analyseError(error)
+                    if(data.context === "COMPUTATION")
+                        computeErrorDialog.openError(data.type, data.msg, node)
                 }
             }
         }
@@ -180,29 +180,26 @@ ApplicationWindow {
         MessageDialog {
             id: computeErrorDialog
 
-            property int errorId // Used to specify signals' behavior
+            property string errorType // Used to specify signals' behavior
             property var currentNode: null
 
-            function openError(msg, node) {
-                // Open specific dialog if the error is related to the following method
-                // There is maybe a better way to handle this
-                if(msg.startsWith("TaskManager.compute()"))
-                    this.setupPendingStatusError(msg, node)
-                else
-                    this.onlyDisplayError(msg)
+            function openError(type, msg, node) {
+                errorType = type
+                switch(type) {
+                    case "Already Submitted": this.setupPendingStatusError(msg, node); break
+                    default: this.onlyDisplayError(msg)
+                }
 
                 this.open()
             }
 
             function onlyDisplayError(msg) {
-                errorId = 0
                 text = msg
 
                 standardButtons = Dialog.Ok
             }
 
             function setupPendingStatusError(msg, node) {
-                errorId = 1
                 currentNode = node
                 text = msg + "\n\nDo you want to Clear Pending Status and Start Computing?"
 
@@ -217,17 +214,14 @@ ApplicationWindow {
             text: ""
 
             onAccepted: {
-                switch(errorId) {
-                    case 0: {
-                        close()
-                        break
-                    }
-                    case 1: {
+                switch(errorType) {
+                    case "Already Submitted": {
                         close()
                         _reconstruction.graph.clearSubmittedNodes()
                         _reconstruction.execute(currentNode)
                         break
                     }
+                    default: close()
                 }
             }
 

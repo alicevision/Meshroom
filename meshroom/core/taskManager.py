@@ -186,7 +186,9 @@ class TaskManager(BaseObject):
             if chunksInConflict:
                 chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
                 chunksName = [node.name for node in chunksInConflict]
-                msg = 'TaskManager.compute(): WARNING - Some nodes are already submitted with status: {}\nNodes: {}'.format(
+                # Syntax and terms are used on QML side to recognize the error
+                msg = '[COMPUTATION] Already Submitted:\n' \
+                      'WARNING - Some nodes are already submitted with status: {}\nNodes: {}'.format(
                       ', '.join(chunksStatus),
                       ', '.join(chunksName)
                       )

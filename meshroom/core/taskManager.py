@@ -184,7 +184,7 @@ class TaskManager(BaseObject):
             if not nodes:
                 logging.warning('Nothing to compute')
                 return
-            self.checkCompatibilityNodes(nodes, "COMPUTATION")  # name of the context is important for QML
+            self.checkCompatibilityNodes(graph, nodes, "COMPUTATION")  # name of the context is important for QML
 
             nodes = [node for node in nodes if not self.contains(node)]  # be sure to avoid non-real conflicts
             chunksInConflict = self.getAlreadySubmittedChunks(nodes)
@@ -273,10 +273,10 @@ class TaskManager(BaseObject):
                 self._nodes.add(node)
                 self._nodesExtern.append(node)
 
-    def checkCompatibilityNodes(self, nodes, context):
+    def checkCompatibilityNodes(self, graph, nodes, context):
         compatNodes = []
         for node in nodes:
-            if node in self._graph._compatibilityNodes.values():
+            if node in graph._compatibilityNodes.values():
                 compatNodes.append(node.nameToLabel(node.name))
         if compatNodes:
             # Warning: Syntax and terms are parsed on QML side to recognize the error
@@ -329,7 +329,7 @@ class TaskManager(BaseObject):
         if not nodesToProcess:
             logging.warning('Nothing to compute')
             return
-        self.checkCompatibilityNodes(nodesToProcess, "SUBMITTING")  # name of the context is important for QML
+        self.checkCompatibilityNodes(graph, nodesToProcess, "SUBMITTING")  # name of the context is important for QML
 
         flowEdges = graph.flowEdges(startNodes=toNodes)
         edgesToProcess = set(edgesToProcess).intersection(flowEdges)

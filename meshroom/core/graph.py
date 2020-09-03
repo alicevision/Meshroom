@@ -733,8 +733,6 @@ class Graph(BaseObject):
             if vertex.hasStatus(Status.SUCCESS):
                 # stop branch visit if discovering a node already computed
                 raise StopBranchVisit()
-            if self._computationBlocked[vertex]:
-                raise RuntimeError("Can't compute node '{}'".format(vertex.name))
 
         def finishVertex(vertex, graph):
             chunksToProcess = []

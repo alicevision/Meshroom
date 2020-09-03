@@ -181,6 +181,11 @@ class TaskManager(BaseObject):
             nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
         else:
             nodes, edges = graph.dfsToProcess(startNodes=toNodes)
+            if not nodes:
+                logging.warning('Nothing to compute')
+                return
+            self.checkCompatibilityNodes(nodes, "COMPUTATION")  # name of the context is important for QML
+
             nodes = [node for node in nodes if not self.contains(node)]  # be sure to avoid non-real conflicts
             chunksInConflict = self.getAlreadySubmittedChunks(nodes)
 
@@ -268,6 +273,18 @@ class TaskManager(BaseObject):
                 self._nodes.add(node)
                 self._nodesExtern.append(node)
 
+    def checkCompatibilityNodes(self, nodes, context):
+        compatNodes = []
+        for node in nodes:
+            if node in self._graph._compatibilityNodes.values():
+                compatNodes.append(node.nameToLabel(node.name))
+        if compatNodes:
+            # Warning: Syntax and terms are parsed on QML side to recognize the error
+            # Syntax : [Context] ErrorType: ErrorMessage
+            raise RuntimeError("[{}] Compatibility Issue:\n"
+                               "Cannot compute because of these incompatible nodes:\n"
+                               "{}".format(context, sorted(compatNodes)))
+
     def submit(self, graph=None, submitter=None, toNodes=None):
         """
         Nodes are send to the renderfarm
@@ -309,6 +326,11 @@ class TaskManager(BaseObject):
                 self._nodesExtern = []
 
         nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
+        if not nodesToProcess:
+            logging.warning('Nothing to compute')
+            return
+        self.checkCompatibilityNodes(nodesToProcess, "SUBMITTING")  # name of the context is important for QML
+
         flowEdges = graph.flowEdges(startNodes=toNodes)
         edgesToProcess = set(edgesToProcess).intersection(flowEdges)
 

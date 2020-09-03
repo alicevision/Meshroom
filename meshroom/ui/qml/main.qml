@@ -168,17 +168,24 @@ ApplicationWindow {
                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
                     if(data.context === "COMPUTATION")
-                        computeErrorDialog.openError(data.type, data.msg, node)
+                        computeSubmitErrorDialog.openError(data.type, data.msg, node)
                 }
             }
         }
 
         function submit(node) {
-            _reconstruction.submit(node);
+            try {
+                _reconstruction.submit(node)
+            }
+            catch (error) {
+                const data = ErrorHandler.analyseError(error)
+                if(data.context === "SUBMITTING")
+                    computeSubmitErrorDialog.openError(data.type, data.msg, node)
+            }
         }
 
         MessageDialog {
-            id: computeErrorDialog
+            id: computeSubmitErrorDialog
 
             property string errorType // Used to specify signals' behavior
             property var currentNode: null
@@ -187,6 +194,7 @@ ApplicationWindow {
                 errorType = type
                 switch(type) {
                     case "Already Submitted": this.setupPendingStatusError(msg, node); break
+                    case "Compatibility Issue": this.setupCompatibilityIssue(msg); break
                     default: this.onlyDisplayError(msg)
                 }
 
@@ -206,6 +214,12 @@ ApplicationWindow {
                 standardButtons = (Dialog.Ok | Dialog.Cancel)
             }
 
+            function setupCompatibilityIssue(msg) {
+                text = msg + "\n\nDo you want to open the Compatibility Manager?"
+
+                standardButtons = (Dialog.Ok | Dialog.Cancel)
+            }
+
             canCopy: false
             icon.text: MaterialIcons.warning
             parent: Overlay.overlay
@@ -220,6 +234,10 @@ ApplicationWindow {
                         _reconstruction.graph.clearSubmittedNodes()
                         _reconstruction.execute(currentNode)
                         break
+                    }
+                    case "Compatibility Issue": {
+                        close()
+                        compatibilityManager.open()
                     }
                     default: close()
                 }

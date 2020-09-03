@@ -67,9 +67,10 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             description='Overlay on top of panorama to analyze transitions:\n'
                         ' * none: no overlay\n'
                         ' * borders: display image borders\n'
-                        ' * seams: display transitions between images\n',
+                        ' * seams: display transitions between images\n'
+                        ' * all: display borders and seams\n',
             value='none',
-            values=['none', 'borders', 'seams'],
+            values=['none', 'borders', 'seams', 'all'],
             exclusive=True,
             advanced=True,
             uid=[0]

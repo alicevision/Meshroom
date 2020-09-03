@@ -5,6 +5,7 @@ from enum import Enum
 import meshroom
 from meshroom.common import BaseObject, DictModel, Property, Signal, Slot
 from meshroom.core.node import Status
+import meshroom.core.graph
 
 
 class State(Enum):
@@ -186,7 +187,8 @@ class TaskManager(BaseObject):
             if chunksInConflict:
                 chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
                 chunksName = [node.name for node in chunksInConflict]
-                # Syntax and terms are used on QML side to recognize the error
+                # Warning: Syntax and terms are parsed on QML side to recognize the error
+                # Syntax : [Context] ErrorType: ErrorMessage
                 msg = '[COMPUTATION] Already Submitted:\n' \
                       'WARNING - Some nodes are already submitted with status: {}\nNodes: {}'.format(
                       ', '.join(chunksStatus),
@@ -275,11 +277,23 @@ class TaskManager(BaseObject):
         :return:
         """
 
-        # ensure submitter is properly set
-        sub = meshroom.core.submitters.get(submitter, None)
+        # Ensure submitter is properly set
+        sub = None
+        if submitter:
+            sub = meshroom.core.submitters.get(submitter, None)
+        elif len(meshroom.core.submitters) == 1:
+            # if only one submitter available use it
+            sub = list(meshroom.core.submitters.values())[0]
         if sub is None:
-            raise RuntimeError("Unknown Submitter : " + submitter)
+            # Warning: Syntax and terms are parsed on QML side to recognize the error
+            # Syntax : [Context] ErrorType: ErrorMessage
+            raise RuntimeError("[SUBMITTING] Unknown Submitter:\n"
+                               "Unknown Submitter called '{submitter}'. Available submitters are: '{allSubmitters}'.".format(
+                                submitter=submitter,
+                                allSubmitters=str(meshroom.core.submitters.keys())
+                                ))
 
+        # Update task manager's lists
         if self._thread._state != State.RUNNING:
             self._nodes.clear()
 
@@ -298,6 +312,9 @@ class TaskManager(BaseObject):
         flowEdges = graph.flowEdges(startNodes=toNodes)
         edgesToProcess = set(edgesToProcess).intersection(flowEdges)
 
+        logging.info("Nodes to process: {}".format(nodesToProcess))
+        logging.info("Edges to process: {}".format(edgesToProcess))
+
         try:
             res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath)
             if res:
@@ -308,6 +325,14 @@ class TaskManager(BaseObject):
             self._nodesExtern.extend(nodesToProcess)
         except Exception as e:
             logging.error("Error on submit : {}".format(e))
+
+    def submitFromFile(self, graphFile, submitter, toNode=None):
+        """
+        Submit the given graph via the given submitter.
+        """
+        graph = meshroom.core.graph.loadGraph(graphFile)
+        toNodes = graph.findNodes([toNode]) if toNode else None
+        self.submit(graph, submitter, toNodes)
 
     def getAlreadySubmittedChunks(self, nodes):
         """

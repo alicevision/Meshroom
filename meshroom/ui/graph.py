@@ -12,7 +12,7 @@ from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QP
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
-from meshroom.core.graph import Graph, Edge, submitGraph
+from meshroom.core.graph import Graph, Edge
 
 from meshroom.core.taskManager import TaskManager
 

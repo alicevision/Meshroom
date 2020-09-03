@@ -198,7 +198,8 @@ if args.submit:
     if not args.save:
         raise ValueError('Need to save the project to file to submit on renderfarm.')
     # submit on renderfarm
-    meshroom.core.graph.submit(args.save, args.submitter, toNode=toNodes)
+    taskManager = meshroom.core.taskManager.TaskManager()
+    taskManager.submitFromFile(args.save, args.submitter, toNode=toNodes)
 elif args.compute:
     # start computation
     taskManager = meshroom.core.taskManager.TaskManager()

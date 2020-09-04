@@ -10,7 +10,7 @@ meshroom.setupEnvironment()
 import meshroom.core.graph
 from meshroom import multiview
 
-parser = argparse.ArgumentParser(description='Launch the full photogrammetry or HDRI pipeline.')
+parser = argparse.ArgumentParser(description='Launch the full photogrammetry or Panorama HDR pipeline.')
 parser.add_argument('-i', '--input', metavar='SFM/FOLDERS/IMAGES', type=str, nargs='*',
                     default=[],
                     help='Input folder containing images or folders of images or file (.sfm or .json) '
@@ -19,8 +19,8 @@ parser.add_argument('-I', '--inputRecursive', metavar='FOLDERS/IMAGES', type=str
                     default=[],
                     help='Input folders containing all images recursively.')
 
-parser.add_argument('-p', '--pipeline', metavar='photogrammetry/hdri/MG_FILE', type=str, default='photogrammetry',
-                    help='"photogrammetry" pipeline, "hdri" pipeline or a Meshroom file containing a custom pipeline to run on input images. '
+parser.add_argument('-p', '--pipeline', metavar='photogrammetry/panoramaHdr/panoramaFisheyeHdr/MG_FILE', type=str, default='photogrammetry',
+                    help='"photogrammetry" pipeline, "panotamaHdr" pipeline, "panotamaFisheyeHdr" pipeline or a Meshroom file containing a custom pipeline to run on input images. '
                          'Requirements: the graph must contain one CameraInit node, '
                          'and one Publish node if --output is set.')
 
@@ -112,12 +112,12 @@ with multiview.GraphModification(graph):
     if args.pipeline.lower() == "photogrammetry":
         # default photogrammetry pipeline
         multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
-    elif args.pipeline.lower() == "hdri":
-        # default hdri pipeline
-        multiview.hdri(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
-    elif args.pipeline.lower() == "hdrifisheye":
-        # default hdriFisheye pipeline
-        multiview.hdriFisheye(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
+    elif args.pipeline.lower() == "panoramahdr":
+        # default panorama Hdr pipeline
+        multiview.panoramaHdr(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
+    elif args.pipeline.lower() == "panoramafisheyehdr":
+        # default panorama Fisheye Hdr pipeline
+        multiview.panoramaFisheyeHdr(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
     else:
         # custom pipeline
         graph.load(args.pipeline)

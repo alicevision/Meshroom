@@ -340,12 +340,12 @@ ApplicationWindow {
                     onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetry") })
                 }
                 Action {
-                    text: "HDRI"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("hdri") })
+                    text: "Panorama HDR"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("panoramahdr") })
                 }
                 Action {
-                    text: "HDRI Fisheye"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("hdriFisheye") })
+                    text: "Panorama Fisheye HDR"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("panoramahdrfisheyehdr") })
                 }
             }
             Action {

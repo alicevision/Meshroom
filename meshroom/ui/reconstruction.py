@@ -484,12 +484,12 @@ class Reconstruction(UIGraph):
         if p.lower() == "photogrammetry":
             # default photogrammetry pipeline
             self.setGraph(multiview.photogrammetry())
-        elif p.lower() == "hdri":
-            # default hdri pipeline
-            self.setGraph(multiview.hdri())
-        elif p.lower() == "hdrifisheye":
-            # default hdri pipeline
-            self.setGraph(multiview.hdriFisheye())
+        elif p.lower() == "panoramahdr":
+            # default panorama hdr pipeline
+            self.setGraph(multiview.panoramaHdr())
+        elif p.lower() == "panoramafisheyehdr":
+            # default panorama fisheye hdr pipeline
+            self.setGraph(multiview.panoramaFisheyeHdr())
         else:
             # use the user-provided default photogrammetry project file
             self.load(p, setupProjectFile=False)

@@ -652,8 +652,8 @@ class Graph(BaseObject):
         return nodeEdges
 
     def dfs(self, visitor, startNodes=None, longestPathFirst=False):
-        # Default direction: from node to root
-        # Reverse direction: from node to leaves
+        # Default direction (visitor.reverse=False): from node to root
+        # Reverse direction (visitor.reverse=True): from node to leaves
         nodeChildren = self._getOutputEdgesPerNode() if visitor.reverse else self._getInputEdgesPerNode()
         # Initialize color map
         colors = {}
@@ -663,9 +663,9 @@ class Graph(BaseObject):
         if longestPathFirst and visitor.reverse:
             # Because we have no knowledge of the node's count between a node and its leaves,
             # it is not possible to handle this case at the moment
-            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and reverse=True are not compatible yet.")
+            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and visitor.reverse=True are not compatible yet.")
 
-        nodes = startNodes or self.getLeafNodes()
+        nodes = startNodes or (self.getRootNodes() if visitor.reverse else self.getLeafNodes())
 
         if longestPathFirst:
             # Graph topology must be known and node depths up-to-date

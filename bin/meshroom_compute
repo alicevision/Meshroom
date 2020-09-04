@@ -40,7 +40,11 @@ graph.update()
 if args.node:
     # Execute the node
     node = graph.findNode(args.node)
-    submittedStatuses = [Status.SUBMITTED, Status.RUNNING]
+    submittedStatuses = [Status.RUNNING]
+    if not args.extern:
+        # If running as "extern", the task is supposed to have the status SUBMITTED.
+        # If not running as "extern", the SUBMITTED status should generate a warning.
+        submittedStatuses.append(Status.SUBMITTED)
     if not args.forceStatus and not args.forceCompute:
         if args.iteration != -1:
             chunks = [node.chunks[args.iteration]]
@@ -48,7 +52,7 @@ if args.node:
             chunks = node.chunks
         for chunk in chunks:
             if chunk.status.status in submittedStatuses:
-                print('Error: Node is already submitted with status "{}". See file: "{}"'.format(chunk.status.status.name, chunk.statusFile))
+                print('Warning: Node is already submitted with status "{}". See file: "{}"'.format(chunk.status.status.name, chunk.statusFile))
                 # sys.exit(-1)
     if args.iteration != -1:
         chunk = node.chunks[args.iteration]

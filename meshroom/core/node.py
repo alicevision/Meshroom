@@ -878,11 +878,19 @@ class BaseNode(BaseObject):
         lockedStatus = (Status.RUNNING, Status.SUBMITTED)
 
         # Unlock required nodes if the current node changes to Error, Stopped or None
-        if self.locked and currentStatus in (Status.ERROR, Status.STOPPED, Status.NONE):
+        # Warning: we must handle some specific cases for global start/stop
+        if self._locked and currentStatus in (Status.ERROR, Status.STOPPED, Status.NONE):
             self.setLocked(False)
             inputNodes = self.getInputNodes(recursive=True)
+
+            for node in inputNodes:
+                if node.getGlobalStatus() == Status.RUNNING:
+                    # Return without unlocking if at least one input node is running
+                    # Example: using Cancel Computation on a submitted node
+                    return
             for node in inputNodes:
                 node.setLocked(False)
+            return
 
         # Avoid useless travel through nodes
         # For instance: when loading a scene with successful nodes

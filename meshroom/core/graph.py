@@ -569,6 +569,9 @@ class Graph(BaseObject):
         if not candidates:
             raise KeyError('No node candidate for "{}"'.format(nodeExpr))
         if len(candidates) > 1:
+            for c in candidates:
+                if c.name == nodeExpr:
+                    return c
             raise KeyError('Multiple node candidates for "{}": {}'.format(nodeExpr, str([c.name for c in candidates])))
         return candidates[0]
 

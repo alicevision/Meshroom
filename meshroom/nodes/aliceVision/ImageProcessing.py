@@ -119,8 +119,8 @@ Convert or apply filtering to the input images.
         ),
         desc.BoolParam(
             name='fillHoles',
-            label='Fill holes',
-            description='Fill holes.',
+            label='Fill Holes',
+            description='Fill holes based on the alpha channel.',
             value=False,
             uid=[0],
         ),

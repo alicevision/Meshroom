@@ -185,6 +185,9 @@ def test_graph_reverse_dfsOnDiscover():
     # Get all nodes from C (order guaranteed)
     nodes = graph.dfsOnDiscover(startNodes=[C], reverse=True)[0]
     assert nodes == [C, E, F]
+    # Get all nodes
+    nodes = graph.dfsOnDiscover(reverse=True)[0]
+    assert set(nodes) == {A, B, C, D, E, F}
 
 
 def test_graph_dfsOnDiscover():
@@ -222,6 +225,9 @@ def test_graph_dfsOnDiscover():
     # Get all nodes from D (order guaranteed)
     nodes = graph.dfsOnDiscover(startNodes=[D], longestPathFirst=True, reverse=False)[0]
     assert nodes == [D, B, A, G]
+    # Get all nodes
+    nodes = graph.dfsOnDiscover(reverse=False)[0]
+    assert set(nodes) == {A, B, C, D, E, F, G}
 
 
 def test_graph_nodes_sorting():

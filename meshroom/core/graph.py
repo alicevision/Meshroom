@@ -731,7 +731,7 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst)
         return nodes, edges
 
-    def dfsOnDiscover(self, startNodes, filterTypes=None, longestPathFirst=False, reverse=False):
+    def dfsOnDiscover(self, startNodes=None, filterTypes=None, longestPathFirst=False, reverse=False):
         """
         Return the node chain from startNodes to the graph roots/leaves.
         Order is defined by the visit and discoverVertex event.

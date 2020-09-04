@@ -877,8 +877,8 @@ class BaseNode(BaseObject):
 
         lockedStatus = (Status.RUNNING, Status.SUBMITTED)
 
-        # Unlock required nodes if the current node changes to Error or Stopped
-        if currentStatus in (Status.ERROR, Status.STOPPED):
+        # Unlock required nodes if the current node changes to Error, Stopped or None
+        if self.locked and currentStatus in (Status.ERROR, Status.STOPPED, Status.NONE):
             self.setLocked(False)
             inputNodes = self.getInputNodes(recursive=True)
             for node in inputNodes:

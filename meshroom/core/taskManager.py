@@ -179,12 +179,15 @@ class TaskManager(BaseObject):
 
         if forceCompute:
             nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
+            self.checkCompatibilityNodes(graph, nodes, "COMPUTATION")  # name of the context is important for QML
+            self.checkDuplicates(nodes, "COMPUTATION")  # name of the context is important for QML
         else:
             nodes, edges = graph.dfsToProcess(startNodes=toNodes)
             if not nodes:
                 logging.warning('Nothing to compute')
                 return
             self.checkCompatibilityNodes(graph, nodes, "COMPUTATION")  # name of the context is important for QML
+            self.checkDuplicates(nodes, "COMPUTATION")  # name of the context is important for QML
 
             nodes = [node for node in nodes if not self.contains(node)]  # be sure to avoid non-real conflicts
             chunksInConflict = self.getAlreadySubmittedChunks(nodes)
@@ -285,6 +288,18 @@ class TaskManager(BaseObject):
                                "Cannot compute because of these incompatible nodes:\n"
                                "{}".format(context, sorted(compatNodes)))
 
+    def checkDuplicates(self, nodesToProcess, context):
+        for node in nodesToProcess:
+            for duplicate in node.duplicates:
+                if duplicate in nodesToProcess:
+                    # Warning: Syntax and terms are parsed on QML side to recognize the error
+                    # Syntax : [Context] ErrorType: ErrorMessage
+                    raise RuntimeError("[{}] Duplicates Issue:\n"
+                                       "Cannot compute because there are some duplicate nodes to process:\n\n"
+                                       "First match: '{}' and '{}'\n\n"
+                                       "There can be other duplicate nodes in the list. Please, check the graph and try again.".format(
+                                       context, node.nameToLabel(node.name), node.nameToLabel(duplicate.name)))
+
     def submit(self, graph=None, submitter=None, toNodes=None):
         """
         Nodes are send to the renderfarm
@@ -330,6 +345,7 @@ class TaskManager(BaseObject):
             logging.warning('Nothing to compute')
             return
         self.checkCompatibilityNodes(graph, nodesToProcess, "SUBMITTING")  # name of the context is important for QML
+        self.checkDuplicates(nodesToProcess, "SUBMITTING")  # name of the context is important for QML
 
         flowEdges = graph.flowEdges(startNodes=toNodes)
         edgesToProcess = set(edgesToProcess).intersection(flowEdges)

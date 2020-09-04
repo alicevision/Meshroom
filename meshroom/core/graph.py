@@ -701,22 +701,33 @@ class Graph(BaseObject):
         colors[u] = BLACK
         visitor.finishVertex(u, self)
 
-    def dfsOnFinish(self, startNodes=None):
+    def dfsOnFinish(self, startNodes=None, longestPathFirst=False, reverse=False):
         """
-        :param startNodes: list of starting nodes. Use all leaves if empty.
-        :return: visited nodes and edges. The order is defined by the visit and finishVertex event.
+        Return the node chain from startNodes to the graph roots/leaves.
+        Order is defined by the visit and finishVertex event.
+
+        Args:
+            startNodes (Node list): the nodes to start the visit from.
+            longestPathFirst (bool): (optional) if multiple paths, nodes belonging to
+                            the longest one will be visited first.
+            reverse (bool): (optional) direction of visit.
+                            True is for getting nodes depending on the startNodes (to leaves).
+                            False is for getting nodes required for the startNodes (to roots).
+        Returns:
+            The list of nodes and edges, from startNodes to the graph roots/leaves following edges.
         """
         nodes = []
         edges = []
         visitor = Visitor()
         visitor.finishVertex = lambda vertex, graph: nodes.append(vertex)
         visitor.finishEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=startNodes)
+        self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst, reverse=reverse)
         return nodes, edges
 
     def dfsOnDiscover(self, startNodes, filterTypes=None, longestPathFirst=False, reverse=False):
         """
         Return the node chain from startNodes to the graph roots/leaves.
+        Order is defined by the visit and discoverVertex event.
 
         Args:
             startNodes (Node list): the nodes to start the visit from.

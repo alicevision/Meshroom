@@ -85,6 +85,9 @@ class Visitor(object):
     Base class for Graph Visitors that does nothing.
     Sub-classes can override any method to implement specific algorithms.
     """
+    def __init__(self, reverse):
+        super(Visitor, self).__init__()
+        self.reverse = reverse
 
     # def initializeVertex(self, s, g):
     #     '''is invoked on every vertex of the graph before the start of the graph search.'''
@@ -644,16 +647,16 @@ class Graph(BaseObject):
 
         return nodeEdges
 
-    def dfs(self, visitor, startNodes=None, longestPathFirst=False, reverse=False):
+    def dfs(self, visitor, startNodes=None, longestPathFirst=False):
         # Default direction: from node to root
         # Reverse direction: from node to leaves
-        nodeChildren = self._getOutputEdgesPerNode() if reverse else self._getInputEdgesPerNode()
+        nodeChildren = self._getOutputEdgesPerNode() if visitor.reverse else self._getInputEdgesPerNode()
         # Initialize color map
         colors = {}
         for u in self._nodes:
             colors[u] = WHITE
 
-        if longestPathFirst and reverse:
+        if longestPathFirst and visitor.reverse:
             # Because we have no knowledge of the node's count between a node and its leaves,
             # it is not possible to handle this case at the moment
             raise NotImplementedError("Graph.dfs(): longestPathFirst=True and reverse=True are not compatible yet.")
@@ -718,10 +721,10 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor()
+        visitor = Visitor(reverse=reverse)
         visitor.finishVertex = lambda vertex, graph: nodes.append(vertex)
         visitor.finishEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst, reverse=reverse)
+        self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst)
         return nodes, edges
 
     def dfsOnDiscover(self, startNodes, filterTypes=None, longestPathFirst=False, reverse=False):
@@ -743,7 +746,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor()
+        visitor = Visitor(reverse=reverse)
 
         def discoverVertex(vertex, graph):
             if not filterTypes or vertex.nodeType in filterTypes:
@@ -751,7 +754,7 @@ class Graph(BaseObject):
 
         visitor.discoverVertex = discoverVertex
         visitor.examineEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst, reverse=reverse)
+        self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst)
         return nodes, edges
 
     def dfsToProcess(self, startNodes=None):
@@ -767,7 +770,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor()
+        visitor = Visitor(reverse=False)
 
         def discoverVertex(vertex, graph):
             if vertex.hasStatus(Status.SUCCESS):
@@ -822,7 +825,7 @@ class Graph(BaseObject):
         self._computationBlocked.clear()
 
         compatNodes = []
-        visitor = Visitor()
+        visitor = Visitor(reverse=False)
 
         def discoverVertex(vertex, graph):
             # initialize depths
@@ -880,7 +883,7 @@ class Graph(BaseObject):
         """
         nodesStack = []
         edgesScore = defaultdict(lambda: 0)
-        visitor = Visitor()
+        visitor = Visitor(reverse=False)
 
         def finishEdge(edge, graph):
             u, v = edge
@@ -938,6 +941,9 @@ class Graph(BaseObject):
             return 0
 
         class SCVisitor(Visitor):
+            def __init__(self, reverse):
+                super(SCVisitor, self).__init__(reverse)
+
             canCompute = True
             canSubmit = True
 
@@ -947,7 +953,7 @@ class Graph(BaseObject):
                     if vertex.isExtern():
                         self.canCompute = False
 
-        visitor = SCVisitor()
+        visitor = SCVisitor(reverse=False)
         self.dfs(visitor=visitor, startNodes=[startNode])
         return visitor.canCompute + (2 * visitor.canSubmit)
 

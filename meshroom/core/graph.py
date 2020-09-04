@@ -380,7 +380,7 @@ class Graph(BaseObject):
         Returns:
             OrderedDict[Node, Node]: the source->duplicate map
         """
-        srcNodes, srcEdges = self.dfsOnDiscover(startNodes=[fromNode])
+        srcNodes, srcEdges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True)
         # use OrderedDict to keep duplicated nodes creation order
         duplicates = OrderedDict()
 
@@ -714,9 +714,9 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=startNodes)
         return nodes, edges
 
-    def dfsOnDiscover(self, startNodes, filterTypes=None, longestPathFirst=False, reverse=True):
+    def dfsOnDiscover(self, startNodes, filterTypes=None, longestPathFirst=False, reverse=False):
         """
-        Return the node chain from startNodes to the graph leaves.
+        Return the node chain from startNodes to the graph roots/leaves.
 
         Args:
             startNodes (Node list): the nodes to start the visit from.
@@ -725,10 +725,10 @@ class Graph(BaseObject):
             longestPathFirst (bool): (optional) if multiple paths, nodes belonging to
                             the longest one will be visited first.
             reverse (bool): (optional) direction of visit.
-                            True is for getting nodes depending on the startNode.
-                            False is for getting nodes required for the startNode.
+                            True is for getting nodes depending on the startNodes (to leaves).
+                            False is for getting nodes required for the startNodes (to roots).
         Returns:
-            The list of nodes and edges, from startNodes to the graph leaves following edges.
+            The list of nodes and edges, from startNodes to the graph roots/leaves following edges.
         """
         nodes = []
         edges = []
@@ -1074,7 +1074,7 @@ class Graph(BaseObject):
         See Also:
             Graph.update, Graph.updateInternals, Graph.updateStatusFromCache
         """
-        nodes, edges = self.dfsOnDiscover(startNodes=[fromNode])
+        nodes, edges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True)
         for node in nodes:
             node.dirty = True
 
@@ -1098,7 +1098,7 @@ class Graph(BaseObject):
 
     @Slot(Node)
     def clearDataFrom(self, startNode):
-        for node in self.dfsOnDiscover(startNodes=[startNode])[0]:
+        for node in self.dfsOnDiscover(startNodes=[startNode], reverse=True)[0]:
             node.clearData()
 
     def iterChunksByStatus(self, status):

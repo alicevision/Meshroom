@@ -174,16 +174,16 @@ def test_graph_reverse_dfsOnDiscover():
     F = graph.addNewNode('AppendText', input=A.output, inputText=E.output)
 
     # Get all nodes from A (use set, order not guaranteed)
-    nodes = graph.dfsOnDiscover(startNodes=[A])[0]
+    nodes = graph.dfsOnDiscover(startNodes=[A], reverse=True)[0]
     assert set(nodes) == {A, B, D, C, E, F}
     # Get all nodes from B
-    nodes = graph.dfsOnDiscover(startNodes=[B])[0]
+    nodes = graph.dfsOnDiscover(startNodes=[B], reverse=True)[0]
     assert set(nodes) == {B, D, C, E, F}
     # Get all nodes of type AppendText from B
-    nodes = graph.dfsOnDiscover(startNodes=[B], filterTypes=['AppendText'])[0]
+    nodes = graph.dfsOnDiscover(startNodes=[B], filterTypes=['AppendText'], reverse=True)[0]
     assert set(nodes) == {B, D, C, F}
     # Get all nodes from C (order guaranteed)
-    nodes = graph.dfsOnDiscover(startNodes=[C])[0]
+    nodes = graph.dfsOnDiscover(startNodes=[C], reverse=True)[0]
     assert nodes == [C, E, F]
 
 

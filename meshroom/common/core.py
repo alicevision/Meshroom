@@ -120,17 +120,18 @@ class CoreProperty(property):
 
 
 class CoreObject(object):
+
     def __init__(self, parent=None, *args, **kwargs):
         super(CoreObject, self).__init__()
         self._parent = parent
+        # Note: we do not use ClassSignal, as it can not be used in __del__.
+        self.destroyed = PySignal.Signal()
 
     def __del__(self):
         self.destroyed.emit()
 
     def parent(self):
         return self._parent
-
-    destroyed = PySignal.ClassSignal()
 
 
 DictModel = CoreDictModel

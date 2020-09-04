@@ -526,7 +526,7 @@ class UIGraph(QObject):
         with self.groupedGraphModification("Remove Nodes from {}".format(startNode.name)):
             # Perform nodes removal from leaves to start node so that edges
             # can be re-created in correct order on redo.
-            [self.removeNode(node) for node in reversed(self._graph.dfsOnDiscover(startNode)[0])]
+            [self.removeNode(node) for node in reversed(self._graph.dfsOnDiscover(startNodes=[startNode])[0])]
 
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):

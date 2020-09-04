@@ -380,7 +380,7 @@ class Graph(BaseObject):
         Returns:
             OrderedDict[Node, Node]: the source->duplicate map
         """
-        srcNodes, srcEdges = self.dfsOnDiscover(fromNode)
+        srcNodes, srcEdges = self.dfsOnDiscover(startNodes=[fromNode])
         # use OrderedDict to keep duplicated nodes creation order
         duplicates = OrderedDict()
 
@@ -714,12 +714,12 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=startNodes)
         return nodes, edges
 
-    def dfsOnDiscover(self, startNode, filterTypes=None, longestPathFirst=False, reverse=True):
+    def dfsOnDiscover(self, startNodes, filterTypes=None, longestPathFirst=False, reverse=True):
         """
-        Return the node chain from startNode to the graph leaves.
+        Return the node chain from startNodes to the graph leaves.
 
         Args:
-            startNode (Node): the node to start the visit from.
+            startNodes (Node list): the nodes to start the visit from.
             filterTypes (str list): (optional) only return the nodes of the given types
                               (does not stop the visit, this is a post-process only)
             longestPathFirst (bool): (optional) if multiple paths, nodes belonging to
@@ -728,7 +728,7 @@ class Graph(BaseObject):
                             True is for getting nodes depending on the startNode.
                             False is for getting nodes required for the startNode.
         Returns:
-            The list of nodes and edges, from startNode to the graph leaves following edges.
+            The list of nodes and edges, from startNodes to the graph leaves following edges.
         """
         nodes = []
         edges = []
@@ -740,7 +740,7 @@ class Graph(BaseObject):
 
         visitor.discoverVertex = discoverVertex
         visitor.examineEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=[startNode], longestPathFirst=longestPathFirst, reverse=reverse)
+        self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst, reverse=reverse)
         return nodes, edges
 
     def dfsToProcess(self, startNodes=None):
@@ -910,7 +910,7 @@ class Graph(BaseObject):
         if not recursive:
             return set([edge.src.node for edge in self.edges if edge.dst.node is node])
 
-        inputNodes, edges = self.dfsOnDiscover(node, filterTypes=None, reverse=False)
+        inputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=False)
         return inputNodes[1:]  # exclude current node
 
     def getOutputNodes(self, node, recursive=False):
@@ -918,7 +918,7 @@ class Graph(BaseObject):
         if not recursive:
             return set([edge.dst.node for edge in self.edges if edge.src.node is node])
 
-        outputNodes, edges = self.dfsOnDiscover(node, filterTypes=None, reverse=True)
+        outputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=True)
         return outputNodes[1:]  # exclude current node
 
     @Slot(Node, result=int)
@@ -1074,7 +1074,7 @@ class Graph(BaseObject):
         See Also:
             Graph.update, Graph.updateInternals, Graph.updateStatusFromCache
         """
-        nodes, edges = self.dfsOnDiscover(fromNode)
+        nodes, edges = self.dfsOnDiscover(startNodes=[fromNode])
         for node in nodes:
             node.dirty = True
 
@@ -1098,7 +1098,7 @@ class Graph(BaseObject):
 
     @Slot(Node)
     def clearDataFrom(self, startNode):
-        for node in self.dfsOnDiscover(startNode)[0]:
+        for node in self.dfsOnDiscover(startNodes=[startNode])[0]:
             node.clearData()
 
     def iterChunksByStatus(self, status):

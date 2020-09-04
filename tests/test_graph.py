@@ -174,16 +174,16 @@ def test_graph_reverse_dfsOnDiscover():
     F = graph.addNewNode('AppendText', input=A.output, inputText=E.output)
 
     # Get all nodes from A (use set, order not guaranteed)
-    nodes = graph.dfsOnDiscover(A)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[A])[0]
     assert set(nodes) == {A, B, D, C, E, F}
     # Get all nodes from B
-    nodes = graph.dfsOnDiscover(B)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[B])[0]
     assert set(nodes) == {B, D, C, E, F}
     # Get all nodes of type AppendText from B
-    nodes = graph.dfsOnDiscover(B, filterTypes=['AppendText'])[0]
+    nodes = graph.dfsOnDiscover(startNodes=[B], filterTypes=['AppendText'])[0]
     assert set(nodes) == {B, D, C, F}
     # Get all nodes from C (order guaranteed)
-    nodes = graph.dfsOnDiscover(C)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[C])[0]
     assert nodes == [C, E, F]
 
 
@@ -205,22 +205,22 @@ def test_graph_dfsOnDiscover():
     F = graph.addNewNode('AppendText', input=A.output, inputText=E.output)
 
     # Get all nodes from A (use set, order not guaranteed)
-    nodes = graph.dfsOnDiscover(A, reverse=False)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[A], reverse=False)[0]
     assert set(nodes) == {A}
     # Get all nodes from D
-    nodes = graph.dfsOnDiscover(D, reverse=False)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[D], reverse=False)[0]
     assert set(nodes) == {A, B, D, G}
     # Get all nodes from E
-    nodes = graph.dfsOnDiscover(E, reverse=False)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[E], reverse=False)[0]
     assert set(nodes) == {A, B, C, E}
     # Get all nodes from F
-    nodes = graph.dfsOnDiscover(F, reverse=False)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[F], reverse=False)[0]
     assert set(nodes) == {A, B, C, E, F}
     # Get all nodes of type AppendText from C
-    nodes = graph.dfsOnDiscover(C, filterTypes=['AppendText'], reverse=False)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[C], filterTypes=['AppendText'], reverse=False)[0]
     assert set(nodes) == {B, C}
     # Get all nodes from D (order guaranteed)
-    nodes = graph.dfsOnDiscover(D, longestPathFirst=True, reverse=False)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[D], longestPathFirst=True, reverse=False)[0]
     assert nodes == [D, B, A, G]
 
 

@@ -578,9 +578,13 @@ class Graph(BaseObject):
     def edge(self, dstAttributeName):
         return self._edges.get(dstAttributeName)
 
-    def getLeaves(self):
+    def getLeafNodes(self):
         nodesWithOutput = set([edge.src.node for edge in self.edges])
         return set(self._nodes) - nodesWithOutput
+
+    def getRootNodes(self):
+        nodesWithInput = set([edge.dst.node for edge in self.edges])
+        return set(self._nodes) - nodesWithInput
 
     @changeTopology
     def addEdge(self, srcAttr, dstAttr):
@@ -661,7 +665,7 @@ class Graph(BaseObject):
             # it is not possible to handle this case at the moment
             raise NotImplementedError("Graph.dfs(): longestPathFirst=True and reverse=True are not compatible yet.")
 
-        nodes = startNodes or self.getLeaves()
+        nodes = startNodes or self.getLeafNodes()
 
         if longestPathFirst:
             # Graph topology must be known and node depths up-to-date
@@ -859,7 +863,7 @@ class Graph(BaseObject):
             # propagate inputVertex computability
             self._computationBlocked[currentVertex] |= self._computationBlocked[inputVertex]
 
-        leaves = self.getLeaves()
+        leaves = self.getLeafNodes()
         visitor.finishEdge = finishEdge
         visitor.discoverVertex = discoverVertex
         self.dfs(visitor=visitor, startNodes=leaves)

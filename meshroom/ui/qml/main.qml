@@ -224,7 +224,7 @@ ApplicationWindow {
             icon.text: MaterialIcons.warning
             parent: Overlay.overlay
             preset: "Warning"
-            title: "Impossible To Compute"
+            title: "Computation/Submitting"
             text: ""
 
             onAccepted: {

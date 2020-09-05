@@ -182,6 +182,17 @@ class TaskManager(BaseObject):
             self.checkCompatibilityNodes(graph, nodes, "COMPUTATION")  # name of the context is important for QML
             self.checkDuplicates(nodes, "COMPUTATION")  # name of the context is important for QML
         else:
+            # Check dependencies of toNodes
+            if not toNodes:
+                toNodes = graph.getLeafNodes()
+            toNodes = list(toNodes)
+            allReady = self.checkNodesDependencies(graph, toNodes, "COMPUTATION")
+
+            # At this point, toNodes is a list
+            # If it is empty, we raise an error to avoid passing through dfsToProcess
+            if not toNodes:
+                self.raiseImpossibleProcess("COMPUTATION")
+
             nodes, edges = graph.dfsToProcess(startNodes=toNodes)
             if not nodes:
                 logging.warning('Nothing to compute')
@@ -220,6 +231,10 @@ class TaskManager(BaseObject):
         elif self._thread._state in (State.DEAD, State.ERROR):
             self._thread = TaskThread(self)
             self._thread.start()
+
+        # At the end because it raises a WarningError but should not stop processing
+        if not allReady:
+            self.raiseDependenciesMessage("COMPUTATION")
 
     def onNodeDestroyed(self, obj, name):
         """
@@ -300,6 +315,50 @@ class TaskManager(BaseObject):
                                        "There can be other duplicate nodes in the list. Please, check the graph and try again.".format(
                                        context, node.nameToLabel(node.name), node.nameToLabel(duplicate.name)))
 
+    def checkNodesDependencies(self, graph, toNodes, context):
+        """
+        Check dependencies of nodes to process.
+        Update toNodes with computable/submittable nodes only.
+
+        Returns:
+            bool: True if all the nodes can be processed. False otherwise.
+        """
+        ready = []
+        computed = []
+        for node in toNodes:
+            if context == "COMPUTATION":
+                if graph.canCompute(node) and graph.canSubmitOrCompute(node) % 2 == 1:
+                    ready.append(node)
+                elif node.isComputed:
+                    computed.append(node)
+            elif context == "SUBMITTING":
+                if graph.canCompute(node) and graph.canSubmitOrCompute(node) > 1:
+                    ready.append(node)
+                elif node.isComputed:
+                    computed.append(node)
+            else:
+                raise ValueError("Argument 'context' must be: 'COMPUTATION' or 'SUBMITTING'")
+
+        if len(ready) + len(computed) != len(toNodes):
+            toNodes.clear()
+            toNodes.extend(ready)
+            return False
+
+        return True
+
+    def raiseDependenciesMessage(self, context):
+        # Warning: Syntax and terms are parsed on QML side to recognize the error
+        # Syntax : [Context] ErrorType: ErrorMessage
+        raise RuntimeWarning("[{}] Unresolved dependencies:\n"
+                             "Some nodes cannot be computed in LOCAL/submitted in EXTERN because of unresolved dependencies.\n\n"
+                             "Nodes which are ready will be processed.".format(context))
+
+    def raiseImpossibleProcess(self, context):
+        # Warning: Syntax and terms are parsed on QML side to recognize the error
+        # Syntax : [Context] ErrorType: ErrorMessage
+        raise RuntimeError("[{}] Impossible Process:\n"
+                           "There is no node able to be processed.".format(context))
+
     def submit(self, graph=None, submitter=None, toNodes=None):
         """
         Nodes are send to the renderfarm
@@ -340,6 +399,17 @@ class TaskManager(BaseObject):
             else:
                 self._nodesExtern = []
 
+        # Check dependencies of toNodes
+        if not toNodes:
+            toNodes = graph.getLeafNodes()
+        toNodes = list(toNodes)
+        allReady = self.checkNodesDependencies(graph, toNodes, "SUBMITTING")
+
+        # At this point, toNodes is a list
+        # If it is empty, we raise an error to avoid passing through dfsToProcess
+        if not toNodes:
+            self.raiseImpossibleProcess("SUBMITTING")
+
         nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
         if not nodesToProcess:
             logging.warning('Nothing to compute')
@@ -361,6 +431,10 @@ class TaskManager(BaseObject):
                     node.submit()  # update node status
             self._nodes.update(nodesToProcess)
             self._nodesExtern.extend(nodesToProcess)
+
+            # At the end because it raises a WarningError but should not stop processing
+            if not allReady:
+                self.raiseDependenciesMessage("SUBMITTING")
         except Exception as e:
             logging.error("Error on submit : {}".format(e))
 

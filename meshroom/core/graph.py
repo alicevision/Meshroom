@@ -944,6 +944,15 @@ class Graph(BaseObject):
 
     @Slot(Node, result=int)
     def canSubmitOrCompute(self, startNode):
+        """
+        Check if a node can be submitted/computed.
+
+        Returns:
+            int: 0 = cannot be submitted or computed /
+                1 = can be computed /
+                2 = can be submitted /
+                3 = can be submitted and computed
+        """
         if startNode.isAlreadySubmittedOrFinished():
             return 0
 

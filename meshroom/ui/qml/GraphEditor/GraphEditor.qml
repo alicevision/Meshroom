@@ -222,6 +222,7 @@ Item {
                 id: edgeMenu
                 property var currentEdge: null
                 MenuItem {
+                    enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked
                     text: "Remove"
                     onTriggered: uigraph.removeEdge(edgeMenu.currentEdge)
                 }
@@ -251,11 +252,11 @@ Item {
                     point2x: dst.nodeItem.x + dstAnchor.x
                     point2y: dst.nodeItem.y + dstAnchor.y
                     onPressed: {
-                        const canEdit = !edge.src.node.locked
+                        const canEdit = !edge.dst.node.locked
 
-                        if(canEdit && event.button == Qt.RightButton)
+                        if(event.button == Qt.RightButton)
                         {
-                            if(event.modifiers & Qt.AltModifier) {
+                            if(canEdit && (event.modifiers & Qt.AltModifier)) {
                                 uigraph.removeEdge(edge)
                             }
                             else {

@@ -191,7 +191,7 @@ Item {
                         // Example: a node duplicated 40 times will be slow while creating another identical node
                         // (sharing the same uid) will not be as slow. If save, quit and reload, it will become slow.
                         MaterialToolButton {
-                            property string baseText: "<b>Shares internal folder (data) with other node(s). Click for details.</b>"
+                            property string baseText: "<b>Shares internal folder (data) with other node(s). Hold click for details.</b>"
                             property string toolTipText: visible ? baseText : ""
                             visible: node.hasDuplicates
                             text: MaterialIcons.layers
@@ -208,7 +208,7 @@ Item {
                             // Avoid to change the text too quickly
                             Timer {
                                 id: offsetReleased
-                                interval: 1000; running: false; repeat: false
+                                interval: 750; running: false; repeat: false
                                 onTriggered: parent.toolTipText = visible ? parent.baseText : ""
                             }
                         }

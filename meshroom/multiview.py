@@ -143,9 +143,9 @@ def findFilesByTypeInFolder(folder, recursive=False):
     return output
 
 
-def hdri(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
+def panoramaHdr(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
     """
-    Create a new Graph with a complete HDRI pipeline.
+    Create a new Graph with a Panorama HDR pipeline.
 
     Args:
         inputImages (list of str, optional): list of image file paths
@@ -156,9 +156,9 @@ def hdri(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output=''
         Graph: the created graph
     """
     if not graph:
-        graph = Graph('HDRI')
+        graph = Graph('PanoramaHDR')
     with GraphModification(graph):
-        nodes = hdriPipeline(graph)
+        nodes = panoramaHdrPipeline(graph)
         cameraInit = nodes[0]
         if inputImages:
             cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
@@ -173,18 +173,18 @@ def hdri(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output=''
 
     return graph
 
-def hdriFisheye(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
+def panoramaFisheyeHdr(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
     if not graph:
-        graph = Graph('HDRI-Fisheye')
+        graph = Graph('PanoramaFisheyeHDR')
     with GraphModification(graph):
-        hdri(inputImages, inputViewpoints, inputIntrinsics, output, graph)
+        panoramaHdr(inputImages, inputViewpoints, inputIntrinsics, output, graph)
         for panoramaInit in graph.nodesByType("PanoramaInit"):
             panoramaInit.attribute("useFisheye").value = True
     return graph
 
-def hdriPipeline(graph):
+def panoramaHdrPipeline(graph):
     """
-    Instantiate an HDRI pipeline inside 'graph'.
+    Instantiate an PanoramaHDR pipeline inside 'graph'.
     Args:
         graph (Graph/UIGraph): the graph in which nodes should be instantiated
 

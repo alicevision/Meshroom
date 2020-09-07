@@ -56,7 +56,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name='downscale',
             label='Texture Downscale',
             description='''Texture downscale factor''',
-            value=1,
+            value=2,
             values=(1, 2, 4, 8),
             exclusive=True,
             uid=[0],

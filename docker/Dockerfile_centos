@@ -26,17 +26,17 @@ COPY ./bin ${MESHROOM_DEV}/bin
 WORKDIR ${MESHROOM_DEV}
 
 RUN source scl_source enable rh-python36 && python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
-	find ${MESHROOM_BUNDLE} -name "*Qt5Web*" -delete && \
-	find ${MESHROOM_BUNDLE} -name "*Qt5Designer*" -delete && \
-	rm -rf ${MESHROOM_BUNDLE}/lib/PySide2/typesystems/ \
-		${MESHROOM_BUNDLE}/lib/PySide2/examples/ \
-		${MESHROOM_BUNDLE}/lib/PySide2/include/ \
-		${MESHROOM_BUNDLE}/lib/PySide2/Qt/translations/ \
-		${MESHROOM_BUNDLE}/lib/PySide2/Qt/resources/ \
-		${MESHROOM_BUNDLE}/lib/PySide2/QtWeb* \
-		${MESHROOM_BUNDLE}/lib/PySide2/pyside2-lupdate \
-		${MESHROOM_BUNDLE}/lib/PySide2/rcc \
-		${MESHROOM_BUNDLE}/lib/PySide2/designer
+    find ${MESHROOM_BUNDLE} -name "*Qt5Web*" -delete && \
+    find ${MESHROOM_BUNDLE} -name "*Qt5Designer*" -delete && \
+    rm -rf ${MESHROOM_BUNDLE}/lib/PySide2/typesystems/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/examples/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/include/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/Qt/translations/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/Qt/resources/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/QtWeb* \
+           ${MESHROOM_BUNDLE}/lib/PySide2/pyside2-lupdate \
+           ${MESHROOM_BUNDLE}/lib/PySide2/rcc \
+           ${MESHROOM_BUNDLE}/lib/PySide2/designer
 
 WORKDIR ${MESHROOM_BUILD}
 

@@ -27,6 +27,9 @@ class LdrToHdrCalibration(desc.CommandLineNode):
     commandLine = 'aliceVision_LdrToHdrCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    cpu = desc.Level.INTENSIVE
+    ram = desc.Level.NORMAL
+
     documentation = '''
     Calibrate LDR to HDR response curve from samples
 '''

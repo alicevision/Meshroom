@@ -10,6 +10,9 @@ class PanoramaCompositing(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaCompositing {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    cpu = desc.Level.INTENSIVE
+    ram = desc.Level.INTENSIVE
+
     documentation = '''
 Once the images have been transformed geometrically (in PanoramaWarping),
 they have to be fused together in a single panorama image which looks like a single photography.

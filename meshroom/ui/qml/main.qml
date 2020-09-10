@@ -345,7 +345,7 @@ ApplicationWindow {
                 }
                 Action {
                     text: "Panorama Fisheye HDR"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("panoramahdrfisheyehdr") })
+                    onTriggered: ensureSaved(function() { _reconstruction.new("panoramafisheyehdr") })
                 }
             }
             Action {

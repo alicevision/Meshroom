@@ -1,0 +1,72 @@
+ARG MESHROOM_VERSION
+ARG AV_VERSION
+ARG CUDA_VERSION
+ARG CENTOS_VERSION
+FROM alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-centos${CENTOS_VERSION}-cuda${CUDA_VERSION}
+LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
+
+# Execute with nvidia docker (https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0))
+# docker run -it --runtime nvidia -p 2222:22 --name meshroom -v</path/to/your/data>:/data alicevision/meshroom:develop-av2.2.8.develop-ubuntu20.04-cuda11.0
+# ssh -p 2222 -X root@<docker host> /opt/Meshroom_bundle/Meshroom # Password is 'meshroom'
+
+ENV MESHROOM_DEV=/opt/Meshroom \
+    MESHROOM_BUILD=/tmp/Meshroom_build \
+    MESHROOM_BUNDLE=/opt/Meshroom_bundle \
+    AV_INSTALL=/opt/AliceVision_install \
+    QT_DIR=/opt/Qt5.14.1/5.14.1/gcc_64 \
+    PATH="${PATH}:${MESHROOM_BUNDLE}" \
+    OPENIMAGEIO_LIBRARY=/opt/AliceVision_install/lib
+
+COPY *.txt *.md *.py ${MESHROOM_DEV}/
+COPY ./docs ${MESHROOM_DEV}/docs
+COPY ./meshroom ${MESHROOM_DEV}/meshroom
+COPY ./tests ${MESHROOM_DEV}/tests
+COPY ./bin ${MESHROOM_DEV}/bin
+
+WORKDIR ${MESHROOM_DEV}
+
+RUN source scl_source enable rh-python36 && python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
+    find ${MESHROOM_BUNDLE} -name "*Qt5Web*" -delete && \
+    find ${MESHROOM_BUNDLE} -name "*Qt5Designer*" -delete && \
+    rm -rf ${MESHROOM_BUNDLE}/lib/PySide2/typesystems/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/examples/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/include/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/Qt/translations/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/Qt/resources/ \
+           ${MESHROOM_BUNDLE}/lib/PySide2/QtWeb* \
+           ${MESHROOM_BUNDLE}/lib/PySide2/pyside2-lupdate \
+           ${MESHROOM_BUNDLE}/lib/PySide2/rcc \
+           ${MESHROOM_BUNDLE}/lib/PySide2/designer
+
+WORKDIR ${MESHROOM_BUILD}
+
+# Build Meshroom plugins
+RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
+RUN make "-j$(nproc)" qtOIIO
+
+RUN make "-j$(nproc)" qmlAlembic
+RUN make "-j$(nproc)" qtAliceVision
+RUN make "-j$(nproc)" && \
+	rm -rf "${MESHROOM_BUILD}" "${MESHROOM_DEV}" \
+		${MESHROOM_BUNDLE}/aliceVision/share/doc \
+		${MESHROOM_BUNDLE}/aliceVision/share/eigen3 \
+		${MESHROOM_BUNDLE}/aliceVision/share/fonts \
+		${MESHROOM_BUNDLE}/aliceVision/share/lemon \
+		${MESHROOM_BUNDLE}/aliceVision/share/libraw \
+		${MESHROOM_BUNDLE}/aliceVision/share/man/ \
+		aliceVision/share/pkgconfig
+
+# Enable SSH X11 forwarding, needed when the Docker image
+# is run on a remote machine
+RUN yum -y install openssh-server xauth mesa-dri-drivers && \
+	systemctl enable sshd && \
+	mkdir -p /run/sshd
+
+RUN sed -i "s/^.*X11Forwarding.*$/X11Forwarding yes/; s/^.*X11UseLocalhost.*$/X11UseLocalhost no/; s/^.*PermitRootLogin prohibit-password/PermitRootLogin yes/; s/^.*X11UseLocalhost.*/X11UseLocalhost no/;" /etc/ssh/sshd_config
+RUN echo "root:meshroom" | chpasswd
+
+WORKDIR /root
+
+EXPOSE 22
+CMD bash -c "test -s /etc/machine-id || systemd-machine-id-setup; sshd-keygen; /usr/sbin/sshd -D"
+

@@ -28,6 +28,8 @@ Controller.prototype.ComponentSelectionPageCallback = function() {
     var widget = gui.currentPageWidget();
     widget.deselectAll();
     widget.selectComponent("qt.qt5.5141.gcc_64");
+    widget.selectComponent("qt.qt5.5141.qtcharts");
+    widget.selectComponent("qt.qt5.5141.qtcharts.gcc_64");
     gui.clickButton(buttons.NextButton);
 }
 Controller.prototype.IntroductionPageCallback = function() {

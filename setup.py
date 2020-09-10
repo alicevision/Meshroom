@@ -46,6 +46,10 @@ build_exe_options = {
     ],
     "include_files": ["CHANGES.md", "COPYING.md", "LICENSE-MPL2.md", "README.md"]
 }
+if os.path.isdir("tractor"):
+    build_exe_options["packages"].append("tractor")
+if os.path.isdir("simpleFarm"):
+    build_exe_options["packages"].append("simpleFarm")
 
 if platform.system() == PlatformExecutable.Linux:
     # include required system libs

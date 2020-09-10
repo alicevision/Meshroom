@@ -29,7 +29,7 @@ Compute the image warping for each input image in the panorama coordinate system
             name='estimateResolution',
             label='Estimate Resolution',
             description='Estimate output panorama resolution automatically based on the input images resolution.',
-            value=False,
+            value=True,
             uid=[0],
             group=None, # skip group from command line
         ),

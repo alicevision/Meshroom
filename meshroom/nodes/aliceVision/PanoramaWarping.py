@@ -25,20 +25,27 @@ Compute the image warping for each input image in the panorama coordinate system
             value='',
             uid=[0],
         ),
+        desc.BoolParam(
+            name='estimateResolution',
+            label='Estimate Resolution',
+            description='Estimate output panorama resolution automatically based on the input images resolution.',
+            value=True,
+            uid=[0],
+            group=None, # skip group from command line
+        ),
         desc.IntParam(
             name='panoramaWidth',
             label='Panorama Width',
-            description='Panorama Width (in pixels).\n'
-                        'Set 0 to let the software choose the size automatically, based on "percentUpscale" parameter.',
+            description='Choose the output panorama width (in pixels).',
             value=10000,
             range=(0, 50000, 1000),
-            uid=[0]
+            uid=[0],
+            enabled=lambda node: (not node.estimateResolution.value),
         ),
         desc.IntParam(
             name='percentUpscale',
             label='Upscale ratio',
-            description='Upscale percent\n'
-                        'Only used if panorama width is set to 0 for automatic estimation.\n'
+            description='Percentage of upscaled pixels.\n'
                         '\n'
                         'How many percent of the pixels will be upscaled (compared to its original resolution):\n'
                         ' * 0: all pixels will be downscaled\n'
@@ -46,7 +53,7 @@ Compute the image warping for each input image in the panorama coordinate system
                         ' * 100: all pixels will be upscaled\n',
             value=50,
             range=(0, 100, 1),
-            enabled=lambda node: (node.panoramaWidth.value == 0),
+            enabled=lambda node: (node.estimateResolution.value),
             uid=[0]
         ),
         desc.ChoiceParam(

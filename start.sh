@@ -1,3 +1,3 @@
 #!/bin/sh
-export PYTHONPATH=$((dirname $0))
+export PYTHONPATH="$(dirname "$(readlink -f "${BASH_SOURCE[0]}" )" )"
 python meshroom/ui

@@ -87,6 +87,13 @@ Convert or apply filtering to the input images.
             uid=[0],
         ),
         desc.BoolParam(
+            name='fixNonFinite',
+            label='Fix Non-Finite',
+            description='Fix non-finite pixels based on neighboring pixels average.',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='exposureCompensation',
             label='Exposure Compensation',
             description='Exposure Compensation',
@@ -120,7 +127,8 @@ Convert or apply filtering to the input images.
         desc.BoolParam(
             name='fillHoles',
             label='Fill Holes',
-            description='Fill holes based on the alpha channel.',
+            description='Fill holes based on the alpha channel.\n'
+                        'Note: It will enable fixNonFinite, as it is required for the image pyramid construction used to fill holes.',
             value=False,
             uid=[0],
         ),

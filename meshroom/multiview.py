@@ -249,6 +249,7 @@ def panoramaHdrPipeline(graph):
 
     imageProcessing = graph.addNewNode('ImageProcessing',
                                        input=panoramaCompositing.output,
+                                       fixNonFinite=True,
                                        fillHoles=True,
                                        extension='exr')
 

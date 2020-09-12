@@ -141,6 +141,19 @@ class LdrToHdrMerge(desc.CommandLineNode):
             enabled= lambda node: node.byPass.enabled and not node.byPass.value and node.highlightCorrectionFactor.value != 0,
         ),
         desc.ChoiceParam(
+            name='storageDataType',
+            label='Storage Data Type',
+            description='Storage image data type:\n'
+                        ' * Float : Use full floating point (32 bits per channel)\n'
+                        ' * Half : Use half float (16 bits per channel)\n'
+                        ' * HalfFinite : Use half float, but clamp values to avoid non-finite values\n'
+                        ' * Auto : Use half float if all values can fit, else use full float\n',
+            value='Float',
+            values=['Float', 'Half', 'HalfFinite', 'Auto'],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='verbosity level (fatal, error, warning, info, debug, trace).',

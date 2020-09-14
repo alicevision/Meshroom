@@ -68,12 +68,12 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             name='storageDataType',
             label='Storage Data Type',
             description='Storage image data type:\n'
-                        ' * Float : Use full floating point (32 bits per channel)\n'
-                        ' * Half : Use half float (16 bits per channel)\n'
-                        ' * HalfFinite : Use half float, but clamp values to avoid non-finite values\n'
-                        ' * Auto : Use half float if all values can fit, else use full float\n',
-            value='Float',
-            values=['Float', 'Half', 'HalfFinite', 'Auto'],
+                        ' * float: Use full floating point (32 bits per channel)\n'
+                        ' * half: Use half float (16 bits per channel)\n'
+                        ' * halfFinite: Use half float, but clamp values to avoid non-finite values\n'
+                        ' * auto: Use half float if all values can fit, else use full float\n',
+            value='float',
+            values=['float', 'half', 'halfFinite', 'auto'],
             exclusive=True,
             uid=[0],
         ),

@@ -123,18 +123,18 @@ class LdrToHdrMerge(desc.CommandLineNode):
             description='This is an arbitrary target value (in Lux) used to replace the unknown luminance value of the saturated pixels.\n'
                         '\n'
                         'Some Outdoor Reference Light Levels:\n'
-                        ' * 120,000 lux : Brightest sunlight\n'
-                        ' * 110,000 lux : Bright sunlight\n'
-                        ' * 20,000 lux : Shade illuminated by entire clear blue sky, midday\n'
-                        ' * 1,000 lux : Typical overcast day, midday\n'
-                        ' * 400 lux : Sunrise or sunset on a clear day\n'
-                        ' * 40 lux : Fully overcast, sunset/sunrise\n'
+                        ' * 120,000 lux: Brightest sunlight\n'
+                        ' * 110,000 lux: Bright sunlight\n'
+                        ' * 20,000 lux: Shade illuminated by entire clear blue sky, midday\n'
+                        ' * 1,000 lux: Typical overcast day, midday\n'
+                        ' * 400 lux: Sunrise or sunset on a clear day\n'
+                        ' * 40 lux: Fully overcast, sunset/sunrise\n'
                         '\n'
                         'Some Indoor Reference Light Levels:\n'
-                        ' * 20000 lux : Max Usually Used Indoor\n'
-                        ' * 750 lux : Supermarkets\n'
-                        ' * 500 lux : Office Work\n'
-                        ' * 150 lux : Home\n',
+                        ' * 20000 lux: Max Usually Used Indoor\n'
+                        ' * 750 lux: Supermarkets\n'
+                        ' * 500 lux: Office Work\n'
+                        ' * 150 lux: Home\n',
             value=120000.0,
             range=(1000.0, 150000.0, 1.0),
             uid=[0],
@@ -144,12 +144,12 @@ class LdrToHdrMerge(desc.CommandLineNode):
             name='storageDataType',
             label='Storage Data Type',
             description='Storage image data type:\n'
-                        ' * Float : Use full floating point (32 bits per channel)\n'
-                        ' * Half : Use half float (16 bits per channel)\n'
-                        ' * HalfFinite : Use half float, but clamp values to avoid non-finite values\n'
-                        ' * Auto : Use half float if all values can fit, else use full float\n',
-            value='Float',
-            values=['Float', 'Half', 'HalfFinite', 'Auto'],
+                        ' * float: Use full floating point (32 bits per channel)\n'
+                        ' * half: Use half float (16 bits per channel)\n'
+                        ' * halfFinite: Use half float, but clamp values to avoid non-finite values\n'
+                        ' * auto: Use half float if all values can fit, else use full float\n',
+            value='float',
+            values=['float', 'half', 'halfFinite', 'auto'],
             exclusive=True,
             uid=[0],
         ),

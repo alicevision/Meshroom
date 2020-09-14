@@ -110,6 +110,14 @@ import Utils 1.0
         MediaLoaderEntity {
             id: exrLoaderEntity
             Component.onCompleted: {
+                var fSize = Filepath.fileSizeMB(source)
+                if(fSize > 500)
+                {
+                    // Do not load images that are larger than 500MB
+                    console.warn("Viewer3D: Do not load the EXR in 3D as the file size is too large: " + fSize + "MB")
+                    root.status = SceneLoader.Error;
+                    return;
+                }
                 // EXR loading strategy:
                 //   - [1] as a depth map
                 var obj = Viewer3DSettings.depthMapLoaderComp.createObject(

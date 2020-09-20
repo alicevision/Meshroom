@@ -99,6 +99,15 @@ This node allows to setup the Panorama:
             exclusive=True,
             uid=[0]
         ),
+        desc.BoolParam(
+            name='debugFisheyeCircleEstimation',
+            label='Debug Fisheye Circle Detection',
+            description='Debug fisheye circle detection.',
+            value=False,
+            uid=[0],
+            enabled=lambda node: node.useFisheye.value,
+            advanced=True,
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

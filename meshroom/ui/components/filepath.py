@@ -2,7 +2,7 @@
 # coding:utf-8
 from meshroom.core import pyCompatibility
 
-from PySide2.QtCore import QUrl
+from PySide2.QtCore import QUrl, QFileInfo
 from PySide2.QtCore import QObject, Slot
 
 import os
@@ -89,3 +89,8 @@ class FilepathHelper(QObject):
         if fileList:
           return fileList[0]
         return ""
+
+    @Slot(QUrl, result=int)
+    def fileSizeMB(self, path):
+        """ Returns the file size in MB. """
+        return QFileInfo(self.asStr(path)).size() / (1024*1024)

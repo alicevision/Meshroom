@@ -51,7 +51,7 @@ Compute the image warping for each input image in the panorama coordinate system
                         ' * 0: all pixels will be downscaled\n'
                         ' * 50: on average the input resolution is kept (optimal to reduce over/under-sampling)\n'
                         ' * 100: all pixels will be upscaled\n',
-            value=50,
+            value=30,
             range=(0, 100, 1),
             enabled=lambda node: (node.estimateResolution.value),
             uid=[0]

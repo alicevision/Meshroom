@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 import json
 
@@ -82,7 +82,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             description='Number of exposure brackets per HDR image (0 for automatic detection).',
             value=0,
             range=(0, 15, 1),
-            uid=[0],
+            uid=[],
             group='user',  # not used directly on the command line
         ),
         desc.IntParam(
@@ -91,7 +91,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             description='Number of exposure brackets used per HDR image. It is detected automatically from input Viewpoints metadata if "userNbBrackets" is 0, else it is equal to "userNbBrackets".',
             value=0,
             range=(0, 10, 1),
-            uid=[],
+            uid=[0],
         ),
         desc.IntParam(
             name='channelQuantizationPower',

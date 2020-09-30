@@ -117,9 +117,8 @@ class LdrToHdrCalibration(desc.CommandLineNode):
         desc.IntParam(
             name='maxTotalPoints',
             label='Max Number of Points',
-            description='Max number of points selected by the sampling strategy.\n'
-                        'This ensures that this sampling step will extract a number of pixels values\n'
-                        'that the calibration step can manage (in term of computation time and memory usage).',
+            description='Max number of points used from the sampling. This ensures that the number of pixels values extracted by the sampling\n'
+                        'can be managed by the calibration step (in term of computation time and memory usage).',
             value=1000000,
             range=(8, 10000000, 1000),
             uid=[0],

@@ -49,6 +49,15 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             value=desc.Node.internalFolder,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='byPass',
+            label='Bypass',
+            description="Bypass HDR creation and use the medium bracket as the source for the next steps",
+            value=False,
+            uid=[0],
+            group='internal',
+            enabled= lambda node: node.nbBrackets.value != 1,
+        ),
         desc.ChoiceParam(
             name='calibrationMethod',
             label='Calibration Method',
@@ -62,6 +71,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             value='debevec',
             exclusive=True,
             uid=[0],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name='calibrationWeight',
@@ -75,6 +85,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             values=['default', 'gaussian', 'triangle', 'plateau'],
             exclusive=True,
             uid=[0],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name='userNbBrackets',
@@ -101,6 +112,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             range=(8, 14, 1),
             uid=[0],
             advanced=True,
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name='maxTotalPoints',
@@ -112,6 +124,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             range=(8, 10000000, 1000),
             uid=[0],
             advanced=True,
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -133,6 +146,11 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             uid=[],
         )
     ]
+
+    def processChunk(self, chunk):
+        if chunk.node.nbBrackets.value == 1 or chunk.node.byPass.value:
+            return
+        super(LdrToHdrCalibration, self).processChunk(chunk)
 
     @classmethod
     def update(cls, node):

@@ -175,7 +175,9 @@ Entity {
 
             // Specific properties to the SFMTRANSFORM node (declared and initialized for every Entity anyway)
             property bool hasTransform: {
-                if(nodeType === "SfMTransform" && currentNode.attribute("method")) // Can have a Transform 
+                if(nodeType === "SfMTransform" && currentNode.attribute("method")) // Can have a Transform
+                    return currentNode.attribute("method").value === "manual"
+                if(nodeType === "MeshTransform" && currentNode.attribute("method")) // Can have a Transform
                     return currentNode.attribute("method").value === "manual"
                 return false
             }

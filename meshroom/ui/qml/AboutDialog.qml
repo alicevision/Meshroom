@@ -67,7 +67,14 @@ Dialog {
                 font.pointSize: 21
                 palette.buttonText: root.palette.link
                 ToolTip.text: "AliceVision Website"
-                onClicked: Qt.openUrlExternally("https://alicevision.github.io")
+                onClicked: Qt.openUrlExternally("https://alicevision.org")
+            }
+            MaterialToolButton {
+                text: MaterialIcons.favorite
+                font.pointSize: 21
+                palette.buttonText: root.palette.link
+                ToolTip.text: "Donate to get a better software"
+                onClicked: Qt.openUrlExternally("https://alicevision.org/association/#donate")
             }
             ToolButton {
                 icon.source: "../img/GitHub-Mark-Light-32px.png"

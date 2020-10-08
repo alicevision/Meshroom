@@ -52,7 +52,7 @@ RUN yum install -y python-devel && \
     python /tmp/get-pip.py && \
     pip install --upgrade pip
 
-COPY ./*requirements.txt ./setup.py ${MESHROOM_DEV}/
+COPY ./*requirements.txt ${MESHROOM_DEV}/
 
 # Install Meshroom requirements and freeze bundle
 WORKDIR "${MESHROOM_DEV}"

@@ -2,13 +2,13 @@
     "BASE": ["mikrosRender"],
     "CPU": {
         "NONE": [],
-        "NORMAL": [],
+        "NORMAL": ["@.nCPUs>8"],
         "INTENSIVE": ["@.nCPUs>30"]
     },
     "RAM": {
         "NONE": [],
         "NORMAL": ["@.mem>8"],
-        "INTENSIVE": ["@.mem>30"]
+        "INTENSIVE": ["@.mem>80"]
     },
     "GPU": {
         "NONE": [],

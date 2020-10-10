@@ -12,16 +12,14 @@ from meshroom.core import desc, stats
 
 
 class BufferReader(io.BytesIO): # object to call the callback while the file is being uploaded
-    def __init__(self, buf=b'',
-                 callback=None,
-                 log=None,
-                 stopped=None):
+    def __init__(self, buffer, callback, logger, stopped):
         self._callback = callback
-        self._log = log
+        self._logger = logger
         self._stopped = stopped
         self._progress = 0
-        self._len = len(buf)
-        io.BytesIO.__init__(self, buf)
+        self._len = len(buffer)
+        logger.makeProgressBar(self._len, 'Upload progress:')
+        io.BytesIO.__init__(self, buffer)
 
     def __len__(self):
         return self._len
@@ -31,12 +29,12 @@ class BufferReader(io.BytesIO): # object to call the callback while the file is 
             raise RuntimeError('Node stopped by user')
         chunk = io.BytesIO.read(self, n)
         self._progress += int(len(chunk))
-        if self._callback:
-            try:
-                self._callback(self._len, self._progress, self._log)
-            except Exception as e: # catches exception from the callback so the upload does not stop
-                self._log.logger.warning('Error at callback: {}'.format(e))
+        try:
+            self._callback(self._len, self._progress, self._logger)
+        except Exception as e: # catches exception from the callback so the upload does not stop
+            self._logger.warning('Error at callback: {}'.format(e))
         return chunk
+
 
 class SketchfabUpload(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
@@ -58,14 +56,6 @@ Upload a textured mesh on Sketchfab.
             label="Input Files",
             description="Input Files to export.",
             group="",
-        ),
-        desc.BoolParam(
-            name='includeMeshroomFiles',
-            label='Include Meshroom Files',
-            description='Include "log", "statistics" and "status" in the .zip file that is uploaded.',
-            value=False,
-            uid=[0],
-            advanced=True,
         ),
         desc.StringParam(
             name='apiToken',
@@ -181,7 +171,7 @@ Upload a textured mesh on Sketchfab.
         ),
     ]
 
-    def upload(self, apiToken, modelFile, data, log):
+    def upload(self, apiToken, modelFile, data, logger):
         modelEndpoint = 'https://api.sketchfab.com/v3/models'
         f = open(modelFile, 'rb')
         file = {'modelFile': (os.path.basename(modelFile), f.read())}
@@ -189,17 +179,16 @@ Upload a textured mesh on Sketchfab.
         f.close()
         (files, contentType) = requests.packages.urllib3.filepost.encode_multipart_formdata(file)
         headers = {'Authorization': 'Token {}'.format(apiToken), 'Content-Type': contentType}
-        body = BufferReader(files, self.uploadCallback, log, self.stopped)
-        log.logger.info('Uploading...')
+        body = BufferReader(files, self.uploadCallback, logger, self.stopped)
+        logger.info('Uploading...')
         try:
             r = requests.post(
                 modelEndpoint, **{'data': body, 'headers': headers})
-            log.completeProgressBar()
         except requests.exceptions.RequestException as e:
             raise RuntimeError(u'An error occured: {}'.format(e))
         finally:
             os.remove(modelFile)
-            log.logger.debug('Deleted file: '+modelFile)
+            logger.debug('Deleted file: '+modelFile)
         if r.status_code != requests.codes.created:
             raise RuntimeError(u'Upload failed with error: {}'.format(r.json()))
 
@@ -219,15 +208,14 @@ Upload a textured mesh on Sketchfab.
         return self._stopped
 
     def processChunk(self, chunk):
-        with stats.Log(chunk) as log:
+        with stats.Logger(chunk) as logger:
             self._stopped = False
             self._startTime = time.time()
             self._progressMeasuredAt = self._startTime
             self._progress = 0
-            uploadFile = ''
 
             if not chunk.node.inputFiles:
-                log.logger.warning('Nothing to upload')
+                logger.warning('Nothing to upload')
                 return
             if chunk.node.apiToken.value == '':
                 raise RuntimeError('Need API token.')
@@ -253,29 +241,27 @@ Upload a textured mesh on Sketchfab.
             }
             if chunk.node.category.value != 'none':
                 data.update({'categories': chunk.node.category.value})
-            log.logger.debug('Data to be sent: '+str(data))
+            logger.debug('Data to be sent: '+str(data))
 
             # pack files into .zip to reduce file size and simplify process
             uploadFile = os.path.join(chunk.node.internalFolder,
                 'Meshroom_{}.zip'.format("".join(x for x in chunk.node.title.value if x.isalnum()))) # use title in the file name for clarity, removing any non-alphanumeric characters
             files = self.resolvedPaths(chunk.node.inputFiles.value)
-            log.logger.debug('Files to write: '+str(files))
+            logger.debug('Files to write: '+str(files))
             with zipfile.ZipFile(uploadFile, 'w') as zf:
                 for file in files:
-                    if os.path.basename(file) in ('log', 'statistics', 'status') and not chunk.node.includeMeshroomFiles.value:
-                        log.logger.debug('File skipped: '+file)
+                    if os.path.basename(file) in ('log', 'statistics', 'status'):
+                        logger.debug('File skipped: '+file)
                     else:
                         zf.write(file, os.path.basename(file))
-            log.logger.debug('Created file: '+uploadFile)
-            log.logger.info('File size: '+stats.bytes2human(os.path.getsize(uploadFile)))
+            logger.debug('Created file: '+uploadFile)
+            logger.info('File size: '+stats.bytes2human(os.path.getsize(uploadFile)))
 
-            self.upload(chunk.node.apiToken.value, uploadFile, data, log)
-            log.logger.info('Upload successful. Your model is being processed on Sketchfab. It may take some time to show up on your "models" page.')
+            self.upload(chunk.node.apiToken.value, uploadFile, data, logger)
+            logger.info('Upload successful. Your model is being processed on Sketchfab. It may take some time to show up on your "models" page.')
 
-    def uploadCallback(self, size, progress, log):
-        if not log.progressBar:
-            log.makeProgressBar(size, 'Upload progress:')
-        log.updateProgressBar(progress)
+    def uploadCallback(self, size, progress, logger):
+        logger.updateProgressBar(progress)
 
         self._progressMeasuredAt = time.time()
         if progress <= 0: # prevent division by 0

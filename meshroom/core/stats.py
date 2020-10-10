@@ -346,11 +346,8 @@ class StatisticsThread(threading.Thread):
         self._stopFlag.set()
 
 
-class Log:
+class Logger(logging.Logger):
     dateTimeFormatting = '%H:%M:%S'
-
-    def __init__(self, chunk):
-        self.chunk = chunk
 
     class Formatter(logging.Formatter):
         def format(self, record):
@@ -358,49 +355,35 @@ class Log:
             record.levelname = record.levelname.lower()
             return logging.Formatter.format(self, record)
 
-    def configureLogger(self):
-        for handler in self.logger.handlers[:]:
-            self.logger.removeHandler(handler)
-        handler = logging.FileHandler(self.chunk.logFile)
+    def __init__(self, chunk):
+        super(Logger, self).__init__(
+            '',
+            chunk.node.verboseLevel.value.upper() if hasattr(chunk.node, 'verboseLevel') else logging.NOTSET,
+        )
+        self.chunk = chunk
+
+        open(chunk.logFile, 'w').close() # Clear log file
+        handler = logging.FileHandler(chunk.logFile)
         formatter = self.Formatter('[%(asctime)s.%(msecs)03d][%(levelname)s] %(message)s', self.dateTimeFormatting)
         handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+        self.addHandler(handler)
 
     def __enter__(self):
-        # Clear log file
-        open(self.chunk.logFile, 'w').close()
-
-        self.logger = logging.getLogger(self.chunk.node.getName())
-        if hasattr(self.chunk.node, 'verboseLevel'):
-            text = self.chunk.node.verboseLevel.value
-            if text == 'critical': lvl = logging.CRITICAL
-            elif text == 'error': lvl = logging.ERROR
-            elif text == 'warning': lvl = logging.WARNING
-            elif text == 'info': lvl = logging.INFO
-            elif text == 'debug': lvl = logging.DEBUG
-            else: lvl = logging.NOTSET
-            self.logger.setLevel(lvl)
-        self.configureLogger()
-
-        self.progressBar = False
-
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type:
-            self.logger.error('{}: {}'.format(exc_type.__name__, exc_value))
+            self.error('{}: {}'.format(exc_type.__name__, exc_value))
 
-        for handler in self.logger.handlers[:]:
+        for handler in self.handlers[:]:
             # Stops the file being locked
             handler.close()
 
     def makeProgressBar(self, end, message=''):
         assert end > 0
-        assert not self.progressBar
 
         self.progressEnd = end
         self.currentProgressTics = 0
-        self.progressBar = True
 
         with open(self.chunk.logFile, 'a') as f:
             if message:
@@ -414,9 +397,6 @@ class Log:
             self.progressBarPosition = content.rfind('\n')
 
     def updateProgressBar(self, value):
-        assert self.progressBar
-        assert value <= self.progressEnd
-
         tics = round((value/self.progressEnd)*51)
         nTicsToAdd = tics-self.currentProgressTics
         if nTicsToAdd < 1:
@@ -424,14 +404,8 @@ class Log:
 
         with open(self.chunk.logFile, 'r+') as f:
             text = f.read()
-            for i in range(nTicsToAdd):
-                text = text[:self.progressBarPosition]+'*'+text[self.progressBarPosition:]
+            text = text[:self.progressBarPosition]+('*'*nTicsToAdd)+text[self.progressBarPosition:]
             f.seek(0)
             f.write(text)
 
         self.currentProgressTics = tics
-
-    def completeProgressBar(self):
-        assert self.progressBar
-
-        self.progressBar = False

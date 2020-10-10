@@ -1,4 +1,4 @@
-__version__ = "1.2"
+__version__ = "2.0"
 
 import shutil
 import glob
@@ -35,6 +35,13 @@ This node allows to copy files into a specific folder.
             value="",
             uid=[0],
         ),
+        desc.BoolParam(
+            name='overwrite',
+            label='Overwrite',
+            description='Allow the overwriting of files.',
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
@@ -47,31 +54,36 @@ This node allows to copy files into a specific folder.
         ]
 
     def resolvedPaths(self, inputFiles, outDir):
-        paths = {}
+        paths = []
         for inputFile in inputFiles:
             for f in glob.glob(inputFile.value):
-                paths[f] = os.path.join(outDir, os.path.basename(f))
+                paths.append([f, os.path.join(outDir, os.path.basename(f))])
         return paths
 
     def processChunk(self, chunk):
-        with stats.Log(chunk) as log:
+        with stats.Logger(chunk) as logger:
             if not chunk.node.inputFiles:
-                log.logger.warning('Nothing to publish')
+                logger.warning('Nothing to publish')
                 return
             if not chunk.node.output.value:
-                log.logger.warning('No output folder set')
+                logger.warning('No output folder set')
                 return
 
-            outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
+            files = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
-            if not outFiles:
-                log.logger.debug('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+            if not files:
+                logger.debug('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
                 raise RuntimeError('Publish: input files listed, but nothing to publish')
 
-            if not os.path.exists(chunk.node.output.value):
+            if not os.path.isdir(chunk.node.output.value):
                 os.mkdir(chunk.node.output.value)
 
-            for iFile, oFile in outFiles.items():
-                log.logger.info('Publish file {} into {}'.format(iFile, oFile))
-                shutil.copyfile(iFile, oFile)
-            log.logger.info('Publish end')
+            logger.makeProgressBar(len(files), 'Publish progress:')
+            for index, file in enumerate(files):
+                logger.info('Publish file {} into {}'.format(*file))
+                if os.path.isfile(file[1]) and not chunk.node.overwrite.value:
+                    logger.warning('File {} already exists, skipping'.format(file[1]))
+                else:
+                    shutil.copyfile(*file)
+                logger.updateProgressBar(index+1)
+            logger.info('Publish end')

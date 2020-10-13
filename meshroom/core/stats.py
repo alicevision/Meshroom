@@ -201,15 +201,19 @@ class ProcStatistics:
         data = proc.as_dict(self.dynamicKeys)
         for k, v in data.items():
             self._addKV(k, v)
-
-        files = [f.path for f in proc.open_files()]
-        if self.lastIterIndexWithFiles != -1:
-            if set(files) != set(self.openFiles[self.lastIterIndexWithFiles]):
-                self.openFiles[self.iterIndex] = files
-                self.lastIterIndexWithFiles = self.iterIndex
-        elif files:
-            self.openFiles[self.iterIndex] = files
-            self.lastIterIndexWithFiles = self.iterIndex
+        
+        ## Note: Do not collect stats about open files for now,
+        #        as there is bug in psutil-5.7.2 on Windows which crashes the application.
+        #        https://github.com/giampaolo/psutil/issues/1763
+        #
+        # files = [f.path for f in proc.open_files()]
+        # if self.lastIterIndexWithFiles != -1:
+        #     if set(files) != set(self.openFiles[self.lastIterIndexWithFiles]):
+        #         self.openFiles[self.iterIndex] = files
+        #         self.lastIterIndexWithFiles = self.iterIndex
+        # elif files:
+        #     self.openFiles[self.iterIndex] = files
+        #     self.lastIterIndexWithFiles = self.iterIndex
         self.iterIndex += 1
 
     def toDict(self):

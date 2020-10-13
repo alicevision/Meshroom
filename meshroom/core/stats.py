@@ -228,7 +228,7 @@ class Statistics:
         self.computer = ComputerStatistics()
         self.process = ProcStatistics()
         self.times = []
-        self.interval = 5
+        self.interval = 10  # refresh interval in seconds
 
     def update(self, proc):
         '''

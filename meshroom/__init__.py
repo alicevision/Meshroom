@@ -1,4 +1,4 @@
-__version__ = "2020.1.0"
+__version__ = "2020.1.1"
 __version_name__ = __version__
 
 from distutils import util

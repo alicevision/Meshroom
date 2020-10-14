@@ -3,6 +3,13 @@
 For algorithmic changes related to the photogrammetric pipeline, 
 please refer to [AliceVision changelog](https://github.com/alicevision/AliceVision/blob/develop/CHANGES.md).
 
+## Release 2020.1.1 (2020.10.14)
+
+Based on [AliceVision 2.3.1](https://github.com/alicevision/AliceVision/tree/v2.3.1).
+
+ - [core] Fix crashes on process statistics (windows-only) [PR](https://github.com/alicevision/meshroom/pull/1096)
+
+
 ## Release 2020.1.0 (2020.10.09)
 
 Based on [AliceVision 2.3.0](https://github.com/alicevision/AliceVision/tree/v2.3.0).

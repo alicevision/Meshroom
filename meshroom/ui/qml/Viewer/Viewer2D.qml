@@ -210,7 +210,7 @@ FocusScope {
                             setSource("FloatImage.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
-                                'offset': Qt.binding(function() { return hdrImageToolbar.offsetValue; }),
+                                'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
                             })
                         } else {

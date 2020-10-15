@@ -411,7 +411,12 @@ ApplicationWindow {
                 id: saveAsAction
                 text: "Save As..."
                 shortcut: "Ctrl+Shift+S"
-                onTriggered: saveFileDialog.open()
+                onTriggered: {
+                    if(_reconstruction.graph && _reconstruction.graph.filepath) {
+                        saveFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                    }
+                    saveFileDialog.open()
+                }
             }
             MenuSeparator { }
             Action {

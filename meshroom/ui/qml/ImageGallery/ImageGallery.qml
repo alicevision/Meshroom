@@ -345,6 +345,7 @@ Panel {
     footerContent: RowLayout {
         // Images count
         MaterialToolLabel {
+            Layout.minimumWidth: childrenRect.width
             ToolTip.text: grid.model.count + " Input Images"
             iconText: MaterialIcons.image
             label: grid.model.count.toString()
@@ -353,6 +354,7 @@ Panel {
         }
         // cameras count
         MaterialToolLabel {
+            Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Estimated Cameras"
             iconText: MaterialIcons.videocam
             label: _reconstruction ? _reconstruction.nbCameras.toString() : "0"
@@ -364,6 +366,7 @@ Panel {
 
         MaterialToolLabelButton {
             id: displayHDR
+            Layout.minimumWidth: childrenRect.width
             property var activeNode: _reconstruction.activeNodes.get("LdrToHdrMerge").node
             ToolTip.text: "Visualize HDR images: " + (activeNode ? activeNode.label : "No Node")
             iconText: MaterialIcons.filter
@@ -405,6 +408,8 @@ Panel {
 
         MaterialToolButton {
             id: imageProcessing
+            Layout.minimumWidth: childrenRect.width
+
             property var activeNode: _reconstruction.activeNodes.get("ImageProcessing").node
             font.pointSize: 15
             padding: 0
@@ -449,6 +454,8 @@ Panel {
 
         // Thumbnail size icon and slider
         MaterialToolButton {
+            Layout.minimumWidth: childrenRect.width
+
             text: MaterialIcons.photo_size_select_large
             ToolTip.text: "Thumbnails Scale"
             padding: 0

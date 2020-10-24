@@ -315,8 +315,8 @@ The metadata needed are:
         return cmd
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 3.610128791565037 # Calculated by (time taken / number of images) / benchmark
-        amount, _ = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 1.4641044 # Calculated by: time / (benchmark * number of images)
+        amount, _ = reconstruction.imagesStatisticsForChunk(chunk)
         return factor*stats.Benchmark()*amount
 
     def processChunk(self, chunk):

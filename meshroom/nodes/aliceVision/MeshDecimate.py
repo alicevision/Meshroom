@@ -85,6 +85,6 @@ This node allows to reduce the density of the Mesh.
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 3.242753813629812e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 2.80335E-06 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
         return factor*stats.Benchmark()*pixels*amount

@@ -98,6 +98,6 @@ This node export undistorted images so the depth map and texturing can be comput
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 3.5434794307875456e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 3.41449E-06 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
         return factor*stats.Benchmark()*pixels*amount

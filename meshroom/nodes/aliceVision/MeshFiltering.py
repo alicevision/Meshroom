@@ -73,7 +73,7 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 2.1002201185508473e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 2.12595E-06 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
         depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [3.15, 1, 0.2, 0.05, 0.01])
         return factor*stats.Benchmark()*pixels*amount*depthMapFactor

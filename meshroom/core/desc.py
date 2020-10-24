@@ -53,8 +53,8 @@ class Attribute(BaseObject):
             return False
         return True
 
-    def getModifiedTime(self, defaultTime, value, timeFactor):
-        return defaultTime
+    def getTimeFactor(self, value, timeFactor):
+        return 1
 
 
 class ListAttribute(Attribute):
@@ -177,10 +177,10 @@ class BoolParam(Param):
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
-    def getModifiedTime(self, defaultTime, value, timeFactor):
-        if timeFactor and value != self._value:
-            return timeFactor * defaultTime
-        return defaultTime
+    def getTimeFactor(self, value, timeFactor):
+        if value != self._value:
+            return timeFactor
+        return 1
 
 
 class IntParam(Param):
@@ -201,10 +201,8 @@ class IntParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
-    def getModifiedTime(self, defaultTime, value, timeFactor):
-        if timeFactor:
-            return (((value - self._value) * timeFactor) + 1) * defaultTime
-        return defaultTime
+    def getTimeFactor(self, value, timeFactor):
+        return (((value - self._value) * timeFactor) + 1)
 
 
 class FloatParam(Param):
@@ -222,10 +220,8 @@ class FloatParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
-    def getModifiedTime(self, defaultTime, value, timeFactor):
-        if timeFactor:
-            return IntParam.getModifiedTime(self, defaultTime, value, timeFactor)
-        return defaultTime
+    def getTimeFactor(self, value, timeFactor):
+        return (((value - self._value) * timeFactor) + 1)
 
 
 class ChoiceParam(Param):
@@ -254,20 +250,18 @@ class ChoiceParam(Param):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
-    def getModifiedTime(self, defaultTime, value, timeFactor):
-        if timeFactor:
-            if self._exclusive:
-                return timeFactor[self._values.index(value)] * defaultTime
-            newTime = defaultTime
-            for v in value: # positive factors
-                factor = timeFactor[self._values.index(v)]
-                if factor > 0:
-                    newTime += factor * defaultTime
-            for f, v in zip(timeFactor, self._values): # negative factors
-                if f < 0 and v not in value:
-                    newTime += f * defaultTime
-            return newTime
-        return defaultTime
+    def getTimeFactor(self, value, timeFactor):
+        if self._exclusive:
+            return timeFactor[self._values.index(value)]
+        finalFactor = 1
+        for v in value: # positive factors
+            factor = timeFactor[self._values.index(v)]
+            if factor > 0:
+                finalFactor += factor
+        for f, v in zip(timeFactor, self._values): # negative factors
+            if f < 0 and v not in value:
+                finalFactor += f
+        return finalFactor
 
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)

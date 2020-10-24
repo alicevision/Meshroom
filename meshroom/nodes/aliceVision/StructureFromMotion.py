@@ -347,7 +347,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 9.436268413444888e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 1.67442E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
         featureExtractionFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'FeatureExtraction', 'describerPreset', [0.17, 0.55, 1, 3.59, 5.78])
         return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount*featureExtractionFactor)

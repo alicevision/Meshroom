@@ -211,7 +211,7 @@ then it checks the number of features that validates this model and iterate thro
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 9.307023776842771e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 1.57947E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
         featureExtractionFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'FeatureExtraction', 'describerPreset', [0.1, 0.5, 1, 5.25, 28])
         return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount*featureExtractionFactor)

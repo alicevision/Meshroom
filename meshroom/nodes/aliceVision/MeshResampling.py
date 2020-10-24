@@ -90,6 +90,6 @@ This node allows to recompute the mesh surface with a new topology and uniform d
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 8.079297209750893e-06 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 6.70092E-06 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
         return factor*stats.Benchmark()*pixels*amount

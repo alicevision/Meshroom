@@ -97,6 +97,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 1.216368273112215e-05 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 1.11834E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
         return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount)

@@ -1078,27 +1078,19 @@ class Reconstruction(UIGraph):
             return 0
         return len([v for v in viewpoints if self.isReconstructed(v)])
 
-    def imagesStatisticsForNode(self, node):
-        """ Get the average amount of images per chunk and average pixels for all images for a given node. """
-        cameraInits = self._graph.nodesFromNode(node, "CameraInit", False)[0]
-        viewpointsAmount = sum(len(cameraInit.viewpoints.value) for cameraInit in cameraInits)
-        reconstructedViewpointsAmount = 0
+    def imagesStatisticsForChunk(self, chunk):
+        """ Get the amount of images per chunk and average pixels for all images for a given chunk. """
+        cameraInits = self._graph.nodesFromNode(chunk.node, "CameraInit", False)[0]
         totalPixels = 0
         for cameraInit in cameraInits:
             for viewpoint in cameraInit.viewpoints.value:
                 intrinsic = next((i for i in cameraInit.intrinsics.value if i.intrinsicId.value == viewpoint.intrinsicId.value)).value
                 totalPixels += intrinsic.get('width').value * intrinsic.get('height').value
-                if self.isReconstructed(viewpoint):
-                    reconstructedViewpointsAmount += 1
-        if reconstructedViewpointsAmount > 0:
-            amount = reconstructedViewpointsAmount / len(node.chunks)
-        else:
-            amount = viewpointsAmount / len(node.chunks)
-        pixels = totalPixels / viewpointsAmount
-        return amount, pixels
+        pixels = totalPixels / sum(len(cameraInit.viewpoints.value) for cameraInit in cameraInits)
+        return chunk.range.effectiveBlockSize, pixels
 
     def weightedAverageTimeFactorForExternalAttribute(self, node, nodeType, attributeName, timeFactor):
-        """ Return a factor weighted by the amount of pixels contributed by each node.
+        """ Return a factor weighted by the amount of images contributed by each node.
 
         Args:
             node: the node object to search from.
@@ -1110,10 +1102,11 @@ class Reconstruction(UIGraph):
         weights = []
         factors = []
         for n in nodes:
-            amount, pixels = self.imagesStatisticsForNode(n)
-            weights.append(amount*pixels)
+            weights.append(n.getSize())
             attribute = n.attribute(attributeName)
-            factors.append(attribute.attributeDesc.getModifiedTime(1, attribute.value, timeFactor))
+            factors.append(attribute.attributeDesc.getTimeFactor(attribute.value, timeFactor))
+        if sum(weights) == 0:
+            weights = [1] * len(factors)
         factor = 0
         for w, f in zip(weights, factors):
             factor += (w / sum(weights)) * f

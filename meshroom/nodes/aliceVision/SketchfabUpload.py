@@ -204,9 +204,6 @@ Upload a textured mesh on Sketchfab.
                     paths.append(f)
         return paths
 
-    def stopped(self):
-        return self._stopped
-
     def processChunk(self, chunk):
         with stats.Logger(chunk) as logger:
             self._stopped = False
@@ -275,3 +272,6 @@ Upload a textured mesh on Sketchfab.
 
     def stopProcess(self, chunk):
         self._stopped = True
+
+    def stopped(self):
+        return self._stopped

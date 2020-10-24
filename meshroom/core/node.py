@@ -681,10 +681,12 @@ class BaseNode(BaseObject):
         self._size = value
         self.sizeChanged.emit()
 
-    def getTotalTime(self, defaultTime):
+    def getTotalTime(self, nodeTime):
         for attr in self._attributes:
-            defaultTime = attr.attributeDesc.getModifiedTime(defaultTime, attr.value, attr.attributeDesc._timeFactor)
-        return defaultTime
+            timeFactor = attr.attributeDesc._timeFactor
+            if timeFactor:
+                nodeTime *= attr.attributeDesc.getTimeFactor(attr.value, timeFactor)
+        return nodeTime
 
     def __repr__(self):
         return self.name

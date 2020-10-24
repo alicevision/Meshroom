@@ -252,7 +252,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 2.9496699741919386e-05 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 2.81998E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
         depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [1.1, 1, 0.7, 0.6, 0.4])
         return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount*depthMapFactor)

@@ -259,7 +259,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
     ]
 
     def getEstimatedTime(self, chunk, reconstruction):
-        factor = 5.4768095591487445e-05 # Calculated by (time taken / number of images) / (benchmark * image resolution x * image resolution y)
-        amount, pixels = reconstruction.imagesStatisticsForNode(chunk.node)
+        factor = 4.40404E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
         depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [2.75, 1, 0.25, 0.1, 0.04])
         return factor*stats.Benchmark()*pixels*amount*depthMapFactor

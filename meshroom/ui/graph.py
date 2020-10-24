@@ -3,6 +3,7 @@
 import logging
 import os
 import time
+import datetime
 from enum import Enum
 from threading import Thread, Event, Lock
 from multiprocessing.pool import ThreadPool
@@ -13,8 +14,8 @@ from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
-from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode, Position
-from meshroom.core import submitters
+from meshroom.core.node import Node, Status, CompatibilityNode, Position
+from meshroom.core import stats, submitters
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
 
@@ -367,6 +368,7 @@ class UIGraph(QObject):
         if self.computing:
             return
         nodes = [node] if node else None
+        stats.Benchmark() # Run the benchmark (if it has not already been ran) before the computation starts
         self._computeThread = Thread(target=self._execute, args=(nodes,))
         self._computeThread.start()
 
@@ -408,6 +410,37 @@ class UIGraph(QObject):
             self._running = running
             self._submitted = submitted
             self.computeStatusChanged.emit()
+
+    @Slot(QObject, result=str)
+    def getETA(self, chunks):
+        """ Estimate the time of completion and format it into 'hours:minutes:seconds'. """
+        totalEstimation = 0
+        startTime = time.time()
+        for chunk in chunks:
+            if chunk.status.status in (Status.RUNNING, Status.SUBMITTED):
+                totalEstimation += chunk.node.nodeDesc.getEstimatedTime(chunk, self)
+                if chunk.status.status == Status.RUNNING and chunk.status.startDateTimeSeconds < startTime:
+                    startTime = chunk.status.startDateTimeSeconds
+
+        estimation = round(totalEstimation - (time.time() - startTime))
+        if estimation < 0:
+            estimation = 0
+        return str(datetime.timedelta(seconds=estimation))
+
+    @Slot(QObject, result=str)
+    def getDiskUsage(self, chunks):
+        totalUsage = 0
+        nodesChecked = []
+        for chunk in chunks:
+            if chunk.node._name not in nodesChecked:
+                nodesChecked.append(chunk.node._name)
+                for dirpath, _, filenames in os.walk(chunk.node.internalFolder):
+                    for f in filenames:
+                        try:
+                            totalUsage += os.path.getsize(os.path.join(dirpath, f))
+                        except FileNotFoundError:
+                            pass
+        return stats.bytes2human(totalUsage)
 
     def isComputing(self):
         """ Whether is graph is being computed, either locally or externally. """
@@ -604,7 +637,7 @@ class UIGraph(QObject):
     computingLocally = Property(bool, isComputingLocally, notify=computeStatusChanged)
     canSubmit = Property(bool, lambda self: len(submitters), constant=True)
 
-    sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, constant=True)
+    sortedDFSChunks = Property(QObject, lambda self: self._sortedDFSChunks, notify=graphChanged)
     lockedChanged = Signal()
 
     selectedNodeChanged = Signal()

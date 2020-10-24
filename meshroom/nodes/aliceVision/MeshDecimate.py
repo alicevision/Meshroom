@@ -1,6 +1,6 @@
 __version__ = "1.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class MeshDecimate(desc.CommandLineNode):
@@ -83,3 +83,8 @@ This node allows to reduce the density of the Mesh.
             uid=[],
             ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 2.80335E-06 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        return factor*stats.Benchmark()*pixels*amount

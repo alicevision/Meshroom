@@ -1,6 +1,6 @@
 __version__ = "1.1"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class FeatureExtraction(desc.CommandLineNode):
@@ -43,6 +43,7 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             description='Describer types used to describe an image.',
             value=['sift'],
             values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            timeFactor=[-1, 0, 0, 4, 0, 0, 0, 0, 0, 0],
             exclusive=False,
             uid=[0],
             joinChar=',',
@@ -53,6 +54,7 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             description='Control the ImageDescriber configuration (low, medium, normal, high, ultra). Configuration "ultra" can take long time !',
             value='normal',
             values=['low', 'medium', 'normal', 'high', 'ultra'],
+            timeFactor=[0.1, 0.25, 1, 1.1, 5.25],
             exclusive=True,
             uid=[0],
         ),
@@ -93,3 +95,8 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             uid=[],
         ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 1.11834E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount)

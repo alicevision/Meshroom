@@ -1,6 +1,6 @@
 __version__ = "6.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class Meshing(desc.CommandLineNode):
@@ -352,3 +352,9 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             uid=[],
         ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 4.40404E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [2.75, 1, 0.25, 0.1, 0.04])
+        return factor*stats.Benchmark()*pixels*amount*depthMapFactor

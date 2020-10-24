@@ -1,6 +1,6 @@
 __version__ = "2.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class FeatureMatching(desc.CommandLineNode):
@@ -64,6 +64,7 @@ then it checks the number of features that validates this model and iterate thro
             description='Describer types used to describe an image.',
             value=['sift'],
             values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            timeFactor=[-1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
             exclusive=False,
             uid=[0],
             joinChar=',',
@@ -208,3 +209,9 @@ then it checks the number of features that validates this model and iterate thro
             uid=[],
         ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 1.57947E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        featureExtractionFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'FeatureExtraction', 'describerPreset', [0.1, 0.5, 1, 5.25, 28])
+        return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount*featureExtractionFactor)

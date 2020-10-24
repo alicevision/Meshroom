@@ -1,6 +1,6 @@
 __version__ = "5.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class Texturing(desc.CommandLineNode):
@@ -58,6 +58,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description='''Texture downscale factor''',
             value=2,
             values=(1, 2, 4, 8),
+            timeFactor=[1, 0.9, 0.875, 0.85],
             exclusive=True,
             uid=[0],
         ),
@@ -249,3 +250,9 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             group='',
             ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 2.81998E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [1.1, 1, 0.7, 0.6, 0.4])
+        return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount*depthMapFactor)

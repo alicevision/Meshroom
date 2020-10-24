@@ -1086,6 +1086,40 @@ class Reconstruction(UIGraph):
             return 0
         return len([v for v in viewpoints if self.isReconstructed(v)])
 
+    def imagesStatisticsForChunk(self, chunk):
+        """ Get the amount of images per chunk and average pixels for all images for a given chunk. """
+        cameraInits = self._graph.nodesFromNode(chunk.node, "CameraInit", False)[0]
+        totalPixels = 0
+        for cameraInit in cameraInits:
+            for viewpoint in cameraInit.viewpoints.value:
+                intrinsic = next((i for i in cameraInit.intrinsics.value if i.intrinsicId.value == viewpoint.intrinsicId.value)).value
+                totalPixels += intrinsic.get('width').value * intrinsic.get('height').value
+        pixels = totalPixels / sum(len(cameraInit.viewpoints.value) for cameraInit in cameraInits)
+        return chunk.range.effectiveBlockSize, pixels
+
+    def weightedAverageTimeFactorForExternalAttribute(self, node, nodeType, attributeName, timeFactor):
+        """ Return a factor weighted by the amount of images contributed by each node.
+
+        Args:
+            node: the node object to search from.
+            nodeType (str): the type of node to search for.
+            attributeName: name of the attribute to apply the factor to.
+            timeFactor: the time factor to apply to the attribute.
+        """
+        nodes = self._graph.nodesFromNode(node, nodeType, False)[0]
+        weights = []
+        factors = []
+        for n in nodes:
+            weights.append(n.getSize())
+            attribute = n.attribute(attributeName)
+            factors.append(attribute.attributeDesc.getTimeFactor(attribute.value, timeFactor))
+        if sum(weights) == 0:
+            weights = [1] * len(factors)
+        factor = 0
+        for w, f in zip(weights, factors):
+            factor += (w / sum(weights)) * f
+        return factor
+
     @Slot(QObject, result="QVariant")
     def getSolvedIntrinsics(self, viewpoint):
         """ Return viewpoint's solved intrinsics if it has been reconstructed, None otherwise.

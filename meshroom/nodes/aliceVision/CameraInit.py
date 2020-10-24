@@ -7,7 +7,7 @@ import shutil
 import tempfile
 import logging
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 Viewpoint = [
@@ -313,6 +313,11 @@ The metadata needed are:
         if chunk.node.viewpointsFile:
             cmd += ' --input "{}"'.format(chunk.node.viewpointsFile)
         return cmd
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 1.4641044 # Calculated by: time / (benchmark * number of images)
+        amount, _ = reconstruction.imagesStatisticsForChunk(chunk)
+        return factor*stats.Benchmark()*amount
 
     def processChunk(self, chunk):
         self.createViewpointsFile(chunk.node)

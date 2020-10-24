@@ -1,6 +1,6 @@
 __version__ = "1.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class MeshResampling(desc.CommandLineNode):
@@ -88,3 +88,8 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             uid=[],
             ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 6.70092E-06 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        return factor*stats.Benchmark()*pixels*amount

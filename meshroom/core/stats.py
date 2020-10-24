@@ -3,6 +3,7 @@ import subprocess
 import logging
 import psutil
 import time
+import timeit
 import threading
 import platform
 import os
@@ -14,13 +15,12 @@ if sys.version_info[0] == 2:
 else:
     import xml.etree.ElementTree as ET
 
-
 def bytes2human(n):
     """
     >>> bytes2human(10000)
-    '9.8 K/s'
+    '9.77 KB'
     >>> bytes2human(100001221)
-    '95.4 M/s'
+    '95.37 MB'
     """
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
@@ -29,8 +29,43 @@ def bytes2human(n):
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
-            return '%.2f %s' % (value, s)
+            return '%.2f %sB' % (value, s)
     return '%.2f B' % (n)
+
+
+class Benchmark:
+    """
+    A simple test to determine the performance of the cpu,
+    useful for calculating the estimated computation time.
+
+    It only runs the benchmark once.
+    A lower result is better.
+
+    Result is accessed via: Benchmark()
+    """
+    result = None
+    def __new__(cls):
+        if Benchmark.result is None:
+            Benchmark.result = cls.run()
+        return cls.result
+
+    @classmethod
+    def run(cls):
+        benchmark = """
+for n in range(1000): # Calculate the factorials of an arbitrary amount of numbers
+    factorial = 1
+    for i in range(1, int(n)+1):
+        factorial = factorial * i
+"""
+        t = timeit.timeit(benchmark, number=1)
+        return (t / psutil.cpu_count(logical=False)) / cls.smtFactor()
+
+    @staticmethod
+    def smtFactor():
+        if psutil.cpu_count() != psutil.cpu_count(logical=False):
+            # Simultaneous multithreading enabled
+            return 1.3 # SMT usually increases performance per physical core by about 30%
+        return 1
 
 
 class ComputerStatistics:
@@ -303,3 +338,68 @@ class StatisticsThread(threading.Thread):
     def stopRequest(self):
         """ Request the thread to exit as soon as possible. """
         self._stopFlag.set()
+
+
+class Logger(logging.Logger):
+    dateTimeFormatting = '%H:%M:%S'
+
+    class Formatter(logging.Formatter):
+        def format(self, record):
+            # Make level name lower case
+            record.levelname = record.levelname.lower()
+            return logging.Formatter.format(self, record)
+
+    def __init__(self, chunk):
+        super(Logger, self).__init__(
+            '',
+            chunk.node.verboseLevel.value.upper() if hasattr(chunk.node, 'verboseLevel') else logging.NOTSET,
+        )
+        self.chunk = chunk
+
+        open(chunk.logFile, 'w').close() # Clear log file
+        handler = logging.FileHandler(chunk.logFile)
+        formatter = self.Formatter('[%(asctime)s.%(msecs)03d][%(levelname)s] %(message)s', self.dateTimeFormatting)
+        handler.setFormatter(formatter)
+        self.addHandler(handler)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type:
+            self.error('{}: {}'.format(exc_type.__name__, exc_value))
+
+        for handler in self.handlers[:]:
+            # Stops the file being locked
+            handler.close()
+
+    def makeProgressBar(self, end, message=''):
+        assert end > 0
+
+        self.progressEnd = end
+        self.currentProgressTics = 0
+
+        with open(self.chunk.logFile, 'a') as f:
+            if message:
+                f.write(message+'\n')
+            f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
+            f.write('|----|----|----|----|----|----|----|----|----|----|\n\n')
+
+        with open(self.chunk.logFile, 'r') as f:
+            content = f.read()
+            # adding to the progress bar in the same place means logging can be used at the same time
+            self.progressBarPosition = content.rfind('\n')
+
+    def updateProgressBar(self, value):
+        tics = round((value/self.progressEnd)*51)
+        nTicsToAdd = tics-self.currentProgressTics
+        if nTicsToAdd < 1:
+            return
+
+        with open(self.chunk.logFile, 'r+') as f:
+            text = f.read()
+            text = text[:self.progressBarPosition]+('*'*nTicsToAdd)+text[self.progressBarPosition:]
+            f.seek(0)
+            f.write(text)
+
+        self.currentProgressTics = tics

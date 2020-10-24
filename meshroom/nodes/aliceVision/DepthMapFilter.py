@@ -1,6 +1,6 @@
 __version__ = "3.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class DepthMapFilter(desc.CommandLineNode):
@@ -22,7 +22,7 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description='SfMData file.',
             value='',
             uid=[0],
-        ),    
+        ),
         desc.File(
             name="depthMapsFolder",
             label="Depth Maps Folder",
@@ -119,3 +119,9 @@ This allows to filter unstable points before starting the fusion of all depth ma
             uid=[],
         ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 2.92834E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [4, 1, 0.25, 0.1, 0.02])
+        return factor*stats.Benchmark()*pixels*amount*depthMapFactor

@@ -1,6 +1,6 @@
 __version__ = "3.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class PrepareDenseScene(desc.CommandLineNode):
@@ -96,3 +96,8 @@ This node export undistorted images so the depth map and texturing can be comput
             advanced=True
             ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 3.41449E-06 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        return factor*stats.Benchmark()*pixels*amount

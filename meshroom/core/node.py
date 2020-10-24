@@ -102,6 +102,10 @@ class StatusData:
         self.endDateTime = datetime.datetime.now().strftime(self.dateTimeFormatting)
 
     @property
+    def startDateTimeSeconds(self):
+        return (datetime.datetime.strptime(self.startDateTime, self.dateTimeFormatting)-datetime.datetime(1970,1,1,1)).total_seconds()
+
+    @property
     def elapsedTimeStr(self):
         return str(datetime.timedelta(seconds=self.elapsedTime))
 
@@ -127,92 +131,6 @@ class StatusData:
         self.sessionUid = d.get('sessionUid', '')
 
 
-class LogManager:
-    dateTimeFormatting = '%H:%M:%S'
-
-    def __init__(self, chunk):
-        self.chunk = chunk
-        self.logger = logging.getLogger(chunk.node.getName())
-
-    class Formatter(logging.Formatter):
-        def format(self, record):
-            # Make level name lower case
-            record.levelname = record.levelname.lower()
-            return logging.Formatter.format(self, record)
-
-    def configureLogger(self):
-        for handler in self.logger.handlers[:]:
-            self.logger.removeHandler(handler)
-        handler = logging.FileHandler(self.chunk.logFile)
-        formatter = self.Formatter('[%(asctime)s.%(msecs)03d][%(levelname)s] %(message)s', self.dateTimeFormatting)
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-
-    def start(self, level):
-        # Clear log file
-        open(self.chunk.logFile, 'w').close()
-        
-        self.configureLogger()
-        self.logger.setLevel(self.textToLevel(level))
-        self.progressBar = False
-
-    def end(self):
-        for handler in self.logger.handlers[:]:
-            # Stops the file being locked
-            handler.close()
-
-    def makeProgressBar(self, end, message=''):
-        assert end > 0
-        assert not self.progressBar
-
-        self.progressEnd = end
-        self.currentProgressTics = 0
-        self.progressBar = True
-        
-        with open(self.chunk.logFile, 'a') as f:
-            if message:
-                f.write(message+'\n')
-            f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
-            f.write('|----|----|----|----|----|----|----|----|----|----|\n\n')
-            
-            f.close()
-            
-        with open(self.chunk.logFile, 'r') as f:
-            content = f.read()
-            self.progressBarPosition = content.rfind('\n')
-            
-            f.close()
-
-    def updateProgressBar(self, value):
-        assert self.progressBar
-        assert value <= self.progressEnd
-
-        tics = round((value/self.progressEnd)*51)
-
-        with open(self.chunk.logFile, 'r+') as f:
-            text = f.read()
-            for i in range(tics-self.currentProgressTics):
-                text = text[:self.progressBarPosition]+'*'+text[self.progressBarPosition:]
-            f.seek(0)
-            f.write(text)
-            f.close()
-
-        self.currentProgressTics = tics
-
-    def completeProgressBar(self):
-        assert self.progressBar
-
-        self.progressBar = False
-
-    def textToLevel(self, text):
-        if text == 'critical': return logging.CRITICAL
-        elif text == 'error': return logging.ERROR
-        elif text == 'warning': return logging.WARNING
-        elif text == 'info': return logging.INFO
-        elif text == 'debug': return logging.DEBUG
-        else: return logging.NOTSET
-
-
 runningProcesses = {}
 
 
@@ -228,7 +146,6 @@ class NodeChunk(BaseObject):
         super(NodeChunk, self).__init__(parent)
         self.node = node
         self.range = range
-        self.logManager = LogManager(self)
         self.status = StatusData(node.name, node.nodeType, node.packageName, node.packageVersion)
         self.statistics = stats.Statistics()
         self.statusFileLastModTime = -1
@@ -250,10 +167,6 @@ class NodeChunk(BaseObject):
     @property
     def statusName(self):
         return self.status.status.name
-
-    @property
-    def logger(self):
-        return self.logManager.logger
 
     @property
     def execModeName(self):
@@ -780,6 +693,13 @@ class BaseNode(BaseObject):
             return
         self._size = value
         self.sizeChanged.emit()
+
+    def getTotalTime(self, nodeTime):
+        for attr in self._attributes:
+            timeFactor = attr.attributeDesc._timeFactor
+            if timeFactor:
+                nodeTime *= attr.attributeDesc.getTimeFactor(attr.value, timeFactor)
+        return nodeTime
 
     def __repr__(self):
         return self.name

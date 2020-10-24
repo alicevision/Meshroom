@@ -1,6 +1,6 @@
 __version__ = "2.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class DepthMap(desc.CommandLineNode):
@@ -27,7 +27,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description='SfMData file.',
             value='',
             uid=[0],
-        ),        
+        ),
         desc.File(
             name='imagesFolder',
             label='Images Folder',
@@ -41,6 +41,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description='Image downscale factor.',
             value=2,
             values=[1, 2, 4, 8, 16],
+            timeFactor=[4, 1, 0.45, 0.3, 0.25],
             exclusive=True,
             uid=[0],
         ),
@@ -97,14 +98,14 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             uid=[0],
             advanced=True,
         ),
-        desc.IntParam( 
-            name='refineMaxTCams', 
-            label='Refine: Nb Neighbour Cameras', 
-            description='Refine: Number of neighbour cameras.', 
-            value=6, 
-            range=(1, 20, 1), 
-            uid=[0], 
-        ), 
+        desc.IntParam(
+            name='refineMaxTCams',
+            label='Refine: Nb Neighbour Cameras',
+            description='Refine: Number of neighbour cameras.',
+            value=6,
+            range=(1, 20, 1),
+            uid=[0],
+        ),
         desc.IntParam(
             name='refineNSamplesHalf',
             label='Refine: Number of Samples',
@@ -213,3 +214,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             uid=[],
         ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 0.000117408 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount)

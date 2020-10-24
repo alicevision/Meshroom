@@ -1,6 +1,6 @@
 __version__ = "2.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class StructureFromMotion(desc.CommandLineNode):
@@ -98,6 +98,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description='Describer types used to describe an image.',
             value=['sift'],
             values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            timeFactor=[-1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
             exclusive=False,
             uid=[0],
             joinChar=',',
@@ -344,3 +345,9 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             uid=[],
         ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 1.67442E-05 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        featureExtractionFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'FeatureExtraction', 'describerPreset', [0.17, 0.55, 1, 3.59, 5.78])
+        return chunk.node.getTotalTime(factor*stats.Benchmark()*pixels*amount*featureExtractionFactor)

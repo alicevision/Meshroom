@@ -1,6 +1,6 @@
 __version__ = "2.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, stats
 
 
 class MeshFiltering(desc.CommandLineNode):
@@ -71,3 +71,9 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             uid=[],
             ),
     ]
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        factor = 2.12595E-06 # Calculated by: time / (benchmark * image resolution x * image resolution y * number of images)
+        amount, pixels = reconstruction.imagesStatisticsForChunk(chunk)
+        depthMapFactor = reconstruction.weightedAverageTimeFactorForExternalAttribute(chunk.node, 'DepthMap', 'downscale', [3.15, 1, 0.2, 0.05, 0.01])
+        return factor*stats.Benchmark()*pixels*amount*depthMapFactor

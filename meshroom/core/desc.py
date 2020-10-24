@@ -10,12 +10,13 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, uid, group, enabled):
+    def __init__(self, name, label, description, value, timeFactor, advanced, uid, group, enabled):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
         self._description = description
         self._value = value
+        self._timeFactor = timeFactor
         self._uid = uid
         self._group = group
         self._advanced = advanced
@@ -52,6 +53,9 @@ class Attribute(BaseObject):
             return False
         return True
 
+    def getTimeFactor(self, value, timeFactor):
+        return 1
+
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
@@ -61,7 +65,7 @@ class ListAttribute(Attribute):
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced, enabled=enabled)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], timeFactor=None, uid=(), group=group, advanced=advanced, enabled=enabled)
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
@@ -98,7 +102,7 @@ class GroupAttribute(Attribute):
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, enabled=enabled)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, timeFactor=None, uid=(), group=group, advanced=advanced, enabled=enabled)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
@@ -166,15 +170,15 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group, advanced, enabled):
-        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled)
+    def __init__(self, name, label, description, value, uid, group, advanced, timeFactor, enabled):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, timeFactor=timeFactor, enabled=enabled)
 
 
 class File(Attribute):
     """
     """
     def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, enabled=True):
-        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled)
+        super(File, self).__init__(name=name, label=label, description=description, value=value, timeFactor=None, uid=uid, group=group, advanced=advanced, enabled=enabled)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):
@@ -185,8 +189,8 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, enabled=True):
-        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled)
+    def __init__(self, name, label, description, value, uid, group='allParams', timeFactor=None, advanced=False, enabled=True):
+        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, timeFactor=timeFactor, uid=uid, group=group, advanced=advanced, enabled=enabled)
 
     def validateValue(self, value):
         try:
@@ -194,13 +198,18 @@ class BoolParam(Param):
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
+    def getTimeFactor(self, value, timeFactor):
+        if value != self._value:
+            return timeFactor
+        return 1
+
 
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, enabled=True):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', timeFactor=None, advanced=False, enabled=True):
         self._range = range
-        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled)
+        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, timeFactor=timeFactor, uid=uid, group=group, advanced=advanced, enabled=enabled)
 
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
@@ -213,13 +222,16 @@ class IntParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
+    def getTimeFactor(self, value, timeFactor):
+        return (((value - self._value) * timeFactor) + 1)
+
 
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, enabled=True):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', timeFactor=None, advanced=False, enabled=True):
         self._range = range
-        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled)
+        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, timeFactor=timeFactor, uid=uid, group=group, advanced=advanced, enabled=enabled)
 
     def validateValue(self, value):
         try:
@@ -229,17 +241,20 @@ class FloatParam(Param):
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
+    def getTimeFactor(self, value, timeFactor):
+        return (((value - self._value) * timeFactor) + 1)
+
 
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, enabled=True):
+    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', timeFactor=None, joinChar=' ', advanced=False, enabled=True):
         assert values
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
         self._valueType = type(self._values[0])  # cast to value type
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled)
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, timeFactor=timeFactor, uid=uid, group=group, advanced=advanced, enabled=enabled)
 
     def conformValue(self, val):
         """ Conform 'val' to the correct type and check for its validity """
@@ -256,6 +271,19 @@ class ChoiceParam(Param):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
+    def getTimeFactor(self, value, timeFactor):
+        if self._exclusive:
+            return timeFactor[self._values.index(value)]
+        finalFactor = 1
+        for v in value: # positive factors
+            factor = timeFactor[self._values.index(v)]
+            if factor > 0:
+                finalFactor += factor
+        for f, v in zip(timeFactor, self._values): # negative factors
+            if f < 0 and v not in value:
+                finalFactor += f
+        return finalFactor
+
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
@@ -265,7 +293,7 @@ class StringParam(Param):
     """
     """
     def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, enabled=True):
-        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled)
+        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, timeFactor=None, uid=uid, group=group, advanced=advanced, enabled=enabled)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):
@@ -445,6 +473,9 @@ class Node(object):
             NodeBase.updateInternals
         """
         pass
+
+    def getEstimatedTime(self, chunk, reconstruction):
+        return 0 # each chunk is estimated to take 0 seconds by default
 
     def stopProcess(self, chunk):
         raise NotImplementedError('No stopProcess implementation on node: {}'.format(chunk.node.name))

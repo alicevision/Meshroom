@@ -28,16 +28,7 @@ Entity {
     }
 
     components: [
-        Transform {
-            id: transform
-
-            Behavior on rotation {
-                PropertyAnimation { duration: 200}
-            }
-            Behavior on translation {
-                Vector3dAnimation { duration: 200}
-            }
-        }
+        Transform { id: transform }
     ]
 
     StateGroup {

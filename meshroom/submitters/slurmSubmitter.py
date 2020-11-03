@@ -3,7 +3,7 @@
 
 import os
 import json
-
+import subprocess
 
 from meshroom.core.desc import Level
 from meshroom.core.submitter import BaseSubmitter
@@ -32,15 +32,19 @@ class SlurmSubmitter(BaseSubmitter):
         parallelArgs = ''
         print('node: ', node.name)
         if node.isParallelized:
-            pass
+            
+            returnCode = subprocess.call(["python", os.path.join(currentDir, 'slurmCommand.py')])
+            print(returnCode)
             #blockSize, fullSize, nbBlocks = node.nodeDesc.parallelization.getSizes(node)
             #parallelArgs = ' --iteration @start'
             #arguments.update({'start': 0, 'end': nbBlocks - 1, 'step': 1})
-
-        #command='{exe} --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(exe='meshroom_compute', nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
+            #print("%d %d %d" % {blockSize, fullSize, nbBlocks})
+            #command='{exe} --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(exe='meshroom_compute', nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
 
     def submit(self, nodes, edges, filepath):
         
+        print(filepath)
+
         #build a list of nodes with dependencies
         for item in nodes:
             v = Vertex(item)

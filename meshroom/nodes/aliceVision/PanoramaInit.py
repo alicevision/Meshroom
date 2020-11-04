@@ -93,7 +93,7 @@ This node allows to setup the Panorama:
         desc.ChoiceParam(
             name='inputAngle',
             label='input Angle offset',
-            description='Add a rotation to the input XML given poses.',
+            description='Add a rotation to the input XML given poses (CCW).',
             value='None',
             values=['None', 'rotate90', 'rotate180', 'rotate270'],
             exclusive=True,

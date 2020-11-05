@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # coding:utf-8
 
@@ -9,7 +10,7 @@ from meshroom.core.desc import Level
 from meshroom.core.submitter import BaseSubmitter
 
 currentDir = os.path.dirname(os.path.realpath(__file__))
-binDir = os.path.dirname(os.path.dirname(os.path.dirname(currentDir)))
+binDir = os.path.dirname(os.path.dirname(currentDir))
 
 class Vertex:
 
@@ -25,25 +26,56 @@ class SlurmSubmitter(BaseSubmitter):
         self.vertices = list()
         self.verticesByNode = dict()
 
-    def start(self, node):
+    def start(self, node, dependencies, meshroomFile):
 
         nbFrames = node.size
         arguments = {}
         parallelArgs = ''
-        print('node: ', node.name)
+
+        binary = os.path.join(binDir, 'bin/meshroom_compute')
+        bash_content = os.path.join(currentDir, 'slurmCommand.sh')
+        jobNameParameter = "--job-name=%s" % node.name
+        dependenciesString = ""
+
+        print(node.name)
+        
+    
+        command = [
+            "sbatch",
+            "--parsable",
+            jobNameParameter,
+        ]
+
+        if (len(dependencies) > 0):
+            dependenciesString = "--dependency=afterok"
+            for dependency in dependencies:
+                dependenciesString = "%s:%d" % (dependenciesString, dependency.pid)
+            command.append(dependenciesString)
+
+        countCores=24
         if node.isParallelized:
+            blockSize, fullSize, nbBlocks = node.nodeDesc.parallelization.getSizes(node)
             
-            returnCode = subprocess.call(["python", os.path.join(currentDir, 'slurmCommand.py')])
-            print(returnCode)
-            #blockSize, fullSize, nbBlocks = node.nodeDesc.parallelization.getSizes(node)
-            #parallelArgs = ' --iteration @start'
-            #arguments.update({'start': 0, 'end': nbBlocks - 1, 'step': 1})
-            #print("%d %d %d" % {blockSize, fullSize, nbBlocks})
-            #command='{exe} --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(exe='meshroom_compute', nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
+            if nbBlocks > 1:
+                command.append("--array=1-%d" % nbBlocks)
+                countCores = 1
+        
+        command.append("--cpus-per-task=%d" % countCores)
+
+        additional = [
+            bash_content,
+            binary,
+            node.name,
+            meshroomFile,
+            str(countCores)
+        ]
+            
+        returnString = subprocess.check_output(command + additional)
+        returnId = int(returnString)
+
+        return returnId
 
     def submit(self, nodes, edges, filepath):
-        
-        print(filepath)
 
         #build a list of nodes with dependencies
         for item in nodes:
@@ -78,8 +110,7 @@ class SlurmSubmitter(BaseSubmitter):
                 
                 #launch
                 if valid:
-                    vertex.pid = 1
-                    self.start(vertex.node)
+                    vertex.pid = self.start(vertex.node, vertex.depends, filepath)
                     somethingFound = True
             
             if somethingFound == False:

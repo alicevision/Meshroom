@@ -39,7 +39,6 @@ class SlurmSubmitter(BaseSubmitter):
 
         print(node.name)
         
-    
         command = [
             "sbatch",
             "--parsable",
@@ -51,6 +50,10 @@ class SlurmSubmitter(BaseSubmitter):
             for dependency in dependencies:
                 dependenciesString = "%s:%d" % (dependenciesString, dependency.pid)
             command.append(dependenciesString)
+
+        if node.nodeDesc.gpu.name != "NONE":
+            command.append("--partition=gpu")
+            command.append("--gres=gpu:1")
 
         countCores=24
         if node.isParallelized:

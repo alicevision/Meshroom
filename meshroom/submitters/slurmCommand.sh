@@ -1,0 +1,12 @@
+#!/bin/bash
+
+BINARY=$1
+NODENAME=$2
+MESHROOMFILE=$3
+COUNT_CORES=$4
+
+THREAD_ID=$((${SLURM_ARRAY_TASK_ID} - 1))
+
+export OMP_NUM_THREADS=$4
+
+${BINARY} --node ${NODENAME} "${MESHROOMFILE}" --iteration ${THREAD_ID} --extern

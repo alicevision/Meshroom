@@ -42,7 +42,7 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             label='Describer Types',
             description='Describer types used to describe an image.',
             value=['sift'],
-            values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            values=['akaze', 'akaze_liop', 'akaze_mldb', 'sift', 'sift_float', 'sift_upright', 'akaze_ocv', 'brisk_ocv', 'sift_ocv', 'surf_ocv', 'cctag3', 'cctag4'],
             exclusive=False,
             uid=[0],
             joinChar=',',

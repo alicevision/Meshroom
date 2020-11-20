@@ -58,9 +58,10 @@ class FeatureRepeatability(desc.CommandLineNode):
                        "* NoFiltering: Disable contrast filtering.\n"
                        "* GridSortOctaves: Grid Sort but per octaves (and only per scale at the end).\n"
                        "* GridSort: Grid sort per octaves and at the end (scale * peakValue).\n"
-                       "* GridSortScaleSteps: Grid sort per octaves and at the end (scale and then peakValue).\n",
+                       "* GridSortScaleSteps: Grid sort per octaves and at the end (scale and then peakValue).\n"
+                       "* NonExtremaFiltering: Filter non-extrema peakValues.\n",
             value='Static',
-            values=['Static', 'AdaptiveToMedianVariance', 'NoFiltering', 'GridSortOctaves', 'GridSort', 'GridSortScaleSteps', 'GridSortOctaveSteps'],
+            values=['Static', 'AdaptiveToMedianVariance', 'NoFiltering', 'GridSortOctaves', 'GridSort', 'GridSortScaleSteps', 'GridSortOctaveSteps', 'NonExtremaFiltering'],
             exclusive=True,
             advanced=True,
             uid=[0],

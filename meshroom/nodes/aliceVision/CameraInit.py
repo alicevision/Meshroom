@@ -188,6 +188,13 @@ The metadata needed are:
             joinChar=',',
             advanced=True,
         ),
+        desc.BoolParam(
+            name='useInternalWhiteBalance',
+            label='Apply internal white balance',
+            description='Apply image white balance (Only for raw images)',
+            value=True,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='viewIdMethod',
             label='ViewId Method',

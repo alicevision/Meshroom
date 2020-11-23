@@ -88,7 +88,7 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
                        "* GridSort: Grid sort per octaves and at the end (scale * peakValue).\n"
                        "* GridSortScaleSteps: Grid sort per octaves and at the end (scale and then peakValue).\n"
                        "* NonExtremaFiltering: Filter non-extrema peakValues.\n",
-            value='Static',
+            value='GridSort',
             values=['Static', 'AdaptiveToMedianVariance', 'NoFiltering', 'GridSortOctaves', 'GridSort', 'GridSortScaleSteps', 'GridSortOctaveSteps', 'NonExtremaFiltering'],
             exclusive=True,
             advanced=True,

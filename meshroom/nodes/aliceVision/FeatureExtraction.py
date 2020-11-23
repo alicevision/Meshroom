@@ -129,23 +129,6 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             uid=[],
             advanced=True,
         ),
-        desc.IntParam(
-            name='invalidate',
-            label='Invalidate',
-            description='Invalidate.',
-            value=0,
-            range=(0, 10000, 1),
-            group="",
-            uid=[0],
-        ),
-        desc.StringParam(
-            name="comments",
-            label="Comments",
-            description="Comments",
-            value="",
-            group="",
-            uid=[],
-        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

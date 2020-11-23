@@ -352,7 +352,12 @@ ApplicationWindow {
                 id: openActionItem
                 text: "Open"
                 shortcut: "Ctrl+O"
-                onTriggered: ensureSaved(function() { openFileDialog.open() })
+                onTriggered: ensureSaved(function() {
+                        if(_reconstruction.graph && _reconstruction.graph.filepath) {
+                            openFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                        }
+                        openFileDialog.open()
+                    })
             }
             Menu {
                 id: openRecentMenu
@@ -405,7 +410,15 @@ ApplicationWindow {
                 text: "Save"
                 shortcut: "Ctrl+S"
                 enabled: (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean
-                onTriggered: _reconstruction.graph.filepath ? _reconstruction.save() : saveFileDialog.open()
+                onTriggered: {
+                    if(_reconstruction.graph.filepath) {
+                        _reconstruction.save()
+                    }
+                    else
+                    {
+                        saveFileDialog.open()
+                    }
+                }
             }
             Action {
                 id: saveAsAction

@@ -12,7 +12,7 @@ imageExtensions = (
     # cineon:
     '.cin',
     # dds
-    'dds'
+    '.dds',
     # dpx:
     '.dpx',
     # gif:

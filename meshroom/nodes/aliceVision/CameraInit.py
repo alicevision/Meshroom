@@ -34,7 +34,10 @@ Intrinsic = [
                     "So this value is used to limit the range of possible values in the optimization. \n"
                     "If you put -1, this value will not be used and the focal length will not be bounded.",
                     value=-1.0, uid=[0], range=None),
-    desc.FloatParam(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length (in pixels)", value=-1.0, uid=[0], range=None),
+    desc.GroupAttribute(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length (in pixels)", groupDesc=[
+        desc.FloatParam(name="x", label="x", description="", value=-1, uid=[], range=(0, 10000, 1)),
+        desc.FloatParam(name="y", label="y", description="", value=-1, uid=[], range=(0, 10000, 1)),
+        ]),
     desc.ChoiceParam(name="type", label="Camera Type",
                      description="Mathematical Model used to represent a camera:\n"
                      " * pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
@@ -100,6 +103,12 @@ def readSfMData(sfmFile):
         intrinsic['principalPoint'] = {}
         intrinsic['principalPoint']['x'] = pp[0]
         intrinsic['principalPoint']['y'] = pp[1]
+
+        f = intrinsic['pxFocalLength']
+        intrinsic['pxFocalLength'] = {}
+        intrinsic['pxFocalLength']['x'] = f[0]
+        intrinsic['pxFocalLength']['y'] = f[1]
+
         # convert empty string distortionParams (i.e: Pinhole model) to empty list
         if intrinsic['distortionParams'] == '':
             intrinsic['distortionParams'] = list()
@@ -290,6 +299,7 @@ The metadata needed are:
             intrinsics = node.intrinsics.getPrimitiveValue(exportDefault=True)
             for intrinsic in intrinsics:
                 intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
+                intrinsic['pxFocalLength'] = [intrinsic['pxFocalLength']['x'], intrinsic['pxFocalLength']['y']]
             views = node.viewpoints.getPrimitiveValue(exportDefault=False)
 
             # convert the metadata string into a map

@@ -10,6 +10,7 @@ import platform
 import re
 import shutil
 import time
+import types
 import uuid
 from collections import defaultdict, namedtuple
 from enum import Enum
@@ -561,15 +562,15 @@ class BaseNode(BaseObject):
     def _buildCmdVars(self):
         def _buildAttributeCmdVars(cmdVars, name, attr):
             if attr.enabled:
-                if attr.attributeDesc.group is not None:
+                group = attr.attributeDesc.group(attr.node) if isinstance(attr.attributeDesc.group, types.FunctionType) else attr.attributeDesc.group
+                if group is not None:
                     # if there is a valid command line "group"
                     v = attr.getValueStr()
                     cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
                     cmdVars[name + 'Value'] = str(v)
 
                     if v:
-                        cmdVars[attr.attributeDesc.group] = cmdVars.get(attr.attributeDesc.group, '') + \
-                                                                ' ' + cmdVars[name]
+                        cmdVars[group] = cmdVars.get(group, '') + ' ' + cmdVars[name]
                 elif isinstance(attr, GroupAttribute):
                     assert isinstance(attr.value, DictModel)
                     # if the GroupAttribute is not set in a single command line argument,

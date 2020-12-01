@@ -112,8 +112,8 @@ The transformation can be based on:
                     joinChar=","
                 ),
                 desc.FloatParam(
-                    name="manualScale", 
-                    label="Scale", 
+                    name="manualScale",
+                    label="Scale",
                     description="Uniform Scale.",
                     value=1.0,
                     uid=[0],
@@ -127,8 +127,8 @@ The transformation can be based on:
             name='landmarksDescriberTypes',
             label='Landmarks Describer Types',
             description='Image describer types used to compute the mean of the point cloud. (only for "landmarks" method).',
-            value=['sift', 'akaze'],
-            values=['sift', 'sift_float', 'sift_upright', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            value=['sift', 'dspsift', 'akaze'],
+            values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'unknown'],
             exclusive=False,
             uid=[0],
             joinChar=',',

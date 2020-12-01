@@ -111,7 +111,7 @@ class LiveSfmManager(QObject):
         to include those images to the reconstruction.
         """
         # Get all new images in the watched folder
-        imagesInFolder = multiview.findFilesByTypeInFolder(self._folder)
+        imagesInFolder = multiview.findFilesByTypeInFolder(self._folder).images
         newImages = set(imagesInFolder).difference(self.allImages)
         for imagePath in newImages:
             # print('[LiveSfmManager] New image file : {}'.format(imagePath))

@@ -87,6 +87,13 @@ Convert or apply filtering to the input images.
             uid=[0],
         ),
         desc.BoolParam(
+            name='fixNonFinite',
+            label='Fix Non-Finite',
+            description='Fix non-finite pixels based on neighboring pixels average.',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='exposureCompensation',
             label='Exposure Compensation',
             description='Exposure Compensation',
@@ -119,8 +126,9 @@ Convert or apply filtering to the input images.
         ),
         desc.BoolParam(
             name='fillHoles',
-            label='Fill holes',
-            description='Fill holes.',
+            label='Fill Holes',
+            description='Fill holes based on the alpha channel.\n'
+                        'Note: It will enable fixNonFinite, as it is required for the image pyramid construction used to fill holes.',
             value=False,
             uid=[0],
         ),
@@ -279,6 +287,19 @@ Convert or apply filtering to the input images.
                 values=['rgba', 'rgb', 'grayscale'],
                 exclusive=True,
                 uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='storageDataType',
+            label='Storage Data Type for EXR output',
+            description='Storage image data type:\n'
+                        ' * float: Use full floating point (32 bits per channel)\n'
+                        ' * half: Use half float (16 bits per channel)\n'
+                        ' * halfFinite: Use half float, but clamp values to avoid non-finite values\n'
+                        ' * auto: Use half float if all values can fit, else use full float\n',
+            value='float',
+            values=['float', 'half', 'halfFinite', 'auto'],
+            exclusive=True,
+            uid=[0],
         ),
         desc.ChoiceParam(
             name='verboseLevel',

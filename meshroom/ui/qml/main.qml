@@ -413,19 +413,24 @@ ApplicationWindow {
                     onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetry") })
                 }
                 Action {
-                    text: "HDRI"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("hdri") })
+                    text: "Panorama HDR"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("panoramahdr") })
                 }
                 Action {
-                    text: "HDRI Fisheye"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("hdriFisheye") })
+                    text: "Panorama Fisheye HDR"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("panoramafisheyehdr") })
                 }
             }
             Action {
                 id: openActionItem
                 text: "Open"
                 shortcut: "Ctrl+O"
-                onTriggered: ensureSaved(function() { openFileDialog.open() })
+                onTriggered: ensureSaved(function() {
+                        if(_reconstruction.graph && _reconstruction.graph.filepath) {
+                            openFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                        }
+                        openFileDialog.open()
+                    })
             }
             Menu {
                 id: openRecentMenu
@@ -477,14 +482,27 @@ ApplicationWindow {
                 id: saveAction
                 text: "Save"
                 shortcut: "Ctrl+S"
-                enabled: _reconstruction.graph && (!_reconstruction.graph.filepath || !_reconstruction.undoStack.clean)
-                onTriggered: _reconstruction.graph.filepath ? _reconstruction.save() : saveFileDialog.open()
+                enabled: (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean
+                onTriggered: {
+                    if(_reconstruction.graph.filepath) {
+                        _reconstruction.save()
+                    }
+                    else
+                    {
+                        saveFileDialog.open()
+                    }
+                }
             }
             Action {
                 id: saveAsAction
                 text: "Save As..."
                 shortcut: "Ctrl+Shift+S"
-                onTriggered: saveFileDialog.open()
+                onTriggered: {
+                    if(_reconstruction.graph && _reconstruction.graph.filepath) {
+                        saveFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                    }
+                    saveFileDialog.open()
+                }
             }
             MenuSeparator { }
             Action {

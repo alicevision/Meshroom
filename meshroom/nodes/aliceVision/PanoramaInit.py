@@ -91,6 +91,24 @@ This node allows to setup the Panorama:
             enabled=lambda node: node.useFisheye.value and not node.estimateFisheyeCircle.value,
         ),
         desc.ChoiceParam(
+            name='inputAngle',
+            label='input Angle offset',
+            description='Add a rotation to the input XML given poses (CCW).',
+            value='None',
+            values=['None', 'rotate90', 'rotate180', 'rotate270'],
+            exclusive=True,
+            uid=[0]
+        ),
+        desc.BoolParam(
+            name='debugFisheyeCircleEstimation',
+            label='Debug Fisheye Circle Detection',
+            description='Debug fisheye circle detection.',
+            value=False,
+            uid=[0],
+            enabled=lambda node: node.useFisheye.value,
+            advanced=True,
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='Verbosity level (fatal, error, warning, info, debug, trace).',

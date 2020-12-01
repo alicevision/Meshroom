@@ -210,7 +210,7 @@ FocusScope {
                             setSource("FloatImage.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
-                                'offset': Qt.binding(function() { return hdrImageToolbar.offsetValue; }),
+                                'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
                             })
                         } else {
@@ -558,10 +558,15 @@ FocusScope {
                         anchors.fill: parent
 
                         property var activeNode: _reconstruction.activeNodes.get('LdrToHdrCalibration').node
-                        active: activeNode && activeNode.isComputed && displayLdrHdrCalibrationGraph.checked
+                        property var isEnabled: displayLdrHdrCalibrationGraph.checked && activeNode && activeNode.isComputed
+                        // active: isEnabled
+                        // Setting "active" from true to false creates a crash on linux with Qt 5.14.2.
+                        // As a workaround, we clear the CameraResponseGraph with an empty node
+                        // and hide the loader content.
+                        visible: isEnabled
 
                         sourceComponent: CameraResponseGraph {
-                            ldrHdrCalibrationNode: activeNode
+                            ldrHdrCalibrationNode: isEnabled ? activeNode : null
                         }
                     }
                 }

@@ -10,6 +10,9 @@ class PanoramaCompositing(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaCompositing {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    cpu = desc.Level.INTENSIVE
+    ram = desc.Level.INTENSIVE
+
     documentation = '''
 Once the images have been transformed geometrically (in PanoramaWarping),
 they have to be fused together in a single panorama image which looks like a single photography.
@@ -54,15 +57,36 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             exclusive=True,
             uid=[0]
         ),
+        desc.BoolParam(
+            name='useGraphCut',
+            label='Use Smart Seams',
+            description='Use a graphcut algorithm to optmize seams for better transitions between images.',
+            value=True,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='storageDataType',
+            label='Storage Data Type',
+            description='Storage image data type:\n'
+                        ' * float: Use full floating point (32 bits per channel)\n'
+                        ' * half: Use half float (16 bits per channel)\n'
+                        ' * halfFinite: Use half float, but clamp values to avoid non-finite values\n'
+                        ' * auto: Use half float if all values can fit, else use full float\n',
+            value='float',
+            values=['float', 'half', 'halfFinite', 'auto'],
+            exclusive=True,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='overlayType',
             label='Overlay Type',
             description='Overlay on top of panorama to analyze transitions:\n'
                         ' * none: no overlay\n'
                         ' * borders: display image borders\n'
-                        ' * seams: display transitions between images\n',
+                        ' * seams: display transitions between images\n'
+                        ' * all: display borders and seams\n',
             value='none',
-            values=['none', 'borders', 'seams'],
+            values=['none', 'borders', 'seams', 'all'],
             exclusive=True,
             advanced=True,
             uid=[0]

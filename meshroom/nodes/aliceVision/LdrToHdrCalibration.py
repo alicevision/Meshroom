@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 import json
 
@@ -27,6 +27,9 @@ class LdrToHdrCalibration(desc.CommandLineNode):
     commandLine = 'aliceVision_LdrToHdrCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    cpu = desc.Level.INTENSIVE
+    ram = desc.Level.NORMAL
+
     documentation = '''
     Calibrate LDR to HDR response curve from samples
 '''
@@ -46,6 +49,15 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             value=desc.Node.internalFolder,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='byPass',
+            label='Bypass',
+            description="Bypass HDR creation and use the medium bracket as the source for the next steps",
+            value=False,
+            uid=[0],
+            group='internal',
+            enabled= lambda node: node.nbBrackets.value != 1,
+        ),
         desc.ChoiceParam(
             name='calibrationMethod',
             label='Calibration Method',
@@ -59,6 +71,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             value='debevec',
             exclusive=True,
             uid=[0],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name='calibrationWeight',
@@ -72,6 +85,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             values=['default', 'gaussian', 'triangle', 'plateau'],
             exclusive=True,
             uid=[0],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name='userNbBrackets',
@@ -79,7 +93,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             description='Number of exposure brackets per HDR image (0 for automatic detection).',
             value=0,
             range=(0, 15, 1),
-            uid=[0],
+            uid=[],
             group='user',  # not used directly on the command line
         ),
         desc.IntParam(
@@ -88,7 +102,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             description='Number of exposure brackets used per HDR image. It is detected automatically from input Viewpoints metadata if "userNbBrackets" is 0, else it is equal to "userNbBrackets".',
             value=0,
             range=(0, 10, 1),
-            uid=[],
+            uid=[0],
         ),
         desc.IntParam(
             name='channelQuantizationPower',
@@ -98,17 +112,18 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             range=(8, 14, 1),
             uid=[0],
             advanced=True,
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name='maxTotalPoints',
             label='Max Number of Points',
-            description='Max number of points selected by the sampling strategy.\n'
-                        'This ensures that this sampling step will extract a number of pixels values\n'
-                        'that the calibration step can manage (in term of computation time and memory usage).',
+            description='Max number of points used from the sampling. This ensures that the number of pixels values extracted by the sampling\n'
+                        'can be managed by the calibration step (in term of computation time and memory usage).',
             value=1000000,
             range=(8, 10000000, 1000),
             uid=[0],
             advanced=True,
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -130,6 +145,11 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             uid=[],
         )
     ]
+
+    def processChunk(self, chunk):
+        if chunk.node.nbBrackets.value == 1 or chunk.node.byPass.value:
+            return
+        super(LdrToHdrCalibration, self).processChunk(chunk)
 
     @classmethod
     def update(cls, node):

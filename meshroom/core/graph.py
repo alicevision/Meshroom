@@ -1204,3 +1204,4 @@ def loadGraph(filepath):
     graph.load(filepath)
     graph.update()
     return graph
+

@@ -3,37 +3,20 @@ __version__ = "1.1"
 from meshroom.core import desc
 
 
-class FeatureExtraction(desc.CommandLineNode):
-    commandLine = 'aliceVision_featureExtraction {allParams}'
+class FeatureRepeatability(desc.CommandLineNode):
+    commandLine = 'aliceVision_samples_repeatabilityDataset {allParams}'
     size = desc.DynamicNodeSize('input')
-    parallelization = desc.Parallelization(blockSize=40)
-    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
+    # parallelization = desc.Parallelization(blockSize=40)
+    # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     documentation = '''
-This node extracts distinctive groups of pixels that are, to some extent, invariant to changing camera viewpoints during image acquisition.
-Hence, a feature in the scene should have similar feature descriptions in all images.
-
-This node implements multiple methods:
- * **SIFT**
-The most standard method. This is the default and recommended value for all use cases.
- * **AKAZE**
-AKAZE can be interesting solution to extract features in challenging condition. It could be able to match wider angle than SIFT but has drawbacks.
-It may extract to many features, the repartition is not always good.
-It is known to be good on challenging surfaces such as skin.
- * **CCTAG**
-CCTag is a marker type with 3 or 4 crowns. You can put markers in the scene during the shooting session to automatically re-orient and re-scale the scene to a known size.
-It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enough white margin around your CCTags.
-
-
-## Online
-[https://alicevision.org/#photogrammetry/natural_feature_extraction](https://alicevision.org/#photogrammetry/natural_feature_extraction)
 '''
 
     inputs = [
         desc.File(
             name='input',
-            label='SfMData',
-            description='SfMData file.',
+            label='Input Folder',
+            description='Input Folder with evaluation datasets.',
             value='',
             uid=[0],
         ),
@@ -53,20 +36,9 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             description='Control the ImageDescriber density (low, medium, normal, high, ultra).\n'
                         'Warning: Use ULTRA only on small datasets.',
             value='normal',
-            values=['low', 'medium', 'normal', 'high', 'ultra', 'custom'],
+            values=['low', 'medium', 'normal', 'high', 'ultra'],
             exclusive=True,
             uid=[0],
-            group=lambda node: 'allParams' if node.describerPreset.value != 'custom' else None,
-        ),
-        desc.IntParam(
-            name='maxNbFeatures',
-            label='Max Nb Features',
-            description='Max number of features extracted (0 means default value based on Describer Density).',
-            value=0,
-            range=(0, 100000, 1000),
-            uid=[0],
-            advanced=True,
-            enabled=lambda node: (node.describerPreset.value == 'custom'),
         ),
         desc.ChoiceParam(
             name='describerQuality',
@@ -88,7 +60,7 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
                        "* GridSort: Grid sort per octaves and at the end (scale * peakValue).\n"
                        "* GridSortScaleSteps: Grid sort per octaves and at the end (scale and then peakValue).\n"
                        "* NonExtremaFiltering: Filter non-extrema peakValues.\n",
-            value='GridSort',
+            value='Static',
             values=['Static', 'AdaptiveToMedianVariance', 'NoFiltering', 'GridSortOctaves', 'GridSort', 'GridSortScaleSteps', 'GridSortOctaveSteps', 'NonExtremaFiltering'],
             exclusive=True,
             advanced=True,
@@ -121,13 +93,21 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             advanced=True,
         ),
         desc.IntParam(
-            name='maxThreads',
-            label='Max Nb Threads',
-            description='Specifies the maximum number of threads to run simultaneously (0 for automatic mode).',
+            name='invalidate',
+            label='Invalidate',
+            description='Invalidate.',
             value=0,
-            range=(0, 24, 1),
+            range=(0, 10000, 1),
+            group="",
+            uid=[0],
+        ),
+        desc.StringParam(
+            name="comments",
+            label="Comments",
+            description="Comments",
+            value="",
+            group="",
             uid=[],
-            advanced=True,
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -143,7 +123,7 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
     outputs = [
         desc.File(
             name='output',
-            label='Features Folder',
+            label='Output Folder',
             description='Output path for the features and descriptors files (*.feat, *.desc).',
             value=desc.Node.internalFolder,
             uid=[],

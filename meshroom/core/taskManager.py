@@ -374,7 +374,8 @@ class TaskManager(BaseObject):
             sub = meshroom.core.submitters.get(submitter, None)
         elif len(meshroom.core.submitters) == 1:
             # if only one submitter available use it
-            sub = list(meshroom.core.submitters.values())[0]
+            allSubmitters = meshroom.core.submitters.values()
+            sub = next(iter(allSubmitters))  # retrieve the first element
         if sub is None:
             # Warning: Syntax and terms are parsed on QML side to recognize the error
             # Syntax : [Context] ErrorType: ErrorMessage

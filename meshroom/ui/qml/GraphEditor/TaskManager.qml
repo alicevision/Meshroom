@@ -231,7 +231,7 @@ Item {
                 }
             }
             Label {
-                text: object.chunks.at(0).execModeName
+                text: object.globalExecMode
                 Layout.preferredWidth: execMetrics.width + 20
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter

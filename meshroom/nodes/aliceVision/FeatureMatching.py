@@ -34,7 +34,7 @@ then it checks the number of features that validates this model and iterate thro
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfMData',
             description='SfMData file.',
             value='',
             uid=[0],
@@ -53,7 +53,7 @@ then it checks the number of features that validates this model and iterate thro
         ),
         desc.File(
             name='imagePairsList',
-            label='Image Pairs List',
+            label='Image Pairs',
             description='Path to a file which contains the list of image pairs to match.',
             value='',
             uid=[0],
@@ -202,7 +202,7 @@ then it checks the number of features that validates this model and iterate thro
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Matches Folder',
             description='Path to a folder in which computed matches will be stored.',
             value=desc.Node.internalFolder,
             uid=[],

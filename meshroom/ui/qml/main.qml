@@ -23,9 +23,6 @@ ApplicationWindow {
     minimumHeight: 500
     visible: true
 
-    /// Whether graph is currently locked and therefore read-only
-    readonly property bool graphLocked: _reconstruction.computing && GraphEditorSettings.lockOnCompute
-
     title: {
         var t = (_reconstruction.graph && _reconstruction.graph.filepath) ? _reconstruction.graph.filepath : "Untitled"
         if(!_reconstruction.undoStack.clean)
@@ -164,14 +161,90 @@ ApplicationWindow {
                 unsavedComputeDialog.currentNode = node;
                 unsavedComputeDialog.open();
             }
-            else
-                _reconstruction.execute(node);
+            else {
+                try {
+                    _reconstruction.execute(node)
+                }
+                catch (error) {
+                    const data = ErrorHandler.analyseError(error)
+                    if(data.context === "COMPUTATION")
+                        computeSubmitErrorDialog.openError(data.type, data.msg, node)
+                }
+            }
         }
 
         function submit(node) {
-            _reconstruction.submit(node);
+            try {
+                _reconstruction.submit(node)
+            }
+            catch (error) {
+                const data = ErrorHandler.analyseError(error)
+                if(data.context === "SUBMITTING")
+                    computeSubmitErrorDialog.openError(data.type, data.msg, node)
+            }
         }
 
+        MessageDialog {
+            id: computeSubmitErrorDialog
+
+            property string errorType // Used to specify signals' behavior
+            property var currentNode: null
+
+            function openError(type, msg, node) {
+                errorType = type
+                switch(type) {
+                    case "Already Submitted": this.setupPendingStatusError(msg, node); break
+                    case "Compatibility Issue": this.setupCompatibilityIssue(msg); break
+                    default: this.onlyDisplayError(msg)
+                }
+
+                this.open()
+            }
+
+            function onlyDisplayError(msg) {
+                text = msg
+
+                standardButtons = Dialog.Ok
+            }
+
+            function setupPendingStatusError(msg, node) {
+                currentNode = node
+                text = msg + "\n\nDo you want to Clear Pending Status and Start Computing?"
+
+                standardButtons = (Dialog.Ok | Dialog.Cancel)
+            }
+
+            function setupCompatibilityIssue(msg) {
+                text = msg + "\n\nDo you want to open the Compatibility Manager?"
+
+                standardButtons = (Dialog.Ok | Dialog.Cancel)
+            }
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "Computation/Submitting"
+            text: ""
+
+            onAccepted: {
+                switch(errorType) {
+                    case "Already Submitted": {
+                        close()
+                        _reconstruction.graph.clearSubmittedNodes()
+                        _reconstruction.execute(currentNode)
+                        break
+                    }
+                    case "Compatibility Issue": {
+                        close()
+                        compatibilityManager.open()
+                    }
+                    default: close()
+                }
+            }
+
+            onRejected: close()
+        }
 
         MessageDialog {
             id: unsavedComputeDialog
@@ -306,7 +379,7 @@ ApplicationWindow {
         property string tooltip: 'Undo "' +_reconstruction.undoStack.undoText +'"'
         text: "Undo"
         shortcut: "Ctrl+Z"
-        enabled: _reconstruction.undoStack.canUndo && !graphLocked
+        enabled: _reconstruction.undoStack.canUndo && _reconstruction.undoStack.isUndoableIndex
         onTriggered: _reconstruction.undoStack.undo()
     }
     Action {
@@ -315,7 +388,7 @@ ApplicationWindow {
         property string tooltip: 'Redo "' +_reconstruction.undoStack.redoText +'"'
         text: "Redo"
         shortcut: "Ctrl+Shift+Z"
-        enabled: _reconstruction.undoStack.canRedo && !graphLocked
+        enabled: _reconstruction.undoStack.canRedo && !_reconstruction.undoStack.lockedRedo
         onTriggered: _reconstruction.undoStack.redo()
     }
 
@@ -434,7 +507,7 @@ ApplicationWindow {
             MenuSeparator { }
             Action {
                 text: "Quit"
-                onTriggered: Qt.quit()
+                onTriggered: _window.close()
             }
         }
         Menu {
@@ -560,7 +633,6 @@ ApplicationWindow {
 
                 Row {
                     // disable controls if graph is executed externally
-                    enabled: !_reconstruction.computingExternally
                     Layout.alignment: Qt.AlignHCenter
 
                     Button {
@@ -569,7 +641,6 @@ ApplicationWindow {
                         palette.button: enabled ? buttonColor : disabledPalette.button
                         palette.window: enabled ? buttonColor : disabledPalette.window
                         palette.buttonText: enabled ? "white" : disabledPalette.buttonText
-                        enabled: computeManager.canStartComputation
                         onClicked: computeManager.compute(null)
                     }
                     Button {
@@ -580,7 +651,6 @@ ApplicationWindow {
                     Item { width: 20; height: 1 }
                     Button {
                         visible: _reconstruction.canSubmit
-                        enabled: computeManager.canSubmit
                         text: "Submit"
                         onClicked: computeManager.submit(null)
                     }
@@ -598,13 +668,6 @@ ApplicationWindow {
                     ToolTip.text: "Compatibility Issues"
                     ToolTip.visible: hovered
                 }
-            }
-
-            Label {
-                text: "Graph is being computed externally"
-                font.italic: true
-                Layout.alignment: Qt.AlignHCenter
-                visible: _reconstruction.computingExternally
             }
 
             // "ProgressBar" reflecting status of all the chunks in the graph, in their process order
@@ -669,11 +732,11 @@ ApplicationWindow {
             height: Math.round(parent.height * 0.3)
             visible: settings_UILayout.showGraphEditor
 
-            Panel {
+            TabPanel {
                 id: graphEditorPanel
                 Layout.fillWidth: true
                 padding: 4
-                title: "Graph Editor"
+                tabs: ["Graph Editor", "Task Manager"]
 
                 headerBar: RowLayout {
                     MaterialToolButton {
@@ -706,16 +769,9 @@ ApplicationWindow {
                                 enabled: !_reconstruction.computingLocally
                                 onTriggered: _reconstruction.graph.clearSubmittedNodes()
                             }
-                            Menu {
-                                title: "Advanced"
-                                MenuItem {
-                                    text: "Lock on Compute"
-                                    ToolTip.text: "Lock Graph when computing. This should only be disabled for advanced usage."
-                                    ToolTip.visible: hovered
-                                    checkable: true
-                                    checked: GraphEditorSettings.lockOnCompute
-                                    onClicked: GraphEditorSettings.lockOnCompute = !GraphEditorSettings.lockOnCompute
-                                }
+                            MenuItem {
+                                text: "Force Unlock Nodes"
+                                onTriggered: _reconstruction.graph.forceUnlockNodes()
                             }
                         }
                     }
@@ -724,10 +780,11 @@ ApplicationWindow {
                 GraphEditor {
                     id: graphEditor
 
+                    visible: graphEditorPanel.currentTab === 0
+
                     anchors.fill: parent
                     uigraph: _reconstruction
                     nodeTypesModel: _nodeTypes
-                    readOnly: graphLocked
 
                     onNodeDoubleClicked: {
                         _reconstruction.setActiveNode(node);
@@ -743,16 +800,29 @@ ApplicationWindow {
                     onComputeRequest: computeManager.compute(node)
                     onSubmitRequest: computeManager.submit(node)
                 }
+
+                TaskManager {
+                    id: taskManager
+
+                    visible: graphEditorPanel.currentTab === 1
+
+                    uigraph: _reconstruction
+                    taskManager: _reconstruction.taskManager
+
+                    anchors.fill: parent
+                }
+
             }
 
             NodeEditor {
+                id: nodeEditor
                 width: Math.round(parent.width * 0.3)
                 node: _reconstruction.selectedNode
+                property bool computing: _reconstruction.computing
                 // Make NodeEditor readOnly when computing
-                readOnly: graphLocked
-                onAttributeDoubleClicked: {
-                     workspaceView.viewAttribute(attribute);
-                }
+                readOnly: node ? node.locked : false
+
+                onAttributeDoubleClicked: workspaceView.viewAttribute(attribute, mouse)
                 onUpgradeRequest: {
                     var n = _reconstruction.upgradeNode(node);
                     _reconstruction.selectedNode = n;

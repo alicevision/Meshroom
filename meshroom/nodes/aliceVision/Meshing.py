@@ -23,7 +23,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfmData',
             description='SfMData file.',
             value='',
             uid=[0],
@@ -339,14 +339,14 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
     outputs = [
         desc.File(
             name="outputMesh",
-            label="Output Mesh",
+            label="Mesh",
             description="Output mesh (OBJ file format).",
             value="{cache}/{nodeType}/{uid0}/mesh.obj",
             uid=[],
         ),
         desc.File(
             name="output",
-            label="Output Dense Point Cloud",
+            label="Dense SfMData",
             description="Output dense point cloud with visibilities (SfMData file format).",
             value="{cache}/{nodeType}/{uid0}/densePointCloud.abc",
             uid=[],

@@ -14,7 +14,7 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
     inputs = [
         desc.File(
             name='inputMesh',
-            label='Input Mesh',
+            label='Mesh',
             description='''Input Mesh (OBJ file format).''',
             value='',
             uid=[0],
@@ -65,7 +65,7 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
     outputs = [
         desc.File(
             name='outputMesh',
-            label='Output Mesh',
+            label='Mesh',
             description='''Output mesh (OBJ file format).''',
             value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],

@@ -85,6 +85,9 @@ class Visitor(object):
     Base class for Graph Visitors that does nothing.
     Sub-classes can override any method to implement specific algorithms.
     """
+    def __init__(self, reverse):
+        super(Visitor, self).__init__()
+        self.reverse = reverse
 
     # def initializeVertex(self, s, g):
     #     '''is invoked on every vertex of the graph before the start of the graph search.'''
@@ -380,7 +383,7 @@ class Graph(BaseObject):
         Returns:
             OrderedDict[Node, Node]: the source->duplicate map
         """
-        srcNodes, srcEdges = self.nodesFromNode(fromNode)
+        srcNodes, srcEdges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True)
         # use OrderedDict to keep duplicated nodes creation order
         duplicates = OrderedDict()
 
@@ -566,6 +569,9 @@ class Graph(BaseObject):
         if not candidates:
             raise KeyError('No node candidate for "{}"'.format(nodeExpr))
         if len(candidates) > 1:
+            for c in candidates:
+                if c.name == nodeExpr:
+                    return c
             raise KeyError('Multiple node candidates for "{}": {}'.format(nodeExpr, str([c.name for c in candidates])))
         return candidates[0]
 
@@ -575,9 +581,13 @@ class Graph(BaseObject):
     def edge(self, dstAttributeName):
         return self._edges.get(dstAttributeName)
 
-    def getLeaves(self):
+    def getLeafNodes(self):
         nodesWithOutput = set([edge.src.node for edge in self.edges])
         return set(self._nodes) - nodesWithOutput
+
+    def getRootNodes(self):
+        nodesWithInput = set([edge.dst.node for edge in self.edges])
+        return set(self._nodes) - nodesWithInput
 
     @changeTopology
     def addEdge(self, srcAttr, dstAttr):
@@ -592,6 +602,7 @@ class Graph(BaseObject):
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
+        srcAttr.hasOutputConnectionsChanged.emit()
         return edge
 
     def addEdges(self, *edges):
@@ -603,10 +614,11 @@ class Graph(BaseObject):
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
             raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.getFullName()))
-        self.edges.pop(dstAttr)
+        edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
         dstAttr.isLinkChanged.emit()
+        edge.src.hasOutputConnectionsChanged.emit()
 
     def getDepth(self, node, minimal=False):
         """ Return node's depth in this Graph.
@@ -642,16 +654,21 @@ class Graph(BaseObject):
 
         return nodeEdges
 
-    def dfs(self, visitor, startNodes=None, longestPathFirst=False, reverse=False):
-        # Default direction: from node to root
-        # Reverse direction: from node to leaves
-        nodeChildren = self._getOutputEdgesPerNode() if reverse else self._getInputEdgesPerNode()
+    def dfs(self, visitor, startNodes=None, longestPathFirst=False):
+        # Default direction (visitor.reverse=False): from node to root
+        # Reverse direction (visitor.reverse=True): from node to leaves
+        nodeChildren = self._getOutputEdgesPerNode() if visitor.reverse else self._getInputEdgesPerNode()
         # Initialize color map
         colors = {}
         for u in self._nodes:
             colors[u] = WHITE
 
-        nodes = startNodes or self.getLeaves()
+        if longestPathFirst and visitor.reverse:
+            # Because we have no knowledge of the node's count between a node and its leaves,
+            # it is not possible to handle this case at the moment
+            raise NotImplementedError("Graph.dfs(): longestPathFirst=True and visitor.reverse=True are not compatible yet.")
+
+        nodes = startNodes or (self.getRootNodes() if visitor.reverse else self.getLeafNodes())
 
         if longestPathFirst:
             # Graph topology must be known and node depths up-to-date
@@ -694,17 +711,57 @@ class Graph(BaseObject):
         colors[u] = BLACK
         visitor.finishVertex(u, self)
 
-    def dfsOnFinish(self, startNodes=None):
+    def dfsOnFinish(self, startNodes=None, longestPathFirst=False, reverse=False):
         """
-        :param startNodes: list of starting nodes. Use all leaves if empty.
-        :return: visited nodes and edges. The order is defined by the visit and finishVertex event.
+        Return the node chain from startNodes to the graph roots/leaves.
+        Order is defined by the visit and finishVertex event.
+
+        Args:
+            startNodes (Node list): the nodes to start the visit from.
+            longestPathFirst (bool): (optional) if multiple paths, nodes belonging to
+                            the longest one will be visited first.
+            reverse (bool): (optional) direction of visit.
+                            True is for getting nodes depending on the startNodes (to leaves).
+                            False is for getting nodes required for the startNodes (to roots).
+        Returns:
+            The list of nodes and edges, from startNodes to the graph roots/leaves following edges.
         """
         nodes = []
         edges = []
-        visitor = Visitor()
+        visitor = Visitor(reverse=reverse)
         visitor.finishVertex = lambda vertex, graph: nodes.append(vertex)
         visitor.finishEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=startNodes)
+        self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst)
+        return nodes, edges
+
+    def dfsOnDiscover(self, startNodes=None, filterTypes=None, longestPathFirst=False, reverse=False):
+        """
+        Return the node chain from startNodes to the graph roots/leaves.
+        Order is defined by the visit and discoverVertex event.
+
+        Args:
+            startNodes (Node list): the nodes to start the visit from.
+            filterTypes (str list): (optional) only return the nodes of the given types
+                              (does not stop the visit, this is a post-process only)
+            longestPathFirst (bool): (optional) if multiple paths, nodes belonging to
+                            the longest one will be visited first.
+            reverse (bool): (optional) direction of visit.
+                            True is for getting nodes depending on the startNodes (to leaves).
+                            False is for getting nodes required for the startNodes (to roots).
+        Returns:
+            The list of nodes and edges, from startNodes to the graph roots/leaves following edges.
+        """
+        nodes = []
+        edges = []
+        visitor = Visitor(reverse=reverse)
+
+        def discoverVertex(vertex, graph):
+            if not filterTypes or vertex.nodeType in filterTypes:
+                nodes.append(vertex)
+
+        visitor.discoverVertex = discoverVertex
+        visitor.examineEdge = lambda edge, graph: edges.append(edge)
+        self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst)
         return nodes, edges
 
     def dfsToProcess(self, startNodes=None):
@@ -720,22 +777,16 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor()
+        visitor = Visitor(reverse=False)
 
         def discoverVertex(vertex, graph):
             if vertex.hasStatus(Status.SUCCESS):
                 # stop branch visit if discovering a node already computed
                 raise StopBranchVisit()
-            if self._computationBlocked[vertex]:
-                raise RuntimeError("Can't compute node '{}'".format(vertex.name))
 
         def finishVertex(vertex, graph):
             chunksToProcess = []
             for chunk in vertex.chunks:
-                if chunk.status.status is Status.SUBMITTED:
-                    logging.warning('Node "{}" is already submitted.'.format(chunk.name))
-                if chunk.status.status is Status.RUNNING:
-                    logging.warning('Node "{}" is already running.'.format(chunk.name))
                 if chunk.status.status is not Status.SUCCESS:
                     chunksToProcess.append(chunk)
             if chunksToProcess:
@@ -781,7 +832,7 @@ class Graph(BaseObject):
         self._computationBlocked.clear()
 
         compatNodes = []
-        visitor = Visitor()
+        visitor = Visitor(reverse=False)
 
         def discoverVertex(vertex, graph):
             # initialize depths
@@ -815,7 +866,7 @@ class Graph(BaseObject):
             # propagate inputVertex computability
             self._computationBlocked[currentVertex] |= self._computationBlocked[inputVertex]
 
-        leaves = self.getLeaves()
+        leaves = self.getLeafNodes()
         visitor.finishEdge = finishEdge
         visitor.discoverVertex = discoverVertex
         self.dfs(visitor=visitor, startNodes=leaves)
@@ -839,7 +890,7 @@ class Graph(BaseObject):
         """
         nodesStack = []
         edgesScore = defaultdict(lambda: 0)
-        visitor = Visitor()
+        visitor = Visitor(reverse=False)
 
         def finishEdge(edge, graph):
             u, v = edge
@@ -875,29 +926,53 @@ class Graph(BaseObject):
                 flowEdges.append(link)
         return flowEdges
 
-    def nodesFromNode(self, startNode, filterTypes=None):
-        """
-        Return the node chain from startNode to the graph leaves.
+    def getInputNodes(self, node, recursive=False):
+        """ Return either the first level input nodes of a node or the whole chain. """
+        if not recursive:
+            return set([edge.src.node for edge in self.edges if edge.dst.node is node])
 
-        Args:
-            startNode (Node): the node to start the visit from.
-            filterTypes (str list): (optional) only return the nodes of the given types
-                              (does not stop the visit, this is a post-process only)
+        inputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=False)
+        return inputNodes[1:]  # exclude current node
+
+    def getOutputNodes(self, node, recursive=False):
+        """ Return either the first level output nodes of a node or the whole chain. """
+        if not recursive:
+            return set([edge.dst.node for edge in self.edges if edge.src.node is node])
+
+        outputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=True)
+        return outputNodes[1:]  # exclude current node
+
+    @Slot(Node, result=int)
+    def canSubmitOrCompute(self, startNode):
+        """
+        Check if a node can be submitted/computed.
+
         Returns:
-            The list of nodes and edges, from startNode to the graph leaves following edges.
+            int: 0 = cannot be submitted or computed /
+                1 = can be computed /
+                2 = can be submitted /
+                3 = can be submitted and computed
         """
-        nodes = []
-        edges = []
-        visitor = Visitor()
+        if startNode.isAlreadySubmittedOrFinished():
+            return 0
 
-        def discoverVertex(vertex, graph):
-            if not filterTypes or vertex.nodeType in filterTypes:
-                nodes.append(vertex)
+        class SCVisitor(Visitor):
+            def __init__(self, reverse):
+                super(SCVisitor, self).__init__(reverse)
 
-        visitor.discoverVertex = discoverVertex
-        visitor.examineEdge = lambda edge, graph: edges.append(edge)
-        self.dfs(visitor=visitor, startNodes=[startNode], reverse=True)
-        return nodes, edges
+            canCompute = True
+            canSubmit = True
+
+            def discoverVertex(self, vertex, graph):
+                if vertex.isAlreadySubmitted():
+                    self.canSubmit = False
+                    if vertex.isExtern():
+                        self.canCompute = False
+
+        visitor = SCVisitor(reverse=False)
+        self.dfs(visitor=visitor, startNodes=[startNode])
+        return visitor.canCompute + (2 * visitor.canSubmit)
+
 
     def _applyExpr(self):
         with GraphModification(self):
@@ -980,6 +1055,24 @@ class Graph(BaseObject):
         for node in self._nodes:
             node.updateStatisticsFromCache()
 
+    def updateNodesPerUid(self):
+        """ Update the duplicate nodes (sharing same uid) list of each node. """
+        # First step is to construct a map uid/nodes
+        nodesPerUid = {}
+        for node in self.nodes:
+            uid = node._uids.get(0)
+
+            # We try to add the node to the list corresponding to this uid
+            try:
+                nodesPerUid.get(uid).append(node)
+            # If it fails because the uid is not in the map, we add it
+            except AttributeError:
+                nodesPerUid.update({uid: [node]})
+
+        # Now, update each individual node
+        for node in self.nodes:
+            node.updateDuplicates(nodesPerUid)
+
     def update(self):
         if not self._updateEnabled:
             # To do the update once for multiple changes
@@ -992,6 +1085,8 @@ class Graph(BaseObject):
         for node in self.nodes:
             node.dirty = False
 
+        self.updateNodesPerUid()
+
         # Graph topology has changed
         if self.dirtyTopology:
             # update nodes topological data cache
@@ -1002,7 +1097,7 @@ class Graph(BaseObject):
 
     def markNodesDirty(self, fromNode):
         """
-        Mark all nodes following 'fromNode' as dirty, and request a graph update.
+        Mark all nodes following 'fromNode' as dirty.
         All nodes marked as dirty will get their outputs to be re-evaluated
         during the next graph update.
 
@@ -1012,15 +1107,21 @@ class Graph(BaseObject):
         See Also:
             Graph.update, Graph.updateInternals, Graph.updateStatusFromCache
         """
-        nodes, edges = self.nodesFromNode(fromNode)
+        nodes, edges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True)
         for node in nodes:
             node.dirty = True
-        self.update()
 
     def stopExecution(self):
         """ Request graph execution to be stopped by terminating running chunks"""
         for chunk in self.iterChunksByStatus(Status.RUNNING):
-            chunk.stopProcess()
+            if not chunk.isExtern():
+                chunk.stopProcess()
+
+    @Slot()
+    def forceUnlockNodes(self):
+        """ Force to unlock all the nodes. """
+        for node in self.nodes:
+            node.setLocked(False)
 
     @Slot()
     def clearSubmittedNodes(self):
@@ -1030,7 +1131,7 @@ class Graph(BaseObject):
 
     @Slot(Node)
     def clearDataFrom(self, startNode):
-        for node in self.nodesFromNode(startNode)[0]:
+        for node in self.dfsOnDiscover(startNodes=[startNode], reverse=True)[0]:
             node.clearData()
 
     def iterChunksByStatus(self, status):
@@ -1103,101 +1204,4 @@ def loadGraph(filepath):
     graph.load(filepath)
     graph.update()
     return graph
-
-
-def getAlreadySubmittedChunks(nodes):
-    out = []
-    for node in nodes:
-        for chunk in node.chunks:
-            if chunk.isAlreadySubmitted():
-                out.append(chunk)
-    return out
-
-
-def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
-    """
-    """
-    if forceCompute:
-        nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
-    else:
-        nodes, edges = graph.dfsToProcess(startNodes=toNodes)
-        chunksInConflict = getAlreadySubmittedChunks(nodes)
-
-        if chunksInConflict:
-            chunksStatus = set([chunk.status.status.name for chunk in chunksInConflict])
-            chunksName = [node.name for node in chunksInConflict]
-            msg = 'WARNING: Some nodes are already submitted with status: {}\nNodes: {}'.format(
-                  ', '.join(chunksStatus),
-                  ', '.join(chunksName)
-                  )
-            if forceStatus:
-                print(msg)
-            else:
-                raise RuntimeError(msg)
-
-    print('Nodes to execute: ', str([n.name for n in nodes]))
-
-    for node in nodes:
-        node.beginSequence(forceCompute)
-
-    for n, node in enumerate(nodes):
-        try:
-            multiChunks = len(node.chunks) > 1
-            for c, chunk in enumerate(node.chunks):
-                if multiChunks:
-                    print('\n[{node}/{nbNodes}]({chunk}/{nbChunks}) {nodeName}'.format(
-                        node=n+1, nbNodes=len(nodes),
-                        chunk=c+1, nbChunks=len(node.chunks), nodeName=node.nodeType))
-                else:
-                    print('\n[{node}/{nbNodes}] {nodeName}'.format(
-                        node=n + 1, nbNodes=len(nodes), nodeName=node.nodeType))
-                chunk.process(forceCompute)
-        except Exception as e:
-            logging.error("Error on node computation: {}".format(e))
-            graph.clearSubmittedNodes()
-            raise
-
-    for node in nodes:
-        node.endSequence()
-
-
-def submitGraph(graph, submitter, toNodes=None):
-    nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
-    flowEdges = graph.flowEdges(startNodes=toNodes)
-    edgesToProcess = set(edgesToProcess).intersection(flowEdges)
-
-    if not nodesToProcess:
-        logging.warning('Nothing to compute')
-        return
-
-    logging.info("Nodes to process: {}".format(edgesToProcess))
-    logging.info("Edges to process: {}".format(edgesToProcess))
-
-    sub = None
-    if submitter:
-        sub = meshroom.core.submitters.get(submitter, None)
-    elif len(meshroom.core.submitters) == 1:
-        # if only one submitter available use it
-        allSubmitters = meshroom.core.submitters.values()
-        sub = next(iter(allSubmitters))  # retrieve the first element
-    if sub is None:
-        raise RuntimeError("Unknown Submitter: '{submitter}'. Available submitters are: '{allSubmitters}'.".format(
-            submitter=submitter, allSubmitters=str(meshroom.core.submitters.keys())))
-
-    try:
-        res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath)
-        if res:
-            for node in nodesToProcess:
-                node.submit()  # update node status
-    except Exception as e:
-        logging.error("Error on submit : {}".format(e))
-
-
-def submit(graphFile, submitter, toNode=None):
-    """
-    Submit the given graph via the given submitter.
-    """
-    graph = loadGraph(graphFile)
-    toNodes = graph.findNodes([toNode]) if toNode else None
-    submitGraph(graph, submitter, toNodes)
 

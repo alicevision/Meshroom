@@ -23,7 +23,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfMData',
             description='SfMData file.',
             value='',
             uid=[0],

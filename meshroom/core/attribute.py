@@ -142,6 +142,7 @@ class Attribute(BaseObject):
     def requestGraphUpdate(self):
         if self.node.graph:
             self.node.graph.markNodesDirty(self.node)
+            self.node.graph.update()
 
     @property
     def isOutput(self):
@@ -170,7 +171,7 @@ class Attribute(BaseObject):
     def isLink(self):
         """ Whether the attribute is a link to another attribute. """
         # note: directly use self.node.graph._edges to avoid using the property that may become invalid at some point
-        return self.node.graph and self.isInput and self in self.node.graph._edges.keys()
+        return self.node.graph and self.isInput and self.node.graph._edges and self in self.node.graph._edges.keys()
 
     @staticmethod
     def isLinkExpression(value):
@@ -189,6 +190,14 @@ class Attribute(BaseObject):
         if linkParam.isLink:
             return linkParam.getLinkParam(recursive)
         return linkParam
+
+    @property
+    def hasOutputConnections(self):
+        """ Whether the attribute has output connections, i.e is the source of at least one edge. """
+        # safety check to avoid evaluation errors
+        if not self.node.graph or not self.node.graph.edges:
+            return False
+        return next((edge for edge in self.node.graph.edges.values() if edge.src == self), None) is not None
 
     def _applyExpr(self):
         """
@@ -255,6 +264,8 @@ class Attribute(BaseObject):
     isOutput = Property(bool, isOutput.fget, constant=True)
     isLinkChanged = Signal()
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
+    hasOutputConnectionsChanged = Signal()
+    hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
     linkParam = Property(BaseObject, getLinkParam, notify=isLinkChanged)
     rootLinkParam = Property(BaseObject, lambda self: self.getLinkParam(recursive=True), notify=isLinkChanged)

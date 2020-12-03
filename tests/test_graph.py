@@ -158,8 +158,8 @@ def test_transitive_reduction():
         assert node.depth == maxDepth
 
 
-def test_graph_reverse_dfs():
-    graph = Graph('Test reverse DFS')
+def test_graph_reverse_dfsOnDiscover():
+    graph = Graph('Test dfsOnDiscover(reverse=True)')
 
     #    ------------\
     #   /   ~ C - E - F
@@ -174,17 +174,60 @@ def test_graph_reverse_dfs():
     F = graph.addNewNode('AppendText', input=A.output, inputText=E.output)
 
     # Get all nodes from A (use set, order not guaranteed)
-    nodes = graph.nodesFromNode(A)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[A], reverse=True)[0]
     assert set(nodes) == {A, B, D, C, E, F}
     # Get all nodes from B
-    nodes = graph.nodesFromNode(B)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[B], reverse=True)[0]
     assert set(nodes) == {B, D, C, E, F}
     # Get all nodes of type AppendText from B
-    nodes = graph.nodesFromNode(B, filterTypes=['AppendText'])[0]
+    nodes = graph.dfsOnDiscover(startNodes=[B], filterTypes=['AppendText'], reverse=True)[0]
     assert set(nodes) == {B, D, C, F}
     # Get all nodes from C (order guaranteed)
-    nodes = graph.nodesFromNode(C)[0]
+    nodes = graph.dfsOnDiscover(startNodes=[C], reverse=True)[0]
     assert nodes == [C, E, F]
+    # Get all nodes
+    nodes = graph.dfsOnDiscover(reverse=True)[0]
+    assert set(nodes) == {A, B, C, D, E, F}
+
+
+def test_graph_dfsOnDiscover():
+    graph = Graph('Test dfsOnDiscover(reverse=False)')
+
+    #    ------------\
+    #   /   ~ C - E - F
+    # A - B
+    #      ~ D
+    #    G
+
+    G = graph.addNewNode('Ls', input='/tmp')
+    A = graph.addNewNode('Ls', input='/tmp')
+    B = graph.addNewNode('AppendText', inputText=A.output)
+    C = graph.addNewNode('AppendText', inputText=B.output)
+    D = graph.addNewNode('AppendText', input=G.output, inputText=B.output)
+    E = graph.addNewNode('Ls', input=C.output)
+    F = graph.addNewNode('AppendText', input=A.output, inputText=E.output)
+
+    # Get all nodes from A (use set, order not guaranteed)
+    nodes = graph.dfsOnDiscover(startNodes=[A], reverse=False)[0]
+    assert set(nodes) == {A}
+    # Get all nodes from D
+    nodes = graph.dfsOnDiscover(startNodes=[D], reverse=False)[0]
+    assert set(nodes) == {A, B, D, G}
+    # Get all nodes from E
+    nodes = graph.dfsOnDiscover(startNodes=[E], reverse=False)[0]
+    assert set(nodes) == {A, B, C, E}
+    # Get all nodes from F
+    nodes = graph.dfsOnDiscover(startNodes=[F], reverse=False)[0]
+    assert set(nodes) == {A, B, C, E, F}
+    # Get all nodes of type AppendText from C
+    nodes = graph.dfsOnDiscover(startNodes=[C], filterTypes=['AppendText'], reverse=False)[0]
+    assert set(nodes) == {B, C}
+    # Get all nodes from D (order guaranteed)
+    nodes = graph.dfsOnDiscover(startNodes=[D], longestPathFirst=True, reverse=False)[0]
+    assert nodes == [D, B, A, G]
+    # Get all nodes
+    nodes = graph.dfsOnDiscover(reverse=False)[0]
+    assert set(nodes) == {A, B, C, D, E, F, G}
 
 
 def test_graph_nodes_sorting():

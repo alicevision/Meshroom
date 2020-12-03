@@ -35,7 +35,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfmData',
             description='SfMData file .',
             value='',
             uid=[0],
@@ -140,7 +140,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
     outputs = [
         desc.File(
             name='output',
-            label='Output List File',
+            label='Image Pairs',
             description='Filepath to the output file with the list of selected image pairs.',
             value=desc.Node.internalFolder + 'imageMatches.txt',
             uid=[],

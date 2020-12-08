@@ -29,13 +29,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             uid=[0],
         ),
         desc.File(
-            name='cacheFolder',
-            label='Cache Folder',
-            description="Temporary cache directory",
-            value='',
-            uid=[0],
-        ),
-        desc.File(
             name='warpingFolder',
             label='Warping Folder',
             description="Panorama Warping results",
@@ -98,6 +91,15 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             advanced=True,
             uid=[0]
         ),
+        desc.File(
+            name='customCacheFolder',
+            label='Cache Folder',
+            description="Temporary cache directory",
+            value='',
+            uid=[0],
+            group='',
+            advanced=True,
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
@@ -115,6 +117,13 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             label='Output Panorama',
             description='',
             value=desc.Node.internalFolder + 'panorama.{outputFileTypeValue}',
+            uid=[],
+        ),
+        desc.File(
+            name='cacheFolder',
+            label='Cache Folder',
+            description='Temporary cache directory',
+            value=lambda attr: attr.node.customCacheFolder.value if attr.node.customCacheFolder.value else (desc.Node.internalFolder + 'cache/'),
             uid=[],
         ),
     ]

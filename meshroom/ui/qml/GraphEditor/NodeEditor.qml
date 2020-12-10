@@ -199,32 +199,27 @@ Panel {
             currentIndex: 0
             TabButton {
                 text: "Attributes"
-                width: implicitWidth
                 padding: 4
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
                 text: "Log"
-                width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
                 text: "Statistics"
-                width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
                 text: "Status"
-                width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
                 text: "Documentation"
-                width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding
             }

@@ -18,6 +18,8 @@ The transformation can be based on:
  * auto_from_landmarks: Fit all landmarks into a box [-1,1]
  * from_single_camera: Use a specific camera as the origin of the coordinate system
  * from_markers: Align specific markers to custom coordinates
+ * from_marker_distances: Scale based on distances between pairs of markers
+ * auto_from_markers: Same as auto_from_landmarks, but only for given markers
 
 '''
 
@@ -38,9 +40,11 @@ The transformation can be based on:
                         " * auto_from_cameras: Use cameras\n"
                         " * auto_from_landmarks: Use landmarks\n"
                         " * from_single_camera: Use a specific camera as the origin of the coordinate system\n"
-                        " * from_markers: Align specific markers to custom coordinates",
+                        " * from_markers: Align specific markers to custom coordinates\n"
+                        " * from_marker_distances: Scale based on distances between pairs of markers\n"
+                        " * auto_from_markers: Use given markers",
             value='auto_from_landmarks',
-            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_markers'],
+            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'auto_from_markers', 'from_single_camera', 'from_markers', 'from_marker_distances'],
             exclusive=True,
             uid=[0],
         ),
@@ -153,6 +157,16 @@ The transformation can be based on:
             ]),
             label="Markers",
             description="Markers alignment points",
+        ),
+        desc.ListAttribute(
+            name="markerDistances",
+            elementDesc=desc.GroupAttribute(name="markerDistance", label="Marker distance", description="IDs of two markers and their distance", joinChar=":", groupDesc=[
+                desc.IntParam(name="markerId1", label="ID of 1st marker", description="Id of first marker", value=0, uid=[0], range=(0, 150, 1)),
+                desc.IntParam(name="markerId2", label="ID of 2nd marker", description="Id of second marker", value=0, uid=[0], range=(0, 150, 1)),
+                desc.FloatParam(name="distance", label="Distance", description="Distance between the two markers", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
+            ]),
+            label="Marker distances",
+            description="Distances between pairs of markers",
         ),
         desc.BoolParam(
             name='applyScale',

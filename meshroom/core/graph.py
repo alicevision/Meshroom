@@ -85,9 +85,10 @@ class Visitor(object):
     Base class for Graph Visitors that does nothing.
     Sub-classes can override any method to implement specific algorithms.
     """
-    def __init__(self, reverse):
+    def __init__(self, reverse, dependenciesOnly):
         super(Visitor, self).__init__()
         self.reverse = reverse
+        self.dependenciesOnly = dependenciesOnly
 
     # def initializeVertex(self, s, g):
     #     '''is invoked on every vertex of the graph before the start of the graph search.'''
@@ -383,7 +384,7 @@ class Graph(BaseObject):
         Returns:
             OrderedDict[Node, Node]: the source->duplicate map
         """
-        srcNodes, srcEdges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True)
+        srcNodes, srcEdges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True, dependenciesOnly=True)
         # use OrderedDict to keep duplicated nodes creation order
         duplicates = OrderedDict()
 
@@ -581,13 +582,13 @@ class Graph(BaseObject):
     def edge(self, dstAttributeName):
         return self._edges.get(dstAttributeName)
 
-    def getLeafNodes(self):
-        nodesWithOutput = set([edge.src.node for edge in self.edges])
-        return set(self._nodes) - nodesWithOutput
+    def getLeafNodes(self, dependenciesOnly):
+        nodesWithOutputLink = set([edge.src.node for edge in self.getEdges(dependenciesOnly)])
+        return set(self._nodes) - nodesWithOutputLink
 
-    def getRootNodes(self):
-        nodesWithInput = set([edge.dst.node for edge in self.edges])
-        return set(self._nodes) - nodesWithInput
+    def getRootNodes(self, dependenciesOnly):
+        nodesWithInputLink = set([edge.dst.node for edge in self.getEdges(dependenciesOnly)])
+        return set(self._nodes) - nodesWithInputLink
 
     @changeTopology
     def addEdge(self, srcAttr, dstAttr):
@@ -635,21 +636,21 @@ class Graph(BaseObject):
         minDepth, maxDepth = self._nodesMinMaxDepths[node]
         return minDepth if minimal else maxDepth
 
-    def getInputEdges(self, node):
-        return set([edge for edge in self.edges if edge.dst.node is node])
+    def getInputEdges(self, node, dependenciesOnly):
+        return set([edge for edge in self.getEdges(dependenciesOnly=dependenciesOnly) if edge.dst.node is node])
 
-    def _getInputEdgesPerNode(self):
+    def _getInputEdgesPerNode(self, dependenciesOnly):
         nodeEdges = defaultdict(set)
 
-        for edge in self.edges:
+        for edge in self.getEdges(dependenciesOnly=dependenciesOnly):
             nodeEdges[edge.dst.node].add(edge.src.node)
 
         return nodeEdges
 
-    def _getOutputEdgesPerNode(self):
+    def _getOutputEdgesPerNode(self, dependenciesOnly):
         nodeEdges = defaultdict(set)
 
-        for edge in self.edges:
+        for edge in self.getEdges(dependenciesOnly=dependenciesOnly):
             nodeEdges[edge.src.node].add(edge.dst.node)
 
         return nodeEdges
@@ -657,7 +658,7 @@ class Graph(BaseObject):
     def dfs(self, visitor, startNodes=None, longestPathFirst=False):
         # Default direction (visitor.reverse=False): from node to root
         # Reverse direction (visitor.reverse=True): from node to leaves
-        nodeChildren = self._getOutputEdgesPerNode() if visitor.reverse else self._getInputEdgesPerNode()
+        nodeChildren = self._getOutputEdgesPerNode(visitor.dependenciesOnly) if visitor.reverse else self._getInputEdgesPerNode(visitor.dependenciesOnly)
         # Initialize color map
         colors = {}
         for u in self._nodes:
@@ -668,7 +669,7 @@ class Graph(BaseObject):
             # it is not possible to handle this case at the moment
             raise NotImplementedError("Graph.dfs(): longestPathFirst=True and visitor.reverse=True are not compatible yet.")
 
-        nodes = startNodes or (self.getRootNodes() if visitor.reverse else self.getLeafNodes())
+        nodes = startNodes or (self.getRootNodes(visitor.dependenciesOnly) if visitor.reverse else self.getLeafNodes(visitor.dependenciesOnly))
 
         if longestPathFirst:
             # Graph topology must be known and node depths up-to-date
@@ -711,7 +712,7 @@ class Graph(BaseObject):
         colors[u] = BLACK
         visitor.finishVertex(u, self)
 
-    def dfsOnFinish(self, startNodes=None, longestPathFirst=False, reverse=False):
+    def dfsOnFinish(self, startNodes=None, longestPathFirst=False, reverse=False, dependenciesOnly=False):
         """
         Return the node chain from startNodes to the graph roots/leaves.
         Order is defined by the visit and finishVertex event.
@@ -728,13 +729,13 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor(reverse=reverse)
+        visitor = Visitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
         visitor.finishVertex = lambda vertex, graph: nodes.append(vertex)
         visitor.finishEdge = lambda edge, graph: edges.append(edge)
         self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=longestPathFirst)
         return nodes, edges
 
-    def dfsOnDiscover(self, startNodes=None, filterTypes=None, longestPathFirst=False, reverse=False):
+    def dfsOnDiscover(self, startNodes=None, filterTypes=None, longestPathFirst=False, reverse=False, dependenciesOnly=False):
         """
         Return the node chain from startNodes to the graph roots/leaves.
         Order is defined by the visit and discoverVertex event.
@@ -753,7 +754,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor(reverse=reverse)
+        visitor = Visitor(reverse=reverse, dependenciesOnly=dependenciesOnly)
 
         def discoverVertex(vertex, graph):
             if not filterTypes or vertex.nodeType in filterTypes:
@@ -777,7 +778,7 @@ class Graph(BaseObject):
         """
         nodes = []
         edges = []
-        visitor = Visitor(reverse=False)
+        visitor = Visitor(reverse=False, dependenciesOnly=True)
 
         def discoverVertex(vertex, graph):
             if vertex.hasStatus(Status.SUCCESS):
@@ -832,7 +833,7 @@ class Graph(BaseObject):
         self._computationBlocked.clear()
 
         compatNodes = []
-        visitor = Visitor(reverse=False)
+        visitor = Visitor(reverse=False, dependenciesOnly=True)
 
         def discoverVertex(vertex, graph):
             # initialize depths
@@ -866,7 +867,7 @@ class Graph(BaseObject):
             # propagate inputVertex computability
             self._computationBlocked[currentVertex] |= self._computationBlocked[inputVertex]
 
-        leaves = self.getLeafNodes()
+        leaves = self.getLeafNodes(visitor.dependenciesOnly)
         visitor.finishEdge = finishEdge
         visitor.discoverVertex = discoverVertex
         self.dfs(visitor=visitor, startNodes=leaves)
@@ -890,7 +891,7 @@ class Graph(BaseObject):
         """
         nodesStack = []
         edgesScore = defaultdict(lambda: 0)
-        visitor = Visitor(reverse=False)
+        visitor = Visitor(reverse=False, dependenciesOnly=False)
 
         def finishEdge(edge, graph):
             u, v = edge
@@ -926,18 +927,34 @@ class Graph(BaseObject):
                 flowEdges.append(link)
         return flowEdges
 
-    def getInputNodes(self, node, recursive=False):
+    def getEdges(self, dependenciesOnly=False):
+        if not dependenciesOnly:
+            return self.edges
+
+        outEdges = []
+        for e in self.edges:
+            attr = e.src
+            if dependenciesOnly:
+                if attr.isLink:
+                    attr = attr.getLinkParam(recursive=True)
+                if not attr.isOutput:
+                    continue
+            newE = Edge(attr, e.dst)
+            outEdges.append(newE)
+        return outEdges
+
+    def getInputNodes(self, node, recursive, dependenciesOnly):
         """ Return either the first level input nodes of a node or the whole chain. """
         if not recursive:
-            return set([edge.src.node for edge in self.edges if edge.dst.node is node])
+            return set([edge.src.node for edge in self.getEdges(dependenciesOnly) if edge.dst.node is node])
 
         inputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=False)
         return inputNodes[1:]  # exclude current node
 
-    def getOutputNodes(self, node, recursive=False):
+    def getOutputNodes(self, node, recursive, dependenciesOnly):
         """ Return either the first level output nodes of a node or the whole chain. """
         if not recursive:
-            return set([edge.dst.node for edge in self.edges if edge.src.node is node])
+            return set([edge.dst.node for edge in self.getEdges(dependenciesOnly) if edge.src.node is node])
 
         outputNodes, edges = self.dfsOnDiscover(startNodes=[node], filterTypes=None, reverse=True)
         return outputNodes[1:]  # exclude current node
@@ -957,8 +974,8 @@ class Graph(BaseObject):
             return 0
 
         class SCVisitor(Visitor):
-            def __init__(self, reverse):
-                super(SCVisitor, self).__init__(reverse)
+            def __init__(self, reverse, dependenciesOnly):
+                super(SCVisitor, self).__init__(reverse, dependenciesOnly)
 
             canCompute = True
             canSubmit = True
@@ -969,7 +986,7 @@ class Graph(BaseObject):
                     if vertex.isExtern():
                         self.canCompute = False
 
-        visitor = SCVisitor(reverse=False)
+        visitor = SCVisitor(reverse=False, dependenciesOnly=True)
         self.dfs(visitor=visitor, startNodes=[startNode])
         return visitor.canCompute + (2 * visitor.canSubmit)
 
@@ -1131,7 +1148,7 @@ class Graph(BaseObject):
 
     @Slot(Node)
     def clearDataFrom(self, startNode):
-        for node in self.dfsOnDiscover(startNodes=[startNode], reverse=True)[0]:
+        for node in self.dfsOnDiscover(startNodes=[startNode], reverse=True, dependenciesOnly=True)[0]:
             node.clearData()
 
     def iterChunksByStatus(self, status):

@@ -589,11 +589,11 @@ class BaseNode(BaseObject):
     def minDepth(self):
         return self.graph.getDepth(self, minimal=True)
 
-    def getInputNodes(self, recursive=False):
-        return self.graph.getInputNodes(self, recursive=recursive)
+    def getInputNodes(self, recursive, dependenciesOnly):
+        return self.graph.getInputNodes(self, recursive=recursive, dependenciesOnly=dependenciesOnly)
 
-    def getOutputNodes(self, recursive=False):
-        return self.graph.getOutputNodes(self, recursive=recursive)
+    def getOutputNodes(self, recursive, dependenciesOnly):
+        return self.graph.getOutputNodes(self, recursive=recursive, dependenciesOnly=dependenciesOnly)
 
     def toDict(self):
         pass
@@ -883,7 +883,7 @@ class BaseNode(BaseObject):
         # Warning: we must handle some specific cases for global start/stop
         if self._locked and currentStatus in (Status.ERROR, Status.STOPPED, Status.NONE):
             self.setLocked(False)
-            inputNodes = self.getInputNodes(recursive=True)
+            inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
 
             for node in inputNodes:
                 if node.getGlobalStatus() == Status.RUNNING:
@@ -901,8 +901,8 @@ class BaseNode(BaseObject):
 
         if currentStatus == Status.SUCCESS:
             # At this moment, the node is necessarily locked because of previous if statement
-            inputNodes = self.getInputNodes(recursive=True)
-            outputNodes = self.getOutputNodes(recursive=True)
+            inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
+            outputNodes = self.getOutputNodes(recursive=True, dependenciesOnly=True)
             stayLocked = None
 
             # Check if at least one dependentNode is submitted or currently running

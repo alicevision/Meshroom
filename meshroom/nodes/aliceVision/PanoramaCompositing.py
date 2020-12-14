@@ -10,6 +10,7 @@ class PanoramaCompositing(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaCompositing {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    parallelization = desc.Parallelization(blockSize=5)
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
@@ -36,16 +37,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='outputFileType',
-            label='Output File Type',
-            description='Output file type for the undistorted images.',
-            value='exr',
-            values=['jpg', 'png', 'tif', 'exr'],
-            exclusive=True,
-            uid=[0],
-            group='', # not part of allParams, as this is not a parameter for the command line
-        ),
-        desc.ChoiceParam(
             name='compositerType',
             label='Compositer Type',
             description='Which compositer should be used to blend images:\n'
@@ -56,13 +47,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             values=['replace', 'alpha', 'multiband'],
             exclusive=True,
             uid=[0]
-        ),
-        desc.BoolParam(
-            name='useGraphCut',
-            label='Use Smart Seams',
-            description='Use a graphcut algorithm to optmize seams for better transitions between images.',
-            value=True,
-            uid=[0],
         ),
         desc.ChoiceParam(
             name='storageDataType',
@@ -76,20 +60,6 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             values=['float', 'half', 'halfFinite', 'auto'],
             exclusive=True,
             uid=[0],
-        ),
-        desc.ChoiceParam(
-            name='overlayType',
-            label='Overlay Type',
-            description='Overlay on top of panorama to analyze transitions:\n'
-                        ' * none: no overlay\n'
-                        ' * borders: display image borders\n'
-                        ' * seams: display transitions between images\n'
-                        ' * all: display borders and seams\n',
-            value='none',
-            values=['none', 'borders', 'seams', 'all'],
-            exclusive=True,
-            advanced=True,
-            uid=[0]
         ),
         desc.File(
             name='customCacheFolder',
@@ -114,9 +84,9 @@ Multiple cameras are contributing to the low frequencies and only the best one c
     outputs = [
         desc.File(
             name='output',
-            label='Output Panorama',
+            label='Output Folder',
             description='',
-            value=desc.Node.internalFolder + 'panorama.{outputFileTypeValue}',
+            value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(

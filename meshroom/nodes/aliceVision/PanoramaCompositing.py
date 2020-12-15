@@ -11,6 +11,8 @@ class PanoramaCompositing(desc.CommandLineNode):
     size = desc.DynamicNodeSize('input')
 
     parallelization = desc.Parallelization(blockSize=5)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
+    
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 

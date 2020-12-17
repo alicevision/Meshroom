@@ -6,21 +6,13 @@ import os
 from meshroom.core import desc
 
 
-class PanoramaCompositing(desc.CommandLineNode):
-    commandLine = 'aliceVision_panoramaCompositing {allParams}'
+class PanoramaMerging(desc.CommandLineNode):
+    commandLine = 'aliceVision_panoramaMerging {allParams}'
     size = desc.DynamicNodeSize('input')
 
-    parallelization = desc.Parallelization(blockSize=5)
-    commandLineRange = '--rangeIteration {rangeIteration} --rangeSize {rangeBlockSize}'
-    
-    cpu = desc.Level.INTENSIVE
-    ram = desc.Level.INTENSIVE
 
     documentation = '''
-Once the images have been transformed geometrically (in PanoramaWarping),
-they have to be fused together in a single panorama image which looks like a single photography.
-The Multi-band Blending method provides the best quality. It averages the pixel values using multiple bands in the frequency domain.
-Multiple cameras are contributing to the low frequencies and only the best one contributes to the high frequencies.
+Merge all inputs coming from PanoramaComposiring
 '''
 
     inputs = [
@@ -32,23 +24,21 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             uid=[0],
         ),
         desc.File(
-            name='warpingFolder',
-            label='Warping Folder',
-            description="Panorama Warping results",
+            name='compositingFolder',
+            label='compositing Folder',
+            description="Panorama Compositing results",
             value='',
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='compositerType',
-            label='Compositer Type',
-            description='Which compositer should be used to blend images:\n'
-                        ' * multiband: high quality transition by fusing images by frequency bands\n'
-                        ' * replace: debug option with straight transitions\n'
-                        ' * alpha: debug option with linear transitions\n',
-            value='multiband',
-            values=['replace', 'alpha', 'multiband'],
+            name='outputFileType',
+            label='Output File Type',
+            description='Output file type for the undistorted images.',
+            value='exr',
+            values=['jpg', 'png', 'tif', 'exr'],
             exclusive=True,
-            uid=[0]
+            uid=[0],
+            group='', # not part of allParams, as this is not a parameter for the command line
         ),
         desc.ChoiceParam(
             name='storageDataType',
@@ -76,10 +66,10 @@ Multiple cameras are contributing to the low frequencies and only the best one c
 
     outputs = [
         desc.File(
-            name='output',
+            name='outputPanorama',
             label='Output Folder',
             description='',
-            value=desc.Node.internalFolder,
+            value=desc.Node.internalFolder + 'panorama.{outputFileTypeValue}',
             uid=[],
-        )
+        ),
     ]

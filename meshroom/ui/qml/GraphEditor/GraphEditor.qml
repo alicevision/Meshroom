@@ -236,10 +236,10 @@ Item {
                 model: nodeRepeater.loaded && root.graph ? root.graph.edges : undefined
 
                 delegate: Edge {
-                    property var src: edge ? root._attributeToDelegate[edge.src] : undefined
-                    property var dst: edge ? root._attributeToDelegate[edge.dst] : undefined
-                    property var srcAnchor: src.nodeItem.mapFromItem(src, src.outputAnchorPos.x, src.outputAnchorPos.y)
-                    property var dstAnchor: dst.nodeItem.mapFromItem(dst, dst.inputAnchorPos.x, dst.inputAnchorPos.y)
+                    property var src: root._attributeToDelegate[edge.src]
+                    property var dst: root._attributeToDelegate[edge.dst]
+                    property bool isValidEdge: src != undefined && dst != undefined
+                    visible: isValidEdge
 
                     property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge == edge)
 
@@ -247,10 +247,10 @@ Item {
                     color: inFocus ? activePalette.highlight : activePalette.text
                     thickness: inFocus ? 2 : 1
                     opacity: 0.7
-                    point1x: src.nodeItem.x + srcAnchor.x
-                    point1y: src.nodeItem.y + srcAnchor.y
-                    point2x: dst.nodeItem.x + dstAnchor.x
-                    point2y: dst.nodeItem.y + dstAnchor.y
+                    point1x: isValidEdge ? src.globalX + src.outputAnchorPos.x : 0
+                    point1y: isValidEdge ? src.globalY + src.outputAnchorPos.y : 0
+                    point2x: isValidEdge ? dst.globalX + dst.inputAnchorPos.x : 0
+                    point2y: isValidEdge ? dst.globalY + dst.inputAnchorPos.y : 0
                     onPressed: {
                         const canEdit = !edge.dst.node.locked
 

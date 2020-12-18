@@ -137,7 +137,7 @@ class Attribute(BaseObject):
         self.valueChanged.emit()
 
     def resetValue(self):
-        self._value = ""
+        self._value = self.attributeDesc.value
 
     def requestGraphUpdate(self):
         if self.node.graph:

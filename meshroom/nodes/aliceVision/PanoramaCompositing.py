@@ -50,6 +50,15 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             exclusive=True,
             uid=[0]
         ),
+        desc.IntParam(
+            name='maxThreads',
+            label='Max Nb Threads',
+            description='Specifies the maximum number of threads to run simultaneously.',
+            value=1,
+            range=(1, 48, 1),
+            uid=[],
+            advanced=True,
+        ),
         desc.ChoiceParam(
             name='storageDataType',
             label='Storage Data Type',

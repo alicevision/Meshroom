@@ -24,10 +24,10 @@ def findMetadata(d, keys, defaultValue):
 
 
 class DividedInputNodeSize(desc.DynamicNodeSize):
-    """
+    '''
     The LDR2HDR will reduce the amount of views in the SfMData.
     This class converts the number of LDR input views into the number of HDR output views.
-    """
+    '''
     def __init__(self, param, divParam):
         super(DividedInputNodeSize, self).__init__(param)
         self._divParam = divParam

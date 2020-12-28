@@ -82,16 +82,18 @@ RowLayout {
 
             keys: [inputDragTarget.objectName]
             onEntered: {
-                // Filter drops:
-                  if( root.readOnly
-                   || drag.source.objectName != inputDragTarget.objectName  // not an edge connector
-                   || drag.source.nodeItem == inputDragTarget.nodeItem   // connection between attributes of the same node
-                   || inputDragTarget.attribute.isLink                    // already connected attribute
-                   || (drag.source.isList && !inputDragTarget.isList)     // connection between a list and a simple attribute
-                   || (drag.source.isList && childrenRepeater.count) // source/target are lists but target already has children
-                   || drag.source.connectorType == "input"
-                   )
+                // Check if attributes are compatible to create a valid connection
+                if( root.readOnly                                         // cannot connect on a read-only attribute
+                  || drag.source.objectName != inputDragTarget.objectName // not an edge connector
+                  || drag.source.baseType != inputDragTarget.baseType     // not the same base type
+                  || drag.source.nodeItem == inputDragTarget.nodeItem     // connection between attributes of the same node
+                  || inputDragTarget.attribute.isLink                     // already connected attribute
+                  || (drag.source.isList && !inputDragTarget.isList)      // connection between a list and a simple attribute
+                  || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
+                  || drag.source.connectorType == "input"                 // refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
+                  )
                 {
+                    // Refuse attributes connection
                     drag.accepted = false
                 }
                 inputDropArea.acceptableDrop = drag.accepted
@@ -112,7 +114,8 @@ RowLayout {
             readonly property string connectorType: "input"
             readonly property alias attribute: root.attribute
             readonly property alias nodeItem: root.nodeItem
-            readonly property bool isOutput: attribute && attribute.isOutput
+            readonly property bool isOutput: attribute.isOutput
+            readonly property string baseType: attribute.baseType
             readonly property alias isList: root.isList
             property bool dragAccepted: false
             anchors.verticalCenter: parent.verticalCenter
@@ -219,15 +222,17 @@ RowLayout {
 
             keys: [outputDragTarget.objectName]
             onEntered: {
-                // Filter drops:
-                if( drag.source.objectName != outputDragTarget.objectName  // not an edge connector
-                   ||  drag.source.nodeItem == outputDragTarget.nodeItem   // connection between attributes of the same node
-                   || drag.source.attribute.isLink                                   // already connected attribute
-                   || (!drag.source.isList && outputDragTarget.isList)     // connection between a list and a simple attribute
-                   || (drag.source.isList && childrenRepeater.count) // source/target are lists but target already has children
-                   || drag.source.connectorType == "output"
-                   )
+                // Check if attributes are compatible to create a valid connection
+                if( drag.source.objectName != outputDragTarget.objectName // not an edge connector
+                  || drag.source.baseType != outputDragTarget.baseType    // not the same base type
+                  || drag.source.nodeItem == outputDragTarget.nodeItem    // connection between attributes of the same node
+                  || drag.source.attribute.isLink                         // already connected attribute
+                  || (!drag.source.isList && outputDragTarget.isList)     // connection between a list and a simple attribute
+                  || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
+                  || drag.source.connectorType == "output"                // refuse to connect an output pin on another one
+                  )
                 {
+                    // Refuse attributes connection
                     drag.accepted = false
                 }
                 outputDropArea.acceptableDrop = drag.accepted
@@ -249,6 +254,7 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: attribute.isOutput
             readonly property alias isList: root.isList
+            readonly property string baseType: attribute.baseType
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter

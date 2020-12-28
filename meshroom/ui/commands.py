@@ -227,6 +227,9 @@ class AddEdgeCommand(GraphCommand):
         self.dstAttr = dst.getFullName()
         self.setText("Connect '{}'->'{}'".format(self.srcAttr, self.dstAttr))
 
+        if src.baseType != dst.baseType:
+            raise ValueError("Attribute types are not compatible and cannot be connected: '{}'({})->'{}'({})".format(self.srcAttr, src.baseType, self.dstAttr, dst.baseType))
+
     def redoImpl(self):
         self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))
         return True

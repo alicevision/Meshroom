@@ -918,7 +918,7 @@ class BaseNode(BaseObject):
             return
         elif currentStatus in lockedStatus and self._chunks.at(0).statusNodeName == self.name:
             self.setLocked(True)
-            inputNodes = self.getInputNodes(recursive=True)
+            inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
             for node in inputNodes:
                 node.setLocked(True)
             return

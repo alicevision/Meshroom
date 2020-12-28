@@ -211,11 +211,15 @@ def panoramaHdrPipeline(graph):
     ldr2hdrCalibration = graph.addNewNode('LdrToHdrCalibration',
                                input=ldr2hdrSampling.input,
                                userNbBrackets=ldr2hdrSampling.userNbBrackets,
+                               byPass=ldr2hdrSampling.byPass,
+                               channelQuantizationPower=ldr2hdrSampling.channelQuantizationPower,
                                samples=ldr2hdrSampling.output)
 
     ldr2hdrMerge = graph.addNewNode('LdrToHdrMerge',
                                input=ldr2hdrCalibration.input,
                                userNbBrackets=ldr2hdrCalibration.userNbBrackets,
+                               byPass=ldr2hdrCalibration.byPass,
+                               channelQuantizationPower=ldr2hdrCalibration.channelQuantizationPower,
                                response=ldr2hdrCalibration.response)
 
     featureExtraction = graph.addNewNode('FeatureExtraction',

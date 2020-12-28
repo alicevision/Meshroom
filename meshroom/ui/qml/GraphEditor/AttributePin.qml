@@ -155,7 +155,7 @@ RowLayout {
             point1y: inputDragTarget.y + inputDragTarget.height/2
             point2x: parent.width / 2
             point2y: parent.width / 2
-            color: nameLabel.color
+            color: palette.highlight
             thickness: outputDragTarget.dropAccepted ? 2 : 1
         }
     }
@@ -171,6 +171,7 @@ RowLayout {
         Label {
             id: nameLabel
 
+            enabled: !root.readOnly
             property bool hovered: (inputConnectMA.containsMouse || inputConnectMA.drag.active || inputDropArea.containsDrag || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag)
             text: attribute ? attribute.label : ""
             elide: hovered ? Text.ElideNone : Text.ElideMiddle
@@ -289,7 +290,7 @@ RowLayout {
             point1y: parent.width / 2
             point2x: outputDragTarget.x + outputDragTarget.width/2
             point2y: outputDragTarget.y + outputDragTarget.height/2
-            color: nameLabel.color
+            color: palette.highlight
             thickness: outputDragTarget.dropAccepted ? 2 : 1
         }
     }

@@ -270,7 +270,7 @@ Item {
                     height: childrenRect.height
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    enabled: !root.readOnly && !root.isCompatibilityNode
+                    enabled: !root.isCompatibilityNode
 
                     Column {
                         id: attributesColumn
@@ -299,7 +299,6 @@ Item {
                                         property real globalX: root.x + nodeAttributes.x + outputs.x + outputLoader.x + outPin.x
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
 
-                                        readOnly: root.readOnly
                                         onPressed: root.pressed(mouse)
                                         Component.onCompleted: attributePinCreated(object, outPin)
                                         Component.onDestruction: attributePinDeleted(attribute, outPin)

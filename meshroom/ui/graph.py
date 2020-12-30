@@ -411,7 +411,7 @@ class UIGraph(QObject):
             node.clearSubmittedChunks()
             self._taskManager.removeNode(node, displayList=True, processList=True)
 
-            for n in node.getOutputNodes(recursive=True):
+            for n in node.getOutputNodes(recursive=True, dependenciesOnly=True):
                 n.clearSubmittedChunks()
                 self._taskManager.removeNode(n, displayList=True, processList=True)
 

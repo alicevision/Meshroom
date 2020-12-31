@@ -44,7 +44,7 @@ Compute the image warping for each input image in the panorama coordinate system
         ),
         desc.IntParam(
             name='percentUpscale',
-            label='Upscale ratio',
+            label='Upscale Ratio',
             description='Percentage of upscaled pixels.\n'
                         '\n'
                         'How many percent of the pixels will be upscaled (compared to its original resolution):\n'

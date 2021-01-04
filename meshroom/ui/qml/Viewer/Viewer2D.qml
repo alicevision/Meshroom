@@ -123,6 +123,8 @@ FocusScope {
     }
 
     function getImageFile(type) {
+        if(!_reconstruction.activeNodes)
+            return "";
         var depthMapNode = _reconstruction.activeNodes.get('allDepthMap').node;
         if (type == "image") {
             return root.source;

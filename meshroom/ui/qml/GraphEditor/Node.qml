@@ -27,6 +27,11 @@ Item {
     readonly property color defaultColor: isCompatibilityNode ? "#444" : activePalette.base
     property color baseColor: defaultColor
 
+    Item {
+        id: m
+        property bool displayParams: false
+    }
+
     // Mouse interaction related signals
     signal pressed(var mouse)
     signal doubleClicked(var mouse)
@@ -60,7 +65,7 @@ Item {
     }
 
     // Whether an attribute can be displayed as an attribute pin on the node
-    function isDisplayableAsPin(attribute) {
+    function isFileAttributeBaseType(attribute) {
         // ATM, only File attributes are meant to be connected
         // TODO: review this if we want to connect something else
         return attribute.type == "File"
@@ -110,7 +115,7 @@ Item {
 
         // Selection border
         Rectangle {
-            anchors.fill: parent
+            anchors.fill: nodeContent
             anchors.margins: -border.width
             visible: root.selected || root.hovered
             border.width: 2.5
@@ -120,10 +125,9 @@ Item {
             color: "transparent"
         }
 
-        // Background
         Rectangle {
             id: background
-            anchors.fill: parent
+            anchors.fill: nodeContent
             color: Qt.lighter(activePalette.base, 1.4)
             layer.enabled: true
             layer.effect: DropShadow { radius: 3; color: shadowColor }
@@ -131,190 +135,281 @@ Item {
             opacity: 0.7
         }
 
-        // Data Layout
-        Column {
-            id: body
+        Rectangle {
+            id: nodeContent
             width: parent.width
+            height: childrenRect.height
+            color: "transparent"
 
-            // Header
-            Rectangle {
-                id: header
+            // Data Layout
+            Column {
+                id: body
                 width: parent.width
-                height: headerLayout.height
-                color: root.selected ? activePalette.highlight : root.baseColor
-                radius: background.radius
 
-                // Fill header's bottom radius
+                // Header
                 Rectangle {
+                    id: header
                     width: parent.width
-                    height: parent.radius
-                    anchors.bottom: parent.bottom
-                    color: parent.color
-                    z: -1
-                }
+                    height: headerLayout.height
+                    color: root.selected ? activePalette.highlight : root.baseColor
+                    radius: background.radius
 
-                // Header Layout
-                RowLayout {
-                    id: headerLayout
-                    width: parent.width
-                    spacing: 0
-
-                    // Node Name
-                    Label {
-                        Layout.fillWidth: true
-                        text: node ? node.label : ""
-                        padding: 4
-                        color: root.selected ? "white" : activePalette.text
-                        elide: Text.ElideMiddle
-                        font.pointSize: 8
+                    // Fill header's bottom radius
+                    Rectangle {
+                        width: parent.width
+                        height: parent.radius
+                        anchors.bottom: parent.bottom
+                        color: parent.color
+                        z: -1
                     }
 
-                    // Node State icons
+                    // Header Layout
                     RowLayout {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignRight
-                        Layout.rightMargin: 2
-                        spacing: 2
+                        id: headerLayout
+                        width: parent.width
+                        spacing: 0
 
-                        // CompatibilityBadge icon for CompatibilityNodes
-                        Loader {
-                            active: root.isCompatibilityNode
-                            sourceComponent: CompatibilityBadge {
-                                sourceComponent: iconDelegate
-                                canUpgrade: root.node.canUpgrade
-                                issueDetails: root.node.issueDetails
+                        // Node Name
+                        Label {
+                            Layout.fillWidth: true
+                            text: node ? node.label : ""
+                            padding: 4
+                            color: root.selected ? "white" : activePalette.text
+                            elide: Text.ElideMiddle
+                            font.pointSize: 8
+                        }
+
+                        // Node State icons
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignRight
+                            Layout.rightMargin: 2
+                            spacing: 2
+
+                            // CompatibilityBadge icon for CompatibilityNodes
+                            Loader {
+                                active: root.isCompatibilityNode
+                                sourceComponent: CompatibilityBadge {
+                                    sourceComponent: iconDelegate
+                                    canUpgrade: root.node.canUpgrade
+                                    issueDetails: root.node.issueDetails
+                                }
                             }
-                        }
 
-                        // Data sharing indicator
-                        // Note: for an unknown reason, there are some performance issues with the UI refresh.
-                        // Example: a node duplicated 40 times will be slow while creating another identical node
-                        // (sharing the same uid) will not be as slow. If save, quit and reload, it will become slow.
-                        MaterialToolButton {
-                            property string baseText: "<b>Shares internal folder (data) with other node(s). Hold click for details.</b>"
-                            property string toolTipText: visible ? baseText : ""
-                            visible: node.hasDuplicates
-                            text: MaterialIcons.layers
-                            font.pointSize: 7
-                            padding: 2
-                            palette.text: Colors.sysPalette.text
-                            ToolTip.text: toolTipText
+                            // Data sharing indicator
+                            // Note: for an unknown reason, there are some performance issues with the UI refresh.
+                            // Example: a node duplicated 40 times will be slow while creating another identical node
+                            // (sharing the same uid) will not be as slow. If save, quit and reload, it will become slow.
+                            MaterialToolButton {
+                                property string baseText: "<b>Shares internal folder (data) with other node(s). Hold click for details.</b>"
+                                property string toolTipText: visible ? baseText : ""
+                                visible: node.hasDuplicates
+                                text: MaterialIcons.layers
+                                font.pointSize: 7
+                                padding: 2
+                                palette.text: Colors.sysPalette.text
+                                ToolTip.text: toolTipText
 
-                            onPressed: { offsetReleased.running = false; toolTipText = visible ? generateDuplicateList() : "" }
-                            onReleased: { toolTipText = "" ; offsetReleased.running = true }
-                            onCanceled: released()
+                                onPressed: { offsetReleased.running = false; toolTipText = visible ? generateDuplicateList() : "" }
+                                onReleased: { toolTipText = "" ; offsetReleased.running = true }
+                                onCanceled: released()
 
-                            // Used for a better user experience with the button
-                            // Avoid to change the text too quickly
-                            Timer {
-                                id: offsetReleased
-                                interval: 750; running: false; repeat: false
-                                onTriggered: parent.toolTipText = visible ? parent.baseText : ""
+                                // Used for a better user experience with the button
+                                // Avoid to change the text too quickly
+                                Timer {
+                                    id: offsetReleased
+                                    interval: 750; running: false; repeat: false
+                                    onTriggered: parent.toolTipText = visible ? parent.baseText : ""
+                                }
                             }
-                        }
 
-                        // Submitted externally indicator
-                        MaterialLabel {
-                            visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.globalExecMode === "EXTERN"
-                            text: MaterialIcons.cloud
-                            padding: 2
-                            font.pointSize: 7
-                            palette.text: Colors.sysPalette.text
-                            ToolTip.text: "Computed Externally"
-                        }
+                            // Submitted externally indicator
+                            MaterialLabel {
+                                visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.globalExecMode === "EXTERN"
+                                text: MaterialIcons.cloud
+                                padding: 2
+                                font.pointSize: 7
+                                palette.text: Colors.sysPalette.text
+                                ToolTip.text: "Computed Externally"
+                            }
 
-                        // Lock indicator
-                        MaterialLabel {
-                            visible: root.readOnly
-                            text: MaterialIcons.lock
-                            padding: 2
-                            font.pointSize: 7
-                            palette.text: "red"
-                            ToolTip.text: "Locked"
+                            // Lock indicator
+                            MaterialLabel {
+                                visible: root.readOnly
+                                text: MaterialIcons.lock
+                                padding: 2
+                                font.pointSize: 7
+                                palette.text: "red"
+                                ToolTip.text: "Locked"
+                            }
                         }
                     }
                 }
-            }
 
-            // Node Chunks
-           NodeChunks {
-               defaultColor: Colors.sysPalette.mid
-               implicitHeight: 3
-               width: parent.width
-               model: node ? node.chunks : undefined
+                // Node Chunks
+               NodeChunks {
+                   defaultColor: Colors.sysPalette.mid
+                   implicitHeight: 3
+                   width: parent.width
+                   model: node ? node.chunks : undefined
 
-               Rectangle {
-                   anchors.fill: parent
-                   color: Colors.sysPalette.mid
-                   z: -1
+                   Rectangle {
+                       anchors.fill: parent
+                       color: Colors.sysPalette.mid
+                       z: -1
+                   }
                }
-           }
 
-            // Vertical Spacer
-            Item { width: parent.width; height: 2 }
+                // Vertical Spacer
+                Item { width: parent.width; height: 2 }
 
-            // Input/Output Attributes
-            Item {
-                id: nodeAttributes
-                width: parent.width - 2
-                height: childrenRect.height
-                anchors.horizontalCenter: parent.horizontalCenter
+                // Input/Output Attributes
+                Item {
+                    id: nodeAttributes
+                    width: parent.width - 2
+                    height: childrenRect.height
+                    anchors.horizontalCenter: parent.horizontalCenter
 
-                enabled: !root.readOnly && !root.isCompatibilityNode
-
-                Column {
-                    width: parent.width
-                    spacing: 5
-                    bottomPadding: 2
+                    enabled: !root.isCompatibilityNode
 
                     Column {
-                        id: outputs
+                        id: attributesColumn
                         width: parent.width
-                        spacing: 3
-                        Repeater {
-                            model: node ? node.attributes : undefined
+                        spacing: 5
+                        bottomPadding: 2
 
-                            delegate: Loader {
-                                id: outputLoader
-                                active: object.isOutput && isDisplayableAsPin(object)
-                                anchors.right: parent.right
-                                width: outputs.width
+                        Column {
+                            id: outputs
+                            width: parent.width
+                            spacing: 3
+                            Repeater {
+                                model: node ? node.attributes : undefined
 
-                                sourceComponent: AttributePin {
-                                    id: outPin
-                                    nodeItem: root
-                                    attribute: object
+                                delegate: Loader {
+                                    id: outputLoader
+                                    active: object.isOutput && isFileAttributeBaseType(object)
+                                    anchors.right: parent.right
+                                    width: outputs.width
 
-                                    readOnly: root.readOnly
-                                    onPressed: root.pressed(mouse)
-                                    Component.onCompleted: attributePinCreated(object, outPin)
-                                    Component.onDestruction: attributePinDeleted(attribute, outPin)
+                                    sourceComponent: AttributePin {
+                                        id: outPin
+                                        nodeItem: root
+                                        attribute: object
+
+                                        property real globalX: root.x + nodeAttributes.x + outputs.x + outputLoader.x + outPin.x
+                                        property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
+
+                                        onPressed: root.pressed(mouse)
+                                        Component.onCompleted: attributePinCreated(object, outPin)
+                                        Component.onDestruction: attributePinDeleted(attribute, outPin)
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    Column {
-                        id: inputs
-                        width: parent.width
-                        spacing: 3
-                        Repeater {
-                            model: node ? node.attributes : undefined
-                            delegate: Loader {
-                                active: !object.isOutput && isDisplayableAsPin(object)
-                                width: inputs.width
+                        Column {
+                            id: inputs
+                            width: parent.width
+                            spacing: 3
+                            Repeater {
+                                model: node ? node.attributes : undefined
+                                delegate: Loader {
+                                    id: inputLoader
+                                    active: !object.isOutput && isFileAttributeBaseType(object)
+                                    width: inputs.width
 
-                                sourceComponent: AttributePin {
-                                    id: inPin
-                                    nodeItem: root
-                                    attribute: object
-                                    readOnly: root.readOnly
-                                    Component.onCompleted: attributePinCreated(attribute, inPin)
-                                    Component.onDestruction: attributePinDeleted(attribute, inPin)
-                                    onPressed: root.pressed(mouse)
-                                    onChildPinCreated: attributePinCreated(childAttribute, inPin)
-                                    onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
+                                    sourceComponent: AttributePin {
+                                        id: inPin
+                                        nodeItem: root
+                                        attribute: object
+
+                                        property real globalX: root.x + nodeAttributes.x + inputs.x + inputLoader.x + inPin.x
+                                        property real globalY: root.y + nodeAttributes.y + inputs.y + inputLoader.y + inPin.y
+
+                                        readOnly: root.readOnly
+                                        Component.onCompleted: attributePinCreated(attribute, inPin)
+                                        Component.onDestruction: attributePinDeleted(attribute, inPin)
+                                        onPressed: root.pressed(mouse)
+                                        onChildPinCreated: attributePinCreated(childAttribute, inPin)
+                                        onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
+                                    }
                                 }
+                            }
+                        }
+
+                        // Vertical Spacer
+                        Rectangle {
+                            height: inputParams.height > 0 ? 3 : 0
+                            visible: (height == 3)
+                            Behavior on height { PropertyAnimation {easing.type: Easing.Linear} }
+                            width: parent.width
+                            color: Colors.sysPalette.mid
+                            MaterialToolButton {
+                                text: " "
+                                width: parent.width
+                                height: parent.height
+                                padding: 0
+                                spacing: 0
+                                anchors.margins: 0
+                                font.pointSize: 6
+                                onClicked: {
+                                    m.displayParams = ! m.displayParams
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            id: inputParamsRect
+                            width: parent.width
+                            height: childrenRect.height
+                            color: "transparent"
+
+                            Column {
+                                id: inputParams
+                                width: parent.width
+                                spacing: 3
+                                Repeater {
+                                    id: inputParamsRepeater
+                                    model: node ? node.attributes : undefined
+                                    delegate: Loader {
+                                        id: paramLoader
+                                        active: !object.isOutput && !isFileAttributeBaseType(object)
+                                        property bool isFullyActive: (m.displayParams || object.isLink || object.hasOutputConnections)
+                                        width: parent.width
+
+                                        sourceComponent: AttributePin {
+                                            id: inPin
+                                            nodeItem: root
+                                            property real globalX: root.x + nodeAttributes.x + inputParamsRect.x + paramLoader.x + inPin.x
+                                            property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inPin.y
+
+                                            height: isFullyActive ? childrenRect.height : 0
+                                            Behavior on height { PropertyAnimation {easing.type: Easing.Linear} }
+                                            visible: (height == childrenRect.height)
+                                            attribute: object
+                                            readOnly: root.readOnly
+                                            Component.onCompleted: attributePinCreated(attribute, inPin)
+                                            Component.onDestruction: attributePinDeleted(attribute, inPin)
+                                            onPressed: root.pressed(mouse)
+                                            onChildPinCreated: attributePinCreated(childAttribute, inPin)
+                                            onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        MaterialToolButton {
+                            text: root.hovered ? (m.displayParams ? MaterialIcons.arrow_drop_up : MaterialIcons.arrow_drop_down) : " "
+                            Layout.alignment: Qt.AlignBottom
+                            width: parent.width
+                            height: 5
+                            padding: 0
+                            spacing: 0
+                            anchors.margins: 0
+                            font.pointSize: 10
+                            onClicked: {
+                                m.displayParams = ! m.displayParams
                             }
                         }
                     }

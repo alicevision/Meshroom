@@ -129,7 +129,52 @@ FloatingPane {
             id: searchBar
             Layout.fillWidth: true
         }
-
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            Label {
+                font.family: MaterialIcons.fontFamily
+                text: MaterialIcons.shutter_speed
+            }
+            Label {
+                id: exposureLabel
+                text: {
+                    if(metadata["ExposureTime"] === undefined)
+                        return "";
+                    var expStr = metadata["ExposureTime"];
+                    var exp = parseFloat(expStr);
+                    if(exp < 1.0)
+                    {
+                        var invExp = 1.0 / exp;
+                        return "1/" + invExp.toFixed(0);
+                    }
+                    return expStr;
+                }
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHLeft
+            }
+            Item { width: 4 }
+            Label {
+                font.family: MaterialIcons.fontFamily
+                text: MaterialIcons.camera
+            }
+            Label {
+                id: fnumberLabel
+                text: (metadata["FNumber"] !== undefined) ? ("f/" + metadata["FNumber"]) : ""
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHLeft
+            }
+            Item { width: 4 }
+            Label {
+                font.family: MaterialIcons.fontFamily
+                text: MaterialIcons.iso
+            }
+            Label {
+                id: isoLabel
+                text: metadata["Exif:ISOSpeedRatings"] || ""
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHLeft
+            }
+        }
         // Metadata ListView
         ListView {
             id: metadataView

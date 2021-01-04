@@ -147,7 +147,7 @@ class TaskManager(BaseObject):
                 self.removeNode(node, displayList=False, processList=True)
 
                 # Remove output nodes from display and computing lists
-                outputNodes = node.getOutputNodes(recursive=True)
+                outputNodes = node.getOutputNodes(recursive=True, dependenciesOnly=True)
                 for n in outputNodes:
                     if n.getGlobalStatus() in (Status.ERROR, Status.SUBMITTED):
                         n.upgradeStatusTo(Status.NONE)
@@ -184,7 +184,7 @@ class TaskManager(BaseObject):
         else:
             # Check dependencies of toNodes
             if not toNodes:
-                toNodes = graph.getLeafNodes()
+                toNodes = graph.getLeafNodes(dependenciesOnly=True)
             toNodes = list(toNodes)
             allReady = self.checkNodesDependencies(graph, toNodes, "COMPUTATION")
 
@@ -402,7 +402,7 @@ class TaskManager(BaseObject):
 
         # Check dependencies of toNodes
         if not toNodes:
-            toNodes = graph.getLeafNodes()
+            toNodes = graph.getLeafNodes(dependenciesOnly=True)
         toNodes = list(toNodes)
         allReady = self.checkNodesDependencies(graph, toNodes, "SUBMITTING")
 

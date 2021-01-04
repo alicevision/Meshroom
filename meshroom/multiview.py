@@ -210,10 +210,16 @@ def panoramaHdrPipeline(graph):
 
     ldr2hdrCalibration = graph.addNewNode('LdrToHdrCalibration',
                                input=ldr2hdrSampling.input,
+                               userNbBrackets=ldr2hdrSampling.userNbBrackets,
+                               byPass=ldr2hdrSampling.byPass,
+                               channelQuantizationPower=ldr2hdrSampling.channelQuantizationPower,
                                samples=ldr2hdrSampling.output)
 
     ldr2hdrMerge = graph.addNewNode('LdrToHdrMerge',
                                input=ldr2hdrCalibration.input,
+                               userNbBrackets=ldr2hdrCalibration.userNbBrackets,
+                               byPass=ldr2hdrCalibration.byPass,
+                               channelQuantizationPower=ldr2hdrCalibration.channelQuantizationPower,
                                response=ldr2hdrCalibration.response)
 
     featureExtraction = graph.addNewNode('FeatureExtraction',
@@ -233,12 +239,14 @@ def panoramaHdrPipeline(graph):
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=imageMatching.input,
                                        featuresFolders=imageMatching.featuresFolders,
-                                       imagePairsList=imageMatching.output)
+                                       imagePairsList=imageMatching.output,
+                                       describerTypes=featureExtraction.describerTypes)
 
     panoramaEstimation = graph.addNewNode('PanoramaEstimation',
-                                           input=featureMatching.input,
-                                           featuresFolders=featureMatching.featuresFolders,
-                                           matchesFolders=[featureMatching.output])
+                                          input=featureMatching.input,
+                                          featuresFolders=featureMatching.featuresFolders,
+                                          matchesFolders=[featureMatching.output],
+                                          describerTypes=featureMatching.describerTypes)
 
     panoramaOrientation = graph.addNewNode('SfMTransform',
                                            input=panoramaEstimation.output,
@@ -340,11 +348,13 @@ def sfmPipeline(graph):
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=imageMatching.input,
                                        featuresFolders=imageMatching.featuresFolders,
-                                       imagePairsList=imageMatching.output)
+                                       imagePairsList=imageMatching.output,
+                                       describerTypes=featureExtraction.describerTypes)
     structureFromMotion = graph.addNewNode('StructureFromMotion',
                                            input=featureMatching.input,
                                            featuresFolders=featureMatching.featuresFolders,
-                                           matchesFolders=[featureMatching.output])
+                                           matchesFolders=[featureMatching.output],
+                                           describerTypes=featureMatching.describerTypes)
     return [
         cameraInit,
         featureExtraction,
@@ -419,16 +429,18 @@ def sfmAugmentation(graph, sourceSfm, withMVS=False):
     featureMatching = graph.addNewNode('FeatureMatching',
                                        input=imageMatchingMulti.outputCombinedSfM,
                                        featuresFolders=imageMatchingMulti.featuresFolders,
-                                       imagePairsList=imageMatchingMulti.output)
+                                       imagePairsList=imageMatchingMulti.output,
+                                       describerTypes=featureExtraction.describerTypes)
     structureFromMotion = graph.addNewNode('StructureFromMotion',
                                            input=featureMatching.input,
                                            featuresFolders=featureMatching.featuresFolders,
-                                           matchesFolders=[featureMatching.output])
+                                           matchesFolders=[featureMatching.output],
+                                           describerTypes=featureMatching.describerTypes)
     graph.addEdge(sourceSfm.output, imageMatchingMulti.inputB)
 
     sfmNodes = [
         cameraInit,
-        featureMatching,
+        featureExtraction,
         imageMatchingMulti,
         featureMatching,
         structureFromMotion

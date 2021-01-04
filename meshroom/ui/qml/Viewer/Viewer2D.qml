@@ -123,6 +123,8 @@ FocusScope {
     }
 
     function getImageFile(type) {
+        if(!_reconstruction.activeNodes)
+            return "";
         var depthMapNode = _reconstruction.activeNodes.get('allDepthMap').node;
         if (type == "image") {
             return root.source;
@@ -240,8 +242,7 @@ FocusScope {
                         }
 
                         // Image cache of the last loaded image
-                        // Only visible when the main one is loading, to keep an image
-                        // displayed at all time and smoothen transitions
+                        // Only visible when the main one is loading, to maintain a displayed image for smoother transitions
                         Image {
                             id: qtImageViewerCache
 

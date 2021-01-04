@@ -41,8 +41,12 @@ Shape {
         startY: root.startY
         fillColor: "transparent"
         strokeColor: "#3E3E3E"
-        capStyle: ShapePath.RoundCap
+        strokeStyle: edge != undefined && ((edge.src != undefined && edge.src.isOutput) || edge.dst == undefined) ? ShapePath.SolidLine : ShapePath.DashLine
         strokeWidth: 1
+        // final visual width of this path (never below 1)
+        readonly property real visualWidth: Math.max(strokeWidth, 1)
+        dashPattern: [6/visualWidth, 4/visualWidth]
+        capStyle: ShapePath.RoundCap
 
         PathCubic {
             id: cubic

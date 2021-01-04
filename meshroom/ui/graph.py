@@ -524,9 +524,11 @@ class UIGraph(QObject):
             startNode (Node): the node to start from.
         """
         with self.groupedGraphModification("Remove Nodes from {}".format(startNode.name)):
+            nodes, _ = self._graph.dfsOnDiscover(startNodes=[startNode], reverse=True, dependenciesOnly=True)
             # Perform nodes removal from leaves to start node so that edges
             # can be re-created in correct order on redo.
-            [self.removeNode(node) for node in reversed(self._graph.dfsOnDiscover(startNodes=[startNode], reverse=True, dependenciesOnly=True)[0])]
+            for node in reversed(nodes):
+                self.removeNode(node)
 
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):

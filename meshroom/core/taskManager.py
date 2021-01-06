@@ -116,8 +116,12 @@ class TaskManager(BaseObject):
     def blockRestart(self):
         """ Avoid the automatic restart of computing. """
         for node in self._nodesToProcess:
-            if node.getGlobalStatus() in (Status.SUBMITTED, Status.ERROR):
-                node.upgradeStatusTo(Status.NONE)
+            chunkCount = 0
+            for chunk in node.chunks:
+                if chunk.status.status in (Status.SUBMITTED, Status.ERROR):
+                    chunk.upgradeStatusTo(Status.NONE)
+                    chunkCount += 1
+            if chunkCount == len(node.chunks):
                 self.removeNode(node, displayList=True)
 
         self._blockRestart = False

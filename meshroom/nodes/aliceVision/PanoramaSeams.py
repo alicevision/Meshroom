@@ -47,13 +47,6 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,
             uid=[],
-        ),
-        desc.File(
-            name='cacheFolder',
-            label='Cache Folder',
-            description='Temporary cache directory',
-            value="",
-            uid=[],
         )
     ]
 

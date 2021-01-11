@@ -252,15 +252,33 @@ def panoramaHdrPipeline(graph):
                                            input=panoramaEstimation.output,
                                            method='from_single_camera')
 
+    panoramaWarpingSeams = graph.addNewNode('PanoramaWarping',
+                                       input=panoramaOrientation.output,
+                                       estimateResolution=False,
+                                       panoramaWidth=3000)
+
+    panoramaSeams =  graph.addNewNode('PanoramaSeams',
+                                       input=panoramaWarpingSeams.input,
+                                       warpingFolder=panoramaWarpingSeams.output
+                                       )
+                                    
     panoramaWarping = graph.addNewNode('PanoramaWarping',
                                        input=panoramaOrientation.output)
 
+
     panoramaCompositing = graph.addNewNode('PanoramaCompositing',
                                            input=panoramaWarping.input,
-                                           warpingFolder=panoramaWarping.output)
+                                           warpingFolder=panoramaWarping.output,
+                                           labels=panoramaSeams.output
+                                        )
+
+    panoramaMerging = graph.addNewNode('PanoramaMerging',
+                                           input=panoramaCompositing.input,
+                                           compositingFolder=panoramaCompositing.output
+                                        )
 
     imageProcessing = graph.addNewNode('ImageProcessing',
-                                       input=panoramaCompositing.output,
+                                       input=panoramaMerging.outputPanorama,
                                        fixNonFinite=True,
                                        fillHoles=True,
                                        extension='exr')
@@ -274,7 +292,10 @@ def panoramaHdrPipeline(graph):
         panoramaEstimation,
         panoramaOrientation,
         panoramaWarping,
+        panoramaWarpingSeams,
+        panoramaSeams,
         panoramaCompositing,
+        panoramaMerging,
         imageProcessing,
     ]
 

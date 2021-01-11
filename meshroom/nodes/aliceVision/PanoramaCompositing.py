@@ -38,6 +38,13 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             value='',
             uid=[0],
         ),
+        desc.File(
+            name='labels',
+            label='Labels image',
+            description="Panorama Seams results",
+            value='',
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='compositerType',
             label='Compositer Type',

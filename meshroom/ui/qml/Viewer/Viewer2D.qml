@@ -16,7 +16,6 @@ FocusScope {
     property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
     property alias useFloatImageViewer: displayHDR.checked
     property alias usePanoramaImageViewer: displayPanoramaViewer.checked
-    property bool displayGridPanorama: panoramaImageToolbar.displayGrid
 
     Loader {
         id: aliceVisionPluginLoader
@@ -237,9 +236,6 @@ FocusScope {
                         }
                     }
 
-//                    displayGridPanorama. :{
-//                        console.warn("Grid out ")
-//                    }
                 }
 
                 // qtAliceVision Panorama Viewer
@@ -259,6 +255,7 @@ FocusScope {
                                 'gamma': Qt.binding(function() { return panoramaImageToolbar.gammaValue; }),
                                 'gain': Qt.binding(function() { return panoramaImageToolbar.gainValue; }),
                                 'channelModeString': Qt.binding(function() { return panoramaImageToolbar.channelModeValue; }),
+                                'isGridDisplayed' : Qt.binding(function(){ return panoramaImageToolbar.displayGrid;})
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

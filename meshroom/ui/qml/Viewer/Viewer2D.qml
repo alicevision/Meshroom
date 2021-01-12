@@ -15,6 +15,7 @@ FocusScope {
 
     property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
     property alias useFloatImageViewer: displayHDR.checked
+    property alias usePanoramaImageViewer: displayPanoramaViewer.checked
 
     Loader {
         id: aliceVisionPluginLoader
@@ -222,10 +223,34 @@ FocusScope {
                     }
                 }
 
+                Loader {
+                    id: panoramaViewerLoader
+                    active: root.aliceVisionPluginAvailable && root.usePanoramaImageViewer
+                    visible: (panoramaViewerLoader.status === Loader.Ready)
+                    anchors.centerIn: parent
+
+                    onActiveChanged: {
+                        if(active) {
+                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                            // Note: It does not work to use previously created component, so we re-create it with setSource.
+                            // floatViewerComp.createObject(floatImageViewerLoader, {
+                            setSource("PanoramaViewer.qml", {
+                                'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
+                                'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
+                                'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
+                                'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
+                            })
+                        } else {
+                            // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                            setSource("", {})
+                        }
+                    }
+                }
+
                 // Simple QML Image Viewer (using Qt or qtOIIO to load images)
                 Loader {
                     id: qtImageViewerLoader
-                    active: !floatImageViewerLoader.active
+                    active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
                     anchors.centerIn: parent
                     sourceComponent: Image {
                         id: qtImageViewer
@@ -616,6 +641,19 @@ FocusScope {
                             // larger font but smaller padding,
                             // so it is visually similar.
                             font.pointSize: 20
+                            padding: 0
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
+                            enabled: root.aliceVisionPluginAvailable
+                        }
+                        MaterialToolButton {
+                            id: displayPanoramaViewer
+                            ToolTip.text: "Panorama Viewer"
+                            text: MaterialIcons.panorama_horizontal
+                            // larger font but smaller padding,
+                            // so it is visually similar.
+                            font.pointSize: 16
                             padding: 0
                             Layout.minimumWidth: 0
                             checkable: true

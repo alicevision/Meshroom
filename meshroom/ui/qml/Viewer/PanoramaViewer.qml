@@ -27,8 +27,6 @@ AliceVision.PanoramaViewer {
             return Image.Null;
 
         root.defaultControlPoints();
-        grid.recalculateCP();
-        repeater.displayControlPoints();
 
         return Image.Ready;
     }
@@ -67,8 +65,11 @@ AliceVision.PanoramaViewer {
         Connections {
             target: root
             onVerticesChanged : {
-                if (reinit)
-                    grid.recalculateCP()
+                if (reinit){
+                   grid.recalculateCP();
+                   grid.generateControlPoints();
+                }
+
             }
         }
 

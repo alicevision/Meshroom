@@ -103,6 +103,8 @@ FocusScope {
         }
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
+            console.warn(imgContainer.width);
+
             if(Math.min(imgContainer.width, imgContainer.image.height) * imgContainer.scale * zoomFactor < 10)
                 return
             var point = mapToItem(imgContainer, wheel.x, wheel.y)
@@ -201,7 +203,7 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 Loader {
                     id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.useFloatImageViewer
+                    active: root.aliceVisionPluginAvailable && root.useFloatImageViewer && !panoramaViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
 
@@ -225,7 +227,7 @@ FocusScope {
 
                 Loader {
                     id: panoramaViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.usePanoramaImageViewer
+                    active: root.aliceVisionPluginAvailable && root.usePanoramaImageViewer && !floatImageViewerLoader.active
                     visible: (panoramaViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
 
@@ -282,7 +284,15 @@ FocusScope {
                     }
                 }
 
-                property var image: qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
+                property var image: {
+                    //qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
+                    if (qtImageViewerLoader.active)
+                        qtImageViewerLoader.item
+                    if (floatImageViewerLoader.active)
+                        floatImageViewerLoader.item
+                    if (panoramaViewerLoader.active)
+                        panoramaViewerLoader.item
+                }
                 width: image ? image.width : 1
                 height: image ? image.height : 1
                 scale: 1.0

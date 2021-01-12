@@ -8,13 +8,17 @@ from PySide2.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import nodesDesc
+from meshroom.core import pyCompatibility
+from meshroom.core.taskManager import TaskManager
+
 from meshroom.ui import components
 from meshroom.ui.components.clipboard import ClipboardHelper
 from meshroom.ui.components.filepath import FilepathHelper
-from meshroom.ui.components.scene3D import Scene3DHelper
+from meshroom.ui.components.scene3D import Scene3DHelper, Transformations3DHelper
 from meshroom.ui.palette import PaletteManager
 from meshroom.ui.reconstruction import Reconstruction
 from meshroom.ui.utils import QmlInstantEngine
+from meshroom.ui import commands
 
 
 class MessageHandler(object):
@@ -67,7 +71,7 @@ class MeshroomApp(QApplication):
                             help='Import images to reconstruct from specified folder and sub-folders.')
         parser.add_argument('-s', '--save', metavar='PROJECT.mg', type=str, default='',
                             help='Save the created scene.')
-        parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE/photogrammetry/hdri', type=str, default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
+        parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE/photogrammetry/panoramaHdr/panoramaFisheyeHdr', type=str, default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
                             help='Override the default Meshroom pipeline with this external graph.')
         parser.add_argument("--verbose", help="Verbosity level", default='warning',
                             choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
@@ -116,7 +120,9 @@ class MeshroomApp(QApplication):
         self.engine.rootContext().setContextProperty("_nodeTypes", sorted(nodesDesc.keys()))
 
         # instantiate Reconstruction object
-        r = Reconstruction(defaultPipeline=args.pipeline, parent=self)
+        self._undoStack = commands.UndoStack(self)
+        self._taskManager = TaskManager(self)
+        r = Reconstruction(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
         self.engine.rootContext().setContextProperty("_reconstruction", r)
 
         # those helpers should be available from QML Utils module as singletons, but:
@@ -125,6 +131,7 @@ class MeshroomApp(QApplication):
         # => expose them as context properties instead
         self.engine.rootContext().setContextProperty("Filepath", FilepathHelper(parent=self))
         self.engine.rootContext().setContextProperty("Scene3DHelper", Scene3DHelper(parent=self))
+        self.engine.rootContext().setContextProperty("Transformations3DHelper", Transformations3DHelper(parent=self))
         self.engine.rootContext().setContextProperty("Clipboard", ClipboardHelper(parent=self))
 
         # additional context properties
@@ -183,8 +190,19 @@ class MeshroomApp(QApplication):
         return projects
 
     @Slot(str)
+    @Slot(QUrl)
     def addRecentProjectFile(self, projectFile):
-        projectFile = QUrl(projectFile).path()
+        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+            raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
+        if isinstance(projectFile, QUrl):
+            projectFileNorm = projectFile.toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = projectFile.toString()
+        else:
+            projectFileNorm = QUrl(projectFile).toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
+
         projects = self._recentProjectFiles()
 
         # remove duplicates while preserving order
@@ -192,13 +210,50 @@ class MeshroomApp(QApplication):
         uniqueProjects = OrderedDict.fromkeys(projects)
         projects = list(uniqueProjects)
         # remove previous usage of the value
-        if projectFile in uniqueProjects:
-            projects.remove(projectFile)
+        if projectFileNorm in uniqueProjects:
+            projects.remove(projectFileNorm)
         # add the new value in the first place
-        projects.insert(0, projectFile)
+        projects.insert(0, projectFileNorm)
 
         # keep only the 10 first elements
         projects = projects[0:20]
+
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        size = settings.beginWriteArray("Projects")
+        for i, p in enumerate(projects):
+            settings.setArrayIndex(i)
+            settings.setValue("filepath", p)
+        settings.endArray()
+        settings.sync()
+
+        self.recentProjectFilesChanged.emit()
+
+    @Slot(str)
+    @Slot(QUrl)
+    def removeRecentProjectFile(self, projectFile):
+        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+            raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
+        if isinstance(projectFile, QUrl):
+            projectFileNorm = projectFile.toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = projectFile.toString()
+        else:
+            projectFileNorm = QUrl(projectFile).toLocalFile()
+            if not projectFileNorm:
+                projectFileNorm = QUrl.fromLocalFile(projectFile).toLocalFile()
+
+        projects = self._recentProjectFiles()
+
+        # remove duplicates while preserving order
+        from collections import OrderedDict
+        uniqueProjects = OrderedDict.fromkeys(projects)
+        projects = list(uniqueProjects)
+        # remove previous usage of the value
+        if projectFileNorm not in uniqueProjects:
+            return
+
+        projects.remove(projectFileNorm)
 
         settings = QSettings()
         settings.beginGroup("RecentFiles")

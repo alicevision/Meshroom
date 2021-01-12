@@ -10,6 +10,7 @@ import platform
 import re
 import shutil
 import time
+import types
 import uuid
 from collections import defaultdict, namedtuple
 from enum import Enum
@@ -205,12 +206,18 @@ class LogManager:
         self.progressBar = False
 
     def textToLevel(self, text):
-        if text == 'critical': return logging.CRITICAL
-        elif text == 'error': return logging.ERROR
-        elif text == 'warning': return logging.WARNING
-        elif text == 'info': return logging.INFO
-        elif text == 'debug': return logging.DEBUG
-        else: return logging.NOTSET
+        if text == 'critical':
+            return logging.CRITICAL
+        elif text == 'error':
+            return logging.ERROR
+        elif text == 'warning':
+            return logging.WARNING
+        elif text == 'info':
+            return logging.INFO
+        elif text == 'debug':
+            return logging.DEBUG
+        else:
+            return logging.NOTSET
 
 
 runningProcesses = {}
@@ -235,6 +242,8 @@ class NodeChunk(BaseObject):
         self._subprocess = None
         # notify update in filepaths when node's internal folder changes
         self.node.internalFolderChanged.connect(self.nodeFolderChanged)
+
+        self.execModeNameChanged.connect(self.node.globalExecModeChanged)
 
     @property
     def index(self):
@@ -316,6 +325,9 @@ class NodeChunk(BaseObject):
         if newStatus.value <= self.status.status.value:
             print('WARNING: downgrade status on node "{}" from {} to {}'.format(self.name, self.status.status,
                                                                                 newStatus))
+
+        if newStatus == Status.SUBMITTED:
+            self.status = StatusData(self.node.name, self.node.nodeType, self.node.packageName, self.node.packageVersion)
         if execMode is not None:
             self.status.execMode = execMode
             self.execModeNameChanged.emit()
@@ -350,6 +362,15 @@ class NodeChunk(BaseObject):
     def isAlreadySubmitted(self):
         return self.status.status in (Status.SUBMITTED, Status.RUNNING)
 
+    def isAlreadySubmittedOrFinished(self):
+        return self.status.status in (Status.SUBMITTED, Status.RUNNING, Status.SUCCESS)
+
+    def isFinishedOrRunning(self):
+        return self.status.status in (Status.SUCCESS, Status.RUNNING)
+
+    def isStopped(self):
+        return self.status.status == Status.STOPPED
+
     def process(self, forceCompute=False):
         if not forceCompute and self.status.status == Status.SUCCESS:
             print("Node chunk already computed:", self.name)
@@ -364,7 +385,8 @@ class NodeChunk(BaseObject):
         try:
             self.node.nodeDesc.processChunk(self)
         except Exception as e:
-            self.upgradeStatusTo(Status.ERROR)
+            if self.status.status != Status.STOPPED:
+                self.upgradeStatusTo(Status.ERROR)
             raise
         except (KeyboardInterrupt, SystemError, GeneratorExit) as e:
             self.upgradeStatusTo(Status.STOPPED)
@@ -382,7 +404,11 @@ class NodeChunk(BaseObject):
         self.upgradeStatusTo(Status.SUCCESS)
 
     def stopProcess(self):
+        self.upgradeStatusTo(Status.STOPPED)
         self.node.nodeDesc.stopProcess(self)
+
+    def isExtern(self):
+        return self.status.execMode == ExecMode.EXTERN
 
     statusChanged = Signal()
     statusName = Property(str, statusName.fget, notify=statusChanged)
@@ -394,6 +420,9 @@ class NodeChunk(BaseObject):
     statusFile = Property(str, statusFile.fget, notify=nodeFolderChanged)
     logFile = Property(str, logFile.fget, notify=nodeFolderChanged)
     statisticsFile = Property(str, statisticsFile.fget, notify=nodeFolderChanged)
+
+    nodeName = Property(str, lambda self: self.node.name, constant=True)
+    statusNodeName = Property(str, lambda self: self.status.nodeName, constant=True)
 
 
 # simple structure for storing node position
@@ -442,6 +471,12 @@ class BaseNode(BaseObject):
         self._position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
+        self._alive = True  # for QML side to know if the node can be used or is going to be deleted
+        self._locked = False
+        self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
+        self._hasDuplicates = False
+
+        self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)
 
     def __getattr__(self, k):
         try:
@@ -462,8 +497,19 @@ class BaseNode(BaseObject):
         Returns:
             str: the high-level label of this node
         """
-        t, idx = self._name.split("_")
+        return self.nameToLabel(self._name)
+
+    @Slot(str, result=str)
+    def nameToLabel(self, name):
+        """
+        Returns:
+            str: the high-level label from the technical node name
+        """
+        t, idx = name.split("_")
         return "{}{}".format(t, idx if int(idx) > 1 else "")
+
+    def getDocumentation(self):
+        return self.nodeDesc.documentation
 
     @property
     def packageFullName(self):
@@ -495,6 +541,10 @@ class BaseNode(BaseObject):
     def getAttributes(self):
         return self._attributes
 
+    @Slot(str, result=bool)
+    def hasAttribute(self, name):
+        return name in self._attributes.keys()
+
     def _applyExpr(self):
         for attr in self._attributes:
             attr._applyExpr()
@@ -521,12 +571,29 @@ class BaseNode(BaseObject):
         self.positionChanged.emit()
 
     @property
+    def alive(self):
+        return self._alive
+
+    @alive.setter
+    def alive(self, value):
+        if self._alive == value:
+            return
+        self._alive = value
+        self.aliveChanged.emit()
+
+    @property
     def depth(self):
         return self.graph.getDepth(self)
 
     @property
     def minDepth(self):
         return self.graph.getDepth(self, minimal=True)
+
+    def getInputNodes(self, recursive, dependenciesOnly):
+        return self.graph.getInputNodes(self, recursive=recursive, dependenciesOnly=dependenciesOnly)
+
+    def getOutputNodes(self, recursive, dependenciesOnly):
+        return self.graph.getOutputNodes(self, recursive=recursive, dependenciesOnly=dependenciesOnly)
 
     def toDict(self):
         pass
@@ -535,28 +602,38 @@ class BaseNode(BaseObject):
         """ Compute node uids by combining associated attributes' uids. """
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             # uid is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this uid
-            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes]
+            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes if a.enabled]
             uidAttributes.sort()
             self._uids[uidIndex] = hashValue(uidAttributes)
 
     def _buildCmdVars(self):
+        def _buildAttributeCmdVars(cmdVars, name, attr):
+            if attr.enabled:
+                group = attr.attributeDesc.group(attr.node) if isinstance(attr.attributeDesc.group, types.FunctionType) else attr.attributeDesc.group
+                if group is not None:
+                    # if there is a valid command line "group"
+                    v = attr.getValueStr()
+                    cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+                    cmdVars[name + 'Value'] = str(v)
+
+                    if v:
+                        cmdVars[group] = cmdVars.get(group, '') + ' ' + cmdVars[name]
+                elif isinstance(attr, GroupAttribute):
+                    assert isinstance(attr.value, DictModel)
+                    # if the GroupAttribute is not set in a single command line argument,
+                    # the sub-attributes may need to be exposed individually
+                    for v in attr._value:
+                        _buildAttributeCmdVars(cmdVars, v.name, v)
+
         """ Generate command variables using input attributes and resolved output attributes names and values. """
         for uidIndex, value in self._uids.items():
             self._cmdVars['uid{}'.format(uidIndex)] = value
 
-        def populate(cmdVars, group, name, value):
-            cmdVars[name] = '--{name} {value}'.format(name=name, value=value)
-            cmdVars[name + 'Value'] = str(v)
-            if v:
-                cmdVars[group] = cmdVars.get(group, '') + ' ' + cmdVars[name]
-
         # Evaluate input params
-        for _, attr in self._attributes.objects.items():
+        for name, attr in self._attributes.objects.items():
             if attr.isOutput:
                 continue  # skip outputs
-            group_name_values = attr.format()
-            for group, name, v in group_name_values:
-                populate(self._cmdVars, group, name, v)
+            _buildAttributeCmdVars(self._cmdVars, name, attr)
 
         # For updating output attributes invalidation values
         cmdVarsNoCache = self._cmdVars.copy()
@@ -571,11 +648,22 @@ class BaseNode(BaseObject):
             if not isinstance(attr.attributeDesc, desc.File):
                 continue
 
-            attr.value = attr.attributeDesc.value.format(**self._cmdVars)
-            attr._invalidationValue = attr.attributeDesc.value.format(**cmdVarsNoCache)
-            group_name_values = attr.format()
-            for group, name, v in group_name_values:
-                populate(self._cmdVars, group, name, v)
+            defaultValue = attr.defaultValue()
+            try:
+                attr.value = defaultValue.format(**self._cmdVars)
+                attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
+            except KeyError as e:
+                logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+            except ValueError as e:
+                logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+            v = attr.getValueStr()
+
+            self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
+            self._cmdVars[name + 'Value'] = str(v)
+
+            if v:
+                self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \
+                                                          ' ' + self._cmdVars[name]
 
     @property
     def isParallelized(self):
@@ -593,8 +681,7 @@ class BaseNode(BaseObject):
                 return False
         return True
 
-    @Slot(result=bool)
-    def isComputed(self):
+    def _isComputed(self):
         return self.hasStatus(Status.SUCCESS)
 
     @Slot()
@@ -612,8 +699,21 @@ class BaseNode(BaseObject):
                 return True
         return False
 
+    def isAlreadySubmittedOrFinished(self):
+        for chunk in self._chunks:
+            if not chunk.isAlreadySubmittedOrFinished():
+                return False
+        return True
+
+    def isFinishedOrRunning(self):
+        """ Return True if all chunks of this Node is either finished or running, False otherwise. """
+        return all(chunk.isFinishedOrRunning() for chunk in self._chunks)
+
     def alreadySubmittedChunks(self):
         return [ch for ch in self._chunks if ch.isAlreadySubmitted()]
+
+    def isExtern(self):
+        return self._chunks.at(0).isExtern()
 
     @Slot()
     def clearSubmittedChunks(self):
@@ -625,7 +725,8 @@ class BaseNode(BaseObject):
             if the graph is still being computed.
         """
         for chunk in self.alreadySubmittedChunks():
-            chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+            if not chunk.isExtern():
+                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
 
     def upgradeStatusTo(self, newStatus):
         """
@@ -653,6 +754,10 @@ class BaseNode(BaseObject):
         """
         if self.nodeDesc:
             self.nodeDesc.update(self)
+
+        for attr in self._attributes:
+            attr.updateInternals()
+
         # Update chunks splitting
         self._updateChunks()
         # Retrieve current internal folder (if possible)
@@ -691,7 +796,7 @@ class BaseNode(BaseObject):
 
     def beginSequence(self, forceCompute=False):
         for chunk in self._chunks:
-            if forceCompute or chunk.status.status != Status.SUCCESS:
+            if forceCompute or (chunk.status.status not in (Status.RUNNING, Status.SUCCESS)):
                 chunk.upgradeStatusTo(Status.SUBMITTED, ExecMode.LOCAL)
 
     def processIteration(self, iteration):
@@ -703,6 +808,12 @@ class BaseNode(BaseObject):
 
     def endSequence(self):
         pass
+
+    def stopComputation(self):
+        """ Stop the computation of this node. """
+        for chunk in self._chunks.values():
+            if not chunk.isExtern():
+                chunk.stopProcess()
 
     def getGlobalStatus(self):
         """
@@ -726,6 +837,10 @@ class BaseNode(BaseObject):
 
         return Status.NONE
 
+    @property
+    def globalExecMode(self):
+        return self._chunks.at(0).execModeName
+
     def getChunks(self):
         return self._chunks
 
@@ -741,9 +856,134 @@ class BaseNode(BaseObject):
     def __repr__(self):
         return self.name
 
+    def getLocked(self):
+        return self._locked
+
+    def setLocked(self, lock):
+        if self._locked == lock:
+            return
+        self._locked = lock
+        self.lockedChanged.emit()
+
+    @Slot()
+    def updateDuplicatesStatusAndLocked(self):
+        """ Update status of duplicate nodes without any latency and update locked. """
+        if self.name == self._chunks.at(0).statusNodeName:
+            for node in self._duplicates:
+                node.updateStatusFromCache()
+
+            self.updateLocked()
+
+    def updateLocked(self):
+        currentStatus = self.getGlobalStatus()
+
+        lockedStatus = (Status.RUNNING, Status.SUBMITTED)
+
+        # Unlock required nodes if the current node changes to Error, Stopped or None
+        # Warning: we must handle some specific cases for global start/stop
+        if self._locked and currentStatus in (Status.ERROR, Status.STOPPED, Status.NONE):
+            self.setLocked(False)
+            inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
+
+            for node in inputNodes:
+                if node.getGlobalStatus() == Status.RUNNING:
+                    # Return without unlocking if at least one input node is running
+                    # Example: using Cancel Computation on a submitted node
+                    return
+            for node in inputNodes:
+                node.setLocked(False)
+            return
+
+        # Avoid useless travel through nodes
+        # For instance: when loading a scene with successful nodes
+        if not self._locked and currentStatus == Status.SUCCESS:
+            return
+
+        if currentStatus == Status.SUCCESS:
+            # At this moment, the node is necessarily locked because of previous if statement
+            inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
+            outputNodes = self.getOutputNodes(recursive=True, dependenciesOnly=True)
+            stayLocked = None
+
+            # Check if at least one dependentNode is submitted or currently running
+            for node in outputNodes:
+                if node.getGlobalStatus() in lockedStatus and node._chunks.at(0).statusNodeName == node.name:
+                    stayLocked = True
+                    break
+            if not stayLocked:
+                self.setLocked(False)
+                # Unlock every input node
+                for node in inputNodes:
+                    node.setLocked(False)
+            return
+        elif currentStatus in lockedStatus and self._chunks.at(0).statusNodeName == self.name:
+            self.setLocked(True)
+            inputNodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
+            for node in inputNodes:
+                node.setLocked(True)
+            return
+
+        self.setLocked(False)
+
+    def updateDuplicates(self, nodesPerUid):
+        """ Update the list of duplicate nodes (sharing the same uid). """
+        uid = self._uids.get(0)
+        if not nodesPerUid or not uid:
+            if len(self._duplicates) > 0:
+                self._duplicates.clear()
+                self._hasDuplicates = False
+                self.hasDuplicatesChanged.emit()
+            return
+
+        newList = [node for node in nodesPerUid.get(uid) if node != self]
+
+        # If number of elements in both lists are identical,
+        # we must check if their content is the same
+        if len(newList) == len(self._duplicates):
+            newListName = set([node.name for node in newList])
+            oldListName = set([node.name for node in self._duplicates.values()])
+
+            # If strict equality between both sets,
+            # there is no need to set the new list
+            if newListName == oldListName:
+                return
+
+        # Set the newList
+        self._duplicates.setObjectList(newList)
+        # Emit a specific signal 'hasDuplicates' to avoid extra binding
+        # re-evaluation when the number of duplicates has changed
+        if bool(len(newList)) != self._hasDuplicates:
+            self._hasDuplicates = bool(len(newList))
+            self.hasDuplicatesChanged.emit()
+
+
+    def statusInThisSession(self):
+        if not self._chunks:
+            return False
+        for chunk in self._chunks:
+            if chunk.status.sessionUid != meshroom.core.sessionUid:
+                return False
+        return True
+
+    @Slot(result=bool)
+    def canBeStopped(self):
+        # Only locked nodes running in local with the same
+        # sessionUid as the Meshroom instance can be stopped
+        return (self.locked and self.getGlobalStatus() == Status.RUNNING and
+                self.globalExecMode == "LOCAL" and self.statusInThisSession())
+
+    @Slot(result=bool)
+    def canBeCanceled(self):
+        # Only locked nodes submitted in local with the same
+        # sessionUid as the Meshroom instance can be canceled
+        return (self.locked and self.getGlobalStatus() == Status.SUBMITTED and
+                self.globalExecMode == "LOCAL" and self.statusInThisSession())
+
+
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
+    documentation = Property(str, getDocumentation, constant=True)
     positionChanged = Signal()
     position = Property(Variant, position.fget, position.fset, notify=positionChanged)
     x = Property(float, lambda self: self._position.x, notify=positionChanged)
@@ -760,6 +1000,16 @@ class BaseNode(BaseObject):
     size = Property(int, getSize, notify=sizeChanged)
     globalStatusChanged = Signal()
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
+    globalExecModeChanged = Signal()
+    globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)
+    isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
+    aliveChanged = Signal()
+    alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)
+    lockedChanged = Signal()
+    locked = Property(bool, getLocked, setLocked, notify=lockedChanged)
+    duplicates = Property(Variant, lambda self: self._duplicates, constant=True)
+    hasDuplicatesChanged = Signal()
+    hasDuplicates = Property(bool, lambda self: self._hasDuplicates, notify=hasDuplicatesChanged)
 
 
 class Node(BaseNode):

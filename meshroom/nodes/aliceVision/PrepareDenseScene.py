@@ -9,10 +9,14 @@ class PrepareDenseScene(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    documentation = '''
+This node export undistorted images so the depth map and texturing can be computed on Pinhole images without distortion.
+'''
+
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfMData',
             description='''SfMData file.''',
             value='',
             uid=[0],
@@ -89,14 +93,14 @@ class PrepareDenseScene(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output',
+            label='Images Folder',
             description='''Output folder.''',
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name='outputUndistorted',
-            label='Undistorted images',
+            label='Undistorted Images',
             description='List of undistorted images.',
             value=desc.Node.internalFolder + '*.{outputFileTypeValue}',
             uid=[],

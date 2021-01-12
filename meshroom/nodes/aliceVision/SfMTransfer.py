@@ -1,11 +1,17 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
+
+import os.path
 
 
 class SfMTransfer(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmTransfer {allParams}'
     size = desc.DynamicNodeSize('input')
+
+    documentation = '''
+This node allows to transfer poses and/or intrinsics form one SfM scene onto another one.
+'''
 
     inputs = [
         desc.File(
@@ -28,9 +34,10 @@ class SfMTransfer(desc.CommandLineNode):
             description="Matching Method:\n"
                 " * from_viewid: Align cameras with same view Id\n"
                 " * from_filepath: Align cameras with a filepath matching, using 'fileMatchingPattern'\n"
-                " * from_metadata: Align cameras with matching metadata, using 'metadataMatchingList'\n",
+                " * from_metadata: Align cameras with matching metadata, using 'metadataMatchingList'\n"
+                " * from_intrinsicid: Copy intrinsics parameters\n",
             value='from_viewid',
-            values=['from_viewid', 'from_filepath', 'from_metadata'],
+            values=['from_viewid', 'from_filepath', 'from_metadata', 'from_intrinsicid'],
             exclusive=True,
             uid=[0],
         ),
@@ -86,9 +93,16 @@ class SfMTransfer(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output',
+            label='Output SfMData File',
             description='SfMData file.',
-            value=desc.Node.internalFolder + 'sfmData.abc',
+            value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or 'sfmData') + '.abc',
+            uid=[],
+        ),
+        desc.File(
+            name='outputViewsAndPoses',
+            label='Output Poses',
+            description='''Path to the output sfmdata file with cameras (views and poses).''',
+            value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],
         ),
     ]

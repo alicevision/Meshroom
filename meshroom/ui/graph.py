@@ -12,7 +12,10 @@ from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QP
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
-from meshroom.core.graph import Graph, Edge, submitGraph, executeGraph
+from meshroom.core.graph import Graph, Edge
+
+from meshroom.core.taskManager import TaskManager
+
 from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode, Position
 from meshroom.core import submitters
 from meshroom.ui import commands
@@ -152,9 +155,9 @@ class GraphLayout(QObject):
         super(GraphLayout, self).__init__(graph)
         self.graph = graph
         self._depthMode = GraphLayout.DepthMode.MaxDepth
-        self._nodeWidth = 140   # implicit node width
-        self._nodeHeight = 80   # implicit node height
-        self._gridSpacing = 15  # column/line spacing between nodes
+        self._nodeWidth = 160  # implicit node width
+        self._nodeHeight = 120   # implicit node height
+        self._gridSpacing = 40  # column/line spacing between nodes
 
     @Slot(Node, Node, int, int)
     def autoLayout(self, fromNode=None, toNode=None, startX=0, startY=0):
@@ -194,6 +197,30 @@ class GraphLayout(QObject):
         """ Perform auto-layout on the whole graph. """
         self.autoLayout()
 
+    def positionBoundingBox(self, nodes=None):
+        """
+        Return bounding box for a set of nodes as (x, y, width, height).
+
+        Args:
+            nodes (list of Node): the list of nodes or the whole graph if None
+
+        Returns:
+            list of int: the resulting bounding box (x, y, width, height)
+        """
+        if nodes is None:
+            nodes = self.graph.nodes.values()
+        first = nodes[0]
+        bbox = [first.x, first.y, first.x, first.y]
+        for n in nodes:
+            bbox[0] = min(bbox[0], n.x)
+            bbox[1] = min(bbox[1], n.y)
+            bbox[2] = max(bbox[2], n.x)
+            bbox[3] = max(bbox[3], n.y)
+
+        bbox[2] -= bbox[0]
+        bbox[3] -= bbox[1]
+        return bbox
+
     def boundingBox(self, nodes=None):
         """
         Return bounding box for a set of nodes as (x, y, width, height).
@@ -202,22 +229,12 @@ class GraphLayout(QObject):
             nodes (list of Node): the list of nodes or the whole graph if None
 
         Returns:
-            tuple of int: the resulting bounding box (x, y, width, height)
+            list of int: the resulting bounding box (x, y, width, height)
         """
-        if nodes is None:
-            nodes = self.graph.nodes.values()
-        first = nodes[0]
-        bbox = [first.x, first.y, first.x + self._nodeWidth, first.y + self._nodeHeight]
-        for n in nodes:
-            bbox[0] = min(bbox[0], n.x)
-            bbox[1] = min(bbox[1], n.y)
-            bbox[2] = max(bbox[2], n.x + self._nodeWidth)
-            bbox[3] = max(bbox[3], n.y + self._nodeHeight)
-
-        bbox[2] -= bbox[0]
-        bbox[3] -= bbox[1]
-
-        return tuple(bbox)
+        bbox = self.positionBoundingBox(nodes)
+        bbox[2] += self._nodeWidth
+        bbox[3] += self._nodeHeight
+        return bbox
 
     def setDepthMode(self, mode):
         """ Set node depth mode to use. """
@@ -243,10 +260,12 @@ class UIGraph(QObject):
     UIGraph exposes undoable methods on its graph and computation in a separate thread.
     It also provides a monitoring of all its computation units (NodeChunks).
     """
-    def __init__(self, parent=None):
+    def __init__(self, undoStack, taskManager, parent=None):
         super(UIGraph, self).__init__(parent)
-        self._undoStack = commands.UndoStack(self)
+        self._undoStack = undoStack
+        self._taskManager = taskManager
         self._graph = Graph('', self)
+
         self._modificationCount = 0
         self._chunksMonitor = ChunksMonitor(parent=self)
         self._computeThread = Thread()
@@ -256,18 +275,32 @@ class UIGraph(QObject):
         self._selectedNode = None
         self._hoveredNode = None
 
+        self.computeStatusChanged.connect(self.updateLockedUndoStack)
+
     def setGraph(self, g):
         """ Set the internal graph. """
         if self._graph:
             self.stopExecution()
             self.clear()
+        oldGraph = self._graph
         self._graph = g
+        if oldGraph:
+            oldGraph.deleteLater()
+
         self._graph.updated.connect(self.onGraphUpdated)
         self._graph.update()
+        self._taskManager.update(self._graph)
         # perform auto-layout if graph does not provide nodes positions
         if Graph.IO.Features.NodesPositions not in self._graph.fileFeatures:
             self._layout.reset()
-            self._undoStack.clear()  # clear undo-stack after layout
+            # clear undo-stack after layout
+            self._undoStack.clear()
+        else:
+            bbox = self._layout.positionBoundingBox()
+            if bbox[2] == 0 and bbox[3] == 0:
+                self._layout.reset()
+                # clear undo-stack after layout
+                self._undoStack.clear()
         self.graphChanged.emit()
 
     def onGraphUpdated(self):
@@ -299,8 +332,8 @@ class UIGraph(QObject):
         if self._graph:
             self.clearNodeHover()
             self.clearNodeSelection()
-            self._graph.deleteLater()
-            self._graph = None
+            self._taskManager.clear()
+            self._graph.clear()
         self._sortedDFSChunks.clear()
         self._undoStack.clear()
 
@@ -309,16 +342,14 @@ class UIGraph(QObject):
         self.stopExecution()
         self._chunksMonitor.stop()
 
-    def load(self, filepath, setupProjectFile=True):
+    @Slot(str, result=bool)
+    def loadGraph(self, filepath, setupProjectFile=True):
         g = Graph('')
-        g.load(filepath, setupProjectFile)
+        status = g.load(filepath, setupProjectFile)
         if not os.path.exists(g.cacheDir):
             os.mkdir(g.cacheDir)
         self.setGraph(g)
-
-    @Slot(QUrl)
-    def loadUrl(self, url):
-        self.load(url.toLocalFile())
+        return status
 
     @Slot(QUrl)
     def saveAs(self, url):
@@ -340,30 +371,49 @@ class UIGraph(QObject):
         self._graph.save()
         self._undoStack.setClean()
 
+    @Slot()
+    def updateLockedUndoStack(self):
+        if self.isComputingLocally():
+            self._undoStack.lockAtThisIndex()
+        else:
+            self._undoStack.unlock()
+
     @Slot(Node)
     def execute(self, node=None):
-        if self.computing:
-            return
         nodes = [node] if node else None
-        self._computeThread = Thread(target=self._execute, args=(nodes,))
-        self._computeThread.start()
-
-    def _execute(self, nodes):
-        self.computeStatusChanged.emit()
-        try:
-            executeGraph(self._graph, nodes)
-        except Exception as e:
-            logging.error("Error during Graph execution {}".format(e))
-        finally:
-            self.computeStatusChanged.emit()
+        self._taskManager.compute(self._graph, nodes)
+        self.updateLockedUndoStack()  # explicitly call the update while it is already computing
 
     @Slot()
     def stopExecution(self):
         if not self.isComputingLocally():
             return
+        self._taskManager.requestBlockRestart()
         self._graph.stopExecution()
-        self._computeThread.join()
-        self.computeStatusChanged.emit()
+        self._taskManager._thread.join()
+
+    @Slot(Node)
+    def stopNodeComputation(self, node):
+        """ Stop the computation of the node and update all the nodes depending on it. """
+        if not self.isComputingLocally():
+            return
+
+        # Stop the node and wait Task Manager
+        node.stopComputation()
+        self._taskManager._thread.join()
+
+    @Slot(Node)
+    def cancelNodeComputation(self, node):
+        """ Cancel the computation of the node and all the nodes depending on it. """
+        if node.getGlobalStatus() == Status.SUBMITTED:
+            # Status from SUBMITTED to NONE
+            # Make sure to remove the nodes from the Task Manager list
+            node.clearSubmittedChunks()
+            self._taskManager.removeNode(node, displayList=True, processList=True)
+
+            for n in node.getOutputNodes(recursive=True, dependenciesOnly=True):
+                n.clearSubmittedChunks()
+                self._taskManager.removeNode(n, displayList=True, processList=True)
 
     @Slot(Node)
     def submit(self, node=None):
@@ -375,8 +425,9 @@ class UIGraph(QObject):
             Default submitter is specified using the MESHROOM_DEFAULT_SUBMITTER environment variable.
         """
         self.save()  # graph must be saved before being submitted
+        self._undoStack.clear()  # the undo stack must be cleared
         node = [node] if node else None
-        submitGraph(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
+        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
 
     def updateGraphComputingStatus(self):
         # update graph computing status
@@ -393,11 +444,11 @@ class UIGraph(QObject):
 
     def isComputingExternally(self):
         """ Whether this graph is being computed externally. """
-        return (self._running or self._submitted) and not self.isComputingLocally()
+        return self._submitted
 
     def isComputingLocally(self):
         """ Whether this graph is being computed locally (i.e computation can be stopped). """
-        return self._computeThread.is_alive()
+        return self._taskManager._thread.isRunning()
 
     def push(self, command):
         """ Try and push the given command to the undo stack.
@@ -473,9 +524,11 @@ class UIGraph(QObject):
             startNode (Node): the node to start from.
         """
         with self.groupedGraphModification("Remove Nodes from {}".format(startNode.name)):
+            nodes, _ = self._graph.dfsOnDiscover(startNodes=[startNode], reverse=True, dependenciesOnly=True)
             # Perform nodes removal from leaves to start node so that edges
             # can be re-created in correct order on redo.
-            [self.removeNode(node) for node in reversed(self._graph.nodesFromNode(startNode)[0])]
+            for node in reversed(nodes):
+                self.removeNode(node)
 
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
@@ -573,6 +626,7 @@ class UIGraph(QObject):
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)
+    taskManager = Property(TaskManager, lambda self: self._taskManager, constant=True)
     nodes = Property(QObject, lambda self: self._graph.nodes, notify=graphChanged)
     layout = Property(GraphLayout, lambda self: self._layout, constant=True)
 

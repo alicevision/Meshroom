@@ -7,10 +7,24 @@ class Texturing(desc.CommandLineNode):
     commandLine = 'aliceVision_texturing {allParams}'
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
+
+    documentation = '''
+This node computes the texturing on the mesh.
+
+If the mesh has no associated UV, it automatically computes UV maps.
+
+For each triangle, it uses the visibility information associated to each vertex to retrieve the texture candidates.
+It select the best cameras based on the resolution covering the triangle. Finally it averages the pixel values using multiple bands in the frequency domain.
+Many cameras are contributing to the low frequencies and only the best ones contributes to the high frequencies.
+
+## Online
+[https://alicevision.org/#photogrammetry/texturing](https://alicevision.org/#photogrammetry/texturing)
+'''
+
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='Dense SfMData',
             description='SfMData file.',
             value='',
             uid=[0],
@@ -24,7 +38,7 @@ class Texturing(desc.CommandLineNode):
         ),
         desc.File(
             name='inputMesh',
-            label='Other Input Mesh',
+            label='Mesh',
             description='Optional input mesh to texture. By default, it will texture the result of the reconstruction.',
             value='',
             uid=[0],
@@ -42,7 +56,7 @@ class Texturing(desc.CommandLineNode):
             name='downscale',
             label='Texture Downscale',
             description='''Texture downscale factor''',
-            value=1,
+            value=2,
             values=(1, 2, 4, 8),
             exclusive=True,
             uid=[0],
@@ -205,31 +219,31 @@ class Texturing(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Folder for output mesh: OBJ, material and texture files.',
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name='outputMesh',
-            label='Output Mesh',
-            description='Folder for output mesh: OBJ, material and texture files.',
+            label='Mesh',
+            description='Output Mesh file.',
             value=desc.Node.internalFolder + 'texturedMesh.obj',
             uid=[],
             group='',
             ),
         desc.File(
             name='outputMaterial',
-            label='Output Material',
-            description='Folder for output mesh: OBJ, material and texture files.',
+            label='Material',
+            description='Output Material file.',
             value=desc.Node.internalFolder + 'texturedMesh.mtl',
             uid=[],
             group='',
             ),
         desc.File(
             name='outputTextures',
-            label='Output Textures',
-            description='Folder for output mesh: OBJ, material and texture files.',
+            label='Textures',
+            description='Output Texture files.',
             value=desc.Node.internalFolder + 'texture_*.{outputTextureFileTypeValue}',
             uid=[],
             group='',

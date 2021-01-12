@@ -1,6 +1,7 @@
 import QtQuick 2.7
+import Utils 1.0
 
-import "common.js" as Common
+//import "common.js" as Common
 
 ListView {
     id: root
@@ -19,7 +20,7 @@ ListView {
         id: chunkDelegate
         height: root.chunkHeight
         width: root.chunkWidth
-        color: Common.getChunkColor(object, {"NONE": root.defaultColor})
+        color: Colors.getChunkColor(object, {"NONE": root.defaultColor})
     }
 }
 

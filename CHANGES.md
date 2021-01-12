@@ -3,6 +3,88 @@
 For algorithmic changes related to the photogrammetric pipeline, 
 please refer to [AliceVision changelog](https://github.com/alicevision/AliceVision/blob/develop/CHANGES.md).
 
+## Release 2020.1.1 (2020.10.14)
+
+Based on [AliceVision 2.3.1](https://github.com/alicevision/AliceVision/tree/v2.3.1).
+
+ - [core] Fix crashes on process statistics (windows-only) [PR](https://github.com/alicevision/meshroom/pull/1096)
+
+
+## Release 2020.1.0 (2020.10.09)
+
+Based on [AliceVision 2.3.0](https://github.com/alicevision/AliceVision/tree/v2.3.0).
+
+### Release Notes Summary
+
+ - [nodes] New Panorama Stitching nodes with support for fisheye lenses [PR](https://github.com/alicevision/meshroom/pull/639) [PR](https://github.com/alicevision/meshroom/pull/808)
+ - [nodes] HDR: Largely improved HDR calibration, including new LdrToHdrSampling for optimal sample selection [PR](https://github.com/alicevision/meshroom/pull/808) [PR](https://github.com/alicevision/meshroom/pull/1016) [PR](https://github.com/alicevision/meshroom/pull/990)
+ - [ui] Viewer3D: Input bounding box (Meshing) & manual transformation (SfMTransform) thanks to a new 3D Gizmo [PR](https://github.com/alicevision/meshroom/pull/978)
+ - [ui] Sync 3D camera with image selection [PR](https://github.com/alicevision/meshroom/pull/633) 
+ - [ui] New HDR (floating point) Image Viewer [PR](https://github.com/alicevision/meshroom/pull/795)
+ - [ui] Ability to load depth maps into 2D and 3D Viewers [PR](https://github.com/alicevision/meshroom/pull/769) [PR](https://github.com/alicevision/meshroom/pull/657) 
+ - [ui] New features overlay in Viewer2D allows to display tracks and landmarks [PR](https://github.com/alicevision/meshroom/pull/873) [PR](https://github.com/alicevision/meshroom/pull/1001)
+ - [ui] Add SfM statistics [PR](https://github.com/alicevision/meshroom/pull/873)
+ - [ui] Visual interface for node resources usage [PR](https://github.com/alicevision/meshroom/pull/564)
+ - [nodes] Coordinate system alignment to specific markers or between scenes [PR](https://github.com/alicevision/meshroom/pull/652)
+ - [nodes] New Sketchfab upload node [PR](https://github.com/alicevision/meshroom/pull/712)
+ - [ui] Dynamic Parameters: add a new 'enabled' property to node's attributes [PR](https://github.com/alicevision/meshroom/pull/1007) [PR](https://github.com/alicevision/meshroom/pull/1027)
+ - [ui] Viewer: add Camera Response Function display [PR](https://github.com/alicevision/meshroom/pull/1020) [PR](https://github.com/alicevision/meshroom/pull/1041)
+ - [ui] UI improvements in the Viewer2D and ImageGallery [PR](https://github.com/alicevision/meshroom/pull/823)
+ - [bin] Improve Meshroom command line [PR](https://github.com/alicevision/meshroom/pull/759) [PR](https://github.com/alicevision/meshroom/pull/632)
+ - [nodes] New ImageProcessing node [PR](https://github.com/alicevision/meshroom/pull/839) [PR](https://github.com/alicevision/meshroom/pull/970) [PR](https://github.com/alicevision/meshroom/pull/941)
+ - [nodes] `FeatureMatching` Add `fundamental_with_distortion` option [PR](https://github.com/alicevision/meshroom/pull/931)
+ - [multiview] Declare more recognized image file extensions [PR](https://github.com/alicevision/meshroom/pull/965)
+ - [multiview] More generic metadata support [PR](https://github.com/alicevision/meshroom/pull/957)
+
+### Other Improvements and Bug Fixes
+
+ - [nodes] CameraInit: New viewId generation and selection of allowed intrinsics [PR](https://github.com/alicevision/meshroom/pull/973)
+ - [core] Avoid error during project load on border cases [PR](https://github.com/alicevision/meshroom/pull/991)
+ - [core] Compatibility : Improve list of groups update [PR](https://github.com/alicevision/meshroom/pull/791)
+ - [core] Invalidation hooks [PR](https://github.com/alicevision/meshroom/pull/732)
+ - [core] Log manager for Python based nodes [PR](https://github.com/alicevision/meshroom/pull/631)
+ - [core] new Node Update Hooks mechanism [PR](https://github.com/alicevision/meshroom/pull/733)
+ - [core] Option to make chunks optional [PR](https://github.com/alicevision/meshroom/pull/778)
+ - [nodes] Add methods in ImageMatching and features in StructureFromMotion and FeatureMatching [PR](https://github.com/alicevision/meshroom/pull/768)
+ - [nodes] FeatureExtraction: add maxThreads argument [PR](https://github.com/alicevision/meshroom/pull/647) 
+ - [nodes] Fix python nodes being blocked by log [PR](https://github.com/alicevision/meshroom/pull/783)
+ - [nodes] ImageProcessing: add new option to fix non finite pixels [PR](https://github.com/alicevision/meshroom/pull/1057)
+ - [nodes] Meshing: simplify input depth map folders [PR](https://github.com/alicevision/meshroom/pull/951)
+ - [nodes] PanoramaCompositing: add a new graphcut option to improve seams [PR](https://github.com/alicevision/meshroom/pull/1026)
+ - [nodes] PanoramaCompositing: option to select the percentage of upscaled pixels [PR](https://github.com/alicevision/meshroom/pull/1049)
+ - [nodes] PanoramaInit: add debug circle detection option [PR](https://github.com/alicevision/meshroom/pull/1069)
+ - [nodes] PanoramaInit: New parameter to set an extra image rotation to each camera declared the input xml [PR](https://github.com/alicevision/meshroom/pull/1046)
+ - [nodes] SfmTransfer: New option to transfer intrinsics parameters [PR](https://github.com/alicevision/meshroom/pull/1053)
+ - [nodes] StructureFromMotion: Add features’s scale as an option [PR](https://github.com/alicevision/meshroom/pull/822) [PR](https://github.com/alicevision/meshroom/pull/817)
+ - [nodes] Texturing: add options for retopoMesh & reorganise options [PR](https://github.com/alicevision/meshroom/pull/571)
+ - [nodes] Texturing: put downscale to 2 by default [PR](https://github.com/alicevision/meshroom/pull/1048)
+ - [sfm] Add option to include 'unknown' feature types in ConvertSfMFormat, needed to be used on dense point cloud from the Meshing node [PR](https://github.com/alicevision/meshroom/pull/584)
+ - [ui] Automatically update layout when needed [PR](https://github.com/alicevision/meshroom/pull/989)
+ - [ui] Avoid crash in 3D with large panoramas [PR](https://github.com/alicevision/meshroom/pull/1061)
+ - [ui] Fix graph axes naming for ram statistics [PR](https://github.com/alicevision/meshroom/pull/1033)
+ - [ui] NodeEditor: minor improvements with single tab group and status table [PR](https://github.com/alicevision/meshroom/pull/637)
+ - [ui] Viewer3D: Display equirectangular images as environment maps [PR](https://github.com/alicevision/meshroom/pull/731) 
+ - [windows] Fix open recent broken on windows and remove unnecessary warnings [PR](https://github.com/alicevision/meshroom/pull/940)
+
+### Build, CI, Documentation
+
+ - [build] Fix cxFreeze version for Python 2.7 compatibility [PR](https://github.com/alicevision/meshroom/pull/634)
+ - [ci] Add github Actions [PR](https://github.com/alicevision/meshroom/pull/1051)
+ - [ci] AppVeyor: Update build environment and save artifacts [PR](https://github.com/alicevision/meshroom/pull/875)
+ - [ci] Travis: Update environment, remove Python 2.7 & add 3.8 [PR](https://github.com/alicevision/meshroom/pull/874)
+ - [docker] Clean Dockerfiles [PR](https://github.com/alicevision/meshroom/pull/1054)
+ - [docker] Move to PySide2 / Qt 5.14.1
+ - [docker] Fix some packaging issues of the release 2019.2.0 [PR](https://github.com/alicevision/meshroom/pull/627)
+ - [github] Add exemptLabels [PR](https://github.com/alicevision/meshroom/pull/801)
+ - [github] Add issue templates [PR](https://github.com/alicevision/meshroom/pull/579)
+ - [github] Add template for questions / help only  [PR](https://github.com/alicevision/meshroom/pull/629)
+ - [github] Added automatic stale detection and closing for issues [PR](https://github.com/alicevision/meshroom/pull/598)
+ - [python] Import ABC from collections.abc [PR](https://github.com/alicevision/meshroom/pull/983)
+
+For more details see all PR merged: https://github.com/alicevision/meshroom/milestone/10
+
+See [AliceVision 2.3.0 Release Notes](https://github.com/alicevision/AliceVision/blob/v2.3.0/CHANGES.md) for more details about algorithmic changes.
+
 
 ## Release 2019.2.0 (2019.08.08)
 

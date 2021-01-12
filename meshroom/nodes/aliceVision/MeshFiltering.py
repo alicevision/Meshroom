@@ -6,10 +6,15 @@ from meshroom.core import desc
 class MeshFiltering(desc.CommandLineNode):
     commandLine = 'aliceVision_meshFiltering {allParams}'
 
+    documentation = '''
+This node applies a Laplacian filtering to remove local defects from the raw Meshing cut.
+
+'''
+
     inputs = [
         desc.File(
             name='inputMesh',
-            label='Input Mesh',
+            label='Mesh',
             description='''Input Mesh (OBJ file format).''',
             value='',
             uid=[0],
@@ -60,7 +65,7 @@ class MeshFiltering(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='outputMesh',
-            label='Output Mesh',
+            label='Mesh',
             description='''Output mesh (OBJ file format).''',
             value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],

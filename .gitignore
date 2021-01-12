@@ -25,7 +25,7 @@ __pycache__
 /scripts
 /build
 /dist
-/*.sh
+/dl
 
 # tests
 /.tests

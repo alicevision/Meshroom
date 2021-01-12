@@ -6,6 +6,7 @@ import Utils 1.0
 import Charts 1.0
 import MaterialIcons 2.2
 
+
 Item {
     id: root
 
@@ -163,7 +164,7 @@ Item {
         root.nbReads = categories[0].length-1
 
         for(var j = 0; j < nbCores; j++) {
-            var lineSerie = cpuChart.createSeries(ChartView.SeriesTypeLine, "CPU" + j, valueAxisX, valueAxisY)
+            var lineSerie = cpuChart.createSeries(ChartView.SeriesTypeLine, "CPU" + j, valueCpuX, valueCpuY)
 
             if(categories[j].length === 1) {
                 lineSerie.append(0, categories[j][0])
@@ -176,7 +177,7 @@ Item {
             lineSerie.color = colors[j % colors.length]
         }
 
-        var averageLine = cpuChart.createSeries(ChartView.SeriesTypeLine, "AVERAGE", valueAxisX, valueAxisY)
+        var averageLine = cpuChart.createSeries(ChartView.SeriesTypeLine, "AVERAGE", valueCpuX, valueCpuY)
         var average = []
 
         for(var l = 0; l < categories[0].length; l++) {
@@ -226,7 +227,7 @@ Item {
             root.ramLabel = "RAM Max Peak: "
         }
 
-        var ramSerie = ramChart.createSeries(ChartView.SeriesTypeLine, root.ramLabel + root.ramTotal + "GB", valueAxisX2, valueAxisRam)
+        var ramSerie = ramChart.createSeries(ChartView.SeriesTypeLine, root.ramLabel + root.ramTotal + "GB", valueRamX, valueRamY)
 
         if(ram.length === 1) {
             // Create 2 entries if we have only one input value to create a segment that can be display
@@ -252,9 +253,9 @@ Item {
         var gpuUsed = getPropertyWithDefault(jsonObject.computer.curves, 'gpuUsed', 0)
         var gpuTemperature = getPropertyWithDefault(jsonObject.computer.curves, 'gpuTemperature', 0)
 
-        var gpuUsedSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "GPU", valueAxisX3, valueAxisY3)
-        var gpuUsedMemorySerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Memory", valueAxisX3, valueAxisY3)
-        var gpuTemperatureSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Temperature", valueAxisX3, valueAxisY3)
+        var gpuUsedSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "GPU", valueGpuX, valueGpuY)
+        var gpuUsedMemorySerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Memory", valueGpuX, valueGpuY)
+        var gpuTemperatureSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Temperature", valueGpuX, valueGpuY)
 
         if(gpuUsedMemory.length === 1) {
             gpuUsedSerie.append(0, gpuUsed[0])
@@ -364,7 +365,7 @@ Item {
                     }
                 }
 
-                ChartView {
+                InteractiveChartView {
                     id: cpuChart
 
                     Layout.fillWidth: true
@@ -383,7 +384,7 @@ Item {
                     title: "CPU: " + root.nbCores + " cores, " + root.cpuFrequency + "Hz"
 
                     ValueAxis {
-                        id: valueAxisY
+                        id: valueCpuY
                         min: 0
                         max: 100
                         titleText: "<span style='color: " + textColor + "'>%</span>"
@@ -396,7 +397,7 @@ Item {
                     }
 
                     ValueAxis {
-                        id: valueAxisX
+                        id: valueCpuX
                         min: 0
                         max: root.deltaTime * Math.max(1, root.nbReads)
                         titleText: "<span style='color: " + textColor + "'>Minutes</span>"
@@ -419,7 +420,7 @@ Item {
 
             ColumnLayout {
 
-                ChartView {
+                InteractiveChartView {
                     id: ramChart
                     margins.top: 0
                     margins.bottom: 0
@@ -438,7 +439,7 @@ Item {
                     title: root.ramLabel + root.ramTotal + "GB"
 
                     ValueAxis {
-                        id: valueAxisY2
+                        id: valueRamY
                         min: 0
                         max: 100
                         titleText: "<span style='color: " + textColor + "'>%</span>"
@@ -451,20 +452,7 @@ Item {
                     }
 
                     ValueAxis {
-                        id: valueAxisRam
-                        min: 0
-                        max: root.ramTotal
-                        titleText: "<span style='color: " + textColor + "'>GB</span>"
-                        color: textColor
-                        gridLineColor: textColor
-                        minorGridLineColor: textColor
-                        shadesColor: textColor
-                        shadesBorderColor: textColor
-                        labelsColor: textColor
-                    }
-
-                    ValueAxis {
-                        id: valueAxisX2
+                        id: valueRamX
                         min: 0
                         max: root.deltaTime * Math.max(1, root.nbReads)
                         titleText: "<span style='color: " + textColor + "'>Minutes</span>"
@@ -487,7 +475,7 @@ Item {
             ColumnLayout {
 
 
-                ChartView {
+                InteractiveChartView {
                     id: gpuChart
 
                     Layout.fillWidth: true
@@ -506,7 +494,7 @@ Item {
                     title: (root.gpuName || root.gpuTotalMemory) ? ("GPU: " + root.gpuName + ", " + root.gpuTotalMemory + "MB") : "No GPU"
 
                     ValueAxis {
-                        id: valueAxisY3
+                        id: valueGpuY
                         min: 0
                         max: root.gpuMaxAxis
                         titleText: "<span style='color: " + textColor + "'>%, °C</span>"
@@ -519,7 +507,7 @@ Item {
                     }
 
                     ValueAxis {
-                        id: valueAxisX3
+                        id: valueGpuX
                         min: 0
                         max: root.deltaTime * Math.max(1, root.nbReads)
                         titleText: "<span style='color: " + textColor + "'>Minutes</span>"

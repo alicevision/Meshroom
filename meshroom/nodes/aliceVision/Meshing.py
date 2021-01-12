@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "6.0"
 
 from meshroom.core import desc
 
@@ -9,10 +9,21 @@ class Meshing(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
+    documentation = '''
+This node creates a dense geometric surface representation of the scene.
+
+First, it fuses all the depth maps into a global dense point cloud with an adaptive resolution.
+It then performs a 3D Delaunay tetrahedralization and a voting procedure is done to compute weights on cells and weights on facets connecting the cells.
+A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents the extracted mesh surface.
+
+## Online
+[https://alicevision.org/#photogrammetry/meshing](https://alicevision.org/#photogrammetry/meshing)
+'''
+
     inputs = [
         desc.File(
             name='input',
-            label='Input',
+            label='SfmData',
             description='SfMData file.',
             value='',
             uid=[0],
@@ -20,16 +31,104 @@ class Meshing(desc.CommandLineNode):
         desc.File(
             name="depthMapsFolder",
             label='Depth Maps Folder',
-            description='Input depth maps folder',
+            description='Input depth maps folder.',
             value='',
             uid=[0],
         ),
-        desc.File(
-            name="depthMapsFilterFolder",
-            label='Filtered Depth Maps Folder',
-            description='Input filtered depth maps folder',
-            value='',
+        desc.BoolParam(
+            name='useBoundingBox',
+            label='Custom Bounding Box',
+            description='Edit the meshing bounding box. If enabled, it takes priority over the Estimate From SfM option. Parameters can be adjusted in advanced settings.',
+            value=False,
             uid=[0],
+            group=''
+        ),
+        desc.GroupAttribute(
+            name="boundingBox",
+            label="Bounding Box Settings",
+            description="Translation, rotation and scale of the bounding box.",
+            groupDesc=[
+                desc.GroupAttribute(
+                    name="bboxTranslation",
+                    label="Translation",
+                    description="Position in space.",
+                    groupDesc=[
+                        desc.FloatParam(
+                            name="x", label="x", description="X Offset",
+                            value=0.0,
+                            uid=[0],
+                            range=(-20.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="y", label="y", description="Y Offset",
+                            value=0.0,
+                            uid=[0],
+                            range=(-20.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="z", label="z", description="Z Offset",
+                            value=0.0,
+                            uid=[0],
+                            range=(-20.0, 20.0, 0.01)
+                        )
+                    ],
+                    joinChar=","
+                ),
+                desc.GroupAttribute(
+                    name="bboxRotation",
+                    label="Euler Rotation",
+                    description="Rotation in Euler degrees.",
+                    groupDesc=[
+                        desc.FloatParam(
+                            name="x", label="x", description="Euler X Rotation",
+                            value=0.0,
+                            uid=[0],
+                            range=(-90.0, 90.0, 1)
+                        ),
+                        desc.FloatParam(
+                            name="y", label="y", description="Euler Y Rotation",
+                            value=0.0,
+                            uid=[0],
+                            range=(-180.0, 180.0, 1)
+                        ),
+                        desc.FloatParam(
+                            name="z", label="z", description="Euler Z Rotation",
+                            value=0.0,
+                            uid=[0],
+                            range=(-180.0, 180.0, 1)
+                        )
+                    ],
+                    joinChar=","
+                ),
+                desc.GroupAttribute(
+                    name="bboxScale",
+                    label="Scale",
+                    description="Scale of the bounding box.",
+                    groupDesc=[
+                        desc.FloatParam(
+                            name="x", label="x", description="X Scale",
+                            value=1.0,
+                            uid=[0],
+                            range=(0.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="y", label="y", description="Y Scale",
+                            value=1.0,
+                            uid=[0],
+                            range=(0.0, 20.0, 0.01)
+                        ),
+                        desc.FloatParam(
+                            name="z", label="z", description="Z Scale",
+                            value=1.0,
+                            uid=[0],
+                            range=(0.0, 20.0, 0.01)
+                        )
+                    ],
+                    joinChar=","
+                )
+            ],
+            joinChar=",",
+            enabled=lambda node: node.useBoundingBox.value,
         ),
         desc.BoolParam(
             name='estimateSpaceFromSfM',
@@ -47,6 +146,7 @@ class Meshing(desc.CommandLineNode):
             range=(0, 100, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: node.estimateSpaceFromSfM.value,
         ),
         desc.FloatParam(
             name='estimateSpaceMinObservationAngle',
@@ -55,6 +155,7 @@ class Meshing(desc.CommandLineNode):
             value=10,
             range=(0, 120, 1),
             uid=[0],
+            enabled=lambda node: node.estimateSpaceFromSfM.value,
         ),
         desc.IntParam(
             name='maxInputPoints',
@@ -238,14 +339,14 @@ class Meshing(desc.CommandLineNode):
     outputs = [
         desc.File(
             name="outputMesh",
-            label="Output Mesh",
+            label="Mesh",
             description="Output mesh (OBJ file format).",
             value="{cache}/{nodeType}/{uid0}/mesh.obj",
             uid=[],
         ),
         desc.File(
             name="output",
-            label="Output Dense Point Cloud",
+            label="Dense SfMData",
             description="Output dense point cloud with visibilities (SfMData file format).",
             value="{cache}/{nodeType}/{uid0}/densePointCloud.abc",
             uid=[],

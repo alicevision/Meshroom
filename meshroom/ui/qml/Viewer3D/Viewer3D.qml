@@ -77,7 +77,7 @@ FocusScope {
             if (event.key == Qt.Key_F) {
                 resetCameraPosition();
             }
-            else if(Qt.Key_1 <= event.key && event.key <= Qt.Key_3)
+            else if(Qt.Key_1 <= event.key && event.key < Qt.Key_1 + Viewer3DSettings.renderModes.length)
             {
                 Viewer3DSettings.renderMode = event.key - Qt.Key_1;
             }
@@ -207,6 +207,17 @@ FocusScope {
                                             ]
                                         }
                                     }
+                                    LayerFilter {
+                                        filterMode: LayerFilter.DiscardAnyMatchingLayers
+                                        layers: Layer {id: drawOnFront}
+                                    }
+                                    LayerFilter {
+                                        filterMode: LayerFilter.AcceptAnyMatchingLayers
+                                        layers: [drawOnFront]
+                                        RenderStateSet {
+                                            renderStates: DepthTest { depthFunction: DepthTest.GreaterOrEqual }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -222,6 +233,11 @@ FocusScope {
                 // Only activate it when a double click may happen or when the 'Control' key is pressed
                 pickingEnabled: cameraController.pickingActive || doubleClickTimer.running
                 camera: cameraSelector.camera
+
+                // Used for TransformGizmo in BoundingBox
+                sceneCameraController: cameraController
+                frontLayerComponent: drawOnFront
+                window: root
 
                 components: [
                     Transform {
@@ -274,8 +290,34 @@ FocusScope {
         }
     }
 
+    FloatingPane {
+        visible: Viewer3DSettings.renderMode == 3
+        anchors.bottom: renderModesPanel.top
+        GridLayout {
+            columns: 2
+            rowSpacing: 0
+
+            RadioButton { text: "SHL File"; autoExclusive: true; checked: true }
+            TextField {
+                text: Viewer3DSettings.shlFile
+                selectByMouse: true
+                Layout.minimumWidth: 300
+                onEditingFinished: Viewer3DSettings.shlFile = text
+            }
+
+            RadioButton {
+                Layout.columnSpan: 2
+                autoExclusive: true
+                text: "Normals"
+                onCheckedChanged: Viewer3DSettings.displayNormals = checked
+            }
+
+        }
+    }
+
     // Rendering modes
     FloatingPane {
+        id: renderModesPanel
         anchors.bottom: parent.bottom
         padding: 4
         Row {

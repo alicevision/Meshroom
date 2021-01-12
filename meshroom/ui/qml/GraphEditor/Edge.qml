@@ -41,13 +41,16 @@ Shape {
         startY: root.startY
         fillColor: "transparent"
         strokeColor: "#3E3E3E"
-        capStyle: ShapePath.RoundCap
+        strokeStyle: edge != undefined && ((edge.src != undefined && edge.src.isOutput) || edge.dst == undefined) ? ShapePath.SolidLine : ShapePath.DashLine
         strokeWidth: 1
+        // final visual width of this path (never below 1)
+        readonly property real visualWidth: Math.max(strokeWidth, 1)
+        dashPattern: [6/visualWidth, 4/visualWidth]
+        capStyle: ShapePath.RoundCap
 
         PathCubic {
             id: cubic
-            property real curveScale: 0.7
-            property real ctrlPtDist: Math.abs(root.width * curveScale)
+            property real ctrlPtDist: 30
             x: root.endX
             y: root.endY
             relativeControl1X: ctrlPtDist; relativeControl1Y: 0
@@ -58,7 +61,7 @@ Shape {
     EdgeMouseArea {
         id: edgeArea
         anchors.fill: parent
-        curveScale: cubic.curveScale
+        curveScale: cubic.ctrlPtDist / root.width  // normalize by width
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         thickness: root.thickness + 4
         onPressed: root.pressed(arguments[0])   // can't get named args, use arguments array

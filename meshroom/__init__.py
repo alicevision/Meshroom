@@ -1,4 +1,4 @@
-__version__ = "2019.2.0"
+__version__ = "2020.1.1"
 __version_name__ = __version__
 
 from distutils import util
@@ -78,7 +78,12 @@ def setupEnvironment():
         if not isinstance(val, (list, tuple)):
             val = [val]
 
-        paths[index:index] = val
+        if index == -1:
+            paths.extend(val)
+        elif index == 0:
+            paths = val + paths
+        else:
+            raise ValueError("addToEnvPath: index must be -1 or 0.")
         os.environ[var] = os.pathsep.join(paths)
 
     # setup root directory (override possible by setting "MESHROOM_INSTALL_DIR" environment variable)

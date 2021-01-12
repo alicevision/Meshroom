@@ -1,5 +1,5 @@
-from PySide2 import QtCore
-
+from PySide2 import QtCore, QtQml
+import shiboken2
 
 class QObjectListModel(QtCore.QAbstractListModel):
     """
@@ -216,6 +216,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
     def reset(self, objects):
         self.setObjectList(objects)
 
+    @QtCore.Slot(QtCore.QObject, result=bool)
     def contains(self, obj):
         """ Returns true if the list contains an occurrence of object;
         otherwise returns false.
@@ -271,7 +272,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
 
     def _dereferenceItem(self, item):
         # Ask for object deletion if parented to the model
-        if item.parent() == self:
+        if shiboken2.isValid(item) and item.parent() == self:
             # delay deletion until the next event loop
             # This avoids warnings when the QML engine tries to evaluate (but should not)
             # an object that has already been deleted
@@ -374,3 +375,4 @@ Property = QtCore.Property
 BaseObject = QtCore.QObject
 Variant = "QVariant"
 VariantList = "QVariantList"
+JSValue = QtQml.QJSValue

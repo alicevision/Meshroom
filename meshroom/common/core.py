@@ -1,3 +1,4 @@
+from . import PySignal
 
 class CoreDictModel:
 
@@ -73,6 +74,9 @@ class CoreListModel:
     def __getitem__(self, idx):
         return self._objects[idx]
 
+    def values(self):
+        return self._objects
+
     def setObjectList(self, iterable):
         self.clear()
         self._objects = iterable
@@ -102,20 +106,6 @@ class CoreListModel:
         self._objects[index:index] = iterable
 
 
-class CoreSignal:
-    """ Simple signal/callback implementation """
-    def __init__(self):
-        self._callbacks = set()
-
-    def emit(self, *args):
-        # TODO: check if we really need this in non-UI mode
-        # [cb(*args) for cb in self._callbacks]
-        pass
-
-    def connect(self, func):
-        self._callbacks.add(func)
-
-
 def CoreSlot(*args, **kwargs):
     def slot_decorator(func):
         def func_wrapper(*f_args, **f_kwargs):
@@ -130,9 +120,15 @@ class CoreProperty(property):
 
 
 class CoreObject(object):
+
     def __init__(self, parent=None, *args, **kwargs):
         super(CoreObject, self).__init__()
         self._parent = parent
+        # Note: we do not use ClassSignal, as it can not be used in __del__.
+        self.destroyed = PySignal.Signal()
+
+    def __del__(self):
+        self.destroyed.emit()
 
     def parent(self):
         return self._parent
@@ -141,8 +137,9 @@ class CoreObject(object):
 DictModel = CoreDictModel
 ListModel = CoreListModel
 Slot = CoreSlot
-Signal = CoreSignal
+Signal = PySignal.ClassSignal
 Property = CoreProperty
 BaseObject = CoreObject
 Variant = object
 VariantList = object
+JSValue = None

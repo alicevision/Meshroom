@@ -52,6 +52,10 @@ class UndoStack(QUndoStack):
         self.canRedoChanged.connect(self._canRedoChanged)
         self.undoTextChanged.connect(self._undoTextChanged)
         self.redoTextChanged.connect(self._redoTextChanged)
+        self.indexChanged.connect(self._indexChanged)
+
+        self._undoableIndex = 0  # used to block the undo stack while computing
+        self._lockedRedo = False  # used to avoid unwanted behaviors while computing
 
     def tryAndPush(self, command):
         # type: (UndoCommand) -> bool
@@ -63,8 +67,34 @@ class UndoStack(QUndoStack):
         if res is not False:
             command.setEnabled(False)
             self.push(command)  # takes ownership
+            self.setLockedRedo(False)  # make sure to unlock the redo action
             command.setEnabled(True)
         return res
+
+    def setUndoableIndex(self, value):
+        if self._undoableIndex == value:
+            return
+        self._undoableIndex = value
+        self.isUndoableIndexChanged.emit()
+
+    def setLockedRedo(self, value):
+        if self._lockedRedo == value:
+            return
+        self._lockedRedo = value
+        self.lockedRedoChanged.emit()
+
+    def lockAtThisIndex(self):
+        """
+        Lock the undo stack at the current index and lock the redo action.
+        Note: should be used while starting a new compute to avoid problems.
+        """
+        self.setUndoableIndex(self.index)
+        self.setLockedRedo(True)
+
+    def unlock(self):
+        """ Unlock both undo stack and redo action. """
+        self.setUndoableIndex(0)
+        self.setLockedRedo(False)
 
     # Redeclare QUndoStack signal since original ones can not be used for properties notifying
     _cleanChanged = Signal()
@@ -72,12 +102,19 @@ class UndoStack(QUndoStack):
     _canRedoChanged = Signal()
     _undoTextChanged = Signal()
     _redoTextChanged = Signal()
+    _indexChanged = Signal()
 
     clean = Property(bool, QUndoStack.isClean, notify=_cleanChanged)
     canUndo = Property(bool, QUndoStack.canUndo, notify=_canRedoChanged)
     canRedo = Property(bool, QUndoStack.canRedo, notify=_canUndoChanged)
     undoText = Property(str, QUndoStack.undoText, notify=_undoTextChanged)
     redoText = Property(str, QUndoStack.redoText, notify=_redoTextChanged)
+    index = Property(int, QUndoStack.index, notify=_indexChanged)
+
+    isUndoableIndexChanged = Signal()
+    isUndoableIndex = Property(bool, lambda self: self.index > self._undoableIndex, notify=isUndoableIndexChanged)
+    lockedRedoChanged = Signal()
+    lockedRedo = Property(bool, lambda self: self._lockedRedo, setLockedRedo, notify=lockedRedoChanged)
 
 
 class GraphCommand(UndoCommand):
@@ -189,6 +226,9 @@ class AddEdgeCommand(GraphCommand):
         self.srcAttr = src.getFullName()
         self.dstAttr = dst.getFullName()
         self.setText("Connect '{}'->'{}'".format(self.srcAttr, self.dstAttr))
+
+        if src.baseType != dst.baseType:
+            raise ValueError("Attribute types are not compatible and cannot be connected: '{}'({})->'{}'({})".format(self.srcAttr, src.baseType, self.dstAttr, dst.baseType))
 
     def redoImpl(self):
         self.graph.addEdge(self.graph.attribute(self.srcAttr), self.graph.attribute(self.dstAttr))

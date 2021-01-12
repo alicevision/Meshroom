@@ -1,17 +1,16 @@
-from meshroom.common import BaseObject, Property, Variant, VariantList, ListModel
+from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue, ListModel
 from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
-import collections
 import math
 import os
 import psutil
-
+import ast
 
 class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, semantic, uid, group, formatter):
+    def __init__(self, name, label, description, value, advanced, semantic, uid, group, enabled, formatter):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
@@ -20,6 +19,7 @@ class Attribute(BaseObject):
         self._uid = uid
         self._group = group
         self._advanced = advanced
+        self._enabled = enabled
         self._semantic = semantic
         self._formatter = formatter or self._defaultFormatter
 
@@ -30,16 +30,17 @@ class Attribute(BaseObject):
     uid = Property(Variant, lambda self: self._uid, constant=True)
     group = Property(str, lambda self: self._group, constant=True)
     advanced = Property(bool, lambda self: self._advanced, constant=True)
+    enabled = Property(Variant, lambda self: self._enabled, constant=True)
     semantic = Property(str, lambda self: self._semantic, constant=True)
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
-        """ Return validated/conformed 'value'.
+        """ Return validated/conformed 'value'. Need to be implemented in derived classes.
 
         Raises:
             ValueError: if value does not have the proper type
         """
-        return value
+        raise NotImplementedError("Attribute.validateValue is an abstract function that should be implemented in the derived class.")
 
     def matchDescription(self, value, conform=False):
         """ Returns whether the value perfectly match attribute's description.
@@ -73,19 +74,27 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, semantic='', joinChar=' ', formatter=None):
+    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' ', formatter=None):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
         self._elementDesc = elementDesc
         self._joinChar = joinChar
-        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced, semantic=semantic, formatter=formatter)
+        super(ListAttribute, self).__init__(name=name, label=label, description=description, value=[], uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled, formatter=formatter)
 
     elementDesc = Property(Attribute, lambda self: self._elementDesc, constant=True)
     uid = Property(Variant, lambda self: self.elementDesc.uid, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
 
     def validateValue(self, value):
+        if JSValue is not None and isinstance(value, JSValue):
+            # Note: we could use isArray(), property("length").toInt() to retrieve all values
+            raise ValueError("ListAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
+        if isinstance(value, pyCompatibility.basestring):
+            # Alternative solution to set values from QML is to convert values to JSON string
+            # In this case, it works with all data types
+            value = ast.literal_eval(value)
+
         if not isinstance(value, (list, tuple)):
             raise ValueError('ListAttribute only supports list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
@@ -109,23 +118,36 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, semantic='', joinChar=' ', formatter=None):
+    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, enabled=True, joinChar=' ', semantic='', formatter=None):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
-        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, semantic=semantic, formatter=formatter)
+        super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, enabled=enabled, semantic=semantic, formatter=formatter)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
 
     def validateValue(self, value):
-        """ Ensure value is a dictionary with keys compatible with the group description. """
-        if not isinstance(value, dict):
-            raise ValueError('GroupAttribute only supports dict input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
-        invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
-        if invalidKeys:
-            raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
+        """ Ensure value is compatible with the group description and convert value if needed. """
+        if JSValue is not None and isinstance(value, JSValue):
+            # Note: we could use isArray(), property("length").toInt() to retrieve all values
+            raise ValueError("GroupAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
+        if isinstance(value, pyCompatibility.basestring):
+            # Alternative solution to set values from QML is to convert values to JSON string
+            # In this case, it works with all data types
+            value = ast.literal_eval(value)
+
+        if isinstance(value, dict):
+            invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
+            if invalidKeys:
+                raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
+        elif isinstance(value, (list, tuple)):
+            if len(value) != len(self._groupDesc):
+                raise ValueError('Value contains incoherent number of values: desc size: {}, value size: {}'.format(len(self._groupDesc), len(value)))
+        else:
+            raise ValueError('GroupAttribute only supports dict/list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+
         return value
 
     def matchDescription(self, value, conform=False):
@@ -185,15 +207,15 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group, advanced, semantic='', formatter=None):
-        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
+    def __init__(self, name, label, description, value, uid, group, advanced, enabled, semantic='', formatter=None):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled, semantic=semantic, formatter=formatter)
 
 
 class File(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', formatter=None):
-        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, enabled=True, semantic='', formatter=None):
+        super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=True, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):
@@ -204,12 +226,12 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', formatter=None):
-        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, enabled=True, semantic='', formatter=None):
+        super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=True, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         try:
-            return bool(int(value)) # int cast is useful to handle string values ('0', '1')
+            return bool(int(value))  # int cast is useful to handle string values ('0', '1')
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
@@ -217,9 +239,9 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', formatter=None):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, enabled=True, semantic='', formatter=None):
         self._range = range
-        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
+        super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
@@ -236,9 +258,9 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', formatter=None):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, enabled=True, semantic='', formatter=None):
         self._range = range
-        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
+        super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         try:
@@ -252,13 +274,13 @@ class FloatParam(Param):
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, semantic='', formatter=None):
+    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, enabled=True, semantic='', formatter=None):
         assert values
         self._values = values
         self._exclusive = exclusive
         self._joinChar = joinChar
         self._valueType = type(self._values[0])  # cast to value type
-        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
+        super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, enabled=enabled, semantic=semantic, formatter=formatter)
 
     def conformValue(self, val):
         """ Conform 'val' to the correct type and check for its validity """
@@ -271,7 +293,7 @@ class ChoiceParam(Param):
         if self.exclusive:
             return self.conformValue(value)
 
-        if not isinstance(value, collections.Iterable):
+        if not isinstance(value, pyCompatibility.Iterable):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
@@ -283,8 +305,8 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', formatter=None):
-        super(StringParam, self).__init__(name=name, label=label, description=description,value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, formatter=formatter)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, enabled=True, semantic='', formatter=None):
+        super(StringParam, self).__init__(name=name, label=label, description=description,value=value, uid=uid, group=group, advanced=advanced, enabled=True, semantic=semantic, formatter=formatter)
 
     def validateValue(self, value):
         if not isinstance(value, pyCompatibility.basestring):
@@ -438,6 +460,7 @@ class Node(object):
     outputs = []
     size = StaticNodeSize(1)
     parallelization = None
+    documentation = ''
 
     def __init__(self):
         pass

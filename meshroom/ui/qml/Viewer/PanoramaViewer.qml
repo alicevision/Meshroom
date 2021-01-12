@@ -25,6 +25,8 @@ AliceVision.PanoramaViewer {
                 (root.sourceSize.height <= 0) ||
                 (root.sourceSize.height <= 0))
             return Image.Null;
+
+        root.defaultControlPoints();
         return Image.Ready;
     }
 

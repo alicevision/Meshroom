@@ -16,6 +16,7 @@ FocusScope {
     property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
     property alias useFloatImageViewer: displayHDR.checked
     property alias usePanoramaImageViewer: displayPanoramaViewer.checked
+    property bool displayGridPanorama: panoramaImageToolbar.displayGrid
 
     Loader {
         id: aliceVisionPluginLoader
@@ -183,6 +184,13 @@ FocusScope {
             }
         }
 
+        PanoramaImageToolbar {
+            id: panoramaImageToolbar
+            anchors.margins: 0
+            visible: displayPanoramaToolBarAction.checked && displayPanoramaToolBarAction.enabled
+            Layout.fillWidth: true
+        }
+
         // Image
         Item {
             id: imgLayout
@@ -228,6 +236,10 @@ FocusScope {
                             setSource("", {})
                         }
                     }
+
+//                    displayGridPanorama. :{
+//                        console.warn("Grid out ")
+//                    }
                 }
 
                 // qtAliceVision Panorama Viewer
@@ -244,9 +256,9 @@ FocusScope {
                             // floatViewerComp.createObject(floatImageViewerLoader, {
                             setSource("PanoramaViewer.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
-                                'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
-                                'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
-                                'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
+                                'gamma': Qt.binding(function() { return panoramaImageToolbar.gammaValue; }),
+                                'gain': Qt.binding(function() { return panoramaImageToolbar.gainValue; }),
+                                'channelModeString': Qt.binding(function() { return panoramaImageToolbar.channelModeValue; }),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -717,7 +729,8 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                         }
-                        MaterialToolButton {
+                        MaterialToolButton
+                        {
                             id: displayHDR
                             ToolTip.text: "High-Dynamic-Range Image Viewer"
                             text: MaterialIcons.hdr_on
@@ -734,8 +747,6 @@ FocusScope {
                             id: displayPanoramaViewer
                             ToolTip.text: "Panorama Viewer"
                             text: MaterialIcons.panorama_horizontal
-                            // larger font but smaller padding,
-                            // so it is visually similar.
                             font.pointSize: 16
                             padding: 0
                             Layout.minimumWidth: 0

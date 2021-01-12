@@ -230,6 +230,7 @@ FocusScope {
                     }
                 }
 
+                // qtAliceVision Panorama Viewer
                 Loader {
                     id: panoramaViewerLoader
                     active: root.aliceVisionPluginAvailable && root.usePanoramaImageViewer && !floatImageViewerLoader.active
@@ -291,12 +292,12 @@ FocusScope {
 
                 property var image: {
                     //qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
-                    if (qtImageViewerLoader.active)
-                        qtImageViewerLoader.item
                     if (floatImageViewerLoader.active)
                         floatImageViewerLoader.item
-                    if (panoramaViewerLoader.active)
+                    else if (panoramaViewerLoader.active)
                         panoramaViewerLoader.item
+                    else
+                        qtImageViewerLoader.item
                 }
                 width: image ? image.width : 1
                 height: image ? image.height : 1

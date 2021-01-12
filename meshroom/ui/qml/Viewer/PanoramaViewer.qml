@@ -30,7 +30,7 @@ AliceVision.PanoramaViewer {
 
         return Image.Ready;
     }
-    property bool isGridDisplayed : true;
+    property bool isGridDisplayed : false;
     property string channelModeString : "rgba"
 
     onIsGridDisplayedChanged: {

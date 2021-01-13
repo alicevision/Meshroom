@@ -250,7 +250,8 @@ FocusScope {
                                 'gamma': Qt.binding(function() { return panoramaImageToolbar.gammaValue; }),
                                 'gain': Qt.binding(function() { return panoramaImageToolbar.gainValue; }),
                                 'channelModeString': Qt.binding(function() { return panoramaImageToolbar.channelModeValue; }),
-                                'isGridDisplayed' : Qt.binding(function(){ return panoramaImageToolbar.displayGrid;})
+                                'isGridDisplayed' : Qt.binding(function(){ return panoramaImageToolbar.displayGrid;}),
+                                'gridOpacity' : Qt.binding(function(){ return panoramaImageToolbar.opacityValue;})
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

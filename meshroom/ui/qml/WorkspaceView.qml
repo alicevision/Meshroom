@@ -106,11 +106,11 @@ Item {
                             enabled: viewer2D.useFloatImageViewer
                         }
                         Action {
-                            id: displayPanoramaToolBarAction
-                            text: "Display Panorama Toolbar"
+                            id: displayLensDistorsionToolBarAction
+                            text: "Display Lens Distorsion Toolbar"
                             checkable: true
                             checked: true
-                            enabled: viewer2D.usePanoramaImageViewer
+                            enabled: viewer2D.useLensDistorsionViewer
                         }
                         Action {
                             id: displayImagePathAction

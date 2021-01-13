@@ -15,7 +15,7 @@ FocusScope {
 
     property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
     property alias useFloatImageViewer: displayHDR.checked
-    property alias usePanoramaImageViewer: displayPanoramaViewer.checked
+    property alias useLensDistorsionViewer: displayLensDistorsionViewer.checked
 
     Loader {
         id: aliceVisionPluginLoader
@@ -183,10 +183,10 @@ FocusScope {
             }
         }
 
-        PanoramaImageToolbar {
-            id: panoramaImageToolbar
+        LensDistorsionToolbar {
+            id: lensDistorsionImageToolbar
             anchors.margins: 0
-            visible: displayPanoramaToolBarAction.checked && displayPanoramaToolBarAction.enabled
+            visible: displayLensDistorsionToolBarAction.checked && displayLensDistorsionToolBarAction.enabled
             Layout.fillWidth: true
         }
 
@@ -215,7 +215,7 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 Loader {
                     id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.useFloatImageViewer && !panoramaViewerLoader.active
+                    active: root.aliceVisionPluginAvailable && root.useFloatImageViewer && !lensDistortionViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
 
@@ -240,9 +240,9 @@ FocusScope {
 
                 // qtAliceVision Panorama Viewer
                 Loader {
-                    id: panoramaViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.usePanoramaImageViewer && !floatImageViewerLoader.active
-                    visible: (panoramaViewerLoader.status === Loader.Ready)
+                    id: lensDistorsionViewerLoader
+                    active: root.aliceVisionPluginAvailable && root.useLensDistorsionViewer && !floatImageViewerLoader.active
+                    visible: (lensDistorsionViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
 
                     onActiveChanged: {
@@ -250,15 +250,15 @@ FocusScope {
                             // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
                             // floatViewerComp.createObject(floatImageViewerLoader, {
-                            setSource("PanoramaViewer.qml", {
+                            setSource("LensDistorsionViewer.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
-                                'gamma': Qt.binding(function() { return panoramaImageToolbar.gammaValue; }),
-                                'gain': Qt.binding(function() { return panoramaImageToolbar.gainValue; }),
-                                'channelModeString': Qt.binding(function() { return panoramaImageToolbar.channelModeValue; }),
-                                'isCtrlPointsDisplayed' : Qt.binding(function(){ return panoramaImageToolbar.displayPoints;}),
-                                'isGridDisplayed' : Qt.binding(function(){ return panoramaImageToolbar.displayGrid;}),
-                                'gridOpacity' : Qt.binding(function(){ return panoramaImageToolbar.opacityValue;}),
-                                'gridColor' : Qt.binding(function(){ return panoramaImageToolbar.color;}),
+                                'gamma': Qt.binding(function() { return lensDistorsionImageToolbar.gammaValue; }),
+                                'gain': Qt.binding(function() { return lensDistorsionImageToolbar.gainValue; }),
+                                'channelModeString': Qt.binding(function() { return lensDistorsionImageToolbar.channelModeValue; }),
+                                'isCtrlPointsDisplayed' : Qt.binding(function(){ return lensDistorsionImageToolbar.displayPoints;}),
+                                'isGridDisplayed' : Qt.binding(function(){ return lensDistorsionImageToolbar.displayGrid;}),
+                                'gridOpacity' : Qt.binding(function(){ return lensDistorsionImageToolbar.opacityValue;}),
+                                'gridColor' : Qt.binding(function(){ return lensDistorsionImageToolbar.color;}),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -270,7 +270,7 @@ FocusScope {
                 // Simple QML Image Viewer (using Qt or qtOIIO to load images)
                 Loader {
                     id: qtImageViewerLoader
-                    active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
+                    active: !floatImageViewerLoader.active && !lensDistorsionViewerLoader.active
                     anchors.centerIn: parent
                     sourceComponent: Image {
                         id: qtImageViewer
@@ -306,8 +306,8 @@ FocusScope {
                     //qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
                     if (floatImageViewerLoader.active)
                         floatImageViewerLoader.item
-                    else if (panoramaViewerLoader.active)
-                        panoramaViewerLoader.item
+                    else if (lensDistorsionViewerLoader.active)
+                        lensDistorsionViewerLoader.item
                     else
                         qtImageViewerLoader.item
                 }
@@ -744,8 +744,8 @@ FocusScope {
                             enabled: root.aliceVisionPluginAvailable
                         }
                         MaterialToolButton {
-                            id: displayPanoramaViewer
-                            ToolTip.text: "Panorama Viewer"
+                            id: displayLensDistorsionViewer
+                            ToolTip.text: "Lens Distorsion Viewer"
                             text: MaterialIcons.panorama_horizontal
                             font.pointSize: 16
                             padding: 0

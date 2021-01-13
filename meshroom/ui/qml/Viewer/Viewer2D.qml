@@ -257,7 +257,8 @@ FocusScope {
                                 'channelModeString': Qt.binding(function() { return panoramaImageToolbar.channelModeValue; }),
                                 'isCtrlPointsDisplayed' : Qt.binding(function(){ return panoramaImageToolbar.displayPoints;}),
                                 'isGridDisplayed' : Qt.binding(function(){ return panoramaImageToolbar.displayGrid;}),
-                                'gridOpacity' : Qt.binding(function(){ return panoramaImageToolbar.opacityValue;})
+                                'gridOpacity' : Qt.binding(function(){ return panoramaImageToolbar.opacityValue;}),
+                                'gridColor' : Qt.binding(function(){ return panoramaImageToolbar.color;}),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

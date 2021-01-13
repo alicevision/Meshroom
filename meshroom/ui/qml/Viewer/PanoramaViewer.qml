@@ -36,6 +36,7 @@ AliceVision.PanoramaViewer {
     property bool isCtrlPointsDisplayed : true;
     property bool isGridDisplayed : false;
     property int gridOpacity : 100;
+    property color gridColor : "#FF0000";
 
     onIsCtrlPointsDisplayedChanged: {
          repeater.displayControlPoints()
@@ -46,7 +47,11 @@ AliceVision.PanoramaViewer {
     }
 
     onGridOpacityChanged: {
-        root.setGridColorQML(Qt.rgba(255, 0, 0, gridOpacity/100));
+        root.setGridColorQML(Qt.rgba(gridColor.r, gridColor.g, gridColor.b, gridOpacity/100));
+    }
+
+    onGridColorChanged: {
+        root.setGridColorQML(Qt.rgba(gridColor.r, gridColor.g, gridColor.b, gridOpacity/100));
     }
 
     channelMode: {

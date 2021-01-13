@@ -3,6 +3,7 @@ import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import Controls 1.0
+import Utils 1.0
 
 FloatingPane {
     id: root
@@ -21,6 +22,11 @@ FloatingPane {
     property variant colorRGBA: null
     property bool displayGrid: displayGridButton.checked
     property bool displayPoints: displayCtrlPointsButton.checked
+
+    property var colors: [Colors.lightgrey, Colors.grey, Colors.red, Colors.green, Colors.blue, Colors.yellow]
+    readonly property int colorIndex: (colorOffset) % root.colors.length
+    property int colorOffset: 0
+    property color color: root.colors[gridColorPicker.currentIndex]
 
     background: Rectangle { color: root.palette.window }
 
@@ -67,6 +73,13 @@ FloatingPane {
             Layout.minimumWidth: 0
             checkable: true
             checked: false
+        }
+        ColorChart {
+            id : gridColorPicker
+            padding : 10
+            colors: root.colors
+            currentIndex: root.colorIndex
+            onColorPicked: root.colorOffset = colorIndex
         }
 
         // Grid opacity slider

@@ -20,6 +20,7 @@ FloatingPane {
     property string channelModeValue: channelsCtrl.value
     property variant colorRGBA: null
     property bool displayGrid: displayGridButton.checked
+    property bool displayPoints: displayCtrlPointsButton.checked
 
     background: Rectangle { color: root.palette.window }
 
@@ -48,11 +49,21 @@ FloatingPane {
             model: channels
         }
         MaterialToolButton {
+            id: displayCtrlPointsButton
+            ToolTip.text: "Display Control Points"
+            text: MaterialIcons.control_point
+            font.pointSize: 13
+            padding: 5
+            Layout.minimumWidth: 0
+            checkable: true
+            checked: true
+        }
+        MaterialToolButton {
             id: displayGridButton
             ToolTip.text: "Display Grid"
             text: MaterialIcons.grid_on
-            font.pointSize: 16
-            padding: 0
+            font.pointSize: 13
+            padding: 5
             Layout.minimumWidth: 0
             checkable: true
             checked: false

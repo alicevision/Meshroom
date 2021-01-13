@@ -250,6 +250,7 @@ FocusScope {
                                 'gamma': Qt.binding(function() { return panoramaImageToolbar.gammaValue; }),
                                 'gain': Qt.binding(function() { return panoramaImageToolbar.gainValue; }),
                                 'channelModeString': Qt.binding(function() { return panoramaImageToolbar.channelModeValue; }),
+                                'isCtrlPointsDisplayed' : Qt.binding(function(){ return panoramaImageToolbar.displayPoints;}),
                                 'isGridDisplayed' : Qt.binding(function(){ return panoramaImageToolbar.displayGrid;}),
                                 'gridOpacity' : Qt.binding(function(){ return panoramaImageToolbar.opacityValue;})
                             })

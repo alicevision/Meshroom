@@ -30,10 +30,16 @@ AliceVision.PanoramaViewer {
 
         return Image.Ready;
     }
-    property bool isGridDisplayed : false;
+
     property string channelModeString : "rgba"
 
+    property bool isCtrlPointsDisplayed : true;
+    property bool isGridDisplayed : false;
     property int gridOpacity : 100;
+
+    onIsCtrlPointsDisplayedChanged: {
+         repeater.displayControlPoints()
+    }
 
     onIsGridDisplayedChanged: {
         root.displayGrid()

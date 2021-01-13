@@ -108,7 +108,6 @@ FocusScope {
         }
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
-            console.warn(imgContainer.width);
 
             if(Math.min(imgContainer.width, imgContainer.image.height) * imgContainer.scale * zoomFactor < 10)
                 return
@@ -215,7 +214,7 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 Loader {
                     id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.useFloatImageViewer && !lensDistortionViewerLoader.active
+                    active: root.aliceVisionPluginAvailable && root.useFloatImageViewer && !lensDistorsionViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
 

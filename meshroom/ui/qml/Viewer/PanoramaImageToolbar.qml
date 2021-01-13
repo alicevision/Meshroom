@@ -10,9 +10,11 @@ FloatingPane {
     padding: 5
     radius: 0
 
+    property int opacityDefaultValue: 100
     property real gainDefaultValue: 1
     property real gammaDefaultValue: 1
     property real slidersPowerValue: 4
+    property int opacityValue: Math.pow(opacityCtrl.value, 1)
     property real gainValue: Math.pow(gainCtrl.value, slidersPowerValue)
     property real gammaValue: Math.pow(gammaCtrl.value, slidersPowerValue)
     property string channelModeValue: channelsCtrl.value
@@ -54,6 +56,46 @@ FloatingPane {
             Layout.minimumWidth: 0
             checkable: true
             checked: false
+        }
+
+        // Grid opacity slider
+        RowLayout {
+            spacing: 5
+
+            ToolButton {
+                text: "Grid Opacity"
+
+                ToolTip.visible: ToolTip.text && hovered
+                ToolTip.delay: 100
+                ToolTip.text: "Reset Opacity"
+
+                onClicked: {
+                    opacityCtrl.value = opacityDefaultValue;
+                }
+            }
+            TextField {
+                id: opacityLabel
+
+                ToolTip.visible: ToolTip.text && hovered
+                ToolTip.delay: 100
+                ToolTip.text: "Grid opacity"
+
+                text: opacityValue.toFixed(1)
+                Layout.preferredWidth: textMetrics_opacityValue.width
+                selectByMouse: true
+                validator: doubleValidator
+                onAccepted: {
+                    opacityCtrl.value = Number(opacityLabel.text)
+                }
+            }
+            Slider {
+                id: opacityCtrl
+                Layout.fillWidth: true
+                from: 0
+                to: 100
+                value: opacityDefaultValue
+                stepSize: 1
+            }
         }
 
         // gain slider
@@ -141,5 +183,10 @@ FloatingPane {
         id: textMetrics_gainValue
         font: gainLabel.font
         text: "1.2345"
+    }
+    TextMetrics {
+        id: textMetrics_opacityValue
+        font: opacityLabel.font
+        text: "100.000"
     }
 }

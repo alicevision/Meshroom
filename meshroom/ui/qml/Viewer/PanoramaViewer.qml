@@ -33,8 +33,14 @@ AliceVision.PanoramaViewer {
     property bool isGridDisplayed : false;
     property string channelModeString : "rgba"
 
+    property int gridOpacity : 100;
+
     onIsGridDisplayedChanged: {
         root.displayGrid()
+    }
+
+    onGridOpacityChanged: {
+        root.setGridColorQML(Qt.rgba(255, 0, 0, gridOpacity/100));
     }
 
     channelMode: {
@@ -101,8 +107,8 @@ AliceVision.PanoramaViewer {
             id: rectGrid
             Rectangle {
                 id: rect
-                width: 20; height: width
-                radius: 10
+                width: root.sourceSize.width/100; height: width
+                radius: width/2
                 x: root.getVertex(model.index).x - (width / 2)
                 y: root.getVertex(model.index).y - (height / 2)
                 color: "yellow"
@@ -116,7 +122,7 @@ AliceVision.PanoramaViewer {
                     drag.smoothed: false
                     drag.axis: Drag.XAndYAxis
                     onReleased: {
-                        root.setVertex(index, rect.x + (20 / 2), rect.y + (20 / 2))
+                        root.setVertex(index, rect.x + (width / 2), rect.y + (height / 2))
                     }
                 }
             }

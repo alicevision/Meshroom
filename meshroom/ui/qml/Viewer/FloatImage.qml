@@ -36,7 +36,7 @@ AliceVision.FloatImageViewer {
     // rename into distortionView
     property bool distortion: false
     property bool isGridDisplayed : false;
-
+    property int subdivisions: 2
 
     onDistortionChanged: {
         console.warn("distortion");
@@ -47,6 +47,9 @@ AliceVision.FloatImageViewer {
         root.displayGrid()
     }
 
+    onSubdivisionsChanged: {
+        root.updateSubdivisions(subdivisions)
+    }
 
     channelMode: {
         switch(channelModeString)

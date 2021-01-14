@@ -12,9 +12,11 @@ FloatingPane {
     radius: 0
 
     property int opacityDefaultValue: 100
+    property int subdivisionsDefaultValue: 100
 
     property real slidersPowerValue: 4
     property int opacityValue: Math.pow(opacityCtrl.value, 1)
+    property int subdivisionsValue: Math.pow(subdivisionsCtrl.value, 1)
 
     property variant colorRGBA: null
     property bool displayGrid: displayGridButton.checked
@@ -104,6 +106,47 @@ FloatingPane {
                 stepSize: 1
             }
         }
+
+        // Grid subdivisions slider
+        RowLayout {
+            spacing: 5
+
+            ToolButton {
+                text: "Subdivisions"
+
+                ToolTip.visible: ToolTip.text && hovered
+                ToolTip.delay: 100
+                ToolTip.text: "Reset Subdivisions"
+
+                onClicked: {
+                    subdivisionsCtrl.value = subdivisionsDefaultValue;
+                }
+            }
+            TextField {
+                id: subdivisionsLabel
+
+                ToolTip.visible: ToolTip.text && hovered
+                ToolTip.delay: 100
+                ToolTip.text: "subdivisions"
+
+                text: subdivisionsValue.toFixed(1)
+                Layout.preferredWidth: textMetrics_opacityValue.width
+                selectByMouse: true
+                validator: doubleValidator
+                onAccepted: {
+                    subdivisionsCtrl.value = Number(subdivisionsLabel.text)
+                }
+            }
+            Slider {
+                id: subdivisionsCtrl
+                Layout.fillWidth: false
+                from: 2
+                to: 10
+                value: subdivisionsDefaultValue
+                stepSize: 1
+            }
+        }
+
         //Fill rectangle to have a better UI
         Rectangle {
         color: root.palette.window

@@ -15,7 +15,7 @@ FocusScope {
 
     property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
     property alias useFloatImageViewer: displayHDR.checked
-    property alias useLensDistorsionViewer: displayLensDistorsionViewer.checked
+    property alias useLensDistortionViewer: displayLensDistortionViewer.checked
 
     Loader {
         id: aliceVisionPluginLoader
@@ -182,10 +182,10 @@ FocusScope {
             }
         }
 
-        LensDistorsionToolbar {
-            id: lensDistorsionImageToolbar
+        LensDistortionToolbar {
+            id: lensDistortionImageToolbar
             anchors.margins: 0
-            visible: displayLensDistorsionToolBarAction.checked && displayLensDistorsionToolBarAction.enabled
+            visible: displayLensDistortionToolBarAction.checked && displayLensDistortionToolBarAction.enabled
             Layout.fillWidth: true
         }
 
@@ -214,7 +214,7 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 Loader {
                     id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.useFloatImageViewer && !lensDistorsionViewerLoader.active
+                    active: root.aliceVisionPluginAvailable && root.useFloatImageViewer && !lensDistortionViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
 
@@ -239,9 +239,9 @@ FocusScope {
 
                 // qtAliceVision Panorama Viewer
                 Loader {
-                    id: lensDistorsionViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.useLensDistorsionViewer && !floatImageViewerLoader.active
-                    visible: (lensDistorsionViewerLoader.status === Loader.Ready)
+                    id: lensDistortionViewerLoader
+                    active: root.aliceVisionPluginAvailable && root.useLensDistortionViewer && !floatImageViewerLoader.active
+                    visible: (lensDistortionViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
 
                     onActiveChanged: {
@@ -249,15 +249,15 @@ FocusScope {
                             // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
                             // floatViewerComp.createObject(floatImageViewerLoader, {
-                            setSource("LensDistorsionViewer.qml", {
+                            setSource("LensDistortionViewer.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
-                                'gamma': Qt.binding(function() { return lensDistorsionImageToolbar.gammaValue; }),
-                                'gain': Qt.binding(function() { return lensDistorsionImageToolbar.gainValue; }),
-                                'channelModeString': Qt.binding(function() { return lensDistorsionImageToolbar.channelModeValue; }),
-                                'isCtrlPointsDisplayed' : Qt.binding(function(){ return lensDistorsionImageToolbar.displayPoints;}),
-                                'isGridDisplayed' : Qt.binding(function(){ return lensDistorsionImageToolbar.displayGrid;}),
-                                'gridOpacity' : Qt.binding(function(){ return lensDistorsionImageToolbar.opacityValue;}),
-                                'gridColor' : Qt.binding(function(){ return lensDistorsionImageToolbar.color;}),
+                                'gamma': Qt.binding(function() { return lensDistortionImageToolbar.gammaValue; }),
+                                'gain': Qt.binding(function() { return lensDistortionImageToolbar.gainValue; }),
+                                'channelModeString': Qt.binding(function() { return lensDistortionImageToolbar.channelModeValue; }),
+                                'isCtrlPointsDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayPoints;}),
+                                'isGridDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayGrid;}),
+                                'gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
+                                'gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -269,7 +269,7 @@ FocusScope {
                 // Simple QML Image Viewer (using Qt or qtOIIO to load images)
                 Loader {
                     id: qtImageViewerLoader
-                    active: !floatImageViewerLoader.active && !lensDistorsionViewerLoader.active
+                    active: !floatImageViewerLoader.active && !lensDistortionViewerLoader.active
                     anchors.centerIn: parent
                     sourceComponent: Image {
                         id: qtImageViewer
@@ -305,8 +305,8 @@ FocusScope {
                     //qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
                     if (floatImageViewerLoader.active)
                         floatImageViewerLoader.item
-                    else if (lensDistorsionViewerLoader.active)
-                        lensDistorsionViewerLoader.item
+                    else if (lensDistortionViewerLoader.active)
+                        lensDistortionViewerLoader.item
                     else
                         qtImageViewerLoader.item
                 }
@@ -743,8 +743,8 @@ FocusScope {
                             enabled: root.aliceVisionPluginAvailable
                         }
                         MaterialToolButton {
-                            id: displayLensDistorsionViewer
-                            ToolTip.text: "Lens Distorsion Viewer"
+                            id: displayLensDistortionViewer
+                            ToolTip.text: "Lens Distortion Viewer"
                             text: MaterialIcons.panorama_horizontal
                             font.pointSize: 16
                             padding: 0

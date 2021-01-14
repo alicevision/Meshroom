@@ -106,11 +106,11 @@ Item {
                             enabled: viewer2D.useFloatImageViewer
                         }
                         Action {
-                            id: displayLensDistorsionToolBarAction
+                            id: displayLensDistortionToolBarAction
                             text: "Display Lens Distorsion Toolbar"
                             checkable: true
                             checked: true
-                            enabled: viewer2D.useLensDistorsionViewer
+                            enabled: viewer2D.useLensDistortionViewer
                         }
                         Action {
                             id: displayImagePathAction

@@ -227,6 +227,7 @@ FocusScope {
                                 'isGridDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayGrid;}),
                                 'gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
                                 'gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
+                                'distortion' : Qt.binding(function(){ return displayLensDistortionViewer.checked;}),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

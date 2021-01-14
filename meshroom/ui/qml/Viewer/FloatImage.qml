@@ -33,6 +33,13 @@ AliceVision.FloatImageViewer {
 
     property string channelModeString : "rgba"
 
+    property bool distortion: false
+
+    onDistortionChanged: {
+        console.warn("distortion");
+        root.hasDistortion(distortion);
+    }
+
     channelMode: {
         switch(channelModeString)
         {

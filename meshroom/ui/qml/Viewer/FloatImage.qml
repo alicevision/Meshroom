@@ -33,12 +33,20 @@ AliceVision.FloatImageViewer {
 
     property string channelModeString : "rgba"
 
+    // rename into distortionView
     property bool distortion: false
+    property bool isGridDisplayed : false;
+
 
     onDistortionChanged: {
         console.warn("distortion");
         root.hasDistortion(distortion);
     }
+
+    onIsGridDisplayedChanged: {
+        root.displayGrid()
+    }
+
 
     channelMode: {
         switch(channelModeString)

@@ -27,12 +27,37 @@ This node allows to setup the Panorama:
             value='',
             uid=[0],
         ),
+        desc.ChoiceParam(
+            name='initializeCameras',
+            label='Initialize Cameras',
+            description='Initialize cameras.',
+            value='No',
+            values=['No', 'File', 'Horizontal', 'Horizontal+Nadir', 'Nadir+Horizontal', 'Spherical'],
+            exclusive=True,
+            uid=[0],
+        ),
         desc.File(
             name='config',
             label='Xml Config',
             description="XML Data File",
             value='',
             uid=[0],
+            enabled=lambda node: node.initializeCameras.value == 'File',
+        ),
+        desc.ListAttribute(
+            elementDesc=desc.IntParam(
+                name='nbViews',
+                label='',
+                description='',
+                value=-1,
+                range=[-1, 20],
+                uid=[0],
+            ),
+            name='nbViewsPerLine',
+            label='Spherical: Nb Views Per Line',
+            description='Number of views per line in Spherical acquisition. Assumes angles from [-90°,+90°] for pitch and [-180°,+180°] for yaw. Use -1 to estimate the number of images automatically.',
+            joinChar=',',
+            enabled=lambda node: node.initializeCameras.value == 'Spherical',
         ),
         desc.ListAttribute(
             elementDesc=desc.File(

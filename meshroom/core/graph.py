@@ -385,6 +385,22 @@ class Graph(BaseObject):
             OrderedDict[Node, Node]: the source->duplicate map
         """
         srcNodes, srcEdges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True, dependenciesOnly=True)
+        return self.duplicateNodes(srcNodes, srcEdges)
+
+    def duplicateNodesFromList(self, nodes):
+        """
+        Duplicate 'nodes'.
+
+        Args:
+            nodes (list[Node]): the nodes to duplicate
+
+        Returns:
+            OrderedDict[Node, Node]: the source->duplicate map
+        """
+        srcEdges = [ self.nodeInEdges(n) for n in nodes ]
+        return self.duplicateNodes(nodes, srcEdges)
+
+    def duplicateNodes(self, srcNodes, srcEdges):
         # use OrderedDict to keep duplicated nodes creation order
         duplicates = OrderedDict()
 

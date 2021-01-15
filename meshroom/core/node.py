@@ -684,7 +684,6 @@ class BaseNode(BaseObject):
     def _isComputed(self):
         return self.hasStatus(Status.SUCCESS)
 
-    @Slot()
     def clearData(self):
         """ Delete this Node internal folder.
         Status will be reset to Status.NONE

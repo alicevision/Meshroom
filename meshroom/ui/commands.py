@@ -173,7 +173,18 @@ class RemoveNodeCommand(GraphCommand):
                                    self.graph.attribute(dstAttr))
 
 
-class DuplicateNodeCommand(GraphCommand):
+class _DuplicateNodes(GraphCommand):
+    def __init__(self, graph, parent=None):
+        super(_DuplicateNodes, self).__init__(graph, parent)
+        self.duplicates = []
+
+    def undoImpl(self):
+        # delete all the duplicated nodes
+        for nodeName in self.duplicates:
+            self.graph.removeNode(nodeName)
+
+
+class DuplicateNodeCommand(_DuplicateNodes):
     """
     Handle node duplication in a Graph.
     """
@@ -181,7 +192,6 @@ class DuplicateNodeCommand(GraphCommand):
         super(DuplicateNodeCommand, self).__init__(graph, parent)
         self.srcNodeName = srcNode.name
         self.duplicateFollowingNodes = duplicateFollowingNodes
-        self.duplicates = []
 
     def redoImpl(self):
         srcNode = self.graph.node(self.srcNodeName)
@@ -196,10 +206,21 @@ class DuplicateNodeCommand(GraphCommand):
         self.duplicates = [n.name for n in duplicates]
         return duplicates
 
-    def undoImpl(self):
-        # delete all the duplicated nodes
-        for nodeName in self.duplicates:
-            self.graph.removeNode(nodeName)
+
+class DuplicateNodeListCommand(_DuplicateNodes):
+    """
+    Handle node duplication in a Graph.
+    """
+    def __init__(self, graph, srcNodes, parent=None):
+        super(DuplicateNodeListCommand, self).__init__(graph, parent)
+        self.srcNodeNames = [ srcNode.name for srcNode in srcNodes ]
+        self.setText("Duplicate selected nodes")
+
+    def redoImpl(self):
+        srcNodes = [ self.graph.node(srcNodeName) for srcNodeName in self.srcNodeNames ]
+        duplicates = list(self.graph.duplicateNodesFromList(srcNodes).values())
+        self.duplicates = [ n.name for n in duplicates ]
+        return duplicates
 
 
 class SetAttributeCommand(GraphCommand):

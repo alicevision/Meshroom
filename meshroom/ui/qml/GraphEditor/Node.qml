@@ -20,8 +20,12 @@ Item {
     /// Whether the node is in compatibility mode
     readonly property bool isCompatibilityNode: node ? node.hasOwnProperty("compatibilityIssue") : false
     /// Mouse related states
+    property bool mainSelected: false
     property bool selected: false
     property bool hovered: false
+    property bool dragging: mouseArea.drag.active
+    /// Combined x and y
+    property point position: Qt.point(x, y)
     /// Styling
     property color shadowColor: "#cc000000"
     readonly property color defaultColor: isCompatibilityNode ? "#444" : activePalette.base
@@ -93,6 +97,7 @@ Item {
 
     // Main Layout
     MouseArea {
+        id: mouseArea
         width: parent.width
         height: body.height
         drag.target: root
@@ -117,9 +122,9 @@ Item {
         Rectangle {
             anchors.fill: nodeContent
             anchors.margins: -border.width
-            visible: root.selected || root.hovered
+            visible: root.mainSelected || root.hovered
             border.width: 2.5
-            border.color: root.selected ? activePalette.highlight : Qt.darker(activePalette.highlight, 1.5)
+            border.color: root.mainSelected ? activePalette.highlight : Qt.darker(activePalette.highlight, 1.5)
             opacity: 0.9
             radius: background.radius
             color: "transparent"
@@ -151,7 +156,7 @@ Item {
                     id: header
                     width: parent.width
                     height: headerLayout.height
-                    color: root.selected ? activePalette.highlight : root.baseColor
+                    color: root.mainSelected ? activePalette.highlight : root.selected ? Qt.darker(activePalette.highlight, 1.1): root.baseColor
                     radius: background.radius
 
                     // Fill header's bottom radius
@@ -174,7 +179,7 @@ Item {
                             Layout.fillWidth: true
                             text: node ? node.label : ""
                             padding: 4
-                            color: root.selected ? "white" : activePalette.text
+                            color: root.mainSelected ? "white" : activePalette.text
                             elide: Text.ElideMiddle
                             font.pointSize: 8
                         }

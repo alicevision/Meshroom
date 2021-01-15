@@ -67,6 +67,11 @@ Item {
     Keys.onPressed: {
         if(event.key === Qt.Key_F)
             fit()
+        if(event.key === Qt.Key_Delete)
+            if(event.modifiers == Qt.AltModifier)
+                uigraph.removeNodesFrom(uigraph.selectedNode)
+            else
+                uigraph.removeNode(uigraph.selectedNode)
     }
 
     MouseArea {
@@ -98,11 +103,20 @@ Item {
         }
 
         onPressed: {
-            if(mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier)
+            if (mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier) {
                 selectNode(null)
-
-            if(mouse.button == Qt.MiddleButton || (mouse.button & Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier))
+                uigraph.clearNodesSelections()
+            }
+            if (mouse.button == Qt.LeftButton && (mouse.modifiers == Qt.NoModifier || mouse.modifiers == Qt.ControlModifier)) {
+                boxSelect.startX = mouseX
+                boxSelect.startY = mouseY
+                boxSelectDraggable.x = mouseX
+                boxSelectDraggable.y = mouseY
+                drag.target = boxSelectDraggable
+            }
+            if (mouse.button == Qt.MiddleButton || (mouse.button == Qt.LeftButton && mouse.modifiers & Qt.ShiftModifier)) {
                 drag.target = draggable // start drag
+            }
         }
         onReleased: {
             drag.target = undefined // stop drag
@@ -310,7 +324,7 @@ Item {
                 }
                 MenuSeparator {}
                 MenuItem {
-                    text: "Duplicate Node" + (duplicateFollowingButton.hovered ? "s From Here" : "")
+                    text: "Duplicate Node" + (duplicateFollowingButton.hovered ? "s From Here" : uigraph.nodeSelection(nodeMenu.currentNode) ? "s" : "")
                     enabled: true
                     onTriggered: duplicateNode(nodeMenu.currentNode, false)
                     MaterialToolButton {
@@ -325,7 +339,7 @@ Item {
                     }
                 }
                 MenuItem {
-                    text: "Remove Node" + (removeFollowingButton.hovered ? "s From Here" : "")
+                    text: "Remove Node" + (removeFollowingButton.hovered ? "s From Here" : uigraph.nodeSelection(nodeMenu.currentNode) ? "s" : "")
                     enabled: nodeMenu.currentNode ? !nodeMenu.currentNode.locked : false
                     onTriggered: uigraph.removeNode(nodeMenu.currentNode)
                     MaterialToolButton {
@@ -395,7 +409,7 @@ Item {
                                 if(deleteFollowing)
                                     graph.clearDataFrom(node);
                                 else
-                                    node.clearData();
+                                    uigraph.clearData(node);
                             }
                             onClosed: destroy()
                         }
@@ -409,34 +423,47 @@ Item {
 
                 model: root.graph ? root.graph.nodes : undefined
                 property bool loaded: model ? count === model.count : false
+                property bool dragging: false
 
                 delegate: Node {
                     id: nodeDelegate
 
-                    property bool animatePosition: true
-
                     node: object
                     width: uigraph.layout.nodeWidth
 
-                    selected: uigraph.selectedNode === node
+                    mainSelected: uigraph.selectedNode === node
+                    selected: uigraph.selectedNodes.contains(node)
                     hovered: uigraph.hoveredNode === node
-                    onSelectedChanged: if(selected) forceActiveFocus()
 
                     onAttributePinCreated: registerAttributePin(attribute, pin)
                     onAttributePinDeleted: unregisterAttributePin(attribute, pin)
 
                     onPressed: {
-                        selectNode(node)
-
-                        if(mouse.button == Qt.LeftButton && mouse.modifiers & Qt.AltModifier)
-                        {
-                            duplicateNode(node, true)
-                        }
-                        if(mouse.button == Qt.RightButton)
-                        {
+                        if (mouse.button == Qt.LeftButton) {
+                            if (mouse.modifiers & Qt.ControlModifier) {
+                                if (mainSelected) {
+                                    // left clicking a selected node twice with control will deselect it
+                                    uigraph.selectedNodes.remove(node)
+                                    uigraph.selectedNodesChanged()
+                                    selectNode(null)
+                                    return
+                                } else if (!selected) {
+                                    uigraph.selectedNodes.append(node)
+                                    uigraph.selectedNodesChanged()
+                                }
+                            } else if (mouse.modifiers & Qt.AltModifier) {
+                                duplicateNode(node, true)
+                            } else if (!mainSelected && !selected) {
+                                uigraph.clearNodesSelections()
+                            }
+                        } else if (mouse.button == Qt.RightButton) {
+                            if (!mainSelected && !selected) {
+                                uigraph.clearNodesSelections()
+                            }
                             nodeMenu.currentNode = node
                             nodeMenu.popup()
                         }
+                        selectNode(node)
                     }
 
                     onDoubleClicked: root.nodeDoubleClicked(mouse, node)
@@ -446,25 +473,66 @@ Item {
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null
 
-                    Keys.onDeletePressed: {
-                        if(node.locked)
-                            return
-                        if(event.modifiers == Qt.AltModifier)
-                            uigraph.removeNodesFrom(node)
-                        else
-                            uigraph.removeNode(node)
+                    onPositionChanged: {
+                        if (dragging && uigraph.selectedNodes.contains(node)) {
+                            // update all selected nodes positions with this node that is being dragged
+                            for (var i = 0; i < nodeRepeater.count; i++) {
+                                var otherNode = nodeRepeater.itemAt(i)
+                                if (uigraph.selectedNodes.contains(otherNode.node) && otherNode.node != node) {
+                                    otherNode.x = otherNode.node.x + (x - node.x)
+                                    otherNode.y = otherNode.node.y + (y - node.y)
+                                }
+                            }
+                        }
                     }
 
+                    // allow all nodes to know if they are being dragged
+                    onDraggingChanged: {
+                        if (dragging) {
+                            nodeRepeater.dragging = true
+                        } else {
+                            nodeRepeater.dragging = false
+                        }
+                    }
+
+                    // must not be enabled during drag because the other nodes will be slow to match the movement of the node being dragged
                     Behavior on x {
-                        enabled: animatePosition
+                        enabled: !nodeRepeater.dragging
                         NumberAnimation { duration: 100 }
                     }
                     Behavior on y {
-                        enabled: animatePosition
+                        enabled: !nodeRepeater.dragging
                         NumberAnimation { duration: 100 }
                     }
                 }
             }
+        }
+
+        Rectangle {
+            id: boxSelect
+            property int startX: 0
+            property int startY: 0
+            property int toX: boxSelectDraggable.x - startX
+            property int toY: boxSelectDraggable.y - startY
+
+            x: toX < 0 ? startX + toX : startX
+            y: toY < 0 ? startY + toY : startY
+            width: Math.abs(toX)
+            height: Math.abs(toY)
+
+            color: "transparent"
+            border.color: activePalette.text
+            visible: mouseArea.drag.target == boxSelectDraggable
+
+            onVisibleChanged: {
+                if (!visible) {
+                    uigraph.boxSelect(boxSelect, draggable)
+                }
+            }
+        }
+
+        Item {
+            id: boxSelectDraggable
         }
     }
 

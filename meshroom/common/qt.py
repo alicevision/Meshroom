@@ -113,6 +113,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
     ############
     # List API #
     ############
+    @QtCore.Slot(QtCore.QObject)
     def append(self, obj):
         """ Insert object at the end of the model. """
         self.extend([obj])
@@ -182,6 +183,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
         self.endRemoveRows()
         self.countChanged.emit()
 
+    @QtCore.Slot(QtCore.QObject)
     def remove(self, obj):
         """ Removes the first occurrence of the given object. Raises a ValueError if not in list. """
         if not self.contains(obj):

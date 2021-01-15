@@ -12,11 +12,11 @@ FloatingPane {
     radius: 0
 
     property int opacityDefaultValue: 100
-    property int subdivisionsDefaultValue: 100
+    property int subdivisionsDefaultValue: 5
 
     property real slidersPowerValue: 4
     property int opacityValue: Math.pow(opacityCtrl.value, 1)
-    property int subdivisionsValue: Math.pow(subdivisionsCtrl.value, 1)
+    property int subdivisionsValue: subdivisionsCtrl.value
 
     property variant colorRGBA: null
     property bool displayGrid: displayGridButton.checked

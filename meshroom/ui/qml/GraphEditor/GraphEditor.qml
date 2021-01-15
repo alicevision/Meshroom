@@ -87,7 +87,7 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         drag.threshold: 0
-        cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
+        cursorShape: drag.target == draggable ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
         onWheel: {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
@@ -487,13 +487,7 @@ Item {
                     }
 
                     // allow all nodes to know if they are being dragged
-                    onDraggingChanged: {
-                        if (dragging) {
-                            nodeRepeater.dragging = true
-                        } else {
-                            nodeRepeater.dragging = false
-                        }
-                    }
+                    onDraggingChanged: nodeRepeater.dragging = dragging
 
                     // must not be enabled during drag because the other nodes will be slow to match the movement of the node being dragged
                     Behavior on x {

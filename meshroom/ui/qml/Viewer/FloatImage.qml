@@ -42,7 +42,7 @@ AliceVision.FloatImageViewer {
 
     property bool isCtrlPointsDisplayed : true;
     property int subdivisions: 5;
-    property int pointsNumber: Math.pow(subdivisions + 1, 2);
+    property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
 
     onDistortionChanged: {
         console.warn("distortion");
@@ -54,6 +54,7 @@ AliceVision.FloatImageViewer {
     }
 
     onSubdivisionsChanged: {
+        pointsNumber = (subdivisions + 1) * (subdivisions + 1);
         root.updateSubdivisions(subdivisions)
     }
 
@@ -68,7 +69,6 @@ AliceVision.FloatImageViewer {
     onGridColorChanged: {
         root.setGridColorQML(Qt.rgba(gridColor.r, gridColor.g, gridColor.b, gridOpacity/100));
     }
-
 
     channelMode: {
         switch(channelModeString)

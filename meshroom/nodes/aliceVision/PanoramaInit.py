@@ -44,6 +44,14 @@ This node allows to setup the Panorama:
             uid=[0],
             enabled=lambda node: node.initializeCameras.value == 'File',
         ),
+        desc.BoolParam(
+            name='yawCW',
+            label='Yaw CW',
+            description="Yaw ClockWise or CounterClockWise",
+            value=1,
+            uid=[0],
+            enabled=lambda node: ('Horizontal' in node.initializeCameras.value) or (node.initializeCameras.value == "Spherical"),
+        ),
         desc.ListAttribute(
             elementDesc=desc.IntParam(
                 name='nbViews',

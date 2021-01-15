@@ -34,18 +34,17 @@ TODO
 
     outputs = [
         desc.File(
-            name='outSfMData',
-            label='Output sfmData',
-            description='Output sfmData.',
+            name='output',
+            label='Output',
+            description='Output sfmData or image folder.',
             value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
             uid=[],
-            group='',  # do not export on the command line
         ),
         desc.File(
-            name='output',
+            name='outputColorData',
             label='Output Color Checker Data',
             description='Output colorimetric data extracted from a detected color checker in the images',
-            value=desc.Node.internalFolder,
+            value=desc.Node.internalFolder + '/colorData',
             uid=[],
         ),
     ]

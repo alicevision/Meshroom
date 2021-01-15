@@ -130,7 +130,7 @@ FloatingPane {
                 ToolTip.text: "subdivisions"
 
                 text: subdivisionsValue.toFixed(1)
-                Layout.preferredWidth: textMetrics_opacityValue.width
+                Layout.preferredWidth: textMetrics_subdivisionsValue.width
                 selectByMouse: true
                 validator: doubleValidator
                 onAccepted: {
@@ -159,5 +159,10 @@ FloatingPane {
         id: textMetrics_opacityValue
         font: opacityLabel.font
         text: "100.000"
+    }
+    TextMetrics {
+        id: textMetrics_subdivisionsValue
+        font: opacityLabel.font
+        text: "10.00"
     }
 }

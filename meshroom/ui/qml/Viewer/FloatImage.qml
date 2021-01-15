@@ -34,9 +34,15 @@ AliceVision.FloatImageViewer {
     property string channelModeString : "rgba"
 
     // rename into distortionView
-    property bool distortion: false
+    property bool distortion: false;
+
     property bool isGridDisplayed : false;
-    property int subdivisions: 2
+    property int gridOpacity : 100;
+    property color gridColor : "#FF0000";
+
+    property bool isCtrlPointsDisplayed : true;
+    property int subdivisions: 5;
+    property int pointsNumber: Math.pow(subdivisions + 1, 2);
 
     onDistortionChanged: {
         console.warn("distortion");
@@ -50,6 +56,19 @@ AliceVision.FloatImageViewer {
     onSubdivisionsChanged: {
         root.updateSubdivisions(subdivisions)
     }
+
+    onIsCtrlPointsDisplayedChanged: {
+         repeater.displayControlPoints()
+    }
+
+    onGridOpacityChanged: {
+        root.setGridColorQML(Qt.rgba(gridColor.r, gridColor.g, gridColor.b, gridOpacity/100));
+    }
+
+    onGridColorChanged: {
+        root.setGridColorQML(Qt.rgba(gridColor.r, gridColor.g, gridColor.b, gridOpacity/100));
+    }
+
 
     channelMode: {
         switch(channelModeString)
@@ -73,5 +92,82 @@ AliceVision.FloatImageViewer {
         hoverEnabled: true
         // Do not intercept mouse events, only get the mouse over information
         acceptedButtons: Qt.NoButton
+    }
+    Item {
+        id: grid
+        width: root.width
+        height: root.height
+
+        Connections {
+            target: root
+            onVerticesChanged : {
+                if (reinit){
+                   grid.recalculateCP();
+                   grid.generateControlPoints();
+                }
+
+            }
+        }
+
+        function generateControlPoints() {
+            if(repeater.model === pointsNumber){
+                repeater.model = 0;
+            }
+            repeater.model = pointsNumber;
+        }
+
+        function recalculateCP() {
+            if (repeater.model === 0)
+                return
+
+            var width = repeater.itemAt(0).width;
+            var height = repeater.itemAt(0).height;
+
+            for (let i = 0; i < repeater.model; i++) {
+                repeater.itemAt(i).x = root.getVertex(i).x - (width / 2);
+                repeater.itemAt(i).y = root.getVertex(i).y - (height / 2);
+            }
+        }
+
+        Component {
+            id: rectGrid
+            Rectangle {
+                id: rect
+                width: root.sourceSize.width/100; height: width
+                radius: width/2
+                x: root.getVertex(model.index).x - (width / 2)
+                y: root.getVertex(model.index).y - (height / 2)
+                color: Colors.yellow
+                visible: true
+                MouseArea {
+                    id: mouseAreaCP
+                    anchors.fill : parent;
+                    acceptedButtons: Qt.LeftButton
+
+                    drag.target: rect
+                    drag.smoothed: false
+                    drag.axis: Drag.XAndYAxis
+                    onReleased: {
+                        root.setVertex(index, rect.x + (width / 2), rect.y + (height / 2))
+                    }
+                }
+            }
+        }
+
+        Repeater {
+            id: repeater
+            model: pointsNumber
+            delegate: rectGrid
+            function displayControlPoints() {
+                for (let i = 0; i < model; i++) {
+                    if (repeater.itemAt(i).visible) {
+                        repeater.itemAt(i).visible = false;
+                    }
+                    else {
+                        repeater.itemAt(i).visible = true;
+                    }
+                }
+            }
+        }
     }
 }

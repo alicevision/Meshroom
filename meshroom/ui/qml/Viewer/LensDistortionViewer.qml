@@ -79,7 +79,7 @@ AliceVision.PanoramaViewer {
     }
 
     Item {
-        id: grid
+        id: points
         width: root.width
         height: root.height
 

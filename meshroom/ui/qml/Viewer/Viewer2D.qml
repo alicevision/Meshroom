@@ -227,8 +227,8 @@ FocusScope {
                                 'isGridDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayGrid;}),
                                 'gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
                                 'gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
-                                'distortion' : Qt.binding(function(){ return displayLensDistortionViewer.checked;}),
                                 'subdivisions' : Qt.binding(function(){ return lensDistortionImageToolbar.subdivisionsValue;}),
+                                'isDistoViewer' : Qt.binding(function(){ return displayLensDistortionViewer.checked;}),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -732,7 +732,7 @@ FocusScope {
                             id: resolutionLabel
                             Layout.fillWidth: true
                             text: (imgContainer.image && imgContainer.image.sourceSize.width > 0) ? (imgContainer.image.sourceSize.width + "x" + imgContainer.image.sourceSize.height) : ""
-                            
+
                             elide: Text.ElideRight
                             horizontalAlignment: Text.AlignHCenter
                         }
@@ -745,7 +745,7 @@ FocusScope {
                             Layout.minimumWidth: 0
                             Layout.preferredWidth: 6.0 * Qt.application.font.pixelSize
                             flat: true
-                            
+
                             property var types: ["image", "depth", "sim"]
                             property string type: enabled ? types[currentIndex] : types[0]
 

@@ -27,8 +27,9 @@ AliceVision.FloatImageViewer {
             return Image.Null;
 
         root.defaultControlPoints();
-        updateSfmPath();
 
+        // Sfm Path
+        updateSfmPath();
 
         return Image.Ready;
     }
@@ -48,16 +49,21 @@ AliceVision.FloatImageViewer {
     property string sfmPath: "null"
 
     function updateSfmPath() {
-        var activeNode = _reconstruction.activeNodes.get('sfm').node;
+        var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
         if(!activeNode)
+        {
             root.sfmPath = "null";
-
-        root.sfmPath = activeNode.attribute("outputViewsAndPoses").value;
+        }
+        else
+        {
+            root.sfmPath = activeNode.attribute("outputViewsAndPoses").value;
+        }
+        root.setSfmPath(sfmPath);
     }
 
     onIsDistoViewerChanged: {
         root.hasDistortion(isDistoViewer);
-        root.displayGrid(isDistoViewer && isGridDisplayed);
+        root.displayGrid(isDistoViewer);
     }
 
     onIsGridDisplayedChanged: {
@@ -116,7 +122,6 @@ AliceVision.FloatImageViewer {
                    grid.recalculateCP();
                    grid.generateControlPoints();
                 }
-
             }
         }
 

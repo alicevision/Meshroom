@@ -33,8 +33,7 @@ AliceVision.FloatImageViewer {
 
     property string channelModeString : "rgba"
 
-    // rename into distortionView
-    property bool distortion: false;
+    property bool isDistoViewer: false;
 
     property bool isGridDisplayed : false;
     property int gridOpacity : 100;
@@ -44,8 +43,7 @@ AliceVision.FloatImageViewer {
     property int subdivisions: 5;
     property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
 
-    onDistortionChanged: {
-        console.warn("distortion");
+    onIsDistoViewerChanged: {
         root.hasDistortion(distortion);
     }
 
@@ -138,7 +136,7 @@ AliceVision.FloatImageViewer {
                 x: root.getVertex(model.index).x - (width / 2)
                 y: root.getVertex(model.index).y - (height / 2)
                 color: Colors.yellow
-                visible: true
+                visible: isDistoViewer
                 MouseArea {
                     id: mouseAreaCP
                     anchors.fill : parent;
@@ -157,6 +155,7 @@ AliceVision.FloatImageViewer {
         Repeater {
             id: repeater
             model: pointsNumber
+            visible: false
             delegate: rectGrid
             function displayControlPoints() {
                 for (let i = 0; i < model; i++) {

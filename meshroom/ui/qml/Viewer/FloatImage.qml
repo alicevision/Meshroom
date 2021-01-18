@@ -27,6 +27,8 @@ AliceVision.FloatImageViewer {
             return Image.Null;
 
         root.defaultControlPoints();
+        updateSfmPath();
+
 
         return Image.Ready;
     }
@@ -42,6 +44,16 @@ AliceVision.FloatImageViewer {
     property bool isCtrlPointsDisplayed : true;
     property int subdivisions: 5;
     property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
+
+    property string sfmPath: "null"
+
+    function updateSfmPath() {
+        var activeNode = _reconstruction.activeNodes.get('sfm').node;
+        if(!activeNode)
+            root.sfmPath = "null";
+
+        root.sfmPath = activeNode.attribute("outputViewsAndPoses").value;
+    }
 
     onIsDistoViewerChanged: {
         root.hasDistortion(isDistoViewer);

@@ -99,6 +99,13 @@ Estimate relative camera rotations between input images.
             advanced=True,
         ),
         desc.BoolParam(
+            name='filterMatches',
+            label='Filter Matches',
+            description='Filter Matches',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='refine',
             label='Refine',
             description='Refine camera relative poses, points and optionally internal camera parameter',

@@ -28,10 +28,17 @@ Based on the input image filenames, it will recognize the input video sequence t
             uid=[0],
         ),
         desc.BoolParam(
+            name='exportUVMaps',
+            label='Export UV Maps',
+            description='Export UV Maps, absolutes values (x,y) of distortion are encoding in  UV channels.',
+            value=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='exportUndistortedImages',
             label='Export Undistorted Images',
             description='Export Undistorted Images.',
-            value=True,
+            value=False,
             uid=[0],
         ),
        desc.ChoiceParam(
@@ -42,6 +49,7 @@ Based on the input image filenames, it will recognize the input video sequence t
             values=['jpg', 'png', 'tif', 'exr'],
             exclusive=True,
             uid=[0],
+            enabled= lambda node: node.exportUndistortedImages.value == 1,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

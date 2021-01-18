@@ -32,7 +32,7 @@ This node allows to setup the Panorama:
             label='Initialize Cameras',
             description='Initialize cameras.',
             value='No',
-            values=['No', 'File', 'Horizontal', 'Horizontal+Nadir', 'Nadir+Horizontal', 'Spherical'],
+            values=['No', 'File', 'Horizontal', 'Horizontal+Zenith', 'Zenith+Horizontal', 'Spherical'],
             exclusive=True,
             uid=[0],
         ),

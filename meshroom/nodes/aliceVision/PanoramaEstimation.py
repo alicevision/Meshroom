@@ -99,6 +99,14 @@ Estimate relative camera rotations between input images.
             advanced=True,
         ),
         desc.BoolParam(
+            name='rotationAveragingWeighting',
+            label='Rotation Averaging Weighting',
+            description='Rotation averaging weighting based on the number of feature matches.',
+            value=True,
+            uid=[0],
+            advanced=True,
+        ),
+        desc.BoolParam(
             name='filterMatches',
             label='Filter Matches',
             description='Filter Matches',

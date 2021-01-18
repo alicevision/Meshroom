@@ -673,6 +673,11 @@ FocusScope {
                             checkable: true
                             checked: false
                             enabled: root.aliceVisionPluginAvailable
+                            onCheckedChanged : {
+                                if(displayLensDistortionViewer.checked && checked){
+                                    displayLensDistortionViewer.checked = false;
+                                }
+                            }
                         }
                         MaterialToolButton {
                             id: displayLensDistortionViewer
@@ -684,6 +689,11 @@ FocusScope {
                             checkable: true
                             checked: false
                             enabled: root.aliceVisionPluginAvailable
+                            onCheckedChanged : {
+                                if(displayHDR.checked  && checked){
+                                    displayHDR.checked = false;
+                                }
+                            }
                         }
                         MaterialToolButton {
                             id: displayFeatures

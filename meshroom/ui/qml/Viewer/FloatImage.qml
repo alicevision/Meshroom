@@ -44,11 +44,12 @@ AliceVision.FloatImageViewer {
     property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
 
     onIsDistoViewerChanged: {
-        root.hasDistortion(distortion);
+        root.hasDistortion(isDistoViewer);
+        root.displayGrid(isDistoViewer && isGridDisplayed);
     }
 
     onIsGridDisplayedChanged: {
-        root.displayGrid()
+        root.displayGrid(isGridDisplayed);
     }
 
     onSubdivisionsChanged: {
@@ -155,7 +156,6 @@ AliceVision.FloatImageViewer {
         Repeater {
             id: repeater
             model: pointsNumber
-            visible: false
             delegate: rectGrid
             function displayControlPoints() {
                 for (let i = 0; i < model; i++) {

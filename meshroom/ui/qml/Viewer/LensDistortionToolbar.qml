@@ -36,7 +36,6 @@ FloatingPane {
 
     RowLayout {
         id: toolLayout
-        // anchors.verticalCenter: parent
         anchors.fill: parent
 
         MaterialToolButton {
@@ -149,8 +148,8 @@ FloatingPane {
 
         //Fill rectangle to have a better UI
         Rectangle {
-        color: root.palette.window
-        Layout.fillWidth: true
+            color: root.palette.window
+            Layout.fillWidth: true
         }
 
     }

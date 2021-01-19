@@ -26,6 +26,10 @@ AliceVision.FloatImageViewer {
                 (root.sourceSize.height <= 0))
             return Image.Null;
 
+        if(!isDistoViewer){
+            root.updateSubdivisions(1)
+        }
+
         root.defaultControlPoints();
         updateSfmPath();
 
@@ -72,7 +76,18 @@ AliceVision.FloatImageViewer {
 
     onIsDistoViewerChanged: {
         root.hasDistortion(isDistoViewer);
-        root.displayGrid(isDistoViewer);
+        //Putting states back where they were
+        if(isDistoViewer){
+            root.displayGrid(isGridDisplayed);
+            repeater.displayControlPoints(isCtrlPointsDisplayed)
+            root.updateSubdivisions(subdivisions)
+        }
+        //Forcing disabling of parameters
+        else{
+            root.isGridDisplayed(isDistoViewer)
+            repeater.displayControlPoints(isDistoViewer)
+            root.updateSubdivisions(1)
+        }
     }
 
     onIsGridDisplayedChanged: {
@@ -85,7 +100,7 @@ AliceVision.FloatImageViewer {
     }
 
     onIsCtrlPointsDisplayedChanged: {
-         repeater.displayControlPoints()
+         repeater.displayControlPoints(isCtrlPointsDisplayed)
     }
 
     onGridOpacityChanged: {
@@ -190,7 +205,7 @@ AliceVision.FloatImageViewer {
                 x: root.getVertex(model.index).x - (width / 2)
                 y: root.getVertex(model.index).y - (height / 2)
                 color: Colors.yellow
-                visible: isDistoViewer
+                visible: isDistoViewer && isCtrlPointsDisplayed
                 MouseArea {
                     id: mouseAreaCP
                     anchors.fill : parent;
@@ -210,14 +225,9 @@ AliceVision.FloatImageViewer {
             id: repeater
             model: pointsNumber
             delegate: rectGrid
-            function displayControlPoints() {
+            function displayControlPoints(state) {
                 for (let i = 0; i < model; i++) {
-                    if (repeater.itemAt(i).visible) {
-                        repeater.itemAt(i).visible = false;
-                    }
-                    else {
-                        repeater.itemAt(i).visible = true;
-                    }
+                    repeater.itemAt(i).visible = state;
                 }
             }
         }

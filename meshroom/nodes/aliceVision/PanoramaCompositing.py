@@ -80,6 +80,20 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             uid=[0],
         ),
         desc.ChoiceParam(
+            name='overlayType',
+            label='Overlay Type',
+            description='Overlay on top of panorama to analyze transitions:\n'
+                        ' * none: no overlay\n'
+                        ' * borders: display image borders\n'
+                        ' * seams: display transitions between images\n'
+                        ' * all: display borders and seams\n',
+            value='none',
+            values=['none', 'borders', 'seams', 'all'],
+            exclusive=True,
+            advanced=True,
+            uid=[0]
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='Verbosity level (fatal, error, warning, info, debug, trace).',

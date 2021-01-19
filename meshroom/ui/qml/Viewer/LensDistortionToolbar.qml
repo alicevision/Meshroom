@@ -57,7 +57,7 @@ FloatingPane {
             padding: 5
             Layout.minimumWidth: 0
             checkable: true
-            checked: false
+            checked: true
         }
         ColorChart {
             id : gridColorPicker

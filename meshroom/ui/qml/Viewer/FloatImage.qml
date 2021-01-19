@@ -66,10 +66,6 @@ AliceVision.FloatImageViewer {
 
     function updatePrincipalPoint() {
         var pp = root.getPrincipalPoint();
-
-        console.warn(pp.x)
-        console.warn(root.getPrincipalPoint())
-
         ppRect.x = pp.x;
         ppRect.y = pp.y;
     }

@@ -12,7 +12,7 @@ class ColorCheckerDetection(desc.CommandLineNode):
     # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     documentation = '''
-TODO
+Perform Macbeth color checker chart detection.
 '''
 
     inputs = [
@@ -34,15 +34,8 @@ TODO
 
     outputs = [
         desc.File(
-            name='output',
-            label='Output',
-            description='Output sfmData or image folder.',
-            value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
-            uid=[],
-        ),
-        desc.File(
             name='outputColorData',
-            label='Output Color Checker Data',
+            label='Color checker data',
             description='Output colorimetric data extracted from a detected color checker in the images',
             value=desc.Node.internalFolder + '/colorData',
             uid=[],

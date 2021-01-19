@@ -17,16 +17,16 @@ TODO
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
-            description='SfMData file input, image filenames or regex(es) on the image file path.\nsupported regex: \'#\' matches a single digit, \'@\' one or more digits, \'?\' one character and \'*\' zero or more.',
+            name='inputColorData',
+            label='Color checker data',
+            description='Input colorimetric data extracted from a detected color checker in the images',
             value='',
             uid=[0],
         ),
         desc.File(
-            name='inputColorData',
-            label='Input Color Data',
-            description='Input colorimetric data extracted from a detected color checker in the images',
+            name='input',
+            label='Input',
+            description='SfMData file input, image filenames or regex(es) on the image file path.\nsupported regex: \'#\' matches a single digit, \'@\' one or more digits, \'?\' one character and \'*\' zero or more.',
             value='',
             uid=[0],
         ),

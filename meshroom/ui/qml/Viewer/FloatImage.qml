@@ -138,7 +138,8 @@ AliceVision.FloatImageViewer {
         id: principalPoint
         Rectangle {
             id: ppRect
-            width: root.sourceSize.width/100; height: width
+            width: root.sourceSize.width/150; height: width
+            radius : width/2
             x: 0
             y: 0
             color: "red"
@@ -158,7 +159,7 @@ AliceVision.FloatImageViewer {
     * Controls Points
     */
     Item {
-        id: grid
+        id: points
         width: root.width
         height: root.height
 
@@ -166,8 +167,8 @@ AliceVision.FloatImageViewer {
             target: root
             onVerticesChanged : {
                 if (reinit){
-                   grid.recalculateCP();
-                   grid.generateControlPoints();
+                   points.recalculateCP();
+                   points.generateControlPoints();
                 }
             }
         }
@@ -193,7 +194,7 @@ AliceVision.FloatImageViewer {
         }
 
         Component {
-            id: rectGrid
+            id: point
             Rectangle {
                 id: rect
                 width: root.sourceSize.width/100; height: width
@@ -220,7 +221,7 @@ AliceVision.FloatImageViewer {
         Repeater {
             id: repeater
             model: pointsNumber
-            delegate: rectGrid
+            delegate: point
             function displayControlPoints(state) {
                 for (let i = 0; i < model; i++) {
                     if (repeater.itemAt(i) !== null)

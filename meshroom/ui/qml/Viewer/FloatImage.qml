@@ -223,7 +223,8 @@ AliceVision.FloatImageViewer {
             delegate: rectGrid
             function displayControlPoints(state) {
                 for (let i = 0; i < model; i++) {
-                    repeater.itemAt(i).visible = state;
+                    if (repeater.itemAt(i) !== null)
+                        repeater.itemAt(i).visible = state;
                 }
             }
         }

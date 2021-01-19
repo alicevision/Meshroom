@@ -238,35 +238,6 @@ FocusScope {
 
                 }
 
-                // qtAliceVision Panorama Viewer
-//                Loader {
-//                    id: lensDistortionViewerLoader
-//                    active: root.aliceVisionPluginAvailable && root.useLensDistortionViewer && !floatImageViewerLoader.active
-//                    visible: (lensDistortionViewerLoader.status === Loader.Ready)
-//                    anchors.centerIn: parent
-
-//                    onActiveChanged: {
-//                        if(active) {
-//                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-//                            // Note: It does not work to use previously created component, so we re-create it with setSource.
-//                            // floatViewerComp.createObject(floatImageViewerLoader, {
-//                            setSource("LensDistortionViewer.qml", {
-//                                'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
-//                                'gamma': Qt.binding(function() { return lensDistortionImageToolbar.gammaValue; }),
-//                                'gain': Qt.binding(function() { return lensDistortionImageToolbar.gainValue; }),
-//                                'channelModeString': Qt.binding(function() { return lensDistortionImageToolbar.channelModeValue; }),
-//                                'isCtrlPointsDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayPoints;}),
-//                                'isGridDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayGrid;}),
-//                                'gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
-//                                'gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
-//                            })
-//                        } else {
-//                            // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
-//                            setSource("", {})
-//                        }
-//                    }
-//                }
-
                 // Simple QML Image Viewer (using Qt or qtOIIO to load images)
                 Loader {
                     id: qtImageViewerLoader

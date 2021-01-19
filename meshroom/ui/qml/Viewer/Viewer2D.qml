@@ -681,6 +681,9 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayLensDistortionViewer
+                            property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
+                            property bool isComputed: activeNode && activeNode.isComputed
+
                             ToolTip.text: "Lens Distortion Viewer"
                             text: MaterialIcons.panorama_horizontal
                             font.pointSize: 16
@@ -688,7 +691,7 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
-                            enabled: root.aliceVisionPluginAvailable
+                            enabled: activeNode && isComputed
                             onCheckedChanged : {
                                 if(displayHDR.checked  && checked){
                                     displayHDR.checked = false;

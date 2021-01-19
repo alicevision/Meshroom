@@ -80,7 +80,7 @@ AliceVision.FloatImageViewer {
         }
         //Forcing disabling of parameters
         else{
-            root.isGridDisplayed(isDistoViewer)
+            root.displayGrid(isDistoViewer)
             repeater.displayControlPoints(isDistoViewer)
             root.updateSubdivisions(1)
         }

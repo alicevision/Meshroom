@@ -27,8 +27,6 @@ AliceVision.FloatImageViewer {
             return Image.Null;
 
         root.defaultControlPoints();
-
-        // Sfm Path
         updateSfmPath();
 
         return Image.Ready;
@@ -49,7 +47,8 @@ AliceVision.FloatImageViewer {
     property string sfmPath: "null"
 
     function updateSfmPath() {
-        var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
+        var activeNode = _reconstruction.activeNodes.get('sfm').node;
+
         if(!activeNode)
         {
             root.sfmPath = "null";
@@ -59,6 +58,16 @@ AliceVision.FloatImageViewer {
             root.sfmPath = activeNode.attribute("outputViewsAndPoses").value;
         }
         root.setSfmPath(sfmPath);
+    }
+
+    function updatePrincipalPoint() {
+        var pp = root.getPrincipalPoint();
+
+        console.warn(pp.x)
+        console.warn(root.getPrincipalPoint())
+
+        ppRect.x = pp.x;
+        ppRect.y = pp.y;
     }
 
     onIsDistoViewerChanged: {
@@ -110,6 +119,33 @@ AliceVision.FloatImageViewer {
         // Do not intercept mouse events, only get the mouse over information
         acceptedButtons: Qt.NoButton
     }
+
+    /*
+    * Principal Point
+    */
+    Item {
+        id: principalPoint
+        Rectangle {
+            id: ppRect
+            width: root.sourceSize.width/100; height: width
+            x: 0
+            y: 0
+            color: "red"
+            visible: isDistoViewer && isCtrlPointsDisplayed
+        }
+
+        Connections {
+            target: root
+            onSfmChanged: {
+                if (isDistoViewer)
+                    updatePrincipalPoint();
+            }
+        }
+    }
+
+    /*
+    * Controls Points
+    */
     Item {
         id: grid
         width: root.width

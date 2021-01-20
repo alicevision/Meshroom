@@ -48,14 +48,14 @@ AliceVision.FloatImageViewer {
     property int subdivisions: 5;
     property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
 
-    property string sfmPath: "null"
+    property string sfmPath: ""
 
     function updateSfmPath() {
         var activeNode = _reconstruction.activeNodes.get('sfm').node;
 
         if(!activeNode)
         {
-            root.sfmPath = "null";
+            root.sfmPath = "";
         }
         else
         {

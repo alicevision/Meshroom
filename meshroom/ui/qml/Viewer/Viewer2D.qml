@@ -14,6 +14,7 @@ FocusScope {
     property var viewIn3D
 
     property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
+    property Component panoramaViewerComp: Qt.createComponent("PanoramaViewer.qml")
     property alias useFloatImageViewer: displayHDR.checked
     property alias useLensDistortionViewer: displayLensDistortionViewer.checked
 

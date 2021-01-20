@@ -40,3 +40,11 @@ __pycache__
 
 *.qmlc
 *.jsc
+
+*.dll
+
+*.lib
+
+install/qml/AliceVision/qmldir
+
+run.bat

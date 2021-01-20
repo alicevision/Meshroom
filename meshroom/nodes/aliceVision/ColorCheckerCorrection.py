@@ -30,6 +30,15 @@ TODO
             value='',
             uid=[0],
         ),
+        desc.ChoiceParam(
+            name='extension',
+            label='Output File Extension',
+            description='Output Image File Extension.',
+            value='',
+            values=['', 'exr', 'jpg', 'tiff', 'png'],
+            exclusive=True,
+            uid=[0],
+        ),
     ]
 
     outputs = [

@@ -12,7 +12,7 @@ FloatingPane {
     radius: 0
 
     property int opacityDefaultValue: 100
-    property int subdivisionsDefaultValue: 5
+    property int subdivisionsDefaultValue: 4
 
     property real slidersPowerValue: 4
     property int opacityValue: Math.pow(opacityCtrl.value, 1)
@@ -142,7 +142,7 @@ FloatingPane {
                 from: 2
                 to: 10
                 value: subdivisionsDefaultValue
-                stepSize: 1
+                stepSize: 2
             }
         }
 

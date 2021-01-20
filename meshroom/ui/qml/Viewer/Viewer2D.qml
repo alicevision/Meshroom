@@ -256,7 +256,7 @@ FocusScope {
                         if(active) {
                             setSource("PanoramaViewer.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
-                                'channelModeString': Qt.binding(function() { return lensDistortionImageToolbar.channelModeValue; }),                            })
+                            })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
                             setSource("", {})
@@ -267,7 +267,7 @@ FocusScope {
                 // Simple QML Image Viewer (using Qt or qtOIIO to load images)
                 Loader {
                     id: qtImageViewerLoader
-                    active: !floatImageViewerLoader.active
+                    active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
                     anchors.centerIn: parent
                     sourceComponent: Image {
                         id: qtImageViewer
@@ -301,9 +301,10 @@ FocusScope {
 
 
                 property var image: {
-                    //qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
                     if (floatImageViewerLoader.active)
                         floatImageViewerLoader.item
+                    else if (panoramaViewerLoader.active)
+                        panoramaViewerLoader.item
                     else
                         qtImageViewerLoader.item
                 }

@@ -25,25 +25,11 @@ AliceVision.PanoramaViewer {
                 (root.sourceSize.height <= 0) ||
                 (root.sourceSize.width <= 0))
             return Image.Null;
-
         root.defaultControlPoints();
-
+        console.warn("Panorama is ready")
         return Image.Ready;
     }
 
-
-
-    channelMode: {
-        switch(channelModeString)
-        {
-            case "rgb": return AliceVision.FloatImageViewer.EChannelMode.RGB
-            case "r": return AliceVision.FloatImageViewer.EChannelMode.R
-            case "g": return AliceVision.FloatImageViewer.EChannelMode.G
-            case "b": return AliceVision.FloatImageViewer.EChannelMode.B
-            case "a": return AliceVision.FloatImageViewer.EChannelMode.A
-            default: return AliceVision.FloatImageViewer.EChannelMode.RGBA
-        }
-    }
     clearBeforeLoad: true
 
     property alias containsMouse: mouseArea.containsMouse
@@ -57,21 +43,4 @@ AliceVision.PanoramaViewer {
         acceptedButtons: Qt.NoButton
     }
 
-    Item {
-        id: points
-        width: root.width
-        height: root.height
-
-        Connections {
-            target: root
-            onVerticesChanged : {
-                if (reinit){
-                   grid.recalculateCP();
-                   grid.generateControlPoints();
-                }
-
-            }
-        }
-
-    }
 }

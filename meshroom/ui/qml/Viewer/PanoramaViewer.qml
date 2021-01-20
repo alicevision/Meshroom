@@ -26,7 +26,6 @@ AliceVision.PanoramaViewer {
                 (root.sourceSize.width <= 0))
             return Image.Null;
         root.defaultControlPoints();
-        console.warn("Panorama is ready")
         return Image.Ready;
     }
 

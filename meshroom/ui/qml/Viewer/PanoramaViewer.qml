@@ -31,6 +31,8 @@ AliceVision.PanoramaViewer {
 
     clearBeforeLoad: true
 
+    channelMode : AliceVision.PanoramaViewer.EChannelMode.RGBA
+
     property alias containsMouse: mouseArea.containsMouse
     property alias mouseX: mouseArea.mouseX
     property alias mouseY: mouseArea.mouseY

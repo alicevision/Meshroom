@@ -17,6 +17,7 @@ FocusScope {
     property Component panoramaViewerComp: Qt.createComponent("PanoramaViewer.qml")
     property alias useFloatImageViewer: displayHDR.checked
     property alias useLensDistortionViewer: displayLensDistortionViewer.checked
+    property alias usePanoramaViewer: displayPanoramaViewer.checked
 
     Loader {
         id: aliceVisionPluginLoader
@@ -244,6 +245,25 @@ FocusScope {
 
                 }
 
+                // qtAliceVision Panorama Viewer
+                Loader {
+                    id: panoramaViewerLoader
+                    active: root.aliceVisionPluginAvailable && root.usePanoramaViewer && !floatImageViewerLoader.active
+                    visible: (panoramaViewerLoader.status === Loader.Ready)
+                    anchors.centerIn: parent
+
+                    onActiveChanged: {
+                        if(active) {
+                            setSource("PanoramaViewer.qml", {
+                                'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
+                                'channelModeString': Qt.binding(function() { return lensDistortionImageToolbar.channelModeValue; }),                            })
+                        } else {
+                            // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                            setSource("", {})
+                        }
+                    }
+                }
+
                 // Simple QML Image Viewer (using Qt or qtOIIO to load images)
                 Loader {
                     id: qtImageViewerLoader
@@ -278,6 +298,7 @@ FocusScope {
                         }
                     }
                 }
+
 
                 property var image: {
                     //qtImageViewerLoader.active ? qtImageViewerLoader.item : floatImageViewerLoader.item
@@ -740,6 +761,25 @@ FocusScope {
                                 if(displayHDR.checked  && checked){
                                     displayHDR.checked = false;
                                 }
+                            }
+                        }
+                        MaterialToolButton {
+                            id: displayPanoramaViewer
+//                            property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
+//                            property bool isComputed: activeNode && activeNode.isComputed
+
+                            ToolTip.text: "Panorama Viewer"
+                            text: MaterialIcons.panorama_wide_angle
+                            font.pointSize: 16
+                            padding: 0
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
+                            enabled: root.aliceVisionPluginAvailable
+                            onCheckedChanged : {
+//                                if(displayHDR.checked  && checked){
+//                                    displayHDR.checked = false;
+//                                }
                             }
                         }
                         MaterialToolButton {

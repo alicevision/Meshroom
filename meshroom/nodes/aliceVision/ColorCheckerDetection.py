@@ -34,8 +34,15 @@ Perform Macbeth color checker chart detection.
 
     outputs = [
         desc.File(
+            name='outputPositionData',
+            label='Position data',
+            description='Output position of a detected color checker in the images',
+            value=desc.Node.internalFolder + '/positionData',
+            uid=[],
+        ),
+        desc.File(
             name='outputColorData',
-            label='Color checker data',
+            label='Colorimetric data',
             description='Output colorimetric data extracted from a detected color checker in the images',
             value=desc.Node.internalFolder + '/colorData',
             uid=[],

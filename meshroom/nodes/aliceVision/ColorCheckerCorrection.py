@@ -18,7 +18,7 @@ TODO
     inputs = [
         desc.File(
             name='inputColorData',
-            label='Color checker data',
+            label='Colorimetric data',
             description='Input colorimetric data extracted from a detected color checker in the images',
             value='',
             uid=[0],

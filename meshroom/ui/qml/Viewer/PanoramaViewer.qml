@@ -44,4 +44,21 @@ AliceVision.PanoramaViewer {
         acceptedButtons: Qt.NoButton
     }
 
+    Loader {
+        id: floatOneLoader
+        active: root.status
+        visible: (floatOneLoader.status === Loader.Ready)
+        anchors.centerIn: parent
+        onActiveChanged: {
+            if(active) {
+                setSource("FloatImage.qml", {
+                    'source':  Qt.binding(function() { return root.source; }),
+                })
+            } else {
+                // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                setSource("", {})
+            }
+        }
+    }
+
 }

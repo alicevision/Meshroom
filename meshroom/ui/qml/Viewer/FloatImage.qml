@@ -48,6 +48,8 @@ AliceVision.FloatImageViewer {
     property int subdivisions: 5;
     property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
 
+    property int index: 0;
+
     property string sfmPath: ""
 
     function updateSfmPath() {

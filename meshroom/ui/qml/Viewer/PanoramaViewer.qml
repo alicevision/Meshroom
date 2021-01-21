@@ -60,32 +60,64 @@ AliceVision.PanoramaViewer {
         root.setSfmPath(sfmPath);
     }
 
-    Component {
-        id: imgPano
-        Loader {
-            id: floatOneLoader
-            active: root.status
-            visible: (floatOneLoader.status === Loader.Ready)
-            anchors.centerIn: parent
-            property string cSource: root.getImgSource()
-            onActiveChanged: {
-                if(active) {
-                    setSource("FloatImage.qml", {
-                        'source':  Qt.binding(function() { return cSource; }),
-                    })
-                } else {
-                    // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
-                    setSource("", {})
+    property var paths: ["L:/IMAC/IMAC2/PTUT/22_190902_GDGM_F1_sph150/HDM_1306.JPG", "L:/IMAC/IMAC2/PTUT/22_190902_GDGM_F1_sph150/HDM_1313.JPG"]
+
+
+
+    Item {
+        id: panoImages
+        width: root.width
+        height: root.height
+
+        function setSource() {
+            if (repeater.model === 0)
+                return
+
+//            var width = repeater.itemAt(0).width;
+//            var height = repeater.itemAt(0).height;
+
+            for (let i = 0; i < repeater.model; i++) {
+                console.warn(repeater.itemAt(i))
+//                repeater.itemAt(i).x = root.getVertex(i).x - (width / 2);
+//                repeater.itemAt(i).y = root.getVertex(i).y - (height / 2);
+            }
+        }
+
+        Component {
+            id: imgPano
+            Loader {
+                id: floatOneLoader
+                active: root.status
+                visible: (floatOneLoader.status === Loader.Ready)
+                //anchors.centerIn: parent
+                property string cSource: Filepath.stringToUrl(root.paths[index].toString())
+                onActiveChanged: {
+                    if(active) {
+                        setSource("FloatImage.qml", {
+                            'source':  Qt.binding(function() { return cSource; }),
+                            'index' : index
+                        })
+                        console.warn(cSource)
+                        console.warn(root.source)
+                    } else {
+                        // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                        setSource("", {})
+                    }
+                }
+                onLoaded: {
+                    //console.warn(repeater.itemAt(index))
+                    repeater.itemAt(index).x = repeater.itemAt(0).width + 50* index
                 }
             }
         }
+        Repeater {
+            id: repeater
+            model: 2
+            delegate: imgPano
+
+        }
     }
 
-    Repeater {
-        id: repeater
-        model: 1
-        delegate: imgPano
-    }
 
 
 }

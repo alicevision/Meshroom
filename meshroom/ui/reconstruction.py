@@ -742,6 +742,7 @@ class Reconstruction(UIGraph):
                 panoramaInitNodes = self.graph.nodesOfType('PanoramaInit')
                 for panoramaInfoFile in filesByType.panoramaInfo:
                     for panoramaInitNode in panoramaInitNodes:
+                        panoramaInitNode.attribute('initializeCameras').value = 'File'
                         panoramaInitNode.attribute('config').value = panoramaInfoFile
                 if panoramaInitNodes:
                     self.info.emit(

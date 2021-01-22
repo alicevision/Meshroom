@@ -97,7 +97,8 @@ AliceVision.PanoramaViewer {
                         setSource("FloatImage.qml", {
                             'source':  Qt.binding(function() { return cSource; }),
                             'index' : index,
-                            'idView': Qt.binding(function() { return cId; })
+                            'idView': Qt.binding(function() { return cId; }),
+                            'isPanoViewer' : true
                         })
                         console.warn(cSource)
                     } else {

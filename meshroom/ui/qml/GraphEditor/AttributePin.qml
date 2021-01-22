@@ -131,7 +131,7 @@ RowLayout {
         MouseArea {
             id: inputConnectMA
             // If an input attribute is connected (isLink), we disable drag&drop
-            drag.target: attribute.isLink ? undefined : inputDragTarget
+            drag.target: (attribute.isLink || attribute.isReadOnly) ? undefined : inputDragTarget
             drag.threshold: 0
             enabled: !root.readOnly
             anchors.fill: parent

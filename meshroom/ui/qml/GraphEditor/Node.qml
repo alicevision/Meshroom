@@ -325,7 +325,7 @@ Item {
                                         property real globalX: root.x + nodeAttributes.x + inputs.x + inputLoader.x + inPin.x
                                         property real globalY: root.y + nodeAttributes.y + inputs.y + inputLoader.y + inPin.y
 
-                                        readOnly: root.readOnly || root.isCompatibilityNode
+                                        readOnly: root.readOnly || object.isReadOnly
                                         Component.onCompleted: attributePinCreated(attribute, inPin)
                                         Component.onDestruction: attributePinDeleted(attribute, inPin)
                                         onPressed: root.pressed(mouse)
@@ -386,7 +386,7 @@ Item {
                                             Behavior on height { PropertyAnimation {easing.type: Easing.Linear} }
                                             visible: (height == childrenRect.height)
                                             attribute: object
-                                            readOnly: root.readOnly
+                                            readOnly: root.readOnly || object.isReadOnly
                                             Component.onCompleted: attributePinCreated(attribute, inPin)
                                             Component.onDestruction: attributePinDeleted(attribute, inPin)
                                             onPressed: root.pressed(mouse)

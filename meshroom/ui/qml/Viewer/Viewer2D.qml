@@ -766,8 +766,8 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayPanoramaViewer
-//                            property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
-//                            property bool isComputed: activeNode && activeNode.isComputed
+                            property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
+                            property bool isComputed: activeNode && activeNode.isComputed
 
                             ToolTip.text: "Panorama Viewer"
                             text: MaterialIcons.panorama_wide_angle
@@ -776,10 +776,10 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
-                            enabled: root.aliceVisionPluginAvailable
+                            enabled: activeNode && isComputed
                             onCheckedChanged : {
-//                                if(displayHDR.checked  && checked){
-//                                    displayHDR.checked = false;
+//                                if(displayPanoramaViewer.checked  && checked){
+//                                    displayPanoramaViewer.checked = false;
 //                                }
                             }
                         }

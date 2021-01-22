@@ -108,7 +108,7 @@ AliceVision.PanoramaViewer {
                 }
                 onLoaded: {
                     //console.warn(repeater.itemAt(index))
-                    repeater.itemAt(index).x = repeater.itemAt(0).width + 100* index
+                    //repeater.itemAt(index).x = repeater.itemAt(0).width + 100* index
                 }
             }
         }

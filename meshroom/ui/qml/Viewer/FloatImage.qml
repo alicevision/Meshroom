@@ -29,7 +29,7 @@ AliceVision.FloatImageViewer {
         if(!isDistoViewer){
             if(isPanoViewer){
                 console.warn('Set pano subdiv image to 6')
-                root.updateSubdivisions(6)
+                root.updateSubdivisions(10)
             }
             else{
                 root.updateSubdivisions(1)
@@ -95,6 +95,10 @@ AliceVision.FloatImageViewer {
             repeater.displayControlPoints(isDistoViewer)
             root.updateSubdivisions(1)
         }
+    }
+
+    onIsPanoViewerChanged: {
+        root.setPanoViewerEnabled(isPanoViewer)
     }
 
     onIsGridDisplayedChanged: {

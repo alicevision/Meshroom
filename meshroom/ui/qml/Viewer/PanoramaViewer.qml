@@ -91,11 +91,13 @@ AliceVision.PanoramaViewer {
                 visible: (floatOneLoader.status === Loader.Ready)
                 //anchors.centerIn: parent
                 property string cSource: Filepath.stringToUrl(root.pathList[index].toString())
+                property int cId: root.idList[index]
                 onActiveChanged: {
                     if(active) {
                         setSource("FloatImage.qml", {
                             'source':  Qt.binding(function() { return cSource; }),
-                            'index' : index
+                            'index' : index,
+                            'idView': Qt.binding(function() { return cId; })
                         })
                         console.warn(cSource)
                     } else {

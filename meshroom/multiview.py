@@ -517,7 +517,7 @@ def colorCheckerDetectionPipeline(graph):
 
     colorCheckerCorrection = graph.addNewNode('ColorCheckerCorrection',
                                              input=colorCheckerDetection.input,
-                                             inputColorData=colorCheckerDetection.outputData)
+                                             inputData=colorCheckerDetection.outputData)
 
     return [
         cameraInit,

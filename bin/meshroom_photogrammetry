@@ -72,7 +72,7 @@ args = parser.parse_args()
 
 def getOnlyNodeOfType(g, nodeType):
     """ Helper function to get a node of 'nodeType' in the graph 'g' and raise if no or multiple candidates. """
-    nodes = g.nodesByType(nodeType)
+    nodes = g.nodesOfType(nodeType)
     if len(nodes) != 1:
         raise RuntimeError("meshroom_photogrammetry requires a pipeline graph with exactly one '{}' node, {} found."
                            .format(nodeType, len(nodes)))
@@ -163,10 +163,10 @@ with multiview.GraphModification(graph):
                 raise ValueError('Invalid param override: ' + str(p))
             node, t, param, value = result.groups()
             if t == ':':
-                nodesByType = graph.nodesByType(node)
-                if not nodesByType:
+                nodesOfType = graph.nodesOfType(node)
+                if not nodesOfType:
                     raise ValueError('No node with the type "{}" in the scene.'.format(node))
-                for n in nodesByType:
+                for n in nodesOfType:
                     print('Overrides {node}.{param}={value}'.format(node=node, param=param, value=value))
                     n.attribute(param).value = value
             elif t == '.':
@@ -178,7 +178,7 @@ with multiview.GraphModification(graph):
 
     # setup DepthMap downscaling
     if args.scale > 0:
-        for node in graph.nodesByType('DepthMap'):
+        for node in graph.nodesOfType('DepthMap'):
             node.downscale.value = args.scale
 
     # setup cache directory

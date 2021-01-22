@@ -222,7 +222,7 @@ Item {
                 id: edgeMenu
                 property var currentEdge: null
                 MenuItem {
-                    enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked
+                    enabled: edgeMenu.currentEdge && !edgeMenu.currentEdge.dst.node.locked && !edgeMenu.currentEdge.dst.isReadOnly
                     text: "Remove"
                     onTriggered: uigraph.removeEdge(edgeMenu.currentEdge)
                 }

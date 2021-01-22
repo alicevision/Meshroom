@@ -257,12 +257,14 @@ Item {
         var gpuUsedMemorySerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Memory", valueGpuX, valueGpuY)
         var gpuTemperatureSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Temperature", valueGpuX, valueGpuY)
 
+        var gpuMemoryRatio = root.gpuTotalMemory > 0 ? (100 / root.gpuTotalMemory) : 1;
+
         if(gpuUsedMemory.length === 1) {
             gpuUsedSerie.append(0, gpuUsed[0])
             gpuUsedSerie.append(1 * root.deltaTime, gpuUsed[0])
 
-            gpuUsedMemorySerie.append(0, gpuUsedMemory[0] / root.gpuTotalMemory * 100)
-            gpuUsedMemorySerie.append(1 * root.deltaTime, gpuUsedMemory[0] / root.gpuTotalMemory * 100)
+            gpuUsedMemorySerie.append(0, gpuUsedMemory[0] * gpuMemoryRatio)
+            gpuUsedMemorySerie.append(1 * root.deltaTime, gpuUsedMemory[0] * gpuMemoryRatio)
 
             gpuTemperatureSerie.append(0, gpuTemperature[0])
             gpuTemperatureSerie.append(1 * root.deltaTime, gpuTemperature[0])
@@ -271,7 +273,7 @@ Item {
             for(var i = 0; i < gpuUsedMemory.length; i++) {
                 gpuUsedSerie.append(i * root.deltaTime, gpuUsed[i])
 
-                gpuUsedMemorySerie.append(i * root.deltaTime, gpuUsedMemory[i] / root.gpuTotalMemory * 100)
+                gpuUsedMemorySerie.append(i * root.deltaTime, gpuUsedMemory[i] * gpuMemoryRatio)
 
                 gpuTemperatureSerie.append(i * root.deltaTime, gpuTemperature[i])
                 root.gpuMaxAxis = Math.max(gpuMaxAxis, gpuTemperature[i])

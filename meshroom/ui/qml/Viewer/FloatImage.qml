@@ -27,7 +27,13 @@ AliceVision.FloatImageViewer {
             return Image.Null;
 
         if(!isDistoViewer){
-            root.updateSubdivisions(1)
+            if(isPanoViewer){
+                console.warn('Set pano subdiv image to 6')
+                root.updateSubdivisions(6)
+            }
+            else{
+                root.updateSubdivisions(1)
+            }
         }
 
         root.defaultControlPoints();
@@ -40,17 +46,18 @@ AliceVision.FloatImageViewer {
     property string channelModeString : "rgba"
 
     property bool isDistoViewer: false;
+    property bool isPanoViewer: false;
 
     property bool isGridDisplayed : false;
     property int gridOpacity : 100;
     property color gridColor : "#FF0000";
 
     property bool isCtrlPointsDisplayed : true;
-    property int subdivisions: 5;
+    property int subdivisions: 4;
     property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
 
     property int index: 0;
-    property int idView: 0;
+    property var idView: 0;
 
     property string sfmPath: ""
 

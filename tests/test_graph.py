@@ -237,7 +237,7 @@ def test_graph_nodes_sorting():
     ls1 = graph.addNewNode('Ls')
     ls2 = graph.addNewNode('Ls')
 
-    assert graph.nodesByType('Ls', sortedByIndex=True) == [ls0, ls1, ls2]
+    assert graph.nodesOfType('Ls', sortedByIndex=True) == [ls0, ls1, ls2]
 
     graph = Graph('')
     # 'Random' creation order (what happens when loading a file)
@@ -245,7 +245,7 @@ def test_graph_nodes_sorting():
     ls0 = graph.addNewNode('Ls', name='Ls_0')
     ls1 = graph.addNewNode('Ls', name='Ls_1')
 
-    assert graph.nodesByType('Ls', sortedByIndex=True) == [ls0, ls1, ls2]
+    assert graph.nodesOfType('Ls', sortedByIndex=True) == [ls0, ls1, ls2]
 
 
 def test_duplicate_nodes():

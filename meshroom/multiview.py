@@ -178,11 +178,11 @@ def panoramaFisheyeHdr(inputImages=None, inputViewpoints=None, inputIntrinsics=N
         graph = Graph('PanoramaFisheyeHDR')
     with GraphModification(graph):
         panoramaHdr(inputImages, inputViewpoints, inputIntrinsics, output, graph)
-        for panoramaInit in graph.nodesByType("PanoramaInit"):
+        for panoramaInit in graph.nodesOfType("PanoramaInit"):
             panoramaInit.attribute("useFisheye").value = True
         # when using fisheye images, the overlap between images can be small
         # and thus requires many features to get enough correspondances for cameras estimation
-        for featureExtraction in graph.nodesByType("FeatureExtraction"):
+        for featureExtraction in graph.nodesOfType("FeatureExtraction"):
             featureExtraction.attribute("describerPreset").value = 'high'
     return graph
 

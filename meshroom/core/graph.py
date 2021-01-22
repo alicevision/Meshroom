@@ -548,7 +548,7 @@ class Graph(BaseObject):
         """
         return sorted(nodes, key=lambda x: Graph.getNodeIndexFromName(x.name))
 
-    def nodesByType(self, nodeType, sortedByIndex=True):
+    def nodesOfType(self, nodeType, sortedByIndex=True):
         """
         Returns all Nodes of the given nodeType.
 

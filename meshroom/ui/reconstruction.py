@@ -570,7 +570,7 @@ class Reconstruction(UIGraph):
         return self._cameraInit.viewpoints.value if self._cameraInit else QObjectListModel(parent=self)
 
     def updateCameraInits(self):
-        cameraInits = self._graph.nodesByType("CameraInit", sortedByIndex=True)
+        cameraInits = self._graph.nodesOfType("CameraInit", sortedByIndex=True)
         if set(self._cameraInits.objectList()) == set(cameraInits):
             return
         self._cameraInits.setObjectList(cameraInits)
@@ -739,7 +739,7 @@ class Reconstruction(UIGraph):
                         "",
                     ))
             else:
-                panoramaInitNodes = self.graph.nodesByType('PanoramaInit')
+                panoramaInitNodes = self.graph.nodesOfType('PanoramaInit')
                 for panoramaInfoFile in filesByType.panoramaInfo:
                     for panoramaInitNode in panoramaInitNodes:
                         panoramaInitNode.attribute('config').value = panoramaInfoFile

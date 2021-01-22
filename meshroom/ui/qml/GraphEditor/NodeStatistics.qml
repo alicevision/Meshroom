@@ -49,11 +49,13 @@ FocusScope {
             spacing: 2
             KeyValue {
                 key: "Time"
-                value: Format.sec2time(node.elapsedTime)
+                property real time: node.elapsedTime
+                value: time > 0.0 ? Format.sec2time(time) : "-"
             }
             KeyValue {
                 key: "Cumulated Time"
-                value: Format.sec2time(node.recursiveElapsedTime)
+                property real time: node.recursiveElapsedTime
+                value: time > 0.0 ? Format.sec2time(time) : "-"
             }
         }
     }

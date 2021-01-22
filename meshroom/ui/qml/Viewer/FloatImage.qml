@@ -31,6 +31,7 @@ AliceVision.FloatImageViewer {
         }
 
         root.defaultControlPoints();
+        root.setIdView(idView);
         updateSfmPath();
 
         return Image.Ready;
@@ -49,6 +50,7 @@ AliceVision.FloatImageViewer {
     property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
 
     property int index: 0;
+    property int idView: 0;
 
     property string sfmPath: ""
 

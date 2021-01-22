@@ -46,13 +46,25 @@ AlembicEntity {
             // Qt 5.13: binding cameraPicker.enabled to cameraPickerEnabled
             //          causes rendering issues when entity gets disabled.
             //          set CuboidMesh extent to 0 to disable picking.
+            property color customColor: Qt.hsva((parseInt(viewId) / 255.0) % 1.0, 0.3, 1.0, 1.0)
             property real extent: cameraPickingEnabled ? 0.2 : 0
 
             components: [
-                CuboidMesh { xExtent: parent.extent; yExtent: xExtent; zExtent: xExtent },
+                // Use cuboid to represent the camera
+                Transform {
+                    translation: Qt.vector3d(0, 0, 0.5 * cameraBack.zExtent)
+                },
+                CuboidMesh { id: cameraBack; xExtent: parent.extent; yExtent: xExtent; zExtent: xExtent * 0.2 },
+                /*
+                // Use a stick to represent the camera
+                Transform {
+                    translation: Qt.vector3d(0, 0, 0.5 * cameraStick.zExtent)
+                },
+                CuboidMesh { id: cameraStick; xExtent: parent.extent * 0.2; yExtent: xExtent; zExtent: xExtent * 50.0 },
+                */
                 PhongMaterial{
                     id: mat
-                    ambient: viewId === _reconstruction.selectedViewId ? activePalette.highlight : "#CCC"
+                    ambient: viewId === _reconstruction.selectedViewId ? activePalette.highlight : customColor // "#CCC"
                     diffuse: cameraPicker.containsMouse ? Qt.lighter(activePalette.highlight, 1.2) : ambient
                 },
                 ObjectPicker {

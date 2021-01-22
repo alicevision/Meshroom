@@ -93,6 +93,9 @@ class Attribute(BaseObject):
     def getType(self):
         return self.attributeDesc.__class__.__name__
 
+    def _isReadOnly(self):
+        return not self._isOutput and self.node.isCompatibilityNode
+
     def getBaseType(self):
         return self.getType()
 
@@ -262,6 +265,7 @@ class Attribute(BaseObject):
     label = Property(str, getLabel, constant=True)
     type = Property(str, getType, constant=True)
     baseType = Property(str, getType, constant=True)
+    isReadOnly = Property(bool, _isReadOnly, constant=True)
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
     valueChanged = Signal()
     value = Property(Variant, _get_value, _set_value, notify=valueChanged)

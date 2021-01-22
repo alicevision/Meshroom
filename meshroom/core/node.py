@@ -865,6 +865,9 @@ class BaseNode(BaseObject):
             fusedStatus.merge(node.fusedStatus)
         return fusedStatus
 
+    def _isCompatibilityNode(self):
+        return False
+
     @property
     def globalExecMode(self):
         return self._chunks.at(0).execModeName
@@ -1031,6 +1034,7 @@ class BaseNode(BaseObject):
     fusedStatus = Property(StatusData, getFusedStatus, notify=globalStatusChanged)
     elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
     recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime, notify=globalStatusChanged)
+    isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)  # need lambda to evaluate the virtual function
 
     globalExecModeChanged = Signal()
     globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)
@@ -1166,6 +1170,9 @@ class CompatibilityNode(BaseNode):
             NodeChunk(self, desc.Range(i, blockSize=self.parallelization.get("blockSize", 0)))
             for i in range(self.splitCount)
         ])
+
+    def _isCompatibilityNode(self):
+        return True
 
     @staticmethod
     def attributeDescFromValue(attrName, value, isOutput):

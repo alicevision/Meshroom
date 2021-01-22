@@ -441,7 +441,7 @@ Item {
                     onPressed: {
                         if (mouse.button == Qt.LeftButton) {
                             if (mouse.modifiers & Qt.ControlModifier) {
-                                if (mainSelected) {
+                                if (mainSelected && selected) {
                                     // left clicking a selected node twice with control will deselect it
                                     uigraph.selectedNodes.remove(node)
                                     uigraph.selectedNodesChanged()

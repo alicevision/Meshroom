@@ -37,12 +37,33 @@ AliceVision.PanoramaViewer {
     property alias containsMouse: mouseArea.containsMouse
     property alias mouseX: mouseArea.mouseX
     property alias mouseY: mouseArea.mouseY
+
+    property var mouseXClicked : 0
+    property var mouseYClicked : 0
+    property var mouseXReleased : 0
+    property var mouseYReleased : 0
+    property var deltaMouseX: mouseXReleased-mouseXClicked
+    property var deltaMouseY: mouseYReleased-mouseYClicked
+
+
     MouseArea {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        // Do not intercept mouse events, only get the mouse over information
-        acceptedButtons: Qt.NoButton
+
+        onPressed:{
+            mouseXClicked=mouse.x
+            mouseYClicked=mouse.y
+
+        }
+        onReleased: {
+            mouseXReleased=mouse.x
+            mouseYReleased=mouse.y
+
+            console.warn("Dx : " + deltaMouseX)
+            console.warn("Dy : " + deltaMouseY)
+        }
+
     }
 
     property string sfmPath: ""

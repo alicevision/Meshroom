@@ -34,9 +34,9 @@ AliceVision.PanoramaViewer {
 
     channelMode : AliceVision.PanoramaViewer.EChannelMode.RGBA
 
-    property alias containsMouse: mouseArea.containsMouse
-    property alias mouseX: mouseArea.mouseX
-    property alias mouseY: mouseArea.mouseY
+    property alias containsMouse: mouseAreaPano.containsMouse
+    property alias mouseX: mouseAreaPano.mouseX
+    property alias mouseY: mouseAreaPano.mouseY
 
     property var mouseXClicked : 0
     property var mouseYClicked : 0
@@ -45,26 +45,48 @@ AliceVision.PanoramaViewer {
     property var deltaMouseX: mouseXReleased-mouseXClicked
     property var deltaMouseY: mouseYReleased-mouseYClicked
 
+    Item {
+        id: containerPanorama
+        Rectangle {
+            width: 3000
+            height: 1000
+            //color: mouseAreaPano.containsMouse? "red" : "green"
+            color: "grey"
+            MouseArea {
+                id: mouseAreaPano
+                anchors.fill: parent
+                hoverEnabled: true
 
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
+                onPositionChanged: {
+                    for (var i = 0; i < repeater.model; i++)
+                    {
+                        repeater.itemAt(i).item.getMouseCoordinates(mouse.x, mouse.y);
+                    }
+                }
 
-        onPressed:{
-            mouseXClicked=mouse.x
-            mouseYClicked=mouse.y
+                onPressed:{
+                    mouseXClicked=mouse.x
+                    mouseYClicked=mouse.y
 
+                }
+                onReleased: {
+                    mouseXReleased=mouse.x
+                    mouseYReleased=mouse.y
+
+                    for (var i = 0; i < repeater.model; i++)
+                    {
+                        repeater.itemAt(i).item.rotatePanorama(deltaMouseX, deltaMouseY)
+                    }
+
+                    console.warn("Dx : " + deltaMouseX)
+                    console.warn("Dy : " + deltaMouseY)
+                }
+            }
         }
-        onReleased: {
-            mouseXReleased=mouse.x
-            mouseYReleased=mouse.y
-
-            console.warn("Dx : " + deltaMouseX)
-            console.warn("Dy : " + deltaMouseY)
-        }
-
     }
+
+
+
 
     property string sfmPath: ""
 

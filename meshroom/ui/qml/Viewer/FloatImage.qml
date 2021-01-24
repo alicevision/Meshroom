@@ -39,6 +39,7 @@ AliceVision.FloatImageViewer {
         root.defaultControlPoints();
         root.setIdView(idView);
         updateSfmPath();
+        updateMouseAreaPano();
 
         return Image.Ready;
     }
@@ -79,6 +80,20 @@ AliceVision.FloatImageViewer {
         var pp = root.getPrincipalPoint();
         ppRect.x = pp.x;
         ppRect.y = pp.y;
+    }
+
+    function rotatePanorama(dx, dy) {
+        //root.setRotationPano(dx, dy);
+    }
+
+    function updateMouseAreaPano() {
+        var coords = root.getMouseAreaPanoCoords()
+        console.warn("MOOUSE AREA" + coords)
+
+        rectPano.x = coords[0] + 25
+        rectPano.y = coords[1] + 25
+        rectPano.width = coords[2] - 25
+        rectPano.height = coords[3] - 25
     }
 
     onIsDistoViewerChanged: {
@@ -135,15 +150,39 @@ AliceVision.FloatImageViewer {
     }
     clearBeforeLoad: true
 
-    property alias containsMouse: mouseArea.containsMouse
-    property alias mouseX: mouseArea.mouseX
-    property alias mouseY: mouseArea.mouseY
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        // Do not intercept mouse events, only get the mouse over information
-        acceptedButtons: Qt.NoButton
+//    property alias containsMouse: mouseArea.containsMouse
+//    property alias mouseX: mouseArea.mouseX
+//    property alias mouseY: mouseArea.mouseY
+//    MouseArea {
+//        id: mouseArea
+//        anchors.fill: parent
+//        hoverEnabled: true
+//        // Do not intercept mouse events, only get the mouse over information
+//        acceptedButtons: Qt.NoButton
+//    }
+
+    function isMouseOver(mx, my) {
+        return (mx > rectPano.x && mx < rectPano.x + rectPano.width
+                && my > rectPano.y && my < rectPano.y + rectPano.height)
+    }
+
+    function getMouseCoordinates(mx, my) {
+        root.mouseOver(isMouseOver(mx, my))
+    }
+
+    /*
+    * Target Rectangle For Mouse Area Highlight
+    */
+    Item {
+        id: containerMouseAreaPano
+        Rectangle {
+            id: rectPano
+            x: 0
+            y: 0
+            width: 0
+            height: 0
+            visible: false;
+        }
     }
 
     /*
@@ -184,6 +223,7 @@ AliceVision.FloatImageViewer {
                 if (reinit){
                    points.recalculateCP();
                    points.generateControlPoints();
+                   root.updateMouseAreaPano()
                 }
             }
         }

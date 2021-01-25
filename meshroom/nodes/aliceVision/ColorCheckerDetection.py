@@ -23,11 +23,20 @@ Perform Macbeth color checker chart detection.
             value='',
             uid=[0],
         ),
+        desc.IntParam(
+            name='maxCount',
+            label='Max count by image',
+            description='Max color charts count to detect in a single image',
+            value=1,
+            range=(1, 3, 1),
+            uid=[0],
+            advanced=True,
+        ),
         desc.BoolParam(
             name='debug',
             label='Debug',
             description='If checked, debug data will be generated',
-            value=True,
+            value=False,
             uid=[0],
         ),
     ]
@@ -37,7 +46,7 @@ Perform Macbeth color checker chart detection.
             name='outputData',
             label='Color checker data',
             description='Output position and colorimetric data extracted from detected color checkers in the images',
-            value=desc.Node.internalFolder + '/colorData',
+            value=desc.Node.internalFolder + '/ccheckers.json',
             uid=[],
         ),
     ]

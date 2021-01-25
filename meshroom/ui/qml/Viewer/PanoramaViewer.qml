@@ -11,8 +11,8 @@ import AliceVision 1.0 as AliceVision
 AliceVision.PanoramaViewer {
     id: root
 
-    width: textureSize.width
-    height: textureSize.height
+    width: 3000
+    height: 1000
     visible: (status === Image.Ready)
 
     // paintedWidth / paintedHeight / status for compatibility with standard Image
@@ -60,7 +60,8 @@ AliceVision.PanoramaViewer {
                 onPositionChanged: {
                     for (var i = 0; i < repeater.model; i++)
                     {
-                        repeater.itemAt(i).item.getMouseCoordinates(mouse.x, mouse.y);
+                        var highlight = repeater.itemAt(i).item.getMouseCoordinates(mouse.x, mouse.y);
+                        repeater.itemAt(i).z = highlight ? 2 : 0
                     }
                 }
 
@@ -132,6 +133,7 @@ AliceVision.PanoramaViewer {
                 id: floatOneLoader
                 active: root.status
                 visible: (floatOneLoader.status === Loader.Ready)
+                z:0
                 //anchors.centerIn: parent
                 property string cSource: Filepath.stringToUrl(root.pathList[index].toString())
                 property int cId: root.idList[index]
@@ -148,10 +150,6 @@ AliceVision.PanoramaViewer {
                         // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
                         setSource("", {})
                     }
-                }
-                onLoaded: {
-                    //console.warn(repeater.itemAt(index))
-                    //repeater.itemAt(index).x = repeater.itemAt(0).width + 100* index
                 }
             }
         }

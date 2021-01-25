@@ -83,12 +83,11 @@ AliceVision.FloatImageViewer {
     }
 
     function rotatePanorama(dx, dy) {
-        //root.setRotationPano(dx, dy);
+        root.setRotationPano(dx, dy);
     }
 
     function updateMouseAreaPano() {
         var coords = root.getMouseAreaPanoCoords()
-        console.warn("MOOUSE AREA" + coords)
 
         rectPano.x = coords[0] + 25
         rectPano.y = coords[1] + 25
@@ -167,7 +166,14 @@ AliceVision.FloatImageViewer {
     }
 
     function getMouseCoordinates(mx, my) {
-        root.mouseOver(isMouseOver(mx, my))
+        if (isMouseOver(mx, my)) {
+            root.mouseOver(true)
+            return true;
+        } else {
+            root.mouseOver(false)
+            return false;
+        }
+
     }
 
     /*

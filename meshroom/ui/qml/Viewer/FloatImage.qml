@@ -28,8 +28,7 @@ AliceVision.FloatImageViewer {
 
         if(!isDistoViewer){
             if(isPanoViewer){
-                console.warn('Set pano subdiv image to 6')
-                root.updateSubdivisions(10)
+                root.updateSubdivisions(4)
             }
             else{
                 root.updateSubdivisions(1)

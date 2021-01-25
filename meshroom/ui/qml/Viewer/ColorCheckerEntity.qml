@@ -8,6 +8,8 @@ Item {
     property real sizeY: 1125.0  // might be overrided in ColorCheckerViewer
 
     property var colors: null
+    property var window: null
+
 
     Rectangle {
         id: canvas
@@ -26,22 +28,6 @@ Item {
             matrix: Qt.matrix4x4()
         }
 
-    }
-
-    Grid {
-        spacing: 12.5
-        rows: 4
-        columns: 6
-
-        Repeater {
-            model: root.colors
-
-            Rectangle {
-                width: 125
-                height: 125
-                color: Qt.rgba(modelData.r, modelData.g, modelData.b, 1.0)
-            }
-        }
     }
 
 

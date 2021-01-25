@@ -19,19 +19,13 @@ Item {
     y: -image.height / 2 + ccheckerSizeY / 2
 
     property var ccheckers: []
+    property int selectedCChecker: -1
 
 
-    onVisibleChanged: { update() }
-    onSourceChanged: { update() }
-    onJsonChanged: { update() }
-
-    function update() {
-        readSourceFile()
-        if (root.json === null)
-            return;
-
-        loadCCheckers();
-    }
+    onVisibleChanged: { readSourceFile(); }
+    onSourceChanged: { readSourceFile(); }
+    onViewIdChanged: { loadCCheckers(); }
+    property var updatePane: null
 
     function readSourceFile() {
         var xhr = new XMLHttpRequest;
@@ -63,20 +57,30 @@ Item {
         if (root.json === null)
             return;
 
+        emptyCCheckers();
+
         for (var i = 0; i < root.json.checkers.length; i++) {
             // Only load ccheckers for the current view
             if (root.viewId == root.json.checkers[i].viewId) {
-                var c = Qt.createComponent("ColorCheckerEntity.qml");
+                var cpt = Qt.createComponent("ColorCheckerEntity.qml");
 
-                var obj = c.createObject(root, {
+                var obj = cpt.createObject(root, {
                     sizeX: root.ccheckerSizeX,
                     sizeY: root.ccheckerSizeY,
                     colors: root.json.checkers[i].colors
-                })
-                obj.transform(root.json.checkers[i].transform)
-                ccheckers.push(obj)
+                });
+                obj.transform(root.json.checkers[i].transform);
+                ccheckers.push(obj);
+                selectedCChecker = ccheckers.length-1;
             }
         }
+        updatePane();
+    }
+
+    function emptyCCheckers() {
+        for (var i = 0; i < ccheckers.length; i++)
+            ccheckers[i].destroy();
+        ccheckers = []
     }
 
 }

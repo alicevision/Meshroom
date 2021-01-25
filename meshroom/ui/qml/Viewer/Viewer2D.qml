@@ -358,6 +358,10 @@ FocusScope {
                         image: imgContainer.image
                         viewId: _reconstruction.selectedViewId
                         zoom: imgContainer.scale
+
+                        updatePane: function() {
+                            colorCheckerPane.colors = ccheckers[selectedCChecker].colors
+                        }
                     }
                 }
             }
@@ -421,6 +425,17 @@ FocusScope {
                         visible: metadataCB.checked
                         // only load metadata model if visible
                         metadata: visible ? root.metadata : {}
+                    }
+
+                    ColorCheckerPane {
+                        id: colorCheckerPane
+                        width: 250
+                        height: 170
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                        }
+                        visible: displayColorCheckerViewerLoader.checked
                     }
 
                     Loader {
@@ -671,9 +686,17 @@ FocusScope {
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true
-                            checked: activeNode && activeNode.isComputed && _reconstruction.selectedViewId != -1
                             enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId != -1
+                            checked: enabled
                             visible: activeNode
+                            onCheckedChanged: {
+                                if(checked == true)
+                                {
+                                    displaySfmDataGlobalStats.checked = false
+                                    displaySfmStatsView.checked = false
+                                    metadataCB.checked = false
+                                }
+                            }
                         }
 
                         MaterialToolButton {
@@ -753,6 +776,7 @@ FocusScope {
                                 if(checked == true) {
                                     displaySfmDataGlobalStats.checked = false
                                     metadataCB.checked = false
+                                    displayColorCheckerViewerLoader.checked = false
                                 }
                             }
                         }
@@ -777,6 +801,7 @@ FocusScope {
                                 if(checked == true) {
                                     displaySfmStatsView.checked = false
                                     metadataCB.checked = false
+                                    displayColorCheckerViewerLoader.checked = false
                                 }
                             }
                         }
@@ -800,6 +825,7 @@ FocusScope {
                                 {
                                     displaySfmDataGlobalStats.checked = false
                                     displaySfmStatsView.checked = false
+                                    displayColorCheckerViewerLoader.checked = false
                                 }
                             }
                         }

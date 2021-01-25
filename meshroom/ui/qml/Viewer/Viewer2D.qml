@@ -191,6 +191,13 @@ FocusScope {
             Layout.fillWidth: true
         }
 
+        PanoramaToolbar {
+            id: panoramaViewerToolbar
+            anchors.margins: 0
+            visible: displayPanoramaToolBarAction.checked && displayPanoramaToolBarAction.enabled
+            Layout.fillWidth: true
+        }
+
         // Image
         Item {
             id: imgLayout
@@ -772,7 +779,7 @@ FocusScope {
                             property bool isComputed: activeNode && activeNode.isComputed
 
                             ToolTip.text: "Panorama Viewer"
-                            text: MaterialIcons.panorama_wide_angle
+                            text: MaterialIcons.panorama_sphere
                             font.pointSize: 16
                             padding: 0
                             Layout.minimumWidth: 0

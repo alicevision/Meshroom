@@ -660,6 +660,8 @@ QtObject {
     readonly property string panorama_fish_eye: "\ue40c"
     readonly property string panorama_horizontal: "\ue40d"
     readonly property string panorama_vertical: "\ue40e"
+    readonly property string panorama_sphere: "\ue9c9"
+    readonly property string panorama_sphere_filled: "\ue9ca"
     readonly property string panorama_wide_angle: "\ue40f"
     readonly property string party_mode: "\ue7fa"
     readonly property string pause: "\ue034"

@@ -30,6 +30,8 @@ AliceVision.PanoramaViewer {
         return Image.Ready;
     }
 
+    property int downscale: 2
+
     clearBeforeLoad: true
 
     channelMode : AliceVision.PanoramaViewer.EChannelMode.RGBA

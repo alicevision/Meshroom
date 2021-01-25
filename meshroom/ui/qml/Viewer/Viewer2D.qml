@@ -263,6 +263,7 @@ FocusScope {
                         if(active) {
                             setSource("PanoramaViewer.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
+                                'downscale': Qt.binding(function(){return panoramaViewerToolbar.downscaleValue;})
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

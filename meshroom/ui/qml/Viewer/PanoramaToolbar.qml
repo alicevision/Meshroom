@@ -14,6 +14,7 @@ FloatingPane {
     property bool enableEdit: enablePanoramaEdit.checked
     property bool enableHover: enableHover.checked
 
+    property int downscaleValue: downscaleSpinBox.value
     property int downscaleDefaultValue: 2
 
     background: Rectangle { color: root.palette.window }

@@ -342,6 +342,24 @@ FocusScope {
                         }
                     }
                 }
+
+                // ColorCheckerViewer: display color checker detection results
+                // note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
+                Loader {
+                    id: colorCheckerViewerLoader
+                    anchors.centerIn: parent
+                    property var activeNode: _reconstruction.activeNodes.get("ColorCheckerDetection").node
+                    active: (displayColorCheckerViewerLoader.checked && activeNode)
+
+
+                    sourceComponent: ColorCheckerViewer {
+                        visible: activeNode.isComputed && json !== undefined
+                        source: activeNode.attribute("outputData").value
+                        image: imgContainer.image
+                        viewId: _reconstruction.selectedViewId
+                        zoom: imgContainer.scale
+                    }
+                }
             }
 
             ColumnLayout {
@@ -643,6 +661,18 @@ FocusScope {
                             checkable: true
                             checked: false
                             enabled: activeNode && activeNode.attribute("useFisheye").value
+                            visible: activeNode
+                        }
+                        MaterialToolButton {
+                            id: displayColorCheckerViewerLoader
+                            property var activeNode: _reconstruction.activeNodes.get('ColorCheckerDetection').node
+                            ToolTip.text: "Display Color Checker: " + (activeNode ? activeNode.label : "No Node")
+                            text: MaterialIcons.view_comfy //view_module grid_on gradient view_comfy border_all
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: activeNode && activeNode.isComputed && _reconstruction.selectedViewId != -1
+                            enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId != -1
                             visible: activeNode
                         }
 

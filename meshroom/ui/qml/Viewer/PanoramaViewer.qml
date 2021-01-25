@@ -45,6 +45,10 @@ AliceVision.PanoramaViewer {
     property var deltaMouseX: mouseXReleased-mouseXClicked
     property var deltaMouseY: mouseYReleased-mouseYClicked
 
+    property bool isRotating: false
+    property var lastX : 0
+    property var lastY: 0
+
     Item {
         id: containerPanorama
         Rectangle {
@@ -58,29 +62,32 @@ AliceVision.PanoramaViewer {
                 hoverEnabled: true
 
                 onPositionChanged: {
-                    for (var i = 0; i < repeater.model; i++)
-                    {
+                    // Send Mouse Coordinates to Float Images Viewers
+                    for (var i = 0; i < repeater.model; i++) {
                         var highlight = repeater.itemAt(i).item.getMouseCoordinates(mouse.x, mouse.y);
                         repeater.itemAt(i).z = highlight ? 2 : 0
+                    }
+
+                    // Rotate Panorama
+                    if (isRotating) {
+                        var xoffset = mouse.x - lastX;
+                        var yoffset = mouse.y - lastY;
+                        lastX = mouse.x;
+                        lastY = mouse.y;
+                        for (var i = 0; i < repeater.model; i++) {
+                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.01, yoffset)
+                        }
                     }
                 }
 
                 onPressed:{
-                    mouseXClicked=mouse.x
-                    mouseYClicked=mouse.y
-
+                    isRotating = true;
+                    mouseXClicked = lastX
+                    mouseYClicked = lastY
                 }
+
                 onReleased: {
-                    mouseXReleased=mouse.x
-                    mouseYReleased=mouse.y
-
-                    for (var i = 0; i < repeater.model; i++)
-                    {
-                        repeater.itemAt(i).item.rotatePanorama(deltaMouseX, deltaMouseY)
-                    }
-
-                    console.warn("Dx : " + deltaMouseX)
-                    console.warn("Dy : " + deltaMouseY)
+                    isRotating = false;
                 }
             }
         }

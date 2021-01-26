@@ -13,6 +13,7 @@ FloatingPane {
 
     property bool enableEdit: enablePanoramaEdit.checked
     property bool enableHover: enableHover.checked
+    property bool displayGrid: displayGrid.checked
 
     property int downscaleValue: downscaleSpinBox.value
     property int downscaleDefaultValue: 2

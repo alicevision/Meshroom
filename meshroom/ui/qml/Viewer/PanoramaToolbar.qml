@@ -17,6 +17,9 @@ FloatingPane {
     property int downscaleValue: downscaleSpinBox.value
     property int downscaleDefaultValue: 2
 
+    property int subdivisionsDefaultValue: 12
+    property int subdivisionsValue: subdivisionsCtrl.value
+
     background: Rectangle { color: root.palette.window }
 
     DoubleValidator {
@@ -57,6 +60,44 @@ FloatingPane {
             Layout.minimumWidth: 0
             checkable: true
             checked: true
+        }
+        RowLayout {
+            spacing: 5
+
+            ToolButton {
+                text: "Subdivisions"
+
+                ToolTip.visible: ToolTip.text && hovered
+                ToolTip.delay: 100
+                ToolTip.text: "Reset Subdivisions"
+
+                onClicked: {
+                    subdivisionsCtrl.value = subdivisionsDefaultValue;
+                }
+            }
+            TextField {
+                id: subdivisionsLabel
+
+                ToolTip.visible: ToolTip.text && hovered
+                ToolTip.delay: 100
+                ToolTip.text: "subdivisions"
+
+                text: subdivisionsValue.toFixed(1)
+                Layout.preferredWidth: textMetrics_subdivisionsValue.width
+                selectByMouse: true
+                validator: doubleValidator
+                onAccepted: {
+                    subdivisionsCtrl.value = Number(subdivisionsLabel.text)
+                }
+            }
+            Slider {
+                id: subdivisionsCtrl
+                Layout.fillWidth: false
+                from: 2
+                to: 24
+                value: subdivisionsDefaultValue
+                stepSize: 2
+            }
         }
         //Fill rectangle to have a better UI
         Rectangle {
@@ -101,6 +142,11 @@ FloatingPane {
             }
         }
 
+    }
+    TextMetrics {
+        id: textMetrics_subdivisionsValue
+        font: subdivisionsLabel.font
+        text: "10.00"
     }
 
 }

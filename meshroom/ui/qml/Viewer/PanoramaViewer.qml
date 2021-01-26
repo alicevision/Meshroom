@@ -62,11 +62,12 @@ AliceVision.PanoramaViewer {
 
     Item {
         id: containerPanorama
+        z: 10
         Rectangle {
             width: 3000
             height: 1000
             //color: mouseAreaPano.containsMouse? "red" : "green"
-            color: "grey"
+            color: "transparent"
             MouseArea {
                 id: mouseAreaPano
                 anchors.fill: parent
@@ -99,6 +100,33 @@ AliceVision.PanoramaViewer {
 
                 onReleased: {
                     isRotating = false;
+                }
+            }
+
+            // Grid Panorama Viewer
+            Canvas {
+                id: gridPano
+                anchors.fill : parent
+                property int wgrid: 40
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.lineWidth = 1.0
+                    ctx.shadowBlur = 0
+                    ctx.strokeStyle = "grey"
+                    var nrows = height/wgrid;
+                    for(var i=0; i < nrows+1; i++){
+                        ctx.moveTo(0, wgrid*i);
+                        ctx.lineTo(width, wgrid*i);
+                    }
+
+                    var ncols = width/wgrid
+                    for(var j=0; j < ncols+1; j++){
+                        ctx.moveTo(wgrid*j, 0);
+                        ctx.lineTo(wgrid*j, height);
+                    }
+
+                    ctx.closePath()
+                    ctx.stroke()
                 }
             }
         }

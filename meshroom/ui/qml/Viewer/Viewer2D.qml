@@ -266,7 +266,8 @@ FocusScope {
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
                                 'downscaleValue': Qt.binding(function(){return panoramaViewerToolbar.downscaleValue;}),
                                 'subdivisionsPano': Qt.binding(function(){ return panoramaViewerToolbar.subdivisionsValue;}),
-                                'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;})
+                                'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;}),
+                                'mouseMultiplier': Qt.binding(function(){ return panoramaViewerToolbar.mouseSpeed;})
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

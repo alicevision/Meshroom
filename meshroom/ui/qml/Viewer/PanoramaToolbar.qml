@@ -21,6 +21,8 @@ FloatingPane {
     property int subdivisionsDefaultValue: 12
     property int subdivisionsValue: subdivisionsCtrl.value
 
+    property int mouseSpeed: speedSpinBox.value
+
     background: Rectangle { color: root.palette.window }
 
     DoubleValidator {
@@ -100,10 +102,42 @@ FloatingPane {
                 stepSize: 2
             }
         }
-        //Fill rectangle to have a better UI
-        Rectangle {
+        Rectangle{
             color: root.palette.window
             Layout.fillWidth: true
+        }
+        RowLayout{
+            ToolButton {
+                text: "Edit Speed"
+
+                ToolTip.visible: ToolTip.text && hovered
+                ToolTip.delay: 100
+                ToolTip.text: "Reset the mouse multiplier"
+
+                onClicked: {
+                    speedSpinBox.value = 1;
+                }
+            }
+            SpinBox {
+                id: speedSpinBox
+                from: 1
+                value: 1
+                to: 10
+                stepSize: 1
+                Layout.fillWidth: false
+                Layout.maximumWidth: 50
+
+
+                validator: DoubleValidator {
+                    bottom: Math.min(speedSpinBox.from, speedSpinBox.to)
+                    top:  Math.max(speedSpinBox.from, speedSpinBox.to)
+                }
+
+                textFromValue: function(value, locale) {
+                    return "x" + value.toString()
+
+                }
+            }
         }
         RowLayout{
             ToolButton {
@@ -124,6 +158,7 @@ FloatingPane {
                 to: 3
                 stepSize: 1
                 Layout.fillWidth: false
+                Layout.maximumWidth: 50
 
 
                 validator: DoubleValidator {

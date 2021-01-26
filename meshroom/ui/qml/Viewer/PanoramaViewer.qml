@@ -47,7 +47,7 @@ AliceVision.PanoramaViewer {
 
     onSubdivisionsPanoChanged:{
         for (var i = 0; i < repeater.model; i++) {
-           repeater.itemAt(i).item.subdivisions=subdivisionsPano;
+           repeater.itemAt(i).item.updateSubdivisions(subdivisionsPano);
         }
     }
 
@@ -88,7 +88,7 @@ AliceVision.PanoramaViewer {
                         lastX = mouse.x;
                         lastY = mouse.y;
                         for (var i = 0; i < repeater.model; i++) {
-                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.001, yoffset*0.01)
+                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.001, yoffset*0.001)
                         }
                     }
                 }

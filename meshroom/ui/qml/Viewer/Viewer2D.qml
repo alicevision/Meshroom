@@ -258,9 +258,10 @@ FocusScope {
                         if(active) {
                             setSource("PanoramaViewer.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
-                                'isEditable': Qt.binding(function(){ return panoramaViewerToolbar.enableEdit}),
-                                'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover}),
-                                'downscaleValue': Qt.binding(function(){return panoramaViewerToolbar.downscaleValue;})
+                                'isEditable': Qt.binding(function(){ return panoramaViewerToolbar.enableEdit;}),
+                                'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
+                                'downscaleValue': Qt.binding(function(){return panoramaViewerToolbar.downscaleValue;}),
+                                'subdivisionsPano': Qt.binding(function(){ return panoramaViewerToolbar.subdivisionsValue;})
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

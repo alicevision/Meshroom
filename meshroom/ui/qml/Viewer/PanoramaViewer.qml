@@ -32,12 +32,20 @@ AliceVision.PanoramaViewer {
 
     property int downscaleValue: 2
 
+    property int subdivisionsPano: 12
+
     property bool isEditable: true
     property bool isHighlightable: true
 
     onIsHighlightableChanged:{
         for (var i = 0; i < repeater.model; i++) {
-            var highlight = repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
+            repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
+        }
+    }
+
+    onSubdivisionsPanoChanged:{
+        for (var i = 0; i < repeater.model; i++) {
+           repeater.itemAt(i).item.subdivisions=subdivisionsPano;
         }
     }
 

@@ -30,7 +30,16 @@ AliceVision.PanoramaViewer {
         return Image.Ready;
     }
 
-    property int downscale: 2
+    property int downscaleValue: 2
+
+    property bool isEditable: true
+    property bool isHighlightable: true
+
+    onIsHighlightableChanged:{
+        for (var i = 0; i < repeater.model; i++) {
+            var highlight = repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
+        }
+    }
 
     clearBeforeLoad: true
 
@@ -65,19 +74,19 @@ AliceVision.PanoramaViewer {
 
                 onPositionChanged: {
                     // Send Mouse Coordinates to Float Images Viewers
-                    for (var i = 0; i < repeater.model; i++) {
+                    for (var i = 0; i < repeater.model && isHighlightable; i++) {
                         var highlight = repeater.itemAt(i).item.getMouseCoordinates(mouse.x, mouse.y);
                         repeater.itemAt(i).z = highlight ? 2 : 0
                     }
 
                     // Rotate Panorama
-                    if (isRotating) {
+                    if (isRotating && isEditable) {
                         var xoffset = mouse.x - lastX;
                         var yoffset = mouse.y - lastY;
                         lastX = mouse.x;
                         lastY = mouse.y;
                         for (var i = 0; i < repeater.model; i++) {
-                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.01, yoffset)
+                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.01, yoffset*0.01)
                         }
                     }
                 }
@@ -121,20 +130,6 @@ AliceVision.PanoramaViewer {
         id: panoImages
         width: root.width
         height: root.height
-
-//        function setSource() {
-//            if (repeater.model === 0)
-//                return
-
-////            var width = repeater.itemAt(0).width;
-////            var height = repeater.itemAt(0).height;
-
-//            for (let i = 0; i < repeater.model; i++) {
-//                console.warn(repeater.itemAt(i))
-////                repeater.itemAt(i).x = root.getVertex(i).x - (width / 2);
-////                repeater.itemAt(i).y = root.getVertex(i).y - (height / 2);
-//            }
-//        }
 
         Component {
             id: imgPano

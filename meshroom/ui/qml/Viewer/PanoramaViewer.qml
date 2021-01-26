@@ -56,15 +56,6 @@ AliceVision.PanoramaViewer {
     channelMode : AliceVision.PanoramaViewer.EChannelMode.RGBA
 
     property alias containsMouse: mouseAreaPano.containsMouse
-    property alias mouseX: mouseAreaPano.mouseX
-    property alias mouseY: mouseAreaPano.mouseY
-
-    property var mouseXClicked : 0
-    property var mouseYClicked : 0
-    property var mouseXReleased : 0
-    property var mouseYReleased : 0
-    property var deltaMouseX: mouseXReleased-mouseXClicked
-    property var deltaMouseY: mouseYReleased-mouseYClicked
 
     property bool isRotating: false
     property var lastX : 0
@@ -97,15 +88,13 @@ AliceVision.PanoramaViewer {
                         lastX = mouse.x;
                         lastY = mouse.y;
                         for (var i = 0; i < repeater.model; i++) {
-                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.01, yoffset*0.01)
+                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.001, yoffset*0.01)
                         }
                     }
                 }
 
                 onPressed:{
                     isRotating = true;
-                    mouseXClicked = lastX
-                    mouseYClicked = lastY
                 }
 
                 onReleased: {

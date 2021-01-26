@@ -18,17 +18,7 @@ AliceVision.PanoramaViewer {
     // paintedWidth / paintedHeight / status for compatibility with standard Image
     property int paintedWidth: textureSize.width
     property int paintedHeight: textureSize.height
-    property var status: {
-        if(root.loading)
-            return Image.Loading;
-        else if((root.source === "") ||
-                (root.sourceSize.height <= 0) ||
-                (root.sourceSize.width <= 0))
-            return Image.Null;
-        root.defaultControlPoints();
-        updateSfmPath();
-        return Image.Ready;
-    }
+    property var status: Image.Null
 
     property int downscaleValue: 2
 
@@ -58,8 +48,6 @@ AliceVision.PanoramaViewer {
     }
 
     clearBeforeLoad: true
-
-    channelMode : AliceVision.PanoramaViewer.EChannelMode.RGBA
 
     property alias containsMouse: mouseAreaPano.containsMouse
 
@@ -222,6 +210,7 @@ AliceVision.PanoramaViewer {
                 //Changing the repeater model (number of elements)
                 panoImages.updateRepeater()
 
+                root.status = Image.Ready;
             }
         }
         function updateRepeater() {

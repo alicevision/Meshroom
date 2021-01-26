@@ -29,6 +29,8 @@ AliceVision.PanoramaViewer {
 
     property bool displayGridPano: true
 
+    property int mouseMultiplier: 1
+
     onIsHighlightableChanged:{
         for (var i = 0; i < repeater.model; i++) {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
@@ -82,7 +84,7 @@ AliceVision.PanoramaViewer {
                         lastX = mouse.x;
                         lastY = mouse.y;
                         for (var i = 0; i < repeater.model; i++) {
-                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.001, yoffset*0.001)
+                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.001 * mouseMultiplier, -yoffset * 0.001 * mouseMultiplier)
                         }
                     }
                 }
@@ -213,6 +215,7 @@ AliceVision.PanoramaViewer {
                 root.status = Image.Ready;
             }
         }
+
         function updateRepeater() {
             if(repeater.model !== root.pathList.length){
                 repeater.model = 0;

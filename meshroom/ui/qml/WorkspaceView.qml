@@ -123,7 +123,7 @@ Item {
                             id: displayImagePathAction
                             text: "Display Image Path"
                             checkable: true
-                            checked: true
+                            checked: true && !viewer2D.usePanoramaViewer
                         }
                     }
                 }

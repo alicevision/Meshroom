@@ -252,23 +252,17 @@ def panoramaHdrPipeline(graph):
                                            input=panoramaEstimation.output,
                                            method='from_single_camera')
 
-    panoramaWarpingSeams = graph.addNewNode('PanoramaWarping',
-                                       input=panoramaOrientation.output,
-                                       estimateResolution=False,
-                                       panoramaWidth=3000)
-
-    panoramaSeams =  graph.addNewNode('PanoramaSeams',
-                                       input=panoramaWarpingSeams.input,
-                                       warpingFolder=panoramaWarpingSeams.output
-                                       )
-                                    
     panoramaWarping = graph.addNewNode('PanoramaWarping',
                                        input=panoramaOrientation.output)
 
+    panoramaSeams =  graph.addNewNode('PanoramaSeams',
+                                       input=panoramaWarping.input,
+                                       warpingFolder=panoramaWarping.output
+                                       )
 
     panoramaCompositing = graph.addNewNode('PanoramaCompositing',
-                                           input=panoramaWarping.input,
-                                           warpingFolder=panoramaWarping.output,
+                                           input=panoramaSeams.input,
+                                           warpingFolder=panoramaSeams.warpingFolder,
                                            labels=panoramaSeams.output
                                         )
 
@@ -292,7 +286,6 @@ def panoramaHdrPipeline(graph):
         panoramaEstimation,
         panoramaOrientation,
         panoramaWarping,
-        panoramaWarpingSeams,
         panoramaSeams,
         panoramaCompositing,
         panoramaMerging,

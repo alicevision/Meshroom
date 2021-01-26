@@ -175,10 +175,8 @@ AliceVision.FloatImageViewer {
     }
 
     function onChangedHighlightState(isHighlightable){
-        if(!isHighlightable){
-            root.mouseOver(true)
-            return true
-        }
+        if(isHighlightable) root.mouseOver(false)
+        else root.mouseOver(true)
     }
 
     /*

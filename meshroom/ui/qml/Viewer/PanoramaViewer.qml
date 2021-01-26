@@ -101,10 +101,14 @@ AliceVision.PanoramaViewer {
 
                 onPressed:{
                     isRotating = true;
+                    lastX = mouse.x;
+                    lastY = mouse.y;
                 }
 
                 onReleased: {
                     isRotating = false;
+                    lastX = 0
+                    lastY = 0
                 }
             }
 

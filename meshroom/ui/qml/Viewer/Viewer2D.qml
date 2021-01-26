@@ -353,7 +353,7 @@ FocusScope {
 
 
                     sourceComponent: ColorCheckerViewer {
-                        visible: activeNode.isComputed && json !== undefined
+                        visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
                         source: activeNode.attribute("outputData").value
                         image: imgContainer.image
                         viewId: _reconstruction.selectedViewId
@@ -687,8 +687,12 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId != -1
-                            checked: enabled
+                            checked: false
                             visible: activeNode
+                            onEnabledChanged: {
+                                if(enabled == false)
+                                    checked = false
+                            }
                             onCheckedChanged: {
                                 if(checked == true)
                                 {

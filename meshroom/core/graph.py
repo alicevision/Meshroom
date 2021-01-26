@@ -362,45 +362,15 @@ class Graph(BaseObject):
                                 child.resetValue()
         return node, skippedEdges
 
-    def duplicateNode(self, srcNode):
-        """ Duplicate a node in the graph with its connections.
+    def duplicateNodes(self, srcNodes):
+        """ Duplicate nodes in the graph with their connections.
 
         Args:
-            srcNode: the node to duplicate
-
-        Returns:
-            Node: the created node
-        """
-        node, edges = self.copyNode(srcNode, withEdges=True)
-        return self.addNode(node)
-
-    def duplicateNodesFromNode(self, fromNode):
-        """
-        Duplicate 'fromNode' and all the following nodes towards graph's leaves.
-
-        Args:
-            fromNode (Node): the node to start the duplication from
+            srcNodes: the nodes to duplicate
 
         Returns:
             OrderedDict[Node, Node]: the source->duplicate map
         """
-        srcNodes, srcEdges = self.dfsOnDiscover(startNodes=[fromNode], reverse=True, dependenciesOnly=True)
-        return self.duplicateNodes(srcNodes, srcEdges)
-
-    def duplicateNodesFromList(self, nodes):
-        """
-        Duplicate 'nodes'.
-
-        Args:
-            nodes (list[Node]): the nodes to duplicate
-
-        Returns:
-            OrderedDict[Node, Node]: the source->duplicate map
-        """
-        srcEdges = [ self.nodeInEdges(n) for n in nodes ]
-        return self.duplicateNodes(nodes, srcEdges)
-
-    def duplicateNodes(self, srcNodes, srcEdges):
         # use OrderedDict to keep duplicated nodes creation order
         duplicates = OrderedDict()
 

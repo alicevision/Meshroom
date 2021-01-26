@@ -55,11 +55,19 @@ Item {
     function selectNode(node)
     {
         uigraph.selectedNode = node
+        if (!uigraph.selectedNodes.contains(node) && node !== null) {
+            uigraph.selectedNodes.append(node)
+            uigraph.selectedNodesChanged()
+        }
     }
 
     /// Duplicate a node and optionnally all the following ones
     function duplicateNode(node, duplicateFollowingNodes) {
-        var nodes = uigraph.duplicateNode(node, duplicateFollowingNodes)
+        if (duplicateFollowingNodes) {
+            var nodes = uigraph.duplicateNodesFrom(node)
+        } else {
+            var nodes = uigraph.duplicateNodes(uigraph.selectedNodes)
+        }
         selectNode(nodes[0])
     }
 
@@ -71,7 +79,7 @@ Item {
             if(event.modifiers == Qt.AltModifier)
                 uigraph.removeNodesFrom(uigraph.selectedNode)
             else
-                uigraph.removeNode(uigraph.selectedNode)
+                uigraph.removeNodes(uigraph.selectedNodes)
     }
 
     MouseArea {
@@ -288,6 +296,7 @@ Item {
                 property bool canComputeNode: currentNode != null && uigraph.graph.canCompute(currentNode)
                 //canSubmitOrCompute: return int n : 0 >= n <= 3 | n=0 cannot submit or compute | n=1 can compute | n=2 can submit | n=3 can compute & submit
                 property int canSubmitOrCompute: currentNode != null && uigraph.graph.canSubmitOrCompute(currentNode)
+                width: 220
                 onClosed: currentNode = null
 
                 MenuItem {
@@ -324,7 +333,7 @@ Item {
                 }
                 MenuSeparator {}
                 MenuItem {
-                    text: "Duplicate Node" + (duplicateFollowingButton.hovered ? "s From Here" : uigraph.nodeSelection(nodeMenu.currentNode) ? "s" : "")
+                    text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
                     enabled: true
                     onTriggered: duplicateNode(nodeMenu.currentNode, false)
                     MaterialToolButton {
@@ -339,9 +348,9 @@ Item {
                     }
                 }
                 MenuItem {
-                    text: "Remove Node" + (removeFollowingButton.hovered ? "s From Here" : uigraph.nodeSelection(nodeMenu.currentNode) ? "s" : "")
+                    text: "Remove Node(s)" + (removeFollowingButton.hovered ? " From Here" : "")
                     enabled: nodeMenu.currentNode ? !nodeMenu.currentNode.locked : false
-                    onTriggered: uigraph.removeNode(nodeMenu.currentNode)
+                    onTriggered: uigraph.removeNodes(uigraph.selectedNodes)
                     MaterialToolButton {
                         id: removeFollowingButton
                         height: parent.height
@@ -409,7 +418,7 @@ Item {
                                 if(deleteFollowing)
                                     graph.clearDataFrom(node);
                                 else
-                                    uigraph.clearData(node);
+                                    uigraph.clearData(uigraph.selectedNodes);
                             }
                             onClosed: destroy()
                         }
@@ -447,9 +456,6 @@ Item {
                                     uigraph.selectedNodesChanged()
                                     selectNode(null)
                                     return
-                                } else if (!selected) {
-                                    uigraph.selectedNodes.append(node)
-                                    uigraph.selectedNodesChanged()
                                 }
                             } else if (mouse.modifiers & Qt.AltModifier) {
                                 duplicateNode(node, true)
@@ -468,7 +474,7 @@ Item {
 
                     onDoubleClicked: root.nodeDoubleClicked(mouse, node)
 
-                    onMoved: uigraph.moveNode(node, position)
+                    onMoved: uigraph.moveNode(node, position, uigraph.selectedNodes)
 
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null

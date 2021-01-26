@@ -28,7 +28,7 @@ AliceVision.FloatImageViewer {
 
         if(!isDistoViewer){
             if(isPanoViewer){
-                root.updateSubdivisions(4)
+                root.updateSubdivisions(12)
             }
             else{
                 root.updateSubdivisions(1)
@@ -172,7 +172,13 @@ AliceVision.FloatImageViewer {
             root.mouseOver(false)
             return false;
         }
+    }
 
+    function onChangedHighlightState(isHighlightable){
+        if(!isHighlightable){
+            root.mouseOver(true)
+            return true
+        }
     }
 
     /*

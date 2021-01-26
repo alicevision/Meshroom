@@ -257,7 +257,6 @@ FocusScope {
                     onActiveChanged: {
                         if(active) {
                             setSource("PanoramaViewer.qml", {
-                                'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
                                 'isEditable': Qt.binding(function(){ return panoramaViewerToolbar.enableEdit;}),
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
                                 'downscaleValue': Qt.binding(function(){return panoramaViewerToolbar.downscaleValue;}),
@@ -268,6 +267,9 @@ FocusScope {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
                             setSource("", {})
                         }
+                    }
+                    onLoaded: {
+                        panoramaViewerLoader.item.updateSfmPath();
                     }
                 }
 

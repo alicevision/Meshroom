@@ -32,6 +32,14 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             value='',
             uid=[0],
         ),
+        desc.IntParam(
+            name='maxWidth',
+            label='Max Resolution',
+            description='Maximal resolution for the panorama seams estimation.',
+            value=5000,
+            range=(0, 100000, 1),
+            uid=[0],
+        ),
         desc.BoolParam(
             name='useGraphCut',
             label='Use Smart Seams',

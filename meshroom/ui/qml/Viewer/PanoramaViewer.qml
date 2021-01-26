@@ -51,6 +51,12 @@ AliceVision.PanoramaViewer {
         }
     }
 
+    onDownscaleValueChanged: {
+        for (var i = 0; i < repeater.model; i++) {
+           repeater.itemAt(i).item.setDownscale(downscaleValue);
+        }
+    }
+
     clearBeforeLoad: true
 
     channelMode : AliceVision.PanoramaViewer.EChannelMode.RGBA

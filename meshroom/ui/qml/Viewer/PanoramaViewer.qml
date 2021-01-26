@@ -37,6 +37,8 @@ AliceVision.PanoramaViewer {
     property bool isEditable: true
     property bool isHighlightable: true
 
+    property bool displayGridPano: true
+
     onIsHighlightableChanged:{
         for (var i = 0; i < repeater.model; i++) {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
@@ -114,6 +116,7 @@ AliceVision.PanoramaViewer {
             // Grid Panorama Viewer
             Canvas {
                 id: gridPano
+                visible: displayGridPano
                 anchors.fill : parent
                 property int wgrid: 40
                 onPaint: {

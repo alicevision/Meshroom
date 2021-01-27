@@ -12,7 +12,7 @@ class PanoramaCompositing(desc.CommandLineNode):
 
     parallelization = desc.Parallelization(blockSize=5)
     commandLineRange = '--rangeIteration {rangeIteration} --rangeSize {rangeBlockSize}'
-    
+
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
@@ -61,8 +61,8 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             name='maxThreads',
             label='Max Nb Threads',
             description='Specifies the maximum number of threads to run simultaneously.',
-            value=1,
-            range=(1, 48, 1),
+            value=0,
+            range=(0, 48, 1),
             uid=[],
             advanced=True,
         ),

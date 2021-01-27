@@ -10,6 +10,9 @@ class PanoramaMerging(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaMerging {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    cpu = desc.Level.NORMAL
+    ram = desc.Level.INTENSIVE
+
 
     documentation = '''
 Merge all inputs coming from PanoramaComposiring

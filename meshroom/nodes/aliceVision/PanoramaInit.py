@@ -63,7 +63,7 @@ This node allows to setup the Panorama:
             ),
             name='nbViewsPerLine',
             label='Spherical: Nb Views Per Line',
-            description='Number of views per line in Spherical acquisition. Assumes angles from [-90°,+90°] for pitch and [-180°,+180°] for yaw. Use -1 to estimate the number of images automatically.',
+            description='Number of views per line in Spherical acquisition. Assumes angles from [-90,+90deg] for pitch and [-180,+180deg] for yaw. Use -1 to estimate the number of images automatically.',
             joinChar=',',
             enabled=lambda node: node.initializeCameras.value == 'Spherical',
         ),

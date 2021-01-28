@@ -61,7 +61,7 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             name='maxThreads',
             label='Max Nb Threads',
             description='Specifies the maximum number of threads to run simultaneously.',
-            value=0,
+            value=4,
             range=(0, 48, 1),
             uid=[],
             advanced=True,

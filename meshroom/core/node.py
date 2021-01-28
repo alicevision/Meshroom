@@ -744,8 +744,8 @@ class BaseNode(BaseObject):
             This must be used with caution. This could lead to inconsistent node status
             if the graph is still being computed.
         """
-        for chunk in self.alreadySubmittedChunks():
-            if not chunk.isExtern():
+        for chunk in self._chunks:
+            if chunk.isAlreadySubmitted():
                 chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
 
     def upgradeStatusTo(self, newStatus):

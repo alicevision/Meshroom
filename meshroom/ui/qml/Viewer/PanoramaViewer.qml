@@ -69,7 +69,10 @@ AliceVision.PanoramaViewer {
                 id: mouseAreaPano
                 anchors.fill: parent
                 hoverEnabled: true
-                cursorShape: isRotating ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                cursorShape: {
+                    if (isEditable)
+                        isRotating ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                }
                 onPositionChanged: {
                     // Send Mouse Coordinates to Float Images Viewers
                     for (var i = 0; i < repeater.model && isHighlightable; i++) {

@@ -63,7 +63,8 @@ class StatusData(BaseObject):
     """
     dateTimeFormatting = '%Y-%m-%d %H:%M:%S.%f'
 
-    def __init__(self, nodeName='', nodeType='', packageName='', packageVersion=''):
+    def __init__(self, nodeName='', nodeType='', packageName='', packageVersion='', parent=None):
+        super(StatusData, self).__init__(parent)
         self.status = Status.NONE
         self.execMode = ExecMode.NONE
         self.nodeName = nodeName
@@ -113,6 +114,7 @@ class StatusData(BaseObject):
 
     def toDict(self):
         d = self.__dict__.copy()
+        d.pop('destroyed', None)  # skip non data attributes from BaseObject
         d["elapsedTimeStr"] = self.elapsedTimeStr
         return d
 
@@ -161,7 +163,7 @@ class LogManager:
     def start(self, level):
         # Clear log file
         open(self.chunk.logFile, 'w').close()
-        
+
         self.configureLogger()
         self.logger.setLevel(self.textToLevel(level))
         self.progressBar = False
@@ -178,19 +180,19 @@ class LogManager:
         self.progressEnd = end
         self.currentProgressTics = 0
         self.progressBar = True
-        
+
         with open(self.chunk.logFile, 'a') as f:
             if message:
                 f.write(message+'\n')
             f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
             f.write('|----|----|----|----|----|----|----|----|----|----|\n\n')
-            
+
             f.close()
-            
+
         with open(self.chunk.logFile, 'r') as f:
             content = f.read()
             self.progressBarPosition = content.rfind('\n')
-            
+
             f.close()
 
     def updateProgressBar(self, value):
@@ -332,7 +334,7 @@ class NodeChunk(BaseObject):
             os.makedirs(folder)
         except Exception as e:
             pass
-        
+
         statusFilepathWriting = getWritingFilepath(statusFilepath)
         with open(statusFilepathWriting, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)

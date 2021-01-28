@@ -99,6 +99,8 @@ Item {
                 id: textView
 
                 property string text
+                property double start
+                property double end
 
                 // model consists in text split by line
                 model: textView.text.split("\n")
@@ -107,6 +109,49 @@ Item {
                 anchors.fill: parent
                 clip: true
                 focus: true
+
+
+                function select(index) 
+                {
+                   var data = model[index];
+                   var pattern = /\[([0-9]+):([0-9]+):([0-9]+)\.([0-9]+)\]/;
+                   var found = data.match(pattern);
+
+                   if (found)
+                   {
+                       var hours = parseInt(found[1], 10)
+                       var minutes = parseInt(found[2], 10)
+                       var seconds = parseInt(found[3], 10)
+                       var microseconds = parseInt(found[4], 10)
+
+                       var time = (((hours * 60 + minutes) * 60) + seconds) * 1000000 + microseconds
+                       textView.start = time
+                   }
+                }
+
+                function selectSecond(index) 
+                {
+                   var data = model[index];
+                   var pattern = /\[([0-9]+):([0-9]+):([0-9]+)\.([0-9]+)\]/;
+                   var found = data.match(pattern);
+
+                   if (found)
+                   {
+                       var hours = parseInt(found[1], 10)
+                       var minutes = parseInt(found[2], 10)
+                       var seconds = parseInt(found[3], 10)
+                       var microseconds = parseInt(found[4], 10)
+
+                       var time = (((hours * 60 + minutes) * 60) + seconds) * 1000000 + microseconds
+                       textView.end = time
+                   }
+                   
+                   console.warn((textView.end - textView.start) / 1000000)
+                }
+
+                onCurrentItemChanged: {
+                    text = currentIndex
+                }
 
                 // custom key navigation handling
                 keyNavigationEnabled: false
@@ -252,6 +297,21 @@ Item {
                                 selectionColor: Colors.sysPalette.highlight
                                 persistentSelection: false
                                 Keys.forwardTo: [textView]
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    
+                                    onClicked: 
+                                    {                                        
+                                        if (mouse.modifiers & Qt.ControlModifier) {
+                                            textView.selectSecond(index)
+                                        }
+                                        else 
+                                        {
+                                            textView.select(index)
+                                        }
+                                    }
+                                }
 
                                 color: {
                                     // color line according to log level

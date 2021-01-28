@@ -277,10 +277,18 @@ Item {
                 onClosed: currentNode = null
 
                 MenuItem {
-                    text: "Compute"
+                    text: (recomputeButton.hovered ? "Restart compute" : "Compute")
                     enabled: nodeMenu.canComputeNode && (nodeMenu.canSubmitOrCompute%2 == 1) //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
-                    onTriggered: {
-                        computeRequest(nodeMenu.currentNode)
+                    onTriggered: computeRequest(nodeMenu.currentNode)
+                    MaterialToolButton {
+                        id: recomputeButton
+                        height: parent.height
+                        anchors { right: parent.right; rightMargin: parent.padding }
+                        text: MaterialIcons.autorenew
+                        onClicked: {
+                            nodeMenu.currentNode.clearData();
+                            computeRequest(nodeMenu.currentNode)
+                        }
                     }
                 }
                 MenuItem {

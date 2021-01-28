@@ -12,7 +12,7 @@ AliceVision.PanoramaViewer {
     id: root
 
     width: 3000
-    height: 1000
+    height: 1500
     visible: (status === Image.Ready)
 
     // paintedWidth / paintedHeight / status for compatibility with standard Image
@@ -62,7 +62,7 @@ AliceVision.PanoramaViewer {
         z: 10
         Rectangle {
             width: 3000
-            height: 1000
+            height: 1500
             //color: mouseAreaPano.containsMouse? "red" : "green"
             color: "transparent"
             MouseArea {

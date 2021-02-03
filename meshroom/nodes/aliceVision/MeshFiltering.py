@@ -1,14 +1,12 @@
-__version__ = "2.0"
+__version__ = "3.0"
 
 from meshroom.core import desc
 
 
 class MeshFiltering(desc.CommandLineNode):
     commandLine = 'aliceVision_meshFiltering {allParams}'
-
     documentation = '''
 This node applies a Laplacian filtering to remove local defects from the raw Meshing cut.
-
 '''
 
     inputs = [
@@ -19,14 +17,6 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             value='',
             uid=[0],
             ),
-        desc.FloatParam(
-            name='removeLargeTrianglesFactor',
-            label='Filter Large Triangles Factor',
-            description='Remove all large triangles. We consider a triangle as large if one edge is bigger than N times the average edge length. Put zero to disable it.',
-            value=60.0,
-            range=(1.0, 100.0, 0.1),
-            uid=[0],
-            ),
         desc.BoolParam(
             name='keepLargestMeshOnly',
             label='Keep Only the Largest Mesh',
@@ -34,8 +24,27 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             value=False,
             uid=[0],
             ),
+        desc.ChoiceParam(
+            name='smoothingSubset',
+            label='Smoothing Subset',
+            description='Subset for smoothing (all, surface_boundaries, surface_inner_part).',
+            value='all',
+            values=['all', 'surface_boundaries', 'surface_inner_part'],
+            exclusive=True,
+            uid=[0],
+            advanced=True,
+            ),
         desc.IntParam(
-            name='iterations',
+            name='smoothingBoundariesNeighbours',
+            label='Smoothing Boundaries Neighbours',
+            description='Neighbours of the boundaries to consider.',
+            value=0,
+            range=(0, 20, 1),
+            uid=[0],
+            advanced=True,
+            ),
+        desc.IntParam(
+            name='smoothingIterations',
             label='Smoothing Iterations',
             description='Number of smoothing iterations',
             value=5,
@@ -43,11 +52,47 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             uid=[0],
             ),
         desc.FloatParam(
-            name='lambda',
-            label='Lambda',
-            description='',
+            name='smoothingLambda',
+            label='Smoothing Lambda',
+            description='Smoothing size.',
             value=1.0,
             range=(0.0, 10.0, 0.1),
+            uid=[0],
+            advanced=True,
+            ),
+        desc.ChoiceParam(
+            name='filteringSubset',
+            label='Filtering Subset',
+            description='Subset for filtering (all, surface_boundaries, surface_inner_part).',
+            value='all',
+            values=['all', 'surface_boundaries', 'surface_inner_part'],
+            exclusive=True,
+            uid=[0],
+            advanced=True,
+            ),
+        desc.IntParam(
+            name='filteringIterations',
+            label='Filtering Iterations',
+            description='Number of filtering iterations.',
+            value=1,
+            range=(0, 20, 1),
+            uid=[0],
+            advanced=True,
+            ),
+        desc.FloatParam(
+            name='filterLargeTrianglesFactor',
+            label='Filter Large Triangles Factor',
+            description='Remove all large triangles. We consider a triangle as large if one edge is bigger than N times the average edge length. Put zero to disable it.',
+            value=60.0,
+            range=(0.0, 100.0, 0.1),
+            uid=[0],
+            ),
+        desc.FloatParam(
+            name='filterTrianglesRatio',
+            label='Filter Triangles Ratio',
+            description='Remove all triangles by ratio (largest edge /smallest edge). Put zero to disable it.',
+            value=0.0,
+            range=(1.0, 50.0, 0.1),
             uid=[0],
             advanced=True,
             ),

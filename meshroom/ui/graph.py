@@ -679,14 +679,12 @@ class UIGraph(QObject):
                     self._selectedNodes.append(n)
         self.selectedNodesChanged.emit()
 
-    def clearNodeSelection(self):
-        """ Clear node selection. """
-        self.selectedNode = None
-
     @Slot()
-    def clearNodesSelections(self):
-        """ Clear multiple nodes selection. """
+    def clearNodeSelection(self):
+        """Clear all node selection."""
+        self.selectedNode = None
         self._selectedNodes.clear()
+        self.selectedNodeChanged.emit()
         self.selectedNodesChanged.emit()
 
     def clearNodeHover(self):

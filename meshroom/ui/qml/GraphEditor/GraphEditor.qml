@@ -112,8 +112,7 @@ Item {
 
         onPressed: {
             if (mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier) {
-                selectNode(null)
-                uigraph.clearNodesSelections()
+                uigraph.clearNodeSelection()
             }
             if (mouse.button == Qt.LeftButton && (mouse.modifiers == Qt.NoModifier || mouse.modifiers == Qt.ControlModifier)) {
                 boxSelect.startX = mouseX
@@ -460,11 +459,11 @@ Item {
                             } else if (mouse.modifiers & Qt.AltModifier) {
                                 duplicateNode(node, true)
                             } else if (!mainSelected && !selected) {
-                                uigraph.clearNodesSelections()
+                                uigraph.clearNodeSelection()
                             }
                         } else if (mouse.button == Qt.RightButton) {
                             if (!mainSelected && !selected) {
-                                uigraph.clearNodesSelections()
+                                uigraph.clearNodeSelection()
                             }
                             nodeMenu.currentNode = node
                             nodeMenu.popup()

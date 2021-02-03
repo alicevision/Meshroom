@@ -46,7 +46,7 @@ Intrinsic = [
                      " * brown: Pinhole camera with 3 radial and 2 tangential distortion parameters\n"
                      " * fisheye4: Pinhole camera with 4 distortion parameters suited for fisheye optics (like 120deg FoV)\n"
                      " * equidistant_r3: Non-projective camera model suited for full-fisheye optics (like 180deg FoV)\n",
-                     value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'equidistant_r3'], exclusive=True, uid=[0]),
+                     value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'equidistant_r3', 'anamorphic4', 'anamorphic10'], exclusive=True, uid=[0]),
     desc.IntParam(name="width", label="Width", description="Image Width", value=0, uid=[], range=(0, 10000, 1)),
     desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[], range=(0, 10000, 1)),
     desc.FloatParam(name="sensorWidth", label="Sensor Width", description="Sensor Width (mm)", value=36, uid=[], range=(0, 1000, 1)),
@@ -191,8 +191,8 @@ The metadata needed are:
             name='allowedCameraModels',
             label='Allowed Camera Models',
             description='the Camera Models that can be attributed.',
-            value=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
-            values=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
+            value=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1', 'anamorphic4', 'anamorphic10'],
+            values=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1', 'anamorphic4', 'anamorphic10'],
             exclusive=False,
             uid=[],
             joinChar=',',

@@ -420,10 +420,6 @@ ApplicationWindow {
                     text: "Panorama Fisheye HDR"
                     onTriggered: ensureSaved(function() { _reconstruction.new("panoramafisheyehdr") })
                 }
-                Action {
-                    text: "Color Checker Detection"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("colorcheckerdetection") })
-                }
             }
             Action {
                 id: openActionItem

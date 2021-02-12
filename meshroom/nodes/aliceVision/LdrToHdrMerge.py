@@ -108,7 +108,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
             name='enableHighlight',
             label='Enable Highlight',
             description="Enable highlights correction.",
-            value=True,
+            value=False,
             uid=[0],
             group='user',  # not used directly on the command line
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,

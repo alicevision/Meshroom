@@ -255,12 +255,24 @@ def panoramaHdrPipeline(graph):
     panoramaWarping = graph.addNewNode('PanoramaWarping',
                                        input=panoramaOrientation.output)
 
+    panoramaSeams =  graph.addNewNode('PanoramaSeams',
+                                       input=panoramaWarping.input,
+                                       warpingFolder=panoramaWarping.output
+                                       )
+
     panoramaCompositing = graph.addNewNode('PanoramaCompositing',
-                                           input=panoramaWarping.input,
-                                           warpingFolder=panoramaWarping.output)
+                                           input=panoramaSeams.input,
+                                           warpingFolder=panoramaSeams.warpingFolder,
+                                           labels=panoramaSeams.output
+                                        )
+
+    panoramaMerging = graph.addNewNode('PanoramaMerging',
+                                           input=panoramaCompositing.input,
+                                           compositingFolder=panoramaCompositing.output
+                                        )
 
     imageProcessing = graph.addNewNode('ImageProcessing',
-                                       input=panoramaCompositing.output,
+                                       input=panoramaMerging.outputPanorama,
                                        fixNonFinite=True,
                                        fillHoles=True,
                                        extension='exr')
@@ -274,7 +286,9 @@ def panoramaHdrPipeline(graph):
         panoramaEstimation,
         panoramaOrientation,
         panoramaWarping,
+        panoramaSeams,
         panoramaCompositing,
+        panoramaMerging,
         imageProcessing,
     ]
 

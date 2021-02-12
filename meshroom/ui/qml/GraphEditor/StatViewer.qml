@@ -29,6 +29,7 @@ Item {
     property int ramTotal
     property string ramLabel: "RAM: "
 
+    property int maxDisplayLength: 500
     property int gpuTotalMemory
     property int gpuMaxAxis: 100
     property string gpuName
@@ -170,7 +171,10 @@ Item {
                 lineSerie.append(0, categories[j][0])
                 lineSerie.append(root.deltaTime, categories[j][0])
             } else {
-                for(var k = 0; k < categories[j].length; k++) {
+                var displayLength = Math.min(maxDisplayLength, categories[j].length);
+                var step = categories[j].length / displayLength;
+                for(var kk = 0; kk < displayLength; kk+=step) {
+                    var k = Math.floor(kk*step)
                     lineSerie.append(k * root.deltaTime, categories[j][k])
                 }
             }
@@ -180,20 +184,25 @@ Item {
         var averageLine = cpuChart.createSeries(ChartView.SeriesTypeLine, "AVERAGE", valueCpuX, valueCpuY)
         var average = []
 
-        for(var l = 0; l < categories[0].length; l++) {
+        var displayLengthA = Math.min(maxDisplayLength, categories[0].length);
+        var stepA = categories[0].length / displayLengthA;
+        for(var l = 0; l < displayLengthA; l+=step) {
             average.push(0)
         }
 
         for(var m = 0; m < categories.length; m++) {
-            for(var n = 0; n < categories[m].length; n++) {
-                average[n] += categories[m][n]
+            var displayLengthB = Math.min(maxDisplayLength, categories[m].length);
+            var stepB = categories[0].length / displayLengthB;
+            for(var nn = 0; nn < displayLengthB; nn++) {
+                var n = Math.floor(nn*stepB)
+                average[nn] += categories[m][n]
             }
         }
 
         for(var q = 0; q < average.length; q++) {
             average[q] = average[q] / (categories.length)
 
-            averageLine.append(q * root.deltaTime, average[q])
+            averageLine.append(q * root.deltaTime * stepA, average[q])
         }
 
         averageLine.color = colors[colors.length-1]
@@ -231,14 +240,17 @@ Item {
 
         if(ram.length === 1) {
             // Create 2 entries if we have only one input value to create a segment that can be display
-            ramSerie.append(0, ram[0])
-            ramSerie.append(root.deltaTime, ram[0])
+            ramSerie.append(0, ram[0]);
+            ramSerie.append(root.deltaTime, ram[0]);
         } else {
-            for(var i = 0; i < ram.length; i++) {
-                ramSerie.append(i * root.deltaTime, ram[i])
+            var displayLength = Math.min(maxDisplayLength, ram.length);
+            var step = ram.length / displayLength;
+            for(var ii = 0; ii < displayLength; ii++) {
+                var i = Math.floor(ii*step);
+                ramSerie.append(i * root.deltaTime, ram[i]);
             }
         }
-        ramSerie.color = colors[10]
+        ramSerie.color = colors[10];
     }
 
 /**************************
@@ -270,7 +282,10 @@ Item {
             gpuTemperatureSerie.append(1 * root.deltaTime, gpuTemperature[0])
             root.gpuMaxAxis = Math.max(gpuMaxAxis, gpuTemperature[0])
         } else {
-            for(var i = 0; i < gpuUsedMemory.length; i++) {
+            var displayLength = Math.min(maxDisplayLength, gpuUsedMemory.length);
+            var step = gpuUsedMemory.length / displayLength;
+            for(var ii = 0; ii < displayLength; ii+=step) {
+                var i = Math.floor(ii*step)
                 gpuUsedSerie.append(i * root.deltaTime, gpuUsed[i])
 
                 gpuUsedMemorySerie.append(i * root.deltaTime, gpuUsedMemory[i] * gpuMemoryRatio)

@@ -10,6 +10,9 @@ class PanoramaCompositing(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaCompositing {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    parallelization = desc.Parallelization(blockSize=5)
+    commandLineRange = '--rangeIteration {rangeIteration} --rangeSize {rangeBlockSize}'
+
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
@@ -35,15 +38,12 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             value='',
             uid=[0],
         ),
-        desc.ChoiceParam(
-            name='outputFileType',
-            label='Output File Type',
-            description='Output file type for the undistorted images.',
-            value='exr',
-            values=['jpg', 'png', 'tif', 'exr'],
-            exclusive=True,
+        desc.File(
+            name='labels',
+            label='Labels image',
+            description="Panorama Seams results",
+            value='',
             uid=[0],
-            group='', # not part of allParams, as this is not a parameter for the command line
         ),
         desc.ChoiceParam(
             name='compositerType',
@@ -57,12 +57,14 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             exclusive=True,
             uid=[0]
         ),
-        desc.BoolParam(
-            name='useGraphCut',
-            label='Use Smart Seams',
-            description='Use a graphcut algorithm to optmize seams for better transitions between images.',
-            value=True,
-            uid=[0],
+        desc.IntParam(
+            name='maxThreads',
+            label='Max Nb Threads',
+            description='Specifies the maximum number of threads to run simultaneously.',
+            value=4,
+            range=(0, 48, 1),
+            uid=[],
+            advanced=True,
         ),
         desc.ChoiceParam(
             name='storageDataType',
@@ -105,9 +107,9 @@ Multiple cameras are contributing to the low frequencies and only the best one c
     outputs = [
         desc.File(
             name='output',
-            label='Output Panorama',
+            label='Output Folder',
             description='',
-            value=desc.Node.internalFolder + 'panorama.{outputFileTypeValue}',
+            value=desc.Node.internalFolder,
             uid=[],
-        ),
+        )
     ]

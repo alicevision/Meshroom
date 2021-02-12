@@ -343,6 +343,14 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             uid=[0],
         ),
         desc.BoolParam(
+            name='addMaskHelperPoints',
+            label='Add Mask Helper Points',
+            description='Add Helper points on the outline of the depth maps masks.',
+            value=False,
+            uid=[0],
+            advanced=True,
+        ),
+        desc.BoolParam(
             name='saveRawDensePointCloud',
             label='Save Raw Dense Point Cloud',
             description='Save dense point cloud before cut and filtering.',

@@ -303,6 +303,13 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             advanced=True,
         ),
         desc.BoolParam(
+            name='voteFilteringForWeaklySupportedSurfaces',
+            label='Weakly Supported Surface Support',
+            description='Improve support of weakly supported surfaces with a tetrahedra fullness score filtering.',
+            value=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='addLandmarksToTheDensePointCloud',
             label='Add Landmarks To The Dense Point Cloud',
             description='Add SfM Landmarks to the dense point cloud.',
@@ -323,6 +330,15 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             description='Save dense point cloud before cut and filtering.',
             value=False,
             uid=[],
+            advanced=True,
+        ),
+        desc.IntParam(
+            name='seed',
+            label='Seed',
+            description='Seed used for random operations. Zero means use of random device instead of a fixed seed.',
+            value=0,
+            range=(0, 10000, 1),
+            uid=[0],
             advanced=True,
         ),
         desc.ChoiceParam(

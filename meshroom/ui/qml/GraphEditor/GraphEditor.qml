@@ -228,7 +228,7 @@ Item {
 
             // Dynamically add the menu categories
             Instantiator {
-                model: !(searchBar.text != "") ? Object.keys(newNodeMenu.parseCategories()) : undefined
+                model: !(searchBar.text != "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
                 onObjectAdded: newNodeMenu.insertMenu(index+1, object ) // add sub-menu under the search bar
                 onObjectRemoved: newNodeMenu.removeMenu(object)
 

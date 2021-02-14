@@ -7,6 +7,8 @@ from meshroom.core import desc
 class CameraLocalization(desc.CommandLineNode):
     commandLine = 'aliceVision_cameraLocalization {allParams}'
 
+    category = 'Utils'
+
     inputs = [
         desc.File(
             name='sfmdata',

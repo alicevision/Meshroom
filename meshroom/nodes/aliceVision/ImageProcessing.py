@@ -34,6 +34,7 @@ class ImageProcessing(desc.CommandLineNode):
     # parallelization = desc.Parallelization(blockSize=40)
     # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Utils'
     documentation = '''
 Convert or apply filtering to the input images.
 '''

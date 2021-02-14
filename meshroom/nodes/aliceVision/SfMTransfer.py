@@ -9,6 +9,7 @@ class SfMTransfer(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmTransfer {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Utils'
     documentation = '''
 This node allows to transfer poses and/or intrinsics form one SfM scene onto another one.
 '''

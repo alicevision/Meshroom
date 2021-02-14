@@ -9,6 +9,7 @@ class SfMTransform(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmTransform {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Utils'
     documentation = '''
 This node allows to change the coordinate system of one SfM scene.
 

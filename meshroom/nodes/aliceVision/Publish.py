@@ -11,6 +11,7 @@ import os
 class Publish(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
 
+    category = 'Export'
     documentation = '''
 This node allows to copy files into a specific folder.
 '''

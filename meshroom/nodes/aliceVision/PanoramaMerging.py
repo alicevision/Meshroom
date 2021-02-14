@@ -9,11 +9,10 @@ from meshroom.core import desc
 class PanoramaMerging(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaMerging {allParams}'
     size = desc.DynamicNodeSize('input')
-
     cpu = desc.Level.NORMAL
     ram = desc.Level.INTENSIVE
 
-
+    category = 'Panorama HDR'
     documentation = '''
 Merge all inputs coming from PanoramaComposiring
 '''

@@ -9,6 +9,7 @@ class ImageMatchingMultiSfM(desc.CommandLineNode):
     # use both SfM inputs to define Node's size
     size = desc.MultiDynamicNodeSize(['input', 'inputB'])
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 The goal of this node is to select the image pairs to match in the context of an SfM augmentation.
 The ambition is to find the images that are looking to the same areas of the scene.

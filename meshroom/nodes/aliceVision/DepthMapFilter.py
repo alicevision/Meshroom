@@ -10,6 +10,7 @@ class DepthMapFilter(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=10)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Dense Reconstruction'
     documentation = '''
 Filter depth map values that are not coherent in multiple depth maps.
 This allows to filter unstable points before starting the fusion of all depth maps in the Meshing node.

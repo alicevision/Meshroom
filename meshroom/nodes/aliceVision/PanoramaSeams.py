@@ -9,10 +9,10 @@ from meshroom.core import desc
 class PanoramaSeams(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaSeams {allParams}'
     size = desc.DynamicNodeSize('input')
-
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
+    category = 'Panorama HDR'
     documentation = '''
 Estimate the seams lines between the inputs to provide an optimal compositing in a further node
 '''

@@ -5,6 +5,8 @@ from meshroom.core import desc
 
 class ConvertMesh(desc.CommandLineNode):
     commandLine = 'aliceVision_convertMesh {allParams}'
+
+    category = 'Utils'
     documentation = '''This node allows to convert a mesh to another format.'''
 
     inputs = [

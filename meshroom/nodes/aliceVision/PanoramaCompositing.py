@@ -9,13 +9,12 @@ from meshroom.core import desc
 class PanoramaCompositing(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaCompositing {allParams}'
     size = desc.DynamicNodeSize('input')
-
     parallelization = desc.Parallelization(blockSize=5)
     commandLineRange = '--rangeIteration {rangeIteration} --rangeSize {rangeBlockSize}'
-
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
+    category = 'Panorama HDR'
     documentation = '''
 Once the images have been transformed geometrically (in PanoramaWarping),
 they have to be fused together in a single panorama image which looks like a single photography.

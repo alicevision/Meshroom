@@ -4,6 +4,7 @@ import QtQuick.Controls 1.4 as Controls1 // SplitView
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import Controls 1.0
+import Utils 1.0
 
 import "common.js" as Common
 
@@ -15,50 +16,46 @@ import "common.js" as Common
  */
 FocusScope {
     id: root
+
     property variant node
-    property alias chunkCurrentIndex: chunksLV.currentIndex
-    signal changeCurrentChunk(int chunkIndex)
+    property variant currentChunkIndex
+    property variant currentChunk
 
     SystemPalette { id: activePalette }
 
-    Controls1.SplitView {
+    Loader {
+        id: componentLoader
+        clip: true
         anchors.fill: parent
+        property string currentFile: currentChunk ? currentChunk["statisticsFile"] : ""
+        property url source: Filepath.stringToUrl(currentFile)
 
-        // The list of chunks
-        ChunksListView {
-            id: chunksLV
-            Layout.fillHeight: true
-            model: node.chunks
-            onChangeCurrentChunk: root.changeCurrentChunk(chunkIndex)
+        sourceComponent: chunksLV.chunksSummary ? statViewerComponent : chunkStatViewerComponent
+    }
+
+    Component {
+        id: chunkStatViewerComponent
+        StatViewer {
+            id: statViewer
+            anchors.fill: parent
+            source: componentLoader.source
         }
+    }
 
-        Loader {
-            id: componentLoader
-            clip: true
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            property url source
+    Component {
+        id: statViewerComponent
 
-            property string currentFile: chunksLV.currentChunk ? chunksLV.currentChunk["statisticsFile"] : ""
-            onCurrentFileChanged: {
-                // only set text file viewer source when ListView is fully ready
-                // (either empty or fully populated with a valid currentChunk)
-                // to avoid going through an empty url when switching between two nodes
-
-                if(!chunksLV.count || chunksLV.currentChunk)
-                    componentLoader.source = Filepath.stringToUrl(currentFile);
+        Column {
+            spacing: 2
+            KeyValue {
+                key: "Time"
+                property real time: node.elapsedTime
+                value: time > 0.0 ? Format.sec2time(time) : "-"
             }
-
-            sourceComponent: statViewerComponent
-        }
-
-        Component {
-            id: statViewerComponent
-            StatViewer {
-                id: statViewer
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                source: componentLoader.source
+            KeyValue {
+                key: "Cumulated Time"
+                property real time: node.recursiveElapsedTime
+                value: time > 0.0 ? Format.sec2time(time) : "-"
             }
         }
     }

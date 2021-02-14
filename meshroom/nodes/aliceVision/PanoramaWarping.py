@@ -60,7 +60,7 @@ Compute the image warping for each input image in the panorama coordinate system
             name='maxPanoramaWidth',
             label='Max Panorama Width',
             description='Choose the maximal output panorama width (in pixels). Zero means no limit.',
-            value=35000,
+            value=70000,
             range=(0, 100000, 1000),
             uid=[0],
             enabled=lambda node: (node.estimateResolution.value),

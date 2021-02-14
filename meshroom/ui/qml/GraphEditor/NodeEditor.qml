@@ -1,5 +1,6 @@
 import QtQuick 2.9
 import QtQuick.Controls 2.4
+import QtQuick.Controls 1.4 as Controls1 // SplitView
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import Controls 1.0
@@ -18,15 +19,6 @@ Panel {
 
     signal attributeDoubleClicked(var mouse, var attribute)
     signal upgradeRequest()
-
-    Item {
-        id: m
-        property int chunkCurrentIndex: 0
-    }
-
-    onNodeChanged: {
-        m.chunkCurrentIndex = 0  // Needed to avoid invalid state of ChunksListView
-    }
 
     title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" : "")
     icon: MaterialLabel { text: MaterialIcons.tune }
@@ -114,7 +106,16 @@ Panel {
             Component {
                 id: editor_component
 
-                ColumnLayout {
+                Controls1.SplitView {
+                    anchors.fill: parent
+
+                    // The list of chunks
+                    ChunksListView {
+                        id: chunksLV
+                        visible: (tabBar.currentIndex >= 1 && tabBar.currentIndex <= 3)
+                        chunks: root.node.chunks
+                    }
+
                     StackLayout {
                         Layout.fillHeight: true
                         Layout.fillWidth: true
@@ -122,35 +123,65 @@ Panel {
                         currentIndex: tabBar.currentIndex
 
                         AttributeEditor {
+                            Layout.fillHeight: true
+                            Layout.fillWidth: true
                             model: root.node.attributes
                             readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: root.attributeDoubleClicked(mouse, attribute)
                             onUpgradeRequest: root.upgradeRequest()
                         }
 
-                        NodeLog {
-                            id: nodeLog
-                            node: root.node
-                            chunkCurrentIndex: m.chunkCurrentIndex
-                            onChangeCurrentChunk: { m.chunkCurrentIndex = chunkIndex }
+                        Loader {
+                            active: (tabBar.currentIndex === 1)
+                            Layout.fillHeight: true
+                            Layout.fillWidth: true
+                            sourceComponent: NodeLog {
+                                // anchors.fill: parent
+                                Layout.fillHeight: true
+                                Layout.fillWidth: true
+                                width: parent.width
+                                height: parent.height
+                                id: nodeLog
+                                node: root.node
+                                currentChunkIndex: chunksLV.currentIndex
+                                currentChunk: chunksLV.currentChunk
+                            }
                         }
 
-                        NodeStatistics {
-                            id: nodeStatistics
-                            node: root.node
-                            chunkCurrentIndex: m.chunkCurrentIndex
-                            onChangeCurrentChunk: { m.chunkCurrentIndex = chunkIndex }
+                        Loader {
+                            active: (tabBar.currentIndex === 2)
+                            Layout.fillHeight: true
+                            Layout.fillWidth: true
+                            sourceComponent: NodeStatistics {
+                                id: nodeStatistics
+
+                                Layout.fillHeight: true
+                                Layout.fillWidth: true
+                                node: root.node
+                                currentChunkIndex: chunksLV.currentIndex
+                                currentChunk: chunksLV.currentChunk
+                            }
                         }
 
-                        NodeStatus {
-                            id: nodeStatus
-                            node: root.node
-                            chunkCurrentIndex: m.chunkCurrentIndex
-                            onChangeCurrentChunk: { m.chunkCurrentIndex = chunkIndex }
+                        Loader {
+                            active: (tabBar.currentIndex === 3)
+                            Layout.fillHeight: true
+                            Layout.fillWidth: true
+                            sourceComponent: NodeStatus {
+                                id: nodeStatus
+
+                                Layout.fillHeight: true
+                                Layout.fillWidth: true
+                                node: root.node
+                                currentChunkIndex: chunksLV.currentIndex
+                                currentChunk: chunksLV.currentChunk
+                            }
                         }
 
                         NodeDocumentation {
                             id: nodeDocumentation
+
+                            Layout.fillHeight: true
                             Layout.fillWidth: true
                             node: root.node
                         }
@@ -168,32 +199,27 @@ Panel {
             currentIndex: 0
             TabButton {
                 text: "Attributes"
-                width: implicitWidth
                 padding: 4
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
                 text: "Log"
-                width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
                 text: "Statistics"
-                width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
                 text: "Status"
-                width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding
             }
             TabButton {
                 text: "Documentation"
-                width: implicitWidth
                 leftPadding: 8
                 rightPadding: leftPadding
             }

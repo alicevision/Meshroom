@@ -178,11 +178,11 @@ def panoramaFisheyeHdr(inputImages=None, inputViewpoints=None, inputIntrinsics=N
         graph = Graph('PanoramaFisheyeHDR')
     with GraphModification(graph):
         panoramaHdr(inputImages, inputViewpoints, inputIntrinsics, output, graph)
-        for panoramaInit in graph.nodesByType("PanoramaInit"):
+        for panoramaInit in graph.nodesOfType("PanoramaInit"):
             panoramaInit.attribute("useFisheye").value = True
         # when using fisheye images, the overlap between images can be small
         # and thus requires many features to get enough correspondances for cameras estimation
-        for featureExtraction in graph.nodesByType("FeatureExtraction"):
+        for featureExtraction in graph.nodesOfType("FeatureExtraction"):
             featureExtraction.attribute("describerPreset").value = 'high'
     return graph
 
@@ -255,12 +255,24 @@ def panoramaHdrPipeline(graph):
     panoramaWarping = graph.addNewNode('PanoramaWarping',
                                        input=panoramaOrientation.output)
 
+    panoramaSeams =  graph.addNewNode('PanoramaSeams',
+                                       input=panoramaWarping.input,
+                                       warpingFolder=panoramaWarping.output
+                                       )
+
     panoramaCompositing = graph.addNewNode('PanoramaCompositing',
-                                           input=panoramaWarping.input,
-                                           warpingFolder=panoramaWarping.output)
+                                           input=panoramaSeams.input,
+                                           warpingFolder=panoramaSeams.warpingFolder,
+                                           labels=panoramaSeams.output
+                                        )
+
+    panoramaMerging = graph.addNewNode('PanoramaMerging',
+                                           input=panoramaCompositing.input,
+                                           compositingFolder=panoramaCompositing.output
+                                        )
 
     imageProcessing = graph.addNewNode('ImageProcessing',
-                                       input=panoramaCompositing.output,
+                                       input=panoramaMerging.outputPanorama,
                                        fixNonFinite=True,
                                        fillHoles=True,
                                        extension='exr')
@@ -274,7 +286,9 @@ def panoramaHdrPipeline(graph):
         panoramaEstimation,
         panoramaOrientation,
         panoramaWarping,
+        panoramaSeams,
         panoramaCompositing,
+        panoramaMerging,
         imageProcessing,
     ]
 

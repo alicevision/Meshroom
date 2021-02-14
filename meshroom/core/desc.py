@@ -420,6 +420,7 @@ class Node(object):
     size = StaticNodeSize(1)
     parallelization = None
     documentation = ''
+    category = 'Other'
 
     def __init__(self):
         pass

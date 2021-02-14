@@ -34,6 +34,11 @@ FocusScope {
             focus: true
             Layout.fillWidth: true
             selectByMouse: true
+
+            // ensure the field has focus when the text is modified
+            onTextChanged: {
+                forceActiveFocus()
+            }
         }
     }
 }

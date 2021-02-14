@@ -117,7 +117,7 @@ class MeshroomApp(QApplication):
         components.registerTypes()
 
         # expose available node types that can be instantiated
-        self.engine.rootContext().setContextProperty("_nodeTypes", sorted(nodesDesc.keys()))
+        self.engine.rootContext().setContextProperty("_nodeTypes", {n: {"category": nodesDesc[n].category} for n in sorted(nodesDesc.keys())})
 
         # instantiate Reconstruction object
         self._undoStack = commands.UndoStack(self)

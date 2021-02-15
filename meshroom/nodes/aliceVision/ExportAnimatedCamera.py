@@ -41,11 +41,22 @@ Based on the input image filenames, it will recognize the input video sequence t
             value=False,
             uid=[0],
         ),
+       desc.ChoiceParam(
+            name='undistortedImageType',
+            label='Undistort Image Format ',
+            description='Image file format to use for undistorted images ("jpg", "png", "tif", "exr (half)").',
+            value='exr',
+            values=['jpg', 'png', 'tif', 'exr'],
+            exclusive=True,
+            uid=[0],
+            enabled= lambda node: node.exportUndistortedImages.value,
+        ),
         desc.BoolParam(
             name='exportFullROD',
             label='Export Full ROD',
             description='Export Full ROD.',
             value=False,
+            enabled=lambda node: node.exportUndistortedImages.value and node.undistortedImageType.value == 'exr',
             uid=[0],
         ),
         desc.BoolParam(
@@ -54,16 +65,6 @@ Based on the input image filenames, it will recognize the input video sequence t
             description='Correct Principal Point.',
             value=True,
             uid=[0],
-        ),
-       desc.ChoiceParam(
-            name='undistortedImageType',
-            label='Undistort Image Format ',
-            description='Image file format to use for undistorted images ("jpg", "png", "tif", "exr (half)").',
-            value= lambda node: 'jpg' or 'exr' and not node.exportFullROD,
-            values=['jpg', 'png', 'tif', 'exr'],
-            exclusive=True,
-            uid=[0],
-            enabled= lambda node: node.exportUndistortedImages.value == 1,
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -93,22 +94,4 @@ Based on the input image filenames, it will recognize the input video sequence t
             uid=[],
         ),
         ]
-    prev = False
-    @classmethod
-    def update(cls, node):
-        if not isinstance(node.nodeDesc, cls):
-            raise ValueError("Node {} is not an instance of type {}".format(node, cls))
-            # TODO: use Node version for this test
 
-        if not cls.prev:
-            node.undistortedImageType.value = 'jpg'
-            cls.prev = True
-
-        if node.exportFullROD.value:
-            node.undistortedImageType.value = 'exr'
-            node.undistortedImageType.enabled = False
-        else:
-            node.undistortedImageType.enabled = True
-
-        if not node.exportUndistortedImages.value:
-            node.exportFullROD.value = False

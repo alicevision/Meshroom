@@ -529,6 +529,8 @@ class BaseNode(BaseObject):
         return "{}{}".format(t, idx if int(idx) > 1 else "")
 
     def getDocumentation(self):
+        if not self.nodeDesc:
+            return ""
         return self.nodeDesc.documentation
 
     @property

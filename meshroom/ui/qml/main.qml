@@ -549,6 +549,10 @@ ApplicationWindow {
         Menu {
             title: "Help"
             Action {
+                text: "Online Documentation"
+                onTriggered: Qt.openUrlExternally("https://meshroom-manual.readthedocs.io")
+            }
+            Action {
                 text: "About Meshroom"
                 onTriggered: aboutDialog.open()
                 // shoud be StandardKey.HelpContents, but for some reason it's not stable

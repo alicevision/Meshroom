@@ -10,6 +10,7 @@ class GlobalSfM(desc.CommandLineNode):
     commandLine = 'aliceVision_globalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 Performs the Structure-From-Motion with a global approach.
 It is known to be faster but less robust to challenging datasets than the Incremental approach.

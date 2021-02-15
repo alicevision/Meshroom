@@ -52,6 +52,7 @@ def progressUpdate(size=None, progress=None, logManager=None):
 class SketchfabUpload(desc.Node):
     size = desc.DynamicNodeSize('inputFiles')
 
+    category = 'Export'
     documentation = '''
 Upload a textured mesh on Sketchfab.
 '''

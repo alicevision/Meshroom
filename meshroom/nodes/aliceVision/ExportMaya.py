@@ -6,6 +6,7 @@ from meshroom.core import desc
 class ExportMaya(desc.CommandLineNode):
     commandLine = 'aliceVision_exportMeshroomMaya {allParams}'
 
+    category = 'Export'
     documentation = '''
 Export a scene for Autodesk Maya, with an Alembic file describing the SfM: cameras and 3D points.
 It will export half-size undistorted images to use as image planes for cameras and also export thumbnails.

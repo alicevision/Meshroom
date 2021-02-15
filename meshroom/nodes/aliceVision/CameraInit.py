@@ -116,6 +116,7 @@ class CameraInit(desc.CommandLineNode):
 
     size = desc.DynamicNodeSize('viewpoints')
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 This node describes your dataset. It lists the Viewpoints candidates, the guess about the type of optic, the initial focal length
 and which images are sharing the same internal camera parameters, as well as potential cameras rigs.

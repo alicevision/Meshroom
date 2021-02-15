@@ -45,6 +45,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=2)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Panorama HDR'
     documentation = '''
     Sample pixels from Low range images for HDR creation
 '''

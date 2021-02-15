@@ -9,7 +9,9 @@ class FeatureRepeatability(desc.CommandLineNode):
     # parallelization = desc.Parallelization(blockSize=40)
     # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Utils'
     documentation = '''
+Compare feature/descriptor matching repeatability on some dataset with known homography motions.
 '''
 
     inputs = [

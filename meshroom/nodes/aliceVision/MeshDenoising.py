@@ -6,6 +6,7 @@ from meshroom.core import desc
 class MeshDenoising(desc.CommandLineNode):
     commandLine = 'aliceVision_meshDenoising {allParams}'
 
+    category = 'Mesh Post-Processing'
     documentation = '''
 This experimental node allows to reduce noise from a Mesh.
 for now, the parameters are difficult to control and vary a lot from one dataset to another.

@@ -9,6 +9,7 @@ class SfMTransform(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmTransform {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Utils'
     documentation = '''
 This node allows to change the coordinate system of one SfM scene.
 
@@ -38,9 +39,10 @@ The transformation can be based on:
                         " * auto_from_cameras: Use cameras\n"
                         " * auto_from_landmarks: Use landmarks\n"
                         " * from_single_camera: Use a specific camera as the origin of the coordinate system\n"
+                        " * from_center_camera: Use the center camera as the origin of the coordinate system\n"
                         " * from_markers: Align specific markers to custom coordinates",
             value='auto_from_landmarks',
-            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_markers'],
+            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers'],
             exclusive=True,
             uid=[0],
         ),

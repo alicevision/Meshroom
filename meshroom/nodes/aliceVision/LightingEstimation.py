@@ -6,6 +6,8 @@ from meshroom.core import desc
 class LightingEstimation(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_lightingEstimation {allParams}'
 
+    category = 'Utils'
+
     inputs = [
         desc.File(
             name='input',

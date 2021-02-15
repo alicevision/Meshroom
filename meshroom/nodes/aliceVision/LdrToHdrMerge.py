@@ -28,6 +28,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=2)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Panorama HDR'
     documentation = '''
     Calibrate LDR to HDR response curve from samples
 '''

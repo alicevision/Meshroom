@@ -7,6 +7,7 @@ class StructureFromMotion(desc.CommandLineNode):
     commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 This node will analyze feature matches to understand the geometric relationship behind all the 2D observations,
 and infer the rigid scene structure (3D points) with the pose (position and orientation) and internal calibration of all cameras.

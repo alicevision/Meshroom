@@ -8,6 +8,7 @@ class ImageMatching(desc.CommandLineNode):
     commandLine = 'aliceVision_imageMatching {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 The goal of this node is to select the image pairs to match. The ambition is to find the images that are looking to the same areas of the scene.
 Thanks to this node, the FeatureMatching node will only compute the matches between the selected image pairs.

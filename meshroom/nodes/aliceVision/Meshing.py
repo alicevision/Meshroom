@@ -9,6 +9,7 @@ class Meshing(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
+    category = 'Dense Reconstruction'
     documentation = '''
 This node creates a dense geometric surface representation of the scene.
 

@@ -9,6 +9,7 @@ class FeatureExtraction(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 This node extracts distinctive groups of pixels that are, to some extent, invariant to changing camera viewpoints during image acquisition.
 Hence, a feature in the scene should have similar feature descriptions in all images.

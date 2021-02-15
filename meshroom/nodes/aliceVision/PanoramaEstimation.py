@@ -10,6 +10,7 @@ class PanoramaEstimation(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaEstimation {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Panorama HDR'
     documentation = '''
 Estimate relative camera rotations between input images.
 '''

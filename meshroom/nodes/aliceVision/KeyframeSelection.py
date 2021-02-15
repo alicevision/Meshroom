@@ -7,6 +7,7 @@ from meshroom.core import desc
 class KeyframeSelection(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_keyframeSelection {allParams}'
 
+    category = 'Utils'
     documentation = '''
 Allows to extract keyframes from a video and insert metadata.
 It can extract frames from a synchronized multi-cameras rig.

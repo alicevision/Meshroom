@@ -5,6 +5,8 @@ from meshroom.core import desc
 
 class MergeMeshes(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_mergeMeshes {allParams}'
+
+    category = 'Utils'
     documentation = '''
 This node allows to merge two meshes in one.
 

@@ -134,6 +134,22 @@ Item {
                 // add node via the proper command in uigraph
                 var node = uigraph.addNewNode(nodeType, spawnPosition)
                 selectNode(node)
+                close()
+            }
+
+            function parseCategories()
+            {
+                // organize nodes based on their category
+                // {"category1": ["node1", "node2"], "category2": ["node3", "node4"]}
+                let categories = {};
+                for (const [name, data] of Object.entries(root.nodeTypesModel)) {
+                    let category = data["category"];
+                    if (categories[category] === undefined) {
+                        categories[category] = [];
+                    }
+                    categories[category].push(name)
+                }
+                return categories
             }
 
             onVisibleChanged: {
@@ -150,11 +166,10 @@ Item {
                 width: parent.width
             }
 
-            Repeater {
-                model: root.nodeTypesModel
-
-                // Create Menu items from available node types model
-                delegate: MenuItem {
+            // menuItemDelegate is wrapped in a component so it can be used in both the search bar and sub-menus
+            Component {
+                id: menuItemDelegateComponent
+                MenuItem {
                     id: menuItemDelegate
                     font.pointSize: 8
                     padding: 3
@@ -169,17 +184,20 @@ Item {
                     Keys.forwardTo: [searchBar.textField]
                     Keys.onPressed: {
                         event.accepted = false;
-                        switch(event.key)
-                        {
-                        case Qt.Key_Return:
-                        case Qt.Key_Enter:
-                            // create node on validation (Enter/Return keys)
-                            newNodeMenu.createNode(modelData);
-                            newNodeMenu.close();
-                            event.accepted = true;
-                            break;
-                        default:
-                            searchBar.textField.forceActiveFocus();
+                        switch(event.key) {
+                            case Qt.Key_Return:
+                            case Qt.Key_Enter:
+                                // create node on validation (Enter/Return keys)
+                                newNodeMenu.createNode(modelData);
+                                event.accepted = true;
+                                break;
+                            case Qt.Key_Up:
+                            case Qt.Key_Down:
+                            case Qt.Key_Left:
+                            case Qt.Key_Right:
+                                break; // ignore if arrow key was pressed to let the menu be controlled
+                            default:
+                                searchBar.forceActiveFocus();
                         }
                     }
                     // Create node on mouse click
@@ -197,6 +215,33 @@ Item {
                             }
                         }
                     ]
+                }
+            }
+
+            Repeater {
+                id: nodeMenuRepeater
+                model: searchBar.text != "" ? Object.keys(root.nodeTypesModel) : undefined
+
+                // create Menu items from available items
+                delegate: menuItemDelegateComponent
+            }
+
+            // Dynamically add the menu categories
+            Instantiator {
+                model: !(searchBar.text != "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
+                onObjectAdded: newNodeMenu.insertMenu(index+1, object ) // add sub-menu under the search bar
+                onObjectRemoved: newNodeMenu.removeMenu(object)
+
+                delegate: Menu {
+                    title: modelData
+                    id: newNodeSubMenu
+
+                    Instantiator {
+                        model: newNodeMenu.visible && newNodeSubMenu.activeFocus ? newNodeMenu.parseCategories()[modelData] : undefined
+                        onObjectAdded: newNodeSubMenu.insertItem(index, object)
+                        onObjectRemoved: newNodeSubMenu.removeItem(object)
+                        delegate: menuItemDelegateComponent
+                    }
                 }
             }
         }

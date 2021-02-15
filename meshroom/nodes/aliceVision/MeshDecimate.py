@@ -5,10 +5,10 @@ from meshroom.core import desc
 
 class MeshDecimate(desc.CommandLineNode):
     commandLine = 'aliceVision_meshDecimate {allParams}'
-
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
 
+    category = 'Mesh Post-Processing'
     documentation = '''
 This node allows to reduce the density of the Mesh.
 '''

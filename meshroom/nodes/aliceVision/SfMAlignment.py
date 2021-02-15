@@ -9,6 +9,7 @@ class SfMAlignment(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmAlignment {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Utils'
     documentation = '''
 This node allows to change the coordinate system of one SfM scene to align it on another one.
 

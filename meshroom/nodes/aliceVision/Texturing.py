@@ -8,6 +8,7 @@ class Texturing(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
+    category = 'Dense Reconstruction'
     documentation = '''
 This node computes the texturing on the mesh.
 

@@ -10,6 +10,7 @@ class DepthMap(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=3)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Dense Reconstruction'
     documentation = '''
 For each camera that have been estimated by the Structure-From-Motion, it estimates the depth value per pixel.
 

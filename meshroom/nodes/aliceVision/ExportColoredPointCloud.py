@@ -6,6 +6,8 @@ from meshroom.core import desc
 class ExportColoredPointCloud(desc.CommandLineNode):
     commandLine = 'aliceVision_exportColoredPointCloud {allParams}'
 
+    category = 'Export'
+
     inputs = [
         desc.File(
             name='input',

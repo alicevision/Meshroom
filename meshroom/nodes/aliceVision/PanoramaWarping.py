@@ -9,10 +9,10 @@ from meshroom.core import desc
 class PanoramaWarping(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaWarping {allParams}'
     size = desc.DynamicNodeSize('input')
-
     parallelization = desc.Parallelization(blockSize=5)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Panorama HDR'
     documentation = '''
 Compute the image warping for each input image in the panorama coordinate system.
 '''

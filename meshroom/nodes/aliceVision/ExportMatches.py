@@ -7,6 +7,8 @@ class ExportMatches(desc.CommandLineNode):
     commandLine = 'aliceVision_exportMatches {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Export'
+
     inputs = [
         desc.File(
             name='input',

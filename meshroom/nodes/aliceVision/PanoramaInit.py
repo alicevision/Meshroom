@@ -7,6 +7,7 @@ class PanoramaInit(desc.CommandLineNode):
     commandLine = 'aliceVision_panoramaInit {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Panorama HDR'
     documentation = '''
 This node allows to setup the Panorama:
 

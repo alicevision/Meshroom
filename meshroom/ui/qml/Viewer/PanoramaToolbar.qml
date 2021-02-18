@@ -18,7 +18,7 @@ FloatingPane {
     property int downscaleValue: downscaleSpinBox.value
     property int downscaleDefaultValue: 2
 
-    property int subdivisionsDefaultValue: 12
+    property int subdivisionsDefaultValue: 24
     property int subdivisionsValue: subdivisionsCtrl.value
 
     property int mouseSpeed: speedSpinBox.value
@@ -97,7 +97,7 @@ FloatingPane {
                 id: subdivisionsCtrl
                 Layout.fillWidth: false
                 from: 2
-                to: 24
+                to: 64
                 value: subdivisionsDefaultValue
                 stepSize: 2
             }

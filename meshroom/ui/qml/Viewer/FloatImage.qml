@@ -62,7 +62,9 @@ AliceVision.FloatImageViewer {
     property string sfmPath: ""
 
     function updateSfmPath() {
-        var activeNode = _reconstruction.activeNodes.get('sfm').node;
+        console.warn("SFM UPDATE - Float IV")
+
+        var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
 
         if(!activeNode)
         {
@@ -70,7 +72,7 @@ AliceVision.FloatImageViewer {
         }
         else
         {
-            root.sfmPath = activeNode.attribute("outputViewsAndPoses").value;
+            root.sfmPath = activeNode.attribute("input").value;
         }
         root.setSfmPath(sfmPath);
     }
@@ -81,8 +83,12 @@ AliceVision.FloatImageViewer {
         ppRect.y = pp.y;
     }
 
-    function rotatePanorama(dx, dy) {
-        root.setRotationPano(dx, dy);
+    function rotatePanoDegrees(yaw, pitch) {
+        root.rotatePanoramaDegrees(yaw, pitch);
+    }
+
+    function rotatePanoRadians(yaw, pitch) {
+        root.rotatePanoramaRadians(yaw, pitch);
     }
 
     function updateMouseAreaPano() {

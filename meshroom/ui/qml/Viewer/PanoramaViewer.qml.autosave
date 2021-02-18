@@ -68,7 +68,7 @@ AliceVision.PanoramaViewer {
     onYawNodeChanged: {
         if (!isRotating) {
             for (var i = 0; i < repeater.model; i++) {
-               repeater.itemAt(i).item.rotatePanoramaDegrees(yawNode, pitchNode);
+               repeater.itemAt(i).item.rotatePanoramaDegrees(yawNode, pitchNod);
             }
         }
     }

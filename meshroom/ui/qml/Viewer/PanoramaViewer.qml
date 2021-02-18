@@ -57,6 +57,9 @@ AliceVision.PanoramaViewer {
     property var lastX : 0
     property var lastY: 0
 
+    property int yaw: 0;
+    property int pitch: 0;
+
     Item {
         id: containerPanorama
         z: 10
@@ -87,7 +90,8 @@ AliceVision.PanoramaViewer {
                         lastX = mouse.x;
                         lastY = mouse.y;
                         for (var i = 0; i < repeater.model; i++) {
-                            repeater.itemAt(i).item.rotatePanorama(xoffset * 0.001 * mouseMultiplier, -yoffset * 0.001 * mouseMultiplier)
+                           //repeater.itemAt(i).item.rotatePanorama((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier)
+                           repeater.itemAt(i).item.rotatePanorama(0, -(yoffset / height) * mouseMultiplier)
                         }
                     }
                 }
@@ -99,6 +103,18 @@ AliceVision.PanoramaViewer {
                 }
 
                 onReleased: {
+                    if (isRotating)
+                    {
+                        // Update Euler angles
+                        var activeNode = _reconstruction.activeNodes.get('sfm').node;
+
+                        root.yaw = repeater.itemAt(0).item.getYaw();
+                        root.pitch = repeater.itemAt(0).item.getPitch();
+
+                        activeNode.attribute("manualTransform.manualRotation.y").value = root.yaw;
+                        activeNode.attribute("manualTransform.manualRotation.x").value = root.pitch;
+                    }
+
                     isRotating = false;
                     lastX = 0
                     lastY = 0
@@ -180,7 +196,8 @@ AliceVision.PanoramaViewer {
                             'index' : index,
                             'idView': Qt.binding(function() { return cId; }),
                         })
-                        console.warn(cSource)
+                        //repeater.itemAt(index).item.rotatePanorama(yaw * (3.14 / 180), pitch * (3.14 / 180))
+
                     } else {
                         // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
                         setSource("", {})
@@ -198,8 +215,6 @@ AliceVision.PanoramaViewer {
             target: root
             onImagesDataChanged: {
                 //We receive the map<ImgPath, idView> from C++
-                console.warn("IMAGES DATA CHANGED ! " + imagesData)
-
                 //Resetting arrays to avoid problem with push
                 pathList = []
                 idList = []
@@ -223,7 +238,6 @@ AliceVision.PanoramaViewer {
             if(repeater.model !== root.pathList.length){
                 repeater.model = 0;
             }
-            //console.warn(imagesData.length)
             repeater.model = root.pathList.length;
         }
     }

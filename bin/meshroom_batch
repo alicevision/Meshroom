@@ -74,7 +74,7 @@ def getOnlyNodeOfType(g, nodeType):
     """ Helper function to get a node of 'nodeType' in the graph 'g' and raise if no or multiple candidates. """
     nodes = g.nodesOfType(nodeType)
     if len(nodes) != 1:
-        raise RuntimeError("meshroom_photogrammetry requires a pipeline graph with exactly one '{}' node, {} found."
+        raise RuntimeError("meshroom_batch requires a pipeline graph with exactly one '{}' node, {} found."
                            .format(nodeType, len(nodes)))
     return nodes[0]
 

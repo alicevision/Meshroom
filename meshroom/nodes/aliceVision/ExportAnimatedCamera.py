@@ -28,19 +28,42 @@ Based on the input image filenames, it will recognize the input video sequence t
             uid=[0],
         ),
         desc.BoolParam(
+            name='exportUVMaps',
+            label='Export UV Maps',
+            description='Export UV Maps, absolutes values (x,y) of distortion are encoding in  UV channels.',
+            value=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='exportUndistortedImages',
             label='Export Undistorted Images',
             description='Export Undistorted Images.',
-            value=True,
+            value=False,
             uid=[0],
         ),
        desc.ChoiceParam(
             name='undistortedImageType',
-            label='Undistort Image Format',
+            label='Undistort Image Format ',
             description='Image file format to use for undistorted images ("jpg", "png", "tif", "exr (half)").',
-            value='jpg',
+            value='exr',
             values=['jpg', 'png', 'tif', 'exr'],
             exclusive=True,
+            uid=[0],
+            enabled= lambda node: node.exportUndistortedImages.value,
+        ),
+        desc.BoolParam(
+            name='exportFullROD',
+            label='Export Full ROD',
+            description='Export Full ROD.',
+            value=False,
+            enabled=lambda node: node.exportUndistortedImages.value and node.undistortedImageType.value == 'exr',
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='correctPrincipalPoint',
+            label='Correct Principal Point ',
+            description='Correct Principal Point.',
+            value=True,
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -70,4 +93,5 @@ Based on the input image filenames, it will recognize the input video sequence t
             group='',  # exclude from command line
             uid=[],
         ),
-    ]
+        ]
+

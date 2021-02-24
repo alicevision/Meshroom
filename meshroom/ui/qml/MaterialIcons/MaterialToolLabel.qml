@@ -9,15 +9,16 @@ import QtQuick.Layouts 1.3
  */
 Item {
     id: control
-    property alias iconText: icon.text
-    property alias iconSize: icon.font.pointSize
+    property alias iconText: iconItem.text
+    property alias iconSize: iconItem.font.pointSize
     property alias label: labelItem.text
-    width: childrenRect.width
-    height: childrenRect.height
+    implicitWidth: childrenRect.width
+    implicitHeight: childrenRect.height
+    anchors.rightMargin: 5
 
     RowLayout {
         Label {
-            id: icon
+            id: iconItem
             font.family: MaterialIcons.fontFamily
             font.pointSize: 13
             padding: 0
@@ -28,9 +29,6 @@ Item {
             id: labelItem
             text: ""
             color: palette.text
-        }
-        Item {
-            width: 5
         }
     }
 

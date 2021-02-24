@@ -90,7 +90,7 @@ You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver 
 ```bash
 # Windows: set PYTHONPATH=%CD% &&
 # Linux/macOS: PYTHONPATH=$PWD
-python bin/meshroom_photogrammetry --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
+python bin/meshroom_batch --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
 ```
 
 

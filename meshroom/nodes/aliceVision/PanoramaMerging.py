@@ -14,7 +14,7 @@ class PanoramaMerging(desc.CommandLineNode):
 
     category = 'Panorama HDR'
     documentation = '''
-Merge all inputs coming from PanoramaComposiring
+Merge all inputs coming from the PanoramaCompositing node.
 '''
 
     inputs = [

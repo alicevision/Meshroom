@@ -12,14 +12,20 @@ class ColorCheckerCorrection(desc.CommandLineNode):
     # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     documentation = '''
-TODO
+(BETA) \\
+Performs color calibration from Macbeth color checker chart.
+
+The node assumes all the images to process are sharing the same colorimetric properties.
+All the input images will get the same correction.
+
+If multiple color charts are submitted, only the first one will be taken in account.
 '''
 
     inputs = [
         desc.File(
             name='inputData',
             label='Color checker data',
-            description='Input position and colorimetric data extracted from detected color checkers in the images',
+            description='Position and colorimetric data of the color checker',
             value='',
             uid=[0],
         ),

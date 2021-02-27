@@ -360,7 +360,7 @@ FocusScope {
                         zoom: imgContainer.scale
 
                         updatePane: function() {
-                            colorCheckerPane.colors = ccheckers[selectedCChecker].colors
+                            colorCheckerPane.colors = (ccheckers[selectedCChecker].colors) ? ccheckers[selectedCChecker].colors : null
                         }
                     }
                 }
@@ -435,7 +435,7 @@ FocusScope {
                             top: parent.top
                             right: parent.right
                         }
-                        visible: displayColorCheckerViewerLoader.checked
+                        visible: displayColorCheckerViewerLoader.checked && colorCheckerPane.colors !== null
                     }
 
                     Loader {

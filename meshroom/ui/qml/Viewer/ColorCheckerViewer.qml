@@ -80,7 +80,8 @@ Item {
     function emptyCCheckers() {
         for (var i = 0; i < ccheckers.length; i++)
             ccheckers[i].destroy();
-        ccheckers = []
+        ccheckers = [];
+        selectedCChecker = -1;
     }
 
 }

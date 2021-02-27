@@ -19,7 +19,7 @@ Item {
         height: parent.sizeY
 
         color: "transparent"
-        border.width: Math.max(1, (12.0 / zoom))
+        border.width: Math.max(1, (4.0 / zoom))
         border.color: "red"
 
         transformOrigin: Item.TopLeft

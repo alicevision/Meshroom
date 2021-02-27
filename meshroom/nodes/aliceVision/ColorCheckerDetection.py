@@ -12,7 +12,18 @@ class ColorCheckerDetection(desc.CommandLineNode):
     # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     documentation = '''
-Perform Macbeth color checker chart detection.
+(BETA) \\
+Performs Macbeth color checker chart detection.
+
+Outputs:
+- the detected color charts position and colors
+- the associated tranform matrix from "theoric" to "measured" 
+assuming that the "theoric" Macbeth chart corners coordinates are: 
+(0, 0), (1675, 0), (1675, 1125), (0, 1125)
+  
+Dev notes:
+- Fisheye/pinhole is not handled
+- ColorCheckerViewer is unstable with multiple color chart within a same image
 '''
 
     inputs = [

@@ -1,4 +1,4 @@
-__version__ = "6.0"
+__version__ = "7.0"
 
 from meshroom.core import desc
 

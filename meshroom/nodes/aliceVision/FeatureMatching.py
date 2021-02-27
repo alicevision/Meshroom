@@ -168,6 +168,13 @@ then it checks the number of features that validates this model and iterate thro
             advanced=True,
         ),
         desc.BoolParam(
+            name='crossMatching',
+            label='Cross Matching',
+            description='Make sure that the matching process is symmetric (same matches for I->J than fo J->I)',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='guidedMatching',
             label='Guided Matching',
             description='the found model to improve the pairwise correspondences.',

@@ -119,7 +119,7 @@ meshroomExe = PlatformExecutable(
 )
 
 meshroomPhotog = PlatformExecutable(
-    "bin/meshroom_photogrammetry"
+    "bin/meshroom_batch"
 )
 
 meshroomCompute = PlatformExecutable(

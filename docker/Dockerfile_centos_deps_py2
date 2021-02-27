@@ -47,8 +47,8 @@ RUN yum install -y \
         libxkbcommon-x11
 
 # Install Python2
-RUN yum install -y python-devel && \
-    curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
+RUN yum install -y python27-python-devel python-devel && \
+    curl https://bootstrap.pypa.io/2.7/get-pip.py -o /tmp/get-pip.py && \
     python /tmp/get-pip.py && \
     pip install --upgrade pip
 

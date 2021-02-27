@@ -19,6 +19,8 @@ imageExtensions = (
     '.gif',
     # hdr:
     '.hdr', '.rgbe',
+    # heif
+    '.heic', '.heif', '.avif',
     # ico:
     '.ico',
     # iff:

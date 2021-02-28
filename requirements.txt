@@ -1,6 +1,6 @@
 # runtime
 psutil>=5.6.3
 enum34;python_version<"3.4"
-PySide2==5.14.1
+PySide2>=5.14.1
 markdown==2.6.11
 requests==2.22.0

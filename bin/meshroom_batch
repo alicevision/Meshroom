@@ -104,7 +104,7 @@ if args.inputRecursive:
 
 if hasSearchedForImages and not filesByType.images:
     print("No image found")
-    exit(-1)
+    sys.exit(-1)
 
 graph = multiview.Graph(name=args.pipeline)
 

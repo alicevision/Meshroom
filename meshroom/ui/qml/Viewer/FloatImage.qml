@@ -32,7 +32,6 @@ AliceVision.FloatImageViewer {
         }
         else if (!isDistoViewer){ // HDR Viewer
             root.updateSubdivisions(1);
-            root.downscaleLevel = -1;
         }
 
         root.defaultControlPoints();
@@ -158,16 +157,16 @@ AliceVision.FloatImageViewer {
     }
     clearBeforeLoad: true
 
-//    property alias containsMouse: mouseArea.containsMouse
-//    property alias mouseX: mouseArea.mouseX
-//    property alias mouseY: mouseArea.mouseY
-//    MouseArea {
-//        id: mouseArea
-//        anchors.fill: parent
-//        hoverEnabled: true
-//        // Do not intercept mouse events, only get the mouse over information
-//        acceptedButtons: Qt.NoButton
-//    }
+    property alias containsMouse: mouseArea.containsMouse
+    property alias mouseX: mouseArea.mouseX
+    property alias mouseY: mouseArea.mouseY
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        hoverEnabled: true
+        // Do not intercept mouse events, only get the mouse over information
+        acceptedButtons: Qt.NoButton
+    }
 
     function isMouseOver(mx, my) {
         return (mx > rectPano.x && mx < rectPano.x + rectPano.width

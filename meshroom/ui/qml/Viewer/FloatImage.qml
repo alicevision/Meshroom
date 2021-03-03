@@ -26,14 +26,13 @@ AliceVision.FloatImageViewer {
                 (root.sourceSize.height <= 0))
             return Image.Null;
 
-        if(!isDistoViewer){
-            if(isPanoViewer){
-                root.updateSubdivisions(12)
-            }
-            else{
-                root.updateSubdivisions(1);
-                root.downscaleLevel = -1;
-            }
+
+        if(isPanoViewer) { // Pano Viewer
+            root.updateSubdivisions(12)
+        }
+        else if (!isDistoViewer){ // HDR Viewer
+            root.updateSubdivisions(1);
+            root.downscaleLevel = -1;
         }
 
         root.defaultControlPoints();
@@ -66,7 +65,6 @@ AliceVision.FloatImageViewer {
 
     onDownscaleLevelChanged: {
         root.setDownscale(downscaleLevel)
-        console.warn("VALUE CHANGGGEEEEEEEEEEEEED " + downscaleLevel)
     }
 
     function updateSfmPath() {

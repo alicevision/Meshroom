@@ -39,7 +39,6 @@ AliceVision.PanoramaViewer {
         for (var i = 0; i < repeater.model; i++) {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
         }
-        var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
     }
 
     onSubdivisionsPanoChanged:{
@@ -49,8 +48,6 @@ AliceVision.PanoramaViewer {
     }
 
     onDownscaleValueQMLChanged: {
-        console.warn("Downscale")
-
         for (var i = 0; i < repeater.model; i++) {
            repeater.itemAt(i).item.downscaleLevel = downscaleValueQML;
         }
@@ -75,18 +72,18 @@ AliceVision.PanoramaViewer {
     onYawNodeChanged: {
         if (!isRotating) {
             for (var i = 0; i < repeater.model; i++) {
-               repeater.itemAt(i).item.rotatePanoramaDegrees(yawNode, pitchNod);
+               repeater.itemAt(i).item.rotatePanoramaDegrees(yawNode, pitchNode);
             }
         }
     }
 
-   onPitchNodeChanged: {
+    onPitchNodeChanged: {
        if (!isRotating) {
            for (var i = 0; i < repeater.model; i++) {
               repeater.itemAt(i).item.rotatePanoDegrees(yawNode, pitchNode);
            }
        }
-   }
+    }
 
 
     Item {

@@ -277,6 +277,8 @@ FocusScope {
                     onLoaded: {
                         panoramaViewerLoader.item.updateSfmPath();
                     }
+
+
                 }
 
                 // Simple QML Image Viewer (using Qt or qtOIIO to load images)
@@ -999,5 +1001,10 @@ FocusScope {
         }
         // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker
         visible: running
+
+        onVisibleChanged: {
+            if (panoramaViewerLoader.active && panoramaViewerLoader.item.status === Image.Ready)
+                fit();
+        }
     }
 }

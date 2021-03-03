@@ -31,7 +31,8 @@ AliceVision.FloatImageViewer {
                 root.updateSubdivisions(12)
             }
             else{
-                root.updateSubdivisions(1)
+                root.updateSubdivisions(1);
+                root.downscaleLevel = -1;
             }
         }
 
@@ -61,9 +62,14 @@ AliceVision.FloatImageViewer {
 
     property string sfmPath: ""
 
-    function updateSfmPath() {
-        console.warn("SFM UPDATE - Float IV")
+    property int downscaleLevel: 0
 
+    onDownscaleLevelChanged: {
+        root.setDownscale(downscaleLevel)
+        console.warn("VALUE CHANGGGEEEEEEEEEEEEED " + downscaleLevel)
+    }
+
+    function updateSfmPath() {
         var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
 
         if(!activeNode)

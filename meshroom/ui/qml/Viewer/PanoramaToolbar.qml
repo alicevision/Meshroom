@@ -16,7 +16,7 @@ FloatingPane {
     property bool displayGrid: displayGrid.checked
 
     property int downscaleValue: downscaleSpinBox.value
-    property int downscaleDefaultValue: 2
+    property int downscaleDefaultValue: 3
 
     property int subdivisionsDefaultValue: 24
     property int subdivisionsValue: subdivisionsCtrl.value
@@ -24,6 +24,10 @@ FloatingPane {
     property int mouseSpeed: speedSpinBox.value
 
     background: Rectangle { color: root.palette.window }
+
+    function updateDownscaleValue(level) {
+        downscaleSpinBox.value = level;
+    }
 
     DoubleValidator {
         id: doubleValidator
@@ -154,7 +158,7 @@ FloatingPane {
             SpinBox {
                 id: downscaleSpinBox
                 from: 0
-                value: 2
+                value: downscaleDefaultValue
                 to: 3
                 stepSize: 1
                 Layout.fillWidth: false

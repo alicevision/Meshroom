@@ -20,7 +20,11 @@ AliceVision.PanoramaViewer {
     property int paintedHeight: textureSize.height
     property var status: Image.Null
 
-    property int downscaleValue: 2
+    // Value from ui button
+    property int downscaleValueQML: 0
+
+    // Value from cpp at initialisation
+    property int downscaleValueCpp: 0
 
     property int subdivisionsPano: 12
 
@@ -35,6 +39,7 @@ AliceVision.PanoramaViewer {
         for (var i = 0; i < repeater.model; i++) {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
         }
+        var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
     }
 
     onSubdivisionsPanoChanged:{
@@ -43,9 +48,11 @@ AliceVision.PanoramaViewer {
         }
     }
 
-    onDownscaleValueChanged: {
+    onDownscaleValueQMLChanged: {
+        console.warn("Downscale")
+
         for (var i = 0; i < repeater.model; i++) {
-           repeater.itemAt(i).item.setDownscale(downscaleValue);
+           repeater.itemAt(i).item.downscaleLevel = downscaleValueQML;
         }
     }
 
@@ -68,7 +75,7 @@ AliceVision.PanoramaViewer {
     onYawNodeChanged: {
         if (!isRotating) {
             for (var i = 0; i < repeater.model; i++) {
-               repeater.itemAt(i).item.rotatePanoramaDegrees(yawNode, pitchNode);
+               repeater.itemAt(i).item.rotatePanoramaDegrees(yawNode, pitchNod);
             }
         }
     }
@@ -176,7 +183,6 @@ AliceVision.PanoramaViewer {
     property string sfmPath: ""
 
     function updateSfmPath() {
-        console.warn("SFM UPDATE - PANO")
         var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
 
         if(!activeNode)
@@ -212,6 +218,7 @@ AliceVision.PanoramaViewer {
                     if(active) {
                         setSource("FloatImage.qml", {
                             'isPanoViewer' : true,
+                            'downscaleLevel' : root.downscaleValueCpp,
                             'source':  Qt.binding(function() { return cSource; }),
                             'index' : index,
                             'idView': Qt.binding(function() { return cId; }),
@@ -235,16 +242,18 @@ AliceVision.PanoramaViewer {
             onImagesDataChanged: {
                 //We receive the map<ImgPath, idView> from C++
                 //Resetting arrays to avoid problem with push
-                pathList = []
-                idList = []
 
                 //Iterating through the map
                 for (var path in imagesData) {
-                    console.warn("Object item:", path, "=", imagesData[path])
+                    if (path === "lvl") {
+                        root.downscaleValueCpp = imagesData[path];
+                        panoramaViewerToolbar.updateDownscaleValue(root.downscaleValueCpp)
+                        continue;
+                    }
+
                     root.pathList.push(path)
                     root.idList.push(imagesData[path])
                 }
-                console.warn(root.pathList.length)
 
                 //Changing the repeater model (number of elements)
                 panoImages.updateRepeater()

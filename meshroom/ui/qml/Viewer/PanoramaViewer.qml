@@ -18,7 +18,21 @@ AliceVision.PanoramaViewer {
     // paintedWidth / paintedHeight / status for compatibility with standard Image
     property int paintedWidth: textureSize.width
     property int paintedHeight: textureSize.height
-    property var status: Image.Null
+    property var status: {
+        if (readyToLoad === Image.Ready && root.imagesLoaded === root.pathList.length) {
+            for (var i = 0; i < repeater.model; i++) {
+                if (repeater.itemAt(i).item.status !== Image.Ready) return Image.Loading;
+            }
+            return Image.Ready;
+        }
+        else if (readyToLoad === Image.Ready) {
+            return Image.Loading;
+        }
+        else {
+            return Image.Null;
+        }
+    }
+    property var readyToLoad: Image.Null
 
     // Value from ui button
     property int downscaleValueQML: 0
@@ -195,6 +209,7 @@ AliceVision.PanoramaViewer {
 
     property var pathList : []
     property var idList : []
+    property int imagesLoaded: 0
 
     Item {
         id: panoImages
@@ -205,7 +220,7 @@ AliceVision.PanoramaViewer {
             id: imgPano
             Loader {
                 id: floatOneLoader
-                active: root.status
+                active: root.readyToLoad
                 visible: (floatOneLoader.status === Loader.Ready)
                 z:0
                 //anchors.centerIn: parent
@@ -226,6 +241,9 @@ AliceVision.PanoramaViewer {
                         setSource("", {})
                     }
                 }
+                onLoaded: {
+                    imagesLoaded++;
+                }
             }
         }
         Repeater {
@@ -237,6 +255,7 @@ AliceVision.PanoramaViewer {
         Connections {
             target: root
             onImagesDataChanged: {
+                root.imagesLoaded = 0;
                 //We receive the map<ImgPath, idView> from C++
                 //Resetting arrays to avoid problem with push
 
@@ -255,7 +274,7 @@ AliceVision.PanoramaViewer {
                 //Changing the repeater model (number of elements)
                 panoImages.updateRepeater()
 
-                root.status = Image.Ready;
+                root.readyToLoad = Image.Ready;
             }
         }
 

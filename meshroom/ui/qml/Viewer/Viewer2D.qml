@@ -24,6 +24,7 @@ FocusScope {
         active: true
         source: "TestAliceVisionPlugin.qml"
     }
+    
     Loader {
         id: oiioPluginLoader
         active: true
@@ -226,6 +227,16 @@ FocusScope {
                     active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer)
                     visible: (floatImageViewerLoader.status === Loader.Ready)
                     anchors.centerIn: parent
+
+                    // handle rotation/position based on available metadata
+                    rotation: {
+                        var orientation = metadata ? metadata["Orientation"] : 0
+                        switch(orientation) {
+                            case "6": return 90;
+                            case "8": return -90;
+                            default: return 0;
+                        }
+                    }
 
                     onActiveChanged: {
                         if(active) {

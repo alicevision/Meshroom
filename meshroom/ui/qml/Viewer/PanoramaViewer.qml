@@ -99,7 +99,6 @@ AliceVision.PanoramaViewer {
        }
     }
 
-
     Item {
         id: containerPanorama
         z: 10

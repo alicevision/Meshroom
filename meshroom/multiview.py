@@ -254,7 +254,7 @@ def panoramaHdrPipeline(graph):
 
     panoramaOrientation = graph.addNewNode('SfMTransform',
                                            input=panoramaEstimation.output,
-                                           method='from_single_camera')
+                                           method='manual')
 
     panoramaWarping = graph.addNewNode('PanoramaWarping',
                                        input=panoramaOrientation.output)

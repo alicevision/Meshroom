@@ -123,13 +123,13 @@ AliceVision.PanoramaViewer {
                         repeater.itemAt(i).z = highlight ? 2 : 0
                         if (highlight)
                         {
-                            // Disable Highlight for all images next to the highlight one
-                            for (let j = i + 1; j < repeater.model; j++)
+                            // Disable Highlight for all other images
+                            for (let j = 0; j < repeater.model; j++)
                             {
+                                if (j === i) continue;
                                 repeater.itemAt(j).item.mouseOver(false);
                                 repeater.itemAt(i).z = 0;
                             }
-                            break;
                         }
                     }
 

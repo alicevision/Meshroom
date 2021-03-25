@@ -29,7 +29,7 @@ Item {
 
     function readSourceFile() {
         var xhr = new XMLHttpRequest;
-        xhr.open("GET", "file:///" + root.source);
+        xhr.open("GET", root.source);
 
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {

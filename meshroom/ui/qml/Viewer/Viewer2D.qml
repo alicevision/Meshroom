@@ -354,7 +354,7 @@ FocusScope {
 
                     sourceComponent: ColorCheckerViewer {
                         visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
-                        source: activeNode.attribute("outputData").value
+                        source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
                         image: imgContainer.image
                         viewId: _reconstruction.selectedViewId
                         zoom: imgContainer.scale

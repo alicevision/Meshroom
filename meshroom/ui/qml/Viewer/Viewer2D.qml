@@ -224,8 +224,8 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 Loader {
                     id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer)
-                    visible: (floatImageViewerLoader.status === Loader.Ready)
+                    active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && _reconstruction.activeNodes.get('sfm').node
+                    visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
 
                     // handle rotation/position based on available metadata
@@ -258,6 +258,8 @@ FocusScope {
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
                             setSource("", {})
+                            displayLensDistortionViewer.checked = false;
+                            displayHDR.checked = false;
                         }
                     }
 

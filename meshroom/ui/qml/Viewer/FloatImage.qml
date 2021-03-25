@@ -173,24 +173,9 @@ AliceVision.FloatImageViewer {
     }
 
     function onChangedHighlightState(isHighlightable){
-        if(isHighlightable) root.mouseOver(false)
-        else root.mouseOver(true)
+        if (!isHighlightable) root.mouseOver(false)
     }
 
-    /*
-    * Target Rectangle For Mouse Area Highlight
-    */
-    Item {
-        id: containerMouseAreaPano
-        Rectangle {
-            id: rectPano
-            x: 0
-            y: 0
-            width: 0
-            height: 0
-            visible: false;
-        }
-    }
 
     /*
     * Principal Point

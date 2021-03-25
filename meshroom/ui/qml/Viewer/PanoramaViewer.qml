@@ -121,6 +121,16 @@ AliceVision.PanoramaViewer {
                     for (var i = 0; i < repeater.model && isHighlightable; i++) {
                         var highlight = repeater.itemAt(i).item.getMouseCoordinates(mouse.x, mouse.y);
                         repeater.itemAt(i).z = highlight ? 2 : 0
+                        if (highlight)
+                        {
+                            // Disable Highlight for all images next to the highlight one
+                            for (let j = i + 1; j < repeater.model; j++)
+                            {
+                                repeater.itemAt(j).item.mouseOver(false);
+                                repeater.itemAt(i).z = 0;
+                            }
+                            break;
+                        }
                     }
 
                     // Rotate Panorama

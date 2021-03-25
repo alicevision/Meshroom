@@ -37,7 +37,6 @@ AliceVision.FloatImageViewer {
         root.defaultControlPoints();
         root.setIdView(idView);
         updateSfmPath();
-        updateMouseAreaPano();
 
         return Image.Ready;
     }
@@ -92,15 +91,6 @@ AliceVision.FloatImageViewer {
 
     function rotatePanoRadians(yaw, pitch) {
         root.rotatePanoramaRadians(yaw, pitch);
-    }
-
-    function updateMouseAreaPano() {
-        var coords = root.getMouseAreaPanoCoords()
-
-        rectPano.x = coords[0] + 25
-        rectPano.y = coords[1] + 25
-        rectPano.width = coords[2] - 25
-        rectPano.height = coords[3] - 25
     }
 
     onIsDistoViewerChanged: {
@@ -169,8 +159,7 @@ AliceVision.FloatImageViewer {
     }
 
     function isMouseOver(mx, my) {
-        return (mx > rectPano.x && mx < rectPano.x + rectPano.width
-                && my > rectPano.y && my < rectPano.y + rectPano.height)
+        return root.isMouseInside(mx, my);
     }
 
     function getMouseCoordinates(mx, my) {
@@ -241,7 +230,6 @@ AliceVision.FloatImageViewer {
                 if (reinit){
                    points.recalculateCP();
                    points.generateControlPoints();
-                   root.updateMouseAreaPano()
                 }
             }
         }

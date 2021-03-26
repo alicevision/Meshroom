@@ -1,11 +1,10 @@
-from __future__ import print_function
+__version__ = "2.0"
 
-__version__ = "1.2"
-
-from meshroom.core import desc
 import shutil
 import glob
 import os
+
+from meshroom.core import desc
 
 
 class Publish(desc.Node):
@@ -37,6 +36,13 @@ This node allows to copy files into a specific folder.
             value="",
             uid=[0],
         ),
+        desc.BoolParam(
+            name='overwrite',
+            label='Overwrite',
+            description='Allow the overwriting of files.',
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
@@ -49,36 +55,36 @@ This node allows to copy files into a specific folder.
         ]
 
     def resolvedPaths(self, inputFiles, outDir):
-        paths = {}
+        paths = []
         for inputFile in inputFiles:
             for f in glob.glob(inputFile.value):
-                paths[f] = os.path.join(outDir, os.path.basename(f))
+                paths.append([f, os.path.join(outDir, os.path.basename(f))])
         return paths
 
     def processChunk(self, chunk):
-        try:
-            chunk.logManager.start(chunk.node.verboseLevel.value)
-            
+        with desc.Logger(chunk) as logger:
             if not chunk.node.inputFiles:
-                chunk.logger.warning('Nothing to publish')
+                logger.warning('Nothing to publish')
                 return
             if not chunk.node.output.value:
+                logger.warning('No output folder set')
                 return
 
-            outFiles = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
+            files = self.resolvedPaths(chunk.node.inputFiles.value, chunk.node.output.value)
 
-            if not outFiles:
-                error = 'Publish: input files listed, but nothing to publish'
-                chunk.logger.error(error)
-                chunk.logger.info('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
-                raise RuntimeError(error)
+            if not files:
+                logger.debug('Listed input files: {}'.format([i.value for i in chunk.node.inputFiles.value]))
+                raise RuntimeError('Publish: input files listed, but nothing to publish')
 
-            if not os.path.exists(chunk.node.output.value):
+            if not os.path.isdir(chunk.node.output.value):
                 os.mkdir(chunk.node.output.value)
 
-            for iFile, oFile in outFiles.items():
-                chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
-                shutil.copyfile(iFile, oFile)
-            chunk.logger.info('Publish end')
-        finally:
-            chunk.logManager.end()
+            logger.makeProgressBar(len(files), 'Publish progress:')
+            for index, file in enumerate(files):
+                logger.info('Publish file {} into {}'.format(*file))
+                if os.path.isfile(file[1]) and not chunk.node.overwrite.value:
+                    logger.warning('File {} already exists, skipping'.format(file[1]))
+                else:
+                    shutil.copyfile(*file)
+                logger.updateProgressBar(index+1)
+            logger.info('Publish end')

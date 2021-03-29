@@ -121,7 +121,7 @@ Item {
             border.width: 2.5
             border.color: root.selected ? activePalette.highlight : Qt.darker(activePalette.highlight, 1.5)
             opacity: 0.9
-            radius: background.radius
+            radius: background.radius + border.width
             color: "transparent"
         }
 

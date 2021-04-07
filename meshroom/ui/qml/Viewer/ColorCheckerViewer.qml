@@ -27,6 +27,17 @@ Item {
     onViewIdChanged: { loadCCheckers(); }
     property var updatePane: null
 
+
+    function getColors() {
+        if (ccheckers[selectedCChecker] === undefined)
+            return null;
+
+        if (ccheckers[selectedCChecker].colors === undefined)
+            return null;
+
+        return ccheckers[selectedCChecker].colors;
+    }
+
     function readSourceFile() {
         var xhr = new XMLHttpRequest;
         xhr.open("GET", root.source);

@@ -360,7 +360,7 @@ FocusScope {
                         zoom: imgContainer.scale
 
                         updatePane: function() {
-                            colorCheckerPane.colors = (ccheckers[selectedCChecker].colors) ? ccheckers[selectedCChecker].colors : null
+                            colorCheckerPane.colors = getColors();
                         }
                     }
                 }

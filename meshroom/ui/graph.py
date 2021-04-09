@@ -535,8 +535,14 @@ class UIGraph(QObject):
         if isinstance(dst, ListAttribute) and not isinstance(src, ListAttribute):
             with self.groupedGraphModification("Insert and Add Edge on {}".format(dst.getFullName())):
                 self.appendAttribute(dst)
-                self.push(commands.AddEdgeCommand(self._graph, src, dst.at(-1)))
+                self._addEdge(src, dst.at(-1))
         else:
+            self._addEdge(src, dst)
+
+    def _addEdge(self, src, dst):
+        with self.groupedGraphModification("Connect '{}'->'{}'".format(src.getFullName(), dst.getFullName())):
+            if dst in self._graph.edges.keys():
+                self.removeEdge(self._graph.edge(dst))
             self.push(commands.AddEdgeCommand(self._graph, src, dst))
 
     @Slot(Edge)

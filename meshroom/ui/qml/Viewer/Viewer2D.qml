@@ -800,6 +800,7 @@ FocusScope {
                         MaterialToolButton {
                             id: displayPanoramaViewer
                             property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('SfMTransform').node : null
+                            property bool isComputed: activeNode && activeNode.isComputed
 
                             ToolTip.text: "Panorama Viewer"
                             text: MaterialIcons.panorama_sphere
@@ -808,7 +809,7 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
-                            enabled: activeNode && (activeNode.attribute("method").value === "manual")
+                            enabled: activeNode && isComputed && (activeNode.attribute("method").value === "manual")
                             onCheckedChanged : {
                                 if((displayHDR.checked || displayLensDistortionViewer.checked) && checked){
                                     displayHDR.checked = false;

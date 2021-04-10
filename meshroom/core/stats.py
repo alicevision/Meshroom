@@ -163,7 +163,7 @@ class ProcStatistics:
         # 'memory_maps',
         'status',
         # 'num_fds', # The number of file descriptors currently opened by this process (non cumulative) - N/A on Windows
-        'io_counters',
+        # 'io_counters', # The number and bytes read/write by the process - N/A on some platforms
         'num_ctx_switches',
         ]
 

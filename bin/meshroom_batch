@@ -21,7 +21,7 @@ parser.add_argument('-I', '--inputRecursive', metavar='FOLDERS/IMAGES', type=str
                     help='Input folders containing all images recursively.')
 
 parser.add_argument('-p', '--pipeline', metavar='photogrammetry/panoramaHdr/panoramaFisheyeHdr/MG_FILE', type=str, default='photogrammetry',
-                    help='"photogrammetry" pipeline, "panotamaHdr" pipeline, "panotamaFisheyeHdr" pipeline or a Meshroom file containing a custom pipeline to run on input images. '
+                    help='"photogrammetry" pipeline, "panoramaHdr" pipeline, "panoramaFisheyeHdr" pipeline or a Meshroom file containing a custom pipeline to run on input images. '
                          'Requirements: the graph must contain one CameraInit node, '
                          'and one Publish node if --output is set.')
 

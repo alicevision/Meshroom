@@ -119,7 +119,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description='Observation contraint mode used in the optimization:\n'
                         ' * Basic: Use standard reprojection error in pixel coordinates\n'
                         ' * Scale: Use reprojection error in pixel coordinates but relative to the feature scale',
-            value='Basic',
+            value='Scale',
             values=['Basic', 'Scale'],
             exclusive=True,
             uid=[0],

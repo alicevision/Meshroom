@@ -55,8 +55,8 @@ Item {
     function selectNode(node)
     {
         uigraph.selectedNode = node
-        if (!uigraph.selectedNodes.contains(node) && node !== null) {
-            uigraph.selectedNodes.append(node)
+        if (node !== null) {
+            uigraph.appendSelection(node)
             uigraph.selectedNodesChanged()
         }
     }
@@ -68,7 +68,9 @@ Item {
         } else {
             var nodes = uigraph.duplicateNodes(uigraph.selectedNodes)
         }
+        uigraph.clearNodeSelection()
         selectNode(nodes[0])
+        uigraph.selectFollowing(nodes[0])
     }
 
 
@@ -80,6 +82,8 @@ Item {
                 uigraph.removeNodesFrom(uigraph.selectedNode)
             else
                 uigraph.removeNodes(uigraph.selectedNodes)
+        if(event.key === Qt.Key_D)
+            duplicateNode(uigraph.selectedNode, event.modifiers == Qt.AltModifier)
     }
 
     MouseArea {
@@ -448,7 +452,7 @@ Item {
 
                     onPressed: {
                         if (mouse.button == Qt.LeftButton) {
-                            if (mouse.modifiers & Qt.ControlModifier) {
+                            if (mouse.modifiers & Qt.ControlModifier && !(mouse.modifiers & Qt.AltModifier)) {
                                 if (mainSelected && selected) {
                                     // left clicking a selected node twice with control will deselect it
                                     uigraph.selectedNodes.remove(node)
@@ -457,7 +461,10 @@ Item {
                                     return
                                 }
                             } else if (mouse.modifiers & Qt.AltModifier) {
-                                duplicateNode(node, true)
+                                if (!(mouse.modifiers & Qt.ControlModifier)){
+                                    uigraph.clearNodeSelection()
+                                }
+                                uigraph.selectFollowing(node)
                             } else if (!mainSelected && !selected) {
                                 uigraph.clearNodeSelection()
                             }

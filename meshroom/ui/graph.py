@@ -662,6 +662,17 @@ class UIGraph(QObject):
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
+    @Slot(Node)
+    def appendSelection(self, node):
+        if not self._selectedNodes.contains(node):
+            self._selectedNodes.append(node)
+
+    @Slot(Node)
+    def selectFollowing(self, node):
+        for n in self._graph.dfsOnDiscover(startNodes=[node], reverse=True, dependenciesOnly=True)[0]:
+            self.appendSelection(n)
+        self.selectedNodesChanged.emit()
+
     @Slot(QObject, QObject)
     def boxSelect(self, selection, draggable):
         x = selection.x() - draggable.x()
@@ -675,8 +686,7 @@ class UIGraph(QObject):
             bbox = self._layout.boundingBox([n])
             # evaluate if the selection and node intersect
             if not (x > bbox[2] + bbox[0] or otherX < bbox[0] or y > bbox[3] + bbox[1] or otherY < bbox[1]):
-                if not self._selectedNodes.contains(n):
-                    self._selectedNodes.append(n)
+                self.appendSelection(n)
         self.selectedNodesChanged.emit()
 
     @Slot()

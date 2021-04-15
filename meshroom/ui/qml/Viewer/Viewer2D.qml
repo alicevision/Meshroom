@@ -19,6 +19,26 @@ FocusScope {
     property alias useLensDistortionViewer: displayLensDistortionViewer.checked
     property alias usePanoramaViewer: displayPanoramaViewer.checked
 
+    QtObject {
+        id: m
+        property variant imgMetadata: {
+            // I did not find a direct way to check if the map is empty or not...
+            var sfmHasImgMetadata = 0;
+            for(var key in root.metadata) { sfmHasImgMetadata = 1; break; }
+
+            if(sfmHasImgMetadata) // check if root.metadata is not empty
+            {
+                return root.metadata
+            }
+
+            if(floatImageViewerLoader.active)
+            {
+                return floatImageViewerLoader.item.metadata
+            }
+            return {}
+        }
+    }
+
     Loader {
         id: aliceVisionPluginLoader
         active: true
@@ -230,7 +250,8 @@ FocusScope {
 
                     // handle rotation/position based on available metadata
                     rotation: {
-                        var orientation = metadata ? metadata["Orientation"] : 0
+                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+
                         switch(orientation) {
                             case "6": return 90;
                             case "8": return -90;
@@ -352,7 +373,7 @@ FocusScope {
 
                     // handle rotation/position based on available metadata
                     rotation: {
-                        var orientation = metadata ? metadata["Orientation"] : 0
+                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
                         switch(orientation) {
                             case "6": return 90;
                             case "8": return -90;
@@ -386,7 +407,7 @@ FocusScope {
 
                     // handle rotation/position based on available metadata
                     rotation: {
-                        var orientation = metadata ? metadata["Orientation"] : 0
+                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
                         switch(orientation) {
                             case "6": return 90;
                             case "8": return -90;
@@ -503,7 +524,7 @@ FocusScope {
 
                         visible: metadataCB.checked
                         // only load metadata model if visible
-                        metadata: visible ? root.metadata : {}
+                        metadata: visible ? m.imgMetadata : {}
                     }
 
                     ColorCheckerPane {
@@ -985,7 +1006,6 @@ FocusScope {
                             smooth: false
                             flat: true
                             checkable: enabled
-                            enabled: _reconstruction.selectedViewId >= 0
                             onCheckedChanged: {
                                 if(checked == true)
                                 {

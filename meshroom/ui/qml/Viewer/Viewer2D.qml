@@ -801,7 +801,19 @@ FocusScope {
                         MaterialToolButton {
                             id: displayLensDistortionViewer
                             property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
-                            property bool isComputed: activeNode && activeNode.isComputed
+                            property bool isComputed: {
+                                if(!activeNode)
+                                    return false;
+                                if(activeNode.isComputed)
+                                    return true;
+                                var inputAttr = activeNode.attribute("input");
+                                if(!inputAttr)
+                                    return false;
+                                var inputAttrLink = inputAttr.rootLinkParam;
+                                if(!inputAttrLink)
+                                    return false;
+                                return inputAttrLink.node.isComputed;
+                            }
 
                             ToolTip.text: "Lens Distortion Viewer"
                             text: MaterialIcons.panorama_horizontal
@@ -830,7 +842,19 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
-                            enabled: activeNode && isComputed && (activeNode.attribute("method").value === "manual")
+                            enabled: {
+                                if(!activeNode)
+                                    return false;
+                                if(activeNode.attribute("method").value !== "manual")
+                                    return false;
+                                var inputAttr = activeNode.attribute("input");
+                                if(!inputAttr)
+                                    return false;
+                                var inputAttrLink = inputAttr.rootLinkParam;
+                                if(!inputAttrLink)
+                                    return false;
+                                return inputAttrLink.node.isComputed;
+                            }
                             onCheckedChanged : {
                                 if((displayHDR.checked || displayLensDistortionViewer.checked) && checked){
                                     displayHDR.checked = false;

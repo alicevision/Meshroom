@@ -490,6 +490,9 @@ class Reconstruction(UIGraph):
         elif p.lower() == "panoramafisheyehdr":
             # default panorama fisheye hdr pipeline
             self.setGraph(multiview.panoramaFisheyeHdr())
+        elif p.lower() == "cameratracking":
+            # default camera tracking pipeline
+            self.setGraph(multiview.cameraTracking())
         else:
             # use the user-provided default photogrammetry project file
             self.load(p, setupProjectFile=False)

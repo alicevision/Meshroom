@@ -1132,11 +1132,6 @@ class Graph(BaseObject):
         for node in self.nodes:
             node.clearSubmittedChunks()
 
-    @Slot(Node)
-    def clearDataFrom(self, startNode):
-        for node in self.dfsOnDiscover(startNodes=[startNode], reverse=True, dependenciesOnly=True)[0]:
-            node.clearData()
-
     def iterChunksByStatus(self, status):
         """ Iterate over NodeChunks with the given status """
         for node in self.nodes:

@@ -62,15 +62,15 @@ Item {
     }
 
     /// Duplicate a node and optionnally all the following ones
-    function duplicateNode(node, duplicateFollowingNodes) {
+    function duplicateNode(duplicateFollowingNodes) {
         if (duplicateFollowingNodes) {
-            var nodes = uigraph.duplicateNodesFrom(node)
+            var nodes = uigraph.duplicateNodesFrom(uigraph.selectedNodes)
         } else {
             var nodes = uigraph.duplicateNodes(uigraph.selectedNodes)
         }
         uigraph.clearNodeSelection()
-        selectNode(nodes[0])
-        uigraph.selectFollowing(nodes[0])
+        uigraph.selectedNode = nodes[0]
+        uigraph.selectNodes(nodes)
     }
 
 
@@ -79,11 +79,11 @@ Item {
             fit()
         if(event.key === Qt.Key_Delete)
             if(event.modifiers == Qt.AltModifier)
-                uigraph.removeNodesFrom(uigraph.selectedNode)
+                uigraph.removeNodesFrom(uigraph.selectedNodes)
             else
                 uigraph.removeNodes(uigraph.selectedNodes)
         if(event.key === Qt.Key_D)
-            duplicateNode(uigraph.selectedNode, event.modifiers == Qt.AltModifier)
+            duplicateNode(event.modifiers == Qt.AltModifier)
     }
 
     MouseArea {
@@ -338,14 +338,14 @@ Item {
                 MenuItem {
                     text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
                     enabled: true
-                    onTriggered: duplicateNode(nodeMenu.currentNode, false)
+                    onTriggered: duplicateNode(false)
                     MaterialToolButton {
                         id: duplicateFollowingButton
                         height: parent.height
                         anchors { right: parent.right; rightMargin: parent.padding }
                         text: MaterialIcons.fast_forward
                         onClicked: {
-                            duplicateNode(nodeMenu.currentNode, true);
+                            duplicateNode(true);
                             nodeMenu.close();
                         }
                     }
@@ -360,7 +360,7 @@ Item {
                         anchors { right: parent.right; rightMargin: parent.padding }
                         text: MaterialIcons.fast_forward
                         onClicked: {
-                            uigraph.removeNodesFrom(nodeMenu.currentNode);
+                            uigraph.removeNodesFrom(uigraph.selectedNodes);
                             nodeMenu.close();
                         }
                     }
@@ -419,7 +419,7 @@ Item {
 
                             onAccepted: {
                                 if(deleteFollowing)
-                                    graph.clearDataFrom(node);
+                                    uigraph.clearDataFrom(uigraph.selectedNodes);
                                 else
                                     uigraph.clearData(uigraph.selectedNodes);
                             }

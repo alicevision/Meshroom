@@ -20,6 +20,7 @@ Item {
     property var ccheckers: []
     property int selectedCChecker: -1
 
+    Component.onCompleted: { readSourceFile(); }
     onSourceChanged: { readSourceFile(); }
     onViewpointChanged: { loadCCheckers(); }
     property var updatePane: null

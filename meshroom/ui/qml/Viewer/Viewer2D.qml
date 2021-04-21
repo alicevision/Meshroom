@@ -356,7 +356,7 @@ FocusScope {
                         visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
                         source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
                         image: imgContainer.image
-                        viewId: _reconstruction.selectedViewId
+                        viewpoint: _reconstruction.selectedViewpoint
                         zoom: imgContainer.scale
 
                         updatePane: function() {

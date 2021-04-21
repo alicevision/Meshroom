@@ -4,10 +4,9 @@ Item {
     id: root
 
     property url source: undefined
-    property var sourceLastModified: null
     property var json: null
     property var image: null
-    property var viewId: null
+    property var viewpoint: null
     property real zoom: 1.0
 
     // required for perspective transform
@@ -21,10 +20,8 @@ Item {
     property var ccheckers: []
     property int selectedCChecker: -1
 
-
-    onVisibleChanged: { readSourceFile(); }
     onSourceChanged: { readSourceFile(); }
-    onViewIdChanged: { loadCCheckers(); }
+    onViewpointChanged: { loadCCheckers(); }
     property var updatePane: null
 
 
@@ -40,39 +37,42 @@ Item {
 
     function readSourceFile() {
         var xhr = new XMLHttpRequest;
+        // console.warn("readSourceFile: " + root.source)
         xhr.open("GET", root.source);
 
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {
-
-                if(root.sourceLastModified === null
-                   || root.sourceLastModified < xhr.getResponseHeader('Last-Modified')
-                  ) {
-                    try {
-                        root.json = JSON.parse(xhr.responseText);
-                    }
-                    catch(exc)
-                    {
-                        console.warn("Failed to parse ColorCheckerDetection JSON file: " + source);
-                        return;
-                    }
-                    root.sourceLastModified = xhr.getResponseHeader('Last-Modified');
-                    loadCCheckers();
+                try {
+                    root.json = null;
+                    // console.warn("readSourceFile: update json from " + root.source)
+                    root.json = JSON.parse(xhr.responseText);
+                    // console.warn("readSourceFile: root.json.checkers.length=" + root.json.checkers.length)
+                }
+                catch(exc)
+                {
+                    console.warn("Failed to parse ColorCheckerDetection JSON file: " + source);
+                    return;
                 }
             }
+            loadCCheckers();
         };
         xhr.send();
     }
 
     function loadCCheckers() {
-        if (root.json === null)
-            return;
-
         emptyCCheckers();
+        if (root.json === null)
+        {
+            return;
+        }
 
+        var currentImagePath = (root.viewpoint && root.viewpoint.attribute && root.viewpoint.attribute.childAttribute("path")) ? root.viewpoint.attribute.childAttribute("path").value : null
+        var viewId = (root.viewpoint && root.viewpoint.attribute && root.viewpoint.attribute.childAttribute("viewId")) ? root.viewpoint.attribute.childAttribute("viewId").value : null
         for (var i = 0; i < root.json.checkers.length; i++) {
             // Only load ccheckers for the current view
-            if (root.viewId == root.json.checkers[i].viewId) {
+            var checker = root.json.checkers[i]
+            if (checker.viewId == viewId ||
+                checker.imagePath == currentImagePath) {
                 var cpt = Qt.createComponent("ColorCheckerEntity.qml");
 
                 var obj = cpt.createObject(root, {
@@ -83,6 +83,7 @@ Item {
                 obj.transform(root.json.checkers[i].transform);
                 ccheckers.push(obj);
                 selectedCChecker = ccheckers.length-1;
+                break;
             }
         }
         updatePane();

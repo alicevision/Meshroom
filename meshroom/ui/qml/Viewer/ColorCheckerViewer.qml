@@ -10,6 +10,8 @@ Item {
     property real zoom: 1.0
 
     // required for perspective transform
+    // Match theoretical values in AliceVision
+    // see https://github.com/alicevision/AliceVision/blob/68ab70bcbc3eb01b73dc8dea78c78d8b4778461c/src/software/utils/main_colorCheckerDetection.cpp#L47
     readonly property real ccheckerSizeX: 1675.0
     readonly property real ccheckerSizeY: 1125.0
 

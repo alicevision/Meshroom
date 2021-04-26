@@ -1070,10 +1070,10 @@ class Reconstruction(UIGraph):
         vp = None
         if self.viewpoints:
             vp = next((v for v in self.viewpoints if str(v.viewId.value) == self._selectedViewId), None)
-        self.setSelectedViewpoint(vp)
+        self._setSelectedViewpoint(vp)
         self.selectedViewIdChanged.emit()
 
-    def setSelectedViewpoint(self, viewpointAttribute):
+    def _setSelectedViewpoint(self, viewpointAttribute):
         if self._selectedViewpoint:
             # Reconstruction has ownership of Viewpoint object - destroy it when not needed anymore
             self._selectedViewpoint.deleteLater()

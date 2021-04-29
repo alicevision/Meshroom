@@ -66,14 +66,50 @@ def main():
 
     print(args.SFM_cam_path)
 
-    #import abd
+
+    #Clear Current Scene
+    try:
+        print(bpy.data.objects[0])
+        print(bpy.data.objects[1])
+        print(bpy.data.objects[2])
+        for objects in bpy.data.objects:
+            bpy.data.objects.remove(objects)
+        print(bpy.data.objects)
+    except:
+        print("Error: While clearing current scene")
+
+
+    #import abc (Animated Camera)
+
     try:
         bpy.ops.wm.alembic_import(filepath=args.SFM_cam_path)
         animated_cams = bpy.context.selected_editable_objects[:] #Contains ['animxform_RJBframe_SONY_ILCE-7M3', 'mvgCameras', 'mvgCamerasUndefined', 'mvgPointCloud', 'mvgCloud', 'mvgRoot']
-        animated_cam = animated_cams[0]
+        animated_cam_obj = animated_cams[1] ## scene.object
+        animated_cam_RJB = animated_cams[0]
+        for obj in animated_cams:
+            if obj.data and obj.data.type == 'PERSP':	
+                bpy.context.scene.collection.objects.link(obj)
+                bpy.context.scene.camera = obj
 
     except:
-        print("Error: while importing the alembic file.")
+        print("Error: while importing the alembic file (Animated Camera).")
+
+
+
+    #import abc (Cloud Point)
+
+    try:
+        bpy.ops.wm.alembic_import(filepath=args.SFM_Data)
+        all_abc_info = bpy.context.selected_editable_objects[:] #Contains ['mvgCameras', 'mvgCamerasUndefined', 'mvgPointCloud', 'mvgCloud', 'mvgRoot']
+        pointCloud = all_abc_info[len(all_abc_info) - 3]
+        for obj in all_abc_info:
+            if obj.name == 'mvgPointCloud.001':
+                bpy.context.scene.collection.objects.link(obj)
+
+    except:
+        print("Error: while importing the alembic file (sfm Data).")
+
+
 
     # import Undistorted Images
 
@@ -85,8 +121,24 @@ def main():
                 undis_imgs.append(bpy.ops.image.open(filepath=args.undisto_images + '/' + f))
     except:
         print("Error: while importing the undistorted images.")
-        
-    #bpy.ops.render.render(animation=True)
+
+
+    cube = bpy.data.meshes['Cube']
+    objects = bpy.data.objects.new(name="Cube", object_data=cube)
+    bpy.context.scene.collection.objects.link(objects)
+
+
+    ## Starts the rendering and launchs it with a blender animator player
+
+    try:
+        bpy.context.scene.render.image_settings.file_format = 'FFMPEG' # Changes to video
+        bpy.context.scene.render.filepath = args.output_path + '/render.mkv'
+        bpy.ops.render.render(animation=True)
+        bpy.ops.render.play_rendered_anim()
+    except:
+        print("Error: while rendering the scene.")
+    
+
 
 if __name__ == "__main__":
     main()

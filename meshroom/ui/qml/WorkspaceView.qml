@@ -1,5 +1,5 @@
-import QtQuick 2.7
-import QtQuick.Controls 2.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.3
 import Qt.labs.platform 1.0 as Platform

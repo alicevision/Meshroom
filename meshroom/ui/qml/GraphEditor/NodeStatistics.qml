@@ -1,5 +1,5 @@
-import QtQuick 2.11
-import QtQuick.Controls 2.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Controls 1.4 as Controls1 // SplitView
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2

@@ -1,6 +1,6 @@
 pragma Singleton
-import QtQuick 2.9
-import QtQuick.Controls 2.4
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 /**
  * Singleton that gathers useful colors, shades and system palettes.

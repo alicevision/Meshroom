@@ -1,5 +1,5 @@
 pragma Singleton
-import QtQuick 2.0
+import QtQuick 2.15
 
 QtObject {
     property FontLoader fl: FontLoader {

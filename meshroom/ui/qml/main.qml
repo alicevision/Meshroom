@@ -602,7 +602,7 @@ ApplicationWindow {
             dialog.detailedText = message.detailedText
         }
 
-        onGraphChanged: {
+        function onGraphChanged() {
             // open CompatibilityManager after file loading if any issue is detected
             if(compatibilityManager.issueCount)
                 compatibilityManager.open()
@@ -610,9 +610,9 @@ ApplicationWindow {
             graphEditor.fit()
         }
 
-        onInfo: createDialog(dialogsFactory.info, arguments[0])
-        onWarning: createDialog(dialogsFactory.warning, arguments[0])
-        onError: createDialog(dialogsFactory.error, arguments[0])
+        function onInfo() { createDialog(dialogsFactory.info, arguments[0]) }
+        function onWarning() { createDialog(dialogsFactory.warning, arguments[0]) }
+        function onError() { createDialog(dialogsFactory.error, arguments[0]) }
     }
 
 

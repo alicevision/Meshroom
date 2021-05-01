@@ -29,8 +29,8 @@ Flow {
     // Update internal ListModel when ChartView's series change
     Connections {
         target: chartView
-        onSeriesAdded: seriesModel.append({"series": series})
-        onSeriesRemoved: {
+        function onSeriesAdded() { seriesModel.append({"series": series}) }
+        function onSeriesRemoved() {
             for(var i = 0; i < seriesModel.count; ++i)
             {
                 if(seriesModel.get(i)["series"] === series)

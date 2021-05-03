@@ -273,6 +273,7 @@ class UIGraph(QObject):
         self._sortedDFSChunks = QObjectListModel(parent=self)
         self._layout = GraphLayout(self)
         self._selectedNode = None
+        self._selectedNodes = QObjectListModel(parent=self)
         self._hoveredNode = None
 
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
@@ -499,36 +500,114 @@ class UIGraph(QObject):
             position = Position(position.x(), position.y())
         return self.push(commands.AddNodeCommand(self._graph, nodeType, position=position, **kwargs))
 
-    @Slot(Node, QPoint)
-    def moveNode(self, node, position):
+    def filterNodes(self, nodes):
+        """Filter out the nodes that do not exist on the graph."""
+        return [ n for n in nodes if n in self._graph.nodes.values() ]
+
+    @Slot(Node, QPoint, QObject)
+    def moveNode(self, node, position, nodes=None):
         """
-        Move 'node' to the given 'position'.
+        Move 'node' to the given 'position' and also update the positions of 'nodes' if neccessary.
 
         Args:
             node (Node): the node to move
             position (QPoint): the target position
+            nodes (list[Node]): the nodes to update the position of
         """
+        if not nodes:
+            nodes = [node]
+        nodes = self.filterNodes(nodes)
         if isinstance(position, QPoint):
             position = Position(position.x(), position.y())
-        self.push(commands.MoveNodeCommand(self._graph, node, position))
+        deltaX = position.x - node.x
+        deltaY = position.y - node.y
+        with self.groupedGraphModification("Move Selected Nodes"):
+            for n in nodes:
+                position = Position(n.x + deltaX, n.y + deltaY)
+                self.push(commands.MoveNodeCommand(self._graph, n, position))
 
-    @Slot(Node)
-    def removeNode(self, node):
-        self.push(commands.RemoveNodeCommand(self._graph, node))
+    @Slot(QObject)
+    def removeNodes(self, nodes):
+        """
+        Remove 'nodes' from the graph.
 
-    @Slot(Node)
-    def removeNodesFrom(self, startNode):
+        Args:
+            nodes (list[Node]): the nodes to remove
+        """
+        nodes = self.filterNodes(nodes)
+        if any([ n.locked for n in nodes ]):
+            return
+        with self.groupedGraphModification("Remove Selected Nodes"):
+            for node in nodes:
+                self.push(commands.RemoveNodeCommand(self._graph, node))
+
+    @Slot(QObject)
+    def removeNodesFrom(self, nodes):
         """
         Remove all nodes starting from 'startNode' to graph leaves.
+
         Args:
             startNode (Node): the node to start from.
         """
-        with self.groupedGraphModification("Remove Nodes from {}".format(startNode.name)):
-            nodes, _ = self._graph.dfsOnDiscover(startNodes=[startNode], reverse=True, dependenciesOnly=True)
+        with self.groupedGraphModification("Remove Nodes From Selected Nodes"):
+            nodesToRemove, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
             # Perform nodes removal from leaves to start node so that edges
             # can be re-created in correct order on redo.
-            for node in reversed(nodes):
-                self.removeNode(node)
+            self.removeNodes(list(reversed(nodesToRemove)))
+
+    @Slot(QObject, result="QVariantList")
+    def duplicateNodes(self, nodes):
+        """
+        Duplicate 'nodes'.
+
+        Args:
+            nodes (list[Node]): the nodes to duplicate
+        Returns:
+            list[Node]: the list of duplicated nodes
+        """
+        nodes = self.filterNodes(nodes)
+        # enable updates between duplication and layout to get correct depths during layout
+        with self.groupedGraphModification("Duplicate Selected Nodes", disableUpdates=False):
+            # disable graph updates during duplication
+            with self.groupedGraphModification("Node duplication", disableUpdates=True):
+                duplicates = self.push(commands.DuplicateNodesCommand(self._graph, nodes))
+            # move nodes below the bounding box formed by the duplicated node(s)
+            bbox = self._layout.boundingBox(duplicates)
+            for n in duplicates:
+                self.moveNode(n, Position(n.x, bbox[3] + self.layout.gridSpacing + n.y))
+        return duplicates
+
+    @Slot(QObject, result="QVariantList")
+    def duplicateNodesFrom(self, nodes):
+        """
+        Duplicate all nodes starting from 'nodes' to graph leaves.
+
+        Args:
+            nodes (list[Node]): the nodes to start from.
+        Returns:
+            list[Node]: the list of duplicated nodes
+        """
+        with self.groupedGraphModification("Duplicate Nodes From Selected Nodes"):
+            nodesToDuplicate, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
+            duplicates = self.duplicateNodes(nodesToDuplicate)
+        return duplicates
+
+    @Slot(QObject)
+    def clearData(self, nodes):
+        """ Clear data from 'nodes'. """
+        nodes = self.filterNodes(nodes)
+        for n in nodes:
+            n.clearData()
+
+    @Slot(QObject)
+    def clearDataFrom(self, nodes):
+        """
+        Clear data from all nodes starting from 'nodes' to graph leaves.
+
+        Args:
+            nodes (list[Node]): the nodes to start from.
+        """
+        self.clearData(self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)[0])
 
     @Slot(Attribute, Attribute)
     def addEdge(self, src, dst):
@@ -563,31 +642,6 @@ class UIGraph(QObject):
         """ Reset 'attribute' to its default value """
         self.push(commands.SetAttributeCommand(self._graph, attribute, attribute.defaultValue()))
 
-    @Slot(Node, bool, result="QVariantList")
-    def duplicateNode(self, srcNode, duplicateFollowingNodes=False):
-        """
-        Duplicate a node an optionally all the following nodes to graph leaves.
-
-        Args:
-            srcNode (Node): node to start the duplication from
-            duplicateFollowingNodes (bool): whether to duplicate all the following nodes to graph leaves
-
-        Returns:
-            [Nodes]: the list of duplicated nodes
-        """
-        title = "Duplicate Nodes from {}" if duplicateFollowingNodes else "Duplicate {}"
-        # enable updates between duplication and layout to get correct depths during layout
-        with self.groupedGraphModification(title.format(srcNode.name), disableUpdates=False):
-            # disable graph updates during duplication
-            with self.groupedGraphModification("Node duplication", disableUpdates=True):
-                duplicates = self.push(commands.DuplicateNodeCommand(self._graph, srcNode, duplicateFollowingNodes))
-            # move nodes below the bounding box formed by the duplicated node(s)
-            bbox = self._layout.boundingBox(duplicates)
-            for n in duplicates:
-                self.moveNode(n, Position(n.x, bbox[3] + self.layout.gridSpacing + n.y))
-
-        return duplicates
-
     @Slot(CompatibilityNode, result=Node)
     def upgradeNode(self, node):
         """ Upgrade a CompatibilityNode. """
@@ -621,9 +675,55 @@ class UIGraph(QObject):
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
+    @Slot(Node)
+    def appendSelection(self, node):
+        """ Append 'node' to the selection if it is not already part of the selection. """
+        if not self._selectedNodes.contains(node):
+            self._selectedNodes.append(node)
+
+    @Slot("QVariantList")
+    def selectNodes(self, nodes):
+        """ Append 'nodes' to the selection. """
+        for node in nodes:
+            self.appendSelection(node)
+        self.selectedNodesChanged.emit()
+
+    @Slot(Node)
+    def selectFollowing(self, node):
+        """ Select all the nodes the depend on 'node'. """
+        self.selectNodes(self._graph.dfsOnDiscover(startNodes=[node], reverse=True, dependenciesOnly=True)[0])
+
+    @Slot(QObject, QObject)
+    def boxSelect(self, selection, draggable):
+        """
+        Select nodes that overlap with 'selection'.
+        Takes into account the zoom and position of 'draggable'.
+
+        Args:
+            selection: the rectangle selection widget.
+            draggable: the parent widget that has position and scale data.
+        """
+        x = selection.x() - draggable.x()
+        y = selection.y() - draggable.y()
+        otherX = x + selection.width()
+        otherY = y + selection.height()
+        x, y, otherX, otherY = [ i / draggable.scale() for i in [x, y, otherX, otherY] ]
+        if x == otherX or y == otherY:
+            return
+        for n in self._graph.nodes:
+            bbox = self._layout.boundingBox([n])
+            # evaluate if the selection and node intersect
+            if not (x > bbox[2] + bbox[0] or otherX < bbox[0] or y > bbox[3] + bbox[1] or otherY < bbox[1]):
+                self.appendSelection(n)
+        self.selectedNodesChanged.emit()
+
+    @Slot()
     def clearNodeSelection(self):
-        """ Clear node selection. """
-        self.selectedNode = None
+        """ Clear all node selection. """
+        self._selectedNode = None
+        self._selectedNodes.clear()
+        self.selectedNodeChanged.emit()
+        self.selectedNodesChanged.emit()
 
     def clearNodeHover(self):
         """ Reset currently hovered node to None. """
@@ -646,8 +746,12 @@ class UIGraph(QObject):
     lockedChanged = Signal()
 
     selectedNodeChanged = Signal()
-    # Currently selected node
+    # Current main selected node
     selectedNode = makeProperty(QObject, "_selectedNode", selectedNodeChanged, resetOnDestroy=True)
+
+    selectedNodesChanged = Signal()
+    # Currently selected nodes
+    selectedNodes = makeProperty(QObject, "_selectedNodes", selectedNodesChanged, resetOnDestroy=True)
 
     hoveredNodeChanged = Signal()
     # Currently hovered node

@@ -182,9 +182,11 @@ def panoramaFisheyeHdr(inputImages=None, inputViewpoints=None, inputIntrinsics=N
         panoramaHdr(inputImages, inputViewpoints, inputIntrinsics, output, graph)
         for panoramaInit in graph.nodesOfType("PanoramaInit"):
             panoramaInit.attribute("useFisheye").value = True
-        # when using fisheye images, the overlap between images can be small
-        # and thus requires many features to get enough correspondances for cameras estimation
         for featureExtraction in graph.nodesOfType("FeatureExtraction"):
+            # when using fisheye images, 'sift' performs better than 'dspsift'
+            featureExtraction.attribute("describerTypes").value = ['sift']
+            # when using fisheye images, the overlap between images can be small
+            # and thus requires many features to get enough correspondances for cameras estimation
             featureExtraction.attribute("describerPreset").value = 'high'
     return graph
 
@@ -468,3 +470,60 @@ def sfmAugmentation(graph, sourceSfm, withMVS=False):
         mvsNodes = mvsPipeline(graph, structureFromMotion)
 
     return sfmNodes, mvsNodes
+
+
+def cameraTrackingPipeline(graph):
+    """
+    Instantiate a camera tracking pipeline inside 'graph'.
+
+    Args:
+        graph (Graph/UIGraph): the graph in which nodes should be instantiated
+
+    Returns:
+        list of Node: the created nodes
+    """
+
+    with GraphModification(graph):
+        
+        cameraInit, featureExtraction, imageMatching, featureMatching, structureFromMotion = sfmPipeline(graph)
+
+        imageMatching.attribute("nbMatches").value = 5  # voctree nb matches
+        imageMatching.attribute("nbNeighbors").value = 10
+
+        structureFromMotion.attribute("minNumberOfMatches").value = 0
+        structureFromMotion.attribute("minInputTrackLength").value = 5
+        structureFromMotion.attribute("minNumberOfObservationsForTriangulation").value = 3
+        structureFromMotion.attribute("minAngleForTriangulation").value = 1.0
+        structureFromMotion.attribute("minAngleForLandmark").value = 0.5
+
+        exportAnimatedCamera = graph.addNewNode('ExportAnimatedCamera', input=structureFromMotion.output)
+
+    # store current pipeline version in graph header
+    graph.header.update({'pipelineVersion': __version__})
+
+    return [
+        cameraInit,
+        featureExtraction,
+        imageMatching,
+        featureMatching,
+        structureFromMotion,
+        exportAnimatedCamera,
+        ]
+
+
+def cameraTracking(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output='', graph=None):
+    if not graph:
+        graph = Graph('Camera Tracking')
+    with GraphModification(graph):
+        trackingNodes = cameraTrackingPipeline(graph)
+        cameraInit = trackingNodes[0]
+        cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        cameraInit.viewpoints.extend(inputViewpoints)
+        cameraInit.intrinsics.extend(inputIntrinsics)
+
+        if output:
+            exportNode = trackingNodes[-1]
+            graph.addNewNode('Publish', output=output, inputFiles=[exportNode.output])
+
+    return graph
+

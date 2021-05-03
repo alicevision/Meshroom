@@ -21,7 +21,7 @@ parser.add_argument('-I', '--inputRecursive', metavar='FOLDERS/IMAGES', type=str
                     help='Input folders containing all images recursively.')
 
 parser.add_argument('-p', '--pipeline', metavar='photogrammetry/panoramaHdr/panoramaFisheyeHdr/MG_FILE', type=str, default='photogrammetry',
-                    help='"photogrammetry" pipeline, "panoramaHdr" pipeline, "panoramaFisheyeHdr" pipeline or a Meshroom file containing a custom pipeline to run on input images. '
+                    help='"photogrammetry", "panoramaHdr", "panoramaFisheyeHdr", "cameraTracking" pipeline or a Meshroom file containing a custom pipeline to run on input images. '
                          'Requirements: the graph must contain one CameraInit node, '
                          'and one Publish node if --output is set.')
 
@@ -119,6 +119,9 @@ with multiview.GraphModification(graph):
     elif args.pipeline.lower() == "panoramafisheyehdr":
         # default panorama Fisheye Hdr pipeline
         multiview.panoramaFisheyeHdr(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
+    elif args.pipeline.lower() == "cameratracking":
+        # default panorama Fisheye Hdr pipeline
+        multiview.cameraTracking(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
     else:
         # custom pipeline
         graph.load(args.pipeline)

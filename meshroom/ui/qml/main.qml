@@ -420,6 +420,10 @@ ApplicationWindow {
                     text: "Panorama Fisheye HDR"
                     onTriggered: ensureSaved(function() { _reconstruction.new("panoramafisheyehdr") })
                 }
+                Action {
+                    text: "Camera Tracking (experimental)"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("cameratracking") })
+                }
             }
             Action {
                 id: openActionItem

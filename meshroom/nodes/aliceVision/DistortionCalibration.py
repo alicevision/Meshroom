@@ -14,10 +14,22 @@ class DistortionCalibration(desc.CommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Input',
-            description="SfM Data File",
+            label='SfmData',
+            description="SfmData File",
             value='',
             uid=[0],
+        ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="lensGridImage",
+                label="Lens Grid Image",
+                description="",
+                value="",
+                uid=[0],
+            ),
+            name="lensGrid",
+            label="Lens Grid Images",
+            description="Lens grid images to estimate the optical distortions."
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -33,8 +45,8 @@ class DistortionCalibration(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='outSfMData',
-            label='Output SfMData File',
-            description='Path to the output sfmdata file',
+            label='Output SfmData File',
+            description='Path to the output sfmData file',
             value=desc.Node.internalFolder + 'sfmData.sfm',
             uid=[],
         )

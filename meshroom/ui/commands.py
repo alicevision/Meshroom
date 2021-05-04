@@ -2,8 +2,8 @@ import logging
 import traceback
 from contextlib import contextmanager
 
-from PySide2.QtWidgets import QUndoCommand, QUndoStack
-from PySide2.QtCore import Property, Signal
+from PySide6.QtGui import QUndoCommand, QUndoStack
+from PySide6.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
 from meshroom.core.graph import GraphModification

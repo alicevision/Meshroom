@@ -3,9 +3,9 @@ import os
 import re
 import argparse
 
-from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, Signal, qInstallMessageHandler, QtMsgType, QSettings
-from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import QApplication
+from PySide6.QtCore import Qt, QUrl, Slot, QJsonValue, Property, Signal, qInstallMessageHandler, QtMsgType, QSettings
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import nodesDesc

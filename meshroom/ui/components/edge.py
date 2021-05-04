@@ -1,6 +1,6 @@
-from PySide2.QtCore import Signal, Property, QPointF, Qt, QObject
-from PySide2.QtGui import QPainterPath, QVector2D
-from PySide2.QtQuick import QQuickItem
+from PySide6.QtCore import Signal, Property, QPointF, Qt, QObject
+from PySide6.QtGui import QPainterPath, QVector2D
+from PySide6.QtQuick import QQuickItem
 
 
 class MouseEvent(QObject):

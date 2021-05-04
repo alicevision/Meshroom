@@ -130,7 +130,7 @@ meshroomCompute = PlatformExecutable(
 setup(
     name="Meshroom",
     description="Meshroom",
-    install_requires=['psutil', 'pytest', 'PySide2', 'markdown'],
+    install_requires=['psutil', 'pytest', 'PySide6', 'markdown'],
     extras_require={
         ':python_version < "3.4"': [
             'enum34',

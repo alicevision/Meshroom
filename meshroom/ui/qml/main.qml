@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.1
 import QtQuick.Window 2.3
 import QtQml.Models 2.2
@@ -762,7 +761,7 @@ ApplicationWindow {
     }
 
 
-    Controls1.SplitView {
+    SplitView {
         anchors.fill: parent
         orientation: Qt.Vertical
 
@@ -770,8 +769,8 @@ ApplicationWindow {
         ToolTip.toolTip.background: Rectangle { color: activePalette.base; border.color: activePalette.mid }
 
         ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            SplitView.fillWidth: true
+            SplitView.fillHeight: true
             Layout.topMargin: 2
             implicitHeight: Math.round(parent.height * 0.7)
             spacing: 4
@@ -878,15 +877,16 @@ ApplicationWindow {
             }
         }
 
-        Controls1.SplitView {
+        SplitView {
             orientation: Qt.Horizontal
-            width: parent.width
-            height: Math.round(parent.height * 0.3)
+            SplitView.preferredWidth: parent.width
+            SplitView.preferredHeight: Math.round(parent.height * 0.3)
             visible: settings_UILayout.showGraphEditor
 
             TabPanel {
                 id: graphEditorPanel
-                Layout.fillWidth: true
+                SplitView.fillWidth: true
+                width: Math.round(parent.width * 0.7)
                 padding: 4
                 tabs: ["Graph Editor", "Task Manager"]
 
@@ -968,7 +968,7 @@ ApplicationWindow {
 
             NodeEditor {
                 id: nodeEditor
-                width: Math.round(parent.width * 0.3)
+                SplitView.preferredWidth: Math.round(parent.width * 0.3)
                 node: _reconstruction.selectedNode
                 property bool computing: _reconstruction.computing
                 // Make NodeEditor readOnly when computing

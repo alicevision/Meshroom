@@ -1,6 +1,6 @@
-from PySide2.QtCore import QObject, Qt, Slot, Property, Signal
-from PySide2.QtGui import QPalette, QColor
-from PySide2.QtWidgets import QApplication
+from PySide6.QtCore import QObject, Qt, Slot, Property, Signal
+from PySide6.QtGui import QPalette, QColor
+from PySide6.QtWidgets import QApplication
 
 
 class PaletteManager(QObject):

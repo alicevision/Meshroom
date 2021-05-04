@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.3
-import QtGraphicalEffects 1.0
+// import QtGraphicalEffects 1.0 // TODO: Porting to Qt6, QtGraphicalEffects is unavailable
 
 import Utils 1.0
 import MaterialIcons 2.2
@@ -130,7 +130,7 @@ Item {
             anchors.fill: nodeContent
             color: Qt.lighter(activePalette.base, 1.4)
             layer.enabled: true
-            layer.effect: DropShadow { radius: 3; color: shadowColor }
+            // layer.effect: DropShadow { radius: 3; color: shadowColor } // TODO: Porting to Qt6, QtGraphicalEffects is unavailable
             radius: 3
             opacity: 0.7
         }

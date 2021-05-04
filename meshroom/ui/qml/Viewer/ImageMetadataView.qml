@@ -268,7 +268,7 @@ FloatingPane {
 
                 Connections {
                     target: root
-                    onCoordinatesChanged: recenter()
+                    function onCoordinatesChanged() { recenter() }
                 }
 
                 zoomLevel: 16

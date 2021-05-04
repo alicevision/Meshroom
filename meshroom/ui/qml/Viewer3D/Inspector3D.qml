@@ -240,7 +240,7 @@ FloatingPane {
 
                         Connections {
                             target: mediaListView
-                            onCountChanged: mediaDelegate.updateCurrentIndex()
+                            function onCountChanged() { mediaDelegate.updateCurrentIndex() }
                         }
 
                         // Current/selected element indicator
@@ -342,7 +342,7 @@ FloatingPane {
                                     background: Rectangle {
                                         Connections {
                                             target: mediaLibrary
-                                            onLoadRequest: if(idx == index) focusAnim.restart()
+                                            function onLoadRequest() { if(idx == index) focusAnim.restart() }
                                         }
                                         ColorAnimation on color {
                                             id: focusAnim

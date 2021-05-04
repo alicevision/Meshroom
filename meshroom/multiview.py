@@ -490,6 +490,12 @@ def cameraTrackingPipeline(graph, sourceSfm=None):
             sfmNodes, _ = sfmAugmentation(graph, sourceSfm)
             cameraInitT, featureExtractionT, imageMatchingT, featureMatchingT, structureFromMotionT = sfmNodes
 
+        distortionCalibrationT = graph.addNewNode('DistortionCalibration',
+                                                  input=cameraInitT.output)
+
+        graph.removeEdge(structureFromMotionT.input)
+        graph.addEdge(distortionCalibrationT.outSfMData, structureFromMotionT.input)
+
         imageMatchingT.attribute("nbMatches").value = 5  # voctree nb matches
         imageMatchingT.attribute("nbNeighbors").value = 10
 
@@ -509,6 +515,7 @@ def cameraTrackingPipeline(graph, sourceSfm=None):
         featureExtractionT,
         imageMatchingT,
         featureMatchingT,
+        distortionCalibrationT,
         structureFromMotionT,
         exportAnimatedCameraT,
         ]
@@ -537,7 +544,7 @@ def photogrammetryAndCameraTracking(inputImages=list(), inputViewpoints=list(), 
     with GraphModification(graph):
         cameraInit, featureExtraction, imageMatching, featureMatching, structureFromMotion = sfmPipeline(graph)
 
-        cameraInitT, featureExtractionT, imageMatchingMultiT, featureMatchingT, structureFromMotionT, exportAnimatedCameraT = cameraTrackingPipeline(graph, structureFromMotion)
+        cameraInitT, featureExtractionT, imageMatchingMultiT, featureMatchingT, distortionCalibrationT, structureFromMotionT, exportAnimatedCameraT = cameraTrackingPipeline(graph, structureFromMotion)
 
         cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
         cameraInit.viewpoints.extend(inputViewpoints)

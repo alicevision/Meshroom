@@ -39,11 +39,7 @@ Item {
     }
 
     function readSourceFile() {
-        var xhr = new XMLHttpRequest;
-        // console.warn("readSourceFile: " + root.source)
-        xhr.open("GET", root.source);
-
-        xhr.onreadystatechange = function() {
+        Request.get(root.source, function(xhr){
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {
                 try {
                     root.json = null;
@@ -58,8 +54,7 @@ Item {
                 }
             }
             loadCCheckers();
-        };
-        xhr.send();
+        })
     }
 
     function loadCCheckers() {

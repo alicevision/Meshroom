@@ -7,7 +7,7 @@ from enum import Enum
 from threading import Thread, Event, Lock
 from multiprocessing.pool import ThreadPool
 
-from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
+from PySide6.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
 
 from meshroom import multiview
 from meshroom.common.qt import QObjectListModel

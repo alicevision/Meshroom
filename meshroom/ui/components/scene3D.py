@@ -1,9 +1,9 @@
 from math import acos, pi, sqrt
 
-from PySide2.QtCore import QObject, Slot, QSize, Signal, QPointF
-from PySide2.Qt3DCore import Qt3DCore
-from PySide2.Qt3DRender import Qt3DRender
-from PySide2.QtGui import QVector3D, QQuaternion, QVector2D, QVector4D, QMatrix4x4
+from PySide6.QtCore import QObject, Slot, QSize, Signal, QPointF
+from PySide6.Qt3DCore import Qt3DCore
+from PySide6.Qt3DRender import Qt3DRender
+from PySide6.QtGui import QVector3D, QQuaternion, QVector2D, QVector4D, QMatrix4x4
 
 from meshroom.ui.utils import makeProperty
 

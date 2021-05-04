@@ -50,10 +50,7 @@ FocusScope {
                     if(!Filepath.urlToString(source).endsWith("status"))
                         return;
 
-                    var xhr = new XMLHttpRequest;
-                    xhr.open("GET", source);
-
-                    xhr.onreadystatechange = function() {
+                    Request.get(source, function(xhr) {
                         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
                             // console.warn("StatusListModel: read valid file")
                             if(lastModified === undefined || lastModified !== xhr.getResponseHeader('Last-Modified')) {
@@ -88,8 +85,7 @@ FocusScope {
                             lastModified = undefined;
                             statusListModel.clear();
                         }
-                    };
-                    xhr.send();
+                    })
                 }
             }
 

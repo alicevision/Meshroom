@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.3
 import Qt.labs.platform 1.0 as Platform
 import ImageGallery 1.0
@@ -52,17 +51,18 @@ Item {
 
     SystemPalette { id: activePalette }
 
-    Controls1.SplitView {
+    SplitView {
         anchors.fill: parent
 
-        Controls1.SplitView {
+        SplitView {
             orientation: Qt.Vertical
-            Layout.fillHeight: true
-            Layout.minimumWidth: imageGallery.defaultCellSize
+            SplitView.fillHeight: true
+            SplitView.preferredWidth : Math.round(parent.width * 0.17)
+            SplitView.minimumWidth: imageGallery.defaultCellSize
 
             ImageGallery {
                 id: imageGallery
-                Layout.fillHeight: true
+                SplitView.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
                 cameraInit: reconstruction.cameraInit
@@ -74,15 +74,14 @@ Item {
             LiveSfmView {
                 visible: settings_UILayout.showLiveReconstruction
                 reconstruction: root.reconstruction
-                Layout.fillWidth: true
-                Layout.preferredHeight: childrenRect.height
+                SplitView.fillWidth: true
+                SplitView.preferredHeight: childrenRect.height
             }
         }
         Panel {
             title: "Image Viewer"
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-            Layout.minimumWidth: 50
+            SplitView.fillWidth: true
+            SplitView.minimumWidth: 50
             loading: viewer2D.loadingModules.length > 0
             loadingText: loading ? "Loading " + viewer2D.loadingModules : ""
 
@@ -148,10 +147,10 @@ Item {
         Panel {
             title: "3D Viewer"
             implicitWidth: Math.round(parent.width * 0.45)
-            Layout.minimumWidth: 20
-            Layout.minimumHeight: 80
+            SplitView.minimumWidth: 20
+            SplitView.minimumHeight: 80
 
-            Controls1.SplitView {
+            SplitView {
                 anchors.fill: parent
                 Viewer3D {
                     id: viewer3D

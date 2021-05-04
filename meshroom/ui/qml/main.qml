@@ -6,7 +6,6 @@ import QtQuick.Window 2.3
 import QtQml.Models 2.2
 
 import Qt.labs.platform 1.0 as Platform
-import QtQuick.Dialogs 1.3
 
 import Qt.labs.settings 1.0
 import GraphEditor 1.0
@@ -312,8 +311,7 @@ ApplicationWindow {
     FileDialog {
         id: importFilesDialog
         title: "Import Images"
-        selectExisting: true
-        selectMultiple: true
+        fileMode: FileDialog.OpenFiles
         nameFilters: []
         onAccepted: {
             console.warn("importFilesDialog fileUrls: " + importFilesDialog.fileUrls)

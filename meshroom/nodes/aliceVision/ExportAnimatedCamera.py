@@ -100,5 +100,13 @@ Based on the input image filenames, it will recognize the input video sequence t
             group='',  # exclude from command line
             uid=[],
         ),
+        desc.File(
+            name='outputUndistorted',
+            label='Output Undistorted images Filepath',
+            description='Output Undistorted images.',
+            value=desc.Node.internalFolder + 'undistort',
+            group='',  # exclude from command line
+            uid=[],
+        ),
         ]
 

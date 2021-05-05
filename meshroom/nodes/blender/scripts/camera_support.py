@@ -69,27 +69,45 @@ def main():
 
     #Clear Current Scene
     try:
-        print(bpy.data.objects[0])
-        print(bpy.data.objects[1])
-        print(bpy.data.objects[2])
         for objects in bpy.data.objects:
             bpy.data.objects.remove(objects)
-        print(bpy.data.objects)
     except:
         print("Error: While clearing current scene")
 
 
-    #import abc (Animated Camera)
+    #Place the particle cube
 
+    cube = bpy.data.meshes['Cube']
+    objectsCube = bpy.data.objects.new(name="Cube", object_data=cube)
+
+    objectsCube.scale = mathutils.Vector((0.3, 0.3, 0.3))
+    objectsCube.location = mathutils.Vector((0, -2.0, -1000))
+    bpy.context.scene.collection.objects.link(objectsCube)
+
+    # import Undistorted Images
+
+    undis_imgs = []
+    try:
+        files = os.listdir(args.undisto_images)
+        for f in files :
+            if f.endswith(".exr") :
+                undis_imgs.append({"name":f})
+    except:
+        print("Error: while importing the undistorted images.")
+
+    #import abc (Animated Camera)
+    cam_name = ""
     try:
         bpy.ops.wm.alembic_import(filepath=args.SFM_cam_path)
         animated_cams = bpy.context.selected_editable_objects[:] #Contains ['animxform_RJBframe_SONY_ILCE-7M3', 'mvgCameras', 'mvgCamerasUndefined', 'mvgPointCloud', 'mvgCloud', 'mvgRoot']
-        animated_cam_obj = animated_cams[1] ## scene.object
-        animated_cam_RJB = animated_cams[0]
         for obj in animated_cams:
-            if obj.data and obj.data.type == 'PERSP':	
+            if obj.data and obj.data.type == 'PERSP':
                 bpy.context.scene.collection.objects.link(obj)
+                bpy.context.view_layer.objects.active = obj
                 bpy.context.scene.camera = obj
+                #bpy.ops.image.open(directory=args.undisto_images, files=undis_imgs, show_multiview=False)
+                obj.data.show_background_images = True
+
 
     except:
         print("Error: while importing the alembic file (Animated Camera).")
@@ -101,37 +119,28 @@ def main():
     try:
         bpy.ops.wm.alembic_import(filepath=args.SFM_Data)
         all_abc_info = bpy.context.selected_editable_objects[:] #Contains ['mvgCameras', 'mvgCamerasUndefined', 'mvgPointCloud', 'mvgCloud', 'mvgRoot']
-        pointCloud = all_abc_info[len(all_abc_info) - 3]
         for obj in all_abc_info:
             if obj.name == 'mvgPointCloud.001':
                 bpy.context.scene.collection.objects.link(obj)
-
+                bpy.context.view_layer.objects.active = obj
+                obj.modifiers.new("ParticleSystem", "PARTICLE_SYSTEM")
+                particle_system = bpy.data.particles["ParticleSystem"]
+                particle_system.render_type = 'OBJECT'
+                particle_system.instance_object = bpy.data.objects["Cube"]
+                particle_system.emit_from = 'VERT'
+                particle_system.count = 4000   #Modulation of numbers in the node
+                particle_system.frame_end = 1.0
+                particle_system.use_emit_random = False
+                particle_system.particle_size = 0.02
+                particle_system.physics_type = 'NO'
+                
     except:
-        print("Error: while importing the alembic file (sfm Data).")
-
-
-
-    # import Undistorted Images
-
-    undis_imgs = []
-    try:
-        files = os.listdir(args.undisto_images)
-        for f in files :
-            if f.endswith(".exr") :                
-                undis_imgs.append(bpy.ops.image.open(filepath=args.undisto_images + '/' + f))
-    except:
-        print("Error: while importing the undistorted images.")
-
-
-    cube = bpy.data.meshes['Cube']
-    objects = bpy.data.objects.new(name="Cube", object_data=cube)
-    bpy.context.scene.collection.objects.link(objects)
-
+        print("Error: while importing the alembic file (Cloud Point).")
 
     ## Starts the rendering and launchs it with a blender animator player
 
     try:
-        bpy.context.scene.render.image_settings.file_format = 'FFMPEG' # Changes to video
+        bpy.context.scene.render.image_settings.file_format = 'FFMPEG'
         bpy.context.scene.render.filepath = args.output_path + '/render.mkv'
         bpy.ops.render.render(animation=True)
         bpy.ops.render.play_rendered_anim()

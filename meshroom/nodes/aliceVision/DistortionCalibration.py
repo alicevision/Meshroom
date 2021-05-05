@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = '2.0'
 
 from meshroom.core import desc
 
@@ -15,21 +15,21 @@ class DistortionCalibration(desc.CommandLineNode):
         desc.File(
             name='input',
             label='SfmData',
-            description="SfmData File",
+            description='SfmData File',
             value='',
             uid=[0],
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
-                name="lensGridImage",
-                label="Lens Grid Image",
-                description="",
-                value="",
+                name='lensGridImage',
+                label='Lens Grid Image',
+                description='',
+                value='',
                 uid=[0],
             ),
-            name="lensGrid",
-            label="Lens Grid Images",
-            description="Lens grid images to estimate the optical distortions."
+            name='lensGrid',
+            label='Lens Grid Images',
+            description='Lens grid images to estimate the optical distortions.',
         ),
         desc.ChoiceParam(
             name='verboseLevel',

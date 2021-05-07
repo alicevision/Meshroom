@@ -32,7 +32,12 @@ def main():
         "--sfMCameraPath", dest="SFM_cam_path", metavar='FILE', required=True,
         help="This text will be used to render an image",
     )
-    
+
+    parser.add_argument(
+        "--cloudPointDensity", dest="Cloud_Point_Density", type=float, required=True,
+        help="Number of point from the cloud rendered",
+    )
+
     parser.add_argument(
         "--undistortedImages", dest="undisto_images", metavar='FILE', required=True,
         help="Save the generated file to the specified path",
@@ -56,6 +61,11 @@ def main():
 
     if not args.undisto_images:
         print("Error: --undisto_images argument not given, aborting.")
+        parser.print_help()
+        return
+        
+    if not args.Cloud_Point_Density:
+        print("Error: --Cloud_Point_Density argument not given, aborting.")
         parser.print_help()
         return
 
@@ -106,6 +116,7 @@ def main():
                 bpy.context.view_layer.objects.active = obj
                 bpy.context.scene.camera = obj
                 #bpy.ops.image.open(directory=args.undisto_images, files=undis_imgs, show_multiview=False)
+                bpy.ops.image.open(filepath=args.undisto_images + "985078214_RJB05565.exr", directory=args.undisto_images, files=undis_imgs, relative_path=True, show_multiview=False)
                 obj.data.show_background_images = True
 
 
@@ -126,9 +137,10 @@ def main():
                 obj.modifiers.new("ParticleSystem", "PARTICLE_SYSTEM")
                 particle_system = bpy.data.particles["ParticleSystem"]
                 particle_system.render_type = 'OBJECT'
+                
                 particle_system.instance_object = bpy.data.objects["Cube"]
                 particle_system.emit_from = 'VERT'
-                particle_system.count = 4000   #Modulation of numbers in the node
+                particle_system.count = 4000#args.Cloud_Point_Density * len(obj.vertices.values())
                 particle_system.frame_end = 1.0
                 particle_system.use_emit_random = False
                 particle_system.particle_size = 0.02

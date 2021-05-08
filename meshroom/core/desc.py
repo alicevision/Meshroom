@@ -520,14 +520,15 @@ class CommandLineNode(Node):
 
 
 class Logger(logging.Logger):
-    """A subclass of `logging.Logger` that:
+    """
+    A subclass of `logging.Logger` that:
 
-    * provides a context manager
-    * logs any exception raised in the context manager
-    * sets the verbose level from the node option
-    * handles formatting
-    * handles the log file (clearing, adding handler)
-    * provides methods to handle a progress bar
+    - provides a context manager
+    - logs any exception raised in the statement body
+    - sets the verbose level from the node option
+    - handles formatting
+    - handles the log file (clearing, adding handler)
+    - provides methods to handle a progress bar
     """
     class Formatter(logging.Formatter):
         """For internal use only."""
@@ -562,13 +563,15 @@ class Logger(logging.Logger):
             handler.close()
 
     def makeProgressBar(self, end, message=''):
-        """Make a new progress bar.
+        """
+        Make a new progress bar.
 
         Args:
             end: the highest possible value
             message (optional): title of the progress bar
         """
-        assert end > 0
+        if end <= 0:
+            raise ValueError('Progress end {} must be more than 0'.format(end))
 
         self.progressEnd = end
         self.currentProgressTics = 0
@@ -585,7 +588,8 @@ class Logger(logging.Logger):
             self.progressBarPosition = content.rfind('\n')
 
     def updateProgressBar(self, value):
-        """Update the current progress bar with the latest value.
+        """
+        Update the current progress bar with the latest value.
 
         Args:
             value: can be equal to or greater than the current value

@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 import glob
 import os
@@ -11,9 +11,7 @@ from meshroom.core import desc
 
 
 class BufferReader(io.BytesIO):
-    """
-    I/O wrapper to update progress bar while the file is being uploaded.
-    """
+    """I/O wrapper to update progress bar while the file is being uploaded."""
     def __init__(self, buffer, logger, stopped):
         self._logger = logger
         self._stopped = stopped
@@ -160,6 +158,26 @@ Upload a textured mesh on Sketchfab.
             uid=[0],
         ),
         desc.ChoiceParam(
+            name='compressionMethod',
+            label='Compression Method',
+            description='Use stored for no compression. Bzip2 is recommended for best speed and compression ratio.',
+            value='bzip2',
+            values=['stored', 'deflated', 'bzip2', 'lzma'],
+            exclusive=True,
+            uid=[0],
+            advanced=True,
+        ),
+        desc.IntParam(
+            name='compressionLevel',
+            label='Compression Level',
+            description='A higher compression level results in a smaller file size but it will take longer to compress. Only applies to deflated and bzip2 methods.',
+            value=1,
+            range=(1, 9, 1),
+            uid=[0],
+            advanced=True,
+            enabled=lambda node: node.compressionMethod.value in ['deflated', 'bzip2'],
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='''verbosity level (critical, error, warning, info, debug).''',
@@ -173,21 +191,17 @@ Upload a textured mesh on Sketchfab.
     def upload(self, apiToken, modelFile, data, logger):
         modelEndpoint = 'https://api.sketchfab.com/v3/models'
         f = open(modelFile, 'rb')
-        file = {'modelFile': (os.path.basename(modelFile), f.read())}
-        file.update(data)
+        uploadData = {'modelFile': (os.path.basename(modelFile), f.read())}
+        uploadData.update(data)
         f.close()
-        (files, contentType) = requests.packages.urllib3.filepost.encode_multipart_formdata(file)
+        (files, contentType) = requests.packages.urllib3.filepost.encode_multipart_formdata(uploadData)
         headers = {'Authorization': 'Token {}'.format(apiToken), 'Content-Type': contentType}
         body = BufferReader(files, logger, self.stopped)
         logger.info('Uploading...')
         try:
-            r = requests.post(
-                modelEndpoint, **{'data': body, 'headers': headers})
+            r = requests.post(modelEndpoint, **{'data': body, 'headers': headers})
         except requests.exceptions.RequestException as e:
             raise RuntimeError(u'An error occured: {}'.format(e))
-        finally:
-            os.remove(modelFile)
-            logger.debug('Deleted file: '+modelFile)
         if r.status_code != requests.codes.created:
             raise RuntimeError(u'Upload failed with error: {}'.format(r.json()))
 
@@ -217,7 +231,7 @@ Upload a textured mesh on Sketchfab.
             if len(chunk.node.description.value) > 1024:
                 raise RuntimeError('Description cannot be longer than 1024 characters.')
             tags = [ i.value.replace(' ', '-') for i in chunk.node.tags.value.values() ]
-            if all(len(i) > 48 for i in tags) and len(tags) > 0:
+            if any([len(i) > 48 for i in tags]):
                 raise RuntimeError('Tags cannot be longer than 48 characters.')
             if len(tags) > 42:
                 raise RuntimeError('Maximum of 42 separate tags.')
@@ -241,16 +255,30 @@ Upload a textured mesh on Sketchfab.
                 'Meshroom_{}.zip'.format("".join(x for x in chunk.node.title.value if x.isalnum()))) # use title in the file name for clarity, removing any non-alphanumeric characters
             files = self.resolvedPaths(chunk.node.inputFiles.value)
             logger.debug('Files to write: '+str(files))
-            with zipfile.ZipFile(uploadFile, 'w') as zf:
-                for file in files:
-                    if os.path.basename(file) in ('log', 'statistics', 'status'):
-                        logger.debug('File skipped: '+file)
-                    else:
-                        zf.write(file, os.path.basename(file))
-            logger.debug('Created file: '+uploadFile)
-            logger.info('File size: {}MB'.format(round(os.path.getsize(uploadFile)/(1024*1024), 3)))
+            logger.info('Total size of files: {}MB'.format(round(sum([os.path.getsize(path) for path in files])/(1024*1024), 3)))
 
-            self.upload(chunk.node.apiToken.value, uploadFile, data, logger)
+            try:
+                logger.info('Compressing using method {}...'.format(chunk.node.compressionMethod.value))
+                compression = {
+                    'stored': zipfile.ZIP_STORED,
+                    'deflated': zipfile.ZIP_DEFLATED,
+                    'bzip2': zipfile.ZIP_BZIP2,
+                    'lzma': zipfile.ZIP_LZMA
+                }[chunk.node.compressionMethod.value]
+                with zipfile.ZipFile(uploadFile, 'w', compression=compression, compresslevel=chunk.node.compressionLevel.value) as zf:
+                    for f in files:
+                        if os.path.basename(f) in ('log', 'statistics', 'status'):
+                            logger.debug('File skipped: '+f)
+                        else:
+                            zf.write(f, os.path.basename(f))
+                logger.debug('Created file: '+uploadFile)
+                logger.info('File size after compression: {}MB'.format(round(os.path.getsize(uploadFile)/(1024*1024), 3)))
+
+                self.upload(chunk.node.apiToken.value, uploadFile, data, logger)
+            finally:
+                if os.path.isfile(uploadFile):
+                    os.remove(uploadFile)
+                    logger.debug('Deleted file: '+uploadFile)
             logger.info('Upload successful. Your model is being processed on Sketchfab. It may take some time to show up on your "models" page.')
 
     def stopProcess(self, chunk):

@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 import os
+import re
 import mathutils
 import math
 import sys   # to get command line args
@@ -93,33 +94,45 @@ def main():
     objectsCube.scale = mathutils.Vector((0.3, 0.3, 0.3))
     objectsCube.location = mathutils.Vector((0, -2.0, -1000))
     bpy.context.scene.collection.objects.link(objectsCube)
+    bpy.data.objects['Cube'].hide_set(True)
 
     # import Undistorted Images
 
     undis_imgs = []
+    #Some of these info will be very useful in the next steps keep them in mind
+    number_of_frame = 0
+    offset = 0
+    image_name = ""
     try:
         files = os.listdir(args.undisto_images)
         for f in files :
-            if f.endswith(".exr") :
+            if f.endswith(".exr") and not f.__contains__("UVMap"):
                 undis_imgs.append({"name":f})
+        number_of_frame = len(undis_imgs)
+        image_name = undis_imgs[0]['name']
+        offset = int(re.search("_(.*).exr", image_name).group(1)[3:]) - 1
+
     except:
         print("Error: while importing the undistorted images.")
 
     #import abc (Animated Camera)
-    cam_name = ""
     try:
         bpy.ops.wm.alembic_import(filepath=args.SFM_cam_path)
-        animated_cams = bpy.context.selected_editable_objects[:] #Contains ['animxform_RJBframe_SONY_ILCE-7M3', 'mvgCameras', 'mvgCamerasUndefined', 'mvgPointCloud', 'mvgCloud', 'mvgRoot']
+        animated_cams = bpy.context.selected_editable_objects[:]
         for obj in animated_cams:
-            if obj.data and obj.data.type == 'PERSP':
+            if obj.data and obj.data.type == 'PERSP' and "anim" in obj.data.name:
                 bpy.context.scene.collection.objects.link(obj)
                 bpy.context.view_layer.objects.active = obj
                 bpy.context.scene.camera = obj
-                #bpy.ops.image.open(directory=args.undisto_images, files=undis_imgs, show_multiview=False)
-                bpy.ops.image.open(filepath=args.undisto_images + "985078214_RJB05565.exr", directory=args.undisto_images, files=undis_imgs, relative_path=True, show_multiview=False)
-                obj.data.show_background_images = True
-
-
+                bpy.ops.image.open(filepath=args.undisto_images + "/" + image_name, directory=args.undisto_images, files=undis_imgs, relative_path=True, show_multiview=False)
+                bpy.data.cameras[obj.data.name].background_images.new()
+                bpy.data.cameras[obj.data.name].show_background_images = True 
+                bpy.data.cameras[obj.data.name].background_images[0].image = bpy.data.images[image_name]
+                bpy.data.cameras[obj.data.name].background_images[0].frame_method = 'CROP'
+                bpy.data.cameras[obj.data.name].background_images[0].image_user.frame_offset = offset
+                bpy.data.cameras[obj.data.name].background_images[0].image_user.frame_duration = number_of_frame
+                bpy.data.cameras[obj.data.name].background_images[0].image_user.frame_start = 1
+                bpy.context.scene.render.film_transparent = True
     except:
         print("Error: while importing the alembic file (Animated Camera).")
 
@@ -129,7 +142,7 @@ def main():
 
     try:
         bpy.ops.wm.alembic_import(filepath=args.SFM_Data)
-        all_abc_info = bpy.context.selected_editable_objects[:] #Contains ['mvgCameras', 'mvgCamerasUndefined', 'mvgPointCloud', 'mvgCloud', 'mvgRoot']
+        all_abc_info = bpy.context.selected_editable_objects[:]
         for obj in all_abc_info:
             if obj.name == 'mvgPointCloud.001':
                 bpy.context.scene.collection.objects.link(obj)
@@ -140,7 +153,8 @@ def main():
                 
                 particle_system.instance_object = bpy.data.objects["Cube"]
                 particle_system.emit_from = 'VERT'
-                particle_system.count = 4000#args.Cloud_Point_Density * len(obj.vertices.values())
+
+                particle_system.count = int(args.Cloud_Point_Density * len(obj.data.vertices.values()))
                 particle_system.frame_end = 1.0
                 particle_system.use_emit_random = False
                 particle_system.particle_size = 0.02
@@ -148,6 +162,32 @@ def main():
                 
     except:
         print("Error: while importing the alembic file (Cloud Point).")
+
+
+    #WE HAVE TO USE THE GRAPH TO MAKE THE BACKGROUND IMAGE VISIBLE (For some reason) All explained in https://www.youtube.com/watch?v=3PoEVlObMv0
+    try:
+        bpy.context.scene.use_nodes = True 
+
+        #CREATE ALL NODES WE NEED (Color.AlphaOver, Input.Image, Distort.Scale)
+        bpy.context.scene.node_tree.nodes.new(type="CompositorNodeAlphaOver")
+        bpy.context.scene.node_tree.nodes.new(type="CompositorNodeScale")
+        bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
+
+        #SET THEM UP CORRECTLY
+        bpy.data.scenes["Scene"].node_tree.nodes["Image"].frame_duration = number_of_frame
+        bpy.data.scenes["Scene"].node_tree.nodes["Image"].frame_offset = offset
+        bpy.data.scenes["Scene"].node_tree.nodes["Scale"].space = 'RENDER_SIZE'
+        bpy.data.scenes["Scene"].node_tree.nodes["Scale"].frame_method = 'CROP'
+        bpy.context.scene.node_tree.nodes["Image"].image = bpy.data.images[image_name]
+
+        #LINKS THE NODES THAT NEEDS TO BE LINKED
+        bpy.context.scene.node_tree.links.new(bpy.context.scene.node_tree.nodes['Alpha Over'].outputs['Image'], bpy.context.scene.node_tree.nodes['Composite'].inputs['Image'])
+        #Two Inputs of AlphaOver are named "Image" so we'll use index instead
+        bpy.context.scene.node_tree.links.new(bpy.context.scene.node_tree.nodes['Render Layers'].outputs['Image'], bpy.context.scene.node_tree.nodes['Alpha Over'].inputs[2]) 
+        bpy.context.scene.node_tree.links.new(bpy.context.scene.node_tree.nodes['Scale'].outputs['Image'], bpy.context.scene.node_tree.nodes['Alpha Over'].inputs[1])
+        bpy.context.scene.node_tree.links.new(bpy.context.scene.node_tree.nodes['Image'].outputs['Image'], bpy.context.scene.node_tree.nodes['Scale'].inputs['Image'])
+    except:
+        print("Error: while composing the compositing graph.")
 
     ## Starts the rendering and launchs it with a blender animator player
 

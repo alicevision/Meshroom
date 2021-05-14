@@ -43,8 +43,8 @@ class RenderAnimatedCamera(desc.CommandLineNode):
             name='cloudPointDensity',
             label='Cloud Point Density',
             description='''Number of point from the cloud rendered''',
-            value=0.50,
-            range=(0.01, 0.75, 0.01),
+            value=0.25,
+            range=(0.01, 0.5, 0.01),
             uid=[0],
         ),
         desc.File(

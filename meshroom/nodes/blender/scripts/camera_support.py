@@ -40,6 +40,11 @@ def main():
     )
 
     parser.add_argument(
+        "--particleSize", dest="Particle_Size", type=float, required=True,
+        help="Scale of every particle used to show the cloud of point",
+    )
+
+    parser.add_argument(
         "--undistortedImages", dest="undisto_images", metavar='FILE', required=True,
         help="Save the generated file to the specified path",
     )
@@ -47,6 +52,11 @@ def main():
     parser.add_argument(
         "--outputPath", dest="output_path", metavar='FILE', required=True,
         help="Render an image to the specified path",
+    )
+
+    parser.add_argument(
+        "--particleColor", dest="Particle_Color", metavar=str, required=True,
+        help="Color of every particle used to show the cloud of point",
     )
 
     args = parser.parse_args(argv)
@@ -70,8 +80,18 @@ def main():
         parser.print_help()
         return
 
+    if not args.Particle_Size:
+        print("Error: --Particle_Size argument not given, aborting.")
+        parser.print_help()
+        return
+
     if not args.output_path:
         print("Error: --output_path argument not given, aborting.")
+        parser.print_help()
+        return
+
+    if not args.Particle_Color:
+        print("Error: --Particle_Color argument not given, aborting.")
         parser.print_help()
         return
 
@@ -84,17 +104,6 @@ def main():
             bpy.data.objects.remove(objects)
     except:
         print("Error: While clearing current scene")
-
-
-    #Place the particle cube
-
-    cube = bpy.data.meshes['Cube']
-    objectsCube = bpy.data.objects.new(name="Cube", object_data=cube)
-
-    objectsCube.scale = mathutils.Vector((0.3, 0.3, 0.3))
-    objectsCube.location = mathutils.Vector((0, -2.0, -1000))
-    bpy.context.scene.collection.objects.link(objectsCube)
-    bpy.data.objects['Cube'].hide_set(True)
 
     # import Undistorted Images
 
@@ -116,14 +125,21 @@ def main():
         print("Error: while importing the undistorted images.")
 
     #import abc (Animated Camera)
+
     try:
         bpy.ops.wm.alembic_import(filepath=args.SFM_cam_path)
         animated_cams = bpy.context.selected_editable_objects[:]
+        cam_scale = mathutils.Vector((0, 0, 0))
+        cam_location = mathutils.Vector((0, 0, 0))
+        cam_obj = None
         for obj in animated_cams:
             if obj.data and obj.data.type == 'PERSP' and "anim" in obj.data.name:
                 bpy.context.scene.collection.objects.link(obj)
                 bpy.context.view_layer.objects.active = obj
                 bpy.context.scene.camera = obj
+                cam_scale = obj.scale
+                cam_location = obj.location
+                cam_obj = obj
                 bpy.ops.image.open(filepath=args.undisto_images + "/" + image_name, directory=args.undisto_images, files=undis_imgs, relative_path=True, show_multiview=False)
                 bpy.data.cameras[obj.data.name].background_images.new()
                 bpy.data.cameras[obj.data.name].show_background_images = True 
@@ -136,7 +152,21 @@ def main():
     except:
         print("Error: while importing the alembic file (Animated Camera).")
 
-
+    #Place the particle plane
+    try:
+        plane = bpy.data.meshes.new('Plane')
+        objectsPlane = bpy.data.objects.new(name="Plane", object_data=plane)
+        bm = bmesh.new()
+        bmesh.ops.create_grid(bm, x_segments = 1, y_segments = 1, size = 1.0)
+        bm.to_mesh(plane)
+        bm.free()
+        objectsPlane.scale = mathutils.Vector((args.Particle_Size, args.Particle_Size, args.Particle_Size))
+        cam_location.y += -2.0
+        objectsPlane.location = cam_location
+        bpy.context.scene.collection.objects.link(objectsPlane)
+        bpy.data.objects['Plane'].parent = cam_obj
+    except:
+        print("Error: while setting up the particle model.")
 
     #import abc (Cloud Point)
 
@@ -151,7 +181,7 @@ def main():
                 particle_system = bpy.data.particles["ParticleSystem"]
                 particle_system.render_type = 'OBJECT'
                 
-                particle_system.instance_object = bpy.data.objects["Cube"]
+                particle_system.instance_object = bpy.data.objects["Plane"]
                 particle_system.emit_from = 'VERT'
 
                 particle_system.count = int(args.Cloud_Point_Density * len(obj.data.vertices.values()))
@@ -159,12 +189,15 @@ def main():
                 particle_system.use_emit_random = False
                 particle_system.particle_size = 0.02
                 particle_system.physics_type = 'NO'
+                particle_system.use_rotations = True
+                particle_system.use_rotation_instance = True
+                particle_system.rotation_mode = 'GLOB_X'
                 
     except:
         print("Error: while importing the alembic file (Cloud Point).")
 
 
-    #WE HAVE TO USE THE GRAPH TO MAKE THE BACKGROUND IMAGE VISIBLE (For some reason) All explained in https://www.youtube.com/watch?v=3PoEVlObMv0
+    #WE HAVE TO USE THE GRAPH TO MAKE THE BACKGROUND IMAGE VISIBLE
     try:
         bpy.context.scene.use_nodes = True 
 

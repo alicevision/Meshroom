@@ -5,8 +5,8 @@ import setuptools  # for bdist
 from cx_Freeze import setup, Executable
 import meshroom
 
-
 currentDir = os.path.dirname(os.path.abspath(__file__))
+
 
 class PlatformExecutable(Executable):
     """
@@ -51,7 +51,6 @@ if os.path.isdir(os.path.join(currentDir, "tractor")):
     build_exe_options["packages"].append("tractor")
 if os.path.isdir(os.path.join(currentDir, "simpleFarm")):
     build_exe_options["packages"].append("simpleFarm")
-
 
 if platform.system() == PlatformExecutable.Linux:
     # include required system libs
@@ -112,20 +111,21 @@ if platform.system() == PlatformExecutable.Linux:
         ]
     })
 
-meshroomExe = PlatformExecutable(
-    "meshroom/ui/__main__.py",
-    targetName="Meshroom",
-    icons={PlatformExecutable.Windows: "meshroom/ui/img/meshroom.ico"}
-)
-
-meshroomPhotog = PlatformExecutable(
-    "bin/meshroom_batch"
-)
-
-meshroomCompute = PlatformExecutable(
-    "bin/meshroom_compute"
-)
-
+executables = [
+    # GUI
+    PlatformExecutable(
+        "meshroom/ui/__main__.py",
+        targetName="Meshroom",
+        icons={PlatformExecutable.Windows: "meshroom/ui/img/meshroom.ico"}
+    ),
+    # Command line
+    PlatformExecutable("bin/meshroom_batch"),
+    PlatformExecutable("bin/meshroom_compute"),
+    PlatformExecutable("bin/meshroom_newNodeType"),
+    PlatformExecutable("bin/meshroom_statistics"),
+    PlatformExecutable("bin/meshroom_status"),
+    PlatformExecutable("bin/meshroom_submit"),
+]
 
 setup(
     name="Meshroom",
@@ -141,5 +141,5 @@ setup(
     ],
     version=meshroom.__version__,
     options={"build_exe": build_exe_options},
-    executables=[meshroomExe, meshroomPhotog, meshroomCompute],
+    executables=executables,
 )

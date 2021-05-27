@@ -21,9 +21,16 @@ Based on the input image filenames, it will recognize the input video sequence t
             uid=[0],
         ),
         desc.File(
-            name='viewFilter',
+            name='sfmDataFilter',
             label='SfMData Filter',
-            description='A SfMData file use as filter.',
+            description='Filter out cameras from the export if they are part of this SfMData. Export all cameras if empty.',
+            value='',
+            uid=[0],
+        ),
+        desc.File(
+            name='viewFilter',
+            label='View Filter',
+            description='Select the cameras to export using an expression based on the image filepath. Export all cameras if empty.',
             value='',
             uid=[0],
         ),

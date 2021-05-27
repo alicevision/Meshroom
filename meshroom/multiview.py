@@ -472,7 +472,7 @@ def sfmAugmentation(graph, sourceSfm, withMVS=False):
     return sfmNodes, mvsNodes
 
 
-def cameraTrackingPipeline(graph):
+def cameraTrackingPipeline(graph, sourceSfm=None):
     """
     Instantiate a camera tracking pipeline inside 'graph'.
 
@@ -484,30 +484,33 @@ def cameraTrackingPipeline(graph):
     """
 
     with GraphModification(graph):
-        
-        cameraInit, featureExtraction, imageMatching, featureMatching, structureFromMotion = sfmPipeline(graph)
+        if sourceSfm is None:
+            cameraInitT, featureExtractionT, imageMatchingT, featureMatchingT, structureFromMotionT = sfmPipeline(graph)
+        else:
+            sfmNodes, _ = sfmAugmentation(graph, sourceSfm)
+            cameraInitT, featureExtractionT, imageMatchingT, featureMatchingT, structureFromMotionT = sfmNodes
 
-        imageMatching.attribute("nbMatches").value = 5  # voctree nb matches
-        imageMatching.attribute("nbNeighbors").value = 10
+        imageMatchingT.attribute("nbMatches").value = 5  # voctree nb matches
+        imageMatchingT.attribute("nbNeighbors").value = 10
 
-        structureFromMotion.attribute("minNumberOfMatches").value = 0
-        structureFromMotion.attribute("minInputTrackLength").value = 5
-        structureFromMotion.attribute("minNumberOfObservationsForTriangulation").value = 3
-        structureFromMotion.attribute("minAngleForTriangulation").value = 1.0
-        structureFromMotion.attribute("minAngleForLandmark").value = 0.5
+        structureFromMotionT.attribute("minNumberOfMatches").value = 0
+        structureFromMotionT.attribute("minInputTrackLength").value = 5
+        structureFromMotionT.attribute("minNumberOfObservationsForTriangulation").value = 3
+        structureFromMotionT.attribute("minAngleForTriangulation").value = 1.0
+        structureFromMotionT.attribute("minAngleForLandmark").value = 0.5
 
-        exportAnimatedCamera = graph.addNewNode('ExportAnimatedCamera', input=structureFromMotion.output)
+        exportAnimatedCameraT = graph.addNewNode('ExportAnimatedCamera', input=structureFromMotionT.output)
 
     # store current pipeline version in graph header
     graph.header.update({'pipelineVersion': __version__})
 
     return [
-        cameraInit,
-        featureExtraction,
-        imageMatching,
-        featureMatching,
-        structureFromMotion,
-        exportAnimatedCamera,
+        cameraInitT,
+        featureExtractionT,
+        imageMatchingT,
+        featureMatchingT,
+        structureFromMotionT,
+        exportAnimatedCameraT,
         ]
 
 
@@ -524,6 +527,24 @@ def cameraTracking(inputImages=list(), inputViewpoints=list(), inputIntrinsics=l
         if output:
             exportNode = trackingNodes[-1]
             graph.addNewNode('Publish', output=output, inputFiles=[exportNode.output])
+
+    return graph
+
+
+def photogrammetryAndCameraTracking(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output='', graph=None):
+    if not graph:
+        graph = Graph('Photogrammetry And Camera Tracking')
+    with GraphModification(graph):
+        cameraInit, featureExtraction, imageMatching, featureMatching, structureFromMotion = sfmPipeline(graph)
+
+        cameraInitT, featureExtractionT, imageMatchingMultiT, featureMatchingT, structureFromMotionT, exportAnimatedCameraT = cameraTrackingPipeline(graph, structureFromMotion)
+
+        cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        cameraInit.viewpoints.extend(inputViewpoints)
+        cameraInit.intrinsics.extend(inputIntrinsics)
+
+        if output:
+            graph.addNewNode('Publish', output=output, inputFiles=[exportAnimatedCameraT.output])
 
     return graph
 

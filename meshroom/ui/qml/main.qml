@@ -408,6 +408,13 @@ ApplicationWindow {
             }
             Menu {
                 title: "New Pipeline"
+                TextMetrics {
+                    id: textMetrics
+                    font: action_PG_CT.font
+                    elide: Text.ElideNone
+                    text: action_PG_CT.text
+                }
+                implicitWidth: textMetrics.width + 10  // largest text width + margin
                 Action {
                     text: "Photogrammetry"
                     onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetry") })
@@ -419,6 +426,11 @@ ApplicationWindow {
                 Action {
                     text: "Panorama Fisheye HDR"
                     onTriggered: ensureSaved(function() { _reconstruction.new("panoramafisheyehdr") })
+                }
+                Action {
+                    id: action_PG_CT
+                    text: "Photogrammetry and Camera Tracking (experimental)"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetryandcameratracking") })
                 }
                 Action {
                     text: "Camera Tracking (experimental)"

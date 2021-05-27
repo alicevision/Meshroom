@@ -48,9 +48,16 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
         desc.ChoiceParam(
             name='method',
             label='Method',
-            description='Method used to select the image pairs to match.',
-            value='VocabularyTree',
-            values=['VocabularyTree', 'Sequential', 'SequentialAndVocabularyTree','Exhaustive','Frustum'],
+            description='Method used to select the image pairs to match:\n'
+            ' * VocabularyTree:  It uses image retrieval techniques to find images that share some content without the cost of resolving all \n'
+            'feature matches in details. Each image is represented in a compact image descriptor which allows to compute the distance between all \n'
+            'images descriptors very efficiently. If your scene contains less than "Voc Tree: Minimal Number of Images", all image pairs will be selected.\n'
+            ' * SequentialAndVocabularyTree:  Combines sequential approach with VocTree to enable connections between keyframes at different times.\n'
+            ' * Exhaustive: Export all image pairs.\n'
+            ' * Frustum: If images have known poses, computes the intersection between cameras frustums to create the list of image pairs.\n'
+            ' * FrustumOrVocabularyTree: If images have known poses, use frustum intersection else use VocabularyTree.\n',
+            value='SequentialAndVocabularyTree',
+            values=['VocabularyTree', 'SequentialAndVocabularyTree', 'Exhaustive', 'Frustum'],
             exclusive=True,
             uid=[0],
         ),
@@ -60,6 +67,7 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             description='Input name for the vocabulary tree file.',
             value=os.environ.get('ALICEVISION_VOCTREE', ''),
             uid=[],
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.File(
             name='weights',
@@ -68,6 +76,7 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             value='',
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.ChoiceParam(
             name='matchingMode',
@@ -86,6 +95,7 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             range=(0, 500, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.IntParam(
             name='maxDescriptors',
@@ -95,24 +105,27 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
             range=(0, 100000, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.IntParam(
             name='nbMatches',
             label='Voc Tree: Nb Matches',
             description='The number of matches to retrieve for each image (If 0 it will retrieve all the matches).',
-            value=50,
+            value=40,
             range=(0, 1000, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),
         desc.IntParam(
             name='nbNeighbors',
             label='Sequential: Nb Neighbors',
             description='The number of neighbors to retrieve for each image (If 0 it will retrieve all the neighbors).',
-            value=50,
+            value=5,
             range=(0, 1000, 1),
             uid=[0],
             advanced=True,
+            enabled=lambda node: 'Sequential' in node.method.value,
         ),
         desc.ChoiceParam(
             name='verboseLevel',

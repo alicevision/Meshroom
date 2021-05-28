@@ -16,7 +16,7 @@ from meshroom.core.graph import Graph, Edge
 
 from meshroom.core.taskManager import TaskManager
 
-from meshroom.core.node import NodeChunk, Node, Status, CompatibilityNode, Position
+from meshroom.core.node import NodeChunk, Node, Status, ExecMode, CompatibilityNode, Position
 from meshroom.core import submitters
 from meshroom.ui import commands
 from meshroom.ui.utils import makeProperty
@@ -269,7 +269,7 @@ class UIGraph(QObject):
         self._modificationCount = 0
         self._chunksMonitor = ChunksMonitor(parent=self)
         self._computeThread = Thread()
-        self._running = self._submitted = False
+        self._computingLocally = self._submitted = False
         self._sortedDFSChunks = QObjectListModel(parent=self)
         self._layout = GraphLayout(self)
         self._selectedNode = None
@@ -432,10 +432,10 @@ class UIGraph(QObject):
 
     def updateGraphComputingStatus(self):
         # update graph computing status
-        running = any([ch.status.status == Status.RUNNING for ch in self._sortedDFSChunks])
+        computingLocally = any([ch.status.execMode == ExecMode.LOCAL and ch.status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
         submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])
-        if self._running != running or self._submitted != submitted:
-            self._running = running
+        if self._computingLocally != computingLocally or self._submitted != submitted:
+            self._computingLocally = computingLocally
             self._submitted = submitted
             self.computeStatusChanged.emit()
 
@@ -449,7 +449,13 @@ class UIGraph(QObject):
 
     def isComputingLocally(self):
         """ Whether this graph is being computed locally (i.e computation can be stopped). """
-        return self._taskManager._thread.isRunning()
+        ## One solution could be to check if the thread is still running,
+        # but the latency in creating/stopping the thread can be off regarding the update signals.
+        # isRunningThread = self._taskManager._thread.isRunning()
+        ## Another solution is to retrieve the current status directly from all chunks status
+        # isRunning = self._taskManager.hasRunningChunks()
+        ## For performance reason, we use a precomputed value updated in updateGraphComputingStatus:
+        return self._computingLocally
 
     def push(self, command):
         """ Try and push the given command to the undo stack.

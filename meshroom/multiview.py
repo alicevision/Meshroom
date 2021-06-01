@@ -493,8 +493,8 @@ def cameraTrackingPipeline(graph, sourceSfm=None):
         distortionCalibrationT = graph.addNewNode('DistortionCalibration',
                                                   input=cameraInitT.output)
 
-        graph.removeEdge(structureFromMotionT.input)
-        graph.addEdge(distortionCalibrationT.outSfMData, structureFromMotionT.input)
+        graph.removeEdge(featureMatchingT.input)
+        graph.addEdge(distortionCalibrationT.outSfMData, featureMatchingT.input)
 
         imageMatchingT.attribute("nbMatches").value = 5  # voctree nb matches
         imageMatchingT.attribute("nbNeighbors").value = 10
@@ -506,6 +506,8 @@ def cameraTrackingPipeline(graph, sourceSfm=None):
         structureFromMotionT.attribute("minAngleForLandmark").value = 0.5
 
         exportAnimatedCameraT = graph.addNewNode('ExportAnimatedCamera', input=structureFromMotionT.output)
+        if sourceSfm:
+            graph.addEdge(sourceSfm.output, exportAnimatedCameraT.sfmDataFilter)
 
     # store current pipeline version in graph header
     graph.header.update({'pipelineVersion': __version__})

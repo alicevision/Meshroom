@@ -12,7 +12,7 @@ imageExtensions = (
     # cineon:
     '.cin',
     # dds
-    'dds'
+    '.dds',
     # dpx:
     '.dpx',
     # gif:
@@ -490,6 +490,12 @@ def cameraTrackingPipeline(graph, sourceSfm=None):
             sfmNodes, _ = sfmAugmentation(graph, sourceSfm)
             cameraInitT, featureExtractionT, imageMatchingT, featureMatchingT, structureFromMotionT = sfmNodes
 
+        distortionCalibrationT = graph.addNewNode('DistortionCalibration',
+                                                  input=cameraInitT.output)
+
+        graph.removeEdge(featureMatchingT.input)
+        graph.addEdge(distortionCalibrationT.outSfMData, featureMatchingT.input)
+
         imageMatchingT.attribute("nbMatches").value = 5  # voctree nb matches
         imageMatchingT.attribute("nbNeighbors").value = 10
 
@@ -500,6 +506,8 @@ def cameraTrackingPipeline(graph, sourceSfm=None):
         structureFromMotionT.attribute("minAngleForLandmark").value = 0.5
 
         exportAnimatedCameraT = graph.addNewNode('ExportAnimatedCamera', input=structureFromMotionT.output)
+        if sourceSfm:
+            graph.addEdge(sourceSfm.output, exportAnimatedCameraT.sfmDataFilter)
 
     # store current pipeline version in graph header
     graph.header.update({'pipelineVersion': __version__})
@@ -509,6 +517,7 @@ def cameraTrackingPipeline(graph, sourceSfm=None):
         featureExtractionT,
         imageMatchingT,
         featureMatchingT,
+        distortionCalibrationT,
         structureFromMotionT,
         exportAnimatedCameraT,
         ]
@@ -537,7 +546,7 @@ def photogrammetryAndCameraTracking(inputImages=list(), inputViewpoints=list(), 
     with GraphModification(graph):
         cameraInit, featureExtraction, imageMatching, featureMatching, structureFromMotion = sfmPipeline(graph)
 
-        cameraInitT, featureExtractionT, imageMatchingMultiT, featureMatchingT, structureFromMotionT, exportAnimatedCameraT = cameraTrackingPipeline(graph, structureFromMotion)
+        cameraInitT, featureExtractionT, imageMatchingMultiT, featureMatchingT, distortionCalibrationT, structureFromMotionT, exportAnimatedCameraT = cameraTrackingPipeline(graph, structureFromMotion)
 
         cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
         cameraInit.viewpoints.extend(inputViewpoints)

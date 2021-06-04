@@ -15,6 +15,8 @@ Item {
     readonly property variant graph: uigraph ? uigraph.graph : null  /// core graph contained in ui graph
     property variant nodeTypesModel: null  /// the list of node types that can be instantiated
 
+    property var edgeAboutToBeRemoved: undefined
+
     property var _attributeToDelegate: ({})
 
     // signals
@@ -314,7 +316,7 @@ Item {
                     property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge == edge)
 
                     edge: object
-                    color: inFocus ? activePalette.highlight : activePalette.text
+                    color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
                     thickness: inFocus ? 2 : 1
                     opacity: 0.7
                     point1x: isValidEdge ? src.globalX + src.outputAnchorPos.x : 0
@@ -479,8 +481,10 @@ Item {
                 id: nodeRepeater
 
                 model: root.graph ? root.graph.nodes : undefined
+
                 property bool loaded: model ? count === model.count : false
                 property bool dragging: false
+                property var temporaryEdgeAboutToBeRemoved: undefined
 
                 delegate: Node {
                     id: nodeDelegate
@@ -529,6 +533,30 @@ Item {
 
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null
+
+                    onEdgeAboutToBeRemoved: {
+                        /*
+                        Sometimes the signals are not in the right order
+                        because of weird Qt/QML update order (next DropArea
+                        entered signal before previous DropArea exited signal)
+                        so edgeAboutToBeRemoved must be set to undefined before
+                        it can be set to another attribute object.
+                        */
+                        if (input === undefined) {
+                            if (nodeRepeater.temporaryEdgeAboutToBeRemoved === undefined) {
+                                root.edgeAboutToBeRemoved = input
+                            } else {
+                                root.edgeAboutToBeRemoved = nodeRepeater.temporaryEdgeAboutToBeRemoved
+                                nodeRepeater.temporaryEdgeAboutToBeRemoved = undefined
+                            }
+                        } else {
+                            if (root.edgeAboutToBeRemoved === undefined) {
+                                root.edgeAboutToBeRemoved = input
+                            } else {
+                                nodeRepeater.temporaryEdgeAboutToBeRemoved = input
+                            }
+                        }
+                    }
 
                     onPositionChanged: {
                         if (dragging && uigraph.selectedNodes.contains(node)) {

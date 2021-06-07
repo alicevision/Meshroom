@@ -48,7 +48,7 @@ AliceVision.FloatImageViewer {
 
     property bool isGridDisplayed : false;
     property int gridOpacity : 100;
-    property color gridColor : "#FF0000";
+    property color gridColorQML : "#FF0000";
 
     property bool isCtrlPointsDisplayed : true;
     property int subdivisions: 4;
@@ -127,11 +127,11 @@ AliceVision.FloatImageViewer {
     }
 
     onGridOpacityChanged: {
-        root.setGridColorQML(Qt.rgba(gridColor.r, gridColor.g, gridColor.b, gridOpacity/100));
+        root.surface.gridColor = Qt.rgba(gridColorQML.r, gridColorQML.g, gridColorQML.b, gridOpacity/100);;
     }
 
-    onGridColorChanged: {
-        root.setGridColorQML(Qt.rgba(gridColor.r, gridColor.g, gridColor.b, gridOpacity/100));
+    onGridColorQMLChanged: {
+        root.surface.gridColor = gridColorQML;
     }
 
     channelMode: {

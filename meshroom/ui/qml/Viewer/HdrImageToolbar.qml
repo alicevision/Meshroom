@@ -10,9 +10,15 @@ FloatingPane {
     padding: 5
     radius: 0
 
-    property real gainDefaultValue: 1
-    property real gammaDefaultValue: 1
-    property real slidersPowerValue: 4
+    property real gainDefaultValue: 1.0
+    property real gammaDefaultValue: 1.0
+
+    function resetDefaultValues(){
+        gainCtrl.value = root.gainDefaultValue;
+        gammaCtrl.value = root.gammaDefaultValue;
+    }
+
+    property real slidersPowerValue: 4.0
     property real gainValue: Math.pow(gainCtrl.value, slidersPowerValue)
     property real gammaValue: Math.pow(gammaCtrl.value, slidersPowerValue)
     property string channelModeValue: channelsCtrl.value

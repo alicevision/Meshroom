@@ -188,6 +188,9 @@ FocusScope {
             anchors.margins: 0
             visible: displayImageToolBarAction.checked && displayImageToolBarAction.enabled
             Layout.fillWidth: true
+            onVisibleChanged: {
+                resetDefaultValues();
+            }
             colorRGBA: {
                 if(!floatImageViewerLoader.item ||
                    floatImageViewerLoader.item.status !== Image.Ready)
@@ -203,6 +206,7 @@ FocusScope {
                 // console.warn("floatImageViewerLoader: pixel value at (" << floatImageViewerLoader.item.mouseX << "," << floatImageViewerLoader.item.mouseY << "): ", pix);
                 return pix;
             }
+
         }
 
         LensDistortionToolbar {
@@ -244,7 +248,7 @@ FocusScope {
                 // qtAliceVision Image Viewer
                 Loader {
                     id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && _reconstruction.activeNodes.get('sfm').node
+                    active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active && _reconstruction.activeNodes.get('sfm').node
                     visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
 
@@ -289,7 +293,7 @@ FocusScope {
                 // qtAliceVision Panorama Viewer
                 Loader {
                     id: panoramaViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.usePanoramaViewer && !floatImageViewerLoader.active && _reconstruction.activeNodes.get('sfm').node
+                    active: root.aliceVisionPluginAvailable && root.usePanoramaViewer && _reconstruction.activeNodes.get('sfm').node
                     visible: (panoramaViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
 
@@ -792,9 +796,8 @@ FocusScope {
                             checked: false
                             enabled: root.aliceVisionPluginAvailable
                             onCheckedChanged : {
-                                if((displayLensDistortionViewer.checked || displayPanoramaViewer.checked) && checked){
+                                if(displayLensDistortionViewer.checked && checked){
                                     displayLensDistortionViewer.checked = false;
-                                    displayPanoramaViewer.checked = false;
                                 }
                             }
                         }
@@ -856,8 +859,7 @@ FocusScope {
                             checked: false
                             enabled: activeNode && isComputed
                             onCheckedChanged : {
-                                if((displayHDR.checked || displayLensDistortionViewer.checked) && checked){
-                                    displayHDR.checked = false;
+                                if(displayLensDistortionViewer.checked && checked){
                                     displayLensDistortionViewer.checked = false;
                                 }
                             }

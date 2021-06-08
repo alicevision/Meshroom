@@ -34,11 +34,7 @@ AliceVision.PanoramaViewer {
     }
     property var readyToLoad: Image.Null
 
-    // Value from ui button
-    property int downscaleValueQML: 0
-
-    // Value from cpp at initialisation
-    property int downscaleValueCpp: 0
+    property int downscale: 0
 
     property int subdivisionsPano: 12
 
@@ -61,9 +57,9 @@ AliceVision.PanoramaViewer {
         }
     }
 
-    onDownscaleValueQMLChanged: {
+    onDownscaleChanged: {
         for (var i = 0; i < repeater.model; i++) {
-           repeater.itemAt(i).item.downscaleLevel = downscaleValueQML;
+           repeater.itemAt(i).item.downscaleLevel = downscale;
         }
     }
 
@@ -239,7 +235,7 @@ AliceVision.PanoramaViewer {
                     if(active) {
                         setSource("FloatImage.qml", {
                             'isPanoViewer' : true,
-                            'downscaleLevel' : root.downscaleValueCpp,
+                            'downscaleLevel' : root.downscale,
                             'source':  Qt.binding(function() { return cSource; }),
                             'index' : index,
                             'idView': Qt.binding(function() { return cId; }),
@@ -273,8 +269,7 @@ AliceVision.PanoramaViewer {
                 //Iterating through the map
                 for (var path in imagesData) {
                     if (path === "lvl") {
-                        root.downscaleValueCpp = imagesData[path];
-                        panoramaViewerToolbar.updateDownscaleValue(root.downscaleValueCpp)
+                        panoramaViewerToolbar.updateDownscaleValue(imagesData[path])
                         continue;
                     }
 

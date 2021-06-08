@@ -49,7 +49,6 @@ AliceVision.FloatImageViewer {
 
     property bool isGridDisplayed : false;
     property int gridOpacity : 100;
-    property color gridColorQML : "#FF0000";
 
     property bool isCtrlPointsDisplayed : true;
     property int subdivisions: 4;
@@ -59,12 +58,6 @@ AliceVision.FloatImageViewer {
     property var idView: 0;
 
     property string sfmPath: ""
-
-    property int downscaleLevel: 0
-
-    onDownscaleLevelChanged: {
-        root.setDownscale(downscaleLevel)
-    }
 
     function updateSfmPath() {
         var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
@@ -128,11 +121,7 @@ AliceVision.FloatImageViewer {
     }
 
     onGridOpacityChanged: {
-        root.surface.gridColor = Qt.rgba(gridColorQML.r, gridColorQML.g, gridColorQML.b, gridOpacity/100);;
-    }
-
-    onGridColorQMLChanged: {
-        root.surface.gridColor = gridColorQML;
+        root.surface.gridColor = Qt.rgba(root.surface.gridColor.r, root.surface.gridColor.g, root.surface.gridColor.b, gridOpacity/100);;
     }
 
     channelMode: {

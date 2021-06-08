@@ -276,7 +276,7 @@ FocusScope {
                                 'isCtrlPointsDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayPoints;}),
                                 'isGridDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayGrid;}),
                                 'gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
-                                'gridColorQML' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
+                                'surface.gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
                                 'subdivisions' : Qt.binding(function(){ return lensDistortionImageToolbar.subdivisionsValue;}),
                                 'isDistoViewer' : Qt.binding(function(){ return displayLensDistortionViewer.checked;}),
                             })
@@ -300,7 +300,7 @@ FocusScope {
                     onActiveChanged: {
                         if(active) {
                             setSource("PanoramaViewer.qml", {
-                                'downscaleValueQML': Qt.binding(function(){return panoramaViewerToolbar.downscaleValue;}),
+                                'downscale': Qt.binding(function(){return panoramaViewerToolbar.downscaleValue;}),
                                 'isEditable': Qt.binding(function(){ return panoramaViewerToolbar.enableEdit;}),
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
                                 'subdivisionsPano': Qt.binding(function(){ return panoramaViewerToolbar.subdivisionsValue;}),

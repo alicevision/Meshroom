@@ -26,7 +26,10 @@ AliceVision.FloatImageViewer {
                 (root.sourceSize.height <= 0))
             return Image.Null;
 
+        return Image.Ready;
+    }
 
+    onStatusChanged: {
         if(isPanoViewer) { // Pano Viewer
             root.updateSubdivisions(12)
         }
@@ -37,8 +40,6 @@ AliceVision.FloatImageViewer {
         root.defaultControlPoints();
         root.setIdView(idView);
         updateSfmPath();
-
-        return Image.Ready;
     }
 
     property string channelModeString : "rgba"

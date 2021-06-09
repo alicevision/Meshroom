@@ -103,7 +103,7 @@ AliceVision.FloatImageViewer {
     }
 
     onIsPanoViewerChanged: {
-        root.setPanoViewerEnabled(isPanoViewer)
+        root.surface.setPanoViewerEnabled(isPanoViewer)
     }
 
     onSubdivisionsChanged: {
@@ -149,16 +149,16 @@ AliceVision.FloatImageViewer {
 
     function getMouseCoordinates(mx, my) {
         if (isMouseOver(mx, my)) {
-            root.mouseOver(true)
+            root.surface.mouseOver = true
             return true;
         } else {
-            root.mouseOver(false)
+            root.surface.mouseOver = false
             return false;
         }
     }
 
     function onChangedHighlightState(isHighlightable){
-        if (!isHighlightable) root.mouseOver(false)
+        if (!isHighlightable) root.surface.mouseOver = false
     }
 
 

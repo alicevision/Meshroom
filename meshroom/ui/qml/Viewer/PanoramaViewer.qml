@@ -122,7 +122,7 @@ AliceVision.PanoramaViewer {
                             for (let j = 0; j < repeater.model; j++)
                             {
                                 if (j === i) continue;
-                                repeater.itemAt(j).item.mouseOver(false);
+                                repeater.itemAt(j).item.surface.mouseOver = false;
                                 repeater.itemAt(i).z = 0;
                             }
                         }

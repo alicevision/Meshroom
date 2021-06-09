@@ -74,7 +74,7 @@ AliceVision.FloatImageViewer {
     }
 
     function updatePrincipalPoint() {
-        var pp = root.getPrincipalPoint();
+        var pp = root.surface.getPrincipalPoint();
         ppRect.x = pp.x;
         ppRect.y = pp.y;
     }
@@ -224,8 +224,8 @@ AliceVision.FloatImageViewer {
             var height = repeater.itemAt(0).height;
 
             for (let i = 0; i < repeater.model; i++) {
-                repeater.itemAt(i).x = root.getVertex(i).x - (width / 2);
-                repeater.itemAt(i).y = root.getVertex(i).y - (height / 2);
+                repeater.itemAt(i).x = root.surface.getVertex(i).x - (width / 2);
+                repeater.itemAt(i).y = root.surface.getVertex(i).y - (height / 2);
             }
         }
 
@@ -235,8 +235,8 @@ AliceVision.FloatImageViewer {
                 id: rect
                 width: root.sourceSize.width/100; height: width
                 radius: width/2
-                x: root.getVertex(model.index).x - (width / 2)
-                y: root.getVertex(model.index).y - (height / 2)
+                x: root.surface.getVertex(model.index).x - (width / 2)
+                y: root.surface.getVertex(model.index).y - (height / 2)
                 color: Colors.yellow
                 visible: isDistoViewer && isCtrlPointsDisplayed
                 MouseArea {

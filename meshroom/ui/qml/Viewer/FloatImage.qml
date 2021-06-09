@@ -47,7 +47,6 @@ AliceVision.FloatImageViewer {
     property bool isDistoViewer: false;
     property bool isPanoViewer: false;
 
-    property bool isGridDisplayed : false;
     property int gridOpacity : 100;
 
     property bool isCtrlPointsDisplayed : true;
@@ -91,7 +90,7 @@ AliceVision.FloatImageViewer {
         root.hasDistortion(isDistoViewer);
         //Putting states back where they were
         if(isDistoViewer){
-            root.displayGrid(isGridDisplayed);
+            //root.displayGrid(isGridDisplayed);
             repeater.displayControlPoints(isCtrlPointsDisplayed)
             root.updateSubdivisions(subdivisions)
         }
@@ -107,10 +106,6 @@ AliceVision.FloatImageViewer {
         root.setPanoViewerEnabled(isPanoViewer)
     }
 
-    onIsGridDisplayedChanged: {
-        root.displayGrid(isGridDisplayed);
-    }
-
     onSubdivisionsChanged: {
         pointsNumber = (subdivisions + 1) * (subdivisions + 1);
         root.updateSubdivisions(subdivisions)
@@ -121,7 +116,7 @@ AliceVision.FloatImageViewer {
     }
 
     onGridOpacityChanged: {
-        root.surface.gridColor = Qt.rgba(root.surface.gridColor.r, root.surface.gridColor.g, root.surface.gridColor.b, gridOpacity/100);;
+        root.surface.gridColor = Qt.rgba(root.surface.gridColor.r, root.surface.gridColor.g, root.surface.gridColor.b, gridOpacity/100);
     }
 
     channelMode: {

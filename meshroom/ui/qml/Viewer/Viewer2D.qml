@@ -274,7 +274,7 @@ FocusScope {
                                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
                                 'isCtrlPointsDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayPoints;}),
-                                'isGridDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayGrid;}),
+                                'surface.displayGrid' : Qt.binding(function(){ return lensDistortionImageToolbar.displayGrid;}),
                                 'gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
                                 'surface.gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
                                 'subdivisions' : Qt.binding(function(){ return lensDistortionImageToolbar.subdivisionsValue;}),

@@ -15,6 +15,7 @@ FloatingPane {
 
     property int pluginStatus: Loader.Null
     property Item featuresViewer: null
+    property var mfeatures: null
     property var featureExtractionNode: null
 
     ColumnLayout {
@@ -35,19 +36,105 @@ FloatingPane {
                     Menu {
                         id: settingsMenu
                         padding: 4
-                        implicitWidth: 210
+                        implicitWidth: 350
 
                         RowLayout {
                             Label {
-                                text: "Display Mode:"
+                                text: "Feature Display Mode:"
                             }
                             ComboBox {
-                                id: displayModeCB
+                                id: featureDisplayModeCB
                                 flat: true
-                                Layout.fillWidth: true
-                                model: root.featuresViewer ? root.featuresViewer.displayModes : null
-                                currentIndex: root.featuresViewer ? root.featuresViewer.displayMode : 0
-                                onActivated: root.featuresViewer.displayMode = currentIndex
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                model: root.featuresViewer ? root.featuresViewer.featureDisplayModes : null
+                                currentIndex: root.featuresViewer ? root.featuresViewer.featureDisplayMode : 0
+                                onActivated: root.featuresViewer.featureDisplayMode = currentIndex
+                            }
+                        }
+                        RowLayout {
+                            Label {
+                                text: "Track Display Mode:"
+                            }
+                            ComboBox {
+                                id: trackDisplayModeCB
+                                flat: true
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                model: root.featuresViewer ? root.featuresViewer.trackDisplayModes : null
+                                currentIndex: root.featuresViewer ? root.featuresViewer.trackDisplayMode : 0
+                                onActivated: root.featuresViewer.trackDisplayMode = currentIndex
+                            }
+                        }
+                        RowLayout {
+                            Label {
+                                text: "Track Contiguous Filter:"
+                            }
+                            CheckBox {
+                                id: trackContiguousFilterCB
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                checked: root.featuresViewer.trackContiguousFilter
+                                onClicked: root.featuresViewer.trackContiguousFilter = trackContiguousFilterCB.checked
+                            }
+                        }
+                        RowLayout {
+                            Label {
+                                text: "Track Inliers Filter:"
+                            }
+                            CheckBox {
+                                id: trackInliersFilterCB
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                checked: root.featuresViewer.trackInliersFilter
+                                onClicked: root.featuresViewer.trackInliersFilter = trackInliersFilterCB.checked
+                            }
+                        }
+                        RowLayout {
+                            Label {
+                                text: "Track Feature Scale Filter:"
+                            }
+                            RangeSlider {
+                                id: trackFeatureScaleFilterRS
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                from: 0
+                                to: 1
+                                first.value: root.featuresViewer.trackMinFeatureScaleFilter
+                                first.onMoved: { root.featuresViewer.trackMinFeatureScaleFilter = first.value; }
+                                second.value: root.featuresViewer.trackMaxFeatureScaleFilter
+                                second.onMoved: { root.featuresViewer.trackMaxFeatureScaleFilter = second.value; }
+                                stepSize: 0.01
+                            }
+                        }
+                        RowLayout {
+                            Label {
+                                text: "Time Window:"
+                            }
+                            SpinBox {
+                                id: timeWindowSB
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                from: -1
+                                to: 50
+                                value: root.mfeatures.timeWindow
+                                stepSize: 1
+
+                                textFromValue: function(value) {
+                                    if (value == -1) return "No Limit";
+                                    if (value ==  0) return "Disable";
+                                    return value;
+                                }
+
+                                valueFromText: function(text) {
+                                    if (value == "No Limit") return -1;
+                                    if (value == "Disable")  return 0;
+                                    return value;
+                                }
+
+                                onValueChanged: {
+                                    root.mfeatures.timeWindow = timeWindowSB.value;
+                                }
                             }
                         }
                     }
@@ -58,7 +145,7 @@ FloatingPane {
         // Error message if AliceVision plugin is unavailable
         Label {
             visible: root.pluginStatus === Loader.Error
-            text: "AliceVision plugin is required to display Features"
+            text: "AliceVision plugin is required to display features"
             color: Colors.red
         }
 
@@ -71,9 +158,7 @@ FloatingPane {
 
             delegate: RowLayout {
                 id: featureType
-
                 property var viewer: root.featuresViewer.itemAt(index)
-
                 spacing: 4
 
                 // Features visibility toggle
@@ -83,24 +168,34 @@ FloatingPane {
                     checked: true
                     text: MaterialIcons.center_focus_strong
                     onClicked: {
-                        featureType.viewer.displayfeatures = featuresVisibilityButton.checked;
+                        featureType.viewer.displayFeatures = featuresVisibilityButton.checked;
                     }
                     font.pointSize: 10
                     opacity: featureType.viewer.visible ? 1.0 : 0.6
                 }
-
                 // Tracks visibility toogle
                 MaterialToolButton {
                     id: tracksVisibilityButton
                     checkable: true
-                    checked: true
+                    checked: false
                     text: MaterialIcons.timeline
                     onClicked: {
                         featureType.viewer.displayTracks = tracksVisibilityButton.checked;
+                        root.mfeatures.enableTimeWindow = tracksVisibilityButton.checked;
                     }
                     font.pointSize: 10
                 }
-
+                // Matches visibility toogle
+                MaterialToolButton {
+                    id: matchesVisibilityButton
+                    checkable: true
+                    checked: true
+                    text: MaterialIcons.sync
+                    onClicked: {
+                        featureType.viewer.displayMatches = matchesVisibilityButton.checked;
+                    }
+                    font.pointSize: 10
+                }
                 // Landmarks visibility toogle
                 MaterialToolButton {
                     id: landmarksVisibilityButton
@@ -112,7 +207,6 @@ FloatingPane {
                     }
                     font.pointSize: 10
                 }
-
                 // ColorChart picker
                 ColorChart {
                     implicitWidth: 12
@@ -128,14 +222,14 @@ FloatingPane {
                         if(featureType.viewer.loadingFeatures)
                             return  featureType.viewer.describerType;
                         return featureType.viewer.describerType + ": " +
-                                ((featureExtractionNode && featureExtractionNode.isComputed) ? featureType.viewer.features.length : " - ") + " / " +
-                                (featureType.viewer.haveValidTracks ? featureType.viewer.nbTracks  : " - ") + " / " +
-                                (featureType.viewer.haveValidLandmarks ? featureType.viewer.nbLandmarks : " - ");
+                                ((featureExtractionNode && featureExtractionNode.isComputed) ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbFeatures'] : " - ") + " / " +
+                                (root.mfeatures.haveValidTracks ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbTracks']  : " - ") + " / " +
+                                (root.mfeatures.haveValidLandmarks ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbLandmarks'] : " - ");
                     }
                 }
                 // Feature loading status
                 Loader {
-                    active: featureType.viewer.loadingFeatures
+                    active: (root.mfeatures.status === MFeatures.Loading)
                     sourceComponent: BusyIndicator {
                         padding: 0
                         implicitWidth: 12
@@ -143,7 +237,6 @@ FloatingPane {
                         running: true
                     }
                 }
-
             }
         }
     }

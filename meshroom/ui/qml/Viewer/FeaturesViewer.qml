@@ -10,22 +10,29 @@ import Utils 1.0
 Repeater {
     id: root
 
-    /// ViewID to display the features of a specific view
-    property int viewId
-    /// SfMData to display the data of SfM
-    property var sfmData
-    /// Folder containing the features files
-    property string featureFolder
-    /// Tracks object loading all the matches files
-    property var tracks
+    /// Features to display
+    property var features
+
     /// The list of describer types to load
     property alias describerTypes: root.model
-    /// List of available display modes
-    readonly property var displayModes: ['Points', 'Squares', 'Oriented Squares']
-    /// Current display mode index
-    property int displayMode: 2
+    /// List of available feature display modes
+    readonly property var featureDisplayModes: ['Points', 'Squares', 'Oriented Squares']
+    /// Current feature display mode index
+    property int featureDisplayMode: 2
+    /// List of available track display modes
+    readonly property var trackDisplayModes: ['Lines Only', 'Current Matches', 'All Matches']
+    /// Current track display mode index
+    property int trackDisplayMode: 1
+    /// Display only contiguous tracks
+    property bool trackContiguousFilter: true
+    /// Display only tracks with at least one inlier
+    property bool trackInliersFilter: false
+    // Minimum track feature scale score to display
+    property real trackMinFeatureScaleFilter: 0
+    // Maximum track feature scale score to display
+    property real trackMaxFeatureScaleFilter: 1
     /// The list of colors used for displaying several describers
-    property var colors: [Colors.blue, Colors.green, Colors.yellow, Colors.orange, Colors.cyan, Colors.pink, Colors.lime] //, Colors.red
+    property var colors: [Colors.blue, Colors.green, Colors.yellow, Colors.cyan, Colors.pink, Colors.lime] //, Colors.orange, Colors.red
 
     model: root.describerTypes
 
@@ -33,14 +40,16 @@ Repeater {
     delegate: AliceVision.FeaturesViewer {
         readonly property int colorIndex: (index + colorOffset) % root.colors.length
         property int colorOffset: 0
-        describerType: modelData
-        featureFolder: root.featureFolder
-        mtracks: root.tracks
-        viewId: root.viewId
-        color: root.colors[colorIndex]
+        featureDisplayMode: root.featureDisplayMode
+        trackDisplayMode: root.trackDisplayMode
+        trackContiguousFilter: root.trackContiguousFilter
+        trackInliersFilter: root.trackInliersFilter
+        trackMinFeatureScaleFilter: root.trackMinFeatureScaleFilter
+        trackMaxFeatureScaleFilter: root.trackMaxFeatureScaleFilter
+        featureColor: root.colors[colorIndex]
+        matchColor: Colors.orange
         landmarkColor: Colors.red
-        displayMode: root.displayMode
-        msfmData: root.sfmData
+        describerType: modelData
+        mfeatures: root.features
     }
-
 }

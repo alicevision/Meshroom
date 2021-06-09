@@ -38,7 +38,7 @@ AliceVision.FloatImageViewer {
         }
 
         root.defaultControlPoints();
-        root.setIdView(idView);
+        root.surface.setIdView(idView);
         updateSfmPath();
     }
 
@@ -56,20 +56,9 @@ AliceVision.FloatImageViewer {
     property int index: 0;
     property var idView: 0;
 
-    property string sfmPath: ""
-
     function updateSfmPath() {
         var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
-
-        if(!activeNode)
-        {
-            root.sfmPath = "";
-        }
-        else
-        {
-            root.sfmPath = activeNode.attribute("input").value;
-        }
-        root.setSfmPath(sfmPath);
+        root.surface.sfmPath = activeNode ? activeNode.attribute("input").value : "";
     }
 
     function updatePrincipalPoint() {

@@ -152,8 +152,8 @@ AliceVision.PanoramaViewer {
                         // Update Euler angles
                         var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
 
-                        root.yaw = repeater.itemAt(0).item.getYaw();
-                        root.pitch = repeater.itemAt(0).item.getPitch();
+                        root.yaw = repeater.itemAt(0).item.surface.getYaw();
+                        root.pitch = repeater.itemAt(0).item.surface.getPitch();
 
                         activeNode.attribute("manualTransform.manualRotation.y").value = root.yaw;
                         activeNode.attribute("manualTransform.manualRotation.x").value = root.pitch;

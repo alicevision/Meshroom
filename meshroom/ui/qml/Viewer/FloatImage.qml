@@ -149,7 +149,7 @@ AliceVision.FloatImageViewer {
     }
 
     function isMouseOver(mx, my) {
-        return root.isMouseInside(mx, my);
+        return root.surface.isMouseInside(mx, my);
     }
 
     function getMouseCoordinates(mx, my) {

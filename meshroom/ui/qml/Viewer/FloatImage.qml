@@ -31,10 +31,10 @@ AliceVision.FloatImageViewer {
 
     onStatusChanged: {
         if(isPanoViewer) { // Pano Viewer
-            root.updateSubdivisions(12)
+            root.surface.subdivisions = 12
         }
         else if (!isDistoViewer){ // HDR Viewer
-            root.updateSubdivisions(1);
+            root.surface.subdivisions =1;
         }
 
         root.surface.setIdView(idView);
@@ -49,8 +49,7 @@ AliceVision.FloatImageViewer {
     property bool isPanoViewer: false;
 
     property bool isPrincipalPointsDisplayed : false;
-    property int subdivisions: 4;
-    property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
+    property int pointsNumber: (surface.subdivisions + 1) * (surface.subdivisions + 1);
 
     property int index: 0;
     property var idView: 0;
@@ -67,18 +66,10 @@ AliceVision.FloatImageViewer {
     }
 
     onIsDistoViewerChanged: {
-
-        //root.hasDistortion(isDistoViewer);
         surface.viewerType = AliceVision.Surface.EViewerType.DISTORTION;
 
-        //Putting states back where they were
-        if(isDistoViewer){
-            root.updateSubdivisions(subdivisions)
-        }
-        //Forcing disabling of parameters
-        else{
-
-            root.updateSubdivisions(1)
+        if(!isDistoViewer){
+            surface.subdivisions = 1
         }
     }
 
@@ -86,10 +77,6 @@ AliceVision.FloatImageViewer {
         surface.viewerType = AliceVision.Surface.EViewerType.PANORAMA;
     }
 
-    onSubdivisionsChanged: {
-        pointsNumber = (subdivisions + 1) * (subdivisions + 1);
-        root.updateSubdivisions(subdivisions)
-    }
 
     channelMode: {
         switch(channelModeString)

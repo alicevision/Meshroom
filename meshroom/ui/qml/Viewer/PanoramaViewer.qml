@@ -53,7 +53,7 @@ AliceVision.PanoramaViewer {
 
     onSubdivisionsPanoChanged:{
         for (var i = 0; i < repeater.model; i++) {
-           repeater.itemAt(i).item.updateSubdivisions(subdivisionsPano);
+           repeater.itemAt(i).item.surface.subdivisions = subdivisionsPano;
         }
     }
 

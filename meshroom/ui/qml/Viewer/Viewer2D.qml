@@ -277,7 +277,7 @@ FocusScope {
                                 'surface.displayGrid' :  Qt.binding(function(){ return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid;}),
                                 'surface.gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
                                 'surface.gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
-                                'subdivisions' : Qt.binding(function(){ return lensDistortionImageToolbar.subdivisionsValue;}),
+                                'surface.subdivisions' : Qt.binding(function(){ return lensDistortionImageToolbar.subdivisionsValue;}),
                                 'isDistoViewer' : Qt.binding(function(){ return displayLensDistortionViewer.checked;}),
                             })
                         } else {

@@ -67,14 +67,6 @@ AliceVision.FloatImageViewer {
         ppRect.y = pp.y;
     }
 
-    function rotatePanoDegrees(yaw, pitch) {
-        root.rotatePanoramaDegrees(yaw, pitch);
-    }
-
-    function rotatePanoRadians(yaw, pitch) {
-        root.rotatePanoramaRadians(yaw, pitch);
-    }
-
     onIsDistoViewerChanged: {
         root.hasDistortion(isDistoViewer);
         //Putting states back where they were

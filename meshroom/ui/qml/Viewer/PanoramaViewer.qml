@@ -82,7 +82,7 @@ AliceVision.PanoramaViewer {
     onYawNodeChanged: {
         if (!isRotating) {
             for (var i = 0; i < repeater.model; i++) {
-               repeater.itemAt(i).item.rotatePanoramaDegrees(yawNode, pitchNode);
+               repeater.itemAt(i).item.surface.rotateSurfaceDegrees(yawNode, pitchNode);
             }
         }
     }
@@ -90,7 +90,7 @@ AliceVision.PanoramaViewer {
     onPitchNodeChanged: {
        if (!isRotating) {
            for (var i = 0; i < repeater.model; i++) {
-              repeater.itemAt(i).item.rotatePanoDegrees(yawNode, pitchNode);
+              repeater.itemAt(i).item.surface.rotateSurfaceDegrees(yawNode, pitchNode);
            }
        }
     }
@@ -135,7 +135,7 @@ AliceVision.PanoramaViewer {
                         lastX = mouse.x;
                         lastY = mouse.y;
                         for (var i = 0; i < repeater.model; i++) {
-                           repeater.itemAt(i).item.rotatePanoRadians((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier);
+                           repeater.itemAt(i).item.surface.rotateSurfaceRadians((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier);
                         }
                     }
                 }

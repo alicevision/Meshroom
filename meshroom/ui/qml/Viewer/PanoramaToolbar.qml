@@ -186,7 +186,7 @@ FloatingPane {
     TextMetrics {
         id: textMetrics_subdivisionsValue
         font: subdivisionsLabel.font
-        text: "10.00"
+        text: "100.00"
     }
 
 }

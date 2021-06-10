@@ -11,10 +11,9 @@ FloatingPane {
     padding: 5
     radius: 0
 
-    property int opacityDefaultValue: 100
-    property int subdivisionsDefaultValue: 4
+    property int opacityDefaultValue: 70
+    property int subdivisionsDefaultValue: 20
 
-    property real slidersPowerValue: 4
     property int opacityValue: Math.pow(opacityCtrl.value, 1)
     property int subdivisionsValue: subdivisionsCtrl.value
 
@@ -46,7 +45,7 @@ FloatingPane {
             padding: 5
             Layout.minimumWidth: 0
             checkable: true
-            checked: true
+            checked: false
         }
         MaterialToolButton {
             id: displayGridButton
@@ -89,6 +88,7 @@ FloatingPane {
                 ToolTip.text: "Grid opacity"
 
                 text: opacityValue.toFixed(1)
+                horizontalAlignment: "AlignHCenter"
                 Layout.preferredWidth: textMetrics_opacityValue.width
                 selectByMouse: true
                 validator: doubleValidator
@@ -129,6 +129,7 @@ FloatingPane {
                 ToolTip.text: "subdivisions"
 
                 text: subdivisionsValue.toFixed(1)
+                horizontalAlignment: "AlignHCenter"
                 Layout.preferredWidth: textMetrics_subdivisionsValue.width
                 selectByMouse: true
                 validator: doubleValidator
@@ -140,9 +141,9 @@ FloatingPane {
                 id: subdivisionsCtrl
                 Layout.fillWidth: false
                 from: 2
-                to: 10
+                to: 40
                 value: subdivisionsDefaultValue
-                stepSize: 2
+                stepSize: 5
             }
         }
 
@@ -162,6 +163,6 @@ FloatingPane {
     TextMetrics {
         id: textMetrics_subdivisionsValue
         font: opacityLabel.font
-        text: "10.00"
+        text: "100.00"
     }
 }

@@ -48,8 +48,6 @@ AliceVision.FloatImageViewer {
     property bool isDistoViewer: false;
     property bool isPanoViewer: false;
 
-    property int gridOpacity : 100;
-
     property bool isPrincipalPointsDisplayed : false;
     property int subdivisions: 4;
     property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
@@ -91,10 +89,6 @@ AliceVision.FloatImageViewer {
     onSubdivisionsChanged: {
         pointsNumber = (subdivisions + 1) * (subdivisions + 1);
         root.updateSubdivisions(subdivisions)
-    }
-
-    onGridOpacityChanged: {
-        root.surface.gridColor = Qt.rgba(root.surface.gridColor.r, root.surface.gridColor.g, root.surface.gridColor.b, gridOpacity/100);
     }
 
     channelMode: {

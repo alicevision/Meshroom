@@ -19,7 +19,7 @@ FloatingPane {
 
     property variant colorRGBA: null
     property bool displayGrid: displayGridButton.checked
-    property bool displayPoints: displayCtrlPointsButton.checked
+    property bool displayPrincipalPoint: displayPrincipalPointButton.checked
 
     property var colors: [Colors.lightgrey, Colors.grey, Colors.red, Colors.green, Colors.blue, Colors.yellow]
     readonly property int colorIndex: (colorOffset) % root.colors.length
@@ -38,8 +38,8 @@ FloatingPane {
         anchors.fill: parent
 
         MaterialToolButton {
-            id: displayCtrlPointsButton
-            ToolTip.text: "Display Control Points"
+            id: displayPrincipalPointButton
+            ToolTip.text: "Display Principal Point"
             text: MaterialIcons.control_point
             font.pointSize: 13
             padding: 5

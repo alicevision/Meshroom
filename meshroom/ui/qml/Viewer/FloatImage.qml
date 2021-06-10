@@ -37,7 +37,6 @@ AliceVision.FloatImageViewer {
             root.updateSubdivisions(1);
         }
 
-        root.defaultControlPoints();
         root.surface.setIdView(idView);
         updateSfmPath();
     }
@@ -51,7 +50,7 @@ AliceVision.FloatImageViewer {
 
     property int gridOpacity : 100;
 
-    property bool isCtrlPointsDisplayed : true;
+    property bool isPrincipalPointsDisplayed : false;
     property int subdivisions: 4;
     property int pointsNumber: (subdivisions + 1) * (subdivisions + 1);
 
@@ -76,30 +75,22 @@ AliceVision.FloatImageViewer {
 
         //Putting states back where they were
         if(isDistoViewer){
-            //root.displayGrid(isGridDisplayed);
-            repeater.displayControlPoints(isCtrlPointsDisplayed)
             root.updateSubdivisions(subdivisions)
         }
         //Forcing disabling of parameters
         else{
-            root.displayGrid(isDistoViewer)
-            repeater.displayControlPoints(isDistoViewer)
+
             root.updateSubdivisions(1)
         }
     }
 
     onIsPanoViewerChanged: {
-        //root.surface.setPanoViewerEnabled(isPanoViewer)
         surface.viewerType = AliceVision.Surface.EViewerType.PANORAMA;
     }
 
     onSubdivisionsChanged: {
         pointsNumber = (subdivisions + 1) * (subdivisions + 1);
         root.updateSubdivisions(subdivisions)
-    }
-
-    onIsCtrlPointsDisplayedChanged: {
-         repeater.displayControlPoints(isCtrlPointsDisplayed)
     }
 
     onGridOpacityChanged: {
@@ -161,7 +152,7 @@ AliceVision.FloatImageViewer {
             x: 0
             y: 0
             color: "red"
-            visible: isDistoViewer && isCtrlPointsDisplayed
+            visible: isDistoViewer && isPrincipalPointsDisplayed
         }
 
         Connections {
@@ -169,82 +160,6 @@ AliceVision.FloatImageViewer {
             onSfmChanged: {
                 if (isDistoViewer)
                     updatePrincipalPoint();
-            }
-        }
-    }
-
-    /*
-    * Controls Points
-    */
-    Item {
-        id: points
-        width: root.width
-        height: root.height
-
-        Connections {
-            target: root
-            onVerticesChanged : {
-                if (reinit){
-                   points.recalculateCP();
-                   points.generateControlPoints();
-                }
-            }
-        }
-
-        function generateControlPoints() {
-            if(repeater.model === pointsNumber){
-                repeater.model = 0;
-            }
-            repeater.model = pointsNumber;
-        }
-
-        function recalculateCP() {
-            if (repeater.model === 0)
-                return
-
-            var width = repeater.itemAt(0).width;
-            var height = repeater.itemAt(0).height;
-
-            for (let i = 0; i < repeater.model; i++) {
-                repeater.itemAt(i).x = root.surface.getVertex(i).x - (width / 2);
-                repeater.itemAt(i).y = root.surface.getVertex(i).y - (height / 2);
-            }
-        }
-
-        Component {
-            id: point
-            Rectangle {
-                id: rect
-                width: root.sourceSize.width/100; height: width
-                radius: width/2
-                x: root.surface.getVertex(model.index).x - (width / 2)
-                y: root.surface.getVertex(model.index).y - (height / 2)
-                color: Colors.yellow
-                visible: isDistoViewer && isCtrlPointsDisplayed
-                MouseArea {
-                    id: mouseAreaCP
-                    anchors.fill : parent;
-                    acceptedButtons: Qt.LeftButton
-
-                    drag.target: rect
-                    drag.smoothed: false
-                    drag.axis: Drag.XAndYAxis
-                    onReleased: {
-                        root.setVertex(index, rect.x + (width / 2), rect.y + (height / 2))
-                    }
-                }
-            }
-        }
-
-        Repeater {
-            id: repeater
-            model: pointsNumber
-            delegate: point
-            function displayControlPoints(state) {
-                for (let i = 0; i < model; i++) {
-                    if (repeater.itemAt(i) !== null)
-                        repeater.itemAt(i).visible = state;
-                }
             }
         }
     }

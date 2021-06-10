@@ -44,6 +44,8 @@ AliceVision.FloatImageViewer {
 
     property string channelModeString : "rgba"
 
+    property string viewerTypeString : "default"
+
     property bool isDistoViewer: false;
     property bool isPanoViewer: false;
 
@@ -68,7 +70,10 @@ AliceVision.FloatImageViewer {
     }
 
     onIsDistoViewerChanged: {
-        root.hasDistortion(isDistoViewer);
+
+        //root.hasDistortion(isDistoViewer);
+        surface.viewerType = AliceVision.Surface.EViewerType.DISTORTION;
+
         //Putting states back where they were
         if(isDistoViewer){
             //root.displayGrid(isGridDisplayed);
@@ -84,7 +89,8 @@ AliceVision.FloatImageViewer {
     }
 
     onIsPanoViewerChanged: {
-        root.surface.setPanoViewerEnabled(isPanoViewer)
+        //root.surface.setPanoViewerEnabled(isPanoViewer)
+        surface.viewerType = AliceVision.Surface.EViewerType.PANORAMA;
     }
 
     onSubdivisionsChanged: {

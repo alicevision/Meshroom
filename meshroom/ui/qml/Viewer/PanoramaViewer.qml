@@ -4,7 +4,7 @@ import Utils 1.0
 import AliceVision 1.0 as AliceVision
 
 /**
- * FloatImage displays an Image with gamma / offset / channel controls
+ * PanoramaViwer displays a list of Float Images
  * Requires QtAliceVision plugin.
  */
 
@@ -13,11 +13,12 @@ AliceVision.PanoramaViewer {
 
     width: 3000
     height: 1500
+
     visible: (status === Image.Ready)
 
     // paintedWidth / paintedHeight / status for compatibility with standard Image
-    property int paintedWidth: textureSize.width
-    property int paintedHeight: textureSize.height
+    property int paintedWidth: sourceSize.width
+    property int paintedHeight: sourceSize.height
     property var status: {
         if (readyToLoad === Image.Ready && root.imagesLoaded === root.pathList.length) {
             for (var i = 0; i < repeater.model; i++) {
@@ -32,13 +33,13 @@ AliceVision.PanoramaViewer {
             return Image.Null;
         }
     }
-    property var readyToLoad: Image.Null
 
-    property int downscale: 0
+    property var readyToLoad: Image.Null
 
     property int subdivisionsPano: 12
 
     property bool isEditable: true
+
     property bool isHighlightable: true
 
     property bool displayGridPano: true
@@ -50,8 +51,6 @@ AliceVision.PanoramaViewer {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
         }
     }
-
-    clearBeforeLoad: true
 
     property alias containsMouse: mouseAreaPano.containsMouse
 
@@ -66,7 +65,6 @@ AliceVision.PanoramaViewer {
     property int yawNode: _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.y").value;
     property int pitchNode: _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.x").value;
 
-
     onYawNodeChanged: {
         if (!isRotating) {
             for (var i = 0; i < repeater.model; i++) {
@@ -74,7 +72,6 @@ AliceVision.PanoramaViewer {
             }
         }
     }
-
     onPitchNodeChanged: {
        if (!isRotating) {
            for (var i = 0; i < repeater.model; i++) {
@@ -89,7 +86,6 @@ AliceVision.PanoramaViewer {
         Rectangle {
             width: 3000
             height: 1500
-            //color: mouseAreaPano.containsMouse? "red" : "green"
             color: "transparent"
             MouseArea {
                 id: mouseAreaPano
@@ -184,8 +180,6 @@ AliceVision.PanoramaViewer {
     }
 
 
-    property string sfmPath: ""
-
     function updateSfmPath() {
         var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
 
@@ -197,7 +191,6 @@ AliceVision.PanoramaViewer {
         {
             root.sfmPath = activeNode.attribute("input").value;
         }
-        root.setSfmPath(sfmPath);
     }
 
     property var pathList : []
@@ -255,7 +248,7 @@ AliceVision.PanoramaViewer {
                 root.imagesLoaded = 0;
 
                 // Retrieve downscale value from C++
-                panoramaViewerToolbar.updateDownscaleValue(root.getDownscale())
+                panoramaViewerToolbar.updateDownscaleValue(root.downscale)
 
                 //We receive the map<ImgPath, idView> from C++
                 //Resetting arrays to avoid problem with push

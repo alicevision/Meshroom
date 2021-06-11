@@ -30,11 +30,9 @@ AliceVision.FloatImageViewer {
     }
 
     onStatusChanged: {
-        if(isPanoViewer) { // Pano Viewer
-            root.surface.subdivisions = 12
-        }
-        else if (!isDistoViewer){ // HDR Viewer
-            root.surface.subdivisions =1;
+        if (isPanoViewer) {
+            // Force to update the surface grid after a downscale change
+            surface.rotateSurfaceRadians(0, 0)
         }
 
         root.surface.setIdView(idView);
@@ -67,10 +65,6 @@ AliceVision.FloatImageViewer {
 
     onIsDistoViewerChanged: {
         surface.viewerType = AliceVision.Surface.EViewerType.DISTORTION;
-
-        if(!isDistoViewer){
-            surface.subdivisions = 1
-        }
     }
 
     onIsPanoViewerChanged: {

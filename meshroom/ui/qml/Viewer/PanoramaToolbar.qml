@@ -18,7 +18,7 @@ FloatingPane {
     property int downscaleValue: downscaleSpinBox.value
     property int downscaleDefaultValue: 3
 
-    property int subdivisionsDefaultValue: 24
+    property int subdivisionsDefaultValue: 12
     property int subdivisionsValue: subdivisionsCtrl.value
 
     property int mouseSpeed: speedSpinBox.value

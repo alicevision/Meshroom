@@ -51,18 +51,6 @@ AliceVision.PanoramaViewer {
         }
     }
 
-    onSubdivisionsPanoChanged:{
-        for (var i = 0; i < repeater.model; i++) {
-           repeater.itemAt(i).item.surface.subdivisions = subdivisionsPano;
-        }
-    }
-
-    onDownscaleChanged: {
-        for (var i = 0; i < repeater.model; i++) {
-           repeater.itemAt(i).item.downscaleLevel = downscale;
-        }
-    }
-
     clearBeforeLoad: true
 
     property alias containsMouse: mouseAreaPano.containsMouse
@@ -235,12 +223,14 @@ AliceVision.PanoramaViewer {
                     if(active) {
                         setSource("FloatImage.qml", {
                             'isPanoViewer' : true,
-                            'downscaleLevel' : root.downscale,
+                            'surface.subdivisions': Qt.binding(function() { return subdivisionsPano; }),
                             'source':  Qt.binding(function() { return cSource; }),
                             'index' : index,
                             'idView': Qt.binding(function() { return cId; }),
                             'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
-                            'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; })
+                            'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
+                            'downscaleLevel' : Qt.binding(function() { return downscale; })
+
                         })
 
                     } else {

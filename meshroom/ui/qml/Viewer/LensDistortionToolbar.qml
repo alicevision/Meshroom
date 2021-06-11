@@ -12,7 +12,7 @@ FloatingPane {
     radius: 0
 
     property int opacityDefaultValue: 70
-    property int subdivisionsDefaultValue: 20
+    property int subdivisionsDefaultValue: 12
 
     property int opacityValue: Math.pow(opacityCtrl.value, 1)
     property int subdivisionsValue: subdivisionsCtrl.value

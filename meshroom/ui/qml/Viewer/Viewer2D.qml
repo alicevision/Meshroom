@@ -300,10 +300,10 @@ FocusScope {
                     onActiveChanged: {
                         if(active) {
                             setSource("PanoramaViewer.qml", {
+                                'subdivisionsPano': Qt.binding(function(){ return panoramaViewerToolbar.subdivisionsValue;}),
                                 'downscale': Qt.binding(function(){return panoramaViewerToolbar.downscaleValue;}),
                                 'isEditable': Qt.binding(function(){ return panoramaViewerToolbar.enableEdit;}),
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
-                                'subdivisionsPano': Qt.binding(function(){ return panoramaViewerToolbar.subdivisionsValue;}),
                                 'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;}),
                                 'mouseMultiplier': Qt.binding(function(){ return panoramaViewerToolbar.mouseSpeed;})
                             })

@@ -278,7 +278,7 @@ FocusScope {
                                 'surface.gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
                                 'surface.gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
                                 'surface.subdivisions' : Qt.binding(function(){ return lensDistortionImageToolbar.subdivisionsValue;}),
-                                'isDistoViewer' : Qt.binding(function(){ return displayLensDistortionViewer.checked;}),
+                                'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

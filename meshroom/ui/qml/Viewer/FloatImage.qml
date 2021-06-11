@@ -40,11 +40,28 @@ AliceVision.FloatImageViewer {
     }
 
     property string channelModeString : "rgba"
+    channelMode: {
+        switch(channelModeString)
+        {
+            case "rgb": return AliceVision.FloatImageViewer.EChannelMode.RGB
+            case "r": return AliceVision.FloatImageViewer.EChannelMode.R
+            case "g": return AliceVision.FloatImageViewer.EChannelMode.G
+            case "b": return AliceVision.FloatImageViewer.EChannelMode.B
+            case "a": return AliceVision.FloatImageViewer.EChannelMode.A
+            default: return AliceVision.FloatImageViewer.EChannelMode.RGBA
+        }
+    }
 
-    property string viewerTypeString : "default"
-
-    property bool isDistoViewer: false;
-    property bool isPanoViewer: false;
+    property string viewerTypeString : "hdr"
+    surface.viewerType: {
+        switch(viewerTypeString)
+        {
+            case "hdr": return AliceVision.Surface.EViewerType.HDR;
+            case "distortion": return AliceVision.Surface.EViewerType.DISTORTION;
+            case "panorama": return AliceVision.Surface.EViewerType.PANORAMA;
+            default: return AliceVision.Surface.EViewerType.HDR;
+        }
+    }
 
     property bool isPrincipalPointsDisplayed : false;
     property int pointsNumber: (surface.subdivisions + 1) * (surface.subdivisions + 1);
@@ -63,26 +80,6 @@ AliceVision.FloatImageViewer {
         ppRect.y = pp.y;
     }
 
-    onIsDistoViewerChanged: {
-        surface.viewerType = AliceVision.Surface.EViewerType.DISTORTION;
-    }
-
-    onIsPanoViewerChanged: {
-        surface.viewerType = AliceVision.Surface.EViewerType.PANORAMA;
-    }
-
-
-    channelMode: {
-        switch(channelModeString)
-        {
-            case "rgb": return AliceVision.FloatImageViewer.EChannelMode.RGB
-            case "r": return AliceVision.FloatImageViewer.EChannelMode.R
-            case "g": return AliceVision.FloatImageViewer.EChannelMode.G
-            case "b": return AliceVision.FloatImageViewer.EChannelMode.B
-            case "a": return AliceVision.FloatImageViewer.EChannelMode.A
-            default: return AliceVision.FloatImageViewer.EChannelMode.RGBA
-        }
-    }
     clearBeforeLoad: true
 
     property alias containsMouse: mouseArea.containsMouse

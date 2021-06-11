@@ -222,7 +222,7 @@ AliceVision.PanoramaViewer {
                 onActiveChanged: {
                     if(active) {
                         setSource("FloatImage.qml", {
-                            'isPanoViewer' : true,
+                            'viewerTypeString' : 'panorama',
                             'surface.subdivisions': Qt.binding(function() { return subdivisionsPano; }),
                             'source':  Qt.binding(function() { return cSource; }),
                             'index' : index,

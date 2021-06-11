@@ -625,6 +625,25 @@ FocusScope {
                             mfeatures: mfeaturesLoader.item
                         }
                     }
+                    Loader {
+                        id: viewTimeWindowOverlay
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        width: 200
+
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                            bottom: parent.bottom
+                            margins: 0
+                        }
+
+                        active: root.aliceVisionPluginAvailable && displayViewTimeWindow.checked
+
+                        sourceComponent: ViewTimeWindowOverlay {
+                            mfeatures: mfeaturesLoader.item
+                        }
+                    }
 
                     Loader {
                         id: ldrHdrCalibrationGraph
@@ -703,6 +722,15 @@ FocusScope {
                             checkable: true
                             checked: false
                             enabled: root.aliceVisionPluginAvailable
+                        }
+                        MaterialToolButton {
+                            id: displayViewTimeWindow
+                            ToolTip.text: "Display View Time Window"
+                            text: MaterialIcons.collections
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
                         }
                         MaterialToolButton {
                             id: displayFisheyeCircleLoader

@@ -30,7 +30,7 @@ AliceVision.FloatImageViewer {
     }
 
     onStatusChanged: {
-        if (isPanoViewer) {
+        if (viewerTypeString === "panorama") {
             // Force to update the surface grid after a downscale change
             surface.rotateSurfaceRadians(0, 0)
         }
@@ -124,13 +124,13 @@ AliceVision.FloatImageViewer {
             x: 0
             y: 0
             color: "red"
-            visible: isDistoViewer && isPrincipalPointsDisplayed
+            visible: viewerTypeString === "distortion" && isPrincipalPointsDisplayed
         }
 
         Connections {
             target: root
             onSfmChanged: {
-                if (isDistoViewer)
+                if (viewerTypeString === "distortion")
                     updatePrincipalPoint();
             }
         }

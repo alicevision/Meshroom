@@ -253,16 +253,13 @@ AliceVision.PanoramaViewer {
             target: root
             onImagesDataChanged: {
                 root.imagesLoaded = 0;
+
+                // Retrieve downscale value from C++
+                panoramaViewerToolbar.updateDownscaleValue(root.getDownscale())
+
                 //We receive the map<ImgPath, idView> from C++
                 //Resetting arrays to avoid problem with push
-
-                //Iterating through the map
                 for (var path in imagesData) {
-                    if (path === "lvl") {
-                        panoramaViewerToolbar.updateDownscaleValue(imagesData[path])
-                        continue;
-                    }
-
                     root.pathList.push(path)
                     root.idList.push(imagesData[path])
                 }

@@ -622,6 +622,7 @@ FocusScope {
                             featureExtractionNode: _reconstruction.activeNodes.get('FeatureExtraction').node
                             pluginStatus: featuresViewerLoader.status
                             featuresViewer: featuresViewerLoader.item
+                            mfeatures: mfeaturesLoader.item
                         }
                     }
 

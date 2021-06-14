@@ -872,7 +872,10 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
-                            enabled: root.aliceVisionPluginAvailable
+                            enabled: root.aliceVisionPluginAvailable && !displayPanoramaViewer.checked
+                            onEnabledChanged : {
+                                if(enabled == false) checked = false;
+                            }
                         }
                         MaterialToolButton {
                             id: displayFisheyeCircleLoader

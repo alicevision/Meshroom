@@ -222,6 +222,7 @@ AliceVision.PanoramaViewer {
                             'idView': Qt.binding(function() { return cId; }),
                             'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
                             'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
+                            'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
                             'downscaleLevel' : Qt.binding(function() { return downscale; })
 
                         })

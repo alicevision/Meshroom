@@ -24,6 +24,8 @@ FloatingPane {
     property string channelModeValue: channelsCtrl.value
     property variant colorRGBA: null
 
+    property bool colorPickerVisible: true
+
     background: Rectangle { color: root.palette.window }
 
     DoubleValidator {
@@ -132,6 +134,7 @@ FloatingPane {
         }
 
         Rectangle {
+            visible: colorPickerVisible
             Layout.preferredWidth: 20
             implicitWidth: 20
             implicitHeight: parent.height
@@ -141,6 +144,7 @@ FloatingPane {
         // RGBA colors
         RowLayout {
             spacing: 1
+            visible: colorPickerVisible
             TextField {
                 id: red
                 property real value: root.colorRGBA ? root.colorRGBA.x : 0.0

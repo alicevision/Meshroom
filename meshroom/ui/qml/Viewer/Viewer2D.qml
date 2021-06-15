@@ -191,6 +191,10 @@ FocusScope {
             onVisibleChanged: {
                 resetDefaultValues();
             }
+            colorPickerVisible: {
+                return !displayPanoramaViewer.checked
+            }
+
             colorRGBA: {
                 if(!floatImageViewerLoader.item ||
                    floatImageViewerLoader.item.status !== Image.Ready)

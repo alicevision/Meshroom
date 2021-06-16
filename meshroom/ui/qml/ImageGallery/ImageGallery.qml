@@ -43,6 +43,7 @@ Panel {
         id: m
         property variant currentCameraInit: _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
         property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
+        property variant intrinsics: currentCameraInit ? currentCameraInit.attribute('intrinsics').value : undefined
         property bool readOnly: root.readOnly || displayHDR.checked
     }
 
@@ -444,6 +445,14 @@ Panel {
                     inputImagesFilterButton.checked = true;
                 }
             }
+
+        }
+        MaterialToolLabel {
+            id : intrinsicsCount
+            Layout.minimumWidth: childrenRect.width
+            ToolTip.text: label + "Number of intrinsics "
+            iconText: MaterialIcons.camera
+            label: _reconstruction ? m.intrinsics.count : "0"
 
         }
 

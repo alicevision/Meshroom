@@ -26,6 +26,9 @@ Panel {
     property int currentIndex: 0
     property bool readOnly: false
 
+    property string filter: ""
+    property bool filterValue: true
+
     signal removeImageRequest(var attribute)
     signal filesDropped(var drop, var augmentSfm)
 
@@ -115,14 +118,16 @@ Panel {
                 model: m.viewpoints
                 sortRole: "path"
                 // TODO: provide filtering on reconstruction status
-                // filterRole: _reconstruction.sfmReport ? "reconstructed" : ""
-                // filterValue: true / false
+                filterRole: _reconstruction.sfmReport ? root.filter : ""
+                filterValue: root.filterValue
                 // in modelData:
                 // if(filterRole == roleName)
                 //     return _reconstruction.isReconstructed(item.model.object)
 
                 // override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName) {
+                    if(filterRole == roleName)
+                        return _reconstruction.isReconstructed(item.model.object)
                     var value = item.model.object.childAttribute(roleName).value
                     if(roleName == sortRole)
                         return Filepath.basename(value)
@@ -140,6 +145,12 @@ Panel {
                     displayViewId: displayViewIdsAction.checked
 
                     isCurrentItem: GridView.isCurrentItem
+
+                    onWidthChanged: {
+                        //console.warn(viewpoint.get("poseId").value)
+                        //console.warn(_reconstruction.isReconstructed(object))
+
+                    }
 
                     onIsCurrentItemChanged: {
                         if(isCurrentItem)
@@ -233,8 +244,9 @@ Panel {
 
             // Explanatory placeholder when no image has been added yet
             Column {
+                id: dropImagePlaceholder
                 anchors.centerIn: parent
-                visible: grid.model.count == 0
+                visible: m.viewpoints.count == 0
                 spacing: 4
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -244,6 +256,22 @@ Panel {
                 }
                 Label {
                     text: "Drop Image Files / Folders"
+                }
+            }
+            // Placeholder when the filtered images list is empty
+            Column {
+                id: noImageImagePlaceholder
+                anchors.centerIn: parent
+                visible: m.viewpoints.count != 0 && !dropImagePlaceholder.visible && grid.model.count == 0
+                spacing: 4
+                Label {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: MaterialIcons.filter_none
+                    font.pointSize: 24
+                    font.family: MaterialIcons.fontFamily
+                }
+                Label {
+                    text: "No images in this filtered view"
                 }
             }
 
@@ -344,22 +372,79 @@ Panel {
 
     footerContent: RowLayout {
         // Images count
-        MaterialToolLabel {
+        MaterialToolLabelButton {
+            id : inputImagesFilterButton
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: grid.model.count + " Input Images"
             iconText: MaterialIcons.image
-            label: grid.model.count.toString()
+            label: m.viewpoints.count
+            checkable: true
+            checked: true
             // enabled: grid.model.count > 0
             // margin: 4
+            onCheckedChanged:{
+                if(checked) {
+                    root.filter = ""
+                    root.filterValue = true
+                    estimatedCamerasFilterButton.checked = false
+                    nonEstimatedCamerasFilterButton.checked = false
+                }
+            }
         }
-        // cameras count
-        MaterialToolLabel {
+        // Estimated cameras count
+        MaterialToolLabelButton {
+            id : estimatedCamerasFilterButton
             Layout.minimumWidth: childrenRect.width
-            ToolTip.text: label + " Estimated Cameras"
+            ToolTip.text: label + "Estimated Cameras "
             iconText: MaterialIcons.videocam
             label: _reconstruction ? _reconstruction.nbCameras.toString() : "0"
-            // margin: 4
-            // enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+            //margin: 4
+            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+            checkable: true
+            checked: false
+            onCheckedChanged:{
+                if(checked) {
+                    root.filter = "viewId"
+                    root.filterValue = true
+                    inputImagesFilterButton.checked = false
+                    nonEstimatedCamerasFilterButton.checked = false
+                }
+            }
+            onEnabledChanged:{
+                if(!enabled) {
+                    checked = false
+                    inputImagesFilterButton.checked = true;
+                }
+            }
+
+        }
+        // Non estimated cameras count
+        MaterialToolLabelButton {
+            id : nonEstimatedCamerasFilterButton
+            Layout.minimumWidth: childrenRect.width
+            ToolTip.text: label + "Non Estimated Cameras "
+            iconText: MaterialIcons.videocam_off
+            label: _reconstruction ? (m.viewpoints.count - _reconstruction.nbCameras.toString()).toString() : "0"
+            checkable: true
+            checked: false
+            //margin: 4
+            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+
+            onCheckedChanged:{
+                if(checked) {
+                    filter = "viewId"
+                    root.filterValue = false
+                    inputImagesFilterButton.checked = false
+                    estimatedCamerasFilterButton.checked = false
+                }
+            }
+            onEnabledChanged:{
+                if(!enabled) {
+                    checked = false
+                    inputImagesFilterButton.checked = true;
+                }
+            }
+
         }
 
         Item { Layout.fillHeight: true; Layout.fillWidth: true }

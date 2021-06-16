@@ -379,10 +379,11 @@ Panel {
             ToolTip.text: grid.model.count + " Input Images"
             iconText: MaterialIcons.image
             label: m.viewpoints.count
+            padding: 3
+
             checkable: true
             checked: true
-            // enabled: grid.model.count > 0
-            // margin: 4
+
             onCheckedChanged:{
                 if(checked) {
                     root.filter = ""
@@ -396,13 +397,15 @@ Panel {
         MaterialToolLabelButton {
             id : estimatedCamerasFilterButton
             Layout.minimumWidth: childrenRect.width
-            ToolTip.text: label + "Estimated Cameras "
+            ToolTip.text: label + " Estimated Cameras"
             iconText: MaterialIcons.videocam
             label: _reconstruction ? _reconstruction.nbCameras.toString() : "0"
-            //margin: 4
+            padding: 3
+
             enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
             checkable: true
             checked: false
+
             onCheckedChanged:{
                 if(checked) {
                     root.filter = "viewId"
@@ -423,13 +426,14 @@ Panel {
         MaterialToolLabelButton {
             id : nonEstimatedCamerasFilterButton
             Layout.minimumWidth: childrenRect.width
-            ToolTip.text: label + "Non Estimated Cameras "
+            ToolTip.text: label + " Non Estimated Cameras"
             iconText: MaterialIcons.videocam_off
             label: _reconstruction ? (m.viewpoints.count - _reconstruction.nbCameras.toString()).toString() : "0"
+            padding: 3
+
+            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
             checkable: true
             checked: false
-            //margin: 4
-            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
 
             onCheckedChanged:{
                 if(checked) {
@@ -450,7 +454,7 @@ Panel {
         MaterialToolLabel {
             id : intrinsicsCount
             Layout.minimumWidth: childrenRect.width
-            ToolTip.text: label + "Number of intrinsics "
+            ToolTip.text: label + "Number of intrinsics"
             iconText: MaterialIcons.camera
             label: _reconstruction ? m.intrinsics.count : "0"
 

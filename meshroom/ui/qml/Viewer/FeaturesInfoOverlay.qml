@@ -100,6 +100,20 @@ FloatingPane {
                         }
                         RowLayout {
                             Label {
+                                text: "Display 3d Tracks:"
+                            }
+                            CheckBox {
+                                id: display3dTracksCB
+                                ToolTip.text: "Draws tracks between 3d points instead of 2d points (if possible)."
+                                ToolTip.visible: hovered
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                checked: root.featuresViewer.display3dTracks
+                                onClicked: root.featuresViewer.display3dTracks = display3dTracksCB.checked
+                            }
+                        }
+                        RowLayout {
+                            Label {
                                 text: "Track Feature Scale Filter:"
                             }
                             RangeSlider {

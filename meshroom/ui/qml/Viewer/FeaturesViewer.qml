@@ -23,6 +23,8 @@ Repeater {
     readonly property var trackDisplayModes: ['Lines Only', 'Current Matches', 'All Matches']
     /// Current track display mode index
     property int trackDisplayMode: 1
+    /// Display 3d tracks
+    property bool display3dTracks: false
     /// Display only contiguous tracks
     property bool trackContiguousFilter: true
     /// Display only tracks with at least one inlier
@@ -42,6 +44,7 @@ Repeater {
         property int colorOffset: 0
         featureDisplayMode: root.featureDisplayMode
         trackDisplayMode: root.trackDisplayMode
+        display3dTracks: root.display3dTracks
         trackContiguousFilter: root.trackContiguousFilter
         trackInliersFilter: root.trackInliersFilter
         trackMinFeatureScaleFilter: root.trackMinFeatureScaleFilter

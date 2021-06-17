@@ -23,16 +23,16 @@ Repeater {
     readonly property var trackDisplayModes: ['Lines Only', 'Current Matches', 'All Matches']
     /// Current track display mode index
     property int trackDisplayMode: 1
+    // Minimum feature scale score to display
+    property real featureMinScaleFilter: 0
+    // Maximum feature scale score to display
+    property real featureMaxScaleFilter: 1
     /// Display 3d tracks
     property bool display3dTracks: false
     /// Display only contiguous tracks
     property bool trackContiguousFilter: true
     /// Display only tracks with at least one inlier
     property bool trackInliersFilter: false
-    // Minimum track feature scale score to display
-    property real trackMinFeatureScaleFilter: 0
-    // Maximum track feature scale score to display
-    property real trackMaxFeatureScaleFilter: 1
     /// The list of colors used for displaying several describers
     property var colors: [Colors.blue, Colors.green, Colors.yellow, Colors.cyan, Colors.pink, Colors.lime] //, Colors.orange, Colors.red
 
@@ -44,11 +44,11 @@ Repeater {
         property int colorOffset: 0
         featureDisplayMode: root.featureDisplayMode
         trackDisplayMode: root.trackDisplayMode
+        featureMinScaleFilter: root.featureMinScaleFilter
+        featureMaxScaleFilter: root.featureMaxScaleFilter
         display3dTracks: root.display3dTracks
         trackContiguousFilter: root.trackContiguousFilter
         trackInliersFilter: root.trackInliersFilter
-        trackMinFeatureScaleFilter: root.trackMinFeatureScaleFilter
-        trackMaxFeatureScaleFilter: root.trackMaxFeatureScaleFilter
         featureColor: root.colors[colorIndex]
         matchColor: Colors.orange
         landmarkColor: Colors.red

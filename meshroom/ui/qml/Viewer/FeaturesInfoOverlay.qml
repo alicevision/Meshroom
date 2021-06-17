@@ -40,6 +40,25 @@ FloatingPane {
 
                         RowLayout {
                             Label {
+                                text: "Feature Scale Filter:"
+                            }
+                            RangeSlider {
+                                id: featureScaleFilterRS
+                                ToolTip.text: "Filters features according to their scale (or filters tracks according to their average feature scale)."
+                                ToolTip.visible: hovered
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                from: 0
+                                to: 1
+                                first.value: root.featuresViewer.featureMinScaleFilter
+                                first.onMoved: { root.featuresViewer.featureMinScaleFilter = first.value; }
+                                second.value: root.featuresViewer.featureMaxScaleFilter
+                                second.onMoved: { root.featuresViewer.featureMaxScaleFilter = second.value; }
+                                stepSize: 0.01
+                            }
+                        }
+                        RowLayout {
+                            Label {
                                 text: "Feature Display Mode:"
                             }
                             ComboBox {
@@ -110,25 +129,6 @@ FloatingPane {
                                 Layout.alignment: Qt.AlignRight
                                 checked: root.featuresViewer.display3dTracks
                                 onClicked: root.featuresViewer.display3dTracks = display3dTracksCB.checked
-                            }
-                        }
-                        RowLayout {
-                            Label {
-                                text: "Track Feature Scale Filter:"
-                            }
-                            RangeSlider {
-                                id: trackFeatureScaleFilterRS
-                                ToolTip.text: "Filters tracks according to their feature scale score (average feature scale)."
-                                ToolTip.visible: hovered
-                                Layout.fillHeight: true
-                                Layout.alignment: Qt.AlignRight
-                                from: 0
-                                to: 1
-                                first.value: root.featuresViewer.trackMinFeatureScaleFilter
-                                first.onMoved: { root.featuresViewer.trackMinFeatureScaleFilter = first.value; }
-                                second.value: root.featuresViewer.trackMaxFeatureScaleFilter
-                                second.onMoved: { root.featuresViewer.trackMaxFeatureScaleFilter = second.value; }
-                                stepSize: 0.01
                             }
                         }
                         RowLayout {

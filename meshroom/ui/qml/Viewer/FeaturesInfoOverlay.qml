@@ -45,6 +45,8 @@ FloatingPane {
                             ComboBox {
                                 id: featureDisplayModeCB
                                 flat: true
+                                ToolTip.text: "Feature Display Mode:\n* Points: Simple points.\n* Square: Scaled filled squares.\n* Oriented Square: Scaled and oriented squares."
+                                ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
                                 model: root.featuresViewer ? root.featuresViewer.featureDisplayModes : null
@@ -59,6 +61,8 @@ FloatingPane {
                             ComboBox {
                                 id: trackDisplayModeCB
                                 flat: true
+                                ToolTip.text: "Track Display Mode:\n* Lines Only: Only track lines.\n* Current Matches: Track lines with current matches / landmarks.\n* All Matches: Track lines with all matches / landmarks."
+                                ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
                                 model: root.featuresViewer ? root.featuresViewer.trackDisplayModes : null
@@ -72,6 +76,8 @@ FloatingPane {
                             }
                             CheckBox {
                                 id: trackContiguousFilterCB
+                                ToolTip.text: "Hides non-contiguous track parts."
+                                ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
                                 checked: root.featuresViewer.trackContiguousFilter
@@ -84,6 +90,8 @@ FloatingPane {
                             }
                             CheckBox {
                                 id: trackInliersFilterCB
+                                ToolTip.text: "Hides tracks without at least one inlier."
+                                ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
                                 checked: root.featuresViewer.trackInliersFilter
@@ -96,6 +104,8 @@ FloatingPane {
                             }
                             RangeSlider {
                                 id: trackFeatureScaleFilterRS
+                                ToolTip.text: "Filters tracks according to their feature scale score (average feature scale)."
+                                ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
                                 from: 0
@@ -113,6 +123,8 @@ FloatingPane {
                             }
                             SpinBox {
                                 id: timeWindowSB
+                                ToolTip.text: "Time Window: The number of frames to consider for tracks display.\ne.g. With time window set at x, tracks will start at current frame - x and they will end at  current frame + x."
+                                ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
                                 from: -1
@@ -167,6 +179,7 @@ FloatingPane {
                     checkable: true
                     checked: true
                     text: MaterialIcons.center_focus_strong
+                    ToolTip.text: "Display Extracted Features"
                     onClicked: {
                         featureType.viewer.displayFeatures = featuresVisibilityButton.checked;
                     }
@@ -179,6 +192,7 @@ FloatingPane {
                     checkable: true
                     checked: false
                     text: MaterialIcons.timeline
+                    ToolTip.text: "Display Tracks"
                     onClicked: {
                         featureType.viewer.displayTracks = tracksVisibilityButton.checked;
                         root.mfeatures.enableTimeWindow = tracksVisibilityButton.checked;
@@ -191,6 +205,7 @@ FloatingPane {
                     checkable: true
                     checked: true
                     text: MaterialIcons.sync
+                    ToolTip.text: "Display Matches"
                     onClicked: {
                         featureType.viewer.displayMatches = matchesVisibilityButton.checked;
                     }
@@ -202,6 +217,7 @@ FloatingPane {
                     checkable: true
                     checked: true
                     text: MaterialIcons.fiber_manual_record
+                    ToolTip.text: "Display Landmarks"
                     onClicked: {
                         featureType.viewer.displayLandmarks = landmarksVisibilityButton.checked;
                     }

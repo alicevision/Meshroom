@@ -50,10 +50,10 @@ FloatingPane {
                                 Layout.alignment: Qt.AlignRight
                                 from: 0
                                 to: 1
-                                first.value: root.featuresViewer.featureMinScaleFilter
-                                first.onMoved: { root.featuresViewer.featureMinScaleFilter = first.value; }
-                                second.value: root.featuresViewer.featureMaxScaleFilter
-                                second.onMoved: { root.featuresViewer.featureMaxScaleFilter = second.value; }
+                                first.value: 0
+                                first.onMoved: { root.featuresViewer.featureMinScaleFilter = Math.pow(first.value,4); }
+                                second.value: 1
+                                second.onMoved: { root.featuresViewer.featureMaxScaleFilter = Math.pow(second.value,4); }
                                 stepSize: 0.01
                             }
                         }

@@ -16,7 +16,7 @@ FloatingPane {
     property bool displayGrid: displayGrid.checked
 
     property int downscaleValue: downscaleSpinBox.value
-    property int downscaleDefaultValue: 3
+    property int downscaleDefaultValue: 4
 
     property int subdivisionsDefaultValue: 12
     property int subdivisionsValue: subdivisionsCtrl.value
@@ -159,7 +159,7 @@ FloatingPane {
                 id: downscaleSpinBox
                 from: 0
                 value: downscaleDefaultValue
-                to: 3
+                to: 5
                 stepSize: 1
                 Layout.fillWidth: false
                 Layout.maximumWidth: 50

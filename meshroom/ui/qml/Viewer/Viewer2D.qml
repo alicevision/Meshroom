@@ -1060,18 +1060,16 @@ FocusScope {
         anchors.centerIn: parent
         // running property binding seems broken, only dynamic binding assignment works
         Component.onCompleted: {
-            if (root.usePanoramaViewer) {
-                running = Qt.binding(function() { return imgContainer.panoramaViewerLoader.status === Image.Loading })
-            } else {
-                running = Qt.binding(function() { return imgContainer.image && imgContainer.image.status === Image.Loading })
-            }
-
+            running = Qt.binding(function() {
+                return (root.usePanoramaViewer === true && imgContainer.image.allImagesLoaded === false)
+                || (imgContainer.image && imgContainer.image.status === Image.Loading)
+            })
         }
         // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker
         visible: running
 
         onVisibleChanged: {
-            if (panoramaViewerLoader.active && panoramaViewerLoader.item.status === Image.Ready)
+            if (panoramaViewerLoader.active)
                 fit();
         }
     }

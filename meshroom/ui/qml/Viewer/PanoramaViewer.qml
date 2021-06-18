@@ -20,14 +20,8 @@ AliceVision.PanoramaViewer {
     property int paintedWidth: sourceSize.width
     property int paintedHeight: sourceSize.height
     property var status: {
-        if (readyToLoad === Image.Ready && root.imagesLoaded === root.pathList.length) {
-            for (var i = 0; i < repeater.model; i++) {
-                if (repeater.itemAt(i).item.status !== Image.Ready) return Image.Loading;
-            }
+        if (readyToLoad === Image.Ready) {
             return Image.Ready;
-        }
-        else if (readyToLoad === Image.Ready) {
-            return Image.Loading;
         }
         else {
             return Image.Null;
@@ -91,6 +85,7 @@ AliceVision.PanoramaViewer {
                 id: mouseAreaPano
                 anchors.fill: parent
                 hoverEnabled: true
+                enabled: allImagesLoaded
                 cursorShape: {
                     if (isEditable)
                         isRotating ? Qt.ClosedHandCursor : Qt.OpenHandCursor
@@ -196,6 +191,16 @@ AliceVision.PanoramaViewer {
     property var pathList : []
     property var idList : []
     property int imagesLoaded: 0
+    property bool allImagesLoaded: false
+
+    function loadRepeaterImages(index)
+    {
+        if (index < repeater.model)
+            repeater.itemAt(index).loadItem();
+        else
+            allImagesLoaded = true;
+    }
+
 
     Item {
         id: panoImages
@@ -212,29 +217,32 @@ AliceVision.PanoramaViewer {
                 //anchors.centerIn: parent
                 property string cSource: Filepath.stringToUrl(root.pathList[index].toString())
                 property int cId: root.idList[index]
-                onActiveChanged: {
-                    if(active) {
+
+                property bool imageLoaded: false
+
+                onImageLoadedChanged: {
+                    imagesLoaded++;
+                    loadRepeaterImages(imagesLoaded);
+                }
+
+                function loadItem() {
+                    if(active && index == imagesLoaded) {
                         setSource("FloatImage.qml", {
-                            'viewerTypeString' : 'panorama',
+                            'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,
+                            'viewerTypeString': 'panorama',
                             'surface.subdivisions': Qt.binding(function() { return subdivisionsPano; }),
-                            'source':  Qt.binding(function() { return cSource; }),
                             'index' : index,
                             'idView': Qt.binding(function() { return cId; }),
                             'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
                             'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
                             'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
-                            'downscaleLevel' : Qt.binding(function() { return downscale; })
-
+                            'downscaleLevel' : Qt.binding(function() { return downscale; }),
+                            'source':  Qt.binding(function() { return cSource; })
                         })
-
-                    } else {
-                        // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
-                        setSource("", {})
+                        imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.status === Image.Ready ? true : false; })
                     }
                 }
-                onLoaded: {
-                    imagesLoaded++;
-                }
+
             }
         }
         Repeater {
@@ -262,6 +270,7 @@ AliceVision.PanoramaViewer {
                 panoImages.updateRepeater()
 
                 root.readyToLoad = Image.Ready;
+                loadRepeaterImages(0);
             }
         }
 

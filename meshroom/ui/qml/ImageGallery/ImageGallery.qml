@@ -1,8 +1,9 @@
-import QtQuick 2.7
+import QtQuick 2.14
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import QtQml.Models 2.2
+import Qt.labs.qmlmodels 1.0
 
 import Controls 1.0
 import Utils 1.0
@@ -89,6 +90,13 @@ Panel {
         anchors.fill: parent
         spacing: 4
 
+        //Resize table view on width changed
+        onWidthChanged: {
+            tableView.forceLayout()
+
+            console.warn()
+        }
+
         GridView {
             id: grid
 
@@ -112,11 +120,13 @@ Panel {
                     if(idx >= 0)
                         grid.currentIndex = idx
                 }
+
             }
+
 
             model: SortFilterDelegateModel {
                 id: sortedModel
-                model: m.viewpoints
+                model: m.intrinsics
                 sortRole: "path"
                 // TODO: provide filtering on reconstruction status
                 filterRole: _reconstruction.sfmReport ? root.filter : ""
@@ -148,6 +158,15 @@ Panel {
                     isCurrentItem: GridView.isCurrentItem
 
                     onWidthChanged: {
+                        console.warn("viewpoint " + object.value.get("intrinsicId").value)
+
+
+
+
+
+
+                         console.warn("viewpoint2 " + (m.viewpoints?m.viewpoints.value:"pute"))
+                        console.warn("intrin " + m.currentCameraInit.attribute('intrinsics').value)
                         //console.warn(viewpoint.get("poseId").value)
                         //console.warn(_reconstruction.isReconstructed(object))
 
@@ -247,7 +266,7 @@ Panel {
             Column {
                 id: dropImagePlaceholder
                 anchors.centerIn: parent
-                visible: m.viewpoints.count == 0
+                visible: (m.viewpoints ? m.viewpoints.count == 0 : true)
                 spacing: 4
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -263,7 +282,7 @@ Panel {
             Column {
                 id: noImageImagePlaceholder
                 anchors.centerIn: parent
-                visible: m.viewpoints.count != 0 && !dropImagePlaceholder.visible && grid.model.count == 0
+                visible: (m.viewpoints ? m.viewpoints.count != 0 : false) && !dropImagePlaceholder.visible && grid.model.count == 0 && !intrinsicsFilterButton.checked
                 spacing: 4
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -275,11 +294,56 @@ Panel {
                     text: "No images in this filtered view"
                 }
             }
+            TableView {
+                id: tableView
+                    anchors.fill: parent
+                    Layout.fillWidth: true
+                    columnSpacing: 1
+                    rowSpacing: 1
+
+                    // Create a kind of responsive width base on the grid width
+                    // Require a forceLayout() call to be updated
+                    columnWidthProvider: function (column) {
+                        return grid.width/ 2;
+                    }
+
+                   boundsBehavior: Flickable.StopAtBounds
+                   visible: (m.viewpoints ? m.viewpoints.count != 0 : false) && intrinsicsFilterButton.checked
+                   onVisibleChanged:{
+                       tableView.forceLayout();
+                   }
+
+                   model: TableModel {
+
+                       TableModelColumn { display: "checked" }
+                       TableModelColumn { display: "fruitName" }
+
+
+                       Component.onCompleted: {
+                            console.warn(data(index(2,1), "display"))
+                       }
+                   }
+
+
+                   delegate:  TextInput {
+                       text: model.display
+                       padding: 12
+                       selectByMouse: false
+
+                       onAccepted: model.display = text
+
+                       Rectangle {
+                           anchors.fill: parent
+                           color: "#efefef"
+                           z: -1
+                       }
+                   }
+               }
 
             DropArea {
                 id: dropArea
                 anchors.fill: parent
-                enabled: !m.readOnly
+                enabled: !m.readOnly && !intrinsicsFilterButton.checked
                 keys: ["text/uri-list"]
                 // TODO: onEntered: call specific method to filter files based on extension
                 onDropped: {
@@ -373,12 +437,20 @@ Panel {
 
     footerContent: RowLayout {
         // Images count
+        id: footer
+
+        function resetButtons(){
+            inputImagesFilterButton.checked = false
+            estimatedCamerasFilterButton.checked = false
+            nonEstimatedCamerasFilterButton.checked = false
+        }
+
         MaterialToolLabelButton {
             id : inputImagesFilterButton
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: grid.model.count + " Input Images"
             iconText: MaterialIcons.image
-            label: m.viewpoints.count
+            label: (m.viewpoints ? m.viewpoints.count : 0)
             padding: 3
 
             checkable: true
@@ -390,6 +462,7 @@ Panel {
                     root.filterValue = true
                     estimatedCamerasFilterButton.checked = false
                     nonEstimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false;
                 }
             }
         }
@@ -412,6 +485,7 @@ Panel {
                     root.filterValue = true
                     inputImagesFilterButton.checked = false
                     nonEstimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false;
                 }
             }
             onEnabledChanged:{
@@ -428,7 +502,7 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Non Estimated Cameras"
             iconText: MaterialIcons.videocam_off
-            label: _reconstruction ? (m.viewpoints.count - _reconstruction.nbCameras.toString()).toString() : "0"
+            label: _reconstruction ? ((m.viewpoints ? m.viewpoints.count : 0) - _reconstruction.nbCameras.toString()).toString() : "0"
             padding: 3
 
             enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
@@ -441,6 +515,7 @@ Panel {
                     root.filterValue = false
                     inputImagesFilterButton.checked = false
                     estimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false;
                 }
             }
             onEnabledChanged:{
@@ -451,12 +526,30 @@ Panel {
             }
 
         }
-        MaterialToolLabel {
-            id : intrinsicsCount
+        MaterialToolLabelButton {
+            id : intrinsicsFilterButton
             Layout.minimumWidth: childrenRect.width
-            ToolTip.text: label + "Number of intrinsics"
+            ToolTip.text: label + " Number of intrinsics"
             iconText: MaterialIcons.camera
-            label: _reconstruction ? m.intrinsics.count : "0"
+            label: _reconstruction ? (m.intrinsics ? m.intrinsics.count : 0) : "0"
+
+            enabled: true
+            checkable: true
+            checked: false
+
+            onCheckedChanged:{
+                if(checked) {
+                    inputImagesFilterButton.checked = false
+                    estimatedCamerasFilterButton.checked = false
+                    nonEstimatedCamerasFilterButton.checked = false
+                }
+            }
+            onEnabledChanged:{
+                if(!enabled) {
+                    checked = false
+                    inputImagesFilterButton.checked = true;
+                }
+            }
 
         }
 

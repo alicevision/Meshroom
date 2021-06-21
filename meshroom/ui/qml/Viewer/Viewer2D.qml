@@ -22,18 +22,18 @@ FocusScope {
         source: "TestAliceVisionPlugin.qml"
     }
     Loader {
-        id: oiioPluginLoader
+        id: aliceVisionImageIOPluginLoader
         active: true
-        source: "TestOIIOPlugin.qml"
+        source: "TestAliceVisionImageIOPlugin.qml"
     }
     readonly property bool aliceVisionPluginAvailable: aliceVisionPluginLoader.status === Component.Ready
-    readonly property bool oiioPluginAvailable: oiioPluginLoader.status === Component.Ready
+    readonly property bool aliceVisionImageIOPluginAvailable: aliceVisionImageIOPluginLoader.status === Component.Ready
 
     Component.onCompleted: {
         if(!aliceVisionPluginAvailable)
             console.warn("Missing plugin qtAliceVision.")
-        if(!oiioPluginAvailable)
-            console.warn("Missing plugin qtOIIO.")
+        if(!aliceVisionImageIOPluginAvailable)
+            console.warn("Missing plugin QtAliceVisionImageIO.")
     }
 
     property string loadingModules: {
@@ -222,7 +222,7 @@ FocusScope {
                     }
                 }
 
-                // Simple QML Image Viewer (using Qt or qtOIIO to load images)
+                // Simple QML Image Viewer (using Qt or qtAliceVisionImageIOHandler to load images)
                 Loader {
                     id: qtImageViewerLoader
                     active: !floatImageViewerLoader.active
@@ -396,7 +396,7 @@ FocusScope {
                         // show which depthmap node is active
                         Label {
                             id: depthMapNodeName
-                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get("allDepthMap").node : null
+                            property var activeNode: root.aliceVisionImageIOPluginAvailable ? _reconstruction.activeNodes.get("allDepthMap").node : null
                             visible: (imageType.type != "image") && activeNode
                             text: activeNode ? activeNode.label : ""
                             font.pointSize: 8
@@ -733,7 +733,7 @@ FocusScope {
 
                         ComboBox {
                             id: imageType
-                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
+                            property var activeNode: root.aliceVisionImageIOPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
                             // set min size to 5 characters + one margin for the combobox
                             clip: true
                             Layout.minimumWidth: 0
@@ -748,7 +748,7 @@ FocusScope {
                         }
 
                         MaterialToolButton {
-                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
+                            property var activeNode: root.aliceVisionImageIOPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
                             enabled: activeNode
                             ToolTip.text: "View Depth Map in 3D (" + (activeNode ? activeNode.label : "No DepthMap Node Selected") + ")"
                             text: MaterialIcons.input

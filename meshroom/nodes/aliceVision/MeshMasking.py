@@ -46,6 +46,13 @@ Decimate triangles based on image masks.
             uid=[0]
         ),
         desc.BoolParam(
+            name='smoothBoundary',
+            label='Smooth Boundary',
+            description='Modify the triangles at the boundary to fit the masks.',
+            value=False,
+            uid=[0]
+        ),
+        desc.BoolParam(
             name='invert',
             label='Invert',
             description='''If ticked, the selected area is ignored.

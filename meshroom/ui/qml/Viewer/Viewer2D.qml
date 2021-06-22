@@ -1059,7 +1059,7 @@ FocusScope {
         // running property binding seems broken, only dynamic binding assignment works
         Component.onCompleted: {
             running = Qt.binding(function() {
-                return (root.usePanoramaViewer === true && imgContainer.image.allImagesLoaded === false)
+                return (root.usePanoramaViewer === true && imgContainer.image && imgContainer.image.allImagesLoaded === false)
                 || (imgContainer.image && imgContainer.image.status === Image.Loading)
             })
         }

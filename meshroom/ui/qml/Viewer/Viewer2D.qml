@@ -287,8 +287,6 @@ FocusScope {
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
                             setSource("", {})
-                            displayLensDistortionViewer.checked = false;
-                            displayHDR.checked = false;
                         }
                     }
 

@@ -281,7 +281,7 @@ FocusScope {
                                 'surface.displayGrid' :  Qt.binding(function(){ return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid;}),
                                 'surface.gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
                                 'surface.gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
-                                'surface.subdivisions' : Qt.binding(function(){ return lensDistortionImageToolbar.subdivisionsValue;}),
+                                'surface.subdivisions' : Qt.binding(function(){ return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue;}),
                                 'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
                             })
                         } else {

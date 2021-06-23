@@ -248,6 +248,7 @@ AliceVision.PanoramaViewer {
                         'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
                         'downscaleLevel' : Qt.binding(function() { return downscale; }),
                         'source':  Qt.binding(function() { return cSource; }),
+                        'sfmRequired': true,
                         'canBeHovered': true
                     })
                     imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.status === Image.Ready ? true : false; })

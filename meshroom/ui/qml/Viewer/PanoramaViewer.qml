@@ -226,21 +226,22 @@ AliceVision.PanoramaViewer {
                 }
 
                 function loadItem() {
-                    if(active && index == imagesLoaded) {
-                        setSource("FloatImage.qml", {
-                            'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,
-                            'viewerTypeString': 'panorama',
-                            'surface.subdivisions': Qt.binding(function() { return subdivisionsPano; }),
-                            'index' : index,
-                            'idView': Qt.binding(function() { return cId; }),
-                            'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
-                            'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
-                            'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
-                            'downscaleLevel' : Qt.binding(function() { return downscale; }),
-                            'source':  Qt.binding(function() { return cSource; })
-                        })
-                        imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.status === Image.Ready ? true : false; })
-                    }
+                    if(!active)
+                        return;
+
+                    setSource("FloatImage.qml", {
+                        'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,
+                        'viewerTypeString': 'panorama',
+                        'surface.subdivisions': Qt.binding(function() { return subdivisionsPano; }),
+                        'index' : index,
+                        'idView': Qt.binding(function() { return cId; }),
+                        'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
+                        'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
+                        'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
+                        'downscaleLevel' : Qt.binding(function() { return downscale; }),
+                        'source':  Qt.binding(function() { return cSource; })
+                    })
+                    imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.status === Image.Ready ? true : false; })
                 }
 
             }

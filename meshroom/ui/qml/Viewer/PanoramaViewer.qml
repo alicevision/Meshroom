@@ -219,6 +219,7 @@ AliceVision.PanoramaViewer {
                 property int cId: root.idList[index]
 
                 property bool imageLoaded: false
+                property bool loading: false
 
                 onImageLoadedChanged: {
                     imagesLoaded++;
@@ -228,6 +229,13 @@ AliceVision.PanoramaViewer {
                 function loadItem() {
                     if(!active)
                         return;
+
+                    if (loading) {
+                        loadRepeaterImages(index + 1)
+                        return;
+                    }
+
+                    loading = true;
 
                     setSource("FloatImage.qml", {
                         'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,
@@ -272,7 +280,10 @@ AliceVision.PanoramaViewer {
                 panoImages.updateRepeater()
 
                 root.readyToLoad = Image.Ready;
+
+                // Load images two by two
                 loadRepeaterImages(0);
+                loadRepeaterImages(1);
             }
         }
 

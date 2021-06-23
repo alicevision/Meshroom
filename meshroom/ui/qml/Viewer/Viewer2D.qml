@@ -52,6 +52,11 @@ FocusScope {
                 }
             }
         }
+        if(mfeaturesLoader.status === Loader.Ready)
+        {
+            if(mfeaturesLoader.item.status === MFeatures.Loading)
+                res += " Features";
+        }
         if(mtracksLoader.status === Loader.Ready)
         {
             if(mtracksLoader.item.status === MTracks.Loading)
@@ -283,13 +288,11 @@ FocusScope {
 
                     onActiveChanged: {
                         if(active) {
+
                             // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             setSource("FeaturesViewer.qml", {
-                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
                                 'model': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : ""; }),
-                                'featureFolder': Qt.binding(function() { return activeNode ? Filepath.stringToUrl(activeNode.attribute("output").value) : ""; }),
-                                'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
-                                'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
+                                'features': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null; }),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -439,6 +442,42 @@ FocusScope {
                     }
 
                     Loader {
+                        id: mfeaturesLoader
+
+                        property bool isUsed: displayFeatures.checked
+                        property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get("FeatureExtraction").node : null
+                        property bool isComputed: activeNode && activeNode.isComputed
+                        active: false
+
+                        onIsUsedChanged: {
+                            active = (!active && isUsed && isComputed);
+                        }
+                        onIsComputedChanged: {
+                            active = (!active && isUsed && isComputed);
+                        }
+                        onActiveNodeChanged: {
+                            active = (!active && isUsed && isComputed);
+                        }
+
+                        onActiveChanged: {
+                            if(active) {
+                                // instantiate and initialize a MFeatures component dynamically using Loader.setSource
+                                // so it can fail safely if the c++ plugin is not available
+                                setSource("MFeatures.qml", {
+                                    'currentViewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                    'describerTypes': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : {}; }),
+                                    'featureFolder': Qt.binding(function() { return activeNode ? Filepath.stringToUrl(activeNode.attribute("output").value) : ""; }),
+                                    'mtracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
+                                    'msfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
+                                })
+
+                            } else {
+                                // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                                setSource("", {})
+                            }
+                        }
+                    }
+                    Loader {
                         id: msfmDataLoader
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
@@ -570,7 +609,6 @@ FocusScope {
                             })
                         }
                     }
-
                     Loader {
                         id: featuresOverlay
                         anchors {
@@ -584,6 +622,7 @@ FocusScope {
                             featureExtractionNode: _reconstruction.activeNodes.get('FeatureExtraction').node
                             pluginStatus: featuresViewerLoader.status
                             featuresViewer: featuresViewerLoader.item
+                            mfeatures: mfeaturesLoader.item
                         }
                     }
 

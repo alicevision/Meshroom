@@ -92,9 +92,9 @@ Panel {
 
         //Resize table view on width changed
         onWidthChanged: {
-            tableView.forceLayout()
+            //tableView.forceLayout()
 
-            console.warn()
+            //console.warn()
         }
 
         GridView {
@@ -126,7 +126,7 @@ Panel {
 
             model: SortFilterDelegateModel {
                 id: sortedModel
-                model: m.intrinsics
+                model: m.viewpoints
                 sortRole: "path"
                 // TODO: provide filtering on reconstruction status
                 filterRole: _reconstruction.sfmReport ? root.filter : ""
@@ -158,16 +158,20 @@ Panel {
                     isCurrentItem: GridView.isCurrentItem
 
                     onWidthChanged: {
-                        console.warn("viewpoint " + object.value.get("intrinsicId").value)
+                        //console.warn("viewpoint " + object.value.get("intrinsicId").value)
+                        //console.warn("viewpoint " + m.intrinsics.at(1).childAttribute("intrinsicId"))
+                        console.warn("viewpoint " + m.intrinsics.at(0).value)
+
+                        //console.warn("viewpoint " + m.intrinsics.at(0))
 
 
 
 
 
 
-                         console.warn("viewpoint2 " + (m.viewpoints?m.viewpoints.value:"pute"))
-                        console.warn("intrin " + m.currentCameraInit.attribute('intrinsics').value)
-                        //console.warn(viewpoint.get("poseId").value)
+//                         console.warn("viewpoint2 " + (m.viewpoints?m.viewpoints.value:"pute"))
+                       // console.warn("intrin " + m.currentCameraInit.attribute('intrinsics').value.count)
+//                        //console.warn(viewpoint.get("poseId").value)
                         //console.warn(_reconstruction.isReconstructed(object))
 
                     }
@@ -294,51 +298,122 @@ Panel {
                     text: "No images in this filtered view"
                 }
             }
-            TableView {
-                id: tableView
-                    anchors.fill: parent
-                    Layout.fillWidth: true
-                    columnSpacing: 1
-                    rowSpacing: 1
 
-                    // Create a kind of responsive width base on the grid width
-                    // Require a forceLayout() call to be updated
-                    columnWidthProvider: function (column) {
-                        return grid.width/ 2;
+
+            ListView {
+                anchors.fill: parent
+                model: m.intrinsics
+                delegate: fruitDelegate
+
+                header: headerComponent
+
+                focus: true
+
+                highlight: Rectangle {
+                    color: "lightblue"
+                    width: parent.width
+                }
+                section {
+                    property: value
+                    criteria: ViewSection.FullString
+                    delegate: Rectangle {
+                        color: "#b0dfb0"
+                        width: parent.width
+                        height: childrenRect.height + 4
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            font.pixelSize: 16
+                            font.bold: true
+                            text: section
+                        }
                     }
-
-                   boundsBehavior: Flickable.StopAtBounds
-                   visible: (m.viewpoints ? m.viewpoints.count != 0 : false) && intrinsicsFilterButton.checked
-                   onVisibleChanged:{
-                       tableView.forceLayout();
-                   }
-
-                   model: TableModel {
-
-                       TableModelColumn { display: "checked" }
-                       TableModelColumn { display: "fruitName" }
+                }
+            }
 
 
-                       Component.onCompleted: {
-                            console.warn(data(index(2,1), "display"))
-                       }
-                   }
+            Component {     //instantiated when header is processed
+                id: headerComponent
+                Rectangle {
+                    id: banner
+                    width: parent.width; height: 50
+                    gradient: clubcolors
+                    border {color: "#9EDDF2"; width: 2}
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Club Members"
+                        font.pixelSize: 32
+                    }
+                }
+            }
+
+            Gradient {
+                id: clubcolors
+                GradientStop { position: 0.0; color: "#8EE2FE"}
+                GradientStop { position: 0.66; color: "#7ED2EE"}
+            }
+
+            Component {
+
+                id: fruitDelegate
+
+                Row {
+                    spacing: 10
+                    Text {
+                        text: object.value.get("width").value
+                        color: "#efefef"
+                    }
+                }
+
+            }
 
 
-                   delegate:  TextInput {
-                       text: model.display
-                       padding: 12
-                       selectByMouse: false
+//            TableView {
+//                id: tableView
+//                    anchors.fill: parent
+//                    Layout.fillWidth: true
+//                    columnSpacing: 1
+//                    rowSpacing: 1
 
-                       onAccepted: model.display = text
+//                    // Create a kind of responsive width base on the grid width
+//                    // Require a forceLayout() call to be updated
+//                    columnWidthProvider: function (column) {
+//                        return grid.width;
+//                    }
 
-                       Rectangle {
-                           anchors.fill: parent
-                           color: "#efefef"
-                           z: -1
-                       }
-                   }
-               }
+//                   boundsBehavior: Flickable.StopAtBounds
+//                   visible: (m.viewpoints ? m.viewpoints.count != 0 : false) && intrinsicsFilterButton.checked
+//                   onVisibleChanged:{
+//                       tableView.forceLayout();
+//                   }
+
+//                   model: m.intrinsics
+
+////                   model: TableModel {
+
+////                         TableModelColumn { display: "checked" }
+////                         TableModelColumn { display: "fruitName" }
+
+
+////                         Component.onCompleted: {
+////                              console.warn(data(index(2,1), "display"))
+////                         }
+////                     }
+
+
+//                   delegate:  TextInput {
+//                       text: object.value.get("pxFocalLength").value.get("x").value
+//                       padding: 12
+//                       selectByMouse: false
+
+//                       onAccepted: model.display = text
+
+//                       Rectangle {
+//                           anchors.fill: parent
+//                           color: "#efefef"
+//                           z: -1
+//                       }
+//                   }
+//               }
 
             DropArea {
                 id: dropArea

@@ -160,7 +160,7 @@ Panel {
                     onWidthChanged: {
                         //console.warn("viewpoint " + object.value.get("intrinsicId").value)
                         //console.warn("viewpoint " + m.intrinsics.at(1).childAttribute("intrinsicId"))
-                        console.warn("viewpoint " + m.intrinsics.at(0).value)
+                        console.warn("viewpoint " + m.intrinsics.at(0).value.at(9).name)
 
                         //console.warn("viewpoint " + m.intrinsics.at(0))
 
@@ -300,73 +300,6 @@ Panel {
             }
 
 
-            ListView {
-                anchors.fill: parent
-                model: m.intrinsics
-                delegate: fruitDelegate
-
-                header: headerComponent
-
-                focus: true
-
-                highlight: Rectangle {
-                    color: "lightblue"
-                    width: parent.width
-                }
-                section {
-                    property: value
-                    criteria: ViewSection.FullString
-                    delegate: Rectangle {
-                        color: "#b0dfb0"
-                        width: parent.width
-                        height: childrenRect.height + 4
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            font.pixelSize: 16
-                            font.bold: true
-                            text: section
-                        }
-                    }
-                }
-            }
-
-
-            Component {     //instantiated when header is processed
-                id: headerComponent
-                Rectangle {
-                    id: banner
-                    width: parent.width; height: 50
-                    gradient: clubcolors
-                    border {color: "#9EDDF2"; width: 2}
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Club Members"
-                        font.pixelSize: 32
-                    }
-                }
-            }
-
-            Gradient {
-                id: clubcolors
-                GradientStop { position: 0.0; color: "#8EE2FE"}
-                GradientStop { position: 0.66; color: "#7ED2EE"}
-            }
-
-            Component {
-
-                id: fruitDelegate
-
-                Row {
-                    spacing: 10
-                    Text {
-                        text: object.value.get("width").value
-                        color: "#efefef"
-                    }
-                }
-
-            }
-
-
 //            TableView {
 //                id: tableView
 //                    anchors.fill: parent
@@ -386,24 +319,18 @@ Panel {
 //                       tableView.forceLayout();
 //                   }
 
-//                   model: m.intrinsics
+//                   model: TableModel {
 
-////                   model: TableModel {
+//                         TableModelColumn { display: "checked" }
+//                         TableModelColumn { display: "fruitName" }
 
-////                         TableModelColumn { display: "checked" }
-////                         TableModelColumn { display: "fruitName" }
-
-
-////                         Component.onCompleted: {
-////                              console.warn(data(index(2,1), "display"))
-////                         }
-////                     }
+//                   }
 
 
 //                   delegate:  TextInput {
-//                       text: object.value.get("pxFocalLength").value.get("x").value
+//                       text: model.display
 //                       padding: 12
-//                       selectByMouse: false
+//                       selectByMouse: true
 
 //                       onAccepted: model.display = text
 
@@ -413,7 +340,76 @@ Panel {
 //                           z: -1
 //                       }
 //                   }
+
+//                   Component.onCompleted: {
+//                       model.appendRow(m.intrinsics.at(0).value)
+////                       console.log(model.getRow(0).display);
+////                       console.log(model.rows[0].fruitName);
+//                   }
 //               }
+
+
+            ImageIntrinsicViewer {
+                id: nodeEditor
+                width: Math.round(parent.width)
+                intrinsics: m.intrinsics
+            }
+
+
+            ListView {
+                id: listView
+                anchors.fill: parent
+                Layout.fillWidth: true
+                property bool readOnly: false
+                property int labelWidth: 180
+
+                signal upgradeRequest()
+                signal attributeDoubleClicked(var mouse, var attribute)
+
+                model : m.intrinsics
+
+                spacing: 2
+                clip: true
+                ScrollBar.vertical: ScrollBar { id: scrollBar }
+                visible: true
+
+                delegate: Loader {
+                    active: object.enabled && (!object.desc.advanced)
+                    visible: active
+                    sourceComponent: ImageIntrinsicDelegate {
+                        width: listView.width
+                        readOnly: listView.readOnly
+                        attribute: model.object
+                        onDoubleClicked: listView.attributeDoubleClicked(mouse, attr)
+                    }
+                }
+            }
+
+
+
+//            Pane {
+//                background: Rectangle { color: 'red' }
+//                width : 150
+//                height : 200
+//                Component{
+//                    id : block
+//                    Rectangle {
+//                        color: 'green'
+//                        width : 15
+//                        height : 20
+
+//                        Text{
+//                            text: "Hello World!"
+//                            font.family: "Helvetica"
+//                            font.pointSize: 24
+//                            color: "blue"
+//                        }
+//                    }
+//                }
+//                Loader{sourceComponent: block }
+//            }
+
+
 
             DropArea {
                 id: dropArea

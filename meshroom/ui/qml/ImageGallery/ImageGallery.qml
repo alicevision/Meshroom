@@ -103,7 +103,14 @@ Panel {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            ScrollBar.vertical: ScrollBar { minimumSize: 0.05 }
+            interactive: !intrinsicsFilterButton.checked
+
+            ScrollBar.vertical: ScrollBar {
+                minimumSize: 0.05
+                active : !intrinsicsFilterButton.checked
+                visible: !intrinsicsFilterButton.checked
+
+            }
 
             focus: true
             clip: true
@@ -161,7 +168,7 @@ Panel {
                     onWidthChanged: {
                         //console.warn("viewpoint " + object.value.get("intrinsicId").value)
                         //console.warn("viewpoint " + m.intrinsics.at(1).childAttribute("intrinsicId"))
-                        console.warn("viewpoint " + m.intrinsics.at(0).value.at(9).name)
+                        //console.warn("viewpoint " + m.intrinsics.at(0).value.at(9).name)
 
                         //console.warn("viewpoint " + m.intrinsics.at(0))
 
@@ -363,6 +370,7 @@ Panel {
                 model: m.intrinsics
 
                 visible: intrinsicsFilterButton.checked
+                interactive: intrinsicsFilterButton.checked
             }
 
 

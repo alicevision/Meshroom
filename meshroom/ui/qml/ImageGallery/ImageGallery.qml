@@ -154,6 +154,7 @@ Panel {
                     height: grid.cellHeight
                     readOnly: m.readOnly
                     displayViewId: displayViewIdsAction.checked
+                    visible: !intrinsicsFilterButton.checked
 
                     isCurrentItem: GridView.isCurrentItem
 
@@ -349,41 +350,50 @@ Panel {
 //               }
 
 
-            ImageIntrinsicViewer {
-                id: nodeEditor
-                width: Math.round(parent.width)
-                intrinsics: m.intrinsics
-            }
+//            ImageIntrinsicViewer {
+//                id: nodeEditor
+//                width: Math.round(parent.width)
+//                intrinsics: m.intrinsics
+//            }
 
-
-            ListView {
+            ImageIntrinsicEditor{
                 id: listView
                 anchors.fill: parent
                 Layout.fillWidth: true
-                property bool readOnly: false
-                property int labelWidth: 180
+                model: m.intrinsics
 
-                signal upgradeRequest()
-                signal attributeDoubleClicked(var mouse, var attribute)
-
-                model : m.intrinsics
-
-                spacing: 2
-                clip: true
-                ScrollBar.vertical: ScrollBar { id: scrollBar }
-                visible: true
-
-                delegate: Loader {
-                    active: object.enabled && (!object.desc.advanced)
-                    visible: active
-                    sourceComponent: ImageIntrinsicDelegate {
-                        width: listView.width
-                        readOnly: listView.readOnly
-                        attribute: model.object
-                        onDoubleClicked: listView.attributeDoubleClicked(mouse, attr)
-                    }
-                }
+                visible: intrinsicsFilterButton.checked
             }
+
+
+//            ListView {
+//                id: listView
+//                anchors.fill: parent
+//                Layout.fillWidth: true
+//                property bool readOnly: false
+//                property int labelWidth: 180
+
+//                signal upgradeRequest()
+//                signal attributeDoubleClicked(var mouse, var attribute)
+
+//                model : m.intrinsics
+
+//                spacing: 2
+//                clip: true
+//                ScrollBar.vertical: ScrollBar { id: scrollBar }
+//                visible: intrinsicsFilterButton.checked
+
+//                delegate: Loader {
+//                    active: object.enabled && (!object.desc.advanced)
+//                    visible: active
+//                    sourceComponent: ImageIntrinsicDelegate {
+//                        width: listView.width
+//                        readOnly: listView.readOnly
+//                        attribute: model.object
+//                        onDoubleClicked: listView.attributeDoubleClicked(mouse, attr)
+//                    }
+//                }
+//            }
 
 
 
@@ -603,8 +613,10 @@ Panel {
             ToolTip.text: label + " Number of intrinsics"
             iconText: MaterialIcons.camera
             label: _reconstruction ? (m.intrinsics ? m.intrinsics.count : 0) : "0"
+            padding: 3
 
-            enabled: true
+
+            enabled: m.intrinsics.count > 0
             checkable: true
             checked: false
 

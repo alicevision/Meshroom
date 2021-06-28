@@ -867,6 +867,11 @@ FocusScope {
                                     displayLensDistortionViewer.checked = false;
                                 }
                             }
+                            onEnabledChanged : {
+                                if(!enabled){
+                                    checked = false;
+                                }
+                            }
                         }
                         MaterialToolButton {
                             id: displayFeatures

@@ -624,7 +624,7 @@ Panel {
             padding: 3
 
 
-            enabled: m.intrinsics.count > 0
+            enabled: m.intrinsics ? m.intrinsics.count > 0 : false
             checkable: true
             checked: false
 

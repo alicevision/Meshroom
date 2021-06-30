@@ -48,6 +48,33 @@ Panel {
         property bool readOnly: root.readOnly || displayHDR.checked
     }
 
+    property variant parsedIntrinsic
+
+    function parseIntr(){
+        parsedIntrinsic = {}
+
+        for(var i = 0; i < m.intrinsics.count; i++){
+            for(var j=0; j < m.intrinsics.at(i).value.count; j++){
+                var currentAttribute = m.intrinsics.at(i).value.at(j)
+                if(currentAttribute.type === "GroupAttribute" || currentAttribute.type === "ListAttribute"){
+                    parsedIntrinsic[currentAttribute.name] = {}
+                    for(var k=0; k < currentAttribute.value.count; k++){
+                        parsedIntrinsic[currentAttribute.name][currentAttribute.value.at(k).name] = currentAttribute.value.at(k).value
+
+                    }
+                }
+                else{
+                    parsedIntrinsic[currentAttribute.name] = currentAttribute.value
+                }
+            }
+        }
+
+//        for (var property in parsedIntrinsic) {
+//          console.warn(property + ': ' + parsedIntrinsic[property]+'; ')
+//        }
+    }
+
+
     headerBar: RowLayout {
         MaterialToolButton {
             text: MaterialIcons.more_vert
@@ -634,6 +661,7 @@ Panel {
                     estimatedCamerasFilterButton.checked = false
                     nonEstimatedCamerasFilterButton.checked = false
                 }
+                parseIntr()
             }
             onEnabledChanged:{
                 if(!enabled) {

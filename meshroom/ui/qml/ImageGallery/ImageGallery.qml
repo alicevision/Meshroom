@@ -50,29 +50,85 @@ Panel {
 
     property variant parsedIntrinsic
 
+
+//    function populate_model()
+//    {
+//        for (var property in parsedIntrinsic) {
+//          console.warn(property + ': ' + parsedIntrinsic[property]+'; ')
+//          intrinsicModel.append({'name' : property, 'value' : parsedIntrinsic[property]})
+//        }
+//    }
+
+//    function populate_model()
+//    {
+//        intrinsicModel.clear()
+//        for (var intr in parsedIntrinsic) {
+//            intrinsicModel.append(parsedIntrinsic[intr])
+//        }
+//    }
+
+    function populate_model()
+    {
+        intrinsicModel.clear()
+        for (var intr in parsedIntrinsic) {
+            intrinsicModel.appendRow(parsedIntrinsic[intr])
+        }
+    }
+
+//    function populate_model()
+//    {
+//        intrinsicModel.clear()
+//        let CurrentIntrinsic = {}
+//        console.warn("Populate Model")
+//        for (var intr in parsedIntrinsic) {
+//            for (var property in parsedIntrinsic[intr])  {
+//                if(property.localeCompare("Locked") === 0){
+//                    CurrentIntrinsic[property] = {'label' : property, 'value' : parsedIntrinsic[intr][property]}
+//                    intrinsicModel.append(CurrentIntrinsic)
+//                    console.warn("Append to Model")
+//                    for (var prop in CurrentIntrinsic) {
+//                      delete CurrentIntrinsic[prop];
+//                    }
+//                }else{
+//                    CurrentIntrinsic[property] = {'label' : property, 'value' : parsedIntrinsic[intr][property]}
+//                }
+//            }
+//        }
+//        console.warn(intrinsicModel.count)
+//    }
+
+    //Parse
+    // Id : value
     function parseIntr(){
         parsedIntrinsic = {}
 
         for(var i = 0; i < m.intrinsics.count; i++){
+            parsedIntrinsic[i] = {}
             for(var j=0; j < m.intrinsics.at(i).value.count; j++){
                 var currentAttribute = m.intrinsics.at(i).value.at(j)
                 if(currentAttribute.type === "GroupAttribute" || currentAttribute.type === "ListAttribute"){
-                    parsedIntrinsic[currentAttribute.name] = {}
+                    parsedIntrinsic[i][currentAttribute.label] = {}
                     for(var k=0; k < currentAttribute.value.count; k++){
-                        parsedIntrinsic[currentAttribute.name][currentAttribute.value.at(k).name] = currentAttribute.value.at(k).value
+                        parsedIntrinsic[i][currentAttribute.label][currentAttribute.value.at(k).label] = currentAttribute.value.at(k).value
 
                     }
                 }
                 else{
-                    parsedIntrinsic[currentAttribute.name] = currentAttribute.value
+                    parsedIntrinsic[i][currentAttribute.label] = currentAttribute.value
                 }
             }
         }
 
-//        for (var property in parsedIntrinsic) {
-//          console.warn(property + ': ' + parsedIntrinsic[property]+'; ')
-//        }
+        for (var intr in parsedIntrinsic) {
+          for (var property in parsedIntrinsic[intr])  {
+              console.warn(property + ': ' + parsedIntrinsic[intr][property] +'; ')
+          }
+        }
+
+        populate_model()
+        //console.warn(parsedIntrinsic.count)
     }
+
 
 
     headerBar: RowLayout {
@@ -399,6 +455,59 @@ Panel {
                 visible: intrinsicsFilterButton.checked
                 interactive: intrinsicsFilterButton.checked
             }
+
+            RowLayout{
+                anchors.fill: parent
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+//                ListView{
+//                    Layout.fillHeight: true
+//                    Layout.fillWidth: true
+//                    orientation: ListView.Vertical
+
+
+//                    model: intrinsicModel
+
+//                    delegate: IntrinsicDisplayDelegate{
+
+//                    }
+//                }
+
+//                ListModel{
+//                    id : intrinsicModel
+//                    dynamicRoles:true
+
+//                }
+
+                TableView{
+                    id : intrinsicTable
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+
+                    model: intrinsicModel
+
+                    delegate: IntrinsicDisplayDelegate{}
+                }
+
+                TableModel{
+                    id : intrinsicModel
+
+                    TableModelColumn { display: "Id" }
+                    TableModelColumn { display: "Sensor Width" }
+                    TableModelColumn { display: "Focal Length"}
+
+                }
+
+//                HorizontalHeaderView {
+//                    id: horizontalHeader
+//                    syncView: tableView
+//                    anchors.left: tableView.left
+//                }
+            }
+
+
+
+
 
 
 //            ListView {

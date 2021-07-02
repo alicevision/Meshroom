@@ -54,9 +54,7 @@ class Split360Images(desc.CommandLineNode):
 			name='equirectangularDemoMode',
 			label='Equirectangular Demo Mode',
 			description="Export a SVG file that simulate the split",
-			value='0',
-			values=['0', '1'],
-			exclusive=True,
+			value=True,
 			uid=[0],
 		),
 	]

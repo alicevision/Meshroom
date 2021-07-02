@@ -15,25 +15,24 @@ RowLayout {
         Layout.fillWidth: true
 
         sourceComponent: {
-            console.warn("keys " + Object.keys(model.model))
-            console.warn("Object   " + model.model.objectName)
-            switch(Object.keys(model)[model.index])
+            //console.warn("keys " + Object.keys(intrinsicModel.columns[model.index]))
+            //console.warn("index " + intrinsicModel.columnCount)
+            console.warn("HEEELPPP " + model.display.value)
+            //console.warn("Object   " + intrinsicModel.columns[model.index].display)
+            switch(model.display.type)
             {
-            //case "ChoiceParam": return attribute.desc.exclusive ? comboBox_component : multiChoice_component
-            case "object": return object_component
-            case "FloatParam": return slider_component
-            case "BoolParam": return checkbox_component
-            case "ListAttribute": return listAttribute_component
-            case "GroupAttribute": return groupAttribute_component
-            default: return textField_component
+//                case "IntParam": return slider_component
+//                case "FloatParam": return slider_component
+                case "BoolParam": return bool_component
+                default: return textField_component
             }
         }
-
     }
+
     Component {
         id: textField_component
         TextInput{
-            text: model.display
+            text: model.display.value
             padding: 12
             selectByMouse: true
 
@@ -48,10 +47,11 @@ RowLayout {
     }
 
     Component {
-        id: focal_length_component
+        id: bool_component
         RowLayout{
+            spacing: 0
             TextInput{
-                text: model.display.x
+                text: "Bool : " + model.display.value
                 padding: 12
                 selectByMouse: true
 
@@ -59,20 +59,7 @@ RowLayout {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: model.index%2 ? parent.palette.window : Qt.darker(parent.palette.window, 1.1)
-                    z: -1
-                }
-            }
-            TextInput{
-                text: model.display.y
-                padding: 12
-                selectByMouse: true
-
-                onAccepted: model.display = text
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: model.index%2 ? parent.palette.window : Qt.darker(parent.palette.window, 1.1)
+                    color: 'green'
                     z: -1
                 }
             }

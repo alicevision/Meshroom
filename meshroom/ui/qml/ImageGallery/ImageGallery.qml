@@ -73,6 +73,7 @@ Panel {
         for (var intr in parsedIntrinsic) {
             intrinsicModel.appendRow(parsedIntrinsic[intr])
         }
+        //console.warn(intrinsicModel.rowCount)
     }
 
 //    function populate_model()
@@ -99,31 +100,76 @@ Panel {
 
     //Parse
     // Id : value
+//    function parseIntr(){
+//        parsedIntrinsic = {}
+
+//        for(var i = 0; i < m.intrinsics.count; i++){
+//            parsedIntrinsic[i] = {}
+//            for(var j=0; j < m.intrinsics.at(i).value.count; j++){
+//                var currentAttribute = m.intrinsics.at(i).value.at(j)
+//                if(currentAttribute.type === "GroupAttribute" || currentAttribute.type === "ListAttribute"){
+//                    parsedIntrinsic[i][currentAttribute.label] = {}
+//                    for(var k=0; k < currentAttribute.value.count; k++){
+//                        parsedIntrinsic[i][currentAttribute.label][currentAttribute.value.at(k).label] = currentAttribute.value.at(k).value
+
+//                    }
+//                }
+//                else{
+//                    parsedIntrinsic[i][currentAttribute.label] = currentAttribute.value
+//                }
+//            }
+//        }
+
+//        for (var intr in parsedIntrinsic) {
+//          for (var property in parsedIntrinsic[intr])  {
+//              console.warn(property + ': ' + parsedIntrinsic[intr][property] +'; ')
+//          }
+//        }
+
+//        populate_model()
+//        //console.warn(parsedIntrinsic.count)
+//    }
+
     function parseIntr(){
         parsedIntrinsic = {}
 
-        for(var i = 0; i < m.intrinsics.count; i++){
-            parsedIntrinsic[i] = {}
-            for(var j=0; j < m.intrinsics.at(i).value.count; j++){
-                var currentAttribute = m.intrinsics.at(i).value.at(j)
-                if(currentAttribute.type === "GroupAttribute" || currentAttribute.type === "ListAttribute"){
-                    parsedIntrinsic[i][currentAttribute.label] = {}
-                    for(var k=0; k < currentAttribute.value.count; k++){
-                        parsedIntrinsic[i][currentAttribute.label][currentAttribute.value.at(k).label] = currentAttribute.value.at(k).value
+        //Loop through all camera inits
+        for(var h = 0 ; h < _reconstruction.cameraInits.count; h++){
+            console.warn("Nb cam init : "+ _reconstruction.cameraInits.count)
+            var currentCameraInitIntrinsics =  _reconstruction.cameraInits.at(h).attribute('intrinsics').value
+
+            //Loop through all intrinsics
+            for(var i = 0; i < currentCameraInitIntrinsics.count; i++){
+                parsedIntrinsic[i] = {}
+
+                //Loop through all attributes
+                for(var j=0; j < currentCameraInitIntrinsics.at(i).value.count; j++){
+                    var currentAttribute = currentCameraInitIntrinsics.at(i).value.at(j)
+                    //parsedIntrinsic[i][currentAttribute.label] = {}
+                    if(currentAttribute.type === "GroupAttribute"){
+                        //parsedIntrinsic[i][currentAttribute.label] = currentAttribute
+                        for(var k=0; k < currentAttribute.value.count; k++){
+                            parsedIntrinsic[i][currentAttribute.label + " " + currentAttribute.value.at(k).label] = currentAttribute.value.at(k)
+                            //console.warn(currentAttribute.label + " " + currentAttribute.value.at(k).label)
+                        }
+                    }
+                    else if(currentAttribute.type === "ListAttribute"){
 
                     }
-                }
-                else{
-                    parsedIntrinsic[i][currentAttribute.label] = currentAttribute.value
+                    else{
+                        parsedIntrinsic[i][currentAttribute.label] = currentAttribute
+                    }
                 }
             }
         }
 
-        for (var intr in parsedIntrinsic) {
-          for (var property in parsedIntrinsic[intr])  {
-              console.warn(property + ': ' + parsedIntrinsic[intr][property] +'; ')
-          }
-        }
+
+
+//        for (var intr in parsedIntrinsic) {
+//          for (var property in parsedIntrinsic[intr])  {
+//              console.warn(property + ': ' + parsedIntrinsic[intr][property].type +'; ')
+//          }
+//        }
 
         populate_model()
         //console.warn(parsedIntrinsic.count)
@@ -493,8 +539,8 @@ Panel {
                     id : intrinsicModel
 
                     TableModelColumn { display: "Id" }
-                    TableModelColumn { display: "Sensor Width" }
-                    TableModelColumn { display: "Focal Length"}
+                    TableModelColumn { display: "Width" }
+                    TableModelColumn { display: "Locked" }
 
                 }
 

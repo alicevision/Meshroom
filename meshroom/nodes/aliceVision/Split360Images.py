@@ -6,7 +6,7 @@ class Split360Images(desc.CommandLineNode):
 	commandLine = 'aliceVision_utils_split360Images {allParams}'
 	
 	category = 'Utils'
-	documentation = '''This program is used to extract multiple images from equirectangular or dualfisheye images or image folder'''
+	documentation = '''This node is used to extract multiple images from equirectangular or dualfisheye images or image folder'''
 
 	inputs = [
 		desc.File(

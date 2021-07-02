@@ -50,7 +50,7 @@ class Split360Images(desc.CommandLineNode):
 			range=(100, 10000, 1),
 			uid=[0],
 		),
-		desc.ChoiceParam(
+		desc.BoolParam(
 			name='equirectangularDemoMode',
 			label='Equirectangular Demo Mode',
 			description="Export a SVG file that simulate the split",

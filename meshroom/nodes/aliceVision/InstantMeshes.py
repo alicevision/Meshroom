@@ -85,7 +85,7 @@ class InstantMeshesLogManager(node.LogManager):
 g_log : InstantMeshesLogManager
 
 class InstantMeshes(desc.CommandLineNode):
-    commandLine = 'external_instantMeshes {inputMeshValue} -S {smoothValue} %params% -o {outputInstantMeshesValue}'
+    commandLine = '{instantMeshesPathValue} {inputMeshValue} -S {smoothValue} %params% -o {outputInstantMeshesValue}'
 
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL
@@ -100,6 +100,14 @@ class InstantMeshes(desc.CommandLineNode):
     '''
 
     inputs = [
+        desc.File(
+        name='instantMeshesPath',
+        label='InstantMeshesPath',
+        description='''Path to Instant Meshes binary. (Instant Meshes.exe or Instant Meshes.app)''',
+        value=os.environ.get('Instant Meshes',""),
+        uid=[],
+        group='',
+        ),
         desc.File(
             name="inputMesh", label='Input Mesh',
             description='Input mesh (OBJ/PLY file format).',

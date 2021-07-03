@@ -101,7 +101,7 @@ To  make use of this node, you need to provide the path to the Instant Meshes ex
     inputs = [
         desc.File(
         name='instantMeshesPath',
-        label='InstantMeshesPath',
+        label='Instant Meshes Path',
         description='''Path to Instant Meshes binary. (Instant Meshes.exe or Instant Meshes.app)''',
         value=os.environ.get('Instant Meshes',""),
         uid=[],

@@ -49,6 +49,11 @@ Panel {
     }
 
     property variant parsedIntrinsic
+    property int numberOfIntrinsics : m.intrinsics.count
+
+    onNumberOfIntrinsicsChanged: {
+        parseIntr()
+    }
 
 
 //    function populate_model()
@@ -75,6 +80,7 @@ Panel {
         }
         //console.warn(intrinsicModel.rowCount)
     }
+
 
 //    function populate_model()
 //    {
@@ -513,6 +519,7 @@ Panel {
 
                 TableView{
                     id : intrinsicTable
+                    visible: intrinsicsFilterButton.checked
                     Layout.fillHeight: true
                     Layout.fillWidth: true
 
@@ -815,7 +822,6 @@ Panel {
                     estimatedCamerasFilterButton.checked = false
                     nonEstimatedCamerasFilterButton.checked = false
                 }
-                parseIntr()
             }
             onEnabledChanged:{
                 if(!enabled) {
@@ -823,6 +829,7 @@ Panel {
                     inputImagesFilterButton.checked = true;
                 }
             }
+
 
         }
 

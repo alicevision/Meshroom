@@ -11,6 +11,7 @@ RowLayout {
 
     property variant attribute: null
     property bool readOnly: false
+
     Loader {
         Layout.fillWidth: true
 

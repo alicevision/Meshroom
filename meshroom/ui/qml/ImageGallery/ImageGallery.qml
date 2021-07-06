@@ -488,16 +488,6 @@ Panel {
 //                intrinsics: m.intrinsics
 //            }
 
-            ImageIntrinsicEditor{
-                id: listView
-                anchors.fill: parent
-                Layout.fillWidth: true
-                model: m.intrinsics
-
-                visible: intrinsicsFilterButton.checked
-                interactive: intrinsicsFilterButton.checked
-            }
-
             RowLayout{
                 anchors.fill: parent
                 Layout.fillWidth: true

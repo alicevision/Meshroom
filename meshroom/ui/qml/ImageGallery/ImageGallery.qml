@@ -133,32 +133,28 @@ Panel {
     function parseIntr(){
         parsedIntrinsic = {}
 
-        //Loop through all camera inits
-        for(var h = 0 ; h < _reconstruction.cameraInits.count; h++){
-            console.warn("Nb cam init : "+ _reconstruction.cameraInits.count)
-            var currentCameraInitIntrinsics =  _reconstruction.cameraInits.at(h).attribute('intrinsics').value
+        var currentCameraInitIntrinsics =  m.intrinsics
 
-            //Loop through all intrinsics
-            for(var i = 0; i < currentCameraInitIntrinsics.count; i++){
-                parsedIntrinsic[i] = {}
+        //Loop through all intrinsics
+        for(var i = 0; i < currentCameraInitIntrinsics.count; i++){
+            parsedIntrinsic[i] = {}
 
-                //Loop through all attributes
-                for(var j=0; j < currentCameraInitIntrinsics.at(i).value.count; j++){
-                    var currentAttribute = currentCameraInitIntrinsics.at(i).value.at(j)
-                    //parsedIntrinsic[i][currentAttribute.label] = {}
-                    if(currentAttribute.type === "GroupAttribute"){
-                        //parsedIntrinsic[i][currentAttribute.label] = currentAttribute
-                        for(var k=0; k < currentAttribute.value.count; k++){
-                            parsedIntrinsic[i][currentAttribute.label + " " + currentAttribute.value.at(k).label] = currentAttribute.value.at(k)
-                            //console.warn(currentAttribute.label + " " + currentAttribute.value.at(k).label)
-                        }
+            //Loop through all attributes
+            for(var j=0; j < currentCameraInitIntrinsics.at(i).value.count; j++){
+                var currentAttribute = currentCameraInitIntrinsics.at(i).value.at(j)
+                //parsedIntrinsic[i][currentAttribute.label] = {}
+                if(currentAttribute.type === "GroupAttribute"){
+                    //parsedIntrinsic[i][currentAttribute.label] = currentAttribute
+                    for(var k=0; k < currentAttribute.value.count; k++){
+                        parsedIntrinsic[i][currentAttribute.label + " " + currentAttribute.value.at(k).label] = currentAttribute.value.at(k)
+                        //console.warn(currentAttribute.label + " " + currentAttribute.value.at(k).label)
                     }
-                    else if(currentAttribute.type === "ListAttribute"){
+                }
+                else if(currentAttribute.type === "ListAttribute"){
 
-                    }
-                    else{
-                        parsedIntrinsic[i][currentAttribute.label] = currentAttribute
-                    }
+                }
+                else{
+                    parsedIntrinsic[i][currentAttribute.label] = currentAttribute
                 }
             }
         }
@@ -539,7 +535,17 @@ Panel {
                     id : intrinsicModel
 
                     TableModelColumn { display: "Id" }
+                    TableModelColumn { display: "Initial Focal Length" }
+                    TableModelColumn { display: "Focal Length x" }
+                    TableModelColumn { display: "Focal Length y" }
+                    TableModelColumn { display: "Camera Type" }
                     TableModelColumn { display: "Width" }
+                    TableModelColumn { display: "Height" }
+                    TableModelColumn { display: "Sensor Width" }
+                    TableModelColumn { display: "Sensor Height" }
+                    TableModelColumn { display: "Serial Number" }
+                    TableModelColumn { display: "Principal Point x" }
+                    TableModelColumn { display: "Principal Point y" }
                     TableModelColumn { display: "Locked" }
 
                 }

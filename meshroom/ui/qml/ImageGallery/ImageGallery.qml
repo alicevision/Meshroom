@@ -519,6 +519,9 @@ Panel {
                     model: intrinsicModel
 
                     delegate: IntrinsicDisplayDelegate{}
+
+                    ScrollBar.horizontal: ScrollBar { id: sb }
+
                 }
 
                 TableModel{

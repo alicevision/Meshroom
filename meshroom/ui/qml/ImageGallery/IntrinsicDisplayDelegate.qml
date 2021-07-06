@@ -18,12 +18,12 @@ RowLayout {
         sourceComponent: {
             //console.warn("keys " + Object.keys(intrinsicModel.columns[model.index]))
             //console.warn("index " + intrinsicModel.columnCount)
-            console.warn("HEEELPPP " + model.display.value)
+            //console.warn("HEEELPPP " + model.row)
             //console.warn("Object   " + intrinsicModel.columns[model.index].display)
             switch(model.display.type)
             {
-//                case "IntParam": return slider_component
-//                case "FloatParam": return slider_component
+               case "IntParam": return textField_component
+               case "FloatParam": return float_component
                 case "BoolParam": return bool_component
                 default: return textField_component
             }
@@ -34,15 +34,52 @@ RowLayout {
         id: textField_component
         TextInput{
             text: model.display.value
+            color: 'white'
             padding: 12
             selectByMouse: true
+            selectionColor: 'white'
+            selectedTextColor: Qt.darker(palette.window, 1.1)
 
             onAccepted: model.display = text
 
             Rectangle {
                 anchors.fill: parent
-                color: "#efefef"
+                color: model.row % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
+                border.width: 2
+                border.color: Qt.darker(palette.window, 1.1)
+            }
+        }
+    }
+
+    Component {
+        id: float_component
+        TextInput{
+            //readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
+            readonly property real formattedValue: model.display.value.toFixed(2)
+            property string displayValue: activeFocus ? model.display.value : formattedValue
+            text: displayValue
+            color: 'white'
+            padding: 12
+            selectByMouse: true
+            selectionColor: 'white'
+            selectedTextColor: Qt.darker(palette.window, 1.1)
+
+            onAccepted: model.display = text
+            clip: true;
+
+            onTextChanged: {
+                if(activeFocus){
+                    cursorPosition = 0
+                }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: model.row % 2 ? palette.window : Qt.darker(palette.window, 1.1)
+                z: -1
+                border.width: 2
+                border.color: Qt.darker(palette.window, 1.1)
             }
         }
     }
@@ -53,6 +90,7 @@ RowLayout {
             spacing: 0
             TextInput{
                 text: "Bool : " + model.display.value
+                color: 'white'
                 padding: 12
                 selectByMouse: true
 
@@ -60,8 +98,10 @@ RowLayout {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: 'green'
+                    color: model.row % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                     z: -1
+                    border.width: 2
+                    border.color: Qt.darker(palette.window, 1.1)
                 }
             }
         }

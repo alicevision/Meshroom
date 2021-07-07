@@ -43,6 +43,9 @@ Item {
     signal entered()
     signal exited()
 
+    // Already connected attribute with another edge in DropArea
+    signal edgeAboutToBeRemoved(var input)
+
     /// Emitted when child attribute pins are created
     signal attributePinCreated(var attribute, var pin)
     /// Emitted when child attribute pins are deleted
@@ -303,6 +306,8 @@ Item {
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
 
                                         onPressed: root.pressed(mouse)
+                                        onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
+
                                         Component.onCompleted: attributePinCreated(object, outPin)
                                         Component.onDestruction: attributePinDeleted(attribute, outPin)
                                     }
@@ -334,6 +339,7 @@ Item {
                                         Component.onCompleted: attributePinCreated(attribute, inPin)
                                         Component.onDestruction: attributePinDeleted(attribute, inPin)
                                         onPressed: root.pressed(mouse)
+                                        onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
                                         onChildPinCreated: attributePinCreated(childAttribute, inPin)
                                         onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
                                     }
@@ -395,6 +401,7 @@ Item {
                                             Component.onCompleted: attributePinCreated(attribute, inPin)
                                             Component.onDestruction: attributePinDeleted(attribute, inPin)
                                             onPressed: root.pressed(mouse)
+                                            onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
                                             onChildPinCreated: attributePinCreated(childAttribute, inPin)
                                             onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
                                         }

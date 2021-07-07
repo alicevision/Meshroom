@@ -29,6 +29,7 @@ RowLayout {
     signal childPinDeleted(var childAttribute, var pin)
 
     signal pressed(var mouse)
+    signal edgeAboutToBeRemoved(var input)
 
     objectName: attribute ? attribute.name + "." : ""
     layoutDirection: Qt.LeftToRight
@@ -95,14 +96,21 @@ RowLayout {
                     // Refuse attributes connection
                     drag.accepted = false
                 }
+                else if (inputDragTarget.attribute.isLink) { // already connected attribute
+                    root.edgeAboutToBeRemoved(inputDragTarget.attribute)
+                }
                 inputDropArea.acceptableDrop = drag.accepted
             }
             onExited: {
+                if (inputDragTarget.attribute.isLink) { // already connected attribute
+                    root.edgeAboutToBeRemoved(undefined)
+                }
                 acceptableDrop = false
                 drag.source.dropAccepted = false
             }
 
             onDropped: {
+                root.edgeAboutToBeRemoved(undefined)
                 _reconstruction.addEdge(drag.source.attribute, inputDragTarget.attribute)
             }
         }
@@ -129,8 +137,7 @@ RowLayout {
 
         MouseArea {
             id: inputConnectMA
-            // If an input attribute is connected (isLink), we disable drag&drop
-            drag.target: (attribute.isReadOnly) ? undefined : inputDragTarget
+            drag.target: attribute.isReadOnly ? undefined : inputDragTarget
             drag.threshold: 0
             enabled: !root.readOnly
             anchors.fill: parent
@@ -234,13 +241,18 @@ RowLayout {
                     // Refuse attributes connection
                     drag.accepted = false
                 }
+                else if (drag.source.attribute.isLink) { // already connected attribute
+                    root.edgeAboutToBeRemoved(drag.source.attribute)
+                }
                 outputDropArea.acceptableDrop = drag.accepted
             }
             onExited: {
+                root.edgeAboutToBeRemoved(undefined)
                 acceptableDrop = false
             }
 
             onDropped: {
+                root.edgeAboutToBeRemoved(undefined)
                 _reconstruction.addEdge(outputDragTarget.attribute, drag.source.attribute)
             }
         }

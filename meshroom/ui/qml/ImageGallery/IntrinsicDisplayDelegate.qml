@@ -106,9 +106,12 @@ RowLayout {
             Component.onCompleted: currentIndex = find(attribute.value)
             onActivated: _reconstruction.setAttribute(attribute, currentText)
             flat : true
+            topInset: 7
+            leftInset: 6
+            rightInset: 6
+            bottomInset: 7
             Rectangle {
                 anchors.fill: parent
-                //height : combo.height
                 color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
                 border.width: 2

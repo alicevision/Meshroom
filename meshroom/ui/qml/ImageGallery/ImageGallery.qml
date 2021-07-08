@@ -409,7 +409,7 @@ Panel {
             Column {
                 id: dropImagePlaceholder
                 anchors.centerIn: parent
-                visible: (m.viewpoints ? m.viewpoints.count == 0 : true)
+                visible: (m.viewpoints ? m.viewpoints.count == 0 : true) && !intrinsicsFilterButton.checked
                 spacing: 4
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter

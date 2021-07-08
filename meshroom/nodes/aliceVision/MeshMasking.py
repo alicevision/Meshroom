@@ -60,6 +60,14 @@ Decimate triangles based on image masks.
             value=False,
             uid=[0]
         ),
+        desc.BoolParam(
+            name='undistortMasks',
+            label='Undistort Masks',
+            description='''Undistort the masks with the same parameters as the matching image.
+            Tick it if the masks are drawn on the original images.''',
+            value=False,
+            uid=[0]
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

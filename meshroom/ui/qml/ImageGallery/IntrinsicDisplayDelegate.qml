@@ -9,7 +9,8 @@ RowLayout {
 
     Layout.fillWidth: true
 
-    property variant attribute: null
+    property variant attribute: model.display
+    property int rowIndex: model.row
     property bool readOnly: false
 
     Loader {
@@ -18,14 +19,15 @@ RowLayout {
         sourceComponent: {
             //console.warn("keys " + Object.keys(intrinsicModel.columns[model.index]))
             //console.warn("index " + intrinsicModel.columnCount)
-            //console.warn("HEEELPPP " + model.row)
+            //console.warn("HEEELPPP " + model.display.desc.values)
             //console.warn("Object   " + intrinsicModel.columns[model.index].display)
             switch(model.display.type)
             {
+               case "ChoiceParam": return choice_component
                case "IntParam": return textField_component
                case "FloatParam": return float_component
-                case "BoolParam": return bool_component
-                default: return textField_component
+               case "BoolParam": return bool_component
+               default: return textField_component
             }
         }
     }
@@ -44,7 +46,44 @@ RowLayout {
 
             Rectangle {
                 anchors.fill: parent
-                color: model.row % 2 ? palette.window : Qt.darker(palette.window, 1.1)
+                color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
+                z: -1
+                border.width: 2
+                border.color: Qt.darker(palette.window, 1.1)
+            }
+        }
+    }
+
+    Component {
+        id: choice_component
+        ComboBox {
+            id: combo
+            model: attribute.desc.values
+            Component.onCompleted: currentIndex = find(attribute.value)
+            flat : true
+            Rectangle {
+                anchors.fill: parent
+                //height : combo.height
+                color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
+                z: -1
+                border.width: 2
+                border.color: Qt.darker(palette.window, 1.1)
+            }
+            Connections {
+                target: attribute
+                onValueChanged: combo.currentIndex = combo.find(attribute.value)
+            }
+        }
+    }
+
+    Component {
+        id: bool_component
+        CheckBox {
+            checked: attribute ? attribute.value : false
+            padding: 12
+            Rectangle {
+                anchors.fill: parent
+                color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
                 border.width: 2
                 border.color: Qt.darker(palette.window, 1.1)
@@ -64,6 +103,7 @@ RowLayout {
             selectByMouse: true
             selectionColor: 'white'
             selectedTextColor: Qt.darker(palette.window, 1.1)
+            enabled: !readOnly
 
             onAccepted: model.display = text
             clip: true;
@@ -76,33 +116,10 @@ RowLayout {
 
             Rectangle {
                 anchors.fill: parent
-                color: model.row % 2 ? palette.window : Qt.darker(palette.window, 1.1)
+                color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
                 border.width: 2
                 border.color: Qt.darker(palette.window, 1.1)
-            }
-        }
-    }
-
-    Component {
-        id: bool_component
-        RowLayout{
-            spacing: 0
-            TextInput{
-                text: "Bool : " + model.display.value
-                color: 'white'
-                padding: 12
-                selectByMouse: true
-
-                onAccepted: model.display = text
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: model.row % 2 ? palette.window : Qt.darker(palette.window, 1.1)
-                    z: -1
-                    border.width: 2
-                    border.color: Qt.darker(palette.window, 1.1)
-                }
             }
         }
     }

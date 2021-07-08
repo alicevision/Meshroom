@@ -49,7 +49,7 @@ Panel {
     }
 
     property variant parsedIntrinsic
-    property int numberOfIntrinsics : m.intrinsics.count
+    property int numberOfIntrinsics : m.intrinsics ? m.intrinsics.count : 0
 
     onNumberOfIntrinsicsChanged: {
         parseIntr()
@@ -767,8 +767,8 @@ Panel {
             }
             onEnabledChanged:{
                 if(!enabled) {
+                    if(checked) inputImagesFilterButton.checked = true;
                     checked = false
-                    inputImagesFilterButton.checked = true;
                 }
             }
 
@@ -797,8 +797,8 @@ Panel {
             }
             onEnabledChanged:{
                 if(!enabled) {
+                    if(checked) inputImagesFilterButton.checked = true;
                     checked = false
-                    inputImagesFilterButton.checked = true;
                 }
             }
 
@@ -825,8 +825,8 @@ Panel {
             }
             onEnabledChanged:{
                 if(!enabled) {
+                    if(checked) inputImagesFilterButton.checked = true;
                     checked = false
-                    inputImagesFilterButton.checked = true;
                 }
             }
 

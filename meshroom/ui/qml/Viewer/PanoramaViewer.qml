@@ -40,6 +40,8 @@ AliceVision.PanoramaViewer {
 
     property int mouseMultiplier: 1
 
+    property var sfmData: null
+
     onIsHighlightableChanged:{
         for (var i = 0; i < repeater.model; i++) {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
@@ -248,6 +250,7 @@ AliceVision.PanoramaViewer {
                         'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
                         'downscaleLevel' : Qt.binding(function() { return downscale; }),
                         'source':  Qt.binding(function() { return cSource; }),
+                        'sfmData': Qt.binding(function() { return sfmData }),
                         'sfmRequired': true,
                         'canBeHovered': true
                     })

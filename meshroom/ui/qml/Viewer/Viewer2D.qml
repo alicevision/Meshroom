@@ -284,6 +284,7 @@ FocusScope {
                                 'surface.subdivisions' : Qt.binding(function(){ return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue;}),
                                 'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
                                 'sfmRequired': Qt.binding(function(){ return displayLensDistortionViewer.checked ? true : false;}),
+                                'sfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                                 'canBeHovered': false
                                 })
                           } else {
@@ -310,7 +311,7 @@ FocusScope {
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
                                 'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;}),
                                 'mouseMultiplier': Qt.binding(function(){ return panoramaViewerToolbar.mouseSpeed;}),
-                                'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
+                                'sfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -587,6 +588,7 @@ FocusScope {
                         id: msfmDataLoader
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
+                                              || displayPanoramaViewer.checked || displayLensDistortionViewer.checked
                         property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
                         property bool isComputed: activeNode && activeNode.isComputed
                         property string filepath: Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : "")

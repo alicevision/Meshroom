@@ -17,7 +17,11 @@ AliceVision.FloatImageViewer {
 
     property var sfmData
 
-    surface.msfmData : sfmData
+    onSfmDataChanged: {
+        console.warn("FLOAT IMG " + sfmData)
+        root.surface.msfmData = sfmData;
+    }
+
 
     // paintedWidth / paintedHeight / status for compatibility with standard Image
     property int paintedWidth: textureSize.width

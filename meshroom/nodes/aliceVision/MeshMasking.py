@@ -13,8 +13,8 @@ Decimate triangles based on image masks.
     inputs = [
         desc.File(
             name='input',
-            label='Input',
-            description='''SfMData file.''',
+            label='Dense SfMData',
+            description='SfMData file.',
             value='',
             uid=[0],
         ),
@@ -65,6 +65,14 @@ Decimate triangles based on image masks.
             label='Undistort Masks',
             description='''Undistort the masks with the same parameters as the matching image.
             Tick it if the masks are drawn on the original images.''',
+            value=False,
+            uid=[0]
+        ),
+        desc.BoolParam(
+            name='usePointsVisibilities',
+            label='Use points visibilities',
+            description='''Use the points visibilities from the meshing to filter triangles.
+            Example: when they are occluded, back-face, etc.''',
             value=False,
             uid=[0]
         ),

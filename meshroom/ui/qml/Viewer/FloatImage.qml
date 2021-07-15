@@ -18,7 +18,6 @@ AliceVision.FloatImageViewer {
     property var sfmData
 
     onSfmDataChanged: {
-        console.warn("FLOAT IMG " + sfmData)
         root.surface.msfmData = sfmData;
     }
 
@@ -127,13 +126,8 @@ AliceVision.FloatImageViewer {
             y: 0
             color: "red"
             visible: viewerTypeString === "distortion" && isPrincipalPointsDisplayed
-        }
-
-        Connections {
-            target: root
-            onSfmChanged: {
-                if (viewerTypeString === "distortion")
-                    updatePrincipalPoint();
+            onVisibleChanged: {
+                updatePrincipalPoint()
             }
         }
     }

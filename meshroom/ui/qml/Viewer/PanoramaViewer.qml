@@ -130,7 +130,6 @@ AliceVision.PanoramaViewer {
                 }
 
                 onReleased: {
-                    console.warn(repeater.model)
                     if (isRotating)
                     {
                         // Update Euler angles

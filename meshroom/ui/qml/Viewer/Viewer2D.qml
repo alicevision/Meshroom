@@ -604,10 +604,6 @@ FocusScope {
                                 return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : "")
                         }
 
-                        onFilepathChanged: {
-                            console.warn("FILLLLLEPPPPATTHHHHH: " + filepath)
-                        }
-
                         active: false
                         // It takes time to load tracks, so keep them looaded, if we may use it again.
                         // If we load another node, we can trash them (to eventually load the new node data).
@@ -616,7 +612,6 @@ FocusScope {
                             {
                                 active = true;
                             }
-                            console.warn("ITEEEEMMMMMMMM" + item + " " + active)
                         }
                         onIsComputedChanged: {
                             if (usePanoramaViewer || useLensDistortionViewer)

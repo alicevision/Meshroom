@@ -590,8 +590,23 @@ FocusScope {
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
                                               || displayPanoramaViewer.checked || displayLensDistortionViewer.checked
                         property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
-                        property bool isComputed: activeNode && activeNode.isComputed
-                        property string filepath: Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : "")
+                        property bool isComputed: {
+                            if (usePanoramaViewer || useLensDistortionViewer)
+                                return activeNode
+                            else
+                                return activeNode && activeNode.isComputed
+
+                        }
+                        property string filepath: {
+                            if (usePanoramaViewer || useLensDistortionViewer)
+                                return Filepath.stringToUrl(activeNode.attribute("input").value)
+                            else
+                                return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : "")
+                        }
+
+                        onFilepathChanged: {
+                            console.warn("FILLLLLEPPPPATTHHHHH: " + filepath)
+                        }
 
                         active: false
                         // It takes time to load tracks, so keep them looaded, if we may use it again.
@@ -601,6 +616,7 @@ FocusScope {
                             {
                                 active = true;
                             }
+                            console.warn("ITEEEEMMMMMMMM" + item + " " + active)
                         }
                         onIsComputedChanged: {
                             if(!isComputed)

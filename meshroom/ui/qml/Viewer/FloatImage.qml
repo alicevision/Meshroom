@@ -39,12 +39,10 @@ AliceVision.FloatImageViewer {
 
     onStatusChanged: {
         if (viewerTypeString === "panorama") {
-            // Force to update the surface grid after a downscale change
-            surface.rotateSurfaceRadians(
-                        _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.y").value * (3.14 / 180),
-                        _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.x").value * (3.14 / 180))
+            surface.rotateSurfaceDegrees(
+                _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.y").value,
+                _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.x").value)
         }
-
         root.surface.setIdView(idView);
     }
 

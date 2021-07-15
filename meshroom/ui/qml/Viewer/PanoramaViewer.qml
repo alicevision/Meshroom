@@ -57,9 +57,11 @@ AliceVision.PanoramaViewer {
     property int yaw: 0;
     property int pitch: 0;
 
+    property var activeNode: _reconstruction.activeNodes.get('SfMTransform').node
+
     // Yaw and Pitch in Degrees from SfMTransform sliders
-    property int yawNode: _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.y").value;
-    property int pitchNode: _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.x").value;
+    property int yawNode: activeNode.attribute("manualTransform.manualRotation.y").value;
+    property int pitchNode: activeNode.attribute("manualTransform.manualRotation.x").value;
 
     onYawNodeChanged: {
         if (!isRotating) {
@@ -128,6 +130,7 @@ AliceVision.PanoramaViewer {
                 }
 
                 onReleased: {
+                    console.warn(repeater.model)
                     if (isRotating)
                     {
                         // Update Euler angles

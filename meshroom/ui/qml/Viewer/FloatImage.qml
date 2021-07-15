@@ -40,11 +40,12 @@ AliceVision.FloatImageViewer {
     onStatusChanged: {
         if (viewerTypeString === "panorama") {
             // Force to update the surface grid after a downscale change
-            surface.rotateSurfaceRadians(0, 0)
+            surface.rotateSurfaceRadians(
+                        _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.y").value * (3.14 / 180),
+                        _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.x").value * (3.14 / 180))
         }
 
         root.surface.setIdView(idView);
-        updateSfmPath();
     }
 
     property string channelModeString : "rgba"
@@ -76,11 +77,6 @@ AliceVision.FloatImageViewer {
 
     property int index: 0;
     property var idView: 0;
-
-    function updateSfmPath() {
-        var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
-        root.surface.sfmPath = activeNode ? activeNode.attribute("input").value : "";
-    }
 
     function updatePrincipalPoint() {
         var pp = root.surface.getPrincipalPoint();

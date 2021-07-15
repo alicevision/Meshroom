@@ -876,7 +876,7 @@ FocusScope {
                                 return inputAttrLink.node.isComputed;
                             }
 
-                            ToolTip.text: "Panorama Viewer: " + activeNode.label
+                            ToolTip.text: activeNode ? "Panorama Viewer " + activeNode.label : "Panorama Viewer"
                             text: MaterialIcons.panorama_sphere
                             font.pointSize: 16
                             padding: 0

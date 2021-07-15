@@ -619,6 +619,9 @@ FocusScope {
                             console.warn("ITEEEEMMMMMMMM" + item + " " + active)
                         }
                         onIsComputedChanged: {
+                            if (usePanoramaViewer || useLensDistortionViewer)
+                                return;
+
                             if(!isComputed)
                             {
                                 active = false;
@@ -873,7 +876,7 @@ FocusScope {
                                 return inputAttrLink.node.isComputed;
                             }
 
-                            ToolTip.text: "Panorama Viewer"
+                            ToolTip.text: "Panorama Viewer: " + activeNode.label
                             text: MaterialIcons.panorama_sphere
                             font.pointSize: 16
                             padding: 0

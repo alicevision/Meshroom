@@ -16,11 +16,9 @@ AliceVision.FloatImageViewer {
     visible: (status === Image.Ready)
 
     property var sfmData
-
     onSfmDataChanged: {
         root.surface.msfmData = sfmData;
     }
-
 
     // paintedWidth / paintedHeight / status for compatibility with standard Image
     property int paintedWidth: textureSize.width
@@ -30,7 +28,7 @@ AliceVision.FloatImageViewer {
             return Image.Loading;
         else if((root.source === "") ||
                 (root.sourceSize.height <= 0) ||
-                (root.sourceSize.height <= 0))
+                (root.sourceSize.width <= 0))
             return Image.Null;
 
         return Image.Ready;
@@ -69,17 +67,10 @@ AliceVision.FloatImageViewer {
         }
     }
 
-    property bool isPrincipalPointsDisplayed : false;
     property int pointsNumber: (surface.subdivisions + 1) * (surface.subdivisions + 1);
 
     property int index: 0;
     property var idView: 0;
-
-    function updatePrincipalPoint() {
-        var pp = root.surface.getPrincipalPoint();
-        ppRect.x = pp.x;
-        ppRect.y = pp.y;
-    }
 
     clearBeforeLoad: true
 
@@ -116,6 +107,15 @@ AliceVision.FloatImageViewer {
     /*
     * Principal Point
     */
+
+    function updatePrincipalPoint() {
+        var pp = root.surface.getPrincipalPoint();
+        ppRect.x = pp.x;
+        ppRect.y = pp.y;
+    }
+
+    property bool isPrincipalPointsDisplayed : false;
+
     Item {
         id: principalPoint
         Rectangle {

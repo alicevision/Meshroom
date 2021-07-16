@@ -59,7 +59,7 @@ AliceVision.PanoramaViewer {
 
     property var activeNode: _reconstruction.activeNodes.get('SfMTransform').node
 
-    // Yaw and Pitch in Degrees from SfMTransform sliders
+    // Yaw and Pitch in Degrees from SfMTransform node sliders
     property int yawNode: activeNode.attribute("manualTransform.manualRotation.y").value;
     property int pitchNode: activeNode.attribute("manualTransform.manualRotation.x").value;
 
@@ -181,15 +181,7 @@ AliceVision.PanoramaViewer {
 
     function updateSfmPath() {
         var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
-
-        if(!activeNode)
-        {
-            root.sfmPath = "";
-        }
-        else
-        {
-            root.sfmPath = activeNode.attribute("input").value;
-        }
+        root.sfmPath = (activeNode) ? activeNode.attribute("input").value : "";
     }
 
     property var pathList : []

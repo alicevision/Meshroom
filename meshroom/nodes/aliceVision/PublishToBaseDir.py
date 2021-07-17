@@ -3,6 +3,8 @@ from __future__ import print_function
 __version__ = "0.1"
 
 from meshroom.core import desc
+import shutil
+import glob
 import os
 import json
 

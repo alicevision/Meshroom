@@ -49,6 +49,17 @@ of the current pipeline as src.mg.
             ),
         ]
 
+    outputs = [
+        desc.File(
+            name='output_folder',
+            label='Output Folder',
+            description='Folder that was created for model.',
+            value="",
+            uid=[],
+            group=""
+        ),
+    ]
+
     def resolvedPaths(self, inputFiles, outDir):
         paths = {}
         for inputFile in inputFiles:
@@ -111,5 +122,7 @@ of the current pipeline as src.mg.
                 chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
                 shutil.copyfile(iFile, oFile)
             chunk.logger.info('Publish end')
+
+            chunk.node.output_folder.value = output_dir
         finally:
             chunk.logManager.end()

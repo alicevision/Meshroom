@@ -30,11 +30,14 @@ sys.frozen = True
 sys.path = sys.path[:4]
 
 
-def run():
+def run(*args):
     m = __import__("__main__")
     importer = zipimport.zipimporter(os.path.dirname(os.__file__))
-    name, ext = os.path.splitext(os.path.basename(os.path.normcase(FILE_NAME)))
-    moduleName = "%s__main__" % name
+    if len(args) == 0:
+        name, ext = os.path.splitext(os.path.basename(os.path.normcase(FILE_NAME)))
+        moduleName = "%s__main__" % name
+    else:
+        moduleName = args[0]
     code = importer.get_code(moduleName)
     exec(code, m.__dict__)
 

@@ -37,6 +37,7 @@ class ImageMasking(desc.CommandLineNode):
                 name='hue',
                 label='Hue',
                 description='Hue value to isolate in [0,1] range. 0 = red, 0.33 = green, 0.66 = blue, 1 = red.',
+                semantic='color/hue',
                 value=0.33,
                 range=(0, 1, 0.01),
                 uid=[0]

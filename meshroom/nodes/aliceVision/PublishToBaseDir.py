@@ -13,8 +13,11 @@ class PublishToBaseDir(desc.Node):
 
     category = 'Export'
     documentation = '''
-This node copies the results to the /mnt/models/<project name>_XXX directory. It also saves a copy
-of the current pipeline as src.mg.
+This node copies the results to a /<base dir>/<project name>_XXX directory. It copies all the input files.
+
+In addition, it saves a copy of the current pipeline as src.mg to that directory.
+
+If the directory already exists, a new directory is created whereby XXX is increment, i.e. it starts with _000 then _001 then _002 ....
 '''
 
     inputs = [
@@ -54,7 +57,7 @@ of the current pipeline as src.mg.
             name='output_folder',
             label='Output Folder',
             description='Folder that was created for model.',
-            value="",
+            value="{outputValue}/{inputFilesValue}/directory",
             uid=[],
             group=""
         ),
@@ -124,5 +127,7 @@ of the current pipeline as src.mg.
             chunk.logger.info('Publish end')
 
             chunk.node.output_folder.value = output_dir
+            chunk.node.output_folder.valueChanged.emit()
+
         finally:
             chunk.logManager.end()

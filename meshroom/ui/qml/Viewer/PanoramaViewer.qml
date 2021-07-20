@@ -68,7 +68,7 @@ AliceVision.PanoramaViewer {
     function updateRotation(){
         if (!isRotating) {
             for (var i = 0; i < repeater.model; i++) {
-               repeater.itemAt(i).item.surface.rotateSurfaceDegrees(yawNode, pitchNode, rollNode);
+               repeater.itemAt(i).item.surface.setEulerAngles(yawNode, pitchNode, rollNode);
             }
         }
     }
@@ -123,7 +123,7 @@ AliceVision.PanoramaViewer {
                         lastX = mouse.x;
                         lastY = mouse.y;
                         for (var i = 0; i < repeater.model; i++) {
-                           repeater.itemAt(i).item.surface.rotateSurfaceRadians((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier);
+                           repeater.itemAt(i).item.surface.incrementEulerAngles((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier);
                         }
                     }
                 }

@@ -34,10 +34,10 @@ class ImageMasking(desc.CommandLineNode):
             - White: Tolerance = 1, minSaturation = 0, maxSaturation = 0.1, minValue = 0.8, maxValue = 1
             - Black: Tolerance = 1, minSaturation = 0, maxSaturation = 0.1, minValue = 0, maxValue = 0.2
             """,
-            group='',
+            group=None,
             groupDesc=[
             desc.FloatParam(
-                name='hsv-hue',
+                name='hsvHue',
                 label='Hue',
                 description='Hue value to isolate in [0,1] range. 0 = red, 0.33 = green, 0.66 = blue, 1 = red.',
                 semantic='color/hue',
@@ -46,7 +46,7 @@ class ImageMasking(desc.CommandLineNode):
                 uid=[0]
             ),
             desc.FloatParam(
-                name='hsv-hueRange',
+                name='hsvHueRange',
                 label='Tolerance',
                 description='Tolerance around the hue value to isolate.',
                 value=0.1,
@@ -54,7 +54,7 @@ class ImageMasking(desc.CommandLineNode):
                 uid=[0]
             ),
             desc.FloatParam(
-                name='hsv-minSaturation',
+                name='hsvMinSaturation',
                 label='Min Saturation',
                 description='Hue is meaningless if saturation is low. Do not mask pixels below this threshold.',
                 value=0.3,
@@ -62,7 +62,7 @@ class ImageMasking(desc.CommandLineNode):
                 uid=[0]
             ),
             desc.FloatParam(
-                name='hsv-maxSaturation',
+                name='hsvMaxSaturation',
                 label='Max Saturation',
                 description='Do not mask pixels above this threshold. It might be useful to mask white/black pixels.',
                 value=1,
@@ -70,7 +70,7 @@ class ImageMasking(desc.CommandLineNode):
                 uid=[0]
             ),
             desc.FloatParam(
-                name='hsv-minValue',
+                name='hsvMinValue',
                 label='Min Value',
                 description='Hue is meaningless if value is low. Do not mask pixels below this threshold.',
                 value=0.3,
@@ -78,7 +78,7 @@ class ImageMasking(desc.CommandLineNode):
                 uid=[0]
             ),
             desc.FloatParam(
-                name='hsv-maxValue',
+                name='hsvMaxValue',
                 label='Max Value',
                 description='Do not mask pixels above this threshold. It might be useful to mask white/black pixels.',
                 value=1,

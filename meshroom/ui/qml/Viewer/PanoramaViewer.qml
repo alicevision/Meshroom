@@ -122,9 +122,21 @@ AliceVision.PanoramaViewer {
                         var yoffset = mouse.y - lastY;
                         lastX = mouse.x;
                         lastY = mouse.y;
-                        for (var i = 0; i < repeater.model; i++) {
-                           repeater.itemAt(i).item.surface.incrementEulerAngles((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier);
+
+                        //Rotate roll if alt is pressed
+                        if(mouse.modifiers & Qt.AltModifier){
+                            for (var k = 0; k < repeater.model; k++) {
+                               repeater.itemAt(k).item.surface.incrementEulerAngles(0, 0, (xoffset / width) * mouseMultiplier);
+                            }
                         }
+                        //Default rotate
+                        else{
+                            for (var l = 0; l < repeater.model; l++) {
+                               repeater.itemAt(l).item.surface.incrementEulerAngles((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier, 0);
+                            }
+                        }
+
+
                     }
                 }
 

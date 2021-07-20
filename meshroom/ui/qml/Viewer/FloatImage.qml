@@ -38,7 +38,8 @@ AliceVision.FloatImageViewer {
         if (viewerTypeString === "panorama") {
             surface.rotateSurfaceDegrees(
                 _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.y").value,
-                _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.x").value)
+                _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.x").value,
+                _reconstruction.activeNodes.get('SfMTransform').node.attribute("manualTransform.manualRotation.z").value)
         }
         root.surface.setIdView(idView);
     }

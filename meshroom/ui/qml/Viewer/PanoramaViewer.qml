@@ -62,20 +62,24 @@ AliceVision.PanoramaViewer {
     // Yaw and Pitch in Degrees from SfMTransform node sliders
     property int yawNode: activeNode.attribute("manualTransform.manualRotation.y").value;
     property int pitchNode: activeNode.attribute("manualTransform.manualRotation.x").value;
+    property int rollNode: activeNode.attribute("manualTransform.manualRotation.z").value;
 
-    onYawNodeChanged: {
+    function updateRotation(){
         if (!isRotating) {
             for (var i = 0; i < repeater.model; i++) {
-               repeater.itemAt(i).item.surface.rotateSurfaceDegrees(yawNode, pitchNode);
+               repeater.itemAt(i).item.surface.rotateSurfaceDegrees(yawNode, pitchNode, rollNode);
             }
         }
     }
+
+    onYawNodeChanged: {
+        updateRotation()
+    }
     onPitchNodeChanged: {
-       if (!isRotating) {
-           for (var i = 0; i < repeater.model; i++) {
-              repeater.itemAt(i).item.surface.rotateSurfaceDegrees(yawNode, pitchNode);
-           }
-       }
+        updateRotation()
+    }
+    onRollNodeChanged: {
+        updateRotation()
     }
 
     Item {

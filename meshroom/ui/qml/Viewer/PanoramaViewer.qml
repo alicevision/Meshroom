@@ -142,8 +142,8 @@ AliceVision.PanoramaViewer {
                         root.yaw = repeater.itemAt(0).item.surface.getYaw();
                         root.pitch = repeater.itemAt(0).item.surface.getPitch();
 
-                        activeNode.attribute("manualTransform.manualRotation.y").value = root.yaw;
-                        activeNode.attribute("manualTransform.manualRotation.x").value = root.pitch;
+                        _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.y"), root.yaw);
+                        _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.x"), root.pitch);
                     }
 
                     isRotating = false;

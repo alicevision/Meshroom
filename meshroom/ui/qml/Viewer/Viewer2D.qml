@@ -439,8 +439,10 @@ FocusScope {
                         onMoved: {
                             if(!useAuto)
                             {
-                                _reconstruction.setAttribute(activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x"), x)
-                                _reconstruction.setAttribute(activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y"), y)
+                                _reconstruction.setAttribute(
+                                    activeNode.attribute("fisheyeCenterOffset"),
+                                    JSON.stringify([x, y])
+                                );
                             }
                         }
                         onIncrementRadius: {

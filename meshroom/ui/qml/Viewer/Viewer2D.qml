@@ -607,7 +607,18 @@ FocusScope {
                             }
                         }
                         property bool isComputed: activeNode && activeNode.isComputed
-                        property string filepath: Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : "")
+                        property string filepath: {
+                            var sfmValue = ""
+                            if(!isComputed){
+                                return Filepath.stringToUrl(sfmValue)
+                            }
+                            else{
+                                if(activeNode.hasAttribute("output")){
+                                    sfmValue = activeNode.attribute("output").value
+                                }
+                                return Filepath.stringToUrl(sfmValue)
+                            }
+                        }
 
                         active: false
                         // It takes time to load tracks, so keep them looaded, if we may use it again.

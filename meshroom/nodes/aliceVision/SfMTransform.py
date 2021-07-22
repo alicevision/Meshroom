@@ -53,7 +53,7 @@ The transformation can be based on:
             label='Transformation',
             description="Required only for 'transformation' and 'from_single_camera' methods:\n"
                         " * transformation: Align [X,Y,Z] to +Y-axis, rotate around Y by R deg, scale by S; syntax: X,Y,Z;R;S\n"
-                        " * from_single_camera: Camera UID or image filename",
+                        " * from_single_camera: Camera UID or simplified regular expression to match image filepath (like '*camera2*.jpg')",
             value='',
             uid=[0],
             enabled=lambda node: node.method.value == "transformation" or node.method.value == "from_single_camera",

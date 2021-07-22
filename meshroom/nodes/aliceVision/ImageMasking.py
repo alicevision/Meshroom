@@ -35,6 +35,7 @@ class ImageMasking(desc.CommandLineNode):
             - Black: Tolerance = 1, minSaturation = 0, maxSaturation = 0.1, minValue = 0, maxValue = 0.2
             """,
             group=None,
+            enabled=lambda node: node.algorithm.value == 'HSV',
             groupDesc=[
             desc.FloatParam(
                 name='hsvHue',

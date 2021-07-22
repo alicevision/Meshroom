@@ -19,6 +19,7 @@ The transformation can be based on:
  * auto_from_landmarks: Fit all landmarks into a box [-1,1]
  * from_single_camera: Use a specific camera as the origin of the coordinate system
  * from_markers: Align specific markers to custom coordinates
+ * from_gps: Align with the gps positions from the image metadata
 
 '''
 
@@ -40,9 +41,10 @@ The transformation can be based on:
                         " * auto_from_landmarks: Use landmarks\n"
                         " * from_single_camera: Use a specific camera as the origin of the coordinate system\n"
                         " * from_center_camera: Use the center camera as the origin of the coordinate system\n"
-                        " * from_markers: Align specific markers to custom coordinates",
+                        " * from_markers: Align specific markers to custom coordinates\n"
+                        " * from_gps: Align with the gps positions from the image metadata",
             value='auto_from_landmarks',
-            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers'],
+            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers', 'from_gps'],
             exclusive=True,
             uid=[0],
         ),

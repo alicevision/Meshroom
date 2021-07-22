@@ -599,6 +599,7 @@ FocusScope {
                                 return null
                             }
                             if(displayPanoramaViewer.checked){
+                                sfmNode = _reconstruction.activeNodes.get('SfMTransform').node
                                 var previousNode = sfmNode.attribute("input").rootLinkParam.node
                                 return previousNode
                             }

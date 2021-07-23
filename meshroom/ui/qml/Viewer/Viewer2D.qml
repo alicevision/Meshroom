@@ -284,7 +284,7 @@ FocusScope {
                                 'surface.subdivisions' : Qt.binding(function(){ return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue;}),
                                 'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
                                 'sfmRequired': Qt.binding(function(){ return displayLensDistortionViewer.checked ? true : false;}),
-                                'sfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
+                                'msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                                 'canBeHovered': false
                                 })
                           } else {
@@ -311,7 +311,7 @@ FocusScope {
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
                                 'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;}),
                                 'mouseMultiplier': Qt.binding(function(){ return panoramaViewerToolbar.mouseSpeed;}),
-                                'sfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready
+                                'msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready
                                                                            && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                             })
                         } else {
@@ -319,9 +319,6 @@ FocusScope {
                             setSource("", {})
                             displayPanoramaViewer.checked = false;
                         }
-                    }
-                    onLoaded: {
-                        panoramaViewerLoader.item.updateSfmPath();
                     }
                 }
 

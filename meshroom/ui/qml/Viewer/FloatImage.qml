@@ -15,11 +15,6 @@ AliceVision.FloatImageViewer {
     height: textureSize.height
     visible: (status === Image.Ready)
 
-    property var sfmData
-    onSfmDataChanged: {
-        root.surface.msfmData = sfmData;
-    }
-
     // paintedWidth / paintedHeight / status for compatibility with standard Image
     property int paintedWidth: textureSize.width
     property int paintedHeight: textureSize.height

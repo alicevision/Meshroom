@@ -196,12 +196,6 @@ AliceVision.PanoramaViewer {
         }
     }
 
-
-    function updateSfmPath() {
-        var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
-        root.sfmPath = (activeNode) ? activeNode.attribute("input").value : "";
-    }
-
     property var pathList : []
     property var idList : []
     property int imagesLoaded: 0
@@ -209,6 +203,7 @@ AliceVision.PanoramaViewer {
 
     function loadRepeaterImages(index)
     {
+        console.warn("LOAD IMG " + index)
         if (index < repeater.model)
             repeater.itemAt(index).loadItem();
         else
@@ -265,7 +260,7 @@ AliceVision.PanoramaViewer {
                         'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
                         'downscaleLevel' : Qt.binding(function() { return downscale; }),
                         'source':  Qt.binding(function() { return cSource; }),
-                        'sfmData': Qt.binding(function() { return sfmData }),
+                        'surface.msfmData': Qt.binding(function() { return root.msfmData }),
                         'sfmRequired': true,
                         'canBeHovered': true
                     })
@@ -284,6 +279,7 @@ AliceVision.PanoramaViewer {
             target: root
             onImagesDataChanged: {
                 root.imagesLoaded = 0;
+
 
                 // Retrieve downscale value from C++
                 panoramaViewerToolbar.updateDownscaleValue(root.downscale)

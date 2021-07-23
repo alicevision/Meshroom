@@ -8,6 +8,7 @@ class Texturing(desc.CommandLineNode):
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE
 
+    category = 'Dense Reconstruction'
     documentation = '''
 This node computes the texturing on the mesh.
 
@@ -188,9 +189,9 @@ Many cameras are contributing to the low frequencies and only the best ones cont
         desc.ChoiceParam(
             name='visibilityRemappingMethod',
             label='Visibility Remapping Method',
-            description='''Method to remap visibilities from the reconstruction to the input mesh (Pull, Push, PullPush).''',
+            description='''Method to remap visibilities from the reconstruction to the input mesh (Pull, Push, PullPush, MeshItself).''',
             value='PullPush',
-            values=['Pull', 'Push', 'PullPush'],
+            values=['Pull', 'Push', 'PullPush', 'MeshItself'],
             exclusive=True,
             uid=[0],
             advanced=True,

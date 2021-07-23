@@ -8,6 +8,7 @@ class ImageMatching(desc.CommandLineNode):
     commandLine = 'aliceVision_imageMatching {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 The goal of this node is to select the image pairs to match. The ambition is to find the images that are looking to the same areas of the scene.
 Thanks to this node, the FeatureMatching node will only compute the matches between the selected image pairs.
@@ -64,7 +65,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             ' * Exhaustive: Export all image pairs.\n'
             ' * Frustum: If images have known poses, computes the intersection between cameras frustums to create the list of image pairs.\n'
             ' * FrustumOrVocabularyTree: If images have known poses, use frustum intersection else use VocabularyTree.\n',
-            value='VocabularyTree',
+            value='SequentialAndVocabularyTree',
             values=['VocabularyTree', 'Sequential', 'SequentialAndVocabularyTree', 'Exhaustive', 'Frustum', 'FrustumOrVocabularyTree'],
             exclusive=True,
             uid=[0],
@@ -110,7 +111,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             name='nbMatches',
             label='Voc Tree: Nb Matches',
             description='The number of matches to retrieve for each image (If 0 it will retrieve all the matches).',
-            value=50,
+            value=40,
             range=(0, 1000, 1),
             uid=[0],
             advanced=True,
@@ -120,7 +121,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             name='nbNeighbors',
             label='Sequential: Nb Neighbors',
             description='The number of neighbors to retrieve for each image (If 0 it will retrieve all the neighbors).',
-            value=50,
+            value=5,
             range=(0, 1000, 1),
             uid=[0],
             advanced=True,

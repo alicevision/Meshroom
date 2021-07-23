@@ -7,6 +7,7 @@ class ConvertSfMFormat(desc.CommandLineNode):
     commandLine = 'aliceVision_convertSfMFormat {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Utils'
     documentation = '''
 Convert an SfM scene from one file format to another.
 It can also be used to remove specific parts of from an SfM scene (like filter all 3D landmarks or filter 2D observations).
@@ -34,7 +35,7 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             name='describerTypes',
             label='Describer Types',
             description='Describer types to keep.',
-            value=['sift'],
+            value=['dspsift'],
             values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'tag16h5', 'unknown'],
             exclusive=False,
             uid=[0],

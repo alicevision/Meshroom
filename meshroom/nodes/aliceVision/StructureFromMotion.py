@@ -7,6 +7,7 @@ class StructureFromMotion(desc.CommandLineNode):
     commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 This node will analyze feature matches to understand the geometric relationship behind all the 2D observations,
 and infer the rigid scene structure (3D points) with the pose (position and orientation) and internal calibration of all cameras.
@@ -96,7 +97,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             name='describerTypes',
             label='Describer Types',
             description='Describer types used to describe an image.',
-            value=['sift'],
+            value=['dspsift'],
             values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'tag16h5'],
             exclusive=False,
             uid=[0],
@@ -118,7 +119,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description='Observation contraint mode used in the optimization:\n'
                         ' * Basic: Use standard reprojection error in pixel coordinates\n'
                         ' * Scale: Use reprojection error in pixel coordinates but relative to the feature scale',
-            value='Basic',
+            value='Scale',
             values=['Basic', 'Scale'],
             exclusive=True,
             uid=[0],
@@ -269,14 +270,35 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             uid=[0],
             advanced=True,
         ),
+        desc.IntParam(
+            name='rigMinNbCamerasForCalibration',
+            label='Min Nb Cameras For Rig Calibration',
+            description='Minimal number of cameras to start the calibration of the rig',
+            value=20,
+            range=(1, 50, 1),
+            uid=[0],
+            advanced=True,
+        ),
         desc.BoolParam(
             name='lockAllIntrinsics',
-            label='Force Lock of All Intrinsic Camera Parameters.',
+            label='Force Lock of All Intrinsic Camera Parameters',
             description='Force to keep constant all the intrinsics parameters of the cameras (focal length, \n'
                         'principal point, distortion if any) during the reconstruction.\n'
                         'This may be helpful if the input cameras are already fully calibrated.',
             value=False,
             uid=[0],
+        ),
+        desc.IntParam(
+            name='minNbCamerasToRefinePrincipalPoint',
+            label='Min Nb Cameras To Refine Principal Point',
+            description='Minimal number of cameras to refine the principal point of the cameras (one of the intrinsic parameters of the camera). '
+                        'If we do not have enough cameras, the principal point in consider is considered in the center of the image. '
+                        'If minNbCamerasToRefinePrincipalPoint<=0, the principal point is never refined. '
+                        'If minNbCamerasToRefinePrincipalPoint==1, the principal point is always refined.',
+            value=3,
+            range=(0, 20, 1),
+            uid=[0],
+            advanced=True,
         ),
         desc.BoolParam(
             name='filterTrackForks',

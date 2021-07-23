@@ -9,6 +9,7 @@ class FeatureMatching(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=20)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 This node performs the matching of all features between the candidate image pairs.
 
@@ -62,7 +63,7 @@ then it checks the number of features that validates this model and iterate thro
             name='describerTypes',
             label='Describer Types',
             description='Describer types used to describe an image.',
-            value=['sift'],
+            value=['dspsift'],
             values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'tag16h5'],
             exclusive=False,
             uid=[0],
@@ -165,6 +166,13 @@ then it checks the number of features that validates this model and iterate thro
             value=False,
             uid=[0],
             advanced=True,
+        ),
+        desc.BoolParam(
+            name='crossMatching',
+            label='Cross Matching',
+            description='Make sure that the matching process is symmetric (same matches for I->J than fo J->I)',
+            value=False,
+            uid=[0],
         ),
         desc.BoolParam(
             name='guidedMatching',

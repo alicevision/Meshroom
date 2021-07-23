@@ -3,14 +3,48 @@
 For algorithmic changes related to the photogrammetric pipeline, 
 please refer to [AliceVision changelog](https://github.com/alicevision/AliceVision/blob/develop/CHANGES.md).
 
-## Release 2020.1.1 (2020.10.14)
+## Release 2021.1.0 (2021/02/26)
+
+Based on [AliceVision 2.4.0](https://github.com/alicevision/AliceVision/tree/v2.4.0).
+
+### Release Notes Summary
+
+ - [panorama] PanoramaCompositing: new algorithm with tiles to deal with large panoramas [PR](https://github.com/alicevision/meshroom/pull/1173)
+ - [feature] Improve robustness of sift features extraction on challenging images: update default values, add new filtering and add dsp-sift variation [PR](https://github.com/alicevision/meshroom/pull/1164)
+ - [ui] Improve Graph Editor UX with better visualization of nodes connections, the ability to accumulate nodes to compute locally or the ability to compute multiple branches in parallel on renderfarm with a new locking system per node, etc. [PR](https://github.com/alicevision/meshroom/pull/612)
+ - [nodes] Meshing: improve mesh quality with a new post-processing. Cells empty/full status are filtered by solid angle ratio to favor smoothness. [PR](https://github.com/alicevision/meshroom/pull/1274)
+ - [nodes] MeshFiltering: smoothing & filtering on subset of the geometry [PR](https://github.com/alicevision/meshroom/pull/1272)
+ - [ui] Viewer: fix gain/gamma behavior and use non-linear sliders [PR](https://github.com/alicevision/meshroom/pull/1092)
+
+### Other Improvements and Bug Fixes
+
+ - [core] taskManager: downgrade status per chunk [PR](https://github.com/alicevision/meshroom/pull/1210)
+ - [core] Improve graph dependencies: dependencies to an input parameter is not a real dependency [PR](https://github.com/alicevision/meshroom/pull/1182)
+ - [nodes] Meshing: Add `addMaskHelperPoints` option [PR](https://github.com/alicevision/meshroom/pull/1273)
+ - [nodes] Meshing: More control on graph cut post processing [PR](https://github.com/alicevision/meshroom/pull/1284)
+ - [nodes] Meshing: new cells filtering by solid angle ratio [PR](https://github.com/alicevision/meshroom/pull/1274)
+ - [nodes] Meshing: add seed and voteFilteringForWeaklySupportedSurfaces [PR](https://github.com/alicevision/meshroom/pull/1268)
+ - [nodes] Add some mesh utilities nodes [PR](https://github.com/alicevision/meshroom/pull/1271)
+ - [nodes] SfmTransform: new from_center_camera [PR](https://github.com/alicevision/meshroom/pull/1281)
+ - [nodes] Panorama: new options to init with known poses [PR](https://github.com/alicevision/meshroom/pull/1230)
+ - [nodes] FeatureMatching: add cross verification [PR](https://github.com/alicevision/meshroom/pull/1276)
+ - [nodes] ExportAnimatedCamera: New option to export undistort maps in EXR format [PR](https://github.com/alicevision/meshroom/pull/1229)
+ - [nodes] new wip node `LightingEstimation` to estimate spherical harmonics from normal map and albedo [PR](https://github.com/alicevision/meshroom/pull/390)
+ - [nodes] CameraInit: add a boolean for white balance use [PR](https://github.com/alicevision/meshroom/pull/1162)
+ - [ui] fix error on live reconstruction [PR](https://github.com/alicevision/meshroom/pull/1145)
+ - [ui] init saveAs folder [PR](https://github.com/alicevision/meshroom/pull/1099)
+ - [ui] add link to online documentation in 'Help' menu [PR](https://github.com/alicevision/meshroom/pull/1279)
+ - [ui] New node menu categories [PR](https://github.com/alicevision/meshroom/pull/1278)
+
+
+## Release 2020.1.1 (2020/10/14)
 
 Based on [AliceVision 2.3.1](https://github.com/alicevision/AliceVision/tree/v2.3.1).
 
  - [core] Fix crashes on process statistics (windows-only) [PR](https://github.com/alicevision/meshroom/pull/1096)
 
 
-## Release 2020.1.0 (2020.10.09)
+## Release 2020.1.0 (2020/10/09)
 
 Based on [AliceVision 2.3.0](https://github.com/alicevision/AliceVision/tree/v2.3.0).
 
@@ -86,7 +120,7 @@ For more details see all PR merged: https://github.com/alicevision/meshroom/mile
 See [AliceVision 2.3.0 Release Notes](https://github.com/alicevision/AliceVision/blob/v2.3.0/CHANGES.md) for more details about algorithmic changes.
 
 
-## Release 2019.2.0 (2019.08.08)
+## Release 2019.2.0 (2019/08/08)
 
 Based on [AliceVision 2.2.0](https://github.com/alicevision/AliceVision/tree/v2.2.0).
 
@@ -119,7 +153,7 @@ See [AliceVision 2.2.0 Release Notes](https://github.com/alicevision/AliceVision
 for more details about algorithmic changes.
 
 
-## Release 2019.1.0 (2019.02.27)
+## Release 2019.1.0 (2019/02/27)
 
 Based on [AliceVision 2.1.0](https://github.com/alicevision/AliceVision/tree/v2.1.0).
 

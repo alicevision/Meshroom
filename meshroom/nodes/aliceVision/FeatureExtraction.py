@@ -9,6 +9,7 @@ class FeatureExtraction(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 This node extracts distinctive groups of pixels that are, to some extent, invariant to changing camera viewpoints during image acquisition.
 Hence, a feature in the scene should have similar feature descriptions in all images.
@@ -37,11 +38,18 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             value='',
             uid=[0],
         ),
+        desc.File(
+            name='masksFolder',
+            label='Masks Folder',
+            description='Use masks to filter features. Filename should be the same or the image uid.',
+            value='',
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='describerTypes',
             label='Describer Types',
             description='Describer types used to describe an image.',
-            value=['sift'],
+            value=['dspsift'],
             values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'tag16h5'],
             exclusive=False,
             uid=[0],

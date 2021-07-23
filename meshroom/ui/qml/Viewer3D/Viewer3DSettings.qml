@@ -13,7 +13,7 @@ Item {
 
     // supported 3D files extensions
     readonly property var supportedExtensions: {
-        var exts = ['.obj'];
+        var exts = ['.obj', '.stl'];
         if(supportAlembic)
             exts.push('.abc');
         if(supportDepthMap)
@@ -26,9 +26,15 @@ Item {
                          {"name": "Solid", "icon": MaterialIcons.crop_din },
                          {"name": "Wireframe", "icon": MaterialIcons.details },
                          {"name": "Textured", "icon": MaterialIcons.texture },
+                         {"name": "Spherical Harmonics", "icon": MaterialIcons.brightness_7}
                      ]
     // Current render mode
     property int renderMode: 2
+
+    // Spherical Harmonics file
+    property string shlFile: ""
+    // Whether to display normals
+    property bool displayNormals: false
 
     // Rasterized point size
     property real pointSize: 1.5

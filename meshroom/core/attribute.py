@@ -93,6 +93,12 @@ class Attribute(BaseObject):
     def getType(self):
         return self.attributeDesc.__class__.__name__
 
+    def _isReadOnly(self):
+        return not self._isOutput and self.node.isCompatibilityNode
+
+    def getBaseType(self):
+        return self.getType()
+
     def getLabel(self):
         return self._label
 
@@ -137,7 +143,7 @@ class Attribute(BaseObject):
         self.valueChanged.emit()
 
     def resetValue(self):
-        self._value = ""
+        self._value = self.attributeDesc.value
 
     def requestGraphUpdate(self):
         if self.node.graph:
@@ -258,6 +264,8 @@ class Attribute(BaseObject):
     fullName = Property(str, getFullName, constant=True)
     label = Property(str, getLabel, constant=True)
     type = Property(str, getType, constant=True)
+    baseType = Property(str, getType, constant=True)
+    isReadOnly = Property(bool, _isReadOnly, constant=True)
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
     valueChanged = Signal()
     value = Property(Variant, _get_value, _set_value, notify=valueChanged)
@@ -291,6 +299,9 @@ class ListAttribute(Attribute):
 
     def __len__(self):
         return len(self._value)
+
+    def getBaseType(self):
+        return self.attributeDesc.elementDesc.__class__.__name__
 
     def at(self, idx):
         """ Returns child attribute at index 'idx' """
@@ -396,6 +407,7 @@ class ListAttribute(Attribute):
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
+    baseType = Property(str, getBaseType, constant=True)
 
 
 class GroupAttribute(Attribute):

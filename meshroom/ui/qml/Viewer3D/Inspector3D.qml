@@ -66,7 +66,7 @@ FloatingPane {
                 MaterialLabel { text: MaterialIcons.grain; padding: 2 }
                 RowLayout {
                     Slider {
-                        Layout.fillWidth: true; from: 0; to: 5; stepSize: 0.1
+                        Layout.fillWidth: true; from: 0; to: 5; stepSize: 0.001
                         value: Viewer3DSettings.pointSize
                         onValueChanged: Viewer3DSettings.pointSize = value
                         ToolTip.text: "Point Size: " + value.toFixed(2)

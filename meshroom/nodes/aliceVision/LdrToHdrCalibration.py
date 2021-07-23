@@ -26,10 +26,10 @@ def findMetadata(d, keys, defaultValue):
 class LdrToHdrCalibration(desc.CommandLineNode):
     commandLine = 'aliceVision_LdrToHdrCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
-
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.NORMAL
 
+    category = 'Panorama HDR'
     documentation = '''
     Calibrate LDR to HDR response curve from samples
 '''
@@ -47,6 +47,23 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             label='Samples folder',
             description='Samples folder',
             value=desc.Node.internalFolder,
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='userNbBrackets',
+            label='Number of Brackets',
+            description='Number of exposure brackets per HDR image (0 for automatic detection).',
+            value=0,
+            range=(0, 15, 1),
+            uid=[],
+            group='user',  # not used directly on the command line
+        ),
+        desc.IntParam(
+            name='nbBrackets',
+            label='Automatic Nb Brackets',
+            description='Number of exposure brackets used per HDR image. It is detected automatically from input Viewpoints metadata if "userNbBrackets" is 0, else it is equal to "userNbBrackets".',
+            value=0,
+            range=(0, 10, 1),
             uid=[0],
         ),
         desc.BoolParam(
@@ -86,23 +103,6 @@ class LdrToHdrCalibration(desc.CommandLineNode):
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
-        ),
-        desc.IntParam(
-            name='userNbBrackets',
-            label='Number of Brackets',
-            description='Number of exposure brackets per HDR image (0 for automatic detection).',
-            value=0,
-            range=(0, 15, 1),
-            uid=[],
-            group='user',  # not used directly on the command line
-        ),
-        desc.IntParam(
-            name='nbBrackets',
-            label='Automatic Nb Brackets',
-            description='Number of exposure brackets used per HDR image. It is detected automatically from input Viewpoints metadata if "userNbBrackets" is 0, else it is equal to "userNbBrackets".',
-            value=0,
-            range=(0, 10, 1),
-            uid=[0],
         ),
         desc.IntParam(
             name='channelQuantizationPower',

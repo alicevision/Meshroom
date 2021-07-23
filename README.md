@@ -40,7 +40,7 @@ Detailed tutorial with a focus on the features of the 2019.1 release.
 
 * [Photogrammetry 2 – 3D scanning with just PHONE/CAMERA simpler, better than ever!](https://www.youtube.com/watch?v=1D0EhSi-vvc) by [Prusa 3D Printer](https://blog.prusaprinters.org)
 
-Overall presentation of the protogrammetry practice with Meshroom.
+Overall presentation of the photogrammetry practice with Meshroom.
 
 * [How to 3D Photoscan Easy and Free! by ](https://www.youtube.com/watch?v=k4NTf0hMjtY) by [CG Geek](https://www.youtube.com/channel/UCG8AxMVa6eutIGxrdnDxWpQ)
 
@@ -90,7 +90,7 @@ You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver 
 ```bash
 # Windows: set PYTHONPATH=%CD% &&
 # Linux/macOS: PYTHONPATH=$PWD
-python bin/meshroom_photogrammetry --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
+python bin/meshroom_batch --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
 ```
 
 

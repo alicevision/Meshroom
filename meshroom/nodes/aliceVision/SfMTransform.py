@@ -9,6 +9,7 @@ class SfMTransform(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_sfmTransform {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Utils'
     documentation = '''
 This node allows to change the coordinate system of one SfM scene.
 
@@ -18,6 +19,7 @@ The transformation can be based on:
  * auto_from_landmarks: Fit all landmarks into a box [-1,1]
  * from_single_camera: Use a specific camera as the origin of the coordinate system
  * from_markers: Align specific markers to custom coordinates
+ * from_gps: Align with the gps positions from the image metadata
 
 '''
 
@@ -38,9 +40,11 @@ The transformation can be based on:
                         " * auto_from_cameras: Use cameras\n"
                         " * auto_from_landmarks: Use landmarks\n"
                         " * from_single_camera: Use a specific camera as the origin of the coordinate system\n"
-                        " * from_markers: Align specific markers to custom coordinates",
+                        " * from_center_camera: Use the center camera as the origin of the coordinate system\n"
+                        " * from_markers: Align specific markers to custom coordinates\n"
+                        " * from_gps: Align with the gps positions from the image metadata",
             value='auto_from_landmarks',
-            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_markers'],
+            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers', 'from_gps'],
             exclusive=True,
             uid=[0],
         ),
@@ -49,7 +53,7 @@ The transformation can be based on:
             label='Transformation',
             description="Required only for 'transformation' and 'from_single_camera' methods:\n"
                         " * transformation: Align [X,Y,Z] to +Y-axis, rotate around Y by R deg, scale by S; syntax: X,Y,Z;R;S\n"
-                        " * from_single_camera: Camera UID or image filename",
+                        " * from_single_camera: Camera UID or simplified regular expression to match image filepath (like '*camera2*.jpg')",
             value='',
             uid=[0],
             enabled=lambda node: node.method.value == "transformation" or node.method.value == "from_single_camera",

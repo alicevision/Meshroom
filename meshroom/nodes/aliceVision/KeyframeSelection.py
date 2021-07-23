@@ -7,6 +7,7 @@ from meshroom.core import desc
 class KeyframeSelection(desc.CommandLineNode):
     commandLine = 'aliceVision_utils_keyframeSelection {allParams}'
 
+    category = 'Utils'
     documentation = '''
 Allows to extract keyframes from a video and insert metadata.
 It can extract frames from a synchronized multi-cameras rig.
@@ -108,14 +109,14 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             name='useSparseDistanceSelection',
             label='Use Sparse Distance Selection',
             description='Use sparseDistance selection in order to avoid similar keyframes.',
-            value=True,
+            value=False,
             uid=[0],
         ),
         desc.BoolParam(
             name='useSharpnessSelection',
             label='Use Sharpness Selection',
             description='Use frame sharpness score for keyframe selection.',
-            value=True,
+            value=False,
             uid=[0],
         ),
         desc.FloatParam(
@@ -147,7 +148,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             name='minFrameStep',
             label='Min Frame Step',
             description='''minimum number of frames between two keyframes''',
-            value=12,
+            value=1,
             range=(1, 100, 1),
             uid=[0],
         ),
@@ -155,7 +156,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             name='maxFrameStep',
             label='Max Frame Step',
             description='''maximum number of frames after which a keyframe can be taken''',
-            value=36,
+            value=2,
             range=(2, 1000, 1),
             uid=[0],
         ),

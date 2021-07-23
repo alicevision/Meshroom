@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "4.0"
 
 import os
 import json
@@ -34,7 +34,10 @@ Intrinsic = [
                     "So this value is used to limit the range of possible values in the optimization. \n"
                     "If you put -1, this value will not be used and the focal length will not be bounded.",
                     value=-1.0, uid=[0], range=None),
-    desc.FloatParam(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length (in pixels)", value=-1.0, uid=[0], range=None),
+    desc.GroupAttribute(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length (in pixels)", groupDesc=[
+        desc.FloatParam(name="x", label="x", description="", value=-1, uid=[], range=(0, 10000, 1)),
+        desc.FloatParam(name="y", label="y", description="", value=-1, uid=[], range=(0, 10000, 1)),
+        ]),
     desc.ChoiceParam(name="type", label="Camera Type",
                      description="Mathematical Model used to represent a camera:\n"
                      " * pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
@@ -42,8 +45,11 @@ Intrinsic = [
                      " * radial3: Pinhole camera with 3 radial distortion parameters\n"
                      " * brown: Pinhole camera with 3 radial and 2 tangential distortion parameters\n"
                      " * fisheye4: Pinhole camera with 4 distortion parameters suited for fisheye optics (like 120deg FoV)\n"
-                     " * equidistant_r3: Non-projective camera model suited for full-fisheye optics (like 180deg FoV)\n",
-                     value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'equidistant_r3'], exclusive=True, uid=[0]),
+                     " * equidistant_r3: Non-projective camera model suited for full-fisheye optics (like 180deg FoV)\n"
+                     " * 3deanamorphic4: Pinhole camera with a 4 anamorphic distortion coefficients.\n"
+                     " * 3declassicld: Pinhole camera with a 10 anamorphic distortion coefficients\n"
+                     " * 3deradial4: Pinhole camera with 3DE radial4 model\n",
+                     value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'equidistant_r3', '3deanamorphic4', '3declassicld', '3deradial4'], exclusive=True, uid=[0]),
     desc.IntParam(name="width", label="Width", description="Image Width", value=0, uid=[], range=(0, 10000, 1)),
     desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[], range=(0, 10000, 1)),
     desc.FloatParam(name="sensorWidth", label="Sensor Width", description="Sensor Width (mm)", value=36, uid=[], range=(0, 1000, 1)),
@@ -100,6 +106,12 @@ def readSfMData(sfmFile):
         intrinsic['principalPoint'] = {}
         intrinsic['principalPoint']['x'] = pp[0]
         intrinsic['principalPoint']['y'] = pp[1]
+
+        f = intrinsic['pxFocalLength']
+        intrinsic['pxFocalLength'] = {}
+        intrinsic['pxFocalLength']['x'] = f[0]
+        intrinsic['pxFocalLength']['y'] = f[1]
+
         # convert empty string distortionParams (i.e: Pinhole model) to empty list
         if intrinsic['distortionParams'] == '':
             intrinsic['distortionParams'] = list()
@@ -116,6 +128,7 @@ class CameraInit(desc.CommandLineNode):
 
     size = desc.DynamicNodeSize('viewpoints')
 
+    category = 'Sparse Reconstruction'
     documentation = '''
 This node describes your dataset. It lists the Viewpoints candidates, the guess about the type of optic, the initial focal length
 and which images are sharing the same internal camera parameters, as well as potential cameras rigs.
@@ -181,8 +194,8 @@ The metadata needed are:
             name='allowedCameraModels',
             label='Allowed Camera Models',
             description='the Camera Models that can be attributed.',
-            value=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
-            values=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1'],
+            value=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1', '3deanamorphic4', '3deradial4', '3declassicld'],
+            values=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1', '3deanamorphic4', '3deradial4', '3declassicld'],
             exclusive=False,
             uid=[],
             joinChar=',',
@@ -297,6 +310,7 @@ The metadata needed are:
             intrinsics = node.intrinsics.getPrimitiveValue(exportDefault=True)
             for intrinsic in intrinsics:
                 intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
+                intrinsic['pxFocalLength'] = [intrinsic['pxFocalLength']['x'], intrinsic['pxFocalLength']['y']]
             views = node.viewpoints.getPrimitiveValue(exportDefault=False)
 
             # convert the metadata string into a map
@@ -305,7 +319,7 @@ The metadata needed are:
                     view['metadata'] = json.loads(view['metadata'])
 
             sfmData = {
-                "version": [1, 0, 0],
+                "version": [1, 2, 0],
                 "views": views + newViews,
                 "intrinsics": intrinsics,
                 "featureFolder": "",

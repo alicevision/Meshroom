@@ -408,6 +408,13 @@ ApplicationWindow {
             }
             Menu {
                 title: "New Pipeline"
+                TextMetrics {
+                    id: textMetrics
+                    font: action_PG_CT.font
+                    elide: Text.ElideNone
+                    text: action_PG_CT.text
+                }
+                implicitWidth: textMetrics.width + 10  // largest text width + margin
                 Action {
                     text: "Photogrammetry"
                     onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetry") })
@@ -419,6 +426,15 @@ ApplicationWindow {
                 Action {
                     text: "Panorama Fisheye HDR"
                     onTriggered: ensureSaved(function() { _reconstruction.new("panoramafisheyehdr") })
+                }
+                Action {
+                    id: action_PG_CT
+                    text: "Photogrammetry and Camera Tracking (experimental)"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetryandcameratracking") })
+                }
+                Action {
+                    text: "Camera Tracking (experimental)"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("cameratracking") })
                 }
             }
             Action {
@@ -478,6 +494,30 @@ ApplicationWindow {
                 shortcut: "Ctrl+I"
                 onTriggered: importFilesDialog.open()
             }
+
+            Action {
+                id: clearActionItem
+                text: "Clear Images"
+                onTriggered: {
+                    //Loop through all the camera inits
+                    for(var i = 0 ; i < _reconstruction.cameraInits.count; i++){
+                        var cameraInit = _reconstruction.cameraInits.at(i)
+
+                        //Delete all viewpoints
+                        var viewpoints = cameraInit.attribute('viewpoints')
+                        for(var y = viewpoints.value.count - 1 ; y >= 0 ; y--){
+                              _reconstruction.removeAttribute(viewpoints.value.at(y))
+                        }
+
+                        //Delete all intrinsics
+                        var intrinsics = cameraInit.attribute('intrinsics')
+                        for(var z = intrinsics.value.count - 1 ; z >= 0 ; z--){
+                              _reconstruction.removeAttribute(intrinsics.value.at(z))
+                        }
+                    }
+                }
+            }
+
             Action {
                 id: saveAction
                 text: "Save"
@@ -548,6 +588,10 @@ ApplicationWindow {
         }
         Menu {
             title: "Help"
+            Action {
+                text: "Online Documentation"
+                onTriggered: Qt.openUrlExternally("https://meshroom-manual.readthedocs.io")
+            }
             Action {
                 text: "About Meshroom"
                 onTriggered: aboutDialog.open()

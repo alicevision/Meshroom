@@ -29,6 +29,7 @@ RowLayout {
     signal childPinDeleted(var childAttribute, var pin)
 
     signal pressed(var mouse)
+    signal edgeAboutToBeRemoved(var input)
 
     objectName: attribute ? attribute.name + "." : ""
     layoutDirection: Qt.LeftToRight
@@ -82,26 +83,34 @@ RowLayout {
 
             keys: [inputDragTarget.objectName]
             onEntered: {
-                // Filter drops:
-                  if( root.readOnly
-                   || drag.source.objectName != inputDragTarget.objectName  // not an edge connector
-                   || drag.source.nodeItem == inputDragTarget.nodeItem   // connection between attributes of the same node
-                   || inputDragTarget.attribute.isLink                    // already connected attribute
-                   || (drag.source.isList && !inputDragTarget.isList)     // connection between a list and a simple attribute
-                   || (drag.source.isList && childrenRepeater.count) // source/target are lists but target already has children
-                   || drag.source.connectorType == "input"
-                   )
+                // Check if attributes are compatible to create a valid connection
+                if( root.readOnly                                         // cannot connect on a read-only attribute
+                  || drag.source.objectName != inputDragTarget.objectName // not an edge connector
+                  || drag.source.baseType != inputDragTarget.baseType     // not the same base type
+                  || drag.source.nodeItem == inputDragTarget.nodeItem     // connection between attributes of the same node
+                  || (drag.source.isList && !inputDragTarget.isList)      // connection between a list and a simple attribute
+                  || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
+                  || drag.source.connectorType == "input"                 // refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
+                  )
                 {
+                    // Refuse attributes connection
                     drag.accepted = false
+                }
+                else if (inputDragTarget.attribute.isLink) { // already connected attribute
+                    root.edgeAboutToBeRemoved(inputDragTarget.attribute)
                 }
                 inputDropArea.acceptableDrop = drag.accepted
             }
             onExited: {
+                if (inputDragTarget.attribute.isLink) { // already connected attribute
+                    root.edgeAboutToBeRemoved(undefined)
+                }
                 acceptableDrop = false
                 drag.source.dropAccepted = false
             }
 
             onDropped: {
+                root.edgeAboutToBeRemoved(undefined)
                 _reconstruction.addEdge(drag.source.attribute, inputDragTarget.attribute)
             }
         }
@@ -112,7 +121,8 @@ RowLayout {
             readonly property string connectorType: "input"
             readonly property alias attribute: root.attribute
             readonly property alias nodeItem: root.nodeItem
-            readonly property bool isOutput: attribute && attribute.isOutput
+            readonly property bool isOutput: attribute.isOutput
+            readonly property string baseType: attribute.baseType
             readonly property alias isList: root.isList
             property bool dragAccepted: false
             anchors.verticalCenter: parent.verticalCenter
@@ -127,8 +137,7 @@ RowLayout {
 
         MouseArea {
             id: inputConnectMA
-            // If an input attribute is connected (isLink), we disable drag&drop
-            drag.target: attribute.isLink ? undefined : inputDragTarget
+            drag.target: attribute.isReadOnly ? undefined : inputDragTarget
             drag.threshold: 0
             enabled: !root.readOnly
             anchors.fill: parent
@@ -152,7 +161,7 @@ RowLayout {
             point1y: inputDragTarget.y + inputDragTarget.height/2
             point2x: parent.width / 2
             point2y: parent.width / 2
-            color: nameLabel.color
+            color: palette.highlight
             thickness: outputDragTarget.dropAccepted ? 2 : 1
         }
     }
@@ -168,6 +177,7 @@ RowLayout {
         Label {
             id: nameLabel
 
+            enabled: !root.readOnly
             property bool hovered: (inputConnectMA.containsMouse || inputConnectMA.drag.active || inputDropArea.containsDrag || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag)
             text: attribute ? attribute.label : ""
             elide: hovered ? Text.ElideNone : Text.ElideMiddle
@@ -219,24 +229,30 @@ RowLayout {
 
             keys: [outputDragTarget.objectName]
             onEntered: {
-                // Filter drops:
-                if( drag.source.objectName != outputDragTarget.objectName  // not an edge connector
-                   ||  drag.source.nodeItem == outputDragTarget.nodeItem   // connection between attributes of the same node
-                   || drag.source.attribute.isLink                                   // already connected attribute
-                   || (!drag.source.isList && outputDragTarget.isList)     // connection between a list and a simple attribute
-                   || (drag.source.isList && childrenRepeater.count) // source/target are lists but target already has children
-                   || drag.source.connectorType == "output"
-                   )
+                // Check if attributes are compatible to create a valid connection
+                if( drag.source.objectName != outputDragTarget.objectName // not an edge connector
+                  || drag.source.baseType != outputDragTarget.baseType    // not the same base type
+                  || drag.source.nodeItem == outputDragTarget.nodeItem    // connection between attributes of the same node
+                  || (!drag.source.isList && outputDragTarget.isList)     // connection between a list and a simple attribute
+                  || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
+                  || drag.source.connectorType == "output"                // refuse to connect an output pin on another one
+                  )
                 {
+                    // Refuse attributes connection
                     drag.accepted = false
+                }
+                else if (drag.source.attribute.isLink) { // already connected attribute
+                    root.edgeAboutToBeRemoved(drag.source.attribute)
                 }
                 outputDropArea.acceptableDrop = drag.accepted
             }
             onExited: {
+                root.edgeAboutToBeRemoved(undefined)
                 acceptableDrop = false
             }
 
             onDropped: {
+                root.edgeAboutToBeRemoved(undefined)
                 _reconstruction.addEdge(outputDragTarget.attribute, drag.source.attribute)
             }
         }
@@ -249,6 +265,7 @@ RowLayout {
             readonly property alias nodeItem: root.nodeItem
             readonly property bool isOutput: attribute.isOutput
             readonly property alias isList: root.isList
+            readonly property string baseType: attribute.baseType
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
@@ -283,12 +300,12 @@ RowLayout {
             point1y: parent.width / 2
             point2x: outputDragTarget.x + outputDragTarget.width/2
             point2y: outputDragTarget.y + outputDragTarget.height/2
-            color: nameLabel.color
+            color: palette.highlight
             thickness: outputDragTarget.dropAccepted ? 2 : 1
         }
     }
 
-    state: (inputConnectMA.pressed && !attribute.isLink) ? "DraggingInput" : outputConnectMA.pressed ? "DraggingOutput" : ""
+    state: (inputConnectMA.pressed) ? "DraggingInput" : outputConnectMA.pressed ? "DraggingOutput" : ""
 
     states: [
         State {

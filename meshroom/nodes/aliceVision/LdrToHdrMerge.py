@@ -28,6 +28,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
     parallelization = desc.Parallelization(blockSize=2)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
+    category = 'Panorama HDR'
     documentation = '''
     Calibrate LDR to HDR response curve from samples
 '''
@@ -104,6 +105,15 @@ class LdrToHdrMerge(desc.CommandLineNode):
             advanced=True,
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
+        desc.BoolParam(
+            name='enableHighlight',
+            label='Enable Highlight',
+            description="Enable highlights correction.",
+            value=False,
+            uid=[0],
+            group='user',  # not used directly on the command line
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+        ),
         desc.FloatParam(
             name='highlightCorrectionFactor',
             label='Highlights Correction',
@@ -115,7 +125,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
             value=1.0,
             range=(0.0, 1.0, 0.01),
             uid=[0],
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled= lambda node: node.enableHighlight.enabled and node.enableHighlight.value,
         ),
         desc.FloatParam(
             name='highlightTargetLux',
@@ -138,7 +148,7 @@ class LdrToHdrMerge(desc.CommandLineNode):
             value=120000.0,
             range=(1000.0, 150000.0, 1.0),
             uid=[0],
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value and node.highlightCorrectionFactor.value != 0,
+            enabled= lambda node: node.enableHighlight.enabled and node.enableHighlight.value and node.highlightCorrectionFactor.value != 0,
         ),
         desc.ChoiceParam(
             name='storageDataType',

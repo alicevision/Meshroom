@@ -49,6 +49,7 @@ import Utils 1.0
             case ".abc": if(Viewer3DSettings.supportAlembic) component = abcLoaderEntityComponent; break;
             case ".exr": if(Viewer3DSettings.supportDepthMap) component = exrLoaderComponent; break;
             case ".obj":
+            case ".stl":
             default: component = sceneLoaderEntityComponent; break;
         }
 

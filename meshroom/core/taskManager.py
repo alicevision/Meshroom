@@ -116,8 +116,12 @@ class TaskManager(BaseObject):
     def blockRestart(self):
         """ Avoid the automatic restart of computing. """
         for node in self._nodesToProcess:
-            if node.getGlobalStatus() in (Status.SUBMITTED, Status.ERROR):
-                node.upgradeStatusTo(Status.NONE)
+            chunkCount = 0
+            for chunk in node.chunks:
+                if chunk.status.status in (Status.SUBMITTED, Status.ERROR):
+                    chunk.upgradeStatusTo(Status.NONE)
+                    chunkCount += 1
+            if chunkCount == len(node.chunks):
                 self.removeNode(node, displayList=True)
 
         self._blockRestart = False
@@ -147,7 +151,7 @@ class TaskManager(BaseObject):
                 self.removeNode(node, displayList=False, processList=True)
 
                 # Remove output nodes from display and computing lists
-                outputNodes = node.getOutputNodes(recursive=True)
+                outputNodes = node.getOutputNodes(recursive=True, dependenciesOnly=True)
                 for n in outputNodes:
                     if n.getGlobalStatus() in (Status.ERROR, Status.SUBMITTED):
                         n.upgradeStatusTo(Status.NONE)
@@ -169,13 +173,7 @@ class TaskManager(BaseObject):
         """
         self._graph = graph
 
-        if self._thread._state != State.RUNNING:
-            self._nodes.clear()
-            externEmpty = any(node.isAlreadySubmitted() for node in self._nodesExtern)
-            if not externEmpty:
-                self._nodes.update(self._nodesExtern)
-            else:
-                self._nodesExtern = []
+        self.updateNodes()
 
         if forceCompute:
             nodes, edges = graph.dfsOnFinish(startNodes=toNodes)
@@ -184,7 +182,7 @@ class TaskManager(BaseObject):
         else:
             # Check dependencies of toNodes
             if not toNodes:
-                toNodes = graph.getLeafNodes()
+                toNodes = graph.getLeafNodes(dependenciesOnly=True)
             toNodes = list(toNodes)
             allReady = self.checkNodesDependencies(graph, toNodes, "COMPUTATION")
 
@@ -279,6 +277,16 @@ class TaskManager(BaseObject):
         self._nodes.clear()
         self._nodesExtern = []
         self._nodesToProcess = []
+
+    def updateNodes(self):
+        """
+        Update task manager nodes lists by checking the nodes status.
+        """
+        self._nodesExtern = [node for node in self._nodesExtern if node.isExtern() and node.isAlreadySubmitted()]
+        newNodes = [node for node in self._nodes if node.isAlreadySubmitted()]
+        if len(newNodes) != len(self._nodes):
+            self._nodes.clear()
+            self._nodes.update(newNodes)
 
     def update(self, graph):
         """
@@ -386,23 +394,11 @@ class TaskManager(BaseObject):
                                 ))
 
         # Update task manager's lists
-        if self._thread._state != State.RUNNING:
-            self._nodes.clear()
-
-            externEmpty = True
-            for node in self._nodesExtern:
-                if node.isAlreadySubmitted():
-                    externEmpty = False
-                    break
-
-            if not externEmpty:
-                self._nodes.update(self._nodesExtern)
-            else:
-                self._nodesExtern = []
+        self.updateNodes()
 
         # Check dependencies of toNodes
         if not toNodes:
-            toNodes = graph.getLeafNodes()
+            toNodes = graph.getLeafNodes(dependenciesOnly=True)
         toNodes = list(toNodes)
         allReady = self.checkNodesDependencies(graph, toNodes, "SUBMITTING")
 

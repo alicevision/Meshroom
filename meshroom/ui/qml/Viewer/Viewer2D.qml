@@ -52,6 +52,11 @@ FocusScope {
                 }
             }
         }
+        if(mfeaturesLoader.status === Loader.Ready)
+        {
+            if(mfeaturesLoader.item.status === MFeatures.Loading)
+                res += " Features";
+        }
         if(mtracksLoader.status === Loader.Ready)
         {
             if(mtracksLoader.item.status === MTracks.Loading)
@@ -123,6 +128,8 @@ FocusScope {
     }
 
     function getImageFile(type) {
+        if(!_reconstruction.activeNodes)
+            return "";
         var depthMapNode = _reconstruction.activeNodes.get('allDepthMap').node;
         if (type == "image") {
             return root.source;
@@ -240,8 +247,7 @@ FocusScope {
                         }
 
                         // Image cache of the last loaded image
-                        // Only visible when the main one is loading, to keep an image
-                        // displayed at all time and smoothen transitions
+                        // Only visible when the main one is loading, to maintain a displayed image for smoother transitions
                         Image {
                             id: qtImageViewerCache
 
@@ -282,13 +288,11 @@ FocusScope {
 
                     onActiveChanged: {
                         if(active) {
+
                             // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             setSource("FeaturesViewer.qml", {
-                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
                                 'model': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : ""; }),
-                                'featureFolder': Qt.binding(function() { return activeNode ? Filepath.stringToUrl(activeNode.attribute("output").value) : ""; }),
-                                'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
-                                'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
+                                'features': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null; }),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -338,6 +342,28 @@ FocusScope {
                             {
                                 _reconstruction.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
                             }
+                        }
+                    }
+                }
+
+                // ColorCheckerViewer: display color checker detection results
+                // note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
+                Loader {
+                    id: colorCheckerViewerLoader
+                    anchors.centerIn: parent
+                    property var activeNode: _reconstruction.activeNodes.get("ColorCheckerDetection").node
+                    active: (displayColorCheckerViewerLoader.checked && activeNode)
+
+
+                    sourceComponent: ColorCheckerViewer {
+                        visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
+                        source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
+                        image: imgContainer.image
+                        viewpoint: _reconstruction.selectedViewpoint
+                        zoom: imgContainer.scale
+
+                        updatePane: function() {
+                            colorCheckerPane.colors = getColors();
                         }
                     }
                 }
@@ -404,6 +430,53 @@ FocusScope {
                         metadata: visible ? root.metadata : {}
                     }
 
+                    ColorCheckerPane {
+                        id: colorCheckerPane
+                        width: 250
+                        height: 170
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                        }
+                        visible: displayColorCheckerViewerLoader.checked && colorCheckerPane.colors !== null
+                    }
+
+                    Loader {
+                        id: mfeaturesLoader
+
+                        property bool isUsed: displayFeatures.checked
+                        property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get("FeatureExtraction").node : null
+                        property bool isComputed: activeNode && activeNode.isComputed
+                        active: false
+
+                        onIsUsedChanged: {
+                            active = (!active && isUsed && isComputed);
+                        }
+                        onIsComputedChanged: {
+                            active = (!active && isUsed && isComputed);
+                        }
+                        onActiveNodeChanged: {
+                            active = (!active && isUsed && isComputed);
+                        }
+
+                        onActiveChanged: {
+                            if(active) {
+                                // instantiate and initialize a MFeatures component dynamically using Loader.setSource
+                                // so it can fail safely if the c++ plugin is not available
+                                setSource("MFeatures.qml", {
+                                    'currentViewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                    'describerTypes': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : {}; }),
+                                    'featureFolder': Qt.binding(function() { return activeNode ? Filepath.stringToUrl(activeNode.attribute("output").value) : ""; }),
+                                    'mtracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
+                                    'msfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
+                                })
+
+                            } else {
+                                // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                                setSource("", {})
+                            }
+                        }
+                    }
                     Loader {
                         id: msfmDataLoader
 
@@ -536,7 +609,6 @@ FocusScope {
                             })
                         }
                     }
-
                     Loader {
                         id: featuresOverlay
                         anchors {
@@ -550,6 +622,7 @@ FocusScope {
                             featureExtractionNode: _reconstruction.activeNodes.get('FeatureExtraction').node
                             pluginStatus: featuresViewerLoader.status
                             featuresViewer: featuresViewerLoader.item
+                            mfeatures: mfeaturesLoader.item
                         }
                     }
 
@@ -644,6 +717,30 @@ FocusScope {
                             enabled: activeNode && activeNode.attribute("useFisheye").value
                             visible: activeNode
                         }
+                        MaterialToolButton {
+                            id: displayColorCheckerViewerLoader
+                            property var activeNode: _reconstruction.activeNodes.get('ColorCheckerDetection').node
+                            ToolTip.text: "Display Color Checker: " + (activeNode ? activeNode.label : "No Node")
+                            text: MaterialIcons.view_comfy //view_module grid_on gradient view_comfy border_all
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId != -1
+                            checked: false
+                            visible: activeNode
+                            onEnabledChanged: {
+                                if(enabled == false)
+                                    checked = false
+                            }
+                            onCheckedChanged: {
+                                if(checked == true)
+                                {
+                                    displaySfmDataGlobalStats.checked = false
+                                    displaySfmStatsView.checked = false
+                                    metadataCB.checked = false
+                                }
+                            }
+                        }
 
                         MaterialToolButton {
                             id: displayLdrHdrCalibrationGraph
@@ -722,6 +819,7 @@ FocusScope {
                                 if(checked == true) {
                                     displaySfmDataGlobalStats.checked = false
                                     metadataCB.checked = false
+                                    displayColorCheckerViewerLoader.checked = false
                                 }
                             }
                         }
@@ -746,6 +844,7 @@ FocusScope {
                                 if(checked == true) {
                                     displaySfmStatsView.checked = false
                                     metadataCB.checked = false
+                                    displayColorCheckerViewerLoader.checked = false
                                 }
                             }
                         }
@@ -769,6 +868,7 @@ FocusScope {
                                 {
                                     displaySfmDataGlobalStats.checked = false
                                     displaySfmStatsView.checked = false
+                                    displayColorCheckerViewerLoader.checked = false
                                 }
                             }
                         }

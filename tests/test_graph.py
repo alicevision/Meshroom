@@ -237,7 +237,7 @@ def test_graph_nodes_sorting():
     ls1 = graph.addNewNode('Ls')
     ls2 = graph.addNewNode('Ls')
 
-    assert graph.nodesByType('Ls', sortedByIndex=True) == [ls0, ls1, ls2]
+    assert graph.nodesOfType('Ls', sortedByIndex=True) == [ls0, ls1, ls2]
 
     graph = Graph('')
     # 'Random' creation order (what happens when loading a file)
@@ -245,7 +245,7 @@ def test_graph_nodes_sorting():
     ls0 = graph.addNewNode('Ls', name='Ls_0')
     ls1 = graph.addNewNode('Ls', name='Ls_1')
 
-    assert graph.nodesByType('Ls', sortedByIndex=True) == [ls0, ls1, ls2]
+    assert graph.nodesOfType('Ls', sortedByIndex=True) == [ls0, ls1, ls2]
 
 
 def test_duplicate_nodes():
@@ -264,7 +264,8 @@ def test_duplicate_nodes():
     n3 = g.addNewNode('AppendFiles', input=n1.output, input2=n2.output)
 
     # duplicate from n1
-    nMap = g.duplicateNodesFromNode(fromNode=n1)
+    nodes_to_duplicate, _ = g.dfsOnDiscover(startNodes=[n1], reverse=True, dependenciesOnly=True)
+    nMap = g.duplicateNodes(srcNodes=nodes_to_duplicate)
     for s, d in nMap.items():
         assert s.nodeType == d.nodeType
 

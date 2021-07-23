@@ -360,8 +360,8 @@ class ViewpointWrapper(QObject):
         """ Get camera vertical field of view in degrees. """
         if not self.solvedIntrinsics:
             return None
-        pxFocalLength = float(self.solvedIntrinsics["pxFocalLength"])
-        return 2.0 * math.atan(self.orientedImageSize.height() / (2.0 * pxFocalLength)) * 180 / math.pi
+        pxFocalLength = self.solvedIntrinsics["pxFocalLength"]
+        return 2.0 * math.atan(self.orientedImageSize.height() / (2.0 * float(pxFocalLength[0]))) * 180 / math.pi
 
     @Property(type=QUrl, notify=denseSceneParamsChanged)
     def undistortedImageSource(self):
@@ -490,6 +490,12 @@ class Reconstruction(UIGraph):
         elif p.lower() == "panoramafisheyehdr":
             # default panorama fisheye hdr pipeline
             self.setGraph(multiview.panoramaFisheyeHdr())
+        elif p.lower() == "photogrammetryandcameratracking":
+            # default camera tracking pipeline
+            self.setGraph(multiview.photogrammetryAndCameraTracking())
+        elif p.lower() == "cameratracking":
+            # default camera tracking pipeline
+            self.setGraph(multiview.cameraTracking())
         else:
             # use the user-provided default photogrammetry project file
             self.load(p, setupProjectFile=False)
@@ -570,7 +576,7 @@ class Reconstruction(UIGraph):
         return self._cameraInit.viewpoints.value if self._cameraInit else QObjectListModel(parent=self)
 
     def updateCameraInits(self):
-        cameraInits = self._graph.nodesByType("CameraInit", sortedByIndex=True)
+        cameraInits = self._graph.nodesOfType("CameraInit", sortedByIndex=True)
         if set(self._cameraInits.objectList()) == set(cameraInits):
             return
         self._cameraInits.setObjectList(cameraInits)
@@ -739,9 +745,10 @@ class Reconstruction(UIGraph):
                         "",
                     ))
             else:
-                panoramaInitNodes = self.graph.nodesByType('PanoramaInit')
+                panoramaInitNodes = self.graph.nodesOfType('PanoramaInit')
                 for panoramaInfoFile in filesByType.panoramaInfo:
                     for panoramaInitNode in panoramaInitNodes:
+                        panoramaInitNode.attribute('initializeCameras').value = 'File'
                         panoramaInitNode.attribute('config').value = panoramaInfoFile
                 if panoramaInitNodes:
                     self.info.emit(
@@ -1069,10 +1076,10 @@ class Reconstruction(UIGraph):
         vp = None
         if self.viewpoints:
             vp = next((v for v in self.viewpoints if str(v.viewId.value) == self._selectedViewId), None)
-        self.setSelectedViewpoint(vp)
+        self._setSelectedViewpoint(vp)
         self.selectedViewIdChanged.emit()
 
-    def setSelectedViewpoint(self, viewpointAttribute):
+    def _setSelectedViewpoint(self, viewpointAttribute):
         if self._selectedViewpoint:
             # Reconstruction has ownership of Viewpoint object - destroy it when not needed anymore
             self._selectedViewpoint.deleteLater()

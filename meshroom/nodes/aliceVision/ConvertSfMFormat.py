@@ -36,7 +36,7 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             label='Describer Types',
             description='Describer types to keep.',
             value=['dspsift'],
-            values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'unknown'],
+            values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'tag16h5', 'unknown'],
             exclusive=False,
             uid=[0],
             joinChar=',',

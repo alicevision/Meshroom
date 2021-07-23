@@ -37,11 +37,11 @@ AliceVision.FloatImageViewer {
     onStatusChanged: {
         if (viewerTypeString === "panorama") {
             var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
-            surface.setEulerAngles(
-                activeNode.attribute("manualTransform.manualRotation.y").value,
-                activeNode.attribute("manualTransform.manualRotation.x").value,
-                activeNode.attribute("manualTransform.manualRotation.z").value
-            )
+//            surface.setEulerAngles(
+//                activeNode.attribute("manualTransform.manualRotation.y").value,
+//                activeNode.attribute("manualTransform.manualRotation.x").value,
+//                activeNode.attribute("manualTransform.manualRotation.z").value
+//            )
         }
         root.surface.setIdView(idView);
     }

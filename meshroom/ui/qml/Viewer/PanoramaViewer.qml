@@ -54,7 +54,7 @@ AliceVision.PanoramaViewer {
     property var lastX : 0
     property var lastY: 0
 
-    property int yaw: 0;
+    property double yaw: 0;
     property int pitch: 0;
     property int roll: 0;
 
@@ -67,13 +67,38 @@ AliceVision.PanoramaViewer {
 
     function updateRotation(){
         if (!isRotating) {
-            for (var i = 0; i < repeater.model; i++) {
-               repeater.itemAt(i).item.surface.setEulerAngles(yawNode, pitchNode, rollNode);
-            }
+//            for (var i = 0; i < repeater.model; i++) {
+//               repeater.itemAt(i).item.surface.setEulerAngles(yawNode, pitchNode, rollNode);
+//            }
         }
     }
 
+    function toDegrees(radians){
+        return radians * (180/Math.PI)
+    }
+
+    function toRadians(degrees){
+        return degrees * (Math.PI/180)
+    }
+
+    function fmod(a,b) { return Number((a - (Math.floor(a / b) * b)).toPrecision(8)); }
+
+    function limitAngle(angleDegrees){
+            var angleRadians = toRadians(angleDegrees)
+            var power = Math.trunc(angleRadians / Math.PI);
+
+            console.warn(power)
+
+            angleRadians = fmod(angleRadians, Math.PI) * Math.pow(-1, power);
+            // Radians to Degrees
+            var limitedAngleDegrees = toDegrees(angleRadians);
+            if (power % 2 != 0) limitedAngleDegrees = -180.0 - limitedAngleDegrees;
+
+            return limitedAngleDegrees;
+    }
+
     onYawNodeChanged: {
+        //console.warn("[QML] Yaw node changed")
         updateRotation()
     }
     onPitchNodeChanged: {
@@ -123,18 +148,24 @@ AliceVision.PanoramaViewer {
                         lastX = mouse.x;
                         lastY = mouse.y;
 
+
                         //Rotate roll if alt is pressed
-                        if(mouse.modifiers & Qt.AltModifier){
-                            for (var k = 0; k < repeater.model; k++) {
-                               repeater.itemAt(k).item.surface.incrementEulerAngles(0, 0, (xoffset / width) * mouseMultiplier);
-                            }
-                        }
+//                        if(mouse.modifiers & Qt.AltModifier){
+//                            for (var k = 0; k < repeater.model; k++) {
+//                               repeater.itemAt(k).item.surface.incrementEulerAngles(0, 0, (xoffset / width) * mouseMultiplier);
+//                            }
+//                        }
                         //Default rotate
-                        else{
-                            for (var l = 0; l < repeater.model; l++) {
-                               repeater.itemAt(l).item.surface.incrementEulerAngles((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier, 0);
-                            }
-                        }
+//                        else{
+//                            for (var l = 0; l < repeater.model; l++) {
+//                               repeater.itemAt(l).item.surface.incrementEulerAngles((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier, 0);
+//                            }
+//                        }
+                        root.yaw += toDegrees((xoffset / width) * mouseMultiplier)
+                        console.warn("Root yaw " + root.yaw)
+                        if (root.yaw > 180) root.yaw = -180.0 + (root.yaw - 180.0);
+                        if (root.yaw < -180) root.yaw = 180.0 - (Math.abs(root.yaw) - 180);
+                        _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.y"), Math.round(root.yaw));
 
 
                     }
@@ -152,14 +183,16 @@ AliceVision.PanoramaViewer {
                         // Update Euler angles
                         var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
 
-                        root.pitch = repeater.itemAt(0).item.surface.getPitch();
-                        root.yaw = repeater.itemAt(0).item.surface.getYaw();
-                        root.roll = repeater.itemAt(0).item.surface.getRoll();
+//                        root.pitch = repeater.itemAt(0).item.surface.getPitch();
+//                        root.yaw = repeater.itemAt(0).item.surface.getYaw();
+//                        root.roll = repeater.itemAt(0).item.surface.getRoll();
 
-                        _reconstruction.setAttribute(
-                            activeNode.attribute("manualTransform.manualRotation"),
-                            JSON.stringify([root.pitch, root.yaw, root.roll])
-                        );
+//                        console.warn("Set QML yaw to " + root.yaw)
+
+//                        _reconstruction.setAttribute(
+//                            activeNode.attribute("manualTransform.manualRotation"),
+//                            JSON.stringify([root.pitch, root.yaw, root.roll])
+//                        );
                     }
 
                     isRotating = false;
@@ -257,6 +290,7 @@ AliceVision.PanoramaViewer {
                         'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,
                         'viewerTypeString': 'panorama',
                         'surface.subdivisions': Qt.binding(function() { return subdivisionsPano; }),
+                        'surface.yaw': Qt.binding(function() { return root.yaw; }),
                         'index' : index,
                         'idView': Qt.binding(function() { return cId; }),
                         'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),

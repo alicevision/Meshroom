@@ -55,8 +55,8 @@ AliceVision.PanoramaViewer {
     property var lastY: 0
 
     property double yaw: 0;
-    property int pitch: 0;
-    property int roll: 0;
+    property double pitch: 0;
+    property double roll: 0;
 
     property var activeNode: _reconstruction.activeNodes.get('SfMTransform').node
 
@@ -64,14 +64,6 @@ AliceVision.PanoramaViewer {
     property int yawNode: activeNode.attribute("manualTransform.manualRotation.y").value;
     property int pitchNode: activeNode.attribute("manualTransform.manualRotation.x").value;
     property int rollNode: activeNode.attribute("manualTransform.manualRotation.z").value;
-
-    function updateRotation(){
-        if (!isRotating) {
-//            for (var i = 0; i < repeater.model; i++) {
-//               repeater.itemAt(i).item.surface.setEulerAngles(yawNode, pitchNode, rollNode);
-//            }
-        }
-    }
 
     function toDegrees(radians){
         return radians * (180/Math.PI)
@@ -83,29 +75,26 @@ AliceVision.PanoramaViewer {
 
     function fmod(a,b) { return Number((a - (Math.floor(a / b) * b)).toPrecision(8)); }
 
-    function limitAngle(angleDegrees){
-            var angleRadians = toRadians(angleDegrees)
-            var power = Math.trunc(angleRadians / Math.PI);
+    // Limit angle between -180 and 180
+    function limitAngle(angle){
+        if (angle > 180) angle = -180.0 + (angle - 180.0);
+        if (angle < -180) angle = 180.0 - (Math.abs(angle) - 180);
+        return angle;
+    }
 
-            console.warn(power)
-
-            angleRadians = fmod(angleRadians, Math.PI) * Math.pow(-1, power);
-            // Radians to Degrees
-            var limitedAngleDegrees = toDegrees(angleRadians);
-            if (power % 2 != 0) limitedAngleDegrees = -180.0 - limitedAngleDegrees;
-
-            return limitedAngleDegrees;
+    function limitPitch(angle)
+    {
+        return (angle > 180 || angle < -180) ? root.pitch : angle;
     }
 
     onYawNodeChanged: {
-        //console.warn("[QML] Yaw node changed")
-        updateRotation()
+        root.yaw = yawNode;
     }
     onPitchNodeChanged: {
-        updateRotation()
+        root.pitch = pitchNode;
     }
     onRollNodeChanged: {
-        updateRotation()
+        root.roll = rollNode;
     }
 
     Item {
@@ -148,26 +137,19 @@ AliceVision.PanoramaViewer {
                         lastX = mouse.x;
                         lastY = mouse.y;
 
+                        // Update Euler Angles
+                        if (mouse.modifiers & Qt.AltModifier) {
+                            root.roll = limitAngle(root.roll + toDegrees((xoffset / width) * mouseMultiplier))
+                        }
+                        else {
+                            root.yaw = limitAngle(root.yaw + toDegrees((xoffset / width) * mouseMultiplier))
+                            root.pitch = limitPitch(root.pitch + toDegrees(-(yoffset / height) * mouseMultiplier))
+                        }
 
-                        //Rotate roll if alt is pressed
-//                        if(mouse.modifiers & Qt.AltModifier){
-//                            for (var k = 0; k < repeater.model; k++) {
-//                               repeater.itemAt(k).item.surface.incrementEulerAngles(0, 0, (xoffset / width) * mouseMultiplier);
-//                            }
-//                        }
-                        //Default rotate
-//                        else{
-//                            for (var l = 0; l < repeater.model; l++) {
-//                               repeater.itemAt(l).item.surface.incrementEulerAngles((xoffset / width) * mouseMultiplier, -(yoffset / height) * mouseMultiplier, 0);
-//                            }
-//                        }
-                        root.yaw += toDegrees((xoffset / width) * mouseMultiplier)
-                        console.warn("Root yaw " + root.yaw)
-                        if (root.yaw > 180) root.yaw = -180.0 + (root.yaw - 180.0);
-                        if (root.yaw < -180) root.yaw = 180.0 - (Math.abs(root.yaw) - 180);
+                        // Update SfmTransform Node attribute   TODO Undo Group Python
+                        _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.x"), Math.round(root.pitch));
                         _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.y"), Math.round(root.yaw));
-
-
+                        _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.z"), Math.round(root.roll));
                     }
                 }
 
@@ -178,23 +160,6 @@ AliceVision.PanoramaViewer {
                 }
 
                 onReleased: {
-                    if (isRotating)
-                    {
-                        // Update Euler angles
-                        var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
-
-//                        root.pitch = repeater.itemAt(0).item.surface.getPitch();
-//                        root.yaw = repeater.itemAt(0).item.surface.getYaw();
-//                        root.roll = repeater.itemAt(0).item.surface.getRoll();
-
-//                        console.warn("Set QML yaw to " + root.yaw)
-
-//                        _reconstruction.setAttribute(
-//                            activeNode.attribute("manualTransform.manualRotation"),
-//                            JSON.stringify([root.pitch, root.yaw, root.roll])
-//                        );
-                    }
-
                     isRotating = false;
                     lastX = 0
                     lastY = 0
@@ -290,7 +255,9 @@ AliceVision.PanoramaViewer {
                         'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,
                         'viewerTypeString': 'panorama',
                         'surface.subdivisions': Qt.binding(function() { return subdivisionsPano; }),
+                        'surface.pitch': Qt.binding(function() { return root.pitch; }),
                         'surface.yaw': Qt.binding(function() { return root.yaw; }),
+                        'surface.roll': Qt.binding(function() { return root.roll; }),
                         'index' : index,
                         'idView': Qt.binding(function() { return cId; }),
                         'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),

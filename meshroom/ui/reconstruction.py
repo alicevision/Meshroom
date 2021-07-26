@@ -496,6 +496,9 @@ class Reconstruction(UIGraph):
         elif p.lower() == "cameratracking":
             # default camera tracking pipeline
             self.setGraph(multiview.cameraTracking())
+        elif p.lower() == "photogrammetrydraft":
+            # photogrammetry pipeline in draft mode (no cuda)
+            self.setGraph(multiview.photogrammetryDraft())
         else:
             # use the user-provided default photogrammetry project file
             self.load(p, setupProjectFile=False)

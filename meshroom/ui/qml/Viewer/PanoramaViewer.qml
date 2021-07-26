@@ -246,6 +246,9 @@ AliceVision.PanoramaViewer {
 
                     loading = true;
 
+                    var idViewItem = msfmData.viewsIds[index]
+                    var sourceItem = msfmData.getUrlFromViewId(idViewItem)
+
                     setSource("FloatImage.qml", {
                         'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,
                         'viewerTypeString': 'panorama',
@@ -254,12 +257,12 @@ AliceVision.PanoramaViewer {
                         'surface.yaw': Qt.binding(function() { return root.yaw; }),
                         'surface.roll': Qt.binding(function() { return root.roll; }),
                         'index' : index,
-                        'idView': Qt.binding(function() { return cId; }),
+                        'idView': Qt.binding(function() { return idViewItem; }),
                         'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
                         'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
                         'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
                         'downscaleLevel' : Qt.binding(function() { return downscale; }),
-                        'source':  Qt.binding(function() { return cSource; }),
+                        'source':  Qt.binding(function() { return sourceItem; }),
                         'surface.msfmData': Qt.binding(function() { return root.msfmData }),
                         'sfmRequired': true,
                         'canBeHovered': true
@@ -286,10 +289,10 @@ AliceVision.PanoramaViewer {
 
                 //We receive the map<ImgPath, idView> from C++
                 //Resetting arrays to avoid problem with push
-                for (var path in imagesData) {
-                    root.pathList.push(path)
-                    root.idList.push(imagesData[path])
-                }
+//                for (var path in imagesData) {
+//                    root.pathList.push(path)
+//                    root.idList.push(imagesData[path])
+//                }
 
                 //Changing the repeater model (number of elements)
                 panoImages.updateRepeater()
@@ -303,10 +306,10 @@ AliceVision.PanoramaViewer {
         }
 
         function updateRepeater() {
-            if(repeater.model !== root.pathList.length){
+            if(repeater.model !== root.msfmData.viewsIds.length){
                 repeater.model = 0;
             }
-            repeater.model = root.pathList.length;
+            repeater.model = root.msfmData.viewsIds.length;
         }
     }
 

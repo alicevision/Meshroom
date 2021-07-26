@@ -58,7 +58,9 @@ The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 ## Get the project
 
-See [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
+If you don't want to built it yourself, you can directly download the released version in [releases](https://github.com/alicevision/meshroom/releases).  
+
+[**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
 
 Get the source code and install runtime requirements:
 ```bash
@@ -93,6 +95,12 @@ You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver 
 python bin/meshroom_batch --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
 ```
 
+## Start Meshroom without building AliceVision
+
+If you want to use Meshroom (ui) without building AliceVision, download [released](https://github.com/alicevision/meshroom/releases) and checkout corresponding Meshroom (ui) version/tag to avoid versions incompatibilities:
+```bash
+LD_LIBRARY_PATH=~/foo/Meshroom-2021.1.0/aliceVision/lib/ PATH=$PATH:~/foo/Meshroom-2021.1.0/aliceVision/bin/ PYTHONPATH=$PWD python3 meshroom/ui
+```
 
 ## FAQ
 

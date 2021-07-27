@@ -223,10 +223,6 @@ AliceVision.PanoramaViewer {
                 active: root.readyToLoad
                 visible: (floatOneLoader.status === Loader.Ready)
                 z:0
-                //anchors.centerIn: parent
-                property string cSource: Filepath.stringToUrl(root.pathList[index].toString())
-                property int cId: root.idList[index]
-
                 property bool imageLoaded: false
                 property bool loading: false
 
@@ -247,7 +243,7 @@ AliceVision.PanoramaViewer {
                     loading = true;
 
                     var idViewItem = msfmData.viewsIds[index]
-                    var sourceItem = msfmData.getUrlFromViewId(idViewItem)
+                    var sourceItem = Filepath.stringToUrl(msfmData.getUrlFromViewId(idViewItem))
 
                     setSource("FloatImage.qml", {
                         'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,

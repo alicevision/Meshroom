@@ -618,6 +618,10 @@ FocusScope {
                             }
                         }
 
+                        onFilepathChanged: {
+                            console.warn("[QML] " + filepath)
+                        }
+
                         active: false
                         // It takes time to load tracks, so keep them looaded, if we may use it again.
                         // If we load another node, we can trash them (to eventually load the new node data).

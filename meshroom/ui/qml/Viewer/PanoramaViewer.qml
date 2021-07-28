@@ -40,8 +40,6 @@ AliceVision.PanoramaViewer {
 
     property int mouseMultiplier: 1
 
-    property var sfmData: null
-
     onIsHighlightableChanged:{
         for (var i = 0; i < repeater.model; i++) {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
@@ -196,8 +194,6 @@ AliceVision.PanoramaViewer {
         }
     }
 
-    property var pathList : []
-    property var idList : []
     property int imagesLoaded: 0
     property bool allImagesLoaded: false
 
@@ -260,7 +256,6 @@ AliceVision.PanoramaViewer {
                         'downscaleLevel' : Qt.binding(function() { return downscale; }),
                         'source':  Qt.binding(function() { return sourceItem; }),
                         'surface.msfmData': Qt.binding(function() { return root.msfmData }),
-                        'sfmRequired': true,
                         'canBeHovered': true
                     })
                     imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.status === Image.Ready ? true : false; })
@@ -279,16 +274,8 @@ AliceVision.PanoramaViewer {
             onImagesDataChanged: {
                 root.imagesLoaded = 0;
 
-
                 // Retrieve downscale value from C++
                 panoramaViewerToolbar.updateDownscaleValue(root.downscale)
-
-                //We receive the map<ImgPath, idView> from C++
-                //Resetting arrays to avoid problem with push
-//                for (var path in imagesData) {
-//                    root.pathList.push(path)
-//                    root.idList.push(imagesData[path])
-//                }
 
                 //Changing the repeater model (number of elements)
                 panoImages.updateRepeater()

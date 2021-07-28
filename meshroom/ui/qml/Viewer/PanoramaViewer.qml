@@ -271,7 +271,7 @@ AliceVision.PanoramaViewer {
         }
         Connections {
             target: root
-            onImagesDataChanged: {
+            onDownscaleReady: {
                 root.imagesLoaded = 0;
 
                 // Retrieve downscale value from C++

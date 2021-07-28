@@ -102,6 +102,16 @@ To use Meshroom (ui) without building AliceVision
 *   Checkout corresponding Meshroom (ui) version/tag to avoid versions incompatibilities
 *   `LD_LIBRARY_PATH=~/foo/Meshroom-2021.1.0/aliceVision/lib/ PATH=$PATH:~/foo/Meshroom-2021.1.0/aliceVision/bin/ PYTHONPATH=$PWD python3 meshroom/ui`
 
+## Start and Debug Meshroom in an IDE
+
+PyCharm Community is free IDE which can be used. To start and debug a project with that IDE,
+right-click on `Meshroom/ui/__main__.py` > `Debug`, then `Edit Configuration`, in `Environment variables` : 
+*   If you want to use aliceVision built by yourself add: `PATH=$PATH:/foo/build/Linux-x86_64/`
+*   If you want to use aliceVision release add: `LD_LIBRARY_PATH=/foo/Meshroom-2021.1.0/aliceVision/lib/;PATH=$PATH:/foo/Meshroom-2021.1.0/aliceVision/bin/` (Make sure that you are on the branch matching the right version)
+
+![image](https://user-images.githubusercontent.com/937836/127321375-3bf78e73-569d-414a-8649-de0307adf794.png)
+
+
 ## FAQ
 
 See the [Meshroom wiki](https://github.com/alicevision/meshroom/wiki) for more information.

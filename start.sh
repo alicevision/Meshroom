@@ -9,4 +9,4 @@ export PYTHONPATH=$MESHROOM_ROOT:$PYTHONPATH
 # using alicevision built source
 #export PATH=$PATH:/foo/build/Linux-x86_64/
 
-python3 $MESHROOM_ROOT/meshroom/ui
+python3 "$MESHROOM_ROOT/meshroom/ui"

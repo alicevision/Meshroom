@@ -199,7 +199,6 @@ AliceVision.PanoramaViewer {
 
     function loadRepeaterImages(index)
     {
-        console.warn("LOAD IMG " + index)
         if (index < repeater.model)
             repeater.itemAt(index).loadItem();
         else

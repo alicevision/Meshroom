@@ -5,14 +5,13 @@
 # Wavefront OBJ format load/save routine is inspired by James Gregson's blog post: 
 # http://jamesgregson.ca/loadsave-wavefront-obj-files-in-python.html
 
-__version__ = "0.4.1"
+__version__ = "1.0"
 
 from meshroom.core import desc, node
 
 import os
 import logging
 import numpy as np
-from pymeshfix import _meshfix
 
 from typing import List, Tuple
 
@@ -131,7 +130,7 @@ To  make use of this node, you need to provide the path to the Instant Meshes ex
             ),                        
         desc.ChoiceParam(
             name='remeshMode', label='Remesh Mode',
-            description='The remeshing mode.',
+            description='The remeshing mode. Quad meshes are not supported by other Meshroom nodes so far.',
             value='Triangles',
             values=('Triangles', 'Quads (2/4)', 'Quads (4/4)'),
             exclusive=True,
@@ -158,22 +157,12 @@ To  make use of this node, you need to provide the path to the Instant Meshes ex
             range=(0, 10, 1),
             uid=[0],
             ),
-        desc.BoolParam(
-            name='fixMesh', label='Fix Mesh',
-            description="Use MeshFix (a great tool by Marco Attene) to repair defect faces.\n"
-                        " * removes self-intersections\n"
-                        " * sometimes, removes non-manifolds too\n"
-                        "\n"
-                        "Thanks to Alex Kaszynski for providing the python wrapper PyMeshFix.",
-            value=True,
-            uid=[0]
-            ),
 
     ]
 
     outputs = [
         desc.File(
-            name="outputMesh", label="Output mesh",
+            name="outputMesh", label="Output triangular mesh",
             description="Output mesh (OBJ file format).",
             value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],
@@ -228,10 +217,6 @@ To  make use of this node, you need to provide the path to the Instant Meshes ex
         mesh = Mesh.createFromFile(chunk.node.outputInstantMeshes.value)
         g_log.logger.info("Mesh loaded")
         
-        # fix self-intersections by utilizing MeshFix tool by Marco Attene
-        if chunk.node.fixMesh.value:
-            mesh.fixSelfIntersections()
-            g_log.logger.info("Mesh fixed")
             
         # save Meshroom compliant Obj file
         mesh.save(chunk.node.outputMesh.value)
@@ -306,9 +291,7 @@ class Mesh(object):
         
     def _loadObj(self, filename: str) -> None:
         """Reads a Wavefront .obj file from disk.
-
         Handles only very rudimentary reading and contains no error handling!
-
         Does not handle:
             - relative indexing
             - subobjects or groups
@@ -413,27 +396,3 @@ class Mesh(object):
                     if normals:
                         pstr += '/' + str(self.faceNormals[pid][v] + 1 if self.faceNormals[pid][v] > -1 else '')
                 ofile.write(pstr + '\n')
-
-
-    def fixSelfIntersections(self):
-        """Uses PyMeshFix to cleanup self-intersections, and sometimes non-manifolds."""
-        
-        # convert vertex/face lists to numpy-arrays 
-        v = np.asarray(self.vertices, np.float)
-        f = np.asarray(self.faces, np.int)
-        assert v.ndim == 2, 'Vertex array must be 2D'
-        assert v.shape[1] == 3, 'Vertex array must contain three columns'
-        assert f.ndim == 2, 'Face array must be 2D'
-        assert f.shape[1] == 3, 'Face array must contain three columns'
-        
-        # create meshfix triangle mesh object
-        tmesh= _meshfix.PyTMesh()
-        tmesh.load_array(v, f)
-        
-        # clean mesh (should remove self-intersections and non-manifolds)
-        tmesh.clean(max_iters=10, inner_loops=3)
-        
-        # get vertex/face numpy-arrays and convert back to lists 
-        v, f = tmesh.return_arrays()
-        self.vertices = v.tolist()
-        self.faces = f.tolist()

@@ -99,18 +99,18 @@ To  make use of this node, you need to provide the path to the Instant Meshes ex
 
     inputs = [
         desc.File(
-        name='instantMeshesPath',
-        label='Instant Meshes Path',
-        description='''Path to Instant Meshes binary. (Instant Meshes.exe or Instant Meshes.app)''',
-        value=os.environ.get('Instant Meshes',""),
-        uid=[],
-        group='',
-        ),
-        desc.File(
             name="inputMesh", label='Input Mesh',
             description='Input mesh (OBJ/PLY file format).',
             value='',
             uid=[0],
+            ),
+	desc.File(
+            name='instantMeshesPath',
+            label='Instant Meshes Path',
+            description='''Path to Instant Meshes binary. (Instant Meshes.exe or Instant Meshes.app)''',
+            value=os.environ.get('Instant Meshes',""),
+            uid=[],
+            group='',
             ),
         desc.IntParam(
             name='threads', label='Threads',

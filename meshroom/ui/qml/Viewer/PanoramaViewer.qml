@@ -152,12 +152,14 @@ AliceVision.PanoramaViewer {
                 }
 
                 onPressed:{
+                    _reconstruction.beginModification("Panorama Manual Rotation");
                     isRotating = true;
                     lastX = mouse.x;
                     lastY = mouse.y;
                 }
 
                 onReleased: {
+                    _reconstruction.endModification();
                     isRotating = false;
                     lastX = 0
                     lastY = 0

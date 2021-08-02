@@ -12,23 +12,48 @@ RowLayout {
     property variant attribute: model.display
     property int rowIndex: model.row
     property bool readOnly: false
+    property string toolTipText: attribute.fullLabel
 
-    Loader {
+    Pane {
+        // anchors.fill: parent
+        // Layout: childrenRect.width
+        Layout.minimumWidth: loaderComponent.width
+        Layout.minimumHeight: loaderComponent.height
         Layout.fillWidth: true
+        // color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
+        // z: -1
+        // border.width: 2
+        // border.color: Qt.darker(palette.window, 1.1)
+        padding: 0
 
-        sourceComponent: {
-            //console.warn("keys " + Object.keys(intrinsicModel.columns[model.index]))
-            //console.warn("index " + intrinsicModel.columnCount)
-            //console.warn("HEEELPPP " + model.display.desc.values)
-            //console.warn("Object   " + intrinsicModel.columns[model.index].display)
-            switch(model.display.type)
-            {
-               case "ChoiceParam": return choice_component
-               case "IntParam": return int_component
-               case "FloatParam": return float_component
-               case "BoolParam": return bool_component
-               case "StringParam": return textField_component
-               default: return textField_component
+        hoverEnabled: true
+
+        ToolTip.delay: 10
+        ToolTip.timeout: 5000
+        ToolTip.visible: hovered
+        ToolTip.text: toolTipText
+
+        Rectangle {
+            width: parent.width
+            height: loaderComponent.height
+
+            color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
+            border.width: 2
+            border.color: Qt.darker(palette.window, 1.1)
+
+            Loader {
+                id: loaderComponent
+                sourceComponent: {
+                    switch(model.display.type)
+                    {
+                       case "ChoiceParam": return choice_component
+                       case "IntParam": return int_component
+                       case "FloatParam": return float_component
+                       case "BoolParam": return bool_component
+                       case "StringParam": return textField_component
+                       default: return textField_component
+                    }
+                }
             }
         }
     }
@@ -42,15 +67,14 @@ RowLayout {
             selectByMouse: true
             selectionColor: 'white'
             selectedTextColor: Qt.darker(palette.window, 1.1)
-
-
+/*
             Rectangle {
                 anchors.fill: parent
                 color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
                 border.width: 2
-                border.color: Qt.darker(palette.window, 1.1)
-            }
+                border.color: Qt.darker(palette.window, 1.1)                
+            }*/
 
             onEditingFinished: _reconstruction.setAttribute(attribute, text)
             onAccepted: {
@@ -65,6 +89,7 @@ RowLayout {
 
     Component {
         id: int_component
+
         TextInput{
             text: model.display.value
             color: 'white'
@@ -78,14 +103,14 @@ RowLayout {
             }
 
             validator: intValidator
-
+/*
             Rectangle {
                 anchors.fill: parent
                 color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
                 border.width: 2
                 border.color: Qt.darker(palette.window, 1.1)
-            }
+            }*/
 
             onEditingFinished: _reconstruction.setAttribute(attribute, Number(text))
             onAccepted: {
@@ -110,13 +135,14 @@ RowLayout {
             leftInset: 6
             rightInset: 6
             bottomInset: 7
-            Rectangle {
+
+            /*Rectangle {
                 anchors.fill: parent
                 color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
                 border.width: 2
                 border.color: Qt.darker(palette.window, 1.1)
-            }
+            }*/
             Connections {
                 target: attribute
                 onValueChanged: combo.currentIndex = combo.find(attribute.value)
@@ -130,20 +156,20 @@ RowLayout {
             checked: attribute ? attribute.value : false
             padding: 12
             onToggled: _reconstruction.setAttribute(attribute, !attribute.value)
+/*
             Rectangle {
                 anchors.fill: parent
                 color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
                 border.width: 2
                 border.color: Qt.darker(palette.window, 1.1)
-            }
+            }*/
         }
     }
 
     Component {
         id: float_component
         TextInput{
-            //readonly property int stepDecimalCount: stepSize <  1 ? String(stepSize).split(".").pop().length : 0
             readonly property real formattedValue: model.display.value.toFixed(2)
             property string displayValue: String(formattedValue)
             text: displayValue
@@ -173,14 +199,16 @@ RowLayout {
             }
 
             validator: doubleValidator
-
+/*
             Rectangle {
                 anchors.fill: parent
                 color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
                 border.width: 2
                 border.color: Qt.darker(palette.window, 1.1)
-            }
+                ToolTip.text: "HELLOOOOO"
+                ToolTip.visible: true
+            }*/
             onEditingFinished: _reconstruction.setAttribute(attribute, Number(text))
             onAccepted: {
                 _reconstruction.setAttribute(attribute, Number(text))
@@ -191,8 +219,5 @@ RowLayout {
             }
         }
     }
-
-
-
 
 }

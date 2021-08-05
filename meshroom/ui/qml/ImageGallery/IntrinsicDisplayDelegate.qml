@@ -11,8 +11,9 @@ RowLayout {
 
     property variant attribute: model.display
     property int rowIndex: model.row
+    property int columnIndex: model.column
     property bool readOnly: false
-    property string toolTipText: attribute.fullLabel
+    property string toolTipText: attribute ? attribute.fullLabel : ""
 
     Pane {
         // anchors.fill: parent
@@ -39,7 +40,7 @@ RowLayout {
 
             color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
             border.width: 2
-            border.color: Qt.darker(palette.window, 1.1)
+            border.color: Qt.darker(palette.window, 1.2)
 
             Loader {
                 id: loaderComponent
@@ -67,13 +68,16 @@ RowLayout {
             selectByMouse: true
             selectionColor: 'white'
             selectedTextColor: Qt.darker(palette.window, 1.1)
+
+            width: intrinsicTable.columnWidths[columnIndex]
+            horizontalAlignment: TextInput.AlignRight
 /*
             Rectangle {
                 anchors.fill: parent
                 color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
                 z: -1
                 border.width: 2
-                border.color: Qt.darker(palette.window, 1.1)                
+                border.color: Qt.darker(palette.window, 1.1)
             }*/
 
             onEditingFinished: _reconstruction.setAttribute(attribute, text)
@@ -103,6 +107,9 @@ RowLayout {
             }
 
             validator: intValidator
+
+            width: intrinsicTable.columnWidths[columnIndex]
+            horizontalAlignment: TextInput.AlignRight
 /*
             Rectangle {
                 anchors.fill: parent
@@ -135,6 +142,8 @@ RowLayout {
             leftInset: 6
             rightInset: 6
             bottomInset: 7
+
+            width: intrinsicTable.columnWidths[columnIndex]
 
             /*Rectangle {
                 anchors.fill: parent
@@ -180,6 +189,8 @@ RowLayout {
             selectedTextColor: Qt.darker(palette.window, 1.1)
             enabled: !readOnly
 
+            width: intrinsicTable.columnWidths[columnIndex]
+            horizontalAlignment: TextInput.AlignRight
             clip: true;
 
             autoScroll: activeFocus

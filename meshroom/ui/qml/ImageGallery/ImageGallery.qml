@@ -523,6 +523,11 @@ Panel {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
 
+                    //Provide width for column
+                    //Note no size provided for the last column bool
+                    property var columnWidths: [90, 75, 75, 75, 125, 60, 60, 45, 45, 175, 60, 60]
+                    columnWidthProvider: function (column) { return columnWidths[column] }
+
                     model: intrinsicModel
 
                     delegate: IntrinsicDisplayDelegate{}

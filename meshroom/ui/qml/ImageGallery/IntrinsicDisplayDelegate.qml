@@ -16,19 +16,15 @@ RowLayout {
     property string toolTipText: attribute ? attribute.fullLabel : ""
 
     Pane {
-        // anchors.fill: parent
-        // Layout: childrenRect.width
         Layout.minimumWidth: loaderComponent.width
         Layout.minimumHeight: loaderComponent.height
         Layout.fillWidth: true
-        // color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
-        // z: -1
-        // border.width: 2
-        // border.color: Qt.darker(palette.window, 1.1)
+
         padding: 0
 
         hoverEnabled: true
 
+        // Tooltip to replace headers for now (header incompatible atm)
         ToolTip.delay: 10
         ToolTip.timeout: 5000
         ToolTip.visible: hovered
@@ -63,22 +59,15 @@ RowLayout {
         id: textField_component
         TextInput{
             text: model.display.value
+            width: intrinsicTable.columnWidths[columnIndex]
+            horizontalAlignment: TextInput.AlignRight
             color: 'white'
+
             padding: 12
+
             selectByMouse: true
             selectionColor: 'white'
             selectedTextColor: Qt.darker(palette.window, 1.1)
-
-            width: intrinsicTable.columnWidths[columnIndex]
-            horizontalAlignment: TextInput.AlignRight
-/*
-            Rectangle {
-                anchors.fill: parent
-                color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
-                z: -1
-                border.width: 2
-                border.color: Qt.darker(palette.window, 1.1)
-            }*/
 
             onEditingFinished: _reconstruction.setAttribute(attribute, text)
             onAccepted: {
@@ -96,8 +85,12 @@ RowLayout {
 
         TextInput{
             text: model.display.value
+            width: intrinsicTable.columnWidths[columnIndex]
+            horizontalAlignment: TextInput.AlignRight
             color: 'white'
+
             padding: 12
+
             selectByMouse: true
             selectionColor: 'white'
             selectedTextColor: Qt.darker(palette.window, 1.1)
@@ -107,17 +100,6 @@ RowLayout {
             }
 
             validator: intValidator
-
-            width: intrinsicTable.columnWidths[columnIndex]
-            horizontalAlignment: TextInput.AlignRight
-/*
-            Rectangle {
-                anchors.fill: parent
-                color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
-                z: -1
-                border.width: 2
-                border.color: Qt.darker(palette.window, 1.1)
-            }*/
 
             onEditingFinished: _reconstruction.setAttribute(attribute, Number(text))
             onAccepted: {
@@ -135,23 +117,18 @@ RowLayout {
         ComboBox {
             id: combo
             model: attribute.desc.values
-            Component.onCompleted: currentIndex = find(attribute.value)
-            onActivated: _reconstruction.setAttribute(attribute, currentText)
+            width: intrinsicTable.columnWidths[columnIndex]
+
             flat : true
+
             topInset: 7
             leftInset: 6
             rightInset: 6
             bottomInset: 7
 
-            width: intrinsicTable.columnWidths[columnIndex]
+            Component.onCompleted: currentIndex = find(attribute.value)
+            onActivated: _reconstruction.setAttribute(attribute, currentText)
 
-            /*Rectangle {
-                anchors.fill: parent
-                color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
-                z: -1
-                border.width: 2
-                border.color: Qt.darker(palette.window, 1.1)
-            }*/
             Connections {
                 target: attribute
                 onValueChanged: combo.currentIndex = combo.find(attribute.value)
@@ -165,14 +142,6 @@ RowLayout {
             checked: attribute ? attribute.value : false
             padding: 12
             onToggled: _reconstruction.setAttribute(attribute, !attribute.value)
-/*
-            Rectangle {
-                anchors.fill: parent
-                color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
-                z: -1
-                border.width: 2
-                border.color: Qt.darker(palette.window, 1.1)
-            }*/
         }
     }
 
@@ -181,16 +150,20 @@ RowLayout {
         TextInput{
             readonly property real formattedValue: model.display.value.toFixed(2)
             property string displayValue: String(formattedValue)
+
             text: displayValue
+            width: intrinsicTable.columnWidths[columnIndex]
+            horizontalAlignment: TextInput.AlignRight
+
             color: 'white'
             padding: 12
+
             selectByMouse: true
             selectionColor: 'white'
             selectedTextColor: Qt.darker(palette.window, 1.1)
+
             enabled: !readOnly
 
-            width: intrinsicTable.columnWidths[columnIndex]
-            horizontalAlignment: TextInput.AlignRight
             clip: true;
 
             autoScroll: activeFocus
@@ -210,16 +183,7 @@ RowLayout {
             }
 
             validator: doubleValidator
-/*
-            Rectangle {
-                anchors.fill: parent
-                color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
-                z: -1
-                border.width: 2
-                border.color: Qt.darker(palette.window, 1.1)
-                ToolTip.text: "HELLOOOOO"
-                ToolTip.visible: true
-            }*/
+
             onEditingFinished: _reconstruction.setAttribute(attribute, Number(text))
             onAccepted: {
                 _reconstruction.setAttribute(attribute, Number(text))

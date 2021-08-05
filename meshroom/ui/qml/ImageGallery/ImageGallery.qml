@@ -55,86 +55,13 @@ Panel {
         parseIntr()
     }
 
-
-//    function populate_model()
-//    {
-//        for (var property in parsedIntrinsic) {
-//          console.warn(property + ': ' + parsedIntrinsic[property]+'; ')
-//          intrinsicModel.append({'name' : property, 'value' : parsedIntrinsic[property]})
-//        }
-//    }
-
-//    function populate_model()
-//    {
-//        intrinsicModel.clear()
-//        for (var intr in parsedIntrinsic) {
-//            intrinsicModel.append(parsedIntrinsic[intr])
-//        }
-//    }
-
     function populate_model()
     {
         intrinsicModel.clear()
         for (var intr in parsedIntrinsic) {
             intrinsicModel.appendRow(parsedIntrinsic[intr])
         }
-        //console.warn(intrinsicModel.rowCount)
     }
-
-
-//    function populate_model()
-//    {
-//        intrinsicModel.clear()
-//        let CurrentIntrinsic = {}
-//        console.warn("Populate Model")
-//        for (var intr in parsedIntrinsic) {
-//            for (var property in parsedIntrinsic[intr])  {
-//                if(property.localeCompare("Locked") === 0){
-//                    CurrentIntrinsic[property] = {'label' : property, 'value' : parsedIntrinsic[intr][property]}
-//                    intrinsicModel.append(CurrentIntrinsic)
-//                    console.warn("Append to Model")
-//                    for (var prop in CurrentIntrinsic) {
-//                      delete CurrentIntrinsic[prop];
-//                    }
-//                }else{
-//                    CurrentIntrinsic[property] = {'label' : property, 'value' : parsedIntrinsic[intr][property]}
-//                }
-//            }
-//        }
-//        console.warn(intrinsicModel.count)
-//    }
-
-    //Parse
-    // Id : value
-//    function parseIntr(){
-//        parsedIntrinsic = {}
-
-//        for(var i = 0; i < m.intrinsics.count; i++){
-//            parsedIntrinsic[i] = {}
-//            for(var j=0; j < m.intrinsics.at(i).value.count; j++){
-//                var currentAttribute = m.intrinsics.at(i).value.at(j)
-//                if(currentAttribute.type === "GroupAttribute" || currentAttribute.type === "ListAttribute"){
-//                    parsedIntrinsic[i][currentAttribute.label] = {}
-//                    for(var k=0; k < currentAttribute.value.count; k++){
-//                        parsedIntrinsic[i][currentAttribute.label][currentAttribute.value.at(k).label] = currentAttribute.value.at(k).value
-
-//                    }
-//                }
-//                else{
-//                    parsedIntrinsic[i][currentAttribute.label] = currentAttribute.value
-//                }
-//            }
-//        }
-
-//        for (var intr in parsedIntrinsic) {
-//          for (var property in parsedIntrinsic[intr])  {
-//              console.warn(property + ': ' + parsedIntrinsic[intr][property] +'; ')
-//          }
-//        }
-
-//        populate_model()
-//        //console.warn(parsedIntrinsic.count)
-//    }
 
     function parseIntr(){
         parsedIntrinsic = {}
@@ -164,17 +91,7 @@ Panel {
                 }
             }
         }
-
-
-
-//        for (var intr in parsedIntrinsic) {
-//          for (var property in parsedIntrinsic[intr])  {
-//              console.warn(property + ': ' + parsedIntrinsic[intr][property].type +'; ')
-//          }
-//        }
-
         populate_model()
-        //console.warn(parsedIntrinsic.count)
     }
 
 
@@ -221,13 +138,6 @@ Panel {
         anchors.fill: parent
         spacing: 4
 
-        //Resize table view on width changed
-        onWidthChanged: {
-            //tableView.forceLayout()
-
-            //console.warn()
-        }
-
         GridView {
             id: grid
 
@@ -260,7 +170,6 @@ Panel {
                 }
 
             }
-
 
             model: SortFilterDelegateModel {
                 id: sortedModel
@@ -438,84 +347,10 @@ Panel {
                 }
             }
 
-
-//            TableView {
-//                id: tableView
-//                    anchors.fill: parent
-//                    Layout.fillWidth: true
-//                    columnSpacing: 1
-//                    rowSpacing: 1
-
-//                    // Create a kind of responsive width base on the grid width
-//                    // Require a forceLayout() call to be updated
-//                    columnWidthProvider: function (column) {
-//                        return grid.width;
-//                    }
-
-//                   boundsBehavior: Flickable.StopAtBounds
-//                   visible: (m.viewpoints ? m.viewpoints.count != 0 : false) && intrinsicsFilterButton.checked
-//                   onVisibleChanged:{
-//                       tableView.forceLayout();
-//                   }
-
-//                   model: TableModel {
-
-//                         TableModelColumn { display: "checked" }
-//                         TableModelColumn { display: "fruitName" }
-
-//                   }
-
-
-//                   delegate:  TextInput {
-//                       text: model.display
-//                       padding: 12
-//                       selectByMouse: true
-
-//                       onAccepted: model.display = text
-
-//                       Rectangle {
-//                           anchors.fill: parent
-//                           color: "#efefef"
-//                           z: -1
-//                       }
-//                   }
-
-//                   Component.onCompleted: {
-//                       model.appendRow(m.intrinsics.at(0).value)
-////                       console.log(model.getRow(0).display);
-////                       console.log(model.rows[0].fruitName);
-//                   }
-//               }
-
-
-//            ImageIntrinsicViewer {
-//                id: nodeEditor
-//                width: Math.round(parent.width)
-//                intrinsics: m.intrinsics
-//            }
-
             RowLayout{
                 anchors.fill: parent
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-//                ListView{
-//                    Layout.fillHeight: true
-//                    Layout.fillWidth: true
-//                    orientation: ListView.Vertical
-
-
-//                    model: intrinsicModel
-
-//                    delegate: IntrinsicDisplayDelegate{
-
-//                    }
-//                }
-
-//                ListModel{
-//                    id : intrinsicModel
-//                    dynamicRoles:true
-
-//                }
 
                 TableView{
                     id : intrinsicTable
@@ -524,7 +359,7 @@ Panel {
                     Layout.fillWidth: true
 
                     //Provide width for column
-                    //Note no size provided for the last column bool
+                    //Note no size provided for the last column (bool comp) so it uses its automated size
                     property var columnWidths: [90, 75, 75, 75, 125, 60, 60, 45, 45, 175, 60, 60]
                     columnWidthProvider: function (column) { return columnWidths[column] }
 
@@ -533,7 +368,6 @@ Panel {
                     delegate: IntrinsicDisplayDelegate{}
 
                     ScrollBar.horizontal: ScrollBar { id: sb }
-
                 }
 
                 TableModel{
@@ -555,72 +389,15 @@ Panel {
 
                 }
 
+                //CODE FOR HEADERS
+                //UNCOMMENT WHEN COMPATIBLE WITH THE RIGHT QT VERSION
+
 //                HorizontalHeaderView {
 //                    id: horizontalHeader
 //                    syncView: tableView
 //                    anchors.left: tableView.left
 //                }
             }
-
-
-
-
-
-
-//            ListView {
-//                id: listView
-//                anchors.fill: parent
-//                Layout.fillWidth: true
-//                property bool readOnly: false
-//                property int labelWidth: 180
-
-//                signal upgradeRequest()
-//                signal attributeDoubleClicked(var mouse, var attribute)
-
-//                model : m.intrinsics
-
-//                spacing: 2
-//                clip: true
-//                ScrollBar.vertical: ScrollBar { id: scrollBar }
-//                visible: intrinsicsFilterButton.checked
-
-//                delegate: Loader {
-//                    active: object.enabled && (!object.desc.advanced)
-//                    visible: active
-//                    sourceComponent: ImageIntrinsicDelegate {
-//                        width: listView.width
-//                        readOnly: listView.readOnly
-//                        attribute: model.object
-//                        onDoubleClicked: listView.attributeDoubleClicked(mouse, attr)
-//                    }
-//                }
-//            }
-
-
-
-//            Pane {
-//                background: Rectangle { color: 'red' }
-//                width : 150
-//                height : 200
-//                Component{
-//                    id : block
-//                    Rectangle {
-//                        color: 'green'
-//                        width : 15
-//                        height : 20
-
-//                        Text{
-//                            text: "Hello World!"
-//                            font.family: "Helvetica"
-//                            font.pointSize: 24
-//                            color: "blue"
-//                        }
-//                    }
-//                }
-//                Loader{sourceComponent: block }
-//            }
-
-
 
             DropArea {
                 id: dropArea

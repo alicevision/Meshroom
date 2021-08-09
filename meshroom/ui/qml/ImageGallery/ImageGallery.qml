@@ -94,8 +94,6 @@ Panel {
         populate_model()
     }
 
-
-
     headerBar: RowLayout {
         MaterialToolButton {
             text: MaterialIcons.more_vert
@@ -168,7 +166,6 @@ Panel {
                     if(idx >= 0)
                         grid.currentIndex = idx
                 }
-
             }
 
             model: SortFilterDelegateModel {
@@ -204,25 +201,6 @@ Panel {
                     visible: !intrinsicsFilterButton.checked
 
                     isCurrentItem: GridView.isCurrentItem
-
-                    onWidthChanged: {
-                        //console.warn("viewpoint " + object.value.get("intrinsicId").value)
-                        //console.warn("viewpoint " + m.intrinsics.at(1).childAttribute("intrinsicId"))
-                        //console.warn("viewpoint " + m.intrinsics.at(0).value.at(9).name)
-
-                        //console.warn("viewpoint " + m.intrinsics.at(0))
-
-
-
-
-
-
-//                         console.warn("viewpoint2 " + (m.viewpoints?m.viewpoints.value:"pute"))
-                       // console.warn("intrin " + m.currentCameraInit.attribute('intrinsics').value.count)
-//                        //console.warn(viewpoint.get("poseId").value)
-                        //console.warn(_reconstruction.isReconstructed(object))
-
-                    }
 
                     onIsCurrentItemChanged: {
                         if(isCurrentItem)
@@ -386,7 +364,6 @@ Panel {
                     TableModelColumn { display: "Principal Point x" }
                     TableModelColumn { display: "Principal Point y" }
                     TableModelColumn { display: "Locked" }
-
                 }
 
                 //CODE FOR HEADERS

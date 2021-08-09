@@ -330,11 +330,20 @@ Panel {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
+                TapHandler {
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onTapped: {
+                        intrinsicTable.focus = false
+                    }
+                }
+
                 TableView{
                     id : intrinsicTable
                     visible: intrinsicsFilterButton.checked
                     Layout.fillHeight: true
                     Layout.fillWidth: true
+
+                    interactive : !focus
 
                     //Provide width for column
                     //Note no size provided for the last column (bool comp) so it uses its automated size

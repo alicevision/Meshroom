@@ -345,6 +345,8 @@ Panel {
 
                     interactive : !focus
 
+                    boundsMovement : Flickable.StopAtBounds
+
                     //Provide width for column
                     //Note no size provided for the last column (bool comp) so it uses its automated size
                     property var columnWidths: [90, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]

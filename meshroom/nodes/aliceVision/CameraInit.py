@@ -1,4 +1,4 @@
-__version__ = "4.0"
+__version__ = "5.0"
 
 import os
 import json
@@ -7,7 +7,7 @@ import shutil
 import tempfile
 import logging
 
-from meshroom.core import desc
+from meshroom.core import desc, Version
 
 
 Viewpoint = [
@@ -253,6 +253,15 @@ The metadata needed are:
             uid=[],
         ),
     ]
+
+    def upgradeAttributeValues(self, attrValues, fromVersion):
+        if fromVersion <= Version(4, 0):
+            for intrinsic in attrValues['intrinsics']:
+                # focal length is now split on x and y
+                pxFocalLength = intrinsic['pxFocalLength']
+                if not isinstance(pxFocalLength, dict):
+                    intrinsic['pxFocalLength'] = {"x": pxFocalLength, "y": pxFocalLength}
+        return attrValues
 
     def readSfMData(self, sfmFile):
         return readSfMData(sfmFile)

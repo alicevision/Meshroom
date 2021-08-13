@@ -18,14 +18,13 @@ class ConvertMesh(desc.CommandLineNode):
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='outputMeshFormat',
-            label='Output Mesh Format',
-            description='''Output Mesh Format (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).''',
-            value='obj',
-            values=['obj', 'mesh', 'meshb', 'ply', 'off','stl'],
+            name='outputMeshFileType',
+            label='File Type',
+            description='''Output Mesh Format (*.obj, *.gltf, *.fbx, *.stl).''',
+            value='gltf',
+            values=('gltf', 'obj', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],
-            group='',
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -43,7 +42,7 @@ class ConvertMesh(desc.CommandLineNode):
             name='output',
             label='Output Mesh',
             description='''Output mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).''',
-            value=desc.Node.internalFolder + 'mesh.' + '{outputMeshFormatValue}',
+            value=desc.Node.internalFolder + 'mesh.' + '{outputMeshFileTypeValue}',
             uid=[],
             ),
     ]

@@ -284,7 +284,7 @@ FocusScope {
                                 'surface.subdivisions' : Qt.binding(function(){ return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue;}),
                                 'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
                                 'sfmRequired': Qt.binding(function(){ return displayLensDistortionViewer.checked ? true : false;}),
-                                'msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
+                                'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                                 'canBeHovered': false
                                 })
                           } else {

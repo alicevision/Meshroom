@@ -142,6 +142,9 @@ class Attribute(BaseObject):
             self.requestGraphUpdate()
         self.valueChanged.emit()
 
+    def upgradeValue(self, exportedValue):
+        self._set_value(exportedValue)
+
     def resetValue(self):
         self._value = self.attributeDesc.value
 
@@ -327,6 +330,19 @@ class ListAttribute(Attribute):
             self.extend(newValue)
         self.requestGraphUpdate()
 
+    def upgradeValue(self, exportedValue):
+        values = exportedValue if isinstance(exportedValue, list) else [exportedValue]
+        attrs = []
+        for v in values:
+            a = attributeFactory(self.attributeDesc.elementDesc, None, self.isOutput, self.node, self)
+            a.upgradeValue(v)
+            attrs.append(a)
+        index = len(self._value)
+        self._value.insert(index, attrs)
+        self.valueChanged.emit()
+        self._applyExpr()
+        self.requestGraphUpdate()
+
     @raiseIfLink
     def append(self, value):
         self.extend([value])
@@ -440,8 +456,25 @@ class GroupAttribute(Attribute):
             for key, v in value.items():
                 self._value.get(key).value = v
         elif isinstance(value, (list, tuple)):
+            if len(self.desc._groupDesc) != len(value):
+                raise AttributeError("Incorrect number of values on GroupAttribute: {}".format(str(value)))
             for attrDesc, v in zip(self.desc._groupDesc, value):
                 self._value.get(attrDesc.name).value = v
+        else:
+            raise AttributeError("Failed to set on GroupAttribute: {}".format(str(value)))
+
+    def upgradeValue(self, exportedValue):
+        value = self.desc.validateValue(exportedValue)
+        if isinstance(value, dict):
+            # set individual child attribute values
+            for key, v in value.items():
+                if key in self._value.keys():
+                    self._value.get(key).upgradeValue(v)
+        elif isinstance(value, (list, tuple)):
+            if len(self.desc._groupDesc) != len(value):
+                raise AttributeError("Incorrect number of values on GroupAttribute: {}".format(str(value)))
+            for attrDesc, v in zip(self.desc._groupDesc, value):
+                self._value.get(attrDesc.name).upgradeValue(v)
         else:
             raise AttributeError("Failed to set on GroupAttribute: {}".format(str(value)))
 

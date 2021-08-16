@@ -23,6 +23,7 @@ except:
 
 from meshroom.core.submitter import BaseSubmitter
 from . import desc
+from . import pyCompatibility
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
@@ -94,15 +95,26 @@ def loadPlugins(folder, packageName, classType):
 
 class Version(object):
     """
-    Version provides convenient properties and methods to manipulate and compare version names.
+    Version provides convenient properties and methods to manipulate and compare versions.
     """
-    def __init__(self, versionName):
+
+    def __init__(self, *args):
         """
         Args:
-            versionName (str): the name of the version as a string
+            *args (convertible to int): version values
         """
-        self.name = versionName
-        self.components = Version.toComponents(self.name)
+        if len(args) == 0:
+            self.components = tuple()
+        elif len(args) == 1:
+            versionName = args[0]
+            if isinstance(versionName, pyCompatibility.basestring):
+                self.components = Version.toComponents(versionName)
+            elif isinstance(versionName, (list, tuple)):
+                self.components = tuple([int(v) for v in versionName])
+            else:
+                raise RuntimeError("Version: Unsupported input type.")
+        else:
+            self.components = tuple([int(v) for v in args])
 
     def __repr__(self):
         return self.name
@@ -135,8 +147,7 @@ class Version(object):
         Returns:
             bool: whether self is inferior to other
         """
-        # sequence comparison works natively for this use-case
-        return self.name < other.name
+        return self.components < other.components
 
     def __le__(self, other):
         """
@@ -148,7 +159,7 @@ class Version(object):
         Returns:
             bool: whether self is inferior or equal to other
         """
-        return self.name <= other.name
+        return self.components <= other.components
 
     @staticmethod
     def toComponents(versionName):
@@ -163,7 +174,12 @@ class Version(object):
         """
         if not versionName:
             return ()
-        return tuple(versionName.split("."))
+        return tuple([int(v) for v in versionName.split(".")])
+
+    @property
+    def name(self):
+        """ Version major number. """
+        return ".".join([str(v) for v in self.components])
 
     @property
     def major(self):
@@ -174,14 +190,14 @@ class Version(object):
     def minor(self):
         """ Version minor number. """
         if len(self) < 2:
-            return ""
+            return 0
         return self.components[1]
 
     @property
     def micro(self):
         """ Version micro number. """
         if len(self) < 3:
-            return ""
+            return 0
         return self.components[2]
 
 

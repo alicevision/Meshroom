@@ -41,12 +41,12 @@ class Attribute(BaseObject):
         """
         raise NotImplementedError("Attribute.validateValue is an abstract function that should be implemented in the derived class.")
 
-    def matchDescription(self, value, conform=False):
+    def matchDescription(self, value, strict=True):
         """ Returns whether the value perfectly match attribute's description.
 
         Args:
             value: the value
-            conform: try to adapt value to match the description
+            strict: strict test for the match (for instance, regarding a group with some parameter changes)
         """
         try:
             self.validateValue(value)
@@ -82,13 +82,13 @@ class ListAttribute(Attribute):
             raise ValueError('ListAttribute only supports list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
-    def matchDescription(self, value, conform=False):
+    def matchDescription(self, value, strict=True):
         """ Check that 'value' content matches ListAttribute's element description. """
-        if not super(ListAttribute, self).matchDescription(value, conform):
+        if not super(ListAttribute, self).matchDescription(value, strict):
             return False
         # list must be homogeneous: only test first element
         if value:
-            return self._elementDesc.matchDescription(value[0], conform)
+            return self._elementDesc.matchDescription(value[0], strict)
         return True
 
 
@@ -115,9 +115,13 @@ class GroupAttribute(Attribute):
             value = ast.literal_eval(value)
 
         if isinstance(value, dict):
-            invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
-            if invalidKeys:
-                raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
+            # invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
+            # if invalidKeys:
+            #     raise ValueError('Value contains key that does not match group description : {}'.format(invalidKeys))
+            if self._groupDesc:
+                commonKeys = set(value.keys()).intersection([attr.name for attr in self._groupDesc])
+                if not commonKeys:
+                    raise ValueError('Value contains no key that matches with the group description: {}'.format(commonKeys))
         elif isinstance(value, (list, tuple)):
             if len(value) != len(self._groupDesc):
                 raise ValueError('Value contains incoherent number of values: desc size: {}, value size: {}'.format(len(self._groupDesc), len(value)))
@@ -126,34 +130,29 @@ class GroupAttribute(Attribute):
 
         return value
 
-    def matchDescription(self, value, conform=False):
+    def matchDescription(self, value, strict=True):
         """
         Check that 'value' contains the exact same set of keys as GroupAttribute's group description
         and that every child value match corresponding child attribute description.
 
         Args:
             value: the value
-            conform: remove entries that don't exist in the description.
+            strict: strict test for the match (for instance, regarding a group with some parameter changes)
         """
         if not super(GroupAttribute, self).matchDescription(value):
             return False
         attrMap = {attr.name: attr for attr in self._groupDesc}
 
-        if conform:
-            # remove invalid keys
-            invalidKeys = set(value.keys()).difference([attr.name for attr in self._groupDesc])
-            for k in invalidKeys:
-                del self._groupDesc[k]
-        else:
-            # must have the exact same child attributes
-            if sorted(value.keys()) != sorted(attrMap.keys()):
-                return False
-
+        matchCount = 0
         for k, v in value.items():
             # each child value must match corresponding child attribute description
-            if not attrMap[k].matchDescription(v, conform):
-                return False
-        return True
+            if k in attrMap and attrMap[k].matchDescription(v, strict):
+                matchCount += 1
+
+        if strict:
+            return matchCount == len(value.items()) == len(self._groupDesc)
+
+        return matchCount > 0
 
     def retrieveChildrenUids(self):
         allUids = []
@@ -426,6 +425,9 @@ class Node(object):
 
     def __init__(self):
         pass
+
+    def upgradeAttributeValues(self, attrValues, fromVersion):
+        return attrValues
 
     @classmethod
     def update(cls, node):

@@ -19,6 +19,17 @@ FocusScope {
     property alias useLensDistortionViewer: displayLensDistortionViewer.checked
     property alias usePanoramaViewer: displayPanoramaViewer.checked
 
+    property var activeNodeFisheye: _reconstruction.activeNodes.get("PanoramaInit").node
+    property bool isFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
+    property bool useAutoFisheye: activeNodeFisheye ? activeNodeFisheye.attribute("estimateFisheyeCircle").value : true
+    property real userFisheyeRadius: activeNodeFisheye ? activeNodeFisheye.attribute("fisheyeRadius").value : 0
+    property variant fisheyeAutoParams: activeNodeFisheye ? _reconstruction.getAutoFisheyeCircle(activeNodeFisheye) : null
+
+    property real fisheyeCircleX: useAutoFisheye ? (fisheyeAutoParams ? (fisheyeAutoParams.x) : 0) : activeNodeFisheye.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
+    property real fisheyeCircleY: useAutoFisheye ? (fisheyeAutoParams ? (fisheyeAutoParams.y) : 0) : activeNodeFisheye.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
+
+    property vector3d fisheyeCircleParametersVec: Qt.vector3d(fisheyeCircleX, fisheyeCircleY, userFisheyeRadius)
+
     QtObject {
         id: m
         property variant imgMetadata: {
@@ -306,7 +317,9 @@ FocusScope {
                         if(active) {
                             setSource("PanoramaViewer.qml", {
                                 'subdivisionsPano': Qt.binding(function(){ return panoramaViewerToolbar.subdivisionsValue;}),
-                                'downscale': Qt.binding(function(){return panoramaViewerToolbar.downscaleValue;}),
+                                'isFisheyePano': Qt.binding(function(){ return root.isFisheye;}),
+                                'fisheyeCircleParametersPano' : Qt.binding(function(){ return root.fisheyeCircleParametersVec;}),
+                                'downscale': Qt.binding(function(){ return panoramaViewerToolbar.downscaleValue;}),
                                 'isEditable': Qt.binding(function(){ return panoramaViewerToolbar.enableEdit;}),
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
                                 'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;}),

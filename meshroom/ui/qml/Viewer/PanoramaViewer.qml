@@ -40,6 +40,10 @@ AliceVision.PanoramaViewer {
 
     property int mouseMultiplier: 1
 
+    property bool isFisheyePano: false
+
+    property vector3d fisheyeCircleParametersPano
+
     onIsHighlightableChanged:{
         for (var i = 0; i < repeater.model; i++) {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
@@ -246,6 +250,8 @@ AliceVision.PanoramaViewer {
                         'surface.viewerType': AliceVision.Surface.EViewerType.PANORAMA,
                         'viewerTypeString': 'panorama',
                         'surface.subdivisions': Qt.binding(function() { return subdivisionsPano; }),
+                        'surface.isFisheye' : Qt.binding(function(){ return isFisheyePano; }),
+                        'fisheyeCircleParameters': Qt.binding(function(){ return fisheyeCircleParametersPano; }),
                         'surface.pitch': Qt.binding(function() { return root.pitch; }),
                         'surface.yaw': Qt.binding(function() { return root.yaw; }),
                         'surface.roll': Qt.binding(function() { return root.roll; }),

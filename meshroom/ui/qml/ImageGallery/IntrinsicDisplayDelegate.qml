@@ -37,7 +37,7 @@ RowLayout {
             color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
             border.width: 2
             border.color: Qt.darker(palette.window, 1.2)
-
+clip: true
             Loader {
                 id: loaderComponent
                 sourceComponent: {

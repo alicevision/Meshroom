@@ -670,7 +670,12 @@ class BaseNode(BaseObject):
             if not isinstance(attr.attributeDesc, desc.File):
                 continue
 
-            defaultValue = attr.defaultValue()
+            try:
+                defaultValue = attr.defaultValue()
+            except AttributeError as e:
+                # If we load an old scene, the lambda associated to the 'value' could try to access other params that could not exist yet
+                logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
+
             try:
                 attr.value = defaultValue.format(**self._cmdVars)
                 attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)

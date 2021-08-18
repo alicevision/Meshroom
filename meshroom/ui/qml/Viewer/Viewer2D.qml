@@ -907,6 +907,9 @@ FocusScope {
                                 if(displayLensDistortionViewer.checked && checked){
                                     displayLensDistortionViewer.checked = false;
                                 }
+                                if(displayFisheyeCircleLoader.checked && checked){
+                                    displayFisheyeCircleLoader.checked = false;
+                                }
                             }
                             onEnabledChanged : {
                                 if(!enabled){
@@ -937,7 +940,7 @@ FocusScope {
                             Layout.minimumWidth: 0
                             checkable: true
                             checked: false
-                            enabled: activeNode && activeNode.attribute("useFisheye").value
+                            enabled: activeNode && activeNode.attribute("useFisheye").value && !displayPanoramaViewer.checked
                             visible: activeNode
                         }
                         MaterialToolButton {

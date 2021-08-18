@@ -334,6 +334,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             ),
         desc.File(
             name='outputMaterial',
+            enabled= lambda node: node.outputMeshFileType.value == "obj",
             label='Material',
             description='Output Material file.',
             value=desc.Node.internalFolder + 'texturedMesh.mtl',

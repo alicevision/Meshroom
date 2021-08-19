@@ -330,10 +330,15 @@ class ListAttribute(Attribute):
             self.extend(newValue)
         self.requestGraphUpdate()
 
-    def upgradeValue(self, exportedValue):
-        values = exportedValue if isinstance(exportedValue, list) else [exportedValue]
+    def upgradeValue(self, exportedValues):
+        if not isinstance(exportedValues, list):
+            if isinstance(exportedValues, ListAttribute) or Attribute.isLinkExpression(exportedValues):
+                self._set_value(exportedValues)
+                return
+            raise RuntimeError("ListAttribute.upgradeValue: the given value is of type " + str(type(exportedValues)) + " but a 'list' is expected.")
+
         attrs = []
-        for v in values:
+        for v in exportedValues:
             a = attributeFactory(self.attributeDesc.elementDesc, None, self.isOutput, self.node, self)
             a.upgradeValue(v)
             attrs.append(a)

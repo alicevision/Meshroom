@@ -64,32 +64,42 @@ Panel {
     }
 
     function parseIntr(){
-        parsedIntrinsic = {}
-
-        var currentCameraInitIntrinsics =  m.intrinsics
+        parsedIntrinsic = []
+        if(!m.intrinsics)
+        {
+            return
+        }
 
         //Loop through all intrinsics
-        for(var i = 0; i < currentCameraInitIntrinsics.count; i++){
-            parsedIntrinsic[i] = {}
+        for(var i = 0; i < m.intrinsics.count; i++){
+            var intrinsic = {}
 
             //Loop through all attributes
-            for(var j=0; j < currentCameraInitIntrinsics.at(i).value.count; j++){
-                var currentAttribute = currentCameraInitIntrinsics.at(i).value.at(j)
-                //parsedIntrinsic[i][currentAttribute.label] = {}
+            for(var j=0; j < m.intrinsics.at(i).value.count; j++){
+                var currentAttribute = m.intrinsics.at(i).value.at(j)
                 if(currentAttribute.type === "GroupAttribute"){
-                    //parsedIntrinsic[i][currentAttribute.label] = currentAttribute
                     for(var k=0; k < currentAttribute.value.count; k++){
-                        parsedIntrinsic[i][currentAttribute.label + " " + currentAttribute.value.at(k).label] = currentAttribute.value.at(k)
-                        //console.warn(currentAttribute.label + " " + currentAttribute.value.at(k).label)
+                        intrinsic[currentAttribute.name + "." + currentAttribute.value.at(k).name] = currentAttribute.value.at(k)
                     }
                 }
                 else if(currentAttribute.type === "ListAttribute"){
-
+                    // not needed for now
                 }
                 else{
-                    parsedIntrinsic[i][currentAttribute.label] = currentAttribute
+                    intrinsic[currentAttribute.name] = currentAttribute
                 }
             }
+            // Table Model needs to contain an entry for each column.
+            // In case of old file formats, some intrinsic keys that we display may not exist in the model.
+            // So, here we create an empty entry to enforce that the key exists in the model.
+            for(var n = 0; n < intrinsicModel.columnNames.length; n++)
+            {
+                var name = intrinsicModel.columnNames[n]
+                if(!(name in intrinsic)) {
+                    intrinsic[name] = {}
+                }
+            }
+            parsedIntrinsic[i] = intrinsic
         }
         populate_model()
     }
@@ -349,8 +359,7 @@ Panel {
 
                     //Provide width for column
                     //Note no size provided for the last column (bool comp) so it uses its automated size
-                    property var columnWidths: [90, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]
-                    columnWidthProvider: function (column) { return columnWidths[column] }
+                    columnWidthProvider: function (column) { return intrinsicModel.columnWidths[column] }
 
                     model: intrinsicModel
 
@@ -362,20 +371,37 @@ Panel {
 
                 TableModel{
                     id : intrinsicModel
+                    // Hardcoded default width per column
+                    property var columnWidths: [105, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]
+                    property var columnNames: [
+                        "intrinsicId",
+                        "pxInitialFocalLength",
+                        "pxFocalLength.x",
+                        "pxFocalLength.y",
+                        "type",
+                        "width",
+                        "height",
+                        "sensorWidth",
+                        "sensorHeight",
+                        "serialNumber",
+                        "principalPoint.x",
+                        "principalPoint.y",
+                        "locked"]
 
-                    TableModelColumn { display: "Id" }
-                    TableModelColumn { display: "Initial Focal Length" }
-                    TableModelColumn { display: "Focal Length x" }
-                    TableModelColumn { display: "Focal Length y" }
-                    TableModelColumn { display: "Camera Type" }
-                    TableModelColumn { display: "Width" }
-                    TableModelColumn { display: "Height" }
-                    TableModelColumn { display: "Sensor Width" }
-                    TableModelColumn { display: "Sensor Height" }
-                    TableModelColumn { display: "Serial Number" }
-                    TableModelColumn { display: "Principal Point x" }
-                    TableModelColumn { display: "Principal Point y" }
-                    TableModelColumn { display: "Locked" }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[0]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[1]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[2]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[3]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[4]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[5]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[6]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[7]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[8]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[9]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[10]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[11]]} }
+                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[12]]} }
+                    //https://doc.qt.io/qt-5/qml-qt-labs-qmlmodels-tablemodel.html#appendRow-method
                 }
 
                 //CODE FOR HEADERS

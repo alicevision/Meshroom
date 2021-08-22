@@ -13,7 +13,11 @@ RowLayout {
     property int rowIndex: model.row
     property int columnIndex: model.column
     property bool readOnly: false
-    property string toolTipText: attribute ? attribute.fullLabel : ""
+    property string toolTipText: {
+        if(!attribute || Object.keys(attribute).length === 0)
+            return ""
+        return attribute.fullLabel
+    }
 
     Pane {
         Layout.minimumWidth: loaderComponent.width
@@ -37,10 +41,13 @@ RowLayout {
             color: rowIndex % 2 ? palette.window : Qt.darker(palette.window, 1.1)
             border.width: 2
             border.color: Qt.darker(palette.window, 1.2)
-clip: true
+            clip: true
             Loader {
                 id: loaderComponent
+                active: !!model.display // convert to bool with "!!"
                 sourceComponent: {
+                    if(!model.display)
+                        return undefined
                     switch(model.display.type)
                     {
                        case "ChoiceParam": return choice_component
@@ -48,7 +55,7 @@ clip: true
                        case "FloatParam": return float_component
                        case "BoolParam": return bool_component
                        case "StringParam": return textField_component
-                       default: return textField_component
+                       default: return undefined
                     }
                 }
             }
@@ -59,7 +66,7 @@ clip: true
         id: textField_component
         TextInput{
             text: model.display.value
-            width: intrinsicTable.columnWidths[columnIndex]
+            width: intrinsicModel.columnWidths[columnIndex]
             horizontalAlignment: TextInput.AlignRight
             color: 'white'
 
@@ -85,7 +92,7 @@ clip: true
 
         TextInput{
             text: model.display.value
-            width: intrinsicTable.columnWidths[columnIndex]
+            width: intrinsicModel.columnWidths[columnIndex]
             horizontalAlignment: TextInput.AlignRight
             color: 'white'
 
@@ -117,7 +124,7 @@ clip: true
         ComboBox {
             id: combo
             model: attribute.desc.values
-            width: intrinsicTable.columnWidths[columnIndex]
+            width: intrinsicModel.columnWidths[columnIndex]
 
             flat : true
 
@@ -152,7 +159,7 @@ clip: true
             property string displayValue: String(formattedValue)
 
             text: displayValue
-            width: intrinsicTable.columnWidths[columnIndex]
+            width: intrinsicModel.columnWidths[columnIndex]
             horizontalAlignment: TextInput.AlignRight
 
             color: 'white'

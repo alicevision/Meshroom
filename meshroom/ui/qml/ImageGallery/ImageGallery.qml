@@ -546,7 +546,7 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Estimated Cameras"
             iconText: MaterialIcons.videocam
-            label: _reconstruction ? _reconstruction.nbCameras.toString() : "0"
+            label: _reconstruction.nbCameras ? _reconstruction.nbCameras.toString() : "-"
             padding: 3
 
             enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
@@ -576,7 +576,7 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Non Estimated Cameras"
             iconText: MaterialIcons.videocam_off
-            label: _reconstruction ? ((m.viewpoints ? m.viewpoints.count : 0) - _reconstruction.nbCameras.toString()).toString() : "0"
+            label: _reconstruction.nbCameras ? ((m.viewpoints ? m.viewpoints.count : 0) - _reconstruction.nbCameras.toString()).toString() : "-"
             padding: 3
 
             enabled: _reconstruction.cameraInit && _reconstruction.nbCameras

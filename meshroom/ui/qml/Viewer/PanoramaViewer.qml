@@ -44,6 +44,8 @@ AliceVision.PanoramaViewer {
 
     property vector3d fisheyeCircleParametersPano
 
+    property var idSelected : -1
+
     onIsHighlightableChanged:{
         for (var i = 0; i < repeater.model; i++) {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
@@ -117,9 +119,13 @@ AliceVision.PanoramaViewer {
                 }
                 onPositionChanged: {
                     // Send Mouse Coordinates to Float Images Viewers
+                    idSelected = -1;
                     for (var i = 0; i < repeater.model && isHighlightable; i++) {
                         var highlight = repeater.itemAt(i).item.getMouseCoordinates(mouse.x, mouse.y);
                         repeater.itemAt(i).z = highlight ? 2 : 0
+                        if(highlight){
+                            idSelected = root.msfmData.viewsIds[i]
+                        }
                     }
 
                     // Rotate Panorama
@@ -157,6 +163,10 @@ AliceVision.PanoramaViewer {
                     isRotating = false;
                     lastX = 0
                     lastY = 0
+
+                    if(!mouse.wasHeld && idSelected != -1){
+                        _reconstruction.selectedViewId = idSelected
+                    }
                 }
             }
 

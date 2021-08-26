@@ -296,7 +296,8 @@ FocusScope {
                                 'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
                                 'sfmRequired': Qt.binding(function(){ return displayLensDistortionViewer.checked ? true : false;}),
                                 'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
-                                'canBeHovered': false
+                                'canBeHovered': false,
+                                'idView': Qt.binding(function() { return _reconstruction.selectedViewId; })
                                 })
                           } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -848,7 +849,7 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayLensDistortionViewer
-                            property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfm').node : null
+                            property var activeNode: root.aliceVisionPluginAvailable ? _reconstruction.activeNodes.get('sfmData').node : null
                             property bool isComputed: {
                                 if(!activeNode)
                                     return false;

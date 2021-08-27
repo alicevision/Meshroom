@@ -45,7 +45,7 @@ AliceVision.PanoramaViewer {
     property var idSelected : -1
 
     onIsHighlightableChanged:{
-        for (var i = 0; i < repeater.model; i++) {
+        for (var i = 0; i < repeater.model; ++i) {
             repeater.itemAt(i).item.onChangedHighlightState(isHighlightable);
         }
     }
@@ -70,6 +70,7 @@ AliceVision.PanoramaViewer {
     property int pitchNode: activeNode.attribute("manualTransform.manualRotation.x").value;
     property int rollNode: activeNode.attribute("manualTransform.manualRotation.z").value;
 
+    //Convert angle functions
     function toDegrees(radians){
         return radians * (180/Math.PI)
     }
@@ -121,7 +122,7 @@ AliceVision.PanoramaViewer {
                 onPositionChanged: {
                     // Send Mouse Coordinates to Float Images Viewers
                     idSelected = -1;
-                    for (var i = 0; i < repeater.model && isHighlightable; i++) {
+                    for (var i = 0; i < repeater.model && isHighlightable; ++i) {
                         var highlight = repeater.itemAt(i).item.getMouseCoordinates(mouse.x, mouse.y);
                         repeater.itemAt(i).z = highlight ? 2 : 0
                         if(highlight){
@@ -145,7 +146,6 @@ AliceVision.PanoramaViewer {
                             root.pitch = limitPitch(root.pitch + toDegrees(-(yoffset / height) * mouseMultiplier))
                         }
 
-                        // Update SfmTransform Node attribute   TODO Undo Group Python
                         _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.x"), Math.round(root.pitch));
                         _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.y"), Math.round(root.yaw));
                         _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.z"), Math.round(root.roll));
@@ -168,7 +168,7 @@ AliceVision.PanoramaViewer {
                     lastX = 0
                     lastY = 0
 
-                    //Select the image if clicked
+                    //Select the image in the image gallery if clicked
                     if(xStart == mouse.x && yStart == mouse.y && idSelected != -1){
                         _reconstruction.selectedViewId = idSelected
                     }
@@ -189,13 +189,13 @@ AliceVision.PanoramaViewer {
                     ctx.shadowBlur = 0
                     ctx.strokeStyle = "grey"
                     var nrows = height/wgrid;
-                    for(var i=0; i < nrows+1; i++){
+                    for(var i=0; i < nrows+1; ++i){
                         ctx.moveTo(0, wgrid*i);
                         ctx.lineTo(width, wgrid*i);
                     }
 
                     var ncols = width/wgrid
-                    for(var j=0; j < ncols+1; j++){
+                    for(var j=0; j < ncols+1; ++j){
                         ctx.moveTo(wgrid*j, 0);
                         ctx.lineTo(wgrid*j, height);
                     }

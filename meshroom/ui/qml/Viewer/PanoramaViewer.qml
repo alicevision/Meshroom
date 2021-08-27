@@ -56,6 +56,9 @@ AliceVision.PanoramaViewer {
     property var lastX : 0
     property var lastY: 0
 
+    property var xStart : 0
+    property var yStart : 0
+
     property double yaw: 0;
     property double pitch: 0;
     property double roll: 0;
@@ -154,6 +157,9 @@ AliceVision.PanoramaViewer {
                     isRotating = true;
                     lastX = mouse.x;
                     lastY = mouse.y;
+
+                    xStart = mouse.x;
+                    yStart = mouse.y;
                 }
 
                 onReleased: {
@@ -162,9 +168,12 @@ AliceVision.PanoramaViewer {
                     lastX = 0
                     lastY = 0
 
-                    if(!mouse.wasHeld && idSelected != -1){
+                    //Select the image if clicked
+                    if(xStart == mouse.x && yStart == mouse.y && idSelected != -1){
                         _reconstruction.selectedViewId = idSelected
                     }
+
+
                 }
             }
 

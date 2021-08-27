@@ -593,7 +593,9 @@ FocusScope {
                             if(! root.aliceVisionPluginAvailable){
                                 return null
                             }
-                            var sfmNode = _reconstruction.activeNodes.get('sfm').node
+                            // For lens distortion viewer: use all nodes creating a sfmData file
+                            var nodeType = displayLensDistortionViewer.checked ? 'sfmData' : 'sfm'
+                            var sfmNode = _reconstruction.activeNodes.get(nodeType).node
                             if(sfmNode === null){
                                 return null
                             }
@@ -842,17 +844,21 @@ FocusScope {
                                 if(!activeNode)
                                     return false;
                                 if(activeNode.isComputed)
+                                {
+                                    console.warn("displayLensDistortionViewer.isComputed: 1")
                                     return true;
+                                }
                                 var inputAttr = activeNode.attribute("input");
                                 if(!inputAttr)
                                     return false;
                                 var inputAttrLink = inputAttr.rootLinkParam;
                                 if(!inputAttrLink)
                                     return false;
+                                console.warn("displayLensDistortionViewer.isComputed (link attr): " + inputAttrLink.node.isComputed)
                                 return inputAttrLink.node.isComputed;
                             }
 
-                            ToolTip.text: "Lens Distortion Viewer"
+                            ToolTip.text: "Lens Distortion Viewer" + (isComputed ? (": " + activeNode.label) : "")
                             text: MaterialIcons.panorama_horizontal
                             font.pointSize: 16
                             padding: 0

@@ -71,14 +71,14 @@ Panel {
         }
 
         //Loop through all intrinsics
-        for(var i = 0; i < m.intrinsics.count; i++){
+        for(var i = 0; i < m.intrinsics.count; ++i){
             var intrinsic = {}
 
             //Loop through all attributes
-            for(var j=0; j < m.intrinsics.at(i).value.count; j++){
+            for(var j=0; j < m.intrinsics.at(i).value.count; ++j){
                 var currentAttribute = m.intrinsics.at(i).value.at(j)
                 if(currentAttribute.type === "GroupAttribute"){
-                    for(var k=0; k < currentAttribute.value.count; k++){
+                    for(var k=0; k < currentAttribute.value.count; ++k){
                         intrinsic[currentAttribute.name + "." + currentAttribute.value.at(k).name] = currentAttribute.value.at(k)
                     }
                 }
@@ -92,7 +92,7 @@ Panel {
             // Table Model needs to contain an entry for each column.
             // In case of old file formats, some intrinsic keys that we display may not exist in the model.
             // So, here we create an empty entry to enforce that the key exists in the model.
-            for(var n = 0; n < intrinsicModel.columnNames.length; n++)
+            for(var n = 0; n < intrinsicModel.columnNames.length; ++n)
             {
                 var name = intrinsicModel.columnNames[n]
                 if(!(name in intrinsic)) {

@@ -20,15 +20,7 @@ FocusScope {
     property alias usePanoramaViewer: displayPanoramaViewer.checked
 
     property var activeNodeFisheye: _reconstruction.activeNodes.get("PanoramaInit").node
-    property bool isFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
-    property bool useAutoFisheye: activeNodeFisheye ? activeNodeFisheye.attribute("estimateFisheyeCircle").value : true
-    property real userFisheyeRadius: activeNodeFisheye ? activeNodeFisheye.attribute("fisheyeRadius").value : 0
-    property variant fisheyeAutoParams: activeNodeFisheye ? _reconstruction.getAutoFisheyeCircle(activeNodeFisheye) : null
-
-    property real fisheyeCircleX: useAutoFisheye ? (fisheyeAutoParams ? (fisheyeAutoParams.x) : 0) : activeNodeFisheye.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
-    property real fisheyeCircleY: useAutoFisheye ? (fisheyeAutoParams ? (fisheyeAutoParams.y) : 0) : activeNodeFisheye.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
-
-    property vector3d fisheyeCircleParametersVec: Qt.vector3d(fisheyeCircleX, fisheyeCircleY, userFisheyeRadius)
+    property bool cropFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
 
     QtObject {
         id: m
@@ -297,7 +289,8 @@ FocusScope {
                                 'sfmRequired': Qt.binding(function(){ return displayLensDistortionViewer.checked ? true : false;}),
                                 'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                                 'canBeHovered': false,
-                                'idView': Qt.binding(function() { return _reconstruction.selectedViewId; })
+                                'idView': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                'cropFisheye': false
                                 })
                           } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -318,8 +311,7 @@ FocusScope {
                         if(active) {
                             setSource("PanoramaViewer.qml", {
                                 'subdivisionsPano': Qt.binding(function(){ return panoramaViewerToolbar.subdivisionsValue;}),
-                                'isFisheyePano': Qt.binding(function(){ return root.isFisheye;}),
-                                'fisheyeCircleParametersPano' : Qt.binding(function(){ return root.fisheyeCircleParametersVec;}),
+                                'cropFisheyePano': Qt.binding(function(){ return root.cropFisheye;}),
                                 'downscale': Qt.binding(function(){ return panoramaViewerToolbar.downscaleValue;}),
                                 'isEditable': Qt.binding(function(){ return panoramaViewerToolbar.enableEdit;}),
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),

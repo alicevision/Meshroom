@@ -73,7 +73,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name='outputMeshFileType',
             label='Mesh File Type',
             description='File Type',
-            value='gltf',
+            value='obj',
             values=('obj', 'gltf', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],

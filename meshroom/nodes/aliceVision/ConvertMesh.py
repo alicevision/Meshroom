@@ -21,7 +21,7 @@ class ConvertMesh(desc.CommandLineNode):
             name='outputMeshFileType',
             label='File Type',
             description='''Output Mesh Format (*.obj, *.gltf, *.fbx, *.stl).''',
-            value='gltf',
+            value='obj',
             values=('gltf', 'obj', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],

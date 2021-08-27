@@ -29,7 +29,7 @@ Decimate triangles based on image masks.
             name='outputMeshFileType',
             label='Output File Type',
             description='File Type',
-            value='gltf',
+            value='obj',
             values=('obj', 'gltf', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],

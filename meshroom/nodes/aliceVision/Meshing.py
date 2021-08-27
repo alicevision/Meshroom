@@ -40,7 +40,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             name='outputMeshFileType',
             label='File Type',
             description='Output Mesh File Type',
-            value='gltf',
+            value='obj',
             values=('gltf', 'obj', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],

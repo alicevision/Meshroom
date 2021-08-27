@@ -23,7 +23,7 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             name='outputMeshFileType',
             label='File Type',
             description='Output Mesh File Type',
-            value='gltf',
+            value='obj',
             values=('gltf', 'obj', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],

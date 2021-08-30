@@ -1,6 +1,7 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
+import QtQuick.Dialogs 1.1
 import MaterialIcons 2.2
 import QtQml.Models 2.2
 
@@ -28,12 +29,25 @@ Panel {
 
     signal removeImageRequest(var attribute)
     signal filesDropped(var drop, var augmentSfm)
+    signal filesAdded(var fileUrls, var augmentSfm)
 
     title: "Images"
     implicitWidth: (root.defaultCellSize + 2) * 2
 
     function changeCurrentIndex(newIndex) {
         _reconstruction.cameraInitIndex = newIndex
+    }
+
+    FileDialog {
+        id: addFileDialog
+        title: "Add Files"
+        nameFilters: ["Images (*.jpg *.jpeg *.tif *.tiff *.png *.exr *.rw2 *.cr2 *.nef *.arw)"]
+        selectMultiple: true
+        onAccepted: {
+            root.filesAdded(fileUrls, false)
+            closed(Platform.Dialog.Accepted)
+        }
+        onRejected: closed(Platform.Dialog.Rejected)
     }
 
     QtObject {
@@ -241,9 +255,19 @@ Panel {
                     text: MaterialIcons.photo_library
                     font.pointSize: 24
                     font.family: MaterialIcons.fontFamily
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { addFileDialog.open() }
+                    }
                 }
                 Label {
                     text: "Drop Image Files / Folders"
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { addFileDialog.open() }
+                    }
                 }
             }
 
@@ -297,7 +321,7 @@ Panel {
                         text: "Augment Reconstruction"
                         font.bold: true
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        visible: m.viewpoints ? m.viewpoints.count > 0 : false
+                        visible: _reconstruction.sfm && _reconstruction.viewpoints ? _reconstruction.viewpoints.count >= 2 : false
                         background: Rectangle {
                             color: parent.hovered ? palette.highlight : palette.window
                             opacity: 0.8

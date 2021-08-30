@@ -70,6 +70,7 @@ Item {
                 currentIndex: reconstruction.cameraInitIndex
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
+                onFilesAdded: reconstruction.handleFilesUrls(fileUrls, augmentSfm ? null : cameraInit)
             }
             LiveSfmView {
                 visible: settings_UILayout.showLiveReconstruction

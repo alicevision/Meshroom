@@ -58,9 +58,9 @@ The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 ## Get the project
 
-If you don't want to built it yourself, you can directly download the released version in [releases](https://github.com/alicevision/meshroom/releases).  
+You can [download pre-compiled binaries for the latest release](https://github.com/alicevision/meshroom/releases).  
 
-[**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
+If you want to build it yourself, see [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
 
 Get the source code and install runtime requirements:
 ```bash

@@ -71,24 +71,29 @@ class Attribute(BaseObject):
     def root(self):
         return self._root() if self._root else None
 
-    def absoluteName(self):
-        return '{}.{}.{}'.format(self.node.graph.name, self.node.name, self._name)
-
-    def getFullName(self):
-        """ Name inside the Graph: nodeName.name """
-        if isinstance(self.root, ListAttribute):
-            return '{}[{}]'.format(self.root.getFullName(), self.root.index(self))
-        elif isinstance(self.root, GroupAttribute):
-            return '{}.{}'.format(self.root.getFullName(), self._name)
-        return '{}.{}'.format(self.node.name, self._name)
-
-    def asLinkExpr(self):
-        """ Return link expression for this Attribute """
-        return "{" + self.getFullName() + "}"
-
     def getName(self):
         """ Attribute name """
         return self._name
+
+    def getFullName(self):
+        """ Name inside the Graph: groupName.name """
+        if isinstance(self.root, ListAttribute):
+            return '{}[{}]'.format(self.root.getFullName(), self.root.index(self))
+        elif isinstance(self.root, GroupAttribute):
+            return '{}.{}'.format(self.root.getFullName(), self.getName())
+        return self.getName()
+
+    def getFullNameToNode(self):
+        """ Name inside the Graph: nodeName.groupName.name """
+        return '{}.{}'.format(self.node.name, self.getFullName())
+
+    def getFullNameToGraph(self):
+        """ Name inside the Graph: graphName.nodeName.groupName.name """
+        return '{}.{}'.format(self.node.graph.name, self.getFullNameToNode())
+
+    def asLinkExpr(self):
+        """ Return link expression for this Attribute """
+        return "{" + self.getFullNameToNode() + "}"
 
     def getType(self):
         return self.attributeDesc.__class__.__name__
@@ -101,6 +106,22 @@ class Attribute(BaseObject):
 
     def getLabel(self):
         return self._label
+
+    def getFullLabel(self):
+        """ Full Label includes the name of all parent groups, e.g. 'groupLabel subGroupLabel Label' """
+        if isinstance(self.root, ListAttribute):
+            return self.root.getFullLabel()
+        elif isinstance(self.root, GroupAttribute):
+            return '{} {}'.format(self.root.getFullLabel(), self.getLabel())
+        return self.getLabel()
+
+    def getFullLabelToNode(self):
+        """ Label inside the Graph: nodeLabel groupLabel Label """
+        return '{} {}'.format(self.node.label, self.getFullLabel())
+
+    def getFullLabelToGraph(self):
+        """ Label inside the Graph: graphName nodeLabel groupLabel Label """
+        return '{} {}'.format(self.node.graph.name, self.getFullLabelToNode())
 
     def getEnabled(self):
         if isinstance(self.desc.enabled, types.FunctionType):
@@ -265,7 +286,12 @@ class Attribute(BaseObject):
 
     name = Property(str, getName, constant=True)
     fullName = Property(str, getFullName, constant=True)
+    fullNameToNode = Property(str, getFullNameToNode, constant=True)
+    fullNameToGraph = Property(str, getFullNameToGraph, constant=True)
     label = Property(str, getLabel, constant=True)
+    fullLabel = Property(str, getFullLabel, constant=True)
+    fullLabelToNode = Property(str, getFullLabelToNode, constant=True)
+    fullLabelToGraph = Property(str, getFullLabelToGraph, constant=True)
     type = Property(str, getType, constant=True)
     baseType = Property(str, getType, constant=True)
     isReadOnly = Property(bool, _isReadOnly, constant=True)

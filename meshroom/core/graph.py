@@ -415,7 +415,7 @@ class Graph(BaseObject):
     def removeNode(self, nodeName):
         """
         Remove the node identified by 'nodeName' from the graph
-        and return in and out edges removed by this operation in two dicts {dstAttr.getFullName(), srcAttr.getFullName()}
+        and return in and out edges removed by this operation in two dicts {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
         """
         node = self.node(nodeName)
         inEdges = {}
@@ -425,10 +425,10 @@ class Graph(BaseObject):
         with GraphModification(self):
             for edge in self.nodeOutEdges(node):
                 self.removeEdge(edge.dst)
-                outEdges[edge.dst.getFullName()] = edge.src.getFullName()
+                outEdges[edge.dst.getFullNameToNode()] = edge.src.getFullNameToNode()
             for edge in self.nodeInEdges(node):
                 self.removeEdge(edge.dst)
-                inEdges[edge.dst.getFullName()] = edge.src.getFullName()
+                inEdges[edge.dst.getFullNameToNode()] = edge.src.getFullNameToNode()
 
             node.alive = False
             self._nodes.remove(node)
@@ -583,7 +583,7 @@ class Graph(BaseObject):
         if srcAttr.node.graph != self or dstAttr.node.graph != self:
             raise RuntimeError('The attributes of the edge should be part of a common graph.')
         if dstAttr in self.edges.keys():
-            raise RuntimeError('Destination attribute "{}" is already connected.'.format(dstAttr.getFullName()))
+            raise RuntimeError('Destination attribute "{}" is already connected.'.format(dstAttr.getFullNameToNode()))
         edge = Edge(srcAttr, dstAttr)
         self.edges.add(edge)
         self.markNodesDirty(dstAttr.node)
@@ -600,7 +600,7 @@ class Graph(BaseObject):
     @changeTopology
     def removeEdge(self, dstAttr):
         if dstAttr not in self.edges.keys():
-            raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.getFullName()))
+            raise RuntimeError('Attribute "{}" is not connected'.format(dstAttr.getFullNameToNode()))
         edge = self.edges.pop(dstAttr)
         self.markNodesDirty(dstAttr.node)
         dstAttr.valueChanged.emit()
@@ -1202,4 +1202,3 @@ def loadGraph(filepath):
     graph.load(filepath)
     graph.update()
     return graph
-

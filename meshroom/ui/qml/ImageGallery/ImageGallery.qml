@@ -152,7 +152,7 @@ Panel {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            interactive: !intrinsicsFilterButton.checked
+            visible: !intrinsicsFilterButton.checked
 
             ScrollBar.vertical: ScrollBar {
                 minimumSize: 0.05
@@ -335,85 +335,6 @@ Panel {
                 }
             }
 
-            RowLayout{
-                anchors.fill: parent
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                TapHandler {
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    onTapped: {
-                        intrinsicTable.focus = false
-                    }
-                }
-
-                TableView{
-                    id : intrinsicTable
-                    visible: intrinsicsFilterButton.checked
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
-
-                    interactive : !focus
-
-                    boundsMovement : Flickable.StopAtBounds
-
-                    //Provide width for column
-                    //Note no size provided for the last column (bool comp) so it uses its automated size
-                    columnWidthProvider: function (column) { return intrinsicModel.columnWidths[column] }
-
-                    model: intrinsicModel
-
-                    delegate: IntrinsicDisplayDelegate{}
-
-                    ScrollBar.horizontal: ScrollBar { id: sb }
-                    ScrollBar.vertical : ScrollBar { id: sbv }
-                }
-
-                TableModel{
-                    id : intrinsicModel
-                    // Hardcoded default width per column
-                    property var columnWidths: [105, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]
-                    property var columnNames: [
-                        "intrinsicId",
-                        "pxInitialFocalLength",
-                        "pxFocalLength.x",
-                        "pxFocalLength.y",
-                        "type",
-                        "width",
-                        "height",
-                        "sensorWidth",
-                        "sensorHeight",
-                        "serialNumber",
-                        "principalPoint.x",
-                        "principalPoint.y",
-                        "locked"]
-
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[0]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[1]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[2]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[3]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[4]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[5]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[6]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[7]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[8]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[9]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[10]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[11]]} }
-                    TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[12]]} }
-                    //https://doc.qt.io/qt-5/qml-qt-labs-qmlmodels-tablemodel.html#appendRow-method
-                }
-
-                //CODE FOR HEADERS
-                //UNCOMMENT WHEN COMPATIBLE WITH THE RIGHT QT VERSION
-
-//                HorizontalHeaderView {
-//                    id: horizontalHeader
-//                    syncView: tableView
-//                    anchors.left: tableView.left
-//                }
-            }
-
             DropArea {
                 id: dropArea
                 anchors.fill: parent
@@ -473,6 +394,74 @@ Panel {
                     }
                 }
             }
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: intrinsicsFilterButton.checked
+
+            TableView {
+                id : intrinsicTable
+                visible: intrinsicsFilterButton.checked
+                anchors.fill: parent
+                boundsMovement : Flickable.StopAtBounds
+
+                //Provide width for column
+                //Note no size provided for the last column (bool comp) so it uses its automated size
+                columnWidthProvider: function (column) { return intrinsicModel.columnWidths[column] }
+
+                model: intrinsicModel
+
+                delegate: IntrinsicDisplayDelegate{}
+
+                ScrollBar.horizontal: ScrollBar { id: sb }
+                ScrollBar.vertical : ScrollBar { id: sbv }
+            }
+
+            TableModel {
+                id : intrinsicModel
+                // Hardcoded default width per column
+                property var columnWidths: [105, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]
+                property var columnNames: [
+                    "intrinsicId",
+                    "pxInitialFocalLength",
+                    "pxFocalLength.x",
+                    "pxFocalLength.y",
+                    "type",
+                    "width",
+                    "height",
+                    "sensorWidth",
+                    "sensorHeight",
+                    "serialNumber",
+                    "principalPoint.x",
+                    "principalPoint.y",
+                    "locked"]
+
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[0]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[1]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[2]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[3]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[4]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[5]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[6]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[7]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[8]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[9]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[10]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[11]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[12]]} }
+                //https://doc.qt.io/qt-5/qml-qt-labs-qmlmodels-tablemodel.html#appendRow-method
+            }
+
+            //CODE FOR HEADERS
+            //UNCOMMENT WHEN COMPATIBLE WITH THE RIGHT QT VERSION
+
+//                HorizontalHeaderView {
+//                    id: horizontalHeader
+//                    syncView: tableView
+//                    anchors.left: tableView.left
+//                }
         }
 
         RowLayout {

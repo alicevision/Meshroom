@@ -17,6 +17,7 @@ Panel {
 
     property variant cameraInits
     property variant cameraInit
+    property int cameraInitIndex
     property variant tempCameraInit
     readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
@@ -24,21 +25,13 @@ Panel {
     readonly property int centerViewId: (_reconstruction && _reconstruction.sfmTransform) ? parseInt(_reconstruction.sfmTransform.attribute("transformation").value) : 0
 
     property int defaultCellSize: 160
-    property int currentIndex: 0
     property bool readOnly: false
-
-    property string filter: ""
-    property bool filterValue: true
 
     signal removeImageRequest(var attribute)
     signal filesDropped(var drop, var augmentSfm)
 
     title: "Images"
     implicitWidth: (root.defaultCellSize + 2) * 2
-
-    function changeCurrentIndex(newIndex) {
-        _reconstruction.cameraInitIndex = newIndex
-    }
 
     QtObject {
         id: m
@@ -158,7 +151,6 @@ Panel {
                 minimumSize: 0.05
                 active : !intrinsicsFilterButton.checked
                 visible: !intrinsicsFilterButton.checked
-
             }
 
             focus: true
@@ -167,37 +159,72 @@ Panel {
             cellHeight: cellWidth
             highlightFollowsCurrentItem: true
             keyNavigationEnabled: true
+            property bool updateSelectedViewFromGrid: true
 
             // Update grid current item when selected view changes
             Connections {
                 target: _reconstruction
                 onSelectedViewIdChanged: {
-                    var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
-                    if(idx >= 0)
-                        grid.currentIndex = idx
+                    grid.updateCurrentIndexFromSelectionViewId()
+                }
+            }
+            function makeCurrentItemVisible()
+            {
+                grid.positionViewAtIndex(grid.currentIndex, GridView.Visible)
+            }
+            function updateCurrentIndexFromSelectionViewId()
+            {
+                var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
+                if(idx >= 0 && grid.currentIndex != idx) {
+                    grid.currentIndex = idx
+                }
+            }
+            onCurrentIndexChanged: {
+                if(grid.updateSelectedViewFromGrid) {
+                    _reconstruction.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
                 }
             }
 
             model: SortFilterDelegateModel {
                 id: sortedModel
                 model: m.viewpoints
-                sortRole: "path"
-                // TODO: provide filtering on reconstruction status
-                filterRole: _reconstruction.sfmReport ? root.filter : ""
-                filterValue: root.filterValue
-                // in modelData:
-                // if(filterRole == roleName)
-                //     return _reconstruction.isReconstructed(item.model.object)
+                sortRole: "path.basename"
+                property var filterRoleType: ""
+                filterRole: _reconstruction.sfmReport ? filterRoleType : ""
+                filterValue: false
+
+                function updateFilter(role, value) {
+                    grid.updateSelectedViewFromGrid = false
+                    sortedModel.filterRoleType = role
+                    sortedModel.filterValue = value
+                    grid.updateCurrentIndexFromSelectionViewId()
+                    grid.updateSelectedViewFromGrid = true
+                }
+                onFilterRoleChanged: {
+                    grid.makeCurrentItemVisible()
+                }
+                onFilterValueChanged: {
+                    grid.makeCurrentItemVisible()
+                }
 
                 // override modelData to return basename of viewpoint's path for sorting
-                function modelData(item, roleName) {
-                    if(filterRole == roleName)
+                function modelData(item, roleName_) {
+                    var roleNameAndCmd = roleName_.split(".")
+                    var roleName = roleName_
+                    var cmd = ""
+                    if(roleNameAndCmd.length >= 2)
+                    {
+                        roleName = roleNameAndCmd[0]
+                        cmd = roleNameAndCmd[1]
+                    }
+                    if(cmd == "isReconstructed")
                         return _reconstruction.isReconstructed(item.model.object)
                     var value = item.model.object.childAttribute(roleName).value
-                    if(roleName == sortRole)
+
+                    if(cmd == "basename")
                         return Filepath.basename(value)
-                    else
-                        return value
+
+                    return value
                 }
 
                 delegate: ImageDelegate {
@@ -211,11 +238,6 @@ Panel {
                     visible: !intrinsicsFilterButton.checked
 
                     isCurrentItem: GridView.isCurrentItem
-
-                    onIsCurrentItemChanged: {
-                        if(isCurrentItem)
-                            _reconstruction.selectedViewId = viewpoint.get("viewId").value
-                    }
 
                     onPressed: {
                         grid.currentIndex = DelegateModel.filteredIndex
@@ -294,11 +316,43 @@ Panel {
             Keys.onPressed: {
                 if(event.modifiers & Qt.AltModifier)
                 {
-                    event.accepted = true
                     if(event.key == Qt.Key_Right)
-                        root.changeCurrentIndex(Math.min(root.cameraInits.count - 1, root.currentIndex + 1))
+                    {
+                        _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
+                        event.accepted = true
+                    }
                     else if(event.key == Qt.Key_Left)
-                        root.changeCurrentIndex(Math.max(0, root.currentIndex - 1))
+                    {
+                        _reconstruction.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
+                        event.accepted = true
+                    }
+                }
+                else
+                {
+                    grid.updateSelectedViewFromGrid = false
+                    if(event.key == Qt.Key_Right)
+                    {
+                        grid.moveCurrentIndexRight()
+                        // grid.setCurrentIndex(Math.min(grid.model.count - 1, grid.currentIndex + 1))
+                        event.accepted = true
+                    }
+                    else if(event.key == Qt.Key_Left)
+                    {
+                        grid.moveCurrentIndexLeft()
+                        // grid.setCurrentIndex(Math.max(0, grid.currentIndex - 1))
+                        event.accepted = true
+                    }
+                    else if(event.key == Qt.Key_Up)
+                    {
+                        grid.moveCurrentIndexUp()
+                        event.accepted = true
+                    }
+                    else if(event.key == Qt.Key_Down)
+                    {
+                        grid.moveCurrentIndexDown()
+                        event.accepted = true
+                    }
+                    grid.updateSelectedViewFromGrid = true
                 }
             }
 
@@ -483,7 +537,7 @@ Panel {
                 id: nodesCB
                 model: root.cameraInits.count
                 implicitWidth: 40
-                currentIndex: root.currentIndex
+                currentIndex: root.cameraInitIndex
                 onActivated: root.changeCurrentIndex(currentIndex)
             }
             Label { text: "/ " + (root.cameraInits.count - 1) }
@@ -492,7 +546,7 @@ Panel {
                 font.family: MaterialIcons.fontFamily
                 ToolTip.text: "Next Group (Alt+Right)"
                 ToolTip.visible: hovered
-                enabled: root.currentIndex < root.cameraInits.count - 1
+                enabled: root.cameraInitIndex < root.cameraInits.count - 1
                 onClicked: nodesCB.incrementCurrentIndex()
             }
         }
@@ -521,8 +575,7 @@ Panel {
 
             onCheckedChanged:{
                 if(checked) {
-                    root.filter = ""
-                    root.filterValue = true
+                    sortedModel.updateFilter("", true)
                     estimatedCamerasFilterButton.checked = false
                     nonEstimatedCamerasFilterButton.checked = false
                     intrinsicsFilterButton.checked = false;
@@ -544,8 +597,7 @@ Panel {
 
             onCheckedChanged:{
                 if(checked) {
-                    root.filter = "viewId"
-                    root.filterValue = true
+                    sortedModel.updateFilter("viewId.isReconstructed", true)
                     inputImagesFilterButton.checked = false
                     nonEstimatedCamerasFilterButton.checked = false
                     intrinsicsFilterButton.checked = false;
@@ -574,8 +626,7 @@ Panel {
 
             onCheckedChanged:{
                 if(checked) {
-                    filter = "viewId"
-                    root.filterValue = false
+                    sortedModel.updateFilter("viewId.isReconstructed", false)
                     inputImagesFilterButton.checked = false
                     estimatedCamerasFilterButton.checked = false
                     intrinsicsFilterButton.checked = false;

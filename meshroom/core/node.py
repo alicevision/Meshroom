@@ -1369,7 +1369,8 @@ class CompatibilityNode(BaseNode):
                 commonInputs.append(attrName)
 
         node = Node(self.nodeType, position=self.position)
-        attrValues = {key: value for key, value in self.inputs.items() if key in commonInputs}
+        # convert attributes from a list of tuples into a dict
+        attrValues = {key: value for (key, value) in self.inputs.items()}
 
         # Use upgrade method of the node description itself if available
         try:
@@ -1381,6 +1382,8 @@ class CompatibilityNode(BaseNode):
         if not isinstance(upgradedAttrValues, dict):
             logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".format(self.name))
             upgradedAttrValues = attrValues
+
+        upgradedAttrValuesTmp = {key: value for (key, value) in upgradedAttrValues.items() if key in commonInputs}
 
         node.upgradeAttributeValues(upgradedAttrValues)
         return node

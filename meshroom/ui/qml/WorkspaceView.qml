@@ -67,7 +67,7 @@ Item {
                 cameraInits: root.cameraInits
                 cameraInit: reconstruction.cameraInit
                 tempCameraInit: reconstruction.tempCameraInit
-                currentIndex: reconstruction.cameraInitIndex
+                cameraInitIndex: reconstruction.cameraInitIndex
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
             }

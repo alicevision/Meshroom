@@ -25,6 +25,7 @@ class ConvertMesh(desc.CommandLineNode):
             values=('gltf', 'obj', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],
+            group='',
         ),
         desc.ChoiceParam(
             name='verboseLevel',

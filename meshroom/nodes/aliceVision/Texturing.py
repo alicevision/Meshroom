@@ -1,6 +1,7 @@
 __version__ = "6.0"
 
-from meshroom.core import desc
+from meshroom.core import desc, Version, pyCompatibility
+import logging
 
 
 class Texturing(desc.CommandLineNode):
@@ -350,3 +351,11 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             group='',
             ),
     ]
+
+    def upgradeAttributeValues(self, attrValues, fromVersion):
+        if fromVersion < Version(6, 0):
+            outputTextureFileType = attrValues['outputTextureFileType']
+            if isinstance(outputTextureFileType, pyCompatibility.basestring):
+                attrValues['colorMapping'] = {}
+                attrValues['colorMapping']['colorMappingFileType'] = outputTextureFileType
+        return attrValues

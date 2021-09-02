@@ -199,11 +199,6 @@ Panel {
                     sortedModel.filterValue = value
                     grid.updateCurrentIndexFromSelectionViewId()
                     grid.updateSelectedViewFromGrid = true
-                }
-                onFilterRoleChanged: {
-                    grid.makeCurrentItemVisible()
-                }
-                onFilterValueChanged: {
                     grid.makeCurrentItemVisible()
                 }
 

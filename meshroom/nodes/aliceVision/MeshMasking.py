@@ -21,8 +21,17 @@ Decimate triangles based on image masks.
         desc.File(
             name='inputMesh',
             label='Input Mesh',
-            description='''Input Mesh (OBJ file format).''',
+            description='''Input Mesh''',
             value='',
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='outputMeshFileType',
+            label='Output File Type',
+            description='File Type',
+            value='obj',
+            values=('obj', 'gltf', 'fbx', 'stl'),
+            exclusive=True,
             uid=[0],
         ),
         desc.ListAttribute(
@@ -91,8 +100,8 @@ Decimate triangles based on image masks.
         desc.File(
             name='outputMesh',
             label='Output Mesh',
-            description='''Output mesh (OBJ file format).''',
-            value=desc.Node.internalFolder + 'mesh.obj',
+            description='''Output mesh.''',
+            value=desc.Node.internalFolder + 'mesh.{outputMeshFileTypeValue}',
             uid=[],
         ),
     ]

@@ -670,14 +670,20 @@ class BaseNode(BaseObject):
             if not isinstance(attr.attributeDesc, desc.File):
                 continue
 
-            defaultValue = attr.defaultValue()
             try:
-                attr.value = defaultValue.format(**self._cmdVars)
-                attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
-            except KeyError as e:
-                logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
-            except ValueError as e:
-                logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                defaultValue = attr.defaultValue()
+            except AttributeError as e:
+                # If we load an old scene, the lambda associated to the 'value' could try to access other params that could not exist yet
+                logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
+            else:
+                try:
+                    attr.value = defaultValue.format(**self._cmdVars)
+                    attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
+                except KeyError as e:
+                    logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                except ValueError as e:
+                    logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+
             v = attr.getValueStr()
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
@@ -1363,7 +1369,8 @@ class CompatibilityNode(BaseNode):
                 commonInputs.append(attrName)
 
         node = Node(self.nodeType, position=self.position)
-        attrValues = {key: value for key, value in self.inputs.items() if key in commonInputs}
+        # convert attributes from a list of tuples into a dict
+        attrValues = {key: value for (key, value) in self.inputs.items()}
 
         # Use upgrade method of the node description itself if available
         try:
@@ -1375,6 +1382,8 @@ class CompatibilityNode(BaseNode):
         if not isinstance(upgradedAttrValues, dict):
             logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".format(self.name))
             upgradedAttrValues = attrValues
+
+        upgradedAttrValuesTmp = {key: value for (key, value) in upgradedAttrValues.items() if key in commonInputs}
 
         node.upgradeAttributeValues(upgradedAttrValues)
         return node

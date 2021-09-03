@@ -13,7 +13,7 @@ Item {
 
     // supported 3D files extensions
     readonly property var supportedExtensions: {
-        var exts = ['.obj', '.stl'];
+        var exts = ['.obj', '.stl', '.fbx', '.gltf'];
         if(supportAlembic)
             exts.push('.abc');
         if(supportDepthMap)

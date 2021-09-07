@@ -44,6 +44,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             values=('gltf', 'obj', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],
+            group='',
         ),
         desc.BoolParam(
             name='useBoundingBox',

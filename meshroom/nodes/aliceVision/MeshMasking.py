@@ -33,6 +33,7 @@ Decimate triangles based on image masks.
             values=('obj', 'gltf', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],
+            group='',
         ),
         desc.ListAttribute(
             elementDesc=desc.File(

@@ -563,7 +563,9 @@ class Graph(BaseObject):
         return candidates[0]
 
     def findNodes(self, nodesExpr):
-        return [self.findNode(nodeName) for nodeName in nodesExpr]
+        if isinstance(nodesExpr, list):
+            return [self.findNode(nodeName) for nodeName in nodesExpr]
+        return [self.findNode(nodesExpr)]
 
     def edge(self, dstAttributeName):
         return self._edges.get(dstAttributeName)

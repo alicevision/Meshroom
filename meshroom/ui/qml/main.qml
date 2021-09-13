@@ -436,6 +436,10 @@ ApplicationWindow {
                     text: "Camera Tracking (experimental)"
                     onTriggered: ensureSaved(function() { _reconstruction.new("cameratracking") })
                 }
+                Action {
+                    text: "Photogrammetry Draft (No CUDA)"
+                    onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetrydraft") })
+                }
             }
             Action {
                 id: openActionItem

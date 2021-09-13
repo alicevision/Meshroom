@@ -557,3 +557,47 @@ def photogrammetryAndCameraTracking(inputImages=list(), inputViewpoints=list(), 
 
     return graph
 
+
+def photogrammetryDraft(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
+    """
+    Create a new Graph with a complete photogrammetry pipeline without requiring a NVIDIA CUDA video card. Something also named Draft Meshing.
+    More information on that pipeline https://github.com/alicevision/meshroom/wiki/Draft-Meshing
+
+    Args:
+        inputImages (list of str, optional): list of image file paths
+        inputViewpoints (list of Viewpoint, optional): list of Viewpoints
+        output (str, optional): the path to export reconstructed model to
+
+    Returns:
+        Graph: the created graph
+    """
+    if not graph:
+        graph = Graph('PhotogrammetryDraft')
+    with GraphModification(graph):
+        sfmNodes = sfmPipeline(graph)
+        sfmNode = sfmNodes[-1]
+
+        meshing = graph.addNewNode('Meshing',
+                                   input=sfmNode.output)
+
+        meshFiltering = graph.addNewNode('MeshFiltering',
+                                         inputMesh=meshing.outputMesh)
+        texturing = graph.addNewNode('Texturing',
+                                     input=meshing.output,
+                                     inputMesh=meshFiltering.outputMesh)
+
+        cameraInit = sfmNodes[0]
+
+        if inputImages:
+            cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        if inputViewpoints:
+            cameraInit.viewpoints.extend(inputViewpoints)
+        if inputIntrinsics:
+            cameraInit.intrinsics.extend(inputIntrinsics)
+
+        if output:
+            graph.addNewNode('Publish', output=output, inputFiles=[texturing.outputMesh,
+                                                                   texturing.outputMaterial,
+                                                                   texturing.outputTextures])
+
+    return graph

@@ -845,7 +845,6 @@ FocusScope {
                                     return false;
                                 if(activeNode.isComputed)
                                 {
-                                    console.warn("displayLensDistortionViewer.isComputed: 1")
                                     return true;
                                 }
                                 var inputAttr = activeNode.attribute("input");
@@ -854,7 +853,6 @@ FocusScope {
                                 var inputAttrLink = inputAttr.rootLinkParam;
                                 if(!inputAttrLink)
                                     return false;
-                                console.warn("displayLensDistortionViewer.isComputed (link attr): " + inputAttrLink.node.isComputed)
                                 return inputAttrLink.node.isComputed;
                             }
 

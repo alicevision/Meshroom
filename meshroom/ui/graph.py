@@ -477,12 +477,14 @@ class UIGraph(QObject):
         """
         return commands.GroupedGraphModification(self._graph, self._undoStack, title, disableUpdates)
 
+    @Slot(str)
     def beginModification(self, name):
         """ Begin a Graph modification. Calls to beginModification and endModification may be nested, but
         every call to beginModification must have a matching call to endModification. """
         self._modificationCount += 1
         self._undoStack.beginMacro(name)
 
+    @Slot()
     def endModification(self):
         """ Ends a Graph modification. Must match a call to beginModification. """
         assert self._modificationCount > 0

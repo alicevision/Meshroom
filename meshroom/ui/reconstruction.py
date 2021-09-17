@@ -413,9 +413,13 @@ class Reconstruction(UIGraph):
     Specialization of a UIGraph designed to manage a 3D reconstruction.
     """
     activeNodeCategories = {
+        # All nodes generating a sfm scene (3D reconstruction or panorama)
         "sfm": ["StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform",
                 "SfMAlignment"],
-        "undistort": ["PrepareDenseScene", "PanoramaWarping"],
+        # All nodes generating a sfmData file
+        "sfmData": ["CameraInit", "DistortionCalibration", "StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform",
+                "SfMAlignment"],
+        # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
     }
 

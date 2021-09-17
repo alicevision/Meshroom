@@ -10,13 +10,21 @@ FloatingPane {
     padding: 5
     radius: 0
 
-    property real gainDefaultValue: 1
-    property real gammaDefaultValue: 1
-    property real slidersPowerValue: 4
+    property real gainDefaultValue: 1.0
+    property real gammaDefaultValue: 1.0
+
+    function resetDefaultValues(){
+        gainCtrl.value = root.gainDefaultValue;
+        gammaCtrl.value = root.gammaDefaultValue;
+    }
+
+    property real slidersPowerValue: 4.0
     property real gainValue: Math.pow(gainCtrl.value, slidersPowerValue)
     property real gammaValue: Math.pow(gammaCtrl.value, slidersPowerValue)
     property string channelModeValue: channelsCtrl.value
     property variant colorRGBA: null
+
+    property bool colorPickerVisible: true
 
     background: Rectangle { color: root.palette.window }
 
@@ -126,6 +134,7 @@ FloatingPane {
         }
 
         Rectangle {
+            visible: colorPickerVisible
             Layout.preferredWidth: 20
             implicitWidth: 20
             implicitHeight: parent.height
@@ -135,6 +144,7 @@ FloatingPane {
         // RGBA colors
         RowLayout {
             spacing: 1
+            visible: colorPickerVisible
             TextField {
                 id: red
                 property real value: root.colorRGBA ? root.colorRGBA.x : 0.0

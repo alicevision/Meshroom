@@ -58,7 +58,7 @@ The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 ## Citation
 
-If you use this project for research, please cite:
+If you use this project for a publication, please cite the [paper](https://hal.archives-ouvertes.fr/hal-03351139):
   ```
   @inproceedings{alicevision2021,
     title={{A}liceVision {M}eshroom: An open-source {3D} reconstruction pipeline},

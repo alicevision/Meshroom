@@ -264,7 +264,8 @@ def test_duplicate_nodes():
     n3 = g.addNewNode('AppendFiles', input=n1.output, input2=n2.output)
 
     # duplicate from n1
-    nMap = g.duplicateNodesFromNode(fromNode=n1)
+    nodes_to_duplicate, _ = g.dfsOnDiscover(startNodes=[n1], reverse=True, dependenciesOnly=True)
+    nMap = g.duplicateNodes(srcNodes=nodes_to_duplicate)
     for s, d in nMap.items():
         assert s.nodeType == d.nodeType
 

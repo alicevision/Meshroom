@@ -23,13 +23,20 @@ AliceVision.FloatImageViewer {
             return Image.Loading;
         else if((root.source === "") ||
                 (root.sourceSize.height <= 0) ||
-                (root.sourceSize.height <= 0))
+                (root.sourceSize.width <= 0))
             return Image.Null;
+
         return Image.Ready;
     }
 
-    property string channelModeString : "rgba"
+    onStatusChanged: {
+        if (viewerTypeString === "panorama") {
+            var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
+        }
+        root.surface.setIdView(idView);
+    }
 
+    property string channelModeString : "rgba"
     channelMode: {
         switch(channelModeString)
         {
@@ -41,6 +48,23 @@ AliceVision.FloatImageViewer {
             default: return AliceVision.FloatImageViewer.EChannelMode.RGBA
         }
     }
+
+    property string viewerTypeString : "hdr"
+    surface.viewerType: {
+        switch(viewerTypeString)
+        {
+            case "hdr": return AliceVision.Surface.EViewerType.HDR;
+            case "distortion": return AliceVision.Surface.EViewerType.DISTORTION;
+            case "panorama": return AliceVision.Surface.EViewerType.PANORAMA;
+            default: return AliceVision.Surface.EViewerType.HDR;
+        }
+    }
+
+    property int pointsNumber: (surface.subdivisions + 1) * (surface.subdivisions + 1);
+
+    property int index: 0;
+    property var idView: 0;
+
     clearBeforeLoad: true
 
     property alias containsMouse: mouseArea.containsMouse
@@ -52,5 +76,52 @@ AliceVision.FloatImageViewer {
         hoverEnabled: true
         // Do not intercept mouse events, only get the mouse over information
         acceptedButtons: Qt.NoButton
+    }
+
+    function isMouseOver(mx, my) {
+        return root.surface.isMouseInside(mx, my);
+    }
+
+    function getMouseCoordinates(mx, my) {
+        if (isMouseOver(mx, my)) {
+            root.surface.mouseOver = true
+            return true;
+        } else {
+            root.surface.mouseOver = false
+            return false;
+        }
+    }
+
+    function onChangedHighlightState(isHighlightable){
+        if (!isHighlightable) root.surface.mouseOver = false
+    }
+
+
+    /*
+    * Principal Point
+    */
+
+    function updatePrincipalPoint() {
+        var pp = root.surface.getPrincipalPoint();
+        ppRect.x = pp.x;
+        ppRect.y = pp.y;
+    }
+
+    property bool isPrincipalPointsDisplayed : false;
+
+    Item {
+        id: principalPoint
+        Rectangle {
+            id: ppRect
+            width: root.sourceSize.width/150; height: width
+            radius : width/2
+            x: 0
+            y: 0
+            color: "red"
+            visible: viewerTypeString === "distortion" && isPrincipalPointsDisplayed
+            onVisibleChanged: {
+                updatePrincipalPoint()
+            }
+        }
     }
 }

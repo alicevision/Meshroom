@@ -348,7 +348,7 @@ class TaskManager(BaseObject):
                 raise ValueError("Argument 'context' must be: 'COMPUTATION' or 'SUBMITTING'")
 
         if len(ready) + len(computed) != len(toNodes):
-            toNodes.clear()
+            del toNodes[:]  # for python 2 compatibility, else use: toNodes.clear()
             toNodes.extend(ready)
             return False
 
@@ -367,7 +367,7 @@ class TaskManager(BaseObject):
         raise RuntimeError("[{}] Impossible Process:\n"
                            "There is no node able to be processed.".format(context))
 
-    def submit(self, graph=None, submitter=None, toNodes=None):
+    def submit(self, graph, submitter=None, toNodes=None):
         """
         Nodes are send to the renderfarm
         :param graph:
@@ -395,6 +395,7 @@ class TaskManager(BaseObject):
 
         # Update task manager's lists
         self.updateNodes()
+        graph.update()
 
         # Check dependencies of toNodes
         if not toNodes:
@@ -440,8 +441,7 @@ class TaskManager(BaseObject):
         Submit the given graph via the given submitter.
         """
         graph = meshroom.core.graph.loadGraph(graphFile)
-        toNodes = graph.findNodes([toNode]) if toNode else None
-        self.submit(graph, submitter, toNodes)
+        self.submit(graph, submitter, toNode)
 
     def getAlreadySubmittedChunks(self, nodes):
         """

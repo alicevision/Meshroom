@@ -36,6 +36,16 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             value='',
             uid=[0],
         ),
+        desc.ChoiceParam(
+            name='outputMeshFileType',
+            label='File Type',
+            description='Output Mesh File Type',
+            value='obj',
+            values=('gltf', 'obj', 'fbx', 'stl'),
+            exclusive=True,
+            uid=[0],
+            group='',
+        ),
         desc.BoolParam(
             name='useBoundingBox',
             label='Custom Bounding Box',
@@ -496,8 +506,8 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
         desc.File(
             name="outputMesh",
             label="Mesh",
-            description="Output mesh (OBJ file format).",
-            value="{cache}/{nodeType}/{uid0}/mesh.obj",
+            description="Output mesh",
+            value="{cache}/{nodeType}/{uid0}/mesh.{outputMeshFileTypeValue}",
             uid=[],
         ),
         desc.File(

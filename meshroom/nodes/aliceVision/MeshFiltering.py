@@ -15,9 +15,19 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
         desc.File(
             name='inputMesh',
             label='Mesh',
-            description='''Input Mesh (OBJ file format).''',
+            description='''Input Mesh''',
             value='',
             uid=[0],
+            ),
+        desc.ChoiceParam(
+            name='outputMeshFileType',
+            label='File Type',
+            description='Output Mesh File Type',
+            value='obj',
+            values=('gltf', 'obj', 'fbx', 'stl'),
+            exclusive=True,
+            uid=[0],
+            group='',
             ),
         desc.BoolParam(
             name='keepLargestMeshOnly',
@@ -113,8 +123,8 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
         desc.File(
             name='outputMesh',
             label='Mesh',
-            description='''Output mesh (OBJ file format).''',
-            value=desc.Node.internalFolder + 'mesh.obj',
+            description='''Output mesh.''',
+            value=desc.Node.internalFolder + 'mesh.{outputMeshFileTypeValue}',
             uid=[],
             ),
     ]

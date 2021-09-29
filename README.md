@@ -56,9 +56,25 @@ Presentation of the Meshroom software with a focus on using it for Match Moving.
 The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 
+## Citation
+
+If you use this project for a publication, please cite the [paper](https://hal.archives-ouvertes.fr/hal-03351139):
+  ```
+  @inproceedings{alicevision2021,
+    title={{A}liceVision {M}eshroom: An open-source {3D} reconstruction pipeline},
+    authors={Carsten Griwodz and Simone Gasparini and Lilian Calvet and Pierre Gurdjos and Fabien Castan and Benoit Maujean and Gregoire De Lillo and Yann Lanthony},
+    booktitle={Proceedings of the 12th ACM Multimedia Systems Conference - {MMSys '21}},
+    doi = {10.1145/3458305.3478443},
+    publisher = {ACM Press},
+    year = {2021}
+  }
+  ```
+
 ## Get the project
 
-See [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
+You can [download pre-compiled binaries for the latest release](https://github.com/alicevision/meshroom/releases).  
+
+If you want to build it yourself, see [**INSTALL.md**](INSTALL.md) to setup the project and pre-requisites.
 
 Get the source code and install runtime requirements:
 ```bash
@@ -92,6 +108,22 @@ You may need to adjust the folder `/usr/lib/nvidia-340` with the correct driver 
 # Linux/macOS: PYTHONPATH=$PWD
 python bin/meshroom_batch --input INPUT_IMAGES_FOLDER --output OUTPUT_FOLDER
 ```
+
+## Start Meshroom without building AliceVision
+
+To use Meshroom (ui) without building AliceVision
+*   Download a [release](https://github.com/alicevision/meshroom/releases)
+*   Checkout corresponding Meshroom (ui) version/tag to avoid versions incompatibilities
+*   `LD_LIBRARY_PATH=~/foo/Meshroom-2021.1.0/aliceVision/lib/ PATH=$PATH:~/foo/Meshroom-2021.1.0/aliceVision/bin/ PYTHONPATH=$PWD python3 meshroom/ui`
+
+## Start and Debug Meshroom in an IDE
+
+PyCharm Community is free IDE which can be used. To start and debug a project with that IDE,
+right-click on `Meshroom/ui/__main__.py` > `Debug`, then `Edit Configuration`, in `Environment variables` : 
+*   If you want to use aliceVision built by yourself add: `PATH=$PATH:/foo/build/Linux-x86_64/`
+*   If you want to use aliceVision release add: `LD_LIBRARY_PATH=/foo/Meshroom-2021.1.0/aliceVision/lib/;PATH=$PATH:/foo/Meshroom-2021.1.0/aliceVision/bin/` (Make sure that you are on the branch matching the right version)
+
+![image](https://user-images.githubusercontent.com/937836/127321375-3bf78e73-569d-414a-8649-de0307adf794.png)
 
 
 ## FAQ

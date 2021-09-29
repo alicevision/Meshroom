@@ -97,8 +97,8 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             name='describerTypes',
             label='Describer Types',
             description='Describer types used to describe an image.',
-            value=['sift'],
-            values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            value=['dspsift'],
+            values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'tag16h5'],
             exclusive=False,
             uid=[0],
             joinChar=',',
@@ -119,7 +119,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description='Observation contraint mode used in the optimization:\n'
                         ' * Basic: Use standard reprojection error in pixel coordinates\n'
                         ' * Scale: Use reprojection error in pixel coordinates but relative to the feature scale',
-            value='Basic',
+            value='Scale',
             values=['Basic', 'Scale'],
             exclusive=True,
             uid=[0],

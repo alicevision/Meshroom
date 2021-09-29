@@ -670,14 +670,20 @@ class BaseNode(BaseObject):
             if not isinstance(attr.attributeDesc, desc.File):
                 continue
 
-            defaultValue = attr.defaultValue()
             try:
-                attr.value = defaultValue.format(**self._cmdVars)
-                attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
-            except KeyError as e:
-                logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
-            except ValueError as e:
-                logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                defaultValue = attr.defaultValue()
+            except AttributeError as e:
+                # If we load an old scene, the lambda associated to the 'value' could try to access other params that could not exist yet
+                logging.warning('Invalid lambda evaluation for "{nodeName}.{attrName}"'.format(nodeName=self.name, attrName=attr.name))
+            else:
+                try:
+                    attr.value = defaultValue.format(**self._cmdVars)
+                    attr._invalidationValue = defaultValue.format(**cmdVarsNoCache)
+                except KeyError as e:
+                    logging.warning('Invalid expression with missing key on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+                except ValueError as e:
+                    logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
+
             v = attr.getValueStr()
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
@@ -706,7 +712,6 @@ class BaseNode(BaseObject):
     def _isComputed(self):
         return self.hasStatus(Status.SUCCESS)
 
-    @Slot()
     def clearData(self):
         """ Delete this Node internal folder.
         Status will be reset to Status.NONE
@@ -1085,11 +1090,27 @@ class Node(BaseNode):
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)
 
+        self.setAttributeValues(kwargs)
+
+    def setAttributeValues(self, values):
         # initialize attribute values
-        for k, v in kwargs.items():
+        for k, v in values.items():
             attr = self.attribute(k)
             if attr.isInput:
-                self.attribute(k).value = v
+                attr.value = v
+
+    def upgradeAttributeValues(self, values):
+        # initialize attribute values
+        for k, v in values.items():
+            if not self.hasAttribute(k):
+                # skip missing attributes
+                continue
+            attr = self.attribute(k)
+            if attr.isInput:
+                try:
+                    attr.upgradeValue(v)
+                except ValueError:
+                    pass
 
     def toDict(self):
         inputs = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
@@ -1158,9 +1179,10 @@ class CompatibilityNode(BaseNode):
         # make a deepcopy of nodeDict to handle CompatibilityNode duplication
         # and be able to change modified inputs (see CompatibilityNode.toDict)
         self.nodeDict = copy.deepcopy(nodeDict)
+        self.version = Version(self.nodeDict.get("version", None))
 
-        self._inputs = nodeDict.get("inputs", {})
-        self.outputs = nodeDict.get("outputs", {})
+        self._inputs = self.nodeDict.get("inputs", {})
+        self.outputs = self.nodeDict.get("outputs", {})
         self._internalFolder = self.nodeDict.get("internalFolder", "")
         self._uids = self.nodeDict.get("uids", {})
 
@@ -1238,7 +1260,7 @@ class CompatibilityNode(BaseNode):
         return desc.StringParam(**params)
 
     @staticmethod
-    def attributeDescFromName(refAttributes, name, value, conform=False):
+    def attributeDescFromName(refAttributes, name, value, strict=True):
         """
         Try to find a matching attribute description in refAttributes for given attribute 'name' and 'value'.
 
@@ -1246,16 +1268,24 @@ class CompatibilityNode(BaseNode):
             refAttributes ([desc.Attribute]): reference Attributes to look for a description
             name (str): attribute's name
             value: attribute's value
+            strict: strict test for the match (for instance, regarding a group with some parameter changes)
 
         Returns:
             desc.Attribute: an attribute description from refAttributes if a match is found, None otherwise.
         """
         # from original node description based on attribute's name
         attrDesc = next((d for d in refAttributes if d.name == name), None)
-        # consider this value matches description:
-        #  - if it's a serialized link expression (no proper value to set/evaluate)
-        #  - or if it passes the 'matchDescription' test
-        if attrDesc and (Attribute.isLinkExpression(value) or attrDesc.matchDescription(value, conform)):
+        if attrDesc is None:
+            return None
+        # We have found a description, and we still need to
+        # check if the value matches the attribute description.
+        #
+        # If it is a serialized link expression (no proper value to set/evaluate)
+        if Attribute.isLinkExpression(value):
+            return attrDesc
+
+        # If it passes the 'matchDescription' test
+        if attrDesc.matchDescription(value, strict):
             return attrDesc
 
         return None
@@ -1286,13 +1316,13 @@ class CompatibilityNode(BaseNode):
     @property
     def issueDetails(self):
         if self.issue == CompatibilityIssue.UnknownNodeType:
-            return "Unknown node type: {}.".format(self.nodeType)
+            return "Unknown node type: '{}'.".format(self.nodeType)
         elif self.issue == CompatibilityIssue.VersionConflict:
             return "Node version '{}' conflicts with current version '{}'.".format(
                 self.nodeDict["version"], nodeVersion(self.nodeDesc)
             )
         elif self.issue == CompatibilityIssue.DescriptionConflict:
-            return "Node attributes don't match node description."
+            return "Node attributes do not match node description."
         else:
             return "Unknown error."
 
@@ -1330,17 +1360,33 @@ class CompatibilityNode(BaseNode):
         """
         if not self.canUpgrade:
             raise NodeUpgradeError(self.name, "no matching node type")
-        # TODO: use upgrade method of node description if available
 
         # inputs matching current type description
         commonInputs = []
         for attrName, value in self._inputs.items():
-            if self.attributeDescFromName(self.nodeDesc.inputs, attrName, value, conform=True):
+            if self.attributeDescFromName(self.nodeDesc.inputs, attrName, value, strict=False):
                 # store attributes that could be used during node upgrade
                 commonInputs.append(attrName)
 
-        return Node(self.nodeType, position=self.position,
-                    **{key: value for key, value in self.inputs.items() if key in commonInputs})
+        node = Node(self.nodeType, position=self.position)
+        # convert attributes from a list of tuples into a dict
+        attrValues = {key: value for (key, value) in self.inputs.items()}
+
+        # Use upgrade method of the node description itself if available
+        try:
+            upgradedAttrValues = node.nodeDesc.upgradeAttributeValues(attrValues, self.version)
+        except Exception as e:
+            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, str(e)))
+            upgradedAttrValues = attrValues
+
+        if not isinstance(upgradedAttrValues, dict):
+            logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".format(self.name))
+            upgradedAttrValues = attrValues
+
+        upgradedAttrValuesTmp = {key: value for (key, value) in upgradedAttrValues.items() if key in commonInputs}
+
+        node.upgradeAttributeValues(upgradedAttrValues)
+        return node
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
     canUpgrade = Property(bool, canUpgrade.fget, constant=True)

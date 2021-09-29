@@ -21,9 +21,16 @@ Based on the input image filenames, it will recognize the input video sequence t
             uid=[0],
         ),
         desc.File(
-            name='viewFilter',
+            name='sfmDataFilter',
             label='SfMData Filter',
-            description='A SfMData file use as filter.',
+            description='Filter out cameras from the export if they are part of this SfMData. Export all cameras if empty.',
+            value='',
+            uid=[0],
+        ),
+        desc.File(
+            name='viewFilter',
+            label='View Filter',
+            description='Select the cameras to export using an expression based on the image filepath. Export all cameras if empty.',
             value='',
             uid=[0],
         ),
@@ -90,6 +97,14 @@ Based on the input image filenames, it will recognize the input video sequence t
             label='Output Camera Filepath',
             description='Output filename for the alembic animated camera.',
             value=desc.Node.internalFolder + 'camera.abc',
+            group='',  # exclude from command line
+            uid=[],
+        ),
+        desc.File(
+            name='outputUndistorted',
+            label='Output Undistorted images Filepath',
+            description='Output Undistorted images.',
+            value=desc.Node.internalFolder + 'undistort',
             group='',  # exclude from command line
             uid=[],
         ),

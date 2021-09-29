@@ -360,8 +360,8 @@ class ViewpointWrapper(QObject):
         """ Get camera vertical field of view in degrees. """
         if not self.solvedIntrinsics:
             return None
-        pxFocalLength = float(self.solvedIntrinsics["pxFocalLength"])
-        return 2.0 * math.atan(self.orientedImageSize.height() / (2.0 * pxFocalLength)) * 180 / math.pi
+        pxFocalLength = self.solvedIntrinsics["pxFocalLength"]
+        return 2.0 * math.atan(self.orientedImageSize.height() / (2.0 * float(pxFocalLength[0]))) * 180 / math.pi
 
     @Property(type=QUrl, notify=denseSceneParamsChanged)
     def undistortedImageSource(self):
@@ -413,9 +413,13 @@ class Reconstruction(UIGraph):
     Specialization of a UIGraph designed to manage a 3D reconstruction.
     """
     activeNodeCategories = {
+        # All nodes generating a sfm scene (3D reconstruction or panorama)
         "sfm": ["StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform",
                 "SfMAlignment"],
-        "undistort": ["PrepareDenseScene", "PanoramaWarping"],
+        # All nodes generating a sfmData file
+        "sfmData": ["CameraInit", "DistortionCalibration", "StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform",
+                "SfMAlignment"],
+        # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
     }
 
@@ -490,6 +494,15 @@ class Reconstruction(UIGraph):
         elif p.lower() == "panoramafisheyehdr":
             # default panorama fisheye hdr pipeline
             self.setGraph(multiview.panoramaFisheyeHdr())
+        elif p.lower() == "photogrammetryandcameratracking":
+            # default camera tracking pipeline
+            self.setGraph(multiview.photogrammetryAndCameraTracking())
+        elif p.lower() == "cameratracking":
+            # default camera tracking pipeline
+            self.setGraph(multiview.cameraTracking())
+        elif p.lower() == "photogrammetrydraft":
+            # photogrammetry pipeline in draft mode (no cuda)
+            self.setGraph(multiview.photogrammetryDraft())
         else:
             # use the user-provided default photogrammetry project file
             self.load(p, setupProjectFile=False)
@@ -1070,10 +1083,10 @@ class Reconstruction(UIGraph):
         vp = None
         if self.viewpoints:
             vp = next((v for v in self.viewpoints if str(v.viewId.value) == self._selectedViewId), None)
-        self.setSelectedViewpoint(vp)
+        self._setSelectedViewpoint(vp)
         self.selectedViewIdChanged.emit()
 
-    def setSelectedViewpoint(self, viewpointAttribute):
+    def _setSelectedViewpoint(self, viewpointAttribute):
         if self._selectedViewpoint:
             # Reconstruction has ownership of Viewpoint object - destroy it when not needed anymore
             self._selectedViewpoint.deleteLater()

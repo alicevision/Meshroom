@@ -1,8 +1,9 @@
-import QtQuick 2.7
+import QtQuick 2.14
 import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import QtQml.Models 2.2
+import Qt.labs.qmlmodels 1.0
 
 import Controls 1.0
 import Utils 1.0
@@ -16,6 +17,7 @@ Panel {
 
     property variant cameraInits
     property variant cameraInit
+    property int cameraInitIndex
     property variant tempCameraInit
     readonly property alias currentItem: grid.currentItem
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
@@ -23,7 +25,6 @@ Panel {
     readonly property int centerViewId: (_reconstruction && _reconstruction.sfmTransform) ? parseInt(_reconstruction.sfmTransform.attribute("transformation").value) : 0
 
     property int defaultCellSize: 160
-    property int currentIndex: 0
     property bool readOnly: false
 
     signal removeImageRequest(var attribute)
@@ -32,15 +33,68 @@ Panel {
     title: "Images"
     implicitWidth: (root.defaultCellSize + 2) * 2
 
-    function changeCurrentIndex(newIndex) {
-        _reconstruction.cameraInitIndex = newIndex
-    }
-
     QtObject {
         id: m
         property variant currentCameraInit: _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
         property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
+        property variant intrinsics: currentCameraInit ? currentCameraInit.attribute('intrinsics').value : undefined
         property bool readOnly: root.readOnly || displayHDR.checked
+    }
+
+    property variant parsedIntrinsic
+    property int numberOfIntrinsics : m.intrinsics ? m.intrinsics.count : 0
+
+    onNumberOfIntrinsicsChanged: {
+        parseIntr()
+    }
+
+    function populate_model()
+    {
+        intrinsicModel.clear()
+        for (var intr in parsedIntrinsic) {
+            intrinsicModel.appendRow(parsedIntrinsic[intr])
+        }
+    }
+
+    function parseIntr(){
+        parsedIntrinsic = []
+        if(!m.intrinsics)
+        {
+            return
+        }
+
+        //Loop through all intrinsics
+        for(var i = 0; i < m.intrinsics.count; ++i){
+            var intrinsic = {}
+
+            //Loop through all attributes
+            for(var j=0; j < m.intrinsics.at(i).value.count; ++j){
+                var currentAttribute = m.intrinsics.at(i).value.at(j)
+                if(currentAttribute.type === "GroupAttribute"){
+                    for(var k=0; k < currentAttribute.value.count; ++k){
+                        intrinsic[currentAttribute.name + "." + currentAttribute.value.at(k).name] = currentAttribute.value.at(k)
+                    }
+                }
+                else if(currentAttribute.type === "ListAttribute"){
+                    // not needed for now
+                }
+                else{
+                    intrinsic[currentAttribute.name] = currentAttribute
+                }
+            }
+            // Table Model needs to contain an entry for each column.
+            // In case of old file formats, some intrinsic keys that we display may not exist in the model.
+            // So, here we create an empty entry to enforce that the key exists in the model.
+            for(var n = 0; n < intrinsicModel.columnNames.length; ++n)
+            {
+                var name = intrinsicModel.columnNames[n]
+                if(!(name in intrinsic)) {
+                    intrinsic[name] = {}
+                }
+            }
+            parsedIntrinsic[i] = intrinsic
+        }
+        populate_model()
     }
 
     headerBar: RowLayout {
@@ -91,7 +145,13 @@ Panel {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            ScrollBar.vertical: ScrollBar { minimumSize: 0.05 }
+            visible: !intrinsicsFilterButton.checked
+
+            ScrollBar.vertical: ScrollBar {
+                minimumSize: 0.05
+                active : !intrinsicsFilterButton.checked
+                visible: !intrinsicsFilterButton.checked
+            }
 
             focus: true
             clip: true
@@ -99,35 +159,67 @@ Panel {
             cellHeight: cellWidth
             highlightFollowsCurrentItem: true
             keyNavigationEnabled: true
+            property bool updateSelectedViewFromGrid: true
 
             // Update grid current item when selected view changes
             Connections {
                 target: _reconstruction
                 onSelectedViewIdChanged: {
-                    var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
-                    if(idx >= 0)
-                        grid.currentIndex = idx
+                    grid.updateCurrentIndexFromSelectionViewId()
+                }
+            }
+            function makeCurrentItemVisible()
+            {
+                grid.positionViewAtIndex(grid.currentIndex, GridView.Visible)
+            }
+            function updateCurrentIndexFromSelectionViewId()
+            {
+                var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
+                if(idx >= 0 && grid.currentIndex != idx) {
+                    grid.currentIndex = idx
+                }
+            }
+            onCurrentIndexChanged: {
+                if(grid.updateSelectedViewFromGrid) {
+                    _reconstruction.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
                 }
             }
 
             model: SortFilterDelegateModel {
                 id: sortedModel
                 model: m.viewpoints
-                sortRole: "path"
-                // TODO: provide filtering on reconstruction status
-                // filterRole: _reconstruction.sfmReport ? "reconstructed" : ""
-                // filterValue: true / false
-                // in modelData:
-                // if(filterRole == roleName)
-                //     return _reconstruction.isReconstructed(item.model.object)
+                sortRole: "path.basename"
+                property var filterRoleType: ""
+                filterRole: _reconstruction.sfmReport ? filterRoleType : ""
+                filterValue: false
+
+                function updateFilter(role, value) {
+                    grid.updateSelectedViewFromGrid = false
+                    sortedModel.filterRoleType = role
+                    sortedModel.filterValue = value
+                    grid.updateCurrentIndexFromSelectionViewId()
+                    grid.updateSelectedViewFromGrid = true
+                    grid.makeCurrentItemVisible()
+                }
 
                 // override modelData to return basename of viewpoint's path for sorting
-                function modelData(item, roleName) {
+                function modelData(item, roleName_) {
+                    var roleNameAndCmd = roleName_.split(".")
+                    var roleName = roleName_
+                    var cmd = ""
+                    if(roleNameAndCmd.length >= 2)
+                    {
+                        roleName = roleNameAndCmd[0]
+                        cmd = roleNameAndCmd[1]
+                    }
+                    if(cmd == "isReconstructed")
+                        return _reconstruction.isReconstructed(item.model.object)
                     var value = item.model.object.childAttribute(roleName).value
-                    if(roleName == sortRole)
+
+                    if(cmd == "basename")
                         return Filepath.basename(value)
-                    else
-                        return value
+
+                    return value
                 }
 
                 delegate: ImageDelegate {
@@ -138,13 +230,9 @@ Panel {
                     height: grid.cellHeight
                     readOnly: m.readOnly
                     displayViewId: displayViewIdsAction.checked
+                    visible: !intrinsicsFilterButton.checked
 
                     isCurrentItem: GridView.isCurrentItem
-
-                    onIsCurrentItemChanged: {
-                        if(isCurrentItem)
-                            _reconstruction.selectedViewId = viewpoint.get("viewId").value
-                    }
 
                     onPressed: {
                         grid.currentIndex = DelegateModel.filteredIndex
@@ -223,18 +311,51 @@ Panel {
             Keys.onPressed: {
                 if(event.modifiers & Qt.AltModifier)
                 {
-                    event.accepted = true
                     if(event.key == Qt.Key_Right)
-                        root.changeCurrentIndex(Math.min(root.cameraInits.count - 1, root.currentIndex + 1))
+                    {
+                        _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
+                        event.accepted = true
+                    }
                     else if(event.key == Qt.Key_Left)
-                        root.changeCurrentIndex(Math.max(0, root.currentIndex - 1))
+                    {
+                        _reconstruction.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
+                        event.accepted = true
+                    }
+                }
+                else
+                {
+                    grid.updateSelectedViewFromGrid = false
+                    if(event.key == Qt.Key_Right)
+                    {
+                        grid.moveCurrentIndexRight()
+                        // grid.setCurrentIndex(Math.min(grid.model.count - 1, grid.currentIndex + 1))
+                        event.accepted = true
+                    }
+                    else if(event.key == Qt.Key_Left)
+                    {
+                        grid.moveCurrentIndexLeft()
+                        // grid.setCurrentIndex(Math.max(0, grid.currentIndex - 1))
+                        event.accepted = true
+                    }
+                    else if(event.key == Qt.Key_Up)
+                    {
+                        grid.moveCurrentIndexUp()
+                        event.accepted = true
+                    }
+                    else if(event.key == Qt.Key_Down)
+                    {
+                        grid.moveCurrentIndexDown()
+                        event.accepted = true
+                    }
+                    grid.updateSelectedViewFromGrid = true
                 }
             }
 
             // Explanatory placeholder when no image has been added yet
             Column {
+                id: dropImagePlaceholder
                 anchors.centerIn: parent
-                visible: grid.model.count == 0
+                visible: (m.viewpoints ? m.viewpoints.count == 0 : true) && !intrinsicsFilterButton.checked
                 spacing: 4
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -246,11 +367,27 @@ Panel {
                     text: "Drop Image Files / Folders"
                 }
             }
+            // Placeholder when the filtered images list is empty
+            Column {
+                id: noImageImagePlaceholder
+                anchors.centerIn: parent
+                visible: (m.viewpoints ? m.viewpoints.count != 0 : false) && !dropImagePlaceholder.visible && grid.model.count == 0 && !intrinsicsFilterButton.checked
+                spacing: 4
+                Label {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: MaterialIcons.filter_none
+                    font.pointSize: 24
+                    font.family: MaterialIcons.fontFamily
+                }
+                Label {
+                    text: "No images in this filtered view"
+                }
+            }
 
             DropArea {
                 id: dropArea
                 anchors.fill: parent
-                enabled: !m.readOnly
+                enabled: !m.readOnly && !intrinsicsFilterButton.checked
                 keys: ["text/uri-list"]
                 // TODO: onEntered: call specific method to filter files based on extension
                 onDropped: {
@@ -308,6 +445,74 @@ Panel {
             }
         }
 
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: intrinsicsFilterButton.checked
+
+            TableView {
+                id : intrinsicTable
+                visible: intrinsicsFilterButton.checked
+                anchors.fill: parent
+                boundsMovement : Flickable.StopAtBounds
+
+                //Provide width for column
+                //Note no size provided for the last column (bool comp) so it uses its automated size
+                columnWidthProvider: function (column) { return intrinsicModel.columnWidths[column] }
+
+                model: intrinsicModel
+
+                delegate: IntrinsicDisplayDelegate{}
+
+                ScrollBar.horizontal: ScrollBar { id: sb }
+                ScrollBar.vertical : ScrollBar { id: sbv }
+            }
+
+            TableModel {
+                id : intrinsicModel
+                // Hardcoded default width per column
+                property var columnWidths: [105, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]
+                property var columnNames: [
+                    "intrinsicId",
+                    "pxInitialFocalLength",
+                    "pxFocalLength.x",
+                    "pxFocalLength.y",
+                    "type",
+                    "width",
+                    "height",
+                    "sensorWidth",
+                    "sensorHeight",
+                    "serialNumber",
+                    "principalPoint.x",
+                    "principalPoint.y",
+                    "locked"]
+
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[0]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[1]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[2]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[3]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[4]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[5]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[6]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[7]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[8]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[9]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[10]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[11]]} }
+                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[12]]} }
+                //https://doc.qt.io/qt-5/qml-qt-labs-qmlmodels-tablemodel.html#appendRow-method
+            }
+
+            //CODE FOR HEADERS
+            //UNCOMMENT WHEN COMPATIBLE WITH THE RIGHT QT VERSION
+
+//                HorizontalHeaderView {
+//                    id: horizontalHeader
+//                    syncView: tableView
+//                    anchors.left: tableView.left
+//                }
+        }
+
         RowLayout {
             Layout.fillHeight: false
             visible: root.cameraInits.count > 1
@@ -327,7 +532,7 @@ Panel {
                 id: nodesCB
                 model: root.cameraInits.count
                 implicitWidth: 40
-                currentIndex: root.currentIndex
+                currentIndex: root.cameraInitIndex
                 onActivated: root.changeCurrentIndex(currentIndex)
             }
             Label { text: "/ " + (root.cameraInits.count - 1) }
@@ -336,7 +541,7 @@ Panel {
                 font.family: MaterialIcons.fontFamily
                 ToolTip.text: "Next Group (Alt+Right)"
                 ToolTip.visible: hovered
-                enabled: root.currentIndex < root.cameraInits.count - 1
+                enabled: root.cameraInitIndex < root.cameraInits.count - 1
                 onClicked: nodesCB.incrementCurrentIndex()
             }
         }
@@ -344,22 +549,120 @@ Panel {
 
     footerContent: RowLayout {
         // Images count
-        MaterialToolLabel {
+        id: footer
+
+        function resetButtons(){
+            inputImagesFilterButton.checked = false
+            estimatedCamerasFilterButton.checked = false
+            nonEstimatedCamerasFilterButton.checked = false
+        }
+
+        MaterialToolLabelButton {
+            id : inputImagesFilterButton
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: grid.model.count + " Input Images"
             iconText: MaterialIcons.image
-            label: grid.model.count.toString()
-            // enabled: grid.model.count > 0
-            // margin: 4
+            label: (m.viewpoints ? m.viewpoints.count : 0)
+            padding: 3
+
+            checkable: true
+            checked: true
+
+            onCheckedChanged:{
+                if(checked) {
+                    sortedModel.updateFilter("", true)
+                    estimatedCamerasFilterButton.checked = false
+                    nonEstimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false;
+                }
+            }
         }
-        // cameras count
-        MaterialToolLabel {
+        // Estimated cameras count
+        MaterialToolLabelButton {
+            id : estimatedCamerasFilterButton
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Estimated Cameras"
             iconText: MaterialIcons.videocam
-            label: _reconstruction ? _reconstruction.nbCameras.toString() : "0"
-            // margin: 4
-            // enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+            label: _reconstruction.nbCameras ? _reconstruction.nbCameras.toString() : "-"
+            padding: 3
+
+            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+            checkable: true
+            checked: false
+
+            onCheckedChanged:{
+                if(checked) {
+                    sortedModel.updateFilter("viewId.isReconstructed", true)
+                    inputImagesFilterButton.checked = false
+                    nonEstimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false;
+                }
+            }
+            onEnabledChanged:{
+                if(!enabled) {
+                    if(checked) inputImagesFilterButton.checked = true;
+                    checked = false
+                }
+            }
+
+        }
+        // Non estimated cameras count
+        MaterialToolLabelButton {
+            id : nonEstimatedCamerasFilterButton
+            Layout.minimumWidth: childrenRect.width
+            ToolTip.text: label + " Non Estimated Cameras"
+            iconText: MaterialIcons.videocam_off
+            label: _reconstruction.nbCameras ? ((m.viewpoints ? m.viewpoints.count : 0) - _reconstruction.nbCameras.toString()).toString() : "-"
+            padding: 3
+
+            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+            checkable: true
+            checked: false
+
+            onCheckedChanged:{
+                if(checked) {
+                    sortedModel.updateFilter("viewId.isReconstructed", false)
+                    inputImagesFilterButton.checked = false
+                    estimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false;
+                }
+            }
+            onEnabledChanged:{
+                if(!enabled) {
+                    if(checked) inputImagesFilterButton.checked = true;
+                    checked = false
+                }
+            }
+
+        }
+        MaterialToolLabelButton {
+            id : intrinsicsFilterButton
+            Layout.minimumWidth: childrenRect.width
+            ToolTip.text: label + " Number of intrinsics"
+            iconText: MaterialIcons.camera
+            label: _reconstruction ? (m.intrinsics ? m.intrinsics.count : 0) : "0"
+            padding: 3
+
+
+            enabled: m.intrinsics ? m.intrinsics.count > 0 : false
+            checkable: true
+            checked: false
+
+            onCheckedChanged:{
+                if(checked) {
+                    inputImagesFilterButton.checked = false
+                    estimatedCamerasFilterButton.checked = false
+                    nonEstimatedCamerasFilterButton.checked = false
+                }
+            }
+            onEnabledChanged:{
+                if(!enabled) {
+                    if(checked) inputImagesFilterButton.checked = true;
+                    checked = false
+                }
+            }
+
+
         }
 
         Item { Layout.fillHeight: true; Layout.fillWidth: true }

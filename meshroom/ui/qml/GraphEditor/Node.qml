@@ -20,8 +20,12 @@ Item {
     /// Whether the node is in compatibility mode
     readonly property bool isCompatibilityNode: node ? node.hasOwnProperty("compatibilityIssue") : false
     /// Mouse related states
+    property bool mainSelected: false
     property bool selected: false
     property bool hovered: false
+    property bool dragging: mouseArea.drag.active
+    /// Combined x and y
+    property point position: Qt.point(x, y)
     /// Styling
     property color shadowColor: "#cc000000"
     readonly property color defaultColor: isCompatibilityNode ? "#444" : activePalette.base
@@ -38,6 +42,9 @@ Item {
     signal moved(var position)
     signal entered()
     signal exited()
+
+    // Already connected attribute with another edge in DropArea
+    signal edgeAboutToBeRemoved(var input)
 
     /// Emitted when child attribute pins are created
     signal attributePinCreated(var attribute, var pin)
@@ -93,6 +100,7 @@ Item {
 
     // Main Layout
     MouseArea {
+        id: mouseArea
         width: parent.width
         height: body.height
         drag.target: root
@@ -117,11 +125,11 @@ Item {
         Rectangle {
             anchors.fill: nodeContent
             anchors.margins: -border.width
-            visible: root.selected || root.hovered
+            visible: root.mainSelected || root.hovered
             border.width: 2.5
-            border.color: root.selected ? activePalette.highlight : Qt.darker(activePalette.highlight, 1.5)
+            border.color: root.mainSelected ? activePalette.highlight : Qt.darker(activePalette.highlight, 1.5)
             opacity: 0.9
-            radius: background.radius
+            radius: background.radius + border.width
             color: "transparent"
         }
 
@@ -151,7 +159,7 @@ Item {
                     id: header
                     width: parent.width
                     height: headerLayout.height
-                    color: root.selected ? activePalette.highlight : root.baseColor
+                    color: root.mainSelected ? activePalette.highlight : root.selected ? Qt.darker(activePalette.highlight, 1.1): root.baseColor
                     radius: background.radius
 
                     // Fill header's bottom radius
@@ -174,7 +182,7 @@ Item {
                             Layout.fillWidth: true
                             text: node ? node.label : ""
                             padding: 4
-                            color: root.selected ? "white" : activePalette.text
+                            color: root.mainSelected ? "white" : activePalette.text
                             elide: Text.ElideMiddle
                             font.pointSize: 8
                         }
@@ -298,6 +306,8 @@ Item {
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
 
                                         onPressed: root.pressed(mouse)
+                                        onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
+
                                         Component.onCompleted: attributePinCreated(object, outPin)
                                         Component.onDestruction: attributePinDeleted(attribute, outPin)
                                     }
@@ -329,6 +339,7 @@ Item {
                                         Component.onCompleted: attributePinCreated(attribute, inPin)
                                         Component.onDestruction: attributePinDeleted(attribute, inPin)
                                         onPressed: root.pressed(mouse)
+                                        onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
                                         onChildPinCreated: attributePinCreated(childAttribute, inPin)
                                         onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
                                     }
@@ -390,6 +401,7 @@ Item {
                                             Component.onCompleted: attributePinCreated(attribute, inPin)
                                             Component.onDestruction: attributePinDeleted(attribute, inPin)
                                             onPressed: root.pressed(mouse)
+                                            onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
                                             onChildPinCreated: attributePinCreated(childAttribute, inPin)
                                             onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
                                         }

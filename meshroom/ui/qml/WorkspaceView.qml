@@ -57,7 +57,9 @@ Item {
 
         Controls1.SplitView {
             orientation: Qt.Vertical
+            Layout.fillWidth: true
             Layout.fillHeight: true
+            implicitWidth: Math.round(parent.width * 0.2)
             Layout.minimumWidth: imageGallery.defaultCellSize
 
             ImageGallery {
@@ -80,6 +82,8 @@ Item {
         }
         Panel {
             title: "Image Viewer"
+            visible: settings_UILayout.showImageViewer
+            implicitWidth: Math.round(parent.width * 0.35)
             Layout.fillHeight: true
             Layout.fillWidth: true
             Layout.minimumWidth: 50
@@ -161,9 +165,12 @@ Item {
 
         Panel {
             title: "3D Viewer"
+            visible: settings_UILayout.showViewer3D
             implicitWidth: Math.round(parent.width * 0.45)
             Layout.minimumWidth: 20
             Layout.minimumHeight: 80
+            Layout.fillHeight: true
+            Layout.fillWidth: true
 
             Controls1.SplitView {
                 anchors.fill: parent

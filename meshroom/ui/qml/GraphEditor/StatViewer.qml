@@ -398,7 +398,7 @@ Item {
                     titleColor: textColor
 
                     visible: (root.fileVersion > 0.0)  // only visible if we have valid information
-                    title: "CPU: " + root.nbCores + " cores, " + root.cpuFrequency + "Hz"
+                    title: "CPU: " + root.nbCores + " cores, " + root.cpuFrequency + "MHz"
 
                     ValueAxis {
                         id: valueCpuY

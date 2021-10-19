@@ -9,6 +9,7 @@ meshroom.setupEnvironment()
 
 import meshroom.core.graph
 from meshroom import multiview
+import logging
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry or Panorama HDR pipeline.')
 parser.add_argument('-i', '--input', metavar='SFM/FOLDERS/IMAGES', type=str, nargs='*',
@@ -66,7 +67,22 @@ parser.add_argument('--submitter',
                     default='SimpleFarm',
                     help='Execute job with a specific submitter.')
 
+parser.add_argument('-v', '--verbose', help="Verbosity level", default='',
+                    choices=['', 'fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
+
 args = parser.parse_args()
+
+
+logStringToPython = {
+    'fatal': logging.FATAL,
+    'error': logging.ERROR,
+    'warning': logging.WARNING,
+    'info': logging.INFO,
+    'debug': logging.DEBUG,
+    'trace': logging.DEBUG,
+}
+if args.verbose:
+    logging.getLogger().setLevel(logStringToPython[args.verbose])
 
 
 def getOnlyNodeOfType(g, nodeType):
@@ -136,6 +152,9 @@ with multiview.GraphModification(graph):
 
     if not graph.canComputeLeaves:
         raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")
+
+    if args.verbose:
+        graph.setVerbose(args.verbose)
 
     if args.output:
         publish = getOnlyNodeOfType(graph, 'Publish')

@@ -756,10 +756,12 @@ ApplicationWindow {
                 }
 
                 function viewIn3D(attribute, mouse) {
-                    var loaded = viewer3D.view(attribute);
+                    if(!panel3dViewer)
+                        return false;
+                    var loaded = panel3dViewer.viewer3D.view(attribute);
                     // solo media if Control modifier was held
                     if(loaded && mouse && mouse.modifiers & Qt.ControlModifier)
-                        viewer3D.solo(attribute);
+                        panel3dViewer.viewer3D.solo(attribute);
                     return loaded;
                 }
 

@@ -144,7 +144,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             name='sgmP2',
             label='SGM: P2',
             description='Semi Global Matching: P2 weight.',
-            value=20.0,
+            value=100.0,
             range=(-255.0, 255.0, 0.5),
             uid=[0],
             advanced=True,

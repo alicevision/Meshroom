@@ -345,9 +345,7 @@ class ViewpointWrapper(QObject):
             return None
         pp = self.solvedIntrinsics["principalPoint"]
         # compute principal point offset in UV space
-        uvPP = QVector2D(float(pp[0]) / self.imageSize.width(), float(pp[1]) / self.imageSize.height())
-        # convert to offset
-        offset = uvPP - QVector2D(0.5, 0.5)
+        offset = QVector2D(float(pp[0]) / self.imageSize.width(), float(pp[1]) / self.imageSize.height())
         # apply orientation to principal point correction
         if self.orientation == 6:
             offset = QVector2D(-offset.y(), offset.x())

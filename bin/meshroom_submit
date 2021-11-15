@@ -5,7 +5,6 @@ import meshroom
 meshroom.setupEnvironment()
 
 import meshroom.core.graph
-import meshroom.core.taskManager
 
 parser = argparse.ArgumentParser(description='Submit a Graph of processes on renderfarm.')
 parser.add_argument('meshroomFile', metavar='MESHROOMFILE.mg', type=str,
@@ -19,5 +18,5 @@ parser.add_argument('--submitter',
                     help='Execute job with a specific submitter.')
 
 args = parser.parse_args()
-taskManager = meshroom.core.taskManager.TaskManager()
-taskManager.submitFromFile(args.meshroomFile, args.submitter, toNode=args.toNode)
+
+meshroom.core.graph.submit(args.save, args.submitter, toNode=toNodes)

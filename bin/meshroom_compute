@@ -6,7 +6,6 @@ import meshroom
 meshroom.setupEnvironment()
 
 import meshroom.core.graph
-import meshroom.core.taskManager
 from meshroom.core.node import Status
 
 
@@ -67,6 +66,4 @@ else:
     if args.toNode:
         toNodes = graph.findNodes([args.toNode])
 
-    taskManager = meshroom.core.taskManager.TaskManager()
-    taskManager.compute(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)
-
+    meshroom.core.graph.executeGraph(graph, toNodes=toNodes, forceCompute=args.forceCompute, forceStatus=args.forceStatus)

@@ -62,7 +62,7 @@ If you use this project for a publication, please cite the [paper](https://hal.a
   ```
   @inproceedings{alicevision2021,
     title={{A}liceVision {M}eshroom: An open-source {3D} reconstruction pipeline},
-    authors={Carsten Griwodz and Simone Gasparini and Lilian Calvet and Pierre Gurdjos and Fabien Castan and Benoit Maujean and Gregoire De Lillo and Yann Lanthony},
+    author={Carsten Griwodz and Simone Gasparini and Lilian Calvet and Pierre Gurdjos and Fabien Castan and Benoit Maujean and Gregoire De Lillo and Yann Lanthony},
     booktitle={Proceedings of the 12th ACM Multimedia Systems Conference - {MMSys '21}},
     doi = {10.1145/3458305.3478443},
     publisher = {ACM Press},

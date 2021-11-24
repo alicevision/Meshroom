@@ -1,6 +1,7 @@
 from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue
 from meshroom.core import pyCompatibility
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
+import logging
 import math
 import os
 import psutil
@@ -521,3 +522,91 @@ class CommandLineNode(Node):
         finally:
             chunk.subprocess = None
 
+
+class Logger(logging.Logger):
+    """
+    A subclass of `logging.Logger` that:
+
+    - provides a context manager
+    - logs any exception raised in the statement body
+    - sets the verbose level from the node option
+    - handles formatting
+    - handles the log file (clearing, adding handler)
+    - provides methods to handle a progress bar
+    """
+    class Formatter(logging.Formatter):
+        """For internal use only."""
+        def format(self, record):
+            # Make level name lower case
+            record.levelname = record.levelname.lower()
+            return logging.Formatter.format(self, record)
+
+    def __init__(self, chunk):
+        super(Logger, self).__init__(
+            '',
+            chunk.node.verboseLevel.value.upper() if hasattr(chunk.node, 'verboseLevel') else logging.NOTSET,
+        )
+        self.chunk = chunk
+
+        open(chunk.logFile, 'w').close() # Clear log file
+        handler = logging.FileHandler(chunk.logFile)
+        formatter = self.Formatter('[%(asctime)s.%(msecs)03d][%(levelname)s] %(message)s', '%H:%M:%S')
+        handler.setFormatter(formatter)
+        self.addHandler(handler)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type:
+            # log exception
+            self.critical('{}: {}'.format(exc_type.__name__, exc_value))
+
+        for handler in self.handlers[:]:
+            # Stops the file being locked
+            handler.close()
+
+    def makeProgressBar(self, end, message=''):
+        """
+        Make a new progress bar.
+
+        Args:
+            end: the highest possible value
+            message (optional): title of the progress bar
+        """
+        if end <= 0:
+            raise ValueError('Progress end {} must be more than 0'.format(end))
+
+        self.progressEnd = end
+        self.currentProgressTics = 0
+
+        with open(self.chunk.logFile, 'a') as f:
+            if message:
+                f.write(message+'\n')
+            f.write('0%   10   20   30   40   50   60   70   80   90   100%\n')
+            f.write('|----|----|----|----|----|----|----|----|----|----|\n\n')
+
+        with open(self.chunk.logFile, 'r') as f:
+            content = f.read()
+            # adding to the progress bar in the same place means normal logging can be used at the same time
+            self.progressBarPosition = content.rfind('\n')
+
+    def updateProgressBar(self, value):
+        """
+        Update the current progress bar with the latest value.
+
+        Args:
+            value: can be equal to or greater than the current value
+        """
+        tics = round((value/self.progressEnd)*51)
+        nTicsToAdd = tics-self.currentProgressTics
+        if nTicsToAdd < 1:
+            return
+
+        with open(self.chunk.logFile, 'r+') as f:
+            text = f.read()
+            text = text[:self.progressBarPosition]+('*'*nTicsToAdd)+text[self.progressBarPosition:]
+            f.seek(0)
+            f.write(text)
+
+        self.currentProgressTics = tics

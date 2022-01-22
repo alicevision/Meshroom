@@ -136,7 +136,7 @@ def findFilesByTypeInFolder(folder, recursive=False):
             else:
                 output.addFiles([os.path.join(currentFolder, filename) for filename in os.listdir(currentFolder)])
         else:
-            # if not a diretory or a file, it may be an expression
+            # if not a directory or a file, it may be an expression
             import glob
             paths = glob.glob(currentFolder)
             filesByType = findFilesByTypeInFolder(paths, recursive=recursive)
@@ -186,7 +186,7 @@ def panoramaFisheyeHdr(inputImages=None, inputViewpoints=None, inputIntrinsics=N
             # when using fisheye images, 'sift' performs better than 'dspsift'
             featureExtraction.attribute("describerTypes").value = ['sift']
             # when using fisheye images, the overlap between images can be small
-            # and thus requires many features to get enough correspondances for cameras estimation
+            # and thus requires many features to get enough correspondences for cameras estimation
             featureExtraction.attribute("describerPreset").value = 'high'
     return graph
 

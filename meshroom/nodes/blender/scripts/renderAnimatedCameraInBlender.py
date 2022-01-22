@@ -31,7 +31,7 @@ def main():
 
     parser.add_argument(
         "--useBackground", type=strtobool, required=True,
-        help="Diplay the background image or not.",
+        help="Display the background image or not.",
     )
 
     parser.add_argument(
@@ -262,8 +262,8 @@ def main():
 
     # For showing an outline of the object, we need to add two materials to the mesh:
     # Center and Edge, we are using a method that consists in having a "bold" effect on the Edge Material so we can see it
-    # around the Center material. We use a Solidify Modifier on which we flip normals and reduce Thickness to bellow zero.
-    # The more the thickness get bellow zero, the more the egde will be largely revealed.
+    # around the Center material. We use a Solidify Modifier on which we flip normals and reduce Thickness to below zero.
+    # The more the thickness get below zero, the more the edge will be largely revealed.
     elif args.model.lower().endswith('.obj'):
         print("Import OBJ")
 

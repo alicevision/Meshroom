@@ -272,9 +272,15 @@ def loadSubmitters(folder, packageName):
 
 meshroomFolder = os.path.dirname(os.path.dirname(__file__))
 
+additionalNodesPath = os.environ.get("MESHROOM_NODES_PATH", "").split(os.pathsep)
+
 # Load plugins:
 # - Nodes
-loadAllNodes(folder=os.path.join(meshroomFolder, 'nodes'))
+nodesFolders = [os.path.join(meshroomFolder, 'nodes')] + additionalNodesPath
+
+for f in nodesFolders:
+    loadAllNodes(folder=f)
+
 # - Submitters
 subs = loadSubmitters(os.environ.get("MESHROOM_SUBMITTERS_PATH", meshroomFolder), 'submitters')
 

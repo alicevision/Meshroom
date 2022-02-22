@@ -273,6 +273,8 @@ def loadSubmitters(folder, packageName):
 meshroomFolder = os.path.dirname(os.path.dirname(__file__))
 
 additionalNodesPath = os.environ.get("MESHROOM_NODES_PATH", "").split(os.pathsep)
+# filter empty strings
+additionalNodesPath = [i for i in additionalNodesPath if i]
 
 # Load plugins:
 # - Nodes

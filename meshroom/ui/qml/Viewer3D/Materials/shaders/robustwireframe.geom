@@ -94,7 +94,7 @@ void main()
     else
     {
         // Viewport projection breaks down for one or two vertices.
-        // Caclulate what we can here and defer rest to fragment shader.
+        // Calculate what we can here and defer rest to fragment shader.
         // Since this is coherent for the entire primitive the conditional
         // in the fragment shader is still cheap as all concurrent
         // fragment shader invocations will take the same code path.

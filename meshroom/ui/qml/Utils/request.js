@@ -1,7 +1,7 @@
 .pragma library
 
 /**
- * Perform 'GET' request on url, and bind 'callback' to onreadystatechange (with XHR objet as parameter).
+ * Perform 'GET' request on url, and bind 'callback' to onreadystatechange (with XHR object as parameter).
  */
 function get(url, callback) {
     var xhr = new XMLHttpRequest();

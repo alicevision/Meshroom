@@ -20,7 +20,7 @@ Dialog {
 
     /// Return the text content of this dialog as a simple string.
     /// Used when copying the message in the system clipboard.
-    /// Can be overriden in components extending MessageDialog
+    /// Can be overridden in components extending MessageDialog
     function getAsString() {
         return asString
     }

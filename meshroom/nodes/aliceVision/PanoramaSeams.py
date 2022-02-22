@@ -43,7 +43,7 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
         desc.BoolParam(
             name='useGraphCut',
             label='Use Smart Seams',
-            description='Use a graphcut algorithm to optmize seams for better transitions between images.',
+            description='Use a graphcut algorithm to optimize seams for better transitions between images.',
             value=True,
             uid=[0],
         ),

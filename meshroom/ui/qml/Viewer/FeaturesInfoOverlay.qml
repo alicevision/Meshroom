@@ -200,7 +200,7 @@ FloatingPane {
                     font.pointSize: 10
                     opacity: featureType.viewer.visible ? 1.0 : 0.6
                 }
-                // Tracks visibility toogle
+                // Tracks visibility toggle
                 MaterialToolButton {
                     id: tracksVisibilityButton
                     checkable: true
@@ -213,7 +213,7 @@ FloatingPane {
                     }
                     font.pointSize: 10
                 }
-                // Matches visibility toogle
+                // Matches visibility toggle
                 MaterialToolButton {
                     id: matchesVisibilityButton
                     checkable: true
@@ -225,7 +225,7 @@ FloatingPane {
                     }
                     font.pointSize: 10
                 }
-                // Landmarks visibility toogle
+                // Landmarks visibility toggle
                 MaterialToolButton {
                     id: landmarksVisibilityButton
                     checkable: true

@@ -200,7 +200,7 @@ Upload a textured mesh on Sketchfab.
                 modelEndpoint, **{'data': body, 'headers': headers})
             chunk.logManager.completeProgressBar()
         except requests.exceptions.RequestException as e:
-            chunk.logger.error(u'An error occured: {}'.format(e))
+            chunk.logger.error(u'An error occurred: {}'.format(e))
             raise RuntimeError() 
         if r.status_code != requests.codes.created:
             chunk.logger.error(u'Upload failed with error: {}'.format(r.json()))

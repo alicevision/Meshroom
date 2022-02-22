@@ -116,7 +116,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.ChoiceParam(
             name='observationConstraint',
             label='Observation Constraint',
-            description='Observation contraint mode used in the optimization:\n'
+            description='Observation constraint mode used in the optimization:\n'
                         ' * Basic: Use standard reprojection error in pixel coordinates\n'
                         ' * Scale: Use reprojection error in pixel coordinates but relative to the feature scale',
             value='Scale',

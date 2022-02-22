@@ -120,7 +120,7 @@ Item {
                         }
                         Action {
                             id: displayLensDistortionToolBarAction
-                            text: "Display Lens Distorsion Toolbar"
+                            text: "Display Lens Distortion Toolbar"
                             checkable: true
                             checked: true
                             enabled: viewer2D.useLensDistortionViewer

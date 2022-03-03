@@ -154,7 +154,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             uid=[0],
             advanced=True,
         ),
-
         desc.FloatParam(
             name='sgmP1',
             label='SGM: P1',
@@ -165,9 +164,9 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             advanced=True,
         ),
         desc.FloatParam(
-            name='sgmP2',
-            label='SGM: P2',
-            description='Semi Global Matching: P2 weight.',
+            name='sgmP2Weighting',
+            label='SGM: P2 Weighting',
+            description='Semi Global Matching: P2 weighting.',
             value=100.0,
             range=(-255.0, 255.0, 0.5),
             uid=[0],

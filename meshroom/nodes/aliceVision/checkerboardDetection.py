@@ -25,6 +25,13 @@ Compute the image warping for each input image in the panorama coordinate system
             value='',
             uid=[0],
         ),
+        desc.BoolParam(
+            name='exportDebugImages',
+            label='Export Debug Images',
+            description='Export Debug Images.',
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
@@ -39,7 +46,7 @@ Compute the image warping for each input image in the panorama coordinate system
     outputs = [
         desc.File(
             name='output',
-            label='Output File',
+            label='Output Directory',
             description='',
             value=desc.Node.internalFolder,
             uid=[],

@@ -3,12 +3,12 @@ __version__ = '2.0'
 from meshroom.core import desc
 
 
-class DistortionCalibration(desc.CommandLineNode):
-    commandLine = 'aliceVision_distortionCalibration {allParams}'
+class IntrinsicsCalibration(desc.CommandLineNode):
+    commandLine = 'aliceVision_intrinsicsCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
     category = 'Other'
     documentation = '''
-    Calibration of a camera/lens couple distortion using a full screen checkerboard
+    Calibration of a camera intrinsics using checkerboards
 '''
 
     inputs = [

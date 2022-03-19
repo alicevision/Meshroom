@@ -80,7 +80,8 @@ Intrinsic = [
             description="Distortion Parameters",
         ),
     desc.BoolParam(name='locked', label='Locked',
-                   description='If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speedup the reconstruction.',
+                   description='If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speedup the reconstruction.\n'
+                   'Parameters: 0 = k1, 1 = k2, 2 = k3, 3 = p1, 4 = p2',
                    value=False, uid=[0]),
 ]
 

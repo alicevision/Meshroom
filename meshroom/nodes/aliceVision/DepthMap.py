@@ -87,6 +87,14 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             range=(0, 500, 1),
             uid=[0],
         ),
+        desc.BoolParam(
+            name='tileMerge',
+            label='Tile Merge',
+            description='Read & merge all computed tiles.',
+            value=False,
+            uid=[0],
+            advanced=True,
+        ),
         desc.IntParam(
             name='sgmScale',
             label='SGM: Downscale factor',

@@ -278,22 +278,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             advanced=True,
         ),
         desc.BoolParam(
-            name='refineUseTcOrRcPixSize',
-            label='Refine: Tc or Rc pixel size',
-            description='Refine: Use minimum pixel size of neighbour cameras (Tc) or current camera pixel size (Rc)',
-            value=False,
-            uid=[0],
-            advanced=True,
-        ),
-        desc.BoolParam(
-            name='refineUseVolumeStrategy',
-            label='Refine: Use Volume Strategy',
-            description='Refine: Use volume strategy instead of legacy strategy for Refine/Fuse',
-            value=False,
-            uid=[0],
-            advanced=True,
-        ),
-        desc.BoolParam(
             name='refineDoRefineFuse',
             label='Refine: Refine and Fuse',
             description='Refine: Perform Refine/Fuse',

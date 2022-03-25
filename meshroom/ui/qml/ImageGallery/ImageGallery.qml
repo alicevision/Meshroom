@@ -474,9 +474,8 @@ Panel {
                 property var columnWidths: [105, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]
                 property var columnNames: [
                     "intrinsicId",
-                    "pxInitialFocalLength",
-                    "pxFocalLength.x",
-                    "pxFocalLength.y",
+                    "initialFocalLength",
+                    "focalLength",
                     "type",
                     "width",
                     "height",
@@ -499,7 +498,6 @@ Panel {
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[9]]} }
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[10]]} }
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[11]]} }
-                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[12]]} }
                 //https://doc.qt.io/qt-5/qml-qt-labs-qmlmodels-tablemodel.html#appendRow-method
             }
 

@@ -358,8 +358,9 @@ class ViewpointWrapper(QObject):
         """ Get camera vertical field of view in degrees. """
         if not self.solvedIntrinsics:
             return None
-        pxFocalLength = self.solvedIntrinsics["pxFocalLength"]
-        return 2.0 * math.atan(self.orientedImageSize.height() / (2.0 * float(pxFocalLength[0]))) * 180 / math.pi
+        focalLength = self.solvedIntrinsics["focalLength"]
+        sensorHeight = self.solvedIntrinsics["sensorHeight"]
+        return 2.0 * math.atan(sensorHeight / (2.0 * float(focalLength))) * 180 / math.pi
 
     @Property(type=QUrl, notify=denseSceneParamsChanged)
     def undistortedImageSource(self):

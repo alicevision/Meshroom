@@ -1,4 +1,4 @@
-__version__ = "6.0"
+__version__ = "7.0"
 
 import os
 import json
@@ -28,16 +28,17 @@ Viewpoint = [
 
 Intrinsic = [
     desc.IntParam(name="intrinsicId", label="Id", description="Intrinsic UID", value=-1, uid=[0], range=None),
-    desc.FloatParam(name="pxInitialFocalLength", label="Initial Focal Length",
+    desc.FloatParam(name="initialFocalLength", label="Initial Focal Length",
                     description="Initial Guess on the Focal Length (in pixels). \n"
                     "When we have an initial value from EXIF, this value is not accurate but cannot be wrong. \n"
                     "So this value is used to limit the range of possible values in the optimization. \n"
                     "If you put -1, this value will not be used and the focal length will not be bounded.",
                     value=-1.0, uid=[0], range=None),
-    desc.GroupAttribute(name="pxFocalLength", label="Focal Length", description="Known/Calibrated Focal Length (in pixels)", groupDesc=[
-        desc.FloatParam(name="x", label="x", description="", value=-1, uid=[], range=(0, 10000, 1)),
-        desc.FloatParam(name="y", label="y", description="", value=-1, uid=[], range=(0, 10000, 1)),
-        ]),
+    desc.FloatParam(name="focalLength", label="Focal Length", description="Known/Calibrated Focal Length (in mm)", value=1000, uid=[], range=(0, 10000, 1)),
+    desc.FloatParam(name="pixelRatio", label="pixel Ratio", description="ratio between pixel width and pixel height", value=1, uid=[], range=(0, 10, 0.1)),
+    desc.BoolParam(name='pixelRatioLocked', label='Pixel ratio Locked',
+                   description='the pixelRatio value is locked for estimation',
+                   value=False, uid=[0]),
     desc.ChoiceParam(name="type", label="Camera Type",
                      description="Mathematical Model used to represent a camera:\n"
                      " * pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
@@ -106,11 +107,6 @@ def readSfMData(sfmFile):
         intrinsic['principalPoint'] = {}
         intrinsic['principalPoint']['x'] = pp[0]
         intrinsic['principalPoint']['y'] = pp[1]
-
-        f = intrinsic['pxFocalLength']
-        intrinsic['pxFocalLength'] = {}
-        intrinsic['pxFocalLength']['x'] = f[0]
-        intrinsic['pxFocalLength']['y'] = f[1]
 
         # convert empty string distortionParams (i.e: Pinhole model) to empty list
         if intrinsic['distortionParams'] == '':
@@ -255,12 +251,6 @@ The metadata needed are:
     ]
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
-        # Starting with version 5, the focal length is now split on x and y
-        if fromVersion < Version(5, 0):
-            for intrinsic in attrValues['intrinsics']:
-                pxFocalLength = intrinsic['pxFocalLength']
-                if not isinstance(pxFocalLength, dict):
-                    intrinsic['pxFocalLength'] = {"x": pxFocalLength, "y": pxFocalLength}
 
         # Starting with version 6, the principal point is now relative to the image center
         if fromVersion < Version(6, 0):
@@ -270,6 +260,20 @@ The metadata needed are:
                     "x": int(principalPoint["x"] - 0.5 * intrinsic['width']),
                     "y": int(principalPoint["y"] - 0.5 * intrinsic['height'])
                     }
+
+        # Starting with version 7, the focal length is now in mm
+        if fromVersion < Version(7, 0):
+            for intrinsic in attrValues['intrinsics']:
+                pxInitialFocalLength = intrinsic['pxInitialFocalLength']
+                pxFocalLength = intrinsic['pxFocalLength']
+                sensorWidth = intrinsic['sensorWidth']
+                width = intrinsic['width']
+                focalLength = (pxFocalLength / width) * sensorWidth
+                initialFocalLength = (pxInitialFocalLength / width) * sensorWidth
+                intrinsic['initialFocalLength'] = initialFocalLength
+                intrinsic['focalLength'] = focalLength
+                intrinsic['pixelRatio'] = 1.0
+                intrinsic['pixelRatioLocked'] = False
 
         return attrValues
 
@@ -329,7 +333,6 @@ The metadata needed are:
             intrinsics = node.intrinsics.getPrimitiveValue(exportDefault=True)
             for intrinsic in intrinsics:
                 intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
-                intrinsic['pxFocalLength'] = [intrinsic['pxFocalLength']['x'], intrinsic['pxFocalLength']['y']]
             views = node.viewpoints.getPrimitiveValue(exportDefault=False)
 
             # convert the metadata string into a map
@@ -338,7 +341,7 @@ The metadata needed are:
                     view['metadata'] = json.loads(view['metadata'])
 
             sfmData = {
-                "version": [1, 2, 1],
+                "version": [1, 2, 2],
                 "views": views + newViews,
                 "intrinsics": intrinsics,
                 "featureFolder": "",

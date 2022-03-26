@@ -46,6 +46,34 @@ ApplicationWindow {
     SystemPalette { id: activePalette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
+    MessageDialog {
+        id: updateDialog
+        title: "Update Available"
+        preset: "Info"
+        canCopy: false
+        standardButtons: Dialog.Ok
+    }
+
+    // check for updates
+    Component.onCompleted: {
+        Request.get("https://github.com/alicevision/meshroom/tags",
+            function(xhr) {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) { // status is OK
+                        var version = xhr.responseText.match(/\d{4}\.\d+\.\d+/)[0];
+                        var currentVersion = Qt.application.version.split("-")[0];
+                        if (version != currentVersion) {
+                            updateDialog.text = "<a href=\"https://github.com/alicevision/meshroom/releases\">Download v"+version+"</a>"
+                            updateDialog.open()
+                        }
+                    } else {
+                        console.warn("Could not check for updates. Code: " + xhr.status)
+                    }
+                }
+            }
+        )
+    }
+
     Settings {
         id: settings_General
         category: 'General'

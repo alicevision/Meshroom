@@ -38,7 +38,7 @@ Intrinsic = [
     desc.FloatParam(name="pixelRatio", label="pixel Ratio", description="ratio between pixel width and pixel height", value=1, uid=[], range=(0, 10, 0.1)),
     desc.BoolParam(name='pixelRatioLocked', label='Pixel ratio Locked',
                    description='the pixelRatio value is locked for estimation',
-                   value=False, uid=[0]),
+                   value=True, uid=[0]),
     desc.ChoiceParam(name="type", label="Camera Type",
                      description="Mathematical Model used to represent a camera:\n"
                      " * pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"

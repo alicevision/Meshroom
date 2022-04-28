@@ -261,7 +261,7 @@ class UIGraph(QObject):
     UIGraph exposes undoable methods on its graph and computation in a separate thread.
     It also provides a monitoring of all its computation units (NodeChunks).
     """
-    def __init__(self, undoStack, taskManager, parent=None):
+    def __init__(self, undoStack, taskManager, submitLabel='%j', parent=None):
         super(UIGraph, self).__init__(parent)
         self._undoStack = undoStack
         self._taskManager = taskManager
@@ -276,6 +276,7 @@ class UIGraph(QObject):
         self._selectedNode = None
         self._selectedNodes = QObjectListModel(parent=self)
         self._hoveredNode = None
+        self.submitLabel = submitLabel
 
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
 
@@ -450,7 +451,7 @@ class UIGraph(QObject):
         self.save()  # graph must be saved before being submitted
         self._undoStack.clear()  # the undo stack must be cleared
         node = [node] if node else None
-        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
+        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node, submitLabel=self.submitLabel)
 
     def updateGraphComputingStatus(self):
         # update graph computing status

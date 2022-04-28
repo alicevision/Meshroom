@@ -9,7 +9,7 @@ class BaseSubmitter(BaseObject):
         super(BaseSubmitter, self).__init__(parent)
         self._name = name
 
-    def submit(self, nodes, edges, filepath):
+    def submit(self, nodes, edges, filepath, submitLabel="%j"):
         """ Submit the given graph
          Returns:
              bool: whether the submission succeeded

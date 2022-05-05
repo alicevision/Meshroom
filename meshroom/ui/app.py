@@ -124,7 +124,7 @@ class MeshroomApp(QApplication):
         self.engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
         # whether to output qml warnings to stderr (disable by default)
         self.engine.setOutputWarningsToStandardError(MessageHandler.outputQmlWarnings)
-        qInstallMessageHandler(MessageHandler.handler)
+        #qInstallMessageHandler(MessageHandler.handler)
 
         self.engine.addImportPath(qmlDir)
         components.registerTypes()

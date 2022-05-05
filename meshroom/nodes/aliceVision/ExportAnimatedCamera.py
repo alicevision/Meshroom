@@ -73,6 +73,13 @@ Based on the input image filenames, it will recognize the input video sequence t
             value=True,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='correctPixelRatio',
+            label='Make sure pixel are square',
+            description='Correct Principal Point.',
+            value=True,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

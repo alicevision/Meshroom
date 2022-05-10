@@ -32,6 +32,13 @@ Compute the image warping for each input image in the panorama coordinate system
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='doubleSize',
+            label='Double Size',
+            description='Double the image size prior to processing.',
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

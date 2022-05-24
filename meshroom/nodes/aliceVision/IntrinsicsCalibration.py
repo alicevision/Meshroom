@@ -36,6 +36,13 @@ class IntrinsicsCalibration(desc.CommandLineNode):
             exclusive=True,
             uid=[],
         ),
+        desc.BoolParam(
+            name='useSimplePinhole',
+            label='use simple pinhole',
+            description='remove distortion for final result',
+            value=True,
+            uid=[0],
+        ),
     ]
 
     outputs = [

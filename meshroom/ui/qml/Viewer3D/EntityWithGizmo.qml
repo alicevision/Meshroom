@@ -25,7 +25,7 @@ Entity {
         frontLayerComponent: root.frontLayerComponent
         window: root.window
 
-        onPickedChanged: {
+        onPickedChanged: function (pressed) {
             sceneCameraController.loseMouseFocus = pressed // Notify the camera if the transform takes/releases the focus
         }
     }

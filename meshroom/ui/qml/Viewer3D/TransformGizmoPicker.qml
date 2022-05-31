@@ -22,7 +22,7 @@ ObjectPicker {
     
     hoverEnabled: true
 
-    onPressed: {
+    onPressed: function (pick) {
         mouseController.enabled = true
         mouseController.objectPicker = this
         root.isPressed = true

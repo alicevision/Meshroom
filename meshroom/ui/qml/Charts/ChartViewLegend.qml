@@ -29,8 +29,8 @@ Flow {
     // Update internal ListModel when ChartView's series change
     Connections {
         target: chartView
-        function onSeriesAdded() { seriesModel.append({"series": series}) }
-        function onSeriesRemoved() {
+        function onSeriesAdded(series) { seriesModel.append({"series": series}) }
+        function onSeriesRemoved(series) {
             for(var i = 0; i < seriesModel.count; ++i)
             {
                 if(seriesModel.get(i)["series"] === series)
@@ -84,7 +84,7 @@ Flow {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: {
+                onClicked: function (mouse) {
                     if(mouse.modifiers & Qt.ControlModifier)
                         root.soloSeries(index);
                     else

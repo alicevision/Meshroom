@@ -112,7 +112,7 @@ Item {
                 keyNavigationEnabled: false
                 highlightFollowsCurrentItem: true
                 highlightMoveDuration: 0
-                Keys.onPressed: {
+                Keys.onPressed: function (event) {
                     switch(event.key)
                     {
                     case Qt.Key_Home:

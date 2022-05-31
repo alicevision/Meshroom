@@ -29,7 +29,7 @@ ApplicationWindow {
         return t
     }
 
-    onClosing: {
+    onClosing: function(close) {
         // make sure document is saved before exiting application
         close.accepted = false
         if(!ensureNotComputing())
@@ -321,7 +321,6 @@ ApplicationWindow {
     FileDialog {
         id: importSceneDialog
         title: "Import Scene"
-        selectMultiple: false
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
             graphEditor.uigraph.importScene(importSceneDialog.fileUrl)
@@ -938,7 +937,7 @@ ApplicationWindow {
                     uigraph: _reconstruction
                     nodeTypesModel: _nodeTypes
 
-                    onNodeDoubleClicked: {
+                    onNodeDoubleClicked: function (mouse, node) {
                         _reconstruction.setActiveNode(node);
 
                         let viewable = false;
@@ -949,8 +948,8 @@ ApplicationWindow {
                                 break;
                         }
                     }
-                    onComputeRequest: computeManager.compute(node)
-                    onSubmitRequest: computeManager.submit(node)
+                    onComputeRequest: function (node) { computeManager.compute(node) }
+                    onSubmitRequest: function (node) { computeManager.submit(node) }
                 }
 
                 TaskManager {
@@ -974,7 +973,7 @@ ApplicationWindow {
                 // Make NodeEditor readOnly when computing
                 readOnly: node ? node.locked : false
 
-                onAttributeDoubleClicked: workspaceView.viewAttribute(attribute, mouse)
+                onAttributeDoubleClicked: function (mouse, attribute) { workspaceView.viewAttribute(attribute, mouse) }
                 onUpgradeRequest: {
                     var n = _reconstruction.upgradeNode(node);
                     _reconstruction.selectedNode = n;

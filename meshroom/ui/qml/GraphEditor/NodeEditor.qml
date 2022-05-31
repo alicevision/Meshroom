@@ -216,7 +216,7 @@ Panel {
                             Layout.fillWidth: true
                             model: root.node.attributes
                             readOnly: root.readOnly || root.isCompatibilityNode
-                            onAttributeDoubleClicked: root.attributeDoubleClicked(mouse, attribute)
+                            onAttributeDoubleClicked: function (mouse, attribute) { root.attributeDoubleClicked(mouse, attribute) }
                             onUpgradeRequest: root.upgradeRequest()
                         }
 

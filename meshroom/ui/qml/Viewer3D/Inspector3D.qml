@@ -25,7 +25,10 @@ FloatingPane {
 
     padding: 0
 
-    MouseArea { anchors.fill: parent; onWheel: wheel.accepted = true }
+    MouseArea {
+        anchors.fill: parent;
+        onWheel: function (wheel) { wheel.accepted = true }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -192,7 +195,7 @@ FloatingPane {
 
                 Connections {
                     target: mediaLibrary
-                    function onLoadRequest() {
+                    function onLoadRequest(idx) {
                         mediaListView.positionViewAtIndex(idx, ListView.Visible);
                     }
                 }
@@ -217,7 +220,7 @@ FloatingPane {
                     hoverEnabled: true
                     onEntered: { if(model.attribute) uigraph.hoveredNode = model.attribute.node }
                     onExited: { if(model.attribute) uigraph.hoveredNode = null }
-                    onClicked: {
+                    onClicked: function (mouse) {
                         if(model.attribute)
                             uigraph.selectedNode = model.attribute.node;
                         else
@@ -277,9 +280,9 @@ FloatingPane {
                                 property int modifiers
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                onPositionChanged: modifiers = mouse.modifiers
+                                onPositionChanged: function (mouse) { modifiers = mouse.modifiers; }
                                 onExited: modifiers = Qt.NoModifier
-                                onPressed: {
+                                onPressed: function (mouse) {
                                     modifiers = mouse.modifiers;
                                     mouse.accepted = false;
                                 }
@@ -342,7 +345,7 @@ FloatingPane {
                                     background: Rectangle {
                                         Connections {
                                             target: mediaLibrary
-                                            function onLoadRequest() { if(idx == index) focusAnim.restart() }
+                                            function onLoadRequest(idx) { if(idx == index) focusAnim.restart() }
                                         }
                                         ColorAnimation on color {
                                             id: focusAnim

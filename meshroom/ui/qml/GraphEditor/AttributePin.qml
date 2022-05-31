@@ -39,8 +39,8 @@ RowLayout {
     Repeater {
         id: childrenRepeater
         model: isList && !attribute.isLink ? attribute.value : 0
-        onItemAdded: {childPinCreated(item.childAttribute, item)}
-        onItemRemoved: {childPinDeleted(item.childAttribute, item)}
+        onItemAdded: function(item) {childPinCreated(item.childAttribute, item)}
+        onItemRemoved: function(item) {childPinDeleted(item.childAttribute, item)}
         delegate: Item {
             property var childAttribute: object
         }
@@ -82,7 +82,7 @@ RowLayout {
             anchors.rightMargin: -root.width * 0.3
 
             keys: [inputDragTarget.objectName]
-            onEntered: {
+            onEntered: function (drag) {
                 // Check if attributes are compatible to create a valid connection
                 if( root.readOnly                                         // cannot connect on a read-only attribute
                   || drag.source.objectName != inputDragTarget.objectName // not an edge connector
@@ -109,7 +109,7 @@ RowLayout {
                 drag.source.dropAccepted = false
             }
 
-            onDropped: {
+            onDropped: function (drop) {
                 root.edgeAboutToBeRemoved(undefined)
                 _reconstruction.addEdge(drag.source.attribute, inputDragTarget.attribute)
             }
@@ -147,7 +147,7 @@ RowLayout {
             anchors.margins: inputDropArea.anchors.margins
             anchors.leftMargin: inputDropArea.anchors.leftMargin
             anchors.rightMargin: inputDropArea.anchors.rightMargin
-            onPressed: {
+            onPressed: function (mouse) {
                 root.pressed(mouse)
             }
             onReleased: {
@@ -232,7 +232,7 @@ RowLayout {
             anchors.leftMargin: -root.width * 0.2
 
             keys: [outputDragTarget.objectName]
-            onEntered: {
+            onEntered: function (drag) {
                 // Check if attributes are compatible to create a valid connection
                 if( drag.source.objectName != outputDragTarget.objectName // not an edge connector
                   || drag.source.baseType != outputDragTarget.baseType    // not the same base type
@@ -255,7 +255,7 @@ RowLayout {
                 acceptableDrop = false
             }
 
-            onDropped: {
+            onDropped: function (drop) {
                 root.edgeAboutToBeRemoved(undefined)
                 _reconstruction.addEdge(outputDragTarget.attribute, drag.source.attribute)
             }
@@ -293,7 +293,7 @@ RowLayout {
             anchors.leftMargin: outputDropArea.anchors.leftMargin
             anchors.rightMargin: outputDropArea.anchors.rightMargin
 
-            onPressed: root.pressed(mouse)
+            onPressed: function (mouse) { root.pressed(mouse)}
             onReleased: outputDragTarget.Drag.drop()
 
             hoverEnabled: true

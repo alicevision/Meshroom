@@ -62,7 +62,7 @@ RowLayout {
                     anchors.fill: parent
                     hoverEnabled: true
                     acceptedButtons: Qt.AllButtons
-                    onDoubleClicked: root.doubleClicked(mouse, root.attribute)
+                    onDoubleClicked: function (mouse) { root.doubleClicked(mouse, root.attribute) }
 
                     property Component menuComp: Menu {
                         id: paramMenu
@@ -97,7 +97,7 @@ RowLayout {
                         }
                     }
 
-                    onClicked: {
+                    onClicked: function (mouse) {
                         forceActiveFocus()
                         if(mouse.button == Qt.RightButton)
                         {
@@ -174,7 +174,7 @@ RowLayout {
                 DropArea {
                     enabled: root.editable
                     anchors.fill: parent
-                    onDropped: {
+                    onDropped: function (drop) {
                         if(drop.hasUrls)
                             setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
                         else if(drop.hasText && drop.text != '')

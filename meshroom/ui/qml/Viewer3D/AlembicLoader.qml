@@ -70,11 +70,11 @@ AlembicEntity {
                 ObjectPicker {
                     id: cameraPicker
                     property point pos
-                    onPressed: {
+                    onPressed: function (pick) {
                         pos = pick.position;
                         pick.accepted = (pick.buttons & Qt.LeftButton) && cameraPickingEnabled
                     }
-                    onReleased: {
+                    onReleased: function (pick) {
                         const delta = Qt.point(Math.abs(pos.x - pick.position.x), Math.abs(pos.y - pick.position.y));
                         // only trigger picking when mouse has not moved between press and release
                         if(delta.x + delta.y < 4)

@@ -339,7 +339,7 @@ Entity {
                     ObjectPicker {
                         enabled: mediaLoader.enabled && pickingEnabled
                         hoverEnabled: false
-                        onPressed: root.pressed(pick)
+                        onPressed: function (pick) { root.pressed(pick) }
                     }
                 ]
             }
@@ -383,12 +383,12 @@ Entity {
             }
         }
 
-        onObjectAdded: {
+        onObjectAdded: function(object) {
             // notify object that it is now fully instantiated
             object.fullyInstantiated = true;
         }
 
-        onObjectRemoved: {
+        onObjectRemoved: function(object) {
             if(m.sourceToEntity[object.modelSource])
                 delete m.sourceToEntity[object.modelSource]
         }

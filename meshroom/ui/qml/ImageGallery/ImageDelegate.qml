@@ -37,7 +37,7 @@ Item {
         anchors.margins: 6
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onPressed: {
+        onPressed: function (mouse) {
             if (mouse.button == Qt.RightButton)
                 imageMenu.popup()
             root.pressed(mouse)

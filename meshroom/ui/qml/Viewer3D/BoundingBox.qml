@@ -56,7 +56,6 @@ Entity {
                     count: 24
                     name: defaultPositionAttributeName
                     buffer: Buffer {
-                        type: Buffer.VertexBuffer
                         data: new Float32Array([
                             1.0, 1.0, 1.0,
                             1.0, -1.0, 1.0,

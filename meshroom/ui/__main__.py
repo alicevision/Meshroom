@@ -9,4 +9,4 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     from meshroom.ui.app import MeshroomApp
     app = MeshroomApp(sys.argv)
-    app.exec_()
+    app.exec()

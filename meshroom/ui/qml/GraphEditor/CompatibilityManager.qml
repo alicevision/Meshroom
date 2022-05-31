@@ -70,7 +70,7 @@ MessageDialog {
             headerPositioning: ListView.OverlayHeader
             header: Pane {
                 z: 2
-                width: ListView.view.width
+                width: parent.width
                 padding: 6
                 background: Rectangle { color: Qt.darker(parent.palette.window, 1.15) }
                 RowLayout {

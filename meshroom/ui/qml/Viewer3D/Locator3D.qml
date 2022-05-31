@@ -19,7 +19,6 @@ Entity {
                     count: 6
                     name: defaultPositionAttributeName
                     buffer: Buffer {
-                        type: Buffer.VertexBuffer
                         data: new Float32Array([
                             0.0, 0.001, 0.0,
                             1.0, 0.001, 0.0,
@@ -37,7 +36,6 @@ Entity {
                     count: 6
                     name: defaultColorAttributeName
                     buffer: Buffer {
-                        type: Buffer.VertexBuffer
                         data: new Float32Array([
                             Colors.red.r, Colors.red.g, Colors.red.b,
                             Colors.red.r, Colors.red.g, Colors.red.b,

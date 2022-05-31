@@ -196,15 +196,15 @@ Item {
   
                 property alias viewer3D: c_viewer3D
 
-                Controls1.SplitView {
+                SplitView {
                     id: c_viewer3DSplitView
                     anchors.fill: parent
                     Viewer3D {
                         id: c_viewer3D
 
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumWidth: 20
+                        SplitView.fillWidth: true
+                        SplitView.fillHeight: true
+                        SplitView.minimumWidth: 20
 
                         DropArea {
                             anchors.fill: parent
@@ -232,8 +232,8 @@ Item {
                     // Inspector Panel
                     Inspector3D {
                         id: inspector3d
-                        width: 200
-                        Layout.minimumWidth: 5
+                        SplitView.preferredWidth: 200
+                        SplitView.minimumWidth: 5
 
                         mediaLibrary: c_viewer3D.library
                         camera: c_viewer3D.mainCamera

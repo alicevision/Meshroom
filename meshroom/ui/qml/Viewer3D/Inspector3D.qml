@@ -4,7 +4,6 @@ import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import Qt3D.Core 2.15
 import Qt3D.Render 2.15
-import QtQuick.Controls.Material 2.4
 import Controls 1.0
 import Utils 1.0
 
@@ -215,7 +214,7 @@ FloatingPane {
                     }
 
                     height: childrenRect.height
-                    width: parent.width - scrollBar.width
+                    width: ListView.view.width - scrollBar.width
 
                     hoverEnabled: true
                     onEntered: { if(model.attribute) uigraph.hoveredNode = model.attribute.node }

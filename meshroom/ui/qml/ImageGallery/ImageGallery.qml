@@ -234,7 +234,7 @@ Panel {
 
                     isCurrentItem: GridView.isCurrentItem
 
-                    onPressed: {
+                    onPressed: function (mouse) {
                         grid.currentIndex = DelegateModel.filteredIndex
                         if(mouse.button == Qt.LeftButton)
                             grid.forceActiveFocus()
@@ -308,7 +308,7 @@ Panel {
 
             // Keyboard shortcut to change current image group
             Keys.priority: Keys.BeforeItem
-            Keys.onPressed: {
+            Keys.onPressed: function (event) {
                 if(event.modifiers & Qt.AltModifier)
                 {
                     if(event.key == Qt.Key_Right)
@@ -390,7 +390,7 @@ Panel {
                 enabled: !m.readOnly && !intrinsicsFilterButton.checked
                 keys: ["text/uri-list"]
                 // TODO: onEntered: call specific method to filter files based on extension
-                onDropped: {
+                onDropped: function (drop) {
                     var augmentSfm = augmentArea.hovered
                     root.filesDropped(drop, augmentSfm)
                 }

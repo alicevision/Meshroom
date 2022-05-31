@@ -47,19 +47,19 @@ Entity {
         property point currentPosition
         property bool hasMoved
         sourceDevice: loseMouseFocus ? null : mouseSourceDevice
-        onPressed: {
+        onPressed: function(mouse) {
             _pressed = true;
             currentPosition.x = lastPosition.x = mouse.x;
             currentPosition.y = lastPosition.y = mouse.y;
             hasMoved = false;
             mousePressed(mouse);
         }
-        onReleased: {
+        onReleased: function(mouse) {
             _pressed = false;
             mouseReleased(mouse, hasMoved);
         }
-        onClicked: mouseClicked(mouse)
-        onPositionChanged: {
+        onClicked: function(mouse) { mouseClicked(mouse); }
+        onPositionChanged: function(mouse) {
             currentPosition.x = mouse.x;
             currentPosition.y = mouse.y;
 
@@ -87,8 +87,8 @@ Entity {
                 return;
             }
         }
-        onDoubleClicked: mouseDoubleClicked(mouse)
-        onWheel: {
+        onDoubleClicked: function(mouse) { mouseDoubleClicked(mouse); }
+        onWheel: function(wheel) {
             var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.2;
             var tz = (wheel.angleDelta.y / 120) * d;
             root.camera.translate(Qt.vector3d(0, 0, tz), Camera.DontTranslateViewCenter)
@@ -104,7 +104,7 @@ Entity {
         // stays active, even when it's released.
         // Handle this issue manually by keeping an additional _pressed state
         // which is cleared when focus changes (used for 'pickingActive' property).
-        onFocusChanged: if(!focus) _pressed = false
+        onFocusChanged: function (focus) { if(!focus) _pressed = false; }
         onPressed: _pressed = true
         onReleased: _pressed = false
     }

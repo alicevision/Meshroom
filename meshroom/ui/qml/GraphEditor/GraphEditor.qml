@@ -76,7 +76,7 @@ Item {
     }
 
 
-    Keys.onPressed: {
+    Keys.onPressed: function (event) {
         if(event.key === Qt.Key_F)
             fit()
         if(event.key === Qt.Key_Delete)
@@ -103,7 +103,7 @@ Item {
         drag.threshold: 0
         cursorShape: drag.target == draggable ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
-        onWheel: {
+        onWheel: function (wheel) {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
             var scale = draggable.scale * zoomFactor
             scale = Math.min(Math.max(minZoom, scale), maxZoom)
@@ -116,7 +116,7 @@ Item {
             workspaceMoved()
         }
 
-        onPressed: {
+        onPressed: function (mouse) {
             if (mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier) {
                 uigraph.clearNodeSelection()
             }
@@ -141,7 +141,7 @@ Item {
                 workspaceMoved()
         }
 
-        onClicked: {
+        onClicked: function (mouse) {
             if(mouse.button == Qt.RightButton)
             {
                 // store mouse click position in 'draggable' coordinates as new node spawn position
@@ -209,7 +209,7 @@ Item {
                     // Forward key events to the search bar to continue typing seamlessly
                     // even if this delegate took the activeFocus due to mouse hovering
                     Keys.forwardTo: [searchBar.textField]
-                    Keys.onPressed: {
+                    Keys.onPressed: function (event) {
                         event.accepted = false;
                         switch(event.key) {
                             case Qt.Key_Return:
@@ -256,8 +256,8 @@ Item {
             // Dynamically add the menu categories
             Instantiator {
                 model: !(searchBar.text != "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
-                onObjectAdded: newNodeMenu.insertMenu(index+1, object ) // add sub-menu under the search bar
-                onObjectRemoved: newNodeMenu.removeMenu(object)
+                onObjectAdded: function (index, object) { newNodeMenu.insertMenu(index+1, object ); } // add sub-menu under the search bar
+                onObjectRemoved: function (index, object) { newNodeMenu.removeMenu(object); }
 
                 delegate: Menu {
                     title: modelData
@@ -265,8 +265,8 @@ Item {
 
                     Instantiator {
                         model: newNodeMenu.visible && newNodeSubMenu.activeFocus ? newNodeMenu.parseCategories()[modelData] : undefined
-                        onObjectAdded: newNodeSubMenu.insertItem(index, object)
-                        onObjectRemoved: newNodeSubMenu.removeItem(object)
+                        onObjectAdded: function (index, object) { newNodeSubMenu.insertItem(index, object); }
+                        onObjectRemoved: function (index, object) { newNodeSubMenu.removeItem(object); }
                         delegate: menuItemDelegateComponent
                     }
                 }
@@ -323,7 +323,7 @@ Item {
                     point1y: isValidEdge ? src.globalY + src.outputAnchorPos.y : 0
                     point2x: isValidEdge ? dst.globalX + dst.inputAnchorPos.x : 0
                     point2y: isValidEdge ? dst.globalY + dst.inputAnchorPos.y : 0
-                    onPressed: {
+                    onPressed: function (mouse) {
                         const canEdit = !edge.dst.node.locked
 
                         if(event.button == Qt.RightButton)
@@ -496,10 +496,10 @@ Item {
                     selected: uigraph.selectedNodes.contains(node)
                     hovered: uigraph.hoveredNode === node
 
-                    onAttributePinCreated: registerAttributePin(attribute, pin)
-                    onAttributePinDeleted: unregisterAttributePin(attribute, pin)
+                    onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin); }
+                    onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin); }
 
-                    onPressed: {
+                    onPressed: function (mouse) {
                         if (mouse.button == Qt.LeftButton) {
                             if (mouse.modifiers & Qt.ControlModifier && !(mouse.modifiers & Qt.AltModifier)) {
                                 if (mainSelected && selected) {
@@ -527,14 +527,14 @@ Item {
                         selectNode(node)
                     }
 
-                    onDoubleClicked: root.nodeDoubleClicked(mouse, node)
+                    onDoubleClicked: function (mouse) { root.nodeDoubleClicked(mouse, node) }
 
                     onMoved: uigraph.moveNode(node, position, uigraph.selectedNodes)
 
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null
 
-                    onEdgeAboutToBeRemoved: {
+                    onEdgeAboutToBeRemoved: function (input) {
                         /*
                         Sometimes the signals are not in the right order
                         because of weird Qt/QML update order (next DropArea

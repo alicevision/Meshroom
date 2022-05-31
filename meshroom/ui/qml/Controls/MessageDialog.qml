@@ -83,20 +83,20 @@ Dialog {
             id: textLabel
             font.bold: true
             visible: text != ""
-            onLinkActivated: Qt.openUrlExternally(link)
+            onLinkActivated: function (link) { Qt.openUrlExternally(link) }
         }
         // Detailed text
         Label {
             id: detailedLabel
             text: text
             visible: text != ""
-            onLinkActivated: Qt.openUrlExternally(link)
+            onLinkActivated: function (link) { Qt.openUrlExternally(link) }
         }
         // Additional helper text
         Label {
             id: helperLabel
             visible: text != ""
-            onLinkActivated: Qt.openUrlExternally(link)
+            onLinkActivated: function (link) { Qt.openUrlExternally(link) }
         }
     }
 

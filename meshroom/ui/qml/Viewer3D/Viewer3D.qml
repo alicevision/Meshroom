@@ -72,7 +72,7 @@ FocusScope {
         focus: true
 
 
-        Keys.onPressed: {
+        Keys.onPressed: function (event) {
             if (event.key == Qt.Key_F) {
                 resetCameraPosition();
             }
@@ -151,7 +151,7 @@ FocusScope {
 
                 camera: mainCamera
                 focus: scene3D.activeFocus
-                onMousePressed: {
+                onMousePressed: function (mouse) {
                     scene3D.forceActiveFocus()
                     if(mouse.button == Qt.LeftButton)
                     {
@@ -161,7 +161,7 @@ FocusScope {
                     else
                         doubleClickTimer.stop()
                 }
-                onMouseReleased: {
+                onMouseReleased: function (mouse, moved) {
                     if(moving)
                         return
                     if(!moved && mouse.button == Qt.RightButton)
@@ -244,7 +244,7 @@ FocusScope {
                     }
                 ]
 
-                onPressed: {
+                onPressed: function (pick) {
                     if(pick.button == Qt.LeftButton)
                     {
                         mainCamera.viewCenter = pick.worldIntersection;

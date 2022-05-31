@@ -77,8 +77,8 @@ Item {
                 cameraInit: reconstruction.cameraInit
                 tempCameraInit: reconstruction.tempCameraInit
                 cameraInitIndex: reconstruction.cameraInitIndex
-                onRemoveImageRequest: reconstruction.removeAttribute(attribute)
-                onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
+                onRemoveImageRequest: function (attribute) { reconstruction.removeAttribute(attribute) }
+                onFilesDropped: function (drop, augmentSfm) { reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit) }
             }
             LiveSfmView {
                 visible: settings_UILayout.showLiveReconstruction
@@ -158,7 +158,7 @@ Item {
                 DropArea {
                     anchors.fill: parent
                     keys: ["text/uri-list"]
-                    onDropped: {
+                    onDropped: function (drop) {
                         viewer2D.source = drop.urls[0]
                         viewer2D.metadata = {}
                     }
@@ -209,7 +209,7 @@ Item {
                         DropArea {
                             anchors.fill: parent
                             keys: ["text/uri-list"]
-                            onDropped: {
+                            onDropped: function (drop) {
                                 drop.urls.forEach(function(url){ load3DMedia(url); });
                             }
                         }
@@ -238,7 +238,7 @@ Item {
                         mediaLibrary: c_viewer3D.library
                         camera: c_viewer3D.mainCamera
                         uigraph: reconstruction
-                        onNodeActivated: _reconstruction.setActiveNode(node)
+                        onNodeActivated: function (node) { _reconstruction.setActiveNode(node) }
                     }
                 }
             }

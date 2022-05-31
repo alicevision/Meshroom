@@ -208,7 +208,7 @@ Entity {
         property var objectPicker: null
         property bool enabled: false
 
-        onPositionChanged: {
+        onPositionChanged: function (mouse) {
             if (objectPicker && objectPicker.button === Qt.LeftButton) {
                 root.focusGizmoPriority = true
 
@@ -276,7 +276,7 @@ Entity {
                 resetMenu.popup(window)
             }
         }
-        onReleased: {
+        onReleased: function (mouse) {
             if(objectPicker && mouse.button === Qt.LeftButton) {
                 const type = objectPicker.gizmoType
                 objectPicker = null // To prevent going again in the onPositionChanged

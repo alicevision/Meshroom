@@ -108,8 +108,8 @@ Item {
         drag.threshold: 2
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onPressed: root.pressed(mouse)
-        onDoubleClicked: root.doubleClicked(mouse)
+        onPressed: function (mouse) { root.pressed(mouse) }
+        onDoubleClicked: function (mouse) { root.doubleClicked(mouse) }
         onEntered: root.entered()
         onExited: root.exited()
         drag.onActiveChanged: {
@@ -305,8 +305,8 @@ Item {
                                         property real globalX: root.x + nodeAttributes.x + outputs.x + outputLoader.x + outPin.x
                                         property real globalY: root.y + nodeAttributes.y + outputs.y + outputLoader.y + outPin.y
 
-                                        onPressed: root.pressed(mouse)
-                                        onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
+                                        onPressed: function (mouse) { root.pressed(mouse) }
+                                        onEdgeAboutToBeRemoved: function (input) { root.edgeAboutToBeRemoved(input) }
 
                                         Component.onCompleted: attributePinCreated(object, outPin)
                                         Component.onDestruction: attributePinDeleted(attribute, outPin)
@@ -338,10 +338,10 @@ Item {
                                         readOnly: root.readOnly || object.isReadOnly
                                         Component.onCompleted: attributePinCreated(attribute, inPin)
                                         Component.onDestruction: attributePinDeleted(attribute, inPin)
-                                        onPressed: root.pressed(mouse)
-                                        onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
-                                        onChildPinCreated: attributePinCreated(childAttribute, inPin)
-                                        onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
+                                        onPressed: function (mouse) { root.pressed(mouse) }
+                                        onEdgeAboutToBeRemoved: function (input) { root.edgeAboutToBeRemoved(input) }
+                                        onChildPinCreated: function(childAttribute, inPin) { attributePinCreated(childAttribute, inPin); }
+                                        onChildPinDeleted: function(childAttribute, inPin) { attributePinDeleted(childAttribute, inPin); }
                                     }
                                 }
                             }
@@ -398,12 +398,12 @@ Item {
                                             visible: (height == childrenRect.height)
                                             attribute: object
                                             readOnly: root.readOnly || object.isReadOnly
-                                            Component.onCompleted: attributePinCreated(attribute, inPin)
-                                            Component.onDestruction: attributePinDeleted(attribute, inPin)
-                                            onPressed: root.pressed(mouse)
-                                            onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
-                                            onChildPinCreated: attributePinCreated(childAttribute, inPin)
-                                            onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
+                                            Component.onCompleted: function(attribute, inPin) { attributePinCreated(attribute, inPin); }
+                                            Component.onDestruction: function(attribute, inPin) { attributePinDeleted(attribute, inPin); }
+                                            onPressed: function (mouse) { root.pressed(mouse) }
+                                            onEdgeAboutToBeRemoved: function (input) { root.edgeAboutToBeRemoved(input) }
+                                            onChildPinCreated: function(childAttribute, inPin) { attributePinCreated(childAttribute, inPin); }
+                                            onChildPinDeleted: function(childAttribute, inPin) { attributePinDeleted(childAttribute, inPin); }
                                         }
                                     }
                                 }

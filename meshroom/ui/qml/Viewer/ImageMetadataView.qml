@@ -117,7 +117,7 @@ FloatingPane {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.MiddleButton
-        onWheel: wheel.accepted = true
+        onWheel: function (wheel) { wheel.accepted = true }
     }
 
 

@@ -32,7 +32,7 @@ ListView {
             readOnly: root.readOnly
             labelWidth: root.labelWidth
             attribute: object
-            onDoubleClicked: root.attributeDoubleClicked(mouse, attr)
+            onDoubleClicked: function (mouse) { root.attributeDoubleClicked(mouse, attr) }
         }
     }
 

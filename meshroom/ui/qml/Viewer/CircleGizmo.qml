@@ -70,7 +70,7 @@ Rectangle {
             propagateComposedEvents: true
 
             property bool controlModifierEnabled: false
-            onPositionChanged: {
+            onPositionChanged: function (mouse) {
                 mArea.controlModifierEnabled = (mouse.modifiers & Qt.ControlModifier)
                 mouse.accepted = false;
             }
@@ -86,7 +86,7 @@ Rectangle {
             onPressed: {
                 forceActiveFocus();
             }
-            onWheel: {
+            onWheel: function (wheel) {
                 mArea.controlModifierEnabled = (wheel.modifiers & Qt.ControlModifier)
                 if (wheel.modifiers & Qt.ControlModifier) {
                     incrementRadius(wheel.angleDelta.y / 120.0);

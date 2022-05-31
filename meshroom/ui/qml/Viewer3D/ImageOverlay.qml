@@ -69,31 +69,6 @@ Item {
         height: image.paintedHeight
         property variant src: image
         property variant uvCenterOffset
-
-        vertexShader: "
-          #version 330 core
-          uniform highp mat4 qt_Matrix;
-          attribute highp vec4 qt_Vertex;
-          attribute highp vec2 qt_MultiTexCoord0;
-          out highp vec2 coord;
-          void main() {
-              coord = qt_MultiTexCoord0;
-              gl_Position = qt_Matrix * qt_Vertex;
-          }"
-        fragmentShader: "
-         #version 330 core
-          in highp vec2 coord;
-          uniform sampler2D src;
-          uniform lowp vec2 uvCenterOffset;
-          uniform lowp float qt_Opacity;
-          out vec4 fragColor;
-          void main() {
-            vec2 xy = coord + uvCenterOffset;
-            fragColor = texture2D(src, xy);
-            fragColor.rgb *= qt_Opacity;
-            fragColor.a = qt_Opacity;
-            // remove undistortion black pixels
-            fragColor.a *= step(0.001, fragColor.r + fragColor.g + fragColor.b);
-          }"
+        fragmentShader: 'qrc:/shaders/ImageOverlay.frag.qsb'
     }
 }

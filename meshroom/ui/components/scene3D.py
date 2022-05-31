@@ -41,14 +41,14 @@ class Scene3DHelper(QObject):
     def faceCount(self, entity):
         """ Returns face count based on children QGeometry buffers size."""
         count = 0
-        for geo in entity.findChildren(Qt3DRender.QGeometry):
+        for geo in entity.findChildren(Qt3DCore.QGeometry):
             count += sum([attr.count() for attr in geo.attributes() if attr.name() == "vertexPosition"])
         return count / 3
 
     @Slot(Qt3DCore.QEntity, result=int)
     def vertexColorCount(self, entity):
         count = 0
-        for geo in entity.findChildren(Qt3DRender.QGeometry):
+        for geo in entity.findChildren(Qt3DCore.QGeometry):
             count += sum([attr.count() for attr in geo.attributes() if attr.name() == "vertexColor"])
         return count
 
@@ -58,11 +58,12 @@ class TrackballController(QObject):
     Trackball-like camera controller.
     Based on the C++ version from https://github.com/cjmdaixi/Qt3DTrackball
     """
-
-    _windowSize = QSize()
-    _camera = None
-    _trackballSize = 1.0
-    _rotationSpeed = 5.0
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._windowSize = QSize()
+        self._camera = None
+        self._trackballSize = 1.0
+        self._rotationSpeed = 5.0
 
     def projectToTrackball(self, screenCoords):
         sx = screenCoords.x()
@@ -98,7 +99,7 @@ class TrackballController(QObject):
     windowSizeChanged = Signal()
     windowSize = makeProperty(QSize, '_windowSize', windowSizeChanged)
     cameraChanged = Signal()
-    camera = makeProperty(Qt3DRender.QCamera, '_camera', cameraChanged)
+    camera = makeProperty(QObject, '_camera', cameraChanged)
     trackballSizeChanged = Signal()
     trackballSize = makeProperty(float, '_trackballSize', trackballSizeChanged)
     rotationSpeedChanged = Signal()

@@ -3,7 +3,6 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import QtPositioning 5.8
-import QtLocation 5.9
 
 import QtCharts 2.13
 

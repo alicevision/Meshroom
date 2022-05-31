@@ -268,6 +268,7 @@ FocusScope {
 
         sourceComponent: ImageOverlay {
             id: imageOverlay
+            anchors.fill: parent
             source: root.viewpoint.undistortedImageSource
             imageRatio: root.viewpoint.orientedImageSize.width / root.viewpoint.orientedImageSize.height
             uvCenterOffset: root.viewpoint.uvCenterOffset

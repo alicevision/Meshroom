@@ -48,6 +48,10 @@ Panel {
         parseIntr()
     }
 
+    function changeCurrentIndex(newIndex) {
+        _reconstruction.cameraInitIndex = newIndex
+    }
+
     function populate_model()
     {
         intrinsicModel.clear()
@@ -539,7 +543,7 @@ Panel {
                 font.family: MaterialIcons.fontFamily
                 ToolTip.text: "Next Group (Alt+Right)"
                 ToolTip.visible: hovered
-                enabled: root.cameraInitIndex < root.cameraInits.count - 1
+                enabled: nodesCB.currentIndex < root.cameraInits.count - 1
                 onClicked: nodesCB.incrementCurrentIndex()
             }
         }

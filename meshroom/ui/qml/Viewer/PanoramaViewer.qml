@@ -59,6 +59,10 @@ AliceVision.PanoramaViewer {
     property var xStart : 0
     property var yStart : 0
 
+    property var previous_yaw: 0;
+    property var previous_pitch: 0;
+    property var previous_roll: 0;
+
     property double yaw: 0;
     property double pitch: 0;
     property double roll: 0;
@@ -132,18 +136,43 @@ AliceVision.PanoramaViewer {
 
                     // Rotate Panorama
                     if (isRotating && isEditable) {
-                        var xoffset = mouse.x - lastX;
-                        var yoffset = mouse.y - lastY;
-                        lastX = mouse.x;
-                        lastY = mouse.y;
 
-                        // Update Euler Angles
-                        if (mouse.modifiers & Qt.AltModifier) {
-                            root.roll = limitAngle(root.roll + toDegrees((xoffset / width) * mouseMultiplier))
-                        }
-                        else {
-                            root.yaw = limitAngle(root.yaw + toDegrees((xoffset / width) * mouseMultiplier))
-                            root.pitch = limitPitch(root.pitch + toDegrees(-(yoffset / height) * mouseMultiplier))
+                        var nx = Math.max(0, mouse.x)
+                        var nx = Math.min(width - 1, mouse.x)
+                        var ny = Math.max(0, mouse.y)
+                        var ny = Math.min(height - 1, mouse.y)
+
+                        var xoffset = nx - lastX;
+                        var yoffset = ny - lastY;
+
+                        if (xoffset != 0 || yoffset !=0)
+                        {
+                            var latitude_start = (yStart / height) * Math.PI - (Math.PI / 2);
+                            var longitude_start = ((xStart / width) * 2 * Math.PI) - Math.PI;
+                            var latitude_end = (ny / height) * Math.PI - ( Math.PI / 2);
+                            var longitude_end = ((nx / width) * 2 * Math.PI) - Math.PI;
+
+                            var start_pt = Qt.vector2d(latitude_start, longitude_start)
+                            var end_pt = Qt.vector2d(latitude_end, longitude_end)
+
+                            var previous_euler = Qt.vector3d(previous_yaw, previous_pitch, previous_roll)
+
+                            if (mouse.modifiers & Qt.ControlModifier)
+                            {
+                                var result = Transformations3DHelper.updatePanoramaInPlane(previous_euler, start_pt, end_pt)
+                                root.pitch = result.x
+                                root.yaw = result.y
+                                root.roll = result.z  
+                            }
+                            else
+                            {
+                                var result = Transformations3DHelper.updatePanorama(previous_euler, start_pt, end_pt)
+                                root.pitch = result.x
+                                root.yaw = result.y
+                                root.roll = result.z  
+                            }
+
+                                                  
                         }
 
                         _reconstruction.setAttribute(activeNode.attribute("manualTransform.manualRotation.x"), Math.round(root.pitch));
@@ -160,6 +189,10 @@ AliceVision.PanoramaViewer {
 
                     xStart = mouse.x;
                     yStart = mouse.y;
+
+                    previous_yaw = yaw;
+                    previous_pitch = pitch;
+                    previous_roll = roll;
                 }
 
                 onReleased: {

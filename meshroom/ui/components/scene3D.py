@@ -1,4 +1,4 @@
-from math import acos, pi, sqrt
+from math import acos, pi, sqrt, atan2, cos, sin, asin
 
 from PySide2.QtCore import QObject, Slot, QSize, Signal, QPointF
 from PySide2.Qt3DCore import Qt3DCore
@@ -109,6 +109,101 @@ class Transformations3DHelper(QObject):
 
     # ---------- Exposed to QML ---------- #
 
+    @Slot(QVector3D, QVector3D, result=QQuaternion)
+    def rotationBetweenAandB(self, A, B):
+
+        A = A/A.length()
+        B = B/B.length()
+
+        # Get rotation matrix between 2 vectors
+        v = QVector3D.crossProduct(A, B)
+        s = v.length()
+        c = QVector3D.dotProduct(A, B)
+        return QQuaternion.fromAxisAndAngle(v / s, atan2(s, c) * 180 / pi)
+
+    @Slot(QVector3D, result=QVector3D)
+    def fromEquirectangular(self, vector):
+        return QVector3D(cos(vector.x()) * sin(vector.y()), sin(vector.x()), cos(vector.x()) * cos(vector.y()))
+
+    @Slot(QVector3D, result=QVector3D)
+    def toEquirectangular(self, vector):
+        return QVector3D(asin(vector.y()), atan2(vector.x(), vector.z()), 0)
+
+    @Slot(QVector3D, QVector2D, QVector2D, result=QVector3D)
+    def updatePanorama(self, euler, ptStart, ptEnd):
+
+        delta = 1e-3
+
+        #Get initial rotation
+        qStart = QQuaternion.fromEulerAngles(euler.y(), euler.x(), euler.z())
+
+        #Convert input to points on unit sphere
+        vStart = self.fromEquirectangular(QVector3D(ptStart))
+        vStartdY = self.fromEquirectangular(QVector3D(ptStart.x(), ptStart.y() + delta, 0))
+        vEnd = self.fromEquirectangular(QVector3D(ptEnd))
+
+        qAdd = QQuaternion.rotationTo(vStart, vEnd)
+
+
+        #Get the 3D point on unit sphere which would correspond to the no rotation +X
+        vCurrent = qAdd.rotatedVector(vStartdY)
+        vIdeal = self.fromEquirectangular(QVector3D(ptEnd.x(), ptEnd.y() + delta, 0))
+
+        #project on rotation plane
+        lambdaEnd = 1 / QVector3D.dotProduct(vEnd, vCurrent)
+        lambdaIdeal = 1 / QVector3D.dotProduct(vEnd, vIdeal)
+        vPlaneCurrent = lambdaEnd * vCurrent
+        vPlaneIdeal = lambdaIdeal * vIdeal
+
+        #Get the directions
+        rotStart = (vPlaneCurrent - vEnd).normalized()
+        rotEnd = (vPlaneIdeal - vEnd).normalized()
+
+        # Get rotation matrix between 2 vectors
+        v = QVector3D.crossProduct(rotEnd, rotStart)
+        s = QVector3D.dotProduct(v, vEnd)
+        c = QVector3D.dotProduct(rotStart, rotEnd)
+        angle = atan2(s, c) * 180 / pi
+
+        qImage = QQuaternion.fromAxisAndAngle(vEnd, -angle)
+
+        return (qImage * qAdd * qStart).toEulerAngles()
+
+    @Slot(QVector3D, QVector2D, QVector2D, result=QVector3D)
+    def updatePanoramaInPlane(self, euler, ptStart, ptEnd):
+
+        delta = 1e-3
+
+        #Get initial rotation
+        qStart = QQuaternion.fromEulerAngles(euler.y(), euler.x(), euler.z())
+
+        #Convert input to points on unit sphere
+        vStart = self.fromEquirectangular(QVector3D(ptStart))
+        vEnd = self.fromEquirectangular(QVector3D(ptEnd))
+
+        #Get the 3D point on unit sphere which would correspond to the no rotation +X
+        vIdeal = self.fromEquirectangular(QVector3D(ptStart.x(), ptStart.y() + delta, 0))
+
+        #project on rotation plane
+        lambdaEnd = 1 / QVector3D.dotProduct(vStart, vEnd)
+        lambdaIdeal = 1 / QVector3D.dotProduct(vStart, vIdeal)
+        vPlaneEnd = lambdaEnd * vEnd
+        vPlaneIdeal = lambdaIdeal * vIdeal
+
+        #Get the directions
+        rotStart = (vPlaneEnd - vStart).normalized()
+        rotEnd = (vPlaneIdeal - vStart).normalized()
+
+        # Get rotation matrix between 2 vectors
+        v = QVector3D.crossProduct(rotEnd, rotStart)
+        s = QVector3D.dotProduct(v, vStart)
+        c = QVector3D.dotProduct(rotStart, rotEnd)
+        angle = atan2(s, c) * 180 / pi
+
+        qAdd = QQuaternion.fromAxisAndAngle(vStart, angle)
+
+        return (qAdd * qStart).toEulerAngles()
+
     @Slot(QVector4D, Qt3DRender.QCamera, QSize, result=QVector2D)
     def pointFromWorldToScreen(self, point, camera, windowSize):
         """ Compute the Screen point corresponding to a World Point.
@@ -123,7 +218,7 @@ class Transformations3DHelper(QObject):
         viewMatrix = camera.transform().matrix().inverted()
         projectedPoint = (camera.projectionMatrix() * viewMatrix[0]).map(point)
         projectedPoint2D = QVector2D(
-            projectedPoint.x()/projectedPoint.w(), 
+            projectedPoint.x()/projectedPoint.w(),
             projectedPoint.y()/projectedPoint.w()
         )
 
@@ -145,7 +240,7 @@ class Transformations3DHelper(QObject):
                 initialScaleMat (QMatrix4x4): initial scale matrix
                 translateVec (QVector3D): vector used for the local translation
         """
-        # Compute the translation transformation matrix 
+        # Compute the translation transformation matrix
         translationMat = QMatrix4x4()
         translationMat.translate(translateVec)
 

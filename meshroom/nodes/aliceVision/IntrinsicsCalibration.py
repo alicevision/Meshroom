@@ -27,6 +27,7 @@ class IntrinsicsCalibration(desc.CommandLineNode):
             uid=[0],
         ),
         desc.FloatParam(name="squareSize", label="Square size", description="Square size of checkerboard (mm)", value=0.1, uid=[0], range=(0, 1, 0.01)),
+        desc.FloatParam(name="distance", label="Distance", description="Distance to grid (mm)", value=1000, uid=[0], range=(0, 10000, 10)),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

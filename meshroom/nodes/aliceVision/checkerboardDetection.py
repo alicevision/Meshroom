@@ -39,6 +39,13 @@ Compute the image warping for each input image in the panorama coordinate system
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='useNestedGrids',
+            label='Calibration nested grid',
+            description='This image contains a calibration nested grid',
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

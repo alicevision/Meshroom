@@ -123,3 +123,4 @@ def setupEnvironment():
         addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))
 
     os.environ["QSG_RHI_BACKEND"] = "opengl"
+    os.environ["QML_XHR_ALLOW_FILE_READ"] = "1"  # there is no obvious replacement yet

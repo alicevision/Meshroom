@@ -89,7 +89,7 @@ FocusScope {
             if(mtracksLoader.item.status === MTracks.Loading)
                 res += " Tracks";
         }
-        if(msfmDataLoader.status === Loader.Ready)
+        if(msfmDataLoader.status === Loader.Ready && msfmDataLoader.item)
         {
             if(msfmDataLoader.item.status === MSfMData.Loading)
             {
@@ -282,8 +282,7 @@ FocusScope {
                                 'surface.gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
                                 'surface.subdivisions' : Qt.binding(function(){ return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue;}),
                                 'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
-                                'sfmRequired': Qt.binding(function(){ return displayLensDistortionViewer.checked ? true : false;}),
-                                'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
+                                'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                                 'canBeHovered': false,
                                 'idView': Qt.binding(function() { return _reconstruction.selectedViewId; }),
                                 'cropFisheye': false

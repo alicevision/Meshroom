@@ -3,7 +3,6 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.3
 import MaterialIcons 2.2
 import QtPositioning 5.8
-import QtLocation 5.9
 
 import Controls 1.0
 import Utils 1.0
@@ -191,7 +190,7 @@ FloatingPane {
                 filterRole: "raw"
                 filterValue: searchBar.text
                 delegate: RowLayout {
-                    width: parent.width
+                    width: ListView.view.width
                     Label {
                         text: key
                         leftPadding: 6
@@ -251,7 +250,13 @@ FloatingPane {
             Layout.preferredHeight: coordinates.isValid ? 160 : 0
 
             active: coordinates.isValid
+            sourceComponent: Label {
+                anchors.centerIn: parent
+                text: "Map is not currently supported in Qt6"
+            }
 
+            /*
+            https://bugreports.qt.io/browse/QTBUG-96795
             Plugin {
                 id: osmPlugin
                 name: "osm"
@@ -302,6 +307,7 @@ FloatingPane {
                     }
                 }
             }
+            */
         }
     }
 }

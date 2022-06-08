@@ -43,16 +43,21 @@ ApplicationWindow {
         palette.base = _PaletteManager.base
         palette.button = _PaletteManager.button
         palette.buttonText = _PaletteManager.buttonText
+        palette.disabled.buttonText = _PaletteManager.disabledButtonText
         palette.highlight = _PaletteManager.highlight
+        palette.disabled.highlight = _PaletteManager.disabledHighlight
         palette.highlightedText = _PaletteManager.highlightedText
+        palette.disabled.highlightedText = _PaletteManager.disabledHighlightedText
         palette.link = _PaletteManager.link
         palette.mid = _PaletteManager.mid
         palette.shadow = _PaletteManager.shadow
         palette.text = _PaletteManager.text
+        palette.disabled.text = _PaletteManager.disabledText
         palette.toolTipBase = _PaletteManager.toolTipBase
         palette.toolTipText = _PaletteManager.toolTipText
         palette.window = _PaletteManager.window
         palette.windowText = _PaletteManager.windowText
+        palette.disabled.windowText = _PaletteManager.disabledWindowText
     }
     SystemPalette { id: activePalette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }

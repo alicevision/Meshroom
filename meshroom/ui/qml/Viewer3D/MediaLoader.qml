@@ -68,7 +68,7 @@ import Utils 1.0
             components: [
                 SceneLoader {
                     source: parent.source
-                    onStatusChanged: {
+                    onStatusChanged: function (status) {
                         if(status == SceneLoader.Ready) {
                             textureCount = sceneLoaderPostProcess(sceneLoaderEntity);
                             faceCount = Scene3DHelper.faceCount(sceneLoaderEntity)

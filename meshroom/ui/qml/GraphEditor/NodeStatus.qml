@@ -99,7 +99,7 @@ FocusScope {
 
                 delegate: Rectangle {
                     color: activePalette.window
-                    width: parent.width
+                    width: ListView.view.width
                     height: childrenRect.height
                     RowLayout {
                         width: parent.width

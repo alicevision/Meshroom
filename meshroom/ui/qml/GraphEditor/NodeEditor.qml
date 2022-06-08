@@ -113,6 +113,7 @@ Panel {
                         id: chunksLV
                         visible: (tabBar.currentIndex >= 1 && tabBar.currentIndex <= 3)
                         chunks: root.node.chunks
+                        SplitView.preferredWidth: 60
                     }
 
                     StackLayout {

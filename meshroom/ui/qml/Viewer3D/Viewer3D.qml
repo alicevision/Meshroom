@@ -126,7 +126,7 @@ FocusScope {
 
             TrackballGizmo {
                 beamRadius: 4.0/root.height
-                alpha: cameraController.moving ? 1.0 : 0.7
+                alpha: 0.7  // cameraController.moving ? 1.0 : 0.7
                 enabled: Viewer3DSettings.displayGizmo && cameraSelector.camera == mainCamera
                 xColor: Colors.red
                 yColor: Colors.green

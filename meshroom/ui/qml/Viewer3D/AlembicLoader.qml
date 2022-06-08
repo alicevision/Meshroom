@@ -62,7 +62,7 @@ AlembicEntity {
                 },
                 CuboidMesh { id: cameraStick; xExtent: parent.extent * 0.2; yExtent: xExtent; zExtent: xExtent * 50.0 },
                 */
-                PhongMaterial{
+                PhongMaterial {
                     id: mat
                     ambient: viewId === _reconstruction.selectedViewId ? activePalette.highlight : customColor // "#CCC"
                     diffuse: cameraPicker.containsMouse ? Qt.lighter(activePalette.highlight, 1.2) : ambient

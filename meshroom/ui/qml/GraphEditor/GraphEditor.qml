@@ -63,7 +63,7 @@ Item {
         }
     }
 
-    /// Duplicate a node and optionnally all the following ones
+    /// Duplicate a node and optionally all the following ones
     function duplicateNode(duplicateFollowingNodes) {
         if (duplicateFollowingNodes) {
             var nodes = uigraph.duplicateNodesFrom(uigraph.selectedNodes)

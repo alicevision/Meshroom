@@ -48,6 +48,10 @@ Panel {
         parseIntr()
     }
 
+    function changeCurrentIndex(newIndex) {
+        _reconstruction.cameraInitIndex = newIndex
+    }
+
     function populate_model()
     {
         intrinsicModel.clear()
@@ -474,9 +478,8 @@ Panel {
                 property var columnWidths: [105, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]
                 property var columnNames: [
                     "intrinsicId",
-                    "pxInitialFocalLength",
-                    "pxFocalLength.x",
-                    "pxFocalLength.y",
+                    "initialFocalLength",
+                    "focalLength",
                     "type",
                     "width",
                     "height",
@@ -499,7 +502,6 @@ Panel {
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[9]]} }
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[10]]} }
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[11]]} }
-                TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[12]]} }
                 //https://doc.qt.io/qt-5/qml-qt-labs-qmlmodels-tablemodel.html#appendRow-method
             }
 
@@ -541,7 +543,7 @@ Panel {
                 font.family: MaterialIcons.fontFamily
                 ToolTip.text: "Next Group (Alt+Right)"
                 ToolTip.visible: hovered
-                enabled: root.cameraInitIndex < root.cameraInits.count - 1
+                enabled: nodesCB.currentIndex < root.cameraInits.count - 1
                 onClicked: nodesCB.incrementCurrentIndex()
             }
         }

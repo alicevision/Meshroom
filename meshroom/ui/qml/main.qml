@@ -628,7 +628,7 @@ ApplicationWindow {
             Action {
                 text: "About Meshroom"
                 onTriggered: aboutDialog.open()
-                // shoud be StandardKey.HelpContents, but for some reason it's not stable
+                // should be StandardKey.HelpContents, but for some reason it's not stable
                 // (may cause crash, requires pressing F1 twice after closing the popup)
                 shortcut: "F1"
             }

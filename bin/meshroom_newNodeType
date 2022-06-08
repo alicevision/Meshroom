@@ -5,6 +5,7 @@ import argparse
 import os
 import re
 import sys
+import shlex
 from pprint import pprint
 
 def trim(s):
@@ -60,7 +61,7 @@ parser.add_argument('node', metavar='NODE_NAME', type=str,
                     help='New node name')
 parser.add_argument('bin', metavar='CMDLINE', type=str,
                     default=None,
-                    help='Output plugin folder')
+                    help='Input executable')
 parser.add_argument('--output', metavar='DIR', type=str,
                     default=os.path.dirname(__file__),
                     help='Output plugin folder')
@@ -77,7 +78,7 @@ soft = "{nodeType}"
 if args.bin:
     soft = args.bin
     import subprocess
-    proc = subprocess.Popen(args=[args.bin, '--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(args=shlex.split(args.bin) + ['--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = proc.communicate()
     inputCmdLineDoc = stdout if stdout else stderr
 elif sys.stdin.isatty():
@@ -137,7 +138,7 @@ choiceValues1_re = re.compile('\* (?P<value>\w+):')
 choiceValues2_re = re.compile('\((?P<value>.+?)\)')
 choiceValues3_re = re.compile('\{(?P<value>.+?)\}')
 
-cmdLineArgs = args_re.findall(inputCmdLineDoc)
+cmdLineArgs = args_re.findall(inputCmdLineDoc.decode('utf-8'))
 
 print('='*80)
 pprint(cmdLineArgs)

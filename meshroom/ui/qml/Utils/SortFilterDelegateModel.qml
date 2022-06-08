@@ -5,12 +5,12 @@ import QtQuick.Controls 2.15
 /**
  * SortFilderDelegateModel adds sorting and filtering capabilities on a source model.
  *
- * The way model data is accessed can be overriden by redefining the modelData function.
+ * The way model data is accessed can be overridden by redefining the modelData function.
  * This is useful if the value is not directly accessible from the model and needs
  * some extra logic.
  *
  * Regarding filtering, any type of value can be used as 'filterValue' (variant).
- * Filtering behavior can also be overriden by redefining the respectFilter function.
+ * Filtering behavior can also be overridden by redefining the respectFilter function.
  *
  * Based on http://doc.qt.io/qt-5/qtquick-tutorials-dynamicview-dynamicview4-example.html
  */

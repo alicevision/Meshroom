@@ -515,7 +515,7 @@ class UIGraph(QObject):
     @Slot(Node, QPoint, QObject)
     def moveNode(self, node, position, nodes=None):
         """
-        Move 'node' to the given 'position' and also update the positions of 'nodes' if neccessary.
+        Move 'node' to the given 'position' and also update the positions of 'nodes' if necessary.
 
         Args:
             node (Node): the node to move

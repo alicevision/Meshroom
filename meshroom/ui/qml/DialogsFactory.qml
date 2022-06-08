@@ -7,7 +7,7 @@ import Controls 1.0
  */
 QtObject {
 
-    readonly property string defaultErrorText: "An unexpected error has occured"
+    readonly property string defaultErrorText: "An unexpected error has occurred"
 
     property Component infoDialog: Component {
         MessageDialog {

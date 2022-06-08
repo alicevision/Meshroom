@@ -4,8 +4,8 @@ Item {
     id: root
 
     // required for perspective transform
-    property real sizeX: 1675.0  // might be overrided in ColorCheckerViewer
-    property real sizeY: 1125.0  // might be overrided in ColorCheckerViewer
+    property real sizeX: 1675.0  // might be overridden in ColorCheckerViewer
+    property real sizeY: 1125.0  // might be overridden in ColorCheckerViewer
 
     property var colors: null
     property var window: null

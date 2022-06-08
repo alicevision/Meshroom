@@ -116,7 +116,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.ChoiceParam(
             name='observationConstraint',
             label='Observation Constraint',
-            description='Observation contraint mode used in the optimization:\n'
+            description='Observation constraint mode used in the optimization:\n'
                         ' * Basic: Use standard reprojection error in pixel coordinates\n'
                         ' * Scale: Use reprojection error in pixel coordinates but relative to the feature scale',
             value='Scale',
@@ -306,6 +306,13 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description='Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n'
                         'lead to multiple features in the same image for a single track. \n',
             value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='computeStructureColor',
+            label='Compute Structure Color',
+            description='Enable/Disable color computation of each 3D point.',
+            value=True,
             uid=[0],
         ),
         desc.File(

@@ -5,6 +5,8 @@ import math
 import os
 import psutil
 import ast
+import distutils.util
+
 
 class Attribute(BaseObject):
     """
@@ -191,7 +193,10 @@ class BoolParam(Param):
 
     def validateValue(self, value):
         try:
-            return bool(int(value))  # int cast is useful to handle string values ('0', '1')
+            if isinstance(value, pyCompatibility.basestring):
+                # use distutils.util.strtobool to handle (1/0, true/false, on/off, y/n)
+                return bool(distutils.util.strtobool(value))
+            return bool(value)
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 

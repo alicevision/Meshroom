@@ -177,7 +177,7 @@ with multiview.GraphModification(graph):
     if args.paramOverrides:
         print("\n")
         import re
-        reExtract = re.compile('(\w+)([:.])(\w+)=(.*)')
+        reExtract = re.compile('(\w+)([:.])(\w[\w.]*)=(.*)')
         for p in args.paramOverrides:
             result = reExtract.match(p)
             if not result:

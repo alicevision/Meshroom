@@ -301,10 +301,46 @@ Convert or apply filtering to the input images.
                 label='Output Color Space',
                 description='Allows you to choose the color space of the output image.',
                 value='AUTO',
-                values=['AUTO', 'sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+                values=['AUTO', 'sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
                 exclusive=True,
                 uid=[0],
         ),
+        desc.ChoiceParam(
+                name='workingColorSpace',
+                label='Working Color Space',
+                description='Allows you to choose the color space in which the data are processed.',
+                value='Linear',
+                values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
+                exclusive=True,
+                uid=[0],
+        ),
+        
+        desc.ChoiceParam(
+                name='rawColorInterpretation',
+                label='RAW Color Interpretation',
+                description='Allows you to choose how raw data are color processed.',
+                value='LibRawNoWhiteBalancing',
+                values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing', 'DCPMetadata', 'Auto'],
+                exclusive=True,
+                uid=[0],
+        ),
+        
+        desc.File(
+            name='colorProfileDatabase',
+            label='Color Profile Database',
+            description='''Color Profile database directory path.''',
+            value='${ALICEVISION_COLOR_PROFILE_DB}',
+            uid=[],
+        ),
+        
+        desc.BoolParam(
+            name='errorOnMissingColorProfile',
+            label='Error On Missing DCP Color Profile',
+            description='If a color profile database is specified but no color profile is found for at least one image, then an error is thrown',
+            value=True,
+            uid=[0],
+        ),
+        
         desc.ChoiceParam(
             name='storageDataType',
             label='Storage Data Type for EXR output',

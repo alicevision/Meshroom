@@ -239,7 +239,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 name='sgmChooseDepthListPerTile',
                 label='Choose Depth List Per Tile',
                 description='SChoose depth list per tile.',
-                value=False,
+                value=True,
                 uid=[0],
                 advanced=True,
             ),

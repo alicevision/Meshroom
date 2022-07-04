@@ -93,14 +93,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 range=(0, 500, 1),
                 uid=[0],
             ),
-            desc.BoolParam(
-                name='tileMerge',
-                label='Merge Tiles',
-                description='Read & merge all computed tiles.',
-                value=True,
-                uid=[0],
-                advanced=True,
-            ),
         ]),
         desc.BoolParam(
             name='chooseTCamsPerTile',

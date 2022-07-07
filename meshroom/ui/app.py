@@ -284,8 +284,7 @@ class MeshroomApp(QApplication):
             return md
         return markdown(md)
 
-    @Property(QJsonValue, constant=True)
-    def systemInfo(self):
+    def _systemInfo(self):
         import platform
         import sys
         return {
@@ -293,8 +292,9 @@ class MeshroomApp(QApplication):
             'python': 'Python {}'.format(sys.version.split(" ")[0])
         }
 
-    @Property("QVariantList", constant=True)
-    def licensesModel(self):
+    systemInfo = Property(QJsonValue, _systemInfo, constant=True)
+
+    def _licensesModel(self):
         """
         Get info about open-source licenses for the application.
         Model provides:
@@ -316,6 +316,7 @@ class MeshroomApp(QApplication):
             }
         ]
 
+    licensesModel = Property("QVariantList", _licensesModel, constant=True)
     recentProjectFilesChanged = Signal()
     recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
 

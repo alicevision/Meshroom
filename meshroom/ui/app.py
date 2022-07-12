@@ -71,8 +71,9 @@ class MeshroomApp(QApplication):
                             help='Import images to reconstruct from specified folder and sub-folders.')
         parser.add_argument('-s', '--save', metavar='PROJECT.mg', type=str, default='',
                             help='Save the created scene.')
-        parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE/photogrammetry/panoramaHdr/panoramaFisheyeHdr', type=str, default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
-                            help='Override the default Meshroom pipeline with this external graph.')
+        parser.add_argument('-p', '--pipeline', metavar="FILE.mg/" + "/".join(meshroom.core.pipelineTemplates), type=str,
+                            default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
+                            help='Override the default Meshroom pipeline with this external or template graph.')
         parser.add_argument("--verbose", help="Verbosity level", default='warning',
                             choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
 

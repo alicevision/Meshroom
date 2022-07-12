@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # coding:utf-8
 import copy
+import os
 import re
 import weakref
 import types
 import logging
 
+from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, pyCompatibility, hashValue
 
@@ -139,7 +141,9 @@ class Attribute(BaseObject):
         self.enabledChanged.emit()
 
     def _get_value(self):
-        return self.getLinkParam().value if self.isLink else self._value
+        if self.isLink:
+            return self.getLinkParam().value
+        return self._value
 
     def _set_value(self, value):
         if self._value == value:
@@ -259,13 +263,18 @@ class Attribute(BaseObject):
             return self.defaultValue()
         return self._value
 
+    def getEvalValue(self):
+        if isinstance(self.value, pyCompatibility.basestring):
+            return Template(self.value).safe_substitute(os.environ)
+        return self.value
+
     def getValueStr(self):
         if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
             assert(isinstance(self.value, pyCompatibility.Sequence) and not isinstance(self.value, pyCompatibility.basestring))
-            return self.attributeDesc.joinChar.join(self.value)
+            return self.attributeDesc.joinChar.join(self.getEvalValue())
         if isinstance(self.attributeDesc, (desc.StringParam, desc.File)):
-            return '"{}"'.format(self.value)
-        return str(self.value)
+            return '"{}"'.format(self.getEvalValue())
+        return str(self.getEvalValue())
 
     def defaultValue(self):
         if isinstance(self.desc.value, types.FunctionType):
@@ -298,6 +307,8 @@ class Attribute(BaseObject):
     desc = Property(desc.Attribute, lambda self: self.attributeDesc, constant=True)
     valueChanged = Signal()
     value = Property(Variant, _get_value, _set_value, notify=valueChanged)
+    valueStr = Property(Variant, getValueStr, notify=valueChanged)
+    evalValue = Property(Variant, getEvalValue, notify=valueChanged)
     isOutput = Property(bool, isOutput.fget, constant=True)
     isLinkChanged = Signal()
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)

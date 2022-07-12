@@ -74,7 +74,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             name='tree',
             label='Voc Tree: Tree',
             description='Input name for the vocabulary tree file.',
-            value=os.environ.get('ALICEVISION_VOCTREE', ''),
+            value='${ALICEVISION_VOCTREE}',
             uid=[],
             enabled=lambda node: 'VocabularyTree' in node.method.value,
         ),

@@ -159,7 +159,7 @@ The metadata needed are:
             name='sensorDatabase',
             label='Sensor Database',
             description='''Camera sensor width database path.''',
-            value=os.environ.get('ALICEVISION_SENSOR_DB', ''),
+            value='${ALICEVISION_SENSOR_DB}',
             uid=[],
         ),
         desc.FloatParam(

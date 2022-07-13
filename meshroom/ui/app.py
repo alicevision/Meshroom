@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import argparse
 
 from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, Signal, qInstallMessageHandler, QtMsgType, QSettings
@@ -177,6 +178,16 @@ class MeshroomApp(QApplication):
 
         self.engine.load(os.path.normpath(url))
 
+    def _pipelineTemplateFiles(self):
+        templates = []
+        for key in sorted(meshroom.core.pipelineTemplates.keys()):
+            # Use uppercase letters in the names as separators to format the templates' name nicely
+            # e.g: the template "panoramaHdr" will be shown as "Panorama Hdr" in the menu
+            name = " ".join(re.findall('[A-Z][^A-Z]*', key[0].upper() + key[1:]))
+            variant = {"name": name, "key": key, "path": meshroom.core.pipelineTemplates[key]}
+            templates.append(variant)
+        return templates
+
     def _recentProjectFiles(self):
         projects = []
         settings = QSettings()
@@ -317,6 +328,7 @@ class MeshroomApp(QApplication):
             }
         ]
 
+    pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
+    pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
-

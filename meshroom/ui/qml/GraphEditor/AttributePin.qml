@@ -131,14 +131,16 @@ RowLayout {
             height: 4
             Drag.keys: [inputDragTarget.objectName]
             Drag.active: inputConnectMA.drag.active
-            Drag.hotSpot.x: width*0.5
-            Drag.hotSpot.y: height*0.5
+            Drag.hotSpot.x: width * 0.5
+            Drag.hotSpot.y: height * 0.5
         }
 
         MouseArea {
             id: inputConnectMA
             drag.target: attribute.isReadOnly ? undefined : inputDragTarget
             drag.threshold: 0
+            // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
+            drag.smoothed: false
             enabled: !root.readOnly
             anchors.fill: parent
             // use the same negative margins as DropArea to ease pin selection
@@ -281,6 +283,8 @@ RowLayout {
             id: outputConnectMA
             drag.target: outputDragTarget
             drag.threshold: 0
+            // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
+            drag.smoothed: false
             anchors.fill: parent
             // use the same negative margins as DropArea to ease pin selection
             anchors.margins: outputDropArea.anchors.margins
@@ -346,6 +350,7 @@ RowLayout {
             }
             StateChangeScript {
                 script: {
+                    // Add the right offset if the initial click is not exactly at the center of the connection circle.
                     var pos = inputDragTarget.mapFromItem(inputConnectMA, inputConnectMA.mouseX, inputConnectMA.mouseY);
                     inputDragTarget.x = pos.x - inputDragTarget.width/2;
                     inputDragTarget.y = pos.y - inputDragTarget.height/2;

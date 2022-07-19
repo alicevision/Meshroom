@@ -37,7 +37,7 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
 class Attribute(BaseObject):
     """
     """
-    stringIsLinkRe = re.compile('^\{[A-Za-z]+[A-Za-z0-9_.]*\}$')
+    stringIsLinkRe = re.compile(r'^\{[A-Za-z]+[A-Za-z0-9_.]*\}$')
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
         """

@@ -3,7 +3,6 @@ import logging
 import math
 import os
 from threading import Thread
-from collections import Iterable
 
 from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF
 from PySide2.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
@@ -14,6 +13,7 @@ from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position
+from meshroom.core.pyCompatibility import Iterable
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
 

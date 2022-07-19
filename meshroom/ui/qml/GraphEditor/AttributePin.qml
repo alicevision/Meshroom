@@ -127,8 +127,8 @@ RowLayout {
             property bool dragAccepted: false
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 4
-            height: 4
+            width: parent.width
+            height: parent.height
             Drag.keys: [inputDragTarget.objectName]
             Drag.active: inputConnectMA.drag.active
             Drag.hotSpot.x: width * 0.5
@@ -175,6 +175,8 @@ RowLayout {
         id: nameContainer
         Layout.fillWidth: true
         implicitHeight: childrenRect.height
+
+        Layout.alignment: Qt.AlignVCenter
 
         Label {
             id: nameLabel
@@ -271,8 +273,8 @@ RowLayout {
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
-            width: 4
-            height: 4
+            width: parent.width
+            height: parent.height
             Drag.keys: [outputDragTarget.objectName]
             Drag.active: outputConnectMA.drag.active
             Drag.hotSpot.x: width*0.5

@@ -145,6 +145,243 @@ def findFilesByTypeInFolder(folder, recursive=False):
     return output
 
 
+def panoramaHdr(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
+    """
+    Create a new Graph with a Panorama HDR pipeline.
+
+    Args:
+        inputImages (list of str, optional): list of image file paths
+        inputViewpoints (list of Viewpoint, optional): list of Viewpoints
+        output (str, optional): the path to export reconstructed model to
+
+    Returns:
+        Graph: the created graph
+    """
+    if not graph:
+        graph = Graph('PanoramaHDR')
+    with GraphModification(graph):
+        nodes = panoramaHdrPipeline(graph)
+        cameraInit = nodes[0]
+        if inputImages:
+            cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        if inputViewpoints:
+            cameraInit.viewpoints.extend(inputViewpoints)
+        if inputIntrinsics:
+            cameraInit.intrinsics.extend(inputIntrinsics)
+
+        if output:
+            imageProcessing = nodes[-1]
+            graph.addNewNode('Publish', output=output, inputFiles=[imageProcessing.outputImages])
+
+    return graph
+
+def panoramaFisheyeHdr(inputImages=None, inputViewpoints=None, inputIntrinsics=None, output='', graph=None):
+    if not graph:
+        graph = Graph('PanoramaFisheyeHDR')
+    with GraphModification(graph):
+        panoramaHdr(inputImages, inputViewpoints, inputIntrinsics, output, graph)
+        for panoramaInit in graph.nodesOfType("PanoramaInit"):
+            panoramaInit.attribute("useFisheye").value = True
+        for featureExtraction in graph.nodesOfType("FeatureExtraction"):
+            # when using fisheye images, 'sift' performs better than 'dspsift'
+            featureExtraction.attribute("describerTypes").value = ['sift']
+            # when using fisheye images, the overlap between images can be small
+            # and thus requires many features to get enough correspondences for cameras estimation
+            featureExtraction.attribute("describerPreset").value = 'high'
+    return graph
+
+def panoramaHdrPipeline(graph):
+    """
+    Instantiate an PanoramaHDR pipeline inside 'graph'.
+    Args:
+        graph (Graph/UIGraph): the graph in which nodes should be instantiated
+
+    Returns:
+        list of Node: the created nodes
+    """
+    cameraInit = graph.addNewNode('CameraInit')
+    try:
+        # fisheye4 does not work well in the ParoramaEstimation, so here we avoid to use it.
+        cameraInit.attribute('allowedCameraModels').value.remove("fisheye4")
+    except ValueError:
+        pass
+
+    panoramaPrepareImages = graph.addNewNode('PanoramaPrepareImages',
+                               input=cameraInit.output)
+
+    ldr2hdrSampling = graph.addNewNode('LdrToHdrSampling',
+                               input=panoramaPrepareImages.output)
+
+    ldr2hdrCalibration = graph.addNewNode('LdrToHdrCalibration',
+                               input=ldr2hdrSampling.input,
+                               userNbBrackets=ldr2hdrSampling.userNbBrackets,
+                               byPass=ldr2hdrSampling.byPass,
+                               channelQuantizationPower=ldr2hdrSampling.channelQuantizationPower,
+                               samples=ldr2hdrSampling.output)
+
+    ldr2hdrMerge = graph.addNewNode('LdrToHdrMerge',
+                               input=ldr2hdrCalibration.input,
+                               userNbBrackets=ldr2hdrCalibration.userNbBrackets,
+                               byPass=ldr2hdrCalibration.byPass,
+                               channelQuantizationPower=ldr2hdrCalibration.channelQuantizationPower,
+                               response=ldr2hdrCalibration.response)
+
+    featureExtraction = graph.addNewNode('FeatureExtraction',
+                                         input=ldr2hdrMerge.outSfMData,
+                                         describerQuality='high')
+
+    panoramaInit = graph.addNewNode('PanoramaInit',
+                                     input=featureExtraction.input,
+                                     dependency=[featureExtraction.output]  # Workaround for tractor submission with a fake dependency
+                                     )
+
+    imageMatching = graph.addNewNode('ImageMatching',
+                                     input=panoramaInit.outSfMData,
+                                     featuresFolders=[featureExtraction.output],
+                                     method='FrustumOrVocabularyTree')
+
+    featureMatching = graph.addNewNode('FeatureMatching',
+                                       input=imageMatching.input,
+                                       featuresFolders=imageMatching.featuresFolders,
+                                       imagePairsList=imageMatching.output,
+                                       describerTypes=featureExtraction.describerTypes)
+
+    panoramaEstimation = graph.addNewNode('PanoramaEstimation',
+                                          input=featureMatching.input,
+                                          featuresFolders=featureMatching.featuresFolders,
+                                          matchesFolders=[featureMatching.output],
+                                          describerTypes=featureMatching.describerTypes)
+
+    panoramaOrientation = graph.addNewNode('SfMTransform',
+                                           input=panoramaEstimation.output,
+                                           method='manual')
+
+    panoramaWarping = graph.addNewNode('PanoramaWarping',
+                                       input=panoramaOrientation.output)
+
+    panoramaSeams =  graph.addNewNode('PanoramaSeams',
+                                       input=panoramaWarping.input,
+                                       warpingFolder=panoramaWarping.output
+                                       )
+
+    panoramaCompositing = graph.addNewNode('PanoramaCompositing',
+                                           input=panoramaSeams.outputSfm,
+                                           warpingFolder=panoramaSeams.warpingFolder,
+                                           labels=panoramaSeams.output,
+                                        )
+
+    panoramaMerging = graph.addNewNode('PanoramaMerging',
+                                           input=panoramaCompositing.input,
+                                           compositingFolder=panoramaCompositing.output
+                                        )
+
+    imageProcessing = graph.addNewNode('ImageProcessing',
+                                       input=panoramaMerging.outputPanorama,
+                                       fixNonFinite=True,
+                                       fillHoles=True,
+                                       extension='exr')
+
+    return [
+        cameraInit,
+        featureExtraction,
+        panoramaInit,
+        imageMatching,
+        featureMatching,
+        panoramaEstimation,
+        panoramaOrientation,
+        panoramaWarping,
+        panoramaSeams,
+        panoramaCompositing,
+        panoramaMerging,
+        imageProcessing,
+    ]
+
+
+
+def photogrammetry(inputImages=list(), inputViewpoints=list(), inputIntrinsics=list(), output='', graph=None):
+    """
+    Create a new Graph with a complete photogrammetry pipeline.
+
+    Args:
+        inputImages (list of str, optional): list of image file paths
+        inputViewpoints (list of Viewpoint, optional): list of Viewpoints
+        output (str, optional): the path to export reconstructed model to
+
+    Returns:
+        Graph: the created graph
+    """
+    if not graph:
+        graph = Graph('Photogrammetry')
+    with GraphModification(graph):
+        sfmNodes, mvsNodes = photogrammetryPipeline(graph)
+        cameraInit = sfmNodes[0]
+        cameraInit.viewpoints.extend([{'path': image} for image in inputImages])
+        cameraInit.viewpoints.extend(inputViewpoints)
+        cameraInit.intrinsics.extend(inputIntrinsics)
+
+        if output:
+            texturing = mvsNodes[-1]
+            graph.addNewNode('Publish', output=output, inputFiles=[texturing.outputMesh,
+                                                                   texturing.outputMaterial,
+                                                                   texturing.outputTextures])
+
+    return graph
+
+
+def photogrammetryPipeline(graph):
+    """
+    Instantiate a complete photogrammetry pipeline inside 'graph'.
+
+    Args:
+        graph (Graph/UIGraph): the graph in which nodes should be instantiated
+
+    Returns:
+        list of Node: the created nodes
+    """
+    sfmNodes = sfmPipeline(graph)
+    mvsNodes = mvsPipeline(graph, sfmNodes[-1])
+
+    # store current pipeline version in graph header
+    graph.header.update({'pipelineVersion': __version__})
+
+    return sfmNodes, mvsNodes
+
+
+def sfmPipeline(graph):
+    """
+    Instantiate a SfM pipeline inside 'graph'.
+    Args:
+        graph (Graph/UIGraph): the graph in which nodes should be instantiated
+
+    Returns:
+        list of Node: the created nodes
+    """
+    cameraInit = graph.addNewNode('CameraInit')
+
+    featureExtraction = graph.addNewNode('FeatureExtraction',
+                                         input=cameraInit.output)
+    imageMatching = graph.addNewNode('ImageMatching',
+                                     input=featureExtraction.input,
+                                     featuresFolders=[featureExtraction.output])
+    featureMatching = graph.addNewNode('FeatureMatching',
+                                       input=imageMatching.input,
+                                       featuresFolders=imageMatching.featuresFolders,
+                                       imagePairsList=imageMatching.output,
+                                       describerTypes=featureExtraction.describerTypes)
+    structureFromMotion = graph.addNewNode('StructureFromMotion',
+                                           input=featureMatching.input,
+                                           featuresFolders=featureMatching.featuresFolders,
+                                           matchesFolders=[featureMatching.output],
+                                           describerTypes=featureMatching.describerTypes)
+    return [
+        cameraInit,
+        featureExtraction,
+        imageMatching,
+        featureMatching,
+        structureFromMotion
+    ]
+
+
 def mvsPipeline(graph, sfm=None):
     """
     Instantiate a MVS pipeline inside 'graph'.

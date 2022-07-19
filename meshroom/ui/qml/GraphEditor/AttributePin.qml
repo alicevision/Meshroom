@@ -59,7 +59,7 @@ RowLayout {
         color: Colors.sysPalette.base
 
         Rectangle {
-            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (attribute && attribute.isLink)
+            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (attribute && attribute.isLink) || inputConnectMA.drag.active || inputDropArea.containsDrag
             radius: isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
@@ -209,7 +209,7 @@ RowLayout {
         color: Colors.sysPalette.base
 
         Rectangle {
-            visible: attribute.hasOutputConnections
+            visible: attribute.hasOutputConnections || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
             radius: isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2

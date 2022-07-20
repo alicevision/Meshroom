@@ -453,6 +453,42 @@ FocusScope {
                     }
                 }
 
+                // LightingCalibration: display circle
+                // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
+                Loader {
+                    anchors.centerIn: parent
+                    property var activeNode: _reconstruction.activeNodes.get("LightingCalibration").node
+                    active: (displayLightingCircleLoader.checked && activeNode)
+
+                    // handle rotation/position based on available metadata
+                    rotation: {
+                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                        switch(orientation) {
+                            case "6": return 90;
+                            case "8": return -90;
+                            default: return 0;
+                        }
+                    }
+
+                    sourceComponent: CircleGizmo {
+                        readOnly: false
+                        x: activeNode.attribute("sphereCenter.x").value
+                        y: activeNode.attribute("sphereCenter.y").value
+                        radius: activeNode.attribute("sphereRadius").value
+
+                        border.width: Math.max(1, (3.0 / imgContainer.scale))
+                        onMoved: {
+                            _reconstruction.setAttribute(
+                                activeNode.attribute("sphereCenter"),
+                                JSON.stringify([x, y])
+                            );
+                        }
+                        onIncrementRadius: {
+                            _reconstruction.setAttribute(activeNode.attribute("sphereRadius"), activeNode.attribute("sphereRadius").value + radiusOffset)
+                        }
+                    }
+                }
+
                 // ColorCheckerViewer: display color checker detection results
                 // note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
                 Loader {
@@ -934,6 +970,19 @@ FocusScope {
                             checkable: true
                             checked: false
                             enabled: activeNode && activeNode.attribute("useFisheye").value && !displayPanoramaViewer.checked
+                            visible: activeNode
+                        }
+                        MaterialToolButton {
+                            id: displayLightingCircleLoader
+                            property var activeNode: _reconstruction.activeNodes.get('LightingCalibration').node
+                            ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
+                            text: MaterialIcons.vignette
+                            // text: MaterialIcons.panorama_fish_eye
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
+                            enabled: activeNode
                             visible: activeNode
                         }
                         MaterialToolButton {

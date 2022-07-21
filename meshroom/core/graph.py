@@ -236,8 +236,6 @@ class Graph(BaseObject):
     @property
     def fileFeatures(self):
         """ Get loaded file supported features based on its version. """
-        if not self._filepath:
-            return []
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)

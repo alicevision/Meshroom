@@ -59,7 +59,7 @@ RowLayout {
         color: Colors.sysPalette.base
 
         Rectangle {
-            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (attribute && attribute.isLink)
+            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (attribute && attribute.isLink) || inputConnectMA.drag.active || inputDropArea.containsDrag
             radius: isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
@@ -127,18 +127,20 @@ RowLayout {
             property bool dragAccepted: false
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 4
-            height: 4
+            width: parent.width
+            height: parent.height
             Drag.keys: [inputDragTarget.objectName]
             Drag.active: inputConnectMA.drag.active
-            Drag.hotSpot.x: width*0.5
-            Drag.hotSpot.y: height*0.5
+            Drag.hotSpot.x: width * 0.5
+            Drag.hotSpot.y: height * 0.5
         }
 
         MouseArea {
             id: inputConnectMA
             drag.target: attribute.isReadOnly ? undefined : inputDragTarget
             drag.threshold: 0
+            // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
+            drag.smoothed: false
             enabled: !root.readOnly
             anchors.fill: parent
             // use the same negative margins as DropArea to ease pin selection
@@ -174,6 +176,8 @@ RowLayout {
         Layout.fillWidth: true
         implicitHeight: childrenRect.height
 
+        Layout.alignment: Qt.AlignVCenter
+
         Label {
             id: nameLabel
 
@@ -205,7 +209,7 @@ RowLayout {
         color: Colors.sysPalette.base
 
         Rectangle {
-            visible: attribute.hasOutputConnections
+            visible: attribute.hasOutputConnections || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
             radius: isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
@@ -269,8 +273,8 @@ RowLayout {
             property bool dropAccepted: false
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
-            width: 4
-            height: 4
+            width: parent.width
+            height: parent.height
             Drag.keys: [outputDragTarget.objectName]
             Drag.active: outputConnectMA.drag.active
             Drag.hotSpot.x: width*0.5
@@ -281,6 +285,8 @@ RowLayout {
             id: outputConnectMA
             drag.target: outputDragTarget
             drag.threshold: 0
+            // Move the edge's tip straight to the the current mouse position instead of waiting after the drag operation has started
+            drag.smoothed: false
             anchors.fill: parent
             // use the same negative margins as DropArea to ease pin selection
             anchors.margins: outputDropArea.anchors.margins
@@ -346,6 +352,7 @@ RowLayout {
             }
             StateChangeScript {
                 script: {
+                    // Add the right offset if the initial click is not exactly at the center of the connection circle.
                     var pos = inputDragTarget.mapFromItem(inputConnectMA, inputConnectMA.mouseX, inputConnectMA.mouseY);
                     inputDragTarget.x = pos.x - inputDragTarget.width/2;
                     inputDragTarget.y = pos.y - inputDragTarget.height/2;

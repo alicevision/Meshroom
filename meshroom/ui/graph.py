@@ -559,9 +559,11 @@ class UIGraph(QObject):
         """
         with self.groupedGraphModification("Remove Nodes From Selected Nodes"):
             nodesToRemove, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
+            # filter out nodes that will be removed more than once
+            uniqueNodesToRemove = list(dict.fromkeys(nodesToRemove))
             # Perform nodes removal from leaves to start node so that edges
             # can be re-created in correct order on redo.
-            self.removeNodes(list(reversed(nodesToRemove)))
+            self.removeNodes(list(reversed(uniqueNodesToRemove)))
 
     @Slot(QObject, result="QVariantList")
     def duplicateNodes(self, nodes):
@@ -609,7 +611,9 @@ class UIGraph(QObject):
         """
         with self.groupedGraphModification("Duplicate Nodes From Selected Nodes"):
             nodesToDuplicate, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
-            duplicates = self.duplicateNodes(nodesToDuplicate)
+            # filter out nodes that will be duplicated more than once
+            uniqueNodesToDuplicate = list(dict.fromkeys(nodesToDuplicate))
+            duplicates = self.duplicateNodes(uniqueNodesToDuplicate)
         return duplicates
 
     @Slot(QObject)

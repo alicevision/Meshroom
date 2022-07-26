@@ -150,6 +150,15 @@ then it checks the number of features that validates this model and iterate thro
             uid=[0],
             advanced=True,
         ),
+        desc.FloatParam(
+            name='minRequired2DMotion',
+            label='required 2d motion',
+            description='A match is invalid if the 2d motion between the 2 points is less than a threshold (or -1 to disable this filter).',
+            value=-1.0,
+            range=(0.0, 10.0, 1.0),
+            uid=[0],
+            advanced=True,
+        ),
         desc.IntParam(
             name='maxMatches',
             label='Max Matches',

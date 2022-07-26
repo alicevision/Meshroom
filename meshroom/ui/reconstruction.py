@@ -483,27 +483,15 @@ class Reconstruction(UIGraph):
     @Slot(str)
     def new(self, pipeline=None):
         p = pipeline if pipeline != None else self._defaultPipeline
-        """ Create a new photogrammetry pipeline. """
-        if p.lower() == "photogrammetry":
-            # default photogrammetry pipeline
-            self.setGraph(multiview.photogrammetry())
-        elif p.lower() == "panoramahdr":
-            # default panorama hdr pipeline
-            self.setGraph(multiview.panoramaHdr())
-        elif p.lower() == "panoramafisheyehdr":
-            # default panorama fisheye hdr pipeline
-            self.setGraph(multiview.panoramaFisheyeHdr())
-        elif p.lower() == "photogrammetryandcameratracking":
-            # default camera tracking pipeline
-            self.setGraph(multiview.photogrammetryAndCameraTracking())
-        elif p.lower() == "cameratracking":
-            # default camera tracking pipeline
-            self.setGraph(multiview.cameraTracking())
-        elif p.lower() == "photogrammetrydraft":
-            # photogrammetry pipeline in draft mode (no cuda)
-            self.setGraph(multiview.photogrammetryDraft())
+        """ Create a new pipeline. """
+        # Lower the input and the dictionary keys to make sure that all input types can be found:
+        # - correct pipeline name but the case does not match (e.g. panoramaHDR instead of panoramaHdr)
+        # - lowercase pipeline name given through the "New Pipeline" menu
+        loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
+        if p.lower() in loweredPipelineTemplates:
+            self.load(loweredPipelineTemplates[p.lower()], setupProjectFile=False)
         else:
-            # use the user-provided default photogrammetry project file
+            # use the user-provided default project file
             self.load(p, setupProjectFile=False)
 
     @Slot(str, result=bool)

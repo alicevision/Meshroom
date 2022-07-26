@@ -125,7 +125,7 @@ class CameraLocalization(desc.CommandLineNode):
             name='voctree',
             label='Voctree',
             description='''[voctree] Filename for the vocabulary tree''',
-            value=os.environ.get('ALICEVISION_VOCTREE', ''),
+            value='${ALICEVISION_VOCTREE}',
             uid=[0],
             ),
         desc.File(

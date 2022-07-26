@@ -35,6 +35,7 @@ cacheFolderName = 'MeshroomCache'
 defaultCacheFolder = os.environ.get('MESHROOM_CACHE', os.path.join(tempfile.gettempdir(), cacheFolderName))
 nodesDesc = {}
 submitters = {}
+pipelineTemplates = {}
 
 
 def hashValue(value):
@@ -270,6 +271,12 @@ def loadSubmitters(folder, packageName):
     return loadPlugins(folder, packageName, BaseSubmitter)
 
 
+def loadPipelineTemplates(folder):
+    global pipelineTemplates
+    for file in os.listdir(folder):
+        if file.endswith(".mg") and file not in pipelineTemplates:
+            pipelineTemplates[os.path.splitext(file)[0]] = os.path.join(folder, file)
+
 meshroomFolder = os.path.dirname(os.path.dirname(__file__))
 
 additionalNodesPath = os.environ.get("MESHROOM_NODES_PATH", "").split(os.pathsep)
@@ -288,3 +295,12 @@ subs = loadSubmitters(os.environ.get("MESHROOM_SUBMITTERS_PATH", meshroomFolder)
 
 for sub in subs:
     registerSubmitter(sub())
+
+# Load pipeline templates: check in the default folder and any folder the user might have
+# added to the environment variable
+additionalPipelinesPath = os.environ.get("MESHROOM_PIPELINE_TEMPLATES_PATH", "").split(os.pathsep)
+additionalPipelinesPath = [i for i in additionalPipelinesPath if i]
+pipelineTemplatesFolders = [os.path.join(meshroomFolder, 'pipelines')] + additionalPipelinesPath
+
+for f in pipelineTemplatesFolders:
+    loadPipelineTemplates(f)

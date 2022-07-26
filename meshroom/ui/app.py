@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import argparse
 
 from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, Signal, qInstallMessageHandler, QtMsgType, QSettings
@@ -71,8 +72,9 @@ class MeshroomApp(QApplication):
                             help='Import images to reconstruct from specified folder and sub-folders.')
         parser.add_argument('-s', '--save', metavar='PROJECT.mg', type=str, default='',
                             help='Save the created scene.')
-        parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE/photogrammetry/panoramaHdr/panoramaFisheyeHdr', type=str, default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
-                            help='Override the default Meshroom pipeline with this external graph.')
+        parser.add_argument('-p', '--pipeline', metavar="FILE.mg/" + "/".join(meshroom.core.pipelineTemplates), type=str,
+                            default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
+                            help='Override the default Meshroom pipeline with this external or template graph.')
         parser.add_argument("--verbose", help="Verbosity level", default='warning',
                             choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
 
@@ -175,6 +177,16 @@ class MeshroomApp(QApplication):
             self.addRecentProjectFile(args.save)
 
         self.engine.load(os.path.normpath(url))
+
+    def _pipelineTemplateFiles(self):
+        templates = []
+        for key in sorted(meshroom.core.pipelineTemplates.keys()):
+            # Use uppercase letters in the names as separators to format the templates' name nicely
+            # e.g: the template "panoramaHdr" will be shown as "Panorama Hdr" in the menu
+            name = " ".join(re.findall('[A-Z][^A-Z]*', key[0].upper() + key[1:]))
+            variant = {"name": name, "key": key, "path": meshroom.core.pipelineTemplates[key]}
+            templates.append(variant)
+        return templates
 
     def _recentProjectFiles(self):
         projects = []
@@ -316,6 +328,7 @@ class MeshroomApp(QApplication):
             }
         ]
 
+    pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
+    pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
-

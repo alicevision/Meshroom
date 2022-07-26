@@ -254,7 +254,7 @@ def panoramaHdrPipeline(graph):
 
     panoramaOrientation = graph.addNewNode('SfMTransform',
                                            input=panoramaEstimation.output,
-                                           method='manual')
+                                           method='auto_from_cameras_x_axis')
 
     panoramaWarping = graph.addNewNode('PanoramaWarping',
                                        input=panoramaOrientation.output)
@@ -275,10 +275,8 @@ def panoramaHdrPipeline(graph):
                                            compositingFolder=panoramaCompositing.output
                                         )
 
-    imageProcessing = graph.addNewNode('ImageProcessing',
+    imageProcessing = graph.addNewNode('PanoramaPostProcessing',
                                        input=panoramaMerging.outputPanorama,
-                                       fixNonFinite=True,
-                                       fillHoles=True,
                                        extension='exr')
 
     return [

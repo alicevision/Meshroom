@@ -6,7 +6,7 @@ from meshroom.core import desc
 class FeatureExtraction(desc.CommandLineNode):
     commandLine = 'aliceVision_featureExtraction {allParams}'
     size = desc.DynamicNodeSize('input')
-    parallelization = desc.Parallelization(blockSize=40)
+    parallelization = desc.Parallelization(blockSize=10)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     category = 'Sparse Reconstruction'

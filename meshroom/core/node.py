@@ -77,13 +77,25 @@ class StatusData(BaseObject):
         self.startDateTime = ""
         self.endDateTime = ""
         self.elapsedTime = 0
+        self.maxChunkTime = 0
         self.hostname = ""
         self.sessionUid = meshroom.core.sessionUid
 
-    def merge(self, other):
+    def mergeChunks(self, other):
         self.startDateTime = min(self.startDateTime, other.startDateTime)
         self.endDateTime = max(self.endDateTime, other.endDateTime)
         self.elapsedTime += other.elapsedTime
+        self.maxChunkTime = max(self.maxChunkTime, other.elapsedTime)
+
+    def mergeNodes(self, other):
+        self.startDateTime = min(self.startDateTime, other.startDateTime)
+        self.endDateTime = max(self.endDateTime, other.endDateTime)
+        self.elapsedTime += other.elapsedTime
+
+        if (other.maxChunkTime > 0):
+            self.maxChunkTime += other.maxChunkTime
+        else:
+            self.maxChunkTime += other.elapsedTime
 
     def reset(self):
         self.status = Status.NONE
@@ -94,6 +106,7 @@ class StatusData(BaseObject):
         self.startDateTime = ""
         self.endDateTime = ""
         self.elapsedTime = 0
+        self.maxChunkTime = 0
         self.hostname = ""
         self.sessionUid = meshroom.core.sessionUid
 
@@ -135,6 +148,7 @@ class StatusData(BaseObject):
         self.startDateTime = d.get('startDateTime', '')
         self.endDateTime = d.get('endDateTime', '')
         self.elapsedTime = d.get('elapsedTime', 0)
+        self.maxChunkTime = d.get('maxChunkTime', 0)
         self.hostname = d.get('hostname', '')
         self.sessionUid = d.get('sessionUid', '')
 
@@ -419,6 +433,7 @@ class NodeChunk(BaseObject):
         finally:
             self._status.initEndCompute()
             self._status.elapsedTime = time.time() - startTime
+            self._status.maxChunkTime = self._status.elapsedTime 
             logging.info(' - elapsed time: {}'.format(self._status.elapsedTimeStr))
             # ask and wait for the stats thread to stop
             self.statThread.stopRequest()
@@ -894,7 +909,7 @@ class BaseNode(BaseObject):
         if self._chunks:
             fusedStatus.fromDict(self._chunks[0].status.toDict())
             for chunk in self._chunks[1:]:
-                fusedStatus.merge(chunk.status)
+                fusedStatus.mergeChunks(chunk.status)
         fusedStatus.status = self.getGlobalStatus()
         return fusedStatus
 
@@ -903,7 +918,7 @@ class BaseNode(BaseObject):
         fusedStatus = self.getFusedStatus()
         nodes = self.getInputNodes(recursive=True, dependenciesOnly=True)
         for node in nodes:
-            fusedStatus.merge(node.fusedStatus)
+            fusedStatus.mergeNodes(node.fusedStatus)
         return fusedStatus
 
     def _isCompatibilityNode(self):
@@ -1074,7 +1089,9 @@ class BaseNode(BaseObject):
     globalStatus = Property(str, lambda self: self.getGlobalStatus().name, notify=globalStatusChanged)
     fusedStatus = Property(StatusData, getFusedStatus, notify=globalStatusChanged)
     elapsedTime = Property(float, lambda self: self.getFusedStatus().elapsedTime, notify=globalStatusChanged)
+    maxChunkTime = Property(float, lambda self: self.getFusedStatus().maxChunkTime, notify=globalStatusChanged)
     recursiveElapsedTime = Property(float, lambda self: self.getRecursiveFusedStatus().elapsedTime, notify=globalStatusChanged)
+    recursiveMaxChunkTime = Property(float, lambda self: self.getRecursiveFusedStatus().maxChunkTime, notify=globalStatusChanged)
     isCompatibilityNode = Property(bool, lambda self: self._isCompatibilityNode(), constant=True)  # need lambda to evaluate the virtual function
 
     globalExecModeChanged = Signal()

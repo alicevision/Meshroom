@@ -53,8 +53,18 @@ FocusScope {
                 value: time > 0.0 ? Format.sec2time(time) : "-"
             }
             KeyValue {
+                key: "Parallel Time"
+                property real time: node.maxChunkTime
+                value: time > 0.0 ? Format.sec2time(time) : "-"
+            }
+            KeyValue {
                 key: "Cumulated Time"
                 property real time: node.recursiveElapsedTime
+                value: time > 0.0 ? Format.sec2time(time) : "-"
+            }
+            KeyValue {
+                key: "Parallel Cumulated Time"
+                property real time: node.recursiveMaxChunkTime
                 value: time > 0.0 ? Format.sec2time(time) : "-"
             }
         }

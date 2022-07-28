@@ -1,12 +1,13 @@
 from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue
 from meshroom.core import pyCompatibility
+
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import math
 import os
 import psutil
 import ast
 import distutils.util
-
+import shlex
 
 class Attribute(BaseObject):
     """
@@ -505,7 +506,7 @@ class CommandLineNode(Node):
                 chunk.saveStatusFile()
                 print(' - commandLine: {}'.format(cmd))
                 print(' - logFile: {}'.format(chunk.logFile))
-                chunk.subprocess = psutil.Popen(cmd, stdout=logF, stderr=logF, shell=True)
+                chunk.subprocess = psutil.Popen(shlex.split(cmd), stdout=logF, stderr=logF)
 
                 # store process static info into the status file
                 # chunk.status.env = node.proc.environ()

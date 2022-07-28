@@ -68,7 +68,7 @@ RowLayout {
                         id: paramMenu
 
                         property bool isFileAttribute: attribute.type == "File"
-                        property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.value)
+                        property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.evalValue)
 
                         MenuItem {
                             text: "Reset To Default Value"
@@ -85,8 +85,8 @@ RowLayout {
                             visible: paramMenu.isFileAttribute
                             height: visible ? implicitHeight : 0
                             text: paramMenu.isFilepath ? "Open Containing Folder" : "Open Folder"
-                            onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(attribute.value)) :
-                                                              Qt.openUrlExternally(Filepath.stringToUrl(attribute.value))
+                            onClicked: paramMenu.isFilepath ? Qt.openUrlExternally(Filepath.dirname(attribute.evalValue)) :
+                                                              Qt.openUrlExternally(Filepath.stringToUrl(attribute.evalValue))
                         }
 
                         MenuItem {

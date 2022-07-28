@@ -409,38 +409,38 @@ ApplicationWindow {
                 onTriggered: ensureSaved(function() { _reconstruction.new() })
             }
             Menu {
+                id: newPipelineMenu
                 title: "New Pipeline"
-                TextMetrics {
-                    id: textMetrics
-                    font: action_PG_CT.font
-                    elide: Text.ElideNone
-                    text: action_PG_CT.text
+                enabled: newPipelineMenuItems.model != undefined && newPipelineMenuItems.model.length > 0
+                property int maxWidth: 1000
+                property int fullWidth: {
+                    var result = 0;
+                    for (var i = 0; i < count; ++i) {
+                        var item = itemAt(i);
+                        result = Math.max(item.implicitWidth + item.padding * 2, result);
+                    }
+                    return result;
                 }
-                implicitWidth: textMetrics.width + 10  // largest text width + margin
-                Action {
-                    text: "Photogrammetry"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetry") })
-                }
-                Action {
-                    text: "Panorama HDR"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("panoramahdr") })
-                }
-                Action {
-                    text: "Panorama Fisheye HDR"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("panoramafisheyehdr") })
-                }
-                Action {
-                    id: action_PG_CT
-                    text: "Photogrammetry and Camera Tracking (experimental)"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetryandcameratracking") })
-                }
-                Action {
-                    text: "Camera Tracking (experimental)"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("cameratracking") })
-                }
-                Action {
-                    text: "Photogrammetry Draft (No CUDA)"
-                    onTriggered: ensureSaved(function() { _reconstruction.new("photogrammetrydraft") })
+                implicitWidth: fullWidth
+                Repeater {
+                    id: newPipelineMenuItems
+                    model: MeshroomApp.pipelineTemplateFiles
+                    MenuItem {
+                        onTriggered: ensureSaved(function() {
+                            _reconstruction.new(modelData["key"])
+                        })
+
+                        text: fileTextMetrics.elidedText
+                        TextMetrics {
+                            id: fileTextMetrics
+                            text: modelData["name"]
+                            elide: Text.ElideLeft
+                            elideWidth: newPipelineMenu.maxWidth
+                        }
+                        ToolTip.text: modelData["path"]
+                        ToolTip.visible: hovered
+                        ToolTip.delay: 200
+                    }
                 }
             }
             Action {

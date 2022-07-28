@@ -20,8 +20,8 @@ parser.add_argument('-I', '--inputRecursive', metavar='FOLDERS/IMAGES', type=str
                     default=[],
                     help='Input folders containing all images recursively.')
 
-parser.add_argument('-p', '--pipeline', metavar='photogrammetry/panoramaHdr/panoramaFisheyeHdr/cameraTracking/photogrammetryDraft/MG_FILE', type=str, default='photogrammetry',
-                    help='"photogrammetry", "panoramaHdr", "panoramaFisheyeHdr", "cameraTracking", "photogrammetryDraft" pipeline or a Meshroom file containing a custom pipeline to run on input images. '
+parser.add_argument('-p', '--pipeline', metavar='FILE.mg/' + '/'.join(meshroom.core.pipelineTemplates), type=str, default='photogrammetry',
+                    help='Template pipeline among those listed or a Meshroom file containing a custom pipeline to run on input images. '
                          'Requirements: the graph must contain one CameraInit node, '
                          'and one Publish node if --output is set.')
 
@@ -124,22 +124,13 @@ if hasSearchedForImages and not filesByType.images:
 graph = multiview.Graph(name=args.pipeline)
 
 with multiview.GraphModification(graph):
-    # initialize photogrammetry pipeline
-    if args.pipeline.lower() == "photogrammetry":
-        # default photogrammetry pipeline
-        multiview.photogrammetry(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
-    elif args.pipeline.lower() == "panoramahdr":
-        # default panorama Hdr pipeline
-        multiview.panoramaHdr(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
-    elif args.pipeline.lower() == "panoramafisheyehdr":
-        # default panorama Fisheye Hdr pipeline
-        multiview.panoramaFisheyeHdr(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
-    elif args.pipeline.lower() == "cameratracking":
-        # default panorama Fisheye Hdr pipeline
-        multiview.cameraTracking(inputViewpoints=views, inputIntrinsics=intrinsics, output=args.output, graph=graph)
+    # initialize template pipeline
+    loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
+    if args.pipeline.lower() in loweredPipelineTemplates:
+        graph.load(loweredPipelineTemplates[args.pipeline.lower()], setupProjectFile=False)
     else:
         # custom pipeline
-        graph.load(args.pipeline)
+        graph.load(args.pipeline, setupProjectFile=False)
         # graph.update()
 
     cameraInit = getOnlyNodeOfType(graph, 'CameraInit')

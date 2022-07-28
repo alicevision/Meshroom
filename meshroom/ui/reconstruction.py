@@ -3,7 +3,6 @@ import logging
 import math
 import os
 from threading import Thread
-from collections import Iterable
 
 from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF
 from PySide2.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
@@ -14,6 +13,7 @@ from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position
+from meshroom.core.pyCompatibility import Iterable
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
 
@@ -481,27 +481,15 @@ class Reconstruction(UIGraph):
     @Slot(str)
     def new(self, pipeline=None):
         p = pipeline if pipeline != None else self._defaultPipeline
-        """ Create a new photogrammetry pipeline. """
-        if p.lower() == "photogrammetry":
-            # default photogrammetry pipeline
-            self.setGraph(multiview.photogrammetry())
-        elif p.lower() == "panoramahdr":
-            # default panorama hdr pipeline
-            self.setGraph(multiview.panoramaHdr())
-        elif p.lower() == "panoramafisheyehdr":
-            # default panorama fisheye hdr pipeline
-            self.setGraph(multiview.panoramaFisheyeHdr())
-        elif p.lower() == "photogrammetryandcameratracking":
-            # default camera tracking pipeline
-            self.setGraph(multiview.photogrammetryAndCameraTracking())
-        elif p.lower() == "cameratracking":
-            # default camera tracking pipeline
-            self.setGraph(multiview.cameraTracking())
-        elif p.lower() == "photogrammetrydraft":
-            # photogrammetry pipeline in draft mode (no cuda)
-            self.setGraph(multiview.photogrammetryDraft())
+        """ Create a new pipeline. """
+        # Lower the input and the dictionary keys to make sure that all input types can be found:
+        # - correct pipeline name but the case does not match (e.g. panoramaHDR instead of panoramaHdr)
+        # - lowercase pipeline name given through the "New Pipeline" menu
+        loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
+        if p.lower() in loweredPipelineTemplates:
+            self.load(loweredPipelineTemplates[p.lower()], setupProjectFile=False)
         else:
-            # use the user-provided default photogrammetry project file
+            # use the user-provided default project file
             self.load(p, setupProjectFile=False)
 
     @Slot(str, result=bool)

@@ -24,6 +24,13 @@ class PanoramaPostProcessing(desc.CommandLineNode):
             value='',
             uid=[0],
         ),
+        desc.BoolParam(
+            name='fillHoles',
+            label='Use fill holes algorithm',
+            description='Fill the non attributed pixels with push pull algorithm.',
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

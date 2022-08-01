@@ -184,7 +184,8 @@ class DuplicateNodesCommand(GraphCommand):
 
     def redoImpl(self):
         srcNodes = [ self.graph.node(i) for i in self.srcNodeNames ]
-        duplicates = list(self.graph.duplicateNodes(srcNodes).values())
+        # flatten the list of duplicated nodes to avoid lists within the list
+        duplicates = [ n for nodes in list(self.graph.duplicateNodes(srcNodes).values()) for n in nodes ]
         self.duplicates = [ n.name for n in duplicates ]
         return duplicates
 

@@ -71,6 +71,10 @@ Item {
             root.x = root.node.x
             root.y = root.node.y
         }
+
+        onInternalAttributesChanged: {
+            nodeLabel.text = node ? node.label : ""
+        }
     }
 
     // Whether an attribute can be displayed as an attribute pin on the node
@@ -181,6 +185,7 @@ Item {
 
                         // Node Name
                         Label {
+                            id: nodeLabel
                             Layout.fillWidth: true
                             text: node ? node.label : ""
                             padding: 4

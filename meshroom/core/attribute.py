@@ -168,6 +168,10 @@ class Attribute(BaseObject):
         # TODO: only update the graph if this attribute participates to a UID
         if self.isInput:
             self.requestGraphUpdate()
+            # TODO: only call update of the node if the attribute is internal
+            # Internal attributes are set as inputs
+            self.requestNodeUpdate()
+
         self.valueChanged.emit()
 
     def upgradeValue(self, exportedValue):
@@ -180,6 +184,12 @@ class Attribute(BaseObject):
         if self.node.graph:
             self.node.graph.markNodesDirty(self.node)
             self.node.graph.update()
+
+    def requestNodeUpdate(self):
+        # Update specific node information that do not affect the rest of the graph
+        # (like internal attributes)
+        if self.node:
+            self.node.updateInternalAttributes()
 
     @property
     def isOutput(self):

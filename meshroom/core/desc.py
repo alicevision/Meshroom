@@ -501,6 +501,13 @@ class Node(object):
             value="",
             semantic="multiline",
             uid=[0],
+        ),
+        StringParam(
+            name="label",
+            label="Label",
+            description="Custom label to replace the node's default label.",
+            value="",
+            uid=[],
         )
     ]
     inputs = []

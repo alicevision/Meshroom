@@ -157,6 +157,8 @@ RowLayout {
                 if (attribute.desc.semantic === 'multiline')
                     return textArea_component
                 return textField_component
+            case "ColorParam":
+                return color_component
             default: return textField_component
             }
         }
@@ -236,6 +238,70 @@ RowLayout {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        Component {
+            id: color_component
+            RowLayout {
+                CheckBox {
+                    id: color_checkbox
+                    Layout.alignment: Qt.AlignLeft
+                    checked: node.color === "" ? false : true
+                    text: "Custom Color"
+                    onClicked: {
+                        if(checked) {
+                            _reconstruction.setAttribute(attribute, "#0000FF")
+                        } else {
+                            _reconstruction.setAttribute(attribute, "")
+                        }
+                    }
+                }
+                TextField {
+                    id: colorText
+                    Layout.alignment: Qt.AlignLeft
+                    implicitWidth: 100
+                    enabled: color_checkbox.checked
+                    visible: enabled
+                    text: enabled ? attribute.value : ""
+                    selectByMouse: true
+                    onEditingFinished: setTextFieldAttribute(text)
+                    onAccepted: setTextFieldAttribute(text)
+                    Component.onDestruction: {
+                        if(activeFocus)
+                            setTextFieldAttribute(text)
+                    }
+                }
+
+                Rectangle {
+                    height: colorText.height
+                    width: colorText.width / 2
+                    Layout.alignment: Qt.AlignLeft
+                    visible: color_checkbox.checked
+                    color: color_checkbox.checked ? attribute.value : ""
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: colorDialog.open()
+                    }
+                }
+
+                ColorDialog {
+                    id: colorDialog
+                    title: "Please choose a color"
+                    color: attribute.value
+                    onAccepted: {
+                        colorText.text = color
+                        // Artificially trigger change of attribute value
+                        colorText.editingFinished()
+                        close()
+                    }
+                    onRejected: close()
+                }
+                Item {
+                    // Dummy item to fill out the space if needed
+                    Layout.fillWidth: true
                 }
             }
         }

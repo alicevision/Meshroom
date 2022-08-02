@@ -74,6 +74,7 @@ Item {
 
         onInternalAttributesChanged: {
             nodeLabel.text = node ? node.label : ""
+            background.color = (node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color)
         }
     }
 
@@ -142,7 +143,7 @@ Item {
         Rectangle {
             id: background
             anchors.fill: nodeContent
-            color: Qt.lighter(activePalette.base, 1.4)
+            color: node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color
             layer.enabled: true
             layer.effect: DropShadow { radius: 3; color: shadowColor }
             radius: 3

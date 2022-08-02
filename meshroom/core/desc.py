@@ -343,6 +343,19 @@ class StringParam(Param):
         return ""
 
 
+class ColorParam(Param):
+    """
+    """
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True):
+        super(ColorParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
+
+    def validateValue(self, value):
+        if not isinstance(value, pyCompatibility.basestring) or len(value.split(" ")) > 1:
+            raise ValueError('ColorParam value should be a string containing either an SVG name or an hexadecimal '
+                             'color code (param: {}, value: {}, type: {})'.format(self.name, value, type(value)))
+        return value
+
+
 class Level(Enum):
     NONE = 0
     NORMAL = 1
@@ -506,6 +519,13 @@ class Node(object):
             name="label",
             label="Label",
             description="Custom label to replace the node's default label.",
+            value="",
+            uid=[],
+        ),
+        ColorParam(
+            name="color",
+            label="Color",
+            description="Custom color for the node (SVG name or hexadecimal code).",
             value="",
             uid=[],
         )

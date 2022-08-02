@@ -532,6 +532,15 @@ class BaseNode(BaseObject):
                 return label
         return self.nameToLabel(self._name)
 
+    def getColor(self):
+        """
+        Returns:
+            str: the user-provided custom color of the node if it exists, empty string otherwise
+        """
+        if self.hasInternalAttribute("color"):
+            return self.internalAttribute("color").value.strip()
+        return ""
+
     @Slot(str, result=str)
     def nameToLabel(self, name):
         """
@@ -1088,6 +1097,7 @@ class BaseNode(BaseObject):
 
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
+    color = Property(str, getColor, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
     positionChanged = Signal()

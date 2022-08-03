@@ -34,8 +34,8 @@ Intrinsic = [
                     "So this value is used to limit the range of possible values in the optimization. \n"
                     "If you put -1, this value will not be used and the focal length will not be bounded.",
                     value=-1.0, uid=[0], range=None),
-    desc.FloatParam(name="focalLength", label="Focal Length", description="Known/Calibrated Focal Length (in mm)", value=1000, uid=[], range=(0, 10000, 1)),
-    desc.FloatParam(name="pixelRatio", label="pixel Ratio", description="ratio between pixel width and pixel height", value=1, uid=[], range=(0, 10, 0.1)),
+    desc.FloatParam(name="focalLength", label="Focal Length", description="Known/Calibrated Focal Length (in mm)", value=1000, uid=[0], range=(0, 10000, 1)),
+    desc.FloatParam(name="pixelRatio", label="pixel Ratio", description="ratio between pixel width and pixel height", value=1, uid=[0], range=(0, 10, 0.1)),
     desc.BoolParam(name='pixelRatioLocked', label='Pixel ratio Locked',
                    description='the pixelRatio value is locked for estimation',
                    value=True, uid=[0]),
@@ -51,14 +51,14 @@ Intrinsic = [
                      " * 3declassicld: Pinhole camera with a 10 anamorphic distortion coefficients\n"
                      " * 3deradial4: Pinhole camera with 3DE radial4 model\n",
                      value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'equidistant_r3', '3deanamorphic4', '3declassicld', '3deradial4'], exclusive=True, uid=[0]),
-    desc.IntParam(name="width", label="Width", description="Image Width", value=0, uid=[], range=(0, 10000, 1)),
-    desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[], range=(0, 10000, 1)),
-    desc.FloatParam(name="sensorWidth", label="Sensor Width", description="Sensor Width (mm)", value=36, uid=[], range=(0, 1000, 1)),
-    desc.FloatParam(name="sensorHeight", label="Sensor Height", description="Sensor Height (mm)", value=24, uid=[], range=(0, 1000, 1)),
-    desc.StringParam(name="serialNumber", label="Serial Number", description="Device Serial Number (Camera UID and Lens UID combined)", value="", uid=[]),
+    desc.IntParam(name="width", label="Width", description="Image Width", value=0, uid=[0], range=(0, 10000, 1)),
+    desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[0], range=(0, 10000, 1)),
+    desc.FloatParam(name="sensorWidth", label="Sensor Width", description="Sensor Width (mm)", value=36, uid=[0], range=(0, 1000, 1)),
+    desc.FloatParam(name="sensorHeight", label="Sensor Height", description="Sensor Height (mm)", value=24, uid=[0], range=(0, 1000, 1)),
+    desc.StringParam(name="serialNumber", label="Serial Number", description="Device Serial Number (Camera UID and Lens UID combined)", value="", uid=[0]),
     desc.GroupAttribute(name="principalPoint", label="Principal Point", description="Position of the Optical Center in the Image (i.e. the sensor surface).", groupDesc=[
-        desc.FloatParam(name="x", label="x", description="", value=0, uid=[], range=(0, 10000, 1)),
-        desc.FloatParam(name="y", label="y", description="", value=0, uid=[], range=(0, 10000, 1)),
+        desc.FloatParam(name="x", label="x", description="", value=0, uid=[0], range=(0, 10000, 1)),
+        desc.FloatParam(name="y", label="y", description="", value=0, uid=[0], range=(0, 10000, 1)),
         ]),
 
     desc.ChoiceParam(name="initializationMode", label="Initialization Mode",
@@ -70,7 +70,7 @@ Intrinsic = [
                      values=("calibrated", "estimated", "unknown", "none"),
                      value="none",
                      exclusive=True,
-                     uid=[],
+                     uid=[0],
                      advanced=True
                      ),
 

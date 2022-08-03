@@ -1,4 +1,4 @@
-__version__ = "7.0"
+__version__ = "8.0"
 
 import os
 import json

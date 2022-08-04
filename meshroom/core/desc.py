@@ -527,3 +527,55 @@ class CommandLineNode(Node):
         finally:
             chunk.subprocess = None
 
+
+# Test abstract node
+class InitNode:
+    def __init__(self):
+        pass
+
+    def initialize(self, node, inputs, recursiveInputs):
+        """
+        Initialize the attributes that are needed for a node to start running.
+
+        Args:
+            node (Node): the node whose attributes must be initialized
+            inputs (list): the user-provided list of input files/directories
+            recursiveInputs (list): the user-provided list of input directories to search recursively for images
+        """
+        pass
+
+    def resetAttributes(self, node, attributeNames):
+        """
+        Reset the values of the provided attributes for a node.
+
+        Args:
+            node (Node): the node whose attributes are to be reset
+            attributeNames (list): the list containing the names of the attributes to reset
+        """
+        for attrName in attributeNames:
+            if node.hasAttribute(attrName):
+                node.attribute(attrName).resetValue()
+
+    def extendAttributes(self, node, attributesDict):
+        """
+        Extend the values of the provided attributes for a node.
+
+        Args:
+            node (Node): the node whose attributes are to be extended
+            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the values to extend with
+        """
+        for attr in attributesDict.keys():
+            if node.hasAttribute(attr):
+                node.attribute(attr).extend(attributesDict[attr])
+
+    def setAttributes(self, node, attributesDict):
+        """
+        Set the values of the provided attributes for a node.
+
+        Args:
+            node (Node): the node whose attributes are to be extended
+            attributesDict (dict): the dictionary containing the attributes' names (as keys) and the values to set
+        """
+        for attr in attributesDict:
+            if node.hasAttribute(attr):
+                node.attribute(attr).value = attributesDict[attr]

@@ -547,6 +547,14 @@ class Graph(BaseObject):
         nodes = [n for n in self._nodes.values() if n.nodeType == nodeType]
         return self.sortNodesByIndex(nodes) if sortedByIndex else nodes
 
+    def findInitNodes(self):
+        """
+        Returns:
+            list[Node]: the list of Init nodes (nodes inheriting from InitNode)
+        """
+        nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InitNode)]
+        return nodes
+
     def findNodeCandidates(self, nodeNameExpr):
         pattern = re.compile(nodeNameExpr)
         return [v for k, v in self._nodes.objects.items() if pattern.match(k)]

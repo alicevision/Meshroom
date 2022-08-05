@@ -8,7 +8,7 @@ import tempfile
 import logging
 
 from meshroom.core import desc, Version
-
+from meshroom.multiview import FilesByType, findFilesByTypeInFolder
 
 Viewpoint = [
     desc.IntParam(name="viewId", label="Id", description="Image UID", value=-1, uid=[0], range=None),
@@ -119,7 +119,8 @@ def readSfMData(sfmFile):
 
     return views, intrinsics
 
-class CameraInit(desc.CommandLineNode):
+
+class CameraInit(desc.CommandLineNode, desc.InitNode):
     commandLine = 'aliceVision_cameraInit {allParams} --allowSingleView 1' # don't throw an error if there is only one image
 
     size = desc.DynamicNodeSize('viewpoints')
@@ -249,6 +250,35 @@ The metadata needed are:
             uid=[],
         ),
     ]
+
+    def __init__(self):
+        super(CameraInit, self).__init__()
+
+    def initialize(self, node, inputs, recursiveInputs):
+        # Reset graph inputs
+        self.resetAttributes(node, ["viewpoints", "intrinsics"])
+
+        filesByType = FilesByType()
+        searchedForImages = False
+
+        if recursiveInputs:
+            filesByType.extend(findFilesByTypeInFolder(recursiveInputs, recursive=True))
+            searchedForImages = True
+
+        # Add views and intrinsics from a file if it was provided, or look for the images
+        if len(inputs) == 1 and os.path.isfile(inputs[0]) and os.path.splitext(inputs[0])[-1] in ('.json', '.sfm'):
+            views, intrinsics = readSfMData(inputs[0])
+            self.extendAttributes(node, {"viewpoints": views, "intrinsics": intrinsics})
+        else:
+            filesByType.extend(findFilesByTypeInFolder(inputs, recursive=False))
+            searchedForImages = True
+
+        # If there was no input file, check that the directories do contain images
+        if searchedForImages and not filesByType.images:
+            raise ValueError("No valid input file or no image in the provided directories")
+
+        views, intrinsics = self.buildIntrinsics(node, filesByType.images)
+        self.setAttributes(node, {"viewpoints": views, "intrinsics": intrinsics})
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
 

@@ -105,11 +105,55 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             value='${ALICEVISION_VOCTREE}',
             uid=[0],
         ),
+        desc.IntParam(
+            name='maxNbOutFrame',
+            label='Max Nb Out Frame',
+            description='''Maximum number of output frames (0 = no limit)''',
+            value=0,
+            range=(0, 10000, 1),
+            uid=[0],
+        ),
+        desc.GroupAttribute(
+            name='regularMode',
+            label='Regular Mode',
+            description='''Regular mode for keyframe extraction. In regular mode, two keyframes are always
+            separated by the same number of frames, specified by the user.''',
+            enabled=True,
+            group=None,
+            groupDesc=[
+                desc.BoolParam(
+                    name='useRegularMode',
+                    label='Enable',
+                    description='''Use regular keyframe extraction mode''',
+                    value=False,
+                    uid=[0]
+                ),
+                desc.IntParam(
+                    name='startFrame',
+                    label='Start Frame',
+                    description='First keyframe to extract in the sequence',
+                    value='0',
+                    range=(0, 10000, 1),
+                    enabled=lambda node: node.regularMode.useRegularMode.value,
+                    uid=[0]
+                ),
+                desc.IntParam(
+                    name='frameRange',
+                    label='Frame Range',
+                    description='Number of frames to skip between two keyframes',
+                    value='100',
+                    range=(1, 1000, 1),
+                    enabled=lambda node: node.regularMode.useRegularMode.value,
+                    uid=[0]
+                ),
+            ],
+        ),
         desc.BoolParam(
             name='useSparseDistanceSelection',
             label='Use Sparse Distance Selection',
             description='Use sparseDistance selection in order to avoid similar keyframes.',
             value=False,
+            enabled=lambda node: not node.regularMode.useRegularMode.value,
             uid=[0],
         ),
         desc.BoolParam(
@@ -117,6 +161,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             label='Use Sharpness Selection',
             description='Use frame sharpness score for keyframe selection.',
             value=False,
+            enabled=lambda node: not node.regularMode.useRegularMode.value,
             uid=[0],
         ),
         desc.FloatParam(
@@ -125,6 +170,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             description='Maximum number of strong common points between two keyframes.',
             value=100.0,
             range=(1.0, 200.0, 1.0),
+            enabled=lambda node: not node.regularMode.useRegularMode.value,
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -134,6 +180,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             value='normal',
             values=['ultra', 'high', 'normal', 'low', 'very_low', 'none'],
             exclusive=True,
+            enabled=lambda node: not node.regularMode.useRegularMode.value,
             uid=[0],
         ),
         desc.IntParam(
@@ -142,6 +189,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             description='''sharp part of the image (1 = all, 2 = size/2, ...)''',
             value=4,
             range=(1, 100, 1),
+            enabled=lambda node: not node.regularMode.useRegularMode.value,
             uid=[0],
         ),
         desc.IntParam(
@@ -150,6 +198,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             description='''minimum number of frames between two keyframes''',
             value=1,
             range=(1, 100, 1),
+            enabled=lambda node: not node.regularMode.useRegularMode.value,
             uid=[0],
         ),
         desc.IntParam(
@@ -158,14 +207,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             description='''maximum number of frames after which a keyframe can be taken''',
             value=2,
             range=(2, 1000, 1),
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='maxNbOutFrame',
-            label='Max Nb Out Frame',
-            description='''maximum number of output frames (0 = no limit)''',
-            value=0,
-            range=(0, 10000, 1),
+            enabled=lambda node: not node.regularMode.useRegularMode.value,
             uid=[0],
         ),
         desc.ChoiceParam(

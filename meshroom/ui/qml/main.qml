@@ -154,6 +154,7 @@ ApplicationWindow {
         onAccepted: {
             _reconstruction.saveAsTemplate(file)
             closed(Platform.Dialog.Accepted)
+            MeshroomApp.reloadTemplateList()
         }
         onRejected: closed(Platform.Dialog.Rejected)
     }

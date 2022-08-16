@@ -188,6 +188,12 @@ class MeshroomApp(QApplication):
             templates.append(variant)
         return templates
 
+    @Slot()
+    def reloadTemplateList(self):
+        for f in meshroom.core.pipelineTemplatesFolders:
+            meshroom.core.loadPipelineTemplates(f)
+        self.pipelineTemplateFilesChanged.emit()
+
     def _recentProjectFiles(self):
         projects = []
         settings = QSettings()

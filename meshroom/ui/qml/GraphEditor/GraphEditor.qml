@@ -75,17 +75,31 @@ Item {
         uigraph.selectNodes(nodes)
     }
 
+    /// Copy node content to clipboard
+    function copyNode()
+    {
+        var nodeContent = uigraph.getSelectedNodeContent()
+        if (nodeContent !== '') {
+            Clipboard.clear()
+            Clipboard.setText(nodeContent)
+        }
+    }
+
 
     Keys.onPressed: {
-        if(event.key === Qt.Key_F)
+        if (event.key === Qt.Key_F)
             fit()
-        if(event.key === Qt.Key_Delete)
-            if(event.modifiers == Qt.AltModifier)
+        if (event.key === Qt.Key_Delete)
+            if (event.modifiers == Qt.AltModifier)
                 uigraph.removeNodesFrom(uigraph.selectedNodes)
             else
                 uigraph.removeNodes(uigraph.selectedNodes)
-        if(event.key === Qt.Key_D)
+        if (event.key === Qt.Key_D)
             duplicateNode(event.modifiers == Qt.AltModifier)
+
+        if (event.key === Qt.Key_C)
+            if (event.modifiers == Qt.ControlModifier)
+                copyNode()
     }
 
     MouseArea {

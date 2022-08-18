@@ -3,6 +3,7 @@
 import logging
 import os
 import time
+import json
 from enum import Enum
 from threading import Thread, Event, Lock
 from multiprocessing.pool import ThreadPool
@@ -752,6 +753,18 @@ class UIGraph(QObject):
     def clearNodeHover(self):
         """ Reset currently hovered node to None. """
         self.hoveredNode = None
+
+    @Slot(result=str)
+    def getSelectedNodeContent(self):
+        """
+        Return the content of the currently selected node in a string, formatted to JSON.
+        If no node is currently selected, an empty string is returned.
+        """
+        if self._selectedNode:
+            d = self._graph.toDict()
+            node = d[self._selectedNode.name]
+            return json.dumps(node, indent=4)
+        return ''
 
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()

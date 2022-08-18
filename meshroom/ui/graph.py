@@ -766,6 +766,44 @@ class UIGraph(QObject):
             return json.dumps(node, indent=4)
         return ''
 
+    @Slot(str)
+    def pasteNode(self, clipboardContent):
+        """
+        Parse the content of the clipboard to see whether it contains
+        a valid node description. If that is the case, the node described
+        in the clipboard is built with the available information.
+        Otherwise, nothing is done.
+
+        This function does not need to be preceded by a call to "copyNodeContent".
+        Any clipboard content that contains at least a node type with a valid JSON
+        formatting (dictionary form with double quotes around the keys and values)
+        can be used to generate a node.
+
+        For example, it is enough to have:
+        {"nodeType":"CameraInit"}
+        in the clipboard to create a default CameraInit node.
+        """
+        if not clipboardContent:
+            return
+        d = {}
+        try:
+            d = json.loads(clipboardContent)
+        except ValueError as e:
+            raise ValueError(e)
+
+        if not isinstance(d, dict):
+            raise ValueError("The clipboard does not contain a valid node. Cannot paste it.")
+
+        nodeType = d.get("nodeType", None)
+        if not nodeType:
+            raise ValueError("The clipboard does not contain a valid node. Cannot paste it.")
+
+        attributes = {}
+        attributes.update(d.get("inputs", {}))
+        attributes.update(d.get("outputs", {}))
+
+        self.push(commands.PasteNodeCommand(self._graph, nodeType, **attributes))
+
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()
     graph = Property(Graph, lambda self: self._graph, notify=graphChanged)

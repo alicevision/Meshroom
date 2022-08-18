@@ -15,6 +15,10 @@ class ClipboardHelper(QObject):
     def setText(self, value):
         self._clipboard.setText(value)
 
+    @Slot(result=str)
+    def getText(self):
+        return self._clipboard.text()
+
     @Slot()
     def clear(self):
         self._clipboard.clear()

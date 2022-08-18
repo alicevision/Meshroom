@@ -85,6 +85,12 @@ Item {
         }
     }
 
+    /// Paste content of clipboard to graph editor and create new node if valid
+    function pasteNode()
+    {
+        var copiedContent = Clipboard.getText()
+        uigraph.pasteNode(copiedContent)
+    }
 
     Keys.onPressed: {
         if (event.key === Qt.Key_F)
@@ -100,6 +106,9 @@ Item {
         if (event.key === Qt.Key_C)
             if (event.modifiers == Qt.ControlModifier)
                 copyNode()
+        if (event.key === Qt.Key_V)
+            if (event.modifiers == Qt.ControlModifier)
+                pasteNode()
     }
 
     MouseArea {

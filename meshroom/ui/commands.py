@@ -195,6 +195,26 @@ class DuplicateNodesCommand(GraphCommand):
             self.graph.removeNode(duplicate)
 
 
+class PasteNodeCommand(GraphCommand):
+    """
+    Handle node pasting in a Graph.
+    """
+    def __init__(self, graph, nodeType, parent=None, **kwargs):
+        super(PasteNodeCommand, self).__init__(graph, parent)
+        self.nodeType = nodeType
+        self.nodeName = None
+        self.kwargs = kwargs
+
+    def redoImpl(self):
+        node = self.graph.pasteNode(self.nodeType, **self.kwargs)
+        self.nodeName = node.name
+        self.setText("Paste Node {}".format(self.nodeName))
+        return node
+
+    def undoImpl(self):
+        self.graph.removeNode(self.nodeName)
+
+
 class SetAttributeCommand(GraphCommand):
     def __init__(self, graph, attribute, value, parent=None):
         super(SetAttributeCommand, self).__init__(graph, parent)

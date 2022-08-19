@@ -396,11 +396,11 @@ class Graph(BaseObject):
 
         return duplicates
 
-    def pasteNode(self, nodeType, **kwargs):
+    def pasteNode(self, nodeType, position, **kwargs):
         name = self._createUniqueNodeName(nodeType)
         node = None
         with GraphModification(self):
-            node = Node(nodeType, **kwargs)
+            node = Node(nodeType, position=position, **kwargs)
             self._addNode(node, name)
             self._applyExpr()
         return node

@@ -199,14 +199,15 @@ class PasteNodeCommand(GraphCommand):
     """
     Handle node pasting in a Graph.
     """
-    def __init__(self, graph, nodeType, parent=None, **kwargs):
+    def __init__(self, graph, nodeType, position=None, parent=None, **kwargs):
         super(PasteNodeCommand, self).__init__(graph, parent)
         self.nodeType = nodeType
+        self.position = position
         self.nodeName = None
         self.kwargs = kwargs
 
     def redoImpl(self):
-        node = self.graph.pasteNode(self.nodeType, **self.kwargs)
+        node = self.graph.pasteNode(self.nodeType, self.position, **self.kwargs)
         self.nodeName = node.name
         self.setText("Paste Node {}".format(self.nodeName))
         return node

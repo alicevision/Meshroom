@@ -41,6 +41,7 @@ Item {
     clip: true
 
     SystemPalette { id: activePalette }
+    property point pastePosition
 
     /// Get node delegate for the given node object
     function nodeDelegate(node)
@@ -88,8 +89,9 @@ Item {
     /// Paste content of clipboard to graph editor and create new node if valid
     function pasteNode()
     {
+        root.pastePosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
         var copiedContent = Clipboard.getText()
-        uigraph.pasteNode(copiedContent)
+        uigraph.pasteNode(copiedContent, root.pastePosition)
     }
 
     Keys.onPressed: {

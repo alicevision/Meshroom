@@ -766,8 +766,8 @@ class UIGraph(QObject):
             return json.dumps(node, indent=4)
         return ''
 
-    @Slot(str)
-    def pasteNode(self, clipboardContent):
+    @Slot(str, QPoint)
+    def pasteNode(self, clipboardContent, position=None):
         """
         Parse the content of the clipboard to see whether it contains
         a valid node description. If that is the case, the node described
@@ -802,7 +802,10 @@ class UIGraph(QObject):
         attributes.update(d.get("inputs", {}))
         attributes.update(d.get("outputs", {}))
 
-        self.push(commands.PasteNodeCommand(self._graph, nodeType, **attributes))
+        if isinstance(position, QPoint):
+            position = Position(position.x(), position.y())
+
+        self.push(commands.PasteNodeCommand(self._graph, nodeType, position=position, **attributes))
 
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()

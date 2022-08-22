@@ -162,6 +162,20 @@ The metadata needed are:
             value='${ALICEVISION_SENSOR_DB}',
             uid=[],
         ),
+        desc.File(
+            name='lensCorrectionProfileInfo',
+            label='Lens Correction Profile Info',
+            description='''Lens Correction Profile filepath or database directory.''',
+            value='${ALICEVISION_LENS_PROFILE_INFO}',
+            uid=[],
+        ),
+        desc.BoolParam(
+            name='enableLensCorrectionProfileSearch',
+            label='Enable Automatic LCP Search',
+            description='''Enable automatic LCP Search if a database directory is specified as LCP info.''',
+            value=False,
+            uid=[0],
+        ),
         desc.FloatParam(
             name='defaultFieldOfView',
             label='Default Field Of View',

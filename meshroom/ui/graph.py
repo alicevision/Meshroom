@@ -755,23 +755,25 @@ class UIGraph(QObject):
         self.hoveredNode = None
 
     @Slot(result=str)
-    def getSelectedNodeContent(self):
+    def getSelectedNodesContent(self):
         """
-        Return the content of the currently selected node in a string, formatted to JSON.
+        Return the content of the currently selected nodes in a string, formatted to JSON.
         If no node is currently selected, an empty string is returned.
         """
-        if self._selectedNode:
+        if self._selectedNodes:
             d = self._graph.toDict()
-            node = d[self._selectedNode.name]
-            return json.dumps(node, indent=4)
+            selection = {}
+            for node in self._selectedNodes:
+                selection[node.name] = d[node.name]
+            return json.dumps(selection, indent=4)
         return ''
 
     @Slot(str, QPoint)
-    def pasteNode(self, clipboardContent, position=None):
+    def pasteNodes(self, clipboardContent, position=None):
         """
         Parse the content of the clipboard to see whether it contains
-        a valid node description. If that is the case, the node described
-        in the clipboard is built with the available information.
+        valid node descriptions. If that is the case, the nodes described
+        in the clipboard are built with the available information.
         Otherwise, nothing is done.
 
         This function does not need to be preceded by a call to "copyNodeContent".
@@ -780,7 +782,7 @@ class UIGraph(QObject):
         can be used to generate a node.
 
         For example, it is enough to have:
-        {"nodeType":"CameraInit"}
+        {"nodeName": {"nodeType":"CameraInit"}}
         in the clipboard to create a default CameraInit node.
         """
         if not clipboardContent:
@@ -794,18 +796,35 @@ class UIGraph(QObject):
         if not isinstance(d, dict):
             raise ValueError("The clipboard does not contain a valid node. Cannot paste it.")
 
-        nodeType = d.get("nodeType", None)
-        if not nodeType:
-            raise ValueError("The clipboard does not contain a valid node. Cannot paste it.")
+        finalPosition = None
+        prevPosition = None
 
-        attributes = {}
-        attributes.update(d.get("inputs", {}))
-        attributes.update(d.get("outputs", {}))
+        for key in d:
+            nodeDesc = d[key]
+            nodeType = nodeDesc.get("nodeType", None)
+            if not nodeType:
+                pass
 
-        if isinstance(position, QPoint):
-            position = Position(position.x(), position.y())
+            attributes = {}
+            attributes.update(nodeDesc.get("inputs", {}))
+            attributes.update(nodeDesc.get("outputs", {}))
 
-        self.push(commands.PasteNodeCommand(self._graph, nodeType, position=position, **attributes))
+            currentPosition = nodeDesc.get("position", None)
+            if isinstance(position, QPoint) and not finalPosition:
+                finalPosition = Position(position.x(), position.y())
+            else:
+                if prevPosition and currentPosition:
+                    # if the nodes both have a position, recreate the distance between them from a different
+                    # starting point
+                    x = finalPosition.x + (currentPosition[0] - prevPosition[0])
+                    y = finalPosition.y + (currentPosition[1] - prevPosition[1])
+                    finalPosition = Position(x, y)
+                else:
+                    # if either the current node or previous one lack a position, use a custom one
+                    finalPosition = Position(finalPosition.x + self.layout.gridSpacing + self.layout.nodeWidth, finalPosition.y)
+
+            self.push(commands.PasteNodeCommand(self._graph, nodeType, position=finalPosition, **attributes))
+            prevPosition = currentPosition
 
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()

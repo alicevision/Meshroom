@@ -77,9 +77,9 @@ Item {
     }
 
     /// Copy node content to clipboard
-    function copyNode()
+    function copyNodes()
     {
-        var nodeContent = uigraph.getSelectedNodeContent()
+        var nodeContent = uigraph.getSelectedNodesContent()
         if (nodeContent !== '') {
             Clipboard.clear()
             Clipboard.setText(nodeContent)
@@ -87,11 +87,11 @@ Item {
     }
 
     /// Paste content of clipboard to graph editor and create new node if valid
-    function pasteNode()
+    function pasteNodes()
     {
         root.pastePosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
         var copiedContent = Clipboard.getText()
-        uigraph.pasteNode(copiedContent, root.pastePosition)
+        uigraph.pasteNodes(copiedContent, root.pastePosition)
     }
 
     Keys.onPressed: {
@@ -107,10 +107,10 @@ Item {
 
         if (event.key === Qt.Key_C)
             if (event.modifiers == Qt.ControlModifier)
-                copyNode()
+                copyNodes()
         if (event.key === Qt.Key_V)
             if (event.modifiers == Qt.ControlModifier)
-                pasteNode()
+                pasteNodes()
     }
 
     MouseArea {

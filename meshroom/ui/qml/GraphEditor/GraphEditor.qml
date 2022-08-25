@@ -104,13 +104,6 @@ Item {
                 uigraph.removeNodes(uigraph.selectedNodes)
         if (event.key === Qt.Key_D)
             duplicateNode(event.modifiers == Qt.AltModifier)
-
-        if (event.key === Qt.Key_C)
-            if (event.modifiers == Qt.ControlModifier)
-                copyNodes()
-        if (event.key === Qt.Key_V)
-            if (event.modifiers == Qt.ControlModifier)
-                pasteNodes()
     }
 
     MouseArea {
@@ -407,6 +400,11 @@ Item {
                     onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
                 }
                 MenuSeparator {}
+                MenuItem {
+                    text: "Copy Node(s)"
+                    enabled: true
+                    onTriggered: copyNodes()
+                }
                 MenuItem {
                     text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
                     enabled: true

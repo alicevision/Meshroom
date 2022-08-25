@@ -51,9 +51,19 @@ class MessageHandler(object):
     @classmethod
     def handler(cls, messageType, context, message):
         """ Message handler remapping Qt logs to Python logging system. """
-        # discard blacklisted Qt messages related to QML when 'output qml warnings' is set to false
-        if not cls.outputQmlWarnings and any(w in message for w in cls.qmlWarningsBlacklist):
-            return
+
+        if not cls.outputQmlWarnings:
+            # If MESHROOM_OUTPUT_QML_WARNINGS is not set and an error in qml files happen we're
+            # left without any output except "QQmlApplicationEngine failed to load component".
+            # This is extremely hard to debug to someone who does not know about
+            # MESHROOM_OUTPUT_QML_WARNINGS beforehand because by default Qml will output errors to
+            # stdout.
+            if "QQmlApplicationEngine failed to load component" in message:
+                logging.warning("Set MESHROOM_OUTPUT_QML_WARNINGS=1 to get a detailed error message.")
+
+            # discard blacklisted Qt messages related to QML when 'output qml warnings' is not enabled
+            elif any(w in message for w in cls.qmlWarningsBlacklist):
+                return
         MessageHandler.logFunctions[messageType](message)
 
 

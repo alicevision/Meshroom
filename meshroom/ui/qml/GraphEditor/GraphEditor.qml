@@ -408,7 +408,19 @@ Item {
                 MenuItem {
                     text: "Copy Node(s)"
                     enabled: true
+                    ToolTip.text: "Copy selection to the clipboard"
+                    ToolTip.visible: hovered
                     onTriggered: copyNodes()
+                }
+                MenuItem {
+                    text: "Paste Node(s)"
+                    enabled: true
+                    ToolTip.text: "Copy selection to the clipboard and immediately paste it"
+                    ToolTip.visible: hovered
+                    onTriggered: {
+                        copyNodes();
+                        pasteNodes();
+                    }
                 }
                 MenuItem {
                     text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")

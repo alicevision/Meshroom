@@ -304,6 +304,16 @@ ApplicationWindow {
         }
     }
 
+    FileDialog {
+        id: importSceneDialog
+        title: "Import Scene"
+        selectMultiple: false
+        nameFilters: ["Meshroom Graphs (*.mg)"]
+        onAccepted: {
+            graphEditor.uigraph.importScene(importSceneDialog.fileUrl)
+        }
+    }
+
     AboutDialog {
         id: aboutDialog
     }
@@ -529,6 +539,12 @@ ApplicationWindow {
                         }
                     }
                 }
+            }
+            Action {
+                id: importSceneAction
+                text: "Import Scene"
+                shortcut: "Ctrl+Shift+I"
+                onTriggered: importSceneDialog.open()
             }
             Action {
                 id: importActionItem

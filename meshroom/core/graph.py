@@ -219,6 +219,7 @@ class Graph(BaseObject):
         self._canComputeLeaves = True
         self._nodes = DictModel(keyAttrName='name', parent=self)
         self._edges = DictModel(keyAttrName='dst', parent=self)  # use dst attribute as unique key since it can only have one input connection
+        self._importedNodes = DictModel(keyAttrName='name', parent=self)
         self._compatibilityNodes = DictModel(keyAttrName='name', parent=self)
         self.cacheDir = meshroom.core.defaultCacheFolder
         self._filepath = ''
@@ -231,6 +232,7 @@ class Graph(BaseObject):
         # Tell QML nodes are going to be deleted
         for node in self._nodes:
             node.alive = False
+        self._importedNodes.clear()
         self._nodes.clear()
 
     @property
@@ -239,7 +241,7 @@ class Graph(BaseObject):
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)
-    def load(self, filepath, setupProjectFile=True):
+    def load(self, filepath, setupProjectFile=True, importScene=False):
         """
         Load a meshroom graph ".mg" file.
 
@@ -248,12 +250,17 @@ class Graph(BaseObject):
             setupProjectFile: Store the reference to the project file and setup the cache directory.
                               If false, it only loads the graph of the project file as a template.
         """
-        self.clear()
+        if not importScene:
+            self.clear()
         with open(filepath) as jsonFile:
             fileData = json.load(jsonFile)
 
         # older versions of Meshroom files only contained the serialized nodes
         graphData = fileData.get(Graph.IO.Keys.Graph, fileData)
+
+        if importScene:
+            self._importedNodes.clear()
+            graphData = self.updateImportedScene(graphData)
 
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
@@ -278,6 +285,9 @@ class Graph(BaseObject):
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
 
+                if importScene:
+                    self._importedNodes.add(n)
+
             # Create graph edges by resolving attributes expressions
             self._applyExpr()
 
@@ -287,6 +297,85 @@ class Graph(BaseObject):
                 self._setFilepath(filepath)
 
         return True
+
+    def updateImportedScene(self, data):
+        """
+        Update the names and links of the scene to import so that it can fit
+        correctly in the existing graph.
+
+        Parse all the nodes from the scene that is going to be imported.
+        If their name already exists in the graph, replace them with new names,
+        then parse all the nodes' inputs/outputs to replace the old names with
+        the new ones in the links.
+
+        Args:
+            data (dict): the dictionary containing all the nodes to import and their data
+
+        Returns:
+            updatedData (dict): the dictionary containing all the nodes to import with their updated names and data
+        """
+
+        nameCorrespondences = {}
+        updatedData = {}
+
+        def createUniqueNodeName(nodeNames, inputName):
+            """
+            Create a unique name that does not already exist in the current graph or in the list
+            of nodes that will be imported.
+            """
+            i = 1
+            while i:
+                newName = "{name}_{index}".format(name=inputName, index=i)
+                if newName not in nodeNames and newName not in updatedData.keys():
+                    return newName
+                i += 1
+
+        def updateLinks(attributes):
+            """
+            Update all the links that refer to nodes that are going to be imported and whose
+            name has to be updated.
+            """
+            for key, val in attributes.items():
+                for corr in nameCorrespondences.keys():
+                    if isinstance(val, pyCompatibility.basestring) and corr in val:
+                        attributes[key] = val.replace(corr, nameCorrespondences[corr])
+                    elif isinstance(val, list):
+                        for v in val:
+                            if isinstance(v, pyCompatibility.basestring):
+                                if corr in v:
+                                    val[val.index(v)] = v.replace(corr, nameCorrespondences[corr])
+                            else:  # the list does not contain strings, so there cannot be links to update
+                                break
+                        attributes[key] = val
+
+            return attributes
+
+        # First pass to get all the names that already exist in the graph, update them, and keep track of the changes
+        for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
+            if not isinstance(nodeData, dict):
+                raise RuntimeError('updateImportedScene error: Node is not a dict.')
+
+            if nodeName in self._nodes.keys() or nodeName in updatedData.keys():
+                newName = createUniqueNodeName(self._nodes.keys(), nodeData["nodeType"])
+                updatedData[newName] = nodeData
+                nameCorrespondences[nodeName] = newName
+
+            else:
+                updatedData[nodeName] = nodeData
+
+        # Second pass to update all the links in the input/output attributes for every node with the new names
+        for nodeName, nodeData in updatedData.items():
+            inputs = nodeData.get("inputs", {})
+            outputs = nodeData.get("outputs", {})
+
+            if inputs:
+                inputs = updateLinks(inputs)
+                updatedData[nodeName]["inputs"] = inputs
+            if outputs:
+                outputs = updateLinks(outputs)
+                updatedData[nodeName]["outputs"] = outputs
+
+        return updatedData
 
     @property
     def updateEnabled(self):
@@ -441,6 +530,8 @@ class Graph(BaseObject):
 
             node.alive = False
             self._nodes.remove(node)
+            if node in self._importedNodes:
+                self._importedNodes.remove(node)
             self.update()
 
         return inEdges, outEdges
@@ -1187,6 +1278,11 @@ class Graph(BaseObject):
     @property
     def edges(self):
         return self._edges
+
+    @property
+    def importedNodes(self):
+        """" Return the list of nodes that were added to the graph with the latest 'Import Scene' action. """
+        return self._importedNodes
 
     @property
     def cacheDir(self):

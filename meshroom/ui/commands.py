@@ -7,7 +7,7 @@ from PySide2.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
 from meshroom.core.graph import GraphModification
-from meshroom.core.node import nodeFactory
+from meshroom.core.node import nodeFactory, Position
 
 
 class UndoCommand(QUndoCommand):
@@ -215,6 +215,37 @@ class PasteNodeCommand(GraphCommand):
     def undoImpl(self):
         self.graph.removeNode(self.nodeName)
 
+
+class ImportSceneCommand(GraphCommand):
+    """
+    Handle the import of a scene into a Graph.
+    """
+    def __init__(self, graph, filepath=None, yOffset=0, parent=None):
+        super(ImportSceneCommand, self).__init__(graph, parent)
+        self.filepath = filepath
+        self.importedNames = []
+        self.yOffset = yOffset
+
+    def redoImpl(self):
+        status = self.graph.load(self.filepath, setupProjectFile=False, importScene=True)
+        importedNodes = self.graph.importedNodes
+        self.setText("Import Scene ({} nodes)".format(importedNodes.count))
+
+        lowestY = 0
+        for node in self.graph.nodes:
+            if node not in importedNodes and node.y > lowestY:
+                lowestY = node.y
+
+        for node in importedNodes:
+            self.importedNames.append(node.name)
+            self.graph.node(node.name).position = Position(node.x, node.y + lowestY + self.yOffset)
+
+        return status
+
+    def undoImpl(self):
+        for nodeName in self.importedNames:
+            self.graph.removeNode(nodeName)
+        self.importedNames = []
 
 class SetAttributeCommand(GraphCommand):
     def __init__(self, graph, attribute, value, parent=None):

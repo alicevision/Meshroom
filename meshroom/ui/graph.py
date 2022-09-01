@@ -559,9 +559,11 @@ class UIGraph(QObject):
         """
         with self.groupedGraphModification("Remove Nodes From Selected Nodes"):
             nodesToRemove, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
+            # filter out nodes that will be removed more than once
+            uniqueNodesToRemove = list(dict.fromkeys(nodesToRemove))
             # Perform nodes removal from leaves to start node so that edges
             # can be re-created in correct order on redo.
-            self.removeNodes(list(reversed(nodesToRemove)))
+            self.removeNodes(list(reversed(uniqueNodesToRemove)))
 
     @Slot(QObject, result="QVariantList")
     def duplicateNodes(self, nodes):
@@ -574,6 +576,7 @@ class UIGraph(QObject):
             list[Node]: the list of duplicated nodes
         """
         nodes = self.filterNodes(nodes)
+        nPositions = []
         # enable updates between duplication and layout to get correct depths during layout
         with self.groupedGraphModification("Duplicate Selected Nodes", disableUpdates=False):
             # disable graph updates during duplication
@@ -581,8 +584,19 @@ class UIGraph(QObject):
                 duplicates = self.push(commands.DuplicateNodesCommand(self._graph, nodes))
             # move nodes below the bounding box formed by the duplicated node(s)
             bbox = self._layout.boundingBox(duplicates)
+
             for n in duplicates:
-                self.moveNode(n, Position(n.x, bbox[3] + self.layout.gridSpacing + n.y))
+                idx = duplicates.index(n)
+                yPos = n.y + self.layout.gridSpacing + bbox[3]
+                if idx > 0 and (n.x, yPos) in nPositions:
+                    # make sure the node will not be moved on top of another node
+                    while (n.x, yPos) in nPositions:
+                        yPos = yPos + self.layout.gridSpacing + self.layout.nodeHeight
+                    self.moveNode(n, Position(n.x, yPos))
+                else:
+                    self.moveNode(n, Position(n.x, bbox[3] + self.layout.gridSpacing + n.y))
+                nPositions.append((n.x, n.y))
+
         return duplicates
 
     @Slot(QObject, result="QVariantList")
@@ -597,7 +611,9 @@ class UIGraph(QObject):
         """
         with self.groupedGraphModification("Duplicate Nodes From Selected Nodes"):
             nodesToDuplicate, _ = self._graph.dfsOnDiscover(startNodes=nodes, reverse=True, dependenciesOnly=True)
-            duplicates = self.duplicateNodes(nodesToDuplicate)
+            # filter out nodes that will be duplicated more than once
+            uniqueNodesToDuplicate = list(dict.fromkeys(nodesToDuplicate))
+            duplicates = self.duplicateNodes(uniqueNodesToDuplicate)
         return duplicates
 
     @Slot(QObject)

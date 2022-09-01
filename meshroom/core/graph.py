@@ -236,8 +236,6 @@ class Graph(BaseObject):
     @property
     def fileFeatures(self):
         """ Get loaded file supported features based on its version. """
-        if not self._filepath:
-            return []
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)
@@ -382,7 +380,7 @@ class Graph(BaseObject):
                 node, edges = self.copyNode(srcNode, withEdges=False)
                 duplicate = self.addNode(node)
                 duplicateEdges.update(edges)
-                duplicates[srcNode] = duplicate  # original node to duplicate map
+                duplicates.setdefault(srcNode, []).append(duplicate)
 
             # re-create edges taking into account what has been duplicated
             for attr, linkExpression in duplicateEdges.items():
@@ -390,8 +388,10 @@ class Graph(BaseObject):
                 # get source node and attribute name
                 edgeSrcNodeName, edgeSrcAttrName = link.split(".", 1)
                 edgeSrcNode = self.node(edgeSrcNodeName)
-                # if the edge's source node has been duplicated, use the duplicate; otherwise use the original node
-                edgeSrcNode = duplicates.get(edgeSrcNode, edgeSrcNode)
+                # if the edge's source node has been duplicated (the key exists in the dictionary),
+                # use the duplicate; otherwise use the original node
+                if edgeSrcNode in duplicates:
+                    edgeSrcNode = duplicates.get(edgeSrcNode)[0]
                 self.addEdge(edgeSrcNode.attribute(edgeSrcAttrName), attr)
 
         return duplicates
@@ -546,6 +546,14 @@ class Graph(BaseObject):
         """
         nodes = [n for n in self._nodes.values() if n.nodeType == nodeType]
         return self.sortNodesByIndex(nodes) if sortedByIndex else nodes
+
+    def findInitNodes(self):
+        """
+        Returns:
+            list[Node]: the list of Init nodes (nodes inheriting from InitNode)
+        """
+        nodes = [n for n in self._nodes.values() if isinstance(n.nodeDesc, meshroom.core.desc.InitNode)]
+        return nodes
 
     def findNodeCandidates(self, nodeNameExpr):
         pattern = re.compile(nodeNameExpr)

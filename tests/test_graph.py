@@ -266,14 +266,16 @@ def test_duplicate_nodes():
     # duplicate from n1
     nodes_to_duplicate, _ = g.dfsOnDiscover(startNodes=[n1], reverse=True, dependenciesOnly=True)
     nMap = g.duplicateNodes(srcNodes=nodes_to_duplicate)
-    for s, d in nMap.items():
-        assert s.nodeType == d.nodeType
+    for s, duplicated in nMap.items():
+        for d in duplicated:
+            assert s.nodeType == d.nodeType
 
-    # check number of duplicated nodes
-    assert len(nMap) == 3
+    # check number of duplicated nodes and that every parent node has been duplicated once
+    assert len(nMap) == 3 and all([len(nMap[i]) == 1 for i in nMap.keys()])
 
     # check connections
-    assert nMap[n1].input.getLinkParam() == n0.output
-    assert nMap[n2].input.getLinkParam() == nMap[n1].output
-    assert nMap[n3].input.getLinkParam() == nMap[n1].output
-    assert nMap[n3].input2.getLinkParam() == nMap[n2].output
+    # access directly index 0 because we know there is a single duplicate for each parent node
+    assert nMap[n1][0].input.getLinkParam() == n0.output
+    assert nMap[n2][0].input.getLinkParam() == nMap[n1][0].output
+    assert nMap[n3][0].input.getLinkParam() == nMap[n1][0].output
+    assert nMap[n3][0].input2.getLinkParam() == nMap[n2][0].output

@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import argparse
 
 from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, Signal, qInstallMessageHandler, QtMsgType, QSettings
@@ -50,9 +51,19 @@ class MessageHandler(object):
     @classmethod
     def handler(cls, messageType, context, message):
         """ Message handler remapping Qt logs to Python logging system. """
-        # discard blacklisted Qt messages related to QML when 'output qml warnings' is set to false
-        if not cls.outputQmlWarnings and any(w in message for w in cls.qmlWarningsBlacklist):
-            return
+
+        if not cls.outputQmlWarnings:
+            # If MESHROOM_OUTPUT_QML_WARNINGS is not set and an error in qml files happen we're
+            # left without any output except "QQmlApplicationEngine failed to load component".
+            # This is extremely hard to debug to someone who does not know about
+            # MESHROOM_OUTPUT_QML_WARNINGS beforehand because by default Qml will output errors to
+            # stdout.
+            if "QQmlApplicationEngine failed to load component" in message:
+                logging.warning("Set MESHROOM_OUTPUT_QML_WARNINGS=1 to get a detailed error message.")
+
+            # discard blacklisted Qt messages related to QML when 'output qml warnings' is not enabled
+            elif any(w in message for w in cls.qmlWarningsBlacklist):
+                return
         MessageHandler.logFunctions[messageType](message)
 
 
@@ -71,8 +82,9 @@ class MeshroomApp(QApplication):
                             help='Import images to reconstruct from specified folder and sub-folders.')
         parser.add_argument('-s', '--save', metavar='PROJECT.mg', type=str, default='',
                             help='Save the created scene.')
-        parser.add_argument('-p', '--pipeline', metavar='MESHROOM_FILE/photogrammetry/panoramaHdr/panoramaFisheyeHdr', type=str, default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
-                            help='Override the default Meshroom pipeline with this external graph.')
+        parser.add_argument('-p', '--pipeline', metavar="FILE.mg/" + "/".join(meshroom.core.pipelineTemplates), type=str,
+                            default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
+                            help='Override the default Meshroom pipeline with this external or template graph.')
         parser.add_argument("--verbose", help="Verbosity level", default='warning',
                             choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
 
@@ -175,6 +187,16 @@ class MeshroomApp(QApplication):
             self.addRecentProjectFile(args.save)
 
         self.engine.load(os.path.normpath(url))
+
+    def _pipelineTemplateFiles(self):
+        templates = []
+        for key in sorted(meshroom.core.pipelineTemplates.keys()):
+            # Use uppercase letters in the names as separators to format the templates' name nicely
+            # e.g: the template "panoramaHdr" will be shown as "Panorama Hdr" in the menu
+            name = " ".join(re.findall('[A-Z][^A-Z]*', key[0].upper() + key[1:]))
+            variant = {"name": name, "key": key, "path": meshroom.core.pipelineTemplates[key]}
+            templates.append(variant)
+        return templates
 
     def _recentProjectFiles(self):
         projects = []
@@ -284,8 +306,7 @@ class MeshroomApp(QApplication):
             return md
         return markdown(md)
 
-    @Property(QJsonValue, constant=True)
-    def systemInfo(self):
+    def _systemInfo(self):
         import platform
         import sys
         return {
@@ -293,8 +314,9 @@ class MeshroomApp(QApplication):
             'python': 'Python {}'.format(sys.version.split(" ")[0])
         }
 
-    @Property("QVariantList", constant=True)
-    def licensesModel(self):
+    systemInfo = Property(QJsonValue, _systemInfo, constant=True)
+
+    def _licensesModel(self):
         """
         Get info about open-source licenses for the application.
         Model provides:
@@ -316,6 +338,8 @@ class MeshroomApp(QApplication):
             }
         ]
 
+    licensesModel = Property("QVariantList", _licensesModel, constant=True)
+    pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
+    pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
-

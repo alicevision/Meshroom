@@ -290,6 +290,15 @@ Convert or apply filtering to the input images.
                 uid=[0],
         ),
         desc.ChoiceParam(
+                name='outputColorSpace',
+                label='Output Color Space',
+                description='Allows you to choose the color space of the output image.',
+                value='AUTO',
+                values=['AUTO', 'sRGB', 'Linear', 'ACES', 'ACEScg'],
+                exclusive=True,
+                uid=[0],
+        ),
+        desc.ChoiceParam(
             name='storageDataType',
             label='Storage Data Type for EXR output',
             description='Storage image data type:\n'

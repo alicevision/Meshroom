@@ -48,6 +48,10 @@ Panel {
         parseIntr()
     }
 
+    onCameraInitIndexChanged: {
+        parseIntr()
+    }
+
     function changeCurrentIndex(newIndex) {
         _reconstruction.cameraInitIndex = newIndex
     }

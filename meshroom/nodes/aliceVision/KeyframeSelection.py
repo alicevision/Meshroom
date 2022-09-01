@@ -95,14 +95,14 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             name='sensorDbPath',
             label='Sensor Db Path',
             description='''Camera sensor width database path.''',
-            value=os.environ.get('ALICEVISION_SENSOR_DB', ''),
+            value='${ALICEVISION_SENSOR_DB}',
             uid=[0],
         ),
         desc.File(
             name='voctreePath',
             label='Voctree Path',
             description='''Vocabulary tree path.''',
-            value=os.environ.get('ALICEVISION_VOCTREE', ''),
+            value='${ALICEVISION_VOCTREE}',
             uid=[0],
         ),
         desc.BoolParam(

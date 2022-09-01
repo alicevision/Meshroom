@@ -9,18 +9,34 @@ from meshroom.core.node import Node
 
 
 def test_multiviewPipeline():
-    graph1 = meshroom.multiview.photogrammetry(inputImages=['/non/existing/fileA'])
-    graph2 = meshroom.multiview.photogrammetry(inputImages=[])
-    graph2b = meshroom.multiview.photogrammetry(inputImages=[])
-    graph3 = meshroom.multiview.photogrammetry(inputImages=['/non/existing/file1', '/non/existing/file2'])
-    graph4 = meshroom.multiview.photogrammetry(inputViewpoints=[
+    graph1InputImages = ['/non/existing/fileA']
+    graph1 = loadGraph(meshroom.core.pipelineTemplates["photogrammetry"])
+    graph1CameraInit = graph1.node("CameraInit_1")
+    graph1CameraInit.viewpoints.extend([{'path': image} for image in graph1InputImages])
+
+    graph2InputImages = []  # common to graph2 and graph2b
+    graph2 = loadGraph(meshroom.core.pipelineTemplates["photogrammetry"])
+    graph2CameraInit = graph2.node("CameraInit_1")
+    graph2CameraInit.viewpoints.extend([{'path': image} for image in graph2InputImages])
+    graph2b = loadGraph(meshroom.core.pipelineTemplates["photogrammetry"])
+    graph2bCameraInit = graph2b.node("CameraInit_1")
+    graph2bCameraInit.viewpoints.extend([{'path': image} for image in graph2InputImages])
+
+    graph3InputImages = ['/non/existing/file1', '/non/existing/file2']
+    graph3 = loadGraph(meshroom.core.pipelineTemplates["photogrammetry"])
+    graph3CameraInit = graph3.node("CameraInit_1")
+    graph3CameraInit.viewpoints.extend([{'path': image} for image in graph3InputImages])
+
+    graph4InputViewpoints = [
         {'path': '/non/existing/file1', 'intrinsicId': 50},
         {'path': '/non/existing/file2', 'intrinsicId': 55}
-        ])
-    graph4b = meshroom.multiview.photogrammetry(inputViewpoints=[
-        {'path': '/non/existing/file1', 'intrinsicId': 50},
-        {'path': '/non/existing/file2', 'intrinsicId': 55}
-        ])
+        ]  # common to graph4 and graph4b
+    graph4 = loadGraph(meshroom.core.pipelineTemplates["photogrammetry"])
+    graph4CameraInit = graph4.node("CameraInit_1")
+    graph4CameraInit.viewpoints.extend(graph4InputViewpoints)
+    graph4b = loadGraph(meshroom.core.pipelineTemplates["photogrammetry"])
+    graph4bCameraInit = graph4b.node("CameraInit_1")
+    graph4bCameraInit.viewpoints.extend(graph4InputViewpoints)
 
     assert graph1.findNode('CameraInit').viewpoints.at(0).path.value == '/non/existing/fileA'
     assert len(graph2.findNode('CameraInit').viewpoints) == 0

@@ -87,7 +87,7 @@ class QmlInstantEngine(QQmlApplicationEngine):
         self._extensions = extensions
 
     def setVerbose(self, verboseValue):
-        """ Activate (True) or desactivate (False) the verbose. """
+        """ Activate (True) or deactivate (False) the verbose. """
         self._verbose = verboseValue
 
     def addFile(self, filename):

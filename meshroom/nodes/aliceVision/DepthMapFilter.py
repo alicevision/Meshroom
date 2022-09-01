@@ -74,6 +74,15 @@ This allows to filter unstable points before starting the fusion of all depth ma
             range=(0, 10, 1),
             uid=[0],
         ),
+        desc.FloatParam(
+            name='pixToleranceFactor',
+            label='Tolerance Size',
+            description='Filtering tolerance size factor (in px).',
+            value=2.0,
+            range=(0.001, 10.0, 0.1),
+            uid=[0],
+            advanced=True,
+        ),
         desc.IntParam(
             name="pixSizeBall",
             label="Filtering Size in Pixels",

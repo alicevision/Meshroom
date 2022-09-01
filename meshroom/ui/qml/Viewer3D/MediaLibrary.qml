@@ -21,7 +21,7 @@ Entity {
     property Layer frontLayerComponent
     property var window
 
-    /// Camera to consider for positionning
+    /// Camera to consider for positioning
     property Camera camera: null
 
     /// True while at least one media is being loaded
@@ -190,7 +190,7 @@ Entity {
                 // whether MediaLoader has been fully instantiated by the NodeInstantiator
                 property bool fullyInstantiated: false
 
-                // explicitely store some attached model properties for outside use and ease binding
+                // explicitly store some attached model properties for outside use and ease binding
                 readonly property var attribute: model.attribute
                 readonly property int idx: index
                 readonly property var modelSource: attribute || model.source
@@ -216,7 +216,7 @@ Entity {
                 property string finalSource: model.requested ? currentSource : ""
 
                 // To use only if we want to draw the input source and not the current node output (Warning: to use with caution)
-                // There is maybe a better way to do this to avoid overwritting bindings which should be readonly properties
+                // There is maybe a better way to do this to avoid overwriting bindings which should be readonly properties
                 function drawInputSource() {
                     rawSource = Qt.binding(() => instantiatedEntity.currentNode ? instantiatedEntity.currentNode.attribute("input").value: "")
                     currentSource = Qt.binding(() => rawSource)

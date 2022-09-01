@@ -95,23 +95,34 @@ class ComputerStatistics:
             return
         try:
             p = subprocess.Popen([self.nvidia_smi, "-q", "-x"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            xmlGpu, stdError = p.communicate(timeout=10) # 10 seconds
+            if sys.version_info[0] == 2:
+                # no timeout in python-2
+                xmlGpu, stdError = p.communicate()
+            else:
+                xmlGpu, stdError = p.communicate(timeout=10) # 10 seconds
 
             smiTree = ET.fromstring(xmlGpu)
             gpuTree = smiTree.find('gpu')
 
             try:
-                self._addKV('gpuMemoryUsed', gpuTree.find('fb_memory_usage').find('used').text.split(" ")[0])
+                gpuMemoryUsed = gpuTree.find('fb_memory_usage').find('used').text.split(" ")[0]
+                self._addKV('gpuMemoryUsed', gpuMemoryUsed)
             except Exception as e:
                 logging.debug('Failed to get gpuMemoryUsed: "{}".'.format(str(e)))
                 pass
             try:
-                self._addKV('gpuUsed', gpuTree.find('utilization').find('gpu_util').text.split(" ")[0])
+                self.gpuMemoryTotal = gpuTree.find('fb_memory_usage').find('total').text.split(" ")[0]
+            except Exception as e:
+                pass
+            try:
+                gpuUsed = gpuTree.find('utilization').find('gpu_util').text.split(" ")[0]
+                self._addKV('gpuUsed', gpuUsed)
             except Exception as e:
                 logging.debug('Failed to get gpuUsed: "{}".'.format(str(e)))
                 pass
             try:
-                self._addKV('gpuTemperature', gpuTree.find('temperature').find('gpu_temp').text.split(" ")[0])
+                gpuTemperature = gpuTree.find('temperature').find('gpu_temp').text.split(" ")[0]
+                self._addKV('gpuTemperature', gpuTemperature)
             except Exception as e:
                 logging.debug('Failed to get gpuTemperature: "{}".'.format(str(e)))
                 pass
@@ -191,7 +202,7 @@ class ProcStatistics:
         data = proc.as_dict(self.dynamicKeys)
         for k, v in data.items():
             self._addKV(k, v)
-        
+
         ## Note: Do not collect stats about open files for now,
         #        as there is bug in psutil-5.7.2 on Windows which crashes the application.
         #        https://github.com/giampaolo/psutil/issues/1763

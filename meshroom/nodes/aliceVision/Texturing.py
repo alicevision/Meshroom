@@ -273,7 +273,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
         desc.BoolParam(
             name='forceVisibleByAllVertices',
             label='Force Visible By All Vertices',
-            description='''Triangle visibility is based on the union of vertices visiblity.''',
+            description='''Triangle visibility is based on the union of vertices visibility.''',
             value=False,
             uid=[0],
             advanced=True,

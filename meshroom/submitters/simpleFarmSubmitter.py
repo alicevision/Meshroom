@@ -3,6 +3,7 @@
 
 import os
 import json
+import logging
 
 import simpleFarm
 from meshroom.core.desc import Level
@@ -12,14 +13,12 @@ currentDir = os.path.dirname(os.path.realpath(__file__))
 binDir = os.path.dirname(os.path.dirname(os.path.dirname(currentDir)))
 
 class SimpleFarmSubmitter(BaseSubmitter):
-    if 'REZ_MESHROOM_VERSION' in os.environ:
-        MESHROOM_PACKAGE = "meshroom-{}".format(os.environ.get('REZ_MESHROOM_VERSION', ''))
-    else:
-        MESHROOM_PACKAGE = None
 
     filepath = os.environ.get('SIMPLEFARMCONFIG', os.path.join(currentDir, 'simpleFarmConfig.json'))
     config = json.load(open(filepath))
 
+    reqPackages = []
+    environment = {}
     ENGINE = ''
     DEFAULT_TAGS = {'prod': ''}
 
@@ -28,6 +27,32 @@ class SimpleFarmSubmitter(BaseSubmitter):
         self.engine = os.environ.get('MESHROOM_SIMPLEFARM_ENGINE', 'tractor')
         self.share = os.environ.get('MESHROOM_SIMPLEFARM_SHARE', 'vfx')
         self.prod = os.environ.get('PROD', 'mvg')
+        if 'REZ_REQUEST' in os.environ:
+            packages = os.environ.get('REZ_REQUEST', '').split()
+            resolvedPackages = os.environ.get('REZ_RESOLVE', '').split()
+            resolvedVersions = {}
+            for r in resolvedPackages:
+                # remove implict packages
+                if r.startswith('~'):
+                    continue
+                # logging.info('REZ: {}'.format(str(r)))
+                v = r.split('-')
+                # logging.info('    v: {}'.format(str(v)))
+                if len(v) == 2:
+                    resolvedVersions[v[0]] = v[1]
+            for p in packages:
+                if p.startswith('~'):
+                    continue
+                v = p.split('-')
+                self.reqPackages.append('-'.join([v[0], resolvedVersions[v[0]]]))
+            logging.debug('REZ Packages: {}'.format(str(self.reqPackages)))
+        elif 'REZ_MESHROOM_VERSION' in os.environ:
+            self.reqPackages = ["meshroom-{}".format(os.environ.get('REZ_MESHROOM_VERSION', ''))]
+        else:
+            self.reqPackages = None
+
+        if 'REZ_DEV_PACKAGES_ROOT' in os.environ:
+            self.environment['REZ_DEV_PACKAGES_ROOT'] = os.environ['REZ_DEV_PACKAGES_ROOT']
 
     def createTask(self, meshroomFile, node):
         tags = self.DEFAULT_TAGS.copy()  # copy to not modify default tags
@@ -50,10 +75,10 @@ class SimpleFarmSubmitter(BaseSubmitter):
         task = simpleFarm.Task(
             name=node.nodeType,
             command='{exe} --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(
-                exe='meshroom_compute' if self.MESHROOM_PACKAGE else os.path.join(binDir, 'meshroom_compute'),
+                exe='meshroom_compute' if self.reqPackages else os.path.join(binDir, 'meshroom_compute'),
                 nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),
             tags=tags,
-            rezPackages=[self.MESHROOM_PACKAGE] if self.MESHROOM_PACKAGE else None,
+            rezPackages=self.reqPackages,
             requirements={'service': str(','.join(allRequirements))},
             **arguments)
         return task
@@ -74,6 +99,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
         job = simpleFarm.Job(name,
                 tags=mainTags,
                 requirements={'service': str(','.join(allRequirements))},
+                environment=self.environment,
                 )
 
         nodeNameToTask = {}

@@ -1393,7 +1393,7 @@ class CompatibilityNode(BaseNode):
     issueDetails = Property(str, issueDetails.fget, constant=True)
 
 
-def nodeFactory(nodeDict, name=None):
+def nodeFactory(nodeDict, name=None, template=False):
     """
     Create a node instance by deserializing the given node data.
     If the serialized data matches the corresponding node type description, a Node instance is created.
@@ -1437,9 +1437,10 @@ def nodeFactory(nodeDict, name=None):
             compatibilityIssue = CompatibilityIssue.VersionConflict
         # in other cases, check attributes compatibility between serialized node and its description
         else:
-            # check that the node has the exact same set of inputs/outputs as its description
-            if sorted([attr.name for attr in nodeDesc.inputs]) != sorted(inputs.keys()) or \
-                    sorted([attr.name for attr in nodeDesc.outputs]) != sorted(outputs.keys()):
+            # check that the node has the exact same set of inputs/outputs as its description, except if the node
+            # is described in a template file, in which only non-default parameters are saved
+            if not template and (sorted([attr.name for attr in nodeDesc.inputs]) != sorted(inputs.keys()) or \
+                    sorted([attr.name for attr in nodeDesc.outputs]) != sorted(outputs.keys())):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
             # verify that all inputs match their descriptions
             for attrName, value in inputs.items():
@@ -1462,6 +1463,8 @@ def nodeFactory(nodeDict, name=None):
         # => automatically try to perform node upgrade
         if not internalFolder and nodeDesc:
             logging.warning("No serialized output data: performing automatic upgrade on '{}'".format(name))
+            node = node.upgrade()
+        elif template:  # if the node comes from a template file and there is a conflict, it should be upgraded anyway
             node = node.upgrade()
 
     return node

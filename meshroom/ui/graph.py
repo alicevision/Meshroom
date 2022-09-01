@@ -354,6 +354,14 @@ class UIGraph(QObject):
 
     @Slot(QUrl)
     def saveAs(self, url):
+        self._saveAs(url)
+
+    @Slot(QUrl)
+    def saveAsTemplate(self, url):
+        self._saveAs(url, setupProjectFile=False, template=True)
+
+    def _saveAs(self, url, setupProjectFile=True, template=False):
+        """ Helper function for 'save as' features. """
         if isinstance(url, (str)):
             localFile = url
         else:
@@ -361,7 +369,7 @@ class UIGraph(QObject):
         # ensure file is saved with ".mg" extension
         if os.path.splitext(localFile)[-1] != ".mg":
             localFile += ".mg"
-        self._graph.save(localFile)
+        self._graph.save(localFile, setupProjectFile=setupProjectFile, template=template)
         self._undoStack.setClean()
         # saving file on disk impacts cache folder location
         # => force re-evaluation of monitored status files paths

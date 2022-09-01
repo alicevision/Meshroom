@@ -261,6 +261,9 @@ class Graph(BaseObject):
         self.header = fileData.get(Graph.IO.Keys.Header, {})
         nodesVersions = self.header.get(Graph.IO.Keys.NodesVersions, {})
 
+        # check whether the file was saved as a template in minimal mode
+        isTemplate = self.header.get("template", False)
+
         with GraphModification(self):
             # iterate over nodes sorted by suffix index in their names
             for nodeName, nodeData in sorted(graphData.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
@@ -273,7 +276,8 @@ class Graph(BaseObject):
                 #   3. fallback to no version "0.0": retro-compatibility
                 if "version" not in nodeData:
                     nodeData["version"] = nodesVersions.get(nodeData["nodeType"], "0.0")
-                n = nodeFactory(nodeData, nodeName)
+
+                n = nodeFactory(nodeData, nodeName, template=isTemplate)
 
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
@@ -999,7 +1003,7 @@ class Graph(BaseObject):
     def asString(self):
         return str(self.toDict())
 
-    def save(self, filepath=None, setupProjectFile=True):
+    def save(self, filepath=None, setupProjectFile=True, template=False):
         path = filepath or self._filepath
         if not path:
             raise ValueError("filepath must be specified for unsaved files.")
@@ -1015,16 +1019,53 @@ class Graph(BaseObject):
             for p in usedNodeTypes
         }
 
-        data = {
-            Graph.IO.Keys.Header: self.header,
-            Graph.IO.Keys.Graph: self.toDict()
-        }
+        data = {}
+        if template:
+            self.header["template"] = True
+            data = {
+                Graph.IO.Keys.Header: self.header,
+                Graph.IO.Keys.Graph: self.getNonDefaultAttributes()
+            }
+        else:
+            data = {
+                Graph.IO.Keys.Header: self.header,
+                Graph.IO.Keys.Graph: self.toDict()
+            }
 
         with open(path, 'w') as jsonFile:
             json.dump(data, jsonFile, indent=4)
 
         if path != self._filepath and setupProjectFile:
             self._setFilepath(path)
+
+    def getNonDefaultAttributes(self):
+        """
+        Instead of getting all the inputs/outputs attribute keys, only get the keys of
+        the attributes whose value is not the default one.
+
+        Returns:
+            dict: self.toDict() with all the inputs/outputs attributes with default values removed
+        """
+        graph = self.toDict()
+        for nodeName in graph.keys():
+            node = self.node(nodeName)
+
+            inputKeys = list(graph[nodeName]["inputs"].keys())
+            outputKeys = list(graph[nodeName]["outputs"].keys())
+
+            for attrName in inputKeys:
+                attribute = node.attribute(attrName)
+                # check that attribute is not a link for choice attributes
+                if attribute.isDefault and not attribute.isLink:
+                    del graph[nodeName]["inputs"][attrName]
+
+            for attrName in outputKeys:
+                attribute = node.attribute(attrName)
+                # check that attribute is not a link for choice attributes
+                if attribute.isDefault and not attribute.isLink:
+                    del graph[nodeName]["outputs"][attrName]
+
+        return graph
 
     def _setFilepath(self, filepath):
         """

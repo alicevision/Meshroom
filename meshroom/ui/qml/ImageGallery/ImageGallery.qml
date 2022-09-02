@@ -536,12 +536,21 @@ Panel {
             Label { id: groupLabel; text: "Group " }
             ComboBox {
                 id: nodesCB
-                model: root.cameraInits.count
+                model: {
+                    // Create an array from 1 to cameraInits.count for the
+                    // display of group indices (real indices still are from
+                    // 0 to cameraInits.count - 1)
+                    var l = [];
+                    for (var i = 1; i <= root.cameraInits.count; i++) {
+                        l.push(i);
+                    }
+                    return l;
+                }
                 implicitWidth: 40
                 currentIndex: root.cameraInitIndex
                 onActivated: root.changeCurrentIndex(currentIndex)
             }
-            Label { text: "/ " + (root.cameraInits.count - 1) }
+            Label { text: "/ " + (root.cameraInits.count) }
             ToolButton {
                 text: MaterialIcons.navigate_next
                 font.family: MaterialIcons.fontFamily

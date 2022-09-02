@@ -387,6 +387,9 @@ class NodeChunk(BaseObject):
     def isFinishedOrRunning(self):
         return self._status.status in (Status.SUCCESS, Status.RUNNING)
 
+    def isRunning(self):
+        return self._status.status == Status.RUNNING
+
     def isStopped(self):
         return self._status.status == Status.STOPPED
 
@@ -443,6 +446,8 @@ class NodeChunk(BaseObject):
 
     nodeName = Property(str, lambda self: self.node.name, constant=True)
     statusNodeName = Property(str, lambda self: self._status.nodeName, constant=True)
+
+    elapsedTime = Property(float, lambda self: self._status.elapsedTime, notify=statusChanged)
 
 
 # simple structure for storing node position
@@ -732,6 +737,17 @@ class BaseNode(BaseObject):
                 return False
         return True
 
+    @Slot(result=bool)
+    def isSubmittedOrRunning(self):
+        """ Return True if all chunks are at least submitted and there is one running chunk, False otherwise. """
+        if not self.isAlreadySubmittedOrFinished():
+            return False
+        for chunk in self._chunks:
+            if chunk.isRunning():
+                return True
+        return False
+
+    @Slot(result=bool)
     def isFinishedOrRunning(self):
         """ Return True if all chunks of this Node is either finished or running, False otherwise. """
         return all(chunk.isFinishedOrRunning() for chunk in self._chunks)

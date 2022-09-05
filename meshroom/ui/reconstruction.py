@@ -950,6 +950,10 @@ class Reconstruction(UIGraph):
                 self.activeNodes.get(category).node = node
                 if category == 'sfm':
                     self.setSfm(node)
+
+                # if the active node is a CameraInit node, update the camera init index
+                if node.nodeType == "CameraInit":
+                    self.setCameraInitIndex(self._cameraInits.indexOf(node))
         self.activeNodes.get(node.nodeType).node = node
 
     @Slot(QObject)

@@ -176,6 +176,13 @@ The metadata needed are:
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name='lensCorrectionProfileSearchByLensNameAndCameraMakerOnly',
+            label='LCP Search using lens name and camera maker only.',
+            description='''Automatic LCP Search consider only the camera model and the lens name.''',
+            value=False,
+            uid=[0],
+        ),
         desc.FloatParam(
             name='defaultFieldOfView',
             label='Default Field Of View',

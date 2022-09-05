@@ -457,6 +457,7 @@ Panel {
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: intrinsicsFilterButton.checked
+            clip: true
 
             TableView {
                 id : intrinsicTable

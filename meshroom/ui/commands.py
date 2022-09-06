@@ -195,25 +195,26 @@ class DuplicateNodesCommand(GraphCommand):
             self.graph.removeNode(duplicate)
 
 
-class PasteNodeCommand(GraphCommand):
+class PasteNodesCommand(GraphCommand):
     """
     Handle node pasting in a Graph.
     """
-    def __init__(self, graph, nodeType, position=None, parent=None, **kwargs):
-        super(PasteNodeCommand, self).__init__(graph, parent)
-        self.nodeType = nodeType
+    def __init__(self, graph, data, position=None, parent=None):
+        super(PasteNodesCommand, self).__init__(graph, parent)
+        self.data = data
         self.position = position
-        self.nodeName = None
-        self.kwargs = kwargs
+        self.nodeNames = []
 
     def redoImpl(self):
-        node = self.graph.pasteNode(self.nodeType, self.position, **self.kwargs)
-        self.nodeName = node.name
-        self.setText("Paste Node {}".format(self.nodeName))
-        return node
+        data = self.graph.updateImportedScene(self.data)
+        nodes = self.graph.pasteNodes(data, self.position)
+        self.nodeNames = [node.name for node in nodes]
+        self.setText("Paste Node{} ({})".format("s" if len(self.nodeNames) > 1 else "", ", ".join(self.nodeNames)))
+        return nodes
 
     def undoImpl(self):
-        self.graph.removeNode(self.nodeName)
+        for name in self.nodeNames:
+            self.graph.removeNode(name)
 
 
 class ImportSceneCommand(GraphCommand):
@@ -246,6 +247,7 @@ class ImportSceneCommand(GraphCommand):
         for nodeName in self.importedNames:
             self.graph.removeNode(nodeName)
         self.importedNames = []
+
 
 class SetAttributeCommand(GraphCommand):
     def __init__(self, graph, attribute, value, parent=None):

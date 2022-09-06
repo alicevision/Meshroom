@@ -91,7 +91,12 @@ Item {
     {
         root.pastePosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
         var copiedContent = Clipboard.getText()
-        uigraph.pasteNodes(copiedContent, root.pastePosition)
+        var nodes = uigraph.pasteNodes(copiedContent, root.pastePosition)
+        if (nodes.length > 0) {
+            uigraph.clearNodeSelection()
+            uigraph.selectedNode = nodes[0]
+            uigraph.selectNodes(nodes)
+        }
     }
 
     Keys.onPressed: {

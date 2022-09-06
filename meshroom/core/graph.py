@@ -314,9 +314,8 @@ class Graph(BaseObject):
         Returns:
             updatedData (dict): the dictionary containing all the nodes to import with their updated names and data
         """
-
-        nameCorrespondences = {}
-        updatedData = {}
+        nameCorrespondences = {}  # maps the old node name to its updated one
+        updatedData = {}  # input data with updated node names and links
 
         def createUniqueNodeName(nodeNames, inputName):
             """
@@ -329,26 +328,6 @@ class Graph(BaseObject):
                 if newName not in nodeNames and newName not in updatedData.keys():
                     return newName
                 i += 1
-
-        def updateLinks(attributes):
-            """
-            Update all the links that refer to nodes that are going to be imported and whose
-            name has to be updated.
-            """
-            for key, val in attributes.items():
-                for corr in nameCorrespondences.keys():
-                    if isinstance(val, pyCompatibility.basestring) and corr in val:
-                        attributes[key] = val.replace(corr, nameCorrespondences[corr])
-                    elif isinstance(val, list):
-                        for v in val:
-                            if isinstance(v, pyCompatibility.basestring):
-                                if corr in v:
-                                    val[val.index(v)] = v.replace(corr, nameCorrespondences[corr])
-                            else:  # the list does not contain strings, so there cannot be links to update
-                                break
-                        attributes[key] = val
-
-            return attributes
 
         # First pass to get all the names that already exist in the graph, update them, and keep track of the changes
         for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
@@ -363,19 +342,96 @@ class Graph(BaseObject):
             else:
                 updatedData[nodeName] = nodeData
 
+        newNames = [nodeName for nodeName in updatedData]  # names of all the nodes that will be added
+
         # Second pass to update all the links in the input/output attributes for every node with the new names
         for nodeName, nodeData in updatedData.items():
+            nodeType = nodeData.get("nodeType", None)
+            nodeDesc = meshroom.core.nodesDesc[nodeType]
+
             inputs = nodeData.get("inputs", {})
             outputs = nodeData.get("outputs", {})
 
             if inputs:
-                inputs = updateLinks(inputs)
+                inputs = self.updateLinks(inputs, nameCorrespondences)
+                inputs = self.resetExternalLinks(inputs, nodeDesc.inputs, newNames)
                 updatedData[nodeName]["inputs"] = inputs
             if outputs:
-                outputs = updateLinks(outputs)
+                outputs = self.updateLinks(outputs, nameCorrespondences)
+                outputs = self.resetExternalLinks(outputs, nodeDesc.outputs, newNames)
                 updatedData[nodeName]["outputs"] = outputs
 
         return updatedData
+
+    @staticmethod
+    def updateLinks(attributes, nameCorrespondences):
+        """
+        Update all the links that refer to nodes that are going to be imported and whose
+        names have to be updated.
+
+        Args:
+            attributes (dict): attributes whose links need to be updated
+            nameCorrespondences (dict): node names to replace in the links with the name to replace them with
+
+        Returns:
+            attributes (dict): the attributes with all the updated links
+        """
+        for key, val in attributes.items():
+            for corr in nameCorrespondences.keys():
+                if isinstance(val, pyCompatibility.basestring) and corr in val:
+                    attributes[key] = val.replace(corr, nameCorrespondences[corr])
+                elif isinstance(val, list):
+                    for v in val:
+                        if isinstance(v, pyCompatibility.basestring):
+                            if corr in v:
+                                val[val.index(v)] = v.replace(corr, nameCorrespondences[corr])
+                        else:  # the list does not contain strings, so there cannot be links to update
+                            break
+                    attributes[key] = val
+
+        return attributes
+
+    @staticmethod
+    def resetExternalLinks(attributes, nodeDesc, newNames):
+        """
+        Reset all links to nodes that are not part of the nodes which are going to be imported:
+        if there are links to nodes that are not in the list, then it means that the references
+        are made to external nodes, and we want to get rid of those.
+
+        Args:
+            attributes (dict): attributes whose links might need to be reset
+            nodeDesc (list): list with all the attributes' description (including their default value)
+            newNames (list): names of the nodes that are going to be imported; no node name should be referenced
+                             in the links except those contained in this list
+
+        Returns:
+            attributes (dict): the attributes with all the links referencing nodes outside those which will be imported
+                               reset to their default values
+        """
+        for key, val in attributes.items():
+            defaultValue = None
+            for desc in nodeDesc:
+                if desc.name == key:
+                    defaultValue = desc.value
+                    break
+
+            if isinstance(val, pyCompatibility.basestring):
+                if Attribute.isLinkExpression(val) and not any(name in val for name in newNames):
+                    if defaultValue is not None:  # prevents from not entering condition if defaultValue = ''
+                        attributes[key] = defaultValue
+
+            elif isinstance(val, list):
+                removedCnt = len(val)  # counter to know whether all the list entries will be deemed invalid
+                tmpVal = list(val)  # deep copy to ensure we iterate over the entire list (even if elements are removed)
+                for v in tmpVal:
+                    if isinstance(v, pyCompatibility.basestring) and Attribute.isLinkExpression(v) and not any(
+                            name in v for name in newNames):
+                        val.remove(v)
+                        removedCnt -= 1
+                if removedCnt == 0 and defaultValue is not None:  # if all links were wrong, reset the attribute
+                    attributes[key] = defaultValue
+
+        return attributes
 
     @property
     def updateEnabled(self):
@@ -485,14 +541,39 @@ class Graph(BaseObject):
 
         return duplicates
 
-    def pasteNode(self, nodeType, position, **kwargs):
-        name = self._createUniqueNodeName(nodeType)
-        node = None
+    def pasteNodes(self, data, position):
+        """
+        Paste node(s) in the graph with their connections. The connections can only be between
+        the pasted nodes and not with the rest of the graph.
+
+        Args:
+            data (dict): the dictionary containing the information about the nodes to paste, with their names and
+                         links already updated to be added to the graph
+            position (list): the list of positions for each node to paste
+
+        Returns:
+            list: the list of Node objects that were pasted and added to the graph
+        """
+        nodes = []
         with GraphModification(self):
-            node = Node(nodeType, position=position, **kwargs)
-            self._addNode(node, name)
+            positionCnt = 0  # always valid because we know the data is sorted the same way as the position list
+            for key in sorted(data):
+                nodeType = data[key].get("nodeType", None)
+                if not nodeType:  # this case should never occur, as the data should have been prefiltered first
+                    pass
+
+                attributes = {}
+                attributes.update(data[key].get("inputs", {}))
+                attributes.update(data[key].get("outputs", {}))
+
+                node = Node(nodeType, position=position[positionCnt], **attributes)
+                self._addNode(node, key)
+
+                nodes.append(node)
+                positionCnt += 1
+
             self._applyExpr()
-        return node
+        return nodes
 
     def outEdges(self, attribute):
         """ Return the list of edges starting from the given attribute """

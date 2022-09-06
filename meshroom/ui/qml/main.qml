@@ -142,6 +142,23 @@ ApplicationWindow {
         onRejected: closed(Platform.Dialog.Rejected)
     }
 
+    Platform.FileDialog {
+        id: saveTemplateDialog
+
+        signal closed(var result)
+
+        title: "Save Template"
+        nameFilters: ["Meshroom Graphs (*.mg)"]
+        defaultSuffix: ".mg"
+        fileMode: Platform.FileDialog.SaveFile
+        onAccepted: {
+            _reconstruction.saveAsTemplate(file)
+            closed(Platform.Dialog.Accepted)
+            MeshroomApp.reloadTemplateList()
+        }
+        onRejected: closed(Platform.Dialog.Rejected)
+    }
+
     Item {
         id: computeManager
 
@@ -548,6 +565,17 @@ ApplicationWindow {
                         saveFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
                     }
                     saveFileDialog.open()
+                }
+            }
+            Action {
+                id: saveAsTemplateAction
+                text: "Save As Template..."
+                shortcut: "Ctrl+Shift+T"
+                onTriggered: {
+                    if(_reconstruction.graph && _reconstruction.graph.filepath) {
+                        saveTemplateDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                    }
+                    saveTemplateDialog.open()
                 }
             }
             MenuSeparator { }

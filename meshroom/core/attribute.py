@@ -283,7 +283,7 @@ class Attribute(BaseObject):
         return copy.copy(self.desc.value)
 
     def _isDefault(self):
-        return self._value == self.defaultValue()
+        return self.value == self.defaultValue()
 
     def getPrimitiveValue(self, exportDefault=True):
         return self._value

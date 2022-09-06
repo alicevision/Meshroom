@@ -6,34 +6,27 @@
             "ImageProcessing": "3.0", 
             "PanoramaCompositing": "2.0", 
             "LdrToHdrMerge": "4.0", 
-            "LdrToHdrSampling": "4.0", 
-            "LdrToHdrCalibration": "3.0", 
             "PanoramaEstimation": "1.0", 
+            "LdrToHdrCalibration": "3.0", 
+            "LdrToHdrSampling": "4.0", 
             "PanoramaInit": "2.0", 
-            "PanoramaMerging": "1.0", 
-            "SfMTransform": "3.0", 
             "CameraInit": "7.0", 
+            "SfMTransform": "3.0", 
+            "PanoramaMerging": "1.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
             "PanoramaPrepareImages": "1.1", 
             "PanoramaWarping": "1.0"
         }, 
         "releaseVersion": "2021.1.0", 
-        "fileVersion": "1.1"
+        "fileVersion": "1.1", 
+        "template": true
     }, 
     "graph": {
         "LdrToHdrMerge_1": {
             "inputs": {
-                "verboseLevel": "info", 
-                "fusionWeight": "gaussian", 
                 "channelQuantizationPower": "{LdrToHdrCalibration_1.channelQuantizationPower}", 
-                "nbBrackets": 0, 
-                "enableHighlight": false, 
-                "offsetRefBracketIndex": 1, 
-                "storageDataType": "float", 
-                "highlightTargetLux": 120000.0, 
                 "byPass": "{LdrToHdrCalibration_1.byPass}", 
-                "highlightCorrectionFactor": 1.0, 
                 "input": "{LdrToHdrCalibration_1.input}", 
                 "userNbBrackets": "{LdrToHdrCalibration_1.userNbBrackets}", 
                 "response": "{LdrToHdrCalibration_1.response}"
@@ -58,48 +51,14 @@
         }, 
         "ImageProcessing_1": {
             "inputs": {
-                "outputFormat": "rgba", 
-                "sharpenFilter": {
-                    "threshold": 0.0, 
-                    "width": 3, 
-                    "sharpenFilterEnabled": false, 
-                    "contrast": 1.0
-                }, 
                 "extension": "exr", 
-                "exposureCompensation": false, 
-                "storageDataType": "float", 
-                "inputFolders": [], 
-                "verboseLevel": "info", 
-                "metadataFolders": [], 
-                "claheFilter": {
-                    "claheClipLimit": 4.0, 
-                    "claheTileGridSize": 8, 
-                    "claheEnabled": false
-                }, 
-                "medianFilter": 0, 
                 "fillHoles": true, 
-                "reconstructedViewsOnly": false, 
                 "input": "{PanoramaMerging_1.outputPanorama}", 
-                "noiseFilter": {
-                    "noiseEnabled": false, 
-                    "noiseMethod": "uniform", 
-                    "noiseB": 1.0, 
-                    "noiseMono": true, 
-                    "noiseA": 0.0
-                }, 
-                "scaleFactor": 1.0, 
-                "bilateralFilter": {
-                    "bilateralFilterDistance": 0, 
-                    "bilateralFilterSigmaColor": 0.0, 
-                    "bilateralFilterSigmaSpace": 0.0, 
-                    "bilateralFilterEnabled": false
-                }, 
-                "contrast": 1.0, 
                 "fixNonFinite": true
             }, 
             "nodeType": "ImageProcessing", 
             "uids": {
-                "0": "d7845b276d97c3489223cce16a1e9d581d98a832"
+                "0": "a6d1b7d35fd36828f678e4547e9e267d84586f20"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -108,8 +67,7 @@
             }, 
             "outputs": {
                 "output": "{cache}/{nodeType}/{uid0}/", 
-                "outputImages": "{cache}/{nodeType}/{uid0}/panorama.exr", 
-                "outSfMData": ""
+                "outputImages": "{cache}/{nodeType}/{uid0}/panorama.exr"
             }, 
             "position": [
                 3000, 
@@ -119,13 +77,7 @@
         }, 
         "PanoramaWarping_1": {
             "inputs": {
-                "panoramaWidth": 10000, 
-                "maxPanoramaWidth": 70000, 
-                "verboseLevel": "info", 
-                "percentUpscale": 50, 
-                "input": "{SfMTransform_1.output}", 
-                "storageDataType": "float", 
-                "estimateResolution": true
+                "input": "{SfMTransform_1.output}"
             }, 
             "nodeType": "PanoramaWarping", 
             "uids": {
@@ -149,11 +101,6 @@
             "inputs": {
                 "samples": "{LdrToHdrSampling_1.output}", 
                 "channelQuantizationPower": "{LdrToHdrSampling_1.channelQuantizationPower}", 
-                "maxTotalPoints": 1000000, 
-                "nbBrackets": 0, 
-                "calibrationMethod": "debevec", 
-                "calibrationWeight": "default", 
-                "verboseLevel": "info", 
                 "byPass": "{LdrToHdrSampling_1.byPass}", 
                 "input": "{LdrToHdrSampling_1.input}", 
                 "userNbBrackets": "{LdrToHdrSampling_1.userNbBrackets}"
@@ -178,16 +125,7 @@
         }, 
         "LdrToHdrSampling_1": {
             "inputs": {
-                "blockSize": 256, 
-                "nbBrackets": 0, 
-                "verboseLevel": "info", 
-                "radius": 5, 
-                "byPass": false, 
-                "channelQuantizationPower": 10, 
-                "debug": false, 
-                "input": "{PanoramaPrepareImages_1.output}", 
-                "maxCountSample": 200, 
-                "userNbBrackets": 0
+                "input": "{PanoramaPrepareImages_1.output}"
             }, 
             "nodeType": "LdrToHdrSampling", 
             "uids": {
@@ -209,13 +147,6 @@
         }, 
         "ImageMatching_1": {
             "inputs": {
-                "minNbImages": 200, 
-                "nbNeighbors": 5, 
-                "tree": "${ALICEVISION_VOCTREE}", 
-                "maxDescriptors": 500, 
-                "verboseLevel": "info", 
-                "weights": "", 
-                "nbMatches": 40, 
                 "input": "{PanoramaInit_1.outSfMData}", 
                 "method": "FrustumOrVocabularyTree", 
                 "featuresFolders": [
@@ -242,20 +173,8 @@
         }, 
         "FeatureExtraction_1": {
             "inputs": {
-                "verboseLevel": "info", 
-                "maxThreads": 0, 
-                "describerTypes": [
-                    "dspsift"
-                ], 
-                "maxNbFeatures": 0, 
-                "relativePeakThreshold": 0.01, 
-                "forceCpuExtraction": true, 
-                "masksFolder": "", 
-                "contrastFiltering": "GridSort", 
                 "describerQuality": "high", 
-                "gridFiltering": true, 
-                "input": "{LdrToHdrMerge_1.outSfMData}", 
-                "describerPreset": "normal"
+                "input": "{LdrToHdrMerge_1.outSfMData}"
             }, 
             "nodeType": "FeatureExtraction", 
             "uids": {
@@ -275,17 +194,14 @@
             ], 
             "internalFolder": "{cache}/{nodeType}/{uid0}/"
         }, 
-        "PanoramaSeams_1": {
+        "PanoramaMerging_1": {
             "inputs": {
-                "verboseLevel": "info", 
-                "input": "{PanoramaWarping_1.input}", 
-                "warpingFolder": "{PanoramaWarping_1.output}", 
-                "maxWidth": 5000, 
-                "useGraphCut": true
+                "compositingFolder": "{PanoramaCompositing_1.output}", 
+                "input": "{PanoramaCompositing_1.input}"
             }, 
-            "nodeType": "PanoramaSeams", 
+            "nodeType": "PanoramaMerging", 
             "uids": {
-                "0": "0ee6da171bd684358b7c64dcc631f81ba743e1fa"
+                "0": "e007a4eb5fc5937b320638eba667cea183c0c642"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -293,10 +209,10 @@
                 "size": 0
             }, 
             "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/labels.exr"
+                "outputPanorama": "{cache}/{nodeType}/{uid0}/panorama.{outputFileTypeValue}"
             }, 
             "position": [
-                2400, 
+                2800, 
                 0
             ], 
             "internalFolder": "{cache}/{nodeType}/{uid0}/"
@@ -304,13 +220,8 @@
         "PanoramaCompositing_1": {
             "inputs": {
                 "warpingFolder": "{PanoramaSeams_1.warpingFolder}", 
-                "maxThreads": 4, 
                 "labels": "{PanoramaSeams_1.output}", 
-                "verboseLevel": "info", 
-                "overlayType": "none", 
-                "compositerType": "multiband", 
-                "input": "{PanoramaSeams_1.input}", 
-                "storageDataType": "float"
+                "input": "{PanoramaSeams_1.input}"
             }, 
             "nodeType": "PanoramaCompositing", 
             "uids": {
@@ -332,10 +243,6 @@
         }, 
         "CameraInit_1": {
             "inputs": {
-                "groupCameraFallback": "folder", 
-                "intrinsics": [], 
-                "viewIdRegex": ".*?(\\d+)", 
-                "defaultFieldOfView": 45.0, 
                 "allowedCameraModels": [
                     "pinhole", 
                     "radial1", 
@@ -345,12 +252,7 @@
                     "3deanamorphic4", 
                     "3deradial4", 
                     "3declassicld"
-                ], 
-                "verboseLevel": "info", 
-                "viewIdMethod": "metadata", 
-                "viewpoints": [], 
-                "useInternalWhiteBalance": true, 
-                "sensorDatabase": "${ALICEVISION_SENSOR_DB}"
+                ]
             }, 
             "nodeType": "CameraInit", 
             "uids": {
@@ -372,7 +274,6 @@
         }, 
         "PanoramaPrepareImages_1": {
             "inputs": {
-                "verboseLevel": "info", 
                 "input": "{CameraInit_1.output}"
             }, 
             "nodeType": "PanoramaPrepareImages", 
@@ -395,33 +296,8 @@
         }, 
         "SfMTransform_1": {
             "inputs": {
-                "applyScale": true, 
-                "scale": 1.0, 
-                "applyTranslation": true, 
-                "landmarksDescriberTypes": [
-                    "sift", 
-                    "dspsift", 
-                    "akaze"
-                ], 
-                "markers": [], 
                 "method": "manual", 
-                "verboseLevel": "info", 
-                "input": "{PanoramaEstimation_1.output}", 
-                "applyRotation": true, 
-                "manualTransform": {
-                    "manualTranslation": {
-                        "y": 0.0, 
-                        "x": 0.0, 
-                        "z": 0.0
-                    }, 
-                    "manualRotation": {
-                        "y": 0.0, 
-                        "x": 0.0, 
-                        "z": 0.0
-                    }, 
-                    "manualScale": 1.0
-                }, 
-                "transformation": ""
+                "input": "{PanoramaEstimation_1.output}"
             }, 
             "nodeType": "SfMTransform", 
             "uids": {
@@ -442,17 +318,14 @@
             ], 
             "internalFolder": "{cache}/{nodeType}/{uid0}/"
         }, 
-        "PanoramaMerging_1": {
+        "PanoramaSeams_1": {
             "inputs": {
-                "verboseLevel": "info", 
-                "compositingFolder": "{PanoramaCompositing_1.output}", 
-                "outputFileType": "exr", 
-                "storageDataType": "float", 
-                "input": "{PanoramaCompositing_1.input}"
+                "input": "{PanoramaWarping_1.input}", 
+                "warpingFolder": "{PanoramaWarping_1.output}"
             }, 
-            "nodeType": "PanoramaMerging", 
+            "nodeType": "PanoramaSeams", 
             "uids": {
-                "0": "e007a4eb5fc5937b320638eba667cea183c0c642"
+                "0": "0ee6da171bd684358b7c64dcc631f81ba743e1fa"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -460,34 +333,21 @@
                 "size": 0
             }, 
             "outputs": {
-                "outputPanorama": "{cache}/{nodeType}/{uid0}/panorama.{outputFileTypeValue}"
+                "output": "{cache}/{nodeType}/{uid0}/labels.exr"
             }, 
             "position": [
-                2800, 
+                2400, 
                 0
             ], 
             "internalFolder": "{cache}/{nodeType}/{uid0}/"
         }, 
         "PanoramaEstimation_1": {
             "inputs": {
-                "intermediateRefineWithFocalDist": false, 
-                "offsetLongitude": 0.0, 
                 "matchesFolders": [
                     "{FeatureMatching_1.output}"
                 ], 
-                "filterMatches": false, 
-                "rotationAveragingWeighting": true, 
-                "offsetLatitude": 0.0, 
-                "verboseLevel": "info", 
-                "maxAngularError": 100.0, 
-                "lockAllIntrinsics": false, 
-                "refine": true, 
                 "input": "{FeatureMatching_1.input}", 
-                "intermediateRefineWithFocal": false, 
                 "describerTypes": "{FeatureMatching_1.describerTypes}", 
-                "relativeRotation": "rotation_matrix", 
-                "maxAngleToPrior": 20.0, 
-                "rotationAveraging": "L2_minimization", 
                 "featuresFolders": "{FeatureMatching_1.featuresFolders}"
             }, 
             "nodeType": "PanoramaEstimation", 
@@ -511,24 +371,10 @@
         }, 
         "PanoramaInit_1": {
             "inputs": {
-                "useFisheye": false, 
-                "fisheyeCenterOffset": {
-                    "fisheyeCenterOffset_y": 0.0, 
-                    "fisheyeCenterOffset_x": 0.0
-                }, 
-                "initializeCameras": "No", 
-                "nbViewsPerLine": [], 
-                "debugFisheyeCircleEstimation": false, 
-                "verboseLevel": "info", 
                 "dependency": [
                     "{FeatureExtraction_1.output}"
                 ], 
-                "estimateFisheyeCircle": true, 
-                "input": "{FeatureExtraction_1.input}", 
-                "yawCW": 1, 
-                "config": "", 
-                "fisheyeRadius": 96.0, 
-                "inputAngle": "None"
+                "input": "{FeatureExtraction_1.input}"
             }, 
             "nodeType": "PanoramaInit", 
             "uids": {
@@ -550,23 +396,9 @@
         }, 
         "FeatureMatching_1": {
             "inputs": {
-                "verboseLevel": "info", 
                 "describerTypes": "{FeatureExtraction_1.describerTypes}", 
-                "exportDebugFiles": false, 
-                "crossMatching": false, 
-                "geometricError": 0.0, 
-                "maxMatches": 0, 
-                "matchFromKnownCameraPoses": false, 
-                "savePutativeMatches": false, 
-                "guidedMatching": false, 
                 "imagePairsList": "{ImageMatching_1.output}", 
-                "geometricEstimator": "acransac", 
-                "geometricFilterType": "fundamental_matrix", 
-                "maxIteration": 2048, 
-                "distanceRatio": 0.8, 
                 "input": "{ImageMatching_1.input}", 
-                "photometricMatchingMethod": "ANN_L2", 
-                "knownPosesGeometricErrorMax": 5.0, 
                 "featuresFolders": "{ImageMatching_1.featuresFolders}"
             }, 
             "nodeType": "FeatureMatching", 

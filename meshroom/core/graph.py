@@ -1315,6 +1315,6 @@ def submit(graphFile, submitter, toNode=None):
     Submit the given graph via the given submitter.
     """
     graph = loadGraph(graphFile)
-    toNodes = graph.findNodes([toNode]) if toNode else None
+    toNodes = graph.findNodes(toNode) if toNode else None
     submitGraph(graph, submitter, toNodes)
 

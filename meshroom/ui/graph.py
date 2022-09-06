@@ -824,18 +824,48 @@ class UIGraph(QObject):
             if not d:
                 return
 
-        finalPosition = None
-        prevPosition = None
-        positions = []
+        if isinstance(position, QPoint):
+            position = Position(position.x(), position.y())
 
+        # Get the position of the first node in a zone whose top-left corner is the mouse and the bottom-right
+        # corner the (x, y) coordinates, with x the maximum of all the nodes' position along the x-axis, and y the
+        # maximum of all the nodes' position along the y-axis. All nodes with a position will be placed relatively
+        # to the first node within that zone.
+        firstNodePos = None
+        minX = 0
+        minY = 0
         for key in sorted(d):
             nodeType = d[key].get("nodeType", None)
             if not nodeType:
                 raise ValueError("Invalid node description: no provided node type for '{}'".format(key))
 
+            pos = d[key].get("position", None)
+            if pos:
+                if not firstNodePos:
+                    firstNodePos = pos
+                    minX = pos[0]
+                    minY = pos[1]
+                else:
+                    if minX > pos[0]:
+                        minX = pos[0]
+                    if minY > pos[1]:
+                        minY = pos[1]
+
+        # Ensure there will not be an error if no node has a specified position
+        if not firstNodePos:
+            firstNodePos = [0, 0]
+
+        # Position of the first node within the zone
+        position = Position(position.x + firstNodePos[0] - minX, position.y + firstNodePos[1] - minY)
+
+        finalPosition = None
+        prevPosition = None
+        positions = []
+
+        for key in sorted(d):
             currentPosition = d[key].get("position", None)
-            if isinstance(position, QPoint) and not finalPosition:
-                finalPosition = Position(position.x(), position.y())
+            if not finalPosition:
+                finalPosition = position
             else:
                 if prevPosition and currentPosition:
                     # If the nodes both have a position, recreate the distance between them with a different

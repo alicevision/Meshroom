@@ -150,6 +150,14 @@ then it checks the number of features that validates this model and iterate thro
             uid=[0],
             advanced=True,
         ),
+        desc.FloatParam(
+            name='minRequired2DMotion',
+            label='Minimal 2D Motion',
+            description='Filter out matches without enough 2D motion (threshold in pixels). Use -1 to disable this filter. Useful for filtering the background during acquisition with a turntable and a static camera.',
+            value=-1.0,
+            range=(0.0, 10.0, 1.0),
+            uid=[0],
+        ),
         desc.IntParam(
             name='maxMatches',
             label='Max Matches',

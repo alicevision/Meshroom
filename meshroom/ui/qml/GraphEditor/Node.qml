@@ -31,6 +31,8 @@ Item {
     readonly property color defaultColor: isCompatibilityNode ? "#444" : activePalette.base
     property color baseColor: defaultColor
 
+    property point mousePosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
+
     Item {
         id: m
         property bool displayParams: false

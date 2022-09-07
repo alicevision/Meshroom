@@ -826,6 +826,9 @@ class UIGraph(QObject):
 
         if isinstance(position, QPoint):
             position = Position(position.x(), position.y())
+        if self.hoveredNode:
+            # If a node is hovered, add an offset to prevent complete occlusion
+            position = Position(position.x + self.layout.gridSpacing, position.y + self.layout.gridSpacing)
 
         # Get the position of the first node in a zone whose top-left corner is the mouse and the bottom-right
         # corner the (x, y) coordinates, with x the maximum of all the nodes' position along the x-axis, and y the

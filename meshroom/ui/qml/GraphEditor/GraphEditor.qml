@@ -89,7 +89,12 @@ Item {
     /// Paste content of clipboard to graph editor and create new node if valid
     function pasteNodes()
     {
-        root.pastePosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
+        if (uigraph.hoveredNode != null) {
+            var node = nodeDelegate(uigraph.hoveredNode)
+            root.pastePosition = Qt.point(node.mousePosition.x + node.x, node.mousePosition.y + node.y)
+        } else {
+            root.pastePosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
+        }
         var copiedContent = Clipboard.getText()
         var nodes = uigraph.pasteNodes(copiedContent, root.pastePosition)
         if (nodes.length > 0) {

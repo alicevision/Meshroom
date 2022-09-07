@@ -157,7 +157,6 @@ then it checks the number of features that validates this model and iterate thro
             value=-1.0,
             range=(0.0, 10.0, 1.0),
             uid=[0],
-            advanced=True,
         ),
         desc.IntParam(
             name='maxMatches',

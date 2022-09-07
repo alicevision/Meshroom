@@ -105,7 +105,7 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
         desc.FloatParam(
             name='relativePeakThreshold',
             label='Relative Peak Threshold',
-            description='Peak Threshold relative to median of gradiants.',
+            description='Peak Threshold relative to median of gradients.',
             value=0.01,
             range=(0.01, 1.0, 0.001),
             advanced=True,

@@ -71,7 +71,7 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
         desc.FloatParam(
             name='relativePeakThreshold',
             label='Relative Peak Threshold',
-            description='Peak Threshold relative to median of gradiants.',
+            description='Peak Threshold relative to median of gradients.',
             value=0.01,
             range=(0.01, 1.0, 0.001),
             advanced=True,

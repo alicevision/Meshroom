@@ -32,7 +32,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
             resolvedPackages = os.environ.get('REZ_RESOLVE', '').split()
             resolvedVersions = {}
             for r in resolvedPackages:
-                # remove implict packages
+                # remove implicit packages
                 if r.startswith('~'):
                     continue
                 # logging.info('REZ: {}'.format(str(r)))

@@ -185,6 +185,7 @@ Panel {
                         currentIndex: tabBar.currentIndex
 
                         AttributeEditor {
+                            id: inOutAttr
                             Layout.fillHeight: true
                             Layout.fillWidth: true
                             model: root.node.attributes
@@ -249,6 +250,7 @@ Panel {
                         }
 
                         AttributeEditor {
+                            id: nodeInternalAttr
                             Layout.fillHeight: true
                             Layout.fillWidth: true
                             model: root.node.internalAttributes

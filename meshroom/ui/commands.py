@@ -7,7 +7,7 @@ from PySide2.QtCore import Property, Signal
 
 from meshroom.core.attribute import ListAttribute, Attribute
 from meshroom.core.graph import GraphModification
-from meshroom.core.node import nodeFactory
+from meshroom.core.node import nodeFactory, Position
 
 
 class UndoCommand(QUndoCommand):
@@ -193,6 +193,60 @@ class DuplicateNodesCommand(GraphCommand):
         # remove all duplicates
         for duplicate in self.duplicates:
             self.graph.removeNode(duplicate)
+
+
+class PasteNodesCommand(GraphCommand):
+    """
+    Handle node pasting in a Graph.
+    """
+    def __init__(self, graph, data, position=None, parent=None):
+        super(PasteNodesCommand, self).__init__(graph, parent)
+        self.data = data
+        self.position = position
+        self.nodeNames = []
+
+    def redoImpl(self):
+        data = self.graph.updateImportedScene(self.data)
+        nodes = self.graph.pasteNodes(data, self.position)
+        self.nodeNames = [node.name for node in nodes]
+        self.setText("Paste Node{} ({})".format("s" if len(self.nodeNames) > 1 else "", ", ".join(self.nodeNames)))
+        return nodes
+
+    def undoImpl(self):
+        for name in self.nodeNames:
+            self.graph.removeNode(name)
+
+
+class ImportSceneCommand(GraphCommand):
+    """
+    Handle the import of a scene into a Graph.
+    """
+    def __init__(self, graph, filepath=None, yOffset=0, parent=None):
+        super(ImportSceneCommand, self).__init__(graph, parent)
+        self.filepath = filepath
+        self.importedNames = []
+        self.yOffset = yOffset
+
+    def redoImpl(self):
+        status = self.graph.load(self.filepath, setupProjectFile=False, importScene=True)
+        importedNodes = self.graph.importedNodes
+        self.setText("Import Scene ({} nodes)".format(importedNodes.count))
+
+        lowestY = 0
+        for node in self.graph.nodes:
+            if node not in importedNodes and node.y > lowestY:
+                lowestY = node.y
+
+        for node in importedNodes:
+            self.importedNames.append(node.name)
+            self.graph.node(node.name).position = Position(node.x, node.y + lowestY + self.yOffset)
+
+        return status
+
+    def undoImpl(self):
+        for nodeName in self.importedNames:
+            self.graph.removeNode(nodeName)
+        self.importedNames = []
 
 
 class SetAttributeCommand(GraphCommand):

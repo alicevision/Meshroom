@@ -321,6 +321,16 @@ ApplicationWindow {
         }
     }
 
+    FileDialog {
+        id: importSceneDialog
+        title: "Import Scene"
+        selectMultiple: false
+        nameFilters: ["Meshroom Graphs (*.mg)"]
+        onAccepted: {
+            graphEditor.uigraph.importScene(importSceneDialog.fileUrl)
+        }
+    }
+
     AboutDialog {
         id: aboutDialog
     }
@@ -409,6 +419,42 @@ ApplicationWindow {
         shortcut: "Ctrl+Shift+Z"
         enabled: _reconstruction.undoStack.canRedo && !_reconstruction.undoStack.lockedRedo
         onTriggered: _reconstruction.undoStack.redo()
+    }
+    Action {
+        id: copyAction
+
+        property string tooltip: {
+            var s = "Copy selected node"
+            s += (_reconstruction.selectedNodes.count > 1 ? "s (" : " (") + getSelectedNodesName()
+            s += ") to the clipboard"
+            return s
+        }
+        text: "Copy Node" + (_reconstruction.selectedNodes.count > 1 ? "s " : " ")
+        shortcut: "Ctrl+C"
+        enabled: _reconstruction.selectedNodes.count > 0
+        onTriggered: graphEditor.copyNodes()
+
+        function getSelectedNodesName()
+        {
+            var nodesName = ""
+            for (var i = 0; i < _reconstruction.selectedNodes.count; i++)
+            {
+                if (nodesName !== "")
+                    nodesName += ", "
+                var node = _reconstruction.selectedNodes.at(i)
+                nodesName += node.name
+            }
+            return nodesName
+        }
+    }
+
+    Action {
+        id: pasteAction
+
+        property string tooltip: "Paste the clipboard content to the scene if it contains valid nodes"
+        text: "Paste Node(s)"
+        shortcut: "Ctrl+V"
+        onTriggered: graphEditor.pasteNodes()
     }
 
     Action {
@@ -512,6 +558,12 @@ ApplicationWindow {
                 }
             }
             Action {
+                id: importSceneAction
+                text: "Import Scene"
+                shortcut: "Ctrl+Shift+I"
+                onTriggered: importSceneDialog.open()
+            }
+            Action {
                 id: importActionItem
                 text: "Import Images"
                 shortcut: "Ctrl+I"
@@ -595,6 +647,16 @@ ApplicationWindow {
                 action: redoAction
                 ToolTip.visible: hovered
                 ToolTip.text: redoAction.tooltip
+            }
+            MenuItem {
+                action: copyAction
+                ToolTip.visible: hovered
+                ToolTip.text: copyAction.tooltip
+            }
+            MenuItem {
+                action: pasteAction
+                ToolTip.visible: hovered
+                ToolTip.text: pasteAction.tooltip
             }
         }
         Menu {

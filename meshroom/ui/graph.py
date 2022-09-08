@@ -3,6 +3,7 @@
 import logging
 import os
 import time
+import json
 from enum import Enum
 from threading import Thread, Event, Lock
 from multiprocessing.pool import ThreadPool
@@ -351,6 +352,19 @@ class UIGraph(QObject):
             os.mkdir(g.cacheDir)
         self.setGraph(g)
         return status
+
+    @Slot(QUrl, result=bool)
+    def importScene(self, filepath):
+        if isinstance(filepath, (QUrl)):
+            # depending how the QUrl has been initialized,
+            # toLocalFile() may return the local path or an empty string
+            localFile = filepath.toLocalFile()
+            if not localFile:
+                localFile = filepath.toString()
+        else:
+            localFile = filepath
+        yOffset = self.layout.gridSpacing + self.layout.nodeHeight
+        return self.push(commands.ImportSceneCommand(self._graph, localFile, yOffset=yOffset))
 
     @Slot(QUrl)
     def saveAs(self, url):
@@ -760,6 +774,123 @@ class UIGraph(QObject):
     def clearNodeHover(self):
         """ Reset currently hovered node to None. """
         self.hoveredNode = None
+
+    @Slot(result=str)
+    def getSelectedNodesContent(self):
+        """
+        Return the content of the currently selected nodes in a string, formatted to JSON.
+        If no node is currently selected, an empty string is returned.
+        """
+        if self._selectedNodes:
+            d = self._graph.toDict()
+            selection = {}
+            for node in self._selectedNodes:
+                selection[node.name] = d[node.name]
+            return json.dumps(selection, indent=4)
+        return ''
+
+    @Slot(str, QPoint, result="QVariantList")
+    def pasteNodes(self, clipboardContent, position=None):
+        """
+        Parse the content of the clipboard to see whether it contains
+        valid node descriptions. If that is the case, the nodes described
+        in the clipboard are built with the available information.
+        Otherwise, nothing is done.
+
+        This function does not need to be preceded by a call to "getSelectedNodesContent".
+        Any clipboard content that contains at least a node type with a valid JSON
+        formatting (dictionary form with double quotes around the keys and values)
+        can be used to generate a node.
+
+        For example, it is enough to have:
+        {"nodeName_1": {"nodeType":"CameraInit"}, "nodeName_2": {"nodeType":"FeatureMatching"}}
+        in the clipboard to create a default CameraInit and a default FeatureMatching nodes.
+
+        Args:
+            clipboardContent (str): the string contained in the clipboard, that may or may not contain valid
+                                    node information
+            position (QPoint): the position of the mouse in the Graph Editor when the function was called
+
+        Returns:
+            list: the list of Node objects that were pasted and added to the graph
+        """
+        if not clipboardContent:
+            return
+
+        try:
+            d = json.loads(clipboardContent)
+        except ValueError as e:
+            raise ValueError(e)
+
+        if not isinstance(d, dict):
+            raise ValueError("The clipboard does not contain a valid node. Cannot paste it.")
+
+        # If the clipboard contains a header, then a whole file is contained in the clipboard
+        # Extract the "graph" part and paste it all, ignore the rest
+        if d.get("header", None):
+            d = d.get("graph", None)
+            if not d:
+                return
+
+        if isinstance(position, QPoint):
+            position = Position(position.x(), position.y())
+        if self.hoveredNode:
+            # If a node is hovered, add an offset to prevent complete occlusion
+            position = Position(position.x + self.layout.gridSpacing, position.y + self.layout.gridSpacing)
+
+        # Get the position of the first node in a zone whose top-left corner is the mouse and the bottom-right
+        # corner the (x, y) coordinates, with x the maximum of all the nodes' position along the x-axis, and y the
+        # maximum of all the nodes' position along the y-axis. All nodes with a position will be placed relatively
+        # to the first node within that zone.
+        firstNodePos = None
+        minX = 0
+        minY = 0
+        for key in sorted(d):
+            nodeType = d[key].get("nodeType", None)
+            if not nodeType:
+                raise ValueError("Invalid node description: no provided node type for '{}'".format(key))
+
+            pos = d[key].get("position", None)
+            if pos:
+                if not firstNodePos:
+                    firstNodePos = pos
+                    minX = pos[0]
+                    minY = pos[1]
+                else:
+                    if minX > pos[0]:
+                        minX = pos[0]
+                    if minY > pos[1]:
+                        minY = pos[1]
+
+        # Ensure there will not be an error if no node has a specified position
+        if not firstNodePos:
+            firstNodePos = [0, 0]
+
+        # Position of the first node within the zone
+        position = Position(position.x + firstNodePos[0] - minX, position.y + firstNodePos[1] - minY)
+
+        finalPosition = None
+        prevPosition = None
+        positions = []
+
+        for key in sorted(d):
+            currentPosition = d[key].get("position", None)
+            if not finalPosition:
+                finalPosition = position
+            else:
+                if prevPosition and currentPosition:
+                    # If the nodes both have a position, recreate the distance between them with a different
+                    # starting point
+                    x = finalPosition.x + (currentPosition[0] - prevPosition[0])
+                    y = finalPosition.y + (currentPosition[1] - prevPosition[1])
+                    finalPosition = Position(x, y)
+                else:
+                    # If either the current node or previous one lacks a position, use a custom one
+                    finalPosition = Position(finalPosition.x + self.layout.gridSpacing + self.layout.nodeWidth, finalPosition.y)
+            prevPosition = currentPosition
+            positions.append(finalPosition)
+
+        return self.push(commands.PasteNodesCommand(self.graph, d, position=positions))
 
     undoStack = Property(QObject, lambda self: self._undoStack, constant=True)
     graphChanged = Signal()

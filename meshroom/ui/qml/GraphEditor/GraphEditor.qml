@@ -41,6 +41,7 @@ Item {
     clip: true
 
     SystemPalette { id: activePalette }
+    property point pastePosition
 
     /// Get node delegate for the given node object
     function nodeDelegate(node)
@@ -75,16 +76,43 @@ Item {
         uigraph.selectNodes(nodes)
     }
 
+    /// Copy node content to clipboard
+    function copyNodes()
+    {
+        var nodeContent = uigraph.getSelectedNodesContent()
+        if (nodeContent !== '') {
+            Clipboard.clear()
+            Clipboard.setText(nodeContent)
+        }
+    }
+
+    /// Paste content of clipboard to graph editor and create new node if valid
+    function pasteNodes()
+    {
+        if (uigraph.hoveredNode != null) {
+            var node = nodeDelegate(uigraph.hoveredNode)
+            root.pastePosition = Qt.point(node.mousePosition.x + node.x, node.mousePosition.y + node.y)
+        } else {
+            root.pastePosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
+        }
+        var copiedContent = Clipboard.getText()
+        var nodes = uigraph.pasteNodes(copiedContent, root.pastePosition)
+        if (nodes.length > 0) {
+            uigraph.clearNodeSelection()
+            uigraph.selectedNode = nodes[0]
+            uigraph.selectNodes(nodes)
+        }
+    }
 
     Keys.onPressed: {
-        if(event.key === Qt.Key_F)
+        if (event.key === Qt.Key_F)
             fit()
-        if(event.key === Qt.Key_Delete)
-            if(event.modifiers == Qt.AltModifier)
+        if (event.key === Qt.Key_Delete)
+            if (event.modifiers == Qt.AltModifier)
                 uigraph.removeNodesFrom(uigraph.selectedNodes)
             else
                 uigraph.removeNodes(uigraph.selectedNodes)
-        if(event.key === Qt.Key_D)
+        if (event.key === Qt.Key_D)
             duplicateNode(event.modifiers == Qt.AltModifier)
     }
 
@@ -382,6 +410,23 @@ Item {
                     onTriggered: Qt.openUrlExternally(Filepath.stringToUrl(nodeMenu.currentNode.internalFolder))
                 }
                 MenuSeparator {}
+                MenuItem {
+                    text: "Copy Node(s)"
+                    enabled: true
+                    ToolTip.text: "Copy selection to the clipboard"
+                    ToolTip.visible: hovered
+                    onTriggered: copyNodes()
+                }
+                MenuItem {
+                    text: "Paste Node(s)"
+                    enabled: true
+                    ToolTip.text: "Copy selection to the clipboard and immediately paste it"
+                    ToolTip.visible: hovered
+                    onTriggered: {
+                        copyNodes();
+                        pasteNodes();
+                    }
+                }
                 MenuItem {
                     text: "Duplicate Node(s)" + (duplicateFollowingButton.hovered ? " From Here" : "")
                     enabled: true

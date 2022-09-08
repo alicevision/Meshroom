@@ -38,13 +38,14 @@ The transformation can be based on:
                         " * transformation: Apply a given transformation\n"
                         " * manual: Apply the gizmo transformation (show the transformed input)\n"
                         " * auto_from_cameras: Use cameras\n"
+                        " * auto_from_cameras_x_axis: Use X axis of all cameras\n"
                         " * auto_from_landmarks: Use landmarks\n"
                         " * from_single_camera: Use a specific camera as the origin of the coordinate system\n"
                         " * from_center_camera: Use the center camera as the origin of the coordinate system\n"
                         " * from_markers: Align specific markers to custom coordinates\n"
                         " * from_gps: Align with the gps positions from the image metadata",
             value='auto_from_landmarks',
-            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers', 'from_gps'],
+            values=['transformation', 'manual', 'auto_from_cameras', 'auto_from_cameras_x_axis', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers', 'from_gps'],
             exclusive=True,
             uid=[0],
         ),

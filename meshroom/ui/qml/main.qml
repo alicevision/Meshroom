@@ -5,6 +5,7 @@ import QtQuick.Window 2.3
 import QtQml.Models 2.2
 
 import Qt.labs.platform 1.0 as Platform
+import QtQuick.Dialogs
 
 import Qt.labs.settings 1.0
 import GraphEditor 1.0
@@ -317,10 +318,11 @@ ApplicationWindow {
         id: openFileDialog
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
+        fileMode: FileDialog.OpenFile
         onAccepted: {
-            if(_reconstruction.loadUrl(fileUrl))
+            if(_reconstruction.loadUrl(selectedFile))
             {
-                MeshroomApp.addRecentProjectFile(fileUrl.toString())
+                MeshroomApp.addRecentProjectFile(selectedFile.toString())
             }
         }
     }
@@ -331,8 +333,8 @@ ApplicationWindow {
         fileMode: FileDialog.OpenFiles
         nameFilters: []
         onAccepted: {
-            console.warn("importFilesDialog fileUrls: " + importFilesDialog.fileUrls)
-            _reconstruction.importImagesUrls(importFilesDialog.fileUrls)
+            console.warn("importFilesDialog selectedFiles: " + importFilesDialog.selectedFiles)
+            _reconstruction.importImagesUrls(importFilesDialog.selectedFiles)
         }
     }
 
@@ -341,7 +343,7 @@ ApplicationWindow {
         title: "Import Scene"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
-            graphEditor.uigraph.importScene(importSceneDialog.fileUrl)
+            graphEditor.uigraph.importScene(importSceneDialog.selectedFile)
         }
     }
 

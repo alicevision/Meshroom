@@ -574,7 +574,7 @@ Item {
 
                     onDoubleClicked: function (mouse) { root.nodeDoubleClicked(mouse, node) }
 
-                    onMoved: uigraph.moveNode(node, position, uigraph.selectedNodes)
+                    onMoved: function (position) { uigraph.moveNode(node, position, uigraph.selectedNodes) }
 
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null

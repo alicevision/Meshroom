@@ -244,7 +244,7 @@ FloatingPane {
                     colors: root.featuresViewer.colors
                     currentIndex: featureType.viewer.colorIndex
                     // offset featuresViewer color set when changing the color of one feature type
-                    onColorPicked: featureType.viewer.colorOffset = colorIndex - index
+                    onColorPicked: function (colorIndex) { featureType.viewer.colorOffset = colorIndex - index }
                 }
                 // Feature type name
                 Label {

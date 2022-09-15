@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 import Utils 1.0
 
 import AliceVision 1.0 as AliceVision

@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.3
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 // import Qt5Compat.GraphicalEffects  // TODO: uncomment when Qt5Compat is included in PySide (https://bugreports.qt.io/browse/PYSIDE-1957)
 
 

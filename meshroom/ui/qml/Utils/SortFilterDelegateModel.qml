@@ -1,6 +1,6 @@
-import QtQuick 2.15
+import QtQuick
 import QtQml.Models 2.2
-import QtQuick.Controls 2.15
+import QtQuick.Controls
 
 /**
  * SortFilderDelegateModel adds sorting and filtering capabilities on a source model.

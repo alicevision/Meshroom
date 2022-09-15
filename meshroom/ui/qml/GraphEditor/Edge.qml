@@ -1,6 +1,6 @@
-import QtQuick 2.15
+import QtQuick
 import GraphEditor 1.0
-import QtQuick.Shapes 1.0
+import QtQuick.Shapes 1.3
 
 /**
     A cubic spline representing an edge, going from point1 to point2, providing mouse interaction.

@@ -890,6 +890,10 @@ ApplicationWindow {
 
                     return false;
                 }
+
+                function setImageTypes(types) {
+                    viewer2D.setImageTypes(types);
+                }
             }
         }
 
@@ -954,6 +958,8 @@ ApplicationWindow {
                     nodeTypesModel: _nodeTypes
 
                     onNodeDoubleClicked: {
+                        workspaceView.setImageTypes(node.outputImageTypes);
+
                         _reconstruction.setActiveNode(node);
 
                         let viewable = false;

@@ -299,3 +299,5 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             uid=[],
         ),
     ]
+
+    outputImageTypes = ['depth', 'sim']

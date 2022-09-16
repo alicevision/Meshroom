@@ -165,6 +165,10 @@ FocusScope {
         return "";
     }
 
+    function setImageTypes(types) {
+        imageType.types = types;
+    }
+
     // context menu
     property Component contextMenu: Menu {
         MenuItem {
@@ -998,7 +1002,7 @@ FocusScope {
                             Layout.preferredWidth: 6.0 * Qt.application.font.pixelSize
                             flat: true
 
-                            property var types: ["image", "depth", "sim"]
+                            property var types: ["image"]
                             property string type: enabled ? types[currentIndex] : types[0]
 
                             model: types

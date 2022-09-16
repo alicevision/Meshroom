@@ -489,6 +489,7 @@ class Node(object):
     parallelization = None
     documentation = ''
     category = 'Other'
+    outputImageTypes = ['image']
 
     def __init__(self):
         pass

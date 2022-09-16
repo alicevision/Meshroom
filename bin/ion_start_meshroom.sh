@@ -1,0 +1,10 @@
+PATH_CONTAINER=${ION_CONTAINER_ROOT}
+PATH_QML=${PATH_CONTAINER}/base/qml/QtQuick
+PATH_TRUE=`readlink -f $PATH_QML`/../
+
+export QML2_IMPORT_PATH=$PATH_TRUE:$QML2_IMPORT_PATH
+
+echo $QML2_IMPORT_PATH
+
+python $PATH_CONTAINER/base/meshroom/meshroom/ui
+

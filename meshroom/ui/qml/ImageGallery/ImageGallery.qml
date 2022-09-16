@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import MaterialIcons 2.2
-import QtQml.Models 2.2
-import Qt.labs.qmlmodels 1.0
+import QtQml.Models
+import Qt.labs.qmlmodels
 
 import Controls 1.0
 import Utils 1.0

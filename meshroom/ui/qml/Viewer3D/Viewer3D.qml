@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQml.Models 2.2
+import QtQml.Models
 import QtQuick.Scene3D 2.3
 import Qt3D.Core 2.3
 import Qt3D.Render 2.3

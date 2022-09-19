@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import MaterialIcons 2.2
 import QtPositioning
 
-import QtCharts 2.13
+import QtCharts
 
 import Controls 1.0
 import Utils 1.0

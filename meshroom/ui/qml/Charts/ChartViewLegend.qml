@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import QtCharts 2.3
+import QtCharts
 
 
 /**

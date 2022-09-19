@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import MaterialIcons 2.2
-import QtPositioning 5.8
+import QtPositioning
 
 import QtCharts 2.13
 

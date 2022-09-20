@@ -383,13 +383,13 @@ Entity {
             }
         }
 
-        onObjectAdded: function(object) {
+        onObjectAdded: function(index, object) {
             // notify object that it is now fully instantiated
             object.fullyInstantiated = true;
         }
 
-        onObjectRemoved: function(object) {
-            if(m.sourceToEntity[object.modelSource])
+        onObjectRemoved: function(index, object) {
+            if (m.sourceToEntity[object.modelSource])
                 delete m.sourceToEntity[object.modelSource]
         }
     }

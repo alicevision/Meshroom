@@ -568,9 +568,6 @@ class BaseNode(BaseObject):
     def getAttributes(self):
         return self._attributes
 
-    def getOutputImageTypes(self):
-        return self.nodeDesc.outputImageTypes
-
     @Slot(str, result=bool)
     def hasAttribute(self, name):
         return name in self._attributes.keys()
@@ -1056,7 +1053,6 @@ class BaseNode(BaseObject):
     x = Property(float, lambda self: self._position.x, notify=positionChanged)
     y = Property(float, lambda self: self._position.y, notify=positionChanged)
     attributes = Property(BaseObject, getAttributes, constant=True)
-    outputImageTypes = Property(Variant, getOutputImageTypes, constant=True)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     depthChanged = Signal()

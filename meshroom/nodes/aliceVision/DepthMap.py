@@ -293,11 +293,27 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
     outputs = [
         desc.File(
             name='output',
-            label='Output',
+            label='Output Folder',
             description='Output folder for generated depth maps.',
             value=desc.Node.internalFolder,
             uid=[],
         ),
+        desc.File(
+            name='depth',
+            label='Depth Maps',
+            description='Generated depth maps.',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap.exr',
+            uid=[],
+            group='', # do not export on the command line
+        ),
+        desc.File(
+            name='sim',
+            label='Sim Maps',
+            description='Generated sim maps.',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_simMap.exr',
+            uid=[],
+            group='', # do not export on the command line
+        ),
     ]
-
-    outputImageTypes = ['depth', 'sim']

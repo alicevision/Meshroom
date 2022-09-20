@@ -9,6 +9,7 @@ FocusScope {
 
     clip: true
 
+    property var displayedNode: _reconstruction.cameraInit
     property url source
     property var metadata
     property var viewIn3D
@@ -153,20 +154,66 @@ FocusScope {
         imgContainer.y = Math.max((imgLayout.height - imgContainer.image.height * imgContainer.scale)*0.5, 0)
     }
 
-    function getImageFile(type) {
-        if(!_reconstruction.activeNodes)
-            return "";
-        var depthMapNode = _reconstruction.activeNodes.get('allDepthMap').node;
-        if (type == "image") {
-            return root.source;
-        } else if (depthMapNode != undefined && _reconstruction.selectedViewId >= 0) {
-            return Filepath.stringToUrl(depthMapNode.internalFolder+_reconstruction.selectedViewId+"_"+type+"Map.exr");
+    function getImageFile() {
+        if (outputAttribute.name == "") {
+            return getViewpointPath(_reconstruction.selectedViewId);
+        } 
+        return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction.selectedViewId);
+    }
+
+    function getFileAttributePath(node, attrName, viewId) {
+        // get output attribute with matching name
+        // and parse its value to get the image filepath
+        for (var i = 0; i < node.attributes.count; i++) {
+            var attr = node.attributes.at(i);
+            if (attr.name == attrName) {
+                return Filepath.stringToUrl(String(attr.value).replace("<VIEW_ID>", viewId));
+            }
         }
         return "";
     }
 
-    function setImageTypes(types) {
-        imageType.types = types;
+    function getViewpointPath(viewId) {
+        // get viewpoint from cameraInit with matching id
+        // and get its image filepath
+        for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
+            var vp = _reconstruction.viewpoints.at(i);
+            if (vp.childAttribute("viewId").value == viewId) {
+                return Filepath.stringToUrl(vp.childAttribute("path").value);
+            }
+        }
+        return "";
+    }
+
+    function getViewpointMetadata(viewId) {
+        // get viewpoint from cameraInit with matching id
+        // and get its image filepath
+        for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
+            var vp = _reconstruction.viewpoints.at(i);
+            if (vp.childAttribute("viewId").value == viewId) {
+                return vp.childAttribute("metadata").value;
+            }
+        }
+        return "";
+    }
+
+    onDisplayedNodeChanged: {
+        var names = [];
+        for (var i = 0; i < displayedNode.attributes.count; i++) {
+            var attr = displayedNode.attributes.at(i);
+            if (attr.isOutput && attr.desc.semantic == "image") {
+                names.push(attr.name);
+            }
+        }
+        outputAttribute.names = names;
+    }
+
+    Connections {
+        target: _reconstruction
+        onSelectedViewIdChanged: {
+            root.source = getImageFile();
+            root.metadata = getViewpointMetadata(_reconstruction.selectedViewId);
+        }
     }
 
     // context menu
@@ -276,7 +323,7 @@ FocusScope {
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
                             // floatViewerComp.createObject(floatImageViewerLoader, {
                             setSource("FloatImage.qml", {
-                                'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
+                                'source':  Qt.binding(function() { return getImageFile(); }),
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
                                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
@@ -340,7 +387,7 @@ FocusScope {
                         fillMode: Image.PreserveAspectFit
                         autoTransform: true
                         onWidthChanged: if(status==Image.Ready) fit()
-                        source: getImageFile(imageType.type)
+                        source: getImageFile()
                         onStatusChanged: {
                             // update cache source when image is loaded
                             if(status === Image.Ready)
@@ -504,7 +551,7 @@ FocusScope {
                             font.pointSize: 8
                             readOnly: true
                             selectByMouse: true
-                            text: Filepath.urlToString(getImageFile(imageType.type))
+                            text: Filepath.urlToString(getImageFile())
                         }
 
                         // show which depthmap node is active
@@ -994,7 +1041,7 @@ FocusScope {
                         }
 
                         ComboBox {
-                            id: imageType
+                            id: outputAttribute
                             property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
                             // set min size to 5 characters + one margin for the combobox
                             clip: true
@@ -1002,10 +1049,10 @@ FocusScope {
                             Layout.preferredWidth: 6.0 * Qt.application.font.pixelSize
                             flat: true
 
-                            property var types: ["image"]
-                            property string type: enabled ? types[currentIndex] : types[0]
+                            property var names: []
+                            property string name: (names.length > 0) ? (enabled ? names[currentIndex] : names[0]) : ""
 
-                            model: types
+                            model: names
                             enabled: activeNode
                         }
 
@@ -1018,7 +1065,7 @@ FocusScope {
                             Layout.minimumWidth: 0
 
                             onClicked: {
-                                root.viewIn3D(root.getImageFile("depth"))
+                                root.viewIn3D(root.getFileAttributePath(activeNode, "depth", _reconstruction.selectedViewId));
                             }
                         }
 

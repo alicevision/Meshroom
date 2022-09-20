@@ -128,4 +128,22 @@ This allows to filter unstable points before starting the fusion of all depth ma
             value=desc.Node.internalFolder,
             uid=[],
         ),
+        desc.File(
+            name='depth',
+            label='Depth Maps',
+            description='Filtered depth maps.',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap.exr',
+            uid=[],
+            group='',  # do not export on the command line
+        ),
+        desc.File(
+            name='sim',
+            label='Sim Maps',
+            description='Filtered sim maps.',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_simMap.exr',
+            uid=[],
+            group='',  # do not export on the command line
+        ),
     ]

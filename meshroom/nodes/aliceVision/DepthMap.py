@@ -298,6 +298,9 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=desc.Node.internalFolder,
             uid=[],
         ),
+        # these attributes are only here to describe more accurately the output of the node
+        # by specifying that it generates 2 sequences of images
+        # (see in Viewer2D.qml how these attributes can be used)
         desc.File(
             name='depth',
             label='Depth Maps',

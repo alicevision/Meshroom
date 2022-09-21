@@ -155,6 +155,8 @@ FocusScope {
     }
 
     function getImageFile() {
+        // entry point for getting the image file URL that corresponds to
+        // the displayed node, selected output attribute and selected viewId
         if (outputAttribute.name == "") {
             return getViewpointPath(_reconstruction.selectedViewId);
         } 

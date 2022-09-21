@@ -338,21 +338,12 @@ Convert or apply filtering to the input images.
             value=desc.Node.internalFolder,
             uid=[],
         ),
-        #desc.File(
-        #    name='outputImages',
-        #    label='Output Images',
-        #    description='Output Image Files.',
-        #    value= outputImagesValueFunct,
-        #    group='',  # do not export on the command line
-        #    uid=[],
-        #),
         desc.File(
             name='outputImages',
             label='Output Images',
             description='Output Image Files.',
-            semantic='image',
-            value=desc.Node.internalFolder + '<VIEW_ID>.exr',
-            group='', # do not export on the command line
-            uid=[]
-        )
+            value= outputImagesValueFunct,
+            group='',  # do not export on the command line
+            uid=[],
+        ),
     ]

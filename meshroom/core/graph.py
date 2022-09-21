@@ -1200,9 +1200,10 @@ class Graph(BaseObject):
             for p in usedNodeTypes
         }
 
+        self.header["template"] = template
+
         data = {}
         if template:
-            self.header["template"] = True
             data = {
                 Graph.IO.Keys.Header: self.header,
                 Graph.IO.Keys.Graph: self.getNonDefaultAttributes()

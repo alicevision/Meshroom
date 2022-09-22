@@ -123,7 +123,7 @@ RowLayout {
         id: choice_component
         ComboBox {
             id: combo
-            model: attribute.desc.values
+            model: attribute.desc != undefined ? attribute.desc.values : null
             width: intrinsicModel.columnWidths[columnIndex]
 
             flat : true
@@ -138,7 +138,7 @@ RowLayout {
 
             Connections {
                 target: attribute
-                onValueChanged: combo.currentIndex = combo.find(attribute.value)
+                function onValueChanged() { combo.currentIndex = combo.find(attribute.value) }
             }
         }
     }
@@ -146,7 +146,7 @@ RowLayout {
     Component {
         id: bool_component
         CheckBox {
-            checked: attribute ? attribute.value : false
+            checked: attribute ? (attribute.value == undefined ? false : attribute.value) : false
             padding: 12
             onToggled: _reconstruction.setAttribute(attribute, !attribute.value)
         }

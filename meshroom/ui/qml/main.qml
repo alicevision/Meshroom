@@ -512,9 +512,14 @@ ApplicationWindow {
                 shortcut: "Ctrl+O"
                 onTriggered: ensureSaved(function() {
                         if(_reconstruction.graph && _reconstruction.graph.filepath) {
-                            openFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                            openFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath));
+                        } else {
+                            var projects = MeshroomApp.recentProjectFiles;
+                            if (projects.length > 0 && Filepath.exists(projects[0])) {
+                                openFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(projects[0]));
+                            }
                         }
-                        openFileDialog.open()
+                        openFileDialog.open();
                     })
             }
             Menu {

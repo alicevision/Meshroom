@@ -155,6 +155,11 @@ FocusScope {
     }
 
     function tryLoadNode(node) {
+        // safety check
+        if (!node) {
+            return;
+        }
+
         // node must be computed or at least running
         if (!node.isFinishedOrRunning()) {
             return;
@@ -179,7 +184,7 @@ FocusScope {
     function getImageFile() {
         // entry point for getting the image file URL that corresponds to
         // the displayed node, selected output attribute and selected viewId
-        if (outputAttribute.name == "" || outputAttribute.name == "gallery") {
+        if (!displayedNode || outputAttribute.name == "" || outputAttribute.name == "gallery") {
             return getViewpointPath(_reconstruction.selectedViewId);
         } 
         return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction.selectedViewId);
@@ -222,6 +227,11 @@ FocusScope {
     }
 
     onDisplayedNodeChanged: {
+        // safety check
+        if (!displayedNode) {
+            return;
+        }
+
         var names = [];
         // store attr name for output attributes that represent images
         for (var i = 0; i < displayedNode.attributes.count; i++) {
@@ -230,10 +240,12 @@ FocusScope {
                 names.push(attr.name);
             }
         }
+
         // ensure that we can always visualize the gallery
         if (names.length > 0) {
             names.push("gallery");
         }
+
         outputAttribute.names = names;
     }
 
@@ -1078,7 +1090,7 @@ FocusScope {
                             flat: true
 
                             property var names: []
-                            property string name: (names.length > 0) ? (enabled ? names[currentIndex] : names[0]) : ""
+                            property string name: ""
 
                             model: names
                             enabled: activeNode
@@ -1088,12 +1100,18 @@ FocusScope {
                             }
 
                             onNamesChanged: {
-                                // set size to max name length
+                                // update name (requires some safety check)
+                                if (names.length > 0 && names[0]) {
+                                    name = names[0];
+                                } else {
+                                    name = "";
+                                }
+
+                                // update width (set size to max name length + add margin for the dropdown icon)
                                 var maxWidth = 0;
                                 for (var i = 0; i < names.length; i++) {
                                     maxWidth = Math.max(maxWidth, fontMetrics.boundingRect(names[i]).width);
                                 }
-                                // add margin for the dropdown icon
                                 Layout.preferredWidth = maxWidth + 3.0 * Qt.application.font.pixelSize;
                             }
                         }

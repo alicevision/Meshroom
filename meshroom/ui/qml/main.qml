@@ -856,8 +856,7 @@ ApplicationWindow {
                     viewer2D.tryLoadNode(node);
 
                     // 3D viewer
-                    for(var i=0; i < node.attributes.count; ++i)
-                    {
+                    for (var i = 0; i < node.attributes.count; i++) {
                         var attr = node.attributes.at(i)
                         if(attr.isOutput && workspaceView.viewIn3D(attr, mouse))
                             break;

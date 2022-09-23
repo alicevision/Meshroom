@@ -154,6 +154,28 @@ FocusScope {
         imgContainer.y = Math.max((imgLayout.height - imgContainer.image.height * imgContainer.scale)*0.5, 0)
     }
 
+    function tryLoadNode(node) {
+        // node must be computed or at least running
+        if (!node.isFinishedOrRunning()) {
+            return;
+        }
+
+        // node must have at least one output attribute with the image semantic
+        var hasImageOutputAttr = false;
+        for (var i = 0; i < node.attributes.count; i++) {
+            var attr = node.attributes.at(i);
+            if (attr.isOutput && attr.desc.semantic == "image") {
+                hasImageOutputAttr = true;
+                break;
+            }
+        }
+        if (!hasImageOutputAttr) {
+            return;
+        }
+
+        displayedNode = node;
+    }
+
     function getImageFile() {
         // entry point for getting the image file URL that corresponds to
         // the displayed node, selected output attribute and selected viewId

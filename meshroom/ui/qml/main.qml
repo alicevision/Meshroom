@@ -853,7 +853,9 @@ ApplicationWindow {
 
                 function viewNode(node, mouse) {
                     // 2D viewer
-                    viewer2D.displayedNode = node;
+                    if (node.isFinishedOrRunning()) {
+                        viewer2D.displayedNode = node;
+                    }
 
                     // 3D viewer
                     for(var i=0; i < node.attributes.count; ++i)

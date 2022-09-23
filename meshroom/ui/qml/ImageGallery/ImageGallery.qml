@@ -332,17 +332,14 @@ Panel {
                 }
                 else
                 {
-                    grid.updateSelectedViewFromGrid = false
                     if(event.key == Qt.Key_Right)
                     {
                         grid.moveCurrentIndexRight()
-                        // grid.setCurrentIndex(Math.min(grid.model.count - 1, grid.currentIndex + 1))
                         event.accepted = true
                     }
                     else if(event.key == Qt.Key_Left)
                     {
                         grid.moveCurrentIndexLeft()
-                        // grid.setCurrentIndex(Math.max(0, grid.currentIndex - 1))
                         event.accepted = true
                     }
                     else if(event.key == Qt.Key_Up)
@@ -355,7 +352,6 @@ Panel {
                         grid.moveCurrentIndexDown()
                         event.accepted = true
                     }
-                    grid.updateSelectedViewFromGrid = true
                 }
             }
 

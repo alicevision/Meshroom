@@ -1045,10 +1045,9 @@ FocusScope {
                         ComboBox {
                             id: outputAttribute
                             property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
-                            // set min size to 5 characters + one margin for the combobox
                             clip: true
                             Layout.minimumWidth: 0
-                            Layout.preferredWidth: 6.0 * Qt.application.font.pixelSize
+                            Layout.preferredWidth: 3.0 * Qt.application.font.pixelSize
                             flat: true
 
                             property var names: []
@@ -1056,6 +1055,20 @@ FocusScope {
 
                             model: names
                             enabled: activeNode
+
+                            FontMetrics {
+                                id: fontMetrics
+                            }
+
+                            onNamesChanged: {
+                                // set size to max name length
+                                var maxWidth = 0;
+                                for (var i = 0; i < names.length; i++) {
+                                    maxWidth = Math.max(maxWidth, fontMetrics.boundingRect(names[i]).width);
+                                }
+                                // add margin for the dropdown icon
+                                Layout.preferredWidth = maxWidth + 3.0 * Qt.application.font.pixelSize;
+                            }
                         }
 
                         MaterialToolButton {

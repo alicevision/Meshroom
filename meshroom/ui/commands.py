@@ -206,7 +206,7 @@ class PasteNodesCommand(GraphCommand):
         self.nodeNames = []
 
     def redoImpl(self):
-        data = self.graph.updateImportedScene(self.data)
+        data = self.graph.updateImportedProject(self.data)
         nodes = self.graph.pasteNodes(data, self.position)
         self.nodeNames = [node.name for node in nodes]
         self.setText("Paste Node{} ({})".format("s" if len(self.nodeNames) > 1 else "", ", ".join(self.nodeNames)))
@@ -217,20 +217,20 @@ class PasteNodesCommand(GraphCommand):
             self.graph.removeNode(name)
 
 
-class ImportSceneCommand(GraphCommand):
+class ImportProjectCommand(GraphCommand):
     """
-    Handle the import of a scene into a Graph.
+    Handle the import of a project into a Graph.
     """
     def __init__(self, graph, filepath=None, yOffset=0, parent=None):
-        super(ImportSceneCommand, self).__init__(graph, parent)
+        super(ImportProjectCommand, self).__init__(graph, parent)
         self.filepath = filepath
         self.importedNames = []
         self.yOffset = yOffset
 
     def redoImpl(self):
-        status = self.graph.load(self.filepath, setupProjectFile=False, importScene=True)
+        status = self.graph.load(self.filepath, setupProjectFile=False, importProject=True)
         importedNodes = self.graph.importedNodes
-        self.setText("Import Scene ({} nodes)".format(importedNodes.count))
+        self.setText("Import Project ({} nodes)".format(importedNodes.count))
 
         lowestY = 0
         for node in self.graph.nodes:

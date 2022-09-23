@@ -241,7 +241,7 @@ class Graph(BaseObject):
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)
-    def load(self, filepath, setupProjectFile=True, importScene=False):
+    def load(self, filepath, setupProjectFile=True, importProject=False):
         """
         Load a meshroom graph ".mg" file.
 
@@ -250,7 +250,7 @@ class Graph(BaseObject):
             setupProjectFile: Store the reference to the project file and setup the cache directory.
                               If false, it only loads the graph of the project file as a template.
         """
-        if not importScene:
+        if not importProject:
             self.clear()
         with open(filepath) as jsonFile:
             fileData = json.load(jsonFile)
@@ -258,9 +258,9 @@ class Graph(BaseObject):
         # older versions of Meshroom files only contained the serialized nodes
         graphData = fileData.get(Graph.IO.Keys.Graph, fileData)
 
-        if importScene:
+        if importProject:
             self._importedNodes.clear()
-            graphData = self.updateImportedScene(graphData)
+            graphData = self.updateImportedProject(graphData)
 
         if not isinstance(graphData, dict):
             raise RuntimeError('loadGraph error: Graph is not a dict. File: {}'.format(filepath))
@@ -289,7 +289,7 @@ class Graph(BaseObject):
                 # Add node to the graph with raw attributes values
                 self._addNode(n, nodeName)
 
-                if importScene:
+                if importProject:
                     self._importedNodes.add(n)
 
             # Create graph edges by resolving attributes expressions
@@ -302,12 +302,12 @@ class Graph(BaseObject):
 
         return True
 
-    def updateImportedScene(self, data):
+    def updateImportedProject(self, data):
         """
-        Update the names and links of the scene to import so that it can fit
+        Update the names and links of the project to import so that it can fit
         correctly in the existing graph.
 
-        Parse all the nodes from the scene that is going to be imported.
+        Parse all the nodes from the project that is going to be imported.
         If their name already exists in the graph, replace them with new names,
         then parse all the nodes' inputs/outputs to replace the old names with
         the new ones in the links.
@@ -336,7 +336,7 @@ class Graph(BaseObject):
         # First pass to get all the names that already exist in the graph, update them, and keep track of the changes
         for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
             if not isinstance(nodeData, dict):
-                raise RuntimeError('updateImportedScene error: Node is not a dict.')
+                raise RuntimeError('updateImportedProject error: Node is not a dict.')
 
             if nodeName in self._nodes.keys() or nodeName in updatedData.keys():
                 newName = createUniqueNodeName(self._nodes.keys(), nodeData["nodeType"])
@@ -1403,7 +1403,7 @@ class Graph(BaseObject):
 
     @property
     def importedNodes(self):
-        """" Return the list of nodes that were added to the graph with the latest 'Import Scene' action. """
+        """" Return the list of nodes that were added to the graph with the latest 'Import Project' action. """
         return self._importedNodes
 
     @property

@@ -322,12 +322,12 @@ ApplicationWindow {
     }
 
     FileDialog {
-        id: importSceneDialog
-        title: "Import Scene"
+        id: importProjectDialog
+        title: "Import Project"
         selectMultiple: false
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
-            graphEditor.uigraph.importScene(importSceneDialog.fileUrl)
+            graphEditor.uigraph.importProject(importProjectDialog.fileUrl)
         }
     }
 
@@ -451,7 +451,7 @@ ApplicationWindow {
     Action {
         id: pasteAction
 
-        property string tooltip: "Paste the clipboard content to the scene if it contains valid nodes"
+        property string tooltip: "Paste the clipboard content to the project if it contains valid nodes"
         text: "Paste Node(s)"
         shortcut: "Ctrl+V"
         onTriggered: graphEditor.pasteNodes()
@@ -570,12 +570,12 @@ ApplicationWindow {
                 }
             }
             Action {
-                id: importSceneAction
-                text: "Import Scene"
+                id: importProjectAction
+                text: "Import Project"
                 shortcut: "Ctrl+Shift+I"
                 onTriggered: {
-                    initFileDialogFolder(importSceneDialog);
-                    importSceneDialog.open();
+                    initFileDialogFolder(importProjectDialog);
+                    importProjectDialog.open();
                 }
             }
             Action {

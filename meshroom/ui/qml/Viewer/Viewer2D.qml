@@ -157,7 +157,7 @@ FocusScope {
     function getImageFile() {
         // entry point for getting the image file URL that corresponds to
         // the displayed node, selected output attribute and selected viewId
-        if (outputAttribute.name == "") {
+        if (outputAttribute.name == "" || outputAttribute.name == "gallery") {
             return getViewpointPath(_reconstruction.selectedViewId);
         } 
         return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction.selectedViewId);
@@ -201,11 +201,16 @@ FocusScope {
 
     onDisplayedNodeChanged: {
         var names = [];
+        // store attr name for output attributes that represent images
         for (var i = 0; i < displayedNode.attributes.count; i++) {
             var attr = displayedNode.attributes.at(i);
             if (attr.isOutput && attr.desc.semantic == "image") {
                 names.push(attr.name);
             }
+        }
+        // ensure that we can always visualize the gallery
+        if (names.length > 0) {
+            names.push("gallery");
         }
         outputAttribute.names = names;
     }

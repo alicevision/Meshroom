@@ -1090,7 +1090,7 @@ FocusScope {
                             flat: true
 
                             property var names: []
-                            property string name: ""
+                            property string name: (enabled && names[currentIndex]) ? names[currentIndex] : "";
 
                             model: names
                             enabled: activeNode
@@ -1100,13 +1100,6 @@ FocusScope {
                             }
 
                             onNamesChanged: {
-                                // update name (requires some safety check)
-                                if (names.length > 0 && names[0]) {
-                                    name = names[0];
-                                } else {
-                                    name = "";
-                                }
-
                                 // update width (set size to max name length + add margin for the dropdown icon)
                                 var maxWidth = 0;
                                 for (var i = 0; i < names.length; i++) {

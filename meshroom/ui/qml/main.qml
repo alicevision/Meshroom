@@ -430,7 +430,6 @@ ApplicationWindow {
             return s
         }
         text: "Copy Node" + (_reconstruction.selectedNodes.count > 1 ? "s " : " ")
-        shortcut: "Ctrl+C"
         enabled: _reconstruction.selectedNodes.count > 0
         onTriggered: graphEditor.copyNodes()
 
@@ -453,7 +452,6 @@ ApplicationWindow {
 
         property string tooltip: "Paste the clipboard content to the scene if it contains valid nodes"
         text: "Paste Node(s)"
-        shortcut: "Ctrl+V"
         onTriggered: graphEditor.pasteNodes()
     }
 

@@ -66,7 +66,7 @@ class ImageMasking(desc.CommandLineNode):
                 name='hsvMaxSaturation',
                 label='Max Saturation',
                 description='Do not mask pixels above this threshold. It might be useful to mask white/black pixels.',
-                value=1,
+                value=1.0,
                 range=(0, 1, 0.01),
                 uid=[0]
             ),
@@ -82,7 +82,7 @@ class ImageMasking(desc.CommandLineNode):
                 name='hsvMaxValue',
                 label='Max Value',
                 description='Do not mask pixels above this threshold. It might be useful to mask white/black pixels.',
-                value=1,
+                value=1.0,
                 range=(0, 1, 0.01),
                 uid=[0]
             ),

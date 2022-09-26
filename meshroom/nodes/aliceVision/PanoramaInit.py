@@ -49,7 +49,7 @@ This node allows to setup the Panorama:
             name='yawCW',
             label='Yaw CW',
             description="Yaw ClockWise or CounterClockWise",
-            value=1,
+            value=True,
             uid=[0],
             enabled=lambda node: ('Horizontal' in node.initializeCameras.value) or (node.initializeCameras.value == "Spherical"),
         ),

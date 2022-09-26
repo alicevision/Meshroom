@@ -163,7 +163,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             name='estimateSpaceMinObservationAngle',
             label='Min Observations Angle For SfM Space Estimation',
             description='Minimum angle between two observations for SfM space estimation.',
-            value=10,
+            value=10.0,
             range=(0, 120, 1),
             uid=[0],
             enabled=lambda node: node.estimateSpaceFromSfM.value,

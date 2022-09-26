@@ -595,12 +595,10 @@ FocusScope {
                             text: Filepath.urlToString(getImageFile())
                         }
 
-                        // show which depthmap node is active
+                        // write which node is being displayed
                         Label {
-                            id: depthMapNodeName
-                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get("allDepthMap").node : null
-                            visible: (imageType.type != "image") && activeNode
-                            text: activeNode ? activeNode.label : ""
+                            id: displayedNodeName
+                            text: root.displayedNode ? root.displayedNode.label : ""
                             font.pointSize: 8
 
                             horizontalAlignment: TextInput.AlignLeft

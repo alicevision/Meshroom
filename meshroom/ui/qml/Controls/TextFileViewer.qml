@@ -25,6 +25,55 @@ Item {
     onAutoReloadChanged: loadSource()
     onVisibleChanged: if(visible) loadSource()
 
+    function getLineTime(line) 
+    {
+        const regex = /[0-9]{2}:[0-9]{2}:[0-9]{2}/;
+        const found = line.match(regex);
+        if (found && found.length > 0) {
+            let hh = parseInt(found[0].substring(0, 2));
+            let mm = parseInt(found[0].substring(3, 5));
+            let ss = parseInt(found[0].substring(6, 8));
+            let time = ss + 60*mm + 3600*hh;
+            if (!isNaN(time)) {
+                return time;
+            }
+        }
+        return -1;
+    }
+
+    function computeLinesDuration(lines)
+    {
+        const times = lines.map(line => getLineTime(line));
+
+        let durations = new Array(lines.length);
+        durations.fill(-1);
+
+        let prev_idx = -1;
+        for (let i = 0; i < lines.length; i++) {
+            if (times[i] >= 0) {
+                if (prev_idx >= 0) {
+                    durations[prev_idx] = times[i]-times[prev_idx];
+                }
+                prev_idx = i;
+            }
+        }
+
+        return durations;
+    }
+
+    function timeColorScale(time)
+    {
+        if (time < 0) {
+            return "#FFFFFF";
+        } else if (time < 60) {
+            return "#0000FF";
+        } else if (time < 3600) {
+            return "#FFFF00";
+        } else {
+            return "#FF0000";
+        }
+    }
+
     RowLayout {
         anchors.fill: parent
         spacing: 0
@@ -103,6 +152,8 @@ Item {
                 // model consists in text split by line
                 model: textView.text.split("\n")
                 visible: text != ""
+
+                property var durations: computeLinesDuration(model)
 
                 anchors.fill: parent
                 clip: true
@@ -198,6 +249,7 @@ Item {
                         enabled: false
                         Layout.fillHeight: true
                         horizontalAlignment: Text.AlignRight
+                        color: timeColorScale(textView.durations[index])
                     }
 
                     Loader {

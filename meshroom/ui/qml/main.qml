@@ -858,7 +858,7 @@ ApplicationWindow {
                     // 3D viewer
                     for (var i = 0; i < node.attributes.count; i++) {
                         var attr = node.attributes.at(i)
-                        if(attr.isOutput && workspaceView.viewIn3D(attr, mouse))
+                        if(attr.isOutput && attr.desc.semantic != "image" && workspaceView.viewIn3D(attr, mouse))
                             break;
                     }
                 }

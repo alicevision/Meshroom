@@ -157,12 +157,12 @@ FocusScope {
     function tryLoadNode(node) {
         // safety check
         if (!node) {
-            return;
+            return false;
         }
 
         // node must be computed or at least running
         if (!node.isFinishedOrRunning()) {
-            return;
+            return false;
         }
 
         // node must have at least one output attribute with the image semantic
@@ -175,10 +175,11 @@ FocusScope {
             }
         }
         if (!hasImageOutputAttr) {
-            return;
+            return false;
         }
 
         displayedNode = node;
+        return true;
     }
 
     function getImageFile() {

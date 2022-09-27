@@ -44,6 +44,14 @@ class Attribute(BaseObject):
         """
         raise NotImplementedError("Attribute.validateValue is an abstract function that should be implemented in the derived class.")
 
+    def checkValueTypes(self):
+        """ Returns the attribute's name if the default value's type is invalid, empty string otherwise.
+
+        Returns:
+            string: contains the attribute's name if the type is invalid, empty string otherwise
+        """
+        raise NotImplementedError("Attribute.checkValueTypes is an abstract function that should be implemented in the derived class.")
+
     def matchDescription(self, value, strict=True):
         """ Returns whether the value perfectly match attribute's description.
 
@@ -84,6 +92,9 @@ class ListAttribute(Attribute):
         if not isinstance(value, (list, tuple)):
             raise ValueError('ListAttribute only supports list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
+
+    def checkValueTypes(self):
+        return self.elementDesc.checkValueTypes()
 
     def matchDescription(self, value, strict=True):
         """ Check that 'value' content matches ListAttribute's element description. """
@@ -132,6 +143,23 @@ class GroupAttribute(Attribute):
             raise ValueError('GroupAttribute only supports dict/list/tuple input values (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
         return value
+
+    def checkValueTypes(self):
+        """ Check the type of every attribute contained in the group (including nested attributes).
+        Returns an empty string if all the attributes' types are valid, or concatenates the names of the attributes in
+        the group with invalid types.
+        """
+        invalidParams = []
+        for attr in self.groupDesc:
+            name = attr.checkValueTypes()
+            if name:
+                invalidParams.append(name)
+        if invalidParams:
+            # In group "group", if parameters "x" and "y" (in nested group "subgroup") are invalid, the returned
+            # string will be: "group:x, group:subgroup:y"
+            return self.name + ":" + str(", " + self.name + ":").join(invalidParams)
+        return ""
+
 
     def matchDescription(self, value, strict=True):
         """
@@ -185,6 +213,13 @@ class File(Attribute):
             raise ValueError('File only supports string input  (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return os.path.normpath(value).replace('\\', '/') if value else ''
 
+    def checkValueTypes(self):
+        # Some File values are functions generating a string: check whether the value is a string or if it
+        # is a function (but there is no way to check that the function's output is indeed a string)
+        if not isinstance(self.value, pyCompatibility.basestring) and not callable(self.value):
+            return self.name
+        return ""
+
 
 class BoolParam(Param):
     """
@@ -200,6 +235,11 @@ class BoolParam(Param):
             return bool(value)
         except:
             raise ValueError('BoolParam only supports bool value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+
+    def checkValueTypes(self):
+        if not isinstance(self.value, bool):
+            return self.name
+        return ""
 
 
 class IntParam(Param):
@@ -218,6 +258,11 @@ class IntParam(Param):
         except:
             raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
+    def checkValueTypes(self):
+        if not isinstance(self.value, int):
+            return self.name
+        return ""
+
     range = Property(VariantList, lambda self: self._range, constant=True)
 
 
@@ -233,6 +278,11 @@ class FloatParam(Param):
             return float(value)
         except:
             raise ValueError('FloatParam only supports float value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+
+    def checkValueTypes(self):
+        if not isinstance(self.value, float):
+            return self.name
+        return ""
 
     range = Property(VariantList, lambda self: self._range, constant=True)
 
@@ -263,6 +313,10 @@ class ChoiceParam(Param):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
+    def checkValueTypes(self):
+        # nothing to validate
+        return ""
+
     values = Property(VariantList, lambda self: self._values, constant=True)
     exclusive = Property(bool, lambda self: self._exclusive, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
@@ -278,6 +332,11 @@ class StringParam(Param):
         if not isinstance(value, pyCompatibility.basestring):
             raise ValueError('StringParam value should be a string (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
+
+    def checkValueTypes(self):
+        if not isinstance(self.value, pyCompatibility.basestring):
+            return self.name
+        return ""
 
 
 class Level(Enum):

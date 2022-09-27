@@ -1081,17 +1081,15 @@ FocusScope {
 
                         ComboBox {
                             id: outputAttribute
-                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
                             clip: true
                             Layout.minimumWidth: 0
                             Layout.preferredWidth: 3.0 * Qt.application.font.pixelSize
                             flat: true
 
                             property var names: []
-                            property string name: (enabled && names[currentIndex]) ? names[currentIndex] : "";
+                            property string name: names[currentIndex] ? names[currentIndex] : ""
 
                             model: names
-                            enabled: activeNode
 
                             FontMetrics {
                                 id: fontMetrics

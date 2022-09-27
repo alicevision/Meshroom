@@ -45,7 +45,7 @@ This allows to filter unstable points before starting the fusion of all depth ma
             label='Max View Angle',
             description='Maximum angle between two views.',
             value=70.0,
-            range=(10.0, 120.0, 1),
+            range=(10.0, 120.0, 1.0),
             uid=[0],
             advanced=True,
         ),

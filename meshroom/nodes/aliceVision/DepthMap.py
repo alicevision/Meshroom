@@ -59,7 +59,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label='Max View Angle',
             description='Maximum angle between two views.',
             value=70.0,
-            range=(10.0, 120.0, 1),
+            range=(10.0, 120.0, 1.0),
             uid=[0],
             advanced=True,
         ),

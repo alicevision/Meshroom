@@ -43,7 +43,7 @@ class ImageMasking(desc.CommandLineNode):
                 description='Hue value to isolate in [0,1] range. 0 = red, 0.33 = green, 0.66 = blue, 1 = red.',
                 semantic='color/hue',
                 value=0.33,
-                range=(0, 1, 0.01),
+                range=(0.0, 1.0, 0.01),
                 uid=[0]
             ),
             desc.FloatParam(
@@ -51,7 +51,7 @@ class ImageMasking(desc.CommandLineNode):
                 label='Tolerance',
                 description='Tolerance around the hue value to isolate.',
                 value=0.1,
-                range=(0, 1, 0.01),
+                range=(0.0, 1.0, 0.01),
                 uid=[0]
             ),
             desc.FloatParam(
@@ -59,7 +59,7 @@ class ImageMasking(desc.CommandLineNode):
                 label='Min Saturation',
                 description='Hue is meaningless if saturation is low. Do not mask pixels below this threshold.',
                 value=0.3,
-                range=(0, 1, 0.01),
+                range=(0.0, 1.0, 0.01),
                 uid=[0]
             ),
             desc.FloatParam(
@@ -67,7 +67,7 @@ class ImageMasking(desc.CommandLineNode):
                 label='Max Saturation',
                 description='Do not mask pixels above this threshold. It might be useful to mask white/black pixels.',
                 value=1.0,
-                range=(0, 1, 0.01),
+                range=(0.0, 1.0, 0.01),
                 uid=[0]
             ),
             desc.FloatParam(
@@ -75,7 +75,7 @@ class ImageMasking(desc.CommandLineNode):
                 label='Min Value',
                 description='Hue is meaningless if value is low. Do not mask pixels below this threshold.',
                 value=0.3,
-                range=(0, 1, 0.01),
+                range=(0.0, 1.0, 0.01),
                 uid=[0]
             ),
             desc.FloatParam(
@@ -83,7 +83,7 @@ class ImageMasking(desc.CommandLineNode):
                 label='Max Value',
                 description='Do not mask pixels above this threshold. It might be useful to mask white/black pixels.',
                 value=1.0,
-                range=(0, 1, 0.01),
+                range=(0.0, 1.0, 0.01),
                 uid=[0]
             ),
         ]),

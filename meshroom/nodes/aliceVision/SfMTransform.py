@@ -99,19 +99,19 @@ The transformation can be based on:
                             name="x", label="x", description="Euler X Rotation",
                             value=0.0,
                             uid=[0],
-                            range=(-90.0, 90.0, 1)
+                            range=(-90.0, 90.0, 1.0)
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Euler Y Rotation",
                             value=0.0,
                             uid=[0],
-                            range=(-180.0, 180.0, 1)
+                            range=(-180.0, 180.0, 1.0)
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Euler Z Rotation",
                             value=0.0,
                             uid=[0],
-                            range=(-180.0, 180.0, 1)
+                            range=(-180.0, 180.0, 1.0)
                         )
                     ],
                     joinChar=","

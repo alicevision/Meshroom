@@ -228,25 +228,21 @@ FocusScope {
     }
 
     onDisplayedNodeChanged: {
-        // safety check
-        if (!displayedNode) {
-            return;
-        }
-
         var names = [];
-        // store attr name for output attributes that represent images
-        for (var i = 0; i < displayedNode.attributes.count; i++) {
-            var attr = displayedNode.attributes.at(i);
-            if (attr.isOutput && attr.desc.semantic == "image") {
-                names.push(attr.name);
+        // safety check
+        if (displayedNode) {
+            // store attr name for output attributes that represent images
+            for (var i = 0; i < displayedNode.attributes.count; i++) {
+                var attr = displayedNode.attributes.at(i);
+                if (attr.isOutput && attr.desc.semantic == "image") {
+                    names.push(attr.name);
+                }
+            }
+            // ensure that we can always visualize the gallery
+            if (names.length > 0) {
+                names.push("gallery");
             }
         }
-
-        // ensure that we can always visualize the gallery
-        if (names.length > 0) {
-            names.push("gallery");
-        }
-
         outputAttribute.names = names;
     }
 

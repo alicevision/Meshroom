@@ -964,7 +964,6 @@ ApplicationWindow {
                 // Make NodeEditor readOnly when computing
                 readOnly: node ? node.locked : false
 
-                onAttributeDoubleClicked: workspaceView.viewAttribute(attribute, mouse)
                 onUpgradeRequest: {
                     var n = _reconstruction.upgradeNode(node);
                     _reconstruction.selectedNode = n;

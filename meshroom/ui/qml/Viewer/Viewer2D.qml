@@ -197,7 +197,9 @@ FocusScope {
         for (var i = 0; i < node.attributes.count; i++) {
             var attr = node.attributes.at(i);
             if (attr.name == attrName) {
-                return Filepath.stringToUrl(String(attr.value).replace("<VIEW_ID>", viewId));
+                let pattern = String(attr.value).replace("<VIEW_ID>", viewId);
+                let path = Filepath.globFirst(pattern);
+                return Filepath.stringToUrl(path);
             }
         }
         return "";

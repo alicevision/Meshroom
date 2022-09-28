@@ -97,4 +97,13 @@ Compute the image warping for each input image in the panorama coordinate system
             value=desc.Node.internalFolder,
             uid=[],
         ),
+        desc.File(
+            name='warping',
+            label='Image Warping',
+            description='',
+            group='', # do not export on the command line
+            semantic='image',
+            value=desc.Node.internalFolder+'<VIEW_ID>.exr',
+            uid=[]
+        ),
     ]

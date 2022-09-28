@@ -12,7 +12,7 @@ def outputImagesValueFunct(attr):
 
     if inputExt in ['.abc', '.sfm']:
         # If we have an SfM in input
-        return desc.Node.internalFolder + '*' + (outputExt or '.*')
+        return desc.Node.internalFolder + '<VIEW_ID>' + (outputExt or '.*')
 
     if inputExt:
         # if we have one or multiple files in input
@@ -342,6 +342,7 @@ Convert or apply filtering to the input images.
             name='outputImages',
             label='Output Images',
             description='Output Image Files.',
+            semantic='image',
             value= outputImagesValueFunct,
             group='',  # do not export on the command line
             uid=[],

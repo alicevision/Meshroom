@@ -114,6 +114,10 @@ Item {
                 uigraph.removeNodes(uigraph.selectedNodes)
         if (event.key === Qt.Key_D)
             duplicateNode(event.modifiers == Qt.AltModifier)
+        if (event.key === Qt.Key_C && event.modifiers == Qt.ControlModifier)
+            copyNodes()
+        if (event.key === Qt.Key_V && event.modifiers == Qt.ControlModifier)
+            pasteNodes()
     }
 
     MouseArea {

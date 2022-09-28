@@ -1087,6 +1087,7 @@ FocusScope {
                             property string name: names[currentIndex] ? names[currentIndex] : ""
 
                             model: names
+                            enabled: count > 0
 
                             FontMetrics {
                                 id: fontMetrics

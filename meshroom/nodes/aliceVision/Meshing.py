@@ -94,19 +94,19 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                             name="x", label="x", description="Euler X Rotation",
                             value=0.0,
                             uid=[0],
-                            range=(-90.0, 90.0, 1)
+                            range=(-90.0, 90.0, 1.0)
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Euler Y Rotation",
                             value=0.0,
                             uid=[0],
-                            range=(-180.0, 180.0, 1)
+                            range=(-180.0, 180.0, 1.0)
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Euler Z Rotation",
                             value=0.0,
                             uid=[0],
-                            range=(-180.0, 180.0, 1)
+                            range=(-180.0, 180.0, 1.0)
                         )
                     ],
                     joinChar=","
@@ -163,8 +163,8 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             name='estimateSpaceMinObservationAngle',
             label='Min Observations Angle For SfM Space Estimation',
             description='Minimum angle between two observations for SfM space estimation.',
-            value=10,
-            range=(0, 120, 1),
+            value=10.0,
+            range=(0.0, 120.0, 1.0),
             uid=[0],
             enabled=lambda node: node.estimateSpaceFromSfM.value,
         ),

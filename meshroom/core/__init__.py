@@ -80,10 +80,20 @@ def loadPlugins(folder, packageName, classType):
                            and issubclass(plugin, classType)]
                 if not plugins:
                     logging.warning("No class defined in plugin: {}".format(pluginModuleName))
+
+                importPlugin = True
                 for p in plugins:
+                    if classType == desc.Node:
+                        nodeErrors = validateNodeDesc(p)
+                        if nodeErrors:
+                            errors.append("  * {}: The following parameters do not have valid default values/ranges: {}"
+                                          .format(pluginName, ", ".join(nodeErrors)))
+                            importPlugin = False
+                            break
                     p.packageName = packageName
                     p.packageVersion = packageVersion
-                pluginTypes.extend(plugins)
+                if importPlugin:
+                    pluginTypes.extend(plugins)
             except Exception as e:
                 errors.append('  * {}: {}'.format(pluginName, str(e)))
 
@@ -92,6 +102,38 @@ def loadPlugins(folder, packageName, classType):
                         '{errorMsg}\n'
                         .format(package=packageName, errorMsg='\n'.join(errors)))
     return pluginTypes
+
+
+def validateNodeDesc(nodeDesc):
+    """
+    Check that the node has a valid description before being loaded. For the description
+    to be valid, the default value of every parameter needs to correspond to the type
+    of the parameter.
+    An empty returned list means that every parameter is valid, and so is the node's description.
+    If it is not valid, the returned list contains the names of the invalid parameters. In case
+    of nested parameters (parameters in groups or lists, for example), the name of the parameter
+    follows the name of the parent attributes. For example, if the attribute "x", contained in group
+    "group", is invalid, then it will be added to the list as "group:x".
+
+    Args:
+        nodeDesc (desc.Node): description of the node
+
+    Returns:
+        errors (list): the list of invalid parameters if there are any, empty list otherwise
+    """
+    errors = []
+
+    for param in nodeDesc.inputs:
+        err = param.checkValueTypes()
+        if err:
+            errors.append(err)
+
+    for param in nodeDesc.outputs:
+        err = param.checkValueTypes()
+        if err:
+            errors.append(err)
+
+    return errors
 
 
 class Version(object):

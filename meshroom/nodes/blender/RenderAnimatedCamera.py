@@ -80,7 +80,7 @@ class RenderAnimatedCamera(desc.CommandLineNode):
                     label='Particle Size',
                     description='''Scale of particles used to show the point cloud''',
                     value=0.1,
-                    range=(0.01, 1, 0.01),
+                    range=(0.01, 1.0, 0.01),
                     uid=[0],
                 ),
                 desc.ChoiceParam(

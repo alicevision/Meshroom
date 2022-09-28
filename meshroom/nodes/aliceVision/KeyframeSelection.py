@@ -84,7 +84,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                 label="Frame Offset",
                 description="Frame offset.",
                 value=0,
-                range=(0, 100.0, 1.0),
+                range=(0, 100, 1),
                 uid=[0],
             ),
             name="frameOffsets",

@@ -45,10 +45,11 @@ class Attribute(BaseObject):
         raise NotImplementedError("Attribute.validateValue is an abstract function that should be implemented in the derived class.")
 
     def checkValueTypes(self):
-        """ Returns the attribute's name if the default value's type is invalid, empty string otherwise.
+        """ Returns the attribute's name if the default value's type is invalid or if the range's type (when available)
+        is invalid, empty string otherwise.
 
         Returns:
-            string: contains the attribute's name if the type is invalid, empty string otherwise
+            string: the attribute's name if the default value's or range's type is invalid, empty string otherwise
         """
         raise NotImplementedError("Attribute.checkValueTypes is an abstract function that should be implemented in the derived class.")
 
@@ -145,7 +146,9 @@ class GroupAttribute(Attribute):
         return value
 
     def checkValueTypes(self):
-        """ Check the type of every attribute contained in the group (including nested attributes).
+        """ Check the default value's and range's (if available) type of every attribute contained in the group
+        (including nested attributes).
+
         Returns an empty string if all the attributes' types are valid, or concatenates the names of the attributes in
         the group with invalid types.
         """
@@ -155,11 +158,10 @@ class GroupAttribute(Attribute):
             if name:
                 invalidParams.append(name)
         if invalidParams:
-            # In group "group", if parameters "x" and "y" (in nested group "subgroup") are invalid, the returned
-            # string will be: "group:x, group:subgroup:y"
+            # In group "group", if parameters "x" and "y" (with "y" in nested group "subgroup") are invalid, the
+            # returned string will be: "group:x, group:subgroup:y"
             return self.name + ":" + str(", " + self.name + ":").join(invalidParams)
         return ""
-
 
     def matchDescription(self, value, strict=True):
         """
@@ -259,7 +261,7 @@ class IntParam(Param):
             raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
     def checkValueTypes(self):
-        if not isinstance(self.value, int):
+        if not isinstance(self.value, int) or (self.range and not all([isinstance(r, int) for r in self.range])):
             return self.name
         return ""
 
@@ -280,7 +282,7 @@ class FloatParam(Param):
             raise ValueError('FloatParam only supports float value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 
     def checkValueTypes(self):
-        if not isinstance(self.value, float):
+        if not isinstance(self.value, float) or (self.range and not all([isinstance(r, float) for r in self.range])):
             return self.name
         return ""
 

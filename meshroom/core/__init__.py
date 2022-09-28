@@ -86,7 +86,7 @@ def loadPlugins(folder, packageName, classType):
                     if classType == desc.Node:
                         nodeErrors = validateNodeDesc(p)
                         if nodeErrors:
-                            errors.append("  * {}: The following parameters do not have valid default values: {}"
+                            errors.append("  * {}: The following parameters do not have valid default values/ranges: {}"
                                           .format(pluginName, ", ".join(nodeErrors)))
                             importPlugin = False
                             break

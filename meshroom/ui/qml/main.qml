@@ -322,12 +322,12 @@ ApplicationWindow {
     }
 
     FileDialog {
-        id: importSceneDialog
-        title: "Import Scene"
+        id: importProjectDialog
+        title: "Import Project"
         selectMultiple: false
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
-            graphEditor.uigraph.importScene(importSceneDialog.fileUrl)
+            graphEditor.uigraph.importProject(importProjectDialog.fileUrl)
         }
     }
 
@@ -450,7 +450,7 @@ ApplicationWindow {
     Action {
         id: pasteAction
 
-        property string tooltip: "Paste the clipboard content to the scene if it contains valid nodes"
+        property string tooltip: "Paste the clipboard content to the project if it contains valid nodes"
         text: "Paste Node(s)"
         onTriggered: graphEditor.pasteNodes()
     }
@@ -458,6 +458,20 @@ ApplicationWindow {
     Action {
         shortcut: "Ctrl+Shift+P"
         onTriggered: _PaletteManager.togglePalette()
+    }
+
+
+    // Utility functions for elements in the menubar
+
+    function initFileDialogFolder(dialog) {
+        if(_reconstruction.graph && _reconstruction.graph.filepath) {
+            dialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath));
+        } else {
+            var projects = MeshroomApp.recentProjectFiles;
+            if (projects.length > 0 && Filepath.exists(projects[0])) {
+                dialog.folder = Filepath.stringToUrl(Filepath.dirname(projects[0]));
+            }
+        }
     }
 
     header: MenuBar {
@@ -509,10 +523,8 @@ ApplicationWindow {
                 text: "Open"
                 shortcut: "Ctrl+O"
                 onTriggered: ensureSaved(function() {
-                        if(_reconstruction.graph && _reconstruction.graph.filepath) {
-                            openFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
-                        }
-                        openFileDialog.open()
+                        initFileDialogFolder(openFileDialog);
+                        openFileDialog.open();
                     })
             }
             Menu {
@@ -556,16 +568,22 @@ ApplicationWindow {
                 }
             }
             Action {
-                id: importSceneAction
-                text: "Import Scene"
+                id: importProjectAction
+                text: "Import Project"
                 shortcut: "Ctrl+Shift+I"
-                onTriggered: importSceneDialog.open()
+                onTriggered: {
+                    initFileDialogFolder(importProjectDialog);
+                    importProjectDialog.open();
+                }
             }
             Action {
                 id: importActionItem
                 text: "Import Images"
                 shortcut: "Ctrl+I"
-                onTriggered: importFilesDialog.open()
+                onTriggered: {
+                    initFileDialogFolder(importFilesDialog);
+                    importFilesDialog.open();
+                }
             }
 
             Action {
@@ -602,7 +620,8 @@ ApplicationWindow {
                     }
                     else
                     {
-                        saveFileDialog.open()
+                        initFileDialogFolder(saveFileDialog);
+                        saveFileDialog.open();
                     }
                 }
             }
@@ -611,10 +630,8 @@ ApplicationWindow {
                 text: "Save As..."
                 shortcut: "Ctrl+Shift+S"
                 onTriggered: {
-                    if(_reconstruction.graph && _reconstruction.graph.filepath) {
-                        saveFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
-                    }
-                    saveFileDialog.open()
+                    initFileDialogFolder(saveFileDialog);
+                    saveFileDialog.open();
                 }
             }
             Action {
@@ -622,10 +639,8 @@ ApplicationWindow {
                 text: "Save As Template..."
                 shortcut: "Ctrl+Shift+T"
                 onTriggered: {
-                    if(_reconstruction.graph && _reconstruction.graph.filepath) {
-                        saveTemplateDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
-                    }
-                    saveTemplateDialog.open()
+                    initFileDialogFolder(saveTemplateDialog);
+                    saveTemplateDialog.open();
                 }
             }
             MenuSeparator { }

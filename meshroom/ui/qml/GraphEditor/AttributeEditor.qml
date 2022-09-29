@@ -34,8 +34,14 @@ ListView {
             onDoubleClicked: function (mouse) { root.attributeDoubleClicked(mouse, attr) }
         }
 
-        onLoaded: {
-            height: item ? item.implicitHeight : -spacing // compensate for spacing if item is hidden
+        onActiveChanged: height = active ? item.implicitHeight : -spacing
+
+        Connections {
+            target: item
+            function onImplicitHeightChanged() {
+                // Handles cases where an attribute is created and its height is then updated as it is filled
+                height = item.implicitHeight
+            }
         }
     }
 

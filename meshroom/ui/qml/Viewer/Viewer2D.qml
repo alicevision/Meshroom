@@ -10,6 +10,10 @@ FocusScope {
     clip: true
 
     property var displayedNode: _reconstruction.cameraInit
+
+    property bool useExternal: false
+    property url sourceExternal
+
     property url source
     property var metadata
     property var viewIn3D
@@ -155,6 +159,8 @@ FocusScope {
     }
 
     function tryLoadNode(node) {
+        useExternal = false;
+        
         // safety check
         if (!node) {
             return false;
@@ -182,13 +188,31 @@ FocusScope {
         return true;
     }
 
+    function loadExternal(path) {
+        useExternal = true;
+        sourceExternal = path;
+        displayedNode = null;
+        metadata = {};
+    }
+
     function getImageFile() {
-        // entry point for getting the image file URL that corresponds to
-        // the displayed node, selected output attribute and selected viewId
+        // entry point for getting the image file URL
+        if (useExternal) {
+            return sourceExternal;
+        }
         if (!displayedNode || outputAttribute.name == "" || outputAttribute.name == "gallery") {
             return getViewpointPath(_reconstruction.selectedViewId);
         } 
         return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction.selectedViewId);
+    }
+
+    function getMetadata() {
+        // entry point for getting the image metadata
+        if (useExternal) {
+            return {};
+        } else {
+            return getViewpointMetadata(_reconstruction.selectedViewId);
+        }
     }
 
     function getFileAttributePath(node, attrName, viewId) {
@@ -226,7 +250,7 @@ FocusScope {
                 return vp.childAttribute("metadata").value;
             }
         }
-        return "";
+        return {};
     }
 
     onDisplayedNodeChanged: {
@@ -252,7 +276,7 @@ FocusScope {
         target: _reconstruction
         onSelectedViewIdChanged: {
             root.source = getImageFile();
-            root.metadata = getViewpointMetadata(_reconstruction.selectedViewId);
+            root.metadata = getMetadata();
         }
     }
 

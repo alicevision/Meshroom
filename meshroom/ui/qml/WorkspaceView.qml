@@ -152,8 +152,7 @@ Item {
                     anchors.fill: parent
                     keys: ["text/uri-list"]
                     onDropped: {
-                        viewer2D.source = drop.urls[0]
-                        viewer2D.metadata = {}
+                        viewer2D.loadExternal(drop.urls[0]);
                     }
                 }
                 Rectangle {

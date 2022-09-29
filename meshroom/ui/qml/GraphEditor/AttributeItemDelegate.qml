@@ -342,7 +342,7 @@ RowLayout {
                         Component.onCompleted: {
                             var cpt = Qt.createComponent("AttributeItemDelegate.qml")
                             var obj = cpt.createObject(item,
-                                                       {'attribute': Qt.binding(function() { return item.childAttrib }),
+                                                       {'attribute': item.childAttrib,
                                                         'readOnly': Qt.binding(function() { return !root.editable })
                                                        })
                             obj.Layout.fillWidth = true
@@ -373,12 +373,12 @@ RowLayout {
                 Component.onCompleted:  {
                     var cpt = Qt.createComponent("AttributeEditor.qml");
                     var obj = cpt.createObject(groupItem,
-                                               {'model': Qt.binding(function() { return attribute.value }),
+                                               {'model': attribute.value,
                                                 'readOnly': Qt.binding(function() { return root.readOnly }),
                                                 'labelWidth': 100, // reduce label width for children (space gain)
-                                               })
+                                               });
                     obj.Layout.fillWidth = true;
-                    obj.attributeDoubleClicked.connect(function(attr) {root.doubleClicked(attr)})
+                    obj.attributeDoubleClicked.connect(function(attr) {root.doubleClicked(attr)});
                 }
             }
         }

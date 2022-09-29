@@ -1082,27 +1082,18 @@ FocusScope {
                             id: outputAttribute
                             clip: true
                             Layout.minimumWidth: 0
-                            Layout.preferredWidth: 3.0 * Qt.application.font.pixelSize
                             flat: true
 
                             property var names: []
                             property string name: names[currentIndex] ? names[currentIndex] : ""
 
-                            model: names
+                            model: displayedNode ? names.map(n => (n == "gallery") ? "Gallery" : displayedNode.attributes.get(n).label) : []
                             enabled: count > 0
 
                             FontMetrics {
                                 id: fontMetrics
                             }
-
-                            onNamesChanged: {
-                                // update width (set size to max name length + add margin for the dropdown icon)
-                                var maxWidth = 0;
-                                for (var i = 0; i < names.length; i++) {
-                                    maxWidth = Math.max(maxWidth, fontMetrics.boundingRect(names[i]).width);
-                                }
-                                Layout.preferredWidth = maxWidth + 3.0 * Qt.application.font.pixelSize;
-                            }
+                            Layout.preferredWidth: model.reduce((acc, label) => Math.max(acc, fontMetrics.boundingRect(label).width), 0) + 3.0*Qt.application.font.pixelSize
                         }
 
                         MaterialToolButton {

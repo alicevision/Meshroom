@@ -161,7 +161,7 @@ FocusScope {
         }
 
         // node must be computed or at least running
-        if (!node.isFinishedOrRunning()) {
+        if (!node.isPartiallyFinished()) {
             return false;
         }
 

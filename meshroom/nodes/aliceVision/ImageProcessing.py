@@ -325,7 +325,7 @@ Convert or apply filtering to the input images.
     outputs = [
         desc.File(
             name='outSfMData',
-            label='Output sfmData',
+            label='SfmData',
             description='Output sfmData.',
             value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
             uid=[],
@@ -333,14 +333,14 @@ Convert or apply filtering to the input images.
         ),
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Output Images Folder.',
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name='outputImages',
-            label='Output Images',
+            label='Images',
             description='Output Image Files.',
             semantic='image',
             value= outputImagesValueFunct,

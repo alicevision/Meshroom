@@ -36,7 +36,7 @@ Prepare images for Panorama pipeline: ensures that images orientations are coher
     outputs = [
         desc.File(
             name='output',
-            label='Output sfmData',
+            label='SfmData',
             description='Output sfmData.',
             value=lambda attr: desc.Node.internalFolder + os.path.basename(attr.node.input.value),
             uid=[],

@@ -83,7 +83,7 @@ class LightingEstimation(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Folder for output lighting vector files.',
             value=desc.Node.internalFolder,
             uid=[],

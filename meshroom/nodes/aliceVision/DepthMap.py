@@ -293,7 +293,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Output folder for generated depth maps.',
             value=desc.Node.internalFolder,
             uid=[],

@@ -65,7 +65,7 @@ class ExportMatches(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Output path for the features and descriptors files (*.feat, *.desc).',
             value=desc.Node.internalFolder,
             uid=[],

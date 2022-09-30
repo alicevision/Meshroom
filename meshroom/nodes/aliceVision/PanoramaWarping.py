@@ -92,7 +92,7 @@ Compute the image warping for each input image in the panorama coordinate system
     outputs = [
         desc.File(
             name='output',
-            label='Output directory',
+            label='Folder',
             description='',
             value=desc.Node.internalFolder,
             uid=[],

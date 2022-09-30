@@ -141,14 +141,14 @@ Thanks to this node, the FeatureMatching node will only compute the matches betw
     outputs = [
         desc.File(
             name='output',
-            label='Output List File',
+            label='List File',
             description='Filepath to the output file with the list of selected image pairs.',
             value=desc.Node.internalFolder + 'imageMatches.txt',
             uid=[],
         ),
         desc.File(
             name='outputCombinedSfM',
-            label='Output Combined SfM',
+            label='Combined SfM',
             description='Path for the combined SfMData file',
             value=desc.Node.internalFolder + 'combineSfM.sfm',
             uid=[],

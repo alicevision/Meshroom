@@ -63,7 +63,7 @@ If multiple color charts are submitted, only the first one will be taken in acco
     outputs = [
         desc.File(
             name='outSfMData',
-            label='Output sfmData',
+            label='SfmData',
             description='Output sfmData.',
             value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
             uid=[],
@@ -71,7 +71,7 @@ If multiple color charts are submitted, only the first one will be taken in acco
         ),
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Output Images Folder.',
             value=desc.Node.internalFolder,
             uid=[],

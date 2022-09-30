@@ -69,7 +69,7 @@ Operation types used to merge two meshes:
     outputs = [
         desc.File(
             name='output',
-            label='Output mesh',
+            label='Mesh',
             description='''Output mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).''',
             value=desc.Node.internalFolder + 'mesh.stl',
             uid=[],

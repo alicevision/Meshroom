@@ -30,7 +30,7 @@ class ExportColoredPointCloud(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Point Cloud Filepath',
+            label='Point Cloud Filepath',
             description='Output point cloud with visibilities as SfMData file.',
             value="{cache}/{nodeType}/{uid0}/pointCloud.abc",
             uid=[],

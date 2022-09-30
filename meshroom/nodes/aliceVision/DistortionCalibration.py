@@ -45,7 +45,7 @@ class DistortionCalibration(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='outSfMData',
-            label='Output SfmData File',
+            label='SfmData File',
             description='Path to the output sfmData file',
             value=desc.Node.internalFolder + 'sfmData.sfm',
             uid=[],

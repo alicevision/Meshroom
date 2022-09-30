@@ -139,7 +139,7 @@ class LdrToHdrCalibration(desc.CommandLineNode):
     outputs = [
        desc.File(
             name='response',
-            label='Output response  File',
+            label='Response  File',
             description='Path to the output response file',
             value=desc.Node.internalFolder + 'response.csv',
             uid=[],

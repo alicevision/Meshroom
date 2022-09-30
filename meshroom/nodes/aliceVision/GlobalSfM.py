@@ -119,7 +119,7 @@ It is known to be faster but less robust to challenging datasets than the Increm
         ),
         desc.File(
             name='extraInfoFolder',
-            label='Output Folder',
+            label='Folder',
             description='Folder for intermediate reconstruction files and additional reconstruction information files.',
             value=desc.Node.internalFolder,
             uid=[],

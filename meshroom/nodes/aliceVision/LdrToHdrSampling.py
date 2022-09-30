@@ -146,7 +146,7 @@ class LdrToHdrSampling(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Output path for the samples.',
             value=desc.Node.internalFolder,
             uid=[],

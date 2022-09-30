@@ -25,40 +25,6 @@ Item {
     onAutoReloadChanged: loadSource()
     onVisibleChanged: if(visible) loadSource()
 
-    function getLogLineTime(line) 
-    {
-        const regex = /[0-9]{2}:[0-9]{2}:[0-9]{2}/;
-        const found = line.match(regex);
-        if (found && found.length > 0) {
-            let hh = parseInt(found[0].substring(0, 2));
-            let mm = parseInt(found[0].substring(3, 5));
-            let ss = parseInt(found[0].substring(6, 8));
-            let time = ss + 60*mm + 3600*hh;
-            if (!isNaN(time)) {
-                return time;
-            }
-        }
-        return -1;
-    }
-
-    function updateLogLinesModel(llm, text)
-    {
-        llm.clear();
-        const lines = text.split('\n');
-        const times = lines.map(line => getLogLineTime(line));
-        let prev_idx = -1;
-        for (let i = 0; i < lines.length; i++) {
-            let delta = -1;
-            if (times[i] >= 0) {
-                if (prev_idx >= 0) {
-                    delta = times[i]-times[prev_idx];
-                }
-                prev_idx = i;
-            }
-            llm.append({"line": lines[i], "duration": delta});
-        }
-    }
-
     RowLayout {
         anchors.fill: parent
         spacing: 0
@@ -233,7 +199,7 @@ Item {
 
                     property var duration: textView.model.get(index).duration
 
-                    // Duration color
+                    // Colored marker to quickly indicate duration
                     Rectangle {
                         width: 4
                         height: lineMetrics.height
@@ -242,6 +208,7 @@ Item {
                     }
 
                     // Line number
+                    // displays a tooltip with the duration when hovered
                     Label {
                         text: index + 1
                         Layout.minimumWidth: lineMetrics.width
@@ -389,5 +356,44 @@ Item {
             }
         };
         xhr.send();
+    }
+
+    // Parse log-line to see if it contains a time indicator
+    // and if yes then turn it into a time value (in seconds)
+    function getLogLineTime(line) 
+    {
+        const regex = /[0-9]{2}:[0-9]{2}:[0-9]{2}/;
+        const found = line.match(regex);
+        if (found && found.length > 0) {
+            let hh = parseInt(found[0].substring(0, 2));
+            let mm = parseInt(found[0].substring(3, 5));
+            let ss = parseInt(found[0].substring(6, 8));
+            let time = ss + 60*mm + 3600*hh;
+            if (!isNaN(time)) {
+                return time;
+            }
+        }
+        return -1;
+    }
+
+    // Update a log-lines ListModel from a log-text by filling it with elements containing: 
+    // - a log-line (string)
+    // - the elapsed time since the last log-line containing a time value and this one (if it also contains a time value)
+    function updateLogLinesModel(llm, text)
+    {
+        llm.clear();
+        const lines = text.split('\n');
+        const times = lines.map(line => getLogLineTime(line));
+        let prev_idx = -1;
+        for (let i = 0; i < lines.length; i++) {
+            let delta = -1;
+            if (times[i] >= 0) {
+                if (prev_idx >= 0) {
+                    delta = times[i]-times[prev_idx];
+                }
+                prev_idx = i;
+            }
+            llm.append({"line": lines[i], "duration": delta});
+        }
     }
 }

@@ -25,7 +25,7 @@ Item {
     onAutoReloadChanged: loadSource()
     onVisibleChanged: if(visible) loadSource()
 
-    function getLineTime(line) 
+    function getLogLineTime(line) 
     {
         const regex = /[0-9]{2}:[0-9]{2}:[0-9]{2}/;
         const found = line.match(regex);
@@ -41,36 +41,21 @@ Item {
         return -1;
     }
 
-    function computeLinesDuration(lines)
+    function updateLogLinesModel(llm, text)
     {
-        const times = lines.map(line => getLineTime(line));
-
-        let durations = new Array(lines.length);
-        durations.fill(-1);
-
+        llm.clear();
+        const lines = text.split('\n');
+        const times = lines.map(line => getLogLineTime(line));
         let prev_idx = -1;
         for (let i = 0; i < lines.length; i++) {
+            let delta = -1;
             if (times[i] >= 0) {
                 if (prev_idx >= 0) {
-                    durations[prev_idx] = times[i]-times[prev_idx];
+                    delta = times[i]-times[prev_idx];
                 }
                 prev_idx = i;
             }
-        }
-
-        return durations;
-    }
-
-    function timeColorScale(time)
-    {
-        if (time < 0) {
-            return "#FFFFFF";
-        } else if (time < 60) {
-            return "#0000FF";
-        } else if (time < 3600) {
-            return "#FFFF00";
-        } else {
-            return "#FF0000";
+            llm.append({"line": lines[i], "duration": delta});
         }
     }
 
@@ -118,7 +103,7 @@ Item {
                             onTriggered: {
                                 var t = "";
                                 for(var i = textView.firstVisibleIndex(); i < textView.lastVisibleIndex(); ++i)
-                                    t += textView.model[i] + "\n";
+                                    t += textView.model.get(i).line + "\n";
                                 Clipboard.setText(t);
                             }
                         }
@@ -149,11 +134,16 @@ Item {
 
                 property string text
 
-                // model consists in text split by line
-                model: textView.text.split("\n")
-                visible: text != ""
+                ListModel {
+                    id: logLinesModel
+                }
 
-                property var durations: computeLinesDuration(model)
+                onTextChanged: {
+                    updateLogLinesModel(logLinesModel, text);
+                }
+
+                model: logLinesModel
+                visible: text != ""
 
                 anchors.fill: parent
                 clip: true
@@ -241,6 +231,13 @@ Item {
                     width: textView.width
                     spacing: 6
 
+                    // Duration color
+                    Rectangle {
+                        width: 4
+                        height: lineMetrics.height
+                        color: Colors.durationColorScale(textView.model.get(index).duration)
+                    }
+
                     // Line number
                     Label {
                         text: index + 1
@@ -249,7 +246,6 @@ Item {
                         enabled: false
                         Layout.fillHeight: true
                         horizontalAlignment: Text.AlignRight
-                        color: timeColorScale(textView.durations[index])
                     }
 
                     Loader {
@@ -264,8 +260,8 @@ Item {
                                 State {
                                     name: "progressBar"
                                     // detect textual progressbar (non empty line with only progressbar character)
-                                    when: modelData.trim().length
-                                          && modelData.split(progressMetrics.character).length - 1 === modelData.trim().length
+                                    when: textView.model.get(index).line.trim().length
+                                          && textView.model.get(index).line.split(progressMetrics.character).length - 1 === textView.model.get(index).line.trim().length
                                     PropertyChanges {
                                         target: delegateLoader
                                         sourceComponent: progressBar_component
@@ -286,7 +282,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     from: 0
                                     to: progressMetrics.count
-                                    value: modelData.length
+                                    value: textView.model.get(index).line.length
                                 }
                             }
                         }
@@ -296,7 +292,7 @@ Item {
                             id: line_component
                             TextInput {
                                 wrapMode: Text.WrapAnywhere
-                                text: modelData
+                                text: textView.model.get(index).line
                                 font.family: "Monospace, Consolas, Monaco"
                                 padding: 0
                                 selectByMouse: true

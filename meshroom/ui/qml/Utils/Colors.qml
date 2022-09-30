@@ -60,4 +60,20 @@ QtObject {
         console.warn("Unknown status : " + chunk.status)
         return "magenta"
     }
+
+    function durationColorScale(t) {
+        if (t < 0) {
+            return "transparent";
+        } else if (t < 10) {
+            return cyan;
+        } else if (t < 30) {
+            return green;
+        } else if (t < 60) {
+            return yellow;
+        } else if (t < 180) {
+            return orange;
+        } else {
+            return red;
+        }
+    }
 }

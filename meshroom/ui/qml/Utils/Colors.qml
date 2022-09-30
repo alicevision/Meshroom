@@ -62,9 +62,7 @@ QtObject {
     }
 
     function durationColorScale(t) {
-        if (t < 0) {
-            return "transparent";
-        } else if (t < 10) {
+        if (t < 10) {
             return cyan;
         } else if (t < 30) {
             return green;

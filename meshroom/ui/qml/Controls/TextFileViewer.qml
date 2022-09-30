@@ -231,11 +231,14 @@ Item {
                     width: textView.width
                     spacing: 6
 
+                    property var duration: textView.model.get(index).duration
+
                     // Duration color
                     Rectangle {
                         width: 4
                         height: lineMetrics.height
-                        color: Colors.durationColorScale(textView.model.get(index).duration)
+                        Layout.alignment: Qt.AlignTop
+                        color: duration > 0 ? Colors.durationColorScale(duration) : "transparent"
                     }
 
                     // Line number
@@ -243,9 +246,17 @@ Item {
                         text: index + 1
                         Layout.minimumWidth: lineMetrics.width
                         rightPadding: 2
-                        enabled: false
                         Layout.fillHeight: true
                         horizontalAlignment: Text.AlignRight
+                        color: "#CCCCCC"
+                        enabled: duration > 0
+                        ToolTip.text: "elapsed time: " + String(duration) + "s"
+                        ToolTip.visible: mouseArea.containsMouse
+                        MouseArea {
+                            id: mouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                        }
                     }
 
                     Loader {

@@ -41,7 +41,6 @@ Item {
     clip: true
 
     SystemPalette { id: activePalette }
-    property point pastePosition
 
     /// Get node delegate for the given node object
     function nodeDelegate(node)
@@ -89,19 +88,33 @@ Item {
     /// Paste content of clipboard to graph editor and create new node if valid
     function pasteNodes()
     {
-        if (uigraph.hoveredNode != null) {
-            var node = nodeDelegate(uigraph.hoveredNode)
-            root.pastePosition = Qt.point(node.mousePosition.x + node.x, node.mousePosition.y + node.y)
+        var finalPosition = undefined
+        var centerPosition = false
+        if (mouseArea.containsMouse) {
+            if (uigraph.hoveredNode != null) {
+                var node = nodeDelegate(uigraph.hoveredNode)
+                finalPosition = Qt.point(node.mousePosition.x + node.x, node.mousePosition.y + node.y)
+            } else {
+                finalPosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
+            }
         } else {
-            root.pastePosition = mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
+            finalPosition = getCenterPosition()
+            centerPosition = true
         }
+
         var copiedContent = Clipboard.getText()
-        var nodes = uigraph.pasteNodes(copiedContent, root.pastePosition)
+        var nodes = uigraph.pasteNodes(copiedContent, finalPosition, centerPosition)
         if (nodes.length > 0) {
             uigraph.clearNodeSelection()
             uigraph.selectedNode = nodes[0]
             uigraph.selectNodes(nodes)
         }
+    }
+
+    /// Get the coordinates of the point at the center of the GraphEditor
+    function getCenterPosition()
+    {
+        return mapToItem(draggable, mouseArea.width / 2, mouseArea.height / 2)
     }
 
     Keys.onPressed: {

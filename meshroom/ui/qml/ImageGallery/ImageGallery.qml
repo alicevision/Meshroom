@@ -30,7 +30,7 @@ Panel {
     signal removeImageRequest(var attribute)
     signal filesDropped(var drop, var augmentSfm)
 
-    title: "Images"
+    title: "Image Gallery"
     implicitWidth: (root.defaultCellSize + 2) * 2
 
     QtObject {

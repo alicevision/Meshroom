@@ -1111,7 +1111,7 @@ FocusScope {
                             property var names: []
                             property string name: names[currentIndex] ? names[currentIndex] : ""
 
-                            model: displayedNode ? names.map(n => (n == "gallery") ? "Gallery" : displayedNode.attributes.get(n).label) : []
+                            model: displayedNode ? names.map(n => (n == "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label) : []
                             enabled: count > 0
 
                             FontMetrics {

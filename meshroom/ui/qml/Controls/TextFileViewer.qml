@@ -202,8 +202,7 @@ Item {
                     // Colored marker to quickly indicate duration
                     Rectangle {
                         width: 4
-                        height: lineMetrics.height
-                        Layout.alignment: Qt.AlignTop
+                        Layout.fillHeight: true
                         color: duration > 0 ? Colors.durationColorScale(duration) : "transparent"
                     }
 

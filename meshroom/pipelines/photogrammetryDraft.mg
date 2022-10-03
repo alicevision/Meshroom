@@ -5,7 +5,7 @@
             "MeshFiltering": "3.0", 
             "Texturing": "6.0", 
             "StructureFromMotion": "2.0", 
-            "CameraInit": "7.0", 
+            "CameraInit": "8.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
             "Meshing": "7.0"
@@ -22,7 +22,7 @@
             }, 
             "nodeType": "Texturing", 
             "uids": {
-                "0": "1ed1516bf83493071547e69146be3f1218012e25"
+                "0": "32a36e3e637609b4d5a6971606728b59f3e7e62c"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -47,7 +47,7 @@
             }, 
             "nodeType": "Meshing", 
             "uids": {
-                "0": "dc3d06f150a2601334a44174aa8e5523d3055468"
+                "0": "d2499e39c1dd2e30c366e3e912254fce9cd0ed59"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -122,7 +122,7 @@
             }, 
             "nodeType": "StructureFromMotion", 
             "uids": {
-                "0": "89c3db0849ba07dfac5e97ca9e27dd690dc476ce"
+                "0": "5af4f4052aa22b0450708941b40928d46170f364"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -166,7 +166,7 @@
             }, 
             "nodeType": "MeshFiltering", 
             "uids": {
-                "0": "057d1647de39a617f79aad02a721938e5625ff64"
+                "0": "a5f72b9e67b26be5a4974c21b9d0bc0b3c34bea5"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -191,7 +191,7 @@
             }, 
             "nodeType": "FeatureMatching", 
             "uids": {
-                "0": "3b1f2c3fcfe0b94c65627c397a2671ba7594827d"
+                "0": "534c5224ba51c770ae3793cc085ae3aaa8c2c415"
             }, 
             "parallelization": {
                 "blockSize": 20, 

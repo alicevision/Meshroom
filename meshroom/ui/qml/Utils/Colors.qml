@@ -61,17 +61,21 @@ QtObject {
         return "magenta"
     }
 
-    function durationColorScale(t) {
-        if (t < 10) {
-            return cyan;
-        } else if (t < 30) {
-            return green;
-        } else if (t < 60) {
-            return yellow;
-        } else if (t < 180) {
-            return orange;
-        } else {
-            return red;
-        }
+    function toRgb(color) {
+        return [
+            parseInt(color.toString().substr(1, 2), 16) / 255, 
+            parseInt(color.toString().substr(3, 2), 16) / 255, 
+            parseInt(color.toString().substr(5, 2), 16) / 255
+        ];
+    }
+
+    function interpolate(c1, c2, t) {
+        let rgb1 = toRgb(c1);
+        let rgb2 = toRgb(c2);
+        return Qt.rgba(
+            rgb1[0] * (1-t) + rgb2[0] * t, 
+            rgb1[1] * (1-t) + rgb2[1] * t, 
+            rgb1[2] * (1-t) + rgb2[2] * t
+        );
     }
 }

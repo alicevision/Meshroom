@@ -203,7 +203,7 @@ Item {
                     Rectangle {
                         width: 4
                         Layout.fillHeight: true
-                        color: duration > 0 ? Colors.durationColorScale(duration) : "transparent"
+                        color: Colors.interpolate(Colors.grey, Colors.red, duration/180)
                     }
 
                     // Line number

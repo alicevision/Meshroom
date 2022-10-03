@@ -22,3 +22,32 @@ function sec2time(time) {
 
     return pad(hours, 2) + ':' + pad(minutes, 2) + ':' + pad(seconds, 2)
 }
+
+function getTimeStr(elapsed)
+{
+    if (elapsed <= 0)
+        return ""
+
+    var hours = 0
+    var min = 0
+    var finalTime = ""
+
+    if (elapsed > 3600) {
+        hours = Math.floor(elapsed / 3600)
+        elapsed = elapsed - (hours * 3600)
+        finalTime += hours + "h"
+    }
+    if (elapsed > 60) {
+        min = Math.floor(elapsed / 60)
+        elapsed = elapsed - (min * 60)
+        finalTime += min + "m"
+    }
+    if (hours == 0 && min == 0) {
+        // Millisecond precision for execution times below 1 min
+        finalTime += Number(elapsed.toLocaleString(Qt.locale('en-US'))) + "s"
+    } else {
+        finalTime += Math.round(elapsed) + "s"
+    }
+
+    return finalTime
+}

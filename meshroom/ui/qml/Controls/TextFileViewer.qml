@@ -216,7 +216,7 @@ Item {
                         horizontalAlignment: Text.AlignRight
                         color: "#CCCCCC"
                         enabled: duration > 0
-                        ToolTip.text: "elapsed time: " + String(duration) + "s"
+                        ToolTip.text: "Elapsed time: " + Format.getTimeStr(duration)
                         ToolTip.visible: mouseArea.containsMouse
                         MouseArea {
                             id: mouseArea

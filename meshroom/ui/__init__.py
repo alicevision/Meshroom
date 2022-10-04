@@ -1,2 +1,0 @@
-import meshroom
-meshroom.useUI()

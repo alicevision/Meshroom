@@ -354,7 +354,7 @@ class UIGraph(QObject):
         return status
 
     @Slot(QUrl, result=bool)
-    def importScene(self, filepath):
+    def importProject(self, filepath):
         if isinstance(filepath, (QUrl)):
             # depending how the QUrl has been initialized,
             # toLocalFile() may return the local path or an empty string
@@ -364,7 +364,7 @@ class UIGraph(QObject):
         else:
             localFile = filepath
         yOffset = self.layout.gridSpacing + self.layout.nodeHeight
-        return self.push(commands.ImportSceneCommand(self._graph, localFile, yOffset=yOffset))
+        return self.push(commands.ImportProjectCommand(self._graph, localFile, yOffset=yOffset))
 
     @Slot(QUrl)
     def saveAs(self, url):

@@ -115,3 +115,5 @@ def test_multiviewPipeline():
         assert sorted([n.name for n in loadedGraph.nodes]) == sorted([n.name for n in graph.nodes])
         #  - no compatibility issues
         assert all(isinstance(n, Node) for n in loadedGraph.nodes)
+        #  - same UIDs for every node
+        assert sorted([n._uids.get(0) for n in loadedGraph.nodes]) == sorted([n._uids.get(0) for n in graph.nodes])

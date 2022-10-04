@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
 
-import Qt.labs.platform 1.0 as Platform
 import QtQuick.Dialogs
 
 import Qt.labs.settings 1.0
@@ -106,7 +105,7 @@ ApplicationWindow {
 
         onAccepted: {
             // save current file
-            if(saveAction.enabled)
+            if (saveAction.enabled)
             {
                 saveAction.trigger()
                 fireCallback()
@@ -116,7 +115,7 @@ ApplicationWindow {
             {
                 saveFileDialog.open()
                 function _callbackWrapper(rc) {
-                    if(rc == Platform.Dialog.Accepted)
+                    if (rc == Dialog.Accepted)
                         fireCallback()
                     saveFileDialog.closed.disconnect(_callbackWrapper)
                 }
@@ -141,7 +140,7 @@ ApplicationWindow {
         }
     }
 
-    Platform.FileDialog {
+    FileDialog {
         id: saveFileDialog
 
         signal closed(var result)
@@ -149,30 +148,26 @@ ApplicationWindow {
         title: "Save File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         defaultSuffix: ".mg"
-        fileMode: Platform.FileDialog.SaveFile
+        fileMode: FileDialog.SaveFile
         onAccepted: {
-            _reconstruction.saveAs(file)
-            closed(Platform.Dialog.Accepted)
-            MeshroomApp.addRecentProjectFile(file.toString())
+            _reconstruction.saveAs(selectedFile)
+            closed(Dialog.Accepted)
+            MeshroomApp.addRecentProjectFile(selectedFile.toString())
         }
-        onRejected: closed(Platform.Dialog.Rejected)
+        onRejected: closed(Dialog.Rejected)
     }
 
-    Platform.FileDialog {
+    FileDialog {
         id: saveTemplateDialog
-
-        signal closed(var result)
 
         title: "Save Template"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         defaultSuffix: ".mg"
-        fileMode: Platform.FileDialog.SaveFile
+        fileMode: FileDialog.SaveFile
         onAccepted: {
-            _reconstruction.saveAsTemplate(file)
-            closed(Platform.Dialog.Accepted)
+            _reconstruction.saveAsTemplate(selectedFile)
             MeshroomApp.reloadTemplateList()
         }
-        onRejected: closed(Platform.Dialog.Rejected)
     }
 
     Item {
@@ -319,7 +314,7 @@ ApplicationWindow {
         nameFilters: ["Meshroom Graphs (*.mg)"]
         fileMode: FileDialog.OpenFile
         onAccepted: {
-            if(_reconstruction.loadUrl(selectedFile))
+            if (_reconstruction.loadUrl(selectedFile))
             {
                 MeshroomApp.addRecentProjectFile(selectedFile.toString())
             }
@@ -341,6 +336,7 @@ ApplicationWindow {
         id: importSceneDialog
         title: "Import Scene"
         nameFilters: ["Meshroom Graphs (*.mg)"]
+        fileMode: FileDialog.OpenFile
         onAccepted: {
             graphEditor.uigraph.importScene(importSceneDialog.selectedFile)
         }
@@ -526,8 +522,8 @@ ApplicationWindow {
                 text: "Open"
                 shortcut: "Ctrl+O"
                 onTriggered: ensureSaved(function() {
-                        if(_reconstruction.graph && _reconstruction.graph.filepath) {
-                            openFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                        if (_reconstruction.graph && _reconstruction.graph.filepath) {
+                            openFileDialog.currentFolder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
                         }
                         openFileDialog.open()
                     })
@@ -628,8 +624,8 @@ ApplicationWindow {
                 text: "Save As..."
                 shortcut: "Ctrl+Shift+S"
                 onTriggered: {
-                    if(_reconstruction.graph && _reconstruction.graph.filepath) {
-                        saveFileDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                    if (_reconstruction.graph && _reconstruction.graph.filepath) {
+                        saveFileDialog.currentFolder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
                     }
                     saveFileDialog.open()
                 }
@@ -639,8 +635,8 @@ ApplicationWindow {
                 text: "Save As Template..."
                 shortcut: "Ctrl+Shift+T"
                 onTriggered: {
-                    if(_reconstruction.graph && _reconstruction.graph.filepath) {
-                        saveTemplateDialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
+                    if (_reconstruction.graph && _reconstruction.graph.filepath) {
+                        saveTemplateDialog.currentFolder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
                     }
                     saveTemplateDialog.open()
                 }

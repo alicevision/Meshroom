@@ -42,7 +42,7 @@ function getTimeStr(elapsed)
         elapsed = elapsed - (min * 60)
         finalTime += min + "m"
     }
-    if (hours == 0 && min == 0) {
+    if (hours === 0 && min === 0) {
         // Millisecond precision for execution times below 1 min
         finalTime += Number(elapsed.toLocaleString(Qt.locale('en-US'))) + "s"
     } else {

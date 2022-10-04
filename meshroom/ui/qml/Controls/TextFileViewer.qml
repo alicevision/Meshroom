@@ -199,30 +199,36 @@ Item {
 
                     property var duration: textView.model.get(index).duration
 
-                    // Colored marker to quickly indicate duration
-                    Rectangle {
-                        width: 4
+                    Item {
+                        Layout.minimumWidth: childrenRect.width
                         Layout.fillHeight: true
-                        color: Colors.interpolate(Colors.grey, Colors.red, duration/180)
-                    }
-
-                    // Line number
-                    // displays a tooltip with the duration when hovered
-                    Label {
-                        text: index + 1
-                        Layout.minimumWidth: lineMetrics.width
-                        rightPadding: 2
-                        Layout.fillHeight: true
-                        horizontalAlignment: Text.AlignRight
-                        color: "#CCCCCC"
+                        RowLayout {
+                            height: parent.height
+                            // Colored marker to quickly indicate duration
+                            Rectangle {
+                                width: 4
+                                Layout.fillHeight: true
+                                color: Colors.interpolate(Colors.grey, Colors.red, duration/180)
+                            }
+                            // Line number
+                            Label {
+                                text: index + 1
+                                Layout.minimumWidth: lineMetrics.width
+                                rightPadding: 6
+                                Layout.fillHeight: true
+                                horizontalAlignment: Text.AlignRight
+                                color: "#CCCCCC"
+                            }
+                        }
+                        // Display a tooltip with the duration when hovered
+                        MouseArea {
+                            id: mouseArea
+                            hoverEnabled: true
+                            anchors.fill: parent
+                        }
                         enabled: duration > 0
                         ToolTip.text: "Elapsed time: " + Format.getTimeStr(duration)
                         ToolTip.visible: mouseArea.containsMouse
-                        MouseArea {
-                            id: mouseArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                        }
                     }
 
                     Loader {

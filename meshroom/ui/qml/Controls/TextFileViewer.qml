@@ -197,7 +197,7 @@ Item {
                     width: textView.width
                     spacing: 6
 
-                    property var duration: textView.model.get(index).duration
+                    property var logLine: textView.model.get(index) ? textView.model.get(index) : {"line": "", "duration": -1}
 
                     Item {
                         Layout.minimumWidth: childrenRect.width
@@ -208,7 +208,7 @@ Item {
                             Rectangle {
                                 width: 4
                                 Layout.fillHeight: true
-                                color: Colors.interpolate(Colors.grey, Colors.red, duration/180)
+                                color: Colors.interpolate(Colors.grey, Colors.red, logLine.duration/180)
                             }
                             // Line number
                             Label {
@@ -226,8 +226,8 @@ Item {
                             hoverEnabled: true
                             anchors.fill: parent
                         }
-                        enabled: duration > 0
-                        ToolTip.text: "Elapsed time: " + Format.getTimeStr(duration)
+                        enabled: logLine.duration > 0
+                        ToolTip.text: "Elapsed time: " + Format.getTimeStr(logLine.duration)
                         ToolTip.visible: mouseArea.containsMouse
                     }
 
@@ -243,8 +243,8 @@ Item {
                                 State {
                                     name: "progressBar"
                                     // detect textual progressbar (non empty line with only progressbar character)
-                                    when: textView.model.get(index).line.trim().length
-                                          && textView.model.get(index).line.split(progressMetrics.character).length - 1 === textView.model.get(index).line.trim().length
+                                    when: logLine.line.trim().length
+                                          && logLine.line.split(progressMetrics.character).length - 1 === logLine.line.trim().length
                                     PropertyChanges {
                                         target: delegateLoader
                                         sourceComponent: progressBar_component
@@ -265,7 +265,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     from: 0
                                     to: progressMetrics.count
-                                    value: textView.model.get(index).line.length
+                                    value: logLine.line.length
                                 }
                             }
                         }
@@ -275,7 +275,7 @@ Item {
                             id: line_component
                             TextInput {
                                 wrapMode: Text.WrapAnywhere
-                                text: textView.model.get(index).line
+                                text: logLine.line
                                 font.family: "Monospace, Consolas, Monaco"
                                 padding: 0
                                 selectByMouse: true

@@ -294,7 +294,7 @@ Convert or apply filtering to the input images.
                 label='Output Color Space',
                 description='Allows you to choose the color space of the output image.',
                 value='AUTO',
-                values=['AUTO', 'sRGB', 'Linear', 'ACES', 'ACEScg'],
+                values=['AUTO', 'sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
                 exclusive=True,
                 uid=[0],
         ),

@@ -9,7 +9,7 @@ FocusScope {
 
     clip: true
 
-    property var displayedNode: _reconstruction.cameraInit
+    property var displayedNode: null
 
     property bool useExternal: false
     property url sourceExternal

@@ -192,7 +192,6 @@ FocusScope {
         useExternal = true;
         sourceExternal = path;
         displayedNode = null;
-        metadata = {};
     }
 
     function getImageFile() {
@@ -254,8 +253,13 @@ FocusScope {
     }
 
     onDisplayedNodeChanged: {
+        // clear metadata if no displayed node
+        if (!displayedNode) {
+            metadata = {};
+        }
+
+        // update output attribute names
         var names = [];
-        // safety check
         if (displayedNode) {
             // store attr name for output attributes that represent images
             for (var i = 0; i < displayedNode.attributes.count; i++) {
@@ -625,6 +629,17 @@ FocusScope {
                             Layout.fillWidth: false
                             Layout.preferredWidth: contentWidth
                             height: contentHeight
+                        }
+
+                        // button to clear currently displayed node
+                        MaterialToolButton {
+                            id: clearDisplayedNode
+                            text: MaterialIcons.close
+                            ToolTip.text: "Clear node"
+                            enabled: root.displayedNode
+                            onClicked: {
+                                root.displayedNode = null
+                            }
                         }
                     }
                 }

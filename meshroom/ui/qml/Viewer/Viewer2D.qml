@@ -200,7 +200,7 @@ FocusScope {
         if (useExternal) {
             return sourceExternal;
         }
-        if (!displayedNode || outputAttribute.name == "" || outputAttribute.name == "gallery") {
+        if (!displayedNode || outputAttribute.name == "gallery") {
             return getViewpointPath(_reconstruction.selectedViewId);
         } 
         return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction.selectedViewId);
@@ -264,11 +264,8 @@ FocusScope {
                     names.push(attr.name);
                 }
             }
-            // ensure that we can always visualize the gallery
-            if (names.length > 0) {
-                names.push("gallery");
-            }
         }
+        names.push("gallery");
         outputAttribute.names = names;
     }
 
@@ -1108,10 +1105,10 @@ FocusScope {
                             Layout.minimumWidth: 0
                             flat: true
 
-                            property var names: []
-                            property string name: names[currentIndex] ? names[currentIndex] : ""
+                            property var names: ["gallery"]
+                            property string name: names[currentIndex]
 
-                            model: displayedNode ? names.map(n => (n == "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label) : []
+                            model: names.map(n => (n == "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label)
                             enabled: count > 0
 
                             FontMetrics {

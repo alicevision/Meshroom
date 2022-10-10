@@ -502,23 +502,26 @@ class Node(object):
         StringParam(
             name="comment",
             label="Comments",
-            description="Comments on the node.",
+            description="User comments describing this specific node instance.",
             value="",
             semantic="multiline",
             uid=[],
         ),
         StringParam(
-            name="invalid",
-            label="Invalid Comments",
-            description="Invalid comments on the node.",
+            name="invalidation",
+            label="Invalidation Message",
+            description="A message that will invalidate the node's output folder.\n"
+                        "This is useful for development, we can invalidate\n"
+                        "the output of the node when we modify the code.",
             value="",
             semantic="multiline",
             uid=[0],
+            advanced=True,
         ),
         StringParam(
             name="label",
-            label="Label",
-            description="Custom label to replace the node's default label.",
+            label="Node's Label",
+            description="Customize the default label (to replace the technical name of the node instance).",
             value="",
             uid=[],
         ),

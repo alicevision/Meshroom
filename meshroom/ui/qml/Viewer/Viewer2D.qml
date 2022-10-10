@@ -246,7 +246,7 @@ FocusScope {
         for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
             var vp = _reconstruction.viewpoints.at(i);
             if (vp.childAttribute("viewId").value == viewId) {
-                return vp.childAttribute("metadata").value;
+                return JSON.parse(vp.childAttribute("metadata").value);
             }
         }
         return {};

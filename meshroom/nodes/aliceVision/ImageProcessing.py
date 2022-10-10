@@ -88,6 +88,13 @@ Convert or apply filtering to the input images.
             uid=[0],
         ),
         desc.BoolParam(
+            name='keepImageFilename',
+            label='Keep Image Name',
+            description='Keep original image name instead of view name',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
             name='fixNonFinite',
             label='Fix Non-Finite',
             description='Fix non-finite pixels based on neighboring pixels average.',

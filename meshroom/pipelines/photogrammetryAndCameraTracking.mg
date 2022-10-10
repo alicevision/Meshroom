@@ -8,7 +8,7 @@
             "ExportAnimatedCamera": "2.0", 
             "FeatureMatching": "2.0", 
             "DistortionCalibration": "2.0", 
-            "CameraInit": "7.0", 
+            "CameraInit": "8.0", 
             "ImageMatchingMultiSfM": "1.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
@@ -96,7 +96,7 @@
             }, 
             "nodeType": "StructureFromMotion", 
             "uids": {
-                "0": "89c3db0849ba07dfac5e97ca9e27dd690dc476ce"
+                "0": "5af4f4052aa22b0450708941b40928d46170f364"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -121,7 +121,7 @@
             }, 
             "nodeType": "ExportAnimatedCamera", 
             "uids": {
-                "0": "6f482ab9e161bd79341c5cd4a43ab9f8e39aec1f"
+                "0": "c28dfbc702edbecf8bf6721224cf6b10799a6a5d"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -171,7 +171,7 @@
             }, 
             "nodeType": "ImageMatchingMultiSfM", 
             "uids": {
-                "0": "ef147c1bc069c7689863c7e14cdbbaca86af4006"
+                "0": "a789cef752e327c0f2ee58012ca4792e9ab6a70e"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -239,7 +239,7 @@
             }, 
             "nodeType": "FeatureMatching", 
             "uids": {
-                "0": "7bb42f40b3f607da7e9f5f432409ddf6ef9c5951"
+                "0": "142e98e3637aedcd3ebc1e19a03878690896a35b"
             }, 
             "parallelization": {
                 "blockSize": 20, 
@@ -264,7 +264,7 @@
             }, 
             "nodeType": "FeatureMatching", 
             "uids": {
-                "0": "3b1f2c3fcfe0b94c65627c397a2671ba7594827d"
+                "0": "534c5224ba51c770ae3793cc085ae3aaa8c2c415"
             }, 
             "parallelization": {
                 "blockSize": 20, 
@@ -295,7 +295,7 @@
             }, 
             "nodeType": "StructureFromMotion", 
             "uids": {
-                "0": "4bc466c45bc7b430553752d1eb1640c581c43e36"
+                "0": "eddc0ed596eb15943d6acd74a7d64753344b40dd"
             }, 
             "parallelization": {
                 "blockSize": 0, 

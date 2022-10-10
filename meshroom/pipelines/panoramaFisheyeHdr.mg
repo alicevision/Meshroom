@@ -10,7 +10,7 @@
             "LdrToHdrCalibration": "3.0", 
             "LdrToHdrSampling": "4.0", 
             "PanoramaInit": "2.0", 
-            "CameraInit": "7.0", 
+            "CameraInit": "8.0", 
             "SfMTransform": "3.0", 
             "PanoramaMerging": "1.0", 
             "ImageMatching": "2.0", 
@@ -58,7 +58,7 @@
             }, 
             "nodeType": "ImageProcessing", 
             "uids": {
-                "0": "3b8b39e478a30aa0ef1871576665b2914204a919"
+                "0": "51d41208c0c929fa50d88c183713958e9a407fd3"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -81,7 +81,7 @@
             }, 
             "nodeType": "PanoramaWarping", 
             "uids": {
-                "0": "45cca14aba2a8c4f68c79a15d3fbc48f30ae9d66"
+                "0": "2def8d004a44dcb3bbaa35da318d38bbb076b6ee"
             }, 
             "parallelization": {
                 "blockSize": 5, 
@@ -205,7 +205,7 @@
             }, 
             "nodeType": "PanoramaMerging", 
             "uids": {
-                "0": "70edd7fe8194bf35dcb0b221141cd4abd2354547"
+                "0": "6895704a5fcd5fd070562190b3747cb3ca08121c"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -229,7 +229,7 @@
             }, 
             "nodeType": "PanoramaCompositing", 
             "uids": {
-                "0": "1f1e629021e2280291046226e009a52dbb7809c1"
+                "0": "29f97e3a8c4d4989fae0ab4c1f3831a92dfbae5c"
             }, 
             "parallelization": {
                 "blockSize": 5, 
@@ -305,7 +305,7 @@
             }, 
             "nodeType": "SfMTransform", 
             "uids": {
-                "0": "b8568fb40b68b42ac80c18df2dcdf600744fe3e1"
+                "0": "d9ff08700916f4e9e3ace1048c2c2621c9541272"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -329,7 +329,7 @@
             }, 
             "nodeType": "PanoramaSeams", 
             "uids": {
-                "0": "dd02562c5c3b1e18e42561d99590cbf4ff5ba35a"
+                "0": "52cbb0d53e0ef49cefe9848394023cf3e7f30572"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -356,7 +356,7 @@
             }, 
             "nodeType": "PanoramaEstimation", 
             "uids": {
-                "0": "47b0976fc98eefcbc0342bbb63e7d27ef3e0d4de"
+                "0": "350636ae916682708019397a10592596e8ef7e84"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -408,7 +408,7 @@
             }, 
             "nodeType": "FeatureMatching", 
             "uids": {
-                "0": "c0fbe0b12fe47ada6a1ca8f74d266e99c1cc548c"
+                "0": "cb919baf3a96df73f0ef07a23357f3d8a7f380e8"
             }, 
             "parallelization": {
                 "blockSize": 20, 

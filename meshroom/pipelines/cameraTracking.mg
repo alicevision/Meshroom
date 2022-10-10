@@ -8,7 +8,7 @@
             "ExportAnimatedCamera": "2.0", 
             "FeatureMatching": "2.0", 
             "DistortionCalibration": "2.0", 
-            "CameraInit": "7.0", 
+            "CameraInit": "8.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
             "StructureFromMotion": "2.0"
@@ -101,7 +101,7 @@
             }, 
             "nodeType": "StructureFromMotion", 
             "uids": {
-                "0": "4d198974784fd71f5a1c189e10c2914e56523585"
+                "0": "28715b8d4a51e5a90fbfee17d9eb193262116845"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -125,7 +125,7 @@
             }, 
             "nodeType": "ExportAnimatedCamera", 
             "uids": {
-                "0": "31413f19e51b239874733f13f9628286fd185c18"
+                "0": "65b4d273f9b9c6a177a8f586b1f9a085f3430133"
             }, 
             "parallelization": {
                 "blockSize": 0, 
@@ -172,7 +172,7 @@
             }, 
             "nodeType": "FeatureMatching", 
             "uids": {
-                "0": "8386c096445d6988ea7d14f1ae3192978a4dd2e8"
+                "0": "d6266b2126948174744b0ff6c33d96440e7596de"
             }, 
             "parallelization": {
                 "blockSize": 20, 

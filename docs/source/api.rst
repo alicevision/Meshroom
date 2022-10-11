@@ -7,3 +7,4 @@ Python API Reference
    :toctree: generated
 
    meshroom
+   tests

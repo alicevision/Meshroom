@@ -208,7 +208,7 @@ Item {
                             Rectangle {
                                 width: 4
                                 Layout.fillHeight: true
-                                color: Colors.interpolate(Colors.grey, Colors.red, logLine.duration/180)
+                                color: Colors.durationColor(logLine.duration)
                             }
                             // Line number
                             Label {

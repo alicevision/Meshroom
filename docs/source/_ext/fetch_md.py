@@ -4,6 +4,12 @@ from docutils.parsers.rst import Directive
 from myst_parser.docutils_ import Parser
 from myst_parser.mdit_to_docutils.base import make_document
 
+# Python2 compatibility
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
 
 class Relinker(SparseNodeVisitor):
 

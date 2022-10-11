@@ -1170,6 +1170,11 @@ class Node(BaseNode):
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)
 
+        # Add internal attributes with a UID to the list
+        for attr in self._internalAttributes:
+            for uidIndex in attr.attributeDesc.uid:
+                self.attributesPerUid[uidIndex].add(attr)
+
         self.setAttributeValues(kwargs)
 
     def setAttributeValues(self, values):

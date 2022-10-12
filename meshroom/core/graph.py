@@ -1236,14 +1236,14 @@ class Graph(BaseObject):
 
     def getNonDefaultInputAttributes(self):
         """
-        Instead of getting all the inputs attribute keys, only get the keys of
+        Instead of getting all the inputs and internal attribute keys, only get the keys of
         the attributes whose value is not the default one.
         The output attributes, UIDs, parallelization parameters and internal folder are
         not relevant for templates, so they are explicitly removed from the returned dictionary.
 
         Returns:
             dict: self.toDict() with the output attributes, UIDs, parallelization parameters, internal folder
-            and input attributes with default values removed
+            and input/internal attributes with default values removed
         """
         graph = self.toDict()
         for nodeName in graph.keys():
@@ -1251,11 +1251,23 @@ class Graph(BaseObject):
 
             inputKeys = list(graph[nodeName]["inputs"].keys())
 
+            internalInputKeys = []
+
+            internalInputs = graph[nodeName].get("internalInputs", None)
+            if internalInputs:
+                internalInputKeys = list(internalInputs.keys())
+
             for attrName in inputKeys:
                 attribute = node.attribute(attrName)
                 # check that attribute is not a link for choice attributes
                 if attribute.isDefault and not attribute.isLink:
                     del graph[nodeName]["inputs"][attrName]
+
+            for attrName in internalInputKeys:
+                attribute = node.internalAttribute(attrName)
+                # check that internal attribute is not a link for choice attributes
+                if attribute.isDefault and not attribute.isLink:
+                    del graph[nodeName]["internalInputs"][attrName]
 
             del graph[nodeName]["outputs"]
             del graph[nodeName]["uids"]

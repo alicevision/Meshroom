@@ -69,7 +69,7 @@ Item {
                             onTriggered: {
                                 var t = "";
                                 for(var i = textView.firstVisibleIndex(); i < textView.lastVisibleIndex(); ++i)
-                                    t += textView.model[i] + "\n";
+                                    t += textView.model.get(i).line + "\n";
                                 Clipboard.setText(t);
                             }
                         }
@@ -100,8 +100,15 @@ Item {
 
                 property string text
 
-                // model consists in text split by line
-                model: textView.text.split("\n")
+                ListModel {
+                    id: logLinesModel
+                }
+
+                onTextChanged: {
+                    updateLogLinesModel(logLinesModel, text);
+                }
+
+                model: logLinesModel
                 visible: text != ""
 
                 anchors.fill: parent
@@ -190,14 +197,38 @@ Item {
                     width: textView.width
                     spacing: 6
 
-                    // Line number
-                    Label {
-                        text: index + 1
-                        Layout.minimumWidth: lineMetrics.width
-                        rightPadding: 2
-                        enabled: false
+                    property var logLine: textView.model.get(index) ? textView.model.get(index) : {"line": "", "duration": -1}
+
+                    Item {
+                        Layout.minimumWidth: childrenRect.width
                         Layout.fillHeight: true
-                        horizontalAlignment: Text.AlignRight
+                        RowLayout {
+                            height: parent.height
+                            // Colored marker to quickly indicate duration
+                            Rectangle {
+                                width: 4
+                                Layout.fillHeight: true
+                                color: Colors.durationColor(logLine.duration)
+                            }
+                            // Line number
+                            Label {
+                                text: index + 1
+                                Layout.minimumWidth: lineMetrics.width
+                                rightPadding: 6
+                                Layout.fillHeight: true
+                                horizontalAlignment: Text.AlignRight
+                                color: "#CCCCCC"
+                            }
+                        }
+                        // Display a tooltip with the duration when hovered
+                        MouseArea {
+                            id: mouseArea
+                            hoverEnabled: true
+                            anchors.fill: parent
+                        }
+                        enabled: logLine.duration > 0
+                        ToolTip.text: "Elapsed time: " + Format.getTimeStr(logLine.duration)
+                        ToolTip.visible: mouseArea.containsMouse
                     }
 
                     Loader {
@@ -212,8 +243,8 @@ Item {
                                 State {
                                     name: "progressBar"
                                     // detect textual progressbar (non empty line with only progressbar character)
-                                    when: modelData.trim().length
-                                          && modelData.split(progressMetrics.character).length - 1 === modelData.trim().length
+                                    when: logLine.line.trim().length
+                                          && logLine.line.split(progressMetrics.character).length - 1 === logLine.line.trim().length
                                     PropertyChanges {
                                         target: delegateLoader
                                         sourceComponent: progressBar_component
@@ -234,7 +265,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     from: 0
                                     to: progressMetrics.count
-                                    value: modelData.length
+                                    value: logLine.line.length
                                 }
                             }
                         }
@@ -244,7 +275,7 @@ Item {
                             id: line_component
                             TextInput {
                                 wrapMode: Text.WrapAnywhere
-                                text: modelData
+                                text: logLine.line
                                 font.family: "Monospace, Consolas, Monaco"
                                 padding: 0
                                 selectByMouse: true
@@ -330,5 +361,44 @@ Item {
             }
         };
         xhr.send();
+    }
+
+    // Parse log-line to see if it contains a time indicator
+    // and if yes then turn it into a time value (in seconds)
+    function getLogLineTime(line) 
+    {
+        const regex = /[0-9]{2}:[0-9]{2}:[0-9]{2}/;
+        const found = line.match(regex);
+        if (found && found.length > 0) {
+            let hh = parseInt(found[0].substring(0, 2));
+            let mm = parseInt(found[0].substring(3, 5));
+            let ss = parseInt(found[0].substring(6, 8));
+            let time = ss + 60*mm + 3600*hh;
+            if (!isNaN(time)) {
+                return time;
+            }
+        }
+        return -1;
+    }
+
+    // Update a log-lines ListModel from a log-text by filling it with elements containing: 
+    // - a log-line (string)
+    // - the elapsed time since the last log-line containing a time value and this one (if it also contains a time value)
+    function updateLogLinesModel(llm, text)
+    {
+        llm.clear();
+        const lines = text.split('\n');
+        const times = lines.map(line => getLogLineTime(line));
+        let prev_idx = -1;
+        for (let i = 0; i < lines.length; i++) {
+            let delta = -1;
+            if (times[i] >= 0) {
+                if (prev_idx >= 0) {
+                    delta = times[i]-times[prev_idx];
+                }
+                prev_idx = i;
+            }
+            llm.append({"line": lines[i], "duration": delta});
+        }
     }
 }

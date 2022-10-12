@@ -40,10 +40,10 @@ QtObject {
     }
 
     readonly property var durationColorScale: [
-        {"time": 0, "color": grey}, 
-        {"time": 60, "color": green}, 
-        {"time": 180, "color": yellow}, 
-        {"time": 600, "color": red}
+        {"time": 0, "color": grey},
+        {"time": 5, "color": green},
+        {"time": 20, "color": yellow},
+        {"time": 90, "color": red}
     ]
 
     function getChunkColor(chunk, overrides)

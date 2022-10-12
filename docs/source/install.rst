@@ -2,5 +2,4 @@ Install
 =======
 
 
-.. fetch_md::
-   :file: INSTALL.md
+.. fetch_md:: INSTALL.md

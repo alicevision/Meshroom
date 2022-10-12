@@ -11,5 +11,4 @@ Welcome to meshroom's documentation!
    changes
 
 
-.. fetch_md::
-   :file: README.md
+.. fetch_md:: README.md

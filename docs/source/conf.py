@@ -25,7 +25,8 @@ author = 'AliceVision Association'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    'fetch_md'
+    'fetch_md',
+    'meshroom_doc'
 ]
 
 templates_path = ['_templates']

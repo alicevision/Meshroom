@@ -38,14 +38,10 @@ class Relinker(SparseNodeVisitor):
 
 class FetchMd(Directive):
 
-    required_arguments = 2
-
-    def arg_path(self):
-        if self.arguments[0] == ':file:':
-            return self.arguments[1]
+    required_arguments = 1
 
     def run(self):
-        path = os.path.abspath(os.getenv('PROJECT_DIR') + '/' + self.arg_path())
+        path = os.path.abspath(os.getenv('PROJECT_DIR')+'/'+self.arguments[0])
         result = []
         try:
             with open(path) as file:

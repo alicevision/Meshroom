@@ -2,5 +2,4 @@ Release Notes
 =============
 
 
-.. fetch_md::
-   :file: CHANGES.md
+.. fetch_md:: CHANGES.md

@@ -247,6 +247,15 @@ Panel {
                             Layout.fillWidth: true
                             node: root.node
                         }
+
+                        AttributeEditor {
+                            Layout.fillHeight: true
+                            Layout.fillWidth: true
+                            model: root.node.internalAttributes
+                            readOnly: root.readOnly || root.isCompatibilityNode
+                            onAttributeDoubleClicked: root.attributeDoubleClicked(mouse, attribute)
+                            onUpgradeRequest: root.upgradeRequest()
+                        }
                     }
                 }
             }
@@ -282,6 +291,12 @@ Panel {
             }
             TabButton {
                 text: "Documentation"
+                leftPadding: 8
+                rightPadding: leftPadding
+            }
+            TabButton {
+                text: "Notes"
+                padding: 4
                 leftPadding: 8
                 rightPadding: leftPadding
             }

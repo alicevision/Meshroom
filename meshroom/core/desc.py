@@ -485,6 +485,24 @@ class Node(object):
     ram = Level.NORMAL
     packageName = ''
     packageVersion = ''
+    internalInputs = [
+        StringParam(
+            name="comment",
+            label="Comments",
+            description="Comments on the node.",
+            value="",
+            semantic="multiline",
+            uid=[],
+        ),
+        StringParam(
+            name="invalid",
+            label="Invalid Comments",
+            description="Invalid comments on the node.",
+            value="",
+            semantic="multiline",
+            uid=[0],
+        )
+    ]
     inputs = []
     outputs = []
     size = StaticNodeSize(1)

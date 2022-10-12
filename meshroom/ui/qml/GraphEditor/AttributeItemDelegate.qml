@@ -1,6 +1,7 @@
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
+import QtQuick.Dialogs 1.0
 import MaterialIcons 2.2
 import Utils 1.0
 
@@ -152,6 +153,10 @@ RowLayout {
             case "BoolParam": return checkbox_component
             case "ListAttribute": return listAttribute_component
             case "GroupAttribute": return groupAttribute_component
+            case "StringParam":
+                if (attribute.desc.semantic === 'multiline')
+                    return textArea_component
+                return textField_component
             default: return textField_component
             }
         }
@@ -179,6 +184,57 @@ RowLayout {
                             setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
                         else if(drop.hasText && drop.text != '')
                             setTextFieldAttribute(drop.text)
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: textArea_component
+
+            Rectangle {
+                // Fixed background for the flickable object
+                color: palette.base
+                width: parent.width
+                height: 70
+
+                Flickable {
+                    width: parent.width
+                    height: parent.height
+                    contentWidth: width
+                    contentHeight: height
+
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AlwaysOn
+                    }
+
+                    TextArea.flickable: TextArea {
+                        wrapMode: Text.WordWrap
+                        padding: 0
+                        rightPadding: 5
+                        bottomPadding: 2
+                        topPadding: 2
+                        readOnly: !root.editable
+                        onEditingFinished: setTextFieldAttribute(text)
+                        text: attribute.value
+                        selectByMouse: true
+                        onPressed: {
+                            root.forceActiveFocus()
+                        }
+                        Component.onDestruction: {
+                            if (activeFocus)
+                                setTextFieldAttribute(text)
+                        }
+                        DropArea {
+                            enabled: root.editable
+                            anchors.fill: parent
+                            onDropped: {
+                                if (drop.hasUrls)
+                                    setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
+                                else if (drop.hasText && drop.text != '')
+                                    setTextFieldAttribute(drop.text)
+                            }
+                        }
                     }
                 }
             }

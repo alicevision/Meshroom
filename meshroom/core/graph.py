@@ -687,9 +687,24 @@ class Graph(BaseObject):
         # type: (str) -> Attribute
         """
         Return the attribute identified by the unique name 'fullName'.
+        If it does not exist, return None.
         """
         node, attribute = fullName.split('.', 1)
-        return self.node(node).attribute(attribute)
+        if self.node(node).hasAttribute(attribute):
+            return self.node(node).attribute(attribute)
+        return None
+
+    @Slot(str, result=Attribute)
+    def internalAttribute(self, fullName):
+        # type: (str) -> Attribute
+        """
+        Return the internal attribute identified by the unique name 'fullName'.
+        If it does not exist, return None.
+        """
+        node, attribute = fullName.split('.', 1)
+        if self.node(node).hasInternalAttribute(attribute):
+            return self.node(node).internalAttribute(attribute)
+        return None
 
     @staticmethod
     def getNodeIndexFromName(name):

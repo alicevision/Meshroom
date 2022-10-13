@@ -541,6 +541,15 @@ class BaseNode(BaseObject):
             return self.internalAttribute("color").value.strip()
         return ""
 
+    def getComment(self):
+        """
+        Returns:
+            str: the comments on the node if they exist, empty string otherwise
+        """
+        if self.hasInternalAttribute("comment"):
+            return self.internalAttribute("comment").value
+        return ""
+
     @Slot(str, result=str)
     def nameToLabel(self, name):
         """
@@ -1104,6 +1113,7 @@ class BaseNode(BaseObject):
     name = Property(str, getName, constant=True)
     label = Property(str, getLabel, constant=True)
     color = Property(str, getColor, constant=True)
+    comment = Property(str, getComment, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
     positionChanged = Signal()

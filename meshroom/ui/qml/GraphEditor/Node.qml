@@ -75,6 +75,8 @@ Item {
         onInternalAttributesChanged: {
             nodeLabel.text = node ? node.label : ""
             background.color = (node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color)
+            nodeCommentTooltip.text = node ? node.comment : ""
+            nodeComment.visible = node.comment != ""
         }
     }
 
@@ -257,6 +259,30 @@ Item {
                                 font.pointSize: 7
                                 palette.text: "red"
                                 ToolTip.text: "Locked"
+                            }
+
+                            MaterialLabel {
+                                id: nodeComment
+                                visible: node.comment != ""
+                                text: MaterialIcons.comment
+                                padding: 2
+                                font.pointSize: 7
+
+                                ToolTip {
+                                    id: nodeCommentTooltip
+                                    parent: header
+                                    visible: nodeCommentMA.containsMouse && nodeComment.visible
+                                    text: node.comment
+                                    implicitWidth: 400 // Forces word-wrap for long comments but the tooltip will be bigger than needed for short comments
+                                    delay: 300
+                                }
+
+                                MouseArea {
+                                    // If the node header is hovered, comments may be displayed
+                                    id: nodeCommentMA
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                }
                             }
                         }
                     }

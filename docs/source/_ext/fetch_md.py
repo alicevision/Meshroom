@@ -1,8 +1,7 @@
 import os
 from docutils.nodes import SparseNodeVisitor
 from docutils.parsers.rst import Directive
-from myst_parser.docutils_ import Parser
-from myst_parser.mdit_to_docutils.base import make_document
+from utils import md_to_docutils, get_link_key
 
 # Python2 compatibility
 try:
@@ -13,16 +12,8 @@ except NameError:
 
 class Relinker(SparseNodeVisitor):
 
-    @staticmethod
-    def get_link_key(node):
-        link_keys = ['uri', 'refuri', 'refname']
-        for key in link_keys:
-            if key in node.attributes.keys():
-                return key
-        return None
-
     def relink(self, node, base_dir):
-        key = Relinker.get_link_key(node)
+        key = get_link_key(node)
         if key is None:
             return
         link = node.attributes[key]
@@ -45,10 +36,8 @@ class FetchMd(Directive):
         result = []
         try:
             with open(path) as file:
-                parser = Parser()
                 text = file.read()
-                doc = make_document(parser_cls=Parser)
-                parser.parse(text, doc)
+                doc = md_to_docutils(text)
                 relinker = Relinker(doc)
                 doc.walk(relinker)
                 result.append(doc[0])

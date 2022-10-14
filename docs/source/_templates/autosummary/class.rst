@@ -1,6 +1,9 @@
 {{ fullname | escape | underline}}
 
 
+.. inheritance-diagram:: {{ fullname }}
+
+
 .. meshroom_doc::
    :module: {{ module }}
    :class: {{ objname }}

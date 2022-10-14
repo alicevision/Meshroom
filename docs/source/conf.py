@@ -26,7 +26,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'fetch_md',
-    'meshroom_doc'
+    'meshroom_doc',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.inheritance_diagram'
 ]
 
 templates_path = ['_templates']

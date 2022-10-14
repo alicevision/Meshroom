@@ -1247,6 +1247,8 @@ class Graph(BaseObject):
                 if attribute.isDefault and not attribute.isLink:
                     del graph[nodeName]["outputs"][attrName]
 
+            del graph[nodeName]["uids"]
+
         return graph
 
     def _setFilepath(self, filepath):

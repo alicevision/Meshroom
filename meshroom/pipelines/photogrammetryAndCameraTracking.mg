@@ -21,9 +21,6 @@
                 "input": "{CameraInit_2.output}"
             }, 
             "nodeType": "DistortionCalibration", 
-            "uids": {
-                "0": "8afea9d171904cdb6ba1c0b116cb60de3ccb6fb4"
-            }, 
             "parallelization": {
                 "blockSize": 0, 
                 "split": 1, 
@@ -46,9 +43,6 @@
                 ]
             }, 
             "nodeType": "ImageMatching", 
-            "uids": {
-                "0": "46fb9072ac753d60bec7dda9c8674b0568506ddf"
-            }, 
             "parallelization": {
                 "blockSize": 0, 
                 "split": 1, 
@@ -68,9 +62,6 @@
                 "input": "{CameraInit_1.output}"
             }, 
             "nodeType": "FeatureExtraction", 
-            "uids": {
-                "0": "a07fb8d05b63327d05461954c2fd2a00f201275b"
-            }, 
             "parallelization": {
                 "blockSize": 40, 
                 "split": 0, 
@@ -95,9 +86,6 @@
                 ]
             }, 
             "nodeType": "StructureFromMotion", 
-            "uids": {
-                "0": "5af4f4052aa22b0450708941b40928d46170f364"
-            }, 
             "parallelization": {
                 "blockSize": 0, 
                 "split": 1, 
@@ -120,9 +108,6 @@
                 "input": "{StructureFromMotion_2.output}"
             }, 
             "nodeType": "ExportAnimatedCamera", 
-            "uids": {
-                "0": "c28dfbc702edbecf8bf6721224cf6b10799a6a5d"
-            }, 
             "parallelization": {
                 "blockSize": 0, 
                 "split": 1, 
@@ -142,9 +127,6 @@
         "CameraInit_1": {
             "inputs": {}, 
             "nodeType": "CameraInit", 
-            "uids": {
-                "0": "f9436e97e444fa71a05aa5cf7639b206df8ba282"
-            }, 
             "parallelization": {
                 "blockSize": 0, 
                 "split": 1, 
@@ -170,9 +152,6 @@
                 ]
             }, 
             "nodeType": "ImageMatchingMultiSfM", 
-            "uids": {
-                "0": "a789cef752e327c0f2ee58012ca4792e9ab6a70e"
-            }, 
             "parallelization": {
                 "blockSize": 0, 
                 "split": 1, 
@@ -191,9 +170,6 @@
         "CameraInit_2": {
             "inputs": {}, 
             "nodeType": "CameraInit", 
-            "uids": {
-                "0": "f9436e97e444fa71a05aa5cf7639b206df8ba282"
-            }, 
             "parallelization": {
                 "blockSize": 0, 
                 "split": 1, 
@@ -213,9 +189,6 @@
                 "input": "{CameraInit_2.output}"
             }, 
             "nodeType": "FeatureExtraction", 
-            "uids": {
-                "0": "a07fb8d05b63327d05461954c2fd2a00f201275b"
-            }, 
             "parallelization": {
                 "blockSize": 40, 
                 "split": 0, 
@@ -238,9 +211,6 @@
                 "featuresFolders": "{ImageMatchingMultiSfM_1.featuresFolders}"
             }, 
             "nodeType": "FeatureMatching", 
-            "uids": {
-                "0": "142e98e3637aedcd3ebc1e19a03878690896a35b"
-            }, 
             "parallelization": {
                 "blockSize": 20, 
                 "split": 0, 
@@ -263,9 +233,6 @@
                 "featuresFolders": "{ImageMatching_1.featuresFolders}"
             }, 
             "nodeType": "FeatureMatching", 
-            "uids": {
-                "0": "534c5224ba51c770ae3793cc085ae3aaa8c2c415"
-            }, 
             "parallelization": {
                 "blockSize": 20, 
                 "split": 0, 
@@ -294,9 +261,6 @@
                 "minAngleForTriangulation": 1.0
             }, 
             "nodeType": "StructureFromMotion", 
-            "uids": {
-                "0": "eddc0ed596eb15943d6acd74a7d64753344b40dd"
-            }, 
             "parallelization": {
                 "blockSize": 0, 
                 "split": 1, 

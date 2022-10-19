@@ -9,6 +9,11 @@ FocusScope {
 
     clip: true
 
+    property var displayedNode: null
+
+    property bool useExternal: false
+    property url sourceExternal
+
     property url source
     property var metadata
     property var viewIn3D
@@ -153,16 +158,127 @@ FocusScope {
         imgContainer.y = Math.max((imgLayout.height - imgContainer.image.height * imgContainer.scale)*0.5, 0)
     }
 
-    function getImageFile(type) {
-        if(!_reconstruction.activeNodes)
-            return "";
-        var depthMapNode = _reconstruction.activeNodes.get('allDepthMap').node;
-        if (type == "image") {
-            return root.source;
-        } else if (depthMapNode != undefined && _reconstruction.selectedViewId >= 0) {
-            return Filepath.stringToUrl(depthMapNode.internalFolder+_reconstruction.selectedViewId+"_"+type+"Map.exr");
+    function tryLoadNode(node) {
+        useExternal = false;
+        
+        // safety check
+        if (!node) {
+            return false;
+        }
+
+        // node must be computed or at least running
+        if (!node.isPartiallyFinished()) {
+            return false;
+        }
+
+        // node must have at least one output attribute with the image semantic
+        var hasImageOutputAttr = false;
+        for (var i = 0; i < node.attributes.count; i++) {
+            var attr = node.attributes.at(i);
+            if (attr.isOutput && attr.desc.semantic == "image") {
+                hasImageOutputAttr = true;
+                break;
+            }
+        }
+        if (!hasImageOutputAttr) {
+            return false;
+        }
+
+        displayedNode = node;
+        return true;
+    }
+
+    function loadExternal(path) {
+        useExternal = true;
+        sourceExternal = path;
+        displayedNode = null;
+    }
+
+    function getImageFile() {
+        // entry point for getting the image file URL
+        if (useExternal) {
+            return sourceExternal;
+        }
+        if (!displayedNode || outputAttribute.name == "gallery") {
+            return getViewpointPath(_reconstruction.selectedViewId);
+        } 
+        return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction.selectedViewId);
+    }
+
+    function getMetadata() {
+        // entry point for getting the image metadata
+        if (useExternal) {
+            return {};
+        } else {
+            return getViewpointMetadata(_reconstruction.selectedViewId);
+        }
+    }
+
+    function getFileAttributePath(node, attrName, viewId) {
+        // get output attribute with matching name
+        // and parse its value to get the image filepath
+        for (var i = 0; i < node.attributes.count; i++) {
+            var attr = node.attributes.at(i);
+            if (attr.name == attrName) {
+                let pattern = String(attr.value).replace("<VIEW_ID>", viewId);
+                let path = Filepath.globFirst(pattern);
+                return Filepath.stringToUrl(path);
+            }
         }
         return "";
+    }
+
+    function getViewpointPath(viewId) {
+        // get viewpoint from cameraInit with matching id
+        // and get its image filepath
+        for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
+            var vp = _reconstruction.viewpoints.at(i);
+            if (vp.childAttribute("viewId").value == viewId) {
+                return Filepath.stringToUrl(vp.childAttribute("path").value);
+            }
+        }
+        return "";
+    }
+
+    function getViewpointMetadata(viewId) {
+        // get viewpoint from cameraInit with matching id
+        // and get its image filepath
+        for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
+            var vp = _reconstruction.viewpoints.at(i);
+            if (vp.childAttribute("viewId").value == viewId) {
+                return JSON.parse(vp.childAttribute("metadata").value);
+            }
+        }
+        return {};
+    }
+
+    onDisplayedNodeChanged: {
+        // clear metadata if no displayed node
+        if (!displayedNode) {
+            metadata = {};
+        }
+
+        // update output attribute names
+        var names = [];
+        if (displayedNode) {
+            // store attr name for output attributes that represent images
+            for (var i = 0; i < displayedNode.attributes.count; i++) {
+                var attr = displayedNode.attributes.at(i);
+                if (attr.isOutput && attr.desc.semantic == "image") {
+                    names.push(attr.name);
+                }
+            }
+        }
+        names.push("gallery");
+        outputAttribute.names = names;
+    }
+
+    Connections {
+        target: _reconstruction
+        onSelectedViewIdChanged: {
+            root.source = getImageFile();
+            root.metadata = getMetadata();
+        }
     }
 
     // context menu
@@ -272,7 +388,7 @@ FocusScope {
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
                             // floatViewerComp.createObject(floatImageViewerLoader, {
                             setSource("FloatImage.qml", {
-                                'source':  Qt.binding(function() { return getImageFile(imageType.type); }),
+                                'source':  Qt.binding(function() { return getImageFile(); }),
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
                                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
@@ -336,7 +452,7 @@ FocusScope {
                         fillMode: Image.PreserveAspectFit
                         autoTransform: true
                         onWidthChanged: if(status==Image.Ready) fit()
-                        source: getImageFile(imageType.type)
+                        source: getImageFile()
                         onStatusChanged: {
                             // update cache source when image is loaded
                             if(status === Image.Ready)
@@ -500,21 +616,30 @@ FocusScope {
                             font.pointSize: 8
                             readOnly: true
                             selectByMouse: true
-                            text: Filepath.urlToString(getImageFile(imageType.type))
+                            text: Filepath.urlToString(getImageFile())
                         }
 
-                        // show which depthmap node is active
+                        // write which node is being displayed
                         Label {
-                            id: depthMapNodeName
-                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get("allDepthMap").node : null
-                            visible: (imageType.type != "image") && activeNode
-                            text: activeNode ? activeNode.label : ""
+                            id: displayedNodeName
+                            text: root.displayedNode ? root.displayedNode.label : ""
                             font.pointSize: 8
 
                             horizontalAlignment: TextInput.AlignLeft
                             Layout.fillWidth: false
                             Layout.preferredWidth: contentWidth
                             height: contentHeight
+                        }
+
+                        // button to clear currently displayed node
+                        MaterialToolButton {
+                            id: clearDisplayedNode
+                            text: MaterialIcons.close
+                            ToolTip.text: "Clear node"
+                            enabled: root.displayedNode
+                            onClicked: {
+                                root.displayedNode = null
+                            }
                         }
                     }
                 }
@@ -990,19 +1115,21 @@ FocusScope {
                         }
 
                         ComboBox {
-                            id: imageType
-                            property var activeNode: root.oiioPluginAvailable ? _reconstruction.activeNodes.get('allDepthMap').node : null
-                            // set min size to 5 characters + one margin for the combobox
+                            id: outputAttribute
                             clip: true
                             Layout.minimumWidth: 0
-                            Layout.preferredWidth: 6.0 * Qt.application.font.pixelSize
                             flat: true
 
-                            property var types: ["image", "depth", "sim"]
-                            property string type: enabled ? types[currentIndex] : types[0]
+                            property var names: ["gallery"]
+                            property string name: names[currentIndex]
 
-                            model: types
-                            enabled: activeNode
+                            model: names.map(n => (n == "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label)
+                            enabled: count > 0
+
+                            FontMetrics {
+                                id: fontMetrics
+                            }
+                            Layout.preferredWidth: model.reduce((acc, label) => Math.max(acc, fontMetrics.boundingRect(label).width), 0) + 3.0*Qt.application.font.pixelSize
                         }
 
                         MaterialToolButton {
@@ -1014,7 +1141,7 @@ FocusScope {
                             Layout.minimumWidth: 0
 
                             onClicked: {
-                                root.viewIn3D(root.getImageFile("depth"))
+                                root.viewIn3D(root.getFileAttributePath(activeNode, "depth", _reconstruction.selectedViewId));
                             }
                         }
 

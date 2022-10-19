@@ -89,7 +89,7 @@ class Split360Images(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description="Output folder for extracted frames.",
             value=desc.Node.internalFolder,
             uid=[],

@@ -110,14 +110,14 @@ The alignment can be based on:
     outputs = [
         desc.File(
             name='output',
-            label='Output SfMData File',
+            label='SfMData File',
             description='SfMData file.',
             value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or 'sfmData') + '.abc',
             uid=[],
         ),
         desc.File(
             name='outputViewsAndPoses',
-            label='Output Poses',
+            label='Poses',
             description='''Path to the output sfmdata file with cameras (views and poses).''',
             value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],

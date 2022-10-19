@@ -77,7 +77,7 @@ This node allows to reduce the density of the Mesh.
     outputs = [
         desc.File(
             name="output",
-            label="Output mesh",
+            label="Mesh",
             description="Output mesh (OBJ file format).",
             value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],

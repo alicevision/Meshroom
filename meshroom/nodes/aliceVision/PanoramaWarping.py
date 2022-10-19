@@ -92,9 +92,36 @@ Compute the image warping for each input image in the panorama coordinate system
     outputs = [
         desc.File(
             name='output',
-            label='Output directory',
+            label='Folder',
             description='',
             value=desc.Node.internalFolder,
             uid=[],
+        ),
+        desc.File(
+            name='warping',
+            label='Warping',
+            description='',
+            group='', # do not export on the command line
+            semantic='image',
+            value=desc.Node.internalFolder+'<VIEW_ID>.exr',
+            uid=[]
+        ),
+        desc.File(
+            name='mask',
+            label='Mask',
+            description='',
+            group='', # do not export on the command line
+            semantic='image',
+            value=desc.Node.internalFolder+'<VIEW_ID>_mask.exr',
+            uid=[]
+        ),
+        desc.File(
+            name='weight',
+            label='Weight',
+            description='',
+            group='', # do not export on the command line
+            semantic='image',
+            value=desc.Node.internalFolder+'<VIEW_ID>_weight.exr',
+            uid=[]
         ),
     ]

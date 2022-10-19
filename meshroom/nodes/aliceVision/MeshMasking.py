@@ -100,7 +100,7 @@ Decimate triangles based on image masks.
     outputs = [
         desc.File(
             name='outputMesh',
-            label='Output Mesh',
+            label='Mesh',
             description='''Output mesh.''',
             value=desc.Node.internalFolder + 'mesh.{outputMeshFileTypeValue}',
             uid=[],

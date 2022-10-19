@@ -106,7 +106,7 @@ Multiple cameras are contributing to the low frequencies and only the best one c
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='',
             value=desc.Node.internalFolder,
             uid=[],

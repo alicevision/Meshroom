@@ -182,7 +182,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
     outputs = [
         desc.File(
             name='outputFolder',
-            label='Output Folder',
+            label='Folder',
             description='''Output keyframes folder for extracted frames.''',
             value=desc.Node.internalFolder,
             uid=[],

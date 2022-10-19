@@ -851,11 +851,16 @@ ApplicationWindow {
                 reconstruction: _reconstruction
                 readOnly: _reconstruction.computing
 
-                function viewAttribute(attribute, mouse) {
-                    let viewable = false;
-                    viewable = workspaceView.viewIn2D(attribute);
-                    viewable |= workspaceView.viewIn3D(attribute, mouse);
-                    return viewable;
+                function viewNode(node, mouse) {
+                    // 2D viewer
+                    viewer2D.tryLoadNode(node);
+
+                    // 3D viewer
+                    for (var i = 0; i < node.attributes.count; i++) {
+                        var attr = node.attributes.at(i)
+                        if(attr.isOutput && attr.desc.semantic != "image" && workspaceView.viewIn3D(attr, mouse))
+                            break;
+                    }
                 }
 
                 function viewIn3D(attribute, mouse) {
@@ -866,29 +871,6 @@ ApplicationWindow {
                     if(loaded && mouse && mouse.modifiers & Qt.ControlModifier)
                         panel3dViewer.viewer3D.solo(attribute);
                     return loaded;
-                }
-
-                function viewIn2D(attribute) {
-                    var imageExts = ['.exr', '.jpg', '.tif', '.png'];
-                    var ext = Filepath.extension(attribute.value);
-                    if(imageExts.indexOf(ext) == -1)
-                    {
-                        return false;
-                    }
-
-                    if(attribute.value.includes('*'))
-                    {
-                        // For now, the viewer only supports a single image.
-                        var firstFile = Filepath.globFirst(attribute.value)
-                        viewer2D.source = Filepath.stringToUrl(firstFile);
-                    }
-                    else
-                    {
-                        viewer2D.source = Filepath.stringToUrl(attribute.value);
-                        return true;
-                    }
-
-                    return false;
                 }
             }
         }
@@ -955,14 +937,7 @@ ApplicationWindow {
 
                     onNodeDoubleClicked: {
                         _reconstruction.setActiveNode(node);
-
-                        let viewable = false;
-                        for(var i=0; i < node.attributes.count; ++i)
-                        {
-                            var attr = node.attributes.at(i)
-                            if(attr.isOutput && workspaceView.viewAttribute(attr, mouse))
-                                break;
-                        }
+                        workspaceView.viewNode(node, mouse);
                     }
                     onComputeRequest: computeManager.compute(node)
                     onSubmitRequest: computeManager.submit(node)
@@ -989,7 +964,6 @@ ApplicationWindow {
                 // Make NodeEditor readOnly when computing
                 readOnly: node ? node.locked : false
 
-                onAttributeDoubleClicked: workspaceView.viewAttribute(attribute, mouse)
                 onUpgradeRequest: {
                     var n = _reconstruction.upgradeNode(node);
                     _reconstruction.selectedNode = n;

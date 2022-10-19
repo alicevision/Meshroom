@@ -100,10 +100,11 @@ This node export undistorted images so the depth map and texturing can be comput
             uid=[],
         ),
         desc.File(
-            name='outputUndistorted',
+            name='undistorted',
             label='Undistorted Images',
             description='List of undistorted images.',
-            value=desc.Node.internalFolder + '*.{outputFileTypeValue}',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>.{outputFileTypeValue}',
             uid=[],
             group='',
             advanced=True

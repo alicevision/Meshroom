@@ -27,7 +27,7 @@ MeshroomMaya contains a user interface to browse all cameras.
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Folder for MeshroomMaya outputs: undistorted images and thumbnails.',
             value=desc.Node.internalFolder,
             uid=[],

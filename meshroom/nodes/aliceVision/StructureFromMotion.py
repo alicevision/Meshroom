@@ -367,7 +367,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         ),
         desc.File(
             name='extraInfoFolder',
-            label='Output Folder',
+            label='Folder',
             description='Folder for intermediate reconstruction files and additional reconstruction information files.',
             value=desc.Node.internalFolder,
             uid=[],

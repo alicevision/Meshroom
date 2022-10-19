@@ -209,14 +209,14 @@ class CameraLocalization(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='outputAlembic',
-            label='Output Alembic',
+            label='Alembic',
             description='''Filename for the SfMData export file (where camera poses will be stored)''',
             value=desc.Node.internalFolder + 'trackedCameras.abc',
             uid=[],
             ),
         desc.File(
             name='outputJSON',
-            label='Output JSON',
+            label='JSON',
             description='''Filename for the localization results as .json''',
             value=desc.Node.internalFolder + 'trackedCameras.json',
             uid=[],

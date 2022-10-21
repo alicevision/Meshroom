@@ -21,19 +21,10 @@
                 "input": "{CameraInit_2.output}"
             }, 
             "nodeType": "DistortionCalibration", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "outSfMData": "{cache}/{nodeType}/{uid0}/sfmData.sfm"
-            }, 
             "position": [
                 1024, 
                 393
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "ImageMatching_1": {
             "inputs": {
@@ -43,38 +34,20 @@
                 ]
             }, 
             "nodeType": "ImageMatching", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/imageMatches.txt"
-            }, 
             "position": [
                 400, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "FeatureExtraction_1": {
             "inputs": {
                 "input": "{CameraInit_1.output}"
             }, 
             "nodeType": "FeatureExtraction", 
-            "parallelization": {
-                "blockSize": 40, 
-                "split": 0, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/"
-            }, 
             "position": [
                 200, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "StructureFromMotion_1": {
             "inputs": {
@@ -86,21 +59,10 @@
                 ]
             }, 
             "nodeType": "StructureFromMotion", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/sfm.abc", 
-                "extraInfoFolder": "{cache}/{nodeType}/{uid0}/", 
-                "outputViewsAndPoses": "{cache}/{nodeType}/{uid0}/cameras.sfm"
-            }, 
             "position": [
                 800, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "ExportAnimatedCamera_1": {
             "inputs": {
@@ -108,38 +70,18 @@
                 "input": "{StructureFromMotion_2.output}"
             }, 
             "nodeType": "ExportAnimatedCamera", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 1
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/", 
-                "outputUndistorted": "{cache}/{nodeType}/{uid0}/undistort", 
-                "outputCamera": "{cache}/{nodeType}/{uid0}/camera.abc"
-            }, 
             "position": [
                 1629, 
                 212
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "CameraInit_1": {
             "inputs": {}, 
             "nodeType": "CameraInit", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/cameraInit.sfm"
-            }, 
             "position": [
                 0, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "ImageMatchingMultiSfM_1": {
             "inputs": {
@@ -152,56 +94,28 @@
                 ]
             }, 
             "nodeType": "ImageMatchingMultiSfM", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/imageMatches.txt", 
-                "outputCombinedSfM": "{cache}/{nodeType}/{uid0}/combineSfM.sfm"
-            }, 
             "position": [
                 1029, 
                 212
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "CameraInit_2": {
             "inputs": {}, 
             "nodeType": "CameraInit", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/cameraInit.sfm"
-            }, 
             "position": [
                 -2, 
                 223
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "FeatureExtraction_2": {
             "inputs": {
                 "input": "{CameraInit_2.output}"
             }, 
             "nodeType": "FeatureExtraction", 
-            "parallelization": {
-                "blockSize": 40, 
-                "split": 0, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/"
-            }, 
             "position": [
                 198, 
                 223
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "FeatureMatching_2": {
             "inputs": {
@@ -211,19 +125,10 @@
                 "featuresFolders": "{ImageMatchingMultiSfM_1.featuresFolders}"
             }, 
             "nodeType": "FeatureMatching", 
-            "parallelization": {
-                "blockSize": 20, 
-                "split": 0, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/"
-            }, 
             "position": [
                 1229, 
                 212
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "FeatureMatching_1": {
             "inputs": {
@@ -233,19 +138,10 @@
                 "featuresFolders": "{ImageMatching_1.featuresFolders}"
             }, 
             "nodeType": "FeatureMatching", 
-            "parallelization": {
-                "blockSize": 20, 
-                "split": 0, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/"
-            }, 
             "position": [
                 600, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "StructureFromMotion_2": {
             "inputs": {
@@ -261,21 +157,10 @@
                 "minAngleForTriangulation": 1.0
             }, 
             "nodeType": "StructureFromMotion", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/sfm.abc", 
-                "extraInfoFolder": "{cache}/{nodeType}/{uid0}/", 
-                "outputViewsAndPoses": "{cache}/{nodeType}/{uid0}/cameras.sfm"
-            }, 
             "position": [
                 1429, 
                 212
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }
     }
 }

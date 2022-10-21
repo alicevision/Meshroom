@@ -21,42 +21,20 @@
                 "inputMesh": "{MeshFiltering_1.outputMesh}"
             }, 
             "nodeType": "Texturing", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 1
-            }, 
-            "outputs": {
-                "outputTextures": "{cache}/{nodeType}/{uid0}/texture_*.exr", 
-                "outputMesh": "{cache}/{nodeType}/{uid0}/texturedMesh.{outputMeshFileTypeValue}", 
-                "outputMaterial": "{cache}/{nodeType}/{uid0}/texturedMesh.mtl", 
-                "output": "{cache}/{nodeType}/{uid0}/"
-            }, 
             "position": [
                 1400, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "Meshing_1": {
             "inputs": {
                 "input": "{StructureFromMotion_1.output}"
             }, 
             "nodeType": "Meshing", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 1
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/densePointCloud.abc", 
-                "outputMesh": "{cache}/{nodeType}/{uid0}/mesh.{outputMeshFileTypeValue}"
-            }, 
             "position": [
                 1000, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "ImageMatching_1": {
             "inputs": {
@@ -66,38 +44,20 @@
                 ]
             }, 
             "nodeType": "ImageMatching", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/imageMatches.txt"
-            }, 
             "position": [
                 400, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "FeatureExtraction_1": {
             "inputs": {
                 "input": "{CameraInit_1.output}"
             }, 
             "nodeType": "FeatureExtraction", 
-            "parallelization": {
-                "blockSize": 40, 
-                "split": 0, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/"
-            }, 
             "position": [
                 200, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "StructureFromMotion_1": {
             "inputs": {
@@ -109,57 +69,28 @@
                 ]
             }, 
             "nodeType": "StructureFromMotion", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/sfm.abc", 
-                "extraInfoFolder": "{cache}/{nodeType}/{uid0}/", 
-                "outputViewsAndPoses": "{cache}/{nodeType}/{uid0}/cameras.sfm"
-            }, 
             "position": [
                 800, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "CameraInit_1": {
             "inputs": {}, 
             "nodeType": "CameraInit", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/cameraInit.sfm"
-            }, 
             "position": [
                 0, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "MeshFiltering_1": {
             "inputs": {
                 "inputMesh": "{Meshing_1.outputMesh}"
             }, 
             "nodeType": "MeshFiltering", 
-            "parallelization": {
-                "blockSize": 0, 
-                "split": 1, 
-                "size": 1
-            }, 
-            "outputs": {
-                "outputMesh": "{cache}/{nodeType}/{uid0}/mesh.{outputMeshFileTypeValue}"
-            }, 
             "position": [
                 1200, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }, 
         "FeatureMatching_1": {
             "inputs": {
@@ -169,19 +100,10 @@
                 "featuresFolders": "{ImageMatching_1.featuresFolders}"
             }, 
             "nodeType": "FeatureMatching", 
-            "parallelization": {
-                "blockSize": 20, 
-                "split": 0, 
-                "size": 0
-            }, 
-            "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/"
-            }, 
             "position": [
                 600, 
                 0
-            ], 
-            "internalFolder": "{cache}/{nodeType}/{uid0}/"
+            ]
         }
     }
 }

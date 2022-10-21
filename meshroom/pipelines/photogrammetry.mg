@@ -76,7 +76,9 @@
                 "size": 0
             }, 
             "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/"
+                "output": "{cache}/{nodeType}/{uid0}/", 
+                "depth": "{cache}/{nodeType}/{uid0}/<VIEW_ID>_depthMap.exr", 
+                "sim": "{cache}/{nodeType}/{uid0}/<VIEW_ID>_simMap.exr"
             }, 
             "position": [
                 1400, 
@@ -163,7 +165,7 @@
             }, 
             "outputs": {
                 "output": "{cache}/{nodeType}/{uid0}/", 
-                "outputUndistorted": "{cache}/{nodeType}/{uid0}/*.{outputFileTypeValue}"
+                "undistorted": "{cache}/{nodeType}/{uid0}/<VIEW_ID>.{outputFileTypeValue}"
             }, 
             "position": [
                 1000, 
@@ -200,7 +202,9 @@
                 "size": 0
             }, 
             "outputs": {
-                "output": "{cache}/{nodeType}/{uid0}/"
+                "output": "{cache}/{nodeType}/{uid0}/", 
+                "depth": "{cache}/{nodeType}/{uid0}/<VIEW_ID>_depthMap.exr", 
+                "sim": "{cache}/{nodeType}/{uid0}/<VIEW_ID>_simMap.exr"
             }, 
             "position": [
                 1200, 

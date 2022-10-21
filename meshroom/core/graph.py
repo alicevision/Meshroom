@@ -1206,7 +1206,7 @@ class Graph(BaseObject):
         if template:
             data = {
                 Graph.IO.Keys.Header: self.header,
-                Graph.IO.Keys.Graph: self.getNonDefaultAttributes()
+                Graph.IO.Keys.Graph: self.getNonDefaultInputAttributes()
             }
         else:
             data = {
@@ -1220,20 +1220,22 @@ class Graph(BaseObject):
         if path != self._filepath and setupProjectFile:
             self._setFilepath(path)
 
-    def getNonDefaultAttributes(self):
+    def getNonDefaultInputAttributes(self):
         """
-        Instead of getting all the inputs/outputs attribute keys, only get the keys of
+        Instead of getting all the inputs attribute keys, only get the keys of
         the attributes whose value is not the default one.
+        The output attributes, UIDs, parallelization parameters and internal folder are
+        not relevant for templates, so they are explicitly removed from the returned dictionary.
 
         Returns:
-            dict: self.toDict() with all the inputs/outputs attributes with default values removed
+            dict: self.toDict() with the output attributes, UIDs, parallelization parameters, internal folder
+            and input attributes with default values removed
         """
         graph = self.toDict()
         for nodeName in graph.keys():
             node = self.node(nodeName)
 
             inputKeys = list(graph[nodeName]["inputs"].keys())
-            outputKeys = list(graph[nodeName]["outputs"].keys())
 
             for attrName in inputKeys:
                 attribute = node.attribute(attrName)
@@ -1241,11 +1243,10 @@ class Graph(BaseObject):
                 if attribute.isDefault and not attribute.isLink:
                     del graph[nodeName]["inputs"][attrName]
 
-            for attrName in outputKeys:
-                attribute = node.attribute(attrName)
-                # check that attribute is not a link for choice attributes
-                if attribute.isDefault and not attribute.isLink:
-                    del graph[nodeName]["outputs"][attrName]
+            del graph[nodeName]["outputs"]
+            del graph[nodeName]["uids"]
+            del graph[nodeName]["internalFolder"]
+            del graph[nodeName]["parallelization"]
 
         return graph
 

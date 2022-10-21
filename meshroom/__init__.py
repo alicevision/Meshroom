@@ -2,10 +2,10 @@ __version__ = "2021.1.0"
 __version_name__ = __version__
 
 from distutils import util
-from enum import Enum
 import logging
 import os
 import sys
+from .common import init, Backend
 
 # sys.frozen is initialized by cx_Freeze and identifies a release package
 isFrozen = getattr(sys, "frozen", False)
@@ -25,20 +25,7 @@ __version_name__ = os.environ.get("REZ_MESHROOM_VERSION", __version_name__)
 useMultiChunks = util.strtobool(os.environ.get("MESHROOM_USE_MULTI_CHUNKS", "True"))
 
 
-class Backend(Enum):
-    STANDALONE = 1
-    PYSIDE = 2
-
-
-backend = Backend.STANDALONE
-
-
-def useUI():
-    global backend
-    backend = Backend.PYSIDE
-
-
-def setupEnvironment():
+def setupEnvironment(backend=Backend.STANDALONE):
     """
     Setup environment for Meshroom to work in a prebuilt, standalone configuration.
 
@@ -60,6 +47,8 @@ def setupEnvironment():
        Meshroom    # main executable
        COPYING.md  # Meshroom COPYING file
     """
+
+    init(backend)
 
     def addToEnvPath(var, val, index=-1):
         """

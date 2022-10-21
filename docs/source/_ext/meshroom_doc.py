@@ -1,3 +1,16 @@
+# Sphinx extension defining the meshroom_doc directive
+#
+# Goal:
+# create specific documentation content for meshroom objects
+#
+# Usage:
+# .. meshroom_doc::
+#    :module: module_name
+#    :class: class_name
+#
+# Note:
+# for now this tool focuses only on meshroom nodes
+
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from utils import md_to_docutils

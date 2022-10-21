@@ -1,3 +1,17 @@
+# Sphinx extension defining the fetch_md directive
+#
+# Goal:
+# include the content of a given markdown file
+#
+# Usage:
+# .. fetch_md:: path/to/file.md
+# the filepath is relative to the project base directory
+#
+# Note:
+# some markdown files contain links to other files that belong to the project
+# since those links are relative to the file location, they are no longer valid in the new context
+# therefore we try to update these links but it is not always possible
+
 import os
 from docutils.nodes import SparseNodeVisitor
 from docutils.parsers.rst import Directive

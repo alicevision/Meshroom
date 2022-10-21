@@ -5,11 +5,12 @@
 # Required
 version: 2
 
-# Build documentation in the docs/ directory with Sphinx
+# Build HTML documentation with Sphinx
 sphinx:
-   configuration: docs/source/conf.py
+  builder: html
+  configuration: docs/source/conf.py
 
-# Optionally declare the Python requirements required to build your docs
+# Python requirements
 python:
   install:
     - requirements: requirements.txt

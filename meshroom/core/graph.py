@@ -1252,7 +1252,6 @@ class Graph(BaseObject):
             inputKeys = list(graph[nodeName]["inputs"].keys())
 
             internalInputKeys = []
-
             internalInputs = graph[nodeName].get("internalInputs", None)
             if internalInputs:
                 internalInputKeys = list(internalInputs.keys())
@@ -1268,6 +1267,10 @@ class Graph(BaseObject):
                 # check that internal attribute is not a link for choice attributes
                 if attribute.isDefault and not attribute.isLink:
                     del graph[nodeName]["internalInputs"][attrName]
+
+            # If all the internal attributes are set to their default values, remove the entry
+            if len(graph[nodeName]["internalInputs"]) == 0:
+                del graph[nodeName]["internalInputs"]
 
             del graph[nodeName]["outputs"]
             del graph[nodeName]["uids"]

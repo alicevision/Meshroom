@@ -2,11 +2,11 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQml.Models
-import QtQuick.Scene3D 2.3
-import Qt3D.Core 2.3
-import Qt3D.Render 2.3
-import Qt3D.Extras 2.3
-import Qt3D.Input 2.3 as Qt3DInput // to avoid clash with Controls2 Action
+import QtQuick.Scene3D 2.4
+import Qt3D.Core 2.4
+import Qt3D.Render 2.4
+import Qt3D.Extras 2.4
+import Qt3D.Input 2.4 as Qt3DInput // to avoid clash with Controls2 Action
 
 import MaterialIcons 2.2
 
@@ -198,6 +198,7 @@ FocusScope {
                                         buffers : ClearBuffers.ColorDepthBuffer
                                         RenderStateSet {
                                             renderStates: [
+                                                // TODO: fix "RHI Unhandled render state class Qt3DRender::Render::PointSize"
                                                 PointSize {
                                                     sizeMode: Viewer3DSettings.fixedPointSize ? PointSize.Fixed : PointSize.Programmable
                                                     value: Viewer3DSettings.pointSize

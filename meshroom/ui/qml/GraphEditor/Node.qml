@@ -382,7 +382,6 @@ Item {
                                 width: parent.width
                                 spacing: 3
                                 Repeater {
-                                    id: inputParamsRepeater
                                     model: node ? node.attributes : undefined
                                     delegate: Loader {
                                         id: paramLoader
@@ -390,31 +389,35 @@ Item {
                                         property bool isFullyActive: (m.displayParams || object.isLink || object.hasOutputConnections)
                                         width: parent.width
 
+                                        /*
+                                        // TODO: fix crash at start-up with Qt6.4
                                         sourceComponent: AttributePin {
-                                            id: inPin
+                                            id: inAdvPin
                                             nodeItem: root
-                                            property real globalX: root.x + nodeAttributes.x + inputParamsRect.x + paramLoader.x + inPin.x
-                                            property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inPin.y
+                                            attribute: object
+                                            property real globalX: root.x + nodeAttributes.x + inputParamsRect.x + paramLoader.x + inAdvPin.x
+                                            property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inAdvPin.y
 
                                             height: isFullyActive ? childrenRect.height : 0
                                             Behavior on height { PropertyAnimation {easing.type: Easing.Linear} }
                                             visible: (height == childrenRect.height)
-                                            attribute: object
+
                                             readOnly: root.readOnly || object.isReadOnly
-                                            Component.onCompleted: function(attribute, inPin) { attributePinCreated(attribute, inPin); }
-                                            Component.onDestruction: function(attribute, inPin) { attributePinDeleted(attribute, inPin); }
+                                            Component.onCompleted: function(attribute, inAdvPin) { attributePinCreated(attribute, inAdvPin); }
+                                            Component.onDestruction: function(attribute, inAdvPin) { attributePinDeleted(attribute, inAdvPin); }
                                             onPressed: function (mouse) { root.pressed(mouse) }
                                             onEdgeAboutToBeRemoved: function (input) { root.edgeAboutToBeRemoved(input) }
-                                            onChildPinCreated: function(childAttribute, inPin) { attributePinCreated(childAttribute, inPin); }
-                                            onChildPinDeleted: function(childAttribute, inPin) { attributePinDeleted(childAttribute, inPin); }
+                                            onChildPinCreated: function(childAttribute, inAdvPin) { attributePinCreated(childAttribute, inAdvPin); }
+                                            onChildPinDeleted: function(childAttribute, inAdvPin) { attributePinDeleted(childAttribute, inAdvPin); }
                                         }
+                                        */
                                     }
                                 }
                             }
                         }
 
                         MaterialToolButton {
-                            text: root.hovered ? (m.displayParams ? MaterialIcons.arrow_drop_up : MaterialIcons.arrow_drop_down) : " "
+                            text: root.hovered ? (m.displayParams ? MaterialIcons.arrow_drop_up : MaterialIcons.arrow_drop_down) : ""
                             Layout.alignment: Qt.AlignBottom
                             width: parent.width
                             height: 5

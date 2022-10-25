@@ -1,7 +1,7 @@
 from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue
 from meshroom.core import pyCompatibility
 
-from enum import Enum  # available by default in python3. For python2: "pip install enum34"
+from enum import Enum
 import math
 import os
 import psutil

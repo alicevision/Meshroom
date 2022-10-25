@@ -1,8 +1,10 @@
-import Qt3D.Core 2.3
-import Qt3D.Render 2.3
-import Qt3D.Input 2.3
-import Qt3D.Extras 2.15 // TODO: upgrade to 2.3; DiffuseSpecularMaterial not recognized anymore with it although it should be supported
+import Qt3D.Core 2.4
+import Qt3D.Render 2.4
+import Qt3D.Input 2.4
+import Qt3D.Extras 2.4
+import Qt3D.Extras 2.15 // TODO: remove import of 2.15; DiffuseSpecularMaterial not recognized with 2.4 alone although it should be supported
 import QtQuick
+
 
 Entity {
     id: root

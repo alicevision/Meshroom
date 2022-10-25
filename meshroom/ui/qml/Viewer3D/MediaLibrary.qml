@@ -1,6 +1,6 @@
 import QtQuick
-import Qt3D.Core 2.3
-import Qt3D.Render 2.3
+import Qt3D.Core 2.4
+import Qt3D.Render 2.4
 import Utils 1.0
 
 

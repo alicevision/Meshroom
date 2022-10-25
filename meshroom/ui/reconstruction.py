@@ -565,7 +565,12 @@ class Reconstruction(UIGraph):
     def getViewpoints(self):
         """ Return the Viewpoints model. """
         # TODO: handle multiple Viewpoints models
-        return self._cameraInit.viewpoints.value if self._cameraInit else QObjectListModel(parent=self)
+        if self.tempCameraInit:
+            return self.tempCameraInit.viewpoints.value
+        elif self._cameraInit:
+            return self._cameraInit.viewpoints.value
+        else:
+            return QObjectListModel(parent=self)
 
     def updateCameraInits(self):
         cameraInits = self._graph.nodesOfType("CameraInit", sortedByIndex=True)

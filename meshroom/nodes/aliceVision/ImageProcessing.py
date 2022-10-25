@@ -12,7 +12,7 @@ def outputImagesValueFunct(attr):
 
     if inputExt in ['.abc', '.sfm']:
         # If we have an SfM in input
-        return desc.Node.internalFolder + '*' + (outputExt or '.*')
+        return desc.Node.internalFolder + '<VIEW_ID>' + (outputExt or '.*')
 
     if inputExt:
         # if we have one or multiple files in input
@@ -84,6 +84,13 @@ Convert or apply filtering to the input images.
             name='reconstructedViewsOnly',
             label='Only Reconstructed Views',
             description='Process Only Reconstructed Views',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='keepImageFilename',
+            label='Keep Image Name',
+            description='Keep original image name instead of view name',
             value=False,
             uid=[0],
         ),
@@ -294,7 +301,7 @@ Convert or apply filtering to the input images.
                 label='Output Color Space',
                 description='Allows you to choose the color space of the output image.',
                 value='AUTO',
-                values=['AUTO', 'sRGB', 'Linear', 'ACES', 'ACEScg'],
+                values=['AUTO', 'sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
                 exclusive=True,
                 uid=[0],
         ),
@@ -325,7 +332,7 @@ Convert or apply filtering to the input images.
     outputs = [
         desc.File(
             name='outSfMData',
-            label='Output sfmData',
+            label='SfmData',
             description='Output sfmData.',
             value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
             uid=[],
@@ -333,15 +340,16 @@ Convert or apply filtering to the input images.
         ),
         desc.File(
             name='output',
-            label='Output Folder',
+            label='Folder',
             description='Output Images Folder.',
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name='outputImages',
-            label='Output Images',
+            label='Images',
             description='Output Image Files.',
+            semantic='image',
             value= outputImagesValueFunct,
             group='',  # do not export on the command line
             uid=[],

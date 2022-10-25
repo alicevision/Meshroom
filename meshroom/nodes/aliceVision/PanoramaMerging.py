@@ -69,8 +69,9 @@ Merge all inputs coming from the PanoramaCompositing node.
     outputs = [
         desc.File(
             name='outputPanorama',
-            label='Output Folder',
+            label='Panorama',
             description='',
+            semantic='image',
             value=desc.Node.internalFolder + 'panorama.{outputFileTypeValue}',
             uid=[],
         ),

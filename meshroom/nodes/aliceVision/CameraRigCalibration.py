@@ -165,7 +165,7 @@ class CameraRigCalibration(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='outfile',
-            label='Output File',
+            label='File',
             description='''The name of the file where to store the calibration data''',
             value=desc.Node.internalFolder + 'cameraRigCalibration.rigCal',
             uid=[],

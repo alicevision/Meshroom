@@ -82,7 +82,7 @@ This node allows to recompute the mesh surface with a new topology and uniform d
     outputs = [
         desc.File(
             name="output",
-            label="Output mesh",
+            label="Mesh",
             description="Output mesh (OBJ file format).",
             value=desc.Node.internalFolder + 'mesh.obj',
             uid=[],

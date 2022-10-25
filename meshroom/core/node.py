@@ -394,6 +394,9 @@ class NodeChunk(BaseObject):
     def isStopped(self):
         return self._status.status == Status.STOPPED
 
+    def isFinished(self):
+        return self._status.status == Status.SUCCESS
+
     def process(self, forceCompute=False):
         if not forceCompute and self._status.status == Status.SUCCESS:
             logging.info("Node chunk already computed: {}".format(self.name))
@@ -752,6 +755,11 @@ class BaseNode(BaseObject):
     def isFinishedOrRunning(self):
         """ Return True if all chunks of this Node is either finished or running, False otherwise. """
         return all(chunk.isFinishedOrRunning() for chunk in self._chunks)
+
+    @Slot(result=bool)
+    def isPartiallyFinished(self):
+        """ Return True is at least one chunk of this Node is finished, False otherwise. """
+        return any(chunk.isFinished() for chunk in self._chunks)
 
     def alreadySubmittedChunks(self):
         return [ch for ch in self._chunks if ch.isAlreadySubmitted()]

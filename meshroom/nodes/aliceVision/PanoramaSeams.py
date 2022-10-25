@@ -61,7 +61,7 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
     outputs = [
         desc.File(
             name='output',
-            label='Output Labels',
+            label='Labels',
             description='',
             value=desc.Node.internalFolder + 'labels.exr',
             uid=[],

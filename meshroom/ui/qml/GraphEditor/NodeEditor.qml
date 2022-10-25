@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import MaterialIcons 2.2
 import Controls 1.0
+import Utils 1.0
 
 
 /**
@@ -28,7 +29,7 @@ Panel {
                 if (node !== null && node.isSubmittedOrRunning()) {
                     // Some chunks might be submitted but they'll all run eventually
                     if (node.elapsedTime > 0) { // At least a chunk is done running
-                        return "Running for: " + getTimeStr(node.elapsedTime)
+                        return "Running for: " + Format.getTimeStr(node.elapsedTime)
                     } else {
                         return (node.chunks.count > 1) ? "First chunk running" : "Node running"
                     }
@@ -36,7 +37,7 @@ Panel {
                     /* Either all chunks finished running or the last one is running
                         * Placed inside an "else if" instead of "else" to avoid entering the functions
                         * when there is no real use */
-                    return getTimeStr(node.elapsedTime)
+                    return Format.getTimeStr(node.elapsedTime)
                 } else {
                     return ""
                 }
@@ -56,7 +57,7 @@ Panel {
                 if (node !== null && (node.isFinishedOrRunning() || (node.isSubmittedOrRunning() && node.elapsedTime > 0))) {
                     var longestChunkTime = getLongestChunkTime(node.chunks)
                     if (longestChunkTime > 0)
-                        return "Longest chunk: " + getTimeStr(longestChunkTime) + " (" + node.chunks.count + " chunks)"
+                        return "Longest chunk: " + Format.getTimeStr(longestChunkTime) + " (" + node.chunks.count + " chunks)"
                     else
                         return ""
                 } else {
@@ -68,35 +69,6 @@ Panel {
                 id: runningTimeMa
                 anchors.fill: parent
                 hoverEnabled: true
-            }
-
-            function getTimeStr(elapsed)
-            {
-                if (elapsed <= 0)
-                    return ""
-
-                var hours = 0
-                var min = 0
-                var finalTime = ""
-
-                if (elapsed > 3600) {
-                    hours = Math.floor(elapsed / 3600)
-                    elapsed = elapsed - (hours * 3600)
-                    finalTime += hours + "h"
-                }
-                if (elapsed > 60) {
-                    min = Math.floor(elapsed / 60)
-                    elapsed = elapsed - (min * 60)
-                    finalTime += min + "m"
-                }
-                if (hours == 0 && min == 0) {
-                    // Millisecond precision for execution times below 1 min
-                    finalTime += Number(elapsed.toLocaleString(Qt.locale('en-US'))) + "s"
-                } else {
-                    finalTime += Math.round(elapsed) + "s"
-                }
-
-                return finalTime
             }
 
             function getLongestChunkTime(chunks)

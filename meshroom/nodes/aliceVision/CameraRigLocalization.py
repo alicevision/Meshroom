@@ -172,7 +172,7 @@ class CameraRigLocalization(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='outputAlembic',
-            label='Output Alembic',
+            label='Alembic',
             description='''Filename for the SfMData export file (where camera poses will be stored).''',
             value=desc.Node.internalFolder + 'trackedcameras.abc',
             uid=[],

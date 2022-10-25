@@ -147,20 +147,11 @@ Item {
 
                 viewIn3D: root.load3DMedia
 
-                Connections {
-                    target: imageGallery
-                    function onCurrentItemChanged() {
-                        viewer2D.source = imageGallery.currentItemSource
-                        viewer2D.metadata = imageGallery.currentItemMetadata
-                    }
-                }
-
                 DropArea {
                     anchors.fill: parent
                     keys: ["text/uri-list"]
-                    onDropped: function (drop) {
-                        viewer2D.source = drop.urls[0]
-                        viewer2D.metadata = {}
+                    onDropped: {
+                        viewer2D.loadExternal(drop.urls[0]);
                     }
                 }
                 Rectangle {

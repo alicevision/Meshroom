@@ -789,8 +789,8 @@ class UIGraph(QObject):
             return json.dumps(selection, indent=4)
         return ''
 
-    @Slot(str, QPoint, result="QVariantList")
-    def pasteNodes(self, clipboardContent, position=None):
+    @Slot(str, QPoint, bool, result="QVariantList")
+    def pasteNodes(self, clipboardContent, position=None, centerPosition=False):
         """
         Parse the content of the clipboard to see whether it contains
         valid node descriptions. If that is the case, the nodes described
@@ -810,6 +810,8 @@ class UIGraph(QObject):
             clipboardContent (str): the string contained in the clipboard, that may or may not contain valid
                                     node information
             position (QPoint): the position of the mouse in the Graph Editor when the function was called
+            centerPosition (bool): whether the provided position is not the top-left corner of the pasting
+                                    zone, but its center
 
         Returns:
             list: the list of Node objects that were pasted and added to the graph
@@ -844,7 +846,9 @@ class UIGraph(QObject):
         # to the first node within that zone.
         firstNodePos = None
         minX = 0
+        maxX = 0
         minY = 0
+        maxY = 0
         for key in sorted(d):
             nodeType = d[key].get("nodeType", None)
             if not nodeType:
@@ -855,12 +859,18 @@ class UIGraph(QObject):
                 if not firstNodePos:
                     firstNodePos = pos
                     minX = pos[0]
+                    maxX = pos[0]
                     minY = pos[1]
+                    maxY = pos[1]
                 else:
                     if minX > pos[0]:
                         minX = pos[0]
+                    if maxX < pos[0]:
+                        maxX = pos[0]
                     if minY > pos[1]:
                         minY = pos[1]
+                    if maxY < pos[1]:
+                        maxY = pos[1]
 
         # Ensure there will not be an error if no node has a specified position
         if not firstNodePos:
@@ -868,6 +878,11 @@ class UIGraph(QObject):
 
         # Position of the first node within the zone
         position = Position(position.x + firstNodePos[0] - minX, position.y + firstNodePos[1] - minY)
+
+        if centerPosition: # Center the zone around the mouse's position (mouse's position might be artificial)
+            maxX = maxX + self.layout.nodeWidth  # maxX and maxY are the position of the furthest node's top-left corner
+            maxY = maxY + self.layout.nodeHeight  # We want the position of the furthest node's bottom-right corner
+            position = Position(position.x - ((maxX - minX) / 2), position.y - ((maxY - minY) / 2))
 
         finalPosition = None
         prevPosition = None

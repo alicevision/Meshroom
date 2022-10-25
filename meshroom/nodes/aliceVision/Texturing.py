@@ -348,8 +348,8 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description='Output Texture files.',
             value= lambda attr: desc.Node.internalFolder + 'texture_*.' + attr.node.colorMapping.colorMappingFileType.value if attr.node.colorMapping.enable.value else '',
             uid=[],
-            group='',
-            ),
+            group=''
+        )
     ]
 
     def upgradeAttributeValues(self, attrValues, fromVersion):

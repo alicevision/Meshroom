@@ -293,9 +293,30 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
     outputs = [
         desc.File(
             name='output',
-            label='Output',
+            label='Folder',
             description='Output folder for generated depth maps.',
             value=desc.Node.internalFolder,
             uid=[],
+        ),
+        # these attributes are only here to describe more accurately the output of the node
+        # by specifying that it generates 2 sequences of images
+        # (see in Viewer2D.qml how these attributes can be used)
+        desc.File(
+            name='depth',
+            label='Depth Maps',
+            description='Generated depth maps.',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap.exr',
+            uid=[],
+            group='', # do not export on the command line
+        ),
+        desc.File(
+            name='sim',
+            label='Sim Maps',
+            description='Generated sim maps.',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_simMap.exr',
+            uid=[],
+            group='', # do not export on the command line
         ),
     ]

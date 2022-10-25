@@ -41,7 +41,7 @@ class ConvertMesh(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Mesh',
+            label='Mesh',
             description='''Output mesh (*.obj, *.mesh, *.meshb, *.ply, *.off, *.stl).''',
             value=desc.Node.internalFolder + 'mesh.' + '{outputMeshFileTypeValue}',
             uid=[],

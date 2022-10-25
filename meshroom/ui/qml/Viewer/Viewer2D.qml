@@ -275,7 +275,7 @@ FocusScope {
 
     Connections {
         target: _reconstruction
-        onSelectedViewIdChanged: {
+        function onSelectedViewIdChanged() {
             root.source = getImageFile();
             root.metadata = getMetadata();
         }

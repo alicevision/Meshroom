@@ -86,7 +86,7 @@ FocusScope {
         }
         if(mfeaturesLoader.status === Loader.Ready)
         {
-            if(mfeaturesLoader.item.status === MFeatures.Loading)
+            if(mfeaturesLoader.item != null && mfeaturesLoader.item.status === MFeatures.Loading)
                 res += " Features";
         }
         if(mtracksLoader.status === Loader.Ready)

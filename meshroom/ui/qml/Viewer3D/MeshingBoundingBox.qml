@@ -24,18 +24,22 @@ Entity {
 
         // Update node meshing slider values when the gizmo has changed: translation, rotation, scale, type
         transformGizmo.onGizmoChanged: {
+
+            var previous_euler = Qt.vector3d(rotation.x, rotation.y, rotation.z)
+            var updated_rotation = Transformations3DHelper.transformRotationGL(previous_euler)
+
             switch(type) {
                 case TransformGizmo.Type.TRANSLATION: {
                     _reconstruction.setAttribute(
                         root.currentMeshingNode.attribute("boundingBox.bboxTranslation"),
-                        JSON.stringify([translation.x, translation.y, translation.z])
+                        JSON.stringify([translation.x, -translation.y, -translation.z])
                     )
                     break
                 }
                 case TransformGizmo.Type.ROTATION: {
                     _reconstruction.setAttribute(
                         root.currentMeshingNode.attribute("boundingBox.bboxRotation"),
-                        JSON.stringify([rotation.x, rotation.y, rotation.z])
+                        JSON.stringify([updated_rotation.x, updated_rotation.y, updated_rotation.z])
                     )
                     break
                 }
@@ -50,8 +54,8 @@ Entity {
                     _reconstruction.setAttribute(
                         root.currentMeshingNode.attribute("boundingBox"),
                         JSON.stringify([
-                            [translation.x, translation.y, translation.z],
-                            [rotation.x, rotation.y, rotation.z],
+                            [translation.x, -translation.y, -translation.z],
+                            [updated_rotation.x, updated_rotation.y, updated_rotation.z],
                             [scale.x, scale.y, scale.z]
                         ])
                     )
@@ -63,13 +67,41 @@ Entity {
         // Translation values from node (vector3d because this is the type of QTransform.translation)
         property var nodeTranslation : Qt.vector3d(
             root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxTranslation.x").value : 0,
-            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxTranslation.y").value : 0,
-            root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxTranslation.z").value : 0
+            root.currentMeshingNode ? -root.currentMeshingNode.attribute("boundingBox.bboxTranslation.y").value : 0,
+            root.currentMeshingNode ? -root.currentMeshingNode.attribute("boundingBox.bboxTranslation.z").value : 0
         )
+
         // Rotation values from node (3 separated values because QTransform stores Euler angles like this)
-        property var nodeRotationX: root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value : 0
-        property var nodeRotationY: root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value : 0
-        property var nodeRotationZ: root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value : 0
+        property var nodeRotationX: {
+            var rx = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value : 0
+            var ry = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value : 0
+            var rz = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value : 0
+
+            var previous_euler = Qt.vector3d(rx, ry, rz)
+            var updated_rotation = Transformations3DHelper.transformRotationGL(previous_euler)
+            return updated_rotation.x
+        }
+
+        property var nodeRotationY: {
+            var rx = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value : 0
+            var ry = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value : 0
+            var rz = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value : 0
+
+            var previous_euler = Qt.vector3d(rx, ry, rz)
+            var updated_rotation = Transformations3DHelper.transformRotationGL(previous_euler)
+            return updated_rotation.y
+        }
+
+        property var nodeRotationZ: {
+            var rx = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.x").value : 0
+            var ry = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.y").value : 0
+            var rz = root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxRotation.z").value : 0
+
+            var previous_euler = Qt.vector3d(rx, ry, rz)
+            var updated_rotation = Transformations3DHelper.transformRotationGL(previous_euler)
+            return updated_rotation.z
+        }
+
         // Scale values from node (vector3d because this is the type of QTransform.scale3D)
         property var nodeScale: Qt.vector3d(
             root.currentMeshingNode ? root.currentMeshingNode.attribute("boundingBox.bboxScale.x").value : 1,

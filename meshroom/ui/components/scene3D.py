@@ -245,6 +245,16 @@ class Transformations3DHelper(QObject):
 
         return modelMat
 
+    @Slot(QVector3D, result=QVector3D)
+    def transformRotationGL(self, rotation):
+        M = QQuaternion.fromAxisAndAngle(QVector3D(1, 0, 0), 180.0)
+        
+        quaternion = QQuaternion.fromEulerAngles(rotation)
+        
+        U = M * quaternion * M
+
+        return U.toEulerAngles()
+
     @Slot(QVector3D, QMatrix4x4, Qt3DRender.QCamera, QSize, result=float)
     def computeScaleUnitFromModelMatrix(self, axis, modelMat, camera, windowSize):
         """ Compute the length of the screen projected vector axis unit transformed by the model matrix.

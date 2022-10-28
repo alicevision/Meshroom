@@ -316,7 +316,6 @@ ApplicationWindow {
         selectMultiple: true
         nameFilters: []
         onAccepted: {
-            console.warn("importFilesDialog fileUrls: " + importFilesDialog.fileUrls)
             _reconstruction.importImagesUrls(importFilesDialog.fileUrls)
         }
     }

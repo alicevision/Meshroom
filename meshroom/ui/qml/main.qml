@@ -953,6 +953,53 @@ ApplicationWindow {
                         enabled: !updatingStatus && (_reconstruction ? !_reconstruction.computingLocally : false)
                     }
                     MaterialToolButton {
+                        id: filePollerRefreshStatus
+                        text: _reconstruction.filePollerRefresh == 0 ? MaterialIcons.sync : MaterialIcons.sync_disabled
+                        ToolTip.text: "Set File Refresh Status"
+                        ToolTip.visible: hovered
+                        font.pointSize: 11
+                        padding: 2
+                        onClicked: {
+                            refreshFilesMenu.open()
+                        }
+                        enabled: true
+                        Menu {
+                            id: refreshFilesMenu
+                            y: parent.height
+                            x: -width + parent.width
+                            MenuItem {
+                                id: enableAutoRefresh
+                                text: "Enable Auto-Refresh"
+                                checkable: true
+                                checked: _reconstruction.filePollerRefresh == 0
+                                onToggled: {
+                                    if (checked) {
+                                        disableAutoRefresh.checked = false
+                                        _reconstruction.filePollerRefreshChanged(0)
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    enableAutoRefresh.checked = true
+                                    filePollerRefreshStatus.text = MaterialIcons.sync
+                                }
+                            }
+                            MenuItem {
+                                id: disableAutoRefresh
+                                text: "Disable Auto-Refresh"
+                                checkable: true
+                                checked: _reconstruction.filePollerRefresh == 1
+                                onToggled: {
+                                    if (checked) {
+                                        enableAutoRefresh.checked = false
+                                        _reconstruction.filePollerRefreshChanged(1)
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    disableAutoRefresh.checked = true
+                                    filePollerRefreshStatus.text = MaterialIcons.sync_disabled
+                                }
+                            }
+                        }
+                    }
+                    MaterialToolButton {
                         text: MaterialIcons.more_vert
                         font.pointSize: 11
                         padding: 2

@@ -2,7 +2,6 @@
 # coding:utf-8
 import logging
 import os
-import time
 import json
 from enum import Enum
 from threading import Thread, Event, Lock
@@ -10,7 +9,6 @@ from multiprocessing.pool import ThreadPool
 
 from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
 
-from meshroom import multiview
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute

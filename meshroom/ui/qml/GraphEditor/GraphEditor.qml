@@ -118,19 +118,30 @@ Item {
     }
 
     Keys.onPressed: {
-        if (event.key === Qt.Key_F)
-            fit()
-        if (event.key === Qt.Key_Delete)
-            if (event.modifiers == Qt.AltModifier)
-                uigraph.removeNodesFrom(uigraph.selectedNodes)
-            else
-                uigraph.removeNodes(uigraph.selectedNodes)
-        if (event.key === Qt.Key_D)
-            duplicateNode(event.modifiers == Qt.AltModifier)
-        if (event.key === Qt.Key_C && event.modifiers == Qt.ControlModifier)
-            copyNodes()
-        if (event.key === Qt.Key_V && event.modifiers == Qt.ControlModifier)
-            pasteNodes()
+        if (event.key === Qt.Key_F) {
+            fit();
+        } 
+        else if (event.key === Qt.Key_Delete) {
+            if (event.modifiers == Qt.AltModifier) {
+                uigraph.removeNodesFrom(uigraph.selectedNodes);
+            }
+            else {
+                uigraph.removeNodes(uigraph.selectedNodes);
+            }
+        }
+        else if (event.key === Qt.Key_D) {
+            duplicateNode(event.modifiers == Qt.AltModifier);
+        }
+        else if (event.key === Qt.Key_C && event.modifiers == Qt.ControlModifier) {
+            copyNodes();
+        }
+        else if (event.key === Qt.Key_V && event.modifiers == Qt.ControlModifier) {
+            pasteNodes();
+        }
+        else if (event.key == Qt.Key_Tab) {
+            newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY);
+            newNodeMenu.popup();
+        }
     }
 
     MouseArea {

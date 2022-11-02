@@ -123,7 +123,7 @@ class Transformations3DHelper(QObject):
         viewMatrix = camera.transform().matrix().inverted()
         projectedPoint = (camera.projectionMatrix() * viewMatrix[0]).map(point)
         projectedPoint2D = QVector2D(
-            projectedPoint.x()/projectedPoint.w(), 
+            projectedPoint.x()/projectedPoint.w(),
             projectedPoint.y()/projectedPoint.w()
         )
 
@@ -145,7 +145,7 @@ class Transformations3DHelper(QObject):
                 initialScaleMat (QMatrix4x4): initial scale matrix
                 translateVec (QVector3D): vector used for the local translation
         """
-        # Compute the translation transformation matrix 
+        # Compute the translation transformation matrix
         translationMat = QMatrix4x4()
         translationMat.translate(translateVec)
 
@@ -246,11 +246,14 @@ class Transformations3DHelper(QObject):
         return modelMat
 
     @Slot(QVector3D, result=QVector3D)
-    def transformRotationGL(self, rotation):
+    def convertRotationFromCV2GL(self, rotation):
+        """ Convert rotation (euler angles) from Computer Vision
+            to Computer Graphics coordinate system (like opengl).
+        """
         M = QQuaternion.fromAxisAndAngle(QVector3D(1, 0, 0), 180.0)
-        
+
         quaternion = QQuaternion.fromEulerAngles(rotation)
-        
+
         U = M * quaternion * M
 
         return U.toEulerAngles()

@@ -310,14 +310,13 @@ ApplicationWindow {
     }
 
     FileDialog {
-        id: importFilesDialog
+        id: importImagesDialog
         title: "Import Images"
         selectExisting: true
         selectMultiple: true
         nameFilters: []
         onAccepted: {
-            console.warn("importFilesDialog fileUrls: " + importFilesDialog.fileUrls)
-            _reconstruction.importImagesUrls(importFilesDialog.fileUrls)
+            _reconstruction.importImagesUrls(importImagesDialog.fileUrls)
         }
     }
 
@@ -577,17 +576,17 @@ ApplicationWindow {
                 }
             }
             Action {
-                id: importActionItem
+                id: importImagesAction
                 text: "Import Images"
                 shortcut: "Ctrl+I"
                 onTriggered: {
-                    initFileDialogFolder(importFilesDialog);
-                    importFilesDialog.open();
+                    initFileDialogFolder(importImagesDialog);
+                    importImagesDialog.open();
                 }
             }
 
             Action {
-                id: clearActionItem
+                id: clearImagesAction
                 text: "Clear Images"
                 onTriggered: {
                     //Loop through all the camera inits

@@ -28,9 +28,6 @@ Entity {
     readonly property alias pressed: mouseHandler._pressed
     signal mousePressed(var mouse)
     signal mouseReleased(var mouse, var moved)
-    signal mouseClicked(var mouse)
-    signal mouseWheeled(var wheel)
-    signal mouseDoubleClicked(var mouse)
 
     KeyboardDevice { id: keyboardSourceDevice }
     MouseDevice { id: mouseSourceDevice }
@@ -58,7 +55,6 @@ Entity {
             _pressed = false;
             mouseReleased(mouse, hasMoved);
         }
-        onClicked: function(mouse) { mouseClicked(mouse); }
         onPositionChanged: function(mouse) {
             currentPosition.x = mouse.x;
             currentPosition.y = mouse.y;
@@ -87,7 +83,6 @@ Entity {
                 return;
             }
         }
-        onDoubleClicked: function(mouse) { mouseDoubleClicked(mouse); }
         onWheel: function(wheel) {
             var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.2;
             var tz = (wheel.angleDelta.y / 120) * d;

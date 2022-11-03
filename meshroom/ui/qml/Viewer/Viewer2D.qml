@@ -20,12 +20,13 @@ FocusScope {
 
     property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
     property Component panoramaViewerComp: Qt.createComponent("PanoramaViewer.qml")
-    property alias useFloatImageViewer: displayHDR.checked
+    property var useFloatImageViewer: displayHDR.checked
     property alias useLensDistortionViewer: displayLensDistortionViewer.checked
     property alias usePanoramaViewer: displayPanoramaViewer.checked
 
     property var activeNodeFisheye: _reconstruction.activeNodes.get("PanoramaInit").node
     property bool cropFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
+    property bool enable8bitViewer: MeshroomApp.default8bitViewerEnabled
 
     QtObject {
         id: m
@@ -62,8 +63,10 @@ FocusScope {
     readonly property bool oiioPluginAvailable: oiioPluginLoader.status === Component.Ready
 
     Component.onCompleted: {
-        if(!aliceVisionPluginAvailable)
+        if(!aliceVisionPluginAvailable) {
             console.warn("Missing plugin qtAliceVision.")
+            displayHDR.checked = false
+        }
         if(!oiioPluginAvailable)
             console.warn("Missing plugin qtOIIO.")
     }
@@ -96,7 +99,7 @@ FocusScope {
         }
         if(msfmDataLoader.status === Loader.Ready)
         {
-            if(msfmDataLoader.item.status === MSfMData.Loading)
+            if(msfmDataLoader.item != null && msfmDataLoader.item.status === MSfMData.Loading)
             {
                 res += " SfMData";
             }
@@ -370,12 +373,35 @@ FocusScope {
                     active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
+                    property var fittedOnce: false
+                    property var previousWidth: 0
+                    property var previousHeight: 0
+                    onHeightChanged: {
+                        /* Image size is not updated through a single signal with the floatImage viewer, unlike
+                         * the simple QML image viewer: instead of updating straight away the width and height to x and
+                         * y, the emitted signals look like:
+                         * - width = -1, height = -1
+                         * - width = x, height = -1
+                         * - width = x, height = y
+                         * We want to do the auto-fit on the first display of an image from the group, and then keep its
+                         * scale when displaying another image from the group, so we need to know if an image in the
+                         * group has already been auto-fitted. If we change the group of images (when another project is
+                         * opened, for example, and the images have a different size), then another auto-fit needs to be
+                         * performed */
+                        if ((!fittedOnce && imgContainer.image.status == Image.Ready && imgContainer.image.height > 0) ||
+                            (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
+                            fit();
+                            fittedOnce = true;
+                            previousWidth = width;
+                            previousHeight = height;
+                        }
+                    }
 
                     // handle rotation/position based on available metadata
                     rotation: {
                         var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
 
-                        switch(orientation) {
+                        switch (orientation) {
                             case "6": return 90;
                             case "8": return -90;
                             default: return 0;
@@ -383,7 +409,7 @@ FocusScope {
                     }
 
                     onActiveChanged: {
-                        if(active) {
+                        if (active) {
                             // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
                             // floatViewerComp.createObject(floatImageViewerLoader, {
@@ -399,7 +425,7 @@ FocusScope {
                                 'surface.subdivisions' : Qt.binding(function(){ return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue;}),
                                 'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
                                 'sfmRequired': Qt.binding(function(){ return displayLensDistortionViewer.checked ? true : false;}),
-                                'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
+                                'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                                 'canBeHovered': false,
                                 'idView': Qt.binding(function() { return _reconstruction.selectedViewId; }),
                                 'cropFisheye': false
@@ -407,6 +433,7 @@ FocusScope {
                           } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
                                 setSource("", {})
+                                fittedOnce = false
                           }
                     }
 
@@ -475,7 +502,6 @@ FocusScope {
                     }
                 }
 
-
                 property var image: {
                     if (floatImageViewerLoader.active)
                         floatImageViewerLoader.item
@@ -484,8 +510,8 @@ FocusScope {
                     else
                         qtImageViewerLoader.item
                 }
-                width: image ? image.width : 1
-                height: image ? image.height : 1
+                width: image ? (image.width > 0 ? image.width : 1) : 1
+                height: image ? (image.height > 0 ? image.height : 1) : 1
                 scale: 1.0
 
                 // FeatureViewer: display view extracted feature points
@@ -954,12 +980,14 @@ FocusScope {
                             padding: 0
                             Layout.minimumWidth: 0
                             checkable: true
-                            checked: false
+                            checked: root.aliceVisionPluginAvailable
                             enabled: root.aliceVisionPluginAvailable
+                            visible: root.enable8bitViewer
                             onCheckedChanged : {
-                                if(displayLensDistortionViewer.checked && checked){
+                                if (displayLensDistortionViewer.checked && checked) {
                                     displayLensDistortionViewer.checked = false;
                                 }
+                                root.useFloatImageViewer = !root.useFloatImageViewer
                             }
                         }
                         MaterialToolButton {
@@ -990,9 +1018,11 @@ FocusScope {
                             checked: false
                             enabled: activeNode && isComputed
                             onCheckedChanged : {
-                                if((displayHDR.checked || displayPanoramaViewer.checked) && checked){
+                                if ((displayHDR.checked || displayPanoramaViewer.checked) && checked) {
                                     displayHDR.checked = false;
                                     displayPanoramaViewer.checked = false;
+                                } else if (!checked) {
+                                    displayHDR.checked = true;
                                 }
                             }
                         }
@@ -1022,15 +1052,15 @@ FocusScope {
                             checked: false
                             enabled: activeNode && isComputed
                             onCheckedChanged : {
-                                if(displayLensDistortionViewer.checked && checked){
+                                if (displayLensDistortionViewer.checked && checked) {
                                     displayLensDistortionViewer.checked = false;
                                 }
-                                if(displayFisheyeCircleLoader.checked && checked){
+                                if (displayFisheyeCircleLoader.checked && checked) {
                                     displayFisheyeCircleLoader.checked = false;
                                 }
                             }
                             onEnabledChanged : {
-                                if(!enabled){
+                                if (!enabled) {
                                     checked = false;
                                 }
                             }

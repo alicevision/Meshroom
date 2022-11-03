@@ -157,9 +157,6 @@ with multiview.GraphModification(graph):
             if not result:
                 raise ValueError('Invalid param override: ' + str(p))
             node, t, param, value = result.groups()
-            multiValues = value.split(',')
-            if len(multiValues) > 1:
-                value = multiValues
             if t == ':':
                 nodesOfType = graph.nodesOfType(node)
                 if not nodesOfType:

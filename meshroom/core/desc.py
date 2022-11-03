@@ -311,6 +311,9 @@ class ChoiceParam(Param):
         if self.exclusive:
             return self.conformValue(value)
 
+        if isinstance(value, pyCompatibility.basestring):
+            value = value.split(',')
+
         if not isinstance(value, pyCompatibility.Iterable):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]

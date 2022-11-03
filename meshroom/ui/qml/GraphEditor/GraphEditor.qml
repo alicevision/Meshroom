@@ -140,8 +140,10 @@ Item {
         }
         else if (event.key == Qt.Key_Tab) {
             event.accepted = true;
-            newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY);
-            newNodeMenu.popup();
+            if (mouseArea.containsMouse) {
+                newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY);
+                newNodeMenu.popup();
+            }
         }
     }
 

@@ -251,8 +251,10 @@ FloatingPane {
                 Label {
                     text: {
                         if (featureType.viewer.loadingFeatures)
-                            return  featureType.viewer.describerType;
-                        if (root.mfeatures != null) {
+                            return featureType.viewer.describerType;
+                        if (root.mfeatures != null &&
+                                root.mfeatures.featuresInfo[featureType.viewer.describerType] != undefined &&
+                                root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId] != undefined) {
                             return featureType.viewer.describerType + ": " +
                                     ((featureExtractionNode && featureExtractionNode.isComputed) ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbFeatures'] : " - ") + " / " +
                                     (root.mfeatures.haveValidTracks ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbTracks']  : " - ") + " / " +

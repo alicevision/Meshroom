@@ -188,8 +188,7 @@ FloatingPane {
                 id: sortedMetadataModel
                 model: metadataModel
                 sortRole: "raw"
-                filterRole: "raw"
-                filterValue: searchBar.text
+                filters: [{role: "raw", value: searchBar.text}]
                 delegate: RowLayout {
                     width: parent.width
                     Label {

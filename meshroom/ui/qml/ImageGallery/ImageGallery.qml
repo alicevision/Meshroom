@@ -109,9 +109,6 @@ Panel {
         SearchBar {
             id: searchBar
             width: 100
-            onTextChanged: {
-                sortedModel.updateFilter("path", text);
-            }
         }
 
         MaterialToolButton {
@@ -207,35 +204,33 @@ Panel {
                 id: sortedModel
                 model: m.viewpoints
                 sortRole: "path.basename"
-                property var filterRoleType: ""
-                filterRole: _reconstruction.sfmReport ? filterRoleType : ""
-                filterValue: false
-
-                function updateFilter(role, value) {
-                    grid.updateSelectedViewFromGrid = false
-                    sortedModel.filterRoleType = role
-                    sortedModel.filterValue = value
-                    grid.updateCurrentIndexFromSelectionViewId()
-                    grid.updateSelectedViewFromGrid = true
-                    grid.makeCurrentItemVisible()
-                }
+                filters: [
+                    [
+                        {role: "path", value: searchBar.text}, 
+                        {role: "viewId.asString", value: searchBar.text}
+                    ], 
+                    {role: "viewId.isReconstructed", value: reconstructionFilter}
+                ]
+                property var reconstructionFilter: undefined
 
                 // override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName_) {
-                    var roleNameAndCmd = roleName_.split(".")
-                    var roleName = roleName_
-                    var cmd = ""
+                    var roleNameAndCmd = roleName_.split(".");
+                    var roleName = roleName_;
+                    var cmd = "";
                     if(roleNameAndCmd.length >= 2)
                     {
-                        roleName = roleNameAndCmd[0]
-                        cmd = roleNameAndCmd[1]
+                        roleName = roleNameAndCmd[0];
+                        cmd = roleNameAndCmd[1];
                     }
                     if(cmd == "isReconstructed")
-                        return _reconstruction.isReconstructed(item.model.object)
-                    var value = item.model.object.childAttribute(roleName).value
+                        return _reconstruction.isReconstructed(item.model.object);
 
+                    var value = item.model.object.childAttribute(roleName).value;
                     if(cmd == "basename")
-                        return Filepath.basename(value)
+                        return Filepath.basename(value);
+                    if (cmd == "asString") 
+                        return value.toString();
 
                     return value
                 }
@@ -592,9 +587,9 @@ Panel {
 
             onCheckedChanged:{
                 if(checked) {
-                    sortedModel.updateFilter("", true)
-                    estimatedCamerasFilterButton.checked = false
-                    nonEstimatedCamerasFilterButton.checked = false
+                    sortedModel.reconstructionFilter = undefined;
+                    estimatedCamerasFilterButton.checked = false;
+                    nonEstimatedCamerasFilterButton.checked = false;
                     intrinsicsFilterButton.checked = false;
                 }
             }
@@ -614,9 +609,9 @@ Panel {
 
             onCheckedChanged:{
                 if(checked) {
-                    sortedModel.updateFilter("viewId.isReconstructed", true)
-                    inputImagesFilterButton.checked = false
-                    nonEstimatedCamerasFilterButton.checked = false
+                    sortedModel.reconstructionFilter = true;
+                    inputImagesFilterButton.checked = false;
+                    nonEstimatedCamerasFilterButton.checked = false;
                     intrinsicsFilterButton.checked = false;
                 }
             }
@@ -643,9 +638,9 @@ Panel {
 
             onCheckedChanged:{
                 if(checked) {
-                    sortedModel.updateFilter("viewId.isReconstructed", false)
-                    inputImagesFilterButton.checked = false
-                    estimatedCamerasFilterButton.checked = false
+                    sortedModel.reconstructionFilter = false;
+                    inputImagesFilterButton.checked = false;
+                    estimatedCamerasFilterButton.checked = false;
                     intrinsicsFilterButton.checked = false;
                 }
             }

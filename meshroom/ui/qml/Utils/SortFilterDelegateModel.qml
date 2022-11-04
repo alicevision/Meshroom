@@ -19,13 +19,11 @@ DelegateModel {
 
     property string sortRole: ""                /// the role to use for sorting
     property int sortOrder: Qt.AscendingOrder   /// the sorting order
-    property string filterRole: ""              /// the role to use for filtering
-    property variant filterValue                /// the value to use as filter
+    property var filters: []
 
     onSortRoleChanged: invalidateSort()
     onSortOrderChanged: invalidateSort()
-    onFilterRoleChanged: invalidateFilter()
-    onFilterValueChanged: invalidateFilter()
+    onFiltersChanged: invalidateFilters()
 
     // display "filtered" group
     filterOnGroup: "filtered"
@@ -50,7 +48,7 @@ DelegateModel {
                     sort()
                 }
                 // perform filter invalidation in both cases
-                invalidateFilter()
+                invalidateFilters()
             }
         },
         // Group for storing filtered items
@@ -85,6 +83,9 @@ DelegateModel {
      * TODO: add case sensitivity / whole word options for Strings
      */
     function respectFilter(value, filter) {
+        if (filter === undefined) {
+            return true;
+        }
         switch(value.constructor.name)
         {
         case "String":
@@ -92,6 +93,11 @@ DelegateModel {
         default:
             return value === filter
         }
+    }
+
+    function respectFilters(item) {
+        let cond = (filter => respectFilter(modelData(item, filter.role), filter.value));
+        return filters.every(x => Array.isArray(x) ? x.some(cond) : cond(x));
     }
 
     /// Reverse sort order (toggle between Qt.AscendingOrder / Qt.DescendingOrder)
@@ -113,18 +119,11 @@ DelegateModel {
     }
 
     /// Invalidate filtering
-    function invalidateFilter() {
-        // no filtering, add everything to the filtered group
-        if(!filterRole)
-        {
-            items.addGroups(0, items.count, "filtered")
-            return
-        }
-
+    function invalidateFilters() {
         for(var i=0; i < items.count; ++i)
         {
             // if the property value contains filterText, add it to the filtered group
-            if(respectFilter(modelData(items.get(i), filterRole), filterValue))
+            if(respectFilters(items.get(i)))
             {
                 items.addGroups(items.get(i), 1, "filtered")
             }

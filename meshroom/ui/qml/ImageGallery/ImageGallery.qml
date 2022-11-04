@@ -106,6 +106,14 @@ Panel {
     }
 
     headerBar: RowLayout {
+        SearchBar {
+            id: searchBar
+            width: 100
+            onTextChanged: {
+                sortedModel.updateFilter("path", text);
+            }
+        }
+
         MaterialToolButton {
             text: MaterialIcons.more_vert
             font.pointSize: 11

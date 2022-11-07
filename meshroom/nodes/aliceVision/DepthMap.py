@@ -298,7 +298,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 name='refineSigma',
                 label='Sigma',
                 description='Sigma Threshold.',
-                value=15,
+                value=15.0,
                 range=(0.0, 30.0, 0.5),
                 uid=[0],
                 advanced=True,

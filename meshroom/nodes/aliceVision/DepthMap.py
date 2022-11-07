@@ -158,7 +158,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             ),
             desc.IntParam(
                 name='sgmWSH',
-                label='SWSH',
+                label='WSH',
                 description='Half-size of the patch used to compute the similarity.',
                 value=4,
                 range=(1, 20, 1),
@@ -168,7 +168,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             desc.FloatParam(
                 name='sgmGammaC',
                 label='GammaC',
-                description='SGammaC Threshold.',
+                description='GammaC Threshold.',
                 value=5.5,
                 range=(0.0, 30.0, 0.5),
                 uid=[0],

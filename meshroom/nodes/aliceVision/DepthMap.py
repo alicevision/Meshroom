@@ -251,6 +251,22 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             group=None,
             groupDesc=[
             desc.IntParam(
+                name='refineScale',
+                label='Downscale factor',
+                description='Downscale factor.',
+                value=1,
+                range=(-1, 10, 1),
+                uid=[0],
+            ),
+            desc.IntParam(
+                name='refineStepXY',
+                label='Step XY',
+                description='Step on X and Y axis.',
+                value=1,
+                range=(-1, 10, 1),
+                uid=[0],
+            ),
+            desc.IntParam(
                 name='refineNSamplesHalf',
                 label='Number of Samples',
                 description='Number of samples.',

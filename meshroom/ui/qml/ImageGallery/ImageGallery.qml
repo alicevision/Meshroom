@@ -108,7 +108,7 @@ Panel {
     headerBar: RowLayout {
         SearchBar {
             id: searchBar
-            width: 100
+            width: 150
         }
 
         MaterialToolButton {
@@ -249,8 +249,6 @@ Panel {
 
                     onPressed: {
                         grid.currentIndex = DelegateModel.filteredIndex
-                        if(mouse.button == Qt.LeftButton)
-                            grid.forceActiveFocus()
                     }
 
                     function sendRemoveRequest()
@@ -357,6 +355,11 @@ Panel {
                         grid.moveCurrentIndexDown()
                         event.accepted = true
                     }
+                    else if (event.key == Qt.Key_Tab)
+                    {
+                        searchBar.forceActiveFocus()
+                        event.accepted = true
+                    }
                 }
             }
 
@@ -450,6 +453,15 @@ Panel {
                             border.color: parent.palette.highlight
                         }
                     }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onPressed: {
+                    if(mouse.button == Qt.LeftButton)
+                        grid.forceActiveFocus()
+                    mouse.accepted = false
                 }
             }
         }

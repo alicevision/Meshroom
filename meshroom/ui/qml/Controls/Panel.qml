@@ -19,7 +19,7 @@ Page {
     property alias footerContent: footerLayout.data
     property alias icon: iconPlaceHolder.data
     property alias loading: loadingIndicator.running
-    property alias loadingText: loadingLabal.text
+    property alias loadingText: loadingLabel.text
 
     clip: true
 
@@ -32,12 +32,22 @@ Page {
 
     padding: 1
 
-
     header: Pane {
         id: headerPane
         topPadding: m.vPadding; bottomPadding: m.vPadding
         leftPadding: m.hPadding; rightPadding: m.hPadding
-        background: Rectangle { color: m.paneBackgroundColor }
+        background: Item {
+            Rectangle {
+                anchors.fill: parent
+                color: m.paneBackgroundColor
+            }
+            MouseArea {
+                anchors.fill: parent
+                onPressed: {
+                    headerLayout.forceActiveFocus()
+                }
+            }
+        }
 
         RowLayout {
             width: parent.width
@@ -70,7 +80,7 @@ Page {
                 running: false
             }
             Label {
-                id: loadingLabal
+                id: loadingLabel
                 text: ""
                 font.italic: true
             }
@@ -88,7 +98,18 @@ Page {
         topPadding: m.vPadding; bottomPadding: m.vPadding
         leftPadding: m.hPadding; rightPadding: m.hPadding
         visible: footerLayout.children.length > 0
-        background: Rectangle { color: m.paneBackgroundColor }
+        background: Item {
+            Rectangle {
+                anchors.fill: parent
+                color: m.paneBackgroundColor
+            }
+            MouseArea {
+                anchors.fill: parent
+                onPressed: {
+                    footerLayout.forceActiveFocus()
+                }
+            }
+        }
 
         // Content place holder
         RowLayout {

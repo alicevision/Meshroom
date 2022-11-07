@@ -166,6 +166,15 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 advanced=True,
             ),
             desc.FloatParam(
+                name='sgmSeedsRangeInflate',
+                label='Seeds Range Inflate',
+                description='Seeds range inflate factor.',
+                value=0.2,
+                range=(0.0, 2.0, 0.1),
+                uid=[0],
+                advanced=True,
+            ),
+            desc.FloatParam(
                 name='sgmGammaC',
                 label='GammaC',
                 description='GammaC Threshold.',

@@ -28,6 +28,11 @@ See the [presentation of the pipeline steps](http://alicevision.github.io/#photo
 https://meshroom-manual.readthedocs.io
 
 
+## Documentation
+
+https://meshroom.readthedocs.io/en/latest/
+
+
 ## Tutorials
 
 * [Meshroom: Open Source 3D Reconstruction Software](https://www.youtube.com/watch?v=v_O6tYKQEBA) by [Mikros Image](http://www.mikrosimage.com)

@@ -28,7 +28,8 @@ extensions = [
     'fetch_md',
     'meshroom_doc',
     'sphinx.ext.graphviz',
-    'sphinx.ext.inheritance_diagram'
+    'sphinx.ext.inheritance_diagram',
+    'sphinx.ext.napoleon'
 ]
 
 templates_path = ['_templates']

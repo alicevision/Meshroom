@@ -92,7 +92,7 @@ DelegateModel {
         switch(value.constructor.name)
         {
         case "String":
-            return value.toLowerCase().search(filter.toLowerCase()) >= 0
+            return value.toLowerCase().indexOf(filter.toLowerCase()) > -1
         default:
             return value === filter
         }

@@ -65,5 +65,12 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             description='',
             value=desc.Node.internalFolder + 'labels.exr',
             uid=[],
+        ),
+        desc.File(
+            name='outputSfm',
+            label='Output SfMData File',
+            description='Path to the output sfmdata file',
+            value=desc.Node.internalFolder + 'panorama.sfm',
+            uid=[],
         )
     ]

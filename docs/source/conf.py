@@ -35,6 +35,8 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 
+inheritance_graph_attrs = dict(rankdir='TB', size='""')
+
 
 
 # -- Options for HTML output -------------------------------------------------

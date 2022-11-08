@@ -1,18 +1,18 @@
 {
     "header": {
         "nodesVersions": {
+            "PanoramaMerging": "1.0", 
             "PanoramaSeams": "2.0", 
             "FeatureMatching": "2.0", 
-            "ImageProcessing": "3.0", 
             "PanoramaCompositing": "2.0", 
             "LdrToHdrMerge": "4.0", 
-            "PanoramaEstimation": "1.0", 
-            "LdrToHdrCalibration": "3.0", 
             "LdrToHdrSampling": "4.0", 
+            "LdrToHdrCalibration": "3.0", 
+            "PanoramaEstimation": "1.0", 
             "PanoramaInit": "2.0", 
             "CameraInit": "9.0", 
             "SfMTransform": "3.0", 
-            "PanoramaMerging": "1.0", 
+            "PanoramaPostProcessing": "1.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
             "PanoramaPrepareImages": "1.1", 
@@ -35,19 +35,6 @@
             "nodeType": "LdrToHdrMerge", 
             "position": [
                 800, 
-                0
-            ]
-        }, 
-        "ImageProcessing_1": {
-            "inputs": {
-                "extension": "exr", 
-                "fillHoles": true, 
-                "input": "{PanoramaMerging_1.outputPanorama}", 
-                "fixNonFinite": true
-            }, 
-            "nodeType": "ImageProcessing", 
-            "position": [
-                3000, 
                 0
             ]
         }, 
@@ -116,14 +103,14 @@
                 0
             ]
         }, 
-        "PanoramaSeams_1": {
+        "PanoramaMerging_1": {
             "inputs": {
-                "input": "{PanoramaWarping_1.input}", 
-                "warpingFolder": "{PanoramaWarping_1.output}"
+                "compositingFolder": "{PanoramaCompositing_1.output}", 
+                "input": "{PanoramaCompositing_1.input}"
             }, 
-            "nodeType": "PanoramaSeams", 
+            "nodeType": "PanoramaMerging", 
             "position": [
-                2400, 
+                2800, 
                 0
             ]
         }, 
@@ -131,7 +118,7 @@
             "inputs": {
                 "warpingFolder": "{PanoramaSeams_1.warpingFolder}", 
                 "labels": "{PanoramaSeams_1.output}", 
-                "input": "{PanoramaSeams_1.input}"
+                "input": "{PanoramaSeams_1.outputSfm}"
             }, 
             "nodeType": "PanoramaCompositing", 
             "position": [
@@ -158,6 +145,17 @@
                 0
             ]
         }, 
+        "PanoramaPostProcessing_1": {
+            "inputs": {
+                "inputPanorama": "{PanoramaMerging_1.outputPanorama}", 
+                "fillHoles": true
+            }, 
+            "nodeType": "PanoramaPostProcessing", 
+            "position": [
+                3005, 
+                -19
+            ]
+        }, 
         "PanoramaPrepareImages_1": {
             "inputs": {
                 "input": "{CameraInit_1.output}"
@@ -179,14 +177,14 @@
                 0
             ]
         }, 
-        "PanoramaMerging_1": {
+        "PanoramaSeams_1": {
             "inputs": {
-                "compositingFolder": "{PanoramaCompositing_1.output}", 
-                "input": "{PanoramaCompositing_1.input}"
+                "input": "{PanoramaWarping_1.input}", 
+                "warpingFolder": "{PanoramaWarping_1.output}"
             }, 
-            "nodeType": "PanoramaMerging", 
+            "nodeType": "PanoramaSeams", 
             "position": [
-                2800, 
+                2400, 
                 0
             ]
         }, 

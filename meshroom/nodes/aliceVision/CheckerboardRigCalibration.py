@@ -16,7 +16,7 @@ Calibrate relative pose of camera in the rig using previously detected checkerbo
     inputs = [
         desc.File(
             name='inputSfmData',
-            label='First input',
+            label='Rig SfmData',
             description="SfM Data File",
             value='',
             uid=[0],

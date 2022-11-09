@@ -31,7 +31,7 @@ FocusScope {
             selectByMouse: true
             selectionColor: activePalette.highlight
             color: activePalette.text
-            text: node.documentation
+            text: node ? node.documentation : ""
             wrapMode: TextEdit.Wrap
         }
     }

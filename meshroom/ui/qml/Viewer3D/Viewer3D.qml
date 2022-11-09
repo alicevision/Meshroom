@@ -231,6 +231,8 @@ FocusScope {
                 renderMode: Viewer3DSettings.renderMode
                 // Picking to set focus point (camera view center)
                 // Only activate it when a double click may happen or when the 'Control' key is pressed
+                // If 'Control' is pressed, then cameraController.pickingActive is true
+                // If a first click has happened and a second one might occur, then doubleClickTimer.running is true
                 pickingEnabled: cameraController.pickingActive || doubleClickTimer.running
                 camera: cameraSelector.camera
 
@@ -245,8 +247,8 @@ FocusScope {
                     }
                 ]
 
-                onPressed: function (pick) {
-                    if(pick.button == Qt.LeftButton)
+                onPickerPressed: function (pick) {
+                    if (pick.button == Qt.LeftButton)
                     {
                         mainCamera.viewCenter = pick.worldIntersection;
                     }

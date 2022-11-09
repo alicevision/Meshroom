@@ -33,7 +33,7 @@ Entity {
         return false;
     }
 
-    signal pressed(var pick)
+    signal pickerPressed(var pick)
     signal loadRequest(var idx)
 
     QtObject {
@@ -337,9 +337,21 @@ Entity {
 
                 components: [
                     ObjectPicker {
-                        enabled: mediaLoader.enabled && pickingEnabled
+                        property var pickerActivatedTs: undefined
+
+                        enabled: { pickerActivatedTs = Date.now(); return mediaLoader.enabled && pickingEnabled }
+                        dragEnabled: false
                         hoverEnabled: false
-                        onPressed: function (pick) { root.pressed(pick) }
+                        onPressed: function (pick) {
+                            /* Workaround to make sure that the pickerPressed() signal is not emitted on the first click.
+                               In Qt6, the ObjectPicker's pressed() signal is emitted although the object is disabled, but
+                               we only want to react to the one that's emitted AFTER the object has been enabled (on the
+                               second click). 15ms is enough to ignore the pressed() signal on the first click and properly
+                               react on the second one. */
+                            if ((mediaLoader.enabled && pickingEnabled) && Date.now() - pickerActivatedTs >= 15) {
+                                root.pickerPressed(pick)
+                            }
+                        }
                     }
                 ]
             }

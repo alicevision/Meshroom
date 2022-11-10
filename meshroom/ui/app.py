@@ -343,8 +343,13 @@ class MeshroomApp(QApplication):
             }
         ]
 
+    def _default8bitViewerEnabled(self):
+        return bool(os.environ.get("MESHROOM_USE_8BIT_VIEWER", False))
+
+
     licensesModel = Property("QVariantList", _licensesModel, constant=True)
     pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
     pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
+    default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)

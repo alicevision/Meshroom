@@ -117,7 +117,7 @@ Item {
         return mapToItem(draggable, mouseArea.width / 2, mouseArea.height / 2)
     }
 
-    Keys.onPressed: {
+    Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             fit();
         } 

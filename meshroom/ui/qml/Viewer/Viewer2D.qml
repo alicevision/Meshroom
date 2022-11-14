@@ -398,15 +398,47 @@ FocusScope {
                     }
 
                     // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-
-                        switch (orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
+                    transform: [
+                        Rotation {
+                            angle: {
+                                var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                                switch(orientation) {
+                                    case "3":
+                                        return 180;
+                                    case "4":
+                                        return 180;
+                                    case "5":
+                                        return 90;
+                                    case "6": 
+                                        return 90;
+                                    case "7":
+                                        return -90;
+                                    case "8": 
+                                        return -90;
+                                    default: 
+                                        return 0;
+                                }
+                            }
+                        },
+                        Scale{
+                            xScale : {
+                                var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                                switch(orientation) {
+                                    case "2":
+                                        return -1;
+                                    case "4":
+                                        return -1;
+                                    case "5":
+                                        return -1;
+                                    case "7":
+                                        return -1;
+                                    default: 
+                                        return 1;
+                                }
+                            }
+                            origin.x: width / 2
                         }
-                    }
+                    ]
 
                     onActiveChanged: {
                         if (active) {
@@ -521,15 +553,49 @@ FocusScope {
                     active: displayFeatures.checked
                     property var activeNode: _reconstruction.activeNodes.get("FeatureExtraction").node
 
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
+                    transform: [
+                        Rotation {
+                            angle: {
+                                var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                                switch(orientation) {
+                                    case "3":
+                                        return 180;
+                                    case "4":
+                                        return 180;
+                                    case "5":
+                                        return 90;
+                                    case "6": 
+                                        return 90;
+                                    case "7":
+                                        return -90;
+                                    case "8": 
+                                        return -90;
+                                    default: 
+                                        return 0;
+                                }
+                            }
+                        },
+                        Scale{
+                            xScale : {
+                                var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                                switch(orientation) {
+                                    case "2":
+                                        return -1;
+                                    case "4":
+                                        return -1;
+                                    case "5":
+                                        return -1;
+                                    case "7":
+                                        return -1;
+                                    default: 
+                                        return 1;
+                                }
+                            }
+                            origin.x: width / 2
                         }
-                    }
+                    ]
+
+
                     x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
                     y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
 
@@ -555,16 +621,50 @@ FocusScope {
                     property var activeNode: _reconstruction.activeNodes.get("PanoramaInit").node
                     active: (displayFisheyeCircleLoader.checked && activeNode)
 
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
+                    
 
+                    transform: [
+                        Rotation {
+                            angle: {
+                                var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                                switch(orientation) {
+                                    case "3":
+                                        return 180;
+                                    case "4":
+                                        return 180;
+                                    case "5":
+                                        return 90;
+                                    case "6": 
+                                        return 90;
+                                    case "7":
+                                        return -90;
+                                    case "8": 
+                                        return -90;
+                                    default: 
+                                        return 0;
+                                }
+                            }
+                        },
+                        Scale{
+                            xScale : {
+                                var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                                switch(orientation) {
+                                    case "2":
+                                        return -1;
+                                    case "4":
+                                        return -1;
+                                    case "5":
+                                        return -1;
+                                    case "7":
+                                        return -1;
+                                    default: 
+                                        return 1;
+                                }
+                            }
+                            origin.x: width / 2
+                        }
+                    ]
+                    
                     sourceComponent: CircleGizmo {
                         property bool useAuto: activeNode.attribute("estimateFisheyeCircle").value
                         readOnly: useAuto

@@ -373,10 +373,10 @@ FocusScope {
                     active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
-                    property var fittedOnce: false
-                    property var previousWidth: 0
-                    property var previousHeight: 0
-                    onHeightChanged: {
+                    property bool fittedOnce: false
+                    property int previousWidth: 0
+                    property int previousHeight: 0
+                    onWidthChanged: {
                         /* Image size is not updated through a single signal with the floatImage viewer, unlike
                          * the simple QML image viewer: instead of updating straight away the width and height to x and
                          * y, the emitted signals look like:
@@ -388,7 +388,7 @@ FocusScope {
                          * group has already been auto-fitted. If we change the group of images (when another project is
                          * opened, for example, and the images have a different size), then another auto-fit needs to be
                          * performed */
-                        if ((!fittedOnce && imgContainer.image.status == Image.Ready && imgContainer.image.height > 0) ||
+                        if ((!fittedOnce && imgContainer.image.status == Image.Ready && imgContainer.image.width > 0) ||
                             (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
                             fit();
                             fittedOnce = true;

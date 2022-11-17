@@ -173,7 +173,9 @@ Panel {
             Connections {
                 target: _reconstruction
                 onSelectedViewIdChanged: {
-                    grid.updateCurrentIndexFromSelectionViewId()
+                    if (_reconstruction.selectedViewId > -1) {
+                        grid.updateCurrentIndexFromSelectionViewId()
+                    }
                 }
             }
             function makeCurrentItemVisible()
@@ -183,12 +185,12 @@ Panel {
             function updateCurrentIndexFromSelectionViewId()
             {
                 var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
-                if(idx >= 0 && grid.currentIndex != idx) {
+                if (idx >= 0 && grid.currentIndex != idx) {
                     grid.currentIndex = idx
                 }
             }
-            onCurrentIndexChanged: {
-                if(grid.updateSelectedViewFromGrid) {
+            onCurrentItemChanged: {
+                if (grid.updateSelectedViewFromGrid && grid.currentItem) {
                     _reconstruction.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
                 }
             }

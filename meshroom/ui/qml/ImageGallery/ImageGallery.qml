@@ -204,7 +204,12 @@ Panel {
                 id: sortedModel
                 model: m.viewpoints
                 sortRole: "path.basename"
-                filters: [
+                filters: displayViewIdsAction.checked ? filtersWithViewIds : filtersBasic
+                property var filtersBasic: [
+                    {role: "path", value: searchBar.text},
+                    {role: "viewId.isReconstructed", value: reconstructionFilter}
+                ]
+                property var filtersWithViewIds:  [
                     [
                         {role: "path", value: searchBar.text}, 
                         {role: "viewId.asString", value: searchBar.text}

@@ -1597,6 +1597,19 @@ def nodeFactory(nodeDict, name=None, template=False):
                     sorted([attr.name for attr in nodeDesc.outputs]) != sorted(outputs.keys())):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
 
+            # check whether there are any internal attributes that are invalidating in the node description: if there
+            # are, then check that these internal attributes are part of nodeDict; if they are not, a compatibility
+            # issue must be raised to warn the user, as this will automatically change the node's UID
+            if not template:
+                invalidatingIntInputs = []
+                for attr in nodeDesc.internalInputs:
+                    if attr.uid == [0]:
+                        invalidatingIntInputs.append(attr.name)
+                for attr in invalidatingIntInputs:
+                    if attr not in internalInputs.keys():
+                        compatibilityIssue = CompatibilityIssue.DescriptionConflict
+                        break
+
             # verify that all inputs match their descriptions
             for attrName, value in inputs.items():
                 if not CompatibilityNode.attributeDescFromName(nodeDesc.inputs, attrName, value):

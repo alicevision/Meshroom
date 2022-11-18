@@ -710,7 +710,8 @@ class UIGraph(QObject):
         """ Upgrade all upgradable CompatibilityNode instances in the graph. """
         with self.groupedGraphModification("Upgrade all Nodes"):
             nodes = [n for n in self._graph._compatibilityNodes.values() if n.canUpgrade]
-            for node in nodes:
+            sortedNodes = sorted(nodes, key=lambda x: x.name)
+            for node in sortedNodes:
                 self.upgradeNode(node)
 
     @Slot()

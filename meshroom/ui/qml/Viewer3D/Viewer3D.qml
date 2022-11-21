@@ -198,11 +198,6 @@ FocusScope {
                                         buffers : ClearBuffers.ColorDepthBuffer
                                         RenderStateSet {
                                             renderStates: [
-                                                // TODO: fix "RHI Unhandled render state class Qt3DRender::Render::PointSize"
-                                                PointSize {
-                                                    sizeMode: Viewer3DSettings.fixedPointSize ? PointSize.Fixed : PointSize.Programmable
-                                                    value: Viewer3DSettings.pointSize
-                                                },
                                                 DepthTest { depthFunction: DepthTest.Less }
                                             ]
                                         }

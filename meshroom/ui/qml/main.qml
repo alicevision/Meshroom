@@ -966,11 +966,22 @@ ApplicationWindow {
                         padding: 2
                         enabled: true
                         ToolTip {
-                            text: "Auto-Refresh Nodes Status For External Changes.\n\n" +
-                                  "Check if the status of a node is changed by another instance\n" +
-                                  "on the same network, such as when computing in render farm."
+                            id: filePollerTooltip
+                            property string title: "Auto-Refresh Nodes Status For External Changes. "
+                            property string description: "Check if the status of a node is changed by another instance on the same network, " +
+                                                         "such as when computing in render farm."
+                            text: {
+                                var status = ""
+                                if (_reconstruction.filePollerRefresh === 0)
+                                    status = "Enabled"
+                                else if (_reconstruction.filePollerRefresh === 2)
+                                    status = "Minimal"
+                                else
+                                    status = "Disabled"
+                                return title + "(Current: " + status + ")\n\n" + description
+                            }
                             visible: filePollerRefreshStatus.hovered
-                            contentWidth: 400
+                            contentWidth: 420
                         }
                         onClicked: {
                             refreshFilesMenu.open()
@@ -997,6 +1008,7 @@ ApplicationWindow {
                                     // Prevents cases where the user unchecks the currently checked option
                                     enableAutoRefresh.checked = true
                                     filePollerRefreshStatus.text = MaterialIcons.published_with_changes
+                                    filePollerTooltip.text = filePollerTooltip.title + "(Current: Enabled)\n\n" + filePollerTooltip.description
                                 }
                             }
                             MenuItem {
@@ -1016,6 +1028,7 @@ ApplicationWindow {
                                     // Prevents cases where the user unchecks the currently checked option
                                     disableAutoRefresh.checked = true
                                     filePollerRefreshStatus.text = MaterialIcons.sync_disabled
+                                    filePollerTooltip.text = filePollerTooltip.title + "(Current: Disabled)\n\n" + filePollerTooltip.description
                                 }
                             }
                             MenuItem {
@@ -1035,6 +1048,7 @@ ApplicationWindow {
                                     // Prevents cases where the user unchecks the currently checked option
                                     minimalAutoRefresh.checked = true
                                     filePollerRefreshStatus.text = MaterialIcons.sync
+                                    filePollerTooltip.text = filePollerTooltip.title + "(Current: Minimal)\n\n" + filePollerTooltip.description
                                 }
                             }
                         }

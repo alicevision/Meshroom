@@ -740,6 +740,7 @@ QtObject {
     readonly property string priority_high: "\ue645"
     readonly property string _public: "\ue80b"
     readonly property string publish: "\ue255"
+    readonly property string published_with_changes: "\uf232"
     readonly property string query_builder: "\ue8ae"
     readonly property string question_answer: "\ue8af"
     readonly property string queue: "\ue03c"

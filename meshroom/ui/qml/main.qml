@@ -954,7 +954,14 @@ ApplicationWindow {
                     }
                     MaterialToolButton {
                         id: filePollerRefreshStatus
-                        text: (_reconstruction.filePollerRefresh === 0 || _reconstruction.filePollerRefresh === 2) ? MaterialIcons.sync : MaterialIcons.sync_disabled
+                        text: {
+                            if (_reconstruction.filePollerRefresh === 0)
+                                return MaterialIcons.published_with_changes
+                            else if (_reconstruction.filePollerRefresh === 2)
+                                return MaterialIcons.sync
+                            else
+                                return MaterialIcons.sync_disabled
+                        }
                         font.pointSize: 11
                         padding: 2
                         enabled: true
@@ -989,7 +996,7 @@ ApplicationWindow {
                                     }
                                     // Prevents cases where the user unchecks the currently checked option
                                     enableAutoRefresh.checked = true
-                                    filePollerRefreshStatus.text = MaterialIcons.sync
+                                    filePollerRefreshStatus.text = MaterialIcons.published_with_changes
                                 }
                             }
                             MenuItem {

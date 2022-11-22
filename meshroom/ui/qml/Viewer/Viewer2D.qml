@@ -665,6 +665,7 @@ FocusScope {
                             text: MaterialIcons.close
                             ToolTip.text: "Clear node"
                             enabled: root.displayedNode
+                            visible: root.displayedNode
                             onClicked: {
                                 root.displayedNode = null
                             }

@@ -1157,12 +1157,12 @@ FocusScope {
                             property string name: names[currentIndex]
 
                             model: names.map(n => (n == "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label)
-                            enabled: count > 0
+                            enabled: count > 1
 
                             FontMetrics {
                                 id: fontMetrics
                             }
-                            Layout.preferredWidth: model.reduce((acc, label) => Math.max(acc, fontMetrics.boundingRect(label).width), 0) + 3.0*Qt.application.font.pixelSize
+                            Layout.preferredWidth: model.reduce((acc, label) => Math.max(acc, fontMetrics.boundingRect(label).width), 0) + 3.0 * Qt.application.font.pixelSize
                         }
 
                         MaterialToolButton {

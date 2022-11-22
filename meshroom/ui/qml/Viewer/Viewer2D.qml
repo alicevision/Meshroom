@@ -281,6 +281,8 @@ FocusScope {
         onSelectedViewIdChanged: {
             root.source = getImageFile();
             root.metadata = getMetadata();
+            if (useExternal)
+                useExternal = false;
         }
     }
 

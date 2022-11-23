@@ -141,14 +141,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 uid=[0],
             ),
             desc.IntParam(
-                name='sgmMaxSideXY',
-                label='Max Side',
-                description='Max side in pixels used to automatically decide for sgmScale/sgmStep if not defined.',
-                value=700,
-                range=(-1, 1000, 1),
-                uid=[0],
-            ),
-            desc.IntParam(
                 name='sgmMaxTCamsPerTile',
                 label='Max Nb Neighbour Cameras Per Tile',
                 description='Maximum number of neighbour cameras.',

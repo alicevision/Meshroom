@@ -602,7 +602,7 @@ FocusScope {
                     // FisheyeCircleViewer: display fisheye circle
                     // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
                     Loader {
-                        anchors.left: imgContainer.left
+                        anchors.centerIn: parent
                         property var activeNode: _reconstruction.activeNodes.get("PanoramaInit").node
                         active: (displayFisheyeCircleLoader.checked && activeNode)
 

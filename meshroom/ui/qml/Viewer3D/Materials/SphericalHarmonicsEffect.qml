@@ -4,7 +4,6 @@ import Qt3D.Render 2.4
 Effect {
     id: root
 
-
     parameters: [
         Parameter { name: "shCoeffs[0]"; value: [] },
         Parameter { name: "displayNormals"; value: false }
@@ -13,19 +12,18 @@ Effect {
     techniques: [
         Technique {
             graphicsApiFilter {
-                api: GraphicsApiFilter.OpenGL
+                api: GraphicsApiFilter.RHI
                 profile: GraphicsApiFilter.CoreProfile
-                majorVersion: 3
-                minorVersion: 1
+                majorVersion: 1
+                minorVersion: 0
             }
-
 
             filterKeys: [ FilterKey { name: "renderingStyle"; value: "forward" } ]
 
             renderPasses: [
                 RenderPass {
                     shaderProgram: ShaderProgram {
-                        vertexShaderCode:   loadSource(Qt.resolvedUrl("shaders/SphericalHarmonics.vert"))
+                        vertexShaderCode: loadSource(Qt.resolvedUrl("shaders/SphericalHarmonics.vert"))
                         fragmentShaderCode: loadSource(Qt.resolvedUrl("shaders/SphericalHarmonics.frag"))
 
                     }

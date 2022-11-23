@@ -364,255 +364,315 @@ FocusScope {
             }
 
             Item {
-                id: imgContainer
-                transformOrigin: Item.TopLeft
+                id: imgContainerTransformer
 
-                // qtAliceVision Image Viewer
-                Loader {
-                    id: floatImageViewerLoader
-                    active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
-                    visible: (floatImageViewerLoader.status === Loader.Ready) && active
-                    anchors.centerIn: parent
-                    property var fittedOnce: false
-                    property var previousWidth: 0
-                    property var previousHeight: 0
-                    onHeightChanged: {
-                        /* Image size is not updated through a single signal with the floatImage viewer, unlike
-                         * the simple QML image viewer: instead of updating straight away the width and height to x and
-                         * y, the emitted signals look like:
-                         * - width = -1, height = -1
-                         * - width = x, height = -1
-                         * - width = x, height = y
-                         * We want to do the auto-fit on the first display of an image from the group, and then keep its
-                         * scale when displaying another image from the group, so we need to know if an image in the
-                         * group has already been auto-fitted. If we change the group of images (when another project is
-                         * opened, for example, and the images have a different size), then another auto-fit needs to be
-                         * performed */
-                        if ((!fittedOnce && imgContainer.image.status == Image.Ready && imgContainer.image.height > 0) ||
-                            (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
-                            fit();
-                            fittedOnce = true;
-                            previousWidth = width;
-                            previousHeight = height;
+                transform: [
+                    Scale {
+                        xScale: {
+                            
+                            var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                            switch (orientation)
+                            {
+                            case "2":
+                            case "4":
+                            case "5":
+                            case "7":
+                                return -1;
+                            default:
+                                return 1;
+                            }
+                        }
+                    },
+                    Translate {
+                        x: {
+                            var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                            switch (orientation)
+                            {
+                            case "2":
+                            case "4":
+                            case "5":
+                            case "7":
+                                return imgLayout.width;
+                            default:
+                                return 0;
+                            }
                         }
                     }
+                ]
 
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                Item {
+                    id: imgContainer
+                    transformOrigin: Item.TopLeft
 
-                        switch (orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
+                    // qtAliceVision Image Viewer
+                    Loader {
+                        id: floatImageViewerLoader
+                        active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
+                        visible: (floatImageViewerLoader.status === Loader.Ready) && active
+                        anchors.centerIn: parent
+                        property var fittedOnce: false
+                        property var previousWidth: 0
+                        property var previousHeight: 0
+                        onHeightChanged: {
+                            /* Image size is not updated through a single signal with the floatImage viewer, unlike
+                            * the simple QML image viewer: instead of updating straight away the width and height to x and
+                            * y, the emitted signals look like:
+                            * - width = -1, height = -1
+                            * - width = x, height = -1
+                            * - width = x, height = y
+                            * We want to do the auto-fit on the first display of an image from the group, and then keep its
+                            * scale when displaying another image from the group, so we need to know if an image in the
+                            * group has already been auto-fitted. If we change the group of images (when another project is
+                            * opened, for example, and the images have a different size), then another auto-fit needs to be
+                            * performed */
+                            if ((!fittedOnce && imgContainer.image.status == Image.Ready && imgContainer.image.height > 0) ||
+                                (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
+                                fit();
+                                fittedOnce = true;
+                                previousWidth = width;
+                                previousHeight = height;
+                            }
                         }
+
+                        // handle rotation/position based on available metadata
+                        rotation: {
+                            var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+
+                            switch (orientation) {
+                                case "3": 
+                                case "4":
+                                    return 180;
+                                case "5": 
+                                case "6":
+                                    return 90;
+                                case "7": 
+                                case "8":
+                                    return -90;
+                                default: return 0;
+                            }
+                        }
+
+                        onActiveChanged: {
+                            if (active) {
+                                // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                                // Note: It does not work to use previously created component, so we re-create it with setSource.
+                                // floatViewerComp.createObject(floatImageViewerLoader, {
+                                setSource("FloatImage.qml", {
+                                    'source':  Qt.binding(function() { return getImageFile(); }),
+                                    'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
+                                    'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
+                                    'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
+                                    'isPrincipalPointsDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayPrincipalPoint;}),
+                                    'surface.displayGrid' :  Qt.binding(function(){ return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid;}),
+                                    'surface.gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
+                                    'surface.gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
+                                    'surface.subdivisions' : Qt.binding(function(){ return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue;}),
+                                    'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
+                                    'sfmRequired': Qt.binding(function(){ return displayLensDistortionViewer.checked ? true : false;}),
+                                    'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
+                                    'canBeHovered': false,
+                                    'idView': Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                    'cropFisheye': false
+                                    })
+                            } else {
+                                    // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                                    setSource("", {})
+                                    fittedOnce = false
+                            }
+                        }
+
                     }
 
-                    onActiveChanged: {
-                        if (active) {
-                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-                            // Note: It does not work to use previously created component, so we re-create it with setSource.
-                            // floatViewerComp.createObject(floatImageViewerLoader, {
-                            setSource("FloatImage.qml", {
-                                'source':  Qt.binding(function() { return getImageFile(); }),
-                                'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
-                                'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
-                                'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue; }),
-                                'isPrincipalPointsDisplayed' : Qt.binding(function(){ return lensDistortionImageToolbar.displayPrincipalPoint;}),
-                                'surface.displayGrid' :  Qt.binding(function(){ return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid;}),
-                                'surface.gridOpacity' : Qt.binding(function(){ return lensDistortionImageToolbar.opacityValue;}),
-                                'surface.gridColor' : Qt.binding(function(){ return lensDistortionImageToolbar.color;}),
-                                'surface.subdivisions' : Qt.binding(function(){ return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue;}),
-                                'viewerTypeString': Qt.binding(function(){ return displayLensDistortionViewer.checked ? "distortion" : "hdr";}),
-                                'sfmRequired': Qt.binding(function(){ return displayLensDistortionViewer.checked ? true : false;}),
-                                'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
-                                'canBeHovered': false,
-                                'idView': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                                'cropFisheye': false
+                    // qtAliceVision Panorama Viewer
+                    Loader {
+                        id: panoramaViewerLoader
+                        active: root.aliceVisionPluginAvailable && root.usePanoramaViewer && _reconstruction.activeNodes.get('sfm').node
+                        visible: (panoramaViewerLoader.status === Loader.Ready) && active
+                        anchors.centerIn: parent
+
+                        onActiveChanged: {
+                            if(active) {
+                                setSource("PanoramaViewer.qml", {
+                                    'subdivisionsPano': Qt.binding(function(){ return panoramaViewerToolbar.subdivisionsValue;}),
+                                    'cropFisheyePano': Qt.binding(function(){ return root.cropFisheye;}),
+                                    'downscale': Qt.binding(function(){ return panoramaViewerToolbar.downscaleValue;}),
+                                    'isEditable': Qt.binding(function(){ return panoramaViewerToolbar.enableEdit;}),
+                                    'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
+                                    'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;}),
+                                    'mouseMultiplier': Qt.binding(function(){ return panoramaViewerToolbar.mouseSpeed;}),
+                                    'msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready
+                                                                            && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                                 })
-                          } else {
+                            } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
                                 setSource("", {})
-                                fittedOnce = false
-                          }
-                    }
-
-                }
-
-                // qtAliceVision Panorama Viewer
-                Loader {
-                    id: panoramaViewerLoader
-                    active: root.aliceVisionPluginAvailable && root.usePanoramaViewer && _reconstruction.activeNodes.get('sfm').node
-                    visible: (panoramaViewerLoader.status === Loader.Ready) && active
-                    anchors.centerIn: parent
-
-                    onActiveChanged: {
-                        if(active) {
-                            setSource("PanoramaViewer.qml", {
-                                'subdivisionsPano': Qt.binding(function(){ return panoramaViewerToolbar.subdivisionsValue;}),
-                                'cropFisheyePano': Qt.binding(function(){ return root.cropFisheye;}),
-                                'downscale': Qt.binding(function(){ return panoramaViewerToolbar.downscaleValue;}),
-                                'isEditable': Qt.binding(function(){ return panoramaViewerToolbar.enableEdit;}),
-                                'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
-                                'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;}),
-                                'mouseMultiplier': Qt.binding(function(){ return panoramaViewerToolbar.mouseSpeed;}),
-                                'msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready
-                                                                           && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
-                            })
-                        } else {
-                            // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
-                            setSource("", {})
-                            displayPanoramaViewer.checked = false;
+                                displayPanoramaViewer.checked = false;
+                            }
                         }
                     }
-                }
 
-                // Simple QML Image Viewer (using Qt or qtOIIO to load images)
-                Loader {
-                    id: qtImageViewerLoader
-                    active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
-                    anchors.centerIn: parent
-                    sourceComponent: Image {
-                        id: qtImageViewer
-                        asynchronous: true
-                        smooth: false
-                        fillMode: Image.PreserveAspectFit
-                        autoTransform: true
-                        onWidthChanged: if(status==Image.Ready) fit()
-                        source: getImageFile()
-                        onStatusChanged: {
-                            // update cache source when image is loaded
-                            if(status === Image.Ready)
-                                qtImageViewerCache.source = source
-                        }
-
-                        // Image cache of the last loaded image
-                        // Only visible when the main one is loading, to maintain a displayed image for smoother transitions
-                        Image {
-                            id: qtImageViewerCache
-
-                            anchors.fill: parent
+                    // Simple QML Image Viewer (using Qt or qtOIIO to load images)
+                    Loader {
+                        id: qtImageViewerLoader
+                        active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
+                        anchors.centerIn: parent
+                        sourceComponent: Image {
+                            id: qtImageViewer
                             asynchronous: true
-                            smooth: parent.smooth
-                            fillMode: parent.fillMode
-                            autoTransform: parent.autoTransform
-
-                            visible: qtImageViewer.status === Image.Loading
-                        }
-                    }
-                }
-
-                property var image: {
-                    if (floatImageViewerLoader.active)
-                        floatImageViewerLoader.item
-                    else if (panoramaViewerLoader.active)
-                        panoramaViewerLoader.item
-                    else
-                        qtImageViewerLoader.item
-                }
-                width: image ? (image.width > 0 ? image.width : 1) : 1
-                height: image ? (image.height > 0 ? image.height : 1) : 1
-                scale: 1.0
-
-                // FeatureViewer: display view extracted feature points
-                // note: requires QtAliceVision plugin - use a Loader to evaluate plugin availability at runtime
-                Loader {
-                    id: featuresViewerLoader
-                    active: displayFeatures.checked
-                    property var activeNode: _reconstruction.activeNodes.get("FeatureExtraction").node
-
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
-                    x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
-                    y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
-
-                    onActiveChanged: {
-                        if(active) {
-
-                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
-                            setSource("FeaturesViewer.qml", {
-                                'model': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : ""; }),
-                                'features': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null; }),
-                            })
-                        } else {
-                            // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
-                            setSource("", {})
-                        }
-                    }
-                }
-
-                // FisheyeCircleViewer: display fisheye circle
-                // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
-                Loader {
-                    anchors.centerIn: parent
-                    property var activeNode: _reconstruction.activeNodes.get("PanoramaInit").node
-                    active: (displayFisheyeCircleLoader.checked && activeNode)
-
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
-
-                    sourceComponent: CircleGizmo {
-                        property bool useAuto: activeNode.attribute("estimateFisheyeCircle").value
-                        readOnly: useAuto
-                        visible: (!useAuto) || activeNode.isComputed
-                        property real userFisheyeRadius: activeNode.attribute("fisheyeRadius").value
-                        property variant fisheyeAutoParams: _reconstruction.getAutoFisheyeCircle(activeNode)
-
-                        x: useAuto ? fisheyeAutoParams.x : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
-                        y: useAuto ? fisheyeAutoParams.y : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
-                        radius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
-
-                        border.width: Math.max(1, (3.0 / imgContainer.scale))
-                        onMoved: {
-                            if(!useAuto)
-                            {
-                                _reconstruction.setAttribute(
-                                    activeNode.attribute("fisheyeCenterOffset"),
-                                    JSON.stringify([x, y])
-                                );
+                            smooth: false
+                            fillMode: Image.PreserveAspectFit
+                            autoTransform: true
+                            onWidthChanged: if(status==Image.Ready) fit()
+                            source: getImageFile()
+                            onStatusChanged: {
+                                // update cache source when image is loaded
+                                if(status === Image.Ready)
+                                    qtImageViewerCache.source = source
                             }
-                        }
-                        onIncrementRadius: {
-                            if(!useAuto)
-                            {
-                                _reconstruction.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
+
+                            // Image cache of the last loaded image
+                            // Only visible when the main one is loading, to maintain a displayed image for smoother transitions
+                            Image {
+                                id: qtImageViewerCache
+
+                                anchors.fill: parent
+                                asynchronous: true
+                                smooth: parent.smooth
+                                fillMode: parent.fillMode
+                                autoTransform: parent.autoTransform
+
+                                visible: qtImageViewer.status === Image.Loading
                             }
                         }
                     }
-                }
 
-                // ColorCheckerViewer: display color checker detection results
-                // note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
-                Loader {
-                    id: colorCheckerViewerLoader
-                    anchors.centerIn: parent
-                    property var activeNode: _reconstruction.activeNodes.get("ColorCheckerDetection").node
-                    active: (displayColorCheckerViewerLoader.checked && activeNode)
+                    property var image: {
+                        if (floatImageViewerLoader.active)
+                            floatImageViewerLoader.item
+                        else if (panoramaViewerLoader.active)
+                            panoramaViewerLoader.item
+                        else
+                            qtImageViewerLoader.item
+                    }
+                    width: image ? (image.width > 0 ? image.width : 1) : 1
+                    height: image ? (image.height > 0 ? image.height : 1) : 1
+                    scale: 1.0
+
+                    // FeatureViewer: display view extracted feature points
+                    // note: requires QtAliceVision plugin - use a Loader to evaluate plugin availability at runtime
+                    Loader {
+                        id: featuresViewerLoader
+                        active: displayFeatures.checked
+                        anchors.fill: parent
+                        property var activeNode: _reconstruction.activeNodes.get("FeatureExtraction").node
+            
+                        // handle rotation/position based on available metadata
+                        rotation: {
+                            var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+
+                            switch (orientation) {
+                                case "3": 
+                                case "4":
+                                    return 180;
+                                case "5": 
+                                case "6":
+                                    return 90;
+                                case "7": 
+                                case "8":
+                                    return -90;
+                                default: return 0;
+                            }
+                        }
+
+                        onActiveChanged: {
+                            if(active) {
+
+                                // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                                setSource("FeaturesViewer.qml", {
+                                    'model': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : ""; }),
+                                    'features': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null; }),
+                                })
+                            } else {
+                                // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
+                                setSource("", {})
+                            }
+                        }
+                    }
+
+                    // FisheyeCircleViewer: display fisheye circle
+                    // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
+                    Loader {
+                        anchors.left: imgContainer.left
+                        property var activeNode: _reconstruction.activeNodes.get("PanoramaInit").node
+                        active: (displayFisheyeCircleLoader.checked && activeNode)
+
+                        // handle rotation/position based on available metadata
+                        rotation: {
+                            var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+
+                            switch (orientation) {
+                                case "3": 
+                                case "4":
+                                    return 180;
+                                case "5": 
+                                case "6":
+                                    return 90;
+                                case "7": 
+                                case "8":
+                                    return -90;
+                                default: return 0;
+                            }
+                        }
+
+                        sourceComponent: CircleGizmo {
+                            property bool useAuto: activeNode.attribute("estimateFisheyeCircle").value
+                            readOnly: useAuto
+                            visible: (!useAuto) || activeNode.isComputed
+                            property real userFisheyeRadius: activeNode.attribute("fisheyeRadius").value
+                            property variant fisheyeAutoParams: _reconstruction.getAutoFisheyeCircle(activeNode)
+
+                            x: useAuto ? fisheyeAutoParams.x : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
+                            y: useAuto ? fisheyeAutoParams.y : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
+                            radius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
+
+                            border.width: Math.max(1, (3.0 / imgContainer.scale))
+                            onMoved: {
+                                if(!useAuto)
+                                {
+                                    _reconstruction.setAttribute(
+                                        activeNode.attribute("fisheyeCenterOffset"),
+                                        JSON.stringify([x, y])
+                                    );
+                                }
+                            }
+                            onIncrementRadius: {
+                                if(!useAuto)
+                                {
+                                    _reconstruction.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
+                                }
+                            }
+                        }
+                    }
+
+                    // ColorCheckerViewer: display color checker detection results
+                    // note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
+                    Loader {
+                        id: colorCheckerViewerLoader
+                        anchors.centerIn: parent
+                        property var activeNode: _reconstruction.activeNodes.get("ColorCheckerDetection").node
+                        active: (displayColorCheckerViewerLoader.checked && activeNode)
 
 
-                    sourceComponent: ColorCheckerViewer {
-                        visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
-                        source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
-                        image: imgContainer.image
-                        viewpoint: _reconstruction.selectedViewpoint
-                        zoom: imgContainer.scale
+                        sourceComponent: ColorCheckerViewer {
+                            visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
+                            source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
+                            image: imgContainer.image
+                            viewpoint: _reconstruction.selectedViewpoint
+                            zoom: imgContainer.scale
 
-                        updatePane: function() {
-                            colorCheckerPane.colors = getColors();
+                            updatePane: function() {
+                                colorCheckerPane.colors = getColors();
+                            }
                         }
                     }
                 }

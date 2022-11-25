@@ -1,8 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-// import Qt5Compat.GraphicalEffects  // TODO: uncomment when Qt5Compat is included in PySide (https://bugreports.qt.io/browse/PYSIDE-1957)
-
+import Qt5Compat.GraphicalEffects
 
 import Utils 1.0
 import MaterialIcons 2.2
@@ -141,7 +140,7 @@ Item {
             anchors.fill: nodeContent
             color: Qt.lighter(activePalette.base, 1.4)
             layer.enabled: true
-            // layer.effect: DropShadow { radius: 3; color: shadowColor } // TODO: uncomment when Qt5Compat is included in PySide
+            layer.effect: DropShadow { radius: 3; color: shadowColor }
             radius: 3
             opacity: 0.7
         }
@@ -389,8 +388,6 @@ Item {
                                         property bool isFullyActive: (m.displayParams || object.isLink || object.hasOutputConnections)
                                         width: parent.width
 
-                                        /*
-                                        // TODO: fix crash at start-up with Qt6.4
                                         sourceComponent: AttributePin {
                                             id: inAdvPin
                                             nodeItem: root
@@ -410,7 +407,6 @@ Item {
                                             onChildPinCreated: function(childAttribute, inAdvPin) { attributePinCreated(childAttribute, inAdvPin); }
                                             onChildPinDeleted: function(childAttribute, inAdvPin) { attributePinDeleted(childAttribute, inAdvPin); }
                                         }
-                                        */
                                     }
                                 }
                             }

@@ -217,15 +217,38 @@ Item {
 
             function createNode(nodeType)
             {
-                // add node via the proper command in uigraph
-                var node = uigraph.addNewNode(nodeType, spawnPosition)
-                selectNode(node)
+                // "nodeType" might be a pipeline (artificially added in the "Pipelines" category) instead of a node
+                // If it is not a pipeline to import, then it must be a node
+                if (!importPipeline(nodeType)) {
+                    // Add node via the proper command in uigraph
+                    var node = uigraph.addNewNode(nodeType, spawnPosition)
+                    selectNode(node)
+                }
                 close()
+            }
+
+            function importPipeline(pipeline)
+            {
+                var pipelineNames = []
+                var pipelinePaths = []
+                for (const [_, data] of Object.entries(MeshroomApp.pipelineTemplateFiles)) {
+                    let name = data["name"]
+                    let path = data["path"]
+                    pipelineNames.push(name)
+                    pipelinePaths.push(path)
+                }
+
+                if (pipelineNames.includes(pipeline)) {
+                    var url = Filepath.stringToUrl(pipelinePaths[pipelineNames.indexOf(pipeline)])
+                    uigraph.importProject(url)
+                    return true
+                }
+                return false
             }
 
             function parseCategories()
             {
-                // organize nodes based on their category
+                // Organize nodes based on their category
                 // {"category1": ["node1", "node2"], "category2": ["node3", "node4"]}
                 let categories = {};
                 for (const [name, data] of Object.entries(root.nodeTypesModel)) {
@@ -235,11 +258,19 @@ Item {
                     }
                     categories[category].push(name)
                 }
+
+                // Add list of templates to create pipelines
+                categories["Pipelines"] = [];
+                for (const [_, data] of Object.entries(MeshroomApp.pipelineTemplateFiles)) {
+                    let pipeline = data["name"];
+                    categories["Pipelines"].push(pipeline)
+                }
+
                 return categories
             }
 
             onVisibleChanged: {
-                if(visible) {
+                if (visible) {
                     // when menu is shown,
                     // clear and give focus to the TextField filter
                     searchBar.clear()

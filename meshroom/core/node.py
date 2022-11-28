@@ -779,6 +779,12 @@ class BaseNode(BaseObject):
             if chunk.isAlreadySubmitted():
                 chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
 
+    def clearLocallySubmittedChunks(self):
+        """ Reset all locally submitted chunks to Status.NONE. """
+        for chunk in self._chunks:
+            if chunk.isAlreadySubmitted() and not chunk.isExtern():
+                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+
     def upgradeStatusTo(self, newStatus):
         """
         Upgrade node to the given status and save it on disk.

@@ -284,6 +284,9 @@ class UIGraph(QObject):
         """ Set the internal graph. """
         if self._graph:
             self.stopExecution()
+            # Clear all the locally submitted nodes at once before the graph gets changed, as it won't receive further updates
+            if self._computingLocally:
+                self._graph.clearLocallySubmittedNodes()
             self.clear()
         oldGraph = self._graph
         self._graph = g

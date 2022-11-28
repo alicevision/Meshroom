@@ -1366,6 +1366,11 @@ class Graph(BaseObject):
         for node in self.nodes:
             node.clearSubmittedChunks()
 
+    def clearLocallySubmittedNodes(self):
+        """ Reset the status of already locally submitted nodes to Status.NONE """
+        for node in self.nodes:
+            node.clearLocallySubmittedChunks()
+
     def iterChunksByStatus(self, status):
         """ Iterate over NodeChunks with the given status """
         for node in self.nodes:

@@ -11,6 +11,7 @@ from multiprocessing.pool import ThreadPool
 from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
 
 from meshroom import multiview
+from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge
@@ -454,7 +455,11 @@ class UIGraph(QObject):
 
     def updateGraphComputingStatus(self):
         # update graph computing status
-        computingLocally = any([ch.status.execMode == ExecMode.LOCAL and ch.status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
+        computingLocally = any([
+                                (ch.status.execMode == ExecMode.LOCAL and
+                                ch.status.sessionUid == sessionUid and
+                                ch.status.status in (Status.RUNNING, Status.SUBMITTED))
+                                    for ch in self._sortedDFSChunks])
         submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])
         if self._computingLocally != computingLocally or self._submitted != submitted:
             self._computingLocally = computingLocally

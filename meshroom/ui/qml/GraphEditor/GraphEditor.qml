@@ -214,6 +214,7 @@ Item {
         Menu {
             id: newNodeMenu
             property point spawnPosition
+            property variant menuKeys: Object.keys(root.nodeTypesModel).concat(Object.values(MeshroomApp.pipelineTemplateNames))
 
             function createNode(nodeType)
             {
@@ -324,7 +325,7 @@ Item {
 
             Repeater {
                 id: nodeMenuRepeater
-                model: searchBar.text != "" ? Object.keys(root.nodeTypesModel) : undefined
+                model: searchBar.text != "" ? Object.values(newNodeMenu.menuKeys) : undefined
 
                 // create Menu items from available items
                 delegate: menuItemDelegateComponent

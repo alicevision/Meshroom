@@ -218,6 +218,8 @@ Item {
 
             function createNode(nodeType)
             {
+                uigraph.clearNodeSelection() // Ensures that only the created node / imported pipeline will be selected
+
                 // "nodeType" might be a pipeline (artificially added in the "Pipelines" category) instead of a node
                 // If it is not a pipeline to import, then it must be a node
                 if (!importPipeline(nodeType)) {

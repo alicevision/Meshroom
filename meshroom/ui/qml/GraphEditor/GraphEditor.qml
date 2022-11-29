@@ -229,18 +229,9 @@ Item {
 
             function importPipeline(pipeline)
             {
-                var pipelineNames = []
-                var pipelinePaths = []
-                for (const [_, data] of Object.entries(MeshroomApp.pipelineTemplateFiles)) {
-                    let name = data["name"]
-                    let path = data["path"]
-                    pipelineNames.push(name)
-                    pipelinePaths.push(path)
-                }
-
-                if (pipelineNames.includes(pipeline)) {
-                    var url = Filepath.stringToUrl(pipelinePaths[pipelineNames.indexOf(pipeline)])
-                    uigraph.importProject(url, spawnPosition)
+                if (MeshroomApp.pipelineTemplateNames.includes(pipeline)) {
+                    var url = MeshroomApp.pipelineTemplateFiles[MeshroomApp.pipelineTemplateNames.indexOf(pipeline)]["path"]
+                    uigraph.importProject(Filepath.stringToUrl(url), spawnPosition)
                     return true
                 }
                 return false
@@ -259,12 +250,8 @@ Item {
                     categories[category].push(name)
                 }
 
-                // Add list of templates to create pipelines
-                categories["Pipelines"] = [];
-                for (const [_, data] of Object.entries(MeshroomApp.pipelineTemplateFiles)) {
-                    let pipeline = data["name"];
-                    categories["Pipelines"].push(pipeline)
-                }
+                // Add a "Pipelines" category, filled with the list of templates to create pipelines from the menu
+                categories["Pipelines"] = MeshroomApp.pipelineTemplateNames;
 
                 return categories
             }

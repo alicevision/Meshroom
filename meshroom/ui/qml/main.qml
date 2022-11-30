@@ -970,4 +970,10 @@ ApplicationWindow {
             }
         }
     }
+
+    background: MouseArea {
+        onPressed: {
+            forceActiveFocus();
+        }
+    }
  }

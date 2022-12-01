@@ -27,7 +27,6 @@ class IntrinsicsCalibration(desc.CommandLineNode):
             uid=[0],
         ),
         desc.FloatParam(name="squareSize", label="Square size", description="Square size of checkerboard (mm)", value=0.1, uid=[0], range=(0.0, 1.0, 0.01)),
-        desc.FloatParam(name="distance", label="Distance", description="Distance to grid (mm)", value=1000.0, uid=[0], range=(0.0, 10000.0, 10.0)),
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
@@ -36,14 +35,7 @@ class IntrinsicsCalibration(desc.CommandLineNode):
             values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
             exclusive=True,
             uid=[],
-        ),
-        desc.BoolParam(
-            name='useSimplePinhole',
-            label='use simple pinhole',
-            description='remove distortion for final result',
-            value=True,
-            uid=[0],
-        ),
+        )
     ]
 
     outputs = [

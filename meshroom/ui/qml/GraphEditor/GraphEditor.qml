@@ -240,7 +240,7 @@ Item {
 
                 if (pipelineNames.includes(pipeline)) {
                     var url = Filepath.stringToUrl(pipelinePaths[pipelineNames.indexOf(pipeline)])
-                    uigraph.importProject(url)
+                    uigraph.importProject(url, spawnPosition)
                     return true
                 }
                 return false

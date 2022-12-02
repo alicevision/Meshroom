@@ -1,4 +1,5 @@
 from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue
+from meshroom.core import pyCompatibility, cgroup
 
 from collections.abc import Iterable
 from enum import Enum
@@ -534,6 +535,7 @@ class CommandLineNode(Node):
     commandLineRange = ''
 
     def buildCommandLine(self, chunk):
+
         cmdPrefix = ''
         # if rez available in env, we use it
         if 'REZ_ENV' in os.environ and chunk.node.packageVersion:
@@ -541,10 +543,22 @@ class CommandLineNode(Node):
             alreadyInEnv = os.environ.get('REZ_{}_VERSION'.format(chunk.node.packageName.upper()), "").startswith(chunk.node.packageVersion)
             if not alreadyInEnv:
                 cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get('REZ_ENV'), packageFullName=chunk.node.packageFullName)
+
         cmdSuffix = ''
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
-        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
+
+        cmdMem = ''
+        memSize = cgroup.getCgroupMemorySize()
+        if memSize > 0:
+            cmdMem = ' --maxMemory={memSize}'.format(memSize=memSize)
+
+        cmdCore = ''
+        coresCount = cgroup.getCgroupCpuCount()
+        if coresCount > 0:
+            cmdCore = ' --maxCores={coresCount}'.format(coresCount=coresCount)
+
+        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdMem + cmdCore + cmdSuffix
 
     def stopProcess(self, chunk):
         # the same node could exists several times in the graph and

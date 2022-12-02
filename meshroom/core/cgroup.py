@@ -32,7 +32,7 @@ def getCgroupMemorySize():
         return -1
 
     size = -1
-    filename = f"/sys/fs/cgroup/memory/{cgroup}"
+    filename = f"/sys/fs/cgroup/memory/{cgroup}/memory.limit_in_bytes"
     try:
         with open(filename, "r") as f :
             value = f.read().rstrip("\r\n")

@@ -22,13 +22,7 @@ ALICEVISION_ROOT=/path/to/AliceVision/install/directory
 
 ### Python Environment
 * Windows: Python 3 (>=3.5)
-* Linux: Python 3 (>=3.5) or Python 2 (>= 2.7)
-
-> No Python 2.7 support on Windows ?
->
-> Official Python 2.7 binary package is built with Visual Studio 2008, while PySide2/Qt is built using Visual Studio 2015/2017.
->Therefore, in order to avoid mixing MSVC runtime libraries, Qt does not ship PySide2 wheels for Python 2.7 on Windows (as explained [here](https://wiki.qt.io/Qt_for_Python/Considerations#Missing_Windows_.2F_Python_2.7_release)).
->Note that for using Meshroom in command line mode only (no UI), PySide2 is not required and Python 2.7 would be fine.
+* Linux: Python 3 (>=3.5)
 
 
 To install all the requirements for runtime, development and packaging, simply run:

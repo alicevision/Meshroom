@@ -24,8 +24,3 @@ Meshroom is licensed under the [MPL2 license](LICENSE-MPL2.md).
    [https://github.com/alicevision/qmlAlembic](https://github.com/alicevision/qmlAlembic)  
    Copyright (c) 2018 AliceVision contributors.  
    Distributed under the [MPL2 license](https://opensource.org/licenses/MPL-2.0).
-
-  * __QtOIIO__  
-   [https://github.com/alicevision/QtOIIO](https://github.com/alicevision/QtOIIO)  
-   Copyright (c) 2018 AliceVision contributors.  
-   Distributed under the [MPL2 license](https://opensource.org/licenses/MPL-2.0).  

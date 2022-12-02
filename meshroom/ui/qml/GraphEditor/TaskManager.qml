@@ -39,7 +39,7 @@ Item {
 
     TextMetrics {
         id: nbMetrics
-        text: root.taskManager.nodes.count
+        text: root.taskManager ? root.taskManager.nodes.count : "0"
     }
 
     TextMetrics {
@@ -67,7 +67,7 @@ Item {
         anchors.fill: parent
         ScrollBar.vertical: ScrollBar {}
 
-        model: parent.taskManager.nodes
+        model: parent.taskManager ? parent.taskManager.nodes : null
         spacing: 3
 
         headerPositioning: ListView.OverlayHeader

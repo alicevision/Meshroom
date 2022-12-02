@@ -20,7 +20,7 @@ Item {
     id: root
 
     property variant reconstruction: _reconstruction
-    readonly property variant cameraInits: _reconstruction.cameraInits
+    readonly property variant cameraInits: _reconstruction ? _reconstruction.cameraInits : null
     property bool readOnly: false
     property alias panel3dViewer: panel3dViewerLoader.item
     readonly property Viewer2D viewer2D: viewer2D
@@ -50,7 +50,7 @@ Item {
 
     // Load reconstruction's current SfM file
     function viewSfM() {
-        var activeNode = _reconstruction.activeNodes.get('sfm').node;
+        var activeNode = _reconstruction.activeNodes ? _reconstruction.activeNodes.get('sfm').node : null;
         if(!activeNode)
             return;
         if(panel3dViewerLoader.active) {
@@ -75,9 +75,9 @@ Item {
                 Layout.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
-                cameraInit: reconstruction.cameraInit
-                tempCameraInit: reconstruction.tempCameraInit
-                cameraInitIndex: reconstruction.cameraInitIndex
+                cameraInit: reconstruction ? reconstruction.cameraInit : null
+                tempCameraInit: reconstruction ? reconstruction.tempCameraInit : null
+                cameraInitIndex: reconstruction ? reconstruction.cameraInitIndex : -1
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
             }
@@ -208,7 +208,7 @@ Item {
                         
                         // Load reconstructed model
                         Button {
-                            readonly property var outputAttribute: _reconstruction.texturing ? _reconstruction.texturing.attribute("outputMesh") : null
+                            readonly property var outputAttribute: _reconstruction && _reconstruction.texturing ? _reconstruction.texturing.attribute("outputMesh") : null
                             readonly property bool outputReady: outputAttribute && _reconstruction.texturing.globalStatus === "SUCCESS"
                             readonly property int outputMediaIndex: c_viewer3D.library.find(outputAttribute)
 

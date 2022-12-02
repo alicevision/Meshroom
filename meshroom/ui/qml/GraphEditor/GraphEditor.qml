@@ -234,7 +234,9 @@ Item {
             {
                 if (MeshroomApp.pipelineTemplateNames.includes(pipeline)) {
                     var url = MeshroomApp.pipelineTemplateFiles[MeshroomApp.pipelineTemplateNames.indexOf(pipeline)]["path"]
-                    uigraph.importProject(Filepath.stringToUrl(url), spawnPosition)
+                    var nodes = uigraph.importProject(Filepath.stringToUrl(url), spawnPosition)
+                    uigraph.selectedNode = nodes[0]
+                    uigraph.selectNodes(nodes)
                     return true
                 }
                 return false

@@ -245,7 +245,7 @@ class ImportProjectCommand(GraphCommand):
             else:
                 self.graph.node(node.name).position = Position(node.x, node.y + lowestY + self.yOffset)
 
-        return status
+        return importedNodes
 
     def undoImpl(self):
         for nodeName in self.importedNames:

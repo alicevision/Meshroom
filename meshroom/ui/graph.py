@@ -353,8 +353,8 @@ class UIGraph(QObject):
         self.setGraph(g)
         return status
 
-    @Slot(QUrl, result=bool)
-    @Slot(QUrl, QPoint, result=bool)
+    @Slot(QUrl, result="QVariantList")
+    @Slot(QUrl, QPoint, result="QVariantList")
     def importProject(self, filepath, position=None):
         if isinstance(filepath, (QUrl)):
             # depending how the QUrl has been initialized,

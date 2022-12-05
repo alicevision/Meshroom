@@ -221,10 +221,11 @@ class ImportProjectCommand(GraphCommand):
     """
     Handle the import of a project into a Graph.
     """
-    def __init__(self, graph, filepath=None, yOffset=0, parent=None):
+    def __init__(self, graph, filepath=None, position=None, yOffset=0, parent=None):
         super(ImportProjectCommand, self).__init__(graph, parent)
         self.filepath = filepath
         self.importedNames = []
+        self.position = position
         self.yOffset = yOffset
 
     def redoImpl(self):
@@ -239,9 +240,12 @@ class ImportProjectCommand(GraphCommand):
 
         for node in importedNodes:
             self.importedNames.append(node.name)
-            self.graph.node(node.name).position = Position(node.x, node.y + lowestY + self.yOffset)
+            if self.position is not None:
+                self.graph.node(node.name).position = Position(node.x + self.position.x, node.y + self.position.y)
+            else:
+                self.graph.node(node.name).position = Position(node.x, node.y + lowestY + self.yOffset)
 
-        return status
+        return importedNodes
 
     def undoImpl(self):
         for nodeName in self.importedNames:

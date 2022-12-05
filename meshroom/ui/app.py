@@ -198,6 +198,9 @@ class MeshroomApp(QApplication):
             templates.append(variant)
         return templates
 
+    def _pipelineTemplateNames(self):
+        return [p["name"] for p in self.pipelineTemplateFiles]
+
     @Slot()
     def reloadTemplateList(self):
         for f in meshroom.core.pipelineTemplatesFolders:
@@ -352,5 +355,6 @@ class MeshroomApp(QApplication):
     pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
     pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
+    pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames, notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)

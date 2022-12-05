@@ -353,8 +353,9 @@ class UIGraph(QObject):
         self.setGraph(g)
         return status
 
-    @Slot(QUrl, result=bool)
-    def importProject(self, filepath):
+    @Slot(QUrl, result="QVariantList")
+    @Slot(QUrl, QPoint, result="QVariantList")
+    def importProject(self, filepath, position=None):
         if isinstance(filepath, (QUrl)):
             # depending how the QUrl has been initialized,
             # toLocalFile() may return the local path or an empty string
@@ -363,8 +364,10 @@ class UIGraph(QObject):
                 localFile = filepath.toString()
         else:
             localFile = filepath
+        if isinstance(position, QPoint):
+                position = Position(position.x(), position.y())
         yOffset = self.layout.gridSpacing + self.layout.nodeHeight
-        return self.push(commands.ImportProjectCommand(self._graph, localFile, yOffset=yOffset))
+        return self.push(commands.ImportProjectCommand(self._graph, localFile, position=position, yOffset=yOffset))
 
     @Slot(QUrl)
     def saveAs(self, url):

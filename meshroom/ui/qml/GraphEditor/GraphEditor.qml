@@ -214,18 +214,37 @@ Item {
         Menu {
             id: newNodeMenu
             property point spawnPosition
+            property variant menuKeys: Object.keys(root.nodeTypesModel).concat(Object.values(MeshroomApp.pipelineTemplateNames))
 
             function createNode(nodeType)
             {
-                // add node via the proper command in uigraph
-                var node = uigraph.addNewNode(nodeType, spawnPosition)
-                selectNode(node)
+                uigraph.clearNodeSelection() // Ensures that only the created node / imported pipeline will be selected
+
+                // "nodeType" might be a pipeline (artificially added in the "Pipelines" category) instead of a node
+                // If it is not a pipeline to import, then it must be a node
+                if (!importPipeline(nodeType)) {
+                    // Add node via the proper command in uigraph
+                    var node = uigraph.addNewNode(nodeType, spawnPosition)
+                    selectNode(node)
+                }
                 close()
+            }
+
+            function importPipeline(pipeline)
+            {
+                if (MeshroomApp.pipelineTemplateNames.includes(pipeline)) {
+                    var url = MeshroomApp.pipelineTemplateFiles[MeshroomApp.pipelineTemplateNames.indexOf(pipeline)]["path"]
+                    var nodes = uigraph.importProject(Filepath.stringToUrl(url), spawnPosition)
+                    uigraph.selectedNode = nodes[0]
+                    uigraph.selectNodes(nodes)
+                    return true
+                }
+                return false
             }
 
             function parseCategories()
             {
-                // organize nodes based on their category
+                // Organize nodes based on their category
                 // {"category1": ["node1", "node2"], "category2": ["node3", "node4"]}
                 let categories = {};
                 for (const [name, data] of Object.entries(root.nodeTypesModel)) {
@@ -235,11 +254,15 @@ Item {
                     }
                     categories[category].push(name)
                 }
+
+                // Add a "Pipelines" category, filled with the list of templates to create pipelines from the menu
+                categories["Pipelines"] = MeshroomApp.pipelineTemplateNames;
+
                 return categories
             }
 
             onVisibleChanged: {
-                if(visible) {
+                if (visible) {
                     // when menu is shown,
                     // clear and give focus to the TextField filter
                     searchBar.clear()
@@ -306,7 +329,7 @@ Item {
 
             Repeater {
                 id: nodeMenuRepeater
-                model: searchBar.text != "" ? Object.keys(root.nodeTypesModel) : undefined
+                model: searchBar.text != "" ? Object.values(newNodeMenu.menuKeys) : undefined
 
                 // create Menu items from available items
                 delegate: menuItemDelegateComponent

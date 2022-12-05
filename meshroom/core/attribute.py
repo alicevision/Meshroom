@@ -7,9 +7,10 @@ import weakref
 import types
 import logging
 
+from collections.abc import Sequence
 from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
-from meshroom.core import desc, pyCompatibility, hashValue
+from meshroom.core import desc, hashValue
 
 
 def attributeFactory(description, value, isOutput, node, root=None, parent=None):
@@ -213,7 +214,7 @@ class Attribute(BaseObject):
         Return whether the given argument is a link expression.
         A link expression is a string matching the {nodeName.attrName} pattern.
         """
-        return isinstance(value, pyCompatibility.basestring) and Attribute.stringIsLinkRe.match(value)
+        return isinstance(value, str) and Attribute.stringIsLinkRe.match(value)
 
     def getLinkParam(self, recursive=False):
         if not self.isLink:
@@ -264,13 +265,13 @@ class Attribute(BaseObject):
         return self._value
 
     def getEvalValue(self):
-        if isinstance(self.value, pyCompatibility.basestring):
+        if isinstance(self.value, str):
             return Template(self.value).safe_substitute(os.environ)
         return self.value
 
     def getValueStr(self):
         if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
-            assert(isinstance(self.value, pyCompatibility.Sequence) and not isinstance(self.value, pyCompatibility.basestring))
+            assert(isinstance(self.value, Sequence) and not isinstance(self.value, str))
             return self.attributeDesc.joinChar.join(self.getEvalValue())
         if isinstance(self.attributeDesc, (desc.StringParam, desc.File)):
             return '"{}"'.format(self.getEvalValue())

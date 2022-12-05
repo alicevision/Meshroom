@@ -1,6 +1,6 @@
 from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue
-from meshroom.core import pyCompatibility
 
+from collections.abc import Iterable
 from enum import Enum  # available by default in python3. For python2: "pip install enum34"
 import math
 import os
@@ -85,7 +85,7 @@ class ListAttribute(Attribute):
         if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
             raise ValueError("ListAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
-        if isinstance(value, pyCompatibility.basestring):
+        if isinstance(value, str):
             # Alternative solution to set values from QML is to convert values to JSON string
             # In this case, it works with all data types
             value = ast.literal_eval(value)
@@ -124,7 +124,7 @@ class GroupAttribute(Attribute):
         if JSValue is not None and isinstance(value, JSValue):
             # Note: we could use isArray(), property("length").toInt() to retrieve all values
             raise ValueError("GroupAttribute.validateValue: cannot recognize QJSValue. Please, use JSON.stringify(value) in QML.")
-        if isinstance(value, pyCompatibility.basestring):
+        if isinstance(value, str):
             # Alternative solution to set values from QML is to convert values to JSON string
             # In this case, it works with all data types
             value = ast.literal_eval(value)
@@ -211,14 +211,14 @@ class File(Attribute):
         super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
 
     def validateValue(self, value):
-        if not isinstance(value, pyCompatibility.basestring):
+        if not isinstance(value, str):
             raise ValueError('File only supports string input  (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return os.path.normpath(value).replace('\\', '/') if value else ''
 
     def checkValueTypes(self):
         # Some File values are functions generating a string: check whether the value is a string or if it
         # is a function (but there is no way to check that the function's output is indeed a string)
-        if not isinstance(self.value, pyCompatibility.basestring) and not callable(self.value):
+        if not isinstance(self.value, str) and not callable(self.value):
             return self.name
         return ""
 
@@ -231,7 +231,7 @@ class BoolParam(Param):
 
     def validateValue(self, value):
         try:
-            if isinstance(value, pyCompatibility.basestring):
+            if isinstance(value, str):
                 # use distutils.util.strtobool to handle (1/0, true/false, on/off, y/n)
                 return bool(distutils.util.strtobool(value))
             return bool(value)
@@ -311,10 +311,10 @@ class ChoiceParam(Param):
         if self.exclusive:
             return self.conformValue(value)
 
-        if isinstance(value, pyCompatibility.basestring):
+        if isinstance(value, str):
             value = value.split(',')
 
-        if not isinstance(value, pyCompatibility.Iterable):
+        if not isinstance(value, Iterable):
             raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return [self.conformValue(v) for v in value]
 
@@ -334,12 +334,12 @@ class StringParam(Param):
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
 
     def validateValue(self, value):
-        if not isinstance(value, pyCompatibility.basestring):
+        if not isinstance(value, str):
             raise ValueError('StringParam value should be a string (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
         return value
 
     def checkValueTypes(self):
-        if not isinstance(self.value, pyCompatibility.basestring):
+        if not isinstance(self.value, str):
             return self.name
         return ""
 

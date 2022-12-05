@@ -17,7 +17,7 @@ from enum import Enum
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
-from meshroom.core import desc, stats, hashValue, pyCompatibility, nodeVersion, Version
+from meshroom.core import desc, stats, hashValue, nodeVersion, Version
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
@@ -1264,7 +1264,7 @@ class CompatibilityNode(BaseNode):
             return desc.IntParam(range=None, **params)
         elif isinstance(value, float):
             return desc.FloatParam(range=None, **params)
-        elif isinstance(value, pyCompatibility.basestring):
+        elif isinstance(value, str):
             if isOutput or os.path.isabs(value) or Attribute.isLinkExpression(value):
                 return desc.File(**params)
             else:

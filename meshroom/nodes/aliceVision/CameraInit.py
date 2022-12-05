@@ -222,9 +222,9 @@ The metadata needed are:
             description='Regex used to catch number used as viewId in filename.'
                         'You should capture specific parts of the filename with parenthesis to define matching elements. (only number will works)\n'
                         'Some examples of patterns:\n'
-                        ' - Match the longest number at the end of filename (default value): ".*?(\d+)"\n'
-                        ' - Match the first number found in filename : "(\d+).*"\n',
-            value='.*?(\d+)',
+                        r' - Match the longest number at the end of filename (default value): ".*?(\d+)"' + '\n' +
+                        r' - Match the first number found in filename : "(\d+).*"',
+            value=r'.*?(\d+)',
             uid=[],
             advanced=True,
             enabled=lambda node: node.viewIdMethod.value == 'filename',

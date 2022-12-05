@@ -33,6 +33,8 @@ Repeater {
     property bool trackContiguousFilter: true
     /// Display only tracks with at least one inlier
     property bool trackInliersFilter: false
+    /// Display track endpoints
+    property bool displayTrackEndpoints: true
     /// The list of colors used for displaying several describers
     property var colors: [Colors.blue, Colors.green, Colors.yellow, Colors.cyan, Colors.pink, Colors.lime] //, Colors.orange, Colors.red
 
@@ -49,6 +51,7 @@ Repeater {
         display3dTracks: root.display3dTracks
         trackContiguousFilter: root.trackContiguousFilter
         trackInliersFilter: root.trackInliersFilter
+        displayTrackEndpoints: root.displayTrackEndpoints
         featureColor: root.colors[colorIndex]
         matchColor: Colors.orange
         landmarkColor: Colors.red

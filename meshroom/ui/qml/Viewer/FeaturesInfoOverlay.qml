@@ -133,6 +133,20 @@ FloatingPane {
                         }
                         RowLayout {
                             Label {
+                                text: "Display Track Endpoints:"
+                            }
+                            CheckBox {
+                                id: displayTrackEndpointsCB
+                                ToolTip.text: "Draws markers indicating the global start/end point of each track."
+                                ToolTip.visible: hovered
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                checked: root.featuresViewer.displayTrackEndpoints
+                                onClicked: root.featuresViewer.displayTrackEndpoints = displayTrackEndpointsCB.checked
+                            }
+                        }
+                        RowLayout {
+                            Label {
                                 text: "Time Window:"
                             }
                             SpinBox {

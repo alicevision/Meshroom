@@ -433,7 +433,8 @@ class NodeChunk(BaseObject):
         self.node.nodeDesc.stopProcess(self)
 
     def isExtern(self):
-        return self._status.execMode == ExecMode.EXTERN
+        return self._status.execMode == ExecMode.EXTERN or (
+            self._status.execMode == ExecMode.LOCAL and self._status.sessionUid != meshroom.core.sessionUid)
 
     statusChanged = Signal()
     status = Property(Variant, lambda self: self._status, notify=statusChanged)

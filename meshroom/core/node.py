@@ -433,7 +433,8 @@ class NodeChunk(BaseObject):
         self.node.nodeDesc.stopProcess(self)
 
     def isExtern(self):
-        return self._status.execMode == ExecMode.EXTERN
+        return self._status.execMode == ExecMode.EXTERN or (
+            self._status.execMode == ExecMode.LOCAL and self._status.sessionUid != meshroom.core.sessionUid)
 
     statusChanged = Signal()
     status = Property(Variant, lambda self: self._status, notify=statusChanged)
@@ -777,6 +778,12 @@ class BaseNode(BaseObject):
         """
         for chunk in self._chunks:
             if chunk.isAlreadySubmitted():
+                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+
+    def clearLocallySubmittedChunks(self):
+        """ Reset all locally submitted chunks to Status.NONE. """
+        for chunk in self._chunks:
+            if chunk.isAlreadySubmitted() and not chunk.isExtern():
                 chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
 
     def upgradeStatusTo(self, newStatus):

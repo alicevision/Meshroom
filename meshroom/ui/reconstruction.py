@@ -461,6 +461,9 @@ class Reconstruction(UIGraph):
     def setDefaultPipeline(self, defaultPipeline):
         self._defaultPipeline = defaultPipeline
 
+    def setSubmitLabel(self, submitLabel):
+        self.submitLabel = submitLabel
+
     def initActiveNodes(self):
         # Create all possible entries
         for category, _ in self.activeNodeCategories.items():

@@ -367,7 +367,7 @@ class TaskManager(BaseObject):
         raise RuntimeError("[{}] Impossible Process:\n"
                            "There is no node able to be processed.".format(context))
 
-    def submit(self, graph, submitter=None, toNodes=None):
+    def submit(self, graph, submitter=None, toNodes=None, submitLabel="{projectName}"):
         """
         Nodes are send to the renderfarm
         :param graph:
@@ -422,7 +422,7 @@ class TaskManager(BaseObject):
         logging.info("Edges to process: {}".format(edgesToProcess))
 
         try:
-            res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath)
+            res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
             if res:
                 for node in nodesToProcess:
                     node.destroyed.connect(lambda obj=None, name=node.name: self.onNodeDestroyed(obj, name))
@@ -436,12 +436,12 @@ class TaskManager(BaseObject):
         except Exception as e:
             logging.error("Error on submit : {}".format(e))
 
-    def submitFromFile(self, graphFile, submitter, toNode=None):
+    def submitFromFile(self, graphFile, submitter, toNode=None, submitLabel="{projectName}"):
         """
         Submit the given graph via the given submitter.
         """
         graph = meshroom.core.graph.loadGraph(graphFile)
-        self.submit(graph, submitter, toNode)
+        self.submit(graph, submitter, toNode, submitLabel=submitLabel)
 
     def getAlreadySubmittedChunks(self, nodes):
         """

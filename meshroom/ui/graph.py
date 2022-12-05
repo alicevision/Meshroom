@@ -278,6 +278,7 @@ class UIGraph(QObject):
         self._selectedNodes = QObjectListModel(parent=self)
         self._hoveredNode = None
 
+        self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
 
     def setGraph(self, g):
@@ -457,7 +458,7 @@ class UIGraph(QObject):
         self.save()  # graph must be saved before being submitted
         self._undoStack.clear()  # the undo stack must be cleared
         node = [node] if node else None
-        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
+        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node, submitLabel=self.submitLabel)
 
     def updateGraphComputingStatus(self):
         # update graph computing status

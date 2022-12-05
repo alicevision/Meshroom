@@ -1513,7 +1513,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
         node.endSequence()
 
 
-def submitGraph(graph, submitter, toNodes=None):
+def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
     nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
     flowEdges = graph.flowEdges(startNodes=toNodes)
     edgesToProcess = set(edgesToProcess).intersection(flowEdges)
@@ -1536,7 +1536,7 @@ def submitGraph(graph, submitter, toNodes=None):
             submitter=submitter, allSubmitters=str(meshroom.core.submitters.keys())))
 
     try:
-        res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath)
+        res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
         if res:
             for node in nodesToProcess:
                 node.submit()  # update node status
@@ -1544,11 +1544,11 @@ def submitGraph(graph, submitter, toNodes=None):
         logging.error("Error on submit : {}".format(e))
 
 
-def submit(graphFile, submitter, toNode=None):
+def submit(graphFile, submitter, toNode=None, submitLabel="{projectName}"):
     """
     Submit the given graph via the given submitter.
     """
     graph = loadGraph(graphFile)
     toNodes = graph.findNodes(toNode) if toNode else None
-    submitGraph(graph, submitter, toNodes)
+    submitGraph(graph, submitter, toNodes, submitLabel=submitLabel)
 

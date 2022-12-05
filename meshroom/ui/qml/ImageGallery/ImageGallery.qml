@@ -157,6 +157,7 @@ Panel {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
+            cacheBuffer: 10000  // Magic number that seems to work well, even with lots of images
 
             visible: !intrinsicsFilterButton.checked
 

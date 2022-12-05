@@ -1,7 +1,7 @@
 from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue
 
 from collections.abc import Iterable
-from enum import Enum  # available by default in python3. For python2: "pip install enum34"
+from enum import Enum
 import math
 import os
 import psutil
@@ -254,9 +254,7 @@ class IntParam(Param):
     def validateValue(self, value):
         # handle unsigned int values that are translated to int by shiboken and may overflow
         try:
-            return long(value)  # Python 2
-        except NameError:
-            return int(value)   # Python 3
+            return int(value)
         except:
             raise ValueError('IntParam only supports int value (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
 

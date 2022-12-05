@@ -94,9 +94,8 @@ def readSfMData(sfmFile):
     Returns:
         The views and intrinsics of the .sfm as two separate lists
     """
-    import io  # use io.open for Python2/3 compatibility (allow to specify encoding + errors handling)
     # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
-    with io.open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
+    with open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
         data = json.load(f)
 
     intrinsicsKeys = [i.name for i in Intrinsic]

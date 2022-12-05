@@ -510,8 +510,7 @@ class BaseNode(BaseObject):
     def __getattr__(self, k):
         try:
             # Throws exception if not in prototype chain
-            # return object.__getattribute__(self, k) # doesn't work in python2
-            return object.__getattr__(self, k)
+            return object.__getattribute__(self, k)
         except AttributeError as e:
             try:
                 return self.attribute(k)

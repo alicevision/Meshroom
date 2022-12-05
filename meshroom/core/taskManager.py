@@ -348,7 +348,7 @@ class TaskManager(BaseObject):
                 raise ValueError("Argument 'context' must be: 'COMPUTATION' or 'SUBMITTING'")
 
         if len(ready) + len(computed) != len(toNodes):
-            del toNodes[:]  # for python 2 compatibility, else use: toNodes.clear()
+            toNodes.clear()
             toNodes.extend(ready)
             return False
 

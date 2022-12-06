@@ -35,7 +35,7 @@ Panel {
 
     QtObject {
         id: m
-        property variant currentCameraInit: _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
+        property variant currentCameraInit: _reconstruction && _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
         property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property variant intrinsics: currentCameraInit ? currentCameraInit.attribute('intrinsics').value : undefined
         property bool readOnly: root.readOnly || displayHDR.checked
@@ -144,7 +144,7 @@ Panel {
     SensorDBDialog {
         id: sensorDBDialog
         sensorDatabase: cameraInit ? Filepath.stringToUrl(cameraInit.attribute("sensorDatabase").value) : ""
-        readOnly: _reconstruction.computing
+        readOnly: _reconstruction ? _reconstruction.computing : false
         onUpdateIntrinsicsRequest: _reconstruction.rebuildIntrinsics(cameraInit)
     }
 
@@ -273,11 +273,11 @@ Panel {
                         spacing: 2
 
                         property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
-                        property bool inViews: valid && _reconstruction.sfmReport && _reconstruction.isInViews(object)
+                        property bool inViews: valid && _reconstruction && _reconstruction.sfmReport && _reconstruction.isInViews(object)
 
                         // Camera Initialization indicator
                         IntrinsicsIndicator {
-                            intrinsic: parent.valid ? _reconstruction.getIntrinsic(object) : null
+                            intrinsic: parent.valid && _reconstruction ? _reconstruction.getIntrinsic(object) : null
                             metadata: imageDelegate.metadata
                         }
 
@@ -540,7 +540,7 @@ Panel {
 
         RowLayout {
             Layout.fillHeight: false
-            visible: root.cameraInits.count > 1
+            visible: root.cameraInits ? root.cameraInits.count > 1 : false
             Layout.alignment: Qt.AlignHCenter
             spacing: 2
 
@@ -560,8 +560,10 @@ Panel {
                     // display of group indices (real indices still are from
                     // 0 to cameraInits.count - 1)
                     var l = [];
-                    for (var i = 1; i <= root.cameraInits.count; i++) {
-                        l.push(i);
+                    if (root.cameraInits) {
+                        for (var i = 1; i <= root.cameraInits.count; i++) {
+                            l.push(i);
+                        }
                     }
                     return l;
                 }
@@ -569,13 +571,13 @@ Panel {
                 currentIndex: root.cameraInitIndex
                 onActivated: root.changeCurrentIndex(currentIndex)
             }
-            Label { text: "/ " + (root.cameraInits.count) }
+            Label { text: "/ " + (root.cameraInits ? root.cameraInits.count : "Unknown") }
             ToolButton {
                 text: MaterialIcons.navigate_next
                 font.family: MaterialIcons.fontFamily
                 ToolTip.text: "Next Group (Alt+Right)"
                 ToolTip.visible: hovered
-                enabled: nodesCB.currentIndex < root.cameraInits.count - 1
+                enabled: root.cameraInits ? nodesCB.currentIndex < root.cameraInits.count - 1 : false
                 onClicked: nodesCB.incrementCurrentIndex()
             }
         }
@@ -617,10 +619,10 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Estimated Cameras"
             iconText: MaterialIcons.videocam
-            label: _reconstruction.nbCameras ? _reconstruction.nbCameras.toString() : "-"
+            label: _reconstruction && _reconstruction.nbCameras ? _reconstruction.nbCameras.toString() : "-"
             padding: 3
 
-            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+            enabled: _reconstruction ? _reconstruction.cameraInit && _reconstruction.nbCameras : false
             checkable: true
             checked: false
 
@@ -646,10 +648,10 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Non Estimated Cameras"
             iconText: MaterialIcons.videocam_off
-            label: _reconstruction.nbCameras ? ((m.viewpoints ? m.viewpoints.count : 0) - _reconstruction.nbCameras.toString()).toString() : "-"
+            label: _reconstruction && _reconstruction.nbCameras ? ((m.viewpoints ? m.viewpoints.count : 0) - _reconstruction.nbCameras.toString()).toString() : "-"
             padding: 3
 
-            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+            enabled: _reconstruction ? _reconstruction.cameraInit && _reconstruction.nbCameras : false
             checkable: true
             checked: false
 
@@ -704,7 +706,7 @@ Panel {
         MaterialToolLabelButton {
             id: displayHDR
             Layout.minimumWidth: childrenRect.width
-            property var activeNode: _reconstruction.activeNodes.get("LdrToHdrMerge").node
+            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("LdrToHdrMerge").node : null
             ToolTip.text: "Visualize HDR images: " + (activeNode ? activeNode.label : "No Node")
             iconText: MaterialIcons.filter
             label: activeNode ? activeNode.attribute("nbBrackets").value : ""
@@ -747,7 +749,7 @@ Panel {
             id: imageProcessing
             Layout.minimumWidth: childrenRect.width
 
-            property var activeNode: _reconstruction.activeNodes.get("ImageProcessing").node
+            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ImageProcessing").node : null
             font.pointSize: 15
             padding: 0
             ToolTip.text: "Preprocessed Images: " + (activeNode ? activeNode.label : "No Node")

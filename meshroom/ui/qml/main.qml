@@ -24,8 +24,8 @@ ApplicationWindow {
     visible: true
 
     title: {
-        var t = (_reconstruction.graph && _reconstruction.graph.filepath) ? _reconstruction.graph.filepath : "Untitled"
-        if(!_reconstruction.undoStack.clean)
+        var t = (_reconstruction && _reconstruction.graph && _reconstruction.graph.filepath) ? _reconstruction.graph.filepath : "Untitled"
+        if (_reconstruction && !_reconstruction.undoStack.clean)
             t += "*"
         t += " - " + Qt.application.name + " " + Qt.application.version
         return t
@@ -73,12 +73,12 @@ ApplicationWindow {
 
         property var _callback: undefined
 
-        title: Filepath.basename(_reconstruction.graph.filepath) || "Unsaved Project"
+        title: (_reconstruction ? Filepath.basename(_reconstruction.graph.filepath) : "") || "Unsaved Project"
         preset: "Info"
         canCopy: false
-        text: _reconstruction.graph.filepath ? "Current project has unsaved modifications."
+        text: _reconstruction && _reconstruction.graph.filepath ? "Current project has unsaved modifications."
                                              : "Current project has not been saved."
-        helperText: _reconstruction.graph.filepath ? "Would you like to save those changes?"
+        helperText: _reconstruction && _reconstruction.graph.filepath ? "Would you like to save those changes?"
                                                    : "Would you like to save this project?"
 
         standardButtons: Dialog.Save | Dialog.Cancel | Dialog.Discard
@@ -165,14 +165,18 @@ ApplicationWindow {
         property bool warnIfUnsaved: true
 
         // evaluate if global reconstruction computation can be started
-        property bool canStartComputation: _reconstruction.viewpoints.count >= 2      // at least 2 images
-                                           && !_reconstruction.computing              // computation is not started
-                                           && _reconstruction.graph.canComputeLeaves  // graph has no uncomputable nodes
+        property bool canStartComputation: _reconstruction ?
+                                           _reconstruction.viewpoints.count >= 2       // at least 2 images
+                                           && !_reconstruction.computing               // computation is not started
+                                           && _reconstruction.graph.canComputeLeaves : // graph has no uncomputable nodes
+                                           false
 
         // evaluate if graph computation can be submitted externally
-        property bool canSubmit: _reconstruction.canSubmit                            // current setup allows to compute externally
-                                 && canStartComputation                               // can be computed
-                                 && _reconstruction.graph.filepath                    // graph is saved on disk
+        property bool canSubmit: _reconstruction ?
+                                 _reconstruction.canSubmit                             // current setup allows to compute externally
+                                 && canStartComputation                                // can be computed
+                                 && _reconstruction.graph.filepath :                   // graph is saved on disk
+                                 false
 
         function compute(node, force) {
             if(!force && warnIfUnsaved && !_reconstruction.graph.filepath)
@@ -276,7 +280,7 @@ ApplicationWindow {
             preset: "Warning"
             title: "Unsaved Project"
             text: "Data will be computed in the default cache folder if project remains unsaved."
-            detailedText: "Default cache folder: " + _reconstruction.graph.cacheDir
+            detailedText: "Default cache folder: " + (_reconstruction ? _reconstruction.graph.cacheDir : "unknown")
             helperText: "Save project first?"
             standardButtons: Dialog.Discard | Dialog.Cancel | Dialog.Save
 
@@ -377,7 +381,7 @@ ApplicationWindow {
         // is busy building intrinsics while importing images
         id: buildingIntrinsicsDialog
         modal: true
-        visible: _reconstruction.buildingIntrinsics
+        visible: _reconstruction ? _reconstruction.buildingIntrinsics : false
         closePolicy: Popup.NoAutoClose
         title: "Initializing Cameras"
         icon.text: MaterialIcons.camera
@@ -404,19 +408,19 @@ ApplicationWindow {
     Action {
         id: undoAction
 
-        property string tooltip: 'Undo "' +_reconstruction.undoStack.undoText +'"'
+        property string tooltip: 'Undo "' + (_reconstruction ? _reconstruction.undoStack.undoText : "Unknown") + '"'
         text: "Undo"
         shortcut: "Ctrl+Z"
-        enabled: _reconstruction.undoStack.canUndo && _reconstruction.undoStack.isUndoableIndex
+        enabled: _reconstruction ? _reconstruction.undoStack.canUndo && _reconstruction.undoStack.isUndoableIndex : false
         onTriggered: _reconstruction.undoStack.undo()
     }
     Action {
         id: redoAction
 
-        property string tooltip: 'Redo "' +_reconstruction.undoStack.redoText +'"'
+        property string tooltip: 'Redo "' + (_reconstruction ? _reconstruction.undoStack.redoText : "Unknown") + '"'
         text: "Redo"
         shortcut: "Ctrl+Shift+Z"
-        enabled: _reconstruction.undoStack.canRedo && !_reconstruction.undoStack.lockedRedo
+        enabled: _reconstruction ? _reconstruction.undoStack.canRedo && !_reconstruction.undoStack.lockedRedo : false
         onTriggered: _reconstruction.undoStack.redo()
     }
     Action {
@@ -424,16 +428,18 @@ ApplicationWindow {
 
         property string tooltip: {
             var s = "Copy selected node"
-            s += (_reconstruction.selectedNodes.count > 1 ? "s (" : " (") + getSelectedNodesName()
+            s += (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s (" : " (") + getSelectedNodesName()
             s += ") to the clipboard"
             return s
         }
-        text: "Copy Node" + (_reconstruction.selectedNodes.count > 1 ? "s " : " ")
-        enabled: _reconstruction.selectedNodes.count > 0
+        text: "Copy Node" + (_reconstruction && _reconstruction.selectedNodes.count > 1 ? "s " : " ")
+        enabled: _reconstruction ? _reconstruction.selectedNodes.count > 0 : false
         onTriggered: graphEditor.copyNodes()
 
         function getSelectedNodesName()
         {
+            if (!_reconstruction)
+                return ""
             var nodesName = ""
             for (var i = 0; i < _reconstruction.selectedNodes.count; i++)
             {
@@ -612,7 +618,7 @@ ApplicationWindow {
                 id: saveAction
                 text: "Save"
                 shortcut: "Ctrl+S"
-                enabled: (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean
+                enabled: _reconstruction ? (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean : false
                 onTriggered: {
                     if(_reconstruction.graph.filepath) {
                         _reconstruction.save()
@@ -742,7 +748,7 @@ ApplicationWindow {
             TextField {
                 readOnly: true
                 selectByMouse: true
-                text: _reconstruction.graph.cacheDir
+                text: _reconstruction ? _reconstruction.graph.cacheDir : "Unknown"
                 color: Qt.darker(palette.text, 1.2)
                 background: Item {}
             }
@@ -809,12 +815,12 @@ ApplicationWindow {
                     }
                     Button {
                         text: "Stop"
-                        enabled: _reconstruction.computingLocally
+                        enabled: _reconstruction ? _reconstruction.computingLocally : false
                         onClicked: _reconstruction.stopExecution()
                     }
                     Item { width: 20; height: 1 }
                     Button {
-                        visible: _reconstruction.canSubmit
+                        visible: _reconstruction ? _reconstruction.canSubmit : false
                         text: "Submit"
                         onClicked: computeManager.submit(null)
                     }
@@ -839,7 +845,7 @@ ApplicationWindow {
                 id: chunksListView
                 Layout.fillWidth: true
                 height: 6
-                model: _reconstruction.sortedDFSChunks
+                model: _reconstruction ? _reconstruction.sortedDFSChunks : null
             }
 
             WorkspaceView {
@@ -848,7 +854,7 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 Layout.minimumHeight: 50
                 reconstruction: _reconstruction
-                readOnly: _reconstruction.computing
+                readOnly: _reconstruction ? _reconstruction.computing : false
 
                 function viewNode(node, mouse) {
                     // 2D viewer
@@ -899,7 +905,7 @@ ApplicationWindow {
                             updatingStatus = false
                         }
                         property bool updatingStatus: false
-                        enabled: !updatingStatus && !_reconstruction.computingLocally
+                        enabled: !updatingStatus && (_reconstruction ? !_reconstruction.computingLocally : false)
                     }
                     MaterialToolButton {
                         text: MaterialIcons.more_vert
@@ -914,7 +920,7 @@ ApplicationWindow {
                             x: -width + parent.width
                             MenuItem {
                                 text: "Clear Pending Status"
-                                enabled: !_reconstruction.computingLocally
+                                enabled: _reconstruction ? !_reconstruction.computingLocally : false
                                 onTriggered: _reconstruction.graph.clearSubmittedNodes()
                             }
                             MenuItem {
@@ -948,7 +954,7 @@ ApplicationWindow {
                     visible: graphEditorPanel.currentTab === 1
 
                     uigraph: _reconstruction
-                    taskManager: _reconstruction.taskManager
+                    taskManager: _reconstruction ? _reconstruction.taskManager : null
 
                     anchors.fill: parent
                 }
@@ -958,8 +964,8 @@ ApplicationWindow {
             NodeEditor {
                 id: nodeEditor
                 width: Math.round(parent.width * 0.3)
-                node: _reconstruction.selectedNode
-                property bool computing: _reconstruction.computing
+                node: _reconstruction ? _reconstruction.selectedNode : null
+                property bool computing: _reconstruction ? _reconstruction.computing : false
                 // Make NodeEditor readOnly when computing
                 readOnly: node ? node.locked : false
 

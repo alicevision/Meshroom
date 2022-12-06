@@ -441,7 +441,7 @@ Item {
                 MenuItem {
                     text: "Submit"
                     enabled: nodeMenu.canComputeNode && nodeMenu.canSubmitOrCompute > 1
-                    visible: uigraph.canSubmit
+                    visible: uigraph ? uigraph.canSubmit : false
                     height: visible ? implicitHeight : 0
                     onTriggered: submitRequest(nodeMenu.currentNode)
                 }
@@ -759,7 +759,7 @@ Item {
                             flat: true
                             model: ['Minimum', 'Maximum']
                             implicitWidth: 80
-                            currentIndex: uigraph.layout.depthMode
+                            currentIndex: uigraph ? uigraph.layout.depthMode : -1
                             onActivated: {
                                 uigraph.layout.depthMode = currentIndex
                             }

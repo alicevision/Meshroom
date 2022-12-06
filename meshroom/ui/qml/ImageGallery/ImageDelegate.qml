@@ -58,7 +58,7 @@ Item {
             }
             MenuItem {
                 text: "Define As Center Image"
-                property var activeNode: _reconstruction.activeNodes.get("SfMTransform").node
+                property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("SfMTransform").node : null
                 enabled: !root.readOnly && _viewpoint.viewId != -1 && _reconstruction && activeNode
                 onClicked: activeNode.attribute("transformation").value = _viewpoint.viewId.toString()
             }

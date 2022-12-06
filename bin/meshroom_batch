@@ -144,9 +144,8 @@ with multiview.GraphModification(graph):
         publish.output.value = args.output
 
     if args.overrides:
-        import io
         import json
-        with io.open(args.overrides, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(args.overrides, 'r', encoding='utf-8', errors='ignore') as f:
             data = json.load(f)
             for nodeName, overrides in data.items():
                 for attrName, value in overrides.items():

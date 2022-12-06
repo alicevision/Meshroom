@@ -23,7 +23,6 @@ except:
 
 from meshroom.core.submitter import BaseSubmitter
 from . import desc
-from . import pyCompatibility
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s][%(levelname)s] %(message)s', level=logging.INFO)
@@ -150,7 +149,7 @@ class Version(object):
             self.components = tuple()
         elif len(args) == 1:
             versionName = args[0]
-            if isinstance(versionName, pyCompatibility.basestring):
+            if isinstance(versionName, str):
                 self.components = Version.toComponents(versionName)
             elif isinstance(versionName, (list, tuple)):
                 self.components = tuple([int(v) for v in versionName])

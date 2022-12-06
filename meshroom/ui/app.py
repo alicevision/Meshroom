@@ -9,7 +9,6 @@ from PySide2.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import nodesDesc
-from meshroom.core import pyCompatibility
 from meshroom.core.taskManager import TaskManager
 
 from meshroom.ui import components
@@ -225,7 +224,7 @@ class MeshroomApp(QApplication):
     @Slot(str)
     @Slot(QUrl)
     def addRecentProjectFile(self, projectFile):
-        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+        if not isinstance(projectFile, (QUrl, str)):
             raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
         if isinstance(projectFile, QUrl):
             projectFileNorm = projectFile.toLocalFile()
@@ -265,7 +264,7 @@ class MeshroomApp(QApplication):
     @Slot(str)
     @Slot(QUrl)
     def removeRecentProjectFile(self, projectFile):
-        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+        if not isinstance(projectFile, (QUrl, str)):
             raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
         if isinstance(projectFile, QUrl):
             projectFileNorm = projectFile.toLocalFile()

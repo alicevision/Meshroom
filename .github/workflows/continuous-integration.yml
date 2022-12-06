@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [2.7.18, 3.8.14]
+        python-version: [3.8.14]
 
     steps:
     - uses: actions/checkout@v3

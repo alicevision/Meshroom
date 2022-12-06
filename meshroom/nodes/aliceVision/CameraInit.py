@@ -94,9 +94,8 @@ def readSfMData(sfmFile):
     Returns:
         The views and intrinsics of the .sfm as two separate lists
     """
-    import io  # use io.open for Python2/3 compatibility (allow to specify encoding + errors handling)
     # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
-    with io.open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
+    with open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
         data = json.load(f)
 
     intrinsicsKeys = [i.name for i in Intrinsic]
@@ -223,9 +222,9 @@ The metadata needed are:
             description='Regex used to catch number used as viewId in filename.'
                         'You should capture specific parts of the filename with parenthesis to define matching elements. (only number will works)\n'
                         'Some examples of patterns:\n'
-                        ' - Match the longest number at the end of filename (default value): ".*?(\d+)"\n'
-                        ' - Match the first number found in filename : "(\d+).*"\n',
-            value='.*?(\d+)',
+                        r' - Match the longest number at the end of filename (default value): ".*?(\d+)"' + '\n' +
+                        r' - Match the first number found in filename : "(\d+).*"',
+            value=r'.*?(\d+)',
             uid=[],
             advanced=True,
             enabled=lambda node: node.viewIdMethod.value == 'filename',

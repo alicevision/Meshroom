@@ -2,6 +2,7 @@ import json
 import logging
 import math
 import os
+from collections.abc import Iterable
 from threading import Thread
 
 from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF
@@ -13,15 +14,8 @@ from meshroom import multiview
 from meshroom.common.qt import QObjectListModel
 from meshroom.core import Version
 from meshroom.core.node import Node, CompatibilityNode, Status, Position
-from meshroom.core.pyCompatibility import Iterable
 from meshroom.ui.graph import UIGraph
 from meshroom.ui.utils import makeProperty
-
-# Python2 compatibility
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
 
 
 class Message(QObject):
@@ -623,9 +617,8 @@ class Reconstruction(UIGraph):
         sfmFile = panoramaInit.attribute('outSfMData').value
         if not os.path.exists(sfmFile):
             return QVector3D(0.0, 0.0, 0.0)
-        import io  # use io.open for Python2/3 compatibility (allow to specify encoding + errors handling)
         # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
-        with io.open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
             data = json.load(f)
 
         intrinsics = data.get('intrinsics', [])

@@ -13,59 +13,7 @@ import inspect
 import sys
 import weakref
 from functools import partial
-
-
-# weakref.WeakMethod backport
-try:
-    from weakref import WeakMethod
-
-except ImportError:
-    import types
-
-    class WeakMethod(object):
-        """Light WeakMethod backport compiled from various sources. Tested in 2.7"""
-
-        def __init__(self, func):
-            if inspect.ismethod(func):
-                self._obj = weakref.ref(func.__self__)
-                self._func = weakref.ref(func.__func__)
-
-            else:
-                self._obj = None
-
-                try:
-                    self._func = weakref.ref(func.__func__)
-
-                # Rather than attempting to handle this, raise the same exception
-                # you get from WeakMethod.
-                except AttributeError:
-                    raise TypeError("argument should be a bound method, not %s" % type(func))
-
-        def __call__(self):
-            if self._obj is not None:
-                obj = self._obj()
-                func = self._func()
-                if func is None or obj is None:
-                    return None
-
-                else:
-                    return types.MethodType(func, obj, obj.__class__)
-
-            elif self._func is not None:
-                return self._func()
-
-            else:
-                return None
-
-        def __eq__(self, other):
-            try:
-                return type(self) is type(other) and self() == other()
-
-            except Exception:
-                return False
-
-        def __ne__(self, other):
-            return not self.__eq__(other)
+from weakref import WeakMethod
 
 
 class Signal(object):

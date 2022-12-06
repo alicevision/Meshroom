@@ -1,5 +1,5 @@
 from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue
-from meshroom.core import pyCompatibility, cgroup
+from meshroom.core import cgroup
 
 from collections.abc import Iterable
 from enum import Enum
@@ -608,7 +608,7 @@ class AVCommandLineNode(CommandLineNode):
         coresCount = cgroup.getCgroupCpuCount()
         if coresCount > 0:
             cmdCore = ' --maxCores={coresCount}'.format(coresCount=coresCount)
-        
+
         return str + cmdMem + cmdCore
 
 # Test abstract node

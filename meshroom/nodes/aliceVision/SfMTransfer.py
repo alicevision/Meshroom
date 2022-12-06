@@ -5,7 +5,7 @@ from meshroom.core import desc
 import os.path
 
 
-class SfMTransfer(desc.CommandLineNode):
+class SfMTransfer(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_sfmTransfer {allParams}'
     size = desc.DynamicNodeSize('input')
 

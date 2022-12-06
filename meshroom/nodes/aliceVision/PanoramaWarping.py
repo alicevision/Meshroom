@@ -6,7 +6,7 @@ import os
 from meshroom.core import desc
 
 
-class PanoramaWarping(desc.CommandLineNode):
+class PanoramaWarping(desc.AVCommandLineNode):
     commandLine = 'aliceVision_panoramaWarping {allParams}'
     size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=5)

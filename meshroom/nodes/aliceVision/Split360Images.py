@@ -2,7 +2,7 @@ __version__ = "1.0"
 
 from meshroom.core import desc
 
-class Split360Images(desc.CommandLineNode):
+class Split360Images(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_split360Images {allParams}'
     
     category = 'Utils'

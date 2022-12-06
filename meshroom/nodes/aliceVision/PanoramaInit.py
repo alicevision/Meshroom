@@ -3,7 +3,7 @@ __version__ = "2.0"
 from meshroom.core import desc
 
 
-class PanoramaInit(desc.CommandLineNode):
+class PanoramaInit(desc.AVCommandLineNode):
     commandLine = 'aliceVision_panoramaInit {allParams}'
     size = desc.DynamicNodeSize('input')
 

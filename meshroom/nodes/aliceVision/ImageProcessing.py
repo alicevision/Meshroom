@@ -28,7 +28,7 @@ def outputImagesValueFunct(attr):
     return desc.Node.internalFolder + '*' + (outputExt or '.*')
 
 
-class ImageProcessing(desc.CommandLineNode):
+class ImageProcessing(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_imageProcessing {allParams}'
     size = desc.DynamicNodeSize('input')
     # parallelization = desc.Parallelization(blockSize=40)

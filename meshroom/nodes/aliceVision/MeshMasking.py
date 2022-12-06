@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class MeshMasking(desc.CommandLineNode):
+class MeshMasking(desc.AVCommandLineNode):
     commandLine = 'aliceVision_meshMasking {allParams}'
     category = 'Mesh Post-Processing'
     documentation = '''

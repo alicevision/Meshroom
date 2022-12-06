@@ -5,7 +5,7 @@ from meshroom.core import desc
 import os.path
 
 
-class SfMAlignment(desc.CommandLineNode):
+class SfMAlignment(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_sfmAlignment {allParams}'
     size = desc.DynamicNodeSize('input')
 

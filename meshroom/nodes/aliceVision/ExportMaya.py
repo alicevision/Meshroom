@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class ExportMaya(desc.CommandLineNode):
+class ExportMaya(desc.AVCommandLineNode):
     commandLine = 'aliceVision_exportMeshroomMaya {allParams}'
 
     category = 'Export'

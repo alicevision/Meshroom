@@ -4,7 +4,7 @@ import os
 from meshroom.core import desc
 
 
-class CameraRigCalibration(desc.CommandLineNode):
+class CameraRigCalibration(desc.AVCommandLineNode):
     commandLine = 'aliceVision_rigCalibration {allParams}'
 
     category = 'Utils'

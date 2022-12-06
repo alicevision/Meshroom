@@ -4,7 +4,7 @@ import os
 from meshroom.core import desc
 
 
-class CameraLocalization(desc.CommandLineNode):
+class CameraLocalization(desc.AVCommandLineNode):
     commandLine = 'aliceVision_cameraLocalization {allParams}'
 
     category = 'Utils'

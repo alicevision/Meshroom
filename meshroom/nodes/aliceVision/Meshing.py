@@ -3,7 +3,7 @@ __version__ = "7.0"
 from meshroom.core import desc
 
 
-class Meshing(desc.CommandLineNode):
+class Meshing(desc.AVCommandLineNode):
     commandLine = 'aliceVision_meshing {allParams}'
 
     cpu = desc.Level.INTENSIVE

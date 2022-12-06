@@ -4,7 +4,7 @@ from meshroom.core import desc, Version
 import logging
 
 
-class Texturing(desc.CommandLineNode):
+class Texturing(desc.AVCommandLineNode):
     commandLine = 'aliceVision_texturing {allParams}'
     cpu = desc.Level.INTENSIVE
     ram = desc.Level.INTENSIVE

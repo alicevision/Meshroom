@@ -548,17 +548,7 @@ class CommandLineNode(Node):
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
 
-        cmdMem = ''
-        memSize = cgroup.getCgroupMemorySize()
-        if memSize > 0:
-            cmdMem = ' --maxMemory={memSize}'.format(memSize=memSize)
-
-        cmdCore = ''
-        coresCount = cgroup.getCgroupCpuCount()
-        if coresCount > 0:
-            cmdCore = ' --maxCores={coresCount}'.format(coresCount=coresCount)
-
-        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdMem + cmdCore + cmdSuffix
+        return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
     def stopProcess(self, chunk):
         # the same node could exists several times in the graph and
@@ -603,6 +593,23 @@ class CommandLineNode(Node):
         finally:
             chunk.subprocess = None
 
+#specific command line node for alicevision apps
+class AVCommandLineNode(CommandLineNode):
+    def buildCommandLine(self, chunk):
+
+        str = super(AVCommandLineNode, self).buildCommandLine(chunk)
+
+        cmdMem = ''
+        memSize = cgroup.getCgroupMemorySize()
+        if memSize > 0:
+            cmdMem = ' --maxMemory={memSize}'.format(memSize=memSize)
+
+        cmdCore = ''
+        coresCount = cgroup.getCgroupCpuCount()
+        if coresCount > 0:
+            cmdCore = ' --maxCores={coresCount}'.format(coresCount=coresCount)
+        
+        return str + cmdMem + cmdCore
 
 # Test abstract node
 class InitNode:

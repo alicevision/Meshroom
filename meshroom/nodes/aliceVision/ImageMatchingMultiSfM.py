@@ -4,7 +4,7 @@ import os
 from meshroom.core import desc
 
 
-class ImageMatchingMultiSfM(desc.CommandLineNode):
+class ImageMatchingMultiSfM(desc.AVCommandLineNode):
     commandLine = 'aliceVision_imageMatching {allParams}'
     # use both SfM inputs to define Node's size
     size = desc.MultiDynamicNodeSize(['input', 'inputB'])

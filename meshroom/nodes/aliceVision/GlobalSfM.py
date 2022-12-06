@@ -6,7 +6,7 @@ import os
 from meshroom.core import desc
 
 
-class GlobalSfM(desc.CommandLineNode):
+class GlobalSfM(desc.AVCommandLineNode):
     commandLine = 'aliceVision_globalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 

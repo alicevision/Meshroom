@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class ExportColoredPointCloud(desc.CommandLineNode):
+class ExportColoredPointCloud(desc.AVCommandLineNode):
     commandLine = 'aliceVision_exportColoredPointCloud {allParams}'
 
     category = 'Export'

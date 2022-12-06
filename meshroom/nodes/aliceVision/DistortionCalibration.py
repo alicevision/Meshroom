@@ -3,7 +3,7 @@ __version__ = '2.0'
 from meshroom.core import desc
 
 
-class DistortionCalibration(desc.CommandLineNode):
+class DistortionCalibration(desc.AVCommandLineNode):
     commandLine = 'aliceVision_distortionCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
 

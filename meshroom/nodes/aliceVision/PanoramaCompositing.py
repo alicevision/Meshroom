@@ -6,7 +6,7 @@ import os
 from meshroom.core import desc
 
 
-class PanoramaCompositing(desc.CommandLineNode):
+class PanoramaCompositing(desc.AVCommandLineNode):
     commandLine = 'aliceVision_panoramaCompositing {allParams}'
     size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=5)

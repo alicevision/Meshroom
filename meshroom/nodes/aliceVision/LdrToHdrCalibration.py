@@ -23,7 +23,7 @@ def findMetadata(d, keys, defaultValue):
 
 
 
-class LdrToHdrCalibration(desc.CommandLineNode):
+class LdrToHdrCalibration(desc.AVCommandLineNode):
     commandLine = 'aliceVision_LdrToHdrCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
     cpu = desc.Level.INTENSIVE

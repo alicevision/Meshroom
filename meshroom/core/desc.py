@@ -350,7 +350,7 @@ class ColorParam(Param):
         super(ColorParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
 
     def validateValue(self, value):
-        if not isinstance(value, pyCompatibility.basestring) or len(value.split(" ")) > 1:
+        if not isinstance(value, str) or len(value.split(" ")) > 1:
             raise ValueError('ColorParam value should be a string containing either an SVG name or an hexadecimal '
                              'color code (param: {}, value: {}, type: {})'.format(self.name, value, type(value)))
         return value

@@ -25,7 +25,7 @@ def getCgroupMemorySize():
                     continue
                 if tokens[1] == "memory":
                     cgroup = tokens[2]
-    except IOError:
+    except OSError:
         pass
 
     if cgroup is None:
@@ -38,7 +38,7 @@ def getCgroupMemorySize():
             value = f.read().rstrip("\r\n")
             if value.isnumeric():
                 size = int(value)
-    except IOError:
+    except OSError:
         pass
 
     return size
@@ -80,7 +80,7 @@ def getCgroupCpuCount():
                     continue
                 if tokens[1] == "cpuset":
                     cgroup = tokens[2]
-    except IOError:
+    except OSError:
         pass
 
     if cgroup is None:
@@ -94,7 +94,7 @@ def getCgroupCpuCount():
             nlist = parseNumericList(value)
             size = len(nlist)
 
-    except IOError:
+    except OSError:
         pass
 
     return size

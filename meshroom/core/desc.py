@@ -595,21 +595,24 @@ class CommandLineNode(Node):
 
 #specific command line node for alicevision apps
 class AVCommandLineNode(CommandLineNode):
+
+    def __init__(self):
+        
+        self._cmdMem = ''
+        memSize = cgroup.getCgroupMemorySize()
+        if memSize > 0:
+            self._cmdMem = ' --maxMemory={memSize}'.format(memSize=memSize)
+
+        self._cmdCore = ''
+        coresCount = cgroup.getCgroupCpuCount()
+        if coresCount > 0:
+            self._cmdCore = ' --maxCores={coresCount}'.format(coresCount=coresCount)
+
     def buildCommandLine(self, chunk):
 
         str = super(AVCommandLineNode, self).buildCommandLine(chunk)
 
-        cmdMem = ''
-        memSize = cgroup.getCgroupMemorySize()
-        if memSize > 0:
-            cmdMem = ' --maxMemory={memSize}'.format(memSize=memSize)
-
-        cmdCore = ''
-        coresCount = cgroup.getCgroupCpuCount()
-        if coresCount > 0:
-            cmdCore = ' --maxCores={coresCount}'.format(coresCount=coresCount)
-
-        return str + cmdMem + cmdCore
+        return str + self._cmdMem + self._cmdCore
 
 # Test abstract node
 class InitNode:

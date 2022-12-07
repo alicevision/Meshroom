@@ -950,7 +950,7 @@ ApplicationWindow {
                             updatingStatus = false
                         }
                         property bool updatingStatus: false
-                        enabled: !updatingStatus && (_reconstruction ? !_reconstruction.computingLocally : false)
+                        enabled: !updatingStatus
                     }
                     MaterialToolButton {
                         id: filePollerRefreshStatus

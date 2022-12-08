@@ -618,9 +618,9 @@ class AVCommandLineNode(CommandLineNode):
 
     def buildCommandLine(self, chunk):
 
-        str = super(AVCommandLineNode, self).buildCommandLine(chunk)
+        commandLineString = super(AVCommandLineNode, self).buildCommandLine(chunk)
 
-        return str + AVCommandLineNode.cmdMem + AVCommandLineNode.cmdCore
+        return commandLineString + AVCommandLineNode.cmdMem + AVCommandLineNode.cmdCore
 
 # Test abstract node
 class InitNode:

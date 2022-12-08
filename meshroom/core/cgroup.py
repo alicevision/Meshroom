@@ -43,10 +43,10 @@ def getCgroupMemorySize():
 
     return size
 
-def parseNumericList(str):
+def parseNumericList(numericListString):
 
     nList = []
-    for item in str.split(','):
+    for item in numericListString.split(','):
         if '-' in item:
             start, end = item.split('-')
             start = int(start)

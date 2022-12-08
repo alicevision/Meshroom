@@ -25,8 +25,9 @@ from meshroom.ui.utils import makeProperty
 
 
 class PollerRefreshStatus(Enum):
-    AUTO_ENABLED = 0
-    DISABLED = 1
+    AUTO_ENABLED = 0  # The file watcher polls every single status file periodically
+    DISABLED = 1  # The file watcher is disabled and never polls any file
+    MINIMAL_ENABLED = 2  # The file watcher only polls status files for chunks that are either submitted or running
 
 
 class FilesModTimePollerThread(QObject):
@@ -44,7 +45,10 @@ class FilesModTimePollerThread(QObject):
         self._stopFlag = Event()
         self._refreshInterval = 5  # refresh interval in seconds
         self._files = []
-        self._filePollerRefresh = PollerRefreshStatus.AUTO_ENABLED
+        if submitters:
+            self._filePollerRefresh = PollerRefreshStatus.MINIMAL_ENABLED
+        else:
+            self._filePollerRefresh = PollerRefreshStatus.DISABLED
 
     def start(self, files=None):
         """ Start polling thread.
@@ -52,7 +56,7 @@ class FilesModTimePollerThread(QObject):
         Args:
             files: the list of files to monitor
         """
-        if self._filePollerRefresh is not PollerRefreshStatus.AUTO_ENABLED:
+        if self._filePollerRefresh is PollerRefreshStatus.DISABLED:
             return
         if self._thread:
             # thread already running, return
@@ -98,13 +102,16 @@ class FilesModTimePollerThread(QObject):
                     self.timesAvailable.emit(times)
 
     def onFilePollerRefreshChanged(self, value):
+        """ Stop or start the file poller depending on the new refresh status. """
         self._filePollerRefresh = PollerRefreshStatus(value)
-        if self._filePollerRefresh is PollerRefreshStatus.AUTO_ENABLED:
-            self.start()
-        else:
+        if self._filePollerRefresh is PollerRefreshStatus.DISABLED:
             self.stop()
+        else:
+            self.start()
+        self.filePollerRefreshReady.emit()
 
     filePollerRefresh = Property(int, lambda self: self._filePollerRefresh.value, constant=True)
+    filePollerRefreshReady = Signal()  # The refresh status has been updated and is ready to be used
 
 
 class ChunksMonitor(QObject):
@@ -126,11 +133,12 @@ class ChunksMonitor(QObject):
         self.setChunks(chunks)
 
         self.filePollerRefreshChanged.connect(self._filesTimePoller.onFilePollerRefreshChanged)
+        self._filesTimePoller.filePollerRefreshReady.connect(self.onFilePollerRefreshUpdated)
 
     def setChunks(self, chunks):
         """ Set the list of chunks to monitor. """
         self.chunks = chunks
-        self._filesTimePoller.setFiles(self.statusFiles)
+        self._filesTimePoller.setFiles(self.watchedStatusFiles)
 
     def stop(self):
         """ Stop the status files monitoring. """
@@ -140,6 +148,19 @@ class ChunksMonitor(QObject):
     def statusFiles(self):
         """ Get status file paths from current chunks. """
         return [c.statusFile for c in self.chunks]
+
+    @property
+    def watchedStatusFiles(self):
+        """ Get status file paths from currently watched chunks. Depending on the file poller status, the paths may
+        either be those of all the current chunks, or those from the currently submitted/running chunks. """
+        files = []
+        if self.filePollerRefresh is PollerRefreshStatus.AUTO_ENABLED.value:
+            return self.statusFiles
+        elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
+            for c in self.chunks:
+                if c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING:
+                    files.append(c.statusFile)
+        return files
 
     def compareFilesTimes(self, times):
         """
@@ -155,8 +176,27 @@ class ChunksMonitor(QObject):
             if fileModTime != chunk.statusFileLastModTime:
                 chunk.updateStatusFromCache()
 
+    def onFilePollerRefreshUpdated(self):
+        """
+        Upon an update of the file poller status, retrigger the generation of the list of status files for
+        the chunks that are to be watched.
+        In auto-refresh mode, this includes all the chunks' status files.
+        In minimal auto-refresh mode, this includes only the chunks that are submitted or running.
+        """
+        if self.filePollerRefresh is not PollerRefreshStatus.DISABLED.value:
+            self._filesTimePoller.setFiles(self.watchedStatusFiles)
+
+    def onComputeStatusChanged(self):
+        """
+        When a chunk's status is updated, update the list of watched files with submitted and running chunks if the
+        file poller status is minimal auto-refresh.
+        """
+        if self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
+            self._filesTimePoller.setFiles(self.watchedStatusFiles)
+
     filePollerRefreshChanged = Signal(int)
     filePollerRefresh = Property(int, lambda self: self._filesTimePoller.filePollerRefresh, notify=filePollerRefreshChanged)
+
 
 class GraphLayout(QObject):
     """
@@ -345,9 +385,11 @@ class UIGraph(QObject):
             return
         for chunk in self._sortedDFSChunks:
             chunk.statusChanged.disconnect(self.updateGraphComputingStatus)
+            chunk.statusChanged.disconnect(self._chunksMonitor.onComputeStatusChanged)
         self._sortedDFSChunks.setObjectList(chunks)
         for chunk in self._sortedDFSChunks:
             chunk.statusChanged.connect(self.updateGraphComputingStatus)
+            chunk.statusChanged.connect(self._chunksMonitor.onComputeStatusChanged)
         # provide ChunkMonitor with the update list of chunks
         self.updateChunkMonitor(self._sortedDFSChunks)
         # update graph computing status based on the new list of NodeChunks
@@ -968,5 +1010,6 @@ class UIGraph(QObject):
     hoveredNodeChanged = Signal()
     # Currently hovered node
     hoveredNode = makeProperty(QObject, "_hoveredNode", hoveredNodeChanged, resetOnDestroy=True)
+
     filePollerRefreshChanged = Signal(int)
     filePollerRefresh = Property(int, lambda self: self._chunksMonitor.filePollerRefresh, notify=filePollerRefreshChanged)

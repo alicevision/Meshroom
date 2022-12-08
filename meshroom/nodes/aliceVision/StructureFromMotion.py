@@ -3,7 +3,7 @@ __version__ = "2.0"
 from meshroom.core import desc
 
 
-class StructureFromMotion(desc.CommandLineNode):
+class StructureFromMotion(desc.AVCommandLineNode):
     commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 

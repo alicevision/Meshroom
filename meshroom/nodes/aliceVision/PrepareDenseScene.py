@@ -3,7 +3,7 @@ __version__ = "3.0"
 from meshroom.core import desc
 
 
-class PrepareDenseScene(desc.CommandLineNode):
+class PrepareDenseScene(desc.AVCommandLineNode):
     commandLine = 'aliceVision_prepareDenseScene {allParams}'
     size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=40)

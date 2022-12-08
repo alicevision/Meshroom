@@ -3,7 +3,7 @@ __version__ = "1.1"
 from meshroom.core import desc
 
 
-class FeatureRepeatability(desc.CommandLineNode):
+class FeatureRepeatability(desc.AVCommandLineNode):
     commandLine = 'aliceVision_samples_repeatabilityDataset {allParams}'
     size = desc.DynamicNodeSize('input')
     # parallelization = desc.Parallelization(blockSize=40)

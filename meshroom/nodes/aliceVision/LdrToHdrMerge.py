@@ -22,7 +22,7 @@ def findMetadata(d, keys, defaultValue):
     return defaultValue
 
 
-class LdrToHdrMerge(desc.CommandLineNode):
+class LdrToHdrMerge(desc.AVCommandLineNode):
     commandLine = 'aliceVision_LdrToHdrMerge {allParams}'
     size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=2)

@@ -3,7 +3,7 @@ __version__ = "2.0"
 from meshroom.core import desc
 
 
-class DepthMap(desc.CommandLineNode):
+class DepthMap(desc.AVCommandLineNode):
     commandLine = 'aliceVision_depthMapEstimation {allParams}'
     gpu = desc.Level.INTENSIVE
     size = desc.DynamicNodeSize('input')

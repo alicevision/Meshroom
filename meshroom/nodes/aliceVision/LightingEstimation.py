@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class LightingEstimation(desc.CommandLineNode):
+class LightingEstimation(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_lightingEstimation {allParams}'
 
     category = 'Utils'

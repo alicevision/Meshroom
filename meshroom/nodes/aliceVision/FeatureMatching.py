@@ -3,7 +3,7 @@ __version__ = "2.0"
 from meshroom.core import desc
 
 
-class FeatureMatching(desc.CommandLineNode):
+class FeatureMatching(desc.AVCommandLineNode):
     commandLine = 'aliceVision_featureMatching {allParams}'
     size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=20)

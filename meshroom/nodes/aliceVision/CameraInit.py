@@ -119,7 +119,7 @@ def readSfMData(sfmFile):
     return views, intrinsics
 
 
-class CameraInit(desc.CommandLineNode, desc.InitNode):
+class CameraInit(desc.AVCommandLineNode, desc.InitNode):
     commandLine = 'aliceVision_cameraInit {allParams} --allowSingleView 1' # don't throw an error if there is only one image
 
     size = desc.DynamicNodeSize('viewpoints')

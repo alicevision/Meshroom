@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class MeshDecimate(desc.CommandLineNode):
+class MeshDecimate(desc.AVCommandLineNode):
     commandLine = 'aliceVision_meshDecimate {allParams}'
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL

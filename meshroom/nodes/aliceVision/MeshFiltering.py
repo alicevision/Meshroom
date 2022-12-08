@@ -3,7 +3,7 @@ __version__ = "3.0"
 from meshroom.core import desc
 
 
-class MeshFiltering(desc.CommandLineNode):
+class MeshFiltering(desc.AVCommandLineNode):
     commandLine = 'aliceVision_meshFiltering {allParams}'
 
     category = 'Dense Reconstruction'

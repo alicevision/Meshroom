@@ -5,7 +5,7 @@ from meshroom.core import desc
 import os.path
 
 
-class ColorCheckerCorrection(desc.CommandLineNode):
+class ColorCheckerCorrection(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_colorCheckerCorrection {allParams}'
     size = desc.DynamicNodeSize('input')
     # parallelization = desc.Parallelization(blockSize=40)

@@ -1,4 +1,5 @@
 from meshroom.common import BaseObject, Property, Variant, VariantList, JSValue
+from meshroom.core import cgroup
 
 from collections.abc import Iterable
 from enum import Enum
@@ -534,6 +535,7 @@ class CommandLineNode(Node):
     commandLineRange = ''
 
     def buildCommandLine(self, chunk):
+
         cmdPrefix = ''
         # if rez available in env, we use it
         if 'REZ_ENV' in os.environ and chunk.node.packageVersion:
@@ -541,9 +543,11 @@ class CommandLineNode(Node):
             alreadyInEnv = os.environ.get('REZ_{}_VERSION'.format(chunk.node.packageName.upper()), "").startswith(chunk.node.packageVersion)
             if not alreadyInEnv:
                 cmdPrefix = '{rez} {packageFullName} -- '.format(rez=os.environ.get('REZ_ENV'), packageFullName=chunk.node.packageFullName)
+
         cmdSuffix = ''
         if chunk.node.isParallelized and chunk.node.size > 1:
             cmdSuffix = ' ' + self.commandLineRange.format(**chunk.range.toDict())
+
         return cmdPrefix + chunk.node.nodeDesc.commandLine.format(**chunk.node._cmdVars) + cmdSuffix
 
     def stopProcess(self, chunk):
@@ -589,6 +593,34 @@ class CommandLineNode(Node):
         finally:
             chunk.subprocess = None
 
+#specific command line node for alicevision apps
+class AVCommandLineNode(CommandLineNode):
+
+    cgroupParsed = False
+    cmdMem = ''
+    cmdCore = ''
+
+    def __init__(self):
+        
+        if AVCommandLineNode.cgroupParsed is False:
+
+            AVCommandLineNode.cmdMem = ''
+            memSize = cgroup.getCgroupMemorySize()
+            if memSize > 0:
+                AVCommandLineNode.cmdMem = ' --maxMemory={memSize}'.format(memSize=memSize)
+
+            AVCommandLineNode.cmdCore = ''
+            coresCount = cgroup.getCgroupCpuCount()
+            if coresCount > 0:
+                AVCommandLineNode.cmdCore = ' --maxCores={coresCount}'.format(coresCount=coresCount)
+
+            AVCommandLineNode.cgroupParsed = True
+
+    def buildCommandLine(self, chunk):
+
+        commandLineString = super(AVCommandLineNode, self).buildCommandLine(chunk)
+
+        return commandLineString + AVCommandLineNode.cmdMem + AVCommandLineNode.cmdCore
 
 # Test abstract node
 class InitNode:

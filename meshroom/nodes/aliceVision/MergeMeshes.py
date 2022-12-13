@@ -4,7 +4,7 @@ from meshroom.core import desc
 
 
 class MergeMeshes(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_utils_mergeMeshes {allParams}'
+    commandLine = 'aliceVision_mergeMeshes {allParams}'
 
     category = 'Utils'
     documentation = '''

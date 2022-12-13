@@ -29,7 +29,7 @@ def outputImagesValueFunct(attr):
 
 
 class ImageProcessing(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_utils_imageProcessing {allParams}'
+    commandLine = 'aliceVision_imageProcessing {allParams}'
     size = desc.DynamicNodeSize('input')
     # parallelization = desc.Parallelization(blockSize=40)
     # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'

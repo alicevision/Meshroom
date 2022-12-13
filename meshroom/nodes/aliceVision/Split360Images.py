@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 class Split360Images(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_utils_split360Images {allParams}'
+    commandLine = 'aliceVision_split360Images {allParams}'
     
     category = 'Utils'
     documentation = "This node is used to extract multiple images from equirectangular or dualfisheye images."

@@ -49,9 +49,10 @@ QML2_IMPORT_PATH=/path/to/qmlAlembic/install/qml
 ```
 
 #### [QtAliceVision](https://github.com/alicevision/QtAliceVision)
-Use AliceVision to load and visualize intermediate reconstruction files.
+Use AliceVision to load and visualize intermediate reconstruction files and OpenImageIO as backend to read RAW/EXR images.
 ```
 QML2_IMPORT_PATH=/path/to/qtAliceVision/install/qml
+QT_PLUGIN_PATH=/path/to/qtAliceVision/install
 ```
 
 

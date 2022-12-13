@@ -208,7 +208,7 @@ The metadata needed are:
             name='rawColorInterpretation',
             label='RAW Color Interpretation',
             description='Allows you to choose how raw data are color processed.',
-            value='LibRawNoWhiteBalancing',
+            value='LibRawWhiteBalancing',
             values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing', 'DCPMetadata'],
             exclusive=True,
             uid=[0],

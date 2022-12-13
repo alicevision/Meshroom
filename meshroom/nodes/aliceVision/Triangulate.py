@@ -8,8 +8,7 @@ class Triangulate(desc.AVCommandLineNode):
     size = desc.DynamicNodeSize('input')
 
     category = 'Sparse Reconstruction'
-    documentation = '''
-'''
+    documentation = '''Perfom keypoint triangulation (similarly to what is done in the SfM)'''
 
     inputs = [
         desc.File(

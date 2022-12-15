@@ -65,6 +65,13 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
             range=(0, 10, 1),
             uid=[0],
         ),
+        desc.BoolParam(
+                name='offsetRefBracketIndexEnabled',
+                label='Enable Ref Bracket Manual Setting',
+                description='Enable user selection of reference bracket index.',
+                value=False,
+                uid=[0],
+        ),
         desc.IntParam(
             name='offsetRefBracketIndex',
             label='Offset Ref Bracket Index',
@@ -72,7 +79,7 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
             value=1,
             range=(-4, 4, 1),
             uid=[0],
-            enabled= lambda node: node.nbBrackets.value != 1,
+            enabled= lambda node: (node.nbBrackets.value != 1 and node.offsetRefBracketIndexEnabled.value),
         ),
         desc.BoolParam(
             name='byPass',

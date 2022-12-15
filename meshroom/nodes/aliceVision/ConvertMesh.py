@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class ConvertMesh(desc.CommandLineNode):
+class ConvertMesh(desc.AVCommandLineNode):
     commandLine = 'aliceVision_convertMesh {allParams}'
 
     category = 'Utils'

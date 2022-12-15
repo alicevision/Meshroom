@@ -64,7 +64,7 @@ AlembicEntity {
                 */
                 PhongMaterial {
                     id: mat
-                    ambient: viewId === _reconstruction.selectedViewId ? activePalette.highlight : customColor // "#CCC"
+                    ambient: _reconstruction && viewId === _reconstruction.selectedViewId ? activePalette.highlight : customColor // "#CCC"
                     diffuse: cameraPicker.containsMouse ? Qt.lighter(activePalette.highlight, 1.2) : ambient
                 },
                 ObjectPicker {

@@ -9,7 +9,6 @@ from PySide6.QtWidgets import QApplication
 
 import meshroom
 from meshroom.core import nodesDesc
-from meshroom.core import pyCompatibility
 from meshroom.core.taskManager import TaskManager
 
 from meshroom.ui import components
@@ -85,6 +84,7 @@ class MeshroomApp(QApplication):
         parser.add_argument('-p', '--pipeline', metavar="FILE.mg/" + "/".join(meshroom.core.pipelineTemplates), type=str,
                             default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
                             help='Override the default Meshroom pipeline with this external or template graph.')
+        parser.add_argument("--submitLabel", metavar='SUBMITLABEL', type=str, help="Label of a node in the submitter", default='{projectName} [Meshroom]')
         parser.add_argument("--verbose", help="Verbosity level", default='warning',
                             choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
 
@@ -134,6 +134,7 @@ class MeshroomApp(QApplication):
         self._undoStack = commands.UndoStack(self)
         self._taskManager = TaskManager(self)
         r = Reconstruction(undoStack=self._undoStack, taskManager=self._taskManager, defaultPipeline=args.pipeline, parent=self)
+        r.setSubmitLabel(args.submitLabel)
         self.engine.rootContext().setContextProperty("_reconstruction", r)
 
         # those helpers should be available from QML Utils module as singletons, but:
@@ -197,6 +198,9 @@ class MeshroomApp(QApplication):
             templates.append(variant)
         return templates
 
+    def _pipelineTemplateNames(self):
+        return [p["name"] for p in self.pipelineTemplateFiles]
+
     @Slot()
     def reloadTemplateList(self):
         for f in meshroom.core.pipelineTemplatesFolders:
@@ -219,7 +223,7 @@ class MeshroomApp(QApplication):
     @Slot(str)
     @Slot(QUrl)
     def addRecentProjectFile(self, projectFile):
-        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+        if not isinstance(projectFile, (QUrl, str)):
             raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
         if isinstance(projectFile, QUrl):
             projectFileNorm = projectFile.toLocalFile()
@@ -259,7 +263,7 @@ class MeshroomApp(QApplication):
     @Slot(str)
     @Slot(QUrl)
     def removeRecentProjectFile(self, projectFile):
-        if not isinstance(projectFile, (QUrl, pyCompatibility.basestring)):
+        if not isinstance(projectFile, (QUrl, str)):
             raise TypeError("Unexpected data type: {}".format(projectFile.__class__))
         if isinstance(projectFile, QUrl):
             projectFileNorm = projectFile.toLocalFile()
@@ -351,5 +355,6 @@ class MeshroomApp(QApplication):
     pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
     pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
+    pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames, notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)

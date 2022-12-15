@@ -17,12 +17,6 @@ from docutils.nodes import SparseNodeVisitor
 from docutils.parsers.rst import Directive
 from utils import md_to_docutils, get_link_key
 
-# Python2 compatibility
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
-
 
 class Relinker(SparseNodeVisitor):
 

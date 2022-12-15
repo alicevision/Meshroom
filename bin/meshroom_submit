@@ -16,7 +16,11 @@ parser.add_argument('--submitter',
                     type=str,
                     default='SimpleFarm',
                     help='Execute job with a specific submitter.')
+parser.add_argument("--submitLabel", 
+                    type=str, 
+                    default='{projectName} [Meshroom]',
+                    help="Label of a node in the submitter")
 
 args = parser.parse_args()
 
-meshroom.core.graph.submit(args.save, args.submitter, toNode=toNodes)
+meshroom.core.graph.submit(args.save, args.submitter, toNode=toNodes, submitLabel=args.submitLabel)

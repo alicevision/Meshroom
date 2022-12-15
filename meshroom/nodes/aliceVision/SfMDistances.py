@@ -3,7 +3,7 @@ __version__ = "3.0"
 from meshroom.core import desc
 
 
-class SfMDistances(desc.CommandLineNode):
+class SfMDistances(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_sfmDistances {allParams}'
     size = desc.DynamicNodeSize('input')
 

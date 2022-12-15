@@ -6,7 +6,7 @@ import os
 from meshroom.core import desc
 
 
-class PanoramaEstimation(desc.CommandLineNode):
+class PanoramaEstimation(desc.AVCommandLineNode):
     commandLine = 'aliceVision_panoramaEstimation {allParams}'
     size = desc.DynamicNodeSize('input')
 

@@ -4,7 +4,7 @@ import os
 from meshroom.core import desc
 
 
-class ImageMatching(desc.CommandLineNode):
+class ImageMatching(desc.AVCommandLineNode):
     commandLine = 'aliceVision_imageMatching {allParams}'
     size = desc.DynamicNodeSize('input')
 

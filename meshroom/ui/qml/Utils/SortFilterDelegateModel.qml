@@ -9,7 +9,10 @@ import QtQuick.Controls
  * This is useful if the value is not directly accessible from the model and needs
  * some extra logic.
  *
- * Regarding filtering, any type of value can be used as 'filterValue' (variant).
+ * Regarding filtering, each filter is defined with a role to filter on and a value to match.
+ * Filters can be accumulated in a 2D-array, which is evaluated with the following rules: 
+ * - on the 2nd dimension we map respectFilter and reduce with logical OR
+ * - on the 1st dimension we map respectFilter and reduce with logical AND.
  * Filtering behavior can also be overridden by redefining the respectFilter function.
  *
  * Based on http://doc.qt.io/qt-5/qtquick-tutorials-dynamicview-dynamicview4-example.html
@@ -19,13 +22,11 @@ DelegateModel {
 
     property string sortRole: ""                /// the role to use for sorting
     property int sortOrder: Qt.AscendingOrder   /// the sorting order
-    property string filterRole: ""              /// the role to use for filtering
-    property variant filterValue                /// the value to use as filter
+    property var filters: []                    /// filter format: {role: "roleName", value: "filteringValue"}
 
     onSortRoleChanged: invalidateSort()
     onSortOrderChanged: invalidateSort()
-    onFilterRoleChanged: invalidateFilter()
-    onFilterValueChanged: invalidateFilter()
+    onFiltersChanged: invalidateFilters()
 
     // display "filtered" group
     filterOnGroup: "filtered"
@@ -50,7 +51,7 @@ DelegateModel {
                     sort()
                 }
                 // perform filter invalidation in both cases
-                invalidateFilter()
+                invalidateFilters()
             }
         },
         // Group for storing filtered items
@@ -85,13 +86,22 @@ DelegateModel {
      * TODO: add case sensitivity / whole word options for Strings
      */
     function respectFilter(value, filter) {
+        if (filter === undefined) {
+            return true;
+        }
         switch(value.constructor.name)
         {
         case "String":
-            return value.toLowerCase().search(filter.toLowerCase()) >= 0
+            return value.toLowerCase().indexOf(filter.toLowerCase()) > -1
         default:
             return value === filter
         }
+    }
+
+    /// Apply respectFilter mapping and logical AND/OR reduction on filters
+    function respectFilters(item) {
+        let cond = (filter => respectFilter(modelData(item, filter.role), filter.value));
+        return filters.every(x => Array.isArray(x) ? x.some(cond) : cond(x));
     }
 
     /// Reverse sort order (toggle between Qt.AscendingOrder / Qt.DescendingOrder)
@@ -113,18 +123,11 @@ DelegateModel {
     }
 
     /// Invalidate filtering
-    function invalidateFilter() {
-        // no filtering, add everything to the filtered group
-        if(!filterRole)
-        {
-            items.addGroups(0, items.count, "filtered")
-            return
-        }
-
+    function invalidateFilters() {
         for(var i=0; i < items.count; ++i)
         {
             // if the property value contains filterText, add it to the filtered group
-            if(respectFilter(modelData(items.get(i), filterRole), filterValue))
+            if(respectFilters(items.get(i)))
             {
                 items.addGroups(items.get(i), 1, "filtered")
             }

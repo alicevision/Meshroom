@@ -3,7 +3,7 @@ __version__ = "1.1"
 from meshroom.core import desc
 
 
-class FeatureExtraction(desc.CommandLineNode):
+class FeatureExtraction(desc.AVCommandLineNode):
     commandLine = 'aliceVision_featureExtraction {allParams}'
     size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=40)

@@ -3,7 +3,7 @@ __version__ = "2.0"
 from meshroom.core import desc
 
 
-class ExportAnimatedCamera(desc.CommandLineNode):
+class ExportAnimatedCamera(desc.AVCommandLineNode):
     commandLine = 'aliceVision_exportAnimatedCamera {allParams}'
 
     category = 'Export'

@@ -3,7 +3,7 @@ __version__ = "1.1"
 from meshroom.core import desc
 
 
-class ExportMatches(desc.CommandLineNode):
+class ExportMatches(desc.AVCommandLineNode):
     commandLine = 'aliceVision_exportMatches {allParams}'
     size = desc.DynamicNodeSize('input')
 

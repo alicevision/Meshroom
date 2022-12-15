@@ -4,7 +4,7 @@ import os
 from meshroom.core import desc
 
 
-class KeyframeSelection(desc.CommandLineNode):
+class KeyframeSelection(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_keyframeSelection {allParams}'
 
     category = 'Utils'

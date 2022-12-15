@@ -39,7 +39,7 @@ class DividedInputNodeSize(desc.DynamicNodeSize):
         return s / divParam.value
 
 
-class LdrToHdrSampling(desc.CommandLineNode):
+class LdrToHdrSampling(desc.AVCommandLineNode):
     commandLine = 'aliceVision_LdrToHdrSampling {allParams}'
     size = DividedInputNodeSize('input', 'nbBrackets')
     parallelization = desc.Parallelization(blockSize=2)

@@ -17,7 +17,7 @@ from enum import Enum
 
 import meshroom
 from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListModel, DictModel
-from meshroom.core import desc, stats, hashValue, pyCompatibility, nodeVersion, Version
+from meshroom.core import desc, stats, hashValue, nodeVersion, Version
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
 
@@ -434,7 +434,8 @@ class NodeChunk(BaseObject):
         self.node.nodeDesc.stopProcess(self)
 
     def isExtern(self):
-        return self._status.execMode == ExecMode.EXTERN
+        return self._status.execMode == ExecMode.EXTERN or (
+            self._status.execMode == ExecMode.LOCAL and self._status.sessionUid != meshroom.core.sessionUid)
 
     statusChanged = Signal()
     status = Property(Variant, lambda self: self._status, notify=statusChanged)
@@ -510,8 +511,7 @@ class BaseNode(BaseObject):
     def __getattr__(self, k):
         try:
             # Throws exception if not in prototype chain
-            # return object.__getattribute__(self, k) # doesn't work in python2
-            return object.__getattr__(self, k)
+            return object.__getattribute__(self, k)
         except AttributeError as e:
             try:
                 return self.attribute(k)
@@ -778,6 +778,12 @@ class BaseNode(BaseObject):
         """
         for chunk in self._chunks:
             if chunk.isAlreadySubmitted():
+                chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
+
+    def clearLocallySubmittedChunks(self):
+        """ Reset all locally submitted chunks to Status.NONE. """
+        for chunk in self._chunks:
+            if chunk.isAlreadySubmitted() and not chunk.isExtern():
                 chunk.upgradeStatusTo(Status.NONE, ExecMode.NONE)
 
     def upgradeStatusTo(self, newStatus):
@@ -1258,7 +1264,7 @@ class CompatibilityNode(BaseNode):
             return desc.IntParam(range=None, **params)
         elif isinstance(value, float):
             return desc.FloatParam(range=None, **params)
-        elif isinstance(value, pyCompatibility.basestring):
+        elif isinstance(value, str):
             if isOutput or os.path.isabs(value) or Attribute.isLinkExpression(value):
                 return desc.File(**params)
             else:

@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class MeshResampling(desc.CommandLineNode):
+class MeshResampling(desc.AVCommandLineNode):
     commandLine = 'aliceVision_meshResampling {allParams}'
     cpu = desc.Level.NORMAL
     ram = desc.Level.NORMAL

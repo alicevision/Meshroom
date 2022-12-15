@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class MeshDenoising(desc.CommandLineNode):
+class MeshDenoising(desc.AVCommandLineNode):
     commandLine = 'aliceVision_meshDenoising {allParams}'
 
     category = 'Mesh Post-Processing'

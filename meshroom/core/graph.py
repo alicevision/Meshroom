@@ -13,7 +13,7 @@ from enum import Enum
 import meshroom
 import meshroom.core
 from meshroom.common import BaseObject, DictModel, Slot, Signal, Property
-from meshroom.core import Version, pyCompatibility
+from meshroom.core import Version
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.exception import StopGraphVisit, StopBranchVisit
 from meshroom.core.node import nodeFactory, Status, Node, CompatibilityNode
@@ -195,7 +195,7 @@ class Graph(BaseObject):
             Returns:
                 tuple of Graph.IO.Features: the list of supported features
             """
-            if isinstance(fileVersion, pyCompatibility.basestring):
+            if isinstance(fileVersion, str):
                 fileVersion = Version(fileVersion)
 
             features = [Graph.IO.Features.Graph]
@@ -382,11 +382,11 @@ class Graph(BaseObject):
         """
         for key, val in attributes.items():
             for corr in nameCorrespondences.keys():
-                if isinstance(val, pyCompatibility.basestring) and corr in val:
+                if isinstance(val, str) and corr in val:
                     attributes[key] = val.replace(corr, nameCorrespondences[corr])
                 elif isinstance(val, list):
                     for v in val:
-                        if isinstance(v, pyCompatibility.basestring):
+                        if isinstance(v, str):
                             if corr in v:
                                 val[val.index(v)] = v.replace(corr, nameCorrespondences[corr])
                         else:  # the list does not contain strings, so there cannot be links to update
@@ -419,7 +419,7 @@ class Graph(BaseObject):
                     defaultValue = desc.value
                     break
 
-            if isinstance(val, pyCompatibility.basestring):
+            if isinstance(val, str):
                 if Attribute.isLinkExpression(val) and not any(name in val for name in newNames):
                     if defaultValue is not None:  # prevents from not entering condition if defaultValue = ''
                         attributes[key] = defaultValue
@@ -428,8 +428,7 @@ class Graph(BaseObject):
                 removedCnt = len(val)  # counter to know whether all the list entries will be deemed invalid
                 tmpVal = list(val)  # deep copy to ensure we iterate over the entire list (even if elements are removed)
                 for v in tmpVal:
-                    if isinstance(v, pyCompatibility.basestring) and Attribute.isLinkExpression(v) and not any(
-                            name in v for name in newNames):
+                    if isinstance(v, str) and Attribute.isLinkExpression(v) and not any(name in v for name in newNames):
                         val.remove(v)
                         removedCnt -= 1
                 if removedCnt == 0 and defaultValue is not None:  # if all links were wrong, reset the attribute
@@ -1366,6 +1365,11 @@ class Graph(BaseObject):
         for node in self.nodes:
             node.clearSubmittedChunks()
 
+    def clearLocallySubmittedNodes(self):
+        """ Reset the status of already locally submitted nodes to Status.NONE """
+        for node in self.nodes:
+            node.clearLocallySubmittedChunks()
+
     def iterChunksByStatus(self, status):
         """ Iterate over NodeChunks with the given status """
         for node in self.nodes:
@@ -1508,7 +1512,7 @@ def executeGraph(graph, toNodes=None, forceCompute=False, forceStatus=False):
         node.endSequence()
 
 
-def submitGraph(graph, submitter, toNodes=None):
+def submitGraph(graph, submitter, toNodes=None, submitLabel="{projectName}"):
     nodesToProcess, edgesToProcess = graph.dfsToProcess(startNodes=toNodes)
     flowEdges = graph.flowEdges(startNodes=toNodes)
     edgesToProcess = set(edgesToProcess).intersection(flowEdges)
@@ -1531,7 +1535,7 @@ def submitGraph(graph, submitter, toNodes=None):
             submitter=submitter, allSubmitters=str(meshroom.core.submitters.keys())))
 
     try:
-        res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath)
+        res = sub.submit(nodesToProcess, edgesToProcess, graph.filepath, submitLabel=submitLabel)
         if res:
             for node in nodesToProcess:
                 node.submit()  # update node status
@@ -1539,11 +1543,11 @@ def submitGraph(graph, submitter, toNodes=None):
         logging.error("Error on submit : {}".format(e))
 
 
-def submit(graphFile, submitter, toNode=None):
+def submit(graphFile, submitter, toNode=None, submitLabel="{projectName}"):
     """
     Submit the given graph via the given submitter.
     """
     graph = loadGraph(graphFile)
     toNodes = graph.findNodes(toNode) if toNode else None
-    submitGraph(graph, submitter, toNodes)
+    submitGraph(graph, submitter, toNodes, submitLabel=submitLabel)
 

@@ -3,7 +3,7 @@ __version__ = "3.0"
 from meshroom.core import desc
 
 
-class ImageMasking(desc.CommandLineNode):
+class ImageMasking(desc.AVCommandLineNode):
     commandLine = 'aliceVision_imageMasking {allParams}'
     size = desc.DynamicNodeSize('input')
     parallelization = desc.Parallelization(blockSize=40)

@@ -14,7 +14,7 @@ MessageDialog {
     // the UIGraph instance
     property var uigraph
     // alias to underlying compatibilityNodes model
-    readonly property var nodesModel: uigraph.graph.compatibilityNodes
+    readonly property var nodesModel: uigraph ? uigraph.graph.compatibilityNodes : undefined
     // the total number of compatibility issues
     readonly property int issueCount: (nodesModel != undefined) ? nodesModel.count : 0
     // the number of CompatibilityNodes that can be upgraded
@@ -47,7 +47,10 @@ MessageDialog {
 
     title: "Compatibility issues detected"
     text: "This project contains " + issueCount + " node(s) incompatible with the current version of Meshroom."
-    detailedText: "Project was created with Meshroom " + uigraph.graph.fileReleaseVersion + "."
+    detailedText: {
+        let releaseVersion = uigraph ? uigraph.graph.fileReleaseVersion : "0.0"
+        return "Project was created with Meshroom " + releaseVersion + "."
+    }
 
     helperText: upgradableCount ?
                 upgradableCount + " node(s) can be upgraded but this might invalidate already computed data.\n"

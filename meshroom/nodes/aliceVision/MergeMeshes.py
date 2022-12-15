@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class MergeMeshes(desc.CommandLineNode):
+class MergeMeshes(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_mergeMeshes {allParams}'
 
     category = 'Utils'

@@ -35,7 +35,7 @@ Panel {
 
     QtObject {
         id: m
-        property variant currentCameraInit: _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
+        property variant currentCameraInit: _reconstruction && _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
         property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property variant intrinsics: currentCameraInit ? currentCameraInit.attribute('intrinsics').value : undefined
         property bool readOnly: root.readOnly || displayHDR.checked
@@ -106,6 +106,11 @@ Panel {
     }
 
     headerBar: RowLayout {
+        SearchBar {
+            id: searchBar
+            width: 150
+        }
+
         MaterialToolButton {
             text: MaterialIcons.more_vert
             font.pointSize: 11
@@ -139,7 +144,7 @@ Panel {
     SensorDBDialog {
         id: sensorDBDialog
         sensorDatabase: cameraInit ? Filepath.stringToUrl(cameraInit.attribute("sensorDatabase").value) : ""
-        readOnly: _reconstruction.computing
+        readOnly: _reconstruction ? _reconstruction.computing : false
         onUpdateIntrinsicsRequest: _reconstruction.rebuildIntrinsics(cameraInit)
     }
 
@@ -173,7 +178,9 @@ Panel {
             Connections {
                 target: _reconstruction
                 function onSelectedViewIdChanged() {
-                    grid.updateCurrentIndexFromSelectionViewId()
+                    if (_reconstruction.selectedViewId > -1) {
+                        grid.updateCurrentIndexFromSelectionViewId()
+                    }
                 }
             }
             function makeCurrentItemVisible()
@@ -183,12 +190,12 @@ Panel {
             function updateCurrentIndexFromSelectionViewId()
             {
                 var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
-                if(idx >= 0 && grid.currentIndex != idx) {
+                if (idx >= 0 && grid.currentIndex != idx) {
                     grid.currentIndex = idx
                 }
             }
-            onCurrentIndexChanged: {
-                if(grid.updateSelectedViewFromGrid) {
+            onCurrentItemChanged: {
+                if (grid.updateSelectedViewFromGrid && grid.currentItem) {
                     _reconstruction.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
                 }
             }
@@ -197,35 +204,38 @@ Panel {
                 id: sortedModel
                 model: m.viewpoints
                 sortRole: "path.basename"
-                property var filterRoleType: ""
-                filterRole: _reconstruction.sfmReport ? filterRoleType : ""
-                filterValue: false
-
-                function updateFilter(role, value) {
-                    grid.updateSelectedViewFromGrid = false
-                    sortedModel.filterRoleType = role
-                    sortedModel.filterValue = value
-                    grid.updateCurrentIndexFromSelectionViewId()
-                    grid.updateSelectedViewFromGrid = true
-                    grid.makeCurrentItemVisible()
-                }
+                filters: displayViewIdsAction.checked ? filtersWithViewIds : filtersBasic
+                property var filtersBasic: [
+                    {role: "path", value: searchBar.text},
+                    {role: "viewId.isReconstructed", value: reconstructionFilter}
+                ]
+                property var filtersWithViewIds:  [
+                    [
+                        {role: "path", value: searchBar.text}, 
+                        {role: "viewId.asString", value: searchBar.text}
+                    ], 
+                    {role: "viewId.isReconstructed", value: reconstructionFilter}
+                ]
+                property var reconstructionFilter: undefined
 
                 // override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName_) {
-                    var roleNameAndCmd = roleName_.split(".")
-                    var roleName = roleName_
-                    var cmd = ""
+                    var roleNameAndCmd = roleName_.split(".");
+                    var roleName = roleName_;
+                    var cmd = "";
                     if(roleNameAndCmd.length >= 2)
                     {
-                        roleName = roleNameAndCmd[0]
-                        cmd = roleNameAndCmd[1]
+                        roleName = roleNameAndCmd[0];
+                        cmd = roleNameAndCmd[1];
                     }
                     if(cmd == "isReconstructed")
-                        return _reconstruction.isReconstructed(item.model.object)
-                    var value = item.model.object.childAttribute(roleName).value
+                        return _reconstruction.isReconstructed(item.model.object);
 
+                    var value = item.model.object.childAttribute(roleName).value;
                     if(cmd == "basename")
-                        return Filepath.basename(value)
+                        return Filepath.basename(value);
+                    if (cmd == "asString") 
+                        return value.toString();
 
                     return value
                 }
@@ -244,8 +254,6 @@ Panel {
 
                     onPressed: function (mouse) {
                         grid.currentIndex = DelegateModel.filteredIndex
-                        if(mouse.button == Qt.LeftButton)
-                            grid.forceActiveFocus()
                     }
 
                     function sendRemoveRequest()
@@ -265,11 +273,11 @@ Panel {
                         spacing: 2
 
                         property bool valid: Qt.isQtObject(object) // object can be evaluated to null at some point during creation/deletion
-                        property bool inViews: valid && _reconstruction.sfmReport && _reconstruction.isInViews(object)
+                        property bool inViews: valid && _reconstruction && _reconstruction.sfmReport && _reconstruction.isInViews(object)
 
                         // Camera Initialization indicator
                         IntrinsicsIndicator {
-                            intrinsic: parent.valid ? _reconstruction.getIntrinsic(object) : null
+                            intrinsic: parent.valid && _reconstruction ? _reconstruction.getIntrinsic(object) : null
                             metadata: imageDelegate.metadata
                         }
 
@@ -350,6 +358,11 @@ Panel {
                     else if(event.key == Qt.Key_Down)
                     {
                         grid.moveCurrentIndexDown()
+                        event.accepted = true
+                    }
+                    else if (event.key == Qt.Key_Tab)
+                    {
+                        searchBar.forceActiveFocus()
                         event.accepted = true
                     }
                 }
@@ -447,6 +460,15 @@ Panel {
                     }
                 }
             }
+
+            MouseArea {
+                anchors.fill: parent
+                onPressed: function(mouse) {
+                    if (mouse.button === Qt.LeftButton)
+                        grid.forceActiveFocus()
+                    mouse.accepted = false
+                }
+            }
         }
 
         Item {
@@ -518,7 +540,7 @@ Panel {
 
         RowLayout {
             Layout.fillHeight: false
-            visible: root.cameraInits.count > 1
+            visible: root.cameraInits ? root.cameraInits.count > 1 : false
             Layout.alignment: Qt.AlignHCenter
             spacing: 2
 
@@ -538,8 +560,10 @@ Panel {
                     // display of group indices (real indices still are from
                     // 0 to cameraInits.count - 1)
                     var l = [];
-                    for (var i = 1; i <= root.cameraInits.count; i++) {
-                        l.push(i);
+                    if (root.cameraInits) {
+                        for (var i = 1; i <= root.cameraInits.count; i++) {
+                            l.push(i);
+                        }
                     }
                     return l;
                 }
@@ -547,13 +571,13 @@ Panel {
                 currentIndex: root.cameraInitIndex
                 onActivated: root.changeCurrentIndex(currentIndex)
             }
-            Label { text: "/ " + (root.cameraInits.count) }
+            Label { text: "/ " + (root.cameraInits ? root.cameraInits.count : "Unknown") }
             ToolButton {
                 text: MaterialIcons.navigate_next
                 font.family: MaterialIcons.fontFamily
                 ToolTip.text: "Next Group (Alt+Right)"
                 ToolTip.visible: hovered
-                enabled: nodesCB.currentIndex < root.cameraInits.count - 1
+                enabled: root.cameraInits ? nodesCB.currentIndex < root.cameraInits.count - 1 : false
                 onClicked: nodesCB.incrementCurrentIndex()
             }
         }
@@ -582,9 +606,9 @@ Panel {
 
             onCheckedChanged:{
                 if(checked) {
-                    sortedModel.updateFilter("", true)
-                    estimatedCamerasFilterButton.checked = false
-                    nonEstimatedCamerasFilterButton.checked = false
+                    sortedModel.reconstructionFilter = undefined;
+                    estimatedCamerasFilterButton.checked = false;
+                    nonEstimatedCamerasFilterButton.checked = false;
                     intrinsicsFilterButton.checked = false;
                 }
             }
@@ -595,18 +619,18 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Estimated Cameras"
             iconText: MaterialIcons.videocam
-            label: _reconstruction.nbCameras ? _reconstruction.nbCameras.toString() : "-"
+            label: _reconstruction && _reconstruction.nbCameras ? _reconstruction.nbCameras.toString() : "-"
             padding: 3
 
-            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+            enabled: _reconstruction ? _reconstruction.cameraInit && _reconstruction.nbCameras : false
             checkable: true
             checked: false
 
             onCheckedChanged:{
                 if(checked) {
-                    sortedModel.updateFilter("viewId.isReconstructed", true)
-                    inputImagesFilterButton.checked = false
-                    nonEstimatedCamerasFilterButton.checked = false
+                    sortedModel.reconstructionFilter = true;
+                    inputImagesFilterButton.checked = false;
+                    nonEstimatedCamerasFilterButton.checked = false;
                     intrinsicsFilterButton.checked = false;
                 }
             }
@@ -624,18 +648,18 @@ Panel {
             Layout.minimumWidth: childrenRect.width
             ToolTip.text: label + " Non Estimated Cameras"
             iconText: MaterialIcons.videocam_off
-            label: _reconstruction.nbCameras ? ((m.viewpoints ? m.viewpoints.count : 0) - _reconstruction.nbCameras.toString()).toString() : "-"
+            label: _reconstruction && _reconstruction.nbCameras ? ((m.viewpoints ? m.viewpoints.count : 0) - _reconstruction.nbCameras.toString()).toString() : "-"
             padding: 3
 
-            enabled: _reconstruction.cameraInit && _reconstruction.nbCameras
+            enabled: _reconstruction ? _reconstruction.cameraInit && _reconstruction.nbCameras : false
             checkable: true
             checked: false
 
             onCheckedChanged:{
                 if(checked) {
-                    sortedModel.updateFilter("viewId.isReconstructed", false)
-                    inputImagesFilterButton.checked = false
-                    estimatedCamerasFilterButton.checked = false
+                    sortedModel.reconstructionFilter = false;
+                    inputImagesFilterButton.checked = false;
+                    estimatedCamerasFilterButton.checked = false;
                     intrinsicsFilterButton.checked = false;
                 }
             }
@@ -682,7 +706,7 @@ Panel {
         MaterialToolLabelButton {
             id: displayHDR
             Layout.minimumWidth: childrenRect.width
-            property var activeNode: _reconstruction.activeNodes.get("LdrToHdrMerge").node
+            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("LdrToHdrMerge").node : null
             ToolTip.text: "Visualize HDR images: " + (activeNode ? activeNode.label : "No Node")
             iconText: MaterialIcons.filter
             label: activeNode ? activeNode.attribute("nbBrackets").value : ""
@@ -725,7 +749,7 @@ Panel {
             id: imageProcessing
             Layout.minimumWidth: childrenRect.width
 
-            property var activeNode: _reconstruction.activeNodes.get("ImageProcessing").node
+            property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ImageProcessing").node : null
             font.pointSize: 15
             padding: 0
             ToolTip.text: "Preprocessed Images: " + (activeNode ? activeNode.label : "No Node")

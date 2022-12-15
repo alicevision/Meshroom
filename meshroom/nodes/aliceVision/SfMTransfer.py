@@ -5,7 +5,7 @@ from meshroom.core import desc
 import os.path
 
 
-class SfMTransfer(desc.CommandLineNode):
+class SfMTransfer(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_sfmTransfer {allParams}'
     size = desc.DynamicNodeSize('input')
 
@@ -48,10 +48,10 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             description='Matching regular expression for the "from_cameras_filepath" method. '
                         'You should capture specific parts of the filepath with parenthesis to define matching elements.\n'
                         'Some examples of patterns:\n'
-                        ' - Match the filename without extension (default value): ".*\/(.*?)\.\w{3}"\n'
-                        ' - Match the filename suffix after "_": ".*\/.*(_.*?\.\w{3})"\n'
-                        ' - Match the filename prefix before "_": ".*\/(.*?)_.*\.\w{3}"\n',
-            value='.*\/(.*?)\.\w{3}',
+                        r' - Match the filename without extension (default value): ".*\/(.*?)\.\w{3}"' + '\n' +
+                        r' - Match the filename suffix after "_": ".*\/.*(_.*?\.\w{3})"' + '\n' +
+                        r' - Match the filename prefix before "_": ".*\/(.*?)_.*\.\w{3}"',
+            value=r'.*\/(.*?)\.\w{3}',
             uid=[0],
         ),
         desc.ListAttribute(

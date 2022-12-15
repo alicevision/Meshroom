@@ -8,11 +8,7 @@ import platform
 import os
 import sys
 
-if sys.version_info[0] == 2:
-    # On Python 2 use C implementation for performance and to avoid lots of warnings
-    from xml.etree import cElementTree as ET
-else:
-    import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET
 
 
 def bytes2human(n):
@@ -95,11 +91,7 @@ class ComputerStatistics:
             return
         try:
             p = subprocess.Popen([self.nvidia_smi, "-q", "-x"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if sys.version_info[0] == 2:
-                # no timeout in python-2
-                xmlGpu, stdError = p.communicate()
-            else:
-                xmlGpu, stdError = p.communicate(timeout=10) # 10 seconds
+            xmlGpu, stdError = p.communicate(timeout=10) # 10 seconds
 
             smiTree = ET.fromstring(xmlGpu)
             gpuTree = smiTree.find('gpu')

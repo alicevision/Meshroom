@@ -13,7 +13,7 @@ Panel {
     id: root
 
     property variant reconstruction
-    readonly property variant liveSfmManager: reconstruction.liveSfmManager
+    readonly property variant liveSfmManager: reconstruction ? reconstruction.liveSfmManager : null
 
     title: "Live Reconstruction"
     icon: Label {
@@ -41,7 +41,7 @@ Panel {
             width: parent.width
             GroupBox {
                 Layout.fillWidth: true
-                enabled: !liveSfmManager.running
+                enabled: liveSfmManager ? !liveSfmManager.running : false
 
                 GridLayout {
                     width: parent.width
@@ -59,7 +59,7 @@ Panel {
                             id: folderPath
                             Layout.fillWidth: true
                             selectByMouse: true
-                            text: liveSfmManager.folder
+                            text: liveSfmManager ? liveSfmManager.folder : ""
                             placeholderText: "Select a Folder"
                         }
                         ToolButton {
@@ -90,8 +90,8 @@ Panel {
             Button {                
                 Layout.alignment: Qt.AlignCenter
                 text: checked ? "Stop" : "Start"
-                enabled: liveSfmManager.running || folderPath.text.trim() != ''
-                checked: liveSfmManager.running
+                enabled: liveSfmManager ? liveSfmManager.running || folderPath.text.trim() != '' : false
+                checked: liveSfmManager ? liveSfmManager.running : false
                 onClicked: {
                     if(!liveSfmManager.running)
                         liveSfmManager.start(folderPath.text, minImg_SB.value)

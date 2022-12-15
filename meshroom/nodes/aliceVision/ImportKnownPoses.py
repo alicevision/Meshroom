@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class ImportKnownPoses(desc.CommandLineNode):
+class ImportKnownPoses(desc.AVCommandLineNode):
     commandLine = 'aliceVision_importKnownPoses {allParams}'
     size = desc.DynamicNodeSize('sfmData')
 

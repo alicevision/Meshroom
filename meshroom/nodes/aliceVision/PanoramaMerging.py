@@ -6,7 +6,7 @@ import os
 from meshroom.core import desc
 
 
-class PanoramaMerging(desc.CommandLineNode):
+class PanoramaMerging(desc.AVCommandLineNode):
     commandLine = 'aliceVision_panoramaMerging {allParams}'
     size = desc.DynamicNodeSize('input')
     cpu = desc.Level.NORMAL

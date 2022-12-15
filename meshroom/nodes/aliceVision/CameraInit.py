@@ -94,9 +94,8 @@ def readSfMData(sfmFile):
     Returns:
         The views and intrinsics of the .sfm as two separate lists
     """
-    import io  # use io.open for Python2/3 compatibility (allow to specify encoding + errors handling)
     # skip decoding errors to avoid potential exceptions due to non utf-8 characters in images metadata
-    with io.open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
+    with open(sfmFile, 'r', encoding='utf-8', errors='ignore') as f:
         data = json.load(f)
 
     intrinsicsKeys = [i.name for i in Intrinsic]
@@ -120,7 +119,7 @@ def readSfMData(sfmFile):
     return views, intrinsics
 
 
-class CameraInit(desc.CommandLineNode, desc.InitNode):
+class CameraInit(desc.AVCommandLineNode, desc.InitNode):
     commandLine = 'aliceVision_cameraInit {allParams} --allowSingleView 1' # don't throw an error if there is only one image
 
     size = desc.DynamicNodeSize('viewpoints')
@@ -163,6 +162,13 @@ The metadata needed are:
             value='${ALICEVISION_SENSOR_DB}',
             uid=[],
         ),
+        desc.File(
+            name='colorProfileDatabase',
+            label='Color Profile Database',
+            description='''Color Profile database directory path.''',
+            value='${ALICEVISION_COLOR_PROFILE_DB}',
+            uid=[],
+        ),
         desc.FloatParam(
             name='defaultFieldOfView',
             label='Default Field Of View',
@@ -198,10 +204,19 @@ The metadata needed are:
             joinChar=',',
             advanced=True,
         ),
+        desc.ChoiceParam(
+            name='rawColorInterpretation',
+            label='RAW Color Interpretation',
+            description='Allows you to choose how raw data are color processed.',
+            value='LibRawWhiteBalancing',
+            values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing', 'DCPMetadata'],
+            exclusive=True,
+            uid=[0],
+        ),
         desc.BoolParam(
-            name='useInternalWhiteBalance',
-            label='Apply internal white balance',
-            description='Apply image white balance (Only for raw images)',
+            name='errorOnMissingColorProfile',
+            label='Error On Missing DCP Color Profile',
+            description='If a color profile database is specified but no color profile is found for at least one image, then an error is thrown',
             value=True,
             uid=[0],
         ),
@@ -223,9 +238,9 @@ The metadata needed are:
             description='Regex used to catch number used as viewId in filename.'
                         'You should capture specific parts of the filename with parenthesis to define matching elements. (only number will works)\n'
                         'Some examples of patterns:\n'
-                        ' - Match the longest number at the end of filename (default value): ".*?(\d+)"\n'
-                        ' - Match the first number found in filename : "(\d+).*"\n',
-            value='.*?(\d+)',
+                        r' - Match the longest number at the end of filename (default value): ".*?(\d+)"' + '\n' +
+                        r' - Match the first number found in filename : "(\d+).*"',
+            value=r'.*?(\d+)',
             uid=[],
             advanced=True,
             enabled=lambda node: node.viewIdMethod.value == 'filename',

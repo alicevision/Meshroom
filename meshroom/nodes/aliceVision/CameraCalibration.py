@@ -3,7 +3,7 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class CameraCalibration(desc.CommandLineNode):
+class CameraCalibration(desc.AVCommandLineNode):
     commandLine = 'aliceVision_cameraCalibration {allParams}'
 
     category = 'Utils'

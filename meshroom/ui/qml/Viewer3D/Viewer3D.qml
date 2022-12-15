@@ -25,7 +25,7 @@ FocusScope {
     readonly property vector3d defaultCamUpVector: Qt.vector3d(0.0, 1.0, 0.0)
     readonly property vector3d defaultCamViewCenter: Qt.vector3d(0.0, 0.0, 0.0)
 
-    readonly property var viewpoint: _reconstruction.selectedViewpoint
+    readonly property var viewpoint: _reconstruction ? _reconstruction.selectedViewpoint : null
     readonly property bool doSyncViewpointCamera: Viewer3DSettings.syncViewpointCamera && (viewpoint && viewpoint.isReconstructed)
 
     // functions

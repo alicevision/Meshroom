@@ -83,8 +83,11 @@ class SimpleFarmSubmitter(BaseSubmitter):
             **arguments)
         return task
 
-    def submit(self, nodes, edges, filepath):
-        name = os.path.splitext(os.path.basename(filepath))[0] + ' [Meshroom]'
+    def submit(self, nodes, edges, filepath, submitLabel="{projectName}"):
+
+        projectName = os.path.splitext(os.path.basename(filepath))[0]
+        name = submitLabel.format(projectName=projectName)
+
         comment = filepath
         nbFrames = max([node.size for node in nodes])
 

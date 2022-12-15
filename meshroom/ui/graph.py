@@ -11,6 +11,7 @@ from multiprocessing.pool import ThreadPool
 from PySide6.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QPoint
 
 from meshroom import multiview
+from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
 from meshroom.core.graph import Graph, Edge
@@ -277,12 +278,16 @@ class UIGraph(QObject):
         self._selectedNodes = QObjectListModel(parent=self)
         self._hoveredNode = None
 
+        self.submitLabel = "{projectName}"
         self.computeStatusChanged.connect(self.updateLockedUndoStack)
 
     def setGraph(self, g):
         """ Set the internal graph. """
         if self._graph:
             self.stopExecution()
+            # Clear all the locally submitted nodes at once before the graph gets changed, as it won't receive further updates
+            if self._computingLocally:
+                self._graph.clearLocallySubmittedNodes()
             self.clear()
         oldGraph = self._graph
         self._graph = g
@@ -353,8 +358,9 @@ class UIGraph(QObject):
         self.setGraph(g)
         return status
 
-    @Slot(QUrl, result=bool)
-    def importProject(self, filepath):
+    @Slot(QUrl, result="QVariantList")
+    @Slot(QUrl, QPoint, result="QVariantList")
+    def importProject(self, filepath, position=None):
         if isinstance(filepath, (QUrl)):
             # depending how the QUrl has been initialized,
             # toLocalFile() may return the local path or an empty string
@@ -363,8 +369,10 @@ class UIGraph(QObject):
                 localFile = filepath.toString()
         else:
             localFile = filepath
+        if isinstance(position, QPoint):
+                position = Position(position.x(), position.y())
         yOffset = self.layout.gridSpacing + self.layout.nodeHeight
-        return self.push(commands.ImportProjectCommand(self._graph, localFile, yOffset=yOffset))
+        return self.push(commands.ImportProjectCommand(self._graph, localFile, position=position, yOffset=yOffset))
 
     @Slot(QUrl)
     def saveAs(self, url):
@@ -450,11 +458,15 @@ class UIGraph(QObject):
         self.save()  # graph must be saved before being submitted
         self._undoStack.clear()  # the undo stack must be cleared
         node = [node] if node else None
-        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node)
+        self._taskManager.submit(self._graph, os.environ.get('MESHROOM_DEFAULT_SUBMITTER', ''), node, submitLabel=self.submitLabel)
 
     def updateGraphComputingStatus(self):
         # update graph computing status
-        computingLocally = any([ch.status.execMode == ExecMode.LOCAL and ch.status.status in (Status.RUNNING, Status.SUBMITTED) for ch in self._sortedDFSChunks])
+        computingLocally = any([
+                                (ch.status.execMode == ExecMode.LOCAL and
+                                ch.status.sessionUid == sessionUid and
+                                ch.status.status in (Status.RUNNING, Status.SUBMITTED))
+                                    for ch in self._sortedDFSChunks])
         submitted = any([ch.status.status == Status.SUBMITTED for ch in self._sortedDFSChunks])
         if self._computingLocally != computingLocally or self._submitted != submitted:
             self._computingLocally = computingLocally

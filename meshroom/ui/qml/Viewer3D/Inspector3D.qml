@@ -114,7 +114,7 @@ FloatingPane {
                     // Synchronization
                     MaterialToolButton {
                         id: syncViewpointCamera
-                        enabled: _reconstruction.sfmReport
+                        enabled: _reconstruction ? _reconstruction.sfmReport : false
                         text: MaterialIcons.linked_camera
                         ToolTip.text: "Sync with Image Selection"
                         checked: enabled && Viewer3DSettings.syncViewpointCamera
@@ -204,8 +204,8 @@ FloatingPane {
                     // add mediaLibrary.count in the binding to ensure 'entity'
                     // is re-evaluated when mediaLibrary delegates are modified
                     property bool loading: model.status === SceneLoader.Loading
-                    property bool hovered:  model.attribute ? uigraph.hoveredNode === model.attribute.node : containsMouse
-                    property bool isSelectedNode: model.attribute ? uigraph.selectedNode === model.attribute.node : false
+                    property bool hovered:  model.attribute ? (uigraph ? uigraph.hoveredNode === model.attribute.node : false) : containsMouse
+                    property bool isSelectedNode: model.attribute ? (uigraph ? uigraph.selectedNode === model.attribute.node : false) : false
 
                     onIsSelectedNodeChanged: updateCurrentIndex()
 

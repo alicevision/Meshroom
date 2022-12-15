@@ -28,7 +28,7 @@ def outputImagesValueFunct(attr):
     return desc.Node.internalFolder + '*' + (outputExt or '.*')
 
 
-class ImageProcessing(desc.CommandLineNode):
+class ImageProcessing(desc.AVCommandLineNode):
     commandLine = 'aliceVision_utils_imageProcessing {allParams}'
     size = desc.DynamicNodeSize('input')
     # parallelization = desc.Parallelization(blockSize=40)
@@ -287,6 +287,55 @@ Convert or apply filtering to the input images.
                 enabled=lambda node: node.noiseFilter.noiseEnabled.value,
             ),
         ]),
+        desc.GroupAttribute(name="nlmFilter", label="NL Means Denoising (8 bits)",
+                            description="NL Means Denoising Parameters.\n This implementation only works on 8-bit images, so the colors can be reduced and clamped.",
+                            joinChar=":", groupDesc=[
+            desc.BoolParam(
+                name='nlmFilterEnabled',
+                label='Enable',
+                description='Use Non-local Mean Denoising from OpenCV to denoise images',
+                value=False,
+                uid=[0],
+            ),
+            desc.FloatParam(
+                name='nlmFilterH',
+                label='H',
+                description='Parameter regulating filter strength for luminance component.\n'
+                            'Bigger H value perfectly removes noise but also removes image details, smaller H value preserves details but also preserves some noise.',
+                value=5.0,
+                range=(1.0, 1000.0, 0.01),
+                uid=[0],
+                enabled=lambda node: node.nlmFilter.nlmFilterEnabled.value,
+            ),
+            desc.FloatParam(
+                name='nlmFilterHColor',
+                label='HColor',
+                description='Parameter regulating filter strength for color components. Not necessary for grayscale images.\n'
+                            'Bigger HColor value perfectly removes noise but also removes image details, smaller HColor value preserves details but also preserves some noise.',
+                value=10.0,
+                range=(0.0, 1000.0, 0.01),
+                uid=[0],
+                enabled=lambda node: node.nlmFilter.nlmFilterEnabled.value,
+            ),
+            desc.IntParam(
+                name='nlmFilterTemplateWindowSize',
+                label='Template Window Size',
+                description='Size in pixels of the template patch that is used to compute weights. Should be odd.',
+                value=7,
+                range=(1, 101, 2),
+                uid=[0],
+                enabled=lambda node: node.nlmFilter.nlmFilterEnabled.value,
+            ),
+            desc.IntParam(
+                name='nlmFilterSearchWindowSize',
+                label='Search Window Size',
+                description='Size in pixels of the window that is used to compute weighted average for given pixel. Should be odd. Affect performance linearly: greater searchWindowsSize - greater denoising time.',
+                value=21,
+                range=(1, 1001, 2),
+                uid=[0],
+                enabled=lambda node: node.nlmFilter.nlmFilterEnabled.value,
+            ),
+        ]),
         desc.ChoiceParam(
                 name='outputFormat',
                 label='Output Image Format',
@@ -301,10 +350,46 @@ Convert or apply filtering to the input images.
                 label='Output Color Space',
                 description='Allows you to choose the color space of the output image.',
                 value='AUTO',
-                values=['AUTO', 'sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+                values=['AUTO', 'sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
                 exclusive=True,
                 uid=[0],
         ),
+        desc.ChoiceParam(
+                name='workingColorSpace',
+                label='Working Color Space',
+                description='Allows you to choose the color space in which the data are processed.',
+                value='Linear',
+                values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
+                exclusive=True,
+                uid=[0],
+        ),
+        
+        desc.ChoiceParam(
+                name='rawColorInterpretation',
+                label='RAW Color Interpretation',
+                description='Allows you to choose how raw data are color processed.',
+                value='LibRawWhiteBalancing',
+                values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing', 'DCPMetadata', 'Auto'],
+                exclusive=True,
+                uid=[0],
+        ),
+        
+        desc.File(
+            name='colorProfileDatabase',
+            label='Color Profile Database',
+            description='''Color Profile database directory path.''',
+            value='${ALICEVISION_COLOR_PROFILE_DB}',
+            uid=[],
+        ),
+        
+        desc.BoolParam(
+            name='errorOnMissingColorProfile',
+            label='Error On Missing DCP Color Profile',
+            description='If a color profile database is specified but no color profile is found for at least one image, then an error is thrown',
+            value=True,
+            uid=[0],
+        ),
+        
         desc.ChoiceParam(
             name='storageDataType',
             label='Storage Data Type for EXR output',

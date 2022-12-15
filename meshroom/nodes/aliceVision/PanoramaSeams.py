@@ -6,7 +6,7 @@ import os
 from meshroom.core import desc
 
 
-class PanoramaSeams(desc.CommandLineNode):
+class PanoramaSeams(desc.AVCommandLineNode):
     commandLine = 'aliceVision_panoramaSeams {allParams}'
     size = desc.DynamicNodeSize('input')
     cpu = desc.Level.INTENSIVE

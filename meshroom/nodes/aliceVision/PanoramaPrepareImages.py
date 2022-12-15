@@ -5,7 +5,7 @@ from meshroom.core import desc
 import os.path
 
 
-class PanoramaPrepareImages(desc.CommandLineNode):
+class PanoramaPrepareImages(desc.AVCommandLineNode):
     commandLine = 'aliceVision_panoramaPrepareImages {allParams}'
     size = desc.DynamicNodeSize('input')
 

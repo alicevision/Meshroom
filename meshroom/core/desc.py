@@ -500,23 +500,22 @@ class Node(object):
     packageVersion = ''
     internalInputs = [
         StringParam(
-            name="comment",
-            label="Comments",
-            description="User comments describing this specific node instance.",
-            value="",
-            semantic="multiline",
-            uid=[],
-        ),
-        StringParam(
             name="invalidation",
             label="Invalidation Message",
             description="A message that will invalidate the node's output folder.\n"
-                        "This is useful for development, we can invalidate\n"
-                        "the output of the node when we modify the code.",
+                        "This is useful for development, we can invalidate the output of the node when we modify the code.\n"
             value="",
             semantic="multiline",
             uid=[0],
             advanced=True,
+        ),
+        StringParam(
+            name="comment",
+            label="Comments",
+            description="User comments describing this specific node instance.\n"
+            value="",
+            semantic="multiline",
+            uid=[],
         ),
         StringParam(
             name="label",

@@ -66,11 +66,12 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
             uid=[0],
         ),
         desc.BoolParam(
-                name='offsetRefBracketIndexEnabled',
-                label='Enable Ref Bracket Manual Setting',
-                description='Enable user selection of reference bracket index.',
-                value=False,
-                uid=[0],
+            name='offsetRefBracketIndexEnabled',
+            label='Manually Specify Ref Bracket',
+            description='Manually specify the reference bracket index to control the exposure of the HDR image.',
+            value=False,
+            uid=[0],
+            group='user',  # not used directly on the command line
         ),
         desc.IntParam(
             name='offsetRefBracketIndex',

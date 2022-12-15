@@ -541,6 +541,15 @@ class BaseNode(BaseObject):
             return self.internalAttribute("color").value.strip()
         return ""
 
+    def getInvalidationMessage(self):
+        """
+        Returns:
+            str: the invalidation message on the node if it exists, empty string otherwise
+        """
+        if self.hasInternalAttribute("invalidation"):
+            return self.internalAttribute("invalidation").value
+        return ""
+
     def getComment(self):
         """
         Returns:
@@ -1131,6 +1140,7 @@ class BaseNode(BaseObject):
     attributes = Property(BaseObject, getAttributes, constant=True)
     internalAttributes = Property(BaseObject, getInternalAttributes, constant=True)
     internalAttributesChanged = Signal()
+    invalidation = Property(str, getInvalidationMessage, notify=internalAttributesChanged)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     depthChanged = Signal()

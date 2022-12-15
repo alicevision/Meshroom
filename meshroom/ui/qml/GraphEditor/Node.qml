@@ -71,13 +71,6 @@ Item {
             root.x = root.node.x
             root.y = root.node.y
         }
-
-        onInternalAttributesChanged: {
-            nodeLabel.text = node ? node.label : ""
-            background.color = (node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color)
-            nodeCommentTooltip.text = node ? node.comment : ""
-            nodeComment.visible = node.comment != ""
-        }
     }
 
     // Whether an attribute can be displayed as an attribute pin on the node

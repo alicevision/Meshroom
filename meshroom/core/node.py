@@ -1128,9 +1128,6 @@ class BaseNode(BaseObject):
 
 
     name = Property(str, getName, constant=True)
-    label = Property(str, getLabel, constant=True)
-    color = Property(str, getColor, constant=True)
-    comment = Property(str, getComment, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
     positionChanged = Signal()
@@ -1140,7 +1137,10 @@ class BaseNode(BaseObject):
     attributes = Property(BaseObject, getAttributes, constant=True)
     internalAttributes = Property(BaseObject, getInternalAttributes, constant=True)
     internalAttributesChanged = Signal()
+    label = Property(str, getLabel, notify=internalAttributesChanged)
+    color = Property(str, getColor, notify=internalAttributesChanged)
     invalidation = Property(str, getInvalidationMessage, notify=internalAttributesChanged)
+    comment = Property(str, getComment, notify=internalAttributesChanged)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     depthChanged = Signal()

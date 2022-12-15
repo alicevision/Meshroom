@@ -248,7 +248,7 @@ RowLayout {
                 CheckBox {
                     id: color_checkbox
                     Layout.alignment: Qt.AlignLeft
-                    checked: node.color === "" ? false : true
+                    checked: node && node.color === "" ? false : true
                     text: "Custom Color"
                     onClicked: {
                         if(checked) {

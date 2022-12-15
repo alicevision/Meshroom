@@ -504,6 +504,7 @@ class Node(object):
             label="Invalidation Message",
             description="A message that will invalidate the node's output folder.\n"
                         "This is useful for development, we can invalidate the output of the node when we modify the code.\n"
+                        "It is displayed in bold font in the invalidation/comment messages tooltip.",
             value="",
             semantic="multiline",
             uid=[0],
@@ -513,6 +514,7 @@ class Node(object):
             name="comment",
             label="Comments",
             description="User comments describing this specific node instance.\n"
+                        "It is displayed in regular font in the invalidation/comment messages tooltip.",
             value="",
             semantic="multiline",
             uid=[],

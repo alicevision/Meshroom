@@ -104,6 +104,53 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             exclusive=True,
             uid=[],
         ),
+
+        desc.GroupAttribute(
+            name="debug",
+            label="Debug Parameters",
+            description="Debugging options for Keyframe Selection",
+            group=None,
+            groupDesc=[
+                desc.BoolParam(
+                    name='computeScores',
+                    label='Compute Sharpness And Optical Flow Scores',
+                    description='Compute sharpness and optical flow scores on all the input frames, at full resolution.',
+                    value=False,
+                    uid=[0],
+                ),
+                desc.BoolParam(
+                    name='computeRescaled',
+                    label='Compute Scores Of Rescaled Inputs',
+                    description='Compute, in additon to the sharpness and optical flow scores on full resolution images, the same scores on rescaled images.',
+                    value=True,
+                    enabled=lambda node: node.debug.computeScores.value,
+                    uid=[],
+                ),
+                desc.BoolParam(
+                    name='exportSharpness',
+                    label='Export Sharpness Scores',
+                    description='Export the sharpness score of each frame into a CSV file.',
+                    value=True,
+                    enabled=lambda node: node.debug.computeScores.value,
+                    uid=[],
+                ),
+                desc.BoolParam(
+                    name='exportFlow',
+                    label='Export Optical Flow Scores',
+                    description='Export the optical flow score of each frame into a CSV file.',
+                    value=True,
+                    enabled=lambda node: node.debug.computeScores.value,
+                    uid=[],
+                ),
+                desc.BoolParam(
+                    name='noSelection',
+                    label='Cancel Keyframe Selection',
+                    description='Do not perform the keyframe selection after the score computations.',
+                    value=True,
+                    enabled=lambda node: node.debug.computeScores.value,
+                    uid=[],
+                )
+        ]),
     ]
 
     outputs = [

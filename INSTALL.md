@@ -48,18 +48,11 @@ Adds support for Alembic file loading in Meshroom's 3D viewport. Allows to visua
 QML2_IMPORT_PATH=/path/to/qmlAlembic/install/qml
 ```
 
-#### [QtOIIO](https://github.com/alicevision/QtOIIO)
-Use OpenImageIO as backend to load images in Qt. Allow to visualize RAW/EXR images in Meshroom.
-This plugin also provides a QML Qt3D Entity to load depthmaps files stored in EXR format.
-```
-QT_PLUGIN_PATH=/path/to/QtOIIO/install
-QML2_IMPORT_PATH=/path/to/QtOIIO/install/qml
-```
-
 #### [QtAliceVision](https://github.com/alicevision/QtAliceVision)
-Use AliceVision to load and visualize intermediate reconstruction files.
+Use AliceVision to load and visualize intermediate reconstruction files and OpenImageIO as backend to read RAW/EXR images.
 ```
 QML2_IMPORT_PATH=/path/to/qtAliceVision/install/qml
+QT_PLUGIN_PATH=/path/to/qtAliceVision/install
 ```
 
 

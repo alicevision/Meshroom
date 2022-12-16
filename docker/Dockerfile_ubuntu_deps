@@ -42,15 +42,6 @@ RUN apt-get update && \
 	libz-dev \
 	systemd \
 	ssh
-
-# Disabled as QTOIIO requires ah least 5.13 (5.12 available in Ubuntu 20.04)
-#	qtdeclarative5-dev \
-#	qt3d-assimpsceneimport-plugin \
-#	qt3d-defaultgeometryloader-plugin \
-#	qt3d-gltfsceneio-plugin \
-#	qt3d-scene2d-plugin \
-#	qt53dextras5 \
-#	qt3d5-dev 
 	
 
 RUN apt-get install -y --no-install-recommends \

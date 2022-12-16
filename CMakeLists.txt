@@ -8,7 +8,6 @@ endif()
 set(ALICEVISION_ROOT "$ENV{ALICEVISION_ROOT}" CACHE STRING "AliceVision root dir")
 set(QT_DIR "$ENV{QT_DIR}" CACHE STRING "Qt root directory")
 
-option(MR_BUILD_QTOIIO "Enable building of QtOIIO plugin" ON)
 option(MR_BUILD_QMLALEMBIC "Enable building of qmlAlembic plugin" ON)
 option(MR_BUILD_QTALICEVISION "Enable building of qtAliceVision plugin" ON)
 
@@ -42,22 +41,6 @@ include(ExternalProject)
 include(GNUInstallDirs)
 
 # message(STATUS "QT_CMAKE_FLAGS: ${QT_CMAKE_FLAGS}")
-
-if(MR_BUILD_QTOIIO)
-set(QTOIIO_TARGET qtOIIO)
-ExternalProject_Add(${QTOIIO_TARGET}
-      GIT_REPOSITORY https://github.com/alicevision/QtOIIO
-      GIT_TAG develop
-      PREFIX ${BUILD_DIR}
-      BUILD_IN_SOURCE 0
-      BUILD_ALWAYS 0
-      SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/qtoiio
-      BINARY_DIR ${BUILD_DIR}/qtoiio_build
-      INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
-      CONFIGURE_COMMAND ${CMAKE_COMMAND} ${CMAKE_CORE_BUILD_FLAGS} ${OIIO_CMAKE_FLAGS} -DCMAKE_PREFIX_PATH:PATH=${QT_DIR} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> <SOURCE_DIR>
-      )
-endif()
-
 
 if(MR_BUILD_QMLALEMBIC)
 set(QMLALEMBIC_TARGET qmlAlembic)

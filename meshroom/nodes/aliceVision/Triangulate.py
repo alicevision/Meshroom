@@ -8,7 +8,7 @@ class Triangulate(desc.AVCommandLineNode):
     size = desc.DynamicNodeSize('input')
 
     category = 'Sparse Reconstruction'
-    documentation = '''Perfom keypoint triangulation (similarly to what is done in the SfM)'''
+    documentation = '''Perfom keypoint triangulation (as it is done in the SfM)'''
 
     inputs = [
         desc.File(
@@ -52,72 +52,6 @@ class Triangulate(desc.AVCommandLineNode):
             uid=[0],
             joinChar=',',
         ),
-        desc.ChoiceParam(
-            name='localizerEstimator',
-            label='Localizer Estimator',
-            description='Estimator type used to localize cameras (acransac, ransac, lsmeds, loransac, maxconsensus).',
-            value='acransac',
-            values=['acransac', 'ransac', 'lsmeds', 'loransac', 'maxconsensus'],
-            exclusive=True,
-            uid=[0],
-            advanced=True,
-        ),
-        desc.ChoiceParam(
-            name='observationConstraint',
-            label='Observation Constraint',
-            description='Observation constraint mode used in the optimization:\n'
-                        ' * Basic: Use standard reprojection error in pixel coordinates\n'
-                        ' * Scale: Use reprojection error in pixel coordinates but relative to the feature scale',
-            value='Scale',
-            values=['Basic', 'Scale'],
-            exclusive=True,
-            uid=[0],
-            advanced=True,
-        ),
-        desc.IntParam(
-            name='localizerEstimatorMaxIterations',
-            label='Localizer Max Ransac Iterations',
-            description='Maximum number of iterations allowed in ransac step.',
-            value=4096,
-            range=(1, 20000, 1),
-            uid=[0],
-            advanced=True,
-        ),
-        desc.FloatParam(
-            name='localizerEstimatorError',
-            label='Localizer Max Ransac Error',
-            description='Maximum error (in pixels) allowed for camera localization (resectioning).\n'
-                        'If set to 0, it will select a threshold according to the localizer estimator used\n'
-                        '(if ACRansac, it will analyze the input data to select the optimal value).',
-            value=0.0,
-            range=(0.0, 100.0, 0.1),
-            uid=[0],
-            advanced=True,
-        ),
-       desc.BoolParam(
-            name='lockScenePreviouslyReconstructed',
-            label='Lock Scene Previously Reconstructed',
-            description='This option is useful for SfM augmentation. Lock previously reconstructed poses and intrinsics.',
-            value=False,
-            uid=[0],
-        ),
-        desc.BoolParam(
-            name='useLocalBA',
-            label='Local Bundle Adjustment',
-            description='It reduces the reconstruction time, especially for large datasets (500+ images),\n'
-                        'by avoiding computation of the Bundle Adjustment on areas that are not changing.',
-            value=True,
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='localBAGraphDistance',
-            label='LocalBA Graph Distance',
-            description='Graph-distance limit to define the Active region in the Local Bundle Adjustment strategy.',
-            value=1,
-            range=(2, 10, 1),
-            uid=[0],
-            advanced=True,
-        ),
         desc.IntParam(
             name='maxNumberOfMatches',
             label='Maximum Number of Matches',
@@ -135,14 +69,6 @@ class Triangulate(desc.AVCommandLineNode):
                         'This can be useful to have a meaningful reconstruction with accurate keypoints. 0 means no limit.',
             value=0,
             range=(0, 50000, 1),
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='minInputTrackLength',
-            label='Min Input Track Length',
-            description='Minimum track length in input of SfM',
-            value=2,
-            range=(2, 10, 1),
             uid=[0],
         ),
         desc.IntParam(
@@ -175,42 +101,6 @@ class Triangulate(desc.AVCommandLineNode):
             uid=[0],
             advanced=True,
         ),
-        desc.FloatParam(
-            name='maxReprojectionError',
-            label='Max Reprojection Error',
-            description='Maximum reprojection error.',
-            value=4.0,
-            range=(0.1, 10.0, 0.1),
-            uid=[0],
-            advanced=True,
-        ),
-        desc.FloatParam(
-            name='minAngleInitialPair',
-            label='Min Angle Initial Pair',
-            description='Minimum angle for the initial pair.',
-            value=5.0,
-            range=(0.1, 10.0, 0.1),
-            uid=[0],
-            advanced=True,
-        ),
-        desc.FloatParam(
-            name='maxAngleInitialPair',
-            label='Max Angle Initial Pair',
-            description='Maximum angle for the initial pair.',
-            value=40.0,
-            range=(0.1, 60.0, 0.1),
-            uid=[0],
-            advanced=True,
-        ),
-        desc.BoolParam(
-            name='useOnlyMatchesFromInputFolder',
-            label='Use Only Matches From Input Folder',
-            description='Use only matches from the input matchesFolder parameter.\n'
-                        'Matches folders previously added to the SfMData file will be ignored.',
-            value=False,
-            uid=[],
-            advanced=True,
-        ),
         desc.BoolParam(
             name='useRigConstraint',
             label='Use Rig Constraint',
@@ -229,53 +119,10 @@ class Triangulate(desc.AVCommandLineNode):
             advanced=True,
         ),
         desc.BoolParam(
-            name='lockAllIntrinsics',
-            label='Force Lock of All Intrinsic Camera Parameters',
-            description='Force to keep constant all the intrinsics parameters of the cameras (focal length, \n'
-                        'principal point, distortion if any) during the reconstruction.\n'
-                        'This may be helpful if the input cameras are already fully calibrated.',
-            value=False,
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='minNbCamerasToRefinePrincipalPoint',
-            label='Min Nb Cameras To Refine Principal Point',
-            description='Minimal number of cameras to refine the principal point of the cameras (one of the intrinsic parameters of the camera). '
-                        'If we do not have enough cameras, the principal point in consider is considered in the center of the image. '
-                        'If minNbCamerasToRefinePrincipalPoint<=0, the principal point is never refined. '
-                        'If minNbCamerasToRefinePrincipalPoint==1, the principal point is always refined.',
-            value=3,
-            range=(0, 20, 1),
-            uid=[0],
-            advanced=True,
-        ),
-        desc.BoolParam(
-            name='filterTrackForks',
-            label='Filter Track Forks',
-            description='Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n'
-                        'lead to multiple features in the same image for a single track. \n',
-            value=False,
-            uid=[0],
-        ),
-        desc.BoolParam(
             name='computeStructureColor',
             label='Compute Structure Color',
             description='Enable/Disable color computation of each 3D point.',
             value=True,
-            uid=[0],
-        ),
-        desc.File(
-            name='initialPairA',
-            label='Initial Pair A',
-            description='Filename of the first image (without path).',
-            value='',
-            uid=[0],
-        ),
-        desc.File(
-            name='initialPairB',
-            label='Initial Pair B',
-            description='Filename of the second image (without path).',
-            value='',
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -305,13 +152,6 @@ class Triangulate(desc.AVCommandLineNode):
             label='SfMData',
             description='Path to the output sfmdata file',
             value=desc.Node.internalFolder + 'sfm.abc',
-            uid=[],
-        ),
-        desc.File(
-            name='outputViewsAndPoses',
-            label='Views and Poses',
-            description='''Path to the output sfmdata file with cameras (views and poses).''',
-            value=desc.Node.internalFolder + 'cameras.sfm',
             uid=[],
         ),
         desc.File(

@@ -54,21 +54,13 @@ FocusScope {
         source: "TestAliceVisionPlugin.qml"
     }
     
-    Loader {
-        id: oiioPluginLoader
-        active: true
-        source: "TestOIIOPlugin.qml"
-    }
     readonly property bool aliceVisionPluginAvailable: aliceVisionPluginLoader.status === Component.Ready
-    readonly property bool oiioPluginAvailable: oiioPluginLoader.status === Component.Ready
 
     Component.onCompleted: {
         if(!aliceVisionPluginAvailable) {
             console.warn("Missing plugin qtAliceVision.")
             displayHDR.checked = false
         }
-        if(!oiioPluginAvailable)
-            console.warn("Missing plugin qtOIIO.")
     }
 
     property string loadingModules: {
@@ -470,7 +462,7 @@ FocusScope {
                     }
                 }
 
-                // Simple QML Image Viewer (using Qt or qtOIIO to load images)
+                // Simple QML Image Viewer (using Qt or qtAliceVisionImageIO to load images)
                 Loader {
                     id: qtImageViewerLoader
                     active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
@@ -1167,7 +1159,7 @@ FocusScope {
                         }
 
                         MaterialToolButton {
-                            property var activeNode: root.oiioPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('allDepthMap').node : null
+                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('allDepthMap').node : null
                             enabled: activeNode
                             ToolTip.text: "View Depth Map in 3D (" + (activeNode ? activeNode.label : "No DepthMap Node Selected") + ")"
                             text: MaterialIcons.input

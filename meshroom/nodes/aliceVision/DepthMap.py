@@ -89,7 +89,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 name='tilePadding',
                 label='Padding',
                 description='Tile buffer padding for overlapping.',
-                value=128,
+                value=64,
                 range=(0, 500, 1),
                 uid=[0],
             ),

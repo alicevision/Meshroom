@@ -214,7 +214,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 name='sgmMaxDepths',
                 label='Max Depths',
                 description='Max number of depths in the overall similarity volume.',
-                value=3000,
+                value=1500,
                 range=(1, 5000, 1),
                 uid=[0],
                 advanced=True,

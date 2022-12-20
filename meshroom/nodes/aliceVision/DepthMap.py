@@ -93,6 +93,14 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 range=(0, 500, 1),
                 uid=[0],
             ),
+            desc.BoolParam(
+                name='autoAdjustSmallImage',
+                label='Auto Adjust Small Image',
+                description='Automatically override depth map parameters if images are smaller than one tile.',
+                value=True,
+                uid=[0],
+                advanced=True,
+            ),
         ]),
         desc.BoolParam(
             name='chooseTCamsPerTile',

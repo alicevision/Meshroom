@@ -177,7 +177,7 @@ The metadata needed are:
             uid=[0],
         ),
         desc.BoolParam(
-            name='lensCorrectionProfileSearchByLensNameAndCameraMakerOnly',
+            name='lensCorrectionProfileSearchIgnoreCameraModel',
             label='LCP Search using lens name and camera maker only.',
             description='''Automatic LCP Search consider only the camera model and the lens name.''',
             value=False,

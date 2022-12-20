@@ -460,4 +460,44 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             uid=[],
             group='', # do not export on the command line
         ),
+        desc.File(
+            name='tilePattern',
+            label='Tile Pattern',
+            description='DEBUG: Tile pattern',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_tilePattern.obj',
+            uid=[],
+            group='', # do not export on the command line
+            # enabled=lambda node: node.intermediateResults.exportTilePattern.value,
+        ),
+        desc.File(
+            name='depthSgm',
+            label='Depth Maps SGM',
+            description='DEBUG: Depth maps SGM',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_scale2_sgm.exr',
+            uid=[],
+            group='', # do not export on the command line
+            # enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
+        ),
+        desc.File(
+            name='depthSgmUpscaled',
+            label='Depth Maps SGM Upscaled',
+            description='DEBUG: Depth maps SGM upscaled',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_sgmUpscaled.exr',
+            uid=[],
+            group='', # do not export on the command line
+            # enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
+        ),
+        desc.File(
+            name='depthRefined',
+            label='Depth Maps Refined',
+            description='DEBUG: Depth maps after refinement',
+            semantic='image',
+            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_refinedFused.exr',
+            uid=[],
+            group='', # do not export on the command line
+            # enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
+        ),
     ]

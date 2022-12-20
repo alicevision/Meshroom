@@ -70,16 +70,16 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             group=None,
             groupDesc=[
             desc.IntParam(
-                name='tileWidth',
-                label='Width',
+                name='tileBufferWidth',
+                label='Buffer Width',
                 description='Maximum tile buffer width.',
                 value=1024,
                 range=(-1, 2000, 10),
                 uid=[0],
             ),
             desc.IntParam(
-                name='tileHeight',
-                label='Height',
+                name='tileBufferHeight',
+                label='Buffer Height',
                 description='Maximum tile buffer height.',
                 value=1024,
                 range=(-1, 2000, 10),

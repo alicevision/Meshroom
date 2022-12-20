@@ -83,7 +83,7 @@ Entity {
         return -1;
     }
 
-    function load(filepath) {
+    function load(filepath, label = undefined) {
         var pathStr = Filepath.urlToString(filepath);
         if(!Filepath.exists(pathStr))
         {
@@ -99,11 +99,10 @@ Entity {
         // add file to the internal ListModel
         m.mediaModel.append(makeElement({
                     "source": pathStr,
-                    "label": Filepath.basename(pathStr),
+                    "label": label ? label : Filepath.basename(pathStr),
                     "section": "External"
         }));
     }
-
 
     function view(attribute) {
         if(m.sourceToEntity[attribute]) {

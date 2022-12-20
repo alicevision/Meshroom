@@ -30,9 +30,9 @@ Item {
 
 
     // Load a 3D media file in the 3D viewer
-    function load3DMedia(filepath) {
+    function load3DMedia(filepath, label = undefined) {
         if(panel3dViewerLoader.active) {
-            panel3dViewerLoader.item.viewer3D.load(filepath);
+            panel3dViewerLoader.item.viewer3D.load(filepath, label);
         }
     }
 

@@ -6,7 +6,7 @@ import os.path
 
 
 class SfMAlignment(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_utils_sfmAlignment {allParams}'
+    commandLine = 'aliceVision_sfmAlignment {allParams}'
     size = desc.DynamicNodeSize('input')
 
     category = 'Utils'

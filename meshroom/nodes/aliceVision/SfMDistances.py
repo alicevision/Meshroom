@@ -4,7 +4,7 @@ from meshroom.core import desc
 
 
 class SfMDistances(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_utils_sfmDistances {allParams}'
+    commandLine = 'aliceVision_sfmDistances {allParams}'
     size = desc.DynamicNodeSize('input')
 
     inputs = [

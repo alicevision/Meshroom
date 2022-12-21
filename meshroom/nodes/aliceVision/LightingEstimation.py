@@ -4,7 +4,7 @@ from meshroom.core import desc
 
 
 class LightingEstimation(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_utils_lightingEstimation {allParams}'
+    commandLine = 'aliceVision_lightingEstimation {allParams}'
 
     category = 'Utils'
 

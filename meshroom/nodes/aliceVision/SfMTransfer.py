@@ -6,7 +6,7 @@ import os.path
 
 
 class SfMTransfer(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_utils_sfmTransfer {allParams}'
+    commandLine = 'aliceVision_sfmTransfer {allParams}'
     size = desc.DynamicNodeSize('input')
 
     category = 'Utils'

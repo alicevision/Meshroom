@@ -67,7 +67,7 @@ Intrinsic = [
                                  " * estimated: estimated from metadata and/or sensor width. \n"
                                  " * unknown: unknown camera parameters (can still have default value guess)\n"
                                  " * none: not set",
-                     values=("calibrated", "estimated", "unknown", "none"),
+                     values=("calibrated", "estimated", "lcp", "unknown", "none"),
                      value="none",
                      exclusive=True,
                      uid=[0],
@@ -170,17 +170,10 @@ The metadata needed are:
             uid=[],
         ),
         desc.BoolParam(
-            name='enableLensCorrectionProfileSearch',
-            label='Enable Automatic LCP Search',
-            description='''Enable automatic LCP Search if a database directory is specified as LCP info.''',
-            value=False,
-            uid=[0],
-        ),
-        desc.BoolParam(
             name='lensCorrectionProfileSearchIgnoreCameraModel',
             label='LCP Search using lens name and camera maker only.',
             description='''Automatic LCP Search consider only the camera model and the lens name.''',
-            value=False,
+            value=True,
             uid=[0],
         ),
         desc.FloatParam(

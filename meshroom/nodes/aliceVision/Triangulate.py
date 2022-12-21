@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "1.0"
 
 from meshroom.core import desc
 
@@ -14,7 +14,7 @@ class Triangulate(desc.AVCommandLineNode):
         desc.File(
             name='input',
             label='SfMData',
-            description='SfMData file.',
+            description='SfMData file. Must contain the camera calibration.',
             value='',
             uid=[0],
         ),

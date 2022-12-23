@@ -43,6 +43,18 @@ class RippleSubmitter(BaseSubmitter):
             "NORMAL":",gpu8G",
             "INTENSIVE":",gpu16G"
         }
+
+        #decide if we need multiple slots
+        minProcessors = 1
+        maxProcessors = 1
+        if Level.INTENSIVE in (node.nodeDesc.ram, node.nodeDesc.cpu):
+            #at least 2 slots
+            minProcessors = 2
+            #if more than 2 are available without waiting, use 3 or 4
+            maxProcessors = 4
+        elif Level.NORMAL in (node.nodeDesc.ram, node.nodeDesc.cpu):
+            #if 2 are available, otherwise 1
+            maxProcessors = 2
         
         #Specify some constraints
         requirements = "!\"rs*\",@.mem>25{gpu}".format(gpu=gpudict[node.nodeDesc.gpu.name])
@@ -66,12 +78,12 @@ class RippleSubmitter(BaseSubmitter):
                 commandext = '{cmd} --iteration {iter}'.format(cmd=command, iter=iteration)
 
                 #Create process task with parameters
-                rippleproc = RippleProcessWithSlots(name='{name} iteration {iter}'.format(name=node.name, iter=iteration), discipline='ripple', appendKeys=True, keys=requirements, label=node.name, cmdList=[commandext], waitsFor=waitsFor, minProcessors=1, maxProcessors=1)
+                rippleproc = RippleProcessWithSlots(name='{name} iteration {iter}'.format(name=node.name, iter=iteration), discipline='ripple', appendKeys=True, keys=requirements, label=node.name, cmdList=[commandext], waitsFor=waitsFor, minProcessors=minProcessors, maxProcessors=maxProcessors)
                 rippleprocs.append(rippleproc)
             
             rippleObj = RippleGroup(label="{name} Group".format(name=node.name), tasks=rippleprocs, name=node.name, waitsFor=waitsFor)
         else:
-            rippleObj = RippleProcessWithSlots(name=node.name, discipline='ripple', appendKeys=True, keys=requirements, label=node.name, cmdList=[command], waitsFor=waitsFor, minProcessors=1, maxProcessors=1)
+            rippleObj = RippleProcessWithSlots(name=node.name, discipline='ripple', appendKeys=True, keys=requirements, label=node.name, cmdList=[command], waitsFor=waitsFor, minProcessors=minProcessors, maxProcessors=maxProcessors)
         
         return rippleObj
     

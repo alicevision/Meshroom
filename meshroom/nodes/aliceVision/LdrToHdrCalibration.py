@@ -66,7 +66,7 @@ class LdrToHdrCalibration(desc.AVCommandLineNode):
             range=(0, 10, 1),
             uid=[0],
         ),
-       desc.FloatParam(
+        desc.FloatParam(
             name='meanTargetedLumaForMerging',
             label='Targeted Luminance For Merging',
             description='Expected mean luminance of the HDR images used to compute the final panorama',

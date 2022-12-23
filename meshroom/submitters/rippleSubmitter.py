@@ -87,7 +87,7 @@ class RippleSubmitter(BaseSubmitter):
         
         return rippleObj
     
-    def submit(self, nodes, edges, filepath, submitLabel):
+    def submit(self, nodes, edges, filepath, submitLabel="{projectName}"):
         
         projectName = os.path.splitext(os.path.basename(filepath))[0]
         label = submitLabel.format(projectName=projectName)

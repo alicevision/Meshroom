@@ -139,7 +139,7 @@ class RippleSubmitter(BaseSubmitter):
                 hasChange = True
             
             for itemRemove in toRemove:
-                nodesDone.append(itemRemove)
+                nodesDone.add(itemRemove)
 
         if (len(tasks) == 0):
             return True

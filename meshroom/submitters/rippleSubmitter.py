@@ -88,7 +88,7 @@ class RippleSubmitter(BaseSubmitter):
         for end, start in edges:
             tree[end].append(start)
 
-        nodesDone = []
+        nodesDone = set()
         hasChange = True
         tasks = []
 
@@ -103,9 +103,8 @@ class RippleSubmitter(BaseSubmitter):
 
                 #Ignore a node already processed
                 found = False
-                for nodeDone in nodesDone:
-                    if nodeDone == node.name:
-                        found = True
+                if node.name in nodesDone:
+                    found = True
 
                 if found:
                     continue
@@ -114,9 +113,8 @@ class RippleSubmitter(BaseSubmitter):
                 valid = True
                 for parent in tree[node]:
                     found = False
-                    for nodeDone in nodesDone:
-                        if nodeDone == parent.name:
-                            found = True
+                    if parent.name in nodesDone:
+                        found = True
                     if found is False:
                         valid = False
             

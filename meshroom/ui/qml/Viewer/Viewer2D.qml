@@ -473,7 +473,6 @@ FocusScope {
                         asynchronous: true
                         smooth: false
                         fillMode: Image.PreserveAspectFit
-                        autoTransform: true
                         onWidthChanged: if(status==Image.Ready) fit()
                         source: getImageFile()
                         onStatusChanged: {
@@ -491,9 +490,19 @@ FocusScope {
                             asynchronous: true
                             smooth: parent.smooth
                             fillMode: parent.fillMode
-                            autoTransform: parent.autoTransform
 
                             visible: qtImageViewer.status === Image.Loading
+                        }
+                    }
+
+                    // handle rotation/position based on available metadata
+                    rotation: {
+                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+
+                        switch (orientation) {
+                            case "6": return 90;
+                            case "8": return -90;
+                            default: return 0;
                         }
                     }
                 }

@@ -364,11 +364,14 @@ FocusScope {
                 transformOrigin: Item.TopLeft
 
                 // qtAliceVision Image Viewer
-                Loader {
+                ExifOrientedViewer {
                     id: floatImageViewerLoader
                     active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
+                    orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     property var fittedOnce: false
                     property var previousWidth: 0
                     property var previousHeight: 0
@@ -390,17 +393,6 @@ FocusScope {
                             fittedOnce = true;
                             previousWidth = width;
                             previousHeight = height;
-                        }
-                    }
-
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-
-                        switch (orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
                         }
                     }
 
@@ -432,7 +424,6 @@ FocusScope {
                                 fittedOnce = false
                           }
                     }
-
                 }
 
                 // qtAliceVision Panorama Viewer
@@ -464,10 +455,13 @@ FocusScope {
                 }
 
                 // Simple QML Image Viewer (using Qt or qtAliceVisionImageIO to load images)
-                Loader {
+                ExifOrientedViewer {
                     id: qtImageViewerLoader
                     active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
                     anchors.centerIn: parent
+                    orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     sourceComponent: Image {
                         id: qtImageViewer
                         asynchronous: true
@@ -494,17 +488,6 @@ FocusScope {
                             visible: qtImageViewer.status === Image.Loading
                         }
                     }
-
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-
-                        switch (orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
                 }
 
                 property var image: {
@@ -521,24 +504,16 @@ FocusScope {
 
                 // FeatureViewer: display view extracted feature points
                 // note: requires QtAliceVision plugin - use a Loader to evaluate plugin availability at runtime
-                Loader {
+                ExifOrientedViewer {
                     id: featuresViewerLoader
                     active: displayFeatures.checked
                     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("FeatureExtraction").node : null
-
-                    anchors.centerIn: parent
                     width: imgContainer.width
                     height: imgContainer.height
-
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
+                    anchors.centerIn: parent
+                    orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
 
                     onActiveChanged: {
                         if(active) {
@@ -557,20 +532,13 @@ FocusScope {
 
                 // FisheyeCircleViewer: display fisheye circle
                 // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
-                Loader {
+                ExifOrientedViewer {
                     anchors.centerIn: parent
+                    orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
                     active: (displayFisheyeCircleLoader.checked && activeNode)
-
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
 
                     sourceComponent: CircleGizmo {
                         property bool useAuto: activeNode.attribute("estimateFisheyeCircle").value

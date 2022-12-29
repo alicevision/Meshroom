@@ -526,6 +526,10 @@ FocusScope {
                     active: displayFeatures.checked
                     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("FeatureExtraction").node : null
 
+                    anchors.centerIn: parent
+                    width: imgContainer.width
+                    height: imgContainer.height
+
                     // handle rotation/position based on available metadata
                     rotation: {
                         var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
@@ -535,8 +539,6 @@ FocusScope {
                             default: return 0;
                         }
                     }
-                    x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
-                    y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
 
                     onActiveChanged: {
                         if(active) {

@@ -138,6 +138,12 @@ Item {
                             checkable: true
                             checked: true && !viewer2D.usePanoramaViewer
                         }
+                        Action {
+                            id: enable8bitViewerAction
+                            text: "Enable 8-bit Viewer"
+                            checkable: true
+                            checked: true
+                        }
                     }
                 }
             }

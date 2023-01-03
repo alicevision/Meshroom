@@ -144,6 +144,12 @@ FocusScope {
         }
     }
 
+    onEnable8bitViewerChanged: {
+        if (!enable8bitViewer) {
+            displayHDR.checked = true;
+        }
+    }
+
     // functions
     function fit() {
         if(imgContainer.image.status != Image.Ready)

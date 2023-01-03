@@ -142,7 +142,7 @@ Item {
                             id: enable8bitViewerAction
                             text: "Enable 8-bit Viewer"
                             checkable: true
-                            checked: true
+                            checked: MeshroomApp.default8bitViewerEnabled
                         }
                     }
                 }

@@ -9,10 +9,10 @@ import QtQuick 2.11
  * - set the xOrigin/yOrigin properties to specify the transform origin.
  */
 Loader {
-	property var orientationTag: undefined
+    property var orientationTag: undefined
 
-	property real xOrigin: 0
-	property real yOrigin: 0
+    property real xOrigin: 0
+    property real yOrigin: 0
 
     transform: [
         Rotation {
@@ -53,6 +53,7 @@ Loader {
                 }
             }
             origin.x: xOrigin
+            origin.y: yOrigin
         }
     ]
 }

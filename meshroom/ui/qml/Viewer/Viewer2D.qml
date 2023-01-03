@@ -146,11 +146,27 @@ FocusScope {
 
     // functions
     function fit() {
+        // make sure the image is ready for use
+        if(!imgContainer.image)
+            return;
         if(imgContainer.image.status != Image.Ready)
             return;
-        imgContainer.scale = Math.min(imgLayout.width / imgContainer.image.width, root.height / imgContainer.image.height)
-        imgContainer.x = Math.max((imgLayout.width - imgContainer.image.width * imgContainer.scale)*0.5, 0)
-        imgContainer.y = Math.max((imgLayout.height - imgContainer.image.height * imgContainer.scale)*0.5, 0)
+
+        // for Exif orientation tags 5 to 8, a 90 degrees rotation is applied
+        // therefore image dimensions must be inverted
+        let dimensionsInverted = ["5", "6", "7", "8"].includes(imgContainer.orientationTag);
+        let orientedWidth = dimensionsInverted ? imgContainer.image.height : imgContainer.image.width;
+        let orientedHeight = dimensionsInverted ? imgContainer.image.width : imgContainer.image.height;
+
+        // fit oriented image
+        imgContainer.scale = Math.min(imgLayout.width / orientedWidth, root.height / orientedHeight);
+        imgContainer.x = Math.max((imgLayout.width - orientedWidth * imgContainer.scale)*0.5, 0);
+        imgContainer.y = Math.max((imgLayout.height - orientedHeight * imgContainer.scale)*0.5, 0);
+
+        // correct position when image dimensions are inverted
+        // so that container center corresponds to image center
+        imgContainer.x += (orientedWidth - imgContainer.image.width) * 0.5 * imgContainer.scale;
+        imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale;
     }
 
     function tryLoadNode(node) {
@@ -362,6 +378,7 @@ FocusScope {
             Item {
                 id: imgContainer
                 transformOrigin: Item.TopLeft
+                property var orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
 
                 // qtAliceVision Image Viewer
                 ExifOrientedViewer {
@@ -369,7 +386,7 @@ FocusScope {
                     active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
-                    orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                    orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
                     property var fittedOnce: false
@@ -459,7 +476,7 @@ FocusScope {
                     id: qtImageViewerLoader
                     active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
                     anchors.centerIn: parent
-                    orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                    orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
                     sourceComponent: Image {
@@ -511,7 +528,7 @@ FocusScope {
                     width: imgContainer.width
                     height: imgContainer.height
                     anchors.centerIn: parent
-                    orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                    orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
 
@@ -534,7 +551,7 @@ FocusScope {
                 // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
                 ExifOrientedViewer {
                     anchors.centerIn: parent
-                    orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                    orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
                     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null

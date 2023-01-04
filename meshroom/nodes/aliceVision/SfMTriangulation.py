@@ -3,12 +3,15 @@ __version__ = "1.0"
 from meshroom.core import desc
 
 
-class Triangulate(desc.AVCommandLineNode):
+class SfMTriangulation(desc.AVCommandLineNode):
     commandLine = 'aliceVision_triangulate {allParams}'
     size = desc.DynamicNodeSize('input')
 
     category = 'Sparse Reconstruction'
-    documentation = '''Perfom keypoint triangulation (as it is done in the SfM)'''
+    documentation = '''
+This node perfoms keypoint triangulation on its input data.
+Contrary to the StructureFromMotion node, this node does not infer the camera poses, therefore they must be given in the SfMData input.
+'''
 
     inputs = [
         desc.File(

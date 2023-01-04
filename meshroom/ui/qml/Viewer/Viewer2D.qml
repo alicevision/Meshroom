@@ -26,7 +26,7 @@ FocusScope {
 
     property var activeNodeFisheye: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
     property bool cropFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
-    property bool enable8bitViewer: MeshroomApp.default8bitViewerEnabled
+    property bool enable8bitViewer: enable8bitViewerAction.checked
 
     QtObject {
         id: m
@@ -141,6 +141,12 @@ FocusScope {
             imgContainer.x += (1-zoomFactor) * point.x * imgContainer.scale
             imgContainer.y += (1-zoomFactor) * point.y * imgContainer.scale
             imgContainer.scale *= zoomFactor
+        }
+    }
+
+    onEnable8bitViewerChanged: {
+        if (!enable8bitViewer) {
+            displayHDR.checked = true;
         }
     }
 

@@ -2,8 +2,8 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
-import Qt3D.Core 2.0
-import Qt3D.Render 2.1
+import Qt3D.Core 2.15
+import Qt3D.Render 2.15
 import QtQuick.Controls.Material 2.12
 import Controls 1.0
 import Utils 1.0
@@ -185,13 +185,15 @@ FloatingPane {
 
                 Connections {
                     target: uigraph
-                    onSelectedNodeChanged: mediaListView.currentIndex = -1
+                    function onSelectedNodeChanged() {
+                        mediaListView.currentIndex = -1
+                    }
                 }
 
                 Connections {
                     target: mediaLibrary
-                    onLoadRequest: {
-                        mediaListView.positionViewAtIndex(idx, ListView.Visible);
+                    function onLoadRequest(idx) {
+                        mediaListView.positionViewAtIndex(idx, ListView.Visible)
                     }
                 }
 
@@ -210,7 +212,11 @@ FloatingPane {
                     }
 
                     height: childrenRect.height
-                    width: parent.width - scrollBar.width
+                    width: {
+                        if (parent != null)
+                            return parent.width - scrollBar.width
+                        return undefined
+                    }
 
                     hoverEnabled: true
                     onEntered: { if(model.attribute) uigraph.hoveredNode = model.attribute.node }
@@ -238,7 +244,9 @@ FloatingPane {
 
                         Connections {
                             target: mediaListView
-                            onCountChanged: mediaDelegate.updateCurrentIndex()
+                            function onCountChanged() {
+                                mediaDelegate.updateCurrentIndex()
+                            }
                         }
 
                         // Current/selected element indicator
@@ -340,7 +348,10 @@ FloatingPane {
                                     background: Rectangle {
                                         Connections {
                                             target: mediaLibrary
-                                            onLoadRequest: if(idx == index) focusAnim.restart()
+                                            function onLoadRequest(idx) {
+                                                if(idx == index)
+                                                    focusAnim.restart()
+                                            }
                                         }
                                         ColorAnimation on color {
                                             id: focusAnim

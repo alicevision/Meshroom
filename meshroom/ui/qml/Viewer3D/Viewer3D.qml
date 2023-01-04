@@ -2,7 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Controls 1.4 as Controls1
 import QtQuick.Layouts 1.11
-import QtQml.Models 2.2
+import QtQml.Models 2.15
 import QtQuick.Scene3D 2.15
 import Qt3D.Core 2.15
 import Qt3D.Render 2.15

@@ -2,8 +2,8 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
-import QtPositioning 5.8
-import QtLocation 5.9
+import QtPositioning 5.15
+import QtLocation 5.15
 
 import Controls 1.0
 import Utils 1.0
@@ -267,7 +267,7 @@ FloatingPane {
 
                 Connections {
                     target: root
-                    onCoordinatesChanged: recenter()
+                    function onCoordinatesChanged() { recenter() }
                 }
 
                 zoomLevel: 16

@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtCharts 2.2
+import QtCharts 2.15
 import QtQuick.Layouts 1.11
 import Utils 1.0
 import Charts 1.0

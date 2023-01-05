@@ -79,8 +79,7 @@ Item {
                 Image {
                     anchors.fill: parent
                     anchors.margins: 4
-                    source: root.source
-                    sourceSize: Qt.size(100, 100)
+                    source: ThumbnailCache.thumbnail(root.source)
                     asynchronous: true
                     autoTransform: true
                     fillMode: Image.PreserveAspectFit

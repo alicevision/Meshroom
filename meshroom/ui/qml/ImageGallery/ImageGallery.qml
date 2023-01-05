@@ -143,7 +143,7 @@ Panel {
 
     SensorDBDialog {
         id: sensorDBDialog
-        sensorDatabase: cameraInit ? Filepath.stringToUrl(cameraInit.attribute("sensorDatabase").value) : ""
+        sensorDatabase: cameraInit ? Filepath.stringToUrl(cameraInit.attribute("sensorDatabase").evalValue) : ""
         readOnly: _reconstruction ? _reconstruction.computing : false
         onUpdateIntrinsicsRequest: _reconstruction.rebuildIntrinsics(cameraInit)
     }

@@ -82,6 +82,15 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
             uid=[0],
             enabled= lambda node: (node.nbBrackets.value != 1 and node.offsetRefBracketIndexEnabled.value),
         ),
+        desc.FloatParam(
+            name='meanTargetedLumaForMerging',
+            label='Targeted Luminance For Merging',
+            description='Expected mean luminance of the HDR images used to compute the final panorama',
+            value=0.4,
+            range=(0.0, 1.0, 0.01),
+            uid=[0],
+            enabled= lambda node: (node.nbBrackets.value != 1 and not node.offsetRefBracketIndexEnabled.value),
+        ),
         desc.BoolParam(
             name='byPass',
             label='Bypass',

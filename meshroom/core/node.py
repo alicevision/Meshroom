@@ -1085,6 +1085,7 @@ class BaseNode(BaseObject):
 
     globalExecModeChanged = Signal()
     globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)
+    isExternal = Property(bool, isExtern, notify=globalExecModeChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
     aliveChanged = Signal()
     alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)

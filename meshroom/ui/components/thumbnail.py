@@ -15,6 +15,7 @@ class ThumbnailCache(QObject):
 
     The default cache location is a subdirectory of the user's home directory:
     ~/Meshroom/thumbnails.
+    This location can be overriden with the MESHROOM_THUMBNAIL_DIR environment variable.
 
     The main use case for thumbnails in Meshroom is in the ImageGallery.
     """

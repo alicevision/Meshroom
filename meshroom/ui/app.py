@@ -116,6 +116,11 @@ class MeshroomApp(QApplication):
         pwd = os.path.dirname(__file__)
         self.setWindowIcon(QIcon(os.path.join(pwd, "img/meshroom.svg")))
 
+        # User specified thumbnail directory
+        thumbnailDir = os.getenv('MESHROOM_THUMBNAIL_DIR')
+        if thumbnailDir is not None:
+            ThumbnailCache.thumbnailDir = thumbnailDir
+
         # QML engine setup
         qmlDir = os.path.join(pwd, "qml")
         url = os.path.join(qmlDir, "main.qml")

@@ -121,6 +121,9 @@ class MeshroomApp(QApplication):
         if thumbnailDir is not None:
             ThumbnailCache.thumbnailDir = thumbnailDir
 
+        # Clean thumbnail directory
+        ThumbnailCache.clean()
+
         # QML engine setup
         qmlDir = os.path.join(pwd, "qml")
         url = os.path.join(qmlDir, "main.qml")

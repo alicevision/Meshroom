@@ -1,9 +1,10 @@
 from PySide2.QtCore import QObject, Slot, QSize, QUrl, Qt
 from PySide2.QtGui import QImageReader, QImageWriter
 
-import hashlib
-import pathlib
 import os
+import pathlib
+import hashlib
+import time
 
 
 class ThumbnailCache(QObject):
@@ -17,11 +18,21 @@ class ThumbnailCache(QObject):
     ~/Meshroom/thumbnails.
     This location can be overriden with the MESHROOM_THUMBNAIL_DIR environment variable.
 
+    This class also takes care of cleaning the thumbnail directory,
+    i.e. scanning this directory and removing thumbnails that have not been used for too long.
+    The default time limit is one week.
+
     The main use case for thumbnails in Meshroom is in the ImageGallery.
     """
 
+    # Thumbnail cache directory
     thumbnailDir = os.path.join(pathlib.Path.home(), 'Meshroom', 'thumbnails')
+
+    # Thumbnail dimensions limit (the actual dimensions of a thumbnail will depend on the aspect ratio)
     thumbnailSize = QSize(100, 100)
+
+    # Time limit for thumbnail storage on disk, expressed in days
+    storageTimeLimit = 7
 
     @Slot(QUrl, result=QUrl)
     def thumbnail(self, imgSource):
@@ -48,6 +59,8 @@ class ThumbnailCache(QObject):
 
         # Check if thumbnail already exists
         if os.path.exists(path):
+            # Update last modification time
+            pathlib.Path(path).touch(exist_ok=True)
             return source
 
         # Thumbnail does not exist, therefore we create it:
@@ -81,3 +94,33 @@ class ThumbnailCache(QObject):
             return None
 
         return source
+
+    @staticmethod
+    def clean():
+        """
+        Scan the thumbnail directory and
+        remove all thumbnails that have not been used for more than storageTimeLimit days.
+        """
+        # Get current time
+        now = time.time()
+
+        # Scan thumbnail directory and gather all thumbnails to remove
+        toRemove = []
+        for entry in os.scandir(ThumbnailCache.thumbnailDir):
+            if not entry.is_file():
+                continue
+
+            # Compute storage duration since last usage of thumbnail
+            lastUsage = os.path.getmtime(entry.path)
+            storageTime = now - lastUsage
+            print(f'[ThumbnailCache] Thumbnail {entry.name} has been stored for {storageTime}s')
+
+            # Mark as removable if storage time exceeds limit
+            if storageTime > ThumbnailCache.storageTimeLimit * 3600 * 24:
+                print(f'[ThumbnailCache] {entry.name} exceeded storage time limit')
+                toRemove.append(entry.path)
+
+        # Remove all thumbnails marked as removable
+        for path in toRemove:
+            print(f'[ThumbnailCache] Remove {path}')
+            os.remove(path)

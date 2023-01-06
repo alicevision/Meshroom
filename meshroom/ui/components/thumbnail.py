@@ -102,6 +102,11 @@ class ThumbnailCache(QObject):
         Scan the thumbnail directory and
         remove all thumbnails that have not been used for more than storageTimeLimit days.
         """
+        # Check if thumbnail directory exists
+        if not os.path.exists(ThumbnailCache.thumbnailDir):
+            logging.debug('[ThumbnailCache] Thumbnail directory does not exist yet.')
+            return
+
         # Get current time
         now = time.time()
 

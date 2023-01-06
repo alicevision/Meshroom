@@ -95,16 +95,6 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             value=False,
             uid=[0],
         ),
-        desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='Verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
-            exclusive=True,
-            uid=[],
-        ),
-
         desc.GroupAttribute(
             name="debug",
             label="Debug Parameters",
@@ -151,6 +141,14 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                     uid=[],
                 ),
                 desc.BoolParam(
+                    name='refineSelection',
+                    label='Refine Frame Selection',
+                    description='Refine the initial frame selection, which is solely based on optical flow, with sharpness information.',
+                    value=True,
+                    enabled=lambda node: node.debug.computeScores.value,
+                    uid=[],
+                ),
+                desc.BoolParam(
                     name='noSelection',
                     label='Cancel Keyframe Selection',
                     description='Do not perform the keyframe selection after the score computations.',
@@ -159,6 +157,15 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                     uid=[],
                 )
         ]),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='Verbosity level (fatal, error, warning, info, debug, trace).',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[],
+        )
     ]
 
     outputs = [

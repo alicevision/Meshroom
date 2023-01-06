@@ -5,6 +5,7 @@ import os
 import pathlib
 import hashlib
 import time
+import logging
 
 
 class ThumbnailCache(QObject):
@@ -67,7 +68,7 @@ class ThumbnailCache(QObject):
         # 1. read the image
         # 2. scale it to thumbnail dimensions
         # 3. write it in the cache
-        print(f'[ThumbnailCache] Creating thumbnail {path} for image {imgPath}')
+        logging.debug(f'[ThumbnailCache] Creating thumbnail {path} for image {imgPath}')
 
         # Initialize image reader object
         reader = QImageReader()
@@ -77,7 +78,7 @@ class ThumbnailCache(QObject):
         # Read image and check for potential errors
         img = reader.read()
         if img.isNull():
-            print(f'[ThumbnailCache] Error when reading image: {reader.errorString()}')
+            logging.error(f'[ThumbnailCache] Error when reading image: {reader.errorString()}')
             return None
 
         # Make sure the thumbnail directory exists before writing into it
@@ -90,7 +91,7 @@ class ThumbnailCache(QObject):
         writer = QImageWriter(path)
         success = writer.write(thumbnail)
         if not success:
-            print(f'[ThumbnailCache] Error when writing thumbnail: {writer.errorString()}')
+            logging.error(f'[ThumbnailCache] Error when writing thumbnail: {writer.errorString()}')
             return None
 
         return source
@@ -113,14 +114,14 @@ class ThumbnailCache(QObject):
             # Compute storage duration since last usage of thumbnail
             lastUsage = os.path.getmtime(entry.path)
             storageTime = now - lastUsage
-            print(f'[ThumbnailCache] Thumbnail {entry.name} has been stored for {storageTime}s')
+            logging.debug(f'[ThumbnailCache] Thumbnail {entry.name} has been stored for {storageTime}s')
 
             # Mark as removable if storage time exceeds limit
             if storageTime > ThumbnailCache.storageTimeLimit * 3600 * 24:
-                print(f'[ThumbnailCache] {entry.name} exceeded storage time limit')
+                logging.debug(f'[ThumbnailCache] {entry.name} exceeded storage time limit')
                 toRemove.append(entry.path)
 
         # Remove all thumbnails marked as removable
         for path in toRemove:
-            print(f'[ThumbnailCache] Remove {path}')
+            logging.debug(f'[ThumbnailCache] Remove {path}')
             os.remove(path)

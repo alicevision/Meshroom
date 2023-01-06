@@ -21,7 +21,8 @@ class ThumbnailCache(QObject):
 
     This class also takes care of cleaning the thumbnail directory,
     i.e. scanning this directory and removing thumbnails that have not been used for too long.
-    The default time limit is one week.
+    The default time limit is 90 days.
+    This time limit can be overriden with the MESHROOM_THUMBNAIL_TIME_LIMIT environment variable.
 
     The main use case for thumbnails in Meshroom is in the ImageGallery.
     """
@@ -33,7 +34,7 @@ class ThumbnailCache(QObject):
     thumbnailSize = QSize(100, 100)
 
     # Time limit for thumbnail storage on disk, expressed in days
-    storageTimeLimit = 7
+    storageTimeLimit = 90
 
     @Slot(QUrl, result=QUrl)
     def thumbnail(self, imgSource):

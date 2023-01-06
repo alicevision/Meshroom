@@ -21,8 +21,14 @@ class ThumbnailCache(QObject):
 
     This class also takes care of cleaning the thumbnail directory,
     i.e. scanning this directory and removing thumbnails that have not been used for too long.
-    The default time limit is 90 days.
-    This time limit can be overriden with the MESHROOM_THUMBNAIL_TIME_LIMIT environment variable.
+    This operation also ensures that the number of thumbnails on disk does not exceed a certain limit, 
+    by removing thumbnails if necessary (from least recently used to most recently used).
+
+    The default time limit is 90 days, 
+    and can be overriden with the MESHROOM_THUMBNAIL_TIME_LIMIT environment variable.
+
+    The default maximum number of thumbnails on disk is 100000, 
+    and can be overriden with the MESHROOM_MAX_THUMBNAILS_ON_DISK.
 
     The main use case for thumbnails in Meshroom is in the ImageGallery.
     """
@@ -35,6 +41,9 @@ class ThumbnailCache(QObject):
 
     # Time limit for thumbnail storage on disk, expressed in days
     storageTimeLimit = 90
+
+    # Maximum number of thumbnails in the cache directory
+    maxThumbnailsOnDisk = 100000
 
     @Slot(QUrl, result=QUrl)
     def thumbnail(self, imgSource):
@@ -100,8 +109,9 @@ class ThumbnailCache(QObject):
     @staticmethod
     def clean():
         """
-        Scan the thumbnail directory and
-        remove all thumbnails that have not been used for more than storageTimeLimit days.
+        Scan the thumbnail directory and: 
+        1. remove all thumbnails that have not been used for more than storageTimeLimit days
+        2. ensure that the number of thumbnails on disk does not exceed maxThumbnailsOnDisk.
         """
         # Check if thumbnail directory exists
         if not os.path.exists(ThumbnailCache.thumbnailDir):
@@ -113,6 +123,7 @@ class ThumbnailCache(QObject):
 
         # Scan thumbnail directory and gather all thumbnails to remove
         toRemove = []
+        remaining = []
         for entry in os.scandir(ThumbnailCache.thumbnailDir):
             if not entry.is_file():
                 continue
@@ -122,12 +133,27 @@ class ThumbnailCache(QObject):
             storageTime = now - lastUsage
             logging.debug(f'[ThumbnailCache] Thumbnail {entry.name} has been stored for {storageTime}s')
 
-            # Mark as removable if storage time exceeds limit
             if storageTime > ThumbnailCache.storageTimeLimit * 3600 * 24:
+                # Mark as removable if storage time exceeds limit
                 logging.debug(f'[ThumbnailCache] {entry.name} exceeded storage time limit')
                 toRemove.append(entry.path)
+            else:
+                # Store path and last usage time for potentially sorting and removing later
+                remaining.append((entry.path, lastUsage))
 
         # Remove all thumbnails marked as removable
         for path in toRemove:
             logging.debug(f'[ThumbnailCache] Remove {path}')
             os.remove(path)
+
+        # Check if number of thumbnails on disk exceeds limit
+        if len(remaining) > ThumbnailCache.maxThumbnailsOnDisk:
+            nbToRemove = len(remaining) - ThumbnailCache.maxThumbnailsOnDisk
+            logging.debug(f'[ThumbnailCache] Too many thumbnails: {len(remaining)} remaining, {nbToRemove} will be removed')
+
+            # Sort by last usage order and remove excess
+            remaining.sort(key=lambda elt: elt[1])
+            for i in range(nbToRemove):
+                path = remaining[i][0]
+                logging.debug(f'[ThumbnailCache] Remove {path}')
+                os.remove(path)

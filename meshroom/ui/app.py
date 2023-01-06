@@ -122,9 +122,14 @@ class MeshroomApp(QApplication):
             ThumbnailCache.thumbnailDir = thumbnailDir
 
         # User specifed time limit for thumbnails on disk (expressed in days)
-        thumbnailTimeLimit = float(os.getenv('MESHROOM_THUMBNAIL_TIME_LIMIT'))
+        thumbnailTimeLimit = os.getenv('MESHROOM_THUMBNAIL_TIME_LIMIT')
         if thumbnailTimeLimit is not None:
-            ThumbnailCache.storageTimeLimit = thumbnailTimeLimit
+            ThumbnailCache.storageTimeLimit = float(thumbnailTimeLimit)
+
+        # User specifed maximum number of thumbnails on disk
+        thumbnailMaxNumberOnDisk = os.getenv('MESHROOM_MAX_THUMBNAILS_ON_DISK')
+        if thumbnailMaxNumberOnDisk is not None:
+            ThumbnailCache.maxThumbnailsOnDisk = int(thumbnailMaxNumberOnDisk)
 
         # Clean thumbnail directory
         ThumbnailCache.clean()

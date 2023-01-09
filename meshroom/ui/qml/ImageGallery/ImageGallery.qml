@@ -201,6 +201,19 @@ Panel {
                 }
             }
 
+            // Update grid item when corresponding thumbnail is computed
+            Connections {
+                target: ThumbnailCache
+                function onThumbnailCreated(imgSource) {
+                    for (let i = 0; i < grid.count; i++) {
+                        let item = grid.itemAtIndex(i);  // item is an ImageDelegate
+                        if (item && item.source == imgSource) {
+                            item.updateThumbnail();
+                        }
+                    }
+                }
+            }
+
             model: SortFilterDelegateModel {
                 id: sortedModel
                 model: m.viewpoints

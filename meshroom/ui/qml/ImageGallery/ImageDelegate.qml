@@ -31,17 +31,13 @@ Item {
         property var metadata: metadataStr ? JSON.parse(viewpoint.get("metadata").value) : {}
     }
 
-    onSourceChanged: {
-        thumbnail.source = ThumbnailCache.thumbnail(root.source)
+    // update thumbnail location
+    // can be called from the GridView when a new thumbnail has been written on disk
+    function updateThumbnail() {
+        thumbnail.source = ThumbnailCache.thumbnail(root.source);
     }
-
-    Connections {
-        target: ThumbnailCache
-        function onThumbnailCreated(imgSource) {
-            if (imgSource == root.source) {
-                thumbnail.source = ThumbnailCache.thumbnail(root.source)
-            }
-        }
+    onSourceChanged: {
+        updateThumbnail();
     }
 
     MouseArea {

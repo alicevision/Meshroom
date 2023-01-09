@@ -116,23 +116,10 @@ class MeshroomApp(QApplication):
         pwd = os.path.dirname(__file__)
         self.setWindowIcon(QIcon(os.path.join(pwd, "img/meshroom.svg")))
 
-        # User specified thumbnail directory
-        thumbnailDir = os.getenv('MESHROOM_THUMBNAIL_DIR')
-        if thumbnailDir is not None:
-            ThumbnailCache.thumbnailDir = thumbnailDir
-
-        # User specifed time limit for thumbnails on disk (expressed in days)
-        thumbnailTimeLimit = os.getenv('MESHROOM_THUMBNAIL_TIME_LIMIT')
-        if thumbnailTimeLimit is not None:
-            ThumbnailCache.storageTimeLimit = float(thumbnailTimeLimit)
-
-        # User specifed maximum number of thumbnails on disk
-        thumbnailMaxNumberOnDisk = os.getenv('MESHROOM_MAX_THUMBNAILS_ON_DISK')
-        if thumbnailMaxNumberOnDisk is not None:
-            ThumbnailCache.maxThumbnailsOnDisk = int(thumbnailMaxNumberOnDisk)
-
-        # Clean thumbnail directory
-        ThumbnailCache.clean()
+        # Initialize thumbnail cache:
+        # - read related environment variables
+        # - clean cache directory and make sure it exists on disk
+        ThumbnailCache.initialize()
 
         # QML engine setup
         qmlDir = os.path.join(pwd, "qml")

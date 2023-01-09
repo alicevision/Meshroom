@@ -31,6 +31,19 @@ Item {
         property var metadata: metadataStr ? JSON.parse(viewpoint.get("metadata").value) : {}
     }
 
+    onSourceChanged: {
+        thumbnail.source = ThumbnailCache.thumbnail(root.source)
+    }
+
+    Connections {
+        target: ThumbnailCache
+        function onThumbnailCreated(imgSource) {
+            if (imgSource == root.source) {
+                thumbnail.source = ThumbnailCache.thumbnail(root.source)
+            }
+        }
+    }
+
     MouseArea {
         id: imageMA
         anchors.fill: parent
@@ -77,9 +90,9 @@ Item {
                 border.color: isCurrentItem ? imageLabel.palette.highlight : Qt.darker(imageLabel.palette.highlight)
                 border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
                 Image {
+                    id: thumbnail
                     anchors.fill: parent
                     anchors.margins: 4
-                    source: ThumbnailCache.thumbnail(root.source)
                     asynchronous: true
                     autoTransform: true
                     fillMode: Image.PreserveAspectFit

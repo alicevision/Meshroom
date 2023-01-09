@@ -4,7 +4,7 @@ from meshroom.core import desc
 
 
 class SfMTriangulation(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_triangulate {allParams}'
+    commandLine = 'aliceVision_sfmTriangulation {allParams}'
     size = desc.DynamicNodeSize('input')
 
     category = 'Sparse Reconstruction'

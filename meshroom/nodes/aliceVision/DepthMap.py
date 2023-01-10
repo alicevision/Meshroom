@@ -455,7 +455,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             name='tilePattern',
             label='Tile Pattern',
             description='DEBUG: Tile pattern',
-            semantic='image',
             value=desc.Node.internalFolder + '<VIEW_ID>_tilePattern.obj',
             uid=[],
             group='', # do not export on the command line

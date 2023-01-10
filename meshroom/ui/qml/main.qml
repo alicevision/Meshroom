@@ -46,6 +46,8 @@ ApplicationWindow {
     SystemPalette { id: activePalette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
+    property url imagesFolder: ""
+
     Settings {
         id: settings_General
         category: 'General'
@@ -328,6 +330,7 @@ ApplicationWindow {
         nameFilters: []
         onAccepted: {
             _reconstruction.importImagesUrls(importImagesDialog.fileUrls)
+            imagesFolder = Filepath.dirname(importImagesDialog.fileUrls[0])
         }
     }
 
@@ -475,15 +478,22 @@ ApplicationWindow {
 
     // Utility functions for elements in the menubar
 
-    function initFileDialogFolder(dialog) {
-        if(_reconstruction.graph && _reconstruction.graph.filepath) {
-            dialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath));
+    function initFileDialogFolder(dialog, importImages = false) {
+        let folder = "";
+        if (_reconstruction.graph && _reconstruction.graph.filepath) {
+            folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath));
         } else {
             var projects = MeshroomApp.recentProjectFiles;
             if (projects.length > 0 && Filepath.exists(projects[0])) {
-                dialog.folder = Filepath.stringToUrl(Filepath.dirname(projects[0]));
+                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]));
             }
         }
+
+        if (importImages && imagesFolder.toString() !== "" && Filepath.exists(imagesFolder)) {
+            folder = imagesFolder;
+        }
+
+        dialog.folder = folder;
     }
 
     header: MenuBar {
@@ -606,7 +616,7 @@ ApplicationWindow {
                 text: "Import Images"
                 shortcut: "Ctrl+I"
                 onTriggered: {
-                    initFileDialogFolder(importImagesDialog);
+                    initFileDialogFolder(importImagesDialog, true);
                     importImagesDialog.open();
                 }
             }

@@ -93,6 +93,10 @@ Item {
                     autoTransform: true
                     fillMode: Image.PreserveAspectFit
                 }
+                BusyIndicator {
+                    anchors.centerIn: parent
+                    running: !Filepath.exists(thumbnail.source)
+                }
             }
             // Image basename
             Label {

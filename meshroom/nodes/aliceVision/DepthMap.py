@@ -177,7 +177,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             desc.FloatParam(
                 name='sgmGammaC',
                 label='GammaC',
-                description='GammaC Threshold.',
+                description='GammaC threshold used for similarity computation.',
                 value=5.5,
                 range=(0.0, 30.0, 0.5),
                 uid=[0],
@@ -186,7 +186,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             desc.FloatParam(
                 name='sgmGammaP',
                 label='GammaP',
-                description='GammaP Threshold.',
+                description='GammaP threshold used for similarity computation.',
                 value=8.0,
                 range=(0.0, 30.0, 0.5),
                 uid=[0],
@@ -331,7 +331,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             desc.FloatParam(
                 name='refineGammaC',
                 label='GammaC',
-                description='GammaC Threshold.',
+                description='GammaC threshold used for similarity computation.',
                 value=15.5,
                 range=(0.0, 30.0, 0.5),
                 uid=[0],
@@ -340,7 +340,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             desc.FloatParam(
                 name='refineGammaP',
                 label='GammaP',
-                description='GammaP threshold.',
+                description='GammaP threshold used for similarity computation.',
                 value=8.0,
                 range=(0.0, 30.0, 0.5),
                 uid=[0],

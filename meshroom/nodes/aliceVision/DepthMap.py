@@ -64,9 +64,9 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             advanced=True,
         ),
         desc.GroupAttribute(
-            name="tilling",
-            label="Tilling Parameters",
-            description='Tilling Parameters.',
+            name="tiling",
+            label="Tiling Parameters",
+            description='Tiling Parameters.',
             group=None,
             groupDesc=[
             desc.IntParam(
@@ -126,7 +126,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             groupDesc=[
             desc.IntParam(
                 name='sgmScale',
-                label='Downscale factor',
+                label='Downscale Factor',
                 description='Downscale factor used to compute the similarity volume.',
                 value=2,
                 range=(-1, 10, 1),

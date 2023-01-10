@@ -23,6 +23,7 @@ Panel {
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
     readonly property int centerViewId: (_reconstruction && _reconstruction.sfmTransform) ? parseInt(_reconstruction.sfmTransform.attribute("transformation").value) : 0
+    readonly property alias galleryGrid: grid
 
     property int defaultCellSize: 160
     property bool readOnly: false

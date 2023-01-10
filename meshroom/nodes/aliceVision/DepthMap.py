@@ -219,15 +219,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 uid=[0],
                 advanced=True,
             ),
-            desc.IntParam(
-                name='sgmMaxDepthsPerTc',
-                label='Max Depths Per Camera Pairs',
-                description='Max number of depths to sweep in the similarity volume per Rc/Tc cameras.',
-                value=1500,
-                range=(1, 5000, 1),
-                uid=[0],
-                advanced=True,
-            ),
             desc.StringParam(
                 name='sgmFilteringAxes',
                 label='Filtering Axes',

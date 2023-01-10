@@ -46,7 +46,18 @@ ApplicationWindow {
     SystemPalette { id: activePalette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
-    property url imagesFolder: ""
+    property url imagesFolder: {
+        var recentImportedImagesFolders = MeshroomApp.recentImportedImagesFolders
+        if (recentImportedImagesFolders.length > 0) {
+            for (var i = 0; i < recentImportedImagesFolders.length; i++) {
+                if (Filepath.exists(recentImportedImagesFolders[i]))
+                    return Filepath.stringToUrl(recentImportedImagesFolders[i])
+                else
+                    MeshroomApp.removeRecentImportedImagesFolder(Filepath.stringToUrl(recentImportedImagesFolders[i]))
+            }
+        }
+        return ""
+    }
 
     Settings {
         id: settings_General
@@ -331,6 +342,7 @@ ApplicationWindow {
         onAccepted: {
             _reconstruction.importImagesUrls(importImagesDialog.fileUrls)
             imagesFolder = Filepath.dirname(importImagesDialog.fileUrls[0])
+            MeshroomApp.addRecentImportedImagesFolder(imagesFolder)
         }
     }
 
@@ -480,6 +492,7 @@ ApplicationWindow {
 
     function initFileDialogFolder(dialog, importImages = false) {
         let folder = "";
+
         if (_reconstruction.graph && _reconstruction.graph.filepath) {
             folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath));
             if (imagesFolder.toString() === "" && workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {

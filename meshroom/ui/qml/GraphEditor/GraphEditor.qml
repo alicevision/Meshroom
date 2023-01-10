@@ -799,8 +799,8 @@ Item {
     function fit() {
         // compute bounding box
         var bbox = boundingBox()
-        // rescale
-        draggable.scale = Math.min(root.width/bbox.width, root.height/bbox.height)
+        // rescale, if low number of node, zomm 100% to prevent huge text
+        draggable.scale = nodeRepeater.count < 4 ? 1 :  Math.min(root.width/bbox.width, root.height/bbox.height)
         // recenter
         draggable.x = bbox.x*draggable.scale*-1 + (root.width-bbox.width*draggable.scale)*0.5
         draggable.y = bbox.y*draggable.scale*-1 + (root.height-bbox.height*draggable.scale)*0.5

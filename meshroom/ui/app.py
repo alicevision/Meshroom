@@ -247,7 +247,7 @@ class MeshroomApp(QApplication):
         # add the new value in the first place
         projects.insert(0, projectFileNorm)
 
-        # keep only the 10 first elements
+        # keep only the 20 first elements
         projects = projects[0:20]
 
         settings = QSettings()

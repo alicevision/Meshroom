@@ -412,6 +412,7 @@ class NodeChunk(BaseObject):
             self.node.nodeDesc.processChunk(self)
         except Exception as e:
             if self._status.status != Status.STOPPED:
+                self._status.elapsedTime = time.time() - startTime
                 self.upgradeStatusTo(Status.ERROR)
             raise
         except (KeyboardInterrupt, SystemError, GeneratorExit) as e:

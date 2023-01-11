@@ -30,7 +30,7 @@ Panel {
         if (node !== null && node.isSubmittedOrRunning()) {
             timer.start()
         }
-        else if (node !== null && node.isFinishedOrRunning()) {
+        else if (node !== null && (node.isFinishedOrRunning() || node.globalStatus=="ERROR")) {
             computationInfo.text = Format.getTimeStr(node.elapsedTime)
         }
         else {
@@ -70,7 +70,7 @@ Panel {
             font.italic: true
             visible: {
                 if (node !== null) {
-                    if ((node.isFinishedOrRunning() || node.isSubmittedOrRunning())) {
+                    if (node.isFinishedOrRunning() || node.isSubmittedOrRunning() || node.globalStatus=="ERROR") {
                         return true
                     }
                 }

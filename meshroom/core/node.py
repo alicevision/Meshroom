@@ -827,6 +827,14 @@ class BaseNode(BaseObject):
                 return True
         return False
 
+    @Slot(result=str)
+    def getFirstChunkRunning(self):
+        """ Return the date (str) of the first running chunk """
+        if not self.isAlreadySubmittedOrFinished() or len(self._chunks) == 0:
+            return ""
+        dateTime = [chunk._status.startDateTime for chunk in self._chunks if chunk._status.startDateTime != ""]
+        return min(dateTime) if len(dateTime) != 0 else ""
+
     @Slot(result=bool)
     def isFinishedOrRunning(self):
         """ Return True if all chunks of this Node is either finished or running, False otherwise. """

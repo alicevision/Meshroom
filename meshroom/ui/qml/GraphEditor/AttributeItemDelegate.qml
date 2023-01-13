@@ -316,7 +316,9 @@ RowLayout {
                 onActivated: _reconstruction.setAttribute(attribute, currentText)
                 Connections {
                     target: attribute
-                    onValueChanged: combo.currentIndex = combo.find(attribute.value)
+                    function onValueChanged() {
+                        combo.currentIndex = combo.find(attribute.value)
+                    }
                 }
             }
         }

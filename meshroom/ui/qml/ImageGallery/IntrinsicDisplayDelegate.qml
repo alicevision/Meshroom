@@ -141,7 +141,7 @@ RowLayout {
 
             Connections {
                 target: attribute
-                onValueChanged: combo.currentIndex = combo.find(attribute.value)
+                function onValueChanged() { combo.currentIndex = combo.find(attribute.value) }
             }
         }
     }

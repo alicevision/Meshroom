@@ -179,7 +179,7 @@ Panel {
             // Update grid current item when selected view changes
             Connections {
                 target: _reconstruction
-                onSelectedViewIdChanged: {
+                function onSelectedViewIdChanged() {
                     if (_reconstruction.selectedViewId > -1) {
                         grid.updateCurrentIndexFromSelectionViewId()
                     }

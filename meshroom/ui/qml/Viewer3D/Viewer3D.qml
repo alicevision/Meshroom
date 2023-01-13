@@ -35,8 +35,8 @@ FocusScope {
         mainCamera.viewCenter = defaultCamViewCenter;
     }
 
-    function load(filepath) {
-        mediaLibrary.load(filepath);
+    function load(filepath, label = undefined) {
+        mediaLibrary.load(filepath, label);
     }
 
     /// View 'attribute' in the 3D Viewer. Media will be loaded if needed.

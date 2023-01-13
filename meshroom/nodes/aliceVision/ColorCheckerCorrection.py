@@ -6,7 +6,7 @@ import os.path
 
 
 class ColorCheckerCorrection(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_utils_colorCheckerCorrection {allParams}'
+    commandLine = 'aliceVision_colorCheckerCorrection {allParams}'
     size = desc.DynamicNodeSize('input')
     # parallelization = desc.Parallelization(blockSize=40)
     # commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'

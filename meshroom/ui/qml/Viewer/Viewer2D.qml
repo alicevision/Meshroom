@@ -26,7 +26,7 @@ FocusScope {
 
     property var activeNodeFisheye: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
     property bool cropFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
-    property bool enable8bitViewer: MeshroomApp.default8bitViewerEnabled
+    property bool enable8bitViewer: enable8bitViewerAction.checked
 
     QtObject {
         id: m
@@ -144,6 +144,12 @@ FocusScope {
         }
     }
 
+    onEnable8bitViewerChanged: {
+        if (!enable8bitViewer) {
+            displayHDR.checked = true;
+        }
+    }
+
     // functions
     function fit() {
         if(imgContainer.image.status != Image.Ready)
@@ -252,7 +258,8 @@ FocusScope {
     onDisplayedNodeChanged: {
         // clear metadata if no displayed node
         if (!displayedNode) {
-            metadata = {};
+            root.source = "";
+            root.metadata = {};
         }
 
         // update output attribute names
@@ -268,6 +275,9 @@ FocusScope {
         }
         names.push("gallery");
         outputAttribute.names = names;
+
+        root.source = getImageFile();
+        root.metadata = getMetadata();
     }
 
     Connections {
@@ -1156,18 +1166,26 @@ FocusScope {
                                 id: fontMetrics
                             }
                             Layout.preferredWidth: model.reduce((acc, label) => Math.max(acc, fontMetrics.boundingRect(label).width), 0) + 3.0 * Qt.application.font.pixelSize
+
+                            onNameChanged: {
+                                root.source = getImageFile();
+                                root.metadata = getMetadata();
+                            }
                         }
 
                         MaterialToolButton {
-                            property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('allDepthMap').node : null
-                            enabled: activeNode
-                            ToolTip.text: "View Depth Map in 3D (" + (activeNode ? activeNode.label : "No DepthMap Node Selected") + ")"
+                            id: displayImageOutputIn3D
+                            enabled: root.aliceVisionPluginAvailable && _reconstruction && displayedNode && Filepath.basename(root.source).includes("depthMap")
+                            ToolTip.text: "View Depth Map in 3D"
                             text: MaterialIcons.input
                             font.pointSize: 11
                             Layout.minimumWidth: 0
 
                             onClicked: {
-                                root.viewIn3D(root.getFileAttributePath(activeNode, "depth", _reconstruction.selectedViewId));
+                                root.viewIn3D(
+                                    root.source, 
+                                    displayedNode.name + ":" + outputAttribute.name + " " + String(_reconstruction.selectedViewId)
+                                );
                             }
                         }
 

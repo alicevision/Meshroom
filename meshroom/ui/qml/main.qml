@@ -83,6 +83,13 @@ ApplicationWindow {
         settings_General.windowHeight = _window.height
     }
 
+    Shortcut {
+        // Ensures the Ctrl+N shortcut is always valid and creates a default pipeline
+        sequence: "Ctrl+N"
+        context: Qt.ApplicationShortcut
+        onActivated: ensureSaved(function() { _reconstruction.new() })
+    }
+
     MessageDialog {
         id: unsavedDialog
 
@@ -494,11 +501,6 @@ ApplicationWindow {
         palette.window: Qt.darker(activePalette.window, 1.15)
         Menu {
             title: "File"
-            Action {
-                text: "New"
-                shortcut: "Ctrl+N"
-                onTriggered: ensureSaved(function() { _reconstruction.new() })
-            }
             Menu {
                 id: newPipelineMenu
                 title: "New Pipeline"
@@ -583,15 +585,33 @@ ApplicationWindow {
                     }
                 }
             }
+            MenuSeparator { }
             Action {
-                id: importProjectAction
-                text: "Import Project"
-                shortcut: "Ctrl+Shift+I"
+                id: saveAction
+                text: "Save"
+                shortcut: "Ctrl+S"
+                enabled: _reconstruction ? (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean : false
                 onTriggered: {
-                    initFileDialogFolder(importProjectDialog);
-                    importProjectDialog.open();
+                    if(_reconstruction.graph.filepath) {
+                        _reconstruction.save();
+                    }
+                    else
+                    {
+                        initFileDialogFolder(saveFileDialog);
+                        saveFileDialog.open();
+                    }
                 }
             }
+            Action {
+                id: saveAsAction
+                text: "Save As..."
+                shortcut: "Ctrl+Shift+S"
+                onTriggered: {
+                    initFileDialogFolder(saveFileDialog);
+                    saveFileDialog.open();
+                }
+            }
+            MenuSeparator { }
             Action {
                 id: importImagesAction
                 text: "Import Images"
@@ -624,39 +644,37 @@ ApplicationWindow {
                     }
                 }
             }
+            MenuSeparator { }
+            Menu {
+                id: advancedMenu
+                title: "Advanced"
 
-            Action {
-                id: saveAction
-                text: "Save"
-                shortcut: "Ctrl+S"
-                enabled: _reconstruction ? (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean : false
-                onTriggered: {
-                    if(_reconstruction.graph.filepath) {
-                        _reconstruction.save()
+                Action {
+                    id: saveAsTemplateAction
+                    text: "Save As Template..."
+                    shortcut: Shortcut {
+                        sequence: "Ctrl+Shift+T"
+                        context: Qt.ApplicationShortcut
+                        onActivated: saveAsTemplateAction.triggered()
                     }
-                    else
-                    {
-                        initFileDialogFolder(saveFileDialog);
-                        saveFileDialog.open();
+                    onTriggered: {
+                            initFileDialogFolder(saveTemplateDialog);
+                            saveTemplateDialog.open();
                     }
                 }
-            }
-            Action {
-                id: saveAsAction
-                text: "Save As..."
-                shortcut: "Ctrl+Shift+S"
-                onTriggered: {
-                    initFileDialogFolder(saveFileDialog);
-                    saveFileDialog.open();
-                }
-            }
-            Action {
-                id: saveAsTemplateAction
-                text: "Save As Template..."
-                shortcut: "Ctrl+Shift+T"
-                onTriggered: {
-                    initFileDialogFolder(saveTemplateDialog);
-                    saveTemplateDialog.open();
+
+                Action {
+                    id: importProjectAction
+                    text: "Import Project"
+                    shortcut: Shortcut {
+                        sequence: "Ctrl+Shift+I"
+                        context: Qt.ApplicationShortcut
+                        onActivated: importProjectAction.triggered()
+                    }
+                    onTriggered: {
+                        initFileDialogFolder(importProjectDialog);
+                        importProjectDialog.open();
+                    }
                 }
             }
             MenuSeparator { }

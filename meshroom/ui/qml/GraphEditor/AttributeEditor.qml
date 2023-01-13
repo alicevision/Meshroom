@@ -25,7 +25,6 @@ ListView {
     delegate: Loader {
         active: object.enabled && (!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)
         visible: active
-        height: item ? item.implicitHeight : -spacing // compensate for spacing if item is hidden
 
         sourceComponent: AttributeItemDelegate {
             width: root.width - scrollBar.width
@@ -33,6 +32,10 @@ ListView {
             labelWidth: root.labelWidth
             attribute: object
             onDoubleClicked: root.attributeDoubleClicked(mouse, attr)
+        }
+
+        onLoaded: {
+            height: item ? item.implicitHeight : -spacing // compensate for spacing if item is hidden
         }
     }
 

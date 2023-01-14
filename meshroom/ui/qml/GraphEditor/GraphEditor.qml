@@ -799,7 +799,7 @@ Item {
     function fit() {
         // compute bounding box
         var bbox = boundingBox()
-        // rescale, if low number of node, zoom 100% to prevent huge text
+        // rescale to fit the bounding box in the view, max zoom is limited to 120% to prevent huge text
         draggable.scale = Math.min(Math.min(root.width/bbox.width, root.height/bbox.height),1.2)
         // recenter
         draggable.x = bbox.x*draggable.scale*-1 + (root.width-bbox.width*draggable.scale)*0.5

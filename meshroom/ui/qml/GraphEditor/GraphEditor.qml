@@ -14,6 +14,7 @@ Item {
     property variant uigraph: null  /// Meshroom ui graph (UIGraph)
     readonly property variant graph: uigraph ? uigraph.graph : null  /// core graph contained in ui graph
     property variant nodeTypesModel: null  /// the list of node types that can be instantiated
+    property real maxZoom: 2.0
 
     property var edgeAboutToBeRemoved: undefined
 
@@ -152,7 +153,6 @@ Item {
         anchors.fill: parent
         property double factor: 1.15
         property real minZoom: 0.1
-        property real maxZoom: 2.0
         // Activate multisampling for edges antialiasing
         layer.enabled: true
         layer.samples: 8
@@ -800,7 +800,7 @@ Item {
         // compute bounding box
         var bbox = boundingBox()
         // rescale to fit the bounding box in the view, max zoom is limited to 120% to prevent huge text
-        draggable.scale = Math.min(Math.min(root.width/bbox.width, root.height/bbox.height),1.2)
+        draggable.scale = Math.min(Math.min(root.width/bbox.width, root.height/bbox.height),maxZoom)
         // recenter
         draggable.x = bbox.x*draggable.scale*-1 + (root.width-bbox.width*draggable.scale)*0.5
         draggable.y = bbox.y*draggable.scale*-1 + (root.height-bbox.height*draggable.scale)*0.5

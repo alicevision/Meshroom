@@ -252,7 +252,7 @@ class MeshroomApp(QApplication):
 
         settings = QSettings()
         settings.beginGroup("RecentFiles")
-        size = settings.beginWriteArray("Projects")
+        settings.beginWriteArray("Projects")
         for i, p in enumerate(projects):
             settings.setArrayIndex(i)
             settings.setValue("filepath", p)
@@ -289,7 +289,7 @@ class MeshroomApp(QApplication):
 
         settings = QSettings()
         settings.beginGroup("RecentFiles")
-        size = settings.beginWriteArray("Projects")
+        settings.beginWriteArray("Projects")
         for i, p in enumerate(projects):
             settings.setArrayIndex(i)
             settings.setValue("filepath", p)
@@ -337,7 +337,7 @@ class MeshroomApp(QApplication):
 
         settings = QSettings()
         settings.beginGroup("RecentFiles")
-        size = settings.beginWriteArray("ImagesFolders")
+        settings.beginWriteArray("ImagesFolders")
         for i, p in enumerate(folders):
             settings.setArrayIndex(i)
             settings.setValue("path", p)
@@ -369,7 +369,7 @@ class MeshroomApp(QApplication):
 
         settings = QSettings()
         settings.beginGroup("RecentFiles")
-        size = settings.beginWriteArray("ImagesFolders")
+        settings.beginWriteArray("ImagesFolders")
         for i, f in enumerate(folders):
             settings.setArrayIndex(i)
             settings.setValue("path", f)

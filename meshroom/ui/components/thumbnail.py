@@ -5,6 +5,7 @@ from PySide2.QtGui import QImageReader, QImageWriter
 
 import os
 from pathlib import Path
+import stat
 import hashlib
 import time
 import logging
@@ -173,22 +174,28 @@ class ThumbnailCache(QObject):
         # Scan thumbnail directory and gather all thumbnails to remove
         toRemove = []
         remaining = []
-        for entry in os.scandir(ThumbnailCache.thumbnailDir):
-            if not entry.is_file():
+        for f_name in os.listdir(ThumbnailCache.thumbnailDir):
+            pathname = os.path.join(ThumbnailCache.thumbnailDir, f_name)
+
+            # System call to get current item info
+            f_stat = os.stat(pathname, follow_symlinks=False)
+
+            # Check if this is a regular file
+            if not stat.S_ISREG(f_stat.st_mode):
                 continue
 
             # Compute storage duration since last usage of thumbnail
-            lastUsage = os.path.getmtime(entry.path)
+            lastUsage = f_stat.st_mtime
             storageTime = now - lastUsage
-            logging.debug(f'[ThumbnailCache] Thumbnail {entry.name} has been stored for {storageTime}s')
+            logging.debug(f'[ThumbnailCache] Thumbnail {f_name} has been stored for {storageTime}s')
 
             if storageTime > ThumbnailCache.storageTimeLimit * 3600 * 24:
                 # Mark as removable if storage time exceeds limit
-                logging.debug(f'[ThumbnailCache] {entry.name} exceeded storage time limit')
-                toRemove.append(entry.path)
+                logging.debug(f'[ThumbnailCache] {f_name} exceeded storage time limit')
+                toRemove.append(pathname)
             else:
                 # Store path and last usage time for potentially sorting and removing later
-                remaining.append((entry.path, lastUsage))
+                remaining.append((pathname, lastUsage))
 
         # Remove all thumbnails marked as removable
         for path in toRemove:

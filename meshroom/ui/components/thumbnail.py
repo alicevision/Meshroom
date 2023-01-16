@@ -49,8 +49,10 @@ class ThumbnailCache(QObject):
     maxThumbnailsOnDisk = 100000
 
     # Signal to notify listeners that a thumbnail was created and written on disk
-    # This signal has one argument: the url of the image that the thumbnail is associated to
-    thumbnailCreated = Signal(QUrl)
+    # This signal has two argument:
+    # - the url of the image that the thumbnail is associated to
+    # - an identifier for the caller, e.g. the component that sent the request (useful for faster dispatch in QML)
+    thumbnailCreated = Signal(QUrl, int)
 
     # Thread pool for running createThumbnail asynchronously on a fixed number of worker threads
     pool = ThreadPool(processes=3)
@@ -93,15 +95,16 @@ class ThumbnailCache(QObject):
         path = os.path.join(ThumbnailCache.thumbnailDir, f'{digest}.jpg')
         return path
 
-    @Slot(QUrl, result=QUrl)
-    def thumbnail(self, imgSource):
+    @Slot(QUrl, int, result=QUrl)
+    def thumbnail(self, imgSource, callerID):
         """Retrieve the filepath of the thumbnail corresponding to a given image.
 
         If the thumbnail does not exist on disk, it will be created asynchronously.
-        When this is done, the createdThumbnail signal is emitted.
+        When this is done, the thumbnailCreated signal is emitted.
 
         Args:
             imgSource (QUrl): location of the input image
+            callerID (int): identifier for the object that requested the thumbnail
 
         Returns:
             QUrl: location of the corresponding thumbnail if it exists, otherwise None
@@ -121,14 +124,15 @@ class ThumbnailCache(QObject):
 
         # Thumbnail does not exist
         # create it in a worker thread to avoid UI freeze
-        ThumbnailCache.pool.apply_async(self.createThumbnail, args=(imgSource,))
+        ThumbnailCache.pool.apply_async(self.createThumbnail, args=(imgSource,callerID,))
         return None
 
-    def createThumbnail(self, imgSource):
+    def createThumbnail(self, imgSource, callerID):
         """Load an image, resize it to thumbnail dimensions and save the result in the cache directory.
 
         Args:
             imgSource (QUrl): location of the input image
+            callerID (int): identifier for the object that requested the thumbnail
         """
         imgPath = imgSource.toLocalFile()
         path = ThumbnailCache.thumbnailPath(imgPath)
@@ -155,7 +159,7 @@ class ThumbnailCache(QObject):
             logging.error(f'[ThumbnailCache] Error when writing thumbnail: {writer.errorString()}')
 
         # Notify listeners
-        self.thumbnailCreated.emit(imgSource)
+        self.thumbnailCreated.emit(imgSource, callerID)
 
     @staticmethod
     def clean():

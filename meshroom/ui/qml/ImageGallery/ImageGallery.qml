@@ -203,12 +203,10 @@ Panel {
             // Update grid item when corresponding thumbnail is computed
             Connections {
                 target: ThumbnailCache
-                function onThumbnailCreated(imgSource) {
-                    for (let i = 0; i < grid.count; i++) {
-                        let item = grid.itemAtIndex(i);  // item is an ImageDelegate
-                        if (item && item.source == imgSource) {
-                            item.updateThumbnail();
-                        }
+                function onThumbnailCreated(imgSource, callerID) {
+                    let item = grid.itemAtIndex(callerID);  // item is an ImageDelegate
+                    if (item && item.source == imgSource) {
+                        item.updateThumbnail();
                     }
                 }
             }
@@ -257,6 +255,7 @@ Panel {
                     id: imageDelegate
 
                     viewpoint: object.value
+                    cellID: DelegateModel.filteredIndex
                     width: grid.cellWidth
                     height: grid.cellHeight
                     readOnly: m.readOnly

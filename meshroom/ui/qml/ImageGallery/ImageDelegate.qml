@@ -11,6 +11,7 @@ Item {
     id: root
 
     property variant viewpoint
+    property int cellID
     property bool isCurrentItem: false
     property alias source: _viewpoint.source
     property alias metadata: _viewpoint.metadata
@@ -34,7 +35,7 @@ Item {
     // update thumbnail location
     // can be called from the GridView when a new thumbnail has been written on disk
     function updateThumbnail() {
-        thumbnail.source = ThumbnailCache.thumbnail(root.source);
+        thumbnail.source = ThumbnailCache.thumbnail(root.source, cellID);
     }
     onSourceChanged: {
         updateThumbnail();

@@ -27,7 +27,7 @@ Panel {
 
     onNodeChanged: {
         nodeStartDateTime = ""
-        if (node !== null && node.isSubmittedOrRunning()) {
+        if (node !== null && node.isRunning()) {
             timer.start()
         }
         else if (node !== null && (node.isFinishedOrRunning() || node.globalStatus=="ERROR")) {
@@ -46,23 +46,25 @@ Panel {
                 interval: 2500
                 triggeredOnStart: true
                 repeat: true
-                running: node !== null && node.isSubmittedOrRunning()
+                running: node !== null && node.isRunning()
                 onTriggered: {
                     if (nodeStartDateTime === "") {
-                        nodeStartDateTime = new Date(node.getFirstChunkRunning()).getTime()
-                    }
+                        nodeStartDateTime = new Date(node.getStartDateTime()).getTime()
+                     }
                     var now = new Date().getTime()
-                    parent.text=Format.getTimeStr((now-nodeStartDateTime)/1000)
+                    var runningTime=Format.getTimeStr((now-nodeStartDateTime)/1000)
 
-                    var chunkCompletion=0
-                    if (node.chunks.count>1) {
+                    var chunksCompleted = 0
+                    var chunkCompletion = ""
+                    if (node.chunks.count>0) {
                         for (var i = 0; i < node.chunks.count; i++) {
                             if (node.chunks.at(i).statusName == "SUCCESS") {
-                                chunkCompletion++
+                                chunksCompleted++
                             }
                         }
-                        parent.text+= " | "+ chunkCompletion + "/" + node.chunks.count + " chunks"
+                        chunkCompletion = " | "+ chunksCompleted + "/" + node.chunks.count + " chunk" + (node.chunks.count == 1 ? "" : "s")
                     }
+                    parent.text = runningTime + chunkCompletion
 
                 }
             }

@@ -493,11 +493,12 @@ ApplicationWindow {
     function initFileDialogFolder(dialog, importImages = false) {
         let folder = "";
 
+        if (imagesFolder.toString() === "" && workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {
+            imagesFolder = Filepath.stringToUrl(Filepath.dirname(workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source));
+        }
+
         if (_reconstruction.graph && _reconstruction.graph.filepath) {
             folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath));
-            if (imagesFolder.toString() === "" && workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {
-                imagesFolder = Filepath.dirname(workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source);
-            }
         } else {
             var projects = MeshroomApp.recentProjectFiles;
             if (projects.length > 0 && Filepath.exists(projects[0])) {

@@ -95,7 +95,7 @@ Item {
                 }
                 BusyIndicator {
                     anchors.centerIn: parent
-                    running: !Filepath.exists(thumbnail.source)
+                    running: Filepath.urlToString(thumbnail.source).length === 0
                 }
             }
             // Image basename

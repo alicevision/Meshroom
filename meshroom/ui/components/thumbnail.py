@@ -200,7 +200,10 @@ class ThumbnailCache(QObject):
         # Remove all thumbnails marked as removable
         for path in toRemove:
             logging.debug(f'[ThumbnailCache] Remove {path}')
-            os.remove(path)
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                logging.error(f'[ThumbnailCache] Tried to remove {path} but this file does not exist')
 
         # Check if number of thumbnails on disk exceeds limit
         if len(remaining) > ThumbnailCache.maxThumbnailsOnDisk:
@@ -212,4 +215,7 @@ class ThumbnailCache(QObject):
             for i in range(nbToRemove):
                 path = remaining[i][0]
                 logging.debug(f'[ThumbnailCache] Remove {path}')
-                os.remove(path)
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    logging.error(f'[ThumbnailCache] Tried to remove {path} but this file does not exist')

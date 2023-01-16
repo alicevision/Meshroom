@@ -1,6 +1,6 @@
 from meshroom.common import Signal
 
-from PySide2.QtCore import QObject, Slot, QSize, QUrl, Qt
+from PySide2.QtCore import QObject, Slot, QSize, QUrl, Qt, QStandardPaths
 from PySide2.QtGui import QImageReader, QImageWriter
 
 import os
@@ -19,9 +19,7 @@ class ThumbnailCache(QObject):
     Since creating thumbnails can be long (as it requires to read the full image from disk)
     it is performed asynchronously to avoid blocking the main thread.
 
-    The default cache location is a subdirectory of the user's home directory:
-    ~/Meshroom/thumbnails.
-    This location can be overriden with the MESHROOM_THUMBNAIL_DIR environment variable.
+    The default cache location can be overriden with the MESHROOM_THUMBNAIL_DIR environment variable.
 
     This class also takes care of cleaning the thumbnail directory,
     i.e. scanning this directory and removing thumbnails that have not been used for too long.
@@ -38,7 +36,7 @@ class ThumbnailCache(QObject):
     """
 
     # Thumbnail cache directory
-    thumbnailDir = os.path.join(Path.home(), 'Meshroom', 'thumbnails')
+    thumbnailDir = os.path.join(QStandardPaths.writableLocation(QStandardPaths.CacheLocation), 'Meshroom', 'thumbnails')
 
     # Thumbnail dimensions limit (the actual dimensions of a thumbnail will depend on the aspect ratio)
     thumbnailSize = QSize(100, 100)

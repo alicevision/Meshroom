@@ -37,7 +37,8 @@ class ThumbnailCache(QObject):
     """
 
     # Thumbnail cache directory
-    thumbnailDir = os.path.join(QStandardPaths.writableLocation(QStandardPaths.CacheLocation), 'Meshroom', 'thumbnails')
+    # Cannot be initialized here as it depends on the organization and application names
+    thumbnailDir = ''
 
     # Thumbnail dimensions limit (the actual dimensions of a thumbnail will depend on the aspect ratio)
     thumbnailSize = QSize(100, 100)
@@ -60,10 +61,13 @@ class ThumbnailCache(QObject):
     @staticmethod
     def initialize():
         """Initialize static fields in cache class and cache directory on disk."""
-        # User specified thumbnail directory
+        # Thumbnail directory: default or user specified
         dir = os.getenv('MESHROOM_THUMBNAIL_DIR')
         if dir is not None:
             ThumbnailCache.thumbnailDir = dir
+        else:
+            ThumbnailCache.thumbnailDir = os.path.join(QStandardPaths.writableLocation(QStandardPaths.CacheLocation),
+                                                       'thumbnails')
 
         # User specifed time limit for thumbnails on disk (expressed in days)
         timeLimit = os.getenv('MESHROOM_THUMBNAIL_TIME_LIMIT')

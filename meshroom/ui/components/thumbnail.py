@@ -52,7 +52,7 @@ class ThumbnailCache(QObject):
     thumbnailCreated = Signal(QUrl)
 
     # Thread pool for running createThumbnail asynchronously on a fixed number of worker threads
-    pool = ThreadPool()
+    pool = ThreadPool(processes=3)
 
     @staticmethod
     def initialize():

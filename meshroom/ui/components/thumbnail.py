@@ -165,6 +165,22 @@ class ThumbnailCache(QObject):
         path = os.path.join(ThumbnailCache.thumbnailDir, f'{digest}.jpg')
         return path
 
+    @staticmethod
+    def checkThumbnail(path):
+        """Check if a thumbnail already exists on disk, and if so update its last modification time.
+
+        Args:
+            path (str): filepath to the thumbnail
+
+        Returns:
+            (bool): whether the thumbnail exists on disk or not
+        """
+        if os.path.exists(path):
+            # Update last modification time
+            Path(path).touch(exist_ok=True)
+            return True
+        return False
+
     @Slot(QUrl, int, result=QUrl)
     def thumbnail(self, imgSource, callerID):
         """Retrieve the filepath of the thumbnail corresponding to a given image.
@@ -187,9 +203,7 @@ class ThumbnailCache(QObject):
         source = QUrl.fromLocalFile(path)
 
         # Check if thumbnail already exists
-        if os.path.exists(path):
-            # Update last modification time
-            Path(path).touch(exist_ok=True)
+        if ThumbnailCache.checkThumbnail(path):
             return source
 
         # Thumbnail does not exist
@@ -210,6 +224,12 @@ class ThumbnailCache(QObject):
         """
         imgPath = imgSource.toLocalFile()
         path = ThumbnailCache.thumbnailPath(imgPath)
+
+        # Check if thumbnail already exists (it may have been created by another thread)
+        if ThumbnailCache.checkThumbnail(path):
+            self.thumbnailCreated.emit(imgSource, callerID)
+            return
+
         logging.debug(f'[ThumbnailCache] Creating thumbnail {path} for image {imgPath}')
 
         # Initialize image reader object

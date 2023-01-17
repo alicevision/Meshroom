@@ -11,7 +11,7 @@ Item {
     id: root
 
     property variant viewpoint
-    property int cellID
+    property int cellID: -1
     property bool isCurrentItem: false
     property alias source: _viewpoint.source
     property alias metadata: _viewpoint.metadata
@@ -35,10 +35,26 @@ Item {
     // update thumbnail location
     // can be called from the GridView when a new thumbnail has been written on disk
     function updateThumbnail() {
-        thumbnail.source = ThumbnailCache.thumbnail(root.source, cellID);
+        thumbnail.source = ThumbnailCache.thumbnail(root.source, root.cellID);
     }
     onSourceChanged: {
         updateThumbnail();
+    }
+
+    // Send a new request every 2 seconds until thumbnail is loaded
+    // This is meant to avoid deadlocks in case there is a synchronization problem
+    Timer {
+        interval: 2000
+        repeat: true
+        running: true
+        onTriggered: {
+            if (thumbnail.status == Image.Null) {
+                updateThumbnail();
+            }
+            else {
+                running = false;
+            }
+        }
     }
 
     MouseArea {
@@ -96,7 +112,7 @@ Item {
                 }
                 BusyIndicator {
                     anchors.centerIn: parent
-                    running: Filepath.urlToString(thumbnail.source).length === 0
+                    running: thumbnail.status != Image.Ready
                 }
             }
             // Image basename

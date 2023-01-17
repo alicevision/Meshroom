@@ -15,6 +15,7 @@ Item {
     readonly property variant graph: uigraph ? uigraph.graph : null  /// core graph contained in ui graph
     property variant nodeTypesModel: null  /// the list of node types that can be instantiated
     property real maxZoom: 2.0
+    property real minZoom: 0.1
 
     property var edgeAboutToBeRemoved: undefined
 
@@ -152,7 +153,6 @@ Item {
         id: mouseArea
         anchors.fill: parent
         property double factor: 1.15
-        property real minZoom: 0.1
         // Activate multisampling for edges antialiasing
         layer.enabled: true
         layer.samples: 8

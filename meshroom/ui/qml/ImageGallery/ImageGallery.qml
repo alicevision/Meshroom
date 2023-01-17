@@ -207,6 +207,14 @@ Panel {
                     let item = grid.itemAtIndex(callerID);  // item is an ImageDelegate
                     if (item && item.source == imgSource) {
                         item.updateThumbnail();
+                        return;
+                    }
+                    // fallback in case the ImageDelegate cellID changed
+                    for (let idx = 0; idx < grid.count; idx++) {
+                        item = grid.itemAtIndex(idx);
+                        if (item && item.source == imgSource) {
+                            item.updateThumbnail();
+                        }
                     }
                 }
             }

@@ -271,3 +271,11 @@ class ThumbnailCache(QObject):
             # No more request to process
             # Unregister worker thread
             ThumbnailCache.activeWorkerThreads -= 1
+
+    @Slot()
+    def clearRequests(self):
+        """Clear all pending thumbnail creation requests.
+
+        Requests already under treatment by a worker thread will still be completed.
+        """
+        ThumbnailCache.requests.clear()

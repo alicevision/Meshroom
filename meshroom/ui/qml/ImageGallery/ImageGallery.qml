@@ -39,6 +39,10 @@ Panel {
         property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property variant intrinsics: currentCameraInit ? currentCameraInit.attribute('intrinsics').value : undefined
         property bool readOnly: root.readOnly || displayHDR.checked
+
+        onViewpointsChanged: {
+            ThumbnailCache.clearRequests();
+        }
     }
 
     property variant parsedIntrinsic

@@ -810,9 +810,8 @@ class BaseNode(BaseObject):
     @Slot(result=str)
     def getStartDateTime(self):
         """ Return the date (str) of the first running chunk """
-        if not self.isAlreadySubmittedOrFinished() or len(self._chunks) == 0:
-            return ""
-        dateTime = [chunk._status.startDateTime for chunk in self._chunks if chunk._status.startDateTime != ""]
+        dateTime = [chunk._status.startDateTime for chunk in self._chunks if chunk._status.status
+                    not in (Status.NONE, Status.SUBMITTED) and chunk._status.startDateTime != ""]
         return min(dateTime) if len(dateTime) != 0 else ""
 
     def isAlreadySubmitted(self):

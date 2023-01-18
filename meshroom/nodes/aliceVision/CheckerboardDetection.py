@@ -11,21 +11,22 @@ class CheckerboardDetection(desc.AVCommandLineNode):
 
     category = 'Other'
     documentation = '''
-This node detects checkerboard structures in a set of images.
+Detect checkerboard structures in a set of images.
+The detection method also supports nested calibration grids.
 '''
 
     inputs = [
         desc.File(
             name='input',
             label='Input',
-            description='SfMData File',
+            description='SfMData File. Viewpoints must correspond to lens calibration grids.',
             value='',
             uid=[0],
         ),
         desc.BoolParam(
             name='useNestedGrids',
             label='Nested calibration grid',
-            description='Images contain nested calibration grids. These grids must be centered on image center.',
+            description='Images contain nested calibration grids. These grids must be centered on the image center.',
             value=False,
             uid=[0],
         ),
@@ -59,7 +60,7 @@ This node detects checkerboard structures in a set of images.
             label='Checker Lines',
             description='Debug Images.',
             semantic='image',
-            value=desc.Node.internalFolder + 'checker_<VIEW_ID>.png',
+            value=desc.Node.internalFolder + '<VIEW_ID>.png',
             group='',  # do not export on the command line
             uid=[],
         ),

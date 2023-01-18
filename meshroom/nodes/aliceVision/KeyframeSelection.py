@@ -125,6 +125,14 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                     uid=[0],
                 ),
                 desc.BoolParam(
+                    name='flowByCell',
+                    label='Compute Optical Flow Scores Using Cells',
+                    description='Compute optical flow scores cell by cell within a frame.',
+                    value=False,
+                    enabled=lambda node: node.debug.computeScores.value,
+                    uid=[0],
+                ),
+                desc.BoolParam(
                     name='exportSharpness',
                     label='Export Sharpness Scores',
                     description='Export the sharpness score of each frame into a CSV file.',

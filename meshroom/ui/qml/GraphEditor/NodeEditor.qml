@@ -15,6 +15,7 @@ Panel {
     id: root
 
     property variant node
+    property string globalStatus : node !== null ? node.globalStatus : ""
     property bool readOnly: false
     property bool isCompatibilityNode: node && node.compatibilityIssue !== undefined
     property string nodeStartDateTime: ""
@@ -25,16 +26,19 @@ Panel {
     title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" + (node.label !== node.defaultLabel ? " (" + node.defaultLabel + ")" : "") : "")
     icon: MaterialLabel { text: MaterialIcons.tune }
 
-    onNodeChanged: {
+    onGlobalStatusChanged: {
         nodeStartDateTime = ""
         if (node !== null && node.isRunning()) {
             timer.start()
         }
-        else if (node !== null && (node.isFinishedOrRunning() || node.globalStatus=="ERROR")) {
-            computationInfo.text = Format.getTimeStr(node.elapsedTime)
-        }
         else {
-            computationInfo.text =  ""
+            timer.stop()
+            if (node !== null && (node.isFinishedOrRunning() || globalStatus == "ERROR")) {
+                computationInfo.text = Format.getTimeStr(node.elapsedTime)
+            }
+            else{
+                computationInfo.text =  ""
+            }
         }
     }
 
@@ -50,22 +54,9 @@ Panel {
                 onTriggered: {
                     if (nodeStartDateTime === "") {
                         nodeStartDateTime = new Date(node.getStartDateTime()).getTime()
-                     }
-                    var now = new Date().getTime()
-                    var runningTime=Format.getTimeStr((now-nodeStartDateTime)/1000)
-
-                    var chunksCompleted = 0
-                    var chunkCompletion = ""
-                    if (node.chunks.count>0) {
-                        for (var i = 0; i < node.chunks.count; i++) {
-                            if (node.chunks.at(i).statusName == "SUCCESS") {
-                                chunksCompleted++
-                            }
-                        }
-                        chunkCompletion = " | "+ chunksCompleted + "/" + node.chunks.count + " chunk" + (node.chunks.count == 1 ? "" : "s")
                     }
-                    parent.text = runningTime + chunkCompletion
-
+                    var now = new Date().getTime()
+                    parent.text = Format.getTimeStr((now-nodeStartDateTime)/1000)
                 }
             }
             padding: 2

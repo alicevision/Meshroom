@@ -3,6 +3,7 @@ import os
 import re
 import argparse
 
+from PySide2 import QtCore
 from PySide2.QtCore import Qt, QUrl, Slot, QJsonValue, Property, Signal, qInstallMessageHandler, QtMsgType, QSettings
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
@@ -123,7 +124,9 @@ class MeshroomApp(QApplication):
         self.engine.setWatching(os.environ.get("MESHROOM_INSTANT_CODING", False))
         # whether to output qml warnings to stderr (disable by default)
         self.engine.setOutputWarningsToStandardError(MessageHandler.outputQmlWarnings)
-        qInstallMessageHandler(MessageHandler.handler)
+        if QtCore.__version_info__ < (5, 14, 2):
+            # After 5.14.1, it gets stuck during logging
+            qInstallMessageHandler(MessageHandler.handler)
 
         self.engine.addImportPath(qmlDir)
         components.registerTypes()

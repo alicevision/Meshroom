@@ -81,8 +81,22 @@ class LdrToHdrSampling(desc.AVCommandLineNode):
             description="Bypass HDR creation and use the medium bracket as the source for the next steps",
             value=False,
             uid=[0],
-            group='internal',
             enabled= lambda node: node.nbBrackets.value != 1,
+        ),
+        desc.ChoiceParam(
+            name='calibrationMethod',
+            label='Calibration Method',
+            description="Method used for camera calibration \n"
+                        " * Linear: Disable the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear. \n"
+                        " * Debevec: This is the standard method for HDR calibration. \n"
+                        " * Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision. \n"
+                        " * Laguerre: Simple but robust method estimating the minimal number of parameters. \n"
+                        " * Robertson: First method for HDR calibration in the literature. \n",
+            values=['linear', 'debevec', 'grossberg', 'laguerre'],
+            value='debevec',
+            exclusive=True,
+            uid=[0],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name='channelQuantizationPower',
@@ -164,7 +178,7 @@ class LdrToHdrSampling(desc.AVCommandLineNode):
     ]
 
     def processChunk(self, chunk):
-        if chunk.node.nbBrackets.value == 1 or chunk.node.byPass.value:
+        if chunk.node.nbBrackets.value == 1:
             return
         super(LdrToHdrSampling, self).processChunk(chunk)
 

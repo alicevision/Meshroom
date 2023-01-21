@@ -64,7 +64,8 @@ Intrinsic = [
     desc.ChoiceParam(name="initializationMode", label="Initialization Mode",
                      description="Defines how this Intrinsic was initialized:\n"
                                  " * calibrated: calibrated externally.\n"
-                                 " * estimated: estimated from metadata and/or sensor width. \n"
+                                 " * estimated: estimated from metadata and/or sensor width \n"
+                                 " * lcp: Lens Camera Profile from a database of generic calibrations \n"
                                  " * unknown: unknown camera parameters (can still have default value guess)\n"
                                  " * none: not set",
                      values=("calibrated", "estimated", "lcp", "unknown", "none"),
@@ -171,8 +172,8 @@ The metadata needed are:
         ),
         desc.BoolParam(
             name='lensCorrectionProfileSearchIgnoreCameraModel',
-            label='LCP Search using lens name and camera maker only.',
-            description='''Automatic LCP Search consider only the camera model and the lens name.''',
+            label='LCP Generic Search',
+            description='The lens name and camera maker are used to match the LCP database, but the camera model is ignored.',
             value=True,
             uid=[0],
         ),

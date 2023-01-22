@@ -250,12 +250,12 @@ class MeshroomApp(QApplication):
         # add the new value in the first place
         projects.insert(0, projectFileNorm)
 
-        # keep only the 10 first elements
+        # keep only the 20 first elements
         projects = projects[0:20]
 
         settings = QSettings()
         settings.beginGroup("RecentFiles")
-        size = settings.beginWriteArray("Projects")
+        settings.beginWriteArray("Projects")
         for i, p in enumerate(projects):
             settings.setArrayIndex(i)
             settings.setValue("filepath", p)
@@ -292,7 +292,7 @@ class MeshroomApp(QApplication):
 
         settings = QSettings()
         settings.beginGroup("RecentFiles")
-        size = settings.beginWriteArray("Projects")
+        settings.beginWriteArray("Projects")
         for i, p in enumerate(projects):
             settings.setArrayIndex(i)
             settings.setValue("filepath", p)
@@ -300,6 +300,86 @@ class MeshroomApp(QApplication):
         settings.sync()
 
         self.recentProjectFilesChanged.emit()
+
+    def _recentImportedImagesFolders(self):
+        folders = []
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        size = settings.beginReadArray("ImagesFolders")
+        for i in range(size):
+            settings.setArrayIndex(i)
+            f = settings.value("path")
+            if f:
+                folders.append(f)
+        settings.endArray()
+        return folders
+
+    @Slot(QUrl)
+    def addRecentImportedImagesFolder(self, imagesFolder):
+        if isinstance(imagesFolder, QUrl):
+            folderPath = imagesFolder.toLocalFile()
+            if not folderPath:
+                folderPath = imagesFolder.toString()
+        else:
+            raise TypeError("Unexpected data type: {}".format(imagesFolder.__class__))
+
+        folders = self._recentImportedImagesFolders()
+
+        # remove duplicates while preserving order
+        from collections import OrderedDict
+        uniqueFolders = OrderedDict.fromkeys(folders)
+        folders = list(uniqueFolders)
+        # remove previous usage of the value
+        if folderPath in uniqueFolders:
+            folders.remove(folderPath)
+        # add the new value in the first place
+        folders.insert(0, folderPath)
+
+        # keep only the first three elements to have a backup if one of the folders goes missing
+        folders = folders[0:3]
+
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        settings.beginWriteArray("ImagesFolders")
+        for i, p in enumerate(folders):
+            settings.setArrayIndex(i)
+            settings.setValue("path", p)
+        settings.endArray()
+        settings.sync()
+
+        self.recentImportedImagesFoldersChanged.emit()
+
+    @Slot(QUrl)
+    def removeRecentImportedImagesFolder(self, imagesFolder):
+        if isinstance(imagesFolder, QUrl):
+            folderPath = imagesFolder.toLocalFile()
+            if not folderPath:
+                folderPath = imagesFolder.toString()
+        else:
+            raise TypeError("Unexpected data type: {}".format(imagesFolder.__class__))
+
+        folders = self._recentImportedImagesFolders()
+
+        # remove duplicates while preserving order
+        from collections import OrderedDict
+        uniqueFolders = OrderedDict.fromkeys(folders)
+        folders = list(uniqueFolders)
+        # remove previous usage of the value
+        if folderPath not in uniqueFolders:
+            return
+
+        folders.remove(folderPath)
+
+        settings = QSettings()
+        settings.beginGroup("RecentFiles")
+        settings.beginWriteArray("ImagesFolders")
+        for i, f in enumerate(folders):
+            settings.setArrayIndex(i)
+            settings.setValue("path", f)
+        settings.endArray()
+        settings.sync()
+
+        self.recentImportedImagesFoldersChanged.emit()
 
     @Slot(str, result=str)
     def markdownToHtml(self, md):
@@ -358,7 +438,9 @@ class MeshroomApp(QApplication):
     licensesModel = Property("QVariantList", _licensesModel, constant=True)
     pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()
+    recentImportedImagesFoldersChanged = Signal()
     pipelineTemplateFiles = Property("QVariantList", _pipelineTemplateFiles, notify=pipelineTemplateFilesChanged)
     pipelineTemplateNames = Property("QVariantList", _pipelineTemplateNames, notify=pipelineTemplateFilesChanged)
     recentProjectFiles = Property("QVariantList", _recentProjectFiles, notify=recentProjectFilesChanged)
+    recentImportedImagesFolders = Property("QVariantList", _recentImportedImagesFolders, notify=recentImportedImagesFoldersChanged)
     default8bitViewerEnabled = Property(bool, _default8bitViewerEnabled, constant=True)

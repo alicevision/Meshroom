@@ -46,6 +46,19 @@ ApplicationWindow {
     SystemPalette { id: activePalette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 
+    property url imagesFolder: {
+        var recentImportedImagesFolders = MeshroomApp.recentImportedImagesFolders
+        if (recentImportedImagesFolders.length > 0) {
+            for (var i = 0; i < recentImportedImagesFolders.length; i++) {
+                if (Filepath.exists(recentImportedImagesFolders[i]))
+                    return Filepath.stringToUrl(recentImportedImagesFolders[i])
+                else
+                    MeshroomApp.removeRecentImportedImagesFolder(Filepath.stringToUrl(recentImportedImagesFolders[i]))
+            }
+        }
+        return ""
+    }
+
     Settings {
         id: settings_General
         category: 'General'
@@ -328,6 +341,8 @@ ApplicationWindow {
         nameFilters: []
         onAccepted: {
             _reconstruction.importImagesUrls(importImagesDialog.fileUrls)
+            imagesFolder = Filepath.dirname(importImagesDialog.fileUrls[0])
+            MeshroomApp.addRecentImportedImagesFolder(imagesFolder)
         }
     }
 
@@ -475,15 +490,27 @@ ApplicationWindow {
 
     // Utility functions for elements in the menubar
 
-    function initFileDialogFolder(dialog) {
-        if(_reconstruction.graph && _reconstruction.graph.filepath) {
-            dialog.folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath));
+    function initFileDialogFolder(dialog, importImages = false) {
+        let folder = "";
+
+        if (imagesFolder.toString() === "" && workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {
+            imagesFolder = Filepath.stringToUrl(Filepath.dirname(workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source));
+        }
+
+        if (_reconstruction.graph && _reconstruction.graph.filepath) {
+            folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath));
         } else {
             var projects = MeshroomApp.recentProjectFiles;
             if (projects.length > 0 && Filepath.exists(projects[0])) {
-                dialog.folder = Filepath.stringToUrl(Filepath.dirname(projects[0]));
+                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]));
             }
         }
+
+        if (importImages && imagesFolder.toString() !== "" && Filepath.exists(imagesFolder)) {
+            folder = imagesFolder;
+        }
+
+        dialog.folder = folder;
     }
 
     header: MenuBar {
@@ -606,7 +633,7 @@ ApplicationWindow {
                 text: "Import Images"
                 shortcut: "Ctrl+I"
                 onTriggered: {
-                    initFileDialogFolder(importImagesDialog);
+                    initFileDialogFolder(importImagesDialog, true);
                     importImagesDialog.open();
                 }
             }

@@ -10,7 +10,7 @@
             "LdrToHdrCalibration": "3.0", 
             "LdrToHdrSampling": "4.0", 
             "PanoramaInit": "2.0", 
-            "CameraInit": "8.0", 
+            "CameraInit": "9.0", 
             "SfMTransform": "3.0", 
             "PanoramaMerging": "1.0", 
             "ImageMatching": "2.0", 

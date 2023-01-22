@@ -764,7 +764,14 @@ class BaseNode(BaseObject):
         return [ch for ch in self._chunks if ch.isAlreadySubmitted()]
 
     def isExtern(self):
-        return self._chunks.at(0).isExtern()
+        """ Return True if at least one chunk of this Node has an external execution mode, False otherwise.
+
+        It is not enough to check whether the first chunk's execution mode is external, because computations
+        may have been started locally, interrupted, and restarted externally. In that case, if the first
+        chunk has completed locally before the computations were interrupted, its execution mode will always
+        be local, even if computations resume externally.
+        """
+        return any(chunk.isExtern() for chunk in self._chunks)
 
     @Slot()
     def clearSubmittedChunks(self):
@@ -1085,6 +1092,7 @@ class BaseNode(BaseObject):
 
     globalExecModeChanged = Signal()
     globalExecMode = Property(str, globalExecMode.fget, notify=globalExecModeChanged)
+    isExternal = Property(bool, isExtern, notify=globalExecModeChanged)
     isComputed = Property(bool, _isComputed, notify=globalStatusChanged)
     aliveChanged = Signal()
     alive = Property(bool, alive.fget, alive.fset, notify=aliveChanged)

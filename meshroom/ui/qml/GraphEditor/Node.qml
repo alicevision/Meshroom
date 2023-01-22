@@ -235,7 +235,7 @@ Item {
 
                             // Submitted externally indicator
                             MaterialLabel {
-                                visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.globalExecMode === "EXTERN"
+                                visible: ["SUBMITTED", "RUNNING"].includes(node.globalStatus) && node.chunks.count > 0 && node.isExternal
                                 text: MaterialIcons.cloud
                                 padding: 2
                                 font.pointSize: 7

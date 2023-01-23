@@ -26,6 +26,7 @@ class ThumbnailCache(QObject):
     i.e. scanning this directory and removing thumbnails that have not been used for too long.
     This operation also ensures that the number of thumbnails on disk does not exceed a certain limit, 
     by removing thumbnails if necessary (from least recently used to most recently used).
+    Since this operation is done at application startup, it is also performed asynchronously.
 
     The default time limit is 90 days, 
     and can be overriden with the MESHROOM_THUMBNAIL_TIME_LIMIT environment variable.
@@ -55,10 +56,11 @@ class ThumbnailCache(QObject):
     # - an identifier for the caller, e.g. the component that sent the request (useful for faster dispatch in QML)
     thumbnailCreated = Signal(QUrl, int)
 
-    # Threads info and LIFO structure for running createThumbnail asynchronously
+    # Threads info and LIFO structure for running clean and createThumbnail asynchronously
     maxWorkerThreads = 3
     activeWorkerThreads = 0
     requests = []
+    cleaningThread = None
 
     @staticmethod
     def initialize():
@@ -82,7 +84,9 @@ class ThumbnailCache(QObject):
             ThumbnailCache.maxThumbnailsOnDisk = int(maxOnDisk)
 
         # Clean thumbnail directory
-        ThumbnailCache.clean()
+        # This is performed asynchronously to avoid freezing the app at startup
+        ThumbnailCache.cleaningThread = Thread(target=ThumbnailCache.clean)
+        ThumbnailCache.cleaningThread.start()
 
         # Make sure the thumbnail directory exists before writing into it
         os.makedirs(ThumbnailCache.thumbnailDir, exist_ok=True)
@@ -260,9 +264,18 @@ class ThumbnailCache(QObject):
 
         This method is only meant to be called by worker threads,
         hence it also takes care of registering/unregistering the calling thread.
+
+        Note: this operation waits for the cleaning process to finish before starting,
+        in order to avoid synchronization issues.
         """
         # Register worker thread
         ThumbnailCache.activeWorkerThreads += 1
+
+        # Wait for cleaning thread to finish
+        if ThumbnailCache.cleaningThread is not None and ThumbnailCache.cleaningThread.is_alive():
+            ThumbnailCache.cleaningThread.join()
+
+        # Handle requests until the requests stack is empty
         try:
             while True:
                 req = ThumbnailCache.requests.pop()

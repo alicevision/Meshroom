@@ -41,10 +41,10 @@ Item {
         updateThumbnail();
     }
 
-    // Send a new request every 2 seconds until thumbnail is loaded
+    // Send a new request every 5 seconds until thumbnail is loaded
     // This is meant to avoid deadlocks in case there is a synchronization problem
     Timer {
-        interval: 2000
+        interval: 5000
         repeat: true
         running: true
         onTriggered: {

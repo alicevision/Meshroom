@@ -193,6 +193,48 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                 )
             ]
         ),
+        desc.GroupAttribute(
+            name="debugOptions",
+            label="Debug Options",
+            description="Debug options for the Smart keyframe selection method.",
+            group=None,  # skip group from command line
+            enabled=lambda node: node.selectionMethod.useSmartSelection.value,
+            advanced=True,
+            groupDesc=[
+                desc.GroupAttribute(
+                    name="debugScores",
+                    label="Export Scores",
+                    description="Export the computed sharpness and optical flow scores to a file.",
+                    group=None,  # skip group from command line
+                    enabled=lambda node: node.debugOptions.enabled,
+                    groupDesc=[
+                        desc.BoolParam(
+                            name="exportScores",
+                            label="Export Scores To CSV",
+                            description="Export the computed sharpness and optical flow scores to a CSV file.",
+                            value=False,
+                            uid=[0]
+                        ),
+                        desc.StringParam(
+                            name="csvFilename",
+                            label="CSV Filename",
+                            description="Name of the CSV file to export. It will be written in the node's output folder.",
+                            value="scores.csv",
+                            uid=[0],
+                            enabled=lambda node: node.debugOptions.debugScores.exportScores.value
+                        ),
+                        desc.BoolParam(
+                            name="exportSelectedFrames",
+                            label="Export Selected Frames",
+                            description="Add a column in the CSV file containing 1s for frames that were selected and 0s for those that were not.",
+                            value=False,
+                            uid=[0],
+                            enabled=lambda node: node.debugOptions.debugScores.exportScores.value
+                        )
+                    ]
+                )
+            ]
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",

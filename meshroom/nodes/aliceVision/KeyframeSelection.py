@@ -73,49 +73,125 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             uid=[0],
         ),
         desc.GroupAttribute(
-            name="regularSelection",
-            label="Regular Keyframe Selection",
-            description="Parameters for the regular keyframe selection.\nKeyframes are selected regularly over the sequence with respect to the set parameters.",
+            name="selectionMethod",
+            label="Keyframe Selection Method",
+            description="Selection the regular or smart method for the keyframe selection.\n"
+                        "- With the regular method, keyframes are selected regularly over the sequence with respect to the set parameters.\n"
+                        "- With the smart method, keyframes are selected based on their sharpness and optical flow scores.",
             group=None,  # skip group from command line
             groupDesc=[
                 desc.BoolParam(
-                    name="useRegularSelection",
-                    label="Use Regular Selection",
-                    description="Enable and use the regular keyframe selection.",
+                    name='useSmartSelection',
+                    label='Use Smart Keyframe Selection',
+                    description="Use the smart keyframe selection.",
                     value=True,
-                    uid=[0],
-                    enabled=False,  # only method for now, it must always be enabled
+                    uid=[0]
                 ),
-                desc.IntParam(
-                    name="minFrameStep",
-                    label="Min Frame Step",
-                    description="Minimum number of frames between two keyframes.",
-                    value=12,
-                    range=(1, 1000, 1),
-                    uid=[0],
-                    enabled=lambda node: node.regularSelection.useRegularSelection.value
+                desc.GroupAttribute(
+                    name="regularSelection",
+                    label="Regular Keyframe Selection",
+                    description="Parameters for the regular keyframe selection.\nKeyframes are selected regularly over the sequence with respect to the set parameters.",
+                    group=None,  # skip group from command line
+                    enabled=lambda node: node.selectionMethod.useSmartSelection.value is False,
+                    groupDesc=[
+                        desc.IntParam(
+                            name="minFrameStep",
+                            label="Min Frame Step",
+                            description="Minimum number of frames between two keyframes.",
+                            value=12,
+                            range=(1, 1000, 1),
+                            uid=[0],
+                            enabled=lambda node: node.regularSelection.enabled
+                        ),
+                        desc.IntParam(
+                            name="maxFrameStep",
+                            label="Max Frame Step",
+                            description="Maximum number of frames between two keyframes. Ignored if equal to 0.",
+                            value=0,
+                            range=(0, 1000, 1),
+                            uid=[0],
+                            enabled=lambda node: node.regularSelection.enabled
+                        ),
+                        desc.IntParam(
+                            name="maxNbOutFrames",
+                            label="Max Nb Output Frames",
+                            description="Maximum number of output frames (0 = no limit).\n"
+                                        "'minFrameStep' and 'maxFrameStep' will always be respected, so combining them with this parameter\n"
+                                        "might cause the selection to stop before reaching the end of the input sequence(s).",
+                            value=0,
+                            range=(0, 10000, 1),
+                            uid=[0],
+                            enabled=lambda node: node.regularSelection.enabled
+                        ),
+                    ],
                 ),
-                desc.IntParam(
-                    name="maxFrameStep",
-                    label="Max Frame Step",
-                    description="Maximum number of frames between two keyframes. Ignored if equal to 0.",
-                    value=0,
-                    range=(0, 1000, 1),
-                    uid=[0],
-                    enabled=lambda node: node.regularSelection.useRegularSelection.value
-                ),
-                desc.IntParam(
-                    name="maxNbOutFrames",
-                    label="Max Nb Output Frames",
-                    description="Maximum number of output frames (0 = no limit).\n"
-                                "'minFrameStep' and 'maxFrameStep' will always be respected, so combining them with this parameter\n"
-                                "might cause the selection to stop before reaching the end of the input sequence(s).",
-                    value=0,
-                    range=(0, 10000, 1),
-                    uid=[0],
-                    enabled=lambda node: node.regularSelection.useRegularSelection.value
-                ),
-            ],
+                desc.GroupAttribute(
+                    name="smartSelection",
+                    label="Smart Keyframe Selection",
+                    description="Parameters for the smart keyframe selection.\nKeyframes are selected based on their sharpness and optical flow scores.",
+                    group=None,  # skip group from command line
+                    enabled=lambda node: node.selectionMethod.useSmartSelection.value,
+                    groupDesc=[
+                        desc.FloatParam(
+                            name="pxDisplacement",
+                            label="Pixel Displacement",
+                            description="The percentage of pixels in the frame that need to have moved since the last keyframe to be considered for the selection",
+                            value=3.0,
+                            range=(0.0, 100.0, 1.0),
+                            uid=[0],
+                            enabled=lambda node: node.smartSelection.enabled
+                        ),
+                        desc.IntParam(
+                            name="minNbOutFrames",
+                            label="Min Nb Output Frames",
+                            description="Minimum number of frames selected to be keyframes.",
+                            value=10,
+                            range=(1, 100, 1),
+                            uid=[0],
+                            enabled=lambda node: node.smartSelection.enabled
+                        ),
+                        desc.IntParam(
+                            name="maxNbOutFrames",
+                            label="Max Nb Output Frames",
+                            description="Maximum number of frames selected to be keyframes.",
+                            value=2000,
+                            range=(1, 10000, 1),
+                            uid=[0],
+                            enabled=lambda node: node.smartSelection.enabled
+                        ),
+                        desc.IntParam(
+                            name="rescaledWidth",
+                            label="Rescaled Frame's Width",
+                            description="Width, in pixels, of the frame after a rescale. Aspect ratio will be preserved. No rescale will be performed if equal to 0.",
+                            value=720,
+                            range=(0, 4000, 1),
+                            uid=[0],
+                            enabled=lambda node: node.smartSelection.enabled,
+                            advanced=True
+                        ),
+                        desc.IntParam(
+                            name="sharpnessWindowSize",
+                            label="Sharpness Window Size",
+                            description="The size, in pixels, of the sliding window used to evaluate a frame's sharpness.",
+                            value=200,
+                            range=(1, 10000, 1),
+                            uid=[0],
+                            enabled=lambda node: node.smartSelection.enabled,
+                            advanced=True
+                        ),
+                        desc.IntParam(
+                            name="flowCellSize",
+                            label="Optical Flow Cell Size",
+                            description="The size, in pixels, of the cells within a frame in which the optical flow scores is evaluated.",
+                            value=90,
+                            range=(10, 2000, 1),
+                            uid=[0],
+                            enabled=lambda node: node.smartSelection.enabled,
+                            advanced=True
+                        ),
+                    ]
+                )
+            ]
         ),
         desc.ChoiceParam(
             name="verboseLevel",

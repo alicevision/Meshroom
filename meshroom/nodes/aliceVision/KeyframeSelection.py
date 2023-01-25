@@ -233,6 +233,32 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                         )
                     ]
                 ),
+                desc.GroupAttribute(
+                    name="opticalFlowVisualisation",
+                    label="Optical Flow Visualisation",
+                    description="Visualise the motion vectors for each input frame in HSV.",
+                    group=None,  # skip group from command line
+                    enabled=lambda node: node.debugOptions.enabled,
+                    groupDesc=[
+                        desc.BoolParam(
+                            name="exportFlowVisualisation",
+                            label="Visualise Optical Flow",
+                            description="Export each frame's optical flow HSV visualisation as PNG images.",
+                            value=False,
+                            uid=[0],
+                            enabled=lambda node: node.debugOptions.opticalFlowVisualisation.enabled
+                        ),
+                        desc.BoolParam(
+                            name="flowVisualisationOnly",
+                            label="Only Visualise Optical Flow",
+                            description="Export each frame's optical flow HSV visualisation as PNG images, but do not perform any score computation or frame selection.\n"
+                                        "If this option is selected, all the other options will be ignored.",
+                            value=False,
+                            uid=[0],
+                            enabled=lambda node: node.debugOptions.opticalFlowVisualisation.enabled
+                        )
+                    ]
+                ),
                 desc.BoolParam(
                     name="skipSelection",
                     label="Skip Frame Selection",

@@ -460,7 +460,7 @@ FocusScope {
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
                                 'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;}),
                                 'mouseMultiplier': Qt.binding(function(){ return panoramaViewerToolbar.mouseSpeed;}),
-                                'msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready
+                                'msfmData': Qt.binding(function() { return (msfmDataLoader && msfmDataLoader.item && msfmDataLoader.status === Loader.Ready
                                                                            && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                             })
                         } else {

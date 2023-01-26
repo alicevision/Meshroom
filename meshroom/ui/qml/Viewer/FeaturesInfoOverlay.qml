@@ -100,7 +100,7 @@ FloatingPane {
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
-                                checked: root.featuresViewer.trackContiguousFilter
+                                checked: root.featuresViewer ? root.featuresViewer.trackContiguousFilter : false
                                 onClicked: root.featuresViewer.trackContiguousFilter = trackContiguousFilterCB.checked
                             }
                         }
@@ -114,7 +114,7 @@ FloatingPane {
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
-                                checked: root.featuresViewer.trackInliersFilter
+                                checked: root.featuresViewer ? root.featuresViewer.trackInliersFilter : false
                                 onClicked: root.featuresViewer.trackInliersFilter = trackInliersFilterCB.checked
                             }
                         }
@@ -128,7 +128,7 @@ FloatingPane {
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
-                                checked: root.featuresViewer.display3dTracks
+                                checked: root.featuresViewer ? root.featuresViewer.display3dTracks : false
                                 onClicked: root.featuresViewer.display3dTracks = display3dTracksCB.checked
                             }
                         }
@@ -158,7 +158,7 @@ FloatingPane {
                                 Layout.alignment: Qt.AlignRight
                                 from: -1
                                 to: 50
-                                value: root.featuresViewer.timeWindow
+                                value: root.featuresViewer ? root.featuresViewer.timeWindow : 0
                                 stepSize: 1
                                 editable: true
 
@@ -175,7 +175,8 @@ FloatingPane {
                                 }
 
                                 onValueChanged: {
-                                    root.featuresViewer.timeWindow = timeWindowSB.value;
+                                    if (root.featuresViewer)
+                                        root.featuresViewer.timeWindow = timeWindowSB.value;
                                 }
                             }
                         }

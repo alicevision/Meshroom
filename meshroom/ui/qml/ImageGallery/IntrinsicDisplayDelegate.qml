@@ -125,7 +125,7 @@ RowLayout {
         id: choice_component
         ComboBox {
             id: combo
-            model: attribute.desc.values
+            model: attribute.desc !== undefined ? attribute.desc.values : undefined
             width: intrinsicModel.columnWidths[columnIndex]
             enabled: !root.readOnly
 

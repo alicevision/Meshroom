@@ -109,6 +109,7 @@ Item {
                     asynchronous: true
                     autoTransform: true
                     fillMode: Image.PreserveAspectFit
+                    sourceSize: Qt.size(100, 100)
                 }
                 BusyIndicator {
                     anchors.centerIn: parent

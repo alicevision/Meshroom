@@ -42,7 +42,7 @@ class ThumbnailCache(QObject):
     thumbnailDir = ''
 
     # Thumbnail dimensions limit (the actual dimensions of a thumbnail will depend on the aspect ratio)
-    thumbnailSize = QSize(100, 100)
+    thumbnailSize = QSize(256, 256)
 
     # Time limit for thumbnail storage on disk, expressed in days
     storageTimeLimit = 90
@@ -248,7 +248,9 @@ class ThumbnailCache(QObject):
             return
 
         # Scale image while preserving aspect ratio
-        thumbnail = img.scaled(ThumbnailCache.thumbnailSize, aspectMode=Qt.KeepAspectRatio)
+        thumbnail = img.scaled(ThumbnailCache.thumbnailSize,
+                               aspectMode=Qt.KeepAspectRatio,
+                               mode=Qt.SmoothTransformation)
 
         # Write thumbnail to disk and check for potential errors
         writer = QImageWriter(path)

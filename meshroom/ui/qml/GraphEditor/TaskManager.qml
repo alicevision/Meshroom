@@ -144,7 +144,7 @@ Item {
         }
 
         delegate: RowLayout {
-            width: parent.width
+            width: parent != null ? parent.width : undefined
             height: 18
             spacing: 3
 

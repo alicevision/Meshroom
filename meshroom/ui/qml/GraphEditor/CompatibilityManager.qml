@@ -90,7 +90,7 @@ MessageDialog {
                 property var node: object
 
                 width: ListView.view.width - 12
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.horizontalCenter: parent != null ? parent.horizontalCenter : undefined
 
                 Label {
                     Layout.preferredWidth: 130

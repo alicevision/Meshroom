@@ -68,7 +68,7 @@ RowLayout {
                     property Component menuComp: Menu {
                         id: paramMenu
 
-                        property bool isFileAttribute: attribute.type == "File"
+                        property bool isFileAttribute: attribute.type === "File"
                         property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.evalValue)
 
                         MenuItem {

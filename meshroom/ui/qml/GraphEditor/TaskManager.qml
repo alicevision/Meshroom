@@ -164,9 +164,9 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
-                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
+                color: object === uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                    color: object === uigraph.selectedNode ? Colors.sysPalette.text : bgColor
                 }
 
                 MouseArea {
@@ -182,9 +182,9 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
-                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
+                color: object === uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                    color: object === uigraph.selectedNode ? Colors.sysPalette.text : bgColor
                 }
 
                 MouseArea {
@@ -200,9 +200,9 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
-                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
+                color: object === uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                    color: object === uigraph.selectedNode ? Colors.sysPalette.text : bgColor
                 }
 
                 MouseArea {
@@ -218,9 +218,9 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
-                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
+                color: object === uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                    color: object === uigraph.selectedNode ? Colors.sysPalette.text : bgColor
                 }
 
                 MouseArea {
@@ -236,9 +236,9 @@ Item {
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
                 verticalAlignment: Label.AlignVCenter
-                color: object == uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
+                color: object === uigraph.selectedNode ? Colors.sysPalette.window : Colors.sysPalette.text
                 background: Rectangle {
-                    color: object == uigraph.selectedNode ? Colors.sysPalette.text : bgColor
+                    color: object === uigraph.selectedNode ? Colors.sysPalette.text : bgColor
                 }
 
                 MouseArea {
@@ -271,7 +271,7 @@ Item {
                                 color: Colors.getChunkColor(object, {"NONE": bgColor})
                                 radius: 3
                                 border.width: 2
-                                border.color: chunkList.node == uigraph.selectedNode ? Colors.sysPalette.text : Colors.getChunkColor(object, {"NONE": bgColor})
+                                border.color: chunkList.node === uigraph.selectedNode ? Colors.sysPalette.text : Colors.getChunkColor(object, {"NONE": bgColor})
 
                             }
 

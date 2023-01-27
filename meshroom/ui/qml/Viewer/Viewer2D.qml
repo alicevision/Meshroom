@@ -99,7 +99,7 @@ FocusScope {
 
     // slots
     Keys.onPressed: {
-        if(event.key == Qt.Key_F) {
+        if(event.key === Qt.Key_F) {
             root.fit();
             event.accepted = true;
         }
@@ -147,7 +147,7 @@ FocusScope {
         // make sure the image is ready for use
         if(!imgContainer.image)
             return;
-        if(imgContainer.image.status != Image.Ready)
+        if(imgContainer.image.status !== Image.Ready)
             return;
 
         // for Exif orientation tags 5 to 8, a 90 degrees rotation is applied
@@ -225,7 +225,7 @@ FocusScope {
             return "";
         for (var i = 0; i < node.attributes.count; i++) {
             var attr = node.attributes.at(i);
-            if (attr.name == attrName) {
+            if (attr.name === attrName) {
                 let path = String(attr.value)
                 for (var key in patterns) {
                     if (patterns.hasOwnProperty(key)) {
@@ -333,7 +333,7 @@ FocusScope {
                 {
                     return null;
                 }
-                if(floatImageViewerLoader.item.containsMouse == false)
+                if(floatImageViewerLoader.item.containsMouse === false)
                 {
                     return null;
                 }
@@ -389,9 +389,9 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    property var fittedOnce: false
-                    property var previousWidth: 0
-                    property var previousHeight: 0
+                    property bool fittedOnce: false
+                    property int previousWidth: 0
+                    property int previousHeight: 0
                     onHeightChanged: {
                         /* Image size is not updated through a single signal with the floatImage viewer, unlike
                          * the simple QML image viewer: instead of updating straight away the width and height to x and
@@ -404,7 +404,7 @@ FocusScope {
                          * group has already been auto-fitted. If we change the group of images (when another project is
                          * opened, for example, and the images have a different size), then another auto-fit needs to be
                          * performed */
-                        if ((!fittedOnce && imgContainer.image.status == Image.Ready && imgContainer.image.height > 0) ||
+                        if ((!fittedOnce && imgContainer.image && imgContainer.image.status === Image.Ready && imgContainer.image.height > 0) ||
                             (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
                             fit();
                             fittedOnce = true;
@@ -1135,7 +1135,7 @@ FocusScope {
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true
-                            enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId != -1
+                            enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId !== -1
                             checked: false
                             visible: activeNode
                             onEnabledChanged: {

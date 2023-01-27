@@ -70,7 +70,7 @@ DelegateModel {
     function find(value, roleName) {
         for(var i = 0; i < filteredItems.count; ++i)
         {
-            if(modelData(filteredItems.get(i), roleName) == value)
+            if(modelData(filteredItems.get(i), roleName) === value)
                 return i
         }
         return -1

@@ -120,7 +120,7 @@ ApplicationWindow {
             {
                 saveFileDialog.open()
                 function _callbackWrapper(rc) {
-                    if(rc == Platform.Dialog.Accepted)
+                    if(rc === Platform.Dialog.Accepted)
                         fireCallback()
                     saveFileDialog.closed.disconnect(_callbackWrapper)
                 }
@@ -277,6 +277,7 @@ ApplicationWindow {
                     case "Compatibility Issue": {
                         close()
                         compatibilityManager.open()
+                        break
                     }
                     default: close()
                 }
@@ -577,7 +578,7 @@ ApplicationWindow {
             Menu {
                 id: newPipelineMenu
                 title: "New Pipeline"
-                enabled: newPipelineMenuItems.model != undefined && newPipelineMenuItems.model.length > 0
+                enabled: newPipelineMenuItems.model !== undefined && newPipelineMenuItems.model.length > 0
                 property int maxWidth: 1000
                 property int fullWidth: {
                     var result = 0;
@@ -621,7 +622,7 @@ ApplicationWindow {
             Menu {
                 id: openRecentMenu
                 title: "Open Recent"
-                enabled: recentFilesMenuItems.model != undefined && recentFilesMenuItems.model.length > 0
+                enabled: recentFilesMenuItems.model !== undefined && recentFilesMenuItems.model.length > 0
                 property int maxWidth: 1000
                 property int fullWidth: {
                     var result = 0;
@@ -961,7 +962,7 @@ ApplicationWindow {
                     // 3D viewer
                     for (var i = 0; i < node.attributes.count; i++) {
                         var attr = node.attributes.at(i)
-                        if(attr.isOutput && attr.desc.semantic != "image" && workspaceView.viewIn3D(attr, mouse))
+                        if(attr.isOutput && attr.desc.semantic !== "image" && workspaceView.viewIn3D(attr, mouse))
                             break;
                     }
                 }

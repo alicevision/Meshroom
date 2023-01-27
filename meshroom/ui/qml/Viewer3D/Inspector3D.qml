@@ -344,12 +344,12 @@ FloatingPane {
                                     text: model.label
                                     opacity: model.valid ? 1.0 : 0.6
                                     elide: Text.ElideMiddle
-                                    font.weight: mediaListView.currentIndex == index ? Font.DemiBold : Font.Normal
+                                    font.weight: mediaListView.currentIndex === index ? Font.DemiBold : Font.Normal
                                     background: Rectangle {
                                         Connections {
                                             target: mediaLibrary
                                             function onLoadRequest(idx) {
-                                                if(idx == index)
+                                                if(idx === index)
                                                     focusAnim.restart()
                                             }
                                         }

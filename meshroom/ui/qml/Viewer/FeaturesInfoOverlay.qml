@@ -163,14 +163,14 @@ FloatingPane {
                                 editable: true
 
                                 textFromValue: function(value, locale) {
-                                    if (value == -1) return "No Limit";
-                                    if (value ==  0) return "Disable";
+                                    if (value === -1) return "No Limit";
+                                    if (value ===  0) return "Disable";
                                     return value;
                                 }
 
                                 valueFromText: function(text, locale) {
-                                    if (text == "No Limit") return -1;
-                                    if (text == "Disable")  return 0;
+                                    if (text === "No Limit") return -1;
+                                    if (text === "Disable")  return 0;
                                     return Number.fromLocaleString(locale, text);
                                 }
 

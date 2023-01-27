@@ -100,8 +100,8 @@ Item {
     function isFileAttributeBaseType(attribute) {
         // ATM, only File attributes are meant to be connected
         // TODO: review this if we want to connect something else
-        return attribute.type == "File"
-               || (attribute.type == "ListAttribute" && attribute.desc.elementDesc.type == "File")
+        return attribute.type === "File"
+               || (attribute.type === "ListAttribute" && attribute.desc.elementDesc.type === "File")
     }
 
     // Used to generate list of node's label sharing the same uid
@@ -480,22 +480,22 @@ Item {
                                         width: parent.width
 
                                         sourceComponent: AttributePin {
-                                            id: inPin
+                                            id: inParamsPin
                                             nodeItem: root
-                                            property real globalX: root.x + nodeAttributes.x + inputParamsRect.x + paramLoader.x + inPin.x
-                                            property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inPin.y
+                                            property real globalX: root.x + nodeAttributes.x + inputParamsRect.x + paramLoader.x + inParamsPin.x
+                                            property real globalY: root.y + nodeAttributes.y + inputParamsRect.y + paramLoader.y + inParamsPin.y
 
                                             height: isFullyActive ? childrenRect.height : 0
                                             Behavior on height { PropertyAnimation {easing.type: Easing.Linear} }
                                             visible: (height == childrenRect.height)
                                             attribute: object
                                             readOnly: root.readOnly || object.isReadOnly
-                                            Component.onCompleted: attributePinCreated(attribute, inPin)
-                                            Component.onDestruction: attributePinDeleted(attribute, inPin)
+                                            Component.onCompleted: attributePinCreated(attribute, inParamsPin)
+                                            Component.onDestruction: attributePinDeleted(attribute, inParamsPin)
                                             onPressed: root.pressed(mouse)
                                             onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
-                                            onChildPinCreated: attributePinCreated(childAttribute, inPin)
-                                            onChildPinDeleted: attributePinDeleted(childAttribute, inPin)
+                                            onChildPinCreated: attributePinCreated(childAttribute, inParamsPin)
+                                            onChildPinDeleted: attributePinDeleted(childAttribute, inParamsPin)
                                         }
                                     }
                                 }

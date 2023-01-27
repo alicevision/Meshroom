@@ -41,7 +41,7 @@ Shape {
         startY: root.startY
         fillColor: "transparent"
         strokeColor: "#3E3E3E"
-        strokeStyle: edge != undefined && ((edge.src != undefined && edge.src.isOutput) || edge.dst == undefined) ? ShapePath.SolidLine : ShapePath.DashLine
+        strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
         strokeWidth: 1
         // final visual width of this path (never below 1)
         readonly property real visualWidth: Math.max(strokeWidth, 1)

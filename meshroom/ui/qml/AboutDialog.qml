@@ -193,6 +193,7 @@ Dialog {
                         TextArea {
                             id: textArea
                             readOnly: true
+                            implicitWidth: parent.implicitWidth
                             selectByMouse: true
                             selectByKeyboard: true
                             wrapMode: TextArea.WrapAnywhere

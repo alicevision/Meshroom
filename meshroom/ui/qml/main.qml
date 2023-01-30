@@ -39,10 +39,30 @@ ApplicationWindow {
         ensureSaved(function(){ Qt.quit() })
     }
 
-    // force Application palette assignation
-    // note: should be implicit (PySide bug)
-    palette: _PaletteManager.palette
+    // QPalette is not convertible to QML palette (anymore)
+    Component.onCompleted: {
+        palette.alternateBase = _PaletteManager.alternateBase
+        palette.base = _PaletteManager.base
+        palette.button = _PaletteManager.button
+        palette.buttonText = _PaletteManager.buttonText
+        palette.highlight = _PaletteManager.highlight
+        palette.highlightedText = _PaletteManager.highlightedText
+        palette.link = _PaletteManager.link
+        palette.mid = _PaletteManager.mid
+        palette.shadow = _PaletteManager.shadow
+        palette.text = _PaletteManager.text
+        palette.toolTipBase = _PaletteManager.toolTipBase
+        palette.toolTipText = _PaletteManager.toolTipText
+        palette.window = _PaletteManager.window
+        palette.windowText = _PaletteManager.windowText
 
+        // TODO: uncomment for Qt6, which supports palette for disabled elements
+        /* palette.disabled.buttonText = _PaletteManager.disabledButtonText
+        palette.disabled.highlight = _PaletteManager.disabledHighlight
+        palette.disabled.highlightedText = _PaletteManager.disabledHighlightedText
+        palette.disabled.text = _PaletteManager.disabledText
+        palette.disabled.windowText = _PaletteManager.disabledWindowText */
+    }
     SystemPalette { id: activePalette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
 

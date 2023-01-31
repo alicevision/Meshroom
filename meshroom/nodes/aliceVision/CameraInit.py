@@ -36,9 +36,6 @@ Intrinsic = [
                     value=-1.0, uid=[0], range=None),
     desc.FloatParam(name="focalLength", label="Focal Length", description="Known/Calibrated Focal Length (in mm)", value=1000.0, uid=[0], range=(0.0, 10000.0, 1.0)),
     desc.FloatParam(name="pixelRatio", label="pixel Ratio", description="ratio between pixel width and pixel height", value=1.0, uid=[0], range=(0.0, 10.0, 0.1)),
-    desc.BoolParam(name='pixelRatioLocked', label='Pixel ratio Locked',
-                   description='the pixelRatio value is locked for estimation',
-                   value=True, uid=[0]),
     desc.ChoiceParam(name="type", label="Camera Type",
                      description="Mathematical Model used to represent a camera:\n"
                      " * pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
@@ -82,6 +79,18 @@ Intrinsic = [
         ),
     desc.BoolParam(name='locked', label='Locked',
                    description='If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speedup the reconstruction.',
+                   value=False, uid=[0]),
+    desc.BoolParam(name='scaleLocked', label='Focal Length Locked',
+                   description='the focal length value is locked for estimation',
+                   value=False, uid=[0]),
+    desc.BoolParam(name='pixelRatioLocked', label='Pixel ratio Locked',
+                   description='the pixelRatio value is locked for estimation',
+                   value=True, uid=[0]),
+    desc.BoolParam(name='offsetLocked', label='Principal point Locked',
+                   description='the principal point is locked for estimation',
+                   value=False, uid=[0]),
+    desc.BoolParam(name='distortionLocked', label='Distortion Locked',
+                   description='the distortion parameters are locked for estimation',
                    value=False, uid=[0]),
 ]
 

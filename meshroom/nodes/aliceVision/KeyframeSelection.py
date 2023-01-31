@@ -193,6 +193,30 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                 )
             ]
         ),
+        desc.ChoiceParam(
+            name="outputExtension",
+            label="Keyframes File Extension",
+            description="File extension of the written keyframes.",
+            value="jpg",
+            values=["exr", "jpg", "png"],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name="storageDataType",
+            label="EXR Storage Data Type",
+            description="Storage image data type for keyframes written to EXR files:\n"
+                        " * float: Use full floating point (32 bits per channel)\n"
+                        " * half: Use half float (16 bits per channel)\n"
+                        " * halfFinite: Use half float, but clamp values to avoid non-finite values\n"
+                        " * auto: Use half float if all values can fit, else use full float\n",
+            value="float",
+            values=["float", "half", "halfFinite", "auto"],
+            exclusive=True,
+            uid=[0],
+            enabled=lambda node: node.outputExtension.value == "exr",
+            advanced=True
+        ),
         desc.GroupAttribute(
             name="debugOptions",
             label="Debug Options",

@@ -290,7 +290,7 @@ class ViewpointWrapper(QObject):
         """ Get the camera translation as a 3D vector. """
         if self._T is None:
             return None
-        return QVector3D(*self._T)
+        return QVector3D(self._T[0], -self._T[1], -self._T[2])
 
     @Property(type=QQuaternion, notify=sfmParamsChanged)
     def rotation(self):
@@ -300,8 +300,8 @@ class ViewpointWrapper(QObject):
 
         rot = QMatrix3x3([
             self._R[0], -self._R[1], -self._R[2],
-            self._R[3], -self._R[4], -self._R[5],
-            self._R[6], -self._R[7], -self._R[8]]
+            -self._R[3], self._R[4], self._R[5],
+            -self._R[6], self._R[7], self._R[8]]
         )
 
         return QQuaternion.fromRotationMatrix(rot)
@@ -315,8 +315,8 @@ class ViewpointWrapper(QObject):
         # convert transform matrix for Qt
         return QMatrix4x4(
             self._R[0], -self._R[1], -self._R[2], self._T[0],
-            self._R[3], -self._R[4], -self._R[5], self._T[1],
-            self._R[6], -self._R[7], -self._R[8], self._T[2],
+            -self._R[3], self._R[4], self._R[5], -self._T[1],
+            -self._R[6], self._R[7], self._R[8], -self._T[2],
             0,          0,           0,           1
         )
 

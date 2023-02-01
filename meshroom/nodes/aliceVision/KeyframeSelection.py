@@ -160,9 +160,21 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             enabled=lambda node: node.smartSelection.enabled
                         ),
                         desc.IntParam(
-                            name="rescaledWidth",
-                            label="Rescaled Frame's Width",
-                            description="Width, in pixels, of the frame after a rescale. Aspect ratio will be preserved. No rescale will be performed if equal to 0.",
+                            name="rescaledWidthSharpness",
+                            label="Rescaled Frame's Width For Sharpness",
+                            description="Width, in pixels, of the frame used for the sharpness score computation after a rescale.\n"
+                                        "Aspect ratio will be preserved. No rescale will be performed if equal to 0.",
+                            value=720,
+                            range=(0, 4000, 1),
+                            uid=[0],
+                            enabled=lambda node: node.smartSelection.enabled,
+                            advanced=True
+                        ),
+                        desc.IntParam(
+                            name="rescaledWidthFlow",
+                            label="Rescaled Frame's Width For Motion",
+                            description="Width, in pixels, of the frame used for the motion score computation after a rescale.\n"
+                                        "Aspect ratio will be preserved. No rescale will be performed if equal to 0.",
                             value=720,
                             range=(0, 4000, 1),
                             uid=[0],

@@ -24,9 +24,9 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                 value="",
                 uid=[0],
             ),
-            name='mediaPaths',
-            label='Media Paths',
-            description='Input video files or image sequence directories.',
+            name="mediaPaths",
+            label="Media Paths",
+            description="Input video files or image sequence directories.",
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -56,124 +56,73 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             elementDesc=desc.FloatParam(
                 name="mmFocal",
                 label="mmFocal",
-                description="Focal in mm (will be use if not 0).",
+                description="Focal in mm (will be used if not 0).",
                 value=0.0,
                 range=(0.0, 500.0, 1.0),
                 uid=[0],
             ),
             name="mmFocals",
             label="mmFocals",
-            description="Focals in mm (will be use if not 0)."
-        ),
-        desc.ListAttribute(
-            elementDesc=desc.FloatParam(
-                name="pxFocal",
-                label="pxFocal",
-                description="Focal in px (will be use and convert in mm if not 0).",
-                value=0.0,
-                range=(0.0, 500.0, 1.0),
-                uid=[0],
-            ),
-            name="pxFocals",
-            label="pxFocals",
-            description="Focals in px (will be use and convert in mm if not 0)."
-        ),
-        desc.ListAttribute(
-            elementDesc=desc.IntParam(
-                name="frameOffset",
-                label="Frame Offset",
-                description="Frame offset.",
-                value=0,
-                range=(0, 100, 1),
-                uid=[0],
-            ),
-            name="frameOffsets",
-            label="Frame Offsets",
-            description="Frame offsets."
+            description="Focals in mm (will be used if not 0)."
         ),
         desc.File(
-            name='sensorDbPath',
-            label='Sensor Db Path',
-            description='''Camera sensor width database path.''',
-            value='${ALICEVISION_SENSOR_DB}',
+            name="sensorDbPath",
+            label="Sensor Db Path",
+            description="Camera sensor width database path.",
+            value="${ALICEVISION_SENSOR_DB}",
             uid=[0],
         ),
-        desc.File(
-            name='voctreePath',
-            label='Voctree Path',
-            description='''Vocabulary tree path.''',
-            value='${ALICEVISION_VOCTREE}',
-            uid=[0],
-        ),
-        desc.BoolParam(
-            name='useSparseDistanceSelection',
-            label='Use Sparse Distance Selection',
-            description='Use sparseDistance selection in order to avoid similar keyframes.',
-            value=False,
-            uid=[0],
-        ),
-        desc.BoolParam(
-            name='useSharpnessSelection',
-            label='Use Sharpness Selection',
-            description='Use frame sharpness score for keyframe selection.',
-            value=False,
-            uid=[0],
-        ),
-        desc.FloatParam(
-            name='sparseDistMaxScore',
-            label='Sparse Distance Max Score',
-            description='Maximum number of strong common points between two keyframes.',
-            value=100.0,
-            range=(1.0, 200.0, 1.0),
-            uid=[0],
-        ),
-        desc.ChoiceParam(
-            name='sharpnessPreset',
-            label='Sharpness Preset',
-            description='Preset for sharpnessSelection : {ultra, high, normal, low, very_low, none}',
-            value='normal',
-            values=['ultra', 'high', 'normal', 'low', 'very_low', 'none'],
-            exclusive=True,
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='sharpSubset',
-            label='Sharp Subset',
-            description='''sharp part of the image (1 = all, 2 = size/2, ...)''',
-            value=4,
-            range=(1, 100, 1),
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='minFrameStep',
-            label='Min Frame Step',
-            description='''minimum number of frames between two keyframes''',
-            value=1,
-            range=(1, 100, 1),
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='maxFrameStep',
-            label='Max Frame Step',
-            description='''maximum number of frames after which a keyframe can be taken''',
-            value=2,
-            range=(2, 1000, 1),
-            uid=[0],
-        ),
-        desc.IntParam(
-            name='maxNbOutFrame',
-            label='Max Nb Out Frame',
-            description='''maximum number of output frames (0 = no limit)''',
-            value=0,
-            range=(0, 10000, 1),
-            uid=[0],
+        desc.GroupAttribute(
+            name="regularSelection",
+            label="Regular Keyframe Selection",
+            description="Parameters for the regular keyframe selection.\nKeyframes are selected regularly over the sequence with respect to the set parameters.",
+            group=None,  # skip group from command line
+            groupDesc=[
+                desc.BoolParam(
+                    name="useRegularSelection",
+                    label="Use Regular Selection",
+                    description="Enable and use the regular keyframe selection.",
+                    value=True,
+                    uid=[0],
+                    enabled=False,  # only method for now, it must always be enabled
+                ),
+                desc.IntParam(
+                    name="minFrameStep",
+                    label="Min Frame Step",
+                    description="Minimum number of frames between two keyframes.",
+                    value=12,
+                    range=(1, 1000, 1),
+                    uid=[0],
+                    enabled=lambda node: node.regularSelection.useRegularSelection.value
+                ),
+                desc.IntParam(
+                    name="maxFrameStep",
+                    label="Max Frame Step",
+                    description="Maximum number of frames between two keyframes. Ignored if equal to 0.",
+                    value=0,
+                    range=(0, 1000, 1),
+                    uid=[0],
+                    enabled=lambda node: node.regularSelection.useRegularSelection.value
+                ),
+                desc.IntParam(
+                    name="maxNbOutFrames",
+                    label="Max Nb Output Frames",
+                    description="Maximum number of output frames (0 = no limit).\n"
+                                "'minFrameStep' and 'maxFrameStep' will always be respected, so combining them with this parameter\n"
+                                "might cause the selection to stop before reaching the end of the input sequence(s).",
+                    value=0,
+                    range=(0, 10000, 1),
+                    uid=[0],
+                    enabled=lambda node: node.regularSelection.useRegularSelection.value
+                ),
+            ],
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),
@@ -181,9 +130,9 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
 
     outputs = [
         desc.File(
-            name='outputFolder',
-            label='Folder',
-            description='''Output keyframes folder for extracted frames.''',
+            name="outputFolder",
+            label="Folder",
+            description="Output keyframes folder for extracted frames.",
             value=desc.Node.internalFolder,
             uid=[],
         ),

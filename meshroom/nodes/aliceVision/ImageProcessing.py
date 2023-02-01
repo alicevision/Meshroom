@@ -398,6 +398,46 @@ Convert or apply filtering to the input images.
             uid=[0],
         ),
         
+        desc.BoolParam(
+            name='useDCPColorMatrixOnly',
+            label='Use DCP Color Matrix Only',
+            description='Do not use the DCP forward matrices if any',
+            value=False,
+            uid=[0],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
+        ),
+        
+        desc.BoolParam(
+            name='doWBAfterDemosaicing',
+            label='WB after demosaicing',
+            description='Do White Balance after demosaicing, just before DCP profile application',
+            value=False,
+            uid=[0],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
+        ),
+        
+        desc.ChoiceParam(
+            name='demosaicingAlgo',
+            label='Demosaicing Algorithm',
+            description='LibRaw Demosaicing Algorithm\n',
+            value='AHD',
+            values=['linear', 'VNG', 'PPG', 'AHD', 'DCB', 'AHD-Mod', 'AFD', 'VCD', 'Mixed', 'LMMSE', 'AMaZE', 'DHT', 'AAHD', 'none'],
+            exclusive=True,
+            uid=[0],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
+        ),
+        
+        desc.ChoiceParam(
+            name='highlightMode',
+            label='Highlight mode',
+            description='LibRaw highlight mode\n',
+            value=0,
+            values=[0, 1, 2, 3, 4, 5, 6, 7, 8],
+            exclusive=True,
+            uid=[0],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
+        ),
+        
         desc.ChoiceParam(
             name='storageDataType',
             label='Storage Data Type for EXR output',

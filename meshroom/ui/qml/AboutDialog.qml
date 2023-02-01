@@ -198,7 +198,7 @@ Dialog {
                             selectByKeyboard: true
                             wrapMode: TextArea.WrapAnywhere
                             textFormat: TextEdit.RichText
-                            onLinkActivated: Qt.openUrlExternally(link)
+                            onLinkActivated: function(link) { Qt.openUrlExternally(link) }
                         }
                     }
                 }

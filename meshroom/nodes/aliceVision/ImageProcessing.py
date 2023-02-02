@@ -388,6 +388,7 @@ Convert or apply filtering to the input images.
             description='''Color Profile database directory path.''',
             value='${ALICEVISION_COLOR_PROFILE_DB}',
             uid=[],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
         ),
         
         desc.BoolParam(
@@ -396,6 +397,7 @@ Convert or apply filtering to the input images.
             description='If a color profile database is specified but no color profile is found for at least one image, then an error is thrown',
             value=True,
             uid=[0],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
         ),
         
         desc.BoolParam(
@@ -424,7 +426,6 @@ Convert or apply filtering to the input images.
             values=['linear', 'VNG', 'PPG', 'AHD', 'DCB', 'AHD-Mod', 'AFD', 'VCD', 'Mixed', 'LMMSE', 'AMaZE', 'DHT', 'AAHD', 'none'],
             exclusive=True,
             uid=[0],
-            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
         ),
         
         desc.ChoiceParam(
@@ -435,7 +436,6 @@ Convert or apply filtering to the input images.
             values=[0, 1, 2, 3, 4, 5, 6, 7, 8],
             exclusive=True,
             uid=[0],
-            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
         ),
         
         desc.ChoiceParam(

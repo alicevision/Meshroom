@@ -1003,9 +1003,9 @@ FocusScope {
                                 {
                                     return true;
                                 }
-                                var inputAttr = activeNode.attribute("input");
-                                if(!inputAttr)
+                                if(!activeNode.hasAttribute("input"))
                                     return false;
+                                var inputAttr = activeNode.attribute("input");
                                 var inputAttrLink = inputAttr.rootLinkParam;
                                 if(!inputAttrLink)
                                     return false;

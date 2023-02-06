@@ -72,6 +72,50 @@ FocusScope {
         aspects: ["logic", "input"]
         focus: true
 
+        property int orientationTag: (doSyncViewpointCamera && root.viewpoint) ? root.viewpoint.orientation : 1
+
+        transform: [
+            Rotation {
+                angle: {
+                    switch(scene3D.orientationTag) {
+                        case 3:
+                            return 180;
+                        case 4:
+                            return 180;
+                        case 5:
+                            return 90;
+                        case 6:
+                            return 90;
+                        case 7:
+                            return -90;
+                        case 8:
+                            return -90;
+                        default:
+                            return 0;
+                    }
+                }
+                origin.x: scene3D.width * 0.5
+                origin.y: scene3D.height * 0.5
+            },
+            Scale {
+                xScale : {
+                    switch(scene3D.orientationTag) {
+                        case 2:
+                            return -1;
+                        case 4:
+                            return -1;
+                        case 5:
+                            return -1;
+                        case 7:
+                            return -1;
+                        default:
+                            return 1;
+                    }
+                }
+                origin.x: scene3D.width * 0.5
+                origin.y: scene3D.height * 0.5
+            }
+        ]
 
         Keys.onPressed: {
             if (event.key == Qt.Key_F) {
@@ -260,9 +304,13 @@ FocusScope {
     }
 
     // Image overlay when navigating reconstructed cameras
-    Loader {
+    ExifOrientedViewer {
         id: imageOverlayLoader
         anchors.fill: parent
+
+        orientationTag: root.viewpoint ? root.viewpoint.orientation.toString() : "1"
+        xOrigin: width * 0.5
+        yOrigin: height * 0.5
 
         active: doSyncViewpointCamera
         visible: Viewer3DSettings.showViewpointImageOverlay
@@ -270,7 +318,7 @@ FocusScope {
         sourceComponent: ImageOverlay {
             id: imageOverlay
             source: root.viewpoint.undistortedImageSource
-            imageRatio: root.viewpoint.orientedImageSize.width / root.viewpoint.orientedImageSize.height
+            imageRatio: root.viewpoint.imageSize.width / root.viewpoint.imageSize.height
             uvCenterOffset: root.viewpoint.uvCenterOffset
             showFrame: Viewer3DSettings.showViewpointImageFrame
             imageOpacity: Viewer3DSettings.viewpointImageOverlayOpacity

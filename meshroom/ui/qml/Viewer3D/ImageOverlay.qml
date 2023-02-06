@@ -55,7 +55,6 @@ Item {
         visible: false
         // Preserver aspect fit while display ratio is aligned with image ratio, crop otherwise
         fillMode: width/height >= imageRatio ? Image.PreserveAspectFit : Image.PreserveAspectCrop
-        autoTransform: true
     }
 
 

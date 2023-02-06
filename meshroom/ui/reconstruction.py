@@ -341,8 +341,12 @@ class ViewpointWrapper(QObject):
         if not self.solvedIntrinsics:
             return None
         focalLength = self.solvedIntrinsics["focalLength"]
-        sensorHeight = self.solvedIntrinsics["sensorHeight"]
-        return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
+        if self.orientation in (5, 6, 7, 8):
+            sensorWidth = self.solvedIntrinsics["sensorWidth"]
+            return 2.0 * math.atan(float(sensorWidth) / (2.0 * float(focalLength))) * 180.0 / math.pi
+        else:
+            sensorHeight = self.solvedIntrinsics["sensorHeight"]
+            return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
 
     @Property(type=QUrl, notify=denseSceneParamsChanged)
     def undistortedImageSource(self):

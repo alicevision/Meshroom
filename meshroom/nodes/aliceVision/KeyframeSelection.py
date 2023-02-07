@@ -205,6 +205,15 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                 )
             ]
         ),
+        desc.BoolParam(
+            name="renameKeyframes",
+            label="Rename Output Keyframes",
+            description="Instead of using the selected keyframes' index as their name, name them as consecutive output frames.\n"
+                        "If the selected keyframes are at index [15, 294, 825], they will be written as [00000.exr, 00001.exr, 00002.exr] with this\n"
+                        "option enabled instead of [00015.exr, 00294.exr, 00825.exr].",
+            value=False,
+            uid=[0]
+        ),
         desc.ChoiceParam(
             name="outputExtension",
             label="Keyframes File Extension",

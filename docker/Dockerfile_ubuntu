@@ -13,7 +13,7 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
     AV_INSTALL=/opt/AliceVision_install \
-    QT_DIR=/opt/Qt5.14.1/5.14.1/gcc_64 \
+    QT_DIR=/opt/Qt/5.15.2/gcc_64 \
     PATH="${PATH}:${MESHROOM_BUNDLE}" \
     OPENIMAGEIO_LIBRARY=/opt/AliceVision_install/lib
 

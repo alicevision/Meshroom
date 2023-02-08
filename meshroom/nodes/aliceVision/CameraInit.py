@@ -1,4 +1,4 @@
-__version__ = "8.0"
+__version__ = "9.0"
 
 import os
 import json
@@ -162,13 +162,6 @@ The metadata needed are:
             value='${ALICEVISION_SENSOR_DB}',
             uid=[],
         ),
-        desc.File(
-            name='colorProfileDatabase',
-            label='Color Profile Database',
-            description='''Color Profile database directory path.''',
-            value='${ALICEVISION_COLOR_PROFILE_DB}',
-            uid=[],
-        ),
         desc.FloatParam(
             name='defaultFieldOfView',
             label='Default Field Of View',
@@ -207,17 +200,32 @@ The metadata needed are:
         desc.ChoiceParam(
             name='rawColorInterpretation',
             label='RAW Color Interpretation',
-            description='Allows you to choose how raw data are color processed.',
-            value='LibRawWhiteBalancing',
+            description='Allows you to choose how raw data are color processed:\n'
+                        'None: Debayering without any color processing.\n'
+                        'LibRawNoWhiteBalancing: Simple neutralization.\n'
+                        'LibRawWhiteBalancing: Use internal white balancing from libraw.\n'
+                        'DCPLinearProcessing: Use DCP color profile.\n'
+                        'DCPMetadata: Same as None with DCP info added in metadata.\n',
+            value='DCPLinearProcessing' if os.environ.get('ALICEVISION_COLOR_PROFILE_DB', '') else 'LibRawWhiteBalancing',
             values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing', 'DCPMetadata'],
             exclusive=True,
             uid=[0],
         ),
+        desc.File(
+            name='colorProfileDatabase',
+            label='Color Profile Database',
+            description='''Color Profile database directory path.''',
+            value='${ALICEVISION_COLOR_PROFILE_DB}',
+            enabled=lambda node: node.rawColorInterpretation.value.startswith('DCP'),
+            uid=[],
+        ),
         desc.BoolParam(
             name='errorOnMissingColorProfile',
             label='Error On Missing DCP Color Profile',
-            description='If a color profile database is specified but no color profile is found for at least one image, then an error is thrown',
+            description='When enabled, if no color profile is found for at least one image, then an error is thrown.\n'
+                        'When disabled, if no color profile is found for some images, it will fallback to libRawWhiteBalancing for those images.',
             value=True,
+            enabled=lambda node: node.rawColorInterpretation.value.startswith('DCP'),
             uid=[0],
         ),
         desc.ChoiceParam(

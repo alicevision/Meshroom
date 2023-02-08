@@ -13,14 +13,14 @@ Controller.prototype.WelcomePageCallback = function() {
 Controller.prototype.CredentialsPageCallback = function() {
     console.log("Credentials Page");
     var login = installer.environmentVariable("QT_CI_LOGIN");
-    var password = installer.environmentVariable("QT_CI_PASSWORD");
-    if( login === "" || password === "" ) {
+    var p = installer.environmentVariable("QT_CI_P");
+    if( login === "" || p === "" ) {
         console.log("No credentials provided - could stuck here forever");
         gui.clickButton(buttons.CommitButton);
     }
     var widget = gui.currentPageWidget();
     widget.loginWidget.EmailLineEdit.setText(login);
-    widget.loginWidget.PasswordLineEdit.setText(password);
+    widget.loginWidget.PasswordLineEdit.setText(p);
     gui.clickButton(buttons.CommitButton);
 }
 Controller.prototype.ComponentSelectionPageCallback = function() {

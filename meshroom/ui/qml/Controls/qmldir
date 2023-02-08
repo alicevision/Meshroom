@@ -9,3 +9,4 @@ Panel 1.0 Panel.qml
 SearchBar 1.0 SearchBar.qml
 TabPanel 1.0 TabPanel.qml
 TextFileViewer 1.0 TextFileViewer.qml
+ExifOrientedViewer 1.0 ExifOrientedViewer.qml

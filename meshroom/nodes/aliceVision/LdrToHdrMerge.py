@@ -105,6 +105,16 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
             advanced=True,
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
+        desc.ChoiceParam(
+            name='workingColorSpace',
+            label='Working Color Space',
+            description='Allows you to choose the color space in which the data are processed.',
+            value='sRGB',
+            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+            exclusive=True,
+            uid=[0],
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+        ),
         desc.BoolParam(
             name='enableHighlight',
             label='Enable Highlight',

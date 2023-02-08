@@ -152,11 +152,27 @@ FocusScope {
 
     // functions
     function fit() {
+        // make sure the image is ready for use
+        if(!imgContainer.image)
+            return;
         if(imgContainer.image.status != Image.Ready)
             return;
-        imgContainer.scale = Math.min(imgLayout.width / imgContainer.image.width, root.height / imgContainer.image.height)
-        imgContainer.x = Math.max((imgLayout.width - imgContainer.image.width * imgContainer.scale)*0.5, 0)
-        imgContainer.y = Math.max((imgLayout.height - imgContainer.image.height * imgContainer.scale)*0.5, 0)
+
+        // for Exif orientation tags 5 to 8, a 90 degrees rotation is applied
+        // therefore image dimensions must be inverted
+        let dimensionsInverted = ["5", "6", "7", "8"].includes(imgContainer.orientationTag);
+        let orientedWidth = dimensionsInverted ? imgContainer.image.height : imgContainer.image.width;
+        let orientedHeight = dimensionsInverted ? imgContainer.image.width : imgContainer.image.height;
+
+        // fit oriented image
+        imgContainer.scale = Math.min(imgLayout.width / orientedWidth, root.height / orientedHeight);
+        imgContainer.x = Math.max((imgLayout.width - orientedWidth * imgContainer.scale)*0.5, 0);
+        imgContainer.y = Math.max((imgLayout.height - orientedHeight * imgContainer.scale)*0.5, 0);
+
+        // correct position when image dimensions are inverted
+        // so that container center corresponds to image center
+        imgContainer.x += (orientedWidth - imgContainer.image.width) * 0.5 * imgContainer.scale;
+        imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale;
     }
 
     function tryLoadNode(node) {
@@ -372,13 +388,18 @@ FocusScope {
             Item {
                 id: imgContainer
                 transformOrigin: Item.TopLeft
+                property var orientationTag: m.imgMetadata ? m.imgMetadata["Orientation"] : 0
 
                 // qtAliceVision Image Viewer
-                Loader {
+                ExifOrientedViewer {
                     id: floatImageViewerLoader
                     active: root.aliceVisionPluginAvailable && (root.useFloatImageViewer || root.useLensDistortionViewer) && !panoramaViewerLoader.active
                     visible: (floatImageViewerLoader.status === Loader.Ready) && active
                     anchors.centerIn: parent
+
+                    orientationTag: imgContainer.orientationTag
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     property bool fittedOnce: false
                     property int previousWidth: 0
                     property int previousHeight: 0
@@ -400,17 +421,6 @@ FocusScope {
                             fittedOnce = true;
                             previousWidth = width;
                             previousHeight = height;
-                        }
-                    }
-
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-
-                        switch (orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
                         }
                     }
 
@@ -441,7 +451,6 @@ FocusScope {
                                 fittedOnce = false
                           }
                     }
-
                 }
 
                 // qtAliceVision Panorama Viewer
@@ -473,16 +482,18 @@ FocusScope {
                 }
 
                 // Simple QML Image Viewer (using Qt or qtAliceVisionImageIO to load images)
-                Loader {
+                ExifOrientedViewer {
                     id: qtImageViewerLoader
                     active: !floatImageViewerLoader.active && !panoramaViewerLoader.active
                     anchors.centerIn: parent
+                    orientationTag: imgContainer.orientationTag
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     sourceComponent: Image {
                         id: qtImageViewer
                         asynchronous: true
                         smooth: false
                         fillMode: Image.PreserveAspectFit
-                        autoTransform: true
                         onWidthChanged: if(status==Image.Ready) fit()
                         source: getImageFile()
                         onStatusChanged: {
@@ -500,7 +511,6 @@ FocusScope {
                             asynchronous: true
                             smooth: parent.smooth
                             fillMode: parent.fillMode
-                            autoTransform: parent.autoTransform
 
                             visible: qtImageViewer.status === Image.Loading
                         }
@@ -521,22 +531,16 @@ FocusScope {
 
                 // FeatureViewer: display view extracted feature points
                 // note: requires QtAliceVision plugin - use a Loader to evaluate plugin availability at runtime
-                Loader {
+                ExifOrientedViewer {
                     id: featuresViewerLoader
                     active: displayFeatures.checked
                     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("FeatureExtraction").node : null
-
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
-                    x: (imgContainer.image && rotation === 90) ? imgContainer.image.paintedWidth : 0
-                    y: (imgContainer.image && rotation === -90) ? imgContainer.image.paintedHeight : 0
+                    width: imgContainer.width
+                    height: imgContainer.height
+                    anchors.centerIn: parent
+                    orientationTag: imgContainer.orientationTag
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
 
                     onActiveChanged: {
                         if(active) {
@@ -555,20 +559,13 @@ FocusScope {
 
                 // FisheyeCircleViewer: display fisheye circle
                 // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
-                Loader {
+                ExifOrientedViewer {
                     anchors.centerIn: parent
+                    orientationTag: imgContainer.orientationTag
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
                     active: (displayFisheyeCircleLoader.checked && activeNode)
-
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
 
                     sourceComponent: CircleGizmo {
                         property bool useAuto: activeNode.attribute("estimateFisheyeCircle").value
@@ -1006,9 +1003,9 @@ FocusScope {
                                 {
                                     return true;
                                 }
-                                var inputAttr = activeNode.attribute("input");
-                                if(!inputAttr)
+                                if(!activeNode.hasAttribute("input"))
                                     return false;
+                                var inputAttr = activeNode.attribute("input");
                                 var inputAttrLink = inputAttr.rootLinkParam;
                                 if(!inputAttrLink)
                                     return false;

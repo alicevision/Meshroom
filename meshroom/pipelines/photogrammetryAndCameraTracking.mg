@@ -8,7 +8,7 @@
             "ExportAnimatedCamera": "2.0", 
             "FeatureMatching": "2.0", 
             "DistortionCalibration": "2.0", 
-            "CameraInit": "8.0", 
+            "CameraInit": "9.0", 
             "ImageMatchingMultiSfM": "1.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 

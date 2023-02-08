@@ -23,6 +23,7 @@ Panel {
     readonly property string currentItemSource: grid.currentItem ? grid.currentItem.source : ""
     readonly property var currentItemMetadata: grid.currentItem ? grid.currentItem.metadata : undefined
     readonly property int centerViewId: (_reconstruction && _reconstruction.sfmTransform) ? parseInt(_reconstruction.sfmTransform.attribute("transformation").value) : 0
+    readonly property alias galleryGrid: grid
 
     property int defaultCellSize: 160
     property bool readOnly: false
@@ -143,7 +144,7 @@ Panel {
 
     SensorDBDialog {
         id: sensorDBDialog
-        sensorDatabase: cameraInit ? Filepath.stringToUrl(cameraInit.attribute("sensorDatabase").value) : ""
+        sensorDatabase: cameraInit ? Filepath.stringToUrl(cameraInit.attribute("sensorDatabase").evalValue) : ""
         readOnly: _reconstruction ? _reconstruction.computing : false
         onUpdateIntrinsicsRequest: _reconstruction.rebuildIntrinsics(cameraInit)
     }

@@ -23,6 +23,7 @@ Item {
     property bool readOnly: false
     property alias panel3dViewer: panel3dViewerLoader.item
     readonly property Viewer2D viewer2D: viewer2D
+    readonly property alias imageGallery: imageGallery
 
     implicitWidth: 300
     implicitHeight: 400

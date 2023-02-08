@@ -11,7 +11,7 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     QT_DIR=/opt/Qt5.14.1/5.14.1/gcc_64 \
     QT_CI_LOGIN=alicevisionjunk@gmail.com \
-    QT_CI_PASSWORD=azerty1.
+    QT_CI_P=azerty1.
 
 # Workaround for qmlAlembic/qtAliceVision builds: fuse lib/lib64 folders
 #RUN ln -s ${AV_INSTALL}/lib ${AV_INSTALL}/lib64

@@ -114,6 +114,17 @@ class LdrToHdrCalibration(desc.AVCommandLineNode):
             advanced=True,
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
+        desc.ChoiceParam(
+            name='workingColorSpace',
+            label='Working Color Space',
+            description='Allows you to choose the color space in which the data are processed.',
+            value='sRGB',
+            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+            exclusive=True,
+            uid=[],
+            group='user',  # not used directly on the command line
+            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+        ),
         desc.IntParam(
             name='maxTotalPoints',
             label='Max Number of Points',

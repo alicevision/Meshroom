@@ -10,7 +10,7 @@
             "LdrToHdrCalibration": "3.0", 
             "LdrToHdrSampling": "4.0", 
             "PanoramaInit": "2.0", 
-            "CameraInit": "8.0", 
+            "CameraInit": "9.0", 
             "SfMTransform": "3.0", 
             "PanoramaMerging": "1.0", 
             "ImageMatching": "2.0", 
@@ -29,7 +29,8 @@
                 "byPass": "{LdrToHdrCalibration_1.byPass}", 
                 "input": "{LdrToHdrCalibration_1.input}", 
                 "userNbBrackets": "{LdrToHdrCalibration_1.userNbBrackets}", 
-                "response": "{LdrToHdrCalibration_1.response}"
+                "response": "{LdrToHdrCalibration_1.response}",
+                "workingColorSpace": "{LdrToHdrCalibration_1.workingColorSpace}"
             }, 
             "nodeType": "LdrToHdrMerge", 
             "position": [
@@ -66,7 +67,8 @@
                 "channelQuantizationPower": "{LdrToHdrSampling_1.channelQuantizationPower}", 
                 "byPass": "{LdrToHdrSampling_1.byPass}", 
                 "input": "{LdrToHdrSampling_1.input}", 
-                "userNbBrackets": "{LdrToHdrSampling_1.userNbBrackets}"
+                "userNbBrackets": "{LdrToHdrSampling_1.userNbBrackets}",
+                "workingColorSpace": "{LdrToHdrSampling_1.workingColorSpace}"
             }, 
             "nodeType": "LdrToHdrCalibration", 
             "position": [

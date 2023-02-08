@@ -92,7 +92,8 @@ class Attribute(BaseObject):
 
     def getFullNameToGraph(self):
         """ Name inside the Graph: graphName.nodeName.groupName.name """
-        return '{}.{}'.format(self.node.graph.name, self.getFullNameToNode())
+        graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
+        return '{}.{}'.format(graphName, self.getFullNameToNode())
 
     def asLinkExpr(self):
         """ Return link expression for this Attribute """
@@ -124,7 +125,8 @@ class Attribute(BaseObject):
 
     def getFullLabelToGraph(self):
         """ Label inside the Graph: graphName nodeLabel groupLabel Label """
-        return '{} {}'.format(self.node.graph.name, self.getFullLabelToNode())
+        graphName = self.node.graph.name if self.node.graph else "UNDEFINED"
+        return '{} {}'.format(graphName, self.getFullLabelToNode())
 
     def getEnabled(self):
         if isinstance(self.desc.enabled, types.FunctionType):

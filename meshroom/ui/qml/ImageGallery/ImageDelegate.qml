@@ -109,6 +109,8 @@ Item {
                     asynchronous: true
                     autoTransform: true
                     fillMode: Image.PreserveAspectFit
+                    smooth: false
+                    cache: false
                 }
                 BusyIndicator {
                     anchors.centerIn: parent

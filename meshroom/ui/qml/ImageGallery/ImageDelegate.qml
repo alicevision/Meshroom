@@ -11,6 +11,7 @@ Item {
     id: root
 
     property variant viewpoint
+    property int cellID: -1
     property bool isCurrentItem: false
     property alias source: _viewpoint.source
     property alias metadata: _viewpoint.metadata
@@ -29,6 +30,31 @@ Item {
         property int viewId: viewpoint ? viewpoint.get("viewId").value : -1
         property string metadataStr: viewpoint ? viewpoint.get("metadata").value : ''
         property var metadata: metadataStr ? JSON.parse(viewpoint.get("metadata").value) : {}
+    }
+
+    // update thumbnail location
+    // can be called from the GridView when a new thumbnail has been written on disk
+    function updateThumbnail() {
+        thumbnail.source = ThumbnailCache.thumbnail(root.source, root.cellID);
+    }
+    onSourceChanged: {
+        updateThumbnail();
+    }
+
+    // Send a new request every 5 seconds until thumbnail is loaded
+    // This is meant to avoid deadlocks in case there is a synchronization problem
+    Timer {
+        interval: 5000
+        repeat: true
+        running: true
+        onTriggered: {
+            if (thumbnail.status == Image.Null) {
+                updateThumbnail();
+            }
+            else {
+                running = false;
+            }
+        }
     }
 
     MouseArea {
@@ -77,13 +103,18 @@ Item {
                 border.color: isCurrentItem ? imageLabel.palette.highlight : Qt.darker(imageLabel.palette.highlight)
                 border.width: imageMA.containsMouse || root.isCurrentItem ? 2 : 0
                 Image {
+                    id: thumbnail
                     anchors.fill: parent
                     anchors.margins: 4
-                    source: root.source
-                    sourceSize: Qt.size(100, 100)
                     asynchronous: true
                     autoTransform: true
                     fillMode: Image.PreserveAspectFit
+                    smooth: false
+                    cache: false
+                }
+                BusyIndicator {
+                    anchors.centerIn: parent
+                    running: thumbnail.status != Image.Ready
                 }
             }
             // Image basename

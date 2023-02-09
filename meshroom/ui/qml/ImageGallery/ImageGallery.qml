@@ -40,6 +40,10 @@ Panel {
         property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property variant intrinsics: currentCameraInit ? currentCameraInit.attribute('intrinsics').value : undefined
         property bool readOnly: root.readOnly || displayHDR.checked
+
+        onViewpointsChanged: {
+            ThumbnailCache.clearRequests();
+        }
     }
 
     property variant parsedIntrinsic
@@ -158,7 +162,6 @@ Panel {
 
             Layout.fillWidth: true
             Layout.fillHeight: true
-            cacheBuffer: 10000  // Magic number that seems to work well, even with lots of images
 
             visible: !intrinsicsFilterButton.checked
 
@@ -199,6 +202,25 @@ Panel {
             onCurrentItemChanged: {
                 if (grid.updateSelectedViewFromGrid && grid.currentItem) {
                     _reconstruction.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
+                }
+            }
+
+            // Update grid item when corresponding thumbnail is computed
+            Connections {
+                target: ThumbnailCache
+                function onThumbnailCreated(imgSource, callerID) {
+                    let item = grid.itemAtIndex(callerID);  // item is an ImageDelegate
+                    if (item && item.source == imgSource) {
+                        item.updateThumbnail();
+                        return;
+                    }
+                    // fallback in case the ImageDelegate cellID changed
+                    for (let idx = 0; idx < grid.count; idx++) {
+                        item = grid.itemAtIndex(idx);
+                        if (item && item.source == imgSource) {
+                            item.updateThumbnail();
+                        }
+                    }
                 }
             }
 
@@ -246,6 +268,7 @@ Panel {
                     id: imageDelegate
 
                     viewpoint: object.value
+                    cellID: DelegateModel.filteredIndex
                     width: grid.cellWidth
                     height: grid.cellHeight
                     readOnly: m.readOnly

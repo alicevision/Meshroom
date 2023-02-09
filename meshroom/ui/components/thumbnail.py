@@ -10,6 +10,7 @@ import hashlib
 import time
 import logging
 from threading import Thread
+from multiprocessing.pool import ThreadPool
 
 
 class ThumbnailCache(QObject):
@@ -57,10 +58,9 @@ class ThumbnailCache(QObject):
     thumbnailCreated = Signal(QUrl, int)
 
     # Threads info and LIFO structure for running clean and createThumbnail asynchronously
-    maxWorkerThreads = 3
-    activeWorkerThreads = 0
     requests = []
     cleaningThread = None
+    workerThreads = ThreadPool(processes=3)
 
     @staticmethod
     def initialize():
@@ -211,11 +211,9 @@ class ThumbnailCache(QObject):
             return source
 
         # Thumbnail does not exist
-        # Create request and start a thread if needed
+        # Create request and submit to worker threads
         ThumbnailCache.requests.append((imgSource, callerID))
-        if ThumbnailCache.activeWorkerThreads < ThumbnailCache.maxWorkerThreads:
-            thread = Thread(target=self.handleRequestsAsync)
-            thread.start()
+        ThumbnailCache.workerThreads.apply_async(func=self.handleRequestsAsync)
 
         return None
 
@@ -264,15 +262,9 @@ class ThumbnailCache(QObject):
     def handleRequestsAsync(self):
         """Process thumbnail creation requests in LIFO order.
 
-        This method is only meant to be called by worker threads,
-        hence it also takes care of registering/unregistering the calling thread.
-
         Note: this operation waits for the cleaning process to finish before starting,
         in order to avoid synchronization issues.
         """
-        # Register worker thread
-        ThumbnailCache.activeWorkerThreads += 1
-
         # Wait for cleaning thread to finish
         if ThumbnailCache.cleaningThread is not None and ThumbnailCache.cleaningThread.is_alive():
             ThumbnailCache.cleaningThread.join()
@@ -284,8 +276,7 @@ class ThumbnailCache(QObject):
                 self.createThumbnail(req[0], req[1])
         except IndexError:
             # No more request to process
-            # Unregister worker thread
-            ThumbnailCache.activeWorkerThreads -= 1
+            return
 
     @Slot()
     def clearRequests(self):

@@ -274,13 +274,9 @@ FocusScope {
     }
 
     // Image overlay when navigating reconstructed cameras
-    ExifOrientedViewer {
+    Loader {
         id: imageOverlayLoader
         anchors.fill: parent
-
-        orientationTag: root.viewpoint ? root.viewpoint.orientation.toString() : "1"
-        xOrigin: width * 0.5
-        yOrigin: height * 0.5
 
         active: doSyncViewpointCamera
         visible: Viewer3DSettings.showViewpointImageOverlay

@@ -362,6 +362,13 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 advanced=True,
                 enabled= lambda node: node.refine.refineEnabled.value,
             ),
+            desc.BoolParam(
+                name='refineInterpolateMiddleDepth',
+                label='Interpolate Middle Depth',
+                description='Enable middle depth bilinear interpolation.', 
+                value=False,
+                uid=[0],
+            ),
         ]),
         desc.GroupAttribute(
             name="colorOptimization",

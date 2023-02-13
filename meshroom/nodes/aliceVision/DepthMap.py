@@ -435,6 +435,14 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 advanced=True,
             ),
             desc.BoolParam(
+                name='exportIntermediateTopographicCutVolumes',
+                label='Export Cut Volumes',
+                description='Export intermediate similarity topographic cut volumes from the SGM and Refine steps.',
+                value=False,
+                uid=[],
+                advanced=True,
+            ),
+            desc.BoolParam(
                 name='exportIntermediateVolume9pCsv',
                 label='Export 9 Points',
                 description='Export intermediate volumes 9 points from the SGM and Refine steps in CSV files.',

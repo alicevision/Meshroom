@@ -411,6 +411,14 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 advanced=True,
             ),
             desc.BoolParam(
+                name='exportIntermediateNormalMaps',
+                label='Export Normal Maps',
+                description='Export intermediate normal maps from the SGM and Refine steps.',
+                value=False,
+                uid=[],
+                advanced=True,
+            ),
+            desc.BoolParam(
                 name='exportIntermediateVolumes',
                 label='Export Volumes',
                 description='Export intermediate full similarity volumes from the SGM and Refine steps.',

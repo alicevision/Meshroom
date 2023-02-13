@@ -189,6 +189,15 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 advanced=True,
             ),
             desc.FloatParam(
+                name='sgmDepthThiknessInflate',
+                label='Thikness Inflate',
+                description='Inflate factor to add margins to the depth thikness.',
+                value=0.0,
+                range=(0.0, 2.0, 0.1),
+                uid=[0],
+                advanced=True,
+            ),
+            desc.FloatParam(
                 name='sgmMaxSimilarity',
                 label='Max Similarity',
                 description='Maximum similarity threshold (between 0 and 1) used to filter out poorly supported depth values.',

@@ -642,22 +642,7 @@ ApplicationWindow {
                 id: clearImagesAction
                 text: "Clear Images"
                 onTriggered: {
-                    //Loop through all the camera inits
-                    for(var i = 0 ; i < _reconstruction.cameraInits.count; i++){
-                        var cameraInit = _reconstruction.cameraInits.at(i)
-
-                        //Delete all viewpoints
-                        var viewpoints = cameraInit.attribute('viewpoints')
-                        for(var y = viewpoints.value.count - 1 ; y >= 0 ; y--){
-                              _reconstruction.removeAttribute(viewpoints.value.at(y))
-                        }
-
-                        //Delete all intrinsics
-                        var intrinsics = cameraInit.attribute('intrinsics')
-                        for(var z = intrinsics.value.count - 1 ; z >= 0 ; z--){
-                              _reconstruction.removeAttribute(intrinsics.value.at(z))
-                        }
-                    }
+                    _reconstruction.clearImages()
                 }
             }
             MenuSeparator { }

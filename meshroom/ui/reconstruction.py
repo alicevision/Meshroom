@@ -3,6 +3,7 @@ import logging
 import math
 import os
 from collections.abc import Iterable
+from multiprocessing.pool import ThreadPool
 from threading import Thread
 
 from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF
@@ -437,6 +438,8 @@ class Reconstruction(UIGraph):
         self._selectedViewpoint = None
         self._liveSfmManager = LiveSfmManager(self)
 
+        self._workerThreads = ThreadPool(processes=1)
+
         # react to internal graph changes to update those variables
         self.graphChanged.connect(self.onGraphChanged)
 
@@ -545,12 +548,6 @@ class Reconstruction(UIGraph):
 
         # TODO: listen specifically for cameraInit creation/deletion
         self._graph.nodes.countChanged.connect(self.updateCameraInits)
-
-    @staticmethod
-    def runAsync(func, args=(), kwargs=None):
-        thread = Thread(target=func, args=args, kwargs=kwargs)
-        thread.start()
-        return thread
 
     @Slot(QObject)
     def getViewpoints(self):
@@ -705,7 +702,7 @@ class Reconstruction(UIGraph):
         """
         filesByType = self.getFilesByTypeFromDrop(drop)
         if filesByType.images:
-            self.importImagesAsync(filesByType.images, cameraInit)
+            self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType.images, cameraInit,))
         if filesByType.videos:
             boundingBox = self.layout.boundingBox()
             keyframeNode = self.addNewNode("KeyframeSelection", position=Position(boundingBox[0], boundingBox[1] + boundingBox[3]))
@@ -795,7 +792,7 @@ class Reconstruction(UIGraph):
         logging.debug("importImagesFromFolder: " + str(path))
         filesByType = multiview.findFilesByTypeInFolder(path, recursive)
         if filesByType.images:
-            self.buildIntrinsics(self.cameraInit, filesByType.images)
+            self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType.images, self.cameraInit,))
 
     @Slot("QVariant")
     def importImagesUrls(self, imagePaths, recursive=False):
@@ -810,13 +807,8 @@ class Reconstruction(UIGraph):
             paths.append(p)
         self.importImagesFromFolder(paths)
 
-    def importImagesAsync(self, images, cameraInit):
-        """ Add the given list of images to the Reconstruction. """
-        # Start the process of updating views and intrinsics
-        logging.debug("Import images: " + str(images))
-        self.runAsync(self.importImagesSync, args=(images, cameraInit,))
-
     def importImagesSync(self, images, cameraInit):
+        """ Add the given list of images to the Reconstruction. """
         try:
             self.buildIntrinsics(cameraInit, images)
         except Exception as e:
@@ -885,7 +877,7 @@ class Reconstruction(UIGraph):
         Args:
             cameraInit (Node): the CameraInit node
         """
-        self.runAsync(self.buildIntrinsics, args=(cameraInit, (), True))
+        self._workerThreads.apply_async(func=self.buildIntrinsics, args=(cameraInit, (), True,))
 
     def onIntrinsicsAvailable(self, cameraInit, views, intrinsics, rebuild=False):
         """ Update CameraInit with given views and intrinsics. """

@@ -133,6 +133,20 @@ FloatingPane {
                         }
                         RowLayout {
                             Label {
+                                text: "Display Track Endpoints:"
+                            }
+                            CheckBox {
+                                id: displayTrackEndpointsCB
+                                ToolTip.text: "Draws markers indicating the global start/end point of each track."
+                                ToolTip.visible: hovered
+                                Layout.fillHeight: true
+                                Layout.alignment: Qt.AlignRight
+                                checked: root.featuresViewer.displayTrackEndpoints
+                                onClicked: root.featuresViewer.displayTrackEndpoints = displayTrackEndpointsCB.checked
+                            }
+                        }
+                        RowLayout {
+                            Label {
                                 text: "Time Window:"
                             }
                             SpinBox {
@@ -145,17 +159,18 @@ FloatingPane {
                                 to: 50
                                 value: root.mfeatures.timeWindow
                                 stepSize: 1
+                                editable: true
 
-                                textFromValue: function(value) {
+                                textFromValue: function(value, locale) {
                                     if (value == -1) return "No Limit";
                                     if (value ==  0) return "Disable";
                                     return value;
                                 }
 
-                                valueFromText: function(text) {
-                                    if (value == "No Limit") return -1;
-                                    if (value == "Disable")  return 0;
-                                    return value;
+                                valueFromText: function(text, locale) {
+                                    if (text == "No Limit") return -1;
+                                    if (text == "Disable")  return 0;
+                                    return Number.fromLocaleString(locale, text);
                                 }
 
                                 onValueChanged: {

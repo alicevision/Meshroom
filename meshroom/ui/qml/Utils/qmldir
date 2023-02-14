@@ -5,6 +5,7 @@ SortFilterDelegateModel 1.0 SortFilterDelegateModel.qml
 Request 1.0 request.js
 Format 1.0 format.js
 ErrorHandler 1.0 errorHandler.js
+singleton ExifOrientation 1.0 ExifOrientation.qml
 # using singleton here causes random crash at application exit
 # singleton Clipboard 1.0 Clipboard.qml
 # singleton Filepath 1.0 Filepath.qml

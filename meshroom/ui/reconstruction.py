@@ -271,7 +271,7 @@ class ViewpointWrapper(QObject):
     @Property(type=QSizeF, notify=initialParamsChanged)
     def orientedImageSize(self):
         """ Get image size taking into account its orientation. """
-        if self.orientation in (6, 8):
+        if self.orientation in (5, 6, 7, 8):
             return QSizeF(self.imageSize.height(), self.imageSize.width())
         else:
             return self.imageSize
@@ -290,7 +290,7 @@ class ViewpointWrapper(QObject):
         """ Get the camera translation as a 3D vector. """
         if self._T is None:
             return None
-        return QVector3D(*self._T)
+        return QVector3D(self._T[0], -self._T[1], -self._T[2])
 
     @Property(type=QQuaternion, notify=sfmParamsChanged)
     def rotation(self):
@@ -300,8 +300,8 @@ class ViewpointWrapper(QObject):
 
         rot = QMatrix3x3([
             self._R[0], -self._R[1], -self._R[2],
-            self._R[3], -self._R[4], -self._R[5],
-            self._R[6], -self._R[7], -self._R[8]]
+            -self._R[3], self._R[4], self._R[5],
+            -self._R[6], self._R[7], self._R[8]]
         )
 
         return QQuaternion.fromRotationMatrix(rot)
@@ -315,20 +315,15 @@ class ViewpointWrapper(QObject):
         # convert transform matrix for Qt
         return QMatrix4x4(
             self._R[0], -self._R[1], -self._R[2], self._T[0],
-            self._R[3], -self._R[4], -self._R[5], self._T[1],
-            self._R[6], -self._R[7], -self._R[8], self._T[2],
+            -self._R[3], self._R[4], self._R[5], -self._T[1],
+            -self._R[6], self._R[7], self._R[8], -self._T[2],
             0,          0,           0,           1
         )
 
     @Property(type=QVector3D, notify=sfmParamsChanged)
     def upVector(self):
-        """ Get camera up vector according to its orientation. """
-        if self.orientation == 6:
-            return QVector3D(-1.0, 0.0, 0.0)
-        elif self.orientation == 8:
-            return QVector3D(1.0, 0.0, 0.0)
-        else:
-            return QVector3D(0.0, 1.0, 0.0)
+        """ Get camera up vector. """
+        return QVector3D(0.0, 1.0, 0.0)
 
     @Property(type=QVector2D, notify=sfmParamsChanged)
     def uvCenterOffset(self):
@@ -338,11 +333,6 @@ class ViewpointWrapper(QObject):
         pp = self.solvedIntrinsics["principalPoint"]
         # compute principal point offset in UV space
         offset = QVector2D(float(pp[0]) / self.imageSize.width(), float(pp[1]) / self.imageSize.height())
-        # apply orientation to principal point correction
-        if self.orientation == 6:
-            offset = QVector2D(-offset.y(), offset.x())
-        elif self.orientation == 8:
-            offset = QVector2D(offset.y(), -offset.x())
         return offset
 
     @Property(type=float, notify=sfmParamsChanged)
@@ -351,8 +341,12 @@ class ViewpointWrapper(QObject):
         if not self.solvedIntrinsics:
             return None
         focalLength = self.solvedIntrinsics["focalLength"]
-        sensorHeight = self.solvedIntrinsics["sensorHeight"]
-        return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
+        if self.orientation in (5, 6, 7, 8):
+            sensorWidth = self.solvedIntrinsics["sensorWidth"]
+            return 2.0 * math.atan(float(sensorWidth) / (2.0 * float(focalLength))) * 180.0 / math.pi
+        else:
+            sensorHeight = self.solvedIntrinsics["sensorHeight"]
+            return 2.0 * math.atan(float(sensorHeight) / (2.0 * float(focalLength))) * 180.0 / math.pi
 
     @Property(type=QUrl, notify=denseSceneParamsChanged)
     def undistortedImageSource(self):

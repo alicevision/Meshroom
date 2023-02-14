@@ -63,7 +63,6 @@ FocusScope {
 
     SystemPalette { id: activePalette }
 
-
     Scene3D {
         id: scene3D
         anchors.fill: parent
@@ -72,6 +71,21 @@ FocusScope {
         aspects: ["logic", "input"]
         focus: true
 
+        // We cannot use directly an ExifOrientedViewer since this component is not a Loader
+        // so we redefine the transform using the ExifOrientation utility functions
+        property var orientationTag: (doSyncViewpointCamera && root.viewpoint) ? root.viewpoint.orientation.toString() : "1"
+        transform: [
+            Rotation {
+                angle: ExifOrientation.rotation(scene3D.orientationTag)
+                origin.x: scene3D.width * 0.5
+                origin.y: scene3D.height * 0.5
+            },
+            Scale {
+                xScale: ExifOrientation.xscale(scene3D.orientationTag)
+                origin.x: scene3D.width * 0.5
+                origin.y: scene3D.height * 0.5
+            }
+        ]
 
         Keys.onPressed: {
             if (event.key == Qt.Key_F) {

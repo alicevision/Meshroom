@@ -65,6 +65,14 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
             range=(0, 10, 1),
             uid=[0],
         ),
+        desc.BoolParam(
+            name='offsetRefBracketIndexEnabled',
+            label='Manually Specify Ref Bracket',
+            description='Manually specify the reference bracket index to control the exposure of the HDR image.',
+            value=False,
+            uid=[0],
+            group='user',  # not used directly on the command line
+        ),
         desc.IntParam(
             name='offsetRefBracketIndex',
             label='Offset Ref Bracket Index',
@@ -72,7 +80,16 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
             value=1,
             range=(-4, 4, 1),
             uid=[0],
-            enabled= lambda node: node.nbBrackets.value != 1,
+            enabled= lambda node: (node.nbBrackets.value != 1 and node.offsetRefBracketIndexEnabled.value),
+        ),
+        desc.FloatParam(
+            name='meanTargetedLumaForMerging',
+            label='Targeted Luminance For Merging',
+            description='Expected mean luminance of the HDR images used to compute the final panorama',
+            value=0.4,
+            range=(0.0, 1.0, 0.01),
+            uid=[0],
+            enabled= lambda node: (node.nbBrackets.value != 1 and not node.offsetRefBracketIndexEnabled.value),
         ),
         desc.BoolParam(
             name='byPass',

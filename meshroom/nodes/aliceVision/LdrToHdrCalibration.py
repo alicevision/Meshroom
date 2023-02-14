@@ -72,7 +72,6 @@ class LdrToHdrCalibration(desc.AVCommandLineNode):
             description="Bypass HDR creation and use the medium bracket as the source for the next steps",
             value=False,
             uid=[0],
-            group='internal',
             enabled= lambda node: node.nbBrackets.value != 1,
         ),
         desc.ChoiceParam(
@@ -158,7 +157,7 @@ class LdrToHdrCalibration(desc.AVCommandLineNode):
     ]
 
     def processChunk(self, chunk):
-        if chunk.node.nbBrackets.value == 1 or chunk.node.byPass.value:
+        if chunk.node.nbBrackets.value == 1:
             return
         super(LdrToHdrCalibration, self).processChunk(chunk)
 

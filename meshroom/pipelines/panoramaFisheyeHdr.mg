@@ -68,7 +68,8 @@
                 "byPass": "{LdrToHdrSampling_1.byPass}", 
                 "input": "{LdrToHdrSampling_1.input}", 
                 "userNbBrackets": "{LdrToHdrSampling_1.userNbBrackets}",
-                "workingColorSpace": "{LdrToHdrSampling_1.workingColorSpace}"
+                "workingColorSpace": "{LdrToHdrSampling_1.workingColorSpace}",
+                "calibrationMethod": "{LdrToHdrSampling_1.calibrationMethod}"
             }, 
             "nodeType": "LdrToHdrCalibration", 
             "position": [

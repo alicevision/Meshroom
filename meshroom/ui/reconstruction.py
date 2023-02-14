@@ -801,7 +801,7 @@ class Reconstruction(UIGraph):
         logging.debug("importImagesFromFolder: " + str(path))
         filesByType = multiview.findFilesByTypeInFolder(path, recursive)
         if filesByType.images:
-            self.buildIntrinsics(self.cameraInit, filesByType.images)
+            self.importImagesAsync(filesByType.images, self.cameraInit)
 
     @Slot("QVariant")
     def importImagesUrls(self, imagePaths, recursive=False):

@@ -170,6 +170,22 @@ class ThumbnailCache(QObject):
         return path
 
     @staticmethod
+    def removeOutdated(imgPath, path):
+        """Remove thumbnail if its corresponding image has been modified after thumbnail creation.
+
+        Args:
+            imgPath (str): filepath to the input image
+            path (str): filepath to the corresponding thumbnail
+        """
+        try:
+            if os.path.getmtime(imgPath) > os.path.getmtime(path):
+                os.remove(path)
+        except OSError:
+            return
+        except FileNotFoundError:
+            return
+
+    @staticmethod
     def checkThumbnail(path):
         """Check if a thumbnail already exists on disk, and if so update its last modification time.
 
@@ -204,10 +220,13 @@ class ThumbnailCache(QObject):
 
         imgPath = imgSource.toLocalFile()
         path = ThumbnailCache.thumbnailPath(imgPath)
-        source = QUrl.fromLocalFile(path)
 
-        # Check if thumbnail already exists
+        # Remove thumbnail in case it is outdated (i.e. if image was modified)
+        ThumbnailCache.removeOutdated(imgPath, path)
+
+        # Check if thumbnail already exists (and update its last modification time)
         if ThumbnailCache.checkThumbnail(path):
+            source = QUrl.fromLocalFile(path)
             return source
 
         # Thumbnail does not exist

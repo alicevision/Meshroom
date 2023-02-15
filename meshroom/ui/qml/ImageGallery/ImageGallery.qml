@@ -629,12 +629,15 @@ Panel {
             checkable: true
             checked: true
 
-            onCheckedChanged:{
-                if(checked) {
+            onCheckedChanged: {
+                if (checked) {
                     sortedModel.reconstructionFilter = undefined;
                     estimatedCamerasFilterButton.checked = false;
                     nonEstimatedCamerasFilterButton.checked = false;
                     intrinsicsFilterButton.checked = false;
+                } else {
+                    if (estimatedCamerasFilterButton.checked === false && nonEstimatedCamerasFilterButton.checked === false && intrinsicsFilterButton.checked === false)
+                        inputImagesFilterButton.checked = true
                 }
             }
         }
@@ -651,12 +654,15 @@ Panel {
             checkable: true
             checked: false
 
-            onCheckedChanged:{
-                if(checked) {
+            onCheckedChanged: {
+                if (checked) {
                     sortedModel.reconstructionFilter = true;
                     inputImagesFilterButton.checked = false;
                     nonEstimatedCamerasFilterButton.checked = false;
                     intrinsicsFilterButton.checked = false;
+                } else {
+                    if (inputImagesFilterButton.checked === false && nonEstimatedCamerasFilterButton.checked === false && intrinsicsFilterButton.checked === false)
+                        inputImagesFilterButton.checked = true
                 }
             }
             onEnabledChanged:{
@@ -680,12 +686,15 @@ Panel {
             checkable: true
             checked: false
 
-            onCheckedChanged:{
-                if(checked) {
+            onCheckedChanged: {
+                if (checked) {
                     sortedModel.reconstructionFilter = false;
                     inputImagesFilterButton.checked = false;
                     estimatedCamerasFilterButton.checked = false;
                     intrinsicsFilterButton.checked = false;
+                } else {
+                    if (inputImagesFilterButton.checked === false && estimatedCamerasFilterButton.checked === false && intrinsicsFilterButton.checked === false)
+                        inputImagesFilterButton.checked = true
                 }
             }
             onEnabledChanged:{
@@ -709,11 +718,14 @@ Panel {
             checkable: true
             checked: false
 
-            onCheckedChanged:{
-                if(checked) {
+            onCheckedChanged: {
+                if (checked) {
                     inputImagesFilterButton.checked = false
                     estimatedCamerasFilterButton.checked = false
                     nonEstimatedCamerasFilterButton.checked = false
+                } else {
+                    if (inputImagesFilterButton.checked === false && estimatedCamerasFilterButton.checked === false && nonEstimatedCamerasFilterButton.checked === false)
+                            inputImagesFilterButton.checked = true
                 }
             }
             onEnabledChanged:{

@@ -9,12 +9,12 @@ RowLayout {
 
     Layout.fillWidth: true
 
-    property variant attribute: model.display
+    property variant attribute: null
     property int rowIndex: model.row
     property int columnIndex: model.column
     property bool readOnly: false
     property string toolTipText: {
-        if(!attribute || Object.keys(attribute).length === 0)
+        if (!attribute || Object.keys(attribute).length === 0)
             return ""
         return attribute.fullLabel
     }
@@ -44,11 +44,11 @@ RowLayout {
             clip: true
             Loader {
                 id: loaderComponent
-                active: !!model.display // convert to bool with "!!"
+                active: !!attribute // convert to bool with "!!"
                 sourceComponent: {
-                    if(!model.display)
+                    if (!attribute)
                         return undefined
-                    switch(model.display.type)
+                    switch (attribute.type)
                     {
                        case "ChoiceParam": return choice_component
                        case "IntParam": return int_component
@@ -65,7 +65,7 @@ RowLayout {
     Component {
         id: textField_component
         TextInput{
-            text: model.display.value
+            text: attribute.value
             width: intrinsicModel.columnWidths[columnIndex]
             horizontalAlignment: TextInput.AlignRight
             color: 'white'
@@ -155,7 +155,7 @@ RowLayout {
     Component {
         id: float_component
         TextInput{
-            readonly property real formattedValue: model.display.value.toFixed(2)
+            readonly property real formattedValue: attribute.value.toFixed(2)
             property string displayValue: String(formattedValue)
 
             text: displayValue
@@ -179,8 +179,10 @@ RowLayout {
             //while keeping the trick for formatting the text
             //Timing issues otherwise
             onActiveFocusChanged: {
-                if(activeFocus) text = String(model.display.value)
-                else text = String(formattedValue)
+                if (activeFocus)
+                    text = String(attribute.value)
+                else
+                    text = String(formattedValue)
                 cursorPosition = 0
             }
 

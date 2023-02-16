@@ -142,7 +142,7 @@ FloatingPane {
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
-                                checked: root.featuresViewer.displayTrackEndpoints
+                                checked: root.featuresViewer ? root.featuresViewer.displayTrackEndpoints : false
                                 onClicked: root.featuresViewer.displayTrackEndpoints = displayTrackEndpointsCB.checked
                             }
                         }

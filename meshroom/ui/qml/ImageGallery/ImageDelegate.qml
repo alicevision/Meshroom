@@ -41,18 +41,14 @@ Item {
         updateThumbnail();
     }
 
-    // Send a new request every 5 seconds until thumbnail is loaded
+    // Send a new request after 5 seconds if thumbnail is not loaded
     // This is meant to avoid deadlocks in case there is a synchronization problem
     Timer {
         interval: 5000
-        repeat: true
         running: true
         onTriggered: {
             if (thumbnail.status == Image.Null) {
                 updateThumbnail();
-            }
-            else {
-                running = false;
             }
         }
     }

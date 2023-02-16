@@ -374,6 +374,14 @@ Convert or apply filtering to the input images.
                 uid=[0],
         ),
         
+        desc.BoolParam(
+            name='applyDcpMetadata',
+            label='Apply DCP metadata',
+            description='If the image contains some DCP metadata then generate a DCP profile from them and apply it on the image content',
+            value=False,
+            uid=[0],
+        ),
+        
         desc.File(
             name='colorProfileDatabase',
             label='Color Profile Database',

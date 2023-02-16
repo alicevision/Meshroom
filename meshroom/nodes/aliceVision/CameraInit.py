@@ -73,18 +73,11 @@ Intrinsic = [
                      uid=[0],
                      advanced=True
                      ),
-
-    desc.ListAttribute(
-            name="distortionParams",
-            elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
-            label="Distortion Params",
-            description="Distortion Parameters",
-        ),
         
-    desc.ChoiceParam(name="distoInitializationMode", label="Disto Initialization Mode",
-                     description="Defines how this Intrinsic was initialized:\n"
+    desc.ChoiceParam(name="distoInitializationMode", label="Distortion Initialization Mode",
+                     description="Defines how the distortion model and parameters was initialized:\n"
                                  " * calibrated: calibrated externally.\n"
-                                 " * estimated: estimated from metadata and/or sensor width \n"
+                                 " * estimated: estimated from a database of generic calibration \n"
                                  " * unknown: unknown camera parameters (can still have default value guess)\n"
                                  " * none: not set",
                      values=("calibrated", "estimated", "unknown", "none"),
@@ -93,6 +86,13 @@ Intrinsic = [
                      uid=[0],
                      advanced=True
                      ),
+
+    desc.ListAttribute(
+            name="distortionParams",
+            elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
+            label="Distortion Params",
+            description="Distortion Parameters",
+        ),
                      
     desc.BoolParam(name='locked', label='Locked',
                    description='If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speedup the reconstruction.',

@@ -15,6 +15,7 @@ ImageBadge {
     property var intrinsic: null
 
     readonly property string intrinsicInitMode: intrinsic ? childAttributeValue(intrinsic, "initializationMode", "none") : "unknown"
+    readonly property string distortionInitMode: intrinsic ? childAttributeValue(intrinsic, "distoInitializationMode", "none") : "unknown"
     readonly property string distortionModel: intrinsic ? childAttributeValue(intrinsic, "type", "") : ""
     property var metadata: ({})
 
@@ -55,6 +56,8 @@ ImageBadge {
     ToolTip.text: "<b>Camera Intrinsics: " + statusText + "</b><br>"
                   + (detailsText ? detailsText + "<br>" : "")
                   + (helperText ? helperText + "<br>" : "")
+                  + "<br>"
+                  + "<b>Distortion: " + distortionInitMode + "</b><br>"
                   + (distortionModel ? 'Distortion Model: ' + distortionModel + "<br>" : "")
                   + "<br>"
                   + "[Metadata]<br>"

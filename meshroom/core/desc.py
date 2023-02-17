@@ -14,7 +14,7 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, semantic, uid, group, enabled):
+    def __init__(self, name, label, description, value, advanced, semantic, uid, group, enabled, uidIgnoreValue=None):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
@@ -25,6 +25,7 @@ class Attribute(BaseObject):
         self._advanced = advanced
         self._enabled = enabled
         self._semantic = semantic
+        self._uidIgnoreValue = uidIgnoreValue
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
@@ -35,6 +36,7 @@ class Attribute(BaseObject):
     advanced = Property(bool, lambda self: self._advanced, constant=True)
     enabled = Property(Variant, lambda self: self._enabled, constant=True)
     semantic = Property(str, lambda self: self._semantic, constant=True)
+    uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
@@ -201,8 +203,9 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group, advanced, semantic, enabled):
-        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
+    def __init__(self, name, label, description, value, uid, group, advanced, semantic, enabled, uidIgnoreValue=None):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
+            uidIgnoreValue=uidIgnoreValue)
 
 
 class File(Attribute):
@@ -329,8 +332,9 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True):
-        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, uidIgnoreValue=None):
+        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
+            uidIgnoreValue=uidIgnoreValue)
 
     def validateValue(self, value):
         if not isinstance(value, str):
@@ -509,6 +513,7 @@ class Node(object):
             semantic="multiline",
             uid=[0],
             advanced=True,
+            uidIgnoreValue="",  # If the invalidation string is empty, it does not participate to the node's UID
         ),
         StringParam(
             name="comment",

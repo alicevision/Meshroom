@@ -143,6 +143,10 @@ class Attribute(BaseObject):
         self._enabled = v
         self.enabledChanged.emit()
 
+    def getUidIgnoreValue(self):
+        """ Value for which the attribute should be ignored during the UID computation. """
+        return self.attributeDesc.uidIgnoreValue
+
     def _get_value(self):
         if self.isLink:
             return self.getLinkParam().value
@@ -333,6 +337,7 @@ class Attribute(BaseObject):
     node = Property(BaseObject, node.fget, constant=True)
     enabledChanged = Signal()
     enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
+    uidIgnoreValue = Property(Variant, getUidIgnoreValue, constant=True)
 
 
 def raiseIfLink(func):

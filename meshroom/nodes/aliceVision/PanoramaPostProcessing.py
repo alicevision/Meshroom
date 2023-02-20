@@ -47,6 +47,7 @@ class PanoramaPostProcessing(desc.CommandLineNode):
             name='outputPanorama',
             label='Output Folder',
             description='',
+            semantic='image',
             value=desc.Node.internalFolder + 'panorama.exr',
             uid=[],
         ),

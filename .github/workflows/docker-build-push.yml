@@ -1,0 +1,58 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - gh-actions-docker # TODO remove before creating a PR
+    # Skip jobs when only documentation files are changed
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
+      - '**.db'
+      - 'docs/**'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
+      - '**.db'
+      - 'docs/**'
+
+env:
+  DOCKER_REGISTRY: "ghcr.io"
+  REPO_OWNER: ${{ github.repository_owner }}
+  CUDA_VERSION: "11.8.0"
+  AV_REPO: ${{ env.DOCKER_REGISTRY }}/${{ env.REPO_OWNER }}/alicevision
+  AV_VERSION: "f9d07d913953a9bf878d951fa1fae11e821c46fb" # Pin to a specific commit or release tag
+  MESHROOM_VERSION: ${{ github.event.release.tag_name || github.sha }}
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    env:
+      UBUNTU_VERSION: "22.04"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Login to registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PUSH_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./docker/Dockerfile_ubuntu_headless
+          build-args: |
+            AV_REPO=${{ env.AV_REPO }}
+            AV_VERSION=${{ env.AV_VERSION }}
+            CUDA_VERSION=${{ env.CUDA_VERSION }}
+            UBUNTU_VERSION=${{ env.UBUNTU_VERSION }}
+          push: true
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.REPO_OWNER }}/meshroom-headless:${{ env.MESHROOM_VERSION }}-av${{ env.AV_VERSION }}-ubuntu${{ env.UBUNTU_VERSION }}-cuda${{ env.CUDA_VERSION }}

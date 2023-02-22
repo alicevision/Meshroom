@@ -1,0 +1,30 @@
+# Preamble
+ARG AV_REPO=alicevision/alicevision
+ARG AV_VERSION
+ARG CUDA_VERSION=11.8.0
+ARG UBUNTU_VERSION=22.04
+FROM ${AV_REPO}:${AV_VERSION}-ubuntu${UBUNTU_VERSION}-cuda${CUDA_VERSION}
+LABEL maintainer="Hossam Hammady <github@hammady.net>"
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3-pip \
+        python3-setuptools \
+        python3-wheel \
+        python3-pkg-resources \
+        python-is-python3 && \
+    pip install --upgrade pip
+
+ENV MESHROOM_DEV=/home
+WORKDIR ${MESHROOM_DEV}
+
+# Install the required packages for headless mode
+COPY requirements-headless.txt ${MESHROOM_DEV}/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install python files
+COPY setup-headless.py ${MESHROOM_DEV}/setup.py
+COPY ./meshroom ${MESHROOM_DEV}/meshroom
+COPY ./bin ${MESHROOM_DEV}/bin
+RUN pip install --no-cache-dir -e .

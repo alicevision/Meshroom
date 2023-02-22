@@ -629,9 +629,6 @@ class BaseNode(BaseObject):
 
     @Slot(str, result=bool)
     def hasInternalAttribute(self, name):
-        if "[" in name or "." in name:
-            p = self.attributeRE.findall(name)
-            return p[0][0] in self._internalAttributes.keys() or p[0][1] in self._internalAttributes.keys()
         return name in self._internalAttributes.keys()
 
     def _applyExpr(self):

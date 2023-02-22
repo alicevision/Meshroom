@@ -8,7 +8,8 @@
             "CameraInit": "9.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
-            "Meshing": "7.0"
+            "Meshing": "7.0",
+            "Publish": "1.2"
         }, 
         "releaseVersion": "2021.1.0", 
         "fileVersion": "1.1", 
@@ -104,6 +105,20 @@
                 600, 
                 0
             ]
+        },
+        "Publish_1": {
+            "nodeType": "Publish",
+            "position": [
+                1600,
+                0
+            ],
+            "inputs": {
+                "inputFiles": [
+                    "{Texturing_1.outputMesh}",
+                    "{Texturing_1.outputMaterial}",
+                    "{Texturing_1.outputTextures}"
+                ]
+            }
         }
     }
 }

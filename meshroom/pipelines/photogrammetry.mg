@@ -16,7 +16,7 @@
             "FeatureExtraction": "1.1", 
             "Meshing": "7.0", 
             "DepthMapFilter": "3.0",
-            "Publish": "1.0"
+            "Publish": "1.2"
         }
     }, 
     "graph": {

@@ -20,11 +20,11 @@ on:
       - 'docs/**'
 
 env:
+  AV_VERSION: "f9d07d913953a9bf878d951fa1fae11e821c46fb" # Pin to a specific commit or release tag
   DOCKER_REGISTRY: "ghcr.io"
   REPO_OWNER: ${{ github.repository_owner }}
   CUDA_VERSION: "11.8.0"
-  AV_REPO: ${{ env.DOCKER_REGISTRY }}/${{ env.REPO_OWNER }}/alicevision
-  AV_VERSION: "f9d07d913953a9bf878d951fa1fae11e821c46fb" # Pin to a specific commit or release tag
+  AV_REPO: "ghcr.io/${{ github.repository_owner }}/alicevision"
   MESHROOM_VERSION: ${{ github.event.release.tag_name || github.sha }}
 
 jobs:

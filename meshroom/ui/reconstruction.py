@@ -694,26 +694,6 @@ class Reconstruction(UIGraph):
         """ Get all view Ids involved in the reconstruction. """
         return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints.value]
 
-    @Slot()
-    def clearImages(self):
-        """ Clear the list of viewpoints and intrinsics for all the CameraInit nodes. """
-        with self.groupedGraphModification("Clear Images"):
-            for cameraInit in self._cameraInits:
-                # Delete all viewpoints
-                viewpoints = cameraInit.attribute("viewpoints")
-                y = len(viewpoints.value) - 1
-                while y >= 0:
-                    self.removeAttribute(viewpoints.value[y])
-                    y = y - 1
-
-                # Delete all intrinsics
-                intrinsics = cameraInit.attribute("intrinsics")
-                z = len(intrinsics.value) - 1
-                while z >= 0:
-                    self.removeAttribute(intrinsics.value[z])
-                    z = z - 1
-
-
     @Slot(QObject, Node)
     def handleFilesDrop(self, drop, cameraInit):
         """ Handle drop events aiming to add images to the Reconstruction.

@@ -305,6 +305,14 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                     ]
                 ),
                 desc.BoolParam(
+                    name="skipSharpnessComputation",
+                    label="Skip Sharpness Computation",
+                    description="Skip the sharpness score computation. A fixed score of 1.0 will be applied by default to all the frames.",
+                    value=False,
+                    uid=[0],
+                    enabled=lambda node: node.debugOptions.enabled
+                ),
+                desc.BoolParam(
                     name="skipSelection",
                     label="Skip Frame Selection",
                     description="Compute the sharpness and optical flow scores, but do not proceed to the frame selection.",

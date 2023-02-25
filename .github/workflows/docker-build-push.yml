@@ -20,7 +20,7 @@ on:
       - 'docs/**'
 
 env:
-  AV_VERSION: "f9d07d913953a9bf878d951fa1fae11e821c46fb" # Pin to a specific commit or release tag
+  AV_VERSION: "8c41c3d2e6b55f8e62e97e52633b38aaff2c7ccf" # Pin to a specific commit or release tag
   DOCKER_REGISTRY: "ghcr.io"
   REPO_OWNER: ${{ github.repository_owner }}
   CUDA_VERSION: "11.8.0"

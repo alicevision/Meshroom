@@ -53,7 +53,7 @@ FocusScope {
         active: true
         source: "TestAliceVisionPlugin.qml"
     }
-    
+
     readonly property bool aliceVisionPluginAvailable: aliceVisionPluginLoader.status === Component.Ready
 
     Component.onCompleted: {
@@ -177,7 +177,7 @@ FocusScope {
 
     function tryLoadNode(node) {
         useExternal = false;
-        
+
         // safety check
         if (!node) {
             return false;
@@ -218,7 +218,7 @@ FocusScope {
         }
         if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
             return getViewpointPath(_reconstruction.selectedViewId);
-        } 
+        }
         return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction ? _reconstruction.selectedViewId : -1);
     }
 
@@ -1188,7 +1188,7 @@ FocusScope {
 
                             onClicked: {
                                 root.viewIn3D(
-                                    root.source, 
+                                    root.source,
                                     displayedNode.name + ":" + outputAttribute.name + " " + String(_reconstruction.selectedViewId)
                                 );
                             }

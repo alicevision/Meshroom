@@ -876,13 +876,17 @@ FocusScope {
                         anchors.fill: parent
                         active: msfmDataLoader.status === Loader.Ready && displaySfmStatsView.checked
 
-                        Component.onCompleted: {
-                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
-                            // so it can fail safely if the c++ plugin is not available
-                            setSource("SfmStatsView.qml", {
-                                'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
-                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                            })
+                        onActiveChanged: {
+                            // Load and unload the component explicitly
+                            // (necessary since Qt 5.14, Component.onCompleted cannot be used anymore to load the data once and for all)
+                            if (active) {
+                                setSource("SfmStatsView.qml", {
+                                    "msfmData": Qt.binding(function() { return msfmDataLoader.item; }),
+                                    "viewId": Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                })
+                            } else {
+                                setSource("", {})
+                            }
                         }
                     }
                     Loader {
@@ -890,14 +894,18 @@ FocusScope {
                         anchors.fill: parent
                         active: msfmDataLoader.status === Loader.Ready && displaySfmDataGlobalStats.checked
 
-                        Component.onCompleted: {
-                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
-                            // so it can fail safely if the c++ plugin is not available
-                            setSource("SfmGlobalStats.qml", {
-                                'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
-                                'mTracks': Qt.binding(function() { return mtracksLoader.item; }),
+                        onActiveChanged: {
+                            // Load and unload the component explicitly
+                            // (necessary since Qt 5.14, Component.onCompleted cannot be used anymore to load the data once and for all)
+                            if (active) {
+                                setSource("SfmGlobalStats.qml", {
+                                    'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
+                                    'mTracks': Qt.binding(function() { return mtracksLoader.item; }),
 
-                            })
+                                })
+                            } else {
+                                setSource("", {})
+                            }
                         }
                     }
                     Loader {

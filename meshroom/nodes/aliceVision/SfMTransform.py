@@ -57,7 +57,7 @@ The transformation can be based on:
                         " * from_single_camera: Camera UID or simplified regular expression to match image filepath (like '*camera2*.jpg')",
             value='',
             uid=[0],
-            enabled=lambda node: node.method.value == "transformation" or node.method.value == "from_single_camera",
+            enabled=lambda node: node.method.value == "transformation" or node.method.value == "from_single_camera" or node.method.value == "auto_from_cameras_x_axis",
         ),
         desc.GroupAttribute(
             name="manualTransform",

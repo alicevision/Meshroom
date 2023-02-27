@@ -488,9 +488,9 @@ class Reconstruction(UIGraph):
             self.load(p, setupProjectFile=False)
 
     @Slot(str, result=bool)
-    def load(self, filepath, setupProjectFile=True):
+    def load(self, filepath, setupProjectFile=True, publishOutputs=False):
         try:
-            status = super(Reconstruction, self).loadGraph(filepath, setupProjectFile)
+            status = super(Reconstruction, self).loadGraph(filepath, setupProjectFile, publishOutputs)
             # warn about pre-release projects being automatically upgraded
             if Version(self._graph.fileReleaseVersion).major == "0":
                 self.warning.emit(Message(

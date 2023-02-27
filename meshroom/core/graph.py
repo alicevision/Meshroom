@@ -241,7 +241,7 @@ class Graph(BaseObject):
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)
-    def load(self, filepath, setupProjectFile=True, importProject=False):
+    def load(self, filepath, setupProjectFile=True, importProject=False, publishOutputs=False):
         """
         Load a meshroom graph ".mg" file.
 
@@ -249,6 +249,9 @@ class Graph(BaseObject):
             filepath: project filepath to load
             setupProjectFile: Store the reference to the project file and setup the cache directory.
                               If false, it only loads the graph of the project file as a template.
+            importProject: True if the project that is loaded will be imported in the current graph, instead
+                           of opened.
+            publishOutputs: True if "Publish" nodes from templates should not be ignored.
         """
         if not importProject:
             self.clear()
@@ -283,6 +286,11 @@ class Graph(BaseObject):
                 #   3. fallback to no version "0.0": retro-compatibility
                 if "version" not in nodeData:
                     nodeData["version"] = nodesVersions.get(nodeData["nodeType"], "0.0")
+
+                # if the node is a "Publish" node and comes from a template file, it should be ignored
+                # unless publishOutputs is True
+                if isTemplate and not publishOutputs and nodeData["nodeType"] == "Publish":
+                    continue
 
                 n = nodeFactory(nodeData, nodeName, template=isTemplate)
 

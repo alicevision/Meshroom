@@ -1197,11 +1197,12 @@ FocusScope {
                         MaterialToolButton {
                             id: displaySfmStatsView
                             property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('sfm').node : null
+                            property bool isComputed: activeNode && activeNode.isComputed
 
                             font.family: MaterialIcons.fontFamily
                             text: MaterialIcons.assessment
 
-                            ToolTip.text: "StructureFromMotion Statistics"
+                            ToolTip.text: "StructureFromMotion Statistics" + (isComputed ? (": " + activeNode.label) : "")
                             ToolTip.visible: hovered
 
                             font.pointSize: 14
@@ -1222,11 +1223,12 @@ FocusScope {
                         MaterialToolButton {
                             id: displaySfmDataGlobalStats
                             property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('sfm').node : null
+                            property bool isComputed: activeNode && activeNode.isComputed
 
                             font.family: MaterialIcons.fontFamily
                             text: MaterialIcons.language
 
-                            ToolTip.text: "StructureFromMotion Global Statistics"
+                            ToolTip.text: "StructureFromMotion Global Statistics" + (isComputed ? (": " + activeNode.label) : "")
                             ToolTip.visible: hovered
 
                             font.pointSize: 14

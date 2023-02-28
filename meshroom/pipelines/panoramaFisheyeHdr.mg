@@ -16,7 +16,8 @@
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
             "PanoramaPrepareImages": "1.1", 
-            "PanoramaWarping": "1.0"
+            "PanoramaWarping": "1.0",
+            "Publish": "1.2"
         }, 
         "releaseVersion": "2021.1.0", 
         "fileVersion": "1.1", 
@@ -229,6 +230,18 @@
                 1600, 
                 0
             ]
+        },
+        "Publish_1": {
+            "nodeType": "Publish",
+            "position": [
+                3200,
+                0
+            ],
+            "inputs": {
+                "inputFiles": [
+                    "{ImageProcessing_1.outputImages}"
+                ]
+            }
         }
     }
 }

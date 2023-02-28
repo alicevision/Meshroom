@@ -15,10 +15,26 @@
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
             "Meshing": "7.0", 
-            "DepthMapFilter": "3.0"
+            "DepthMapFilter": "3.0",
+            "Publish": "1.2"
         }
     }, 
     "graph": {
+        "Publish_1": {
+            "inputs": {
+                "output": "",
+                "inputFiles": [
+                    "{Texturing_1.outputMesh}",
+                    "{Texturing_1.outputMaterial}",
+                    "{Texturing_1.outputTextures}"
+                ]
+            }, 
+            "nodeType": "Publish", 
+            "position": [
+                2200, 
+                0
+            ]
+        },
         "Texturing_1": {
             "inputs": {
                 "imagesFolder": "{DepthMap_1.imagesFolder}", 

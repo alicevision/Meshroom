@@ -91,15 +91,6 @@ if args.verbose:
     logging.getLogger().setLevel(logStringToPython[args.verbose])
 
 
-def getOnlyNodeOfType(g, nodeType):
-    """ Helper function to get a node of 'nodeType' in the graph 'g' and raise if no or multiple candidates. """
-    nodes = g.nodesOfType(nodeType)
-    if len(nodes) != 1:
-        raise RuntimeError("meshroom_batch requires a pipeline graph with exactly one '{}' node, {} found."
-                           .format(nodeType, len(nodes)))
-    return nodes[0]
-
-
 def getInitNode(g):
     """
     Helper function to get the Init node in the graph 'g' and raise an exception if there is no or
@@ -124,10 +115,10 @@ with multiview.GraphModification(graph):
     # initialize template pipeline
     loweredPipelineTemplates = dict((k.lower(), v) for k, v in meshroom.core.pipelineTemplates.items())
     if args.pipeline.lower() in loweredPipelineTemplates:
-        graph.load(loweredPipelineTemplates[args.pipeline.lower()], setupProjectFile=False)
+        graph.load(loweredPipelineTemplates[args.pipeline.lower()], setupProjectFile=False, publishOutputs=True if args.output else False)
     else:
         # custom pipeline
-        graph.load(args.pipeline, setupProjectFile=False)
+        graph.load(args.pipeline, setupProjectFile=False, publishOutputs=True if args.output else False)
 
     # get init node and initialize it
     initNode = getInitNode(graph)
@@ -140,8 +131,15 @@ with multiview.GraphModification(graph):
         graph.setVerbose(args.verbose)
 
     if args.output:
-        publish = getOnlyNodeOfType(graph, 'Publish')
-        publish.output.value = args.output
+        # if there is more than 1 Publish node, they will all be set to the same output;
+        # depending on what they are connected to, some input files might be overwritten in the output folder
+        # (e.g. if two Publish nodes are connected to two Texturing nodes)
+        publishNodes = graph.nodesOfType('Publish')
+        if len(publishNodes) > 0:
+            for node in publishNodes:
+                node.output.value = args.output
+        else:
+            raise RuntimeError("meshroom_batch requires a pipeline graph with at least one Publish node, none found.")
 
     if args.overrides:
         import json

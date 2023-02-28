@@ -350,9 +350,9 @@ class UIGraph(QObject):
         self._chunksMonitor.stop()
 
     @Slot(str, result=bool)
-    def loadGraph(self, filepath, setupProjectFile=True):
+    def loadGraph(self, filepath, setupProjectFile=True, publishOutputs=False):
         g = Graph('')
-        status = g.load(filepath, setupProjectFile)
+        status = g.load(filepath, setupProjectFile, importProject=False, publishOutputs=publishOutputs)
         if not os.path.exists(g.cacheDir):
             os.mkdir(g.cacheDir)
         self.setGraph(g)

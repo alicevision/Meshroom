@@ -124,7 +124,8 @@ class ChunksMonitor(QObject):
     """
     def __init__(self, chunks=(), parent=None):
         super(ChunksMonitor, self).__init__(parent)
-        self.chunks = []
+        self.monitorableChunks = []
+        self.monitoredChunks = []
         self._filesTimePoller = FilesModTimePollerThread(parent=self)
         self._filesTimePoller.timesAvailable.connect(self.compareFilesTimes)
         self._filesTimePoller.start()
@@ -134,9 +135,14 @@ class ChunksMonitor(QObject):
         self._filesTimePoller.filePollerRefreshReady.connect(self.onFilePollerRefreshUpdated)
 
     def setChunks(self, chunks):
-        """ Set the list of chunks to monitor. """
-        self.chunks = chunks
-        self._filesTimePoller.setFiles(self.watchedStatusFiles)
+        """
+        Set the lists of chunks that can be monitored and that are monitored.
+        When the file poller status is set to AUTO_ENABLED, the lists of monitorable and monitored chunks are identical.
+        """
+        self.monitorableChunks = chunks
+        files, monitoredChunks = self.watchedStatusFiles
+        self._filesTimePoller.setFiles(files)
+        self.monitoredChunks = monitoredChunks
 
     def stop(self):
         """ Stop the status files monitoring. """
@@ -144,21 +150,27 @@ class ChunksMonitor(QObject):
 
     @property
     def statusFiles(self):
-        """ Get status file paths from current chunks. """
-        return [c.statusFile for c in self.chunks]
+        """ Get status file paths from the monitorable chunks. """
+        return [c.statusFile for c in self.monitorableChunks]
 
     @property
     def watchedStatusFiles(self):
-        """ Get status file paths from currently watched chunks. Depending on the file poller status, the paths may
-        either be those of all the current chunks, or those from the currently submitted/running chunks. """
+        """
+        Get the status file paths from the currently monitored chunks.
+        Depending on the file poller status, the paths may either be those of all the current chunks, or those from the currently submitted/running chunks.
+        """
+
         files = []
+        chunks = []
         if self.filePollerRefresh is PollerRefreshStatus.AUTO_ENABLED.value:
-            return self.statusFiles
+            return self.statusFiles, self.monitorableChunks
         elif self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
-            for c in self.chunks:
-                if c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING:
+            for c in self.monitorableChunks:
+                # When a chunk's status is ERROR, it may be externally re-submitted and it should thus still be monitored
+                if c._status.status is Status.SUBMITTED or c._status.status is Status.RUNNING or c._status.status is Status.ERROR:
                     files.append(c.statusFile)
-        return files
+                    chunks.append(c)
+        return files, chunks
 
     def compareFilesTimes(self, times):
         """
@@ -168,7 +180,7 @@ class ChunksMonitor(QObject):
         Args:
             times: the last modification times for currently monitored files.
         """
-        newRecords = dict(zip(self.chunks, times))
+        newRecords = dict(zip(self.monitoredChunks, times))
         for chunk, fileModTime in newRecords.items():
             # update chunk status if last modification time has changed since previous record
             if fileModTime != chunk.statusFileLastModTime:
@@ -182,7 +194,9 @@ class ChunksMonitor(QObject):
         In minimal auto-refresh mode, this includes only the chunks that are submitted or running.
         """
         if self.filePollerRefresh is not PollerRefreshStatus.DISABLED.value:
-            self._filesTimePoller.setFiles(self.watchedStatusFiles)
+            files, chunks = self.watchedStatusFiles
+            self._filesTimePoller.setFiles(files)
+            self.monitoredChunks = chunks
 
     def onComputeStatusChanged(self):
         """
@@ -190,7 +204,9 @@ class ChunksMonitor(QObject):
         file poller status is minimal auto-refresh.
         """
         if self.filePollerRefresh is PollerRefreshStatus.MINIMAL_ENABLED.value:
-            self._filesTimePoller.setFiles(self.watchedStatusFiles)
+            files, chunks = self.watchedStatusFiles
+            self._filesTimePoller.setFiles(files)
+            self.monitoredChunks = chunks
 
     filePollerRefreshChanged = Signal(int)
     filePollerRefresh = Property(int, lambda self: self._filesTimePoller.filePollerRefresh, notify=filePollerRefreshChanged)

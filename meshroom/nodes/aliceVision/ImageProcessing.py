@@ -362,6 +362,7 @@ Convert or apply filtering to the input images.
                 values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
                 exclusive=True,
                 uid=[0],
+                enabled=lambda node: not node.applyDcpMetadata.value,
         ),
         
         desc.ChoiceParam(

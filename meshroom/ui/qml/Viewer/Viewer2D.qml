@@ -596,7 +596,7 @@ FocusScope {
                 // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
                 Loader {
                     anchors.centerIn: parent
-                    property var activeNode: _reconstruction.activeNodes.get("LightingCalibration").node
+                    property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node
                     active: (displayLightingCircleLoader.checked && activeNode)
 
                     // handle rotation/position based on available metadata
@@ -1118,7 +1118,7 @@ FocusScope {
                         }
                         MaterialToolButton {
                             id: displayLightingCircleLoader
-                            property var activeNode: _reconstruction.activeNodes.get('LightingCalibration').node
+                            property var activeNode: _reconstruction.activeNodes.get('SphereDetection').node
                             ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
                             text: MaterialIcons.vignette
                             // text: MaterialIcons.panorama_fish_eye

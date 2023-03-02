@@ -31,6 +31,13 @@ FocusScope {
     QtObject {
         id: m
         property variant imgMetadata: {
+            // Use metadata from FloatImage viewer in priority
+            // since it directly reads them from the image file
+            if(floatImageViewerLoader.active)
+            {
+                return floatImageViewerLoader.item.metadata
+            }
+
             // I did not find a direct way to check if the map is empty or not...
             var sfmHasImgMetadata = 0;
             for(var key in root.metadata) { sfmHasImgMetadata = 1; break; }
@@ -40,10 +47,6 @@ FocusScope {
                 return root.metadata
             }
 
-            if(floatImageViewerLoader.active)
-            {
-                return floatImageViewerLoader.item.metadata
-            }
             return {}
         }
     }

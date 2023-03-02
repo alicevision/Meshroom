@@ -1090,8 +1090,14 @@ ApplicationWindow {
                         _reconstruction.setActiveNode(node);
                         workspaceView.viewNode(node, mouse);
                     }
-                    onComputeRequest: computeManager.compute(node)
-                    onSubmitRequest: computeManager.submit(node)
+                    onComputeRequest: {
+                        _reconstruction.forceNodesStatusUpdate();
+                        computeManager.compute(node)
+                    }
+                    onSubmitRequest: {
+                        _reconstruction.forceNodesStatusUpdate();
+                        computeManager.submit(node)
+                    }
                 }
 
                 TaskManager {

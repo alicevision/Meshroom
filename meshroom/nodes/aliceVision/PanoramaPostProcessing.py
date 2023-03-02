@@ -32,6 +32,15 @@ Post process the panorama.
             uid=[0],
         ),
         desc.ChoiceParam(
+                name='outputColorSpace',
+                label='Output Color Space',
+                description='Allows you to choose the color space of the output image.',
+                value='AUTO',
+                values=['AUTO', 'sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
+                exclusive=True,
+                uid=[0],
+        ),
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='Verbosity level (fatal, error, warning, info, debug, trace).',

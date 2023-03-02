@@ -112,7 +112,7 @@ Sample pixels from Low range images for HDR creation.
             label='Working Color Space',
             description='Allows you to choose the color space in which the data are processed.',
             value='sRGB',
-            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,

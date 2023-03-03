@@ -87,26 +87,26 @@ Based on the input image filenames, it will recognize the input video sequence t
     outputs = [
         desc.File(
             name='output',
-            label='Filepath',
-            description='Output filepath for the alembic animated camera.',
+            label='Folder',
+            description='Output folder with animated camera and undistorted images.',
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
             name='outputCamera',
-            label='Camera Filepath',
-            description='Output filename for the alembic animated camera.',
+            label='Camera',
+            description='Output filename for the animated camera in Alembic format.',
             value=desc.Node.internalFolder + 'camera.abc',
             group='',  # exclude from command line
             uid=[],
         ),
         desc.File(
             name='outputUndistorted',
-            label='Undistorted images Filepath',
+            label='Undistorted Images',
             description='Output Undistorted images.',
             value=desc.Node.internalFolder + 'undistort',
             group='',  # exclude from command line
             uid=[],
         ),
-        ]
+    ]
 

@@ -42,6 +42,13 @@ Merge all inputs coming from the PanoramaCompositing node.
             uid=[0],
             group='', # not part of allParams, as this is not a parameter for the command line
         ),
+        desc.BoolParam(
+            name='useTiling',
+            label='Use tiling',
+            description='''Enable tiling mode for parallelization''',
+            value=True,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='storageDataType',
             label='Storage Data Type',

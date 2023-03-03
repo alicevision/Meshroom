@@ -91,7 +91,21 @@ Intrinsic = [
             label="Distortion Params",
             description="Distortion Parameters",
         ),
-
+    desc.GroupAttribute(
+            name="undistortionOffset",
+            label="Undistortion Offset",
+            description="Undistortion Offset",
+            groupDesc=[
+                desc.FloatParam(name="x", label="x", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
+                desc.FloatParam(name="y", label="y", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
+            ]
+        ),
+    desc.ListAttribute(
+            name="undistortionParams",
+            elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
+            label="Undistortion Params",
+            description="Undistortion Parameters"
+        ),
     desc.BoolParam(name='locked', label='Locked',
                    description='If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speedup the reconstruction.',
                    value=False, uid=[0]),
@@ -122,6 +136,14 @@ def readSfMData(sfmFile):
         # convert empty string distortionParams (i.e: Pinhole model) to empty list
         if intrinsic['distortionParams'] == '':
             intrinsic['distortionParams'] = list()
+
+        offset = intrinsic['undistortionOffset']
+        intrinsic['undistortionOffset'] = {}
+        intrinsic['undistortionOffset']['x'] = offset[0]
+        intrinsic['undistortionOffset']['y'] = offset[1]
+
+        if intrinsic['undistortionParams'] == '':
+            intrinsic['undistortionParams'] = list()
 
     viewsKeys = [v.name for v in Viewpoint]
     views = [{k: v for k, v in item.items() if k in viewsKeys} for item in data.get("views", [])]
@@ -411,6 +433,7 @@ The metadata needed are:
             intrinsics = node.intrinsics.getPrimitiveValue(exportDefault=True)
             for intrinsic in intrinsics:
                 intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
+                intrinsic['undistortionOffset'] = [intrinsic['undistortionOffset']['x'], intrinsic['undistortionOffset']['y']]
             views = node.viewpoints.getPrimitiveValue(exportDefault=False)
 
             # convert the metadata string into a map

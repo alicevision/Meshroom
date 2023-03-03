@@ -149,7 +149,7 @@
             }, 
             "nodeType": "PanoramaPostProcessing", 
             "position": [
-                3007, 
+                3000,
                 0
             ]
         }, 

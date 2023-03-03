@@ -16,16 +16,25 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
         desc.File(
             name='input',
             label='SfmData',
-            description='SfmData File',
+            description='SfmData File.',
             value='',
             uid=[0],
         ),
         desc.File(
             name='checkerboards',
             label='Checkerboards folder',
-            description='Folder containing checkerboard JSON files',
+            description='Folder containing checkerboard JSON files.',
             value='',
-            uid=[0]
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='cameraModel',
+            label='Camera Model',
+            description='Camera model used to estimate distortion.',
+            value='3deanamorphic4',
+            values=['3deanamorphic4'],
+            exclusive=True,
+            uid=[0],
         ),
     ]
 
@@ -33,7 +42,7 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
         desc.File(
             name='outSfMData',
             label='SfmData File',
-            description='Path to the output sfmData file',
+            description='Path to the output sfmData file.',
             value=desc.Node.internalFolder + 'sfmData.sfm',
             uid=[],
         )

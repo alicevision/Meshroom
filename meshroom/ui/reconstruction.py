@@ -524,7 +524,8 @@ class Reconstruction(UIGraph):
             return False
 
     @Slot(QUrl, result=bool)
-    def loadUrl(self, url):
+    @Slot(QUrl, bool, bool, result=bool)
+    def loadUrl(self, url, setupProjectFile=True, publishOutputs=False):
         if isinstance(url, (QUrl)):
             # depending how the QUrl has been initialized,
             # toLocalFile() may return the local path or an empty string
@@ -533,7 +534,7 @@ class Reconstruction(UIGraph):
                 localFile = url.toString()
         else:
             localFile = url
-        return self.load(localFile)
+        return self.load(localFile, setupProjectFile, publishOutputs)
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """

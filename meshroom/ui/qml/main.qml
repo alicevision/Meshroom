@@ -334,6 +334,18 @@ ApplicationWindow {
     }
 
     FileDialog {
+        id: loadTemplateDialog
+        title: "Load Template"
+        nameFilters: ["Meshroom Graphs (*.mg)"]
+        onAccepted: {
+            // Open the template as a regular file
+            if (_reconstruction.loadUrl(fileUrl, true, true)) {
+                MeshroomApp.addRecentProjectFile(fileUrl.toString())
+            }
+        }
+    }
+
+    FileDialog {
         id: importImagesDialog
         title: "Import Images"
         selectExisting: true
@@ -500,6 +512,19 @@ ApplicationWindow {
         property string tooltip: "Paste the clipboard content to the project if it contains valid nodes"
         text: "Paste Node(s)"
         onTriggered: graphEditor.pasteNodes()
+    }
+
+    Action {
+        id: loadTemplateAction
+
+        property string tooltip: "Load a template like a regular project file (any \"Publish\" node will be displayed)"
+        text: "Load Template"
+        onTriggered: {
+            ensureSaved(function() {
+                initFileDialogFolder(loadTemplateDialog);
+                loadTemplateDialog.open();
+            })
+        }
     }
 
     Action {
@@ -681,6 +706,12 @@ ApplicationWindow {
                             initFileDialogFolder(saveTemplateDialog);
                             saveTemplateDialog.open();
                     }
+                }
+
+                MenuItem {
+                    action: loadTemplateAction
+                    ToolTip.visible: hovered
+                    ToolTip.text: loadTemplateAction.tooltip
                 }
 
                 Action {

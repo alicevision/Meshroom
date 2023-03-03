@@ -31,7 +31,7 @@ class LdrToHdrCalibration(desc.AVCommandLineNode):
 
     category = 'Panorama HDR'
     documentation = '''
-    Calibrate LDR to HDR response curve from samples
+Calibrate LDR to HDR response curve from samples.
 '''
 
     inputs = [

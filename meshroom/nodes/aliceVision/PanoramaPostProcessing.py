@@ -13,8 +13,8 @@ class PanoramaPostProcessing(desc.CommandLineNode):
 
     category = 'Panorama HDR'
     documentation = '''
-    Post process the panorama
-    '''
+Post process the panorama.
+'''
 
     inputs = [
         desc.File(

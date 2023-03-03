@@ -47,7 +47,7 @@ class LdrToHdrSampling(desc.AVCommandLineNode):
 
     category = 'Panorama HDR'
     documentation = '''
-    Sample pixels from Low range images for HDR creation
+Sample pixels from Low range images for HDR creation.
 '''
 
     inputs = [

@@ -153,8 +153,8 @@
             }, 
             "nodeType": "PanoramaPostProcessing", 
             "position": [
-                3005, 
-                -19
+                3000,
+                0
             ]
         }, 
         "PanoramaPrepareImages_1": {

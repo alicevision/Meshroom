@@ -31,7 +31,7 @@ class LdrToHdrCalibration(desc.AVCommandLineNode):
 
     category = 'Panorama HDR'
     documentation = '''
-    Calibrate LDR to HDR response curve from samples
+Calibrate LDR to HDR response curve from samples.
 '''
 
     inputs = [
@@ -81,8 +81,7 @@ class LdrToHdrCalibration(desc.AVCommandLineNode):
                         " * Linear: Disable the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear. \n"
                         " * Debevec: This is the standard method for HDR calibration. \n"
                         " * Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision. \n"
-                        " * Laguerre: Simple but robust method estimating the minimal number of parameters. \n"
-                        " * Robertson: First method for HDR calibration in the literature. \n",
+                        " * Laguerre: Simple but robust method estimating the minimal number of parameters.",
             values=['linear', 'debevec', 'grossberg', 'laguerre'],
             value='debevec',
             exclusive=True,

@@ -30,7 +30,7 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
 
     category = 'Panorama HDR'
     documentation = '''
-    Calibrate LDR to HDR response curve from samples
+Merge LDR images into HDR images.
 '''
 
     inputs = [

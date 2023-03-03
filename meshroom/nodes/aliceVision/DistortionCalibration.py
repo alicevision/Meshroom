@@ -1,4 +1,4 @@
-__version__ = '2.0'
+__version__ = '3.0'
 
 from meshroom.core import desc
 
@@ -7,8 +7,9 @@ class DistortionCalibration(desc.AVCommandLineNode):
     commandLine = 'aliceVision_distortionCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Other'
     documentation = '''
-    Calibration of a camera/lens couple distortion using a full screen checkerboard
+Calibration of a camera/lens couple distortion using a full screen checkerboard.
 '''
 
     inputs = [
@@ -19,26 +20,12 @@ class DistortionCalibration(desc.AVCommandLineNode):
             value='',
             uid=[0],
         ),
-        desc.ListAttribute(
-            elementDesc=desc.File(
-                name='lensGridImage',
-                label='Lens Grid Image',
-                description='',
-                value='',
-                uid=[0],
-            ),
-            name='lensGrid',
-            label='Lens Grid Images',
-            description='Lens grid images to estimate the optical distortions.',
-        ),
-        desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='Verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
-            exclusive=True,
-            uid=[],
+        desc.File(
+            name='checkerboards',
+            label='Checkerboards folder',
+            description='Folder containing checkerboard JSON files',
+            value='',
+            uid=[0]
         ),
     ]
 

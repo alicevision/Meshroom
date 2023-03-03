@@ -428,6 +428,26 @@ ApplicationWindow {
     }
 
     Action {
+        id: clearImagesAction
+        property string tooltip: "Clear images for the current CameraInit group"
+        text: "Clear Images"
+        onTriggered: {
+            _reconstruction.clearImages()
+            _reconstruction.selectedViewId = "-1"
+        }
+    }
+
+    Action {
+        id: clearAllImagesAction
+        property string tooltip: "Clear all the images for all the CameraInit groups"
+        text: "Clear All Images"
+        onTriggered: {
+            _reconstruction.clearAllImages()
+            _reconstruction.selectedViewId = "-1"
+        }
+    }
+
+    Action {
         id: undoAction
 
         property string tooltip: 'Undo "' + (_reconstruction ? _reconstruction.undoStack.undoText : "Unknown") + '"'
@@ -638,28 +658,12 @@ ApplicationWindow {
                 }
             }
 
-            Action {
-                id: clearImagesAction
-                text: "Clear Images"
-                onTriggered: {
-                    //Loop through all the camera inits
-                    for(var i = 0 ; i < _reconstruction.cameraInits.count; i++){
-                        var cameraInit = _reconstruction.cameraInits.at(i)
-
-                        //Delete all viewpoints
-                        var viewpoints = cameraInit.attribute('viewpoints')
-                        for(var y = viewpoints.value.count - 1 ; y >= 0 ; y--){
-                              _reconstruction.removeAttribute(viewpoints.value.at(y))
-                        }
-
-                        //Delete all intrinsics
-                        var intrinsics = cameraInit.attribute('intrinsics')
-                        for(var z = intrinsics.value.count - 1 ; z >= 0 ; z--){
-                              _reconstruction.removeAttribute(intrinsics.value.at(z))
-                        }
-                    }
-                }
+            MenuItem {
+                action: clearImagesAction
+                ToolTip.visible: hovered
+                ToolTip.text: clearImagesAction.tooltip
             }
+
             MenuSeparator { }
             Menu {
                 id: advancedMenu
@@ -691,6 +695,12 @@ ApplicationWindow {
                         initFileDialogFolder(importProjectDialog);
                         importProjectDialog.open();
                     }
+                }
+
+                MenuItem {
+                    action: clearAllImagesAction
+                    ToolTip.visible: hovered
+                    ToolTip.text: clearAllImagesAction.tooltip
                 }
             }
             MenuSeparator { }

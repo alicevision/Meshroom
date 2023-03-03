@@ -733,6 +733,16 @@ class UIGraph(QObject):
     def removeAttribute(self, attribute):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
+    @Slot()
+    def clearImages(self):
+        with self.groupedGraphModification("Clear Images"):
+            self.push(commands.ClearImagesCommand(self._graph, [self.cameraInit]))
+
+    @Slot()
+    def clearAllImages(self):
+        with self.groupedGraphModification("Clear All Images"):
+            self.push(commands.ClearImagesCommand(self._graph, list(self.cameraInits)))
+
     @Slot(Node)
     def appendSelection(self, node):
         """ Append 'node' to the selection if it is not already part of the selection. """

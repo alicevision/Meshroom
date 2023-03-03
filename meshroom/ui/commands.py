@@ -350,6 +350,31 @@ class ListAttributeRemoveCommand(GraphCommand):
         listAttribute.insert(self.index, self.value)
 
 
+class ClearImagesCommand(GraphCommand):
+    def __init__(self, graph, cameraInitNodes, parent=None):
+        super(ClearImagesCommand, self).__init__(graph, parent)
+        self.cameraInits = cameraInitNodes
+        self.viewpoints = { cameraInit.name: cameraInit.attribute("viewpoints").getExportValue() for cameraInit in self.cameraInits }
+        self.intrinsics = { cameraInit.name: cameraInit.attribute("intrinsics").getExportValue() for cameraInit in self.cameraInits }
+        self.title = "Clear{}Images".format(" " if len(self.cameraInits) == 1 else " All ")
+        self.setText(self.title)
+
+    def redoImpl(self):
+        for i in range(len(self.cameraInits)):
+            # Reset viewpoints
+            self.cameraInits[i].viewpoints.resetValue()
+            self.cameraInits[i].viewpoints.valueChanged.emit()
+            # Reset intrinsics
+            self.cameraInits[i].intrinsics.resetValue()
+            self.cameraInits[i].intrinsics.valueChanged.emit()
+
+    def undoImpl(self):
+        for cameraInit in self.viewpoints:
+            with GraphModification(self.graph):
+                self.graph.node(cameraInit).viewpoints.value = self.viewpoints[cameraInit]
+                self.graph.node(cameraInit).intrinsics.value = self.intrinsics[cameraInit]
+
+
 class MoveNodeCommand(GraphCommand):
     """ Move a node to a given position. """
     def __init__(self, graph, node, position, parent=None):

@@ -74,7 +74,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name='outputMeshFileType',
             label='Mesh File Type',
             description='File Type',
-            value='obj',
+            value='gltf',
             values=('obj', 'gltf', 'fbx', 'stl'),
             exclusive=True,
             uid=[0],
@@ -329,7 +329,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name='outputMesh',
             label='Mesh',
             description='Output Mesh file.',
-            value=desc.Node.internalFolder + 'texturedMesh.{outputMeshFileTypeValue}',
+            value=desc.Node.internalFolder + 'texturedMesh.*', # gltf generates an additional .bin file
             uid=[],
             group='',
             ),

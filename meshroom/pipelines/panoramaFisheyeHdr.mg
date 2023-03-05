@@ -107,7 +107,8 @@
         "PanoramaMerging_1": {
             "inputs": {
                 "compositingFolder": "{PanoramaCompositing_1.output}", 
-                "input": "{PanoramaCompositing_1.input}"
+                "input": "{PanoramaCompositing_1.input}",
+                "useTiling": "{PanoramaCompositing_1.useTiling}"
             }, 
             "nodeType": "PanoramaMerging", 
             "position": [
@@ -119,7 +120,8 @@
             "inputs": {
                 "warpingFolder": "{PanoramaSeams_1.warpingFolder}", 
                 "labels": "{PanoramaSeams_1.output}", 
-                "input": "{PanoramaSeams_1.outputSfm}"
+                "input": "{PanoramaSeams_1.outputSfm}",
+                "useTiling": false
             }, 
             "nodeType": "PanoramaCompositing", 
             "position": [

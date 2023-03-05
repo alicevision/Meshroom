@@ -65,6 +65,13 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             uid=[],
             advanced=True,
         ),
+        desc.BoolParam(
+            name='useTiling',
+            label='Use tiling',
+            description='''Enable tiling mode for parallelization''',
+            value=True,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='storageDataType',
             label='Storage Data Type',

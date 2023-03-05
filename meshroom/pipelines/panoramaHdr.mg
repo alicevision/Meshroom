@@ -103,7 +103,8 @@
         "PanoramaMerging_1": {
             "inputs": {
                 "compositingFolder": "{PanoramaCompositing_1.output}", 
-                "input": "{PanoramaCompositing_1.input}"
+                "input": "{PanoramaCompositing_1.input}",
+                "useTiling": "{PanoramaCompositing_1.useTiling}"
             }, 
             "nodeType": "PanoramaMerging", 
             "position": [

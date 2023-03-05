@@ -1,6 +1,7 @@
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
+import QtQuick.Dialogs 1.0
 import MaterialIcons 2.2
 import Utils 1.0
 
@@ -152,6 +153,12 @@ RowLayout {
             case "BoolParam": return checkbox_component
             case "ListAttribute": return listAttribute_component
             case "GroupAttribute": return groupAttribute_component
+            case "StringParam":
+                if (attribute.desc.semantic === 'multiline')
+                    return textArea_component
+                return textField_component
+            case "ColorParam":
+                return color_component
             default: return textField_component
             }
         }
@@ -180,6 +187,121 @@ RowLayout {
                         else if(drop.hasText && drop.text != '')
                             setTextFieldAttribute(drop.text)
                     }
+                }
+            }
+        }
+
+        Component {
+            id: textArea_component
+
+            Rectangle {
+                // Fixed background for the flickable object
+                color: palette.base
+                width: parent.width
+                height: 70
+
+                Flickable {
+                    width: parent.width
+                    height: parent.height
+                    contentWidth: width
+                    contentHeight: height
+
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AlwaysOn
+                    }
+
+                    TextArea.flickable: TextArea {
+                        wrapMode: Text.WordWrap
+                        padding: 0
+                        rightPadding: 5
+                        bottomPadding: 2
+                        topPadding: 2
+                        readOnly: !root.editable
+                        onEditingFinished: setTextFieldAttribute(text)
+                        text: attribute.value
+                        selectByMouse: true
+                        onPressed: {
+                            root.forceActiveFocus()
+                        }
+                        Component.onDestruction: {
+                            if (activeFocus)
+                                setTextFieldAttribute(text)
+                        }
+                        DropArea {
+                            enabled: root.editable
+                            anchors.fill: parent
+                            onDropped: {
+                                if (drop.hasUrls)
+                                    setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
+                                else if (drop.hasText && drop.text != '')
+                                    setTextFieldAttribute(drop.text)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: color_component
+            RowLayout {
+                CheckBox {
+                    id: color_checkbox
+                    Layout.alignment: Qt.AlignLeft
+                    checked: node && node.color === "" ? false : true
+                    text: "Custom Color"
+                    onClicked: {
+                        if(checked) {
+                            _reconstruction.setAttribute(attribute, "#0000FF")
+                        } else {
+                            _reconstruction.setAttribute(attribute, "")
+                        }
+                    }
+                }
+                TextField {
+                    id: colorText
+                    Layout.alignment: Qt.AlignLeft
+                    implicitWidth: 100
+                    enabled: color_checkbox.checked
+                    visible: enabled
+                    text: enabled ? attribute.value : ""
+                    selectByMouse: true
+                    onEditingFinished: setTextFieldAttribute(text)
+                    onAccepted: setTextFieldAttribute(text)
+                    Component.onDestruction: {
+                        if(activeFocus)
+                            setTextFieldAttribute(text)
+                    }
+                }
+
+                Rectangle {
+                    height: colorText.height
+                    width: colorText.width / 2
+                    Layout.alignment: Qt.AlignLeft
+                    visible: color_checkbox.checked
+                    color: color_checkbox.checked ? attribute.value : ""
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: colorDialog.open()
+                    }
+                }
+
+                ColorDialog {
+                    id: colorDialog
+                    title: "Please choose a color"
+                    color: attribute.value
+                    onAccepted: {
+                        colorText.text = color
+                        // Artificially trigger change of attribute value
+                        colorText.editingFinished()
+                        close()
+                    }
+                    onRejected: close()
+                }
+                Item {
+                    // Dummy item to fill out the space if needed
+                    Layout.fillWidth: true
                 }
             }
         }

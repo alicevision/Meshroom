@@ -143,6 +143,10 @@ class Attribute(BaseObject):
         self._enabled = v
         self.enabledChanged.emit()
 
+    def getUidIgnoreValue(self):
+        """ Value for which the attribute should be ignored during the UID computation. """
+        return self.attributeDesc.uidIgnoreValue
+
     def _get_value(self):
         if self.isLink:
             return self.getLinkParam().value
@@ -168,6 +172,10 @@ class Attribute(BaseObject):
         # TODO: only update the graph if this attribute participates to a UID
         if self.isInput:
             self.requestGraphUpdate()
+            # TODO: only call update of the node if the attribute is internal
+            # Internal attributes are set as inputs
+            self.requestNodeUpdate()
+
         self.valueChanged.emit()
 
     def upgradeValue(self, exportedValue):
@@ -180,6 +188,12 @@ class Attribute(BaseObject):
         if self.node.graph:
             self.node.graph.markNodesDirty(self.node)
             self.node.graph.update()
+
+    def requestNodeUpdate(self):
+        # Update specific node information that do not affect the rest of the graph
+        # (like internal attributes)
+        if self.node:
+            self.node.updateInternalAttributes()
 
     @property
     def isOutput(self):
@@ -323,6 +337,7 @@ class Attribute(BaseObject):
     node = Property(BaseObject, node.fget, constant=True)
     enabledChanged = Signal()
     enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
+    uidIgnoreValue = Property(Variant, getUidIgnoreValue, constant=True)
 
 
 def raiseIfLink(func):

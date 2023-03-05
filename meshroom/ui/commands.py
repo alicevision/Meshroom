@@ -264,11 +264,17 @@ class SetAttributeCommand(GraphCommand):
     def redoImpl(self):
         if self.value == self.oldValue:
             return False
-        self.graph.attribute(self.attrName).value = self.value
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).value = self.value
+        else:
+            self.graph.internalAttribute(self.attrName).value = self.value
         return True
 
     def undoImpl(self):
-        self.graph.attribute(self.attrName).value = self.oldValue
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).value = self.oldValue
+        else:
+            self.graph.internalAttribute(self.attrName).value = self.oldValue
 
 
 class AddEdgeCommand(GraphCommand):

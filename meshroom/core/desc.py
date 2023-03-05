@@ -14,7 +14,7 @@ class Attribute(BaseObject):
     """
     """
 
-    def __init__(self, name, label, description, value, advanced, semantic, uid, group, enabled):
+    def __init__(self, name, label, description, value, advanced, semantic, uid, group, enabled, uidIgnoreValue=None):
         super(Attribute, self).__init__()
         self._name = name
         self._label = label
@@ -25,6 +25,7 @@ class Attribute(BaseObject):
         self._advanced = advanced
         self._enabled = enabled
         self._semantic = semantic
+        self._uidIgnoreValue = uidIgnoreValue
 
     name = Property(str, lambda self: self._name, constant=True)
     label = Property(str, lambda self: self._label, constant=True)
@@ -35,6 +36,7 @@ class Attribute(BaseObject):
     advanced = Property(bool, lambda self: self._advanced, constant=True)
     enabled = Property(Variant, lambda self: self._enabled, constant=True)
     semantic = Property(str, lambda self: self._semantic, constant=True)
+    uidIgnoreValue = Property(Variant, lambda self: self._uidIgnoreValue, constant=True)
     type = Property(str, lambda self: self.__class__.__name__, constant=True)
 
     def validateValue(self, value):
@@ -201,8 +203,9 @@ class GroupAttribute(Attribute):
 class Param(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group, advanced, semantic, enabled):
-        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
+    def __init__(self, name, label, description, value, uid, group, advanced, semantic, enabled, uidIgnoreValue=None):
+        super(Param, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
+            uidIgnoreValue=uidIgnoreValue)
 
 
 class File(Attribute):
@@ -329,8 +332,9 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True):
-        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, uidIgnoreValue=None):
+        super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
+            uidIgnoreValue=uidIgnoreValue)
 
     def validateValue(self, value):
         if not isinstance(value, str):
@@ -341,6 +345,19 @@ class StringParam(Param):
         if not isinstance(self.value, str):
             return self.name
         return ""
+
+
+class ColorParam(Param):
+    """
+    """
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True):
+        super(ColorParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
+
+    def validateValue(self, value):
+        if not isinstance(value, str) or len(value.split(" ")) > 1:
+            raise ValueError('ColorParam value should be a string containing either an SVG name or an hexadecimal '
+                             'color code (param: {}, value: {}, type: {})'.format(self.name, value, type(value)))
+        return value
 
 
 class Level(Enum):
@@ -485,6 +502,43 @@ class Node(object):
     ram = Level.NORMAL
     packageName = ''
     packageVersion = ''
+    internalInputs = [
+        StringParam(
+            name="invalidation",
+            label="Invalidation Message",
+            description="A message that will invalidate the node's output folder.\n"
+                        "This is useful for development, we can invalidate the output of the node when we modify the code.\n"
+                        "It is displayed in bold font in the invalidation/comment messages tooltip.",
+            value="",
+            semantic="multiline",
+            uid=[0],
+            advanced=True,
+            uidIgnoreValue="",  # If the invalidation string is empty, it does not participate to the node's UID
+        ),
+        StringParam(
+            name="comment",
+            label="Comments",
+            description="User comments describing this specific node instance.\n"
+                        "It is displayed in regular font in the invalidation/comment messages tooltip.",
+            value="",
+            semantic="multiline",
+            uid=[],
+        ),
+        StringParam(
+            name="label",
+            label="Node's Label",
+            description="Customize the default label (to replace the technical name of the node instance).",
+            value="",
+            uid=[],
+        ),
+        ColorParam(
+            name="color",
+            label="Color",
+            description="Custom color for the node (SVG name or hexadecimal code).",
+            value="",
+            uid=[],
+        )
+    ]
     inputs = []
     outputs = []
     size = StaticNodeSize(1)

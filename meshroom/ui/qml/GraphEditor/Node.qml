@@ -73,6 +73,29 @@ Item {
         }
     }
 
+    function formatInternalAttributesTooltip(invalidation, comment) {
+        /*
+         * Creates a string that contains the invalidation message (if it is not empty) in bold,
+         * followed by the comment message (if it exists) in regular font, separated by an empty
+         * line.
+         * Invalidation and comment messages have their tabs or line returns in plain text format replaced
+         * by their HTML equivalents.
+         */
+        let str = ""
+        if (invalidation !== "") {
+            let replacedInvalidation = node.invalidation.replace(/\n/g, "<br/>").replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;")
+            str += "<b>" + replacedInvalidation + "</b>"
+        }
+        if (invalidation !== "" && comment !== "") {
+            str += "<br/><br/>"
+        }
+        if (comment !== "") {
+            let replacedComment = node.comment.replace(/\n/g, "<br/>").replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;")
+            str += replacedComment
+        }
+        return str
+    }
+
     // Whether an attribute can be displayed as an attribute pin on the node
     function isFileAttributeBaseType(attribute) {
         // ATM, only File attributes are meant to be connected
@@ -138,7 +161,7 @@ Item {
         Rectangle {
             id: background
             anchors.fill: nodeContent
-            color: Qt.lighter(activePalette.base, 1.4)
+            color: node.color === "" ? Qt.lighter(activePalette.base, 1.4) : node.color
             layer.enabled: true
             layer.effect: DropShadow { radius: 3; color: shadowColor }
             radius: 3
@@ -181,6 +204,7 @@ Item {
 
                         // Node Name
                         Label {
+                            id: nodeLabel
                             Layout.fillWidth: true
                             text: node ? node.label : ""
                             padding: 4
@@ -251,6 +275,35 @@ Item {
                                 font.pointSize: 7
                                 palette.text: "red"
                                 ToolTip.text: "Locked"
+                            }
+
+                            MaterialLabel {
+                                id: nodeComment
+                                visible: node.comment !== "" || node.invalidation !== ""
+                                text: MaterialIcons.comment
+                                padding: 2
+                                font.pointSize: 7
+
+                                ToolTip {
+                                    id: nodeCommentTooltip
+                                    parent: header
+                                    visible: nodeCommentMA.containsMouse && nodeComment.visible
+                                    text: formatInternalAttributesTooltip(node.invalidation, node.comment)
+                                    implicitWidth: 400 // Forces word-wrap for long comments but the tooltip will be bigger than needed for short comments
+                                    delay: 300
+
+                                    // Relative position for the tooltip to ensure we won't get stuck in a case where it starts appearing over the mouse's
+                                    // position because it's a bit long and cutting off the hovering of the mouse area (which leads to the tooltip beginning
+                                    // to appear and immediately disappearing, over and over again)
+                                    x: implicitWidth / 2.5
+                                }
+
+                                MouseArea {
+                                    // If the node header is hovered, comments may be displayed
+                                    id: nodeCommentMA
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                }
                             }
                         }
                     }

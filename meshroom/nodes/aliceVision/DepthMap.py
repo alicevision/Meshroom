@@ -483,7 +483,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=desc.Node.internalFolder + '<VIEW_ID>_tilePattern.obj',
             uid=[],
             group='', # do not export on the command line
-            # enabled=lambda node: node.intermediateResults.exportTilePattern.value,
+            enabled=lambda node: node.intermediateResults.exportTilePattern.value,
         ),
         desc.File(
             name='depthSgm',
@@ -493,7 +493,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_scale2_sgm.exr',
             uid=[],
             group='', # do not export on the command line
-            # enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
+            enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
         desc.File(
             name='depthSgmUpscaled',
@@ -503,7 +503,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_sgmUpscaled.exr',
             uid=[],
             group='', # do not export on the command line
-            # enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
+            enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
         desc.File(
             name='depthRefined',
@@ -513,6 +513,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_refinedFused.exr',
             uid=[],
             group='', # do not export on the command line
-            # enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
+            enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
     ]

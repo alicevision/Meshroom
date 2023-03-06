@@ -57,9 +57,9 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             uid=[0]
         ),
         desc.IntParam(
-            name='forcedLevelsCount',
+            name='forceMinPyramidLevels',
             label='Pyramid levels',
-            description='Force the number of levels in the pyramid for multiband compositer.',
+            description='Force the minimal number of levels in the pyramid for multiband compositer.',
             value=0,
             range=(0, 16, 1),
             uid=[0],

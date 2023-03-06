@@ -61,7 +61,7 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             label='Pyramid levels',
             description='Force the number of levels in the pyramid for multiband compositer.',
             value=0,
-            range=(0, 64, 1),
+            range=(0, 16, 1),
             uid=[0],
             enabled=lambda node: node.compositerType.value and node.compositerType.value == 'multiband',
         ),

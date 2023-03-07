@@ -1166,6 +1166,8 @@ class BaseNode(BaseObject):
     hasDuplicatesChanged = Signal()
     hasDuplicates = Property(bool, lambda self: self._hasDuplicates, notify=hasDuplicatesChanged)
 
+    outputAttrEnabledChanged = Signal()
+
 
 class Node(BaseNode):
     """
@@ -1192,6 +1194,8 @@ class Node(BaseNode):
 
         # List attributes per uid
         for attr in self._attributes:
+            if attr.isOutput and attr.desc.semantic == "image":
+                attr.enabledChanged.connect(self.outputAttrEnabledChanged)
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)
 

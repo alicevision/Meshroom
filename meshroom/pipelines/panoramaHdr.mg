@@ -235,7 +235,7 @@
             ],
             "inputs": {
                 "inputFiles": [
-                    "{ImageProcessing_1.outputImages}"
+                    "{PanoramaPostProcessing_1.outputPanorama}"
                 ]
             }
         }

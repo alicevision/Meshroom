@@ -157,7 +157,7 @@ FloatingPane {
                                 Layout.alignment: Qt.AlignRight
                                 from: -1
                                 to: 50
-                                value: root.mfeatures.timeWindow
+                                value: root.featuresViewer.timeWindow
                                 stepSize: 1
                                 editable: true
 
@@ -174,7 +174,7 @@ FloatingPane {
                                 }
 
                                 onValueChanged: {
-                                    root.mfeatures.timeWindow = timeWindowSB.value;
+                                    root.featuresViewer.timeWindow = timeWindowSB.value;
                                 }
                             }
                         }
@@ -224,7 +224,7 @@ FloatingPane {
                     ToolTip.text: "Display Tracks"
                     onClicked: {
                         featureType.viewer.displayTracks = tracksVisibilityButton.checked;
-                        root.mfeatures.enableTimeWindow = tracksVisibilityButton.checked;
+                        root.featuresViewer.enableTimeWindow = tracksVisibilityButton.checked;
                     }
                     font.pointSize: 10
                 }
@@ -232,7 +232,7 @@ FloatingPane {
                 MaterialToolButton {
                     id: matchesVisibilityButton
                     checkable: true
-                    checked: true
+                    checked: false
                     text: MaterialIcons.sync
                     ToolTip.text: "Display Matches"
                     onClicked: {
@@ -244,7 +244,7 @@ FloatingPane {
                 MaterialToolButton {
                     id: landmarksVisibilityButton
                     checkable: true
-                    checked: true
+                    checked: false
                     text: MaterialIcons.fiber_manual_record
                     ToolTip.text: "Display Landmarks"
                     onClicked: {
@@ -267,9 +267,7 @@ FloatingPane {
                         if(featureType.viewer.loadingFeatures)
                             return  featureType.viewer.describerType;
                         return featureType.viewer.describerType + ": " +
-                                ((featureExtractionNode && featureExtractionNode.isComputed) ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbFeatures'] : " - ") + " / " +
-                                (root.mfeatures.haveValidTracks ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbTracks']  : " - ") + " / " +
-                                (root.mfeatures.haveValidLandmarks ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbLandmarks'] : " - ");
+                                ((featureExtractionNode && featureExtractionNode.isComputed) ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.featuresViewer.currentViewId]['nbFeatures'] : " - ");
                     }
                 }
                 // Feature loading status

@@ -692,6 +692,7 @@ class Reconstruction(UIGraph):
         """ Get all image paths in the reconstruction. """
         return [vp.path.value for node in self._cameraInits for vp in node.viewpoints.value]
 
+    @Slot(result="QVariantList")
     def allViewIds(self):
         """ Get all view Ids involved in the reconstruction. """
         return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints.value]

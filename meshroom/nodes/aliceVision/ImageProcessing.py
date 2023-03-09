@@ -362,13 +362,14 @@ Convert or apply filtering to the input images.
                 values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
                 exclusive=True,
                 uid=[0],
+                enabled=lambda node: not node.applyDcpMetadata.value,
         ),
         
         desc.ChoiceParam(
                 name='rawColorInterpretation',
                 label='RAW Color Interpretation',
                 description='Allows you to choose how raw data are color processed.',
-                value='LibRawWhiteBalancing',
+                value='DCPLinearProcessing' if os.environ.get('ALICEVISION_COLOR_PROFILE_DB', '') else 'LibRawWhiteBalancing',
                 values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing', 'DCPMetadata', 'Auto'],
                 exclusive=True,
                 uid=[0],
@@ -388,6 +389,7 @@ Convert or apply filtering to the input images.
             description='''Color Profile database directory path.''',
             value='${ALICEVISION_COLOR_PROFILE_DB}',
             uid=[],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
         ),
         
         desc.BoolParam(
@@ -395,6 +397,45 @@ Convert or apply filtering to the input images.
             label='Error On Missing DCP Color Profile',
             description='If a color profile database is specified but no color profile is found for at least one image, then an error is thrown',
             value=True,
+            uid=[0],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
+        ),
+        
+        desc.BoolParam(
+            name='useDCPColorMatrixOnly',
+            label='Use DCP Color Matrix Only',
+            description='Use only the Color Matrix information from the DCP and ignore the Forward Matrix.',
+            value=True,
+            uid=[0],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
+        ),
+        
+        desc.BoolParam(
+            name='doWBAfterDemosaicing',
+            label='WB after demosaicing',
+            description='Do White Balance after demosaicing, just before DCP profile application',
+            value=False,
+            uid=[0],
+            enabled=lambda node: (node.rawColorInterpretation.value=='DCPLinearProcessing') or (node.rawColorInterpretation.value=='DCPMetadata'),
+        ),
+        
+        desc.ChoiceParam(
+            name='demosaicingAlgo',
+            label='Demosaicing Algorithm',
+            description='LibRaw Demosaicing Algorithm\n',
+            value='AHD',
+            values=['linear', 'VNG', 'PPG', 'AHD', 'DCB', 'AHD-Mod', 'AFD', 'VCD', 'Mixed', 'LMMSE', 'AMaZE', 'DHT', 'AAHD', 'none'],
+            exclusive=True,
+            uid=[0],
+        ),
+        
+        desc.ChoiceParam(
+            name='highlightMode',
+            label='Highlight mode',
+            description='LibRaw highlight mode\n',
+            value=0,
+            values=[0, 1, 2, 3, 4, 5, 6, 7, 8],
+            exclusive=True,
             uid=[0],
         ),
         

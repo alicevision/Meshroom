@@ -207,7 +207,7 @@ The metadata needed are:
                         'DCPLinearProcessing: Use DCP color profile.\n'
                         'DCPMetadata: Same as None with DCP info added in metadata.\n',
             value='DCPLinearProcessing' if os.environ.get('ALICEVISION_COLOR_PROFILE_DB', '') else 'LibRawWhiteBalancing',
-            values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing', 'DCPMetadata'],
+            values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing'],
             exclusive=True,
             uid=[0],
         ),

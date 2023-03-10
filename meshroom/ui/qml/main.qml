@@ -217,13 +217,17 @@ ApplicationWindow {
         }
 
         function submit(node) {
-            try {
-                _reconstruction.submit(node)
-            }
-            catch (error) {
-                const data = ErrorHandler.analyseError(error)
-                if(data.context === "SUBMITTING")
-                    computeSubmitErrorDialog.openError(data.type, data.msg, node)
+            if (!canSubmit) {
+                unsavedSubmitDialog.open()
+            } else {
+                try {
+                    _reconstruction.submit(node)
+                }
+                catch (error) {
+                    const data = ErrorHandler.analyseError(error)
+                    if(data.context === "SUBMITTING")
+                        computeSubmitErrorDialog.openError(data.type, data.msg, node)
+                }
             }
         }
 
@@ -317,6 +321,22 @@ ApplicationWindow {
             }
 
             onDiscarded: { close(); computeManager.compute(currentNode, true) }
+            onAccepted: saveAsAction.trigger()
+        }
+
+        MessageDialog {
+            id: unsavedSubmitDialog
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "Unsaved Project"
+            text: "The project cannot be submitted if it remains unsaved."
+            helperText: "Save the project to be able to submit it?"
+            standardButtons: Dialog.Cancel | Dialog.Save
+
+            onDiscarded: close()
             onAccepted: saveAsAction.trigger()
         }
     }

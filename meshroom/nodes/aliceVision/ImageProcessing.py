@@ -422,7 +422,7 @@ Convert or apply filtering to the input images.
         desc.ChoiceParam(
             name='demosaicingAlgo',
             label='Demosaicing Algorithm',
-            description='LibRaw Demosaicing Algorithm\n',
+            description='LibRaw Demosaicing Algorithm',
             value='AHD',
             values=['linear', 'VNG', 'PPG', 'AHD', 'DCB', 'AHD-Mod', 'AFD', 'VCD', 'Mixed', 'LMMSE', 'AMaZE', 'DHT', 'AAHD', 'none'],
             exclusive=True,
@@ -432,9 +432,13 @@ Convert or apply filtering to the input images.
         desc.ChoiceParam(
             name='highlightMode',
             label='Highlight mode',
-            description='LibRaw highlight mode\n',
+            description='LibRaw highlight mode:\n'
+                        ' * 0: Clip (default)\n'
+                        ' * 1: Unclip\n'
+                        ' * 2: Blend\n'
+                        ' * 3-9: Rebuild',
             value=0,
-            values=[0, 1, 2, 3, 4, 5, 6, 7, 8],
+            values=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
             exclusive=True,
             uid=[0],
         ),

@@ -599,6 +599,9 @@ class Reconstruction(UIGraph):
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
         self.tempCameraInit = tmpCameraInit
+        rootNode = self.graph.dfsOnFinish([node])[0][0]
+        if rootNode.nodeType == "CameraInit":
+            self.setCameraInitIndex(self._cameraInits.indexOf(rootNode))
 
     @Slot(QObject, result=QVector3D)
     def getAutoFisheyeCircle(self, panoramaInit):

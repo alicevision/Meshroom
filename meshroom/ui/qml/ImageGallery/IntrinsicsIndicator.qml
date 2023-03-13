@@ -15,7 +15,7 @@ ImageBadge {
     property var intrinsic: null
 
     readonly property string intrinsicInitMode: intrinsic ? childAttributeValue(intrinsic, "initializationMode", "none") : "unknown"
-    readonly property string distortionInitMode: intrinsic ? childAttributeValue(intrinsic, "distoInitializationMode", "none") : "unknown"
+    readonly property string distortionInitMode: intrinsic ? childAttributeValue(intrinsic, "distortionInitializationMode", "none") : "unknown"
     readonly property string distortionModel: intrinsic ? childAttributeValue(intrinsic, "type", "") : ""
     property var metadata: ({})
 

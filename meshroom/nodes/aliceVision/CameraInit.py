@@ -71,9 +71,8 @@ Intrinsic = [
                      value="none",
                      exclusive=True,
                      uid=[0],
-                     advanced=True
                      ),
-        
+
     desc.ChoiceParam(name="distortionInitializationMode", label="Distortion Initialization Mode",
                      description="Defines how the distortion model and parameters was initialized:\n"
                                  " * calibrated: calibrated externally.\n"
@@ -84,7 +83,6 @@ Intrinsic = [
                      value="none",
                      exclusive=True,
                      uid=[0],
-                     advanced=True
                      ),
 
     desc.ListAttribute(
@@ -93,7 +91,7 @@ Intrinsic = [
             label="Distortion Params",
             description="Distortion Parameters",
         ),
-                     
+
     desc.BoolParam(name='locked', label='Locked',
                    description='If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speedup the reconstruction.',
                    value=False, uid=[0]),
@@ -189,6 +187,7 @@ The metadata needed are:
             description='The lens name and camera maker are used to match the LCP database, but the camera model is ignored.',
             value=True,
             uid=[0],
+            advanced=True,
         ),
         desc.FloatParam(
             name='defaultFieldOfView',

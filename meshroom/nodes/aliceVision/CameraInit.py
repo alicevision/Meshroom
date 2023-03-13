@@ -192,11 +192,10 @@ The metadata needed are:
         desc.FloatParam(
             name='defaultFieldOfView',
             label='Default Field Of View',
-            description='Empirical value for the field of view in degree.',
+            description='Default value for the field of view (in degree) used as an initialization when there is no focal or field of view in the image metadata.',
             value=45.0,
             range=(0.0, 180.0, 1.0),
             uid=[],
-            advanced=True,
         ),
         desc.ChoiceParam(
             name='groupCameraFallback',
@@ -211,7 +210,6 @@ The metadata needed are:
             value='folder',
             exclusive=True,
             uid=[],
-            advanced=True,
         ),
         desc.ChoiceParam(
             name='allowedCameraModels',
@@ -232,7 +230,7 @@ The metadata needed are:
                         'LibRawNoWhiteBalancing: Simple neutralization.\n'
                         'LibRawWhiteBalancing: Use internal white balancing from libraw.\n'
                         'DCPLinearProcessing: Use DCP color profile.\n'
-                        'DCPMetadata: Same as None with DCP info added in metadata.\n',
+                        'DCPMetadata: Same as None with DCP info added in metadata.',
             value='DCPLinearProcessing' if os.environ.get('ALICEVISION_COLOR_PROFILE_DB', '') else 'LibRawWhiteBalancing',
             values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing'],
             exclusive=True,

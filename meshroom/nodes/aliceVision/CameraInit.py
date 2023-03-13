@@ -64,14 +64,25 @@ Intrinsic = [
     desc.ChoiceParam(name="initializationMode", label="Initialization Mode",
                      description="Defines how this Intrinsic was initialized:\n"
                                  " * calibrated: calibrated externally.\n"
-                                 " * estimated: estimated from metadata and/or sensor width. \n"
+                                 " * estimated: estimated from metadata and/or sensor width \n"
                                  " * unknown: unknown camera parameters (can still have default value guess)\n"
                                  " * none: not set",
                      values=("calibrated", "estimated", "unknown", "none"),
                      value="none",
                      exclusive=True,
                      uid=[0],
-                     advanced=True
+                     ),
+
+    desc.ChoiceParam(name="distortionInitializationMode", label="Distortion Initialization Mode",
+                     description="Defines how the distortion model and parameters was initialized:\n"
+                                 " * calibrated: calibrated externally.\n"
+                                 " * estimated: estimated from a database of generic calibration \n"
+                                 " * unknown: unknown camera parameters (can still have default value guess)\n"
+                                 " * none: not set",
+                     values=("calibrated", "estimated", "unknown", "none"),
+                     value="none",
+                     exclusive=True,
+                     uid=[0],
                      ),
 
     desc.ListAttribute(
@@ -80,6 +91,7 @@ Intrinsic = [
             label="Distortion Params",
             description="Distortion Parameters",
         ),
+
     desc.BoolParam(name='locked', label='Locked',
                    description='If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speedup the reconstruction.',
                    value=False, uid=[0]),
@@ -162,14 +174,28 @@ The metadata needed are:
             value='${ALICEVISION_SENSOR_DB}',
             uid=[],
         ),
+        desc.File(
+            name='lensCorrectionProfileInfo',
+            label='Lens Correction Profile Info',
+            description='''Lens Correction Profile filepath or database directory.''',
+            value='${ALICEVISION_LENS_PROFILE_INFO}',
+            uid=[],
+        ),
+        desc.BoolParam(
+            name='lensCorrectionProfileSearchIgnoreCameraModel',
+            label='LCP Generic Search',
+            description='The lens name and camera maker are used to match the LCP database, but the camera model is ignored.',
+            value=True,
+            uid=[0],
+            advanced=True,
+        ),
         desc.FloatParam(
             name='defaultFieldOfView',
             label='Default Field Of View',
-            description='Empirical value for the field of view in degree.',
+            description='Default value for the field of view (in degree) used as an initialization when there is no focal or field of view in the image metadata.',
             value=45.0,
             range=(0.0, 180.0, 1.0),
             uid=[],
-            advanced=True,
         ),
         desc.ChoiceParam(
             name='groupCameraFallback',
@@ -184,7 +210,6 @@ The metadata needed are:
             value='folder',
             exclusive=True,
             uid=[],
-            advanced=True,
         ),
         desc.ChoiceParam(
             name='allowedCameraModels',
@@ -205,7 +230,7 @@ The metadata needed are:
                         'LibRawNoWhiteBalancing: Simple neutralization.\n'
                         'LibRawWhiteBalancing: Use internal white balancing from libraw.\n'
                         'DCPLinearProcessing: Use DCP color profile.\n'
-                        'DCPMetadata: Same as None with DCP info added in metadata.\n',
+                        'DCPMetadata: Same as None with DCP info added in metadata.',
             value='DCPLinearProcessing' if os.environ.get('ALICEVISION_COLOR_PROFILE_DB', '') else 'LibRawWhiteBalancing',
             values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing'],
             exclusive=True,

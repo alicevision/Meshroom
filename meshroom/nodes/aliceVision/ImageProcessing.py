@@ -108,6 +108,31 @@ Convert or apply filtering to the input images.
             value=False,
             uid=[0],
         ),
+        desc.GroupAttribute(name="lensCorrection", label="Lens Correction", description="Automatic lens correction settings.", joinChar=":", groupDesc=[
+            desc.BoolParam(
+                name='lensCorrectionEnabled',
+                label='Enable',
+                description='Enable lens correction.',
+                value=False,
+                uid=[0],
+            ),
+            desc.BoolParam(
+                name='geometry',
+                label='Geometry',
+                description='Geometry correction if a model is available in sfm data.',
+                value=False,
+                uid=[0],
+                enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value,
+            ),
+            desc.BoolParam(
+                name='vignetting',
+                label='Vignetting',
+                description='Vignetting correction if model parameters are available in metadata.',
+                value=False,
+                uid=[0],
+                enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value,
+            ),
+        ]),        
         desc.FloatParam(
             name='scaleFactor',
             label='ScaleFactor',

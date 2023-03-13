@@ -43,6 +43,10 @@ FocusScope {
             if (floatImageViewerLoader.active) {
                 return floatImageViewerLoader.item.metadata;
             }
+            // Use viewpoint metadata for the special case of the 8-bit viewer
+            if (qtImageViewerLoader.active) {
+                return viewpointMetadata;
+            }
             return {};
         }
     }

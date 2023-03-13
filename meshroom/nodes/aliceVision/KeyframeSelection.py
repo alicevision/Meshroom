@@ -136,7 +136,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             name="pxDisplacement",
                             label="Pixel Displacement",
                             description="The percentage of pixels in the frame that need to have moved since the last keyframe to be considered for the selection",
-                            value=3.0,
+                            value=10.0,
                             range=(0.0, 100.0, 1.0),
                             uid=[0],
                             enabled=lambda node: node.smartSelection.enabled

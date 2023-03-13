@@ -132,6 +132,15 @@ Convert or apply filtering to the input images.
                 uid=[0],
                 enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value,
             ),
+            desc.BoolParam(
+                name='chromaticAberration',
+                label='Chromatic Aberration',
+                description='Chromatic aberration (fringing) correction if model parameters are available in metadata.',
+                value=False,
+                uid=[0],
+                enabled=False  # To replace with the line below when the correction of chromatic aberration will be available
+                # enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value
+            )
         ]),        
         desc.FloatParam(
             name='scaleFactor',

@@ -74,7 +74,7 @@ Intrinsic = [
                      advanced=True
                      ),
         
-    desc.ChoiceParam(name="distoInitializationMode", label="Distortion Initialization Mode",
+    desc.ChoiceParam(name="distortionInitializationMode", label="Distortion Initialization Mode",
                      description="Defines how the distortion model and parameters was initialized:\n"
                                  " * calibrated: calibrated externally.\n"
                                  " * estimated: estimated from a database of generic calibration \n"

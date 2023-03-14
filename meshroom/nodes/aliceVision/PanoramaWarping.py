@@ -66,6 +66,15 @@ Compute the image warping for each input image in the panorama coordinate system
             enabled=lambda node: (node.estimateResolution.value),
         ),
         desc.ChoiceParam(
+                name='outputColorSpace',
+                label='Output Color Space',
+                description='Allows you to choose the color space of the output image.',
+                value='Linear',
+                values=['Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
+                exclusive=True,
+                uid=[0],
+        ),
+       desc.ChoiceParam(
             name='storageDataType',
             label='Storage Data Type',
             description='Storage image data type:\n'

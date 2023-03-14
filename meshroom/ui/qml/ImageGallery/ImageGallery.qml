@@ -527,7 +527,7 @@ Panel {
             TableModel {
                 id : intrinsicModel
                 // Hardcoded default width per column
-                property var columnWidths: [105, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]
+                property var columnWidths: [105, 75, 75, 75, 60, 60, 60, 60, 200, 60, 60, 60]
                 property var columnNames: [
                     "intrinsicId",
                     "initialFocalLength",

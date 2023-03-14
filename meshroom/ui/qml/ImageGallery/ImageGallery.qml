@@ -201,6 +201,10 @@ Panel {
             }
             onCurrentItemChanged: {
                 if (grid.updateSelectedViewFromGrid && grid.currentItem) {
+                    // If tempCameraInit is set and the first image in the GridView is selected, there has been a change of the CameraInit group and the viewId might be the same
+                    // Forcing the index to -1 before re-setting it will always cause a refresh on the Viewer2D's side, even if the viewId has not changed
+                    if (tempCameraInit !== null && grid.currentIndex == 0)
+                        _reconstruction.selectedViewId = -1
                     _reconstruction.selectedViewId = grid.currentItem.viewpoint.get("viewId").value
                 }
             }

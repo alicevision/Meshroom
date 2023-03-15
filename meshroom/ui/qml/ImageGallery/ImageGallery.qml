@@ -517,7 +517,10 @@ Panel {
 
                 model: intrinsicModel
 
-                delegate: IntrinsicDisplayDelegate { attribute: model.display }
+                delegate: IntrinsicDisplayDelegate {
+                    attribute: model.display
+                    readOnly: m.currentCameraInit ? m.currentCameraInit.locked : false
+                }
 
                 ScrollBar.horizontal: ScrollBar { id: sb }
                 ScrollBar.vertical : ScrollBar { id: sbv }

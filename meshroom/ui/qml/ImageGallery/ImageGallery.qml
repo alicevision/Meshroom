@@ -42,7 +42,7 @@ Panel {
         property bool readOnly: root.readOnly || displayHDR.checked
 
         onViewpointsChanged: {
-            ThumbnailCache.clearRequests();
+            ThumbnailCache.clearRequests()
         }
 
         onIntrinsicsChanged: {
@@ -60,45 +60,42 @@ Panel {
         _reconstruction.cameraInitIndex = newIndex
     }
 
-    function populate_model()
-    {
+    function populate_model() {
         intrinsicModel.clear()
         for (var intr in parsedIntrinsic) {
             intrinsicModel.appendRow(parsedIntrinsic[intr])
         }
     }
 
-    function parseIntr(){
+    function parseIntr() {
         parsedIntrinsic = []
-        if(!m.intrinsics)
-        {
+        if(!m.intrinsics) {
             return
         }
 
         //Loop through all intrinsics
-        for(var i = 0; i < m.intrinsics.count; ++i){
+        for(var i = 0; i < m.intrinsics.count; ++i) {
             var intrinsic = {}
 
             //Loop through all attributes
-            for(var j=0; j < m.intrinsics.at(i).value.count; ++j){
+            for(var j=0; j < m.intrinsics.at(i).value.count; ++j) {
                 var currentAttribute = m.intrinsics.at(i).value.at(j)
-                if(currentAttribute.type === "GroupAttribute"){
-                    for(var k=0; k < currentAttribute.value.count; ++k){
+                if(currentAttribute.type === "GroupAttribute") {
+                    for(var k=0; k < currentAttribute.value.count; ++k) {
                         intrinsic[currentAttribute.name + "." + currentAttribute.value.at(k).name] = currentAttribute.value.at(k)
                     }
                 }
-                else if(currentAttribute.type === "ListAttribute"){
+                else if(currentAttribute.type === "ListAttribute") {
                     // not needed for now
                 }
-                else{
+                else {
                     intrinsic[currentAttribute.name] = currentAttribute
                 }
             }
             // Table Model needs to contain an entry for each column.
             // In case of old file formats, some intrinsic keys that we display may not exist in the model.
             // So, here we create an empty entry to enforce that the key exists in the model.
-            for(var n = 0; n < intrinsicModel.columnNames.length; ++n)
-            {
+            for(var n = 0; n < intrinsicModel.columnNames.length; ++n) {
                 var name = intrinsicModel.columnNames[n]
                 if(!(name in intrinsic)) {
                     intrinsic[name] = {}
@@ -187,12 +184,11 @@ Panel {
                     }
                 }
             }
-            function makeCurrentItemVisible()
-            {
+            function makeCurrentItemVisible() {
                 grid.positionViewAtIndex(grid.currentIndex, GridView.Visible)
             }
-            function updateCurrentIndexFromSelectionViewId()
-            {
+
+            function updateCurrentIndexFromSelectionViewId() {
                 var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
                 if (idx >= 0 && grid.currentIndex != idx) {
                     grid.currentIndex = idx
@@ -250,8 +246,7 @@ Panel {
                     var roleNameAndCmd = roleName_.split(".");
                     var roleName = roleName_;
                     var cmd = "";
-                    if(roleNameAndCmd.length >= 2)
-                    {
+                    if(roleNameAndCmd.length >= 2) {
                         roleName = roleNameAndCmd[0];
                         cmd = roleNameAndCmd[1];
                     }
@@ -284,8 +279,7 @@ Panel {
                         grid.currentIndex = DelegateModel.filteredIndex
                     }
 
-                    function sendRemoveRequest()
-                    {
+                    function sendRemoveRequest() {
                         if(!readOnly)
                             removeImageRequest(object)
                     }
@@ -542,7 +536,8 @@ Panel {
                     "serialNumber",
                     "principalPoint.x",
                     "principalPoint.y",
-                    "locked"]
+                    "locked"
+                ]
 
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[0]]} }
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[1]]} }
@@ -618,7 +613,7 @@ Panel {
         // Images count
         id: footer
 
-        function resetButtons(){
+        function resetButtons() {
             inputImagesFilterButton.checked = false
             estimatedCamerasFilterButton.checked = false
             nonEstimatedCamerasFilterButton.checked = false
@@ -662,23 +657,24 @@ Panel {
 
             onCheckedChanged: {
                 if (checked) {
-                    sortedModel.reconstructionFilter = true;
-                    inputImagesFilterButton.checked = false;
-                    nonEstimatedCamerasFilterButton.checked = false;
-                    intrinsicsFilterButton.checked = false;
+                    sortedModel.reconstructionFilter = true
+                    inputImagesFilterButton.checked = false
+                    nonEstimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false
                 } else {
                     if (inputImagesFilterButton.checked === false && nonEstimatedCamerasFilterButton.checked === false && intrinsicsFilterButton.checked === false)
                         inputImagesFilterButton.checked = true
                 }
             }
-            onEnabledChanged:{
+            onEnabledChanged: {
                 if(!enabled) {
-                    if(checked) inputImagesFilterButton.checked = true;
+                    if(checked)
+                        inputImagesFilterButton.checked = true
                     checked = false
                 }
             }
-
         }
+
         // Non estimated cameras count
         MaterialToolLabelButton {
             id : nonEstimatedCamerasFilterButton
@@ -694,23 +690,24 @@ Panel {
 
             onCheckedChanged: {
                 if (checked) {
-                    sortedModel.reconstructionFilter = false;
-                    inputImagesFilterButton.checked = false;
-                    estimatedCamerasFilterButton.checked = false;
-                    intrinsicsFilterButton.checked = false;
+                    sortedModel.reconstructionFilter = false
+                    inputImagesFilterButton.checked = false
+                    estimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false
                 } else {
                     if (inputImagesFilterButton.checked === false && estimatedCamerasFilterButton.checked === false && intrinsicsFilterButton.checked === false)
                         inputImagesFilterButton.checked = true
                 }
             }
-            onEnabledChanged:{
+            onEnabledChanged: {
                 if(!enabled) {
-                    if(checked) inputImagesFilterButton.checked = true;
+                    if(checked)
+                        inputImagesFilterButton.checked = true
                     checked = false
                 }
             }
-
         }
+
         MaterialToolLabelButton {
             id : intrinsicsFilterButton
             Layout.minimumWidth: childrenRect.width
@@ -718,7 +715,6 @@ Panel {
             iconText: MaterialIcons.camera
             label: _reconstruction ? (m.intrinsics ? m.intrinsics.count : 0) : "0"
             padding: 3
-
 
             enabled: m.intrinsics ? m.intrinsics.count > 0 : false
             checkable: true
@@ -731,20 +727,22 @@ Panel {
                     nonEstimatedCamerasFilterButton.checked = false
                 } else {
                     if (inputImagesFilterButton.checked === false && estimatedCamerasFilterButton.checked === false && nonEstimatedCamerasFilterButton.checked === false)
-                            inputImagesFilterButton.checked = true
+                        inputImagesFilterButton.checked = true
                 }
             }
-            onEnabledChanged:{
+            onEnabledChanged: {
                 if(!enabled) {
-                    if(checked) inputImagesFilterButton.checked = true;
+                    if(checked)
+                        inputImagesFilterButton.checked = true
                     checked = false
                 }
             }
-
-
         }
 
-        Item { Layout.fillHeight: true; Layout.fillWidth: true }
+        Item {
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+        }
 
         MaterialToolLabelButton {
             id: displayHDR
@@ -784,7 +782,7 @@ Panel {
                 _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
             }
             function close() {
-                    _reconstruction.clearTempCameraInit();
+                _reconstruction.clearTempCameraInit();
             }
         }
 
@@ -828,11 +826,14 @@ Panel {
                 _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
             }
             function close() {
-                    _reconstruction.clearTempCameraInit();
+                _reconstruction.clearTempCameraInit();
             }
         }
 
-        Item { Layout.fillHeight: true; width: 1 }
+        Item {
+            Layout.fillHeight: true
+            width: 1
+        }
 
         // Thumbnail size icon and slider
         MaterialToolButton {
@@ -843,7 +844,7 @@ Panel {
             padding: 0
             anchors.margins: 0
             font.pointSize: 11
-            onClicked: { thumbnailSizeSlider.value = defaultCellSize; }
+            onClicked: { thumbnailSizeSlider.value = defaultCellSize }
         }
         Slider {
             id: thumbnailSizeSlider

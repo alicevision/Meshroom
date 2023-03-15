@@ -24,6 +24,15 @@ TODO.
             description='Input file. Coulb be SfMData file or folder.',
             value='',
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name='method',
+            label='method',
+            description='Method used for light calibration.',
+            values=['brightestPoint', 'whiteSphere'],
+            value='brightestPoint',
+            exclusive=True,
+            uid=[0],
         )
     ]
 

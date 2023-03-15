@@ -44,16 +44,15 @@ Panel {
         onViewpointsChanged: {
             ThumbnailCache.clearRequests();
         }
+
+        onIntrinsicsChanged: {
+            parseIntr()
+        }
     }
 
     property variant parsedIntrinsic
     property int numberOfIntrinsics : m.intrinsics ? m.intrinsics.count : 0
-
     onNumberOfIntrinsicsChanged: {
-        parseIntr()
-    }
-
-    onCameraInitIndexChanged: {
         parseIntr()
     }
 

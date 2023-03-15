@@ -318,14 +318,14 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.File(
             name='initialPairA',
             label='Initial Pair A',
-            description='Filename of the first image (without path).',
+            description='View ID or filename of the first image (either with or without the full path).',
             value='',
             uid=[0],
         ),
         desc.File(
             name='initialPairB',
             label='Initial Pair B',
-            description='Filename of the second image (without path).',
+            description='View ID or filename of the second image (either with or without the full path).',
             value='',
             uid=[0],
         ),

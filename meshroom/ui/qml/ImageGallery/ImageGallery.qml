@@ -190,7 +190,7 @@ Panel {
 
             function updateCurrentIndexFromSelectionViewId() {
                 var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
-                if (idx >= 0 && grid.currentIndex != idx) {
+                if (idx >= 0 && grid.currentIndex !== idx) {
                     grid.currentIndex = idx
                 }
             }
@@ -209,14 +209,14 @@ Panel {
                 target: ThumbnailCache
                 function onThumbnailCreated(imgSource, callerID) {
                     let item = grid.itemAtIndex(callerID);  // item is an ImageDelegate
-                    if (item && item.source == imgSource) {
+                    if (item && item.source === imgSource) {
                         item.updateThumbnail();
                         return;
                     }
                     // fallback in case the ImageDelegate cellID changed
                     for (let idx = 0; idx < grid.count; idx++) {
                         item = grid.itemAtIndex(idx);
-                        if (item && item.source == imgSource) {
+                        if (item && item.source === imgSource) {
                             item.updateThumbnail();
                         }
                     }
@@ -320,7 +320,7 @@ Panel {
                         // Center of SfMTransform
                         Loader {
                             id: sfmTransformIndicator
-                            active: viewpoint && (viewpoint.get("viewId").value == centerViewId)
+                            active: viewpoint && (viewpoint.get("viewId").value === centerViewId)
                             sourceComponent: ImageBadge {
                                 text: MaterialIcons.gamepad
                                 ToolTip.text: "Camera used to define the center of the scene."
@@ -349,12 +349,12 @@ Panel {
             Keys.onPressed: {
                 if(event.modifiers & Qt.AltModifier)
                 {
-                    if(event.key == Qt.Key_Right)
+                    if(event.key === Qt.Key_Right)
                     {
                         _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
                         event.accepted = true
                     }
-                    else if(event.key == Qt.Key_Left)
+                    else if(event.key === Qt.Key_Left)
                     {
                         _reconstruction.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
                         event.accepted = true
@@ -362,27 +362,27 @@ Panel {
                 }
                 else
                 {
-                    if(event.key == Qt.Key_Right)
+                    if(event.key === Qt.Key_Right)
                     {
                         grid.moveCurrentIndexRight()
                         event.accepted = true
                     }
-                    else if(event.key == Qt.Key_Left)
+                    else if(event.key === Qt.Key_Left)
                     {
                         grid.moveCurrentIndexLeft()
                         event.accepted = true
                     }
-                    else if(event.key == Qt.Key_Up)
+                    else if(event.key === Qt.Key_Up)
                     {
                         grid.moveCurrentIndexUp()
                         event.accepted = true
                     }
-                    else if(event.key == Qt.Key_Down)
+                    else if(event.key === Qt.Key_Down)
                     {
                         grid.moveCurrentIndexDown()
                         event.accepted = true
                     }
-                    else if (event.key == Qt.Key_Tab)
+                    else if (event.key === Qt.Key_Tab)
                     {
                         searchBar.forceActiveFocus()
                         event.accepted = true
@@ -394,7 +394,7 @@ Panel {
             Column {
                 id: dropImagePlaceholder
                 anchors.centerIn: parent
-                visible: (m.viewpoints ? m.viewpoints.count == 0 : true) && !intrinsicsFilterButton.checked
+                visible: (m.viewpoints ? m.viewpoints.count === 0 : true) && !intrinsicsFilterButton.checked
                 spacing: 4
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -410,7 +410,7 @@ Panel {
             Column {
                 id: noImageImagePlaceholder
                 anchors.centerIn: parent
-                visible: (m.viewpoints ? m.viewpoints.count != 0 : false) && !dropImagePlaceholder.visible && grid.model.count == 0 && !intrinsicsFilterButton.checked
+                visible: (m.viewpoints ? m.viewpoints.count !== 0 : false) && !dropImagePlaceholder.visible && grid.model.count === 0 && !intrinsicsFilterButton.checked
                 spacing: 4
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter

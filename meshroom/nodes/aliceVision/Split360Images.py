@@ -11,8 +11,8 @@ class Split360Images(desc.AVCommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Images',
-            description="Images",
+            label='Input',
+            description="Single image, image folder or SfMData file.",
             value='',
             uid=[0],
         ),
@@ -101,6 +101,13 @@ class Split360Images(desc.AVCommandLineNode):
             label='Folder',
             description="Output folder for extracted frames.",
             value=desc.Node.internalFolder,
+            uid=[],
+        ),
+        desc.File(
+            name='outSfMData',
+            label='SfMData file',
+            description="Output SfMData file.",
+            value=desc.Node.internalFolder + 'rig.sfm',
             uid=[],
         ),
     ]

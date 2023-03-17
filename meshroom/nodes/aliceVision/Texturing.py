@@ -266,12 +266,11 @@ Many cameras are contributing to the low frequencies and only the best ones cont
         desc.ChoiceParam(
             name='outputColorSpace',
             label='Output Color Space',
-            description="Color space for the output file.",
+            description="Color space for the output texture files.",
             value='AUTO',
             values=('sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'AUTO'),
             exclusive=True,
             uid=[0],
-            advanced=True,
         ),
         desc.BoolParam(
             name='correctEV',

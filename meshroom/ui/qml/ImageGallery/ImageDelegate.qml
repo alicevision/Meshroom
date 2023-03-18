@@ -84,6 +84,22 @@ Item {
                 enabled: !root.readOnly && _viewpoint.viewId != -1 && _reconstruction && activeNode
                 onClicked: activeNode.attribute("transformation").value = _viewpoint.viewId.toString()
             }
+            Menu {
+                id: sfmSetPairMenu
+                title: "SfM: Define Initial Pair"
+                property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("StructureFromMotion").node : null
+                enabled: !root.readOnly && _viewpoint.viewId != -1 && _reconstruction && activeNode
+
+                MenuItem {
+                    text: "A"
+                    onClicked: sfmSetPairMenu.activeNode.attribute("initialPairA").value = _viewpoint.viewId.toString()
+                }
+
+                MenuItem {
+                    text: "B"
+                    onClicked: sfmSetPairMenu.activeNode.attribute("initialPairB").value = _viewpoint.viewId.toString()
+                }
+            }
         }
 
         ColumnLayout {

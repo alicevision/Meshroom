@@ -42,18 +42,17 @@ Panel {
         property bool readOnly: root.readOnly || displayHDR.checked
 
         onViewpointsChanged: {
-            ThumbnailCache.clearRequests();
+            ThumbnailCache.clearRequests()
+        }
+
+        onIntrinsicsChanged: {
+            parseIntr()
         }
     }
 
     property variant parsedIntrinsic
     property int numberOfIntrinsics : m.intrinsics ? m.intrinsics.count : 0
-
     onNumberOfIntrinsicsChanged: {
-        parseIntr()
-    }
-
-    onCameraInitIndexChanged: {
         parseIntr()
     }
 
@@ -61,45 +60,42 @@ Panel {
         _reconstruction.cameraInitIndex = newIndex
     }
 
-    function populate_model()
-    {
+    function populate_model() {
         intrinsicModel.clear()
         for (var intr in parsedIntrinsic) {
             intrinsicModel.appendRow(parsedIntrinsic[intr])
         }
     }
 
-    function parseIntr(){
+    function parseIntr() {
         parsedIntrinsic = []
-        if(!m.intrinsics)
-        {
+        if(!m.intrinsics) {
             return
         }
 
         //Loop through all intrinsics
-        for(var i = 0; i < m.intrinsics.count; ++i){
+        for(var i = 0; i < m.intrinsics.count; ++i) {
             var intrinsic = {}
 
             //Loop through all attributes
-            for(var j=0; j < m.intrinsics.at(i).value.count; ++j){
+            for(var j=0; j < m.intrinsics.at(i).value.count; ++j) {
                 var currentAttribute = m.intrinsics.at(i).value.at(j)
-                if(currentAttribute.type === "GroupAttribute"){
-                    for(var k=0; k < currentAttribute.value.count; ++k){
+                if(currentAttribute.type === "GroupAttribute") {
+                    for(var k=0; k < currentAttribute.value.count; ++k) {
                         intrinsic[currentAttribute.name + "." + currentAttribute.value.at(k).name] = currentAttribute.value.at(k)
                     }
                 }
-                else if(currentAttribute.type === "ListAttribute"){
+                else if(currentAttribute.type === "ListAttribute") {
                     // not needed for now
                 }
-                else{
+                else {
                     intrinsic[currentAttribute.name] = currentAttribute
                 }
             }
             // Table Model needs to contain an entry for each column.
             // In case of old file formats, some intrinsic keys that we display may not exist in the model.
             // So, here we create an empty entry to enforce that the key exists in the model.
-            for(var n = 0; n < intrinsicModel.columnNames.length; ++n)
-            {
+            for(var n = 0; n < intrinsicModel.columnNames.length; ++n) {
                 var name = intrinsicModel.columnNames[n]
                 if(!(name in intrinsic)) {
                     intrinsic[name] = {}
@@ -188,14 +184,13 @@ Panel {
                     }
                 }
             }
-            function makeCurrentItemVisible()
-            {
+            function makeCurrentItemVisible() {
                 grid.positionViewAtIndex(grid.currentIndex, GridView.Visible)
             }
-            function updateCurrentIndexFromSelectionViewId()
-            {
+
+            function updateCurrentIndexFromSelectionViewId() {
                 var idx = grid.model.find(_reconstruction.selectedViewId, "viewId")
-                if (idx >= 0 && grid.currentIndex != idx) {
+                if (idx >= 0 && grid.currentIndex !== idx) {
                     grid.currentIndex = idx
                 }
             }
@@ -214,14 +209,14 @@ Panel {
                 target: ThumbnailCache
                 function onThumbnailCreated(imgSource, callerID) {
                     let item = grid.itemAtIndex(callerID);  // item is an ImageDelegate
-                    if (item && item.source == imgSource) {
+                    if (item && item.source === imgSource) {
                         item.updateThumbnail();
                         return;
                     }
                     // fallback in case the ImageDelegate cellID changed
                     for (let idx = 0; idx < grid.count; idx++) {
                         item = grid.itemAtIndex(idx);
-                        if (item && item.source == imgSource) {
+                        if (item && item.source === imgSource) {
                             item.updateThumbnail();
                         }
                     }
@@ -251,8 +246,7 @@ Panel {
                     var roleNameAndCmd = roleName_.split(".");
                     var roleName = roleName_;
                     var cmd = "";
-                    if(roleNameAndCmd.length >= 2)
-                    {
+                    if(roleNameAndCmd.length >= 2) {
                         roleName = roleNameAndCmd[0];
                         cmd = roleNameAndCmd[1];
                     }
@@ -285,8 +279,7 @@ Panel {
                         grid.currentIndex = DelegateModel.filteredIndex
                     }
 
-                    function sendRemoveRequest()
-                    {
+                    function sendRemoveRequest() {
                         if(!readOnly)
                             removeImageRequest(object)
                     }
@@ -327,7 +320,7 @@ Panel {
                         // Center of SfMTransform
                         Loader {
                             id: sfmTransformIndicator
-                            active: viewpoint && (viewpoint.get("viewId").value == centerViewId)
+                            active: viewpoint && (viewpoint.get("viewId").value === centerViewId)
                             sourceComponent: ImageBadge {
                                 text: MaterialIcons.gamepad
                                 ToolTip.text: "Camera used to define the center of the scene."
@@ -356,12 +349,12 @@ Panel {
             Keys.onPressed: {
                 if(event.modifiers & Qt.AltModifier)
                 {
-                    if(event.key == Qt.Key_Right)
+                    if(event.key === Qt.Key_Right)
                     {
                         _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
                         event.accepted = true
                     }
-                    else if(event.key == Qt.Key_Left)
+                    else if(event.key === Qt.Key_Left)
                     {
                         _reconstruction.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
                         event.accepted = true
@@ -369,27 +362,27 @@ Panel {
                 }
                 else
                 {
-                    if(event.key == Qt.Key_Right)
+                    if(event.key === Qt.Key_Right)
                     {
                         grid.moveCurrentIndexRight()
                         event.accepted = true
                     }
-                    else if(event.key == Qt.Key_Left)
+                    else if(event.key === Qt.Key_Left)
                     {
                         grid.moveCurrentIndexLeft()
                         event.accepted = true
                     }
-                    else if(event.key == Qt.Key_Up)
+                    else if(event.key === Qt.Key_Up)
                     {
                         grid.moveCurrentIndexUp()
                         event.accepted = true
                     }
-                    else if(event.key == Qt.Key_Down)
+                    else if(event.key === Qt.Key_Down)
                     {
                         grid.moveCurrentIndexDown()
                         event.accepted = true
                     }
-                    else if (event.key == Qt.Key_Tab)
+                    else if (event.key === Qt.Key_Tab)
                     {
                         searchBar.forceActiveFocus()
                         event.accepted = true
@@ -401,7 +394,7 @@ Panel {
             Column {
                 id: dropImagePlaceholder
                 anchors.centerIn: parent
-                visible: (m.viewpoints ? m.viewpoints.count == 0 : true) && !intrinsicsFilterButton.checked
+                visible: (m.viewpoints ? m.viewpoints.count === 0 : true) && !intrinsicsFilterButton.checked
                 spacing: 4
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -417,7 +410,7 @@ Panel {
             Column {
                 id: noImageImagePlaceholder
                 anchors.centerIn: parent
-                visible: (m.viewpoints ? m.viewpoints.count != 0 : false) && !dropImagePlaceholder.visible && grid.model.count == 0 && !intrinsicsFilterButton.checked
+                visible: (m.viewpoints ? m.viewpoints.count !== 0 : false) && !dropImagePlaceholder.visible && grid.model.count === 0 && !intrinsicsFilterButton.checked
                 spacing: 4
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -518,7 +511,10 @@ Panel {
 
                 model: intrinsicModel
 
-                delegate: IntrinsicDisplayDelegate { attribute: model.display }
+                delegate: IntrinsicDisplayDelegate {
+                    attribute: model.display
+                    readOnly: m.currentCameraInit ? m.currentCameraInit.locked : false
+                }
 
                 ScrollBar.horizontal: ScrollBar { id: sb }
                 ScrollBar.vertical : ScrollBar { id: sbv }
@@ -527,7 +523,7 @@ Panel {
             TableModel {
                 id : intrinsicModel
                 // Hardcoded default width per column
-                property var columnWidths: [105, 75, 75, 75, 125, 60, 60, 45, 45, 200, 60, 60]
+                property var columnWidths: [105, 75, 75, 75, 60, 60, 60, 60, 200, 60, 60, 60]
                 property var columnNames: [
                     "intrinsicId",
                     "initialFocalLength",
@@ -540,7 +536,8 @@ Panel {
                     "serialNumber",
                     "principalPoint.x",
                     "principalPoint.y",
-                    "locked"]
+                    "locked"
+                ]
 
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[0]]} }
                 TableModelColumn { display: function(modelIndex){return parsedIntrinsic[modelIndex.row][intrinsicModel.columnNames[1]]} }
@@ -616,7 +613,7 @@ Panel {
         // Images count
         id: footer
 
-        function resetButtons(){
+        function resetButtons() {
             inputImagesFilterButton.checked = false
             estimatedCamerasFilterButton.checked = false
             nonEstimatedCamerasFilterButton.checked = false
@@ -660,23 +657,24 @@ Panel {
 
             onCheckedChanged: {
                 if (checked) {
-                    sortedModel.reconstructionFilter = true;
-                    inputImagesFilterButton.checked = false;
-                    nonEstimatedCamerasFilterButton.checked = false;
-                    intrinsicsFilterButton.checked = false;
+                    sortedModel.reconstructionFilter = true
+                    inputImagesFilterButton.checked = false
+                    nonEstimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false
                 } else {
                     if (inputImagesFilterButton.checked === false && nonEstimatedCamerasFilterButton.checked === false && intrinsicsFilterButton.checked === false)
                         inputImagesFilterButton.checked = true
                 }
             }
-            onEnabledChanged:{
+            onEnabledChanged: {
                 if(!enabled) {
-                    if(checked) inputImagesFilterButton.checked = true;
+                    if(checked)
+                        inputImagesFilterButton.checked = true
                     checked = false
                 }
             }
-
         }
+
         // Non estimated cameras count
         MaterialToolLabelButton {
             id : nonEstimatedCamerasFilterButton
@@ -692,23 +690,24 @@ Panel {
 
             onCheckedChanged: {
                 if (checked) {
-                    sortedModel.reconstructionFilter = false;
-                    inputImagesFilterButton.checked = false;
-                    estimatedCamerasFilterButton.checked = false;
-                    intrinsicsFilterButton.checked = false;
+                    sortedModel.reconstructionFilter = false
+                    inputImagesFilterButton.checked = false
+                    estimatedCamerasFilterButton.checked = false
+                    intrinsicsFilterButton.checked = false
                 } else {
                     if (inputImagesFilterButton.checked === false && estimatedCamerasFilterButton.checked === false && intrinsicsFilterButton.checked === false)
                         inputImagesFilterButton.checked = true
                 }
             }
-            onEnabledChanged:{
+            onEnabledChanged: {
                 if(!enabled) {
-                    if(checked) inputImagesFilterButton.checked = true;
+                    if(checked)
+                        inputImagesFilterButton.checked = true
                     checked = false
                 }
             }
-
         }
+
         MaterialToolLabelButton {
             id : intrinsicsFilterButton
             Layout.minimumWidth: childrenRect.width
@@ -716,7 +715,6 @@ Panel {
             iconText: MaterialIcons.camera
             label: _reconstruction ? (m.intrinsics ? m.intrinsics.count : 0) : "0"
             padding: 3
-
 
             enabled: m.intrinsics ? m.intrinsics.count > 0 : false
             checkable: true
@@ -729,20 +727,22 @@ Panel {
                     nonEstimatedCamerasFilterButton.checked = false
                 } else {
                     if (inputImagesFilterButton.checked === false && estimatedCamerasFilterButton.checked === false && nonEstimatedCamerasFilterButton.checked === false)
-                            inputImagesFilterButton.checked = true
+                        inputImagesFilterButton.checked = true
                 }
             }
-            onEnabledChanged:{
+            onEnabledChanged: {
                 if(!enabled) {
-                    if(checked) inputImagesFilterButton.checked = true;
+                    if(checked)
+                        inputImagesFilterButton.checked = true
                     checked = false
                 }
             }
-
-
         }
 
-        Item { Layout.fillHeight: true; Layout.fillWidth: true }
+        Item {
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+        }
 
         MaterialToolLabelButton {
             id: displayHDR
@@ -782,7 +782,7 @@ Panel {
                 _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
             }
             function close() {
-                    _reconstruction.clearTempCameraInit();
+                _reconstruction.clearTempCameraInit();
             }
         }
 
@@ -826,11 +826,14 @@ Panel {
                 _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
             }
             function close() {
-                    _reconstruction.clearTempCameraInit();
+                _reconstruction.clearTempCameraInit();
             }
         }
 
-        Item { Layout.fillHeight: true; width: 1 }
+        Item {
+            Layout.fillHeight: true
+            width: 1
+        }
 
         // Thumbnail size icon and slider
         MaterialToolButton {
@@ -841,7 +844,7 @@ Panel {
             padding: 0
             anchors.margins: 0
             font.pointSize: 11
-            onClicked: { thumbnailSizeSlider.value = defaultCellSize; }
+            onClicked: { thumbnailSizeSlider.value = defaultCellSize }
         }
         Slider {
             id: thumbnailSizeSlider

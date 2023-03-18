@@ -598,6 +598,7 @@ class Reconstruction(UIGraph):
         nodeDesc = meshroom.core.nodesDesc["CameraInit"]()
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
+        tmpCameraInit.locked = True
         self.tempCameraInit = tmpCameraInit
         rootNode = self.graph.dfsOnFinish([node])[0][0]
         if rootNode.nodeType == "CameraInit":

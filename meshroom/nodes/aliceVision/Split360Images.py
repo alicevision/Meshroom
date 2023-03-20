@@ -2,8 +2,26 @@ __version__ = "3.0"
 
 from meshroom.core import desc
 
+
+class Split360InputNodeSize(desc.DynamicNodeSize):
+    '''
+    The Split360Images will increase the amount of views in the SfMData.
+    This class converts the number of input views into the number of split output views.
+    '''
+    def computeSize(self, node):
+        s = super(Split360InputNodeSize, self).computeSize(node)
+        factor = 0
+        mode = node.attribute('splitMode')
+        if mode.value == 'equirectangular':
+            factor = node.attribute('equirectangularGroup.equirectangularNbSplits').value
+        elif mode.value == 'dualfisheye':
+            factor = 2
+        return s * factor
+
+
 class Split360Images(desc.AVCommandLineNode):
     commandLine = 'aliceVision_split360Images {allParams}'
+    size = Split360InputNodeSize('input')
     
     category = 'Utils'
     documentation = "This node is used to extract multiple images from equirectangular or dualfisheye images."

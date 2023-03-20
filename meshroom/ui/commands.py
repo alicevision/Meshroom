@@ -264,11 +264,17 @@ class SetAttributeCommand(GraphCommand):
     def redoImpl(self):
         if self.value == self.oldValue:
             return False
-        self.graph.attribute(self.attrName).value = self.value
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).value = self.value
+        else:
+            self.graph.internalAttribute(self.attrName).value = self.value
         return True
 
     def undoImpl(self):
-        self.graph.attribute(self.attrName).value = self.oldValue
+        if self.graph.attribute(self.attrName) is not None:
+            self.graph.attribute(self.attrName).value = self.oldValue
+        else:
+            self.graph.internalAttribute(self.attrName).value = self.oldValue
 
 
 class AddEdgeCommand(GraphCommand):
@@ -348,6 +354,34 @@ class ListAttributeRemoveCommand(GraphCommand):
     def undoImpl(self):
         listAttribute = self.graph.attribute(self.listAttrName)
         listAttribute.insert(self.index, self.value)
+
+
+class ClearImagesCommand(GraphCommand):
+    def __init__(self, graph, cameraInitNodes, parent=None):
+        super(ClearImagesCommand, self).__init__(graph, parent)
+        self.cameraInits = cameraInitNodes
+        self.viewpoints = { cameraInit.name: cameraInit.attribute("viewpoints").getExportValue() for cameraInit in self.cameraInits }
+        self.intrinsics = { cameraInit.name: cameraInit.attribute("intrinsics").getExportValue() for cameraInit in self.cameraInits }
+        self.title = "Clear{}Images".format(" " if len(self.cameraInits) == 1 else " All ")
+        self.setText(self.title)
+
+    def redoImpl(self):
+        for i in range(len(self.cameraInits)):
+            # Reset viewpoints
+            self.cameraInits[i].viewpoints.resetValue()
+            self.cameraInits[i].viewpoints.valueChanged.emit()
+            self.cameraInits[i].viewpoints.requestGraphUpdate()
+
+            # Reset intrinsics
+            self.cameraInits[i].intrinsics.resetValue()
+            self.cameraInits[i].intrinsics.valueChanged.emit()
+            self.cameraInits[i].intrinsics.requestGraphUpdate()
+
+    def undoImpl(self):
+        for cameraInit in self.viewpoints:
+            with GraphModification(self.graph):
+                self.graph.node(cameraInit).viewpoints.value = self.viewpoints[cameraInit]
+                self.graph.node(cameraInit).intrinsics.value = self.intrinsics[cameraInit]
 
 
 class MoveNodeCommand(GraphCommand):

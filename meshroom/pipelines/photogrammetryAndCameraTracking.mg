@@ -12,7 +12,8 @@
             "ImageMatchingMultiSfM": "1.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
-            "StructureFromMotion": "2.0"
+            "StructureFromMotion": "2.0",
+            "Publish": "1.2"
         }
     }, 
     "graph": {
@@ -161,6 +162,18 @@
                 1429, 
                 212
             ]
+        },
+        "Publish_1": {
+            "nodeType": "Publish",
+            "position": [
+                1829,
+                212
+            ],
+            "inputs": {
+                "inputFiles": [
+                    "{ExportAnimatedCamera_1.output}"
+                ]
+            }
         }
     }
 }

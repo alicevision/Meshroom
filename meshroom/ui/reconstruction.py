@@ -488,9 +488,9 @@ class Reconstruction(UIGraph):
             self.load(p, setupProjectFile=False)
 
     @Slot(str, result=bool)
-    def load(self, filepath, setupProjectFile=True):
+    def load(self, filepath, setupProjectFile=True, publishOutputs=False):
         try:
-            status = super(Reconstruction, self).loadGraph(filepath, setupProjectFile)
+            status = super(Reconstruction, self).loadGraph(filepath, setupProjectFile, publishOutputs)
             # warn about pre-release projects being automatically upgraded
             if Version(self._graph.fileReleaseVersion).major == "0":
                 self.warning.emit(Message(
@@ -524,7 +524,8 @@ class Reconstruction(UIGraph):
             return False
 
     @Slot(QUrl, result=bool)
-    def loadUrl(self, url):
+    @Slot(QUrl, bool, bool, result=bool)
+    def loadUrl(self, url, setupProjectFile=True, publishOutputs=False):
         if isinstance(url, (QUrl)):
             # depending how the QUrl has been initialized,
             # toLocalFile() may return the local path or an empty string
@@ -533,7 +534,7 @@ class Reconstruction(UIGraph):
                 localFile = url.toString()
         else:
             localFile = url
-        return self.load(localFile)
+        return self.load(localFile, setupProjectFile, publishOutputs)
 
     def onGraphChanged(self):
         """ React to the change of the internal graph. """
@@ -597,7 +598,11 @@ class Reconstruction(UIGraph):
         nodeDesc = meshroom.core.nodesDesc["CameraInit"]()
         views, intrinsics = nodeDesc.readSfMData(sfmFile)
         tmpCameraInit = Node("CameraInit", viewpoints=views, intrinsics=intrinsics)
+        tmpCameraInit.locked = True
         self.tempCameraInit = tmpCameraInit
+        rootNode = self.graph.dfsOnFinish([node])[0][0]
+        if rootNode.nodeType == "CameraInit":
+            self.setCameraInitIndex(self._cameraInits.indexOf(rootNode))
 
     @Slot(QObject, result=QVector3D)
     def getAutoFisheyeCircle(self, panoramaInit):

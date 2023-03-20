@@ -241,7 +241,7 @@ class Graph(BaseObject):
         return Graph.IO.getFeaturesForVersion(self.header.get(Graph.IO.Keys.FileVersion, "0.0"))
 
     @Slot(str)
-    def load(self, filepath, setupProjectFile=True, importProject=False):
+    def load(self, filepath, setupProjectFile=True, importProject=False, publishOutputs=False):
         """
         Load a meshroom graph ".mg" file.
 
@@ -249,6 +249,9 @@ class Graph(BaseObject):
             filepath: project filepath to load
             setupProjectFile: Store the reference to the project file and setup the cache directory.
                               If false, it only loads the graph of the project file as a template.
+            importProject: True if the project that is loaded will be imported in the current graph, instead
+                           of opened.
+            publishOutputs: True if "Publish" nodes from templates should not be ignored.
         """
         if not importProject:
             self.clear()
@@ -283,6 +286,11 @@ class Graph(BaseObject):
                 #   3. fallback to no version "0.0": retro-compatibility
                 if "version" not in nodeData:
                     nodeData["version"] = nodesVersions.get(nodeData["nodeType"], "0.0")
+
+                # if the node is a "Publish" node and comes from a template file, it should be ignored
+                # unless publishOutputs is True
+                if isTemplate and not publishOutputs and nodeData["nodeType"] == "Publish":
+                    continue
 
                 n = nodeFactory(nodeData, nodeName, template=isTemplate)
 
@@ -687,9 +695,24 @@ class Graph(BaseObject):
         # type: (str) -> Attribute
         """
         Return the attribute identified by the unique name 'fullName'.
+        If it does not exist, return None.
         """
         node, attribute = fullName.split('.', 1)
-        return self.node(node).attribute(attribute)
+        if self.node(node).hasAttribute(attribute):
+            return self.node(node).attribute(attribute)
+        return None
+
+    @Slot(str, result=Attribute)
+    def internalAttribute(self, fullName):
+        # type: (str) -> Attribute
+        """
+        Return the internal attribute identified by the unique name 'fullName'.
+        If it does not exist, return None.
+        """
+        node, attribute = fullName.split('.', 1)
+        if self.node(node).hasInternalAttribute(attribute):
+            return self.node(node).internalAttribute(attribute)
+        return None
 
     @staticmethod
     def getNodeIndexFromName(name):
@@ -1221,14 +1244,14 @@ class Graph(BaseObject):
 
     def getNonDefaultInputAttributes(self):
         """
-        Instead of getting all the inputs attribute keys, only get the keys of
+        Instead of getting all the inputs and internal attribute keys, only get the keys of
         the attributes whose value is not the default one.
         The output attributes, UIDs, parallelization parameters and internal folder are
         not relevant for templates, so they are explicitly removed from the returned dictionary.
 
         Returns:
             dict: self.toDict() with the output attributes, UIDs, parallelization parameters, internal folder
-            and input attributes with default values removed
+            and input/internal attributes with default values removed
         """
         graph = self.toDict()
         for nodeName in graph.keys():
@@ -1236,11 +1259,26 @@ class Graph(BaseObject):
 
             inputKeys = list(graph[nodeName]["inputs"].keys())
 
+            internalInputKeys = []
+            internalInputs = graph[nodeName].get("internalInputs", None)
+            if internalInputs:
+                internalInputKeys = list(internalInputs.keys())
+
             for attrName in inputKeys:
                 attribute = node.attribute(attrName)
                 # check that attribute is not a link for choice attributes
                 if attribute.isDefault and not attribute.isLink:
                     del graph[nodeName]["inputs"][attrName]
+
+            for attrName in internalInputKeys:
+                attribute = node.internalAttribute(attrName)
+                # check that internal attribute is not a link for choice attributes
+                if attribute.isDefault and not attribute.isLink:
+                    del graph[nodeName]["internalInputs"][attrName]
+
+            # If all the internal attributes are set to their default values, remove the entry
+            if len(graph[nodeName]["internalInputs"]) == 0:
+                del graph[nodeName]["internalInputs"]
 
             del graph[nodeName]["outputs"]
             del graph[nodeName]["uids"]

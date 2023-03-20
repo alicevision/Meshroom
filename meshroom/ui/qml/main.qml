@@ -217,13 +217,17 @@ ApplicationWindow {
         }
 
         function submit(node) {
-            try {
-                _reconstruction.submit(node)
-            }
-            catch (error) {
-                const data = ErrorHandler.analyseError(error)
-                if(data.context === "SUBMITTING")
-                    computeSubmitErrorDialog.openError(data.type, data.msg, node)
+            if (!canSubmit) {
+                unsavedSubmitDialog.open()
+            } else {
+                try {
+                    _reconstruction.submit(node)
+                }
+                catch (error) {
+                    const data = ErrorHandler.analyseError(error)
+                    if(data.context === "SUBMITTING")
+                        computeSubmitErrorDialog.openError(data.type, data.msg, node)
+                }
             }
         }
 
@@ -319,6 +323,22 @@ ApplicationWindow {
             onDiscarded: { close(); computeManager.compute(currentNode, true) }
             onAccepted: saveAsAction.trigger()
         }
+
+        MessageDialog {
+            id: unsavedSubmitDialog
+
+            canCopy: false
+            icon.text: MaterialIcons.warning
+            parent: Overlay.overlay
+            preset: "Warning"
+            title: "Unsaved Project"
+            text: "The project cannot be submitted if it remains unsaved."
+            helperText: "Save the project to be able to submit it?"
+            standardButtons: Dialog.Cancel | Dialog.Save
+
+            onDiscarded: close()
+            onAccepted: saveAsAction.trigger()
+        }
     }
 
     FileDialog {
@@ -328,6 +348,18 @@ ApplicationWindow {
         onAccepted: {
             if(_reconstruction.loadUrl(fileUrl))
             {
+                MeshroomApp.addRecentProjectFile(fileUrl.toString())
+            }
+        }
+    }
+
+    FileDialog {
+        id: loadTemplateDialog
+        title: "Load Template"
+        nameFilters: ["Meshroom Graphs (*.mg)"]
+        onAccepted: {
+            // Open the template as a regular file
+            if (_reconstruction.loadUrl(fileUrl, true, true)) {
                 MeshroomApp.addRecentProjectFile(fileUrl.toString())
             }
         }
@@ -428,6 +460,26 @@ ApplicationWindow {
     }
 
     Action {
+        id: clearImagesAction
+        property string tooltip: "Clear images for the current CameraInit group"
+        text: "Clear Images"
+        onTriggered: {
+            _reconstruction.clearImages()
+            _reconstruction.selectedViewId = "-1"
+        }
+    }
+
+    Action {
+        id: clearAllImagesAction
+        property string tooltip: "Clear all the images for all the CameraInit groups"
+        text: "Clear All Images"
+        onTriggered: {
+            _reconstruction.clearAllImages()
+            _reconstruction.selectedViewId = "-1"
+        }
+    }
+
+    Action {
         id: undoAction
 
         property string tooltip: 'Undo "' + (_reconstruction ? _reconstruction.undoStack.undoText : "Unknown") + '"'
@@ -480,6 +532,19 @@ ApplicationWindow {
         property string tooltip: "Paste the clipboard content to the project if it contains valid nodes"
         text: "Paste Node(s)"
         onTriggered: graphEditor.pasteNodes()
+    }
+
+    Action {
+        id: loadTemplateAction
+
+        property string tooltip: "Load a template like a regular project file (any \"Publish\" node will be displayed)"
+        text: "Load Template"
+        onTriggered: {
+            ensureSaved(function() {
+                initFileDialogFolder(loadTemplateDialog);
+                loadTemplateDialog.open();
+            })
+        }
     }
 
     Action {
@@ -638,28 +703,12 @@ ApplicationWindow {
                 }
             }
 
-            Action {
-                id: clearImagesAction
-                text: "Clear Images"
-                onTriggered: {
-                    //Loop through all the camera inits
-                    for(var i = 0 ; i < _reconstruction.cameraInits.count; i++){
-                        var cameraInit = _reconstruction.cameraInits.at(i)
-
-                        //Delete all viewpoints
-                        var viewpoints = cameraInit.attribute('viewpoints')
-                        for(var y = viewpoints.value.count - 1 ; y >= 0 ; y--){
-                              _reconstruction.removeAttribute(viewpoints.value.at(y))
-                        }
-
-                        //Delete all intrinsics
-                        var intrinsics = cameraInit.attribute('intrinsics')
-                        for(var z = intrinsics.value.count - 1 ; z >= 0 ; z--){
-                              _reconstruction.removeAttribute(intrinsics.value.at(z))
-                        }
-                    }
-                }
+            MenuItem {
+                action: clearImagesAction
+                ToolTip.visible: hovered
+                ToolTip.text: clearImagesAction.tooltip
             }
+
             MenuSeparator { }
             Menu {
                 id: advancedMenu
@@ -679,6 +728,12 @@ ApplicationWindow {
                     }
                 }
 
+                MenuItem {
+                    action: loadTemplateAction
+                    ToolTip.visible: hovered
+                    ToolTip.text: loadTemplateAction.tooltip
+                }
+
                 Action {
                     id: importProjectAction
                     text: "Import Project"
@@ -691,6 +746,12 @@ ApplicationWindow {
                         initFileDialogFolder(importProjectDialog);
                         importProjectDialog.open();
                     }
+                }
+
+                MenuItem {
+                    action: clearAllImagesAction
+                    ToolTip.visible: hovered
+                    ToolTip.text: clearAllImagesAction.tooltip
                 }
             }
             MenuSeparator { }
@@ -950,7 +1011,108 @@ ApplicationWindow {
                             updatingStatus = false
                         }
                         property bool updatingStatus: false
-                        enabled: !updatingStatus && (_reconstruction ? !_reconstruction.computingLocally : false)
+                        enabled: !updatingStatus
+                    }
+                    MaterialToolButton {
+                        id: filePollerRefreshStatus
+                        text: {
+                            if (_reconstruction.filePollerRefresh === 0)
+                                return MaterialIcons.published_with_changes
+                            else if (_reconstruction.filePollerRefresh === 2)
+                                return MaterialIcons.sync
+                            else
+                                return MaterialIcons.sync_disabled
+                        }
+                        font.pointSize: 11
+                        padding: 2
+                        enabled: true
+                        ToolTip {
+                            id: filePollerTooltip
+                            property string title: "Auto-Refresh Nodes Status For External Changes. "
+                            property string description: "Check if the status of a node is changed by another instance on the same network, " +
+                                                         "such as when computing in render farm."
+                            text: {
+                                var status = ""
+                                if (_reconstruction.filePollerRefresh === 0)
+                                    status = "Enabled"
+                                else if (_reconstruction.filePollerRefresh === 2)
+                                    status = "Minimal"
+                                else
+                                    status = "Disabled"
+                                return title + "(Current: " + status + ")\n\n" + description
+                            }
+                            visible: filePollerRefreshStatus.hovered
+                            contentWidth: 420
+                        }
+                        onClicked: {
+                            refreshFilesMenu.open()
+                        }
+                        Menu {
+                            id: refreshFilesMenu
+                            width: 210
+                            y: parent.height
+                            x: -width + parent.width
+                            MenuItem {
+                                id: enableAutoRefresh
+                                text: "Enable Auto-Refresh"
+                                checkable: true
+                                checked: _reconstruction.filePollerRefresh === 0
+                                ToolTip.text: "Check every file's status periodically"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 200
+                                onToggled: {
+                                    if (checked) {
+                                        disableAutoRefresh.checked = false
+                                        minimalAutoRefresh.checked = false
+                                        _reconstruction.filePollerRefreshChanged(0)
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    enableAutoRefresh.checked = true
+                                    filePollerRefreshStatus.text = MaterialIcons.published_with_changes
+                                    filePollerTooltip.text = filePollerTooltip.title + "(Current: Enabled)\n\n" + filePollerTooltip.description
+                                }
+                            }
+                            MenuItem {
+                                id: disableAutoRefresh
+                                text: "Disable Auto-Refresh"
+                                checkable: true
+                                checked: _reconstruction.filePollerRefresh === 1
+                                ToolTip.text: "No file status will be checked"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 200
+                                onToggled: {
+                                    if (checked) {
+                                        enableAutoRefresh.checked = false
+                                        minimalAutoRefresh.checked = false
+                                        _reconstruction.filePollerRefreshChanged(1)
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    disableAutoRefresh.checked = true
+                                    filePollerRefreshStatus.text = MaterialIcons.sync_disabled
+                                    filePollerTooltip.text = filePollerTooltip.title + "(Current: Disabled)\n\n" + filePollerTooltip.description
+                                }
+                            }
+                            MenuItem {
+                                id: minimalAutoRefresh
+                                text: "Enable Minimal Auto-Refresh"
+                                checkable: true
+                                checked: _reconstruction.filePollerRefresh === 2
+                                ToolTip.text: "Check the file status of submitted or running chunks periodically"
+                                ToolTip.visible: hovered
+                                ToolTip.delay: 200
+                                onToggled: {
+                                    if (checked) {
+                                        disableAutoRefresh.checked = false
+                                        enableAutoRefresh.checked = false
+                                        _reconstruction.filePollerRefreshChanged(2)
+                                    }
+                                    // Prevents cases where the user unchecks the currently checked option
+                                    minimalAutoRefresh.checked = true
+                                    filePollerRefreshStatus.text = MaterialIcons.sync
+                                    filePollerTooltip.text = filePollerTooltip.title + "(Current: Minimal)\n\n" + filePollerTooltip.description
+                                }
+                            }
+                        }
                     }
                     MaterialToolButton {
                         text: MaterialIcons.more_vert
@@ -989,8 +1151,14 @@ ApplicationWindow {
                         _reconstruction.setActiveNode(node);
                         workspaceView.viewNode(node, mouse);
                     }
-                    onComputeRequest: computeManager.compute(node)
-                    onSubmitRequest: computeManager.submit(node)
+                    onComputeRequest: {
+                        _reconstruction.forceNodesStatusUpdate();
+                        computeManager.compute(node)
+                    }
+                    onSubmitRequest: {
+                        _reconstruction.forceNodesStatusUpdate();
+                        computeManager.submit(node)
+                    }
                 }
 
                 TaskManager {

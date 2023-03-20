@@ -16,7 +16,8 @@
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
             "PanoramaPrepareImages": "1.1", 
-            "PanoramaWarping": "1.0"
+            "PanoramaWarping": "1.0",
+            "Publish": "1.2"
         }, 
         "releaseVersion": "2021.1.0", 
         "fileVersion": "1.1", 
@@ -102,7 +103,8 @@
         "PanoramaMerging_1": {
             "inputs": {
                 "compositingFolder": "{PanoramaCompositing_1.output}", 
-                "input": "{PanoramaCompositing_1.input}"
+                "input": "{PanoramaCompositing_1.input}",
+                "useTiling": "{PanoramaCompositing_1.useTiling}"
             }, 
             "nodeType": "PanoramaMerging", 
             "position": [
@@ -148,7 +150,7 @@
             }, 
             "nodeType": "PanoramaPostProcessing", 
             "position": [
-                3007, 
+                3000,
                 0
             ]
         }, 
@@ -224,6 +226,18 @@
                 1600, 
                 0
             ]
+        },
+        "Publish_1": {
+            "nodeType": "Publish",
+            "position": [
+                3200,
+                0
+            ],
+            "inputs": {
+                "inputFiles": [
+                    "{PanoramaPostProcessing_1.outputPanorama}"
+                ]
+            }
         }
     }
 }

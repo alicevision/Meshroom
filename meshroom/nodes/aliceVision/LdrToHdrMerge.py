@@ -30,7 +30,7 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
 
     category = 'Panorama HDR'
     documentation = '''
-    Calibrate LDR to HDR response curve from samples
+Merge LDR images into HDR images.
 '''
 
     inputs = [
@@ -127,7 +127,7 @@ class LdrToHdrMerge(desc.AVCommandLineNode):
             label='Working Color Space',
             description='Allows you to choose the color space in which the data are processed.',
             value='sRGB',
-            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,

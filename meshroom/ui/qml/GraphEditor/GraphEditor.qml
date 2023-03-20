@@ -529,6 +529,7 @@ Item {
                     }
 
                     function showConfirmationDialog(deleteFollowing) {
+                        uigraph.forceNodesStatusUpdate();
                         var obj = deleteDataDialog.createObject(root,
                                            {
                                                "node": nodeMenu.currentNode,

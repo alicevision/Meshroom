@@ -64,10 +64,11 @@ RowLayout {
 
     Component {
         id: textField_component
-        TextInput{
+        TextInput {
             text: attribute.value
             width: intrinsicModel.columnWidths[columnIndex]
             horizontalAlignment: TextInput.AlignRight
+            readOnly: root.readOnly
             color: 'white'
 
             padding: 12
@@ -90,11 +91,12 @@ RowLayout {
     Component {
         id: int_component
 
-        TextInput{
+        TextInput {
             text: model.display.value
             width: intrinsicModel.columnWidths[columnIndex]
             horizontalAlignment: TextInput.AlignRight
             color: 'white'
+            readOnly: root.readOnly
 
             padding: 12
 
@@ -125,6 +127,7 @@ RowLayout {
             id: combo
             model: attribute.desc.values
             width: intrinsicModel.columnWidths[columnIndex]
+            enabled: !root.readOnly
 
             flat : true
 
@@ -148,13 +151,14 @@ RowLayout {
         CheckBox {
             checked: attribute ? attribute.value : false
             padding: 12
+            enabled: !readOnly
             onToggled: _reconstruction.setAttribute(attribute, !attribute.value)
         }
     }
 
     Component {
         id: float_component
-        TextInput{
+        TextInput {
             readonly property real formattedValue: attribute.value.toFixed(2)
             property string displayValue: String(formattedValue)
 
@@ -169,6 +173,7 @@ RowLayout {
             selectionColor: 'white'
             selectedTextColor: Qt.darker(palette.window, 1.1)
 
+            readOnly: root.readOnly
             enabled: !readOnly
 
             clip: true;

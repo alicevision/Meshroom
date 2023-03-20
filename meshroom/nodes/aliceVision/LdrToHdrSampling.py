@@ -47,7 +47,7 @@ class LdrToHdrSampling(desc.AVCommandLineNode):
 
     category = 'Panorama HDR'
     documentation = '''
-    Sample pixels from Low range images for HDR creation
+Sample pixels from Low range images for HDR creation.
 '''
 
     inputs = [
@@ -90,8 +90,7 @@ class LdrToHdrSampling(desc.AVCommandLineNode):
                         " * Linear: Disable the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear. \n"
                         " * Debevec: This is the standard method for HDR calibration. \n"
                         " * Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision. \n"
-                        " * Laguerre: Simple but robust method estimating the minimal number of parameters. \n"
-                        " * Robertson: First method for HDR calibration in the literature. \n",
+                        " * Laguerre: Simple but robust method estimating the minimal number of parameters.",
             values=['linear', 'debevec', 'grossberg', 'laguerre'],
             value='debevec',
             exclusive=True,
@@ -113,7 +112,7 @@ class LdrToHdrSampling(desc.AVCommandLineNode):
             label='Working Color Space',
             description='Allows you to choose the color space in which the data are processed.',
             value='sRGB',
-            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,

@@ -13,8 +13,8 @@ class PanoramaPostProcessing(desc.CommandLineNode):
 
     category = 'Panorama HDR'
     documentation = '''
-    Post process the panorama
-    '''
+Post process the panorama.
+'''
 
     inputs = [
         desc.File(
@@ -30,6 +30,15 @@ class PanoramaPostProcessing(desc.CommandLineNode):
             description='Fill the non attributed pixels with push pull algorithm.',
             value=False,
             uid=[0],
+        ),
+        desc.ChoiceParam(
+                name='outputColorSpace',
+                label='Output Color Space',
+                description='Allows you to choose the color space of the output image.',
+                value='Linear',
+                values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+                exclusive=True,
+                uid=[0],
         ),
         desc.ChoiceParam(
             name='verboseLevel',

@@ -38,6 +38,7 @@ def test_templateVersions():
             currentNodeVersion = meshroom.core.nodeVersion(nodeDesc)
 
             inputs = nodeData.get("inputs", {})
+            internalInputs = nodeData.get("internalInputs", {})
             version = nodesVersions.get(nodeType, None)
 
             compatibilityIssue = None
@@ -47,6 +48,10 @@ def test_templateVersions():
             else:
                 for attrName, value in inputs.items():
                     if not CompatibilityNode.attributeDescFromName(nodeDesc.inputs, attrName, value):
+                        compatibilityIssue = CompatibilityIssue.DescriptionConflict
+                        break
+                for attrName, value in internalInputs.items():
+                    if not CompatibilityNode.attributeDescFromName(nodeDesc.internalInputs, attrName, value):
                         compatibilityIssue = CompatibilityIssue.DescriptionConflict
                         break
 

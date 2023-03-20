@@ -57,6 +57,15 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             uid=[0]
         ),
         desc.IntParam(
+            name='forceMinPyramidLevels',
+            label='Min Pyramid Levels',
+            description='Force the minimal number of levels in the pyramid for multiband compositer.',
+            value=0,
+            range=(0, 16, 1),
+            uid=[0],
+            enabled=lambda node: node.compositerType.value and node.compositerType.value == 'multiband',
+        ),
+        desc.IntParam(
             name='maxThreads',
             label='Max Nb Threads',
             description='Specifies the maximum number of threads to run simultaneously.',
@@ -64,6 +73,13 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             range=(0, 48, 1),
             uid=[],
             advanced=True,
+        ),
+        desc.BoolParam(
+            name='useTiling',
+            label='Use tiling',
+            description='''Enable tiling mode for parallelization''',
+            value=True,
+            uid=[0],
         ),
         desc.ChoiceParam(
             name='storageDataType',

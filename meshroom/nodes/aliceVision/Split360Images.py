@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 
@@ -11,8 +11,8 @@ class Split360Images(desc.AVCommandLineNode):
     inputs = [
         desc.File(
             name='input',
-            label='Images Folder',
-            description="Images Folder",
+            label='Images',
+            description="Images",
             value='',
             uid=[0],
         ),
@@ -59,8 +59,8 @@ class Split360Images(desc.AVCommandLineNode):
                     uid=[0],
                 ),
                 desc.BoolParam(
-                    name='equirectangularDemoMode',
-                    label='Demo Mode',
+                    name='equirectangularPreviewMode',
+                    label='Preview Mode',
                     description="Export a SVG file that simulates the split",
                     value=False,
                     uid=[0],
@@ -74,6 +74,15 @@ class Split360Images(desc.AVCommandLineNode):
                     uid=[0],
                 ),
             ]
+        ),
+        desc.ChoiceParam(
+            name='extension',
+            label='Output File Extension',
+            description='Output Image File Extension.',
+            value='',
+            values=['', 'exr', 'jpg', 'tiff', 'png'],
+            exclusive=True,
+            uid=[0],
         ),
         desc.ChoiceParam(
             name='verboseLevel',

@@ -11,7 +11,8 @@
             "CameraInit": "9.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
-            "StructureFromMotion": "2.0"
+            "StructureFromMotion": "2.0",
+            "Publish": "1.2"
         }
     }, 
     "graph": {
@@ -99,6 +100,18 @@
                 600, 
                 0
             ]
+        },
+        "Publish_1": {
+            "nodeType": "Publish",
+            "position": [
+                1200,
+                0
+            ],
+            "inputs": {
+                "inputFiles": [
+                    "{ExportAnimatedCamera_1.output}"
+                ]
+            }
         }
     }
 }

@@ -15,7 +15,6 @@ FocusScope {
     property url sourceExternal
 
     property url source
-    property var metadata
     property var viewIn3D
 
     property Component floatViewerComp: Qt.createComponent("FloatImage.qml")
@@ -30,21 +29,25 @@ FocusScope {
 
     QtObject {
         id: m
+        property variant viewpointMetadata: {
+            // Metadata from viewpoint attribute
+            // Read from the reconstruction object
+            if (_reconstruction) {
+                return getViewpointMetadata(_reconstruction.selectedViewId);
+            }
+            return {};
+        }
         property variant imgMetadata: {
-            // I did not find a direct way to check if the map is empty or not...
-            var sfmHasImgMetadata = 0;
-            for(var key in root.metadata) { sfmHasImgMetadata = 1; break; }
-
-            if(sfmHasImgMetadata) // check if root.metadata is not empty
-            {
-                return root.metadata
+            // Metadata from FloatImage viewer
+            // Directly read from the image file on disk
+            if (floatImageViewerLoader.active) {
+                return floatImageViewerLoader.item.metadata;
             }
-
-            if(floatImageViewerLoader.active)
-            {
-                return floatImageViewerLoader.item.metadata
+            // Use viewpoint metadata for the special case of the 8-bit viewer
+            if (qtImageViewerLoader.active) {
+                return viewpointMetadata;
             }
-            return {}
+            return {};
         }
     }
 
@@ -53,7 +56,7 @@ FocusScope {
         active: true
         source: "TestAliceVisionPlugin.qml"
     }
-    
+
     readonly property bool aliceVisionPluginAvailable: aliceVisionPluginLoader.status === Component.Ready
 
     Component.onCompleted: {
@@ -102,7 +105,6 @@ FocusScope {
     function clear()
     {
         source = ''
-        metadata = {}
     }
 
     // slots
@@ -177,7 +179,7 @@ FocusScope {
 
     function tryLoadNode(node) {
         useExternal = false;
-        
+
         // safety check
         if (!node) {
             return false;
@@ -218,17 +220,8 @@ FocusScope {
         }
         if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
             return getViewpointPath(_reconstruction.selectedViewId);
-        } 
-        return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction ? _reconstruction.selectedViewId : -1);
-    }
-
-    function getMetadata() {
-        // entry point for getting the image metadata
-        if (useExternal || !_reconstruction) {
-            return {};
-        } else {
-            return getViewpointMetadata(_reconstruction.selectedViewId);
         }
+        return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction ? _reconstruction.selectedViewId : -1);
     }
 
     function getFileAttributePath(node, attrName, viewId) {
@@ -272,10 +265,8 @@ FocusScope {
     }
 
     onDisplayedNodeChanged: {
-        // clear metadata if no displayed node
         if (!displayedNode) {
             root.source = "";
-            root.metadata = {};
         }
 
         // update output attribute names
@@ -293,14 +284,12 @@ FocusScope {
         outputAttribute.names = names;
 
         root.source = getImageFile();
-        root.metadata = getMetadata();
     }
 
     Connections {
         target: _reconstruction
         onSelectedViewIdChanged: {
             root.source = getImageFile();
-            root.metadata = getMetadata();
             if (useExternal)
                 useExternal = false;
         }
@@ -688,7 +677,17 @@ FocusScope {
 
                         visible: metadataCB.checked
                         // only load metadata model if visible
-                        metadata: visible ? m.imgMetadata : {}
+                        metadata: {
+                            if (visible) {
+                                if (root.useExternal || outputAttribute.name != "gallery") {
+                                    return m.imgMetadata;
+                                }
+                                else {
+                                    return m.viewpointMetadata;
+                                }
+                            }
+                            return {};
+                        }
                     }
 
                     ColorCheckerPane {
@@ -876,13 +875,17 @@ FocusScope {
                         anchors.fill: parent
                         active: msfmDataLoader.status === Loader.Ready && displaySfmStatsView.checked
 
-                        Component.onCompleted: {
-                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
-                            // so it can fail safely if the c++ plugin is not available
-                            setSource("SfmStatsView.qml", {
-                                'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
-                                'viewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                            })
+                        onActiveChanged: {
+                            // Load and unload the component explicitly
+                            // (necessary since Qt 5.14, Component.onCompleted cannot be used anymore to load the data once and for all)
+                            if (active) {
+                                setSource("SfmStatsView.qml", {
+                                    "msfmData": Qt.binding(function() { return msfmDataLoader.item; }),
+                                    "viewId": Qt.binding(function() { return _reconstruction.selectedViewId; }),
+                                })
+                            } else {
+                                setSource("", {})
+                            }
                         }
                     }
                     Loader {
@@ -890,14 +893,18 @@ FocusScope {
                         anchors.fill: parent
                         active: msfmDataLoader.status === Loader.Ready && displaySfmDataGlobalStats.checked
 
-                        Component.onCompleted: {
-                            // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
-                            // so it can fail safely if the c++ plugin is not available
-                            setSource("SfmGlobalStats.qml", {
-                                'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
-                                'mTracks': Qt.binding(function() { return mtracksLoader.item; }),
+                        onActiveChanged: {
+                            // Load and unload the component explicitly
+                            // (necessary since Qt 5.14, Component.onCompleted cannot be used anymore to load the data once and for all)
+                            if (active) {
+                                setSource("SfmGlobalStats.qml", {
+                                    'msfmData': Qt.binding(function() { return msfmDataLoader.item; }),
+                                    'mTracks': Qt.binding(function() { return mtracksLoader.item; }),
 
-                            })
+                                })
+                            } else {
+                                setSource("", {})
+                            }
                         }
                     }
                     Loader {
@@ -1166,7 +1173,6 @@ FocusScope {
 
                             onNameChanged: {
                                 root.source = getImageFile();
-                                root.metadata = getMetadata();
                             }
                         }
 
@@ -1180,7 +1186,7 @@ FocusScope {
 
                             onClicked: {
                                 root.viewIn3D(
-                                    root.source, 
+                                    root.source,
                                     displayedNode.name + ":" + outputAttribute.name + " " + String(_reconstruction.selectedViewId)
                                 );
                             }
@@ -1189,11 +1195,12 @@ FocusScope {
                         MaterialToolButton {
                             id: displaySfmStatsView
                             property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('sfm').node : null
+                            property bool isComputed: activeNode && activeNode.isComputed
 
                             font.family: MaterialIcons.fontFamily
                             text: MaterialIcons.assessment
 
-                            ToolTip.text: "StructureFromMotion Statistics"
+                            ToolTip.text: "StructureFromMotion Statistics" + (isComputed ? (": " + activeNode.label) : "")
                             ToolTip.visible: hovered
 
                             font.pointSize: 14
@@ -1214,11 +1221,12 @@ FocusScope {
                         MaterialToolButton {
                             id: displaySfmDataGlobalStats
                             property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('sfm').node : null
+                            property bool isComputed: activeNode && activeNode.isComputed
 
                             font.family: MaterialIcons.fontFamily
                             text: MaterialIcons.language
 
-                            ToolTip.text: "StructureFromMotion Global Statistics"
+                            ToolTip.text: "StructureFromMotion Global Statistics" + (isComputed ? (": " + activeNode.label) : "")
                             ToolTip.visible: hovered
 
                             font.pointSize: 14

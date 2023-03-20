@@ -499,6 +499,7 @@ class BaseNode(BaseObject):
         self._size = 0
         self._position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
+        self._internalAttributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
         self._alive = True  # for QML side to know if the node can be used or is going to be deleted
         self._locked = False
@@ -523,9 +524,40 @@ class BaseNode(BaseObject):
     def getLabel(self):
         """
         Returns:
-            str: the high-level label of this node
+            str: the user-provided label if it exists, the high-level label of this node otherwise
         """
+        if self.hasInternalAttribute("label"):
+            label = self.internalAttribute("label").value.strip()
+            if label:
+                return label
         return self.nameToLabel(self._name)
+
+    def getColor(self):
+        """
+        Returns:
+            str: the user-provided custom color of the node if it exists, empty string otherwise
+        """
+        if self.hasInternalAttribute("color"):
+            return self.internalAttribute("color").value.strip()
+        return ""
+
+    def getInvalidationMessage(self):
+        """
+        Returns:
+            str: the invalidation message on the node if it exists, empty string otherwise
+        """
+        if self.hasInternalAttribute("invalidation"):
+            return self.internalAttribute("invalidation").value
+        return ""
+
+    def getComment(self):
+        """
+        Returns:
+            str: the comments on the node if they exist, empty string otherwise
+        """
+        if self.hasInternalAttribute("comment"):
+            return self.internalAttribute("comment").value
+        return ""
 
     @Slot(str, result=str)
     def nameToLabel(self, name):
@@ -568,12 +600,36 @@ class BaseNode(BaseObject):
             att = self._attributes.get(name)
         return att
 
+    @Slot(str, result=Attribute)
+    def internalAttribute(self, name):
+        # No group or list attributes for internal attributes
+        # The internal attribute itself can be returned directly
+        return self._internalAttributes.get(name)
+
+    def setInternalAttributeValues(self, values):
+        # initialize internal attribute values
+        for k, v in values.items():
+            attr = self.internalAttribute(k)
+            attr.value = v
+
     def getAttributes(self):
         return self._attributes
 
+    def getInternalAttributes(self):
+        return self._internalAttributes
+
     @Slot(str, result=bool)
     def hasAttribute(self, name):
+        # Complex name indicating group or list attribute: parse it and get the
+        # first output element to check for the attribute's existence
+        if "[" in name or "." in name:
+            p = self.attributeRE.findall(name)
+            return p[0][0] in self._attributes.keys() or p[0][1] in self._attributes.keys()
         return name in self._attributes.keys()
+
+    @Slot(str, result=bool)
+    def hasInternalAttribute(self, name):
+        return name in self._internalAttributes.keys()
 
     def _applyExpr(self):
         for attr in self._attributes:
@@ -632,7 +688,7 @@ class BaseNode(BaseObject):
         """ Compute node uids by combining associated attributes' uids. """
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
             # uid is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this uid
-            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes if a.enabled]
+            uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes if a.enabled and a.value != a.uidIgnoreValue]
             uidAttributes.sort()
             self._uids[uidIndex] = hashValue(uidAttributes)
 
@@ -841,6 +897,9 @@ class BaseNode(BaseObject):
         # Notify internal folder change if needed
         if self.internalFolder != folder:
             self.internalFolderChanged.emit()
+
+    def updateInternalAttributes(self):
+        self.internalAttributesChanged.emit()
 
     @property
     def internalFolder(self):
@@ -1066,7 +1125,6 @@ class BaseNode(BaseObject):
 
 
     name = Property(str, getName, constant=True)
-    label = Property(str, getLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
     positionChanged = Signal()
@@ -1074,6 +1132,12 @@ class BaseNode(BaseObject):
     x = Property(float, lambda self: self._position.x, notify=positionChanged)
     y = Property(float, lambda self: self._position.y, notify=positionChanged)
     attributes = Property(BaseObject, getAttributes, constant=True)
+    internalAttributes = Property(BaseObject, getInternalAttributes, constant=True)
+    internalAttributesChanged = Signal()
+    label = Property(str, getLabel, notify=internalAttributesChanged)
+    color = Property(str, getColor, notify=internalAttributesChanged)
+    invalidation = Property(str, getInvalidationMessage, notify=internalAttributesChanged)
+    comment = Property(str, getComment, notify=internalAttributesChanged)
     internalFolderChanged = Signal()
     internalFolder = Property(str, internalFolder.fget, notify=internalFolderChanged)
     depthChanged = Signal()
@@ -1123,8 +1187,16 @@ class Node(BaseNode):
         for attrDesc in self.nodeDesc.outputs:
             self._attributes.add(attributeFactory(attrDesc, None, True, self))
 
+        for attrDesc in self.nodeDesc.internalInputs:
+            self._internalAttributes.add(attributeFactory(attrDesc, None, False, self))
+
         # List attributes per uid
         for attr in self._attributes:
+            for uidIndex in attr.attributeDesc.uid:
+                self.attributesPerUid[uidIndex].add(attr)
+
+        # Add internal attributes with a UID to the list
+        for attr in self._internalAttributes:
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)
 
@@ -1150,8 +1222,22 @@ class Node(BaseNode):
                 except ValueError:
                     pass
 
+    def upgradeInternalAttributeValues(self, values):
+        # initialize internal attibute values
+        for k, v in values.items():
+            if not self.hasInternalAttribute(k):
+                # skip missing atributes
+                continue
+            attr = self.internalAttribute(k)
+            if attr.isInput:
+                try:
+                    attr.upgradeValue(v)
+                except ValueError:
+                    pass
+
     def toDict(self):
         inputs = {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
+        internalInputs = {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
         outputs = ({k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isOutput})
 
         return {
@@ -1165,6 +1251,7 @@ class Node(BaseNode):
             'uids': self._uids,
             'internalFolder': self._internalFolder,
             'inputs': {k: v for k, v in inputs.items() if v is not None},  # filter empty values
+            'internalInputs': {k: v for k, v in internalInputs.items() if v is not None},
             'outputs': outputs,
         }
 
@@ -1220,6 +1307,7 @@ class CompatibilityNode(BaseNode):
         self.version = Version(self.nodeDict.get("version", None))
 
         self._inputs = self.nodeDict.get("inputs", {})
+        self._internalInputs = self.nodeDict.get("internalInputs", {})
         self.outputs = self.nodeDict.get("outputs", {})
         self._internalFolder = self.nodeDict.get("internalFolder", "")
         self._uids = self.nodeDict.get("uids", {})
@@ -1231,11 +1319,15 @@ class CompatibilityNode(BaseNode):
 
         # create input attributes
         for attrName, value in self._inputs.items():
-            self._addAttribute(attrName, value, False)
+            self._addAttribute(attrName, value, isOutput=False)
 
         # create outputs attributes
         for attrName, value in self.outputs.items():
-            self._addAttribute(attrName, value, True)
+            self._addAttribute(attrName, value, isOutput=True)
+
+        # create internal attributes
+        for attrName, value in self._internalInputs.items():
+            self._addAttribute(attrName, value, isOutput=False, internalAttr=True)
 
         # create NodeChunks matching serialized parallelization settings
         self._chunks.setObjectList([
@@ -1328,7 +1420,7 @@ class CompatibilityNode(BaseNode):
 
         return None
 
-    def _addAttribute(self, name, val, isOutput):
+    def _addAttribute(self, name, val, isOutput, internalAttr=False):
         """
         Add a new attribute on this node.
 
@@ -1336,19 +1428,26 @@ class CompatibilityNode(BaseNode):
             name (str): the name of the attribute
             val: the attribute's value
             isOutput: whether the attribute is an output
+            internalAttr: whether the attribute is internal
 
         Returns:
             bool: whether the attribute exists in the node description
         """
         attrDesc = None
         if self.nodeDesc:
-            refAttrs = self.nodeDesc.outputs if isOutput else self.nodeDesc.inputs
+            if internalAttr:
+                refAttrs = self.nodeDesc.internalInputs
+            else:
+                refAttrs = self.nodeDesc.outputs if isOutput else self.nodeDesc.inputs
             attrDesc = CompatibilityNode.attributeDescFromName(refAttrs, name, val)
         matchDesc = attrDesc is not None
-        if not matchDesc:
+        if attrDesc is None:
             attrDesc = CompatibilityNode.attributeDescFromValue(name, val, isOutput)
         attribute = attributeFactory(attrDesc, val, isOutput, self)
-        self._attributes.add(attribute)
+        if internalAttr:
+            self._internalAttributes.add(attribute)
+        else:
+            self._attributes.add(attribute)
         return matchDesc
 
     @property
@@ -1372,6 +1471,13 @@ class CompatibilityNode(BaseNode):
         if not self.graph:
             return self._inputs
         return {k: v.getExportValue() for k, v in self._attributes.objects.items() if v.isInput}
+
+    @property
+    def internalInputs(self):
+        """ Get current node's internal attributes """
+        if not self.graph:
+            return self._internalInputs
+        return {k: v.getExportValue() for k, v in self._internalAttributes.objects.items()}
 
     def toDict(self):
         """
@@ -1406,9 +1512,16 @@ class CompatibilityNode(BaseNode):
                 # store attributes that could be used during node upgrade
                 commonInputs.append(attrName)
 
+        commonInternalAttributes = []
+        for attrName, value in self._internalInputs.items():
+            if self.attributeDescFromName(self.nodeDesc.internalInputs, attrName, value, strict=False):
+                # store internal attributes that could be used during node upgrade
+                commonInternalAttributes.append(attrName)
+
         node = Node(self.nodeType, position=self.position)
         # convert attributes from a list of tuples into a dict
         attrValues = {key: value for (key, value) in self.inputs.items()}
+        intAttrValues = {key: value for (key, value) in self.internalInputs.items()}
 
         # Use upgrade method of the node description itself if available
         try:
@@ -1421,9 +1534,15 @@ class CompatibilityNode(BaseNode):
             logging.error("Error in the upgrade implementation of the node: {}. The return type is incorrect.".format(self.name))
             upgradedAttrValues = attrValues
 
-        upgradedAttrValuesTmp = {key: value for (key, value) in upgradedAttrValues.items() if key in commonInputs}
-
         node.upgradeAttributeValues(upgradedAttrValues)
+
+        try:
+            upgradedIntAttrValues = node.nodeDesc.upgradeAttributeValues(intAttrValues, self.version)
+        except Exception as e:
+            logging.error("Error in the upgrade implementation of the node: {}.\n{}".format(self.name, str(e)))
+            upgradedIntAttrValues = intAttrValues
+
+        node.upgradeInternalAttributeValues(upgradedIntAttrValues)
         return node
 
     compatibilityIssue = Property(int, lambda self: self.issue.value, constant=True)
@@ -1453,6 +1572,7 @@ def nodeFactory(nodeDict, name=None, template=False):
 
     # get node inputs/outputs
     inputs = nodeDict.get("inputs", {})
+    internalInputs = nodeDict.get("internalInputs", {})
     outputs = nodeDict.get("outputs", {})
     version = nodeDict.get("version", None)
     internalFolder = nodeDict.get("internalFolder", None)
@@ -1475,14 +1595,36 @@ def nodeFactory(nodeDict, name=None, template=False):
             compatibilityIssue = CompatibilityIssue.VersionConflict
         # in other cases, check attributes compatibility between serialized node and its description
         else:
-            # check that the node has the exact same set of inputs/outputs as its description, except if the node
-            # is described in a template file, in which only non-default parameters are saved
+            # check that the node has the exact same set of inputs/outputs as its description, except
+            # if the node is described in a template file, in which only non-default parameters are saved;
+            # do not perform that check for internal attributes because there is no point in
+            # raising compatibility issues if their number differs: in that case, it is only useful
+            # if some internal attributes do not exist or are invalid
             if not template and (sorted([attr.name for attr in nodeDesc.inputs]) != sorted(inputs.keys()) or \
                     sorted([attr.name for attr in nodeDesc.outputs]) != sorted(outputs.keys())):
                 compatibilityIssue = CompatibilityIssue.DescriptionConflict
+
+            # check whether there are any internal attributes that are invalidating in the node description: if there
+            # are, then check that these internal attributes are part of nodeDict; if they are not, a compatibility
+            # issue must be raised to warn the user, as this will automatically change the node's UID
+            if not template:
+                invalidatingIntInputs = []
+                for attr in nodeDesc.internalInputs:
+                    if attr.uid == [0]:
+                        invalidatingIntInputs.append(attr.name)
+                for attr in invalidatingIntInputs:
+                    if attr not in internalInputs.keys():
+                        compatibilityIssue = CompatibilityIssue.DescriptionConflict
+                        break
+
             # verify that all inputs match their descriptions
             for attrName, value in inputs.items():
                 if not CompatibilityNode.attributeDescFromName(nodeDesc.inputs, attrName, value):
+                    compatibilityIssue = CompatibilityIssue.DescriptionConflict
+                    break
+            # verify that all internal inputs match their description
+            for attrName, value in internalInputs.items():
+                if not CompatibilityNode.attributeDescFromName(nodeDesc.internalInputs, attrName, value):
                     compatibilityIssue = CompatibilityIssue.DescriptionConflict
                     break
             # verify that all outputs match their descriptions
@@ -1493,6 +1635,7 @@ def nodeFactory(nodeDict, name=None, template=False):
 
     if compatibilityIssue is None:
         node = Node(nodeType, position, **inputs)
+        node.setInternalAttributeValues(internalInputs)
     else:
         logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))
         node = CompatibilityNode(nodeType, nodeDict, position, compatibilityIssue)

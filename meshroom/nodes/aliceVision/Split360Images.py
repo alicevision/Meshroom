@@ -29,9 +29,18 @@ class Split360Images(desc.AVCommandLineNode):
             enabled=lambda node: node.splitMode.value == 'dualfisheye',
             groupDesc=[
                 desc.ChoiceParam(
-                    name='dualFisheyeSplitPreset',
-                    label='Split Preset',
-                    description="Dual-Fisheye split type preset (center, top, bottom)",
+                    name='dualFisheyeOffsetPresetX',
+                    label='X Offset Preset',
+                    description="Dual-Fisheye X offset preset",
+                    value='center',
+                    values=['center', 'left', 'right'],
+                    exclusive=True,
+                    uid=[0],
+                ),
+                desc.ChoiceParam(
+                    name='dualFisheyeOffsetPresetY',
+                    label='Y Offset Preset',
+                    description="Dual-Fisheye Y offset preset",
                     value='center',
                     values=['center', 'top', 'bottom'],
                     exclusive=True,

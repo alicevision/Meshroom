@@ -37,6 +37,15 @@ class Split360Images(desc.AVCommandLineNode):
                     exclusive=True,
                     uid=[0],
                 ),
+                desc.ChoiceParam(
+                    name='dualFisheyeCameraModel',
+                    label='Camera Model',
+                    description="Dual-Fisheye camera model",
+                    value='fisheye4',
+                    values=['fisheye4', 'equidistant_r3'],
+                    exclusive=True,
+                    uid=[0],
+                ),
             ]
         ),
         desc.GroupAttribute(name="equirectangularGroup", label="Equirectangular", description="Equirectangular", group=None,

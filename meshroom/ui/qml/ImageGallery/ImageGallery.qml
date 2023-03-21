@@ -39,7 +39,7 @@ Panel {
         property variant currentCameraInit: _reconstruction && _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit
         property variant viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property variant intrinsics: currentCameraInit ? currentCameraInit.attribute('intrinsics').value : undefined
-        property bool readOnly: root.readOnly || displayHDR.checked
+        property bool readOnly: ((_reconstruction && currentCameraInit) ? currentCameraInit.locked : root.readOnly) || displayHDR.checked
 
         onViewpointsChanged: {
             ThumbnailCache.clearRequests()

@@ -31,6 +31,14 @@ Post process the panorama.
             value=False,
             uid=[0],
         ),
+        desc.IntParam(
+            name='previewSize',
+            label='Panorama preview Width',
+            description='Choose the output preview width (in pixels).',
+            value=1000,
+            range=(0, 1000, 5000),
+            uid=[0]
+        ),
         desc.ChoiceParam(
                 name='outputColorSpace',
                 label='Output Color Space',

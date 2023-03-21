@@ -40,7 +40,7 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
 
     outputs = [
         desc.File(
-            name='outSfMData',
+            name='output',
             label='SfmData File',
             description='Path to the output sfmData file.',
             value=desc.Node.internalFolder + 'sfmData.sfm',

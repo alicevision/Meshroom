@@ -3,9 +3,16 @@ set -ex
 
 
 test -z "$MESHROOM_VERSION" && MESHROOM_VERSION="$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)"
-test -z "$AV_VERSION" && echo "AliceVision version not specified, set AV_VERSION in the environment" && exit 1
+echo "MESHROOM_VERSION=${MESHROOM_VERSION}"
+
 test -z "$CUDA_VERSION" && CUDA_VERSION="10.2"
+echo "CUDA_VERSION=${CUDA_VERSION}"
+
 test -z "$CENTOS_VERSION" && CENTOS_VERSION="7"
+echo "CENTOS_VERSION=${CENTOS_VERSION}"
+
+test -z "$AV_VERSION" && echo "AliceVision version not specified, set AV_VERSION in the environment" && exit 1
+echo "AV_VERSION=${AV_VERSION}"
 
 test -d docker || (
 	echo This script must be run from the top level Meshroom directory

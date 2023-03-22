@@ -108,7 +108,7 @@ class MeshroomApp(QApplication):
 
         self.setOrganizationName('AliceVision')
         self.setApplicationName('Meshroom')
-        self.setApplicationVersion(meshroom.__version_name__)
+        self.setApplicationVersion(meshroom.__version_label__)
 
         font = self.font()
         font.setPointSize(9)

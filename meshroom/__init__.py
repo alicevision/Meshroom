@@ -1,26 +1,46 @@
-__version__ = "2021.1.0"
-__version_name__ = __version__
-
 from distutils import util
+from enum import Enum
 import logging
 import os
 import sys
+
+class VersionStatus(Enum):
+    release = 1
+    develop = 2
+
+__version__ = "2023.1.0"
+# Always increase the minor version when switching from release to develop.
+__version_status__ = VersionStatus.release
+
+if __version_status__ is VersionStatus.develop:
+    __version__ += "-" + __version_status__.name
+
+__version_label__ = __version__
+# Modify version label if we are in a development phase.
+if __version_status__ is VersionStatus.develop:
+
+    scriptPath = os.path.dirname(os.path.abspath(__file__))
+    headFilepath = os.path.join(scriptPath, "../.git/HEAD")
+    if os.path.exists(headFilepath):
+        # Add git branch name, if it is a git repository
+        with open(headFilepath, "r") as headFile:
+            data = headFile.readlines()
+            branchName = data[0].split('/')[-1].strip()
+            __version_label__ += " branch=" + branchName
+    else:
+        # Add a generic default label "develop"
+        __version_label__ += "-" + __version_status__.name
+
+    # Allow override from env variable
+    if "REZ_MESHROOM_VERSION" in os.environ:
+        __version_label__ += " package=" + os.environ.get("REZ_MESHROOM_VERSION")
+
+
+# Internal imports after the definition of the version
 from .common import init, Backend
 
 # sys.frozen is initialized by cx_Freeze and identifies a release package
 isFrozen = getattr(sys, "frozen", False)
-if not isFrozen:
-    # development mode: add git branch name (if any) to __version_name__
-    scriptPath = os.path.dirname(os.path.abspath(__file__))
-    headFilepath = os.path.join(scriptPath, "../.git/HEAD")
-    if os.path.exists(headFilepath):
-        with open(headFilepath, "r") as headFile:
-            data = headFile.readlines()
-            branchName = data[0].split('/')[-1].strip()
-            __version_name__ += "-" + branchName
-
-# Allow override from env variable
-__version_name__ = os.environ.get("REZ_MESHROOM_VERSION", __version_name__)
 
 useMultiChunks = util.strtobool(os.environ.get("MESHROOM_USE_MULTI_CHUNKS", "True"))
 

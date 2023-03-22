@@ -41,7 +41,8 @@ RUN source scl_source enable rh-python36 && python setup.py install_exe -d "${ME
 WORKDIR ${MESHROOM_BUILD}
 
 # Build Meshroom plugins
-RUN cmake "${MESHROOM_DEV}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
+RUN cmake "${MESHROOM_DEV}" -DCMAKE_PREFIX_PATH="${AV_INSTALL}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
+
 RUN make "-j$(nproc)" qmlAlembic
 RUN make "-j$(nproc)" qtAliceVision
 RUN make "-j$(nproc)" && \

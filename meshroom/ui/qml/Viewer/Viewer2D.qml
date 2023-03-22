@@ -720,7 +720,17 @@ FocusScope {
                                 setSource("MFeatures.qml", {
                                     'describerTypes': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : {}; }),
                                     'featureFolder': Qt.binding(function() { return activeNode ? Filepath.stringToUrl(activeNode.attribute("output").value) : ""; }),
-                                    'viewIds': Qt.binding(function() { return _reconstruction ? _reconstruction.allViewIds() : {}; }),
+                                    'viewIds': Qt.binding(function() {
+                                        if (_reconstruction) {
+                                            let result = [];
+                                            for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
+                                                let vp = _reconstruction.viewpoints.at(i);
+                                                result.push(vp.childAttribute("viewId").value);
+                                            }
+                                            return result;
+                                        }
+                                        return {};
+                                    }),
                                 })
 
                             } else {

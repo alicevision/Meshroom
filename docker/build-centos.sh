@@ -5,7 +5,7 @@ set -ex
 test -z "$MESHROOM_VERSION" && MESHROOM_VERSION="$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)"
 echo "MESHROOM_VERSION=${MESHROOM_VERSION}"
 
-test -z "$CUDA_VERSION" && CUDA_VERSION="10.2"
+test -z "$CUDA_VERSION" && CUDA_VERSION="11.3.1"
 echo "CUDA_VERSION=${CUDA_VERSION}"
 
 test -z "$CENTOS_VERSION" && CENTOS_VERSION="7"

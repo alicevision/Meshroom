@@ -87,7 +87,7 @@ class MeshroomApp(QApplication):
                             default=os.environ.get("MESHROOM_DEFAULT_PIPELINE", "photogrammetry"),
                             help='Override the default Meshroom pipeline with this external or template graph.')
         parser.add_argument("--submitLabel", metavar='SUBMITLABEL', type=str, help="Label of a node in the submitter", default='{projectName} [Meshroom]')
-        parser.add_argument("--verbose", help="Verbosity level", default='warning',
+        parser.add_argument("--verbose", help="Verbosity level", default=os.environ.get('MESHROOM_VERBOSE', 'warning'),
                             choices=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],)
 
         args = parser.parse_args(args[1:])

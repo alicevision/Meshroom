@@ -44,6 +44,15 @@ isFrozen = getattr(sys, "frozen", False)
 
 useMultiChunks = util.strtobool(os.environ.get("MESHROOM_USE_MULTI_CHUNKS", "True"))
 
+logStringToPython = {
+    'fatal': logging.FATAL,
+    'error': logging.ERROR,
+    'warning': logging.WARNING,
+    'info': logging.INFO,
+    'debug': logging.DEBUG,
+    'trace': logging.DEBUG,
+}
+logging.getLogger().setLevel(logStringToPython[os.environ.get('MESHROOM_VERBOSE', 'warning')])
 
 def setupEnvironment(backend=Backend.STANDALONE):
     """

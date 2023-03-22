@@ -25,21 +25,33 @@ test -f dl/qt.run || \
         wget "https://download.qt.io/archive/qt/5.14/5.14.1/qt-opensource-linux-x64-5.14.1.run" -O "dl/qt.run" --no-check-certificate
 
 # DEPENDENCIES
+
+DEPS_DOCKER_TAG=alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-centos${CENTOS_VERSION}-cuda${CUDA_VERSION}
+
 docker build \
 	--rm \
 	--build-arg "CUDA_VERSION=${CUDA_VERSION}" \
 	--build-arg "CENTOS_VERSION=${CENTOS_VERSION}" \
 	--build-arg "AV_VERSION=${AV_VERSION}" \
-        --tag "alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-centos${CENTOS_VERSION}-cuda${CUDA_VERSION}" \
+        --tag ${DEPS_DOCKER_TAG} \
         -f docker/Dockerfile_centos_deps .
 
 # Meshroom
+
+DOCKER_TAG=alicevision/meshroom:${MESHROOM_VERSION}-av${AV_VERSION}-centos${CENTOS_VERSION}-cuda${CUDA_VERSION}
+
 docker build \
 	--rm \
 	--build-arg "MESHROOM_VERSION=${MESHROOM_VERSION}" \
 	--build-arg "CUDA_VERSION=${CUDA_VERSION}" \
 	--build-arg "CENTOS_VERSION=${CENTOS_VERSION}" \
 	--build-arg "AV_VERSION=${AV_VERSION}" \
-        --tag "alicevision/meshroom:${MESHROOM_VERSION}-av${AV_VERSION}-centos${CENTOS_VERSION}-cuda${CUDA_VERSION}" \
+        --tag ${DOCKER_TAG} \
         -f docker/Dockerfile_centos .
 
+echo ""
+echo "  To upload results:"
+echo ""
+echo "docker push ${DEPS_DOCKER_TAG}"
+echo "docker push ${DOCKER_TAG}"
+echo ""

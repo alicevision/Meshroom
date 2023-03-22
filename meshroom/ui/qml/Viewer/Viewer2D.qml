@@ -68,33 +68,23 @@ FocusScope {
             return "";
         var res = "";
         if(imgContainer.image.status === Image.Loading)
-            res += " Image";
-        if(featuresViewerLoader.status === Loader.Ready && featuresViewerLoader.item)
         {
-            for (var i = 0; i < featuresViewerLoader.item.count; ++i) {
-                if(featuresViewerLoader.item.itemAt(i).loadingFeatures)
-                {
-                    res += " Features";
-                    break;
-                }
-            }
+            res += " Image";
         }
         if(mfeaturesLoader.status === Loader.Ready)
         {
-            if(mfeaturesLoader.item.status === MFeatures.Loading)
+            if(mfeaturesLoader.item && mfeaturesLoader.item.status === MFeatures.Loading)
                 res += " Features";
         }
         if(mtracksLoader.status === Loader.Ready)
         {
-            if(mtracksLoader.item.status === MTracks.Loading)
+            if(mtracksLoader.item && mtracksLoader.item.status === MTracks.Loading)
                 res += " Tracks";
         }
         if(msfmDataLoader.status === Loader.Ready)
         {
-            if(msfmDataLoader.item != null && msfmDataLoader.item.status === MSfMData.Loading)
-            {
+            if(msfmDataLoader.item && msfmDataLoader.item.status === MSfMData.Loading)
                 res += " SfMData";
-            }
         }
         return res;
     }
@@ -919,10 +909,11 @@ FocusScope {
                         active: root.aliceVisionPluginAvailable && displayFeatures.checked && featuresViewerLoader.status === Loader.Ready
 
                         sourceComponent: FeaturesInfoOverlay {
-                            featureExtractionNode: _reconstruction.activeNodes.get('FeatureExtraction').node
                             pluginStatus: featuresViewerLoader.status
                             featuresViewer: featuresViewerLoader.item
                             mfeatures: mfeaturesLoader.item
+                            mtracks: mtracksLoader.item
+                            msfmdata: msfmDataLoader.item
                         }
                     }
 

@@ -16,16 +16,12 @@ FloatingPane {
     property int pluginStatus: Loader.Null
     property Item featuresViewer: null
     property var mfeatures: null
-    property var featureExtractionNode: null
+    property var mtracks: null
+    property var msfmdata: null
 
     ColumnLayout {
         // Header
         RowLayout {
-            // FeatureExtraction node name
-            Label {
-                text: featureExtractionNode ? featureExtractionNode.label : ""
-                Layout.fillWidth: true
-            }
             // Settings menu
             Loader {
                 active: root.pluginStatus === Loader.Ready
@@ -232,7 +228,7 @@ FloatingPane {
                 MaterialToolButton {
                     id: matchesVisibilityButton
                     checkable: true
-                    checked: false
+                    checked: true
                     text: MaterialIcons.sync
                     ToolTip.text: "Display Matches"
                     onClicked: {
@@ -244,7 +240,7 @@ FloatingPane {
                 MaterialToolButton {
                     id: landmarksVisibilityButton
                     checkable: true
-                    checked: false
+                    checked: true
                     text: MaterialIcons.fiber_manual_record
                     ToolTip.text: "Display Landmarks"
                     onClicked: {
@@ -263,12 +259,9 @@ FloatingPane {
                 }
                 // Feature type name
                 Label {
-                    text: {
-                        if(featureType.viewer.loadingFeatures)
-                            return  featureType.viewer.describerType;
-                        return featureType.viewer.describerType + ": " +
-                                ((featureExtractionNode && featureExtractionNode.isComputed) ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.featuresViewer.currentViewId]['nbFeatures'] : " - ");
-                    }
+                    property string descType: featureType.viewer.describerType
+                    property int viewId: root.featuresViewer.currentViewId
+                    text: descType + ": " + ((root.mfeatures.status === MFeatures.Ready) ? root.mfeatures.nbFeatures(descType, viewId) : " - ") + " / " + ((root.mtracks.status === MTracks.Ready) ? root.mtracks.nbMatches(descType, viewId) : " - ") + " / " + ((root.msfmdata.status === MSfMData.Ready) ? root.msfmdata.nbLandmarks(descType, viewId) : " - ")
                 }
                 // Feature loading status
                 Loader {

@@ -1,12 +1,9 @@
 #!/bin/bash
 set -ex
 
-AV_VERSION="2.2.10.hdri"
-MESHROOM_VERSION="2020.0.1.hdri"
-
 test -z "$MESHROOM_VERSION" && MESHROOM_VERSION="$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)"
 test -z "$AV_VERSION" && echo "AliceVision version not specified, set AV_VERSION in the environment" && exit 1
-test -z "$CUDA_VERSION" && CUDA_VERSION="10.2"
+test -z "$CUDA_VERSION" && CUDA_VERSION="11.3.1"
 test -z "$CENTOS_VERSION" && CENTOS_VERSION="7"
 
 test -d docker || (

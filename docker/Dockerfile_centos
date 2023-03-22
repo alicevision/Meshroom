@@ -44,7 +44,11 @@ COPY ./bin ${MESHROOM_DEV}/bin
 
 WORKDIR ${MESHROOM_DEV}
 
-RUN source scl_source enable rh-python36 && python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
+# remove from default install
+RUN rm meshroom/submitters/ripple* meshroom/submitters/simpleFarm*
+
+RUN source scl_source enable rh-python36 && \
+    python setup.py install_exe -d "${MESHROOM_BUNDLE}" && \
     find ${MESHROOM_BUNDLE} -name "*Qt5Web*" -delete && \
     find ${MESHROOM_BUNDLE} -name "*Qt5Designer*" -delete && \
     rm -rf ${MESHROOM_BUNDLE}/lib/PySide2/typesystems/ \

@@ -106,6 +106,9 @@ def setupEnvironment(backend=Backend.STANDALONE):
 
     # setup root directory (override possible by setting "MESHROOM_INSTALL_DIR" environment variable)
     rootDir = os.path.dirname(sys.executable) if isFrozen else os.environ.get("MESHROOM_INSTALL_DIR", None)
+    logging.debug(f"isFrozen={isFrozen}")
+    logging.debug(f"sys.executable={sys.executable}")
+    logging.debug(f"rootDir={rootDir}")
 
     if rootDir:
         os.environ["MESHROOM_INSTALL_DIR"] = rootDir
@@ -125,7 +128,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
         }
 
         for key, value in env.items():
-            logging.info("Add to {}: {}".format(key, value))
+            logging.debug(f"Add to {key}: {value}")
             addToEnvPath(key, value, 0)
 
         variables = {
@@ -135,7 +138,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
 
         for key, value in variables.items():
             if key not in os.environ and os.path.exists(value):
-                logging.info("Set {}: {}".format(key, value))
+                logging.debug(f"Set {key}: {value}")
                 os.environ[key] = value
     else:
         addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))

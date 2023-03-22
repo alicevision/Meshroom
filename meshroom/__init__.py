@@ -132,6 +132,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
             addToEnvPath(key, value, 0)
 
         variables = {
+            "ALICEVISION_ROOT": aliceVisionDir,
             "ALICEVISION_SENSOR_DB": sensorDBPath,
             "ALICEVISION_VOCTREE": voctreePath
         }

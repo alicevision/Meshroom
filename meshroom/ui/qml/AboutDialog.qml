@@ -132,7 +132,7 @@ Dialog {
 
         // OpenSource licenses
         Label {
-             text: "Open Source Licenses"
+             text: "Changelog & Open Source Licenses"
              Layout.alignment: Qt.AlignHCenter
         }
 
@@ -142,7 +142,7 @@ Dialog {
             spacing: 2
             interactive: false
 
-            model: MeshroomApp.licensesModel
+            model: MeshroomApp.changelogModel.concat(MeshroomApp.licensesModel)
 
             // Exclusive ButtonGroup for licenses entries
             ButtonGroup { id: licensesGroup; exclusive: true }

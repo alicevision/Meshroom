@@ -1297,8 +1297,10 @@ FocusScope {
                     }
                 }
 
-                FloatingPane {
-                    SequencePlayer {}
+                SequencePlayer {
+                    id: sequencePlayer
+                    anchors.margins: 0
+                    Layout.fillWidth: true
                 }
             }
         }

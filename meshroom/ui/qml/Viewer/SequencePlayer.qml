@@ -1,7 +1,11 @@
 import QtQuick 2.11
 import QtQuick.Controls 2.0
+import QtQuick.Layouts 1.3
 
-Slider {
+import Controls 1.0
+
+FloatingPane {
+    id: root
 
     function sequence(vps) {
         let objs = []
@@ -27,19 +31,31 @@ Slider {
         property var viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property var sortedViewIds: viewpoints ? sequence(viewpoints) : []
     }
+    
+    RowLayout {
 
-    stepSize: 1
-    snapMode: Slider.SnapAlways
-    live: true
+        anchors.fill: parent
+    
+        Slider {
 
-    from: 0
-    to: Math.max(m.sortedViewIds.length, 1)
+            Layout.fillWidth: true
 
-    onValueChanged: {
-        let idx = Math.floor(value);
-        if (_reconstruction && idx >= 0 && idx < m.sortedViewIds.length - 1) {
-            _reconstruction.selectedViewId = m.sortedViewIds[idx];
+            stepSize: 1
+            snapMode: Slider.SnapAlways
+            live: true
+
+            from: 0
+            to: Math.max(m.sortedViewIds.length, 1)
+
+            onValueChanged: {
+                let idx = Math.floor(value);
+                if (_reconstruction && idx >= 0 && idx < m.sortedViewIds.length - 1) {
+                    _reconstruction.selectedViewId = m.sortedViewIds[idx];
+                }
+            }
+
         }
+
     }
 
 }

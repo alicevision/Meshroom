@@ -66,9 +66,9 @@ Compute the image warping for each input image in the panorama coordinate system
             enabled=lambda node: (node.estimateResolution.value),
         ),
         desc.ChoiceParam(
-                name='outputColorSpace',
-                label='Output Color Space',
-                description='Allows you to choose the color space of the output image.',
+                name='workingColorSpace',
+                label='Working Color Space',
+                description='Allows you to choose the color space of the output image in which the stitching will be done.',
                 value='Linear',
                 values=['Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
                 exclusive=True,

@@ -43,13 +43,23 @@ FloatingPane {
         interval: 1000 / fps
 
         onTriggered: {
-            viewSlider.value = viewSlider.value + 1;
+            viewSlider.value += 1;
         }
     }
     
     RowLayout {
 
         anchors.fill: parent
+
+        Button {
+            id: prevButton
+
+            text: "prev"
+
+            onClicked: {
+                viewSlider.value -= 1;
+            }
+        }
 
         Button {
             id: playButton
@@ -66,7 +76,16 @@ FloatingPane {
                     timer.running = false;
                 }
             }
+        }
 
+        Button {
+            id: nextButton
+
+            text: "next"
+
+            onClicked: {
+                viewSlider.value += 1;
+            }
         }
     
         Slider {
@@ -87,9 +106,6 @@ FloatingPane {
                     _reconstruction.selectedViewId = m.sortedViewIds[idx];
                 }
             }
-
         }
-
     }
-
 }

@@ -7,6 +7,8 @@ import Controls 1.0
 FloatingPane {
     id: root
 
+    property real fps: 4
+
     function sequence(vps) {
         let objs = []
         for (let i = 0; i < vps.count; i++) {
@@ -27,16 +29,48 @@ FloatingPane {
 
     QtObject {
         id: m
+
         property var currentCameraInit: _reconstruction && _reconstruction.cameraInit ? _reconstruction.cameraInit : undefined
         property var viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property var sortedViewIds: viewpoints ? sequence(viewpoints) : []
+    }
+
+    Timer {
+        id: timer
+
+        repeat: true
+        running: false
+        interval: 1000 / fps
+
+        onTriggered: {
+            viewSlider.value = viewSlider.value + 1;
+        }
     }
     
     RowLayout {
 
         anchors.fill: parent
+
+        Button {
+            id: playButton
+
+            checkable: true
+            checked: false
+            text: checked ? "pause" : "play"
+
+            onCheckedChanged: {
+                if (checked) {
+                    timer.running = true;
+                }
+                else {
+                    timer.running = false;
+                }
+            }
+
+        }
     
         Slider {
+            id: viewSlider
 
             Layout.fillWidth: true
 
@@ -45,7 +79,7 @@ FloatingPane {
             live: true
 
             from: 0
-            to: Math.max(m.sortedViewIds.length, 1)
+            to: m.sortedViewIds.length + 1
 
             onValueChanged: {
                 let idx = Math.floor(value);

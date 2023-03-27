@@ -416,6 +416,23 @@ class MeshroomApp(QApplication):
 
     systemInfo = Property(QJsonValue, _systemInfo, constant=True)
 
+    def _changelogModel(self):
+        """
+        Get the complete changelog for the application.
+        Model provides:
+            title: the name of the changelog
+            localUrl: the local path to CHANGES.md
+            onlineUrl: the remote path to CHANGES.md
+        """
+        rootDir = os.environ.get("MESHROOM_INSTALL_DIR", os.getcwd())
+        return [
+            {
+                "title": "Changelog",
+                "localUrl": os.path.join(rootDir, "CHANGES.md"),
+                "onlineUrl": "https://raw.githubusercontent.com/alicevision/meshroom/develop/CHANGES.md"
+            }
+        ]
+
     def _licensesModel(self):
         """
         Get info about open-source licenses for the application.
@@ -442,6 +459,7 @@ class MeshroomApp(QApplication):
         return bool(os.environ.get("MESHROOM_USE_8BIT_VIEWER", False))
 
 
+    changelogModel = Property("QVariantList", _changelogModel, constant=True)
     licensesModel = Property("QVariantList", _licensesModel, constant=True)
     pipelineTemplateFilesChanged = Signal()
     recentProjectFilesChanged = Signal()

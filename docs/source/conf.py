@@ -16,7 +16,7 @@ sys.path.append(os.path.abspath(os.getenv('PROJECT_DIR')))
 sys.path.append(os.path.abspath('./_ext'))
 
 project = 'Meshroom'
-copyright = '2022, AliceVision Association'
+copyright = '2023, AliceVision Association'
 author = 'AliceVision Association'
 
 # -- General configuration ---------------------------------------------------

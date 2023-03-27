@@ -3,11 +3,10 @@ import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 
 import Controls 1.0
+import MaterialIcons 2.2
 
 FloatingPane {
     id: root
-
-    property real fps: 4
 
     function sequence(vps) {
         let objs = []
@@ -40,33 +39,42 @@ FloatingPane {
 
         repeat: true
         running: false
-        interval: 1000 / fps
+        interval: 1000 / fpsSpinBox.value
 
         onTriggered: {
             viewSlider.value += 1;
         }
+    }
+
+    TextMetrics {
+        id: fpsMetrics
+
+        font: fpsSpinBox.font
+        text: "100"
     }
     
     RowLayout {
 
         anchors.fill: parent
 
-        Button {
+        MaterialToolButton {
             id: prevButton
 
-            text: "prev"
+            text: MaterialIcons.skip_previous
+            ToolTip.text: "Previous Frame"
 
             onClicked: {
                 viewSlider.value -= 1;
             }
         }
 
-        Button {
+        MaterialToolButton {
             id: playButton
 
             checkable: true
             checked: false
-            text: checked ? "pause" : "play"
+            text: checked ? MaterialIcons.pause : MaterialIcons.play_arrow
+            ToolTip.text: checked ? "Pause Player" : "Play Sequence"
 
             onCheckedChanged: {
                 if (checked) {
@@ -78,10 +86,11 @@ FloatingPane {
             }
         }
 
-        Button {
+        MaterialToolButton {
             id: nextButton
 
-            text: "next"
+            text: MaterialIcons.skip_next
+            ToolTip.text: "Next Frame"
 
             onClicked: {
                 viewSlider.value += 1;
@@ -105,6 +114,23 @@ FloatingPane {
                 if (_reconstruction && idx >= 0 && idx < m.sortedViewIds.length - 1) {
                     _reconstruction.selectedViewId = m.sortedViewIds[idx];
                 }
+            }
+        }
+
+        RowLayout {
+            Label {
+                text: "FPS:"
+                ToolTip.text: "Frame Per Second"
+            }
+
+            SpinBox {
+                id: fpsSpinBox
+
+                Layout.preferredWidth: fpsMetrics.width + up.implicitIndicatorWidth
+
+                from: 1
+                to: 60
+                stepSize: 1
             }
         }
     }

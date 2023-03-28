@@ -40,13 +40,13 @@ Post process the panorama.
             uid=[0]
         ),
         desc.ChoiceParam(
-                name='outputColorSpace',
-                label='Output Color Space',
-                description='Allows you to choose the color space of the output image.',
-                value='Linear',
-                values=['sRGB', 'rec709', 'Linear', 'ACES2065-1', 'ACEScg'],
-                exclusive=True,
-                uid=[0],
+            name='outputColorSpace',
+            label='Output Color Space',
+            description='Allows you to choose the color space of the output image.',
+            value='Linear',
+            values=['sRGB', 'rec709', 'Linear', 'ACES2065-1', 'ACEScg'],
+            exclusive=True,
+            uid=[0],
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -66,6 +66,14 @@ Post process the panorama.
             description='',
             semantic='image',
             value=desc.Node.internalFolder + 'panorama.exr',
+            uid=[],
+        ),
+        desc.File(
+            name='outputPanoramaPreview',
+            label='Output Panorama preview',
+            description='',
+            semantic='image',
+            value=desc.Node.internalFolder + 'panoramaPreview.jpg',
             uid=[],
         ),
     ]

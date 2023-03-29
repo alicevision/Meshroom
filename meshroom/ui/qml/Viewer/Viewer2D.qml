@@ -417,9 +417,8 @@ FocusScope {
 
                     onActiveChanged: {
                         if (active) {
-                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                            // instantiate and initialize a FLoatImage component dynamically using Loader.setSource
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
-                            // floatViewerComp.createObject(floatImageViewerLoader, {
                             setSource("FloatImage.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(); }),
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),

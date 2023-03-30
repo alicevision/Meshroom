@@ -33,10 +33,10 @@ Post process the panorama.
         ),
         desc.IntParam(
             name='previewSize',
-            label='Panorama preview Width',
-            description='Choose the output preview width (in pixels).',
+            label='Panorama Preview Width',
+            description='The width (in pixels) of the output panorama preview.',
             value=1000,
-            range=(0, 1000, 5000),
+            range=(0, 5000, 100),
             uid=[0]
         ),
         desc.ChoiceParam(
@@ -63,15 +63,15 @@ Post process the panorama.
         desc.File(
             name='outputPanorama',
             label='Output Panorama',
-            description='',
+            description='Generated panorama in EXR format.',
             semantic='image',
             value=desc.Node.internalFolder + 'panorama.exr',
             uid=[],
         ),
         desc.File(
             name='outputPanoramaPreview',
-            label='Output Panorama preview',
-            description='',
+            label='Output Panorama Preview',
+            description='Preview of the generated panorama in JPG format.',
             semantic='image',
             value=desc.Node.internalFolder + 'panoramaPreview.jpg',
             uid=[],

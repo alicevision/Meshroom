@@ -3,9 +3,16 @@ set -ex
 
 
 test -z "$MESHROOM_VERSION" && MESHROOM_VERSION="$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)"
-test -z "$AV_VERSION" && echo "AliceVision version not specified, set AV_VERSION in the environment" && exit 1
-test -z "$CUDA_VERSION" && CUDA_VERSION="10.2"
+echo "MESHROOM_VERSION=${MESHROOM_VERSION}"
+
+test -z "$CUDA_VERSION" && CUDA_VERSION="11.3.1"
+echo "CUDA_VERSION=${CUDA_VERSION}"
+
 test -z "$CENTOS_VERSION" && CENTOS_VERSION="7"
+echo "CENTOS_VERSION=${CENTOS_VERSION}"
+
+test -z "$AV_VERSION" && echo "AliceVision version not specified, set AV_VERSION in the environment" && exit 1
+echo "AV_VERSION=${AV_VERSION}"
 
 test -d docker || (
 	echo This script must be run from the top level Meshroom directory
@@ -15,24 +22,36 @@ test -d docker || (
 test -d dl || \
         mkdir dl
 test -f dl/qt.run || \
-        wget "https://download.qt.io/archive/qt/5.14/5.14.1/qt-opensource-linux-x64-5.14.1.run" -O "dl/qt.run"
+        wget "https://download.qt.io/archive/qt/5.14/5.14.1/qt-opensource-linux-x64-5.14.1.run" -O "dl/qt.run" --no-check-certificate
 
 # DEPENDENCIES
+
+DEPS_DOCKER_TAG=alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-centos${CENTOS_VERSION}-cuda${CUDA_VERSION}
+
 docker build \
 	--rm \
 	--build-arg "CUDA_VERSION=${CUDA_VERSION}" \
 	--build-arg "CENTOS_VERSION=${CENTOS_VERSION}" \
 	--build-arg "AV_VERSION=${AV_VERSION}" \
-        --tag "alicevision/meshroom-deps:${MESHROOM_VERSION}-av${AV_VERSION}-centos${CENTOS_VERSION}-cuda${CUDA_VERSION}" \
+        --tag ${DEPS_DOCKER_TAG} \
         -f docker/Dockerfile_centos_deps .
 
 # Meshroom
+
+DOCKER_TAG=alicevision/meshroom:${MESHROOM_VERSION}-av${AV_VERSION}-centos${CENTOS_VERSION}-cuda${CUDA_VERSION}
+
 docker build \
 	--rm \
 	--build-arg "MESHROOM_VERSION=${MESHROOM_VERSION}" \
 	--build-arg "CUDA_VERSION=${CUDA_VERSION}" \
 	--build-arg "CENTOS_VERSION=${CENTOS_VERSION}" \
 	--build-arg "AV_VERSION=${AV_VERSION}" \
-        --tag "alicevision/meshroom:${MESHROOM_VERSION}-av${AV_VERSION}-centos${CENTOS_VERSION}-cuda${CUDA_VERSION}" \
+        --tag ${DOCKER_TAG} \
         -f docker/Dockerfile_centos .
 
+echo ""
+echo "  To upload results:"
+echo ""
+echo "docker push ${DEPS_DOCKER_TAG}"
+echo "docker push ${DOCKER_TAG}"
+echo ""

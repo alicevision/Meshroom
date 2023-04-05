@@ -31,6 +31,40 @@ TODO.
             value='',
             uid=[0]
         ),
+        desc.IntParam(
+            name='HSOrder',
+            label='HS order',
+            description='Order of the spherical harmonics. ',
+            value=0,
+            range=(0, 2, 1),
+            uid=[0],
+            advanced=True,
+         ),
+         desc.BoolParam(
+            name='removeAmbiant',
+            label='removeAmbiant',
+            description='removeAmbiant',
+            value=False,
+            uid=[0],
+            advanced=True,
+         ),
+         desc.BoolParam(
+            name='isRobust',
+            label='isRobust',
+            description='isRobust',
+            value=False,
+            uid=[0],
+            advanced=True,
+         ),
+         desc.IntParam(
+            name='downscale',
+            label='downscale',
+            description='downscale',
+            value=1,
+            uid=[0],
+            range=(1, 2, 8),
+            advanced=True
+         )
     ]
 
     outputs = [

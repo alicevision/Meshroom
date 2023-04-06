@@ -44,10 +44,18 @@ TODO.
 
     outputs = [
         desc.File(
+            name='outputSfmData',
+            label='SfmData',
+            description='Path to the output folder',
+            value=desc.Node.internalFolder + '/sfmData.sfm',
+            uid=[],
+            group='', # remove from command line
+        ),
+        desc.File(
             name='outputPath',
-            label='Output path',
+            label='Output Folder',
             description='Path to the output folder',
             value=desc.Node.internalFolder,
             uid=[],
-        )
+        ),
     ]

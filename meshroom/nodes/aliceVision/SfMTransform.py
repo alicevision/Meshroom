@@ -45,7 +45,7 @@ The transformation can be based on:
                         " * from_center_camera: Use the center camera as the origin of the coordinate system\n"
                         " * from_markers: Align specific markers to custom coordinates\n"
                         " * from_gps: Align with the gps positions from the image metadata",
-            value='auto_from_landmarks',
+            value='auto',
             values=['transformation', 'manual', 'auto', 'auto_from_cameras', 'auto_from_cameras_x_axis', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers', 'from_gps'],
             exclusive=True,
             uid=[0],

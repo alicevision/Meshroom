@@ -55,4 +55,4 @@ def test_templateVersions():
                         compatibilityIssue = CompatibilityIssue.DescriptionConflict
                         break
 
-            assert compatibilityIssue is None
+            assert compatibilityIssue is None, "{} in {} for node {}".format(compatibilityIssue, path, nodeType)

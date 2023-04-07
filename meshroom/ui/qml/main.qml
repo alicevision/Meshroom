@@ -184,17 +184,9 @@ ApplicationWindow {
 
         property bool warnIfUnsaved: true
 
-        // evaluate if global reconstruction computation can be started
-        property bool canStartComputation: _reconstruction ?
-                                           _reconstruction.viewpoints.count >= 2       // at least 2 images
-                                           && !_reconstruction.computing               // computation is not started
-                                           && _reconstruction.graph.canComputeLeaves : // graph has no uncomputable nodes
-                                           false
-
         // evaluate if graph computation can be submitted externally
         property bool canSubmit: _reconstruction ?
                                  _reconstruction.canSubmit                             // current setup allows to compute externally
-                                 && canStartComputation                                // can be computed
                                  && _reconstruction.graph.filepath :                   // graph is saved on disk
                                  false
 

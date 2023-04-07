@@ -67,7 +67,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
         ),
         desc.File(
             name="sensorDbPath",
-            label="Sensor Db Path",
+            label="Sensor Database",
             description="Camera sensor width database path.",
             value="${ALICEVISION_SENSOR_DB}",
             uid=[0],

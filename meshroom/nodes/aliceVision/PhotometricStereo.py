@@ -30,16 +30,7 @@ TODO.
             description='Folder containing lighting information.',
             value='',
             uid=[0]
-        ),
-        desc.IntParam(
-            name='HSOrder',
-            label='HS order',
-            description='Order of the spherical harmonics. ',
-            value=0,
-            range=(0, 2, 1),
-            uid=[0],
-            advanced=True,
-         )
+        )
     ]
 
     outputs = [

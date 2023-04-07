@@ -147,16 +147,19 @@ class Version(object):
         """
         if len(args) == 0:
             self.components = tuple()
+            self.status = str()
         elif len(args) == 1:
             versionName = args[0]
             if isinstance(versionName, str):
-                self.components = Version.toComponents(versionName)
+                self.components, self.status = Version.toComponents(versionName)
             elif isinstance(versionName, (list, tuple)):
                 self.components = tuple([int(v) for v in versionName])
+                self.status = str()
             else:
                 raise RuntimeError("Version: Unsupported input type.")
         else:
             self.components = tuple([int(v) for v in args])
+            self.status = str()
 
     def __repr__(self):
         return self.name
@@ -206,17 +209,24 @@ class Version(object):
     @staticmethod
     def toComponents(versionName):
         """
-        Split 'versionName' as a tuple of individual components.
+        Split 'versionName' as a tuple of individual components, including its status if
+        there is any.
 
         Args:
             versionName (str): version name
 
         Returns:
-            tuple of str: split version numbers
+            tuple of int, string: split version numbers, status if any (or empty string)
         """
         if not versionName:
-            return ()
-        return tuple([int(v) for v in versionName.split(".")])
+            return (), str()
+
+        status = str()
+        # If there is a status, it is placed after a "-"
+        splitComponents = versionName.split("-", maxsplit=1)
+        if (len(splitComponents) > 1):  # If there is no status, splitComponents is equal to [versionName]
+            status = splitComponents[-1]
+        return tuple([int(v) for v in splitComponents[0].split(".")]), status
 
     @property
     def name(self):

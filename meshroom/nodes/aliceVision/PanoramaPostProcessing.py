@@ -49,6 +49,24 @@ Post process the panorama.
             uid=[0],
         ),
         desc.ChoiceParam(
+            name='compressionMethod',
+            label='Compression Method',
+            description='Compression method for output image.',
+            value='Auto',
+            values=['None', 'Auto', 'RLE', 'ZIP', 'ZIPS', 'PIZ', 'PXR24', 'B44', 'B44A', 'DWAA', 'DWAB'],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='compressionLevel',
+            label='Compression Level',
+            description='Level of compression relying on the selected compression method.',
+            value=0,
+            range=(0, 200, 1),
+            uid=[0],
+        ),
+
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='Verbosity level (fatal, error, warning, info, debug, trace).',

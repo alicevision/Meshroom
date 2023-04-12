@@ -712,7 +712,7 @@ class Reconstruction(UIGraph):
         if filesByType.videos:
             boundingBox = self.layout.boundingBox()
             keyframeNode = self.addNewNode("KeyframeSelection", position=Position(boundingBox[0], boundingBox[1] + boundingBox[3]))
-            keyframeNode.mediaPaths.value = filesByType.videos
+            keyframeNode.inputPaths.value = filesByType.videos
             if len(filesByType.videos) == 1:
                 newVideoNodeMessage = "New node '{}' added for the input video.".format(keyframeNode.getLabel())
             else:

@@ -32,28 +32,49 @@ FloatingPane {
         property var currentCameraInit: _reconstruction && _reconstruction.cameraInit ? _reconstruction.cameraInit : undefined
         property var viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property var sortedViewIds: viewpoints ? sequence(viewpoints) : []
+        property int frame: 0
+        property bool playing: false
+        property bool repeat: false
+        property real fps: 1
+
+        onFrameChanged: {
+            if (_reconstruction && frame >= 0 && frame < sortedViewIds.length) {
+                _reconstruction.selectedViewId = sortedViewIds[frame];
+            }
+        }
+    }
+
+    Connections {
+        target: _reconstruction
+        onSelectedViewIdChanged: {
+            for (let idx = 0; idx < m.sortedViewIds.length; idx++) {
+                if (_reconstruction.selectedViewId == m.sortedViewIds[idx] && (m.frame != idx)) {
+                    m.frame = idx;
+                }
+            }
+        }
     }
 
     Timer {
         id: timer
 
         repeat: true
-        running: false
-        interval: 1000 / fpsSpinBox.value
+        running: m.playing
+        interval: 1000 / m.fps
 
         onTriggered: {
-            let nextIndex = viewSlider.value + 1;
+            let nextIndex = m.frame + 1;
             if (nextIndex == m.sortedViewIds.length) {
-                if (repeatButton.checked) {
-                    viewSlider.value = 0;
+                if (m.repeat) {
+                    m.frame = 0;
                     return;
                 }
                 else {
-                    playButton.checked = false;
+                    m.playing = false;
                     return;
                 }
             }
-            viewSlider.value = nextIndex;
+            m.frame = nextIndex;
         }
     }
 
@@ -75,7 +96,7 @@ FloatingPane {
             ToolTip.text: "Previous Frame"
 
             onClicked: {
-                viewSlider.value -= 1;
+                m.frame -= 1;
             }
         }
 
@@ -88,11 +109,13 @@ FloatingPane {
             ToolTip.text: checked ? "Pause Player" : "Play Sequence"
 
             onCheckedChanged: {
-                if (checked) {
-                    timer.running = true;
-                }
-                else {
-                    timer.running = false;
+                m.playing = checked;
+            }
+
+            Connections {
+                target: m
+                onPlayingChanged: {
+                    playButton.checked = m.playing;
                 }
             }
         }
@@ -104,18 +127,18 @@ FloatingPane {
             ToolTip.text: "Next Frame"
 
             onClicked: {
-                viewSlider.value += 1;
+                m.frame += 1;
             }
         }
 
         Label {
             id: frameLabel
 
-            text: viewSlider.value
+            text: m.frame
         }
     
         Slider {
-            id: viewSlider
+            id: frameSlider
 
             Layout.fillWidth: true
 
@@ -127,9 +150,13 @@ FloatingPane {
             to: m.sortedViewIds.length - 1
 
             onValueChanged: {
-                let idx = Math.floor(value);
-                if (_reconstruction && idx >= 0 && idx < m.sortedViewIds.length - 1) {
-                    _reconstruction.selectedViewId = m.sortedViewIds[idx];
+                m.frame = value;
+            }
+
+            Connections {
+                target: m
+                onFrameChanged: {
+                    frameSlider.value = m.frame;
                 }
             }
         }
@@ -148,6 +175,10 @@ FloatingPane {
                 from: 1
                 to: 60
                 stepSize: 1
+
+                onValueChanged: {
+                    m.fps = value;
+                }
             }
         }
 
@@ -158,6 +189,10 @@ FloatingPane {
             checked: false
             text: MaterialIcons.replay
             ToolTip.text: "Repeat"
+
+            onCheckedChanged: {
+                m.repeat = checked;
+            }
         }
     }
 }

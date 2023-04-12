@@ -18,15 +18,15 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
     inputs = [
         desc.ListAttribute(
             elementDesc=desc.File(
-                name="mediaPath",
-                label="Media Path",
-                description="Media path.",
+                name="inputPath",
+                label="Input Path",
+                description="Input path.",
                 value="",
                 uid=[0],
             ),
-            name="mediaPaths",
-            label="Media Paths",
-            description="Input video files or image sequence directories.",
+            name="inputPaths",
+            label="Input Paths",
+            description="Input video files, image sequence directories or SfMData file.",
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -341,5 +341,19 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             value=desc.Node.internalFolder,
             uid=[],
         ),
+        desc.File(
+            name="outputSfMDataKeyframes",
+            label="Keyframes SfMData",
+            description="Output SfMData file containing all the selected keyframes.",
+            value=desc.Node.internalFolder + "keyframes.sfm",
+            uid=[],
+        ),
+        desc.File(
+            name="outputSfMDataFrames",
+            label="Frames SfMData",
+            description="Output SfMData file containing all the frames that were not selected as keyframes.",
+            value=desc.Node.internalFolder + "frames.sfm",
+            uid=[]
+        )
     ]
 

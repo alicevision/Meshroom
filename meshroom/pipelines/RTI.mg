@@ -1,11 +1,11 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2021.1.0",
+        "releaseVersion": "2023.1.0",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "CameraInit": "8.0",
+            "CameraInit": "9.0",
             "RTI": "3.0"
         }
     },

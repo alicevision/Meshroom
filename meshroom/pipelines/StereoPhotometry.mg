@@ -1,13 +1,13 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2021.1.0",
+        "releaseVersion": "2023.1.0",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
             "SphereDetection": "3.0",
             "LightingCalibration": "3.0",
-            "CameraInit": "8.0",
+            "CameraInit": "9.0",
             "NormalIntegration": "3.0",
             "PhotometricStereo": "3.0"
         }

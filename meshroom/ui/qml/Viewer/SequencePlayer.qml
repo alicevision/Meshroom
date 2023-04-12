@@ -42,7 +42,18 @@ FloatingPane {
         interval: 1000 / fpsSpinBox.value
 
         onTriggered: {
-            viewSlider.value += 1;
+            let nextIndex = viewSlider.value + 1;
+            if (nextIndex == m.sortedViewIds.length) {
+                if (repeatButton.checked) {
+                    viewSlider.value = 0;
+                    return;
+                }
+                else {
+                    playButton.checked = false;
+                    return;
+                }
+            }
+            viewSlider.value = nextIndex;
         }
     }
 
@@ -138,6 +149,15 @@ FloatingPane {
                 to: 60
                 stepSize: 1
             }
+        }
+
+        MaterialToolButton {
+            id: repeatButton
+
+            checkable: true
+            checked: false
+            text: MaterialIcons.replay
+            ToolTip.text: "Repeat"
         }
     }
 }

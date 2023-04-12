@@ -49,6 +49,12 @@ class FilepathHelper(QObject):
         """ Returns the extension (.ext) of a pathname """
         return os.path.splitext(self.asStr(path))[-1]
 
+    @Slot(str, result=str)
+    @Slot(QUrl, result=str)
+    def removeExtension(self, path):
+        """ Returns the pathname without its extension (.ext)"""
+        return os.path.splitext(self.asStr(path))[0]
+
     @Slot(str, result=bool)
     @Slot(QUrl, result=bool)
     def isFile(self, path):

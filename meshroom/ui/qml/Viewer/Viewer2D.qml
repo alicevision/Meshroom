@@ -219,37 +219,50 @@ FocusScope {
             return sourceExternal;
         }
         if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
-            return getViewpointPath(_reconstruction.selectedViewId);
+            return Filepath.stringToUrl(getViewpointAttribute("path",_reconstruction.selectedViewId));
         }
-        return getFileAttributePath(displayedNode, outputAttribute.name, _reconstruction ? _reconstruction.selectedViewId : -1);
+
+        var viewId = -1;
+        var intrinsicId = -1;
+        var fileName = "";
+        if (_reconstruction) {
+            viewId = _reconstruction.selectedViewId;
+            intrinsicId = getViewpointAttribute("intrinsicId", viewId);
+            fileName = Filepath.removeExtension(Filepath.basename(getViewpointAttribute("path",viewId)));
+        }
+        var patterns = {"<VIEW_ID>": viewId,"<INTRINSIC_ID>": intrinsicId, "<FILENAME>": fileName}
+        return getFileAttributePath(displayedNode, outputAttribute.name,patterns);
     }
 
-    function getFileAttributePath(node, attrName, viewId) {
+    function getFileAttributePath(node, attrName, patterns) {
         // get output attribute with matching name
-        // and parse its value to get the image filepath
+        // and parse with the patterns present in the patterns dict
         if (!node)
             return "";
         for (var i = 0; i < node.attributes.count; i++) {
             var attr = node.attributes.at(i);
             if (attr.name == attrName) {
-                let pattern = String(attr.value).replace("<VIEW_ID>", viewId);
-                let path = Filepath.globFirst(pattern);
+                let path = String(attr.value)
+                for (var key in patterns) {
+                    if (patterns.hasOwnProperty(key)) {
+                        path = path.replace(key, patterns[key])
+                    }
+                }
                 return Filepath.stringToUrl(path);
             }
         }
         return "";
     }
 
-    function getViewpointPath(viewId) {
-        // get viewpoint from cameraInit with matching id
-        // and get its image filepath
+    function getViewpointAttribute(attributeName, viewId) {
+        // get viewpoint from cameraInit with matching id and return the attribute corresponding to the attributeName
         for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
             var vp = _reconstruction.viewpoints.at(i);
             if (vp.childAttribute("viewId").value == viewId) {
-                return Filepath.stringToUrl(vp.childAttribute("path").value);
+                return vp.childAttribute(attributeName).value;
             }
         }
-        return "";
+        return undefined;
     }
 
     function getViewpointMetadata(viewId) {

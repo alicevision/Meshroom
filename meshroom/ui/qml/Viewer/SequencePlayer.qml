@@ -5,9 +5,21 @@ import QtQuick.Layouts 1.3
 import Controls 1.0
 import MaterialIcons 2.2
 
+/**
+ * The Sequence Player is a UI for manipulating
+ * the currently selected (and displayed) viewpoint
+ * in an ordered set of viewpoints (i.e. a sequence).
+ *
+ * The viewpoint manipulation process can be manual
+ * (for example by dragging a slider to change the current frame)
+ * or automatic
+ * (by playing the sequence, i.e. incrementing the current frame at a given time rate).
+ */
 FloatingPane {
     id: root
 
+    // Utility function to sort a set of viewpoints
+    // using their corresponding image filenames
     function sequence(vps) {
         let objs = []
         for (let i = 0; i < vps.count; i++) {
@@ -26,6 +38,10 @@ FloatingPane {
         return viewIds;
     }
 
+    // Sequence player model:
+    // - ordered set of viewpoints
+    // - current frame
+    // - data related to automatic sequence playing
     QtObject {
         id: m
 
@@ -44,6 +60,8 @@ FloatingPane {
         }
     }
 
+    // Update the frame property
+    // when the selected view ID is changed externally
     Connections {
         target: _reconstruction
         onSelectedViewIdChanged: {
@@ -55,6 +73,9 @@ FloatingPane {
         }
     }
 
+    // In play mode
+    // we use a timer to increment the frame property
+    // at a given time rate (defined by the fps property)
     Timer {
         id: timer
 
@@ -77,14 +98,15 @@ FloatingPane {
             m.frame = nextIndex;
         }
     }
-
-    TextMetrics {
-        id: fpsMetrics
-
-        font: fpsSpinBox.font
-        text: "100"
-    }
     
+    // Widgets:
+    // - "Previous Frame" button
+    // - "Play - Pause" button
+    // - "Next Frame" button
+    // - frame label
+    // - frame slider
+    // - FPS spin box
+    // - "Repeat" button
     RowLayout {
 
         anchors.fill: parent
@@ -194,5 +216,12 @@ FloatingPane {
                 m.repeat = checked;
             }
         }
+    }
+
+    TextMetrics {
+        id: fpsMetrics
+
+        font: fpsSpinBox.font
+        text: "100"
     }
 }

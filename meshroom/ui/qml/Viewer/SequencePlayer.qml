@@ -96,6 +96,12 @@ FloatingPane {
                 viewSlider.value += 1;
             }
         }
+
+        Label {
+            id: frameLabel
+
+            text: viewSlider.value
+        }
     
         Slider {
             id: viewSlider
@@ -107,7 +113,7 @@ FloatingPane {
             live: true
 
             from: 0
-            to: m.sortedViewIds.length + 1
+            to: m.sortedViewIds.length - 1
 
             onValueChanged: {
                 let idx = Math.floor(value);

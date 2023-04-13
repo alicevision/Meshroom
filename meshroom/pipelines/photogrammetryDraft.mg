@@ -4,7 +4,7 @@
             "FeatureMatching": "2.0", 
             "MeshFiltering": "3.0", 
             "Texturing": "6.0", 
-            "StructureFromMotion": "2.0", 
+            "StructureFromMotion": "3.0",
             "CameraInit": "9.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 

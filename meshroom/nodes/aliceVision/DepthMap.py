@@ -267,6 +267,13 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 uid=[0],
                 advanced=True,
             ),
+            desc.BoolParam(
+                name='sgmUseConsistentScale',
+                label='Consistent Scale',
+                description='Compare patch with consistent scale for similarity volume computation.', 
+                value=False,
+                uid=[0],
+            ),
         ]),
         desc.GroupAttribute(
             name='refine',
@@ -377,6 +384,15 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 description='Enable middle depth bilinear interpolation.', 
                 value=False,
                 uid=[0],
+                enabled= lambda node: node.refine.refineEnabled.value,
+            ),
+            desc.BoolParam(
+                name='refineUseConsistentScale',
+                label='Consistent Scale',
+                description='Compare patch with consistent scale for similarity volume computation.', 
+                value=False,
+                uid=[0],
+                enabled= lambda node: node.refine.refineEnabled.value,
             ),
         ]),
         desc.GroupAttribute(

@@ -104,8 +104,16 @@ Convert or apply filtering to the input images.
         desc.BoolParam(
             name='exposureCompensation',
             label='Exposure Compensation',
-            description='Exposure Compensation',
+            description='Exposure Compensation (only valid for sfmData)',
             value=False,
+            uid=[0],
+        ),
+        desc.FloatParam(
+            name='exposureAdjust',
+            label='Exposure Adjustment',
+            description='Exposure Adjustment in fstops',
+            value=0.0,
+            range=(-2.0, 2.0, 0.125),
             uid=[0],
         ),
         desc.GroupAttribute(name="lensCorrection", label="Lens Correction", description="Automatic lens correction settings.", joinChar=":", groupDesc=[
@@ -148,6 +156,22 @@ Convert or apply filtering to the input images.
             description='Scale Factor.',
             value=1.0,
             range=(0.0, 1.0, 0.01),
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='maxWidth',
+            label='max Width',
+            description='Maximal width of the output images.',
+            value=0,
+            range=(0, 10000, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='maxHeight',
+            label='max Height',
+            description='Maximal height of the output images.',
+            value=0,
+            range=(0, 10000, 1),
             uid=[0],
         ),
         desc.FloatParam(

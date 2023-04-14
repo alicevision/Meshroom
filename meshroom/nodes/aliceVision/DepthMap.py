@@ -636,7 +636,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label='Depth Maps SGM',
             description='Debug: Depth maps SGM',
             semantic='image',
-            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_scale2_sgm.exr',
+            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_sgm.exr',
             uid=[],
             group='', # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,

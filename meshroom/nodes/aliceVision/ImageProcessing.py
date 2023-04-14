@@ -104,16 +104,23 @@ Convert or apply filtering to the input images.
         desc.BoolParam(
             name='exposureCompensation',
             label='Exposure Compensation',
-            description='Exposure Compensation (only valid for sfmData)',
+            description='Exposure compensation (only valid for sfmData)',
+            value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='rawAutoBright',
+            label='RAW Auto Bright',
+            description='Enable automatic exposure adjustment for RAW images',
             value=False,
             uid=[0],
         ),
         desc.FloatParam(
-            name='exposureAdjust',
-            label='Exposure Adjustment',
-            description='Exposure Adjustment in fstops',
+            name='rawExposureAdjust',
+            label='RAW Exposure Adjustment',
+            description='Manual exposure adjustment in fstops for RAW images',
             value=0.0,
-            range=(-2.0, 2.0, 0.125),
+            range=(-2.0, 3.0, 0.125),
             uid=[0],
         ),
         desc.GroupAttribute(name="lensCorrection", label="Lens Correction", description="Automatic lens correction settings.", joinChar=":", groupDesc=[

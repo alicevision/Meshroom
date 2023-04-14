@@ -189,9 +189,9 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 advanced=True,
             ),
             desc.FloatParam(
-                name='sgmDepthThiknessInflate',
-                label='Thikness Inflate',
-                description='Inflate factor to add margins to the depth thikness.',
+                name='sgmDepthThicknessInflate',
+                label='Thickness Inflate',
+                description='Inflate factor to add margins to the depth thickness.',
                 value=0.0,
                 range=(0.0, 2.0, 0.1),
                 uid=[0],

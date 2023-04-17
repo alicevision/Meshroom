@@ -4,6 +4,7 @@ from meshroom.core import desc
 
 class ApplyCalibration(desc.AVCommandLineNode):
     commandLine = 'aliceVision_applyCalibration {allParams}'
+    size = desc.DynamicNodeSize('input')
 
     category = 'Utils'
     documentation = '''

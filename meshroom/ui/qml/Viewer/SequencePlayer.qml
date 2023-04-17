@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 
 import Controls 1.0
 import MaterialIcons 2.2
+import Utils 1.0
 
 /**
  * The Sequence Player is a UI for manipulating
@@ -59,6 +60,9 @@ FloatingPane {
             }
         }
     }
+
+    // Exposed properties
+    property var viewer: null
 
     // Update the frame property
     // when the selected view ID is changed externally
@@ -179,6 +183,30 @@ FloatingPane {
                 target: m
                 onFrameChanged: {
                     frameSlider.value = m.frame;
+                }
+            }
+
+            property real frameLength: m.sortedViewIds.length > 0 ? width / m.sortedViewIds.length : 0
+
+            background: Rectangle {
+                x: frameSlider.leftPadding
+                y: frameSlider.topPadding + frameSlider.height / 2 - height / 2
+                width: frameSlider.availableWidth
+                height: 4
+                radius: 2
+                color: Colors.grey
+
+                Repeater {
+                    model: viewer ? viewer.cachedFrames : []
+
+                    Rectangle {
+                        x: modelData * frameSlider.frameLength
+                        y: 0
+                        width: frameSlider.frameLength
+                        height: 4
+                        radius: 2
+                        color: Colors.blue
+                    }
                 }
             }
         }

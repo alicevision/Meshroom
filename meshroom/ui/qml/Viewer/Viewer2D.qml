@@ -434,7 +434,8 @@ FocusScope {
                                 'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                                 'canBeHovered': false,
                                 'idView': Qt.binding(function() { return (_reconstruction ? _reconstruction.selectedViewId : -1); }),
-                                'cropFisheye': false
+                                'cropFisheye': false,
+                                'sequence': Qt.binding(function() { return ((_reconstruction && _reconstruction.viewpoints) ? _reconstruction.allImagePaths() : []) })
                                 })
                           } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -1301,6 +1302,7 @@ FocusScope {
                     id: sequencePlayer
                     anchors.margins: 0
                     Layout.fillWidth: true
+                    viewer: floatImageViewerLoader.status === Loader.Ready ? floatImageViewerLoader.item : null
                 }
             }
         }

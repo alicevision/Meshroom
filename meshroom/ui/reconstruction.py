@@ -696,6 +696,7 @@ class Reconstruction(UIGraph):
         self.sfmAugmented.emit(first, last)
         return sfm[0], sfm[-1]
 
+    @Slot(result="QVariantList")
     def allImagePaths(self):
         """ Get all image paths in the reconstruction. """
         return [vp.path.value for node in self._cameraInits for vp in node.viewpoints.value]

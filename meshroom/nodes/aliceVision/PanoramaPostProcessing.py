@@ -36,7 +36,7 @@ Post process the panorama.
                 label='Output Color Space',
                 description='Allows you to choose the color space of the output image.',
                 value='Linear',
-                values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+                values=['sRGB', 'rec709', 'Linear', 'ACES2065-1', 'ACEScg'],
                 exclusive=True,
                 uid=[0],
         ),

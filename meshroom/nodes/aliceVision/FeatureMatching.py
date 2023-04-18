@@ -77,10 +77,11 @@ then it checks the number of features that validates this model and iterate thro
                         ' * ANN_L2: L2 Approximate Nearest Neighbor matching\n'
                         ' * CASCADE_HASHING_L2: L2 Cascade Hashing matching\n'
                         ' * FAST_CASCADE_HASHING_L2: L2 Cascade Hashing with precomputed hashed regions (faster than CASCADE_HASHING_L2 but use more memory) \n'
+			' * HNSWLIB: Fast approximate Nearest Neighbor matching\n'
                         'For Binary based descriptor\n'
                         ' * BRUTE_FORCE_HAMMING: BruteForce Hamming matching',
             value='ANN_L2',
-            values=('BRUTE_FORCE_L2', 'ANN_L2', 'CASCADE_HASHING_L2', 'FAST_CASCADE_HASHING_L2', 'BRUTE_FORCE_HAMMING'),
+            values=('BRUTE_FORCE_L2', 'ANN_L2', 'CASCADE_HASHING_L2', 'FAST_CASCADE_HASHING_L2', 'BRUTE_FORCE_HAMMING', 'HNSWLIB'),
             exclusive=True,
             uid=[0],
             advanced=True,

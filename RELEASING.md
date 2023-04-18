@@ -25,6 +25,9 @@ Tags
    - Create branch from develop: "rcMAJOR.MINOR"
    - Modify version in code, version status to RELEASE (meshroom/__init__.py)
    - Create Release note (using https://github.com/cbentejac/github-generate-release-note)
+     - ```
+	   ./github-generate-release-note.py -o alicevision -r Meshroom -m "Meshroom MAJOR.MINOR.PATCH" --highlights major-feature --label-include bugfix,ci,scope:doc,scope:build -s updated-asc
+	   ```
    - PR to develop: "Release MAJOR.MINOR"
  - Build
    - Build docker & push to dockerhub

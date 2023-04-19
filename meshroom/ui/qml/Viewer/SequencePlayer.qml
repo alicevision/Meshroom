@@ -200,9 +200,9 @@ FloatingPane {
                     model: viewer ? viewer.cachedFrames : []
 
                     Rectangle {
-                        x: modelData * frameSlider.frameLength
+                        x: modelData.x * frameSlider.frameLength
                         y: 0
-                        width: frameSlider.frameLength
+                        width: frameSlider.frameLength * (modelData.y - modelData.x + 1)
                         height: 4
                         radius: 2
                         color: Colors.blue

@@ -214,13 +214,15 @@ FocusScope {
 
         var viewId = -1;
         var intrinsicId = -1;
+        var poseId = -1;
         var fileName = "";
         if (_reconstruction) {
             viewId = _reconstruction.selectedViewId;
             intrinsicId = getViewpointAttribute("intrinsicId", viewId);
-            fileName = Filepath.removeExtension(Filepath.basename(getViewpointAttribute("path",viewId)));
+            poseId = getViewpointAttribute("poseId", viewId);
+            fileName = Filepath.removeExtension(Filepath.basename(getViewpointAttribute("path", viewId)));
         }
-        var patterns = {"<VIEW_ID>": viewId,"<INTRINSIC_ID>": intrinsicId, "<FILENAME>": fileName}
+        var patterns = {"<VIEW_ID>": viewId, "<INTRINSIC_ID>": intrinsicId, "<POSE_ID>": poseId, "<FILENAME>": fileName}
         return getFileAttributePath(displayedNode, outputAttribute.name,patterns);
     }
 

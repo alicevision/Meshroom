@@ -49,4 +49,25 @@ TODO.
             value=desc.Node.internalFolder,
             uid=[],
         ),
+        # these attributes are only here to describe more accurately the output of the node
+        # by specifying that it generates 2 sequences of images
+        # (see in Viewer2D.qml how these attributes can be used)
+        desc.File(
+            name='normals',
+            label='Normal Maps',
+            description='Generated normal maps.',
+            semantic='image',
+            value=desc.Node.internalFolder + '<POSE_ID>_normals.png',
+            uid=[],
+            group='', # do not export on the command line
+        ),
+        desc.File(
+            name='albedo',
+            label='Albedo Maps',
+            description='Generated albedo maps.',
+            semantic='image',
+            value=desc.Node.internalFolder + '<POSE_ID>_albedo.png',
+            uid=[],
+            group='', # do not export on the command line
+        ),
     ]

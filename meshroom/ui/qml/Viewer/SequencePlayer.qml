@@ -39,6 +39,16 @@ FloatingPane {
         return viewIds;
     }
 
+    function updateReconstructionView() {
+        if (_reconstruction && m.frame >= 0 && m.frame < m.sortedViewIds.length) {
+            if (m.syncSelected) {
+                _reconstruction.selectedViewId = m.sortedViewIds[m.frame];
+            } else {
+                _reconstruction.pickedViewId = m.sortedViewIds[m.frame];
+            }
+        }
+    }
+
     // Sequence player model:
     // - ordered set of viewpoints
     // - current frame
@@ -50,14 +60,17 @@ FloatingPane {
         property var viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
         property var sortedViewIds: viewpoints ? sequence(viewpoints) : []
         property int frame: 0
+        property bool syncSelected: true
         property bool playing: false
         property bool repeat: false
         property real fps: 1
 
         onFrameChanged: {
-            if (_reconstruction && frame >= 0 && frame < sortedViewIds.length) {
-                _reconstruction.selectedViewId = sortedViewIds[frame];
-            }
+            updateReconstructionView();
+        }
+
+        onSyncSelectedChanged: {
+            updateReconstructionView();
         }
     }
 
@@ -177,6 +190,10 @@ FloatingPane {
 
             onValueChanged: {
                 m.frame = value;
+            }
+
+            onPressedChanged: {
+                m.syncSelected = !pressed;
             }
 
             Connections {

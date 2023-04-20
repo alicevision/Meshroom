@@ -201,7 +201,7 @@ FocusScope {
             return sourceExternal;
         }
         if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
-            return Filepath.stringToUrl(getViewpointAttribute("path",_reconstruction.selectedViewId));
+            return Filepath.stringToUrl(getViewpointAttribute("path",_reconstruction.pickedViewId));
         }
 
         var viewId = -1;

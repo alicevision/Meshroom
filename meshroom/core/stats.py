@@ -257,8 +257,8 @@ class Statistics:
         version = d.get('fileVersion', 0.0)
         if version != self.fileVersion:
             logging.debug('Statistics: file version was {} and the current version is {}.'.format(version, self.fileVersion))
-        self.computer = {}
-        self.process = {}
+        self.computer = ComputerStatistics()
+        self.process = ProcStatistics()
         self.times = []
         try:
             self.computer.fromDict(d.get('computer', {}))

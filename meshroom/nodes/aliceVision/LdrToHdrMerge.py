@@ -99,6 +99,13 @@ Merge LDR images into HDR images.
             uid=[0],
             enabled= lambda node: node.nbBrackets.value != 1,
         ),
+        desc.BoolParam(
+            name='keepSourceImageName',
+            label='Keep Source Image Name',
+            description="Keep the filename of the input image selected as central image for the output image filename.",
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='fusionWeight',
             label='Fusion Weight',

@@ -72,6 +72,10 @@ FloatingPane {
         onSyncSelectedChanged: {
             updateReconstructionView();
         }
+
+        onPlayingChanged: {
+            syncSelected = !playing;
+        }
     }
 
     // Exposed properties
@@ -174,6 +178,7 @@ FloatingPane {
             id: frameLabel
 
             text: m.frame
+            Layout.preferredWidth: frameMetrics.width
         }
     
         Slider {
@@ -203,8 +208,6 @@ FloatingPane {
                 }
             }
 
-            property real frameLength: m.sortedViewIds.length > 0 ? width / m.sortedViewIds.length : 0
-
             background: Rectangle {
                 x: frameSlider.leftPadding
                 y: frameSlider.topPadding + frameSlider.height / 2 - height / 2
@@ -214,12 +217,15 @@ FloatingPane {
                 color: Colors.grey
 
                 Repeater {
+                    id: cacheView
+
                     model: viewer ? viewer.cachedFrames : []
+                    property real frameLength: m.sortedViewIds.length > 0 ? frameSlider.width / m.sortedViewIds.length : 0
 
                     Rectangle {
-                        x: modelData.x * frameSlider.frameLength
+                        x: modelData.x * cacheView.frameLength
                         y: 0
-                        width: frameSlider.frameLength * (modelData.y - modelData.x + 1)
+                        width: cacheView.frameLength * (modelData.y - modelData.x + 1)
                         height: 4
                         radius: 2
                         color: Colors.blue
@@ -261,6 +267,13 @@ FloatingPane {
                 m.repeat = checked;
             }
         }
+    }
+
+    TextMetrics {
+        id: frameMetrics
+
+        font: frameLabel.font
+        text: "10000"
     }
 
     TextMetrics {

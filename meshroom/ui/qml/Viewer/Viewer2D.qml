@@ -435,7 +435,7 @@ FocusScope {
                                 'canBeHovered': false,
                                 'idView': Qt.binding(function() { return (_reconstruction ? _reconstruction.selectedViewId : -1); }),
                                 'cropFisheye': false,
-                                'sequence': Qt.binding(function() { return ((_reconstruction && _reconstruction.viewpoints) ? _reconstruction.allImagePaths() : []) }),
+                                'sequence': Qt.binding(function() { return ((_reconstruction && _reconstruction.viewpoints.count > 0) ? _reconstruction.allImagePaths() : []) }),
                                 'useSequence': Qt.binding(function() { return !useExternal && _reconstruction && (!displayedNode || outputAttribute.name == "gallery"); })
                                 })
                           } else {

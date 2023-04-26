@@ -97,6 +97,11 @@ class ComputerStatistics:
             gpuTree = smiTree.find('gpu')
 
             try:
+                self.gpuName = gpuTree.find('product_name').text
+            except Exception as e:
+                logging.debug('Failed to get gpuName: "{}".'.format(str(e)))
+                pass
+            try:
                 gpuMemoryUsed = gpuTree.find('fb_memory_usage').find('used').text.split(" ")[0]
                 self._addKV('gpuMemoryUsed', gpuMemoryUsed)
             except Exception as e:
@@ -105,6 +110,7 @@ class ComputerStatistics:
             try:
                 self.gpuMemoryTotal = gpuTree.find('fb_memory_usage').find('total').text.split(" ")[0]
             except Exception as e:
+                logging.debug('Failed to get gpuMemoryTotal: "{}".'.format(str(e)))
                 pass
             try:
                 gpuUsed = gpuTree.find('utilization').find('gpu_util').text.split(" ")[0]

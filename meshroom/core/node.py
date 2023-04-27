@@ -1123,6 +1123,12 @@ class BaseNode(BaseObject):
         return (self.locked and self.getGlobalStatus() == Status.SUBMITTED and
                 self.globalExecMode == "LOCAL" and self.statusInThisSession())
 
+    def hasImageOutputAttribute(self):
+        for attr in self._attributes:
+            if attr.enabled and attr.isOutput and attr.desc.semantic == "image":
+                return True
+        return False
+
 
     name = Property(str, getName, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
@@ -1165,6 +1171,8 @@ class BaseNode(BaseObject):
     duplicates = Property(Variant, lambda self: self._duplicates, constant=True)
     hasDuplicatesChanged = Signal()
     hasDuplicates = Property(bool, lambda self: self._hasDuplicates, notify=hasDuplicatesChanged)
+    # When output attributes will be able to switch between enabled/disabled, the property should have a notifying
+    hasImageOutput = Property(bool, hasImageOutputAttribute, constant=True)
 
     outputAttrEnabledChanged = Signal()
 

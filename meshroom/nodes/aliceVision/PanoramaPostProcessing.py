@@ -31,14 +31,22 @@ Post process the panorama.
             value=False,
             uid=[0],
         ),
+        desc.IntParam(
+            name='previewSize',
+            label='Panorama Preview Width',
+            description='The width (in pixels) of the output panorama preview.',
+            value=1000,
+            range=(0, 5000, 100),
+            uid=[0]
+        ),
         desc.ChoiceParam(
-                name='outputColorSpace',
-                label='Output Color Space',
-                description='Allows you to choose the color space of the output image.',
-                value='Linear',
-                values=['sRGB', 'rec709', 'Linear', 'ACES2065-1', 'ACEScg'],
-                exclusive=True,
-                uid=[0],
+            name='outputColorSpace',
+            label='Output Color Space',
+            description='Allows you to choose the color space of the output image.',
+            value='Linear',
+            values=['sRGB', 'rec709', 'Linear', 'ACES2065-1', 'ACEScg'],
+            exclusive=True,
+            uid=[0],
         ),
         desc.ChoiceParam(
             name='verboseLevel',
@@ -55,9 +63,17 @@ Post process the panorama.
         desc.File(
             name='outputPanorama',
             label='Output Panorama',
-            description='',
+            description='Generated panorama in EXR format.',
             semantic='image',
             value=desc.Node.internalFolder + 'panorama.exr',
+            uid=[],
+        ),
+        desc.File(
+            name='outputPanoramaPreview',
+            label='Output Panorama Preview',
+            description='Preview of the generated panorama in JPG format.',
+            semantic='image',
+            value=desc.Node.internalFolder + 'panoramaPreview.jpg',
             uid=[],
         ),
     ]

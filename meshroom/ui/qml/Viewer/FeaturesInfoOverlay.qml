@@ -266,11 +266,11 @@ FloatingPane {
                 Label {
                     property string descType: featureType.viewer.describerType
                     property int viewId: root.featuresViewer.currentViewId
-                    text: descType + ": " + ((root.mfeatures.status === MFeatures.Ready) ? root.mfeatures.nbFeatures(descType, viewId) : " - ") + " / " + ((root.mtracks.status === MTracks.Ready) ? root.mtracks.nbMatches(descType, viewId) : " - ") + " / " + ((root.msfmdata.status === MSfMData.Ready) ? root.msfmdata.nbLandmarks(descType, viewId) : " - ")
+                    text: descType + ": " + ((root.mfeatures && root.mfeatures.status === MFeatures.Ready) ? root.mfeatures.nbFeatures(descType, viewId) : " - ") + " / " + ((root.mtracks && root.mtracks.status === MTracks.Ready) ? root.mtracks.nbMatches(descType, viewId) : " - ") + " / " + ((root.msfmdata && root.msfmdata.status === MSfMData.Ready) ? root.msfmdata.nbLandmarks(descType, viewId) : " - ")
                 }
                 // Feature loading status
                 Loader {
-                    active: (root.mfeatures.status === MFeatures.Loading)
+                    active: (root.mfeatures && root.mfeatures.status === MFeatures.Loading)
                     sourceComponent: BusyIndicator {
                         padding: 0
                         implicitWidth: 12

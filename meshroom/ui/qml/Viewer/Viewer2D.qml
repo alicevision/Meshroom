@@ -524,7 +524,7 @@ FocusScope {
                 ExifOrientedViewer {
                     id: featuresViewerLoader
                     active: displayFeatures.checked
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("FeatureExtraction").node : null
+                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("featureProvider").node : null
                     width: imgContainer.width
                     height: imgContainer.height
                     anchors.centerIn: parent
@@ -706,17 +706,7 @@ FocusScope {
                             return _reconstruction ? _reconstruction.activeNodes.get("featureProvider").node : null;
                         }
                         property bool isComputed: activeNode && activeNode.isComputed
-                        active: false
-
-                        onIsUsedChanged: {
-                            active = (!active && isUsed && isComputed);
-                        }
-                        onIsComputedChanged: {
-                            active = (!active && isUsed && isComputed);
-                        }
-                        onActiveNodeChanged: {
-                            active = (!active && isUsed && isComputed);
-                        }
+                        active: isUsed && isComputed
 
                         onActiveChanged: {
                             if(active) {
@@ -731,7 +721,7 @@ FocusScope {
                                         if (activeNode) {
                                             if (activeNode.nodeType == "FeatureExtraction" && isComputed) {
                                                 result.push(activeNode.attribute("output").value);
-                                            } else {
+                                            } else if (activeNode.hasAttribute("featuresFolders")) {
                                                 for (let i = 0; i < activeNode.attribute("featuresFolders").value.count; i++) {
                                                     let attr = activeNode.attribute("featuresFolders").value.at(i);
                                                     result.push(attr.value);
@@ -791,39 +781,7 @@ FocusScope {
                             return Filepath.stringToUrl(sfmValue);
                         }
 
-                        active: false
-                        // It takes time to load tracks, so keep them looaded, if we may use it again.
-                        // If we load another node, we can trash them (to eventually load the new node data).
-                        onIsUsedChanged: {
-                            if(!active && isUsed && isComputed)
-                            {
-                                active = true;
-                            }
-                        }
-                        onIsComputedChanged: {
-                            if(!isComputed)
-                            {
-                                active = false;
-                            }
-                            else if(!active && isUsed)
-                            {
-                                active = true;
-                            }
-                        }
-                        onActiveNodeChanged: {
-                            if(!isUsed)
-                            {
-                                active = false;
-                            }
-                            else if(!isComputed)
-                            {
-                                active = false;
-                            }
-                            else
-                            {
-                                active = true;
-                            }
-                        }
+                        active: isUsed && isComputed
 
                         onActiveChanged: {
                             if(active) {
@@ -850,33 +808,7 @@ FocusScope {
                         }
                         property bool isComputed: activeNode && activeNode.isComputed
 
-                        active: false
-                        // It takes time to load tracks, so keep them loaded, if we may use it again.
-                        // If we load another node, we can trash them (to eventually load the new node data).
-                        onIsUsedChanged: {
-                            if(!active && isUsed && isComputed) {
-                                active = true;
-                            }
-                        }
-                        onIsComputedChanged: {
-                            if(!isComputed) {
-                                active = false;
-                            }
-                            else if(!active && isUsed) {
-                                active = true;
-                            }
-                        }
-                        onActiveNodeChanged: {
-                            if(!isUsed) {
-                                active = false;
-                            }
-                            else if(!isComputed) {
-                                active = false;
-                            }
-                            else {
-                                active = true;
-                            }
-                        }
+                        active: isUsed && isComputed
 
                         onActiveChanged: {
                             if(active) {
@@ -888,7 +820,7 @@ FocusScope {
                                         if (activeNode) {
                                             if (activeNode.nodeType == "FeatureMatching" && isComputed) {
                                                 result.push(activeNode.attribute("output").value);
-                                            } else {
+                                            } else if (activeNode.hasAttribute("matchesFolders")) {
                                                 for (let i = 0; i < activeNode.attribute("matchesFolders").value.count; i++) {
                                                     let attr = activeNode.attribute("matchesFolders").value.at(i);
                                                     result.push(attr.value);

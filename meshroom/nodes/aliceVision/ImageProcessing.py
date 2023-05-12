@@ -508,6 +508,15 @@ Convert or apply filtering to the input images.
             uid=[0],
         ),
         
+        desc.FloatParam(
+            name='correlatedColorTemperature',
+            label='Illuminant Color Temperature',
+            description='Scene illuminant color temperature in Kelvin. A negative or nul value indicates to use metadata information.',
+            value=-1.0,
+            range=(-1.0, 10000.0, 1.0),
+            uid=[0],
+        ),
+
         desc.ChoiceParam(
             name='storageDataType',
             label='Storage Data Type for EXR output',

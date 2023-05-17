@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "3.1"
 
 from meshroom.core import desc
 
@@ -187,6 +187,15 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         'This prevents adding too much data at once without performing the bundle adjustment.',
             value=30,
             range=(1, 100, 1),
+            uid=[0],
+            advanced=True
+        ),
+        desc.IntParam(
+            name='bundleAdjustmentMaxOutliers',
+            label='Bundle Adjustment Maximum Outliers',
+            description='Threshold for the maximum number of outliers allowed at the end of a bundle adjustment iteration.',
+            value=50,
+            range=(0, 1000, 1),
             uid=[0],
             advanced=True
         ),

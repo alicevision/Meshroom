@@ -192,10 +192,11 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         ),
         desc.IntParam(
             name='bundleAdjustmentMaxOutliers',
-            label='Bundle Adjustment Maximum Outliers',
-            description='Threshold for the maximum number of outliers allowed at the end of a bundle adjustment iteration.',
+            label='Max Nb of Outliers after BA',
+            description='Threshold for the maximum number of outliers allowed at the end of a bundle adjustment iteration.\n'
+                        'Using a negative value for this threshold will disable BA iterations.',
             value=50,
-            range=(0, 1000, 1),
+            range=(-1, 1000, 1),
             uid=[0],
             advanced=True
         ),

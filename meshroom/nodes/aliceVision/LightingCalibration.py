@@ -25,6 +25,13 @@ TODO.
             value='',
             uid=[0],
         ),
+        desc.BoolParam(
+            name='saveAsModel',
+            label='saveAsModel',
+            description='saveAsModel',
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name='method',
             label='method',

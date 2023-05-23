@@ -43,6 +43,22 @@ TODO.
             group='', # remove from command line
         ),
         desc.File(
+            name='outputSfmDataAlbedo',
+            label='SfmData Albedo',
+            description='',
+            value=desc.Node.internalFolder + '/albedoMaps.sfm',
+            uid=[],
+            group='', # remove from command line
+        ),
+        desc.File(
+            name='outputSfmDataNormal',
+            label='SfmData Normal',
+            description='',
+            value=desc.Node.internalFolder + '/normalMaps.sfm',
+            uid=[],
+            group='', # remove from command line
+        ),
+        desc.File(
             name='outputPath',
             label='Output Folder',
             description='Path to the output folder',

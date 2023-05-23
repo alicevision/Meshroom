@@ -10,10 +10,17 @@ TODO.
 '''
 
     inputs = [
+    	desc.File(
+            name='pathToJSONLightFile',
+            label='Lights file',
+            description='File containing lighting information.',
+            value='',
+            uid=[0]
+        ),
         desc.File(
             name='inputPath',
             label='SfmData',
-            description='Input file. Coulb be SfMData file or folder.',
+            description='Input file. Could be SfMData file or folder.',
             value='',
             uid=[0],
         ),
@@ -23,13 +30,6 @@ TODO.
             description='Mask folder path',
             value='',
             uid=[0],
-        ),
-        desc.File(
-            name='pathToJSONLightFile',
-            label='Lights Folder',
-            description='Folder containing lighting information.',
-            value='',
-            uid=[0]
         )
     ]
 
@@ -37,7 +37,7 @@ TODO.
         desc.File(
             name='outputSfmData',
             label='SfmData',
-            description='Path to the output folder',
+            description='',
             value=desc.Node.internalFolder + '/sfmData.sfm',
             uid=[],
             group='', # remove from command line
@@ -73,7 +73,7 @@ TODO.
             label='Normal Maps',
             description='Generated normal maps.',
             semantic='image',
-            value=desc.Node.internalFolder + '<POSE_ID>_normals.png',
+            value=desc.Node.internalFolder + '<POSE_ID>_normals.exr',
             uid=[],
             group='', # do not export on the command line
         ),
@@ -82,7 +82,7 @@ TODO.
             label='Albedo Maps',
             description='Generated albedo maps.',
             semantic='image',
-            value=desc.Node.internalFolder + '<POSE_ID>_albedo.png',
+            value=desc.Node.internalFolder + '<POSE_ID>_albedo.exr',
             uid=[],
             group='', # do not export on the command line
         ),

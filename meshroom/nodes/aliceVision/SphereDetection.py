@@ -13,29 +13,29 @@ TODO.
     inputs = [
         desc.File(
             name='input_sfmdata_path',
-            label='SfmData',
-            description='Input file. Coulb be SfMData file or folder.',
+            label="SfmData",
+            description='Input SfMData file.',
             value='',
             uid=[0],
         ),
         desc.File(
             name='input_model_path',
-            label='input_model_path',
-            description='Input file. Coulb be SfMData file or folder.',
+            label='Deep learning net for automatic detection',
+            description='Deep learning net for automatic detection.',
             value='',
             uid=[0],
         ),
         desc.BoolParam(
             name='autoDetect',
-            label='autoDetect',
-            description='autoDetect',
+            label='Automatic Sphere Detection',
+            description='Automatic detection of calibration spheres',
             value=False,
             uid=[0],
         ),
         desc.GroupAttribute(
             name="sphereCenter",
-            label="Sphere Center",
-            description="Center of the circle (XY offset to the center in pixels).",
+            label="Sphere center",
+            description="Center of the circle (XY offset to the center of the image in pixels).",
             groupDesc=[
                 desc.FloatParam(
                     name="x", label="x", description="X Offset in pixels",
@@ -52,7 +52,7 @@ TODO.
         ),
         desc.FloatParam(
             name='sphereRadius',
-            label='r',
+            label='Radius',
             description='Sphere radius in pixels.',
             value=500.0,
             range=(0.0, 1000.0, 0.1),
@@ -63,7 +63,7 @@ TODO.
     outputs = [
         desc.File(
             name='output_path',
-            label='Output json file',
+            label='Output light file folder',
             description='Light information will be written here.',
             value=desc.Node.internalFolder,
             uid=[],

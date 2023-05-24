@@ -31,8 +31,8 @@ Overwrite intrinsics with a calibrated intrinsic.
     outputs = [
         desc.File(
             name='output',
-            label='SfMData File.',
-            description='Path to the output sfmData file.',
+            label='SfMData File',
+            description='Path to the output SfMData file.',
             value=desc.Node.internalFolder + 'sfmData.sfm',
             uid=[],
         ),

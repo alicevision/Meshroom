@@ -15,14 +15,14 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
     inputs = [
         desc.File(
             name='input',
-            label='SfmData',
-            description='SfmData File.',
+            label='Input SfMData',
+            description='SfMData file.',
             value='',
             uid=[0],
         ),
         desc.File(
             name='checkerboards',
-            label='Checkerboards folder',
+            label='Checkerboards Folder',
             description='Folder containing checkerboard JSON files.',
             value='',
             uid=[0],
@@ -41,8 +41,8 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
     outputs = [
         desc.File(
             name='output',
-            label='SfmData File',
-            description='Path to the output sfmData file.',
+            label='SfMData File',
+            description='Path to the output SfMData file.',
             value=desc.Node.internalFolder + 'sfmData.sfm',
             uid=[],
         )

@@ -89,12 +89,12 @@ Intrinsic = [
             name="distortionParams",
             elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
             label="Distortion Params",
-            description="Distortion Parameters",
+            description="Distortion parameters.",
         ),
     desc.GroupAttribute(
             name="undistortionOffset",
             label="Undistortion Offset",
-            description="Undistortion Offset",
+            description="Undistortion offset.",
             groupDesc=[
                 desc.FloatParam(name="x", label="x", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
                 desc.FloatParam(name="y", label="y", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
@@ -104,7 +104,7 @@ Intrinsic = [
             name="undistortionParams",
             elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
             label="Undistortion Params",
-            description="Undistortion Parameters"
+            description="Undistortion parameters."
         ),
     desc.BoolParam(name='locked', label='Locked',
                    description='If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speedup the reconstruction.',

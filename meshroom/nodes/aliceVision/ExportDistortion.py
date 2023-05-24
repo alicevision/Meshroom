@@ -24,7 +24,7 @@ Export the distortion model and parameters of cameras in a SfM scene.
         desc.File(
             name='output',
             label='Folder',
-            description='',
+            description='Output folder.',
             value=desc.Node.internalFolder,
             uid=[],
         ),

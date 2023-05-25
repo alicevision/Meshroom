@@ -22,7 +22,7 @@ TODO.
             name='input_model_path',
             label='Deep learning net for automatic detection',
             description='Deep learning net for automatic detection.',
-            value='',
+            value='${ALICEVISION_SPHERE_DETECTION_MODEL}',
             uid=[0],
         ),
         desc.BoolParam(

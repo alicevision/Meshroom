@@ -408,6 +408,10 @@ class Reconstruction(UIGraph):
                 "SfMAlignment"],
         # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
+        # Nodes that can be used to provide features folders to the UI
+        "featureProvider": ["FeatureExtraction", "FeatureMatching", "StructureFromMotion"],
+        # Nodes that can be used to provide matches folders to the UI
+        "matchProvider": ["FeatureMatching", "StructureFromMotion"]
     }
 
     def __init__(self, undoStack, taskManager, defaultPipeline='', parent=None):

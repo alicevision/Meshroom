@@ -71,33 +71,23 @@ FocusScope {
             return "";
         var res = "";
         if(imgContainer.image.status === Image.Loading)
-            res += " Image";
-        if(featuresViewerLoader.status === Loader.Ready && featuresViewerLoader.item)
         {
-            for (var i = 0; i < featuresViewerLoader.item.count; ++i) {
-                if(featuresViewerLoader.item.itemAt(i).loadingFeatures)
-                {
-                    res += " Features";
-                    break;
-                }
-            }
+            res += " Image";
         }
         if(mfeaturesLoader.status === Loader.Ready)
         {
-            if(mfeaturesLoader.item.status === MFeatures.Loading)
+            if(mfeaturesLoader.item && mfeaturesLoader.item.status === MFeatures.Loading)
                 res += " Features";
         }
         if(mtracksLoader.status === Loader.Ready)
         {
-            if(mtracksLoader.item.status === MTracks.Loading)
+            if(mtracksLoader.item && mtracksLoader.item.status === MTracks.Loading)
                 res += " Tracks";
         }
         if(msfmDataLoader.status === Loader.Ready)
         {
-            if(msfmDataLoader.item != null && msfmDataLoader.item.status === MSfMData.Loading)
-            {
+            if(msfmDataLoader.item && msfmDataLoader.item.status === MSfMData.Loading)
                 res += " SfMData";
-            }
         }
         return res;
     }
@@ -536,7 +526,7 @@ FocusScope {
                 ExifOrientedViewer {
                     id: featuresViewerLoader
                     active: displayFeatures.checked
-                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("FeatureExtraction").node : null
+                    property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("featureProvider").node : null
                     width: imgContainer.width
                     height: imgContainer.height
                     anchors.centerIn: parent
@@ -550,7 +540,10 @@ FocusScope {
                             // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
                             setSource("FeaturesViewer.qml", {
                                 'model': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : ""; }),
+                                'currentViewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
                                 'features': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null; }),
+                                'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
+                                'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
                             })
                         } else {
                             // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -718,30 +711,48 @@ FocusScope {
                         id: mfeaturesLoader
 
                         property bool isUsed: displayFeatures.checked
-                        property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get("FeatureExtraction").node : null
+                        property var activeNode: {
+                            if (!root.aliceVisionPluginAvailable) {
+                                return null;
+                            }
+                            return _reconstruction ? _reconstruction.activeNodes.get("featureProvider").node : null;
+                        }
                         property bool isComputed: activeNode && activeNode.isComputed
-                        active: false
-
-                        onIsUsedChanged: {
-                            active = (!active && isUsed && isComputed);
-                        }
-                        onIsComputedChanged: {
-                            active = (!active && isUsed && isComputed);
-                        }
-                        onActiveNodeChanged: {
-                            active = (!active && isUsed && isComputed);
-                        }
+                        active: isUsed && isComputed
 
                         onActiveChanged: {
                             if(active) {
                                 // instantiate and initialize a MFeatures component dynamically using Loader.setSource
                                 // so it can fail safely if the c++ plugin is not available
                                 setSource("MFeatures.qml", {
-                                    'currentViewId': Qt.binding(function() { return _reconstruction.selectedViewId; }),
-                                    'describerTypes': Qt.binding(function() { return activeNode ? activeNode.attribute("describerTypes").value : {}; }),
-                                    'featureFolder': Qt.binding(function() { return activeNode ? Filepath.stringToUrl(activeNode.attribute("output").value) : ""; }),
-                                    'mtracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null; }),
-                                    'msfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null; }),
+                                    'describerTypes': Qt.binding(function() {
+                                        return activeNode ? activeNode.attribute("describerTypes").value : {};
+                                    }),
+                                    'featureFolders': Qt.binding(function() {
+                                        let result = [];
+                                        if (activeNode) {
+                                            if (activeNode.nodeType == "FeatureExtraction" && isComputed) {
+                                                result.push(activeNode.attribute("output").value);
+                                            } else if (activeNode.hasAttribute("featuresFolders")) {
+                                                for (let i = 0; i < activeNode.attribute("featuresFolders").value.count; i++) {
+                                                    let attr = activeNode.attribute("featuresFolders").value.at(i);
+                                                    result.push(attr.value);
+                                                }
+                                            }
+                                        }
+                                        return result;
+                                    }),
+                                    'viewIds': Qt.binding(function() {
+                                        if (_reconstruction) {
+                                            let result = [];
+                                            for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
+                                                let vp = _reconstruction.viewpoints.at(i);
+                                                result.push(vp.childAttribute("viewId").value);
+                                            }
+                                            return result;
+                                        }
+                                        return {};
+                                    }),
                                 })
 
                             } else {
@@ -753,74 +764,36 @@ FocusScope {
                     Loader {
                         id: msfmDataLoader
 
-                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked
-                                              || displayPanoramaViewer.checked || displayLensDistortionViewer.checked
+                        property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked || displayPanoramaViewer.checked || displayLensDistortionViewer.checked
                         property var activeNode: {
-                            if(! root.aliceVisionPluginAvailable){
-                                return null
+                            if(!root.aliceVisionPluginAvailable){
+                                return null;
                             }
-                            // For lens distortion viewer: use all nodes creating a sfmData file
-                            var nodeType = displayLensDistortionViewer.checked ? 'sfmData' : 'sfm'
-                            var sfmNode = _reconstruction ? _reconstruction.activeNodes.get(nodeType).node : null
+                            var nodeType = "sfm";
+                            if (displayLensDistortionViewer.checked) {
+                                nodeType = "sfmData";
+                            }
+                            var sfmNode = _reconstruction ? _reconstruction.activeNodes.get(nodeType).node : null;
                             if(sfmNode === null){
-                                return null
+                                return null;
                             }
                             if(displayPanoramaViewer.checked){
-                                sfmNode = _reconstruction.activeNodes.get('SfMTransform').node
-                                var previousNode = sfmNode.attribute("input").rootLinkParam.node
-                                return previousNode
+                                sfmNode = _reconstruction.activeNodes.get('SfMTransform').node;
+                                var previousNode = sfmNode.attribute("input").rootLinkParam.node;
+                                return previousNode;
                             }
-                            else{
-                                return sfmNode
-                            }
+                            return sfmNode;
                         }
                         property bool isComputed: activeNode && activeNode.isComputed
                         property string filepath: {
-                            var sfmValue = ""
-                            if(!isComputed){
-                                return Filepath.stringToUrl(sfmValue)
+                            var sfmValue = "";
+                            if (isComputed && activeNode.hasAttribute("output")) {
+                                sfmValue = activeNode.attribute("output").value;
                             }
-                            else{
-                                if(activeNode.hasAttribute("output")){
-                                    sfmValue = activeNode.attribute("output").value
-                                }
-                                return Filepath.stringToUrl(sfmValue)
-                            }
+                            return Filepath.stringToUrl(sfmValue);
                         }
 
-                        active: false
-                        // It takes time to load tracks, so keep them looaded, if we may use it again.
-                        // If we load another node, we can trash them (to eventually load the new node data).
-                        onIsUsedChanged: {
-                            if(!active && isUsed && isComputed)
-                            {
-                                active = true;
-                            }
-                        }
-                        onIsComputedChanged: {
-                            if(!isComputed)
-                            {
-                                active = false;
-                            }
-                            else if(!active && isUsed)
-                            {
-                                active = true;
-                            }
-                        }
-                        onActiveNodeChanged: {
-                            if(!isUsed)
-                            {
-                                active = false;
-                            }
-                            else if(!isComputed)
-                            {
-                                active = false;
-                            }
-                            else
-                            {
-                                active = true;
-                            }
-                        }
+                        active: isUsed && isComputed
 
                         onActiveChanged: {
                             if(active) {
@@ -839,43 +812,35 @@ FocusScope {
                         id: mtracksLoader
 
                         property bool isUsed: displayFeatures.checked || displaySfmStatsView.checked || displaySfmDataGlobalStats.checked || displayPanoramaViewer.checked
-                        property var activeNode: root.aliceVisionPluginAvailable && _reconstruction ? _reconstruction.activeNodes.get('FeatureMatching').node : null
+                        property var activeNode: {
+                            if (!root.aliceVisionPluginAvailable) {
+                                return null;
+                            }
+                            return _reconstruction ? _reconstruction.activeNodes.get("matchProvider").node : null;
+                        }
                         property bool isComputed: activeNode && activeNode.isComputed
 
-                        active: false
-                        // It takes time to load tracks, so keep them looaded, if we may use it again.
-                        // If we load another node, we can trash them (to eventually load the new node data).
-                        onIsUsedChanged: {
-                            if(!active && isUsed && isComputed) {
-                                active = true;
-                            }
-                        }
-                        onIsComputedChanged: {
-                            if(!isComputed) {
-                                active = false;
-                            }
-                            else if(!active && isUsed) {
-                                active = true;
-                            }
-                        }
-                        onActiveNodeChanged: {
-                            if(!isUsed) {
-                                active = false;
-                            }
-                            else if(!isComputed) {
-                                active = false;
-                            }
-                            else {
-                                active = true;
-                            }
-                        }
+                        active: isUsed && isComputed
 
                         onActiveChanged: {
                             if(active) {
                                 // instantiate and initialize a SfmStatsView component dynamically using Loader.setSource
                                 // so it can fail safely if the c++ plugin is not available
                                 setSource("MTracks.qml", {
-                                    'matchingFolder': Qt.binding(function() { return Filepath.stringToUrl(isComputed ? activeNode.attribute("output").value : ""); }),
+                                    'matchingFolders': Qt.binding(function() {
+                                        let result = [];
+                                        if (activeNode) {
+                                            if (activeNode.nodeType == "FeatureMatching" && isComputed) {
+                                                result.push(activeNode.attribute("output").value);
+                                            } else if (activeNode.hasAttribute("matchesFolders")) {
+                                                for (let i = 0; i < activeNode.attribute("matchesFolders").value.count; i++) {
+                                                    let attr = activeNode.attribute("matchesFolders").value.at(i);
+                                                    result.push(attr.value);
+                                                }
+                                            }
+                                        }
+                                        return result;
+                                    }),
                                 })
                             } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -930,10 +895,11 @@ FocusScope {
                         active: root.aliceVisionPluginAvailable && displayFeatures.checked && featuresViewerLoader.status === Loader.Ready
 
                         sourceComponent: FeaturesInfoOverlay {
-                            featureExtractionNode: _reconstruction.activeNodes.get('FeatureExtraction').node
                             pluginStatus: featuresViewerLoader.status
                             featuresViewer: featuresViewerLoader.item
                             mfeatures: mfeaturesLoader.item
+                            mtracks: mtracksLoader.item
+                            msfmdata: msfmDataLoader.item
                         }
                     }
 

@@ -5,6 +5,9 @@ from meshroom.core import desc
 
 class ConvertDepthMap(desc.AVCommandLineNode):
     commandLine = 'aliceVision_convertDepthMap {allParams}'
+    size = desc.DynamicNodeSize('input')
+    parallelization = desc.Parallelization(blockSize=4)
+    commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
     category = 'Dense Reconstruction'
     documentation = '''Convert depth maps files to obj meshes files'''
 
@@ -15,7 +18,7 @@ class ConvertDepthMap(desc.AVCommandLineNode):
             description='SfMData file.',
             value='',
             uid=[0],
-        ),    
+        ),
         desc.File(
             name="depthMapsFolder",
             label="DepthMaps Folder",

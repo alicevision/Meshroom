@@ -16,14 +16,15 @@ FloatingPane {
     property int pluginStatus: Loader.Null
     property Item featuresViewer: null
     property var mfeatures: null
-    property var featureExtractionNode: null
+    property var mtracks: null
+    property var msfmdata: null
 
     ColumnLayout {
         // Header
         RowLayout {
-            // FeatureExtraction node name
+            // Node used to read features
             Label {
-                text: featureExtractionNode ? featureExtractionNode.label : ""
+                text: _reconstruction ? _reconstruction.activeNodes.get("featureProvider").node.label : ""
                 Layout.fillWidth: true
             }
             // Settings menu
@@ -157,7 +158,7 @@ FloatingPane {
                                 Layout.alignment: Qt.AlignRight
                                 from: -1
                                 to: 50
-                                value: root.mfeatures.timeWindow
+                                value: root.featuresViewer.timeWindow
                                 stepSize: 1
                                 editable: true
 
@@ -174,7 +175,7 @@ FloatingPane {
                                 }
 
                                 onValueChanged: {
-                                    root.mfeatures.timeWindow = timeWindowSB.value;
+                                    root.featuresViewer.timeWindow = timeWindowSB.value;
                                 }
                             }
                         }
@@ -224,7 +225,7 @@ FloatingPane {
                     ToolTip.text: "Display Tracks"
                     onClicked: {
                         featureType.viewer.displayTracks = tracksVisibilityButton.checked;
-                        root.mfeatures.enableTimeWindow = tracksVisibilityButton.checked;
+                        root.featuresViewer.enableTimeWindow = tracksVisibilityButton.checked;
                     }
                     font.pointSize: 10
                 }
@@ -263,18 +264,13 @@ FloatingPane {
                 }
                 // Feature type name
                 Label {
-                    text: {
-                        if(featureType.viewer.loadingFeatures)
-                            return  featureType.viewer.describerType;
-                        return featureType.viewer.describerType + ": " +
-                                ((featureExtractionNode && featureExtractionNode.isComputed) ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbFeatures'] : " - ") + " / " +
-                                (root.mfeatures.haveValidTracks ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbTracks']  : " - ") + " / " +
-                                (root.mfeatures.haveValidLandmarks ? root.mfeatures.featuresInfo[featureType.viewer.describerType][root.mfeatures.currentViewId]['nbLandmarks'] : " - ");
-                    }
+                    property string descType: featureType.viewer.describerType
+                    property int viewId: root.featuresViewer.currentViewId
+                    text: descType + ": " + ((root.mfeatures && root.mfeatures.status === MFeatures.Ready) ? root.mfeatures.nbFeatures(descType, viewId) : " - ") + " / " + ((root.mtracks && root.mtracks.status === MTracks.Ready) ? root.mtracks.nbMatches(descType, viewId) : " - ") + " / " + ((root.msfmdata && root.msfmdata.status === MSfMData.Ready) ? root.msfmdata.nbLandmarks(descType, viewId) : " - ")
                 }
                 // Feature loading status
                 Loader {
-                    active: (root.mfeatures.status === MFeatures.Loading)
+                    active: (root.mfeatures && root.mfeatures.status === MFeatures.Loading)
                     sourceComponent: BusyIndicator {
                         padding: 0
                         implicitWidth: 12

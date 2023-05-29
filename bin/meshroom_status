@@ -42,11 +42,10 @@ if args.node:
 else:
     startNodes = None
     if args.toNode:
-        startNodes = [graph.nodes(args.toNode)]
+        startNodes = [graph.findNode(args.toNode)]
     nodes, edges = graph.dfsOnFinish(startNodes=startNodes)
     for node in nodes:
         for chunk in node.chunks:
             print('{}: {}'.format(chunk.name, chunk.status.status.name))
     if args.verbose:
         pprint([n.status.toDict() for n in nodes])
-

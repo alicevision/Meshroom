@@ -12,7 +12,7 @@
             "ImageMatchingMultiSfM": "1.0", 
             "ImageMatching": "2.0", 
             "FeatureExtraction": "1.1", 
-            "StructureFromMotion": "2.0",
+            "StructureFromMotion": "3.0",
             "Publish": "1.2"
         }
     }, 

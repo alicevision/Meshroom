@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "4.0"
 
 import os
 from meshroom.core import desc
@@ -18,15 +18,15 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
     inputs = [
         desc.ListAttribute(
             elementDesc=desc.File(
-                name="mediaPath",
-                label="Media Path",
-                description="Media path.",
+                name="inputPath",
+                label="Input Path",
+                description="Input path.",
                 value="",
                 uid=[0],
             ),
-            name="mediaPaths",
-            label="Media Paths",
-            description="Input video files or image sequence directories.",
+            name="inputPaths",
+            label="Input Paths",
+            description="Input video files, image sequence directories or SfMData file.",
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -67,7 +67,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
         ),
         desc.File(
             name="sensorDbPath",
-            label="Sensor Db Path",
+            label="Sensor Database",
             description="Camera sensor width database path.",
             value="${ALICEVISION_SENSOR_DB}",
             uid=[0],
@@ -341,5 +341,20 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             value=desc.Node.internalFolder,
             uid=[],
         ),
+        desc.File(
+            name="outputSfMDataKeyframes",
+            label="Keyframes SfMData",
+            description="Output SfMData file containing all the selected keyframes.",
+            value=desc.Node.internalFolder + "keyframes.sfm",
+            uid=[],
+        ),
+        desc.File(
+            name="outputSfMDataFrames",
+            label="Frames SfMData",
+            description="Output SfMData file containing all the frames that were not selected as keyframes.\n"
+                        "If the input contains videos, this file will not be written since all the frames that were not selected do not actually exist on disk.",
+            value=desc.Node.internalFolder + "frames.sfm",
+            uid=[]
+        )
     ]
 

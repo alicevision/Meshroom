@@ -3,7 +3,8 @@ import argparse
 import os
 import sys
 from pprint import pprint
-from collections import Iterable, defaultdict
+from collections import defaultdict
+from collections.abc import Iterable
 
 from meshroom.core import graph as pg
 
@@ -15,11 +16,11 @@ def addPlots(curves, title, fileObj):
     import matplotlib.pyplot as plt, mpld3
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, axisbg='#EEEEEE')
+    ax = fig.add_subplot(111, facecolor='#EEEEEE')
     ax.grid(color='white', linestyle='solid')
 
     for curveName, curve in curves:
-        if not isinstance(curve[0], pg.basestring):
+        if not isinstance(curve[0], str):
             ax.plot(curve, label=curveName)
     ax.legend()
     # plt.ylim(0, 100)

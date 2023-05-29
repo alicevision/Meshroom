@@ -408,6 +408,10 @@ class Reconstruction(UIGraph):
                 "SfMAlignment"],
         # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
+        # Nodes that can be used to provide features folders to the UI
+        "featureProvider": ["FeatureExtraction", "FeatureMatching", "StructureFromMotion"],
+        # Nodes that can be used to provide matches folders to the UI
+        "matchProvider": ["FeatureMatching", "StructureFromMotion"]
     }
 
     def __init__(self, undoStack, taskManager, defaultPipeline='', parent=None):
@@ -712,7 +716,7 @@ class Reconstruction(UIGraph):
         if filesByType.videos:
             boundingBox = self.layout.boundingBox()
             keyframeNode = self.addNewNode("KeyframeSelection", position=Position(boundingBox[0], boundingBox[1] + boundingBox[3]))
-            keyframeNode.mediaPaths.value = filesByType.videos
+            keyframeNode.inputPaths.value = filesByType.videos
             if len(filesByType.videos) == 1:
                 newVideoNodeMessage = "New node '{}' added for the input video.".format(keyframeNode.getLabel())
             else:

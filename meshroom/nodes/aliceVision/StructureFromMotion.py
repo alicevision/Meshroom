@@ -1,4 +1,4 @@
-__version__ = "2.0"
+__version__ = "3.1"
 
 from meshroom.core import desc
 
@@ -168,6 +168,37 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             range=(2, 10, 1),
             uid=[0],
             advanced=True,
+        ),
+        desc.IntParam(
+            name='nbFirstUnstableCameras',
+            label='First Unstable Cameras Nb',
+            description='Number of cameras for which the bundle adjustment is performed every single time a camera is added.\n'
+                        'This leads to more stable results while computations are not too expensive, as there is little data.\n'
+                        'Past this number, the bundle adjustment will only be performed once for N added cameras.',
+            value=30,
+            range=(1, 100, 1),
+            uid=[0],
+            advanced=True
+        ),
+        desc.IntParam(
+            name='maxImagesPerGroup',
+            label='Max Images Per Group',
+            description='Maximum number of cameras that can be added before the bundle adjustment has to be performed again.\n'
+                        'This prevents adding too much data at once without performing the bundle adjustment.',
+            value=30,
+            range=(1, 100, 1),
+            uid=[0],
+            advanced=True
+        ),
+        desc.IntParam(
+            name='bundleAdjustmentMaxOutliers',
+            label='Max Nb of Outliers after BA',
+            description='Threshold for the maximum number of outliers allowed at the end of a bundle adjustment iteration.\n'
+                        'Using a negative value for this threshold will disable BA iterations.',
+            value=50,
+            range=(-1, 1000, 1),
+            uid=[0],
+            advanced=True
         ),
         desc.IntParam(
             name='maxNumberOfMatches',

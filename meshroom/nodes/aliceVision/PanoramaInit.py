@@ -53,6 +53,15 @@ This node allows to setup the Panorama:
             uid=[0],
             enabled=lambda node: ('Horizontal' in node.initializeCameras.value) or (node.initializeCameras.value == "Spherical"),
         ),
+        desc.BoolParam(
+            name='buildContactSheet',
+            label='Build Contact Sheet',
+            description='Build the contact sheet for the panorama if an XML data file is provided.\n'
+                        'The contact sheet consists in a preview of the panorama using the input images.',
+            value=True,
+            uid=[0],
+            enabled=lambda node: node.config.enabled and node.config.value != ''
+        ),
         desc.ListAttribute(
             elementDesc=desc.IntParam(
                 name='nbViews',

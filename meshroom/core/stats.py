@@ -97,6 +97,11 @@ class ComputerStatistics:
             gpuTree = smiTree.find('gpu')
 
             try:
+                self.gpuName = gpuTree.find('product_name').text
+            except Exception as e:
+                logging.debug('Failed to get gpuName: "{}".'.format(str(e)))
+                pass
+            try:
                 gpuMemoryUsed = gpuTree.find('fb_memory_usage').find('used').text.split(" ")[0]
                 self._addKV('gpuMemoryUsed', gpuMemoryUsed)
             except Exception as e:
@@ -105,6 +110,7 @@ class ComputerStatistics:
             try:
                 self.gpuMemoryTotal = gpuTree.find('fb_memory_usage').find('total').text.split(" ")[0]
             except Exception as e:
+                logging.debug('Failed to get gpuMemoryTotal: "{}".'.format(str(e)))
                 pass
             try:
                 gpuUsed = gpuTree.find('utilization').find('gpu_util').text.split(" ")[0]
@@ -257,8 +263,8 @@ class Statistics:
         version = d.get('fileVersion', 0.0)
         if version != self.fileVersion:
             logging.debug('Statistics: file version was {} and the current version is {}.'.format(version, self.fileVersion))
-        self.computer = {}
-        self.process = {}
+        self.computer = ComputerStatistics()
+        self.process = ProcStatistics()
         self.times = []
         try:
             self.computer.fromDict(d.get('computer', {}))

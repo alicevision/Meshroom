@@ -54,6 +54,9 @@ class SimpleFarmSubmitter(BaseSubmitter):
         if 'REZ_DEV_PACKAGES_ROOT' in os.environ:
             self.environment['REZ_DEV_PACKAGES_ROOT'] = os.environ['REZ_DEV_PACKAGES_ROOT']
 
+        if 'REZ_PROD_PACKAGES_PATH' in os.environ:
+            self.environment['REZ_PROD_PACKAGES_PATH'] = os.environ['REZ_PROD_PACKAGES_PATH']
+
     def createTask(self, meshroomFile, node):
         tags = self.DEFAULT_TAGS.copy()  # copy to not modify default tags
         nbFrames = node.size

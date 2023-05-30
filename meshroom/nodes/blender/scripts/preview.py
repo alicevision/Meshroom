@@ -143,8 +143,11 @@ def setupRender(view, intrinsic, pose, outputDir):
 
 def setupBackground(view, folderUndistorted):
     '''Retrieve undistorted image corresponding to view and use it as background.'''
-    baseImgName = os.path.splitext(os.path.basename(view['path']))[0]
-    undistortedImgPath = glob.glob(folderUndistorted + '/*' + baseImgName + "*")[0]
+    matches = glob.glob(folderUndistorted + '/*' + view['viewId'] + "*") # try with viewId
+    if len(matches) == 0:
+        baseImgName = os.path.splitext(os.path.basename(view['path']))[0]
+        matches = glob.glob(folderUndistorted + '/*' + baseImgName + "*") # try with image name
+    undistortedImgPath = matches[0]
     bpy.ops.image.open(filepath=undistortedImgPath)
     undistortedImgName = os.path.basename(undistortedImgPath)
     bpy.context.scene.node_tree.nodes["Image"].image = bpy.data.images[undistortedImgName]

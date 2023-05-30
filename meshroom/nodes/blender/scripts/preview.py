@@ -157,7 +157,8 @@ def loadModel(filename):
     '''Load model in Alembic of OBJ format. Make sure orientation matches camera orientation.'''
     if filename.lower().endswith('.obj'):
         bpy.ops.import_scene.obj(filepath=filename, axis_forward='Y', axis_up='Z')
-        return bpy.data.objects['mesh'], bpy.data.meshes['mesh']
+        meshName = os.path.splitext(os.path.basename(filename))[0]
+        return bpy.data.objects[meshName], bpy.data.meshes[meshName]
     elif filename.lower().endswith('.abc'):
         bpy.ops.wm.alembic_import(filepath=filename)
         root = bpy.data.objects['mvgRoot']

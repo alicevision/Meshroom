@@ -9,6 +9,7 @@ import glob
 
 
 def createParser():
+    '''Create command line interface.'''
     # When --help or no args are given, print this help
     usage_text = (
         "Run blender in background mode with this script:"
@@ -67,10 +68,10 @@ def parseSfMCameraFile(filepath):
     return views, intrinsics, poses
 
 
-def getFromId(data, key, id):
+def getFromId(data, key, identifier):
     '''Utility function to retrieve view, intrinsic or pose using their IDs.'''
     for item in data:
-        if item[key] == id:
+        if item[key] == identifier:
             return item
     return None
 
@@ -109,14 +110,16 @@ def setupCamera(intrinsic, pose):
 
 
 def initScene():
+    '''Initialize Blender scene.'''
     # Clear current scene (keep default camera)
     bpy.data.objects.remove(bpy.data.objects['Cube'])
     bpy.data.objects.remove(bpy.data.objects['Light'])
+    # Set output format
+    bpy.context.scene.render.image_settings.file_format = 'JPEG'
 
 
 def initCompositing():
     '''Initialize Blender compositing graph for adding background image to render.'''
-    bpy.context.scene.render.image_settings.file_format = 'PNG'
     bpy.context.scene.render.film_transparent = True
     bpy.context.scene.use_nodes = True
     bpy.context.scene.node_tree.nodes.new(type="CompositorNodeAlphaOver")
@@ -135,11 +138,11 @@ def initCompositing():
 def setupRender(view, intrinsic, pose, outputDir):
     '''Setup rendering in Blender for a given view.'''
     setupCamera(intrinsic, pose)
-    bpy.context.scene.render.filepath = os.path.abspath(outputDir + '/' + view['viewId'] + '.png')
+    bpy.context.scene.render.filepath = os.path.abspath(outputDir + '/' + view['viewId'] + '.jpg')
 
 
 def setupBackground(view, folderUndistorted):
-    '''TODO'''
+    '''Retrieve undistorted image corresponding to view and use it as background.'''
     baseImgName = os.path.splitext(os.path.basename(view['path']))[0]
     undistortedImgPath = glob.glob(folderUndistorted + '/*' + baseImgName + "*")[0]
     bpy.ops.image.open(filepath=undistortedImgPath)
@@ -147,8 +150,8 @@ def setupBackground(view, folderUndistorted):
     bpy.context.scene.node_tree.nodes["Image"].image = bpy.data.images[undistortedImgName]
 
 
-def loadScene(filename):
-    '''TODO'''
+def loadModel(filename):
+    '''Load model in Alembic of OBJ format. Make sure orientation matches camera orientation.'''
     if filename.lower().endswith('.obj'):
         bpy.ops.import_scene.obj(filepath=filename, axis_forward='Y', axis_up='Z')
         return bpy.data.objects['mesh'], bpy.data.meshes['mesh']
@@ -160,7 +163,7 @@ def loadScene(filename):
 
 
 def setupWireframeShading(mesh, color):
-    '''TODO'''
+    '''Setup material for wireframe shading.'''
     # Initialize wireframe material
     material = bpy.data.materials.new('Wireframe')
     material.use_backface_culling = True
@@ -191,7 +194,7 @@ def setupWireframeShading(mesh, color):
 
 
 def setupLineArtShading(obj, mesh, color):
-    '''TODO'''
+    '''Setup materials and Solidify modifier for line art shading.'''
     # Transparent filling material
     matFill = bpy.data.materials.new('Fill')
     matFill.use_backface_culling = True
@@ -225,7 +228,7 @@ def setupLineArtShading(obj, mesh, color):
 
 
 def setupPointCloudShading(obj, color, size):
-    '''TODO'''
+    '''Setup material and geometry nodes for point cloud shading.'''
     # Colored filling material
     material = bpy.data.materials.new('PointCloud_Mat')
     material.use_nodes = True
@@ -278,6 +281,7 @@ def main():
         parser.print_help()
         return -1
 
+    # Color palette (common for point cloud and mesh visualization)
     palette={
         'Grey':(0.2, 0.2, 0.2, 1),
         'White':(1, 1, 1, 1),
@@ -297,7 +301,7 @@ def main():
     views, intrinsics, poses = parseSfMCameraFile(args.cameras)
 
     print("Load scene objects")
-    sceneObj, sceneMesh = loadScene(args.model)
+    sceneObj, sceneMesh = loadModel(args.model)
 
     print("Setup shading")
     if args.model.lower().endswith('.obj'):

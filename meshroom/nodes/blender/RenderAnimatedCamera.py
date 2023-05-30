@@ -10,9 +10,11 @@ class RenderAnimatedCamera(desc.CommandLineNode):
 
     category = 'Visualization'
     documentation = '''
-        This node makes a rendering of the sfmData scene through an animated camera using the Blender rendering engine.
-        It supports both Point Clouds (.abc) and Meshes (.obj).
-    '''
+This node uses Blender to visualize a 3D model from a given set of cameras.
+The cameras must be a SfMData file in JSON format.
+For the 3D model it supports both point clouds in Alembic format and meshes in OBJ format.
+One frame per viewpoint will be rendered, and the undistorted views can optionally be used as background.
+'''
 
     inputs = [
         desc.File(
@@ -25,7 +27,7 @@ class RenderAnimatedCamera(desc.CommandLineNode):
         ),
         desc.File(
             name='script',
-            label='Script Path',
+            label='Script',
             description='Path to the internal script for rendering in Blender',
             value=os.path.join(currentDir, 'scripts' ,'renderAnimatedCameraInBlender.py'),
             uid=[],
@@ -34,15 +36,15 @@ class RenderAnimatedCamera(desc.CommandLineNode):
         ),
         desc.File(
             name='cameras',
-            label='SfmData with Animated Camera',
-            description='SfmData with the animated camera to render (in json format)',
+            label='Cameras',
+            description='SfmData with the views, poses and intrinsics to use (in JSON format)',
             value='',
             uid=[0],
         ),
         desc.File(
             name='model',
             label='Model',
-            description='Point Cloud or Mesh to render',
+            description='Point cloud (.abc) or mesh (.obj) to render',
             value='',
             uid=[0],
         ),
@@ -55,8 +57,8 @@ class RenderAnimatedCamera(desc.CommandLineNode):
         ),
         desc.File(
             name='undistortedImages',
-            label='Undistorted Images Folder',
-            description='Input folder with the undistorted images',
+            label='Undistorted Images',
+            description='Folder containing the undistorted images',
             value='',
             uid=[0],
             enabled=lambda node: node.useBackground.value,
@@ -66,12 +68,12 @@ class RenderAnimatedCamera(desc.CommandLineNode):
             label="Point Cloud Settings",
             group=None,
             enabled=lambda node: node.model.value.lower().endswith('.abc'),
-            description="Settings of the render if we use a Point Cloud",
+            description="Settings for point cloud rendering",
             groupDesc=[
                 desc.FloatParam(
                     name='particleSize',
                     label='Particle Size',
-                    description='Scale of particles used to show the point cloud',
+                    description='Scale of particles used for the point cloud',
                     value=0.01,
                     range=(0.01, 1.0, 0.01),
                     uid=[0],
@@ -79,12 +81,11 @@ class RenderAnimatedCamera(desc.CommandLineNode):
                 desc.ChoiceParam(
                     name='particleColor',
                     label='Particle Color',
-                    description='Color of particles used to show the point cloud',
+                    description='Color of particles used for the point cloud',
                     value='Red',
                     values=['Grey', 'White', 'Red', 'Green', 'Magenta'],
                     exclusive=True,
                     uid=[0],
-                    joinChar=',',
                 ),
             ]
         ),
@@ -93,7 +94,7 @@ class RenderAnimatedCamera(desc.CommandLineNode):
             label="Mesh Settings",
             group=None,
             enabled=lambda node: node.model.value.lower().endswith('.obj'),
-            description="Setting of the render if we use a Mesh",
+            description="Setting for mesh rendering",
             groupDesc=[
                 desc.ChoiceParam(
                     name='shading',
@@ -107,7 +108,7 @@ class RenderAnimatedCamera(desc.CommandLineNode):
                 desc.ChoiceParam(
                     name='edgeColor',
                     label='Edge Color',
-                    description='Color of the edges of the rendered object',
+                    description='Color of the mesh edges',
                     value='Red',
                     values=['Grey', 'White', 'Red', 'Green', 'Magenta'],
                     exclusive=True,
@@ -120,17 +121,17 @@ class RenderAnimatedCamera(desc.CommandLineNode):
     outputs = [
         desc.File(
             name='output',
-            label='Output Folder',
-            description='Output Folder',
+            label='Output',
+            description='Output folder',
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
-            name='render',
-            label='Render',
+            name='frames',
+            label='Frames',
             description='Frames rendered in Blender',
             semantic='image',
-            value=desc.Node.internalFolder + '<VIEW_ID>.png',
+            value=desc.Node.internalFolder + '<VIEW_ID>.jpg',
             uid=[],
             group='',
         ),

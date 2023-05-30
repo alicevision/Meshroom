@@ -1,14 +1,14 @@
-__version__ = "2.0"
+__version__ = "1.0"
 
 from meshroom.core import desc
 import os.path
 
 currentDir = os.path.dirname(os.path.abspath(__file__))
 
-class RenderAnimatedCamera(desc.CommandLineNode):
+class ScenePreview(desc.CommandLineNode):
     commandLine = '{blenderCmdValue} -b --python {scriptValue} -- {allParams}'
 
-    category = 'Visualization'
+    category = 'Utils'
     documentation = '''
 This node uses Blender to visualize a 3D model from a given set of cameras.
 The cameras must be a SfMData file in JSON format.
@@ -29,7 +29,7 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             name='script',
             label='Script',
             description='Path to the internal script for rendering in Blender',
-            value=os.path.join(currentDir, 'scripts' ,'renderAnimatedCameraInBlender.py'),
+            value=os.path.join(currentDir, 'scripts' ,'preview.py'),
             uid=[],
             group='',
             advanced=True,

@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "1.0"
 
 from meshroom.core import desc
 
@@ -10,54 +10,78 @@ TODO.
 '''
 
     inputs = [
-    	desc.File(
-            name='pathToJSONLightFile',
-            label='Lights file',
-            description='File containing lighting information.',
+        desc.File(
+            name='inputPath',
+            label='SfMData',
+            description='Input file. Could be an SfMData file or folder containing images.',
             value='',
             uid=[0]
         ),
         desc.File(
-            name='inputPath',
-            label='SfmData',
-            description='Input file. Could be SfMData file or folder.',
-            value='',
-            uid=[0],
+            name='pathToJSONLightFile',
+            label='Light File',
+            description='Path to a JSON file containing the lighting information.\n'
+                        'If empty, .txt files are expected in the image folder.',
+            value='defaultJSON.txt',
+            uid=[0]
         ),
         desc.File(
             name='maskPath',
-            label='Mask folder path',
-            description='Mask folder path',
+            label='Mask Folder Path',
+            description='Path to a folder containing masks or to a mask directly.',
             value='',
-            uid=[0],
+            uid=[0]
+        ),
+        desc.ChoiceParam(
+            name='SHOrder',
+            label='Spherical Harmonics Order',
+            description='Order of the spherical harmonics.\n'
+                        '- 0: directional\n'
+                        '- 1: directional + ambiant\n'
+                        '- 2: second order spherical harmonics',
+            values=['0', '1', '2'],
+            value='0',
+            exclusive=True,
+            advanced=True,
+            uid=[0]
+        ),
+        desc.BoolParam(
+            name='removeAmbiant',
+            label='Remove Ambiant Light',
+            description='True if the ambiant light is to be removed on the PS images, false otherwise.',
+            value=False,
+            advanced=True,
+            uid=[0]
+        ),
+        desc.BoolParam(
+            name='isRobust',
+            label='Use Robust Algorithm',
+            description='True to use the robust algorithm, false otherwise.',
+            value=False,
+            advanced=True,
+            uid=[0]
+        ),
+        desc.IntParam(
+            name='downscale',
+            label='Downscale Factor',
+            description='Downscale factor for faster results.',
+            value=1,
+            range=(1, 10, 1),
+            advanced=True,
+            uid=[0]
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='Verbosity level (fatal, error, warning, info, debug, trace).',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[],
         )
     ]
 
     outputs = [
-        desc.File(
-            name='outputSfmData',
-            label='SfmData',
-            description='',
-            value=desc.Node.internalFolder + '/sfmData.sfm',
-            uid=[],
-            group='', # remove from command line
-        ),
-        desc.File(
-            name='outputSfmDataAlbedo',
-            label='SfmData Albedo',
-            description='',
-            value=desc.Node.internalFolder + '/albedoMaps.sfm',
-            uid=[],
-            group='', # remove from command line
-        ),
-        desc.File(
-            name='outputSfmDataNormal',
-            label='SfmData Normal',
-            description='',
-            value=desc.Node.internalFolder + '/normalMaps.sfm',
-            uid=[],
-            group='', # remove from command line
-        ),
         desc.File(
             name='outputPath',
             label='Output Folder',
@@ -65,15 +89,48 @@ TODO.
             value=desc.Node.internalFolder,
             uid=[],
         ),
+        desc.File(
+            name='outputSfmData',
+            label='SfMData',
+            description='Output path for the Sfm',
+            value=desc.Node.internalFolder + '/sfmData.sfm',
+            uid=[],
+            group='', # remove from command line
+        ),
+        desc.File(
+            name='outputSfmDataAlbedo',
+            label='SfMData Albedo',
+            description='',
+            value=desc.Node.internalFolder + '/albedoMaps.sfm',
+            uid=[],
+            group='', # remove from command line
+        ),
+        desc.File(
+            name='outputSfmDataNormal',
+            label='SfMData Normal',
+            description='',
+            value=desc.Node.internalFolder + '/normalMaps.sfm',
+            uid=[],
+            group='', # remove from command line
+        ),
         # these attributes are only here to describe more accurately the output of the node
         # by specifying that it generates 2 sequences of images
         # (see in Viewer2D.qml how these attributes can be used)
         desc.File(
             name='normals',
-            label='Normal Maps',
-            description='Generated normal maps.',
+            label='Normal Maps Camera',
+            description='Generated normal maps in the camera coordinate system.',
             semantic='image',
             value=desc.Node.internalFolder + '<POSE_ID>_normals.exr',
+            uid=[],
+            group='', # do not export on the command line
+        ),
+        desc.File(
+            name='normalsWorld',
+            label='Normal Maps World',
+            description='Generated normal maps in the world coordinate system.',
+            semantic='image',
+            value=desc.Node.internalFolder + '<POSE_ID>_normals_w.exr',
             uid=[],
             group='', # do not export on the command line
         ),

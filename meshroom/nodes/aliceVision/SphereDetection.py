@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "1.0"
 
 from meshroom.core import desc
 
@@ -12,29 +12,38 @@ TODO.
 
     inputs = [
         desc.File(
-            name='input_sfmdata_path',
-            label="SfmData",
+            name='input',
+            label="SfMData",
             description='Input SfMData file.',
             value='',
-            uid=[0],
+            uid=[0]
         ),
         desc.File(
-            name='input_model_path',
-            label='Deep learning net for automatic detection',
-            description='Deep learning net for automatic detection.',
+            name='modelPath',
+            label='Detection Network',
+            description='Deep learning network for automatic calibration sphere detection.',
             value='${ALICEVISION_SPHERE_DETECTION_MODEL}',
-            uid=[0],
+            uid=[0]
         ),
         desc.BoolParam(
             name='autoDetect',
             label='Automatic Sphere Detection',
             description='Automatic detection of calibration spheres',
             value=False,
-            uid=[0],
+            uid=[0]
+        ),
+        desc.FloatParam(
+            name="minScore",
+            label="Minimum Score",
+            description="Minimum score for the detection.",
+            value=0.0,
+            range=(0.0, 50.0, 0.01),
+            advanced=True,
+            uid=[0]
         ),
         desc.GroupAttribute(
             name="sphereCenter",
-            label="Sphere center",
+            label="Sphere Center",
             description="Center of the circle (XY offset to the center of the image in pixels).",
             groupDesc=[
                 desc.FloatParam(
@@ -48,7 +57,8 @@ TODO.
                     uid=[0],
                     range=(-1000.0, 10000.0, 1.0)),
                 ],
-            group=None, # skip group from command line
+            enabled=lambda node: not node.autoDetect.value,
+            group=None # skip group from command line
         ),
         desc.FloatParam(
             name='sphereRadius',
@@ -56,16 +66,26 @@ TODO.
             description='Sphere radius in pixels.',
             value=500.0,
             range=(0.0, 1000.0, 0.1),
-            uid=[0],
+            enabled=lambda node: not node.autoDetect.value,
+            uid=[0]
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='Verbosity level (fatal, error, warning, info, debug, trace).',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[]
         )
     ]
 
     outputs = [
         desc.File(
-            name='output_path',
-            label='Output light file folder',
+            name='output',
+            label='Light File Folder',
             description='Light information will be written here.',
             value=desc.Node.internalFolder,
-            uid=[],
+            uid=[]
         )
     ]

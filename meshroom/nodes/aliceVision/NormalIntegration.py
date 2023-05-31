@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "1.0"
 
 from meshroom.core import desc
 
@@ -11,27 +11,45 @@ TODO.
 
     inputs = [
         desc.File(
+            name='inputPath',
+            label='Normal Maps Folder',
+            description='Path to the folder containing the normal maps and the masks.',
+            value='',
+            uid=[0]
+         ),
+        desc.File(
             name='sfmDataFile',
-            label='sfmDataFile',
-            description='''SfMData file.''',
+            label='SfMData',
+            description='Input SfMData file.',
             value='',
             uid=[0],
         ),
-        desc.File(
-            name='inputPath',
-            label='inputPath',
-            description='Normal maps folder',
-            value='',
+        desc.IntParam(
+            name='downscale',
+            label='Downscale Factor',
+            description='Downscale factor for faster results.',
+            value=1,
+            range=(1, 10, 1),
+            advanced=True,
             uid=[0]
-         )
+        ),
+        desc.ChoiceParam(
+            name='verboseLevel',
+            label='Verbose Level',
+            description='Verbosity level (fatal, error, warning, info, debug, trace).',
+            value='info',
+            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            exclusive=True,
+            uid=[]
+        )
     ]
 
     outputs = [
         desc.File(
             name='outputPath',
-            label='Output path',
-            description='Path to the output folder',
+            label='Output Path',
+            description='Path to the output folder.',
             value=desc.Node.internalFolder,
-            uid=[],
+            uid=[]
         )
     ]

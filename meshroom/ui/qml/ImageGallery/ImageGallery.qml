@@ -29,6 +29,7 @@ Panel {
     property bool readOnly: false
 
     signal removeImageRequest(var attribute)
+    signal allViewpointsCleared()
     signal filesDropped(var drop, var augmentSfm)
 
     title: "Image Gallery"
@@ -51,7 +52,7 @@ Panel {
     }
 
     property variant parsedIntrinsic
-    property int numberOfIntrinsics : m.intrinsics ? m.intrinsics.count : 0
+    property int numberOfIntrinsics: m.intrinsics ? m.intrinsics.count : 0
     onNumberOfIntrinsicsChanged: {
         parseIntr()
     }
@@ -280,8 +281,12 @@ Panel {
                     }
 
                     function sendRemoveRequest() {
-                        if(!readOnly)
+                        if (!readOnly) {
                             removeImageRequest(object)
+                            // If the last image has been removed, make sure the viewpoints and intrinsics are reset
+                            if (m.viewpoints.count === 0)
+                                allViewpointsCleared()
+                        }
                     }
 
                     onRemoveRequest: sendRemoveRequest()

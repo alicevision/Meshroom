@@ -1,8 +1,9 @@
 from __future__ import print_function
 
-__version__ = "1.2"
+__version__ = "1.3"
 
 from meshroom.core import desc
+import distutils.dir_util as du
 import shutil
 import glob
 import os
@@ -27,13 +28,13 @@ This node allows to copy files into a specific folder.
             ),
             name="inputFiles",
             label="Input Files",
-            description="Input Files to publish.",
+            description="Input files or folders' content to publish.",
             group="",
         ),
         desc.File(
             name="output",
             label="Output Folder",
-            description="",
+            description="Folder to publish to.",
             value="",
             uid=[0],
         ),
@@ -52,7 +53,10 @@ This node allows to copy files into a specific folder.
         paths = {}
         for inputFile in inputFiles:
             for f in glob.glob(inputFile.value):
-                paths[f] = os.path.join(outDir, os.path.basename(f))
+                if os.path.isdir(f):
+                    paths[f] = outDir  # Do not concatenate the input folder's name with the output's
+                else:
+                    paths[f] = os.path.join(outDir, os.path.basename(f))
         return paths
 
     def processChunk(self, chunk):
@@ -77,8 +81,12 @@ This node allows to copy files into a specific folder.
                 os.mkdir(chunk.node.output.value)
 
             for iFile, oFile in outFiles.items():
-                chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
-                shutil.copyfile(iFile, oFile)
+                if os.path.isdir(iFile):  # If the input is a directory, copy the directory's content
+                    chunk.logger.info('Publish directory {} into {}'.format(iFile, oFile))
+                    du.copy_tree(iFile, oFile)
+                else:
+                    chunk.logger.info('Publish file {} into {}'.format(iFile, oFile))
+                    shutil.copyfile(iFile, oFile)
             chunk.logger.info('Publish end')
         finally:
             chunk.logManager.end()

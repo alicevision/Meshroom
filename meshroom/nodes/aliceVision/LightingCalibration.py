@@ -7,7 +7,8 @@ class LightingCalibration(desc.CommandLineNode):
     commandLine = 'aliceVision_lightingCalibration {allParams}'
     category = 'Photometry'
     documentation = '''
-TODO.
+Evaluate the lighting in a scene using spheres placed in the scene.
+Can also be used to calibrate a lighting dome (RTI type).
 '''
 
     inputs = [

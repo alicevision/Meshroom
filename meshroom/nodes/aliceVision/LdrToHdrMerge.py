@@ -1,4 +1,4 @@
-__version__ = "4.0"
+__version__ = "4.1"
 
 import json
 
@@ -209,6 +209,14 @@ Merge LDR images into HDR images.
     ]
 
     outputs = [
+        desc.File(
+            name='outputFolder',
+            label='Output Folder',
+            description='Path to the folder containing the merged HDR images.',
+            value=desc.Node.internalFolder,
+            uid=[],
+            group='',  # do not export on the command line
+        ),
         desc.File(
             name='outSfMData',
             label='SfMData File',

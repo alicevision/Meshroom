@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "3.1"
 
 from meshroom.core import desc
 
@@ -104,8 +104,23 @@ Convert or apply filtering to the input images.
         desc.BoolParam(
             name='exposureCompensation',
             label='Exposure Compensation',
-            description='Exposure Compensation',
+            description='Exposure compensation (only valid for sfmData)',
             value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name='rawAutoBright',
+            label='RAW Auto Bright',
+            description='Enable automatic exposure adjustment for RAW images',
+            value=False,
+            uid=[0],
+        ),
+        desc.FloatParam(
+            name='rawExposureAdjust',
+            label='RAW Exposure Adjustment',
+            description='Manual exposure adjustment in fstops for RAW images',
+            value=0.0,
+            range=(-2.0, 3.0, 0.125),
             uid=[0],
         ),
         desc.GroupAttribute(name="lensCorrection", label="Lens Correction", description="Automatic lens correction settings.", joinChar=":", groupDesc=[
@@ -148,6 +163,22 @@ Convert or apply filtering to the input images.
             description='Scale Factor.',
             value=1.0,
             range=(0.0, 1.0, 0.01),
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='maxWidth',
+            label='Max Width',
+            description='Maximal width of the output images (0: ignored).',
+            value=0,
+            range=(0, 10000, 1),
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='maxHeight',
+            label='Max Height',
+            description='Maximal height of the output images (0: ignored).',
+            value=0,
+            range=(0, 10000, 1),
             uid=[0],
         ),
         desc.FloatParam(

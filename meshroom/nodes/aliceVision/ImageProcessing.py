@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "3.1"
 
 from meshroom.core import desc
 
@@ -167,16 +167,16 @@ Convert or apply filtering to the input images.
         ),
         desc.IntParam(
             name='maxWidth',
-            label='max Width',
-            description='Maximal width of the output images.',
+            label='Max Width',
+            description='Maximal width of the output images (0: ignored).',
             value=0,
             range=(0, 10000, 1),
             uid=[0],
         ),
         desc.IntParam(
             name='maxHeight',
-            label='max Height',
-            description='Maximal height of the output images.',
+            label='Max Height',
+            description='Maximal height of the output images (0: ignored).',
             value=0,
             range=(0, 10000, 1),
             uid=[0],

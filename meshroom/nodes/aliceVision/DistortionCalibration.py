@@ -1,4 +1,4 @@
-__version__ = '2.0'
+__version__ = '3.0'
 
 from meshroom.core import desc
 
@@ -7,46 +7,42 @@ class DistortionCalibration(desc.AVCommandLineNode):
     commandLine = 'aliceVision_distortionCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    category = 'Other'
     documentation = '''
-    Calibration of a camera/lens couple distortion using a full screen checkerboard
+Calibration of a camera/lens couple distortion using a full screen checkerboard.
 '''
 
     inputs = [
         desc.File(
             name='input',
-            label='SfmData',
-            description='SfmData File',
+            label='Input SfMData',
+            description='SfMData file.',
             value='',
             uid=[0],
         ),
-        desc.ListAttribute(
-            elementDesc=desc.File(
-                name='lensGridImage',
-                label='Lens Grid Image',
-                description='',
-                value='',
-                uid=[0],
-            ),
-            name='lensGrid',
-            label='Lens Grid Images',
-            description='Lens grid images to estimate the optical distortions.',
+        desc.File(
+            name='checkerboards',
+            label='Checkerboards Folder',
+            description='Folder containing checkerboard JSON files.',
+            value='',
+            uid=[0],
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='Verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name='cameraModel',
+            label='Camera Model',
+            description='Camera model used to estimate distortion.',
+            value='3deanamorphic4',
+            values=['3deanamorphic4'],
             exclusive=True,
-            uid=[],
+            uid=[0],
         ),
     ]
 
     outputs = [
         desc.File(
-            name='outSfMData',
-            label='SfmData File',
-            description='Path to the output sfmData file',
+            name='output',
+            label='SfMData File',
+            description='Path to the output SfMData file.',
             value=desc.Node.internalFolder + 'sfmData.sfm',
             uid=[],
         )

@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "3.1"
 
 from meshroom.core import desc
 
@@ -20,6 +20,7 @@ The transformation can be based on:
  * from_single_camera: Use a specific camera as the origin of the coordinate system
  * from_markers: Align specific markers to custom coordinates
  * from_gps: Align with the gps positions from the image metadata
+ * align_ground: Detect ground level and align to it
 
 '''
 
@@ -35,18 +36,19 @@ The transformation can be based on:
             name='method',
             label='Transformation Method',
             description="Transformation method:\n"
-                        " * transformation: Apply a given transformation\n"
-                        " * manual: Apply the gizmo transformation (show the transformed input)\n"
-                        " * auto: Using X axis of all cameras as horizon. gps north and scale if available. cameras center mean is used as origin.\n"
-                        " * auto_from_cameras: Use cameras\n"
-                        " * auto_from_cameras_x_axis: Use X axis of all cameras\n"
-                        " * auto_from_landmarks: Use landmarks\n"
-                        " * from_single_camera: Use a specific camera as the origin of the coordinate system\n"
-                        " * from_center_camera: Use the center camera as the origin of the coordinate system\n"
-                        " * from_markers: Align specific markers to custom coordinates\n"
-                        " * from_gps: Align with the gps positions from the image metadata",
+                        " * transformation: Apply a given transformation.\n"
+                        " * manual: Apply the gizmo transformation (show the transformed input).\n"
+                        " * auto: Determines scene orientation from the cameras' X axis, determines north and scale from GPS information if available, and defines ground level from the point cloud.\n"
+                        " * auto_from_cameras: Defines coordinate system from cameras.\n"
+                        " * auto_from_cameras_x_axis: Determines scene orientation from the cameras' X axis.\n"
+                        " * auto_from_landmarks: Defines coordinate system from landmarks.\n"
+                        " * from_single_camera: Defines the coordinate system from the camera specified by --tranformation.\n"
+                        " * from_center_camera: Defines the coordinate system from the camera closest to the center of the reconstruction.\n"
+                        " * from_markers: Defines the coordinate system from markers specified by --markers.\n"
+                        " * from_gps: Defines coordinate system from GPS metadata.\n"
+                        " * align_ground: Defines ground level from the point cloud density. It assumes that the scene is oriented.",
             value='auto',
-            values=['transformation', 'manual', 'auto', 'auto_from_cameras', 'auto_from_cameras_x_axis', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers', 'from_gps'],
+            values=['transformation', 'manual', 'auto', 'auto_from_cameras', 'auto_from_cameras_x_axis', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers', 'from_gps', 'align_ground'],
             exclusive=True,
             uid=[0],
         ),

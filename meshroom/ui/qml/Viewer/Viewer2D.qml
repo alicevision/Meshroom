@@ -214,13 +214,15 @@ FocusScope {
 
         var viewId = -1;
         var intrinsicId = -1;
+        var poseId = -1;
         var fileName = "";
         if (_reconstruction) {
             viewId = _reconstruction.selectedViewId;
             intrinsicId = getViewpointAttribute("intrinsicId", viewId);
-            fileName = Filepath.removeExtension(Filepath.basename(getViewpointAttribute("path",viewId)));
+            poseId = getViewpointAttribute("poseId", viewId);
+            fileName = Filepath.removeExtension(Filepath.basename(getViewpointAttribute("path", viewId)));
         }
-        var patterns = {"<VIEW_ID>": viewId,"<INTRINSIC_ID>": intrinsicId, "<FILENAME>": fileName}
+        var patterns = {"<VIEW_ID>": viewId, "<INTRINSIC_ID>": intrinsicId, "<POSE_ID>": poseId, "<FILENAME>": fileName}
         return getFileAttributePath(displayedNode, outputAttribute.name,patterns);
     }
 
@@ -588,6 +590,42 @@ FocusScope {
                             {
                                 _reconstruction.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
                             }
+                        }
+                    }
+                }
+
+                // LightingCalibration: display circle
+                // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
+                Loader {
+                    anchors.centerIn: parent
+                    property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node
+                    active: (displayLightingCircleLoader.checked && activeNode)
+
+                    // handle rotation/position based on available metadata
+                    rotation: {
+                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                        switch(orientation) {
+                            case "6": return 90;
+                            case "8": return -90;
+                            default: return 0;
+                        }
+                    }
+
+                    sourceComponent: CircleGizmo {
+                        readOnly: false
+                        x: activeNode.attribute("sphereCenter.x").value
+                        y: activeNode.attribute("sphereCenter.y").value
+                        radius: activeNode.attribute("sphereRadius").value
+
+                        border.width: Math.max(1, (3.0 / imgContainer.scale))
+                        onMoved: {
+                            _reconstruction.setAttribute(
+                                activeNode.attribute("sphereCenter"),
+                                JSON.stringify([x, y])
+                            );
+                        }
+                        onIncrementRadius: {
+                            _reconstruction.setAttribute(activeNode.attribute("sphereRadius"), activeNode.attribute("sphereRadius").value + radiusOffset)
                         }
                     }
                 }
@@ -1078,6 +1116,19 @@ FocusScope {
                             checkable: true
                             checked: false
                             enabled: activeNode && activeNode.attribute("useFisheye").value && !displayPanoramaViewer.checked
+                            visible: activeNode
+                        }
+                        MaterialToolButton {
+                            id: displayLightingCircleLoader
+                            property var activeNode: _reconstruction.activeNodes.get('SphereDetection').node
+                            ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
+                            text: MaterialIcons.vignette
+                            // text: MaterialIcons.panorama_fish_eye
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
+                            enabled: activeNode
                             visible: activeNode
                         }
                         MaterialToolButton {

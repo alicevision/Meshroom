@@ -6,7 +6,7 @@
         "template": true,
         "nodesVersions": {
             "ExportAnimatedCamera": "2.0",
-            "Publish": "1.2",
+            "Publish": "1.3",
             "StructureFromMotion": "3.0",
             "FeatureExtraction": "1.1",
             "FeatureMatching": "2.0",

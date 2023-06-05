@@ -35,8 +35,8 @@
         "CameraInit_1": {
             "nodeType": "CameraInit",
             "position": [
-                -215,
-                15
+                -200,
+                0
             ],
             "inputs": {}
         },
@@ -65,8 +65,8 @@
         "FeatureExtraction_1": {
             "nodeType": "FeatureExtraction",
             "position": [
-                197,
-                227
+                200,
+                200
             ],
             "inputs": {
                 "input": "{ApplyCalibration_1.output}"
@@ -91,8 +91,8 @@
         "ImageMatchingMultiSfM_1": {
             "nodeType": "ImageMatchingMultiSfM",
             "position": [
-                996,
-                215
+                1000,
+                200
             ],
             "inputs": {
                 "input": "{KeyframeSelection_1.outputSfMDataFrames}",
@@ -125,8 +125,8 @@
         "KeyframeSelection_1": {
             "nodeType": "KeyframeSelection",
             "position": [
-                197,
-                3
+                200,
+                0
             ],
             "inputs": {
                 "inputPaths": [
@@ -223,8 +223,8 @@
         "ExportAnimatedCamera_1": {
             "nodeType": "ExportAnimatedCamera",
             "position": [
-                1625,
-                209
+                1600,
+                200
             ],
             "inputs": {
                 "input": "{StructureFromMotion_1.output}",
@@ -249,8 +249,8 @@
         "CheckerboardDetection_1": {
             "nodeType": "CheckerboardDetection",
             "position": [
-                -431,
-                -131
+                -400,
+                -160
             ],
             "inputs": {
                 "input": "{CameraInit_2.output}",
@@ -261,8 +261,8 @@
         "DistortionCalibration_1": {
             "nodeType": "DistortionCalibration",
             "position": [
-                -216,
-                -133
+                -200,
+                -160
             ],
             "inputs": {
                 "input": "{CheckerboardDetection_1.input}",
@@ -272,8 +272,8 @@
         "ExportDistortion_1": {
             "nodeType": "ExportDistortion",
             "position": [
-                -13,
-                -136
+                0,
+                -160
             ],
             "inputs": {
                 "input": "{DistortionCalibration_1.output}"
@@ -282,8 +282,8 @@
         "ApplyCalibration_1": {
             "nodeType": "ApplyCalibration",
             "position": [
-                -9,
-                11
+                0,
+                0
             ],
             "inputs": {
                 "input": "{CameraInit_1.output}",
@@ -293,8 +293,8 @@
         "ScenePreview_1": {
             "nodeType": "ScenePreview",
             "position": [
-                3202,
-                232
+                3200,
+                200
             ],
             "inputs": {
                 "cameras": "{ConvertSfMFormat_1.output}",
@@ -305,8 +305,8 @@
         "ConvertSfMFormat_1": {
             "nodeType": "ConvertSfMFormat",
             "position": [
-                3006,
-                233
+                3000,
+                200
             ],
             "inputs": {
                 "input": "{ExportAnimatedCamera_1.input}",
@@ -319,8 +319,8 @@
         "StructureFromMotion_1": {
             "nodeType": "StructureFromMotion",
             "position": [
-                1396,
-                215
+                1400,
+                200
             ],
             "inputs": {
                 "input": "{FeatureMatching_3.input}",
@@ -361,8 +361,8 @@
         "FeatureMatching_2": {
             "nodeType": "FeatureMatching",
             "position": [
-                1198,
-                396
+                1200,
+                360
             ],
             "inputs": {
                 "input": "{ImageMatching_2.input}",
@@ -376,8 +376,8 @@
         "ImageMatching_2": {
             "nodeType": "ImageMatching",
             "position": [
-                998,
-                396
+                1000,
+                360
             ],
             "inputs": {
                 "input": "{ApplyCalibration_1.output}",
@@ -391,8 +391,8 @@
         "CameraInit_2": {
             "nodeType": "CameraInit",
             "position": [
-                -633,
-                -130
+                -600,
+                -160
             ],
             "inputs": {},
             "internalInputs": {
@@ -402,8 +402,8 @@
         "FeatureMatching_3": {
             "nodeType": "FeatureMatching",
             "position": [
-                1196,
-                215
+                1200,
+                200
             ],
             "inputs": {
                 "input": "{ImageMatchingMultiSfM_1.outputCombinedSfM}",

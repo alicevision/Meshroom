@@ -5,7 +5,7 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "Publish": "1.2",
+            "Publish": "1.3",
             "StructureFromMotion": "3.0",
             "FeatureExtraction": "1.1",
             "FeatureMatching": "2.0",

@@ -5,30 +5,30 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
+            "MeshDecimate": "1.0",
+            "ScenePreview": "1.0",
+            "ConvertSfMFormat": "2.0",
+            "MeshFiltering": "3.0",
+            "FeatureMatching": "2.0",
+            "ImageMatching": "2.0",
+            "SfMTransfer": "2.1",
             "FeatureExtraction": "1.1",
             "CameraInit": "9.0",
             "DepthMap": "3.0",
+            "SfMTriangulation": "1.0",
             "DepthMapFilter": "3.0",
             "DistortionCalibration": "3.0",
-            "StructureFromMotion": "3.1",
-            "PrepareDenseScene": "3.0",
-            "Texturing": "6.0",
             "ExportDistortion": "1.0",
+            "PrepareDenseScene": "3.0",
             "KeyframeSelection": "4.0",
-            "ScenePreview": "1.0",
-            "CheckerboardDetection": "1.0",
-            "Meshing": "7.0",
-            "ImageMatchingMultiSfM": "1.0",
-            "MeshDecimate": "1.0",
-            "Publish": "1.2",
-            "MeshFiltering": "3.0",
+            "Publish": "1.3",
+            "StructureFromMotion": "3.1",
             "ApplyCalibration": "1.0",
+            "CheckerboardDetection": "1.0",
+            "ImageMatchingMultiSfM": "1.0",
+            "Texturing": "6.0",
             "ExportAnimatedCamera": "2.0",
-            "SfMTransfer": "2.1",
-            "ConvertSfMFormat": "2.0",
-            "FeatureMatching": "2.0",
-            "ImageMatching": "2.0",
-            "SfMTriangulation": "1.0"
+            "Meshing": "7.0"
         }
     },
     "graph": {
@@ -226,7 +226,8 @@
                 209
             ],
             "inputs": {
-                "input": "{StructureFromMotion_1.output}"
+                "input": "{StructureFromMotion_1.output}",
+                "exportUndistortedImages": true
             }
         },
         "Meshing_1": {

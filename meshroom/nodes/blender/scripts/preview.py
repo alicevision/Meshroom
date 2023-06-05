@@ -138,7 +138,9 @@ def initCompositing():
 def setupRender(view, intrinsic, pose, outputDir):
     '''Setup rendering in Blender for a given view.'''
     setupCamera(intrinsic, pose)
-    bpy.context.scene.render.filepath = os.path.abspath(outputDir + '/' + view['viewId'] + '.jpg')
+
+    baseImgName = os.path.splitext(os.path.basename(view['path']))[0]
+    bpy.context.scene.render.filepath = os.path.abspath(outputDir + '/' + baseImgName + '_preview.jpg')
 
 
 def setupBackground(view, folderUndistorted):

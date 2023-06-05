@@ -5,30 +5,30 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
+            "FeatureExtraction": "1.1",
+            "CameraInit": "9.0",
+            "DepthMap": "3.0",
+            "SfMTriangulation": "1.0",
+            "ExportDistortion": "1.0",
+            "DepthMapFilter": "3.0",
+            "DistortionCalibration": "3.0",
+            "PrepareDenseScene": "3.0",
+            "KeyframeSelection": "4.0",
+            "Publish": "1.3",
+            "StructureFromMotion": "3.1",
+            "CheckerboardDetection": "1.0",
+            "ImageMatchingMultiSfM": "1.0",
+            "ApplyCalibration": "1.0",
+            "Texturing": "6.0",
+            "ExportAnimatedCamera": "2.0",
+            "Meshing": "7.0",
             "MeshDecimate": "1.0",
             "ScenePreview": "1.0",
             "ConvertSfMFormat": "2.0",
             "MeshFiltering": "3.0",
             "FeatureMatching": "2.0",
             "ImageMatching": "2.0",
-            "SfMTransfer": "2.1",
-            "FeatureExtraction": "1.1",
-            "CameraInit": "9.0",
-            "DepthMap": "3.0",
-            "SfMTriangulation": "1.0",
-            "DepthMapFilter": "3.0",
-            "DistortionCalibration": "3.0",
-            "ExportDistortion": "1.0",
-            "PrepareDenseScene": "3.0",
-            "KeyframeSelection": "4.0",
-            "Publish": "1.3",
-            "StructureFromMotion": "3.1",
-            "ApplyCalibration": "1.0",
-            "CheckerboardDetection": "1.0",
-            "ImageMatchingMultiSfM": "1.0",
-            "Texturing": "6.0",
-            "ExportAnimatedCamera": "2.0",
-            "Meshing": "7.0"
+            "SfMTransfer": "2.1"
         }
     },
     "graph": {
@@ -142,7 +142,7 @@
             ],
             "inputs": {
                 "input": "{MeshFiltering_1.outputMesh}",
-                "simplificationFactor": 0.2
+                "simplificationFactor": 0.05
             }
         },
         "MeshFiltering_1": {
@@ -174,7 +174,8 @@
             ],
             "inputs": {
                 "input": "{KeyframeSelection_1.outputSfMDataKeyframes}",
-                "reference": "{StructureFromMotion_1.output}"
+                "reference": "{StructureFromMotion_1.output}",
+                "transferLandmarks": false
             },
             "internalInputs": {
                 "comment": "Transfer pose from final camera tracking into the keyframes-only scene."
@@ -310,6 +311,7 @@
             "inputs": {
                 "input": "{ExportAnimatedCamera_1.input}",
                 "fileExt": "json",
+                "describerTypes": "{StructureFromMotion_1.describerTypes}",
                 "structure": false,
                 "observations": false
             }

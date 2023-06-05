@@ -11,6 +11,7 @@
             "MeshFiltering": "3.0",
             "SfMTransfer": "2.1",
             "ApplyCalibration": "1.0",
+            "ScenePreview": "1.0",
             "CheckerboardDetection": "1.0",
             "ImageMatchingMultiSfM": "1.0",
             "Meshing": "7.0",
@@ -18,6 +19,7 @@
             "StructureFromMotion": "3.1",
             "ExportAnimatedCamera": "2.0",
             "MeshDecimate": "1.0",
+            "ConvertSfMFormat": "2.0",
             "FeatureMatching": "2.0",
             "ImageMatching": "2.0",
             "PrepareDenseScene": "3.0",
@@ -363,6 +365,31 @@
             "inputs": {
                 "input": "{CameraInit_1.output}",
                 "calibration": "{DistortionCalibration_1.output}"
+            }
+        },
+        "ScenePreview_1": {
+            "nodeType": "ScenePreview",
+            "position": [
+                3200,
+                274
+            ],
+            "inputs": {
+                "cameras": "{ConvertSfMFormat_1.output}",
+                "model": "{MeshDecimate_1.output}",
+                "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}"
+            }
+        },
+        "ConvertSfMFormat_1": {
+            "nodeType": "ConvertSfMFormat",
+            "position": [
+                3001,
+                275
+            ],
+            "inputs": {
+                "input": "{ExportAnimatedCamera_1.input}",
+                "fileExt": "json",
+                "structure": false,
+                "observations": false
             }
         }
     }

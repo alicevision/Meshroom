@@ -5,32 +5,36 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "ExportAnimatedCamera": "2.0",
-            "Publish": "1.2",
-            "Meshing": "7.0",
-            "DepthMapFilter": "3.0",
-            "FeatureMatching": "2.0",
-            "SfMTransfer": "2.0",
-            "Texturing": "6.0",
             "SfMTriangulation": "1.0",
-            "CameraInit": "9.0",
-            "KeyframeSelection": "4.0",
-            "ImageMatchingMultiSfM": "1.0",
-            "FeatureExtraction": "1.1",
-            "StructureFromMotion": "3.1",
+            "Publish": "1.2",
+            "Texturing": "6.0",
             "MeshFiltering": "3.0",
+            "SfMTransfer": "2.1",
+            "ApplyCalibration": "1.0",
+            "CheckerboardDetection": "1.0",
+            "ImageMatchingMultiSfM": "1.0",
+            "Meshing": "7.0",
+            "ExportDistortion": "1.0",
+            "StructureFromMotion": "3.1",
+            "ExportAnimatedCamera": "2.0",
             "MeshDecimate": "1.0",
-            "PrepareDenseScene": "3.0",
+            "FeatureMatching": "2.0",
             "ImageMatching": "2.0",
-            "DepthMap": "3.0"
+            "PrepareDenseScene": "3.0",
+            "KeyframeSelection": "4.0",
+            "FeatureExtraction": "1.1",
+            "CameraInit": "9.0",
+            "DepthMap": "3.0",
+            "DepthMapFilter": "3.0",
+            "DistortionCalibration": "3.0"
         }
     },
     "graph": {
         "CameraInit_1": {
             "nodeType": "CameraInit",
             "position": [
-                0,
-                0
+                -213,
+                -2
             ],
             "inputs": {}
         },
@@ -63,7 +67,7 @@
                 0
             ],
             "inputs": {
-                "input": "{CameraInit_1.output}"
+                "input": "{ApplyCalibration_1.output}"
             }
         },
         "FeatureMatching_1": {
@@ -121,7 +125,7 @@
             ],
             "inputs": {
                 "inputPaths": [
-                    "{CameraInit_1.output}"
+                    "{ApplyCalibration_1.output}"
                 ]
             }
         },
@@ -207,6 +211,28 @@
                 "inputMesh": "{MeshDecimate_1.output}"
             }
         },
+        "Publish_1": {
+            "nodeType": "Publish",
+            "position": [
+                1800,
+                160
+            ],
+            "inputs": {
+                "inputFiles": [
+                    "{ExportAnimatedCamera_1.output}"
+                ]
+            }
+        },
+        "ExportAnimatedCamera_1": {
+            "nodeType": "ExportAnimatedCamera",
+            "position": [
+                1600,
+                160
+            ],
+            "inputs": {
+                "input": "{StructureFromMotion_2.output}"
+            }
+        },
         "FeatureMatching_2": {
             "nodeType": "FeatureMatching",
             "position": [
@@ -229,7 +255,7 @@
                 160
             ],
             "inputs": {
-                "input": "{CameraInit_1.output}",
+                "input": "{ApplyCalibration_1.output}",
                 "featuresFolders": [
                     "{FeatureExtraction_1.output}"
                 ],
@@ -288,26 +314,55 @@
                 "label": "FeatureMatchingFramesToKeyframes"
             }
         },
-        "Publish_1": {
-            "nodeType": "Publish",
+        "CameraInit_2": {
+            "nodeType": "CameraInit",
             "position": [
-                1800,
-                160
+                -633,
+                -130
+            ],
+            "inputs": {}
+        },
+        "CheckerboardDetection_1": {
+            "nodeType": "CheckerboardDetection",
+            "position": [
+                -431,
+                -131
             ],
             "inputs": {
-                "inputFiles": [
-                    "{ExportAnimatedCamera_1.output}"
-                ]
+                "input": "{CameraInit_2.output}",
+                "exportDebugImages": true
             }
         },
-        "ExportAnimatedCamera_1": {
-            "nodeType": "ExportAnimatedCamera",
+        "DistortionCalibration_1": {
+            "nodeType": "DistortionCalibration",
             "position": [
-                1600,
-                160
+                -216,
+                -133
             ],
             "inputs": {
-                "input": "{StructureFromMotion_2.output}"
+                "input": "{CheckerboardDetection_1.input}",
+                "checkerboards": "{CheckerboardDetection_1.output}"
+            }
+        },
+        "ExportDistortion_1": {
+            "nodeType": "ExportDistortion",
+            "position": [
+                -13,
+                -136
+            ],
+            "inputs": {
+                "input": "{DistortionCalibration_1.output}"
+            }
+        },
+        "ApplyCalibration_1": {
+            "nodeType": "ApplyCalibration",
+            "position": [
+                -9,
+                11
+            ],
+            "inputs": {
+                "input": "{CameraInit_1.output}",
+                "calibration": "{DistortionCalibration_1.output}"
             }
         }
     }

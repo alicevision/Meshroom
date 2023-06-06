@@ -571,6 +571,23 @@ Convert or apply filtering to the input images.
             uid=[0],
         ),
 
+        desc.File(
+            name='lensCorrectionProfileInfo',
+            label='Lens Correction Profile Info',
+            description='''Lens Correction Profile filepath or database directory.''',
+            value='${ALICEVISION_LENS_PROFILE_INFO}',
+            uid=[],
+        ),
+        
+        desc.BoolParam(
+            name='lensCorrectionProfileSearchIgnoreCameraModel',
+            label='LCP Generic Search',
+            description='The lens name and camera maker are used to match the LCP database, but the camera model is ignored.',
+            value=True,
+            uid=[0],
+            advanced=True,
+        ),
+        
         desc.ChoiceParam(
             name="storageDataType",
             label="Storage Data Type For EXR Output",

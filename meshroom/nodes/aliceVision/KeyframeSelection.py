@@ -1,4 +1,4 @@
-__version__ = "4.0"
+__version__ = "4.1"
 
 import os
 from meshroom.core import desc
@@ -212,14 +212,17 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                         "If the selected keyframes are at index [15, 294, 825], they will be written as [00000.exr, 00001.exr, 00002.exr] with this\n"
                         "option enabled instead of [00015.exr, 00294.exr, 00825.exr].",
             value=False,
+            enabled=lambda node: node.outputExtension.value != "none",
             uid=[0]
         ),
         desc.ChoiceParam(
             name="outputExtension",
             label="Keyframes File Extension",
-            description="File extension of the written keyframes.",
-            value="jpg",
-            values=["exr", "jpg", "png"],
+            description="File extension of the written keyframes.\n"
+                        "If 'none' is selected, no keyframe will be written on disk.\n"
+                        "For input videos, 'none' should not be used since the written keyframes are used to generate the output SfMData file.",
+            value="none",
+            values=["none", "exr", "jpg", "png"],
             exclusive=True,
             uid=[0],
         ),

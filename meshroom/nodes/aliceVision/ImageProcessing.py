@@ -521,6 +521,47 @@ Convert or apply filtering to the input images.
             exclusive=True,
             uid=[0],
         ),
+        
+        desc.ChoiceParam(
+            name='exrCompressionMethod',
+            label='EXR Compression Method',
+            description='Compression method for EXR images.',
+            value='auto',
+            values=['none', 'auto', 'rle', 'zip', 'zips', 'piz', 'pxr24', 'b44', 'b44a', 'dwaa', 'dwab'],
+            exclusive=True,
+            uid=[0],
+        ),
+        
+        desc.IntParam(
+            name='exrCompressionLevel',
+            label='EXR Compression Level',
+            description='Level of compression for EXR images, range depends on method used.\n'
+                        'For zip/zips methods, values must be between 1 and 9.\n'
+                        'A value of 0 will be ignored, default value for the selected method will be used.',
+            value=0,
+            range=(0, 500, 1),
+            uid=[0],
+            enabled=lambda node: node.exrCompressionMethod.value in ['dwaa', 'dwab', 'zip', 'zips']
+        ),
+
+        desc.BoolParam(
+            name='jpegCompress',
+            label='JPEG Compress',
+            description='Enable JPEG compression.',
+            value=True,
+            uid=[0],
+        ),
+
+        desc.IntParam(
+            name='jpegQuality',
+            label='JPEG Quality',
+            description='JPEG images quality after compression.',
+            value=90,
+            range=(0, 100, 1),
+            uid=[0],
+            enabled=lambda node: node.jpegCompress.value
+        ),
+
         desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',

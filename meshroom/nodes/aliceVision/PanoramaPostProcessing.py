@@ -49,6 +49,27 @@ Post process the panorama.
             uid=[0],
         ),
         desc.ChoiceParam(
+            name='compressionMethod',
+            label='Compression Method',
+            description='Compression method for output EXR image.',
+            value='auto',
+            values=['none', 'auto', 'rle', 'zip', 'zips', 'piz', 'pxr24', 'b44', 'b44a', 'dwaa', 'dwab'],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.IntParam(
+            name='compressionLevel',
+            label='Compression Level',
+            description='Level of compression for output EXR image, range depends on method used.\n'
+                        'For zip/zips methods, values must be between 1 and 9.\n'
+                        'A value of 0 will be ignored, default value for the selected method will be used.',
+            value=0,
+            range=(0, 500, 1),
+            uid=[0],
+            enabled=lambda node: node.compressionMethod.value in ['dwaa', 'dwab', 'zip', 'zips']
+        ),
+
+        desc.ChoiceParam(
             name='verboseLevel',
             label='Verbose Level',
             description='Verbosity level (fatal, error, warning, info, debug, trace).',

@@ -51,19 +51,22 @@ Post process the panorama.
         desc.ChoiceParam(
             name='compressionMethod',
             label='Compression Method',
-            description='Compression method for output image.',
-            value='Auto',
-            values=['None', 'Auto', 'RLE', 'ZIP', 'ZIPS', 'PIZ', 'PXR24', 'B44', 'B44A', 'DWAA', 'DWAB'],
+            description='Compression method for output EXR image.',
+            value='auto',
+            values=['none', 'auto', 'rle', 'zip', 'zips', 'piz', 'pxr24', 'b44', 'b44a', 'dwaa', 'dwab'],
             exclusive=True,
             uid=[0],
         ),
         desc.IntParam(
             name='compressionLevel',
             label='Compression Level',
-            description='Level of compression relying on the selected compression method.',
+            description='Level of compression for output EXR image, range depends on method used.\n'
+                        'For zip/zips methods, values must be between 1 and 9.\n'
+                        'A value of 0 will be ignored, default value for the selected method will be used.',
             value=0,
-            range=(0, 200, 1),
+            range=(0, 500, 1),
             uid=[0],
+            enabled=lambda node: node.compressionMethod.value in ['dwaa', 'dwab', 'zip', 'zips']
         ),
 
         desc.ChoiceParam(

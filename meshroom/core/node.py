@@ -685,11 +685,15 @@ class BaseNode(BaseObject):
         pass
 
     def _computeUids(self):
-        """ Compute node uids by combining associated attributes' uids. """
+        """ Compute node UIDs by combining associated attributes' UIDs. """
+        # Get all the attributes associated to a given UID index, specified in node descriptions with "uid=[index]"
+        # For now, the only index that is used is "0", so there will be a single iteration of the loop below
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
-            # uid is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this uid
+            # UID is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this UID
             uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes if a.enabled and a.value != a.uidIgnoreValue]
             uidAttributes.sort()
+            # Adding the node type prevents ending up with two identical UIDs for different node types that have the exact same list of attributes
+            uidAttributes.append(self.nodeType)
             self._uids[uidIndex] = hashValue(uidAttributes)
 
     def _buildCmdVars(self):

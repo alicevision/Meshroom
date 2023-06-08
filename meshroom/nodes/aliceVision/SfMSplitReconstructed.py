@@ -1,8 +1,6 @@
-__version__ = "2.0"
+__version__ = "1.0"
 
 from meshroom.core import desc
-
-import os.path
 
 
 class SfMSplitReconstructed(desc.AVCommandLineNode):
@@ -11,6 +9,9 @@ class SfMSplitReconstructed(desc.AVCommandLineNode):
 
     category = 'Utils'
     documentation = '''
+    This nodes takes a sfmData file and split it in two
+    - One sfmData with the reconstructed views
+    - One sfmData with the non reconstructed views
 '''
 
     inputs = [

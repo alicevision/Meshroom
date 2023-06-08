@@ -7,7 +7,7 @@
         "nodesVersions": {
             "FeatureExtraction": "1.1",
             "CameraInit": "9.0",
-            "DepthMap": "3.0",
+            "DepthMap": "4.0",
             "SfMTriangulation": "1.0",
             "ExportDistortion": "1.0",
             "DepthMapFilter": "3.0",

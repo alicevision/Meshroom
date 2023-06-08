@@ -128,21 +128,23 @@ def readSfMData(sfmFile):
 
     intrinsics = [{k: v for k, v in item.items() if k in intrinsicsKeys} for item in data.get("intrinsics", [])]
     for intrinsic in intrinsics:
-        pp = intrinsic['principalPoint']
+        pp = intrinsic.get('principalPoint', (0, 0))
         intrinsic['principalPoint'] = {}
         intrinsic['principalPoint']['x'] = pp[0]
         intrinsic['principalPoint']['y'] = pp[1]
 
         # convert empty string distortionParams (i.e: Pinhole model) to empty list
-        if intrinsic['distortionParams'] == '':
+        distortionParams = intrinsic.get('distortionParams', '')
+        if distortionParams == '':
             intrinsic['distortionParams'] = list()
 
-        offset = intrinsic['undistortionOffset']
+        offset = intrinsic.get('undistortionOffset', (0, 0))
         intrinsic['undistortionOffset'] = {}
         intrinsic['undistortionOffset']['x'] = offset[0]
         intrinsic['undistortionOffset']['y'] = offset[1]
 
-        if intrinsic['undistortionParams'] == '':
+        undistortionParams = intrinsic.get('undistortionParams', '')
+        if undistortionParams == '':
             intrinsic['undistortionParams'] = list()
 
     viewsKeys = [v.name for v in Viewpoint]

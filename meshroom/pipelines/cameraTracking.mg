@@ -13,7 +13,7 @@
             "DepthMapFilter": "3.0",
             "DistortionCalibration": "3.0",
             "PrepareDenseScene": "3.0",
-            "KeyframeSelection": "4.0",
+            "KeyframeSelection": "4.1",
             "Publish": "1.3",
             "StructureFromMotion": "3.1",
             "CheckerboardDetection": "1.0",

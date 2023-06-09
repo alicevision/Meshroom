@@ -104,7 +104,7 @@ Convert or apply filtering to the input images.
         desc.BoolParam(
             name='exposureCompensation',
             label='Exposure Compensation',
-            description='Exposure compensation (only valid for sfmData)',
+            description='Exposure compensation (only valid for SfMData)',
             value=False,
             uid=[0],
         ),
@@ -134,7 +134,7 @@ Convert or apply filtering to the input images.
             desc.BoolParam(
                 name='geometry',
                 label='Geometry',
-                description='Geometry correction if a model is available in sfm data.',
+                description='Geometry correction if a model is available in SfM data.',
                 value=False,
                 uid=[0],
                 enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value,
@@ -159,7 +159,7 @@ Convert or apply filtering to the input images.
         ]),        
         desc.FloatParam(
             name='scaleFactor',
-            label='ScaleFactor',
+            label='Scale Factor',
             description='Scale Factor.',
             value=1.0,
             range=(0.0, 1.0, 0.01),
@@ -477,7 +477,7 @@ Convert or apply filtering to the input images.
         
         desc.BoolParam(
             name='doWBAfterDemosaicing',
-            label='WB after demosaicing',
+            label='WB After Demosaicing',
             description='Do White Balance after demosaicing, just before DCP profile application',
             value=False,
             uid=[0],
@@ -496,7 +496,7 @@ Convert or apply filtering to the input images.
         
         desc.ChoiceParam(
             name='highlightMode',
-            label='Highlight mode',
+            label='Highlight Mode',
             description='LibRaw highlight mode:\n'
                         ' * 0: Clip (default)\n'
                         ' * 1: Unclip\n'
@@ -511,7 +511,7 @@ Convert or apply filtering to the input images.
         desc.FloatParam(
             name='correlatedColorTemperature',
             label='Illuminant Color Temperature',
-            description='Scene illuminant color temperature in Kelvin. A negative or null value indicates to use metadata information.',
+            description='Scene illuminant color temperature in Kelvin. A negative or null value indicates that the metadata information will be used.',
             value=-1.0,
             range=(-1.0, 10000.0, 1.0),
             uid=[0],
@@ -519,7 +519,7 @@ Convert or apply filtering to the input images.
 
         desc.ChoiceParam(
             name='storageDataType',
-            label='Storage Data Type for EXR output',
+            label='Storage Data Type For EXR Output',
             description='Storage image data type:\n'
                         ' * float: Use full floating point (32 bits per channel)\n'
                         ' * half: Use half float (16 bits per channel)\n'
@@ -585,8 +585,8 @@ Convert or apply filtering to the input images.
     outputs = [
         desc.File(
             name='outSfMData',
-            label='SfmData',
-            description='Output sfmData.',
+            label='SfMData',
+            description='Output SfMData.',
             value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
             uid=[],
             group='',  # do not export on the command line

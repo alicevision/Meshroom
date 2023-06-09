@@ -7,7 +7,7 @@
             "StructureFromMotion": "3.0",
             "CameraInit": "9.0", 
             "ImageMatching": "2.0", 
-            "FeatureExtraction": "1.1", 
+            "FeatureExtraction": "1.2",
             "Meshing": "7.0",
             "Publish": "1.3"
         }, 

@@ -14,9 +14,9 @@
             "SfMTransform": "3.0", 
             "PanoramaPostProcessing": "1.0", 
             "ImageMatching": "2.0", 
-            "FeatureExtraction": "1.1", 
+            "FeatureExtraction": "1.2",
             "PanoramaPrepareImages": "1.1", 
-            "PanoramaWarping": "1.0",
+            "PanoramaWarping": "1.1",
             "Publish": "1.3"
         }, 
         "releaseVersion": "2023.1.0",

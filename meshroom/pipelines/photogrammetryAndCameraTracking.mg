@@ -7,7 +7,7 @@
         "nodesVersions": {
             "Publish": "1.3",
             "StructureFromMotion": "3.0",
-            "FeatureExtraction": "1.1",
+            "FeatureExtraction": "1.2",
             "FeatureMatching": "2.0",
             "CameraInit": "9.0",
             "ImageMatchingMultiSfM": "1.0",

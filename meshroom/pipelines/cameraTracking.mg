@@ -5,7 +5,7 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "FeatureExtraction": "1.1",
+            "FeatureExtraction": "1.2",
             "CameraInit": "9.0",
             "DepthMap": "3.0",
             "SfMTriangulation": "1.0",

@@ -1,11 +1,58 @@
-__version__ = "4.0"
+__version__ = "4.1"
 
 import os
 from meshroom.core import desc
 
+class KeyframeSelectionNodeSize(desc.DynamicNodeSize):
+    def computeSize(self, node):
+        inputPathsSize = super(KeyframeSelectionNodeSize, self).computeSize(node)
+        s = 0
+        finalSize = 0
+        defaultParam = self._param
+
+        # Compute the size for each entry in the list of input paths
+        for input in node.attribute("inputPaths").value:
+            self._param = input.getFullName()
+            s = s + super(KeyframeSelectionNodeSize, self).computeSize(node)
+
+        # Retrieve the maximum number of keyframes for the smart selection (which is high by default)
+        maxFramesSmart = node.attribute("selectionMethod.smartSelection.maxNbOutFrames").value
+
+        # If the smart selection is enabled and the number of input frames is available (s is not equal to the number of input paths),
+        # set the size as the minimum between the number of input frames and maximum number of output keyframes. If the number of
+        # input frames is not available, set the size to the maximum number of output keyframes.
+        smartSelectionOn = node.attribute("selectionMethod.useSmartSelection").value
+        if smartSelectionOn:
+            if s != inputPathsSize:
+                finalSize = min(s, maxFramesSmart)
+            else:
+                finalSize = maxFramesSmart
+
+        # If the smart selection is not enabled, the maximum number of output keyframes for the regular mode can be used
+        # if and only if it has been set, in the same way as for the smart selection. If the maximum number of frames has
+        # not been set, then the size is either the minimum between the maximum number of output keyframes for the smart
+        # selection and the number of input frames if it is available, or the maximum number of output keyframes for the
+        # smart selection if the number of input frames is not available.
+        else:
+            maxFrames = node.attribute("selectionMethod.regularSelection.maxNbOutFrames").value
+            if maxFrames > 0 and s != inputPathsSize:
+                finalSize = min(s, maxFrames)
+            elif maxFrames > 0 and s == inputPathsSize:
+                finalSize = maxFrames
+            elif maxFrames <= 0 and s != inputPathsSize:
+                finalSize = min(s, maxFramesSmart)
+            else:
+                finalSize = maxFramesSmart
+
+        # Reset the param used to compute size to the default one: if the size is computed again,
+        # this will prevent having an inputPathsSize that is erroneous
+        self._param = defaultParam
+        return finalSize
+
 
 class KeyframeSelection(desc.AVCommandLineNode):
     commandLine = 'aliceVision_keyframeSelection {allParams}'
+    size = KeyframeSelectionNodeSize('inputPaths')
 
     category = 'Utils'
     documentation = '''

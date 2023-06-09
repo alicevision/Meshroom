@@ -579,7 +579,7 @@ Panel {
                 text: MaterialIcons.navigate_before
                 property string previousGroupName: {
                     if (root.cameraInits && root.cameraInitIndex - 1 >= 0) {
-                        return root.cameraInits.at(root.cameraInitIndex - 1).name
+                        return root.cameraInits.at(root.cameraInitIndex - 1).label
                     }
                     return ""
                 }
@@ -613,7 +613,7 @@ Panel {
                 text: MaterialIcons.navigate_next
                 property string nextGroupName: {
                     if (root.cameraInits && root.cameraInitIndex + 1 < root.cameraInits.count) {
-                        return root.cameraInits.at(root.cameraInitIndex + 1).name
+                        return root.cameraInits.at(root.cameraInitIndex + 1).label
                     }
                     return ""
                 }
@@ -632,7 +632,7 @@ Panel {
 
             Label {
                 id: groupName
-                text: root.cameraInit ? root.cameraInit.name : ""
+                text: root.cameraInit ? root.cameraInit.label : ""
                 font.pointSize: 8
             }
         }

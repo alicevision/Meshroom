@@ -1,4 +1,4 @@
-__version__ = "3.1"
+__version__ = "3.2"
 
 from meshroom.core import desc
 
@@ -511,7 +511,7 @@ Convert or apply filtering to the input images.
         desc.FloatParam(
             name='correlatedColorTemperature',
             label='Illuminant Color Temperature',
-            description='Scene illuminant color temperature in Kelvin. A negative or nul value indicates to use metadata information.',
+            description='Scene illuminant color temperature in Kelvin. A negative or null value indicates to use metadata information.',
             value=-1.0,
             range=(-1.0, 10000.0, 1.0),
             uid=[0],

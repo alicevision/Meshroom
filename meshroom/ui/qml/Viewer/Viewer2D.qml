@@ -184,7 +184,7 @@ FocusScope {
         var hasImageOutputAttr = false;
         for (var i = 0; i < node.attributes.count; i++) {
             var attr = node.attributes.at(i);
-            if (attr.isOutput && attr.desc.semantic == "image") {
+            if (attr.isOutput && attr.desc.semantic === "image" && attr.enabled) {
                 hasImageOutputAttr = true;
                 break;
             }
@@ -280,7 +280,7 @@ FocusScope {
             // store attr name for output attributes that represent images
             for (var i = 0; i < displayedNode.attributes.count; i++) {
                 var attr = displayedNode.attributes.at(i);
-                if (attr.isOutput && attr.desc.semantic == "image") {
+                if (attr.isOutput && attr.desc.semantic === "image" && attr.enabled) {
                     names.push(attr.name);
                 }
             }
@@ -300,6 +300,10 @@ FocusScope {
         }
     }
 
+    Connections {
+        target: displayedNode
+        onOutputAttrEnabledChanged: tryLoadNode(displayedNode)
+    }
     // context menu
     property Component contextMenu: Menu {
         MenuItem {
@@ -1193,7 +1197,7 @@ FocusScope {
                             property var names: ["gallery"]
                             property string name: names[currentIndex]
 
-                            model: names.map(n => (n == "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label)
+                            model: names.map(n => (n === "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label)
                             enabled: count > 1
 
                             FontMetrics {

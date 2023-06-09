@@ -391,7 +391,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 label='Export Depth Maps',
                 description='Export intermediate depth/similarity maps from the SGM and Refine steps.',
                 value=False,
-                uid=[],
+                uid=[0],
                 advanced=True,
             ),
             desc.BoolParam(
@@ -399,7 +399,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 label='Export Volumes',
                 description='Export intermediate full similarity volumes from the SGM and Refine steps.',
                 value=False,
-                uid=[],
+                uid=[0],
                 advanced=True,
             ),
             desc.BoolParam(
@@ -407,7 +407,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 label='Export Cross Volumes',
                 description='Export intermediate similarity cross volumes from the SGM and Refine steps.',
                 value=False,
-                uid=[],
+                uid=[0],
                 advanced=True,
             ),
             desc.BoolParam(
@@ -415,7 +415,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 label='Export 9 Points',
                 description='Export intermediate volumes 9 points from the SGM and Refine steps in CSV files.',
                 value=False,
-                uid=[],
+                uid=[0],
                 advanced=True,
             ),
             desc.BoolParam(
@@ -423,7 +423,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 label='Export Tile Pattern',
                 description='Export the bounding boxes of tiles volumes as meshes. This allows to visualize the depth map search areas.',
                 value=False,
-                uid=[],
+                uid=[0],
                 advanced=True,
             ),
         ]),
@@ -483,7 +483,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=desc.Node.internalFolder + '<VIEW_ID>_tilePattern.obj',
             uid=[],
             group='', # do not export on the command line
-            # enabled=lambda node: node.intermediateResults.exportTilePattern.value,
+            enabled=lambda node: node.intermediateResults.exportTilePattern.value,
         ),
         desc.File(
             name='depthSgm',
@@ -493,7 +493,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_scale2_sgm.exr',
             uid=[],
             group='', # do not export on the command line
-            # enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
+            enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
         desc.File(
             name='depthSgmUpscaled',
@@ -503,7 +503,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_sgmUpscaled.exr',
             uid=[],
             group='', # do not export on the command line
-            # enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
+            enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
         desc.File(
             name='depthRefined',
@@ -513,6 +513,6 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_refinedFused.exr',
             uid=[],
             group='', # do not export on the command line
-            # enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
+            enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,
         ),
     ]

@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "1.1"
 
 import json
 import os
@@ -68,7 +68,7 @@ Compute the image warping for each input image in the panorama coordinate system
         desc.ChoiceParam(
                 name='workingColorSpace',
                 label='Working Color Space',
-                description='Allows you to choose the color space of the output image in which the stitching will be done.',
+                description='Colorspace in which the panorama warping will be performed.',
                 value='Linear',
                 values=['Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
                 exclusive=True,

@@ -529,7 +529,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 label='Export Normal Maps',
                 description='Export intermediate normal maps from the SGM and Refine steps.',
                 value=False,
-                uid=[],
+                uid=[0],
                 advanced=True,
             ),
             desc.BoolParam(
@@ -553,7 +553,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 label='Export Cut Volumes',
                 description='Export intermediate similarity topographic cut volumes from the SGM and Refine steps.',
                 value=False,
-                uid=[],
+                uid=[0],
                 advanced=True,
             ),
             desc.BoolParam(

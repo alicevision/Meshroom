@@ -149,10 +149,14 @@ def setupBackground(view, folderUndistorted):
     if len(matches) == 0:
         baseImgName = os.path.splitext(os.path.basename(view['path']))[0]
         matches = glob.glob(folderUndistorted + '/*' + baseImgName + "*") # try with image name
+    if len(matches) == 0:
+        # no background image found
+        return False
     undistortedImgPath = matches[0]
     bpy.ops.image.open(filepath=undistortedImgPath)
     undistortedImgName = os.path.basename(undistortedImgPath)
     bpy.context.scene.node_tree.nodes["Image"].image = bpy.data.images[undistortedImgName]
+    return True
 
 
 def loadModel(filename):
@@ -332,7 +336,10 @@ def main():
 
         print("Rendering view " + view['viewId'])
         if args.useBackground:
-            setupBackground(view, args.undistortedImages)
+            if not setupBackground(view, args.undistortedImages):
+                # background setup failed
+                # do not render this frame
+                continue
         setupRender(view, intrinsic, pose, args.output)
         bpy.ops.render.render(write_still=True)
 

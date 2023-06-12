@@ -305,6 +305,36 @@ Item {
                                     hoverEnabled: true
                                 }
                             }
+
+                            MaterialLabel {
+                                id: nodeImageOutput
+                                visible: node.hasImageOutput && ["SUCCESS"].includes(node.globalStatus) && node.chunks.count > 0
+                                text: MaterialIcons.visibility
+                                padding: 2
+                                font.pointSize: 7
+
+                                ToolTip {
+                                    id: nodeImageOutputTooltip
+                                    parent: header
+                                    visible: nodeImageOutputMA.containsMouse && nodeImageOutput.visible
+                                    text: "This node has at least one output that can be loaded in the 2D Viewer.\n" +
+                                          "Double-clicking on this node will load it in the 2D Viewer."
+                                    implicitWidth: 500
+                                    delay: 300
+
+                                    // Relative position for the tooltip to ensure we won't get stuck in a case where it starts appearing over the mouse's
+                                    // position because it's a bit long and cutting off the hovering of the mouse area (which leads to the tooltip beginning
+                                    // to appear and immediately disappearing, over and over again)
+                                    x: implicitWidth / 2.5
+                                }
+
+                                MouseArea {
+                                    // If the node header is hovered, comments may be displayed
+                                    id: nodeImageOutputMA
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                }
+                            }
                         }
                     }
                 }

@@ -4,7 +4,7 @@ from meshroom.core import desc
 
 class PhotometricStereo(desc.CommandLineNode):
     commandLine = 'aliceVision_photometricStereo {allParams}'
-    category = 'Photometry'
+    category = 'PhotometricStereo'
     documentation = '''
 Reconstruction using Photometric Stereo. A normal map is evaluated from several photographs taken from the same point of view, but under different lighting conditions.
 The lighting conditions are assumed to be known.

@@ -15,14 +15,14 @@ Can also be used to calibrate a lighting dome (RTI type).
         desc.File(
             name='inputPath',
             label='SfMData',
-            description='Input file. Could be SfMData file or folder.',
+            description='Input SfMData file.',
             value='',
             uid=[0]
         ),
         desc.File(
             name='inputJSON',
             label='Sphere Detection File',
-            description='Input JSON file containing spheres centers and radius.',
+            description='Input JSON file containing sphere centers and radiuses.',
             value='',
             uid=[0]
         ),

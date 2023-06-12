@@ -84,8 +84,8 @@ Spheres can be automatically detected or manually defined in the interface.
     outputs = [
         desc.File(
             name='output',
-            label='Light File Folder',
-            description='Light information will be written here.',
+            label='Output Folder',
+            description='Sphere detection information will be written here.',
             value=desc.Node.internalFolder,
             uid=[]
         )

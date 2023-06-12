@@ -5,7 +5,7 @@ from meshroom.core import desc
 
 class SphereDetection(desc.CommandLineNode):
     commandLine = 'aliceVision_sphereDetection {allParams}'
-    category = 'Photometry'
+    category = 'PhotometricStereo'
     documentation = '''
 Detect spheres in pictures. These spheres will be used for lighting calibration.
 Spheres can be automatically detected or manually defined in the interface.

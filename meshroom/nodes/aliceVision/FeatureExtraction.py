@@ -1,4 +1,4 @@
-__version__ = "1.1"
+__version__ = "1.2"
 
 from meshroom.core import desc
 
@@ -119,6 +119,15 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             value=True,
             advanced=True,
             uid=[0],
+        ),
+        desc.ChoiceParam(
+                name='workingColorSpace',
+                label='Working Color Space',
+                description='Allows you to choose the color space in which the data are processed.',
+                value='sRGB',
+                values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
+                exclusive=True,
+                uid=[0],
         ),
         desc.BoolParam(
             name='forceCpuExtraction',

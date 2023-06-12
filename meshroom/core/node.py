@@ -1171,10 +1171,9 @@ class BaseNode(BaseObject):
     duplicates = Property(Variant, lambda self: self._duplicates, constant=True)
     hasDuplicatesChanged = Signal()
     hasDuplicates = Property(bool, lambda self: self._hasDuplicates, notify=hasDuplicatesChanged)
-    # When output attributes will be able to switch between enabled/disabled, the property should have a notifying
-    hasImageOutput = Property(bool, hasImageOutputAttribute, constant=True)
 
     outputAttrEnabledChanged = Signal()
+    hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
 
 
 class Node(BaseNode):

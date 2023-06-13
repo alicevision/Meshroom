@@ -62,7 +62,7 @@ In a standard precompiled version of Meshroom, you can also directly add custom 
 ### Custom Nodes
 
 You can create custom nodes in python and make them available in Meshroom using the `MESHROOM_NODES_PATH` environment variable.
-[Here is an example](meshroom/nodes/blender/RenderAnimatedCamera.py) to launch a Blender rendering from Meshroom.
+[Here is an example](meshroom/nodes/blender/ScenePreview.py) to launch a Blender rendering from Meshroom.
 In a standard precompiled version of Meshroom, you can also directly add custom nodes in `lib/meshroom/nodes`.
 To be recognized by Meshroom, a custom folder with nodes should be a Python module (an `__init__.py` file is needed).
 

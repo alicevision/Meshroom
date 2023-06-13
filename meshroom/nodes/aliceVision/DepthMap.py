@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "4.0"
 
 from meshroom.core import desc
 
@@ -189,6 +189,24 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 advanced=True,
             ),
             desc.FloatParam(
+                name='sgmDepthThicknessInflate',
+                label='Thickness Inflate',
+                description='Inflate factor to add margins to the depth thickness.',
+                value=0.0,
+                range=(0.0, 2.0, 0.1),
+                uid=[0],
+                advanced=True,
+            ),
+            desc.FloatParam(
+                name='sgmMaxSimilarity',
+                label='Max Similarity',
+                description='Maximum similarity threshold (between 0 and 1) used to filter out poorly supported depth values.',
+                value=1.0,
+                range=(0.0, 1.0, 0.01),
+                uid=[0],
+                advanced=True,
+            ),
+            desc.FloatParam(
                 name='sgmGammaC',
                 label='GammaC',
                 description='GammaC threshold used for similarity computation.',
@@ -248,6 +266,13 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 value=True,
                 uid=[0],
                 advanced=True,
+            ),
+            desc.BoolParam(
+                name='sgmUseConsistentScale',
+                label='Consistent Scale',
+                description='Compare patch with consistent scale for similarity volume computation.', 
+                value=False,
+                uid=[0],
             ),
         ]),
         desc.GroupAttribute(
@@ -353,6 +378,22 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 advanced=True,
                 enabled= lambda node: node.refine.refineEnabled.value,
             ),
+            desc.BoolParam(
+                name='refineInterpolateMiddleDepth',
+                label='Interpolate Middle Depth',
+                description='Enable middle depth bilinear interpolation.', 
+                value=False,
+                uid=[0],
+                enabled= lambda node: node.refine.refineEnabled.value,
+            ),
+            desc.BoolParam(
+                name='refineUseConsistentScale',
+                label='Consistent Scale',
+                description='Compare patch with consistent scale for similarity volume computation.', 
+                value=False,
+                uid=[0],
+                enabled= lambda node: node.refine.refineEnabled.value,
+            ),
         ]),
         desc.GroupAttribute(
             name="colorOptimization",
@@ -379,6 +420,95 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             ),
         ]),
         desc.GroupAttribute(
+            name='customPatchPattern',
+            label='Custom Patch Pattern',
+            description='User custom patch pattern for similarity comparison.',
+            advanced=True,
+            group=None,
+            groupDesc=[
+            desc.BoolParam(
+                name='sgmUseCustomPatchPattern',
+                label='Enable for SGM',
+                description='Enable custom patch pattern for similarity volume computation at the SGM step .',
+                value=False,
+                uid=[0],
+                advanced=True,
+            ),
+            desc.BoolParam(
+                name='refineUseCustomPatchPattern',
+                label='Enable for Refine',
+                description='Enable custom patch pattern for similarity volume computation at the Refine step .',
+                value=False,
+                uid=[0],
+                advanced=True,
+            ),
+            desc.ListAttribute(
+                name="customPatchPatternSubparts",
+                label="Subparts",
+                description='User custom patch pattern subparts for similarity volume computation.',
+                advanced=True,
+                enabled= lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
+                elementDesc=desc.GroupAttribute(
+                    name='customPatchPatternSubpart',
+                    label='Patch Pattern Subpart',
+                    description='',
+                    joinChar=":",
+                    group=None,
+                    groupDesc=[
+                    desc.ChoiceParam(
+                        name='customPatchPatternSubpartType',
+                        label='Type',
+                        description='Patch pattern subpart type.',
+                        value='full',
+                        values=['full', 'circle'],
+                        exclusive=True,
+                        uid=[0],
+                    ),
+                    desc.FloatParam(
+                        name='customPatchPatternSubpartRadius',
+                        label='Radius / WSH',
+                        description='Patch pattern subpart half-width or circle radius.',
+                        value=2.5,
+                        range=(0.5, 30.0, 0.1),
+                        uid=[0],
+                    ),
+                    desc.IntParam(
+                        name='customPatchPatternSubpartNbCoords',
+                        label='Coordinates',
+                        description='Patch pattern subpart number of coordinates (for circle or ignore).',
+                        value=12,
+                        range=(3, 24, 1),
+                        uid=[0],
+                    ),
+                    desc.IntParam(
+                        name='customPatchPatternSubpartLevel',
+                        label='Level',
+                        description='Patch pattern subpart image level.',
+                        value=0,
+                        range=(0, 2, 1),
+                        uid=[0],
+                    ),
+                    desc.FloatParam(
+                        name='customPatchPatternSubpartWeight',
+                        label='Weight',
+                        description='Patch pattern subpart weight.',
+                        value=1.0,
+                        range=(0.0, 1.0, 0.1),
+                        uid=[0],
+                    ),
+                ]),
+            ),
+            desc.BoolParam(
+                name='customPatchPatternGroupSubpartsPerLevel',
+                label='Group Subparts Per Level',
+                description='Group all subparts with the same image level.', 
+                value=False,
+                uid=[0],
+                advanced=True,
+                enabled= lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
+            ),
+        ]),
+        desc.GroupAttribute(
             name='intermediateResults',
             label='Intermediate Results',
             description='Intermediate results parameters for debug purposes.\n'
@@ -395,6 +525,14 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 advanced=True,
             ),
             desc.BoolParam(
+                name='exportIntermediateNormalMaps',
+                label='Export Normal Maps',
+                description='Export intermediate normal maps from the SGM and Refine steps.',
+                value=False,
+                uid=[0],
+                advanced=True,
+            ),
+            desc.BoolParam(
                 name='exportIntermediateVolumes',
                 label='Export Volumes',
                 description='Export intermediate full similarity volumes from the SGM and Refine steps.',
@@ -406,6 +544,14 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                 name='exportIntermediateCrossVolumes',
                 label='Export Cross Volumes',
                 description='Export intermediate similarity cross volumes from the SGM and Refine steps.',
+                value=False,
+                uid=[0],
+                advanced=True,
+            ),
+            desc.BoolParam(
+                name='exportIntermediateTopographicCutVolumes',
+                label='Export Cut Volumes',
+                description='Export intermediate similarity topographic cut volumes from the SGM and Refine steps.',
                 value=False,
                 uid=[0],
                 advanced=True,
@@ -490,7 +636,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             label='Depth Maps SGM',
             description='Debug: Depth maps SGM',
             semantic='image',
-            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_scale2_sgm.exr',
+            value=desc.Node.internalFolder + '<VIEW_ID>_depthMap_sgm.exr',
             uid=[],
             group='', # do not export on the command line
             enabled=lambda node: node.intermediateResults.exportIntermediateDepthSimMaps.value,

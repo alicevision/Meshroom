@@ -1124,8 +1124,24 @@ class BaseNode(BaseObject):
                 self.globalExecMode == "LOCAL" and self.statusInThisSession())
 
     def hasImageOutputAttribute(self):
+        """
+        Return True if at least one attribute has the 'image' semantic (and can thus be loaded in the 2D Viewer), False otherwise.
+        """
         for attr in self._attributes:
             if attr.enabled and attr.isOutput and attr.desc.semantic == "image":
+                return True
+        return False
+
+    def has3DOutputAttribute(self):
+        """
+        Return True if at least one attribute is a File that can be loaded in the 3D Viewer, False otherwise.
+        """
+        # List of supported extensions, taken from Viewer3DSettings
+        supportedExts = ['.obj', '.stl', '.fbx', '.gltf', '.abc']
+        for attr in self._attributes:
+            # If the attribute is a File attribute, it is an instance of str and can be iterated over
+            hasSupportedExt = isinstance(attr.value, str) and any(ext in attr.value for ext in supportedExts)
+            if attr.enabled and attr.isOutput and hasSupportedExt:
                 return True
         return False
 
@@ -1174,7 +1190,7 @@ class BaseNode(BaseObject):
 
     outputAttrEnabledChanged = Signal()
     hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
-
+    has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
 
 class Node(BaseNode):
     """

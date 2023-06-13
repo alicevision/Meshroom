@@ -96,7 +96,25 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.ChoiceParam(
             name='describerTypes',
             label='Describer Types',
-            description='Describer types used to describe an image.',
+            description='The algorithm used to extract distinctive features from images.\n'
+                        'sift: Popular method for detecting/describing features.\n'
+                        '      Robust to changes in scale and orientation\n'
+                        ' sift_float: Uses floats (not ints).\n'
+                        ' sift_upright: Variation that does not compute scale and orientation.\n'
+                        ' dspsift: Dense version of SIFT that samples features at regular intervals.\n'
+                        '      (More efficient, but may be less accurate.)\n'
+                        'akaze: A faster and more memory-efficient alternative to SIFT.\n'
+                        '      Less sensitive to affine distortion, making it useful for changing camera perspectives.\n'
+                        '      (Good to use in combination with SIFT)\n'
+                        ' akaze_liop: With Local Intensity Order Pattern features.\n'
+                        ' akaze_mldb: With Multi-Learning Decision Binary features.\n'
+                        'cctag3: Features for detecting Cube-Circle-Triangle markers in images.\n'
+                        '      Robust to changes in illumination and scale, and can be used to estimate camera pose.\n'
+                        'cctag4: Variation of CCTAG with more information in markers.\n'
+                        'sift_ocv: Implementation of SIFT provided by OpenCV.\n'
+                        'akaze_ocv: Implementation of AKAZE provided by OpenCV.\n'
+                        'tag16h5: Features for detecting AprilTag markers in images.\n'
+                        '      Robust and reliable for object detection and pose estimation.',
             value=['dspsift'],
             values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'tag16h5'],
             exclusive=False,
@@ -106,7 +124,13 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.ChoiceParam(
             name='localizerEstimator',
             label='Localizer Estimator',
-            description='Estimator type used to localize cameras (acransac, ransac, lsmeds, loransac, maxconsensus).',
+            description='The type of estimator used to localize cameras. '
+                        '(The algorithm used to find the best estimate for the camera positions and orientations.)\n'
+                        'acransac: Efficient RANSAC algorithm that uses pre-conditioning and early termination.\n'
+                        'ransac: Standard RANSAC algorithm for estimating model parameters from data.\n'
+                        'lsmeds: Least-Median-of-Squares (LMedS) algorithm for robust estimation.\n'
+                        'loransac: LO-RANSAC algorithm that combines RANSAC and LMedS.\n'
+                        'maxconsensus: Maximum Consensus (MC) algorithm for robust estimation.',
             value='acransac',
             values=['acransac', 'ransac', 'lsmeds', 'loransac', 'maxconsensus'],
             exclusive=True,
@@ -222,7 +246,14 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.IntParam(
             name='minInputTrackLength',
             label='Min Input Track Length',
-            description='Minimum track length in input of SfM',
+			description='Minimum track length to be used as input of the SfM (Structure from\n'
+						'Motion) process. A track is a set of features in different images\n'
+						'that correspond to the same 3D point. By setting this parameter to a\n'
+						'higher value, shorter tracks that are less reliable or contain outliers\n'
+						'can be ignored, which can improve the accuracy and reliability of the\n'
+						'reconstruction. However, setting this parameter too high can also result\n'
+						'in a loss of information and potentially lead to missing or incomplete\n'
+						'reconstructions.',
             value=2,
             range=(2, 10, 1),
             uid=[0],
@@ -242,7 +273,10 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.FloatParam(
             name='minAngleForTriangulation',
             label='Min Angle For Triangulation',
-            description='Minimum angle for triangulation.',
+            description='This parameter sets the minimum angle required between two views to perform triangulation. '
+                        'Triangulation is the process of determining the 3D position of a point based on its projections in '
+                        'two or more views. A higher value for this parameter can improve the accuracy of the reconstruction, '
+                        'but may also reduce the number of points that can be triangulated.',
             value=3.0,
             range=(0.1, 10.0, 0.1),
             uid=[0],
@@ -251,7 +285,10 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.FloatParam(
             name='minAngleForLandmark',
             label='Min Angle For Landmark',
-            description='Minimum angle for landmark.',
+            description='This parameter sets the minimum angle required between two views to create a landmark. A landmark is '
+                        'a point that is manually marked in multiple images to help improve the reconstruction accuracy. '
+                        'A higher value for this parameter can reduce the number of landmarks created, but may also improve '
+                        'the overall accuracy of the reconstruction.',
             value=2.0,
             range=(0.1, 10.0, 0.1),
             uid=[0],
@@ -260,7 +297,11 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.FloatParam(
             name='maxReprojectionError',
             label='Max Reprojection Error',
-            description='Maximum reprojection error.',
+            description='This parameter sets the maximum allowable reprojection error for triangulated points. Reprojection '
+                        'error is a measure of the accuracy of the 3D reconstruction and is calculated as the distance '
+                        'between the projection of a 3D point onto an image and the corresponding 2D point in that image. '
+                        'A lower value for this parameter can improve the accuracy of the reconstruction, but may also '
+                        'reduce the number of points that can be triangulated.',
             value=4.0,
             range=(0.1, 10.0, 0.1),
             uid=[0],
@@ -269,7 +310,10 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.FloatParam(
             name='minAngleInitialPair',
             label='Min Angle Initial Pair',
-            description='Minimum angle for the initial pair.',
+            description='This parameter sets the minimum angle required between the two views used to create the initial pair. '
+                        'The initial pair is the first pair of images used to start the reconstruction process. A higher '
+                        'value for this parameter can improve the accuracy of the initial pair, but may also limit the number '
+                        'of images that can be used for reconstruction.',
             value=5.0,
             range=(0.1, 10.0, 0.1),
             uid=[0],
@@ -278,7 +322,9 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.FloatParam(
             name='maxAngleInitialPair',
             label='Max Angle Initial Pair',
-            description='Maximum angle for the initial pair.',
+            description='This parameter sets the maximum angle allowed between the two views used to create the initial pair. '
+                        'A higher value for this parameter can increase the number of images that can be used for '
+                        'reconstruction, but may also reduce the accuracy of the initial pair.',
             value=40.0,
             range=(0.1, 60.0, 0.1),
             uid=[0],
@@ -287,8 +333,8 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.BoolParam(
             name='useOnlyMatchesFromInputFolder',
             label='Use Only Matches From Input Folder',
-            description='Use only matches from the input matchesFolder parameter.\n'
-                        'Matches folders previously added to the SfMData file will be ignored.',
+            description='This parameter determines whether only matches from the input matchesFolder will be used for '
+                        'reconstruction, or if matches from previously added folders in the SfMData file will also be used.',
             value=False,
             uid=[],
             advanced=True,
@@ -296,7 +342,9 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.BoolParam(
             name='useRigConstraint',
             label='Use Rig Constraint',
-            description='Enable/Disable rig constraint.',
+            description='This parameter enables or disables the use of rig constraints during reconstruction. '
+                        'Rig constraints are used to enforce certain geometric relationships between the cameras in a '
+                        'multi-camera system.',
             value=True,
             uid=[0],
             advanced=True,
@@ -304,7 +352,9 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.IntParam(
             name='rigMinNbCamerasForCalibration',
             label='Min Nb Cameras For Rig Calibration',
-            description='Minimal number of cameras to start the calibration of the rig',
+            description='This parameter sets the minimal number of cameras required to start the calibration of the rig. '
+                        'The rig calibration process determines the relative positions and orientations of the cameras '
+                        'in a multi-camera system.',
             value=20,
             range=(1, 50, 1),
             uid=[0],

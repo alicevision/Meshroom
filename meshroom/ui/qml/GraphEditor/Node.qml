@@ -308,7 +308,8 @@ Item {
 
                             MaterialLabel {
                                 id: nodeImageOutput
-                                visible: node.hasImageOutput && ["SUCCESS"].includes(node.globalStatus) && node.chunks.count > 0
+                                visible: (node.hasImageOutput || node.has3DOutput)
+                                         && ["SUCCESS"].includes(node.globalStatus) && node.chunks.count > 0
                                 text: MaterialIcons.visibility
                                 padding: 2
                                 font.pointSize: 7
@@ -317,8 +318,14 @@ Item {
                                     id: nodeImageOutputTooltip
                                     parent: header
                                     visible: nodeImageOutputMA.containsMouse && nodeImageOutput.visible
-                                    text: "This node has at least one output that can be loaded in the 2D Viewer.\n" +
-                                          "Double-clicking on this node will load it in the 2D Viewer."
+                                    text: {
+                                        if (node.hasImageOutput && !node.has3DOutput)
+                                            return "Double-click on this node to load its outputs in the Image Viewer."
+                                        else if (node.has3DOutput && !node.hasImageOutput)
+                                            return "Double-click on this node to load its outputs in the 3D Viewer."
+                                        else  // Handle case where a node might have both 2D and 3D outputs
+                                            return "Double-click on this node to load its outputs in the Image or 3D Viewer."
+                                    }
                                     implicitWidth: 500
                                     delay: 300
 

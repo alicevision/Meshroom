@@ -1,9 +1,6 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
-import os.path
-
-currentDir = os.path.dirname(os.path.abspath(__file__))
 
 class ScenePreview(desc.CommandLineNode):
     commandLine = '{blenderCmdValue} -b --python {scriptValue} -- {allParams}'
@@ -29,7 +26,7 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             name='script',
             label='Script',
             description='Path to the internal script for rendering in Blender',
-            value=os.path.join(currentDir, 'scripts' ,'preview.py'),
+            value='${MESHROOM_INSTALL_DIR}/meshroom/nodes/blender/scripts/preview.py',
             uid=[],
             group='',
             advanced=True,

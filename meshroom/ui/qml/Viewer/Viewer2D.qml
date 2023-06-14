@@ -181,15 +181,7 @@ FocusScope {
         }
 
         // node must have at least one output attribute with the image semantic
-        var hasImageOutputAttr = false;
-        for (var i = 0; i < node.attributes.count; i++) {
-            var attr = node.attributes.at(i);
-            if (attr.isOutput && attr.desc.semantic === "image" && attr.enabled) {
-                hasImageOutputAttr = true;
-                break;
-            }
-        }
-        if (!hasImageOutputAttr) {
+        if (!node.hasImageOutput) {
             return false;
         }
 

@@ -1094,7 +1094,7 @@ class Graph(BaseObject):
         """
         nodesStack = []
         edgesScore = defaultdict(lambda: 0)
-        visitor = Visitor(reverse=False, dependenciesOnly=False)
+        visitor = Visitor(reverse=False, dependenciesOnly=True)
 
         def finishEdge(edge, graph):
             u, v = edge

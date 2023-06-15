@@ -23,56 +23,66 @@ If multiple color charts are submitted, only the first one will be taken in acco
 
     inputs = [
         desc.File(
-            name='inputData',
-            label='Color checker data',
-            description='Position and colorimetric data of the color checker',
-            value='',
+            name="inputData",
+            label="Color Checker Data",
+            description="Position and colorimetric data of the color checker.",
+            value="",
             uid=[0],
         ),
         desc.File(
-            name='input',
-            label='Input',
-            description='SfMData file input, image filenames or regex(es) on the image file path.\nsupported regex: \'#\' matches a single digit, \'@\' one or more digits, \'?\' one character and \'*\' zero or more.',
-            value='',
+            name="input",
+            label="Input",
+            description="Input SfMData file, image filenames or regex(es) on the image file path.\n"
+                        "Supported regex: '#' matches a single digit, '@' one or more digits, '?' one character and '*' zero or more.",
+            value="",
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='extension',
-            label='Output File Extension',
-            description='Output Image File Extension.',
-            value='exr',
-            values=['exr', ''],
+            name="extension",
+            label="Output File Extension",
+            description="Output image file extension.",
+            value="exr",
+            values=["exr", ""],
             exclusive=True,
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='storageDataType',
-            label='Storage Data Type for EXR output',
-            description='Storage image data type:\n'
-                        ' * float: Use full floating point (32 bits per channel)\n'
-                        ' * half: Use half float (16 bits per channel)\n'
-                        ' * halfFinite: Use half float, but clamp values to avoid non-finite values\n'
-                        ' * auto: Use half float if all values can fit, else use full float\n',
-            value='float',
-            values=['float', 'half', 'halfFinite', 'auto'],
+            name="storageDataType",
+            label="EXR Storage Data Type",
+            description="Storage data type for EXR output:\n"
+                        " - float: Use full floating point (32 bits per channel).\n"
+                        " - half: Use half float (16 bits per channel).\n"
+                        " - halfFinite: Use half float, but clamp values to avoid non-finite values.\n"
+                        " - auto: Use half float if all values can fit, else use full float.",
+            value="float",
+            values=["float", "half", "halfFinite", "auto"],
             exclusive=True,
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
+            exclusive=True,
+            uid=[],
         ),
     ]
 
     outputs = [
         desc.File(
-            name='outSfMData',
-            label='SfmData',
-            description='Output sfmData.',
-            value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in ['.abc', '.sfm']) else '',
+            name="outSfMData",
+            label="SfMData",
+            description="Output SfMData.",
+            value=lambda attr: (desc.Node.internalFolder + os.path.basename(attr.node.input.value)) if (os.path.splitext(attr.node.input.value)[1] in [".abc", ".sfm"]) else "",
             uid=[],
-            group='',  # do not export on the command line
+            group="",  # do not export on the command line
         ),
         desc.File(
-            name='output',
-            label='Folder',
-            description='Output Images Folder.',
+            name="output",
+            label="Folder",
+            description="Output images folder.",
             value=desc.Node.internalFolder,
             uid=[],
         ),

@@ -1579,7 +1579,7 @@ class CompatibilityNode(BaseNode):
     issueDetails = Property(str, issueDetails.fget, constant=True)
 
 
-def nodeFactory(nodeDict, name=None, template=False):
+def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
     """
     Create a node instance by deserializing the given node data.
     If the serialized data matches the corresponding node type description, a Node instance is created.
@@ -1588,6 +1588,8 @@ def nodeFactory(nodeDict, name=None, template=False):
     Args:
         nodeDict (dict): the serialization of the node
         name (str): (optional) the node's name
+        template (bool): (optional) true if the node is part of a template, false otherwise
+        uidConflict (bool): (optional) true if a UID conflict has been detected externally on that node
 
     Returns:
         BaseNode: the created node
@@ -1616,7 +1618,10 @@ def nodeFactory(nodeDict, name=None, template=False):
         # unknown node type
         compatibilityIssue = CompatibilityIssue.UnknownNodeType
 
-    if nodeDesc:
+    if uidConflict:
+        compatibilityIssue = CompatibilityIssue.UidConflict
+
+    if nodeDesc and not uidConflict:  # if uidConflict, there is no need to look for another compatibility issue
         # compare serialized node version with current node version
         currentNodeVersion = meshroom.core.nodeVersion(nodeDesc)
         # if both versions are available, check for incompatibility in major version

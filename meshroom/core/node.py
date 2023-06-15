@@ -1487,6 +1487,8 @@ class CompatibilityNode(BaseNode):
             )
         elif self.issue == CompatibilityIssue.DescriptionConflict:
             return "Node attributes do not match node description."
+        elif self.issue == CompatibilityIssue.UidConflict:
+            return "Node UID differs from the expected one."
         else:
             return "Unknown error."
 

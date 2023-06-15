@@ -1087,14 +1087,14 @@ class Graph(BaseObject):
 
     compatibilityNodes = Property(BaseObject, lambda self: self._compatibilityNodes, constant=True)
 
-    def dfsMaxEdgeLength(self, startNodes=None):
+    def dfsMaxEdgeLength(self, startNodes=None, dependenciesOnly=True):
         """
         :param startNodes: list of starting nodes. Use all leaves if empty.
         :return:
         """
         nodesStack = []
         edgesScore = defaultdict(lambda: 0)
-        visitor = Visitor(reverse=False, dependenciesOnly=False)
+        visitor = Visitor(reverse=False, dependenciesOnly=dependenciesOnly)
 
         def finishEdge(edge, graph):
             u, v = edge
@@ -1113,7 +1113,7 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=True)
         return edgesScore
 
-    def flowEdges(self, startNodes=None):
+    def flowEdges(self, startNodes=None, dependenciesOnly=True):
         """
         Return as few edges as possible, such that if there is a directed path from one vertex to another in the
         original graph, there is also such a path in the reduction.
@@ -1122,7 +1122,7 @@ class Graph(BaseObject):
         :return: the remaining edges after a transitive reduction of the graph.
         """
         flowEdges = []
-        edgesScore = self.dfsMaxEdgeLength(startNodes)
+        edgesScore = self.dfsMaxEdgeLength(startNodes, dependenciesOnly)
 
         for link, score in edgesScore.items():
             assert score != 0

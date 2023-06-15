@@ -76,7 +76,7 @@ class SimpleFarmSubmitter(BaseSubmitter):
         allRequirements.extend(self.config['GPU'].get(node.nodeDesc.gpu.name, []))
 
         task = simpleFarm.Task(
-            name=node.nodeType,
+            name=node.name,
             command='{exe} --node {nodeName} "{meshroomFile}" {parallelArgs} --extern'.format(
                 exe='meshroom_compute' if self.reqPackages else os.path.join(binDir, 'meshroom_compute'),
                 nodeName=node.name, meshroomFile=meshroomFile, parallelArgs=parallelArgs),

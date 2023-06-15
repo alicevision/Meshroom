@@ -176,7 +176,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
                         'This leads to more stable results while computations are not too expensive, as there is little data.\n'
                         'Past this number, the bundle adjustment will only be performed once for N added cameras.',
             value=30,
-            range=(1, 100, 1),
+            range=(0, 100, 1),
             uid=[0],
             advanced=True
         ),

@@ -186,7 +186,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             description='Maximum number of cameras that can be added before the bundle adjustment has to be performed again.\n'
                         'This prevents adding too much data at once without performing the bundle adjustment.',
             value=30,
-            range=(1, 100, 1),
+            range=(0, 100, 1),
             uid=[0],
             advanced=True
         ),

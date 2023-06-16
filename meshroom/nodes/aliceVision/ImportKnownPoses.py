@@ -13,28 +13,37 @@ class ImportKnownPoses(desc.AVCommandLineNode):
 
     inputs = [
         desc.File(
-            name='sfmData',
-            label='SfmData',
-            description='SfMData file.',
-            value='',
+            name="sfmData",
+            label="SfMData",
+            description="Input SfMData file.",
+            value="",
             uid=[0],
         ),
         desc.File(
-            name='knownPosesData',
-            label='KnownPosesData',
-            description='KnownPoses data in the json or xmp format',
-            value='',
+            name="knownPosesData",
+            label="Known Poses Data",
+            description="Known poses data in the JSON or XMP format.",
+            value="",
             uid=[0],
         ),
+        desc.ChoiceParam(
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
+            exclusive=True,
+            uid=[],
+        )
     ]
 
     outputs = [
         desc.File(
-            name='output',
-            label='Output',
-            description='Path to the output smfData file.',
+            name="output",
+            label="Output",
+            description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "/sfmData.abc",
             uid=[],
-            ),
+        ),
     ]
 

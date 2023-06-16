@@ -23,6 +23,14 @@ def createParser():
         help="sfmData with the animated camera.",
     )
     parser.add_argument(
+        "--rangeStart", type=int, required=False,
+        help="Range start for processing views. Set to -1 to process all views.",
+    )
+    parser.add_argument(
+        "--rangeSize", type=int, required=False,
+        help="Range size for processing views.",
+    )
+    parser.add_argument(
         "--useBackground", type=lambda x: (str(x).lower() == 'true'), required=True,
         help="Display the background image or not.",
     )
@@ -328,8 +336,21 @@ def main():
         color = palette[args.particleColor]
         setupPointCloudShading(sceneObj, color, args.particleSize)
 
+    print("Retrieve range")
+    rangeStart = args.rangeStart if args.rangeStart else -1
+    rangeSize = args.rangeSize if args.rangeSize else -1
+    if rangeStart != -1:
+        if rangeStart < 0 or rangeSize < 0 or rangeStart > len(views):
+            print("Invalid range")
+            return 0
+        if rangeStart + rangeSize > len(views):
+            rangeSize = len(views) - rangeStart
+    else:
+        rangeStart = 0
+        rangeSize = len(views)
+
     print("Render viewpoints")
-    for view in views:
+    for view in views[rangeStart:rangeStart+rangeSize]:
         intrinsic = getFromId(intrinsics, 'intrinsicId', view['intrinsicId'])
         if not intrinsic:
             continue

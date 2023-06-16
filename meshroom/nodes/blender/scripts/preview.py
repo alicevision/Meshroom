@@ -116,6 +116,11 @@ def initScene():
     bpy.data.objects.remove(bpy.data.objects['Light'])
     # Set output format
     bpy.context.scene.render.image_settings.file_format = 'JPEG'
+    # Setup rendering engine
+    bpy.context.scene.render.engine = 'CYCLES'
+    bpy.context.scene.cycles.samples = 1
+    bpy.context.scene.cycles.use_adaptative_sampling = False
+    bpy.context.scene.cycles.use_denoising = False
 
 
 def initCompositing():

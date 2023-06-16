@@ -36,76 +36,78 @@ Calibrate LDR to HDR response curve from samples.
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
-            description='SfMData file.',
-            value='',
+            name="input",
+            label="SfMData",
+            description="Input SfMData file.",
+            value="",
             uid=[0],
         ),
         desc.File(
-            name='samples',
-            label='Samples folder',
-            description='Samples folder',
+            name="samples",
+            label="Samples Folder",
+            description="Samples folder.",
             value=desc.Node.internalFolder,
             uid=[0],
         ),
         desc.IntParam(
-            name='userNbBrackets',
-            label='Number of Brackets',
-            description='Number of exposure brackets per HDR image (0 for automatic detection).',
+            name="userNbBrackets",
+            label="Number Of Brackets",
+            description="Number of exposure brackets per HDR image (0 for automatic detection).",
             value=0,
             range=(0, 15, 1),
             uid=[],
-            group='user',  # not used directly on the command line
+            group="user",  # not used directly on the command line
         ),
         desc.IntParam(
-            name='nbBrackets',
-            label='Automatic Nb Brackets',
-            description='Number of exposure brackets used per HDR image. It is detected automatically from input Viewpoints metadata if "userNbBrackets" is 0, else it is equal to "userNbBrackets".',
+            name="nbBrackets",
+            label="Automatic Nb Brackets",
+            description="Number of exposure brackets used per HDR image.\n"
+                        "It is detected automatically from input Viewpoints metadata if 'userNbBrackets' is 0,\n"
+                        "else it is equal to 'userNbBrackets'.",
             value=0,
             range=(0, 10, 1),
             uid=[0],
         ),
         desc.BoolParam(
-            name='byPass',
-            label='Bypass',
-            description="Bypass HDR creation and use the medium bracket as the source for the next steps",
+            name="byPass",
+            label="Bypass",
+            description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
             uid=[0],
             enabled= lambda node: node.nbBrackets.value != 1,
         ),
         desc.ChoiceParam(
-            name='calibrationMethod',
-            label='Calibration Method',
-            description="Method used for camera calibration \n"
-                        " * Linear: Disable the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear. \n"
-                        " * Debevec: This is the standard method for HDR calibration. \n"
-                        " * Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision. \n"
-                        " * Laguerre: Simple but robust method estimating the minimal number of parameters.",
-            values=['linear', 'debevec', 'grossberg', 'laguerre'],
-            value='debevec',
+            name="calibrationMethod",
+            label="Calibration Method",
+            description="Method used for camera calibration:\n"
+                        " - Linear: Disables the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear.\n"
+                        " - Debevec: This is the standard method for HDR calibration.\n"
+                        " - Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision.\n"
+                        " - Laguerre: Simple but robust method estimating the minimal number of parameters.",
+            values=["linear", "debevec", "grossberg", "laguerre"],
+            value="debevec",
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
-            name='calibrationWeight',
-            label='Calibration Weight',
-            description="Weight function used to calibrate camera response \n"
-                        " * default (automatically selected according to the calibrationMethod) \n"
-                        " * gaussian \n"
-                        " * triangle \n"
-                        " * plateau",
-            value='default',
-            values=['default', 'gaussian', 'triangle', 'plateau'],
+            name="calibrationWeight",
+            label="Calibration Weight",
+            description="Weight function used to calibrate camera response:\n"
+                        " - default (automatically selected according to the calibrationMethod)\n"
+                        " - gaussian\n"
+                        " - triangle\n"
+                        " - plateau",
+            value="default",
+            values=["default", "gaussian", "triangle", "plateau"],
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
-            name='channelQuantizationPower',
-            label='Channel Quantization Power',
-            description='Quantization level like 8 bits or 10 bits.',
+            name="channelQuantizationPower",
+            label="Channel Quantization Power",
+            description="Quantization level like 8 bits or 10 bits.",
             value=10,
             range=(8, 14, 1),
             uid=[0],
@@ -113,21 +115,22 @@ Calibrate LDR to HDR response curve from samples.
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
-            name='workingColorSpace',
-            label='Working Color Space',
-            description='Allows you to choose the color space in which the data are processed.',
-            value='sRGB',
-            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg'],
+            name="workingColorSpace",
+            label="Working Color Space",
+            description="Allows you to choose the color space in which the data are processed.",
+            value="sRGB",
+            values=["sRGB", "Linear", "ACES2065-1", "ACEScg"],
             exclusive=True,
             uid=[],
-            group='user',  # not used directly on the command line
+            group="user",  # not used directly on the command line
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
-            name='maxTotalPoints',
-            label='Max Number of Points',
-            description='Max number of points used from the sampling. This ensures that the number of pixels values extracted by the sampling\n'
-                        'can be managed by the calibration step (in term of computation time and memory usage).',
+            name="maxTotalPoints",
+            label="Max Number Of Points",
+            description="Maximum number of points used from the sampling.\n"
+                        "This ensures that the number of pixels values extracted by the sampling\n"
+                        "can be managed by the calibration step (in term of computation time and memory usage).",
             value=1000000,
             range=(8, 10000000, 1000),
             uid=[0],
@@ -135,11 +138,11 @@ Calibrate LDR to HDR response curve from samples.
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )
@@ -147,10 +150,10 @@ Calibrate LDR to HDR response curve from samples.
 
     outputs = [
        desc.File(
-            name='response',
-            label='Response File',
-            description='Path to the output response file',
-            value=desc.Node.internalFolder + 'response.csv',
+            name="response",
+            label="Response File",
+            description="Path to the output response file.",
+            value=desc.Node.internalFolder + "response.csv",
             uid=[],
         )
     ]

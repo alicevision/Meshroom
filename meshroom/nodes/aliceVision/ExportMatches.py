@@ -8,30 +8,32 @@ class ExportMatches(desc.AVCommandLineNode):
     size = desc.DynamicNodeSize('input')
 
     category = 'Export'
+    documentation = '''
+    '''
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
-            description='SfMData file.',
-            value='',
+            name="input",
+            label="Input",
+            description="SfMData file.",
+            value="",
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='describerTypes',
-            label='Describer Types',
-            description='Describer types used to describe an image.',
-            value=['dspsift'],
-            values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv'],
+            name="describerTypes",
+            label="Describer Types",
+            description="Describer types used to describe an image.",
+            value=["dspsift"],
+            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv"],
             exclusive=False,
             uid=[0],
-            joinChar=',',
+            joinChar=",",
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
                 name="featuresFolder",
                 label="Features Folder",
-                description="",
+                description="Folder containing some extracted features and descriptors.",
                 value="",
                 uid=[0],
             ),
@@ -43,7 +45,7 @@ class ExportMatches(desc.AVCommandLineNode):
             elementDesc=desc.File(
                 name="matchesFolder",
                 label="Matches Folder",
-                description="",
+                description="Folder containing some computed matches.",
                 value="",
                 uid=[0],
             ),
@@ -52,21 +54,21 @@ class ExportMatches(desc.AVCommandLineNode):
             description="Folder(s) in which computed matches are stored."
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
         desc.File(
-            name='output',
-            label='Folder',
-            description='Output path for the features and descriptors files (*.feat, *.desc).',
+            name="output",
+            label="Folder",
+            description="Output path for the features and descriptors files (*.feat, *.desc).",
             value=desc.Node.internalFolder,
             uid=[],
         ),

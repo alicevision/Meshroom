@@ -12,97 +12,97 @@ Decimate triangles based on image masks.
 
     inputs = [
         desc.File(
-            name='input',
-            label='Dense SfMData',
-            description='SfMData file.',
-            value='',
+            name="input",
+            label="Dense SfMData",
+            description="Dense SfMData file.",
+            value="",
             uid=[0],
         ),
         desc.File(
-            name='inputMesh',
-            label='Input Mesh',
-            description='''Input Mesh''',
-            value='',
+            name="inputMesh",
+            label="Input Mesh",
+            description="Input mesh.",
+            value="",
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='outputMeshFileType',
-            label='Output File Type',
-            description='File Type',
-            value='obj',
-            values=('obj', 'gltf', 'fbx', 'stl'),
+            name="outputMeshFileType",
+            label="Output Mesh Type",
+            description="File type of the output mesh.",
+            value="obj",
+            values=("obj", "gltf", "fbx", "stl"),
             exclusive=True,
             uid=[0],
-            group='',
+            group="",
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
                 name="masksFolder",
                 label="Masks Folder",
-                description="",
+                description="Folder containing some masks.",
                 value="",
                 uid=[0],
             ),
             name="masksFolders",
             label="Masks Folders",
-            description='Use masks from specific folder(s). Filename should be the same or the image uid.',
+            description="Use masks from specific folder(s). Filename should be the same or the image UID.",
         ),
         desc.IntParam(
-            name='threshold',
-            label='Threshold',
-            description='The minimum number of visibility to keep a vertex.',
+            name="threshold",
+            label="Threshold",
+            description="The minimum number of visibilities to keep a vertex.",
             value=1,
             range=(1, 100, 1),
             uid=[0]
         ),
         desc.BoolParam(
-            name='smoothBoundary',
-            label='Smooth Boundary',
-            description='Modify the triangles at the boundary to fit the masks.',
+            name="smoothBoundary",
+            label="Smooth Boundary",
+            description="Modify the triangles at the boundary to fit the masks.",
             value=False,
             uid=[0]
         ),
         desc.BoolParam(
-            name='invert',
-            label='Invert',
-            description='''If ticked, the selected area is ignored.
-            If not, only the selected area is considered.''',
+            name="invert",
+            label="Invert",
+            description="If ticked, the selected area is ignored.\n"
+                        "If not, only the selected area is considered.",
             value=False,
             uid=[0]
         ),
         desc.BoolParam(
-            name='undistortMasks',
-            label='Undistort Masks',
-            description='''Undistort the masks with the same parameters as the matching image.
-            Tick it if the masks are drawn on the original images.''',
+            name="undistortMasks",
+            label="Undistort Masks",
+            description="Undistort the masks with the same parameters as the matching image.\n"
+                        "Select it if the masks are drawn on the original images.",
             value=False,
             uid=[0]
         ),
         desc.BoolParam(
-            name='usePointsVisibilities',
-            label='Use points visibilities',
-            description='''Use the points visibilities from the meshing to filter triangles.
-            Example: when they are occluded, back-face, etc.''',
+            name="usePointsVisibilities",
+            label="Use Points visibilities",
+            description="Use the points visibilities from the meshing to filter triangles.\n"
+                        "Example: when they are occluded, back-face, etc.",
             value=False,
             uid=[0]
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        ),
+        )
     ]
 
     outputs = [
         desc.File(
-            name='outputMesh',
-            label='Mesh',
-            description='''Output mesh.''',
-            value=desc.Node.internalFolder + 'mesh.{outputMeshFileTypeValue}',
+            name="outputMesh",
+            label="Mesh",
+            description="Output mesh file.",
+            value=desc.Node.internalFolder + "mesh.{outputMeshFileTypeValue}",
             uid=[],
         ),
     ]

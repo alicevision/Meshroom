@@ -53,55 +53,57 @@ Sample pixels from Low range images for HDR creation.
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
-            description='SfMData file.',
-            value='',
+            name="input",
+            label="SfMData",
+            description="Input SfMData file.",
+            value="",
             uid=[0],
         ),
         desc.IntParam(
-            name='userNbBrackets',
-            label='Number of Brackets',
-            description='Number of exposure brackets per HDR image (0 for automatic detection).',
+            name="userNbBrackets",
+            label="Number Of Brackets",
+            description="Number of exposure brackets per HDR image (0 for automatic detection).",
             value=0,
             range=(0, 15, 1),
             uid=[],
-            group='user',  # not used directly on the command line
+            group="user",  # not used directly on the command line
         ),
         desc.IntParam(
-            name='nbBrackets',
-            label='Automatic Nb Brackets',
-            description='Number of exposure brackets used per HDR image. It is detected automatically from input Viewpoints metadata if "userNbBrackets" is 0, else it is equal to "userNbBrackets".',
+            name="nbBrackets",
+            label="Automatic Nb Brackets",
+            description="Number of exposure brackets used per HDR image.\n"
+                        "It is detected automatically from input Viewpoints metadata if 'userNbBrackets'\n"
+                        "is 0, else it is equal to 'userNbBrackets'.",
             value=0,
             range=(0, 10, 1),
             uid=[0],
         ),
         desc.BoolParam(
-            name='byPass',
-            label='Bypass',
-            description="Bypass HDR creation and use the medium bracket as the source for the next steps",
+            name="byPass",
+            label="Bypass",
+            description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
             uid=[0],
             enabled= lambda node: node.nbBrackets.value != 1,
         ),
         desc.ChoiceParam(
-            name='calibrationMethod',
-            label='Calibration Method',
-            description="Method used for camera calibration \n"
-                        " * Linear: Disable the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear. \n"
-                        " * Debevec: This is the standard method for HDR calibration. \n"
-                        " * Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision. \n"
-                        " * Laguerre: Simple but robust method estimating the minimal number of parameters.",
-            values=['linear', 'debevec', 'grossberg', 'laguerre'],
-            value='debevec',
+            name="calibrationMethod",
+            label="Calibration Method",
+            description="Method used for camera calibration:\n"
+                        " - Linear: Disable the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear.\n"
+                        " - Debevec: This is the standard method for HDR calibration.\n"
+                        " - Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision.\n"
+                        " - Laguerre: Simple but robust method estimating the minimal number of parameters.",
+            values=["linear", "debevec", "grossberg", "laguerre"],
+            value="debevec",
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
-            name='channelQuantizationPower',
-            label='Channel Quantization Power',
-            description='Quantization level like 8 bits or 10 bits.',
+            name="channelQuantizationPower",
+            label="Channel Quantization Power",
+            description="Quantization level like 8 bits or 10 bits.",
             value=10,
             range=(8, 14, 1),
             uid=[0],
@@ -109,19 +111,19 @@ Sample pixels from Low range images for HDR creation.
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
-            name='workingColorSpace',
-            label='Working Color Space',
-            description='Allows you to choose the color space in which the data are processed.',
-            value='sRGB',
-            values=['sRGB', 'Linear', 'ACES2065-1', 'ACEScg', 'no_conversion'],
+            name="workingColorSpace",
+            label="Working Color Space",
+            description="Allows you to choose the color space in which the data are processed.",
+            value="sRGB",
+            values=["sRGB", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
-            name='blockSize',
-            label='Block Size',
-            description='Size of the image tile to extract a sample.',
+            name="blockSize",
+            label="Block Size",
+            description="Size of the image tile to extract a sample.",
             value=256,
             range=(8, 1024, 1),
             uid=[0],
@@ -129,9 +131,9 @@ Sample pixels from Low range images for HDR creation.
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
-            name='radius',
-            label='Patch Radius',
-            description='Radius of the patch used to analyze the sample statistics.',
+            name="radius",
+            label="Patch Radius",
+            description="Radius of the patch used to analyze the sample statistics.",
             value=5,
             range=(0, 10, 1),
             uid=[0],
@@ -139,9 +141,9 @@ Sample pixels from Low range images for HDR creation.
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
-            name='maxCountSample',
-            label='Max Number of Samples',
-            description='Max number of samples per image group.',
+            name="maxCountSample",
+            label="Max Number Of Samples",
+            description="Maximum number of samples per image group.",
             value=200,
             range=(10, 1000, 10),
             uid=[0],
@@ -149,19 +151,19 @@ Sample pixels from Low range images for HDR creation.
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.BoolParam(
-            name='debug',
-            label='Export Debug Files',
+            name="debug",
+            label="Export Debug Files",
             description="Export debug files to analyze the sampling strategy.",
             value=False,
             uid=[],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )
@@ -169,9 +171,9 @@ Sample pixels from Low range images for HDR creation.
 
     outputs = [
         desc.File(
-            name='output',
-            label='Folder',
-            description='Output path for the samples.',
+            name="output",
+            label="Folder",
+            description="Output path for the samples.",
             value=desc.Node.internalFolder,
             uid=[],
         ),

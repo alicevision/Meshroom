@@ -16,19 +16,28 @@ MeshroomMaya contains a user interface to browse all cameras.
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input SfMData',
-            description='',
-            value='',
+            name="input",
+            label="Input SfMData",
+            description="Input SfMData file.",
+            value="",
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
+            exclusive=True,
+            uid=[],
         ),
     ]
     
     outputs = [
         desc.File(
-            name='output',
-            label='Folder',
-            description='Folder for MeshroomMaya outputs: undistorted images and thumbnails.',
+            name="output",
+            label="Folder",
+            description="Folder for MeshroomMaya outputs: undistorted images and thumbnails.",
             value=desc.Node.internalFolder,
             uid=[],
         ),

@@ -14,36 +14,45 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input SfMData',
-            description='SfMData file.',
-            value='',
+            name="input",
+            label="Input SfMData",
+            description="SfMData file.",
+            value="",
             uid=[0],
         ),
         desc.File(
-            name='checkerboards',
-            label='Checkerboards Folder',
-            description='Folder containing checkerboard JSON files.',
-            value='',
+            name="checkerboards",
+            label="Checkerboards Folder",
+            description="Folder containing checkerboard JSON files.",
+            value="",
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='cameraModel',
-            label='Camera Model',
-            description='Camera model used to estimate distortion.',
-            value='3deanamorphic4',
-            values=['3deanamorphic4'],
+            name="cameraModel",
+            label="Camera Model",
+            description="Camera model used to estimate distortion.",
+            value="3deanamorphic4",
+            values=["3deanamorphic4"],
             exclusive=True,
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
+            exclusive=True,
+            uid=[],
         ),
     ]
 
     outputs = [
         desc.File(
-            name='output',
-            label='SfMData File',
-            description='Path to the output SfMData file.',
-            value=desc.Node.internalFolder + 'sfmData.sfm',
+            name="output",
+            label="SfMData File",
+            description="Path to the output SfMData file.",
+            value=desc.Node.internalFolder + "sfmData.sfm",
             uid=[],
         )
     ]

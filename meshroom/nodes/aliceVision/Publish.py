@@ -39,15 +39,15 @@ This node allows to copy files into a specific folder.
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='''verbosity level (critical, error, warning, info, debug).''',
-            value='info',
-            values=['critical', 'error', 'warning', 'info', 'debug'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-            ),
-        ]
+        ),
+    ]
 
     def resolvedPaths(self, inputFiles, outDir):
         paths = {}

@@ -102,14 +102,14 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
         desc.ListAttribute(
             elementDesc=desc.FloatParam(
                 name="mmFocal",
-                label="mmFocal",
+                label="Focal",
                 description="Focal in mm (will be used if not 0).",
                 value=0.0,
                 range=(0.0, 500.0, 1.0),
                 uid=[0],
             ),
             name="mmFocals",
-            label="mmFocals",
+            label="Focals",
             description="Focals in mm (will be used if not 0)."
         ),
         desc.File(
@@ -128,8 +128,8 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             group=None,  # skip group from command line
             groupDesc=[
                 desc.BoolParam(
-                    name='useSmartSelection',
-                    label='Use Smart Keyframe Selection',
+                    name="useSmartSelection",
+                    label="Use Smart Keyframe Selection",
                     description="Use the smart keyframe selection.",
                     value=True,
                     uid=[0]
@@ -137,7 +137,8 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                 desc.GroupAttribute(
                     name="regularSelection",
                     label="Regular Keyframe Selection",
-                    description="Parameters for the regular keyframe selection.\nKeyframes are selected regularly over the sequence with respect to the set parameters.",
+                    description="Parameters for the regular keyframe selection.\n"
+                                "Keyframes are selected regularly over the sequence with respect to the set parameters.",
                     group=None,  # skip group from command line
                     enabled=lambda node: node.selectionMethod.useSmartSelection.value is False,
                     groupDesc=[
@@ -175,14 +176,15 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                 desc.GroupAttribute(
                     name="smartSelection",
                     label="Smart Keyframe Selection",
-                    description="Parameters for the smart keyframe selection.\nKeyframes are selected based on their sharpness and optical flow scores.",
+                    description="Parameters for the smart keyframe selection.\n"
+                                "Keyframes are selected based on their sharpness and optical flow scores.",
                     group=None,  # skip group from command line
                     enabled=lambda node: node.selectionMethod.useSmartSelection.value,
                     groupDesc=[
                         desc.FloatParam(
                             name="pxDisplacement",
                             label="Pixel Displacement",
-                            description="The percentage of pixels in the frame that need to have moved since the last keyframe to be considered for the selection",
+                            description="The percentage of pixels in the frame that need to have moved since the last keyframe to be considered for the selection.",
                             value=10.0,
                             range=(0.0, 100.0, 1.0),
                             uid=[0],
@@ -277,10 +279,10 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             name="storageDataType",
             label="EXR Storage Data Type",
             description="Storage image data type for keyframes written to EXR files:\n"
-                        " * float: Use full floating point (32 bits per channel)\n"
-                        " * half: Use half float (16 bits per channel)\n"
-                        " * halfFinite: Use half float, but clamp values to avoid non-finite values\n"
-                        " * auto: Use half float if all values can fit, else use full float\n",
+                        " - float: Use full floating point (32 bits per channel).\n"
+                        " - half: Use half float (16 bits per channel).\n"
+                        " - halfFinite: Use half float, but clamp values to avoid non-finite values.\n"
+                        " - auto: Use half float if all values can fit, else use full float.",
             value="float",
             values=["float", "half", "halfFinite", "auto"],
             exclusive=True,

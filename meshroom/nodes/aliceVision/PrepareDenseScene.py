@@ -16,10 +16,10 @@ This node export undistorted images so the depth map and texturing can be comput
 
     inputs = [
         desc.File(
-            name='input',
-            label='SfMData',
-            description='''SfMData file.''',
-            value='',
+            name="input",
+            label="SfMData",
+            description="Input SfMData file.",
+            value="",
             uid=[0],
         ),
         desc.ListAttribute(
@@ -32,7 +32,7 @@ This node export undistorted images so the depth map and texturing can be comput
             ),
             name="imagesFolders",
             label="Images Folders",
-            description='Use images from specific folder(s). Filename should be the same or the image uid.',
+            description="Use images from specific folder(s). Filename should be the same or the image UID.",
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -44,48 +44,48 @@ This node export undistorted images so the depth map and texturing can be comput
             ),
             name="masksFolders",
             label="Masks Folders",
-            description='Use masks from specific folder(s). Filename should be the same or the image uid.',
+            description="Use masks from specific folder(s). Filename should be the same or the image UID.",
         ),
         desc.ChoiceParam(
-            name='outputFileType',
-            label='Output File Type',
-            description='Output file type for the undistorted images.',
-            value='exr',
-            values=['jpg', 'png', 'tif', 'exr'],
+            name="outputFileType",
+            label="Output File Type",
+            description="Output file type for the undistorted images.",
+            value="exr",
+            values=["jpg", "png", "tif", "exr"],
             exclusive=True,
             uid=[0],
             advanced=True
         ),
         desc.BoolParam(
-            name='saveMetadata',
-            label='Save Metadata',
-            description='Save projections and intrinsics information in images metadata (only for .exr images).',
+            name="saveMetadata",
+            label="Save Metadata",
+            description="Save projections and intrinsics information in images metadata (only for .exr images).",
             value=True,
             uid=[0],
             advanced=True
         ),
         desc.BoolParam(
-            name='saveMatricesTxtFiles',
-            label='Save Matrices Text Files',
-            description='Save projections and intrinsics information in text files.',
+            name="saveMatricesTxtFiles",
+            label="Save Matrices Text Files",
+            description="Save projections and intrinsics information in text files.",
             value=False,
             uid=[0],
             advanced=True
         ),
         desc.BoolParam(
-            name='evCorrection',
-            label='Correct images exposure',
-            description='Apply a correction on images Exposure Value',
+            name="evCorrection",
+            label="Correct Images Exposure",
+            description="Apply a correction on images' exposure value.",
             value=False,
             uid=[0],
             advanced=True
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),
@@ -93,20 +93,20 @@ This node export undistorted images so the depth map and texturing can be comput
 
     outputs = [
         desc.File(
-            name='output',
-            label='Images Folder',
-            description='''Output folder.''',
+            name="output",
+            label="Images Folder",
+            description="Output folder.",
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
-            name='undistorted',
-            label='Undistorted Images',
-            description='List of undistorted images.',
-            semantic='image',
-            value=desc.Node.internalFolder + '<VIEW_ID>.{outputFileTypeValue}',
+            name="undistorted",
+            label="Undistorted Images",
+            description="List of undistorted images.",
+            semantic="image",
+            value=desc.Node.internalFolder + "<VIEW_ID>.{outputFileTypeValue}",
             uid=[],
-            group='',
+            group="",
             advanced=True
-            ),
+        ),
     ]

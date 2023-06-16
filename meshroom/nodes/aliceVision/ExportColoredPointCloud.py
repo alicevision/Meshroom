@@ -7,21 +7,23 @@ class ExportColoredPointCloud(desc.AVCommandLineNode):
     commandLine = 'aliceVision_exportColoredPointCloud {allParams}'
 
     category = 'Export'
+    documentation = '''
+    '''
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input SfMData',
-            description='SfMData file containing a complete SfM.',
-            value='',
+            name="input",
+            label="Input SfMData",
+            description="SfMData file containing a complete SfM.",
+            value="",
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='Verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),
@@ -29,9 +31,9 @@ class ExportColoredPointCloud(desc.AVCommandLineNode):
 
     outputs = [
         desc.File(
-            name='output',
-            label='Point Cloud Filepath',
-            description='Output point cloud with visibilities as SfMData file.',
+            name="output",
+            label="Point Cloud Filepath",
+            description="Output point cloud with visibilities as SfMData file.",
             value="{cache}/{nodeType}/{uid0}/pointCloud.abc",
             uid=[],
         ),

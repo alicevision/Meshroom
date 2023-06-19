@@ -26,6 +26,7 @@ FocusScope {
     property var activeNodeFisheye: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
     property bool cropFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
     property bool enable8bitViewer: enable8bitViewerAction.checked
+    property bool enableSequencePlayer: enableSequencePlayerAction.checked
 
     QtObject {
         id: m
@@ -435,8 +436,8 @@ FocusScope {
                                 'canBeHovered': false,
                                 'idView': Qt.binding(function() { return (_reconstruction ? _reconstruction.selectedViewId : -1); }),
                                 'cropFisheye': false,
-                                'sequence': Qt.binding(function() { return ((_reconstruction && _reconstruction.viewpoints.count > 0) ? _reconstruction.allImagePaths() : []) }),
-                                'useSequence': Qt.binding(function() { return !useExternal && _reconstruction && (!displayedNode || outputAttribute.name == "gallery"); })
+                                'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? _reconstruction.allImagePaths() : []) }),
+                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction && (!displayedNode || outputAttribute.name == "gallery"); })
                                 })
                           } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -1304,6 +1305,8 @@ FocusScope {
                     anchors.margins: 0
                     Layout.fillWidth: true
                     viewer: floatImageViewerLoader.status === Loader.Ready ? floatImageViewerLoader.item : null
+                    visible: root.enableSequencePlayer
+                    enabled: root.enableSequencePlayer
                 }
             }
         }

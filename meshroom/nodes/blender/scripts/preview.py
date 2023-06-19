@@ -216,37 +216,20 @@ def setupWireframeShading(mesh, color):
 
 
 def setupLineArtShading(obj, mesh, color):
-    '''Setup materials and Solidify modifier for line art shading.'''
-    # Transparent filling material
-    matFill = bpy.data.materials.new('Fill')
-    matFill.use_backface_culling = True
-    matFill.use_nodes = True
-    matFill.blend_method = 'BLEND'
-    matFill.show_transparent_back = False
-    matFill.node_tree.links.clear()
-    nodeTransparent = matFill.node_tree.nodes.new(type='ShaderNodeBsdfTransparent')
-    nodeOutputFill = matFill.node_tree.nodes['Material Output']
-    matFill.node_tree.links.new(nodeTransparent.outputs['BSDF'], nodeOutputFill.inputs['Surface'])
-    # Colored edge material
-    matEdge = bpy.data.materials.new('Edge')
-    matEdge.use_backface_culling = True
-    matEdge.use_nodes = True
-    matEdge.blend_method = 'BLEND'
-    matEdge.node_tree.links.clear()
-    nodeEmission = matEdge.node_tree.nodes.new(type='ShaderNodeEmission')
-    nodeEmission.inputs['Color'].default_value = color
-    nodeOutputEdge = matEdge.node_tree.nodes['Material Output']
-    matEdge.node_tree.links.new(nodeEmission.outputs['Emission'], nodeOutputEdge.inputs['Surface'])
-    # Apply materials to mesh
+    '''Setup line art shading using Freestyle.'''
+    # Freestyle
+    bpy.context.scene.render.use_freestyle = True
+    bpy.data.linestyles["LineStyle"].color = (color[0], color[1], color[2])
+    # Holdout material
+    material = bpy.data.materials.new('Holdout')
+    material.use_nodes = True
+    material.node_tree.links.clear()
+    nodeHoldout = material.node_tree.nodes.new(type='ShaderNodeHoldout')
+    nodeOutput = material.node_tree.nodes['Material Output']
+    material.node_tree.links.new(nodeHoldout.outputs['Holdout'], nodeOutput.inputs['Surface'])
+    # Apply material to mesh
     mesh.materials.clear()
-    mesh.materials.append(matFill)
-    mesh.materials.append(matEdge)
-    # Solidify modifier
-    solidify = obj.modifiers.new('Solidify', type='SOLIDIFY')
-    solidify.thickness = -0.01
-    solidify.use_rim = False
-    solidify.use_flip_normals = True
-    solidify.material_offset = 1
+    mesh.materials.append(material)
 
 
 def setupPointCloudShading(obj, color, size):

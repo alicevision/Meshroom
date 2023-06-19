@@ -3,6 +3,7 @@ from enum import Enum
 import logging
 import os
 import sys
+import platform
 
 class VersionStatus(Enum):
     release = 1
@@ -60,86 +61,122 @@ def setupEnvironment(backend=Backend.STANDALONE):
 
     Use 'MESHROOM_INSTALL_DIR' to simulate standalone configuration with a path to a Meshroom installation folder.
 
+    Directories or files can be overwritten by using the corresponding environment variable.
+
+    Example: (unix) $ export ALICEVISION_LIB=aliceVision/lib:aliceVision/lib64
+
     # Meshroom standalone structure
 
-    - Meshroom/
-       - aliceVision/
-           - bin/    # runtime bundled binaries (windows: exe + libs, unix: executables)
-           - lib/    # runtime bundled libraries (unix: libs)
+    - Meshroom/         # <MESHROOM_INSTALL_DIR>
+       - aliceVision/   # <ALICEVISION_ROOT>
+           - bin/    # <ALICEVISION_BIN_PATH> runtime bundled binaries (windows: exe + libs, unix: executables)
+           - lib/    # <ALICEVISION_LIB> runtime bundled libraries (unix: libs)
            - share/  # resource files
                - aliceVision/
                    - COPYING.md         # AliceVision COPYING file
-                   - cameraSensors.db   # sensor database
-                   - vlfeat_K80L3.tree  # voctree file
+                   - cameraSensors.db   # <ALICEVISION_SENSOR_DB> sensor database
+                   - vlfeat_K80L3.tree  # <ALICEVISION_VOCTREE> voctree file
+                   - config.ocio        # <ALICEVISION_OCIO> AliceVision color configuration file
        - lib/      # Python lib folder
-       - qtPlugins/
+       - qtPlugins/  # <QT_PLUGIN_PATH>
+            - qml/   # <QML2_IMPORT_PATH>
        Meshroom    # main executable
        COPYING.md  # Meshroom COPYING file
+       CHANGES.md   # Meshroom changelog file
     """
 
     init(backend)
 
-    def addToEnvPath(var, val, index=-1):
-        """
-        Add paths to the given environment variable.
+    class _env_var:
+        """Container class for environment variable information."""
+        def __init__(self, name, default, isFile=False, appendTo=None):
+            """
+            Args:
+                name (str): the name of the variable
+                default (callable -> str): default value
+                isFile (bool): specifies if it's a file or a directory
+                appendTo (str): environment variable to be appended to.
+            """
+            self.name = name
+            self.default = default
+            self.isFile = isFile
+            self.appendTo = appendTo
+            self.__value = None
 
-        Args:
-            var (str): the name of the variable to add paths to
-            val (str or list of str): the path(s) to add
-            index (int): insertion index
-        """
-        if not val:
-            return
+        @property
+        def value(self):
+            return self.__value
 
-        paths = os.environ.get(var, "").split(os.pathsep)
+        def resolveValue(self):
+            """Resolve environment value using current environment and default.
+            
+            Also check if the resolved path exists.
+            """
+            check = os.path.isfile if self.isFile else os.path.isdir
+            self.__value = os.environ.get(self.name, None)
+            if self.__value is None:
+                logging.debug("{} is not defined. Trying to retrieve default path.".format(self.name))
+                self.__value = self.default()
+                usingDefault = True
+            else:
+                usingDefault = False
+            if not all(check(x) for x in self.__value.split(os.pathsep)):
+                if usingDefault:
+                    logging.warning("Couldn't find {} at default path(s): {}".format(self.name, self.__value))
+                    # val = None
+                else:
+                    # TODO error or warning?
+                    logging.error("{} is set but the path(s) cannot be found: {}".format(self.name, self.__value))
+            logging.debug("{} is set to: {}".format(self.name, self.__value))
+        
+        def updateEnv(self):
+            """Update environment with this variable after resolving its value."""
+            self.resolveValue()
+            if self.__value is None:
+                return
+            os.environ[self.name] = self.__value
+            if self.appendTo is not None:
+                os.environ[self.appendTo] = os.pathsep.join([self.__value, os.environ[self.appendTo]])
 
-        if not isinstance(val, (list, tuple)):
-            val = [val]
+    env = {}
+    rootDir = None
+    # n.b. order is important
+    env_vars = [_env_var("MESHROOM_INSTALL_DIR", lambda: rootDir, False),
+        _env_var("ALICEVISION_ROOT",
+            lambda: os.path.join(env["MESHROOM_INSTALL_DIR"].value, "aliceVision"),
+            False),
+        _env_var("ALICEVISION_BIN_PATH",
+            lambda: os.path.join(env["ALICEVISION_ROOT"].value, "bin"),
+            False,
+            "PATH"),
+        _env_var("ALICEVISION_SENSOR_DB",
+            lambda: os.path.join(env["ALICEVISION_ROOT"].value, "share", "aliceVision", "cameraSensors.db"),
+            True),
+        _env_var("ALICEVISION_VOCTREE",
+            lambda: os.path.join(env["ALICEVISION_ROOT"].value, "share", "aliceVision", "vlfeat_K80L3.tree"),
+            True),
+        _env_var("ALICEVISION_OCIO",
+            lambda: os.path.join(env["ALICEVISION_ROOT"].value, "share", "aliceVision", "config.ocio"),
+            True),
+        _env_var("QT_PLUGIN_PATH",
+            lambda: os.path.join(env["MESHROOM_INSTALL_DIR"].value, "qtPlugins"),
+            False),
+        _env_var("QML2_IMPORT_PATH",
+            lambda: os.path.join(env["MESHROOM_INSTALL_DIR"], "qtPlugins", "qml"),
+            False)]
+    if not isFrozen and platform.system() in ("Linux", "Darwin"):
+        env_vars += [_env_var("ALICEVISION_LIB",
+            lambda: os.pathsep.join([
+                os.path.join(env["ALICEVISION_ROOT"].value, "lib"),
+                os.path.join(env["ALICEVISION_ROOT"].value, "lib64")]),
+            False,
+            "LD_LIBRARY_PATH")]
 
-        if index == -1:
-            paths.extend(val)
-        elif index == 0:
-            paths = val + paths
-        else:
-            raise ValueError("addToEnvPath: index must be -1 or 0.")
-        os.environ[var] = os.pathsep.join(paths)
-
-    # setup root directory (override possible by setting "MESHROOM_INSTALL_DIR" environment variable)
-    rootDir = os.path.dirname(sys.executable) if isFrozen else os.environ.get("MESHROOM_INSTALL_DIR", None)
-    logging.debug(f"isFrozen={isFrozen}")
-    logging.debug(f"sys.executable={sys.executable}")
-    logging.debug(f"rootDir={rootDir}")
-
-    if rootDir:
-        os.environ["MESHROOM_INSTALL_DIR"] = rootDir
-
-        aliceVisionDir = os.path.join(rootDir, "aliceVision")
-        # default directories
-        aliceVisionBinDir = os.path.join(aliceVisionDir, "bin")
-        aliceVisionShareDir = os.path.join(aliceVisionDir, "share", "aliceVision")
-        qtPluginsDir = os.path.join(rootDir, "qtPlugins")
-        sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
-        voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.SIFT.tree")
-
-        env = {
-            'PATH': aliceVisionBinDir,
-            'QT_PLUGIN_PATH': [qtPluginsDir],
-            'QML2_IMPORT_PATH': [os.path.join(qtPluginsDir, "qml")]
-        }
-
-        for key, value in env.items():
-            logging.debug(f"Add to {key}: {value}")
-            addToEnvPath(key, value, 0)
-
-        variables = {
-            "ALICEVISION_ROOT": aliceVisionDir,
-            "ALICEVISION_SENSOR_DB": sensorDBPath,
-            "ALICEVISION_VOCTREE": voctreePath
-        }
-
-        for key, value in variables.items():
-            if key not in os.environ and os.path.exists(value):
-                logging.debug(f"Set {key}: {value}")
-                os.environ[key] = value
+    if isFrozen:
+        rootDir = os.path.dirname(sys.executable)
     else:
-        addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))
+        rootDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env = { var.name: var for var in env_vars}
+
+    for key in env:
+        env[key].updateEnv()

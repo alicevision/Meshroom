@@ -8,5 +8,6 @@ import Qt.labs.settings 1.0
 Settings {
     category: 'GraphEditor'
     property bool showAdvancedAttributes: false
+    property bool showOnlyModifiedAttributes: false
     property bool lockOnCompute: true
 }

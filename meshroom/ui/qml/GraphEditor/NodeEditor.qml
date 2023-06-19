@@ -110,6 +110,20 @@ Panel {
                     onClicked: GraphEditorSettings.showAdvancedAttributes = !GraphEditorSettings.showAdvancedAttributes
                 }
                 MenuItem {
+                    id: modifiedToggle
+                    text: "Only Modified Attributes"
+                    MaterialLabel {
+                        anchors.right: parent.right; anchors.rightMargin: parent.padding;
+                        text: MaterialIcons.edit
+                        anchors.verticalCenter: parent.verticalCenter
+                        font.pointSize: 8
+                    }
+                    checkable: true
+                    checked: GraphEditorSettings.showOnlyModifiedAttributes
+                    onClicked: GraphEditorSettings.showOnlyModifiedAttributes = !GraphEditorSettings.showOnlyModifiedAttributes 
+                    enabled: tabBar.currentIndex === 0
+                }
+                MenuItem {
                     text: "Open Cache Folder"
                     enabled: root.node !== null
                     onClicked: Qt.openUrlExternally(Filepath.stringToUrl(root.node.internalFolder))
@@ -186,6 +200,7 @@ Panel {
 
                         AttributeEditor {
                             id: inOutAttr
+                            objectsHideable: true
                             Layout.fillHeight: true
                             Layout.fillWidth: true
                             model: root.node.attributes
@@ -251,6 +266,7 @@ Panel {
 
                         AttributeEditor {
                             id: nodeInternalAttr
+                            objectsHideable: false
                             Layout.fillHeight: true
                             Layout.fillWidth: true
                             model: root.node.internalAttributes

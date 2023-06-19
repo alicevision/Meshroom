@@ -199,15 +199,15 @@ def setupWireframeShading(mesh, color):
     # Emission node
     nodeEmission = material.node_tree.nodes.new(type='ShaderNodeEmission')
     nodeEmission.inputs['Color'].default_value = color
-    # Transparent BSDF node
-    nodeTransparent = material.node_tree.nodes.new(type='ShaderNodeBsdfTransparent')
+    # Holdout node
+    nodeHoldout = material.node_tree.nodes.new(type='ShaderNodeHoldout')
     # Max Shader node
     nodeMix = material.node_tree.nodes.new(type='ShaderNodeMixShader')
     # Retrieve ouput node
     nodeOutput = material.node_tree.nodes['Material Output']
     # Connect nodes
     material.node_tree.links.new(nodeWireframe.outputs['Fac'], nodeMix.inputs['Fac'])
-    material.node_tree.links.new(nodeTransparent.outputs['BSDF'], nodeMix.inputs[1])
+    material.node_tree.links.new(nodeHoldout.outputs['Holdout'], nodeMix.inputs[1])
     material.node_tree.links.new(nodeEmission.outputs['Emission'], nodeMix.inputs[2])
     material.node_tree.links.new(nodeMix.outputs['Shader'], nodeOutput.inputs['Surface'])
     # Apply material to mesh

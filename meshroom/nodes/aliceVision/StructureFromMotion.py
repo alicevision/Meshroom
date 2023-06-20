@@ -63,10 +63,10 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
 
     inputs = [
         desc.File(
-            name='input',
-            label='SfMData',
+            name="input",
+            label="SfMData",
             description='SfMData file.',
-            value='',
+            value="",
             uid=[0],
         ),
         desc.ListAttribute(
@@ -91,291 +91,293 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             ),
             name="matchesFolders",
             label="Matches Folders",
-            description="Folder(s) in which computed matches are stored."
+            description="Folder(s) in which the computed matches are stored."
         ),
         desc.ChoiceParam(
-            name='describerTypes',
-            label='Describer Types',
-            description='Describer types used to describe an image.',
-            value=['dspsift'],
-            values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'tag16h5'],
+            name="describerTypes",
+            label="Describer Types",
+            description="Describer types used to describe an image.",
+            value=["dspsift"],
+            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv", "tag16h5"],
             exclusive=False,
             uid=[0],
-            joinChar=',',
+            joinChar=",",
         ),
         desc.ChoiceParam(
-            name='localizerEstimator',
-            label='Localizer Estimator',
-            description='Estimator type used to localize cameras (acransac, ransac, lsmeds, loransac, maxconsensus).',
-            value='acransac',
-            values=['acransac', 'ransac', 'lsmeds', 'loransac', 'maxconsensus'],
+            name="localizerEstimator",
+            label="Localizer Estimator",
+            description="Estimator type used to localize cameras (acransac, ransac, lsmeds, loransac, maxconsensus).",
+            value="acransac",
+            values=["acransac", "ransac", "lsmeds", "loransac", "maxconsensus"],
             exclusive=True,
             uid=[0],
             advanced=True,
         ),
         desc.ChoiceParam(
-            name='observationConstraint',
-            label='Observation Constraint',
-            description='Observation constraint mode used in the optimization:\n'
-                        ' * Basic: Use standard reprojection error in pixel coordinates\n'
-                        ' * Scale: Use reprojection error in pixel coordinates but relative to the feature scale',
-            value='Scale',
-            values=['Basic', 'Scale'],
+            name="observationConstraint",
+            label="Observation Constraint",
+            description="Observation constraint mode used in the optimization:\n"
+                        " - Basic: Use standard reprojection error in pixel coordinates.\n"
+                        " - Scale: Use reprojection error in pixel coordinates but relative to the feature scale.",
+            value="Scale",
+            values=["Basic", "Scale"],
             exclusive=True,
             uid=[0],
             advanced=True,
         ),
         desc.IntParam(
-            name='localizerEstimatorMaxIterations',
-            label='Localizer Max Ransac Iterations',
-            description='Maximum number of iterations allowed in ransac step.',
+            name="localizerEstimatorMaxIterations",
+            label="Localizer Max Ransac Iterations",
+            description="Maximum number of iterations allowed in the Ransac step.",
             value=4096,
             range=(1, 20000, 1),
             uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
-            name='localizerEstimatorError',
-            label='Localizer Max Ransac Error',
-            description='Maximum error (in pixels) allowed for camera localization (resectioning).\n'
-                        'If set to 0, it will select a threshold according to the localizer estimator used\n'
-                        '(if ACRansac, it will analyze the input data to select the optimal value).',
+            name="localizerEstimatorError",
+            label="Localizer Max Ransac Error",
+            description="Maximum error (in pixels) allowed for camera localization (resectioning).\n"
+                        "If set to 0, it will select a threshold according to the localizer estimator used\n"
+                        "(if ACRansac, it will analyze the input data to select the optimal value).",
             value=0.0,
             range=(0.0, 100.0, 0.1),
             uid=[0],
             advanced=True,
         ),
        desc.BoolParam(
-            name='lockScenePreviouslyReconstructed',
-            label='Lock Scene Previously Reconstructed',
-            description='This option is useful for SfM augmentation. Lock previously reconstructed poses and intrinsics.',
+            name="lockScenePreviouslyReconstructed",
+            label="Lock Previously Reconstructed Scene",
+            description="Lock previously reconstructed poses and intrinsics.\n"
+                        "This option is useful for SfM augmentation.",
             value=False,
             uid=[0],
         ),
         desc.BoolParam(
-            name='useLocalBA',
-            label='Local Bundle Adjustment',
-            description='It reduces the reconstruction time, especially for large datasets (500+ images),\n'
-                        'by avoiding computation of the Bundle Adjustment on areas that are not changing.',
+            name="useLocalBA",
+            label="Local Bundle Adjustment",
+            description="It reduces the reconstruction time, especially for large datasets (500+ images),\n"
+                        "by avoiding computation of the Bundle Adjustment on areas that are not changing.",
             value=True,
             uid=[0],
         ),
         desc.IntParam(
-            name='localBAGraphDistance',
-            label='LocalBA Graph Distance',
-            description='Graph-distance limit to define the Active region in the Local Bundle Adjustment strategy.',
+            name="localBAGraphDistance",
+            label="LocalBA Graph Distance",
+            description="Graph-distance limit to define the active region in the Local Bundle Adjustment strategy.",
             value=1,
             range=(2, 10, 1),
             uid=[0],
             advanced=True,
         ),
         desc.IntParam(
-            name='nbFirstUnstableCameras',
-            label='First Unstable Cameras Nb',
-            description='Number of cameras for which the bundle adjustment is performed every single time a camera is added.\n'
-                        'This leads to more stable results while computations are not too expensive, as there is little data.\n'
-                        'Past this number, the bundle adjustment will only be performed once for N added cameras.',
+            name="nbFirstUnstableCameras",
+            label="First Unstable Cameras Nb",
+            description="Number of cameras for which the bundle adjustment is performed every single time a camera is added.\n"
+                        "This leads to more stable results while computations are not too expensive, as there is little data.\n"
+                        "Past this number, the bundle adjustment will only be performed once for N added cameras.",
             value=30,
-            range=(1, 100, 1),
+            range=(0, 100, 1),
             uid=[0],
             advanced=True
         ),
         desc.IntParam(
-            name='maxImagesPerGroup',
-            label='Max Images Per Group',
-            description='Maximum number of cameras that can be added before the bundle adjustment has to be performed again.\n'
-                        'This prevents adding too much data at once without performing the bundle adjustment.',
+            name="maxImagesPerGroup",
+            label="Max Images Per Group",
+            description="Maximum number of cameras that can be added before the bundle adjustment has to be performed again.\n"
+                        "This prevents adding too much data at once without performing the bundle adjustment.",
             value=30,
-            range=(1, 100, 1),
+            range=(0, 100, 1),
             uid=[0],
             advanced=True
         ),
         desc.IntParam(
-            name='bundleAdjustmentMaxOutliers',
-            label='Max Nb of Outliers after BA',
-            description='Threshold for the maximum number of outliers allowed at the end of a bundle adjustment iteration.\n'
-                        'Using a negative value for this threshold will disable BA iterations.',
+            name="bundleAdjustmentMaxOutliers",
+            label="Max Nb Of Outliers After BA",
+            description="Threshold for the maximum number of outliers allowed at the end of a bundle adjustment iteration.\n"
+                        "Using a negative value for this threshold will disable BA iterations.",
             value=50,
             range=(-1, 1000, 1),
             uid=[0],
             advanced=True
         ),
         desc.IntParam(
-            name='maxNumberOfMatches',
-            label='Maximum Number of Matches',
-            description='Maximum number of matches per image pair (and per feature type). \n'
-                        'This can be useful to have a quick reconstruction overview. \n'
-                        '0 means no limit.',
+            name="maxNumberOfMatches",
+            label="Maximum Number Of Matches",
+            description="Maximum number of matches per image pair (and per feature type).\n"
+                        "This can be useful to have a quick reconstruction overview.\n"
+                        "0 means no limit.",
             value=0,
             range=(0, 50000, 1),
             uid=[0],
         ),
         desc.IntParam(
-            name='minNumberOfMatches',
-            label='Minimum Number of Matches',
-            description='Minimum number of matches per image pair (and per feature type). \n'
-                        'This can be useful to have a meaningful reconstruction with accurate keypoints. 0 means no limit.',
+            name="minNumberOfMatches",
+            label="Minimum Number Of Matches",
+            description="Minimum number of matches per image pair (and per feature type).\n"
+                        "This can be useful to have a meaningful reconstruction with accurate keypoints.\n"
+                        "0 means no limit.",
             value=0,
             range=(0, 50000, 1),
             uid=[0],
         ),
         desc.IntParam(
-            name='minInputTrackLength',
-            label='Min Input Track Length',
-            description='Minimum track length in input of SfM',
+            name="minInputTrackLength",
+            label="Min Input Track Length",
+            description="Minimum track length in input of SfM.",
             value=2,
             range=(2, 10, 1),
             uid=[0],
         ),
         desc.IntParam(
-            name='minNumberOfObservationsForTriangulation',
-            label='Min Observation For Triangulation',
-            description='Minimum number of observations to triangulate a point.\n'
-                        'Set it to 3 (or more) reduces drastically the noise in the point cloud,\n'
-                        'but the number of final poses is a little bit reduced\n'
-                        '(from 1.5% to 11% on the tested datasets).',
+            name="minNumberOfObservationsForTriangulation",
+            label="Min Observations For Triangulation",
+            description="Minimum number of observations to triangulate a point.\n"
+                        "Setting it to 3 (or more) reduces drastically the noise in the point cloud,\n"
+                        "but the number of final poses is a little bit reduced\n"
+                        "(from 1.5% to 11% on the tested datasets).",
             value=2,
             range=(2, 10, 1),
             uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
-            name='minAngleForTriangulation',
-            label='Min Angle For Triangulation',
-            description='Minimum angle for triangulation.',
+            name="minAngleForTriangulation",
+            label="Min Angle For Triangulation",
+            description="Minimum angle for triangulation.",
             value=3.0,
             range=(0.1, 10.0, 0.1),
             uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
-            name='minAngleForLandmark',
-            label='Min Angle For Landmark',
-            description='Minimum angle for landmark.',
+            name="minAngleForLandmark",
+            label="Min Angle For Landmark",
+            description="Minimum angle for landmark.",
             value=2.0,
             range=(0.1, 10.0, 0.1),
             uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
-            name='maxReprojectionError',
-            label='Max Reprojection Error',
-            description='Maximum reprojection error.',
+            name="maxReprojectionError",
+            label="Max Reprojection Error",
+            description="Maximum reprojection error.",
             value=4.0,
             range=(0.1, 10.0, 0.1),
             uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
-            name='minAngleInitialPair',
-            label='Min Angle Initial Pair',
-            description='Minimum angle for the initial pair.',
+            name="minAngleInitialPair",
+            label="Min Angle Initial Pair",
+            description="Minimum angle for the initial pair.",
             value=5.0,
             range=(0.1, 10.0, 0.1),
             uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
-            name='maxAngleInitialPair',
-            label='Max Angle Initial Pair',
-            description='Maximum angle for the initial pair.',
+            name="maxAngleInitialPair",
+            label="Max Angle Initial Pair",
+            description="Maximum angle for the initial pair.",
             value=40.0,
             range=(0.1, 60.0, 0.1),
             uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
-            name='useOnlyMatchesFromInputFolder',
-            label='Use Only Matches From Input Folder',
-            description='Use only matches from the input matchesFolder parameter.\n'
-                        'Matches folders previously added to the SfMData file will be ignored.',
+            name="useOnlyMatchesFromInputFolder",
+            label="Use Only Matches From Input Folder",
+            description="Use only matches from the input matchesFolder parameter.\n"
+                        "Matches folders previously added to the SfMData file will be ignored.",
             value=False,
             uid=[],
             advanced=True,
         ),
         desc.BoolParam(
-            name='useRigConstraint',
-            label='Use Rig Constraint',
-            description='Enable/Disable rig constraint.',
+            name="useRigConstraint",
+            label="Use Rig Constraint",
+            description="Enable/Disable rig constraint.",
             value=True,
             uid=[0],
             advanced=True,
         ),
         desc.IntParam(
-            name='rigMinNbCamerasForCalibration',
-            label='Min Nb Cameras For Rig Calibration',
-            description='Minimal number of cameras to start the calibration of the rig',
+            name="rigMinNbCamerasForCalibration",
+            label="Min Nb Cameras For Rig Calibration",
+            description="Minimum number of cameras to start the calibration of the rig.",
             value=20,
             range=(1, 50, 1),
             uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
-            name='lockAllIntrinsics',
-            label='Force Lock of All Intrinsic Camera Parameters',
-            description='Force to keep constant all the intrinsics parameters of the cameras (focal length, \n'
-                        'principal point, distortion if any) during the reconstruction.\n'
-                        'This may be helpful if the input cameras are already fully calibrated.',
+            name="lockAllIntrinsics",
+            label="Lock All Intrinsic Camera Parameters",
+            description="Force to keep all the intrinsic parameters of the cameras (focal length, \n"
+                        "principal point, distortion if any) constant during the reconstruction.\n"
+                        "This may be helpful if the input cameras are already fully calibrated.",
             value=False,
             uid=[0],
         ),
         desc.IntParam(
-            name='minNbCamerasToRefinePrincipalPoint',
+            name="minNbCamerasToRefinePrincipalPoint",
             label='Min Nb Cameras To Refine Principal Point',
-            description='Minimal number of cameras to refine the principal point of the cameras (one of the intrinsic parameters of the camera). '
-                        'If we do not have enough cameras, the principal point in consider is considered in the center of the image. '
-                        'If minNbCamerasToRefinePrincipalPoint<=0, the principal point is never refined. '
-                        'If minNbCamerasToRefinePrincipalPoint==1, the principal point is always refined.',
+            description="Minimum number of cameras to refine the principal point of the cameras (one of the intrinsic parameters of the camera).\n"
+                        "If we do not have enough cameras, the principal point is considered to be in the center of the image.\n"
+                        "If minNbCamerasToRefinePrincipalPoint <= 0, the principal point is never refined."
+                        "If minNbCamerasToRefinePrincipalPoint is set to 1, the principal point is always refined.",
             value=3,
             range=(0, 20, 1),
             uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
-            name='filterTrackForks',
-            label='Filter Track Forks',
-            description='Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n'
-                        'lead to multiple features in the same image for a single track. \n',
+            name="filterTrackForks",
+            label="Filter Track Forks",
+            description="Enable/Disable the track forks removal. A track contains a fork when incoherent matches \n"
+                        "lead to multiple features in the same image for a single track.",
             value=False,
             uid=[0],
         ),
         desc.BoolParam(
-            name='computeStructureColor',
-            label='Compute Structure Color',
-            description='Enable/Disable color computation of each 3D point.',
+            name="computeStructureColor",
+            label="Compute Structure Color",
+            description="Enable/Disable color computation of every 3D point.",
             value=True,
             uid=[0],
         ),
         desc.File(
-            name='initialPairA',
-            label='Initial Pair A',
-            description='View ID or filename of the first image (either with or without the full path).',
-            value='',
+            name="initialPairA",
+            label="Initial Pair A",
+            description="View ID or filename of the first image (either with or without the full path).",
+            value="",
             uid=[0],
         ),
         desc.File(
-            name='initialPairB',
-            label='Initial Pair B',
-            description='View ID or filename of the second image (either with or without the full path).',
-            value='',
+            name="initialPairB",
+            label="Initial Pair B",
+            description="View ID or filename of the second image (either with or without the full path).",
+            value="",
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='interFileExtension',
-            label='Inter File Extension',
-            description='Extension of the intermediate file export.',
-            value='.abc',
-            values=('.abc', '.ply'),
+            name="interFileExtension",
+            label="Inter File Extension",
+            description="Extension of the intermediate file export.",
+            value=".abc",
+            values=(".abc", ".ply"),
             exclusive=True,
             uid=[],
             advanced=True,
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='Verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )
@@ -383,23 +385,23 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
 
     outputs = [
         desc.File(
-            name='output',
-            label='SfMData',
-            description='Path to the output sfmdata file',
-            value=desc.Node.internalFolder + 'sfm.abc',
+            name="output",
+            label="SfMData",
+            description="Path to the output SfM point cloud file (in SfMData format).",
+            value=desc.Node.internalFolder + "sfm.abc",
             uid=[],
         ),
         desc.File(
-            name='outputViewsAndPoses',
-            label='Views and Poses',
-            description='''Path to the output sfmdata file with cameras (views and poses).''',
-            value=desc.Node.internalFolder + 'cameras.sfm',
+            name="outputViewsAndPoses",
+            label="Views And Poses",
+            description="Path to the output SfMData file with cameras (views and poses).",
+            value=desc.Node.internalFolder + "cameras.sfm",
             uid=[],
         ),
         desc.File(
-            name='extraInfoFolder',
-            label='Folder',
-            description='Folder for intermediate reconstruction files and additional reconstruction information files.',
+            name="extraInfoFolder",
+            label="Folder",
+            description="Folder for intermediate reconstruction files and additional reconstruction information files.",
             value=desc.Node.internalFolder,
             uid=[],
         ),

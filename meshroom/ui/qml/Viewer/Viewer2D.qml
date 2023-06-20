@@ -181,15 +181,7 @@ FocusScope {
         }
 
         // node must have at least one output attribute with the image semantic
-        var hasImageOutputAttr = false;
-        for (var i = 0; i < node.attributes.count; i++) {
-            var attr = node.attributes.at(i);
-            if (attr.isOutput && attr.desc.semantic == "image") {
-                hasImageOutputAttr = true;
-                break;
-            }
-        }
-        if (!hasImageOutputAttr) {
+        if (!node.hasImageOutput) {
             return false;
         }
 
@@ -214,13 +206,15 @@ FocusScope {
 
         var viewId = -1;
         var intrinsicId = -1;
+        var poseId = -1;
         var fileName = "";
         if (_reconstruction) {
             viewId = _reconstruction.selectedViewId;
             intrinsicId = getViewpointAttribute("intrinsicId", viewId);
-            fileName = Filepath.removeExtension(Filepath.basename(getViewpointAttribute("path",viewId)));
+            poseId = getViewpointAttribute("poseId", viewId);
+            fileName = Filepath.removeExtension(Filepath.basename(getViewpointAttribute("path", viewId)));
         }
-        var patterns = {"<VIEW_ID>": viewId,"<INTRINSIC_ID>": intrinsicId, "<FILENAME>": fileName}
+        var patterns = {"<VIEW_ID>": viewId, "<INTRINSIC_ID>": intrinsicId, "<POSE_ID>": poseId, "<FILENAME>": fileName}
         return getFileAttributePath(displayedNode, outputAttribute.name,patterns);
     }
 
@@ -278,7 +272,7 @@ FocusScope {
             // store attr name for output attributes that represent images
             for (var i = 0; i < displayedNode.attributes.count; i++) {
                 var attr = displayedNode.attributes.at(i);
-                if (attr.isOutput && attr.desc.semantic == "image") {
+                if (attr.isOutput && attr.desc.semantic === "image" && attr.enabled) {
                     names.push(attr.name);
                 }
             }
@@ -298,6 +292,10 @@ FocusScope {
         }
     }
 
+    Connections {
+        target: displayedNode
+        onOutputAttrEnabledChanged: tryLoadNode(displayedNode)
+    }
     // context menu
     property Component contextMenu: Menu {
         MenuItem {
@@ -588,6 +586,42 @@ FocusScope {
                             {
                                 _reconstruction.setAttribute(activeNode.attribute("fisheyeRadius"), activeNode.attribute("fisheyeRadius").value + radiusOffset)
                             }
+                        }
+                    }
+                }
+
+                // LightingCalibration: display circle
+                // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
+                Loader {
+                    anchors.centerIn: parent
+                    property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node
+                    active: (displayLightingCircleLoader.checked && activeNode)
+
+                    // handle rotation/position based on available metadata
+                    rotation: {
+                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
+                        switch(orientation) {
+                            case "6": return 90;
+                            case "8": return -90;
+                            default: return 0;
+                        }
+                    }
+
+                    sourceComponent: CircleGizmo {
+                        readOnly: false
+                        x: activeNode.attribute("sphereCenter.x").value
+                        y: activeNode.attribute("sphereCenter.y").value
+                        radius: activeNode.attribute("sphereRadius").value
+
+                        border.width: Math.max(1, (3.0 / imgContainer.scale))
+                        onMoved: {
+                            _reconstruction.setAttribute(
+                                activeNode.attribute("sphereCenter"),
+                                JSON.stringify([x, y])
+                            );
+                        }
+                        onIncrementRadius: {
+                            _reconstruction.setAttribute(activeNode.attribute("sphereRadius"), activeNode.attribute("sphereRadius").value + radiusOffset)
                         }
                     }
                 }
@@ -1081,6 +1115,19 @@ FocusScope {
                             visible: activeNode
                         }
                         MaterialToolButton {
+                            id: displayLightingCircleLoader
+                            property var activeNode: _reconstruction.activeNodes.get('SphereDetection').node
+                            ToolTip.text: "Display Lighting Circle: " + (activeNode ? activeNode.label : "No Node")
+                            text: MaterialIcons.vignette
+                            // text: MaterialIcons.panorama_fish_eye
+                            font.pointSize: 11
+                            Layout.minimumWidth: 0
+                            checkable: true
+                            checked: false
+                            enabled: activeNode
+                            visible: activeNode
+                        }
+                        MaterialToolButton {
                             id: displayColorCheckerViewerLoader
                             property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('ColorCheckerDetection').node : null
                             ToolTip.text: "Display Color Checker: " + (activeNode ? activeNode.label : "No Node")
@@ -1142,7 +1189,7 @@ FocusScope {
                             property var names: ["gallery"]
                             property string name: names[currentIndex]
 
-                            model: names.map(n => (n == "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label)
+                            model: names.map(n => (n === "gallery") ? "Image Gallery" : displayedNode.attributes.get(n).label)
                             enabled: count > 1
 
                             FontMetrics {

@@ -12,11 +12,14 @@ Meshroom also relies on specific files provided with AliceVision.
 Provided in AliceVision source tree: {ALICEVISION_REPOSITORY}/src/aliceVision/sensorDB/cameraSensors.db
 * voctree (optional): for larger datasets (>200 images), greatly improves image matching performances.
 It can be downloaded [here](https://gitlab.com/alicevision/trainedVocabularyTreeData/raw/master/vlfeat_K80L3.SIFT.tree).
+* sphere detection model (optional): for the automated sphere detection in stereo photometry.
+It can be downloaded [here](https://gitlab.com/alicevision/SphereDetectionModel/-/raw/main/sphereDetection_Mask-RCNN.onnx).
 
 Environment variables must be set for Meshroom to find those files:
 ```
 ALICEVISION_SENSOR_DB=/path/to/database
 ALICEVISION_VOCTREE=/path/to/voctree
+ALICEVISION_SPHERE_DETECTION_MODEL=/path/to/detection/model
 ALICEVISION_ROOT=/path/to/AliceVision/install/directory
 ```
 

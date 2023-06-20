@@ -11,90 +11,107 @@ from meshroom.core import desc, Version
 from meshroom.multiview import FilesByType, findFilesByTypeInFolder
 
 Viewpoint = [
-    desc.IntParam(name="viewId", label="Id", description="Image UID", value=-1, uid=[0], range=None),
-    desc.IntParam(name="poseId", label="Pose Id", description="Pose Id", value=-1, uid=[0], range=None),
-    desc.File(name="path", label="Image Path", description="Image Filepath", value="", uid=[0]),
-    desc.IntParam(name="intrinsicId", label="Intrinsic", description="Internal Camera Parameters", value=-1, uid=[0], range=None),
-    desc.IntParam(name="rigId", label="Rig", description="Rig Parameters", value=-1, uid=[0], range=None),
-    desc.IntParam(name="subPoseId", label="Rig Sub-Pose", description="Rig Sub-Pose Parameters", value=-1, uid=[0], range=None),
+    desc.IntParam(name="viewId", label="ID", description="Image UID.", value=-1, uid=[0], range=None),
+    desc.IntParam(name="poseId", label="Pose ID", description="Pose ID.", value=-1, uid=[0], range=None),
+    desc.File(name="path", label="Image Path", description="Image filepath.", value="", uid=[0]),
+    desc.IntParam(name="intrinsicId", label="Intrinsic", description="Internal camera parameters.", value=-1, uid=[0], range=None),
+    desc.IntParam(name="rigId", label="Rig", description="Rig parameters.", value=-1, uid=[0], range=None),
+    desc.IntParam(name="subPoseId", label="Rig Sub-Pose", description="Rig sub-pose parameters.", value=-1, uid=[0], range=None),
     desc.StringParam(name="metadata", label="Image Metadata",
-                     description="The configuration of the Viewpoints is based on the images metadata.\n"
+                     description="The configuration of the Viewpoints is based on the images' metadata.\n"
                                  "The important ones are:\n"
-                     " * Focal Length: the focal length in mm.\n"
-                     " * Make and Model: this information allows to convert the focal in mm into a focal length in pixel using an embedded sensor database.\n"
-                     " * Serial Number: allows to uniquely identify a device so multiple devices with the same Make, Model can be differentiated and their internal parameters are optimized separately.",
+                                 " - Focal Length: the focal length in mm.\n"
+                                 " - Make and Model: this information allows to convert the focal in mm into a focal length in pixels using "
+                                 "an embedded sensor database.\n"
+                                 " - Serial Number: allows to uniquely identify a device so multiple devices with the same Make, Model can be "
+                                 "differentiated and their internal parameters are optimized separately.",
                      value="", uid=[], advanced=True),
 ]
 
 Intrinsic = [
-    desc.IntParam(name="intrinsicId", label="Id", description="Intrinsic UID", value=-1, uid=[0], range=None),
+    desc.IntParam(name="intrinsicId", label="ID", description="Intrinsic UID.", value=-1, uid=[0], range=None),
     desc.FloatParam(name="initialFocalLength", label="Initial Focal Length",
-                    description="Initial Guess on the Focal Length (in pixels). \n"
-                    "When we have an initial value from EXIF, this value is not accurate but cannot be wrong. \n"
-                    "So this value is used to limit the range of possible values in the optimization. \n"
-                    "If you put -1, this value will not be used and the focal length will not be bounded.",
+                    description="Initial guess on the focal length (in pixels).\n"
+                                "When we have an initial value from EXIF, this value is not accurate but it cannot be wrong.\n"
+                                "So this value is used to limit the range of possible values in the optimization.\n"
+                                "If this value is set to -1, it will not be used and the focal length will not be bounded.",
                     value=-1.0, uid=[0], range=None),
-    desc.FloatParam(name="focalLength", label="Focal Length", description="Known/Calibrated Focal Length (in mm)", value=1000.0, uid=[0], range=(0.0, 10000.0, 1.0)),
-    desc.FloatParam(name="pixelRatio", label="pixel Ratio", description="ratio between pixel width and pixel height", value=1.0, uid=[0], range=(0.0, 10.0, 0.1)),
-    desc.BoolParam(name='pixelRatioLocked', label='Pixel ratio Locked',
-                   description='the pixelRatio value is locked for estimation',
+    desc.FloatParam(name="focalLength", label="Focal Length", description="Known/calibrated focal length (in mm).", value=1000.0, uid=[0], range=(0.0, 10000.0, 1.0)),
+    desc.FloatParam(name="pixelRatio", label="Pixel Ratio", description="Ratio between the pixel width and the pixel height.", value=1.0, uid=[0], range=(0.0, 10.0, 0.1)),
+    desc.BoolParam(name='pixelRatioLocked', label='Pixel Ratio Locked',
+                   description='The pixel ratio value is locked for estimation.',
                    value=True, uid=[0]),
     desc.ChoiceParam(name="type", label="Camera Type",
-                     description="Mathematical Model used to represent a camera:\n"
-                     " * pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
-                     " * radial1: Pinhole camera with one radial distortion parameter\n"
-                     " * radial3: Pinhole camera with 3 radial distortion parameters\n"
-                     " * brown: Pinhole camera with 3 radial and 2 tangential distortion parameters\n"
-                     " * fisheye4: Pinhole camera with 4 distortion parameters suited for fisheye optics (like 120deg FoV)\n"
-                     " * equidistant_r3: Non-projective camera model suited for full-fisheye optics (like 180deg FoV)\n"
-                     " * 3deanamorphic4: Pinhole camera with a 4 anamorphic distortion coefficients.\n"
-                     " * 3declassicld: Pinhole camera with a 10 anamorphic distortion coefficients\n"
-                     " * 3deradial4: Pinhole camera with 3DE radial4 model\n",
-                     value="", values=['', 'pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'equidistant_r3', '3deanamorphic4', '3declassicld', '3deradial4'], exclusive=True, uid=[0]),
-    desc.IntParam(name="width", label="Width", description="Image Width", value=0, uid=[0], range=(0, 10000, 1)),
-    desc.IntParam(name="height", label="Height", description="Image Height", value=0, uid=[0], range=(0, 10000, 1)),
-    desc.FloatParam(name="sensorWidth", label="Sensor Width", description="Sensor Width (mm)", value=36.0, uid=[0], range=(0.0, 1000.0, 1.0)),
-    desc.FloatParam(name="sensorHeight", label="Sensor Height", description="Sensor Height (mm)", value=24.0, uid=[0], range=(0.0, 1000.0, 1.0)),
-    desc.StringParam(name="serialNumber", label="Serial Number", description="Device Serial Number (Camera UID and Lens UID combined)", value="", uid=[0]),
-    desc.GroupAttribute(name="principalPoint", label="Principal Point", description="Position of the Optical Center in the Image (i.e. the sensor surface).", groupDesc=[
+                     description="Mathematical model used to represent a camera:\n"
+                     " - pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
+                     " - radial1: Pinhole camera with one radial distortion parameter.\n"
+                     " - radial3: Pinhole camera with 3 radial distortion parameters.\n"
+                     " - brown: Pinhole camera with 3 radial and 2 tangential distortion parameters.\n"
+                     " - fisheye4: Pinhole camera with 4 distortion parameters suited for fisheye optics (like 120deg FoV).\n"
+                     " - equidistant_r3: Non-projective camera model suited for full-fisheye optics (like 180deg FoV).\n"
+                     " - 3deanamorphic4: Pinhole camera with 4 anamorphic distortion coefficients.\n"
+                     " - 3declassicld: Pinhole camera with 10 anamorphic distortion coefficients.\n"
+                     " - 3deradial4: Pinhole camera with 3DE radial4 model.\n",
+                     value="", values=["", "pinhole", "radial1", "radial3", "brown", "fisheye4", "equidistant_r3", "3deanamorphic4", "3declassicld", "3deradial4"], exclusive=True, uid=[0]),
+    desc.IntParam(name="width", label="Width", description="Image width.", value=0, uid=[0], range=(0, 10000, 1)),
+    desc.IntParam(name="height", label="Height", description="Image height.", value=0, uid=[0], range=(0, 10000, 1)),
+    desc.FloatParam(name="sensorWidth", label="Sensor Width", description="Sensor width (in mm).", value=36.0, uid=[0], range=(0.0, 1000.0, 1.0)),
+    desc.FloatParam(name="sensorHeight", label="Sensor Height", description="Sensor height (in mm).", value=24.0, uid=[0], range=(0.0, 1000.0, 1.0)),
+    desc.StringParam(name="serialNumber", label="Serial Number", description="Device serial number (Camera UID and Lens UID combined).", value="", uid=[0]),
+    desc.GroupAttribute(name="principalPoint", label="Principal Point", description="Position of the optical center in the image (i.e. the sensor surface).", groupDesc=[
         desc.FloatParam(name="x", label="x", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
         desc.FloatParam(name="y", label="y", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
-        ]),
+    ]),
 
     desc.ChoiceParam(name="initializationMode", label="Initialization Mode",
-                     description="Defines how this Intrinsic was initialized:\n"
-                                 " * calibrated: calibrated externally.\n"
-                                 " * estimated: estimated from metadata and/or sensor width \n"
-                                 " * unknown: unknown camera parameters (can still have default value guess)\n"
-                                 " * none: not set",
+                     description="Defines how this intrinsic was initialized:\n"
+                                 " - calibrated: calibrated externally.\n"
+                                 " - estimated: estimated from metadata and/or sensor width.\n"
+                                 " - unknown: unknown camera parameters (can still have default value guess).\n"
+                                 " - none: not set.",
                      values=("calibrated", "estimated", "unknown", "none"),
                      value="none",
                      exclusive=True,
                      uid=[0],
-                     ),
+    ),
 
     desc.ChoiceParam(name="distortionInitializationMode", label="Distortion Initialization Mode",
-                     description="Defines how the distortion model and parameters was initialized:\n"
-                                 " * calibrated: calibrated externally.\n"
-                                 " * estimated: estimated from a database of generic calibration \n"
-                                 " * unknown: unknown camera parameters (can still have default value guess)\n"
-                                 " * none: not set",
+                     description="Defines how the distortion model and parameters were initialized:\n"
+                                 " - calibrated: calibrated externally.\n"
+                                 " - estimated: estimated from a database of generic calibration.\n"
+                                 " - unknown: unknown camera parameters (can still have default value guess).\n"
+                                 " - none: not set.",
                      values=("calibrated", "estimated", "unknown", "none"),
                      value="none",
                      exclusive=True,
                      uid=[0],
-                     ),
+    ),
 
     desc.ListAttribute(
             name="distortionParams",
             elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
             label="Distortion Params",
-            description="Distortion Parameters",
-        ),
-
-    desc.BoolParam(name='locked', label='Locked',
-                   description='If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speedup the reconstruction.',
-                   value=False, uid=[0]),
+            description="Distortion parameters.",
+    ),
+    desc.GroupAttribute(
+            name="undistortionOffset",
+            label="Undistortion Offset",
+            description="Undistortion offset.",
+            groupDesc=[
+                desc.FloatParam(name="x", label="x", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
+                desc.FloatParam(name="y", label="y", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
+            ]
+    ),
+    desc.ListAttribute(
+            name="undistortionParams",
+            elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
+            label="Undistortion Params",
+            description="Undistortion parameters."
+    ),
+    desc.BoolParam(name="locked", label="Locked",
+                   description="If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speed-up the reconstruction.",
+                   value=False, uid=[0]
+    ),
 ]
 
 def readSfMData(sfmFile):
@@ -114,14 +131,24 @@ def readSfMData(sfmFile):
 
     intrinsics = [{k: v for k, v in item.items() if k in intrinsicsKeys} for item in data.get("intrinsics", [])]
     for intrinsic in intrinsics:
-        pp = intrinsic['principalPoint']
+        pp = intrinsic.get('principalPoint', (0, 0))
         intrinsic['principalPoint'] = {}
         intrinsic['principalPoint']['x'] = pp[0]
         intrinsic['principalPoint']['y'] = pp[1]
 
         # convert empty string distortionParams (i.e: Pinhole model) to empty list
-        if intrinsic['distortionParams'] == '':
+        distortionParams = intrinsic.get('distortionParams', '')
+        if distortionParams == '':
             intrinsic['distortionParams'] = list()
+
+        offset = intrinsic.get('undistortionOffset', (0, 0))
+        intrinsic['undistortionOffset'] = {}
+        intrinsic['undistortionOffset']['x'] = offset[0]
+        intrinsic['undistortionOffset']['y'] = offset[1]
+
+        undistortionParams = intrinsic.get('undistortionParams', '')
+        if undistortionParams == '':
+            intrinsic['undistortionParams'] = list()
 
     viewsKeys = [v.name for v in Viewpoint]
     views = [{k: v for k, v in item.items() if k in viewsKeys} for item in data.get("views", [])]
@@ -139,151 +166,153 @@ class CameraInit(desc.AVCommandLineNode, desc.InitNode):
     category = 'Sparse Reconstruction'
     documentation = '''
 This node describes your dataset. It lists the Viewpoints candidates, the guess about the type of optic, the initial focal length
-and which images are sharing the same internal camera parameters, as well as potential cameras rigs.
+and which images are sharing the same internal camera parameters, as well as potential camera rigs.
 
-When you import new images into Meshroom, this node is automatically configured from the analysis of the image metadata.
+When you import new images into Meshroom, this node is automatically configured from the analysis of the images' metadata.
 The software can support images without any metadata but it is recommended to have them for robustness.
 
 ### Metadata
-Metadata allows images to be grouped together and provides an initialization of the focal length (in pixel unit).
-The metadata needed are:
+Metadata allow images to be grouped together and provide an initialization of the focal length (in pixel unit).
+The needed metadata are:
  * **Focal Length**: the focal length in mm.
- * **Make** & **Model**: this information allows to convert the focal in mm into a focal length in pixel using an embedded sensor database.
+ * **Make** & **Model**: this information allows to convert the focal in mm into a focal length in pixels using an embedded sensor database.
  * **Serial Number**: allows to uniquely identify a device so multiple devices with the same Make, Model can be differentiated and their internal parameters are optimized separately (in the photogrammetry case).
 '''
 
     inputs = [
         desc.ListAttribute(
             name="viewpoints",
-            elementDesc=desc.GroupAttribute(name="viewpoint", label="Viewpoint", description="", groupDesc=Viewpoint),
+            elementDesc=desc.GroupAttribute(name="viewpoint", label="Viewpoint", description="Viewpoint.", groupDesc=Viewpoint),
             label="Viewpoints",
-            description="Input viewpoints",
+            description="Input viewpoints.",
             group="",
         ),
         desc.ListAttribute(
             name="intrinsics",
-            elementDesc=desc.GroupAttribute(name="intrinsic", label="Intrinsic", description="", groupDesc=Intrinsic),
+            elementDesc=desc.GroupAttribute(name="intrinsic", label="Intrinsic", description="Intrinsic.", groupDesc=Intrinsic),
             label="Intrinsics",
-            description="Camera Intrinsics",
+            description="Camera intrinsics.",
             group="",
         ),
         desc.File(
-            name='sensorDatabase',
-            label='Sensor Database',
-            description='''Camera sensor width database path.''',
-            value='${ALICEVISION_SENSOR_DB}',
+            name="sensorDatabase",
+            label="Sensor Database",
+            description="Camera sensor with database path.",
+            value="${ALICEVISION_SENSOR_DB}",
             uid=[],
         ),
         desc.File(
-            name='lensCorrectionProfileInfo',
-            label='Lens Correction Profile Info',
-            description='''Lens Correction Profile filepath or database directory.''',
-            value='${ALICEVISION_LENS_PROFILE_INFO}',
+            name="lensCorrectionProfileInfo",
+            label="LCP Info",
+            description="Lens Correction Profile filepath or database directory.",
+            value="${ALICEVISION_LENS_PROFILE_INFO}",
             uid=[],
         ),
         desc.BoolParam(
-            name='lensCorrectionProfileSearchIgnoreCameraModel',
-            label='LCP Generic Search',
-            description='The lens name and camera maker are used to match the LCP database, but the camera model is ignored.',
+            name="lensCorrectionProfileSearchIgnoreCameraModel",
+            label="LCP Generic Search",
+            description="The lens name and camera maker are used to match the LCP database, but the camera model is ignored.",
             value=True,
             uid=[0],
             advanced=True,
         ),
         desc.FloatParam(
-            name='defaultFieldOfView',
-            label='Default Field Of View',
-            description='Default value for the field of view (in degree) used as an initialization when there is no focal or field of view in the image metadata.',
+            name="defaultFieldOfView",
+            label="Default Field Of View",
+            description="Default value for the field of view (in degrees) used as an initialization value when there is no focal or field of view in the image metadata.",
             value=45.0,
             range=(0.0, 180.0, 1.0),
             uid=[],
         ),
         desc.ChoiceParam(
-            name='groupCameraFallback',
-            label='Group Camera Fallback',
-            description="If there is no serial number in image metadata, devices cannot be accurately identified.\n"
+            name="groupCameraFallback",
+            label="Group Camera Fallback",
+            description="If there is no serial number in the images' metadata, devices cannot be accurately identified.\n"
                         "Therefore, internal camera parameters cannot be shared among images reliably.\n"
                         "A fallback grouping strategy must be chosen:\n"
-                        " * global: group images from comparable devices (same make/model/focal) globally.\n"
-                        " * folder: group images from comparable devices only within the same folder.\n"
-                        " * image: never group images from comparable devices",
-            values=['global', 'folder', 'image'],
-            value='folder',
+                        " - global: group images from comparable devices (same make/model/focal) globally.\n"
+                        " - folder: group images from comparable devices only within the same folder.\n"
+                        " - image: never group images from comparable devices.",
+            values=["global", "folder", "image"],
+            value="folder",
             exclusive=True,
             uid=[],
         ),
         desc.ChoiceParam(
-            name='allowedCameraModels',
-            label='Allowed Camera Models',
-            description='the Camera Models that can be attributed.',
-            value=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1', '3deanamorphic4', '3deradial4', '3declassicld'],
-            values=['pinhole', 'radial1', 'radial3', 'brown', 'fisheye4', 'fisheye1', '3deanamorphic4', '3deradial4', '3declassicld'],
+            name="allowedCameraModels",
+            label="Allowed Camera Models",
+            description='List of the camera models that can be attributed.',
+            value=["pinhole", "radial1", "radial3", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3deradial4", "3declassicld"],
+            values=["pinhole", "radial1", "radial3", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3deradial4", "3declassicld"],
             exclusive=False,
             uid=[],
-            joinChar=',',
+            joinChar=",",
             advanced=True,
         ),
         desc.ChoiceParam(
-            name='rawColorInterpretation',
-            label='RAW Color Interpretation',
-            description='Allows you to choose how raw data are color processed:\n'
-                        'None: Debayering without any color processing.\n'
-                        'LibRawNoWhiteBalancing: Simple neutralization.\n'
-                        'LibRawWhiteBalancing: Use internal white balancing from libraw.\n'
-                        'DCPLinearProcessing: Use DCP color profile.\n'
-                        'DCPMetadata: Same as None with DCP info added in metadata.',
-            value='DCPLinearProcessing' if os.environ.get('ALICEVISION_COLOR_PROFILE_DB', '') else 'LibRawWhiteBalancing',
-            values=['None', 'LibRawNoWhiteBalancing', 'LibRawWhiteBalancing', 'DCPLinearProcessing'],
+            name="rawColorInterpretation",
+            label="RAW Color Interpretation",
+            description="Allows to choose how RAW data are color processed:\n"
+                        " - None: Debayering without any color processing.\n"
+                        " - LibRawNoWhiteBalancing: Simple neutralization.\n"
+                        " - LibRawWhiteBalancing: Use internal white balancing from libraw.\n"
+                        " - DCPLinearProcessing: Use DCP color profile.\n"
+                        " - DCPMetadata: Same as None with DCP info added in metadata.",
+            value="DCPLinearProcessing" if os.environ.get("ALICEVISION_COLOR_PROFILE_DB", "") else "LibRawWhiteBalancing",
+            values=["None", "LibRawNoWhiteBalancing", "LibRawWhiteBalancing", "DCPLinearProcessing", "DCPMetadata"],
             exclusive=True,
             uid=[0],
         ),
         desc.File(
-            name='colorProfileDatabase',
-            label='Color Profile Database',
-            description='''Color Profile database directory path.''',
-            value='${ALICEVISION_COLOR_PROFILE_DB}',
-            enabled=lambda node: node.rawColorInterpretation.value.startswith('DCP'),
+            name="colorProfileDatabase",
+            label="Color Profile Database",
+            description="Color Profile database directory path.",
+            value="${ALICEVISION_COLOR_PROFILE_DB}",
+            enabled=lambda node: node.rawColorInterpretation.value.startswith("DCP"),
             uid=[],
         ),
         desc.BoolParam(
-            name='errorOnMissingColorProfile',
-            label='Error On Missing DCP Color Profile',
-            description='When enabled, if no color profile is found for at least one image, then an error is thrown.\n'
-                        'When disabled, if no color profile is found for some images, it will fallback to libRawWhiteBalancing for those images.',
+            name="errorOnMissingColorProfile",
+            label="Error On Missing DCP Color Profile",
+            description="When enabled, if no color profile is found for at least one image, then an error is thrown.\n"
+                        "When disabled, if no color profile is found for some images, it will fallback to libRawWhiteBalancing for those images.",
             value=True,
-            enabled=lambda node: node.rawColorInterpretation.value.startswith('DCP'),
+            enabled=lambda node: node.rawColorInterpretation.value.startswith("DCP"),
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='viewIdMethod',
-            label='ViewId Method',
+            name="viewIdMethod",
+            label="ViewId Method",
             description="Allows to choose the way the viewID is generated:\n"
-                        " * metadata : Generate viewId from image metadata.\n"
-                        " * filename : Generate viewId from file names using regex.",
-            value='metadata',
-            values=['metadata', 'filename'],
+                        " - metadata : Generate viewId from image metadata.\n"
+                        " - filename : Generate viewId from filename using regex.",
+            value="metadata",
+            values=["metadata", "filename"],
             exclusive=True,
             uid=[],
             advanced=True,
         ),
         desc.StringParam(
-            name='viewIdRegex',
-            label='ViewId Regex',
-            description='Regex used to catch number used as viewId in filename.'
-                        'You should capture specific parts of the filename with parenthesis to define matching elements. (only number will works)\n'
-                        'Some examples of patterns:\n'
-                        r' - Match the longest number at the end of filename (default value): ".*?(\d+)"' + '\n' +
-                        r' - Match the first number found in filename : "(\d+).*"',
-            value=r'.*?(\d+)',
+            name="viewIdRegex",
+            label="ViewId Regex",
+            description="Regex used to catch number used as viewId in filename."
+                        "You should capture specific parts of the filename with parentheses to define matching elements. (only numbers will work)\n"
+                        "Some examples of patterns:\n"
+                        " - Match the longest number at the end of the filename (default value): "
+                        r'".*?(\d+)"' + "\n" +
+                        " - Match the first number found in filename: "
+                        r'"(\d+).*"',
+            value=r".*?(\d+)",
             uid=[],
             advanced=True,
-            enabled=lambda node: node.viewIdMethod.value == 'filename',
+            enabled=lambda node: node.viewIdMethod.value == "filename",
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),
@@ -411,6 +440,7 @@ The metadata needed are:
             intrinsics = node.intrinsics.getPrimitiveValue(exportDefault=True)
             for intrinsic in intrinsics:
                 intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
+                intrinsic['undistortionOffset'] = [intrinsic['undistortionOffset']['x'], intrinsic['undistortionOffset']['y']]
             views = node.viewpoints.getPrimitiveValue(exportDefault=False)
 
             # convert the metadata string into a map

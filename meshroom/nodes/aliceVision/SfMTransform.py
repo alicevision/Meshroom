@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "3.1"
 
 from meshroom.core import desc
 
@@ -20,43 +20,45 @@ The transformation can be based on:
  * from_single_camera: Use a specific camera as the origin of the coordinate system
  * from_markers: Align specific markers to custom coordinates
  * from_gps: Align with the gps positions from the image metadata
+ * align_ground: Detect ground level and align to it
 
 '''
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
-            description='''SfMData file .''',
-            value='',
+            name="input",
+            label="Input",
+            description="SfMData file.",
+            value="",
             uid=[0],
         ),
         desc.ChoiceParam(
-            name='method',
-            label='Transformation Method',
+            name="method",
+            label="Transformation Method",
             description="Transformation method:\n"
-                        " * transformation: Apply a given transformation\n"
-                        " * manual: Apply the gizmo transformation (show the transformed input)\n"
-                        " * auto: Using X axis of all cameras as horizon. gps north and scale if available. cameras center mean is used as origin.\n"
-                        " * auto_from_cameras: Use cameras\n"
-                        " * auto_from_cameras_x_axis: Use X axis of all cameras\n"
-                        " * auto_from_landmarks: Use landmarks\n"
-                        " * from_single_camera: Use a specific camera as the origin of the coordinate system\n"
-                        " * from_center_camera: Use the center camera as the origin of the coordinate system\n"
-                        " * from_markers: Align specific markers to custom coordinates\n"
-                        " * from_gps: Align with the gps positions from the image metadata",
-            value='auto',
-            values=['transformation', 'manual', 'auto', 'auto_from_cameras', 'auto_from_cameras_x_axis', 'auto_from_landmarks', 'from_single_camera', 'from_center_camera', 'from_markers', 'from_gps'],
+                        " - transformation: Apply a given transformation.\n"
+                        " - manual: Apply the gizmo transformation (show the transformed input).\n"
+                        " - auto: Determines scene orientation from the cameras' X axis, determines north and scale from GPS information if available, and defines ground level from the point cloud.\n"
+                        " - auto_from_cameras: Defines coordinate system from cameras.\n"
+                        " - auto_from_cameras_x_axis: Determines scene orientation from the cameras' X axis.\n"
+                        " - auto_from_landmarks: Defines coordinate system from landmarks.\n"
+                        " - from_single_camera: Defines the coordinate system from the camera specified by --tranformation.\n"
+                        " - from_center_camera: Defines the coordinate system from the camera closest to the center of the reconstruction.\n"
+                        " - from_markers: Defines the coordinate system from markers specified by --markers.\n"
+                        " - from_gps: Defines coordinate system from GPS metadata.\n"
+                        " - align_ground: Defines ground level from the point cloud density. It assumes that the scene is oriented.",
+            value="auto",
+            values=["transformation", "manual", "auto", "auto_from_cameras", "auto_from_cameras_x_axis", "auto_from_landmarks", "from_single_camera", "from_center_camera", "from_markers", "from_gps", "align_ground"],
             exclusive=True,
             uid=[0],
         ),
         desc.StringParam(
-            name='transformation',
-            label='Transformation',
+            name="transformation",
+            label="Transformation",
             description="Required only for 'transformation' and 'from_single_camera' methods:\n"
-                        " * transformation: Align [X,Y,Z] to +Y-axis, rotate around Y by R deg, scale by S; syntax: X,Y,Z;R;S\n"
-                        " * from_single_camera: Camera UID or simplified regular expression to match image filepath (like '*camera2*.jpg')",
-            value='',
+                        " - transformation: Align [X,Y,Z] to +Y-axis, rotate around Y by R deg, scale by S; syntax: X,Y,Z;R;S\n"
+                        " - from_single_camera: Camera UID or simplified regular expression to match image filepath (like '*camera2*.jpg').",
+            value="",
             uid=[0],
             enabled=lambda node: node.method.value == "transformation" or node.method.value == "from_single_camera" or node.method.value == "auto_from_cameras_x_axis",
         ),
@@ -71,19 +73,19 @@ The transformation can be based on:
                     description="Translation in space.",
                     groupDesc=[
                         desc.FloatParam(
-                            name="x", label="x", description="X Offset",
+                            name="x", label="x", description="X offset.",
                             value=0.0,
                             uid=[0],
                             range=(-20.0, 20.0, 0.01)
                         ),
                         desc.FloatParam(
-                            name="y", label="y", description="Y Offset",
+                            name="y", label="y", description="Y offset.",
                             value=0.0,
                             uid=[0],
                             range=(-20.0, 20.0, 0.01)
                         ),
                         desc.FloatParam(
-                            name="z", label="z", description="Z Offset",
+                            name="z", label="z", description="Z offset.",
                             value=0.0,
                             uid=[0],
                             range=(-20.0, 20.0, 0.01)
@@ -94,22 +96,22 @@ The transformation can be based on:
                 desc.GroupAttribute(
                     name="manualRotation",
                     label="Euler Rotation",
-                    description="Rotation in Euler degrees.",
+                    description="Rotation in Euler angles.",
                     groupDesc=[
                         desc.FloatParam(
-                            name="x", label="x", description="Euler X Rotation",
+                            name="x", label="x", description="Euler X rotation.",
                             value=0.0,
                             uid=[0],
                             range=(-90.0, 90.0, 1.0)
                         ),
                         desc.FloatParam(
-                            name="y", label="y", description="Euler Y Rotation",
+                            name="y", label="y", description="Euler Y rotation.",
                             value=0.0,
                             uid=[0],
                             range=(-180.0, 180.0, 1.0)
                         ),
                         desc.FloatParam(
-                            name="z", label="z", description="Euler Z Rotation",
+                            name="z", label="z", description="Euler Z rotation.",
                             value=0.0,
                             uid=[0],
                             range=(-180.0, 180.0, 1.0)
@@ -120,7 +122,7 @@ The transformation can be based on:
                 desc.FloatParam(
                     name="manualScale",
                     label="Scale",
-                    description="Uniform Scale.",
+                    description="Uniform scale.",
                     value=1.0,
                     uid=[0],
                     range=(0.0, 20.0, 0.01)
@@ -130,19 +132,19 @@ The transformation can be based on:
             enabled=lambda node: node.method.value == "manual",
         ),
         desc.ChoiceParam(
-            name='landmarksDescriberTypes',
-            label='Landmarks Describer Types',
-            description='Image describer types used to compute the mean of the point cloud. (only for "landmarks" method).',
-            value=['sift', 'dspsift', 'akaze'],
-            values=['sift', 'sift_float', 'sift_upright', 'dspsift', 'akaze', 'akaze_liop', 'akaze_mldb', 'cctag3', 'cctag4', 'sift_ocv', 'akaze_ocv', 'tag16h5', 'unknown'],
+            name="landmarksDescriberTypes",
+            label="Landmarks Describer Types",
+            description="Image describer types used to compute the mean of the point cloud (only for 'landmarks' method).",
+            value=["sift", "dspsift", "akaze"],
+            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv", "tag16h5", "unknown"],
             exclusive=False,
             uid=[0],
-            joinChar=',',
+            joinChar=",",
         ),
         desc.FloatParam(
-            name='scale',
-            label='Additional Scale',
-            description='Additional scale to apply.',
+            name="scale",
+            label="Additional Scale",
+            description="Additional scale to apply.",
             value=1.0,
             range=(0.0, 100.0, 0.1),
             uid=[0],
@@ -150,46 +152,46 @@ The transformation can be based on:
         desc.ListAttribute(
             name="markers",
             elementDesc=desc.GroupAttribute(name="markerAlign", label="Marker Align", description="", joinChar=":", groupDesc=[
-                desc.IntParam(name="markerId", label="Marker", description="Marker Id", value=0, uid=[0], range=(0, 32, 1)),
-                desc.GroupAttribute(name="markerCoord", label="Coord", description="", joinChar=",", groupDesc=[
-                    desc.FloatParam(name="x", label="x", description="", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
-                    desc.FloatParam(name="y", label="y", description="", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
-                    desc.FloatParam(name="z", label="z", description="", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
+                desc.IntParam(name="markerId", label="Marker", description="Marker ID.", value=0, uid=[0], range=(0, 32, 1)),
+                desc.GroupAttribute(name="markerCoord", label="Coord", description="Marker coordinates.", joinChar=",", groupDesc=[
+                    desc.FloatParam(name="x", label="x", description="X coordinates for the marker.", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
+                    desc.FloatParam(name="y", label="y", description="Y coordinates for the marker.", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
+                    desc.FloatParam(name="z", label="z", description="Z coordinates for the marker.", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
                 ])
             ]),
             label="Markers",
-            description="Markers alignment points",
+            description="Markers alignment points.",
         ),
         desc.BoolParam(
-            name='applyScale',
-            label='Scale',
-            description='Apply scale transformation.',
+            name="applyScale",
+            label="Scale",
+            description="Apply scale transformation.",
             value=True,
             uid=[0],
             enabled=lambda node: node.method.value != "manual",
         ),
         desc.BoolParam(
-            name='applyRotation',
-            label='Rotation',
-            description='Apply rotation transformation.',
+            name="applyRotation",
+            label="Rotation",
+            description="Apply rotation transformation.",
             value=True,
             uid=[0],
             enabled=lambda node: node.method.value != "manual",
         ),
         desc.BoolParam(
-            name='applyTranslation',
-            label='Translation',
-            description='Apply translation transformation.',
+            name="applyTranslation",
+            label="Translation",
+            description="Apply translation transformation.",
             value=True,
             uid=[0],
             enabled=lambda node: node.method.value != "manual",
         ),
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='''verbosity level (fatal, error, warning, info, debug, trace).''',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),
@@ -197,17 +199,17 @@ The transformation can be based on:
 
     outputs = [
         desc.File(
-            name='output',
-            label='SfMData File',
-            description='''Aligned SfMData file .''',
-            value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or 'sfmData') + '.abc',
+            name="output",
+            label="SfMData File",
+            description="Aligned SfMData file.",
+            value=lambda attr: desc.Node.internalFolder + (os.path.splitext(os.path.basename(attr.node.input.value))[0] or "sfmData") + ".abc",
             uid=[],
         ),
         desc.File(
-            name='outputViewsAndPoses',
-            label='Poses',
-            description='''Path to the output sfmdata file with cameras (views and poses).''',
-            value=desc.Node.internalFolder + 'cameras.sfm',
+            name="outputViewsAndPoses",
+            label="Poses",
+            description="Path to the output SfMData file with cameras (views and poses).",
+            value=desc.Node.internalFolder + "cameras.sfm",
             uid=[],
         ),
     ]

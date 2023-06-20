@@ -29,6 +29,7 @@ Panel {
     property bool readOnly: false
 
     signal removeImageRequest(var attribute)
+    signal allViewpointsCleared()
     signal filesDropped(var drop, var augmentSfm)
 
     title: "Image Gallery"
@@ -51,7 +52,7 @@ Panel {
     }
 
     property variant parsedIntrinsic
-    property int numberOfIntrinsics : m.intrinsics ? m.intrinsics.count : 0
+    property int numberOfIntrinsics: m.intrinsics ? m.intrinsics.count : 0
     onNumberOfIntrinsicsChanged: {
         parseIntr()
     }
@@ -280,8 +281,12 @@ Panel {
                     }
 
                     function sendRemoveRequest() {
-                        if(!readOnly)
+                        if (!readOnly) {
                             removeImageRequest(object)
+                            // If the last image has been removed, make sure the viewpoints and intrinsics are reset
+                            if (m.viewpoints.count === 0)
+                                allViewpointsCleared()
+                        }
                     }
 
                     onRemoveRequest: sendRemoveRequest()
@@ -572,8 +577,14 @@ Panel {
 
             ToolButton {
                 text: MaterialIcons.navigate_before
+                property string previousGroupName: {
+                    if (root.cameraInits && root.cameraInitIndex - 1 >= 0) {
+                        return root.cameraInits.at(root.cameraInitIndex - 1).label
+                    }
+                    return ""
+                }
                 font.family: MaterialIcons.fontFamily
-                ToolTip.text: "Previous Group (Alt+Left)"
+                ToolTip.text: "Previous Group (Alt+Left): " + previousGroupName
                 ToolTip.visible: hovered
                 enabled: nodesCB.currentIndex > 0
                 onClicked: nodesCB.decrementCurrentIndex()
@@ -600,11 +611,29 @@ Panel {
             Label { text: "/ " + (root.cameraInits ? root.cameraInits.count : "Unknown") }
             ToolButton {
                 text: MaterialIcons.navigate_next
+                property string nextGroupName: {
+                    if (root.cameraInits && root.cameraInitIndex + 1 < root.cameraInits.count) {
+                        return root.cameraInits.at(root.cameraInitIndex + 1).label
+                    }
+                    return ""
+                }
                 font.family: MaterialIcons.fontFamily
-                ToolTip.text: "Next Group (Alt+Right)"
+                ToolTip.text: "Next Group (Alt+Right): " + nextGroupName
                 ToolTip.visible: hovered
                 enabled: root.cameraInits ? nodesCB.currentIndex < root.cameraInits.count - 1 : false
                 onClicked: nodesCB.incrementCurrentIndex()
+            }
+        }
+
+        RowLayout {
+            Layout.fillHeight: false
+            Layout.alignment: Qt.AlignHCenter
+            visible: root.cameraInits ? root.cameraInits.count > 1 : false
+
+            Label {
+                id: groupName
+                text: root.cameraInit ? root.cameraInit.label : ""
+                font.pointSize: 8
             }
         }
     }

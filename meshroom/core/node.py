@@ -685,11 +685,15 @@ class BaseNode(BaseObject):
         pass
 
     def _computeUids(self):
-        """ Compute node uids by combining associated attributes' uids. """
+        """ Compute node UIDs by combining associated attributes' UIDs. """
+        # Get all the attributes associated to a given UID index, specified in node descriptions with "uid=[index]"
+        # For now, the only index that is used is "0", so there will be a single iteration of the loop below
         for uidIndex, associatedAttributes in self.attributesPerUid.items():
-            # uid is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this uid
+            # UID is computed by hashing the sorted list of tuple (name, value) of all attributes impacting this UID
             uidAttributes = [(a.getName(), a.uid(uidIndex)) for a in associatedAttributes if a.enabled and a.value != a.uidIgnoreValue]
             uidAttributes.sort()
+            # Adding the node type prevents ending up with two identical UIDs for different node types that have the exact same list of attributes
+            uidAttributes.append(self.nodeType)
             self._uids[uidIndex] = hashValue(uidAttributes)
 
     def _buildCmdVars(self):
@@ -1123,6 +1127,28 @@ class BaseNode(BaseObject):
         return (self.locked and self.getGlobalStatus() == Status.SUBMITTED and
                 self.globalExecMode == "LOCAL" and self.statusInThisSession())
 
+    def hasImageOutputAttribute(self):
+        """
+        Return True if at least one attribute has the 'image' semantic (and can thus be loaded in the 2D Viewer), False otherwise.
+        """
+        for attr in self._attributes:
+            if attr.enabled and attr.isOutput and attr.desc.semantic == "image":
+                return True
+        return False
+
+    def has3DOutputAttribute(self):
+        """
+        Return True if at least one attribute is a File that can be loaded in the 3D Viewer, False otherwise.
+        """
+        # List of supported extensions, taken from Viewer3DSettings
+        supportedExts = ['.obj', '.stl', '.fbx', '.gltf', '.abc']
+        for attr in self._attributes:
+            # If the attribute is a File attribute, it is an instance of str and can be iterated over
+            hasSupportedExt = isinstance(attr.value, str) and any(ext in attr.value for ext in supportedExts)
+            if attr.enabled and attr.isOutput and hasSupportedExt:
+                return True
+        return False
+
 
     name = Property(str, getName, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
@@ -1166,6 +1192,9 @@ class BaseNode(BaseObject):
     hasDuplicatesChanged = Signal()
     hasDuplicates = Property(bool, lambda self: self._hasDuplicates, notify=hasDuplicatesChanged)
 
+    outputAttrEnabledChanged = Signal()
+    hasImageOutput = Property(bool, hasImageOutputAttribute, notify=outputAttrEnabledChanged)
+    has3DOutput = Property(bool, has3DOutputAttribute, notify=outputAttrEnabledChanged)
 
 class Node(BaseNode):
     """
@@ -1192,6 +1221,8 @@ class Node(BaseNode):
 
         # List attributes per uid
         for attr in self._attributes:
+            if attr.isOutput and attr.desc.semantic == "image":
+                attr.enabledChanged.connect(self.outputAttrEnabledChanged)
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)
 
@@ -1460,6 +1491,8 @@ class CompatibilityNode(BaseNode):
             )
         elif self.issue == CompatibilityIssue.DescriptionConflict:
             return "Node attributes do not match node description."
+        elif self.issue == CompatibilityIssue.UidConflict:
+            return "Node UID differs from the expected one."
         else:
             return "Unknown error."
 
@@ -1550,7 +1583,7 @@ class CompatibilityNode(BaseNode):
     issueDetails = Property(str, issueDetails.fget, constant=True)
 
 
-def nodeFactory(nodeDict, name=None, template=False):
+def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
     """
     Create a node instance by deserializing the given node data.
     If the serialized data matches the corresponding node type description, a Node instance is created.
@@ -1559,6 +1592,8 @@ def nodeFactory(nodeDict, name=None, template=False):
     Args:
         nodeDict (dict): the serialization of the node
         name (str): (optional) the node's name
+        template (bool): (optional) true if the node is part of a template, false otherwise
+        uidConflict (bool): (optional) true if a UID conflict has been detected externally on that node
 
     Returns:
         BaseNode: the created node
@@ -1587,7 +1622,10 @@ def nodeFactory(nodeDict, name=None, template=False):
         # unknown node type
         compatibilityIssue = CompatibilityIssue.UnknownNodeType
 
-    if nodeDesc:
+    if uidConflict:
+        compatibilityIssue = CompatibilityIssue.UidConflict
+
+    if nodeDesc and not uidConflict:  # if uidConflict, there is no need to look for another compatibility issue
         # compare serialized node version with current node version
         currentNodeVersion = meshroom.core.nodeVersion(nodeDesc)
         # if both versions are available, check for incompatibility in major version

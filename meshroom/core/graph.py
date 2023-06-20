@@ -243,7 +243,7 @@ class Graph(BaseObject):
     @Slot(str)
     def load(self, filepath, setupProjectFile=True, importProject=False, publishOutputs=False):
         """
-        Load a meshroom graph ".mg" file.
+        Load a Meshroom graph ".mg" file.
 
         Args:
             filepath: project filepath to load
@@ -308,7 +308,38 @@ class Graph(BaseObject):
                 # Note: needs to be done at the end as it will trigger an updateInternals.
                 self._setFilepath(filepath)
 
+            # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the nodes'
+            # links have been resolved and their UID computations are all complete.
+            # It is now possible to check whether the UIDs stored in the graph file for each node correspond to the ones
+            # that were computed.
+            if not isTemplate:  # UIDs are not stored in templates
+                self._evaluateUidConflicts(graphData)
+                self._applyExpr()
+
         return True
+
+    def _evaluateUidConflicts(self, data):
+        """
+        Compare the UIDs of all the nodes in the graph with the UID that is expected in the graph file. If there
+        are mismatches, the nodes with the unexpected UID are replaced with "UidConflict" compatibility nodes.
+
+        Args:
+            data (dict): the dictionary containing all the nodes to import and their data
+        """
+        for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
+            node = self.node(nodeName)
+            # If the node is a CompatibilityNode, its UID is not available and there is no need to check it
+            if isinstance(node, CompatibilityNode):
+                continue
+
+            savedUid = nodeData.get("uids", "").get("0", "")  # Node's UID from the graph file
+            graphUid = node._uids.get(0)  # Node's UID from the graph itself
+            if savedUid != graphUid and graphUid is not None:
+                # Different UIDs, remove the existing node from the graph and replace it with a CompatibilityNode
+                logging.debug("UID conflict detected for {}".format(nodeName))
+                self.removeNode(nodeName)
+                n = nodeFactory(nodeData, nodeName, template=False, uidConflict=True)
+                self._addNode(n, nodeName)
 
     def updateImportedProject(self, data):
         """
@@ -1087,14 +1118,14 @@ class Graph(BaseObject):
 
     compatibilityNodes = Property(BaseObject, lambda self: self._compatibilityNodes, constant=True)
 
-    def dfsMaxEdgeLength(self, startNodes=None):
+    def dfsMaxEdgeLength(self, startNodes=None, dependenciesOnly=True):
         """
         :param startNodes: list of starting nodes. Use all leaves if empty.
         :return:
         """
         nodesStack = []
         edgesScore = defaultdict(lambda: 0)
-        visitor = Visitor(reverse=False, dependenciesOnly=False)
+        visitor = Visitor(reverse=False, dependenciesOnly=dependenciesOnly)
 
         def finishEdge(edge, graph):
             u, v = edge
@@ -1113,7 +1144,7 @@ class Graph(BaseObject):
         self.dfs(visitor=visitor, startNodes=startNodes, longestPathFirst=True)
         return edgesScore
 
-    def flowEdges(self, startNodes=None):
+    def flowEdges(self, startNodes=None, dependenciesOnly=True):
         """
         Return as few edges as possible, such that if there is a directed path from one vertex to another in the
         original graph, there is also such a path in the reduction.
@@ -1122,7 +1153,7 @@ class Graph(BaseObject):
         :return: the remaining edges after a transitive reduction of the graph.
         """
         flowEdges = []
-        edgesScore = self.dfsMaxEdgeLength(startNodes)
+        edgesScore = self.dfsMaxEdgeLength(startNodes, dependenciesOnly)
 
         for link, score in edgesScore.items():
             assert score != 0

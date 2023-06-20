@@ -28,36 +28,46 @@ Dev notes:
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
-            description='SfMData file input, image filenames or regex(es) on the image file path.\nsupported regex: \'#\' matches a single digit, \'@\' one or more digits, \'?\' one character and \'*\' zero or more.',
-            value='',
+            name="input",
+            label="Input",
+            description="SfMData file input, image filenames or regex(es) on the image file path.\n"
+                        "Supported regex: '#' matches a single digit, '@' one or more digits, '?' one character and '*' zero or more.",
+            value="",
             uid=[0],
         ),
         desc.IntParam(
-            name='maxCount',
-            label='Max count by image',
-            description='Max color charts count to detect in a single image',
+            name="maxCount",
+            label="Max Count By Image",
+            description="Maximum color charts count to detect in a single image.",
             value=1,
             range=(1, 3, 1),
             uid=[0],
             advanced=True,
         ),
         desc.BoolParam(
-            name='debug',
-            label='Debug',
-            description='If checked, debug data will be generated',
+            name="debug",
+            label="Debug",
+            description="If checked, debug data will be generated.",
             value=False,
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
+            exclusive=True,
+            uid=[],
         ),
     ]
 
     outputs = [
         desc.File(
-            name='outputData',
-            label='Color checker data',
-            description='Output position and colorimetric data extracted from detected color checkers in the images',
-            value=desc.Node.internalFolder + '/ccheckers.json',
+            name="outputData",
+            label="Color Checker Data",
+            description="Output position and colorimetric data extracted from detected color checkers in the images.",
+            value=desc.Node.internalFolder + "/ccheckers.json",
             uid=[],
         ),
     ]

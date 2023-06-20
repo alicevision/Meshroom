@@ -89,7 +89,11 @@ class ThumbnailCache(QObject):
         ThumbnailCache.cleaningThread.start()
 
         # Make sure the thumbnail directory exists before writing into it
-        os.makedirs(ThumbnailCache.thumbnailDir, exist_ok=True)
+        try:
+            os.makedirs(ThumbnailCache.thumbnailDir, exist_ok=True)
+        except OSError:
+            logging.warning(f'[ThumbnailCache] Failed to create directory: {ThumbnailCache.thumbnailDir}')
+            pass
 
     @staticmethod
     def clean():
@@ -217,6 +221,9 @@ class ThumbnailCache(QObject):
         """
         if not imgSource.isValid():
             return None
+
+        if not os.path.exists(ThumbnailCache.thumbnailDir):
+            return imgSource
 
         imgPath = imgSource.toLocalFile()
         path = ThumbnailCache.thumbnailPath(imgPath)

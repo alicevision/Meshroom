@@ -1,24 +1,28 @@
-__version__ = "1.1"
+__version__ = "1.0"
 
 from meshroom.core import desc
 
-import os.path
-
-
-class PanoramaPrepareImages(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_panoramaPrepareImages {allParams}'
+class ApplyCalibration(desc.AVCommandLineNode):
+    commandLine = 'aliceVision_applyCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
 
-    category = 'Panorama HDR'
+    category = 'Utils'
     documentation = '''
-Prepare images for Panorama pipeline: ensures that images orientations are coherent.
+Overwrite intrinsics with a calibrated intrinsic.
 '''
 
     inputs = [
         desc.File(
             name="input",
-            label="Input",
-            description="SfMData file.",
+            label="SfMData",
+            description="Input SfMData file.",
+            value="",
+            uid=[0],
+        ),
+        desc.File(
+            name="calibration",
+            label="Calibration",
+            description="Calibration SfMData file.",
             value="",
             uid=[0],
         ),
@@ -36,9 +40,9 @@ Prepare images for Panorama pipeline: ensures that images orientations are coher
     outputs = [
         desc.File(
             name="output",
-            label="SfMData",
-            description="Output SfMData file.",
-            value=lambda attr: desc.Node.internalFolder + os.path.basename(attr.node.input.value),
+            label="SMData",
+            description="Path to the output SfMData file.",
+            value=desc.Node.internalFolder + "sfmData.sfm",
             uid=[],
         ),
     ]

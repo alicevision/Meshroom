@@ -21,6 +21,14 @@ class ImageSegmentation(desc.AVCommandLineNode):
             uid=[0],
         ),
 
+        desc.File(
+            name="modelPath",
+            label="Segmentation model path",
+            description="Weights file for the internal model",
+            value="${ALICEVISION_SEMANTIC_SEGMENTATION_MODEL}",
+            uid=[0]
+        ),
+
         desc.ListAttribute(
             elementDesc=desc.StringParam(
                         name='className',

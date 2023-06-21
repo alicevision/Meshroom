@@ -1,4 +1,4 @@
-__version__ = "1.2"
+__version__ = "1.3"
 
 from meshroom.core import desc
 
@@ -43,6 +43,22 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             label="Masks Folder",
             description="Use masks to filter features. Filename should be the same or the image UID.",
             value="",
+            uid=[0],
+        ),
+        desc.ChoiceParam(
+            name="maskExtension",
+            label="Mask Extension",
+            description="File extension for masks.",
+            value="png",
+            values=["png", "exr", "jpg"],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name="maskInvert",
+            label="Invert Masks",
+            description="Invert mask values.",
+            value=False,
             uid=[0],
         ),
         desc.ChoiceParam(

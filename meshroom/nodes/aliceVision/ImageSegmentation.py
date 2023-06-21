@@ -60,5 +60,14 @@ Generate a mask with segmented labels for each pixel.
             value=desc.Node.internalFolder,
             uid=[],
         ),
+        desc.File(
+            name="masks",
+            label="Masks",
+            description="Generated segmentation masks.",
+            semantic="image",
+            value=desc.Node.internalFolder + "<VIEW_ID>.exr",
+            group="",
+            uid=[],
+        ),
     ]
 

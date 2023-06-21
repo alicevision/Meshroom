@@ -9,44 +9,44 @@ class ImageSegmentation(desc.AVCommandLineNode):
 
     category = 'Utils'
     documentation = '''
-    Generate a mask with segmented labels for each pixel
-    '''
+Generate a mask with segmented labels for each pixel.
+'''
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
-            description='SfMData file input',
-            value='',
+            name="input",
+            label="Input",
+            description="SfMData file input.",
+            value="",
             uid=[0],
         ),
 
         desc.File(
             name="modelPath",
-            label="Segmentation model path",
-            description="Weights file for the internal model",
+            label="Segmentation Model",
+            description="Weights file for the internal model.",
             value="${ALICEVISION_SEMANTIC_SEGMENTATION_MODEL}",
             uid=[0]
         ),
 
         desc.ListAttribute(
             elementDesc=desc.StringParam(
-                        name='className',
-                        label='Class Name',
-                        description='Class name to be added to the mask',
-                        value='classname',
-                        uid=[0]),
+                name="className",
+                label="Class Name",
+                description="Class name to be added to the mask.",
+                value="classname",
+                uid=[0]),
             name="validClasses",
-            label="Valid classes",
-            description="Classes names which are to be considered"
+            label="Classes",
+            description="Classes names which are to be considered."
         ),
 
         desc.ChoiceParam(
-            name='verboseLevel',
-            label='Verbose Level',
-            description='verbosity level (fatal, error, warning, info, debug, trace).',
-            value='info',
-            values=['fatal', 'error', 'warning', 'info', 'debug', 'trace'],
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            value="info",
+            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )
@@ -54,9 +54,9 @@ class ImageSegmentation(desc.AVCommandLineNode):
 
     outputs = [
         desc.File(
-            name='output',
-            label='Masks Folder',
-            description='Output path for the masks.',
+            name="output",
+            label="Masks Folder",
+            description="Output path for the masks.",
             value=desc.Node.internalFolder,
             uid=[],
         ),

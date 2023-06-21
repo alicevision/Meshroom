@@ -6,6 +6,7 @@ from meshroom.core import desc
 class ImageSegmentation(desc.AVCommandLineNode):
     commandLine = 'aliceVision_imageSegmentation {allParams}'
     size = desc.DynamicNodeSize('input')
+    gpu = desc.Level.NORMAL
 
     category = 'Utils'
     documentation = '''

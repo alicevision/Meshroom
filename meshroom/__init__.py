@@ -120,6 +120,7 @@ def setupEnvironment(backend=Backend.STANDALONE):
         qtPluginsDir = os.path.join(rootDir, "qtPlugins")
         sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
         voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.SIFT.tree")
+        sphereDetectionModel = os.path.join(aliceVisionShareDir, "sphereDetection_Mask-RCNN.onnx")
 
         env = {
             'PATH': aliceVisionBinDir,
@@ -134,7 +135,8 @@ def setupEnvironment(backend=Backend.STANDALONE):
         variables = {
             "ALICEVISION_ROOT": aliceVisionDir,
             "ALICEVISION_SENSOR_DB": sensorDBPath,
-            "ALICEVISION_VOCTREE": voctreePath
+            "ALICEVISION_VOCTREE": voctreePath,
+            "ALICEVISION_SPHERE_DETECTION_MODEL": sphereDetectionModel
         }
 
         for key, value in variables.items():

@@ -656,7 +656,7 @@ Convert or apply filtering to the input images.
             name="outputImages",
             label="Images",
             description="Output images.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value= outputImagesValueFunct,
             group="",  # do not export on the command line
             uid=[],

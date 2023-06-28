@@ -135,7 +135,7 @@ This allows to filter unstable points before starting the fusion of all depth ma
             name="depth",
             label="Depth Maps",
             description="Filtered depth maps.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap.exr",
             uid=[],
             group="",  # do not export on the command line
@@ -144,7 +144,7 @@ This allows to filter unstable points before starting the fusion of all depth ma
             name="sim",
             label="Sim Maps",
             description="Filtered sim maps.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<VIEW_ID>_simMap.exr",
             uid=[],
             group="",  # do not export on the command line

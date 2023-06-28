@@ -78,7 +78,7 @@ Merge all inputs coming from the PanoramaCompositing node.
             name="outputPanorama",
             label="Panorama",
             description="Output merged panorama image.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "panorama.{outputFileTypeValue}",
             uid=[],
         ),

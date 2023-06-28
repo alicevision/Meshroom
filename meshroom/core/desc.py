@@ -10,6 +10,12 @@ import ast
 import distutils.util
 import shlex
 
+class Semantic(Enum):
+    NONE = ""
+    IMAGE = "image"
+    MULTILINE = "multiline"
+    COLOR_HUE = "color/hue"
+
 class Attribute(BaseObject):
     """
     """
@@ -72,7 +78,7 @@ class Attribute(BaseObject):
 
 class ListAttribute(Attribute):
     """ A list of Attributes """
-    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' '):
+    def __init__(self, elementDesc, name, label, description, group='allParams', advanced=False, semantic=Semantic.NONE, enabled=True, joinChar=' '):
         """
         :param elementDesc: the Attribute description of elements to store in that list
         """
@@ -112,7 +118,7 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' ', brackets=None):
+    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, semantic=Semantic.NONE, enabled=True, joinChar=' ', brackets=None):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
@@ -213,7 +219,7 @@ class Param(Attribute):
 class File(Attribute):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True):
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic=Semantic.NONE, enabled=True):
         super(File, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
 
     def validateValue(self, value):
@@ -232,7 +238,7 @@ class File(Attribute):
 class BoolParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True):
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic=Semantic.NONE, enabled=True):
         super(BoolParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
 
     def validateValue(self, value):
@@ -253,7 +259,7 @@ class BoolParam(Param):
 class IntParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', enabled=True):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic=Semantic.NONE, enabled=True):
         self._range = range
         super(IntParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
 
@@ -275,7 +281,7 @@ class IntParam(Param):
 class FloatParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic='', enabled=True):
+    def __init__(self, name, label, description, value, range, uid, group='allParams', advanced=False, semantic=Semantic.NONE, enabled=True):
         self._range = range
         super(FloatParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
 
@@ -296,7 +302,7 @@ class FloatParam(Param):
 class ChoiceParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, semantic='', enabled=True):
+    def __init__(self, name, label, description, value, values, exclusive, uid, group='allParams', joinChar=' ', advanced=False, semantic=Semantic.NONE, enabled=True):
         assert values
         self._values = values
         self._exclusive = exclusive
@@ -334,7 +340,7 @@ class ChoiceParam(Param):
 class StringParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True, uidIgnoreValue=None):
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic=Semantic.NONE, enabled=True, uidIgnoreValue=None):
         super(StringParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled,
             uidIgnoreValue=uidIgnoreValue)
 
@@ -352,7 +358,7 @@ class StringParam(Param):
 class ColorParam(Param):
     """
     """
-    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic='', enabled=True):
+    def __init__(self, name, label, description, value, uid, group='allParams', advanced=False, semantic=Semantic.NONE, enabled=True):
         super(ColorParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced, semantic=semantic, enabled=enabled)
 
     def validateValue(self, value):
@@ -512,7 +518,7 @@ class Node(object):
                         "This is useful for development, we can invalidate the output of the node when we modify the code.\n"
                         "It is displayed in bold font in the invalidation/comment messages tooltip.",
             value="",
-            semantic="multiline",
+            semantic=Semantic.MULTILINE,
             uid=[0],
             advanced=True,
             uidIgnoreValue="",  # If the invalidation string is empty, it does not participate to the node's UID
@@ -523,7 +529,7 @@ class Node(object):
             description="User comments describing this specific node instance.\n"
                         "It is displayed in regular font in the invalidation/comment messages tooltip.",
             value="",
-            semantic="multiline",
+            semantic=Semantic.MULTILINE,
             uid=[],
         ),
         StringParam(

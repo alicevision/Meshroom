@@ -1132,7 +1132,7 @@ class BaseNode(BaseObject):
         Return True if at least one attribute has the 'image' semantic (and can thus be loaded in the 2D Viewer), False otherwise.
         """
         for attr in self._attributes:
-            if attr.enabled and attr.isOutput and attr.desc.semantic == "image":
+            if attr.enabled and attr.isOutput and attr.desc.semantic == desc.Semantic.IMAGE:
                 return True
         return False
 
@@ -1221,7 +1221,7 @@ class Node(BaseNode):
 
         # List attributes per uid
         for attr in self._attributes:
-            if attr.isOutput and attr.desc.semantic == "image":
+            if attr.isOutput and attr.desc.semantic == desc.Semantic.IMAGE:
                 attr.enabledChanged.connect(self.outputAttrEnabledChanged)
             for uidIndex in attr.attributeDesc.uid:
                 self.attributesPerUid[uidIndex].add(attr)

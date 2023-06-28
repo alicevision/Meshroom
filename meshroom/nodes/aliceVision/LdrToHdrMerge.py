@@ -92,15 +92,6 @@ Merge LDR images into HDR images.
             enabled= lambda node: (node.nbBrackets.value != 1 and not node.offsetRefBracketIndexEnabled.value),
         ),
         desc.FloatParam(
-            name='noiseThreshold',
-            label='Noise Threshold',
-            description='Value under which input channel value is considered as noise.',
-            value=0.05,
-            range=(0.0, 1.0, 0.001),
-            uid=[0],
-            enabled= lambda node: (node.nbBrackets.value != 1),
-        ),
-        desc.FloatParam(
             name='minSignificantValue',
             label='Minimum Significant Value',
             description='Minimum channel input value to be considered in advanced pixelwise merging.',

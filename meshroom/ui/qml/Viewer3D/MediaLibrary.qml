@@ -167,8 +167,12 @@ Entity {
 
             // Specific properties to the MESHING node (declared and initialized for every Entity anyway)
             property bool hasBoundingBox: {
-                if (nodeType === "Meshing" && currentNode.attribute("useBoundingBox")) // Can have a BoundingBox
+                if(nodeType === "Meshing" && currentNode.attribute("useBoundingBox")) // Can have a BoundingBox 
+                {
+                    if(currentNode.attribute("automaticBBoxValid"))
+                        return currentNode.attribute("useBoundingBox").value || currentNode.attribute("automaticBBoxValid").value
                     return currentNode.attribute("useBoundingBox").value
+                }
                 return false
             }
             onHasBoundingBoxChanged: model.hasBoundingBox = hasBoundingBox

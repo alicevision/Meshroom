@@ -20,6 +20,7 @@ from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListMod
 from meshroom.core import desc, stats, hashValue, nodeVersion, Version
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
+from meshroom.nodes.aliceVision.Meshing import boundingBoxMonitor
 
 
 def getWritingFilepath(filepath):
@@ -1323,6 +1324,19 @@ class Node(BaseNode):
             else:
                 self._chunks[0].range = desc.Range()
 
+class MeshingNode(Node):
+    def __init__(self, nodeType, position=None, parent=None, **kwargs):
+        super().__init__(nodeType, position, parent, **kwargs)
+        self.internalFolderChanged.connect(self.checkBBox)
+        self.globalStatusChanged.connect(self.checkBBox)
+
+    def checkBBox(self):
+        """Load automatic bounding box if needed."""
+        if self.useBoundingBox.value:
+            return
+        self.automaticBBoxValid.value = False
+        with boundingBoxMonitor(self, checkOnce=True) as thread:
+            pass
 
 class CompatibilityIssue(Enum):
     """
@@ -1564,7 +1578,8 @@ class CompatibilityNode(BaseNode):
                 # store internal attributes that could be used during node upgrade
                 commonInternalAttributes.append(attrName)
 
-        node = Node(self.nodeType, position=self.position)
+        cl = MeshingNode if self.nodeType=="Meshing" else Node
+        node = cl(self.nodeType, position=self.position)
         # convert attributes from a list of tuples into a dict
         attrValues = {key: value for (key, value) in self.inputs.items()}
         intAttrValues = {key: value for (key, value) in self.internalInputs.items()}
@@ -1685,7 +1700,8 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
                     break
 
     if compatibilityIssue is None:
-        node = Node(nodeType, position, **inputs)
+        cl = MeshingNode if nodeType=="Meshing" else Node
+        node = cl(nodeType, position, **inputs)
         node.setInternalAttributeValues(internalInputs)
     else:
         logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))

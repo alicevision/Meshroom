@@ -2,6 +2,11 @@ __version__ = "7.0"
 
 from meshroom.core import desc
 from meshroom.core.utils import VERBOSE_LEVEL
+import os
+import threading
+import psutil
+import time
+from contextlib import contextmanager
 
 
 class Meshing(desc.AVCommandLineNode):
@@ -536,4 +541,102 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             value="{cache}/{nodeType}/{uid0}/densePointCloud.abc",
             uid=[],
         ),
+        desc.BoolParam(
+            name="automaticBBoxValid",
+            label="",
+            description="Indicates if the Bounding Box has been "
+                "automatically computed and loaded.\n"
+                "Note that this param is always not enabled (not exposed in the UI) and "
+                "only used to indicate if the automatic bounding box should be displayed.",
+            value=False,
+            enabled=False,
+            uid=[],
+        ),
     ]
+
+    def processChunk(self, chunk):
+        with boundingBoxMonitor(chunk.node):
+            super(Meshing, self).processChunk(chunk)
+
+@contextmanager
+def boundingBoxMonitor(node, checkOnce=False):
+    """
+    Context manager to load the automatic bounding box.
+
+    Inputs
+    ------
+    node: MeshingNode
+        The considered meshing node
+    
+    checkOnce: bool
+        If `True`, the bounding box file will be checked continuously 
+        till created; if already exists, it will be ignored.
+        Otherwise, the file is checked only once and it will not be 
+        ignored if already created.
+    
+    Returns
+    -------
+    BoundingBoxThread
+    """
+    bboxThread = None
+    try:
+        if not node.useBoundingBox.value:
+            bboxThread = BoundingBoxThread(node, checkOnce)
+            bboxThread.start()
+        yield bboxThread
+    finally:
+        if bboxThread is not None:
+            bboxThread.stopRequest()
+            bboxThread.join()
+
+class BoundingBoxThread(threading.Thread):
+    """Thread that loads the bounding box."""
+    def __init__(self, node, checkOnce):
+        threading.Thread.__init__(self)
+        self.node = node
+        self.checkOnce = checkOnce
+        self.parentProc = psutil.Process()  # by default current process pid
+        self._stopFlag = threading.Event()
+        self.interval = 5 # wait duration before rechecking for bounding box file
+
+    def run(self):
+        self.startTime = time.time() if not self.checkOnce else -1
+        try:
+            while True:
+                updated = self.updateBoundingBox()
+                if updated or self.checkOnce:
+                    return
+                if self._stopFlag.wait(self.interval):
+                    # stopFlag has been set
+                    # try to update boundingBox one last time and exit main loop
+                    if self.parentProc.is_running():
+                        self.updateBoundingBox()
+                    return
+        except (KeyboardInterrupt, SystemError, GeneratorExit, psutil.NoSuchProcess):
+            pass
+
+    def updateBoundingBox(self) -> bool:
+        """Tries to load the bounding box.
+        
+        Returns
+        -------
+        bool: indicates if loading was successful
+        """
+        file = os.path.join(os.path.dirname(self.node.outputMesh.value), "boundingBox.txt")
+        if not os.path.exists(file) or os.path.getmtime(file) < self.startTime:
+            return False
+        with open(file, 'r') as stream:
+            # file contains (in order, one value per line):
+            # translation: x, y, z ; rotation: x, y, z ; scale: x, y, z
+            data = list(map(float, stream.read().strip().splitlines()))
+            i = 0
+            for vec in self.node.boundingBox.value:
+                for x in vec.value:
+                    x.value = data[i]
+                    i += 1
+        self.node.automaticBBoxValid.value = True
+        return True
+
+    def stopRequest(self):
+        """ Request the thread to exit as soon as possible. """
+        self._stopFlag.set()

@@ -14,12 +14,15 @@ Provided in AliceVision source tree: {ALICEVISION_REPOSITORY}/src/aliceVision/se
 It can be downloaded [here](https://gitlab.com/alicevision/trainedVocabularyTreeData/raw/master/vlfeat_K80L3.SIFT.tree).
 * sphere detection model (optional): for the automated sphere detection in stereo photometry.
 It can be downloaded [here](https://gitlab.com/alicevision/SphereDetectionModel/-/raw/main/sphereDetection_Mask-RCNN.onnx).
+* semantic segmentation model (optional): for the semantic segmentation of objects.
+It can be downloaded [here](https://gitlab.com/alicevision/semanticSegmentationModel/-/raw/main/fcn_resnet50.onnx).
 
 Environment variables must be set for Meshroom to find those files:
 ```
 ALICEVISION_SENSOR_DB=/path/to/database
 ALICEVISION_VOCTREE=/path/to/voctree
 ALICEVISION_SPHERE_DETECTION_MODEL=/path/to/detection/model
+ALICEVISION_SEMANTIC_SEGMENTATION_MODEL=/path/to/segmentation/model
 ALICEVISION_ROOT=/path/to/AliceVision/install/directory
 ```
 

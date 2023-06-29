@@ -34,7 +34,9 @@ FocusScope {
             // Metadata from viewpoint attribute
             // Read from the reconstruction object
             if (_reconstruction) {
-                return getViewpointMetadata(_reconstruction.selectedViewId);
+                let vp = getViewpoint(_reconstruction.selectedViewId);
+                let metadata = vp ? vp.childAttribute("metadata").value : "";
+                return JSON.parse(metadata);
             }
             return {};
         }
@@ -196,70 +198,74 @@ FocusScope {
         displayedNode = null;
     }
 
-    function getImageFile() {
-        // entry point for getting the image file URL
-        if (useExternal) {
-            return sourceExternal;
-        }
-        if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
-            return Filepath.stringToUrl(getViewpointAttribute("path",_reconstruction.pickedViewId));
-        }
+    function getViewpoint(viewId) {
+        // Get viewpoint from cameraInit with matching id
+        // This requires to loop over all viewpoints
 
-        var viewId = -1;
-        var intrinsicId = -1;
-        var poseId = -1;
-        var fileName = "";
-        if (_reconstruction) {
-            viewId = _reconstruction.selectedViewId;
-            intrinsicId = getViewpointAttribute("intrinsicId", viewId);
-            poseId = getViewpointAttribute("poseId", viewId);
-            fileName = Filepath.removeExtension(Filepath.basename(getViewpointAttribute("path", viewId)));
-        }
-        var patterns = {"<VIEW_ID>": viewId, "<INTRINSIC_ID>": intrinsicId, "<POSE_ID>": poseId, "<FILENAME>": fileName}
-        return getFileAttributePath(displayedNode, outputAttribute.name,patterns);
-    }
-
-    function getFileAttributePath(node, attrName, patterns) {
-        // get output attribute with matching name
-        // and parse with the patterns present in the patterns dict
-        if (!node)
-            return "";
-        for (var i = 0; i < node.attributes.count; i++) {
-            var attr = node.attributes.at(i);
-            if (attr.name === attrName) {
-                let path = String(attr.value)
-                for (var key in patterns) {
-                    if (patterns.hasOwnProperty(key)) {
-                        path = path.replace(key, patterns[key])
-                    }
-                }
-                return Filepath.stringToUrl(path);
-            }
-        }
-        return "";
-    }
-
-    function getViewpointAttribute(attributeName, viewId) {
-        // get viewpoint from cameraInit with matching id and return the attribute corresponding to the attributeName
         for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
             var vp = _reconstruction.viewpoints.at(i);
             if (vp.childAttribute("viewId").value == viewId) {
-                return vp.childAttribute(attributeName).value;
+                return vp;
             }
         }
+
         return undefined;
     }
 
-    function getViewpointMetadata(viewId) {
-        // get viewpoint from cameraInit with matching id
-        // and get its image filepath
-        for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
-            var vp = _reconstruction.viewpoints.at(i);
-            if (vp.childAttribute("viewId").value == viewId) {
-                return JSON.parse(vp.childAttribute("metadata").value);
+    function getAttributeByName(node, attrName) {
+        // Get attribute from given node by name
+        // This requires to loop over all atributes
+
+        for (var i = 0; i < node.attributes.count; i++) {
+            var attr = node.attributes.at(i);
+            if (attr.name == attrName) {
+                return attr;
             }
         }
-        return {};
+
+        return undefined;
+    }
+
+    function resolve(path, vp) {
+        // Resolve dynamic path that depends on viewpoint
+
+        let replacements = {
+            "<VIEW_ID>": vp.childAttribute("viewId").value,
+            "<INTRINSIC_ID>": vp.childAttribute("intrinsicId").value,
+            "<POSE_ID>": vp.childAttribute("poseId").value,
+            "<FILENAME>": Filepath.removeExtension(Filepath.basename(vp.childAttribute("path").value)),
+        };
+
+        let resolved = path;
+        for (let key in replacements) {
+            resolved = resolved.replace(key, replacements[key]);
+        }
+
+        return resolved;
+    }
+
+    function getImageFile() {
+        // Entry point for getting the image file URL
+
+        if (useExternal) {
+            return sourceExternal;
+        }
+
+        if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
+            let vp = getViewpoint(_reconstruction.pickedViewId);
+            let path = vp ? vp.childAttribute("path").value : "";
+            return Filepath.stringToUrl(path);
+        }
+
+        if (_reconstruction) {
+            let vp = getViewpoint(_reconstruction.selectedViewId);
+            let attr = getAttributeByName(displayedNode, outputAttribute.name);
+            let path = attr ? attr.value : "";
+            let resolved = vp ? resolve(path, vp) : "";
+            return Filepath.stringToUrl(resolved);
+        }
+
+        return undefined;
     }
 
     onDisplayedNodeChanged: {
@@ -436,7 +442,7 @@ FocusScope {
                                 'canBeHovered': false,
                                 'idView': Qt.binding(function() { return (_reconstruction ? _reconstruction.selectedViewId : -1); }),
                                 'cropFisheye': false,
-                                'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? _reconstruction.allImagePaths() : []) }),
+                                'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? _reconstruction.allImagePaths() : []); }),
                                 'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction && (!displayedNode || outputAttribute.name == "gallery"); })
                                 })
                           } else {

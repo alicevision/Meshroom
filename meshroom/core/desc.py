@@ -626,7 +626,7 @@ class CommandLineNode(Node):
                 chunk.saveStatusFile()
                 print(' - commandLine: {}'.format(cmd))
                 print(' - logFile: {}'.format(chunk.logFile))
-                chunk.subprocess = psutil.Popen(shlex.split(cmd), stdout=logF, stderr=logF)
+                chunk.subprocess = psutil.Popen(shlex.split(cmd), stdout=logF, stderr=logF, cwd=chunk.node.internalFolder)
 
                 # store process static info into the status file
                 # chunk.status.env = node.proc.environ()

@@ -112,12 +112,13 @@ class ListAttribute(Attribute):
 
 class GroupAttribute(Attribute):
     """ A macro Attribute composed of several Attributes """
-    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' '):
+    def __init__(self, groupDesc, name, label, description, group='allParams', advanced=False, semantic='', enabled=True, joinChar=' ', brackets=None):
         """
         :param groupDesc: the description of the Attributes composing this group
         """
         self._groupDesc = groupDesc
         self._joinChar = joinChar
+        self._brackets = brackets
         super(GroupAttribute, self).__init__(name=name, label=label, description=description, value={}, uid=(), group=group, advanced=advanced, semantic=semantic, enabled=enabled)
 
     groupDesc = Property(Variant, lambda self: self._groupDesc, constant=True)
@@ -198,6 +199,7 @@ class GroupAttribute(Attribute):
 
     uid = Property(Variant, retrieveChildrenUids, constant=True)
     joinChar = Property(str, lambda self: self._joinChar, constant=True)
+    brackets = Property(str, lambda self: self._brackets, constant=True)
 
 
 class Param(Attribute):

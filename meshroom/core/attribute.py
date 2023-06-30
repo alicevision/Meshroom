@@ -581,9 +581,19 @@ class GroupAttribute(Attribute):
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault}
 
     def getValueStr(self):
+        # add brackets if requested
+        strBegin = ''
+        strEnd = ''
+        if self.attributeDesc.brackets is not None:
+            if len(self.attributeDesc.brackets) == 2:
+                strBegin = self.attributeDesc.brackets[0]
+                strEnd = self.attributeDesc.brackets[1]
+            else:
+                raise AttributeError("Incorrect brackets on GroupAttribute: {}".format(self.attributeDesc.brackets))
+            
         # sort values based on child attributes group description order
         sortedSubValues = [self._value.get(attr.name).getValueStr() for attr in self.attributeDesc.groupDesc]
-        return self.attributeDesc.joinChar.join(sortedSubValues)
+        return strBegin + self.attributeDesc.joinChar.join(sortedSubValues) + strEnd
 
     def updateInternals(self):
         super(GroupAttribute, self).updateInternals()

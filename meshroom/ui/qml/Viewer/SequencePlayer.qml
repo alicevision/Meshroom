@@ -25,8 +25,8 @@ FloatingPane {
         let objs = []
         for (let i = 0; i < vps.count; i++) {
             objs.push({
-                viewId: m.viewpoints.at(i).childAttribute("viewId").value,
-                filename: Filepath.basename(m.viewpoints.at(i).childAttribute("path").value)
+                viewId: vps.at(i).childAttribute("viewId").value,
+                filename: Filepath.basename(vps.at(i).childAttribute("path").value)
             });
         }
         objs.sort((a, b) => { return a.filename < b.filename ? -1 : 1; });

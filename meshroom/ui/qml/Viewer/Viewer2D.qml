@@ -233,6 +233,7 @@ FocusScope {
             "<VIEW_ID>": vp.childAttribute("viewId").value,
             "<INTRINSIC_ID>": vp.childAttribute("intrinsicId").value,
             "<POSE_ID>": vp.childAttribute("poseId").value,
+            "<PATH>": vp.childAttribute("path").value,
             "<FILENAME>": Filepath.removeExtension(Filepath.basename(vp.childAttribute("path").value)),
         };
 
@@ -258,7 +259,7 @@ FocusScope {
         }
 
         if (_reconstruction) {
-            let vp = getViewpoint(_reconstruction.selectedViewId);
+            let vp = getViewpoint(_reconstruction.pickedViewId);
             let attr = getAttributeByName(displayedNode, outputAttribute.name);
             let path = attr ? attr.value : "";
             let resolved = vp ? resolve(path, vp) : "";
@@ -266,6 +267,39 @@ FocusScope {
         }
 
         return undefined;
+    }
+
+    function buildOrderedSequence(path_template) {
+        let objs = []
+        for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
+            objs.push(_reconstruction.viewpoints.at(i));
+        }
+        objs.sort((a, b) => { return a.childAttribute("path").value < b.childAttribute("path").value ? -1 : 1; });
+
+        let seq = [];
+        for (let i = 0; i < objs.length; i++) {
+            seq.push(resolve(path_template, objs[i]));
+        }
+
+        return seq;
+    }
+
+    function getSequence() {
+        if (useExternal) {
+            return [];
+        }
+
+        if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
+            return buildOrderedSequence("<PATH>");
+        }
+
+        if (_reconstruction) {
+            let attr = getAttributeByName(displayedNode, outputAttribute.name);
+            let path_template = attr ? attr.value : "";
+            return buildOrderedSequence(path_template);
+        }
+
+        return [];
     }
 
     onDisplayedNodeChanged: {
@@ -442,8 +476,8 @@ FocusScope {
                                 'canBeHovered': false,
                                 'idView': Qt.binding(function() { return (_reconstruction ? _reconstruction.selectedViewId : -1); }),
                                 'cropFisheye': false,
-                                'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? _reconstruction.allImagePaths() : []); }),
-                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction && (!displayedNode || outputAttribute.name == "gallery"); })
+                                'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? getSequence() : []); }),
+                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction; })
                                 })
                           } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

@@ -91,6 +91,7 @@ def setupCamera(intrinsic, pose):
 
     bpy.context.scene.render.resolution_x = int(intrinsic['width'])
     bpy.context.scene.render.resolution_y = int(intrinsic['height'])
+    bpy.context.scene.render.pixel_aspect_x = float(intrinsic['pixelRatio'])
 
     camData.sensor_width = float(intrinsic['sensorWidth'])
     camData.lens = float(intrinsic['focalLength'])

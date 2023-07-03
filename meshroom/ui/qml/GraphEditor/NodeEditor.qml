@@ -86,6 +86,12 @@ Panel {
             }
         }
 
+        SearchBar {
+            id: searchBar
+            width: 150
+            enabled: tabBar.currentIndex === 0 || tabBar.currentIndex === 5
+        }
+
         MaterialToolButton {
             text: MaterialIcons.more_vert
             font.pointSize: 11
@@ -96,32 +102,79 @@ Panel {
             Menu {
                 id: settingsMenu
                 y: parent.height
-                MenuItem {
-                    id: advancedToggle
-                    text: "Advanced Attributes"
-                    MaterialLabel {
-                        anchors.right: parent.right; anchors.rightMargin: parent.padding;
-                        text: MaterialIcons.build
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.pointSize: 8
+                Menu {
+                    id: filterAttributesMenu
+                    title: "Filter Attributes"
+                    RowLayout {
+                        CheckBox {
+                            id: outputToggle
+                            text: "Output"
+                            checkable: true
+                            checked: GraphEditorSettings.showOutputAttributes
+                            onClicked: GraphEditorSettings.showOutputAttributes = !GraphEditorSettings.showOutputAttributes 
+                            enabled: tabBar.currentIndex === 0
+                        }
+                        CheckBox {
+                            id: inputToggle
+                            text: "Input"
+                            checkable: true
+                            checked: GraphEditorSettings.showInputAttributes
+                            onClicked: GraphEditorSettings.showInputAttributes = !GraphEditorSettings.showInputAttributes 
+                            enabled: tabBar.currentIndex === 0
+                        }
                     }
-                    checkable: true
-                    checked: GraphEditorSettings.showAdvancedAttributes
-                    onClicked: GraphEditorSettings.showAdvancedAttributes = !GraphEditorSettings.showAdvancedAttributes
-                }
-                MenuItem {
-                    id: modifiedToggle
-                    text: "Only Modified Attributes"
-                    MaterialLabel {
-                        anchors.right: parent.right; anchors.rightMargin: parent.padding;
-                        text: MaterialIcons.edit
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.pointSize: 8
+                    MenuSeparator {}
+                    RowLayout {
+                        CheckBox {
+                            id: defaultToggle
+                            text: "Default"
+                            checkable: true
+                            checked: GraphEditorSettings.showDefaultAttributes
+                            onClicked: GraphEditorSettings.showDefaultAttributes = !GraphEditorSettings.showDefaultAttributes 
+                            enabled: tabBar.currentIndex === 0
+                        }
+                        CheckBox {
+                            id: modifiedToggle
+                            text: "Modified"
+                            checkable: true
+                            checked: GraphEditorSettings.showModifiedAttributes
+                            onClicked: GraphEditorSettings.showModifiedAttributes = !GraphEditorSettings.showModifiedAttributes 
+                            enabled: tabBar.currentIndex === 0
+                        }
                     }
-                    checkable: true
-                    checked: GraphEditorSettings.showOnlyModifiedAttributes
-                    onClicked: GraphEditorSettings.showOnlyModifiedAttributes = !GraphEditorSettings.showOnlyModifiedAttributes 
-                    enabled: tabBar.currentIndex === 0
+                    MenuSeparator {}
+                    RowLayout {
+                        CheckBox {
+                            id: linkToggle
+                            text: "Link"
+                            checkable: true
+                            checked: GraphEditorSettings.showLinkAttributes
+                            onClicked: GraphEditorSettings.showLinkAttributes = !GraphEditorSettings.showLinkAttributes 
+                            enabled: tabBar.currentIndex === 0
+                        }
+                        CheckBox {
+                            id: notLinkToggle
+                            text: "Not Link"
+                            checkable: true
+                            checked: GraphEditorSettings.showNotLinkAttributes
+                            onClicked: GraphEditorSettings.showNotLinkAttributes = !GraphEditorSettings.showNotLinkAttributes 
+                            enabled: tabBar.currentIndex === 0
+                        }
+                    }
+                    MenuSeparator {}
+                    CheckBox {
+                        id: advancedToggle
+                        text: "Advanced"
+                        MaterialLabel {
+                            anchors.right: parent.right; anchors.rightMargin: parent.padding;
+                            text: MaterialIcons.build
+                            anchors.verticalCenter: parent.verticalCenter
+                            font.pointSize: 8
+                        }
+                        checkable: true
+                        checked: GraphEditorSettings.showAdvancedAttributes
+                        onClicked: GraphEditorSettings.showAdvancedAttributes = !GraphEditorSettings.showAdvancedAttributes
+                    }
                 }
                 MenuItem {
                     text: "Open Cache Folder"
@@ -207,6 +260,7 @@ Panel {
                             readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: root.attributeDoubleClicked(mouse, attribute)
                             onUpgradeRequest: root.upgradeRequest()
+                            filterText: searchBar.text
                         }
 
                         Loader {
@@ -273,6 +327,7 @@ Panel {
                             readOnly: root.readOnly || root.isCompatibilityNode
                             onAttributeDoubleClicked: root.attributeDoubleClicked(mouse, attribute)
                             onUpgradeRequest: root.upgradeRequest()
+                            filterText: searchBar.text
                         }
                     }
                 }

@@ -111,6 +111,10 @@ class Attribute(BaseObject):
 
     def getLabel(self):
         return self._label
+    
+    @Slot(str, result=bool)
+    def matchText(self, text):
+        return self.fullLabel.lower().find(text.lower()) > -1
 
     def getFullLabel(self):
         """ Full Label includes the name of all parent groups, e.g. 'groupLabel subGroupLabel Label' """
@@ -349,6 +353,7 @@ class Attribute(BaseObject):
     isOutput = Property(bool, isOutput.fget, constant=True)
     isLinkChanged = Signal()
     isLink = Property(bool, isLink.fget, notify=isLinkChanged)
+    isLinkNested = isLink
     hasOutputConnectionsChanged = Signal()
     hasOutputConnections = Property(bool, hasOutputConnections.fget, notify=hasOutputConnectionsChanged)
     isDefault = Property(bool, _isDefault, notify=valueChanged)
@@ -502,10 +507,19 @@ class ListAttribute(Attribute):
         for attr in self._value:
             attr.updateInternals()
 
+    @property
+    def isLinkNested(self):
+        """ Whether the attribute or any of its elements is a link to another attribute. """
+        # note: directly use self.node.graph._edges to avoid using the property that may become invalid at some point
+        return self.isLink \
+            or self.node.graph and self.isInput and self.node.graph._edges \
+            and any(v in self.node.graph._edges.keys() for v in self._value)
+
     # Override value property setter
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)
     isDefault = Property(bool, _isDefault, notify=Attribute.valueChanged)
     baseType = Property(str, getBaseType, constant=True)
+    isLinkNested = Property(bool, isLinkNested.fget)
 
 
 class GroupAttribute(Attribute):
@@ -621,6 +635,10 @@ class GroupAttribute(Attribute):
         super(GroupAttribute, self).updateInternals()
         for attr in self._value:
             attr.updateInternals()
+
+    @Slot(str, result=bool)
+    def matchText(self, text):
+        return super().matchText(text) or any(c.matchText(text) for c in self._value)
 
     # Override value property
     value = Property(Variant, Attribute._get_value, _set_value, notify=Attribute.valueChanged)

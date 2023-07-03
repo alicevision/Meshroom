@@ -172,273 +172,290 @@ FloatingPane {
                 checked: true
             }
 
-            ListView {
-                id: mediaListView
+            ColumnLayout {
                 anchors.fill: parent
-                clip: true
-                model: mediaLibrary.model
-                spacing: 4
 
-                ScrollBar.vertical: ScrollBar { id: scrollBar }
-
-                currentIndex: -1
-
-                Connections {
-                    target: uigraph
-                    function onSelectedNodeChanged() {
-                        mediaListView.currentIndex = -1
-                    }
+                SearchBar {
+                    id: searchBar
+                    Layout.minimumWidth: 150
+                    Layout.fillWidth: true
+                    Layout.rightMargin: 10
+                    Layout.leftMargin: 10
                 }
 
-                Connections {
-                    target: mediaLibrary
-                    function onLoadRequest(idx) {
-                        mediaListView.positionViewAtIndex(idx, ListView.Visible)
-                    }
-                }
+                ListView {
+                    id: mediaListView
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    clip: true
+                    spacing: 4
 
-                delegate: MouseArea {
-                    id: mediaDelegate
-                    // add mediaLibrary.count in the binding to ensure 'entity'
-                    // is re-evaluated when mediaLibrary delegates are modified
-                    property bool loading: model.status === SceneLoader.Loading
-                    property bool hovered:  model.attribute ? (uigraph ? uigraph.hoveredNode === model.attribute.node : false) : containsMouse
-                    property bool isSelectedNode: model.attribute ? (uigraph ? uigraph.selectedNode === model.attribute.node : false) : false
+                    ScrollBar.vertical: ScrollBar { id: scrollBar }
 
-                    onIsSelectedNodeChanged: updateCurrentIndex()
+                    currentIndex: -1
 
-                    function updateCurrentIndex() {
-                        if(isSelectedNode) { mediaListView.currentIndex = index }
-                    }
-
-                    height: childrenRect.height
-                    width: {
-                        if (parent != null)
-                            return parent.width - scrollBar.width
-                        return undefined
-                    }
-
-                    hoverEnabled: true
-                    onEntered: { if(model.attribute) uigraph.hoveredNode = model.attribute.node }
-                    onExited: { if(model.attribute) uigraph.hoveredNode = null }
-                    onClicked: {
-                        if(model.attribute)
-                            uigraph.selectedNode = model.attribute.node;
-                        else
-                            uigraph.selectedNode = null;
-                        if(mouse.button == Qt.RightButton)
-                            contextMenu.popup();
-                        mediaListView.currentIndex = index;
-                    }
-                    onDoubleClicked: {
-                        model.visible = true;
-                        nodeActivated(model.attribute.node);
-                    }
-
-                    RowLayout {
-                        width: parent.width
-                        spacing: 2
-
-                        property string src: model.source
-                        onSrcChanged: focusAnim.restart()
-
-                        Connections {
-                            target: mediaListView
-                            function onCountChanged() {
-                                mediaDelegate.updateCurrentIndex()
-                            }
+                    Connections {
+                        target: uigraph
+                        function onSelectedNodeChanged() {
+                            mediaListView.currentIndex = -1
                         }
+                    }
 
-                        // Current/selected element indicator
-                        Rectangle {
-                            Layout.fillHeight: true
-                            width: 2
-                            color: {
-                                if(mediaListView.currentIndex == index || mediaDelegate.isSelectedNode)
-                                    return label.palette.highlight;
-                                if(mediaDelegate.hovered)
-                                    return Qt.darker(label.palette.highlight, 1.5);
-                                return "transparent";
-                            }
+                    Connections {
+                        target: mediaLibrary
+                        function onLoadRequest(idx) {
+                            mediaListView.positionViewAtIndex(idx, ListView.Visible)
                         }
+                    }
 
-                        // Media visibility/loading control
-                        MaterialToolButton {
-                            Layout.alignment: Qt.AlignTop
-                            Layout.fillHeight: true
-                            text: model.visible ? MaterialIcons.visibility : MaterialIcons.visibility_off
-                            font.pointSize: 10
-                            ToolTip.text: model.visible ? "Hide" : model.requested ? "Show" : model.valid ? "Load and Show" : "Load and Show when Available"
-                            flat: true
-                            opacity: model.visible ? 1.0 : 0.6
+                    model: SortFilterDelegateModel {
+                        model: mediaLibrary.model
+                        sortRole: "label"
+                        filters: [{role: "label", value: searchBar.text}]
+                        delegate: MouseArea {
+                            id: mediaDelegate
+                            // add mediaLibrary.count in the binding to ensure 'entity'
+                            // is re-evaluated when mediaLibrary delegates are modified
+                            property bool loading: model.status === SceneLoader.Loading
+                            property bool hovered:  model.attribute ? (uigraph ? uigraph.hoveredNode === model.attribute.node : false) : containsMouse
+                            property bool isSelectedNode: model.attribute ? (uigraph ? uigraph.selectedNode === model.attribute.node : false) : false
+
+                            onIsSelectedNodeChanged: updateCurrentIndex()
+
+                            function updateCurrentIndex() {
+                                if(isSelectedNode) { mediaListView.currentIndex = index }
+                            }
+
+                            height: childrenRect.height
+                            width: {
+                                if (parent != null)
+                                    return parent.width - scrollBar.width
+                                return undefined
+                            }
+
+                            hoverEnabled: true
+                            onEntered: { if(model.attribute) uigraph.hoveredNode = model.attribute.node }
+                            onExited: { if(model.attribute) uigraph.hoveredNode = null }
                             onClicked: {
-                                if(hoverArea.modifiers & Qt.ControlModifier)
-                                    mediaLibrary.solo(index);
+                                if(model.attribute)
+                                    uigraph.selectedNode = model.attribute.node;
                                 else
-                                    model.visible = !model.visible
+                                    uigraph.selectedNode = null;
+                                if(mouse.button == Qt.RightButton)
+                                    contextMenu.popup();
+                                mediaListView.currentIndex = index;
                             }
-                            // Handle modifiers on button click
-                            MouseArea {
-                                id: hoverArea
-                                property int modifiers
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                onPositionChanged: modifiers = mouse.modifiers
-                                onExited: modifiers = Qt.NoModifier
-                                onPressed: {
-                                    modifiers = mouse.modifiers;
-                                    mouse.accepted = false;
-                                }
+                            onDoubleClicked: {
+                                model.visible = true;
+                                nodeActivated(model.attribute.node);
                             }
-                        }
 
-                        // BoundingBox visibility (if meshing node)
-                        MaterialToolButton {
-                            visible: model.hasBoundingBox
-                            enabled: model.visible
-                            Layout.alignment: Qt.AlignTop
-                            Layout.fillHeight: true
-                            text: MaterialIcons.transform
-                            font.pointSize: 10
-                            ToolTip.text: model.displayBoundingBox ? "Hide BBox" : "Show BBox"
-                            flat: true
-                            opacity: model.visible ? (model.displayBoundingBox ? 1.0 : 0.6) : 0.6
-                            onClicked: {
-                                model.displayBoundingBox = !model.displayBoundingBox
-                            }
-                        }
-
-                        // Transform visibility (if SfMTransform node)
-                        MaterialToolButton {
-                            visible: model.hasTransform
-                            enabled: model.visible
-                            Layout.alignment: Qt.AlignTop
-                            Layout.fillHeight: true
-                            text: MaterialIcons._3d_rotation
-                            font.pointSize: 10
-                            ToolTip.text: model.displayTransform ? "Hide Gizmo" : "Show Gizmo"
-                            flat: true
-                            opacity: model.visible ? (model.displayTransform ? 1.0 : 0.6) : 0.6
-                            onClicked: {
-                                model.displayTransform = !model.displayTransform
-                            }
-                        }
-
-                        // Media label and info
-                        Item {
-                            implicitHeight: childrenRect.height
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignTop
-                            ColumnLayout {
-                                id: centralLayout
+                            RowLayout {
                                 width: parent.width
-                                spacing: 1
+                                spacing: 2
 
-                                Label {
-                                    id: label
+                                property string src: model.source
+                                onSrcChanged: focusAnim.restart()
+
+                                Connections {
+                                    target: mediaListView
+                                    function onCountChanged() {
+                                        mediaDelegate.updateCurrentIndex()
+                                    }
+                                }
+
+                                // Current/selected element indicator
+                                Rectangle {
+                                    Layout.fillHeight: true
+                                    width: 2
+                                    color: {
+                                        if(mediaListView.currentIndex == index || mediaDelegate.isSelectedNode)
+                                            return label.palette.highlight;
+                                        if(mediaDelegate.hovered)
+                                            return Qt.darker(label.palette.highlight, 1.5);
+                                        return "transparent";
+                                    }
+                                }
+
+                                // Media visibility/loading control
+                                MaterialToolButton {
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.fillHeight: true
+                                    text: model.visible ? MaterialIcons.visibility : MaterialIcons.visibility_off
+                                    font.pointSize: 10
+                                    ToolTip.text: model.visible ? "Hide" : model.requested ? "Show" : model.valid ? "Load and Show" : "Load and Show when Available"
+                                    flat: true
+                                    opacity: model.visible ? 1.0 : 0.6
+                                    onClicked: {
+                                        if(hoverArea.modifiers & Qt.ControlModifier)
+                                            mediaLibrary.solo(index);
+                                        else
+                                            model.visible = !model.visible
+                                    }
+                                    // Handle modifiers on button click
+                                    MouseArea {
+                                        id: hoverArea
+                                        property int modifiers
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        onPositionChanged: modifiers = mouse.modifiers
+                                        onExited: modifiers = Qt.NoModifier
+                                        onPressed: {
+                                            modifiers = mouse.modifiers;
+                                            mouse.accepted = false;
+                                        }
+                                    }
+                                }
+
+                                // BoundingBox visibility (if meshing node)
+                                MaterialToolButton {
+                                    visible: model.hasBoundingBox
+                                    enabled: model.visible
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.fillHeight: true
+                                    text: MaterialIcons.transform
+                                    font.pointSize: 10
+                                    ToolTip.text: model.displayBoundingBox ? "Hide BBox" : "Show BBox"
+                                    flat: true
+                                    opacity: model.visible ? (model.displayBoundingBox ? 1.0 : 0.6) : 0.6
+                                    onClicked: {
+                                        model.displayBoundingBox = !model.displayBoundingBox
+                                    }
+                                }
+
+                                // Transform visibility (if SfMTransform node)
+                                MaterialToolButton {
+                                    visible: model.hasTransform
+                                    enabled: model.visible
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.fillHeight: true
+                                    text: MaterialIcons._3d_rotation
+                                    font.pointSize: 10
+                                    ToolTip.text: model.displayTransform ? "Hide Gizmo" : "Show Gizmo"
+                                    flat: true
+                                    opacity: model.visible ? (model.displayTransform ? 1.0 : 0.6) : 0.6
+                                    onClicked: {
+                                        model.displayTransform = !model.displayTransform
+                                    }
+                                }
+
+                                // Media label and info
+                                Item {
+                                    implicitHeight: childrenRect.height
                                     Layout.fillWidth: true
-                                    leftPadding: 0
-                                    rightPadding: 0
-                                    topPadding: 3
-                                    bottomPadding: topPadding
-                                    text: model.label
-                                    opacity: model.valid ? 1.0 : 0.6
-                                    elide: Text.ElideMiddle
-                                    font.weight: mediaListView.currentIndex === index ? Font.DemiBold : Font.Normal
-                                    background: Rectangle {
-                                        Connections {
-                                            target: mediaLibrary
-                                            function onLoadRequest(idx) {
-                                                if(idx === index)
-                                                    focusAnim.restart()
+                                    Layout.alignment: Qt.AlignTop
+                                    ColumnLayout {
+                                        id: centralLayout
+                                        width: parent.width
+                                        spacing: 1
+
+                                        Label {
+                                            id: label
+                                            Layout.fillWidth: true
+                                            leftPadding: 0
+                                            rightPadding: 0
+                                            topPadding: 3
+                                            bottomPadding: topPadding
+                                            text: model.label
+                                            opacity: model.valid ? 1.0 : 0.6
+                                            elide: Text.ElideMiddle
+                                            font.weight: mediaListView.currentIndex === index ? Font.DemiBold : Font.Normal
+                                            background: Rectangle {
+                                                Connections {
+                                                    target: mediaLibrary
+                                                    function onLoadRequest(idx) {
+                                                        if(idx === index)
+                                                            focusAnim.restart()
+                                                    }
+                                                }
+                                                ColorAnimation on color {
+                                                    id: focusAnim
+                                                    from: label.palette.highlight
+                                                    to: "transparent"
+                                                    duration: 2000
+                                                }
                                             }
                                         }
-                                        ColorAnimation on color {
-                                            id: focusAnim
-                                            from: label.palette.highlight
-                                            to: "transparent"
-                                            duration: 2000
+                                        Item {
+                                            visible: infoButton.checked
+                                            Layout.fillWidth: true
+                                            implicitHeight: childrenRect.height
+                                            Flow {
+                                                width: parent.width
+                                                spacing: 4
+                                                visible: model.status === SceneLoader.Ready
+                                                RowLayout {
+                                                    spacing: 1
+                                                    visible: model.vertexCount
+                                                    MaterialLabel {  text: MaterialIcons.grain }
+                                                    Label { text: Format.intToString(model.vertexCount) }
+                                                }
+                                                RowLayout {
+                                                    spacing: 1
+                                                    visible: model.faceCount
+                                                    MaterialLabel { text: MaterialIcons.details; rotation: -180 }
+                                                    Label { text: Format.intToString(model.faceCount) }
+                                                }
+                                                RowLayout {
+                                                    spacing: 1
+                                                    visible: model.cameraCount
+                                                    MaterialLabel { text: MaterialIcons.videocam }
+                                                    Label { text: model.cameraCount }
+                                                }
+                                                RowLayout {
+                                                    spacing: 1
+                                                    visible: model.textureCount
+                                                    MaterialLabel { text: MaterialIcons.texture }
+                                                    Label { text: model.textureCount }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Menu {
+                                        id: contextMenu
+                                        MenuItem {
+                                            text: "Open Containing Folder"
+                                            enabled: model.valid
+                                            onTriggered: Qt.openUrlExternally(Filepath.dirname(model.source))
+                                        }
+                                        MenuItem {
+                                            text: "Copy Path"
+                                            onTriggered: Clipboard.setText(Filepath.normpath(model.source))
+                                        }
+                                        MenuSeparator {}
+                                        MenuItem {
+                                            text: model.requested ? "Unload Media" : "Load Media"
+                                            enabled: model.valid
+                                            onTriggered: model.requested = !model.requested
                                         }
                                     }
                                 }
-                                Item {
-                                    visible: infoButton.checked
-                                    Layout.fillWidth: true
-                                    implicitHeight: childrenRect.height
-                                    Flow {
-                                        width: parent.width
-                                        spacing: 4
-                                        visible: model.status === SceneLoader.Ready
-                                        RowLayout {
-                                            spacing: 1
-                                            visible: model.vertexCount
-                                            MaterialLabel {  text: MaterialIcons.grain }
-                                            Label { text: Format.intToString(model.vertexCount) }
-                                        }
-                                        RowLayout {
-                                            spacing: 1
-                                            visible: model.faceCount
-                                            MaterialLabel { text: MaterialIcons.details; rotation: -180 }
-                                            Label { text: Format.intToString(model.faceCount) }
-                                        }
-                                        RowLayout {
-                                            spacing: 1
-                                            visible: model.cameraCount
-                                            MaterialLabel { text: MaterialIcons.videocam }
-                                            Label { text: model.cameraCount }
-                                        }
-                                        RowLayout {
-                                            spacing: 1
-                                            visible: model.textureCount
-                                            MaterialLabel { text: MaterialIcons.texture }
-                                            Label { text: model.textureCount }
-                                        }
-                                    }
+
+                                // Remove media from library button
+                                MaterialToolButton {
+                                    id: removeButton
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.fillHeight: true
+
+                                    visible: !loading && mediaDelegate.containsMouse
+                                    text: MaterialIcons.clear
+                                    font.pointSize: 10
+
+                                    ToolTip.text: "Remove"
+                                    ToolTip.delay: 500
+                                    onClicked: mediaLibrary.remove(index)
+                                }
+
+                                // Media loading indicator
+                                BusyIndicator {
+                                    visible: loading
+                                    running: visible
+                                    padding: removeButton.padding
+                                    implicitHeight: implicitWidth
+                                    implicitWidth: removeButton.width
                                 }
                             }
-
-                            Menu {
-                                id: contextMenu
-                                MenuItem {
-                                    text: "Open Containing Folder"
-                                    enabled: model.valid
-                                    onTriggered: Qt.openUrlExternally(Filepath.dirname(model.source))
-                                }
-                                MenuItem {
-                                    text: "Copy Path"
-                                    onTriggered: Clipboard.setText(Filepath.normpath(model.source))
-                                }
-                                MenuSeparator {}
-                                MenuItem {
-                                    text: model.requested ? "Unload Media" : "Load Media"
-                                    enabled: model.valid
-                                    onTriggered: model.requested = !model.requested
-                                }
-                            }
-                        }
-
-                        // Remove media from library button
-                        MaterialToolButton {
-                            id: removeButton
-                            Layout.alignment: Qt.AlignTop
-                            Layout.fillHeight: true
-
-                            visible: !loading && mediaDelegate.containsMouse
-                            text: MaterialIcons.clear
-                            font.pointSize: 10
-
-                            ToolTip.text: "Remove"
-                            ToolTip.delay: 500
-                            onClicked: mediaLibrary.remove(index)
-                        }
-
-                        // Media loading indicator
-                        BusyIndicator {
-                            visible: loading
-                            running: visible
-                            padding: removeButton.padding
-                            implicitHeight: implicitWidth
-                            implicitWidth: removeButton.width
                         }
                     }
                 }

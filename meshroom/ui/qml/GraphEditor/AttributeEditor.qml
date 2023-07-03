@@ -13,6 +13,7 @@ ListView {
     property bool readOnly: false
     property int labelWidth: 180
     property bool objectsHideable: true
+    property string filterText: ""
 
     signal upgradeRequest()
     signal attributeDoubleClicked(var mouse, var attribute)
@@ -24,21 +25,21 @@ ListView {
     ScrollBar.vertical: ScrollBar { id: scrollBar }
 
     delegate: Loader {
-        active: {
-            object.enabled
-            && (!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)
-            && (
-                !(object.isDefault || object.isOutput || object.isLink)
-                || !GraphEditorSettings.showOnlyModifiedAttributes
-                || !objectsHideable
-                )
-        }
+        active: object.enabled && (
+            !objectsHideable
+            || ((!object.desc.advanced || GraphEditorSettings.showAdvancedAttributes)
+            && (object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
+            && (object.isOutput && GraphEditorSettings.showOutputAttributes || !object.isOutput && GraphEditorSettings.showInputAttributes)
+            && (object.isLinkNested && GraphEditorSettings.showLinkAttributes || !object.isLink && GraphEditorSettings.showNotLinkAttributes))
+        ) && object.matchText(filterText)
         visible: active
 
         sourceComponent: AttributeItemDelegate {
             width: root.width - scrollBar.width
             readOnly: root.readOnly
             labelWidth: root.labelWidth
+            filterText: root.filterText
+            objectsHideable: root.objectsHideable
             attribute: object
             onDoubleClicked: root.attributeDoubleClicked(mouse, attr)
         }

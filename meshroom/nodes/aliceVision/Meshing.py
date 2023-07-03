@@ -541,17 +541,6 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             value="{cache}/{nodeType}/{uid0}/densePointCloud.abc",
             uid=[],
         ),
-        desc.BoolParam(
-            name="automaticBBoxValid",
-            label="",
-            description="Indicates if the Bounding Box has been "
-                "automatically computed and loaded.\n"
-                "Note that this param is always not enabled (not exposed in the UI) and "
-                "only used to indicate if the automatic bounding box should be displayed.",
-            value=False,
-            enabled=False,
-            uid=[],
-        ),
     ]
 
     def processChunk(self, chunk):
@@ -634,7 +623,7 @@ class BoundingBoxThread(threading.Thread):
                 for x in vec.value:
                     x.value = data[i]
                     i += 1
-        self.node.automaticBBoxValid.value = True
+        self.node.automaticBBoxValid = True
         return True
 
     def stopRequest(self):

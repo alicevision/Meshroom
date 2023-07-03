@@ -270,6 +270,9 @@ FocusScope {
     }
 
     function buildOrderedSequence(path_template) {
+        // Resolve the path template on the sequence of viewpoints
+        // ordered by path
+
         let objs = []
         for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
             objs.push(_reconstruction.viewpoints.at(i));
@@ -285,6 +288,8 @@ FocusScope {
     }
 
     function getSequence() {
+        // Entry point for getting the current image sequence
+
         if (useExternal) {
             return [];
         }
@@ -1344,6 +1349,7 @@ FocusScope {
                     id: sequencePlayer
                     anchors.margins: 0
                     Layout.fillWidth: true
+                    sortedViewIds: (root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? buildOrderedSequence("<VIEW_ID>") : []
                     viewer: floatImageViewerLoader.status === Loader.Ready ? floatImageViewerLoader.item : null
                     visible: root.enableSequencePlayer
                     enabled: root.enableSequencePlayer

@@ -19,46 +19,26 @@ import Utils 1.0
 FloatingPane {
     id: root
 
-    // Utility function to sort a set of viewpoints
-    // using their corresponding image filenames
-    function sequence(vps) {
-        let objs = []
-        for (let i = 0; i < vps.count; i++) {
-            objs.push({
-                viewId: vps.at(i).childAttribute("viewId").value,
-                filename: Filepath.basename(vps.at(i).childAttribute("path").value)
-            });
-        }
-        objs.sort((a, b) => { return a.filename < b.filename ? -1 : 1; });
-
-        let viewIds = [];
-        for (let i = 0; i < objs.length; i++) {
-            viewIds.push(objs[i].viewId);
-        }
-
-        return viewIds;
-    }
+    // Exposed properties
+    property var sortedViewIds: []
+    property var viewer: null
 
     function updateReconstructionView() {
-        if (_reconstruction && m.frame >= 0 && m.frame < m.sortedViewIds.length) {
+        if (_reconstruction && m.frame >= 0 && m.frame < sortedViewIds.length) {
             if (m.syncSelected) {
-                _reconstruction.selectedViewId = m.sortedViewIds[m.frame];
+                _reconstruction.selectedViewId = sortedViewIds[m.frame];
             } else {
-                _reconstruction.pickedViewId = m.sortedViewIds[m.frame];
+                _reconstruction.pickedViewId = sortedViewIds[m.frame];
             }
         }
     }
 
     // Sequence player model:
-    // - ordered set of viewpoints
     // - current frame
     // - data related to automatic sequence playing
     QtObject {
         id: m
 
-        property var currentCameraInit: _reconstruction && _reconstruction.cameraInit ? _reconstruction.cameraInit : undefined
-        property var viewpoints: currentCameraInit ? currentCameraInit.attribute('viewpoints').value : undefined
-        property var sortedViewIds: viewpoints ? sequence(viewpoints) : []
         property int frame: 0
         property bool syncSelected: true
         property bool playing: false
@@ -78,16 +58,13 @@ FloatingPane {
         }
     }
 
-    // Exposed properties
-    property var viewer: null
-
     // Update the frame property
     // when the selected view ID is changed externally
     Connections {
         target: _reconstruction
         onSelectedViewIdChanged: {
-            for (let idx = 0; idx < m.sortedViewIds.length; idx++) {
-                if (_reconstruction.selectedViewId == m.sortedViewIds[idx] && (m.frame != idx)) {
+            for (let idx = 0; idx < sortedViewIds.length; idx++) {
+                if (_reconstruction.selectedViewId == sortedViewIds[idx] && (m.frame != idx)) {
                     m.frame = idx;
                 }
             }
@@ -106,7 +83,7 @@ FloatingPane {
 
         onTriggered: {
             let nextIndex = m.frame + 1;
-            if (nextIndex == m.sortedViewIds.length) {
+            if (nextIndex == sortedViewIds.length) {
                 if (m.repeat) {
                     m.frame = 0;
                     return;
@@ -191,7 +168,7 @@ FloatingPane {
             live: true
 
             from: 0
-            to: m.sortedViewIds.length - 1
+            to: sortedViewIds.length - 1
 
             onValueChanged: {
                 m.frame = value;
@@ -220,7 +197,7 @@ FloatingPane {
                     id: cacheView
 
                     model: viewer ? viewer.cachedFrames : []
-                    property real frameLength: m.sortedViewIds.length > 0 ? frameSlider.width / m.sortedViewIds.length : 0
+                    property real frameLength: sortedViewIds.length > 0 ? frameSlider.width / sortedViewIds.length : 0
 
                     Rectangle {
                         x: modelData.x * cacheView.frameLength

@@ -22,7 +22,8 @@ test -d docker || (
 test -d dl || \
         mkdir dl
 test -f dl/qt.run || \
-        wget "https://download.qt.io/archive/qt/5.14/5.14.1/qt-opensource-linux-x64-5.14.1.run" -O "dl/qt.run" --no-check-certificate
+        wget --no-check-certificate "https://download.qt.io/official_releases/online_installers/qt-unified-linux-x64-online.run" -O "dl/qt.run"
+
 
 # DEPENDENCIES
 

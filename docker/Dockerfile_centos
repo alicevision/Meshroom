@@ -61,6 +61,9 @@ RUN source scl_source enable rh-python36 && \
            ${MESHROOM_BUNDLE}/lib/PySide2/rcc \
            ${MESHROOM_BUNDLE}/lib/PySide2/designer
 
+# Copy missing libassimpsceneimport.so
+COPY dl/libassimpsceneimport.so ${MESHROOM_BUNDLE}/lib/PySide2/Qt/plugins/sceneparsers
+
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine
 RUN yum -y install openssh-server xauth mesa-dri-drivers && \

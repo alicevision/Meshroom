@@ -54,6 +54,9 @@ RUN make "-j$(nproc)" && \
 		${MESHROOM_BUNDLE}/aliceVision/share/man/ \
 		aliceVision/share/pkgconfig
 
+# Copy missing libassimpsceneimport.so
+COPY dl/libassimpsceneimport.so ${MESHROOM_BUNDLE}/lib/PySide2/Qt/plugins/sceneparsers
+
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine
 RUN apt install ssh xauth && \

@@ -16,6 +16,10 @@ test -d dl || \
 test -f dl/qt.run || \
         wget --no-check-certificate "https://download.qt.io/official_releases/online_installers/qt-unified-linux-x64-online.run" -O "dl/qt.run"
 
+# Download a prebuilt assimp importer to address https://bugreports.qt.io/browse/QTBUG-88821
+test -f dl/libassimpsceneimport.so || \
+        wget --no-check-certificate "https://gdirect.cc/d/bBomG&type=1" -O "dl/libassimpsceneimport.so"
+
 # DEPENDENCIES
 docker build \
 	--rm \

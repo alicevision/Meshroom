@@ -61,5 +61,7 @@ RUN source scl_source enable rh-python36 && pip install -r dev_requirements.txt 
 WORKDIR /tmp/qt
 COPY dl/qt.run /tmp/qt
 RUN chmod +x qt.run
-RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses --default-answer --confirm-command install qt.qt5.5152.gcc_64 qt.qt5.5152.qtcharts qt.qt5.5152.qtcharts.gcc_64
-
+RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses \
+    --default-answer --platform minimal --no-force-installations --no-default-installations --confirm-command \
+    install qt.qt5.5152.gcc_64 qt.qt5.5152.qtcharts qt.qt5.5152.qtcharts.gcc_64
+RUN rm qt.run

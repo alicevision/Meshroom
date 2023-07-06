@@ -1,32 +1,32 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.2.0",
+        "releaseVersion": "2023.3.0-develop",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
+            "FeatureMatching": "2.0",
+            "ConvertSfMFormat": "2.0",
+            "PrepareDenseScene": "3.0",
             "Meshing": "7.0",
             "KeyframeSelection": "4.1",
-            "DistortionCalibration": "3.0",
-            "ScenePreview": "1.0",
-            "DepthMapFilter": "3.0",
-            "DepthMap": "4.0",
-            "CheckerboardDetection": "1.0",
-            "FeatureExtraction": "1.2",
-            "CameraInit": "9.0",
-            "FeatureMatching": "2.0",
-            "Texturing": "6.0",
-            "Publish": "1.3",
-            "StructureFromMotion": "3.1",
-            "ConvertSfMFormat": "2.0",
-            "MeshDecimate": "1.0",
-            "ApplyCalibration": "1.0",
+            "FeatureExtraction": "1.3",
             "MeshFiltering": "3.0",
+            "DepthMap": "4.0",
             "ImageMatching": "2.0",
-            "ImageMatchingMultiSfM": "1.0",
+            "DistortionCalibration": "3.0",
+            "Texturing": "6.0",
+            "DepthMapFilter": "3.0",
+            "CameraInit": "9.0",
+            "ScenePreview": "1.0",
+            "StructureFromMotion": "3.1",
+            "ExportDistortion": "1.0",
+            "ApplyCalibration": "1.0",
+            "Publish": "1.3",
             "ExportAnimatedCamera": "2.0",
-            "PrepareDenseScene": "3.0",
-            "ExportDistortion": "1.0"
+            "MeshDecimate": "1.0",
+            "ImageMatchingMultiSfM": "1.0",
+            "CheckerboardDetection": "1.0"
         }
     },
     "graph": {
@@ -38,7 +38,8 @@
             ],
             "inputs": {},
             "internalInputs": {
-                "label": "InitShot"
+                "label": "InitShot",
+                "color": "#575963"
             }
         },
         "FeatureExtraction_1": {
@@ -49,6 +50,9 @@
             ],
             "inputs": {
                 "input": "{ApplyCalibration_1.output}"
+            },
+            "internalInputs": {
+                "color": "#575963"
             }
         },
         "FeatureMatching_1": {
@@ -64,7 +68,8 @@
                 "describerTypes": "{FeatureExtraction_1.describerTypes}"
             },
             "internalInputs": {
-                "label": "FeatureMatchingKeyframes"
+                "label": "FeatureMatchingKeyframes",
+                "color": "#575963"
             }
         },
         "ImageMatchingMultiSfM_1": {
@@ -82,6 +87,9 @@
                 "method": "VocabularyTree",
                 "matchingMode": "a/b",
                 "nbMatches": 20
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "ImageMatching_1": {
@@ -98,7 +106,8 @@
                 "method": "Exhaustive"
             },
             "internalInputs": {
-                "label": "ImageMatchingKeyframes"
+                "label": "ImageMatchingKeyframes",
+                "color": "#575963"
             }
         },
         "KeyframeSelection_1": {
@@ -111,6 +120,9 @@
                 "inputPaths": [
                     "{ApplyCalibration_1.output}"
                 ]
+            },
+            "internalInputs": {
+                "color": "#575963"
             }
         },
         "MeshDecimate_1": {
@@ -122,6 +134,9 @@
             "inputs": {
                 "input": "{MeshFiltering_2.outputMesh}",
                 "simplificationFactor": 0.05
+            },
+            "internalInputs": {
+                "color": "#4c594c"
             }
         },
         "Publish_1": {
@@ -149,6 +164,9 @@
                 "input": "{StructureFromMotion_1.output}",
                 "sfmDataFilter": "{ImageMatchingMultiSfM_2.inputB}",
                 "exportUndistortedImages": true
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "CheckerboardDetection_1": {
@@ -161,6 +179,9 @@
                 "input": "{CameraInit_2.output}",
                 "useNestedGrids": true,
                 "exportDebugImages": true
+            },
+            "internalInputs": {
+                "color": "#302e2e"
             }
         },
         "DistortionCalibration_1": {
@@ -172,6 +193,9 @@
             "inputs": {
                 "input": "{CheckerboardDetection_1.input}",
                 "checkerboards": "{CheckerboardDetection_1.output}"
+            },
+            "internalInputs": {
+                "color": "#302e2e"
             }
         },
         "ExportDistortion_1": {
@@ -182,6 +206,9 @@
             ],
             "inputs": {
                 "input": "{DistortionCalibration_1.output}"
+            },
+            "internalInputs": {
+                "color": "#302e2e"
             }
         },
         "ApplyCalibration_1": {
@@ -193,6 +220,9 @@
             "inputs": {
                 "input": "{CameraInit_1.output}",
                 "calibration": "{DistortionCalibration_1.output}"
+            },
+            "internalInputs": {
+                "color": "#575963"
             }
         },
         "ScenePreview_1": {
@@ -205,6 +235,9 @@
                 "cameras": "{ConvertSfMFormat_1.output}",
                 "model": "{MeshDecimate_1.output}",
                 "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}"
+            },
+            "internalInputs": {
+                "color": "#4c594c"
             }
         },
         "ConvertSfMFormat_1": {
@@ -219,6 +252,9 @@
                 "describerTypes": "{StructureFromMotion_1.describerTypes}",
                 "structure": false,
                 "observations": false
+            },
+            "internalInputs": {
+                "color": "#4c594c"
             }
         },
         "StructureFromMotion_1": {
@@ -244,7 +280,8 @@
                 "minAngleForLandmark": 0.5
             },
             "internalInputs": {
-                "comment": "Estimate cameras parameters for the complete camera tracking sequence."
+                "comment": "Estimate cameras parameters for the complete camera tracking sequence.",
+                "color": "#80766f"
             }
         },
         "StructureFromMotion_2": {
@@ -265,7 +302,8 @@
             },
             "internalInputs": {
                 "comment": "Solve all keyframes first.",
-                "label": "StructureFromMotionKeyframes"
+                "label": "StructureFromMotionKeyframes",
+                "color": "#575963"
             }
         },
         "FeatureMatching_2": {
@@ -280,7 +318,8 @@
                 "imagePairsList": "{ImageMatching_2.output}"
             },
             "internalInputs": {
-                "label": "FeatureMatchingAllFrames"
+                "label": "FeatureMatchingAllFrames",
+                "color": "#80766f"
             }
         },
         "ImageMatching_2": {
@@ -296,6 +335,9 @@
                 ],
                 "method": "Sequential",
                 "nbNeighbors": 20
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "CameraInit_2": {
@@ -306,7 +348,8 @@
             ],
             "inputs": {},
             "internalInputs": {
-                "label": "InitLensGrid"
+                "label": "InitLensGrid",
+                "color": "#302e2e"
             }
         },
         "Texturing_2": {
@@ -319,6 +362,9 @@
                 "input": "{Meshing_2.output}",
                 "imagesFolder": "{DepthMap_2.imagesFolder}",
                 "inputMesh": "{MeshFiltering_2.outputMesh}"
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "Meshing_2": {
@@ -330,6 +376,9 @@
             "inputs": {
                 "input": "{DepthMapFilter_2.input}",
                 "depthMapsFolder": "{DepthMapFilter_2.output}"
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "DepthMapFilter_2": {
@@ -341,6 +390,9 @@
             "inputs": {
                 "input": "{DepthMap_2.input}",
                 "depthMapsFolder": "{DepthMap_2.output}"
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "FeatureExtraction_2": {
@@ -351,6 +403,9 @@
             ],
             "inputs": {
                 "input": "{CameraInit_3.output}"
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "PrepareDenseScene_2": {
@@ -361,6 +416,9 @@
             ],
             "inputs": {
                 "input": "{StructureFromMotion_3.output}"
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "DepthMap_2": {
@@ -372,6 +430,9 @@
             "inputs": {
                 "input": "{PrepareDenseScene_2.input}",
                 "imagesFolder": "{PrepareDenseScene_2.output}"
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "MeshFiltering_2": {
@@ -382,6 +443,9 @@
             ],
             "inputs": {
                 "inputMesh": "{Meshing_2.outputMesh}"
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "ImageMatchingMultiSfM_2": {
@@ -398,6 +462,9 @@
                 ],
                 "method": "VocabularyTree",
                 "matchingMode": "a/b"
+            },
+            "internalInputs": {
+                "color": "#575963"
             }
         },
         "FeatureMatching_3": {
@@ -413,7 +480,8 @@
                 "describerTypes": "{FeatureExtraction_1.describerTypes}"
             },
             "internalInputs": {
-                "label": "FeatureMatchingFramesToKeyframes"
+                "label": "FeatureMatchingFramesToKeyframes",
+                "color": "#80766f"
             }
         },
         "ImageMatching_3": {
@@ -427,6 +495,9 @@
                 "featuresFolders": [
                     "{FeatureExtraction_2.output}"
                 ]
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "StructureFromMotion_3": {
@@ -442,6 +513,9 @@
                     "{FeatureMatching_4.output}"
                 ],
                 "describerTypes": "{FeatureMatching_4.describerTypes}"
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "CameraInit_3": {
@@ -452,7 +526,8 @@
             ],
             "inputs": {},
             "internalInputs": {
-                "label": "InitPhotogrammetry"
+                "label": "InitPhotogrammetry",
+                "color": "#384a55"
             }
         },
         "FeatureMatching_4": {
@@ -466,6 +541,9 @@
                 "featuresFolders": "{ImageMatching_3.featuresFolders}",
                 "imagePairsList": "{ImageMatching_3.output}",
                 "describerTypes": "{FeatureExtraction_2.describerTypes}"
+            },
+            "internalInputs": {
+                "color": "#384a55"
             }
         },
         "FeatureMatching_5": {
@@ -479,6 +557,9 @@
                 "featuresFolders": "{ImageMatchingMultiSfM_2.featuresFolders}",
                 "imagePairsList": "{ImageMatchingMultiSfM_2.output}",
                 "describerTypes": "{FeatureExtraction_1.describerTypes}"
+            },
+            "internalInputs": {
+                "color": "#575963"
             }
         }
     }

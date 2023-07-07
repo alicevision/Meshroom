@@ -36,8 +36,13 @@ pip install -r requirements.txt -r dev_requirements.txt
 
 ### Qt/PySide
 * PySide >= 5.15.2.1
-Warning: The plugin AssimpSceneParser is missing from pre-built binaries, so you need to add it manually (from an older version for instance).
-See https://bugreports.qt.io/browse/QTBUG-88821
+Warning: The plugin AssimpSceneParser is missing from pre-built binaries, so it needs to be added manually (see https://bugreports.qt.io/browse/QTBUG-88821).
+It can either be taken from an older version, or directly downloaded from here:
+  * Linux: [libassimpsceneimport.so](https://gdirect.cc/d/bBomG&type=1)
+  * Windows: [assimpsceneimport.dll](https://gdirect.cc/d/JXD82&type=1)
+
+and then copied into PySide's installation folder, in `plugins/sceneparsers`.
+
 
 ### Qt Plugins
 Additional Qt plugins can be built to extend Meshroom UI features. They can be found on separate repositories,

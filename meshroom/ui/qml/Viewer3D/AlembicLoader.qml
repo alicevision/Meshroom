@@ -1,8 +1,8 @@
 import AlembicEntity 2.0
-import QtQuick 2.9
-import Qt3D.Core 2.1
-import Qt3D.Render 2.1
-import Qt3D.Extras 2.1
+import QtQuick 2.15
+import Qt3D.Core 2.15
+import Qt3D.Render 2.15
+import Qt3D.Extras 2.15
 
 /**
  * Support for Alembic files in Qt3d.

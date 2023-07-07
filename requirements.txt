@@ -1,5 +1,5 @@
 # runtime
 psutil>=5.6.7
-PySide2==5.14.1
+PySide2==5.15.2.1
 markdown==2.6.11
 requests==2.27.1

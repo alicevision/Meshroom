@@ -1,6 +1,6 @@
-import QtQuick 2.7
-import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.11
 import Controls 1.0
 import Utils 1.0
 import MaterialIcons 2.2
@@ -67,10 +67,11 @@ Item {
 
     /// Duplicate a node and optionally all the following ones
     function duplicateNode(duplicateFollowingNodes) {
+        var nodes
         if (duplicateFollowingNodes) {
-            var nodes = uigraph.duplicateNodesFrom(uigraph.selectedNodes)
+            nodes = uigraph.duplicateNodesFrom(uigraph.selectedNodes)
         } else {
-            var nodes = uigraph.duplicateNodes(uigraph.selectedNodes)
+            nodes = uigraph.duplicateNodes(uigraph.selectedNodes)
         }
         uigraph.clearNodeSelection()
         uigraph.selectedNode = nodes[0]
@@ -93,7 +94,7 @@ Item {
         var finalPosition = undefined
         var centerPosition = false
         if (mouseArea.containsMouse) {
-            if (uigraph.hoveredNode != null) {
+            if (uigraph.hoveredNode !== null) {
                 var node = nodeDelegate(uigraph.hoveredNode)
                 finalPosition = Qt.point(node.mousePosition.x + node.x, node.mousePosition.y + node.y)
             } else {
@@ -124,7 +125,7 @@ Item {
             fit();
         } 
         else if (event.key === Qt.Key_Delete) {
-            if (event.modifiers == Qt.AltModifier) {
+            if (event.modifiers === Qt.AltModifier) {
                 uigraph.removeNodesFrom(uigraph.selectedNodes);
             }
             else {
@@ -132,15 +133,15 @@ Item {
             }
         }
         else if (event.key === Qt.Key_D) {
-            duplicateNode(event.modifiers == Qt.AltModifier);
+            duplicateNode(event.modifiers === Qt.AltModifier);
         }
-        else if (event.key === Qt.Key_C && event.modifiers == Qt.ControlModifier) {
+        else if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
             copyNodes();
         }
-        else if (event.key === Qt.Key_V && event.modifiers == Qt.ControlModifier) {
+        else if (event.key === Qt.Key_V && event.modifiers === Qt.ControlModifier) {
             pasteNodes();
         }
-        else if (event.key == Qt.Key_Tab) {
+        else if (event.key === Qt.Key_Tab) {
             event.accepted = true;
             if (mouseArea.containsMouse) {
                 newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY);
@@ -329,7 +330,7 @@ Item {
 
             Repeater {
                 id: nodeMenuRepeater
-                model: searchBar.text != "" ? Object.values(newNodeMenu.menuKeys) : undefined
+                model: searchBar.text !== "" ? Object.values(newNodeMenu.menuKeys) : undefined
 
                 // create Menu items from available items
                 delegate: menuItemDelegateComponent
@@ -337,7 +338,7 @@ Item {
 
             // Dynamically add the menu categories
             Instantiator {
-                model: !(searchBar.text != "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
+                model: !(searchBar.text !== "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
                 onObjectAdded: newNodeMenu.insertMenu(index+1, object ) // add sub-menu under the search bar
                 onObjectRemoved: newNodeMenu.removeMenu(object)
 
@@ -392,10 +393,10 @@ Item {
                 delegate: Edge {
                     property var src: root._attributeToDelegate[edge.src]
                     property var dst: root._attributeToDelegate[edge.dst]
-                    property bool isValidEdge: src != undefined && dst != undefined
+                    property bool isValidEdge: src !== undefined && dst !== undefined
                     visible: isValidEdge
 
-                    property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge == edge)
+                    property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge === edge)
 
                     edge: object
                     color: edge.dst === root.edgeAboutToBeRemoved ? "red" : inFocus ? activePalette.highlight : activePalette.text
@@ -408,7 +409,7 @@ Item {
                     onPressed: {
                         const canEdit = !edge.dst.node.locked
 
-                        if(event.button == Qt.RightButton)
+                        if(event.button === Qt.RightButton)
                         {
                             if(canEdit && (event.modifiers & Qt.AltModifier)) {
                                 uigraph.removeEdge(edge)
@@ -600,7 +601,7 @@ Item {
                     onAttributePinDeleted: unregisterAttributePin(attribute, pin)
 
                     onPressed: {
-                        if (mouse.button == Qt.LeftButton) {
+                        if (mouse.button === Qt.LeftButton) {
                             if (mouse.modifiers & Qt.ControlModifier && !(mouse.modifiers & Qt.AltModifier)) {
                                 if (mainSelected && selected) {
                                     // left clicking a selected node twice with control will deselect it
@@ -617,7 +618,7 @@ Item {
                             } else if (!mainSelected && !selected) {
                                 uigraph.clearNodeSelection()
                             }
-                        } else if (mouse.button == Qt.RightButton) {
+                        } else if (mouse.button === Qt.RightButton) {
                             if (!mainSelected && !selected) {
                                 uigraph.clearNodeSelection()
                             }
@@ -663,7 +664,7 @@ Item {
                             // update all selected nodes positions with this node that is being dragged
                             for (var i = 0; i < nodeRepeater.count; i++) {
                                 var otherNode = nodeRepeater.itemAt(i)
-                                if (uigraph.selectedNodes.contains(otherNode.node) && otherNode.node != node) {
+                                if (uigraph.selectedNodes.contains(otherNode.node) && otherNode.node !== node) {
                                     otherNode.x = otherNode.node.x + (x - node.x)
                                     otherNode.y = otherNode.node.y + (y - node.y)
                                 }

@@ -68,7 +68,7 @@ RowLayout {
                     property Component menuComp: Menu {
                         id: paramMenu
 
-                        property bool isFileAttribute: attribute.type == "File"
+                        property bool isFileAttribute: attribute.type === "File"
                         property bool isFilepath: isFileAttribute && Filepath.isFile(attribute.evalValue)
 
                         MenuItem {
@@ -316,7 +316,9 @@ RowLayout {
                 onActivated: _reconstruction.setAttribute(attribute, currentText)
                 Connections {
                     target: attribute
-                    onValueChanged: combo.currentIndex = combo.find(attribute.value)
+                    function onValueChanged() {
+                        combo.currentIndex = combo.find(attribute.value)
+                    }
                 }
             }
         }

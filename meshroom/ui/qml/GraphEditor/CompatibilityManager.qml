@@ -1,6 +1,6 @@
-import QtQuick 2.9
-import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
 import Controls 1.0
 import Utils 1.0
@@ -90,7 +90,7 @@ MessageDialog {
                 property var node: object
 
                 width: ListView.view.width - 12
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.horizontalCenter: parent != null ? parent.horizontalCenter : undefined
 
                 Label {
                     Layout.preferredWidth: 130

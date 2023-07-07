@@ -1,6 +1,6 @@
-import QtQuick 2.9
-import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
 
 import Utils 1.0
@@ -100,7 +100,7 @@ FloatingPane {
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
-                                checked: root.featuresViewer.trackContiguousFilter
+                                checked: root.featuresViewer ? root.featuresViewer.trackContiguousFilter : false
                                 onClicked: root.featuresViewer.trackContiguousFilter = trackContiguousFilterCB.checked
                             }
                         }
@@ -114,7 +114,7 @@ FloatingPane {
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
-                                checked: root.featuresViewer.trackInliersFilter
+                                checked: root.featuresViewer ? root.featuresViewer.trackInliersFilter : false
                                 onClicked: root.featuresViewer.trackInliersFilter = trackInliersFilterCB.checked
                             }
                         }
@@ -128,7 +128,7 @@ FloatingPane {
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
-                                checked: root.featuresViewer.display3dTracks
+                                checked: root.featuresViewer ? root.featuresViewer.display3dTracks : false
                                 onClicked: root.featuresViewer.display3dTracks = display3dTracksCB.checked
                             }
                         }
@@ -142,7 +142,7 @@ FloatingPane {
                                 ToolTip.visible: hovered
                                 Layout.fillHeight: true
                                 Layout.alignment: Qt.AlignRight
-                                checked: root.featuresViewer.displayTrackEndpoints
+                                checked: root.featuresViewer ? root.featuresViewer.displayTrackEndpoints : false
                                 onClicked: root.featuresViewer.displayTrackEndpoints = displayTrackEndpointsCB.checked
                             }
                         }
@@ -158,24 +158,25 @@ FloatingPane {
                                 Layout.alignment: Qt.AlignRight
                                 from: -1
                                 to: 50
-                                value: root.featuresViewer.timeWindow
+                                value: root.featuresViewer ? root.featuresViewer.timeWindow : 0
                                 stepSize: 1
                                 editable: true
 
                                 textFromValue: function(value, locale) {
-                                    if (value == -1) return "No Limit";
-                                    if (value ==  0) return "Disable";
+                                    if (value === -1) return "No Limit";
+                                    if (value ===  0) return "Disable";
                                     return value;
                                 }
 
                                 valueFromText: function(text, locale) {
-                                    if (text == "No Limit") return -1;
-                                    if (text == "Disable")  return 0;
+                                    if (text === "No Limit") return -1;
+                                    if (text === "Disable")  return 0;
                                     return Number.fromLocaleString(locale, text);
                                 }
 
                                 onValueChanged: {
-                                    root.featuresViewer.timeWindow = timeWindowSB.value;
+                                    if (root.featuresViewer)
+                                        root.featuresViewer.timeWindow = timeWindowSB.value;
                                 }
                             }
                         }

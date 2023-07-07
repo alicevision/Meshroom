@@ -10,7 +10,7 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
-    QT_DIR=/opt/Qt5.14.1/5.14.1/gcc_64 \
+    QT_DIR=/opt/Qt/5.15.2/gcc_64 \
     QT_CI_LOGIN=alicevisionjunk@gmail.com \
     QT_CI_P=azerty1.
 
@@ -44,6 +44,8 @@ RUN yum install -y \
         mesa-libGLU-devel \
         xcb-util-keysyms \
         xcb-util-image \
+        xcb-util-wm \
+        xcb-util-renderutil \
         libxkbcommon-x11
 
 # Install Python3
@@ -58,8 +60,8 @@ RUN source scl_source enable rh-python36 && pip install -r dev_requirements.txt 
 # Install Qt (to build plugins)
 WORKDIR /tmp/qt
 COPY dl/qt.run /tmp/qt
-COPY ./docker/qt-installer-noninteractive.qs ${MESHROOM_DEV}/docker/
-RUN chmod +x qt.run && \
-    ./qt.run --verbose --platform minimal --script "${MESHROOM_DEV}/docker/qt-installer-noninteractive.qs" && \
-    rm qt.run
-
+RUN chmod +x qt.run
+RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses \
+    --default-answer --platform minimal --no-force-installations --no-default-installations --confirm-command \
+    install qt.qt5.5152.gcc_64 qt.qt5.5152.qtcharts qt.qt5.5152.qtcharts.gcc_64
+RUN rm qt.run

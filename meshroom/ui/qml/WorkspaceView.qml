@@ -1,7 +1,7 @@
-import QtQuick 2.7
-import QtQuick.Controls 2.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Controls 1.4 as Controls1 // For SplitView
-import QtQuick.Layouts 1.3
+import QtQuick.Layouts 1.11
 import Qt.labs.platform 1.0 as Platform
 import ImageGallery 1.0
 import Viewer 1.0
@@ -39,13 +39,13 @@ Item {
 
     Connections {
         target: reconstruction
-        onGraphChanged: {
+        function onGraphChanged() {
             if(panel3dViewerLoader.active) {
                 panel3dViewerLoader.item.viewer3D.clear()
             }
         }
-        onSfmChanged: viewSfM()
-        onSfmReportChanged: viewSfM()
+        function onSfmChanged() { viewSfM() }
+        function onSfmReportChanged() { viewSfM() }
     }
     Component.onCompleted: viewSfM()
 

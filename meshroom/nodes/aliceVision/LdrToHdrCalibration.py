@@ -168,33 +168,31 @@ Calibrate LDR to HDR response curve from samples.
         if not isinstance(node.nodeDesc, cls):
             raise ValueError("Node {} is not an instance of type {}".format(node, cls))
         # TODO: use Node version for this test
-        if 'userNbBrackets' not in node.getAttributes().keys():
+        if "userNbBrackets" not in node.getAttributes().keys():
             # Old version of the node
             return
         if node.userNbBrackets.value != 0:
             node.nbBrackets.value = node.userNbBrackets.value
             return
-        # logging.info("[LDRToHDR] Update start: version:" + str(node.packageVersion))
         cameraInitOutput = node.input.getLinkParam(recursive=True)
         if not cameraInitOutput:
             node.nbBrackets.value = 0
             return
-        if not cameraInitOutput.node.hasAttribute('viewpoints'):
-            if cameraInitOutput.node.hasAttribute('input'):
+        if not cameraInitOutput.node.hasAttribute("viewpoints"):
+            if cameraInitOutput.node.hasAttribute("input"):
                 cameraInitOutput = cameraInitOutput.node.input.getLinkParam(recursive=True)
-        if cameraInitOutput and cameraInitOutput.node and cameraInitOutput.node.hasAttribute('viewpoints'):
+        if cameraInitOutput and cameraInitOutput.node and cameraInitOutput.node.hasAttribute("viewpoints"):
             viewpoints = cameraInitOutput.node.viewpoints.value
         else:
             # No connected CameraInit
             node.nbBrackets.value = 0
             return
 
-        # logging.info("[LDRToHDR] Update start: nb viewpoints:" + str(len(viewpoints)))
         inputs = []
         for viewpoint in viewpoints:
             jsonMetadata = viewpoint.metadata.value
             if not jsonMetadata:
-                # no metadata, we cannot found the number of brackets
+                # no metadata, we cannot find the number of brackets
                 node.nbBrackets.value = 0
                 return
             d = json.loads(jsonMetadata)
@@ -206,18 +204,30 @@ Calibrate LDR to HDR response curve from samples.
                 # We assume that there is no multi-bracketing, so nothing to do.
                 node.nbBrackets.value = 1
                 return
-            inputs.append((viewpoint.path.value, (fnumber, shutterSpeed, iso)))
+            inputs.append((viewpoint.path.value, (float(fnumber), float(shutterSpeed), float(iso))))
         inputs.sort()
 
         exposureGroups = []
         exposures = []
+        prevFnumber = 0.0
+        prevShutterSpeed = 0.0
+        prevIso = 0.0
         for path, exp in inputs:
-            if exposures and exp != exposures[-1] and exp == exposures[0]:
+            # A new group is created if the current image's exposure level is larger than the previous image's, or if there
+            # were any changes in the ISO or aperture value.
+            # Since the input images are ordered, the shutter speed should always be decreasing, so a shutter speed larger
+            # than the previous one indicates the start of a new exposure group.
+            fnumber, shutterSpeed, iso = exp
+            if exposures:
+                prevFnumber, prevShutterSpeed, prevIso = exposures[-1]
+            if exposures and len(exposures) > 1 and (fnumber != prevFnumber or shutterSpeed > prevShutterSpeed or iso != prevIso):
                 exposureGroups.append(exposures)
                 exposures = [exp]
             else:
                 exposures.append(exp)
+
         exposureGroups.append(exposures)
+
         exposures = None
         bracketSizes = set()
         if len(exposureGroups) == 1:
@@ -232,8 +242,5 @@ Calibrate LDR to HDR response curve from samples.
                 bracketSizes.add(len(expGroup))
             if len(bracketSizes) == 1:
                 node.nbBrackets.value = bracketSizes.pop()
-                # logging.info("[LDRToHDR] nb bracket size:" + str(node.nbBrackets.value))
             else:
                 node.nbBrackets.value = 0
-        # logging.info("[LDRToHDR] Update end")
-

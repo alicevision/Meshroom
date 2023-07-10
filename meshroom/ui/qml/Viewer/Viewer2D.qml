@@ -294,7 +294,9 @@ FocusScope {
 
     Connections {
         target: displayedNode
-        onOutputAttrEnabledChanged: tryLoadNode(displayedNode)
+        function onOutputAttrEnabledChanged() {
+            tryLoadNode(displayedNode)
+        }
     }
     // context menu
     property Component contextMenu: Menu {

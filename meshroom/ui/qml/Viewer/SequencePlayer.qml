@@ -62,7 +62,7 @@ FloatingPane {
     // when the selected view ID is changed externally
     Connections {
         target: _reconstruction
-        onSelectedViewIdChanged: {
+        function onSelectedViewIdChanged() {
             for (let idx = 0; idx < sortedViewIds.length; idx++) {
                 if (_reconstruction.selectedViewId == sortedViewIds[idx] && (m.frame != idx)) {
                     m.frame = idx;
@@ -134,7 +134,7 @@ FloatingPane {
 
             Connections {
                 target: m
-                onPlayingChanged: {
+                function onPlayingChanged() {
                     playButton.checked = m.playing;
                 }
             }
@@ -180,7 +180,7 @@ FloatingPane {
 
             Connections {
                 target: m
-                onFrameChanged: {
+                function onFrameChanged() {
                     frameSlider.value = m.frame;
                 }
             }

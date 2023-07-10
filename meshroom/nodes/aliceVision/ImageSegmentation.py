@@ -32,29 +32,25 @@ Generate a mask with segmented labels for each pixel.
             uid=[0]
         ),
 
-        desc.ListAttribute(
-            elementDesc=desc.ChoiceParam(
-                name="className",
-                label="Class Name",
-                description="Class name to be added to the mask.",
-                value="person",
-                values=[
-                    "__background__",
-                    "aeroplane",
-                    "bicycle", "bird", "boat", "bottle", "bus",
-                    "car", "cat", "chair", "cow",
-                    "diningtable", "dog",
-                    "horse",
-                    "motorbike",
-                    "person", "pottedplant",
-                    "sheep", "sofa",
-                    "train", "tvmonitor"
-                ],
-                exclusive=True,
-                uid=[0]),
+        desc.ChoiceParam(
             name="validClasses",
             label="Classes",
-            description="Classes names which are to be considered."
+            description="Classes names which are to be considered.",
+            value=["person"],
+            values=[
+                "__background__",
+                "aeroplane",
+                "bicycle", "bird", "boat", "bottle", "bus",
+                "car", "cat", "chair", "cow",
+                "diningtable", "dog",
+                "horse",
+                "motorbike",
+                "person", "pottedplant",
+                "sheep", "sofa",
+                "train", "tvmonitor"
+            ],
+            exclusive=False,
+            uid=[0],
         ),
 
         desc.ChoiceParam(

@@ -1,23 +1,23 @@
 {
     "header": {
         "nodesVersions": {
-            "PanoramaEstimation": "1.0",
-            "FeatureMatching": "2.0",
-            "PanoramaCompositing": "2.0",
             "CameraInit": "9.0",
             "FeatureExtraction": "1.3",
             "LdrToHdrCalibration": "3.0",
+            "PanoramaEstimation": "1.0",
             "PanoramaSeams": "2.0",
-            "PanoramaPostProcessing": "2.0",
-            "LdrToHdrMerge": "4.1",
             "ImageMatching": "2.0",
-            "PanoramaMerging": "1.0",
+            "SfMTransform": "3.1",
             "PanoramaPrepareImages": "1.1",
-            "Publish": "1.3",
             "PanoramaInit": "2.0",
-            "PanoramaWarping": "1.1",
+            "Publish": "1.3",
+            "PanoramaPostProcessing": "2.0",
+            "FeatureMatching": "2.0",
             "LdrToHdrSampling": "4.0",
-            "SfMTransform": "3.1"
+            "PanoramaWarping": "1.1",
+            "PanoramaCompositing": "2.0",
+            "PanoramaMerging": "1.0",
+            "LdrToHdrMerge": "4.1"
         },
         "releaseVersion": "2023.3.0-develop",
         "fileVersion": "1.1",
@@ -42,8 +42,8 @@
         "PanoramaWarping_1": {
             "nodeType": "PanoramaWarping",
             "position": [
-                2200,
-                0
+                2059,
+                -6
             ],
             "inputs": {
                 "input": "{SfMTransform_1.output}"
@@ -78,8 +78,8 @@
         "ImageMatching_1": {
             "nodeType": "ImageMatching",
             "position": [
-                1400,
-                0
+                1259,
+                -6
             ],
             "inputs": {
                 "input": "{PanoramaInit_1.outSfMData}",
@@ -92,8 +92,8 @@
         "FeatureExtraction_1": {
             "nodeType": "FeatureExtraction",
             "position": [
-                1000,
-                0
+                1023,
+                85
             ],
             "inputs": {
                 "input": "{LdrToHdrMerge_1.outSfMData}",
@@ -107,8 +107,8 @@
         "PanoramaMerging_1": {
             "nodeType": "PanoramaMerging",
             "position": [
-                2800,
-                0
+                2659,
+                -6
             ],
             "inputs": {
                 "input": "{PanoramaCompositing_1.input}",
@@ -119,8 +119,8 @@
         "PanoramaCompositing_1": {
             "nodeType": "PanoramaCompositing",
             "position": [
-                2600,
-                0
+                2459,
+                -6
             ],
             "inputs": {
                 "input": "{PanoramaSeams_1.outputSfm}",
@@ -151,8 +151,8 @@
         "PanoramaPostProcessing_1": {
             "nodeType": "PanoramaPostProcessing",
             "position": [
-                3000,
-                0
+                2859,
+                -6
             ],
             "inputs": {
                 "inputPanorama": "{PanoramaMerging_1.outputPanorama}",
@@ -173,8 +173,8 @@
         "SfMTransform_1": {
             "nodeType": "SfMTransform",
             "position": [
-                2000,
-                0
+                1859,
+                -6
             ],
             "inputs": {
                 "input": "{PanoramaEstimation_1.output}",
@@ -184,8 +184,8 @@
         "PanoramaSeams_1": {
             "nodeType": "PanoramaSeams",
             "position": [
-                2400,
-                0
+                2259,
+                -6
             ],
             "inputs": {
                 "input": "{PanoramaWarping_1.input}",
@@ -195,8 +195,8 @@
         "PanoramaEstimation_1": {
             "nodeType": "PanoramaEstimation",
             "position": [
-                1800,
-                0
+                1659,
+                -6
             ],
             "inputs": {
                 "input": "{FeatureMatching_1.input}",
@@ -210,22 +210,19 @@
         "PanoramaInit_1": {
             "nodeType": "PanoramaInit",
             "position": [
-                1200,
-                0
+                1028,
+                -44
             ],
             "inputs": {
-                "input": "{FeatureExtraction_1.input}",
-                "dependency": [
-                    "{FeatureExtraction_1.output}"
-                ],
+                "input": "{LdrToHdrMerge_1.outSfMData}",
                 "useFisheye": true
             }
         },
         "FeatureMatching_1": {
             "nodeType": "FeatureMatching",
             "position": [
-                1600,
-                0
+                1459,
+                -6
             ],
             "inputs": {
                 "input": "{ImageMatching_1.input}",
@@ -237,8 +234,8 @@
         "Publish_1": {
             "nodeType": "Publish",
             "position": [
-                3200,
-                0
+                3059,
+                -6
             ],
             "inputs": {
                 "inputFiles": [

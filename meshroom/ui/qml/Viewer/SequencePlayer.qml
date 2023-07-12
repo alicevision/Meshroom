@@ -64,7 +64,7 @@ FloatingPane {
         target: _reconstruction
         function onSelectedViewIdChanged() {
             for (let idx = 0; idx < sortedViewIds.length; idx++) {
-                if (_reconstruction.selectedViewId == sortedViewIds[idx] && (m.frame != idx)) {
+                if (_reconstruction.selectedViewId === sortedViewIds[idx] && (m.frame != idx)) {
                     m.frame = idx;
                 }
             }

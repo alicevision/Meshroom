@@ -35,8 +35,9 @@ FocusScope {
             // Read from the reconstruction object
             if (_reconstruction) {
                 let vp = getViewpoint(_reconstruction.selectedViewId);
-                let metadata = vp ? vp.childAttribute("metadata").value : "";
-                return JSON.parse(metadata);
+                if (vp) {
+                    return JSON.parse(vp.childAttribute("metadata").value);
+                }
             }
             return {};
         }

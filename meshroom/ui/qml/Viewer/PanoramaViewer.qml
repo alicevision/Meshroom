@@ -293,7 +293,6 @@ AliceVision.PanoramaViewer {
                         'surface.pitch': Qt.binding(function() { return root.pitch; }),
                         'surface.yaw': Qt.binding(function() { return root.yaw; }),
                         'surface.roll': Qt.binding(function() { return root.roll; }),
-                        'index' : index,
                         'idView': Qt.binding(function() { return idViewItem; }),
                         'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
                         'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
@@ -301,7 +300,8 @@ AliceVision.PanoramaViewer {
                         'downscaleLevel' : Qt.binding(function() { return downscale; }),
                         'source':  Qt.binding(function() { return sourceItem; }),
                         'surface.msfmData': Qt.binding(function() { return root.msfmData }),
-                        'canBeHovered': true
+                        'canBeHovered': true,
+                        'useSequence': false
                     })
                     imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.status === Image.Ready ? true : false; })
                 }

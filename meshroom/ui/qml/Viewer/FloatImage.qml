@@ -13,7 +13,7 @@ AliceVision.FloatImageViewer {
 
     width: textureSize.width
     height: textureSize.height
-    visible: (status === Image.Ready)
+    visible: true
 
     // paintedWidth / paintedHeight / status for compatibility with standard Image
     property int paintedWidth: textureSize.width
@@ -62,10 +62,9 @@ AliceVision.FloatImageViewer {
 
     property int pointsNumber: (surface.subdivisions + 1) * (surface.subdivisions + 1);
 
-    property int index: 0;
     property int idView: 0;
 
-    clearBeforeLoad: true
+    clearBeforeLoad: false
 
     property alias containsMouse: mouseArea.containsMouse
     property alias mouseX: mouseArea.mouseX

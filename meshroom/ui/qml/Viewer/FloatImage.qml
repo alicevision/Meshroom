@@ -62,7 +62,6 @@ AliceVision.FloatImageViewer {
 
     property int pointsNumber: (surface.subdivisions + 1) * (surface.subdivisions + 1);
 
-    property int index: 0;
     property int idView: 0;
 
     clearBeforeLoad: false

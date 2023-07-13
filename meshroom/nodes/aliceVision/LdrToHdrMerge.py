@@ -1,6 +1,7 @@
 __version__ = "4.1"
 
 import json
+from collections import Counter
 
 from meshroom.core import desc
 
@@ -321,7 +322,7 @@ Merge LDR images into HDR images.
         exposureGroups.append(exposures)
 
         exposures = None
-        bracketSizes = set()
+        bracketSizes = Counter()
         if len(exposureGroups) == 1:
             if len(set(exposureGroups[0])) == 1:
                 # Single exposure and multiple views
@@ -331,8 +332,16 @@ Merge LDR images into HDR images.
                 node.nbBrackets.value = len(exposureGroups[0])
         else:
             for expGroup in exposureGroups:
-                bracketSizes.add(len(expGroup))
-            if len(bracketSizes) == 1:
-                node.nbBrackets.value = bracketSizes.pop()
-            else:
+                bracketSizes[len(expGroup)] += 1
+
+            if len(bracketSizes) == 0:
                 node.nbBrackets.value = 0
+            else:
+                bestTuple = bracketSizes.most_common(1)[0]
+                bestBracketSize = bestTuple[0]
+                bestCount = bestTuple[1]
+                total = bestBracketSize * bestCount
+                if len(inputs) - total < 2:
+                    node.nbBrackets.value = bestBracketSize
+                else:
+                    node.nbBrackets.value = 0

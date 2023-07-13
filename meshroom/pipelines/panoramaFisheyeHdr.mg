@@ -42,8 +42,8 @@
         "PanoramaWarping_1": {
             "nodeType": "PanoramaWarping",
             "position": [
-                2059,
-                -6
+                2000,
+                0
             ],
             "inputs": {
                 "input": "{SfMTransform_1.output}"
@@ -78,8 +78,8 @@
         "ImageMatching_1": {
             "nodeType": "ImageMatching",
             "position": [
-                1259,
-                -6
+                1200,
+                0
             ],
             "inputs": {
                 "input": "{PanoramaInit_1.outSfMData}",
@@ -92,8 +92,8 @@
         "FeatureExtraction_1": {
             "nodeType": "FeatureExtraction",
             "position": [
-                1023,
-                85
+                1000,
+                70
             ],
             "inputs": {
                 "input": "{LdrToHdrMerge_1.outSfMData}",
@@ -107,8 +107,8 @@
         "PanoramaMerging_1": {
             "nodeType": "PanoramaMerging",
             "position": [
-                2659,
-                -6
+                2600,
+                0
             ],
             "inputs": {
                 "input": "{PanoramaCompositing_1.input}",
@@ -119,8 +119,8 @@
         "PanoramaCompositing_1": {
             "nodeType": "PanoramaCompositing",
             "position": [
-                2459,
-                -6
+                2400,
+                0
             ],
             "inputs": {
                 "input": "{PanoramaSeams_1.outputSfm}",
@@ -151,8 +151,8 @@
         "PanoramaPostProcessing_1": {
             "nodeType": "PanoramaPostProcessing",
             "position": [
-                2859,
-                -6
+                2800,
+                0
             ],
             "inputs": {
                 "inputPanorama": "{PanoramaMerging_1.outputPanorama}",
@@ -173,8 +173,8 @@
         "SfMTransform_1": {
             "nodeType": "SfMTransform",
             "position": [
-                1859,
-                -6
+                1800,
+                0
             ],
             "inputs": {
                 "input": "{PanoramaEstimation_1.output}",
@@ -184,8 +184,8 @@
         "PanoramaSeams_1": {
             "nodeType": "PanoramaSeams",
             "position": [
-                2259,
-                -6
+                2200,
+                0
             ],
             "inputs": {
                 "input": "{PanoramaWarping_1.input}",
@@ -195,8 +195,8 @@
         "PanoramaEstimation_1": {
             "nodeType": "PanoramaEstimation",
             "position": [
-                1659,
-                -6
+                1600,
+                0
             ],
             "inputs": {
                 "input": "{FeatureMatching_1.input}",
@@ -210,8 +210,8 @@
         "PanoramaInit_1": {
             "nodeType": "PanoramaInit",
             "position": [
-                1028,
-                -44
+                1000,
+                -50
             ],
             "inputs": {
                 "input": "{LdrToHdrMerge_1.outSfMData}",
@@ -221,8 +221,8 @@
         "FeatureMatching_1": {
             "nodeType": "FeatureMatching",
             "position": [
-                1459,
-                -6
+                1400,
+                0
             ],
             "inputs": {
                 "input": "{ImageMatching_1.input}",
@@ -234,8 +234,8 @@
         "Publish_1": {
             "nodeType": "Publish",
             "position": [
-                3059,
-                -6
+                3000,
+                0
             ],
             "inputs": {
                 "inputFiles": [

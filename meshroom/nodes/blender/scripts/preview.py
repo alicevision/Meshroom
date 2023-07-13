@@ -23,11 +23,11 @@ def createParser():
         help="sfmData with the animated camera.",
     )
     parser.add_argument(
-        "--rangeStart", type=int, required=False,
+        "--rangeStart", type=int, required=False, default=-1,
         help="Range start for processing views. Set to -1 to process all views.",
     )
     parser.add_argument(
-        "--rangeSize", type=int, required=False,
+        "--rangeSize", type=int, required=False, default=0,
         help="Range size for processing views.",
     )
     parser.add_argument(
@@ -321,8 +321,8 @@ def main():
         setupPointCloudShading(sceneObj, color, args.particleSize)
 
     print("Retrieve range")
-    rangeStart = args.rangeStart if args.rangeStart else -1
-    rangeSize = args.rangeSize if args.rangeSize else -1
+    rangeStart = args.rangeStart
+    rangeSize = args.rangeSize
     if rangeStart != -1:
         if rangeStart < 0 or rangeSize < 0 or rangeStart > len(views):
             print("Invalid range")

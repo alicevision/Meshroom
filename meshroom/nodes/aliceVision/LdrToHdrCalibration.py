@@ -1,6 +1,7 @@
 __version__ = "3.0"
 
 import json
+import os
 from collections import Counter
 
 from meshroom.core import desc
@@ -213,19 +214,31 @@ Calibrate LDR to HDR response curve from samples.
         prevFnumber = 0.0
         prevShutterSpeed = 0.0
         prevIso = 0.0
+        prevPath = None  # Stores the dirname of the previous parsed image
+        newGroup = False  # True if a new exposure group needs to be created (useful when there are several datasets)
         for path, exp in inputs:
-            # A new group is created if the current image's exposure level is larger than the previous image's, or if there
-            # were any changes in the ISO or aperture value.
+            # If the dirname of the previous image and the dirname of the current image do not match, this means that the
+            # dataset that is being parsed has changed. A new group needs to be created but will fail to be detected in the
+            # next "if" statement if the new dataset's exposure levels are different. Setting "newGroup" to True prevents this
+            # from happening.
+            if prevPath is not None and prevPath != os.path.dirname(path):
+                newGroup = True
+
+            # A new group is created if the current image's exposure level is larger than the previous image's, if there
+            # were any changes in the ISO or aperture value, or if a new dataset has been detected with the path.
             # Since the input images are ordered, the shutter speed should always be decreasing, so a shutter speed larger
             # than the previous one indicates the start of a new exposure group.
             fnumber, shutterSpeed, iso = exp
             if exposures:
                 prevFnumber, prevShutterSpeed, prevIso = exposures[-1]
-            if exposures and len(exposures) > 1 and (fnumber != prevFnumber or shutterSpeed > prevShutterSpeed or iso != prevIso):
+            if exposures and len(exposures) > 1 and (fnumber != prevFnumber or shutterSpeed > prevShutterSpeed or iso != prevIso) or newGroup:
                 exposureGroups.append(exposures)
                 exposures = [exp]
             else:
                 exposures.append(exp)
+
+            prevPath = os.path.dirname(path)
+            newGroup = False
 
         exposureGroups.append(exposures)
 
@@ -249,7 +262,7 @@ Calibrate LDR to HDR response curve from samples.
                 bestBracketSize = bestTuple[0]
                 bestCount = bestTuple[1]
                 total = bestBracketSize * bestCount
-                if len(inputs) - total < 2:
+                if total >= len(inputs) - 2:
                     node.nbBrackets.value = bestBracketSize
                 else:
                     node.nbBrackets.value = 0

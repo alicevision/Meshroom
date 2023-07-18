@@ -68,6 +68,7 @@ Merge LDR images into HDR images.
             value=0,
             range=(0, 10, 1),
             uid=[0],
+            group="bracketsParams"
         ),
         desc.BoolParam(
             name="offsetRefBracketIndexEnabled",
@@ -358,3 +359,12 @@ Merge LDR images into HDR images.
                     node.nbBrackets.value = bestBracketSize
                 else:
                     node.nbBrackets.value = 0
+
+    def processChunk(self, chunk):
+        # Trick to avoid sending --nbBrackets to the command line when the bracket detection is automatic.
+        # Otherwise, the AliceVision executable has no way of determining whether the bracket detection was automatic
+        # or if it was hard-set by the user.
+        self.commandLine = "aliceVision_LdrToHdrMerge {allParams}"
+        if chunk.node.userNbBrackets.value == chunk.node.nbBrackets.value:
+            self.commandLine += "{bracketsParams}"
+        super(LdrToHdrMerge, self).processChunk(chunk)

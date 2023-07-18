@@ -79,6 +79,7 @@ Sample pixels from Low range images for HDR creation.
             value=0,
             range=(0, 10, 1),
             uid=[0],
+            group="bracketsParams"
         ),
         desc.BoolParam(
             name="byPass",
@@ -184,6 +185,12 @@ Sample pixels from Low range images for HDR creation.
     def processChunk(self, chunk):
         if chunk.node.nbBrackets.value == 1:
             return
+        # Trick to avoid sending --nbBrackets to the command line when the bracket detection is automatic.
+        # Otherwise, the AliceVision executable has no way of determining whether the bracket detection was automatic
+        # or if it was hard-set by the user.
+        self.commandLine = "aliceVision_LdrToHdrSampling {allParams}"
+        if chunk.node.userNbBrackets.value == chunk.node.nbBrackets.value:
+            self.commandLine += "{bracketsParams}"
         super(LdrToHdrSampling, self).processChunk(chunk)
 
     @classmethod

@@ -353,12 +353,7 @@ Merge LDR images into HDR images.
             else:
                 bestTuple = bracketSizes.most_common(1)[0]
                 bestBracketSize = bestTuple[0]
-                bestCount = bestTuple[1]
-                total = bestBracketSize * bestCount
-                if total >= len(inputs) - 2:
-                    node.nbBrackets.value = bestBracketSize
-                else:
-                    node.nbBrackets.value = 0
+                node.nbBrackets.value = bestBracketSize
 
     def processChunk(self, chunk):
         # Trick to avoid sending --nbBrackets to the command line when the bracket detection is automatic.

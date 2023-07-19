@@ -39,7 +39,9 @@ class DividedInputNodeSize(desc.DynamicNodeSize):
         divParam = node.attribute(self._divParam)
         if divParam.value == 0:
             return s
-        return s / divParam.value
+        # s is the total number of inputs and may include outliers, that will not be used
+        # during computations and should thus be excluded from the size computation
+        return (s - node.outliersNb) / divParam.value
 
 
 class LdrToHdrSampling(desc.AVCommandLineNode):
@@ -52,6 +54,8 @@ class LdrToHdrSampling(desc.AVCommandLineNode):
     documentation = '''
 Sample pixels from Low range images for HDR creation.
 '''
+
+    outliersNb = 0  # Number of detected outliers among the input images
 
     inputs = [
         desc.File(
@@ -201,6 +205,7 @@ Sample pixels from Low range images for HDR creation.
         if "userNbBrackets" not in node.getAttributes().keys():
             # Old version of the node
             return
+        node.outliersNb = 0  # Reset the number of detected outliers
         if node.userNbBrackets.value != 0:
             node.nbBrackets.value = node.userNbBrackets.value
             return
@@ -288,4 +293,6 @@ Sample pixels from Low range images for HDR creation.
             else:
                 bestTuple = bracketSizes.most_common(1)[0]
                 bestBracketSize = bestTuple[0]
+                bestCount = bestTuple[1]
+                node.outliersNb = len(inputs) - (bestBracketSize * bestCount)  # Compute number of outliers
                 node.nbBrackets.value = bestBracketSize

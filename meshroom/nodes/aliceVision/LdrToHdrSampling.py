@@ -291,7 +291,13 @@ Sample pixels from Low range images for HDR creation.
             if len(bracketSizes) == 0:
                 node.nbBrackets.value = 0
             else:
-                bestTuple = bracketSizes.most_common(1)[0]
+                bestTuple = None
+                for tuple in bracketSizes.most_common():
+                    if bestTuple is None or tuple[1] > bestTuple[1]:
+                        bestTuple = tuple
+                    elif tuple[1] == bestTuple[1]:
+                        bestTuple = tuple if tuple[0] > bestTuple[0] else bestTuple
+
                 bestBracketSize = bestTuple[0]
                 bestCount = bestTuple[1]
                 node.outliersNb = len(inputs) - (bestBracketSize * bestCount)  # Compute number of outliers

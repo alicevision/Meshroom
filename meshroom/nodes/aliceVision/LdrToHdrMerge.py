@@ -292,7 +292,7 @@ Merge LDR images into HDR images.
                 return
             d = json.loads(jsonMetadata)
             fnumber = findMetadata(d, ["FNumber", "Exif:ApertureValue", "ApertureValue", "Aperture"], "")
-            shutterSpeed = findMetadata(d, ["Exif:ShutterSpeedValue", "ShutterSpeedValue", "ShutterSpeed"], "")
+            shutterSpeed = findMetadata(d, ["ExposureTime", "Shutter Speed Value", "ShutterSpeedValue", "ShutterSpeed"], "")
             iso = findMetadata(d, ["Exif:ISOSpeedRatings", "ISOSpeedRatings", "ISO"], "")
             if not fnumber and not shutterSpeed:
                 # If one image without shutter or fnumber, we cannot found the number of brackets.
@@ -324,7 +324,7 @@ Merge LDR images into HDR images.
             fnumber, shutterSpeed, iso = exp
             if exposures:
                 prevFnumber, prevShutterSpeed, prevIso = exposures[-1]
-            if exposures and len(exposures) > 1 and (fnumber != prevFnumber or shutterSpeed > prevShutterSpeed or iso != prevIso) or newGroup:
+            if exposures and len(exposures) >= 1 and (fnumber != prevFnumber or shutterSpeed < prevShutterSpeed or iso != prevIso) or newGroup:
                 exposureGroups.append(exposures)
                 exposures = [exp]
             else:
@@ -359,7 +359,6 @@ Merge LDR images into HDR images.
                         bestTuple = tuple if tuple[0] > bestTuple[0] else bestTuple
 
                 bestBracketSize = bestTuple[0]
-                bestCount = bestTuple[1]
                 node.nbBrackets.value = bestBracketSize
 
     def processChunk(self, chunk):

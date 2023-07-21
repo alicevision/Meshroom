@@ -232,7 +232,7 @@ Sample pixels from Low range images for HDR creation.
                 return
             d = json.loads(jsonMetadata)
             fnumber = findMetadata(d, ["FNumber", "Exif:ApertureValue", "ApertureValue", "Aperture"], "")
-            shutterSpeed = findMetadata(d, ["Exif:ShutterSpeedValue", "ShutterSpeedValue", "ShutterSpeed"], "")
+            shutterSpeed = findMetadata(d, ["ExposureTime", "Shutter Speed Value", "ShutterSpeedValue", "ShutterSpeed"], "")
             iso = findMetadata(d, ["Exif:ISOSpeedRatings", "ISOSpeedRatings", "ISO"], "")
             if not fnumber and not shutterSpeed:
                 # If one image without shutter or fnumber, we cannot found the number of brackets.
@@ -264,7 +264,7 @@ Sample pixels from Low range images for HDR creation.
             fnumber, shutterSpeed, iso = exp
             if exposures:
                 prevFnumber, prevShutterSpeed, prevIso = exposures[-1]
-            if exposures and len(exposures) > 1 and (fnumber != prevFnumber or shutterSpeed > prevShutterSpeed or iso != prevIso) or newGroup:
+            if exposures and len(exposures) >= 1 and (fnumber != prevFnumber or shutterSpeed < prevShutterSpeed or iso != prevIso) or newGroup:
                 exposureGroups.append(exposures)
                 exposures = [exp]
             else:

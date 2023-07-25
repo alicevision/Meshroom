@@ -47,23 +47,19 @@ It can either be taken from an older version, or directly downloaded from here:
 and then copied into PySide's installation folder, in `plugins/sceneparsers`.
 
 
-### Qt Plugins
-Additional Qt plugins can be built to extend Meshroom UI features. They can be found on separate repositories,
-though they might get better integration in the future.
-Note that they are optional but highly recommended.
-
-#### [QmlAlembic](https://github.com/alicevision/qmlAlembic)
-Adds support for Alembic file loading in Meshroom's 3D viewport. Allows to visualize sparse reconstruction results
-(point cloud and cameras).
-```
-QML2_IMPORT_PATH=/path/to/qmlAlembic/install/qml
-```
+### Qt Plugin
+An additional Qt plugin can be built to extend Meshroom UI features. It can be found on a separate repository,
+though it might get better integration in the future.
+Note that it is optional but highly recommended.
 
 #### [QtAliceVision](https://github.com/alicevision/QtAliceVision)
-Use AliceVision to load and visualize intermediate reconstruction files and OpenImageIO as backend to read RAW/EXR images.
+It uses AliceVision to load and visualize intermediate reconstruction files and OpenImageIO as backend to read RAW/EXR images.
+It also adds support for Alembic file loading in Meshroom's 3D viewport, which allows to visualize sparse reconstruction results
+(point clouds and cameras).
+
 ```
-QML2_IMPORT_PATH=/path/to/qtAliceVision/install/qml
-QT_PLUGIN_PATH=/path/to/qtAliceVision/install
+QML2_IMPORT_PATH=/path/to/QtAliceVision/install/qml
+QT_PLUGIN_PATH=/path/to/QtAliceVision/install
 ```
 
 

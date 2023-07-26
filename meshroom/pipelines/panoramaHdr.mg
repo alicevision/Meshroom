@@ -1,23 +1,23 @@
 {
     "header": {
         "nodesVersions": {
-            "SfMTransform": "3.1",
-            "FeatureExtraction": "1.3",
+            "ImageMatching": "2.0",
+            "PanoramaInit": "2.0",
+            "PanoramaPrepareImages": "1.1",
             "LdrToHdrSampling": "4.0",
+            "PanoramaWarping": "1.1",
+            "PanoramaEstimation": "1.0",
+            "PanoramaCompositing": "2.0",
+            "SfMTransform": "3.1",
             "PanoramaPostProcessing": "1.0",
             "PanoramaMerging": "1.0",
-            "FeatureMatching": "2.0",
-            "Publish": "1.3",
-            "PanoramaPrepareImages": "1.1",
-            "PanoramaEstimation": "1.0",
-            "PanoramaWarping": "1.1",
-            "PanoramaInit": "2.0",
-            "PanoramaCompositing": "2.0",
-            "ImageMatching": "2.0",
-            "LdrToHdrCalibration": "3.0",
             "PanoramaSeams": "2.0",
+            "LdrToHdrCalibration": "3.0",
             "CameraInit": "9.0",
-            "LdrToHdrMerge": "4.1"
+            "FeatureMatching": "2.0",
+            "FeatureExtraction": "1.3",
+            "LdrToHdrMerge": "4.1",
+            "Publish": "1.3"
         },
         "releaseVersion": "2023.3.0-develop",
         "fileVersion": "1.1",
@@ -151,7 +151,8 @@
             ],
             "inputs": {
                 "inputPanorama": "{PanoramaMerging_1.outputPanorama}",
-                "fillHoles": true
+                "fillHoles": true,
+                "exportLevels": true
             }
         },
         "PanoramaPrepareImages_1": {

@@ -31,6 +31,13 @@ Post process the panorama.
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name="exportLevels",
+            label="Export Downscaled Levels",
+            description="Export downscaled panorama levels.",
+            value=False,
+            uid=[0],
+        ),
         desc.IntParam(
             name="previewSize",
             label="Panorama Preview Width",

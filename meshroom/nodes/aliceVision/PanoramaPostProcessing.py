@@ -39,6 +39,14 @@ Post process the panorama.
             uid=[0],
         ),
         desc.IntParam(
+            name="lastLevelMaxSize",
+            label="Last Level Max Size",
+            description="Maximum width of smallest downscaled panorama level.",
+            value=3840,
+            range=(1, 100000),
+            uid=[0],
+        ),
+        desc.IntParam(
             name="previewSize",
             label="Panorama Preview Width",
             description="The width (in pixels) of the output panorama preview.",

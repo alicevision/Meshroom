@@ -107,40 +107,32 @@ with multiview.GraphModification(graph):
         # custom pipeline
         graph.load(args.pipeline, setupProjectFile=False, publishOutputs=True if args.output else False)
     
+    def parseInputs(inputs, uniqueInitNode):
+        """Utility method for parsing the input and inputRecursive arguments."""
+        mapInputs = {}
+        for inp in inputs:
+            inputGroup = inp.split(':')
+            nodeName = None
+            if len(inputGroup) == 1 and uniqueInitNode:
+                nodeName = uniqueInitNode.getName()
+            elif len(inputGroup) == 2:
+                nodeName = inputGroup[0]
+            else:
+                print('Syntax error in input argument')
+                sys.exit(1)
+            nodeInputs = inputGroup[-1].split(';')
+            mapInputs[nodeName] = nodeInputs
+        return mapInputs
+    
     # get init nodes
     initNodes = graph.findInitNodes()
-    uniqueInitNode = (len(initNodes) == 1)
+    uniqueInitNode = initNodes[0] if (len(initNodes) == 1) else None
 
     # parse inputs for each init node
-    mapInput = {}
-    for inp in args.input:
-        inputGroup = inp.split(':')
-        nodeName = None
-        if len(inputGroup) == 1 and uniqueInitNode:
-            nodeName = initNodes[0].getName()
-        elif len(inputGroup) == 2:
-            nodeName = inputGroup[0]
-        else:
-            print('Syntax error in input argument')
-            sys.exit(1)
-        nodeInputs = inputGroup[-1].split(';')
-        mapInput[nodeName] = nodeInputs
+    mapInput = parseInputs(args.input, uniqueInitNode)
     
     # parse recursive inputs for each init node
-    mapInputRecursive = {}
-    for inp in args.inputRecursive:
-        inputGroup = inp.split(':')
-        nodeName = None
-        if len(inputGroup) == 1 and uniqueInitNode:
-            nodeName = initNodes[0].getName()
-        elif len(inputGroup) == 2:
-            nodeName = inputGroup[0]
-        else:
-            print('Syntax error in inputRecursive argument')
-            sys.exit(1)
-        nodeName = inputGroup[0]
-        nodeInputs = inputGroup[-1].split(';')
-        mapInputRecursive[nodeName] = nodeInputs
+    mapInputRecursive = parseInputs(args.inputRecursive, uniqueInitNode)
 
     # feed inputs and recursive inputs to init nodes
     for initNode in initNodes:

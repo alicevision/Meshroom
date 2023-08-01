@@ -21,7 +21,7 @@ Panel {
     signal attributeDoubleClicked(var mouse, var attribute)
     signal upgradeRequest()
 
-    title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" : "")
+    title: "Node" + (node !== null ? " - <b>" + node.label + "</b>" + (node.label !== node.defaultLabel ? " (" + node.defaultLabel + ")" : "") : "")
     icon: MaterialLabel { text: MaterialIcons.tune }
 
     headerBar: RowLayout {

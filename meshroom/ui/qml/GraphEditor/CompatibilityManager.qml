@@ -78,7 +78,7 @@ MessageDialog {
                 background: Rectangle { color: Qt.darker(parent.palette.window, 1.15) }
                 RowLayout {
                     width: parent.width
-                    Label { text: "Node"; Layout.preferredWidth: 130; font.bold: true }
+                    Label { text: "Node"; Layout.preferredWidth: 150; font.bold: true }
                     Label { text: "Issue"; Layout.fillWidth: true; font.bold: true }
                     Label { text: "Upgradable"; font.bold: true }
                 }
@@ -93,8 +93,8 @@ MessageDialog {
                 anchors.horizontalCenter: parent != null ? parent.horizontalCenter : undefined
 
                 Label {
-                    Layout.preferredWidth: 130
-                    text: compatibilityNodeDelegate.node ? compatibilityNodeDelegate.node.nodeType : ""
+                    Layout.preferredWidth: 150
+                    text: compatibilityNodeDelegate.node ? compatibilityNodeDelegate.node.defaultLabel : ""
                 }
                 Label {
                     Layout.fillWidth: true

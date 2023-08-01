@@ -80,7 +80,7 @@ ColumnLayout {
             id: chunkDelegate
             property var chunk: object
             text: index
-            width: parent.width
+            width: parent ? parent.width : 0
             leftPadding: 8
             onClicked: {
                 chunksLV.forceActiveFocus()

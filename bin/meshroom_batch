@@ -50,11 +50,6 @@ parser.add_argument('--save', metavar='FILE', type=str, required=False,
 parser.add_argument('--compute', metavar='<yes/no>', type=lambda x: bool(distutils.util.strtobool(x)), default=True, required=False,
                     help='You can set it to <no/false/0> to disable the computation.')
 
-parser.add_argument('--scale', type=int, default=-1,
-                    choices=[-1, 1, 2, 4, 8, 16],
-                    help='Downscale factor override for DepthMap estimation. '
-                         'By default (-1): use pipeline default value.')
-
 parser.add_argument('--toNode', metavar='NODE', type=str, nargs='*',
                     default=None,
                     help='Process the node(s) with its dependencies.')
@@ -189,11 +184,6 @@ with multiview.GraphModification(graph):
             else:
                 raise ValueError('Invalid param override: ' + str(p))
         print("\n")
-
-    # setup DepthMap downscaling
-    if args.scale > 0:
-        for node in graph.nodesOfType('DepthMap'):
-            node.downscale.value = args.scale
 
     # setup cache directory
     graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder

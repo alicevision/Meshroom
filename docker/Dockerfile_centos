@@ -24,8 +24,7 @@ WORKDIR ${MESHROOM_BUILD}
 # Build Meshroom plugins
 RUN cmake "${MESHROOM_DEV}" -DCMAKE_PREFIX_PATH="${AV_INSTALL}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
 
-RUN make "-j$(nproc)" qmlAlembic
-RUN make "-j$(nproc)" qtAliceVision
+RUN make "-j$(nproc)" QtAliceVision
 RUN make "-j$(nproc)" && \
     rm -rf "${MESHROOM_BUILD}" "${MESHROOM_DEV}" \
            ${MESHROOM_BUNDLE}/aliceVision/share/doc \

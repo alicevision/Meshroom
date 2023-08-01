@@ -3,6 +3,8 @@ import argparse
 import os
 import sys
 import distutils.util
+import json
+import re
 
 import meshroom
 meshroom.setupEnvironment()
@@ -14,11 +16,11 @@ import logging
 
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry or Panorama HDR pipeline.')
-parser.add_argument('-i', '--input', metavar='SFM/FOLDERS/IMAGES', type=str, nargs='*',
+parser.add_argument('-i', '--input', metavar='NODEINSTANCE:SFM/FOLDERS/IMAGES;...', type=str, nargs='*',
                     default=[],
                     help='Input folder containing images or folders of images or file (.sfm or .json) '
                          'with images paths and optionally predefined camera intrinsics.')
-parser.add_argument('-I', '--inputRecursive', metavar='FOLDERS/IMAGES', type=str, nargs='*',
+parser.add_argument('-I', '--inputRecursive', metavar='NODEINSTANCE:FOLDERS/IMAGES;...', type=str, nargs='*',
                     default=[],
                     help='Input folders containing all images recursively.')
 
@@ -90,21 +92,6 @@ logStringToPython = {
 if args.verbose:
     logging.getLogger().setLevel(logStringToPython[args.verbose])
 
-
-def getInitNode(g):
-    """
-    Helper function to get the Init node in the graph 'g' and raise an exception if there is no or
-    multiple candidates.
-    """
-    nodes = g.findInitNodes()
-    if len(nodes) == 0:
-        raise RuntimeError("meshroom_batch requires an Init node in the pipeline.")
-    elif len(nodes) > 1:
-        raise RuntimeError("meshroom_batch requires exactly one Init node in the pipeline, {} found: {}"
-                           .format(len(nodes), str(nodes)))
-    return nodes[0]
-
-
 if not args.input and not args.inputRecursive:
     print('Nothing to compute. You need to set --input or --inputRecursive.')
     sys.exit(1)
@@ -120,9 +107,38 @@ with multiview.GraphModification(graph):
         # custom pipeline
         graph.load(args.pipeline, setupProjectFile=False, publishOutputs=True if args.output else False)
 
-    # get init node and initialize it
-    initNode = getInitNode(graph)
-    initNode.nodeDesc.initialize(initNode, args.input, args.inputRecursive)
+    # get inputs for each init node
+    mapInput = {}
+    for inp in args.input:
+        inputGroup = inp.split(':')
+        if len(inputGroup) != 2:
+            print('Syntax error in input argument')
+            sys.exit(1)
+        nodeName = inputGroup[0]
+        nodeInputs = inputGroup[1].split(';')
+        mapInput[nodeName] = nodeInputs
+    
+    # get recursive inputs for each init node
+    mapInputRecursive = {}
+    for inp in args.inputRecursive:
+        inputGroup = inp.split(':')
+        if len(inputGroup) != 2:
+            print('Syntax error in inputRecursive argument')
+            sys.exit(1)
+        nodeName = inputGroup[0]
+        nodeInputs = inputGroup[1].split(';')
+        mapInputRecursive[nodeName] = nodeInputs
+
+    # get init nodes and initialize them
+    initNodes = graph.findInitNodes()
+    for initNode in initNodes:
+        nodeName = initNode.getName()
+        inp = mapInput.get(nodeName)
+        inpRec = mapInputRecursive.get(nodeName)
+        if not inp and not inpRec:
+            print(f'Nothing to compute for node {nodeName}.')
+            sys.exit(1)
+        initNode.nodeDesc.initialize(initNode, inp, inpRec)
 
     if not graph.canComputeLeaves:
         raise RuntimeError("Graph cannot be computed. Check for compatibility issues.")
@@ -142,7 +158,6 @@ with multiview.GraphModification(graph):
             raise RuntimeError("meshroom_batch requires a pipeline graph with at least one Publish node, none found.")
 
     if args.overrides:
-        import json
         with open(args.overrides, 'r', encoding='utf-8', errors='ignore') as f:
             data = json.load(f)
             for nodeName, overrides in data.items():
@@ -151,7 +166,6 @@ with multiview.GraphModification(graph):
 
     if args.paramOverrides:
         print("\n")
-        import re
         reExtract = re.compile('(\w+)([:.])(\w[\w.]*)=(.*)')
         for p in args.paramOverrides:
             result = reExtract.match(p)

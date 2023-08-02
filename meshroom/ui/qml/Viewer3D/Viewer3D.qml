@@ -21,6 +21,7 @@ FocusScope {
     property int renderMode: 2
     readonly property alias library: mediaLibrary
     readonly property alias mainCamera: mainCamera
+    readonly property alias viewpointCamera: viewpointCamera
 
     readonly property vector3d defaultCamPosition: Qt.vector3d(12.0, 10.0, -12.0)
     readonly property vector3d defaultCamUpVector: Qt.vector3d(0.0, 1.0, 0.0)
@@ -34,6 +35,44 @@ FocusScope {
         mainCamera.position = defaultCamPosition;
         mainCamera.upVector = defaultCamUpVector;
         mainCamera.viewCenter = defaultCamViewCenter;
+    }
+
+    function changeMainCamera() {
+        console.warn("changeMainCamera");
+        // console.warn(JSON.stringify(mainCamera.upVector));
+        // console.warn(JSON.stringify(viewpointCamera));
+
+        var items = [mainCamera, viewpointCamera.camera]
+        for (var i in items)
+        {
+            var item = items[i]
+            for (var p in item)
+            {
+                if( typeof item[p] != "function" )
+                    if(p != "objectName" && p !== undefined)
+                        console.warn(p + ":" + item[p]);
+            }
+            console.warn("\n-------------\n")
+        }
+
+        mainCamera.nearPlane = 0.1;
+        mainCamera.farPlane = 10000.0;
+        mainCamera.viewCenter = Qt.vector3d(0.0, 0.0, -1.0);
+        mainCamera.fieldOfView = viewpoint.fieldOfView;
+        mainCamera.upVector = viewpoint.upVector;
+        mainCamera.transform.rotation = viewpoint.rotation;
+        mainCamera.transform.translation = viewpoint.translation;
+        trackballGizmo.transform.rotation = viewpoint.rotation;
+        trackballGizmo.transform.translation = viewpoint.translation;
+        // mainCamera.fieldOfView = viewpointCamera.camera.fieldOfView;
+        // mainCamera.upVector = viewpointCamera.camera.upVector;
+        // mainCamera.position = viewpointCamera.camera.position;
+        // mainCamera.viewCenter = viewpointCamera.camera.viewVector;
+        // mainCamera.projectionMatrix = viewpointCamera.camera.projectionMatrix;
+        // mainCamera.transform.rotation = viewpointCamera.transform.rotation;
+        // mainCamera.transform.translation = viewpointCamera.transform.translation;
+        
+        // cameraSelector.camera = viewpointCamera.camera;
     }
 
     function load(filepath, label = undefined) {
@@ -95,6 +134,9 @@ FocusScope {
             {
                 Viewer3DSettings.renderMode = event.key - Qt.Key_1;
             }
+            else if (event.key == Qt.Key_S) {
+                changeMainCamera();
+            }
             else {
                 event.accepted = false
             }
@@ -140,6 +182,7 @@ FocusScope {
             }
 
             TrackballGizmo {
+                id: trackballGizmo
                 beamRadius: 4.0/root.height
                 alpha: cameraController.moving ? 1.0 : 0.7
                 enabled: Viewer3DSettings.displayGizmo && cameraSelector.camera == mainCamera

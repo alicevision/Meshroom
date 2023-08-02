@@ -116,7 +116,20 @@ FloatingPane {
                         text: MaterialIcons.linked_camera
                         ToolTip.text: "Sync with Image Selection"
                         checked: enabled && Viewer3DSettings.syncViewpointCamera
-                        onClicked: Viewer3DSettings.syncViewpointCamera = !Viewer3DSettings.syncViewpointCamera
+                        onClicked: {
+                            Viewer3DSettings.syncViewpointCamera = !Viewer3DSettings.syncViewpointCamera;
+                            // Viewer3D.mainCamera.position = Viewer3D.viewpointCamera.camera.position;
+                            // Viewer3D.mainCamera.upVector = Viewer3D.viewpointCamera.camera.upVector;
+                            // console.warn(Viewer3D.viewpointCamera);
+                            // Viewer3D.mainCamera.viewCenter = Viewer3D.viewpointCamera.camera.viewCenter;
+//                            target: camera
+//                                fieldOfView: root.viewpoint.fieldOfView
+//                                upVector: root.viewpoint.upVector
+//                            target: transform
+//                                rotation: root.viewpoint.rotation
+//                                translation: root.viewpoint.translation
+//                            camera.aspectRatio: width/height
+                        }
                     }
                     // Image Overlay controls
                     RowLayout {

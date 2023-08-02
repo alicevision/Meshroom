@@ -10,6 +10,7 @@ Entity {
     id: root
 
     property variant viewpoint
+    property alias transform: transform
 
     property Camera camera: Camera {
 

@@ -4,7 +4,7 @@ This guide will help you setup a development environment to launch and contribut
 ## Requirements
 ### AliceVision
 Meshroom relies on the [AliceVision](https://github.com/alicevision/AliceVision) framework. AliceVision's binaries must
-be in the path while running Meshroom.
+be in the PATH while running Meshroom.
 To build AliceVision, follow this [guide](https://github.com/alicevision/AliceVision/blob/develop/INSTALL.md).
 
 Meshroom also relies on specific files provided with AliceVision.

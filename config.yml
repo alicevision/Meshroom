@@ -1,0 +1,14 @@
+devmode: true
+env_override: true
+
+verbose_level:
+  default: info
+  dev_mode: debug
+
+key_shortcuts:
+  undo: ctrl+z
+  redo: ctrl+y
+
+graph:
+  node:
+    delete_data_on_node_delete: true

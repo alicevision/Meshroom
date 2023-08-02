@@ -929,9 +929,6 @@ class BaseNode(BaseObject):
             if forceCompute or (chunk.status.status not in (Status.RUNNING, Status.SUCCESS)):
                 chunk.upgradeStatusTo(Status.SUBMITTED, ExecMode.LOCAL)
 
-    def processIteration(self, iteration):
-        self._chunks[iteration].process()
-
     def process(self, forceCompute=False):
         for chunk in self._chunks:
             chunk.process(forceCompute)

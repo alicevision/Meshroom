@@ -1,8 +1,8 @@
-import QtQuick 2.14
-import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
-import QtQml.Models 2.2
+import QtQml.Models 2.15
 import Qt.labs.qmlmodels 1.0
 
 import Controls 1.0
@@ -179,7 +179,7 @@ Panel {
             // Update grid current item when selected view changes
             Connections {
                 target: _reconstruction
-                onSelectedViewIdChanged: {
+                function onSelectedViewIdChanged() {
                     if (_reconstruction.selectedViewId > -1) {
                         grid.updateCurrentIndexFromSelectionViewId()
                     }

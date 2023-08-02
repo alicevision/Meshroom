@@ -1,4 +1,4 @@
-import QtQuick 2.11
+import QtQuick 2.15
 
 Item {
     id: root
@@ -74,8 +74,8 @@ Item {
         for (var i = 0; i < root.json.checkers.length; i++) {
             // Only load ccheckers for the current view
             var checker = root.json.checkers[i]
-            if (checker.viewId == viewId ||
-                checker.imagePath == currentImagePath) {
+            if (checker.viewId === viewId ||
+                checker.imagePath === currentImagePath) {
                 var cpt = Qt.createComponent("ColorCheckerEntity.qml");
 
                 var obj = cpt.createObject(root, {

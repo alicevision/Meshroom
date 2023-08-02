@@ -1,9 +1,9 @@
-import QtQuick 2.7
-import QtQuick.Controls 2.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Controls 1.4 as Controls1 // For SplitView
-import QtQuick.Layouts 1.1
-import QtQuick.Window 2.3
-import QtQml.Models 2.2
+import QtQuick.Layouts 1.11
+import QtQuick.Window 2.15
+import QtQml.Models 2.15
 
 import Qt.labs.platform 1.0 as Platform
 import QtQuick.Dialogs 1.3
@@ -39,9 +39,33 @@ ApplicationWindow {
         ensureSaved(function(){ Qt.quit() })
     }
 
-    // force Application palette assignation
-    // note: should be implicit (PySide bug)
     palette: _PaletteManager.palette
+
+    // TODO: uncomment for Qt6, which correctly supports palette for disabled elements AND an alternate base
+    /*
+    // QPalette is not convertible to QML palette (anymore)
+    Component.onCompleted: {
+        palette.alternateBase = _PaletteManager.alternateBase
+        palette.base = _PaletteManager.base
+        palette.button = _PaletteManager.button
+        palette.buttonText = _PaletteManager.buttonText
+        palette.highlight = _PaletteManager.highlight
+        palette.highlightedText = _PaletteManager.highlightedText
+        palette.link = _PaletteManager.link
+        palette.mid = _PaletteManager.mid
+        palette.shadow = _PaletteManager.shadow
+        palette.text = _PaletteManager.text
+        palette.toolTipBase = _PaletteManager.toolTipBase
+        palette.toolTipText = _PaletteManager.toolTipText
+        palette.window = _PaletteManager.window
+        palette.windowText = _PaletteManager.windowText
+
+        palette.disabled.buttonText = _PaletteManager.disabledButtonText
+        palette.disabled.highlight = _PaletteManager.disabledHighlight
+        palette.disabled.highlightedText = _PaletteManager.disabledHighlightedText
+        palette.disabled.text = _PaletteManager.disabledText
+        palette.disabled.windowText = _PaletteManager.disabledWindowText
+    } */
 
     SystemPalette { id: activePalette }
     SystemPalette { id: disabledPalette; colorGroup: SystemPalette.Disabled }
@@ -120,7 +144,7 @@ ApplicationWindow {
             {
                 saveFileDialog.open()
                 function _callbackWrapper(rc) {
-                    if(rc == Platform.Dialog.Accepted)
+                    if(rc === Platform.Dialog.Accepted)
                         fireCallback()
                     saveFileDialog.closed.disconnect(_callbackWrapper)
                 }
@@ -277,6 +301,7 @@ ApplicationWindow {
                     case "Compatibility Issue": {
                         close()
                         compatibilityManager.open()
+                        break
                     }
                     default: close()
                 }
@@ -539,10 +564,12 @@ ApplicationWindow {
         }
     }
 
-    Action {
+    // TODO: uncomment for Qt6 to re-enable the alternative palette (the alternative palette and the disabled items currently cannot both be supported)
+    /* Action {
+
         shortcut: "Ctrl+Shift+P"
         onTriggered: _PaletteManager.togglePalette()
-    }
+    } */
 
 
     // Utility functions for elements in the menubar
@@ -577,7 +604,7 @@ ApplicationWindow {
             Menu {
                 id: newPipelineMenu
                 title: "New Pipeline"
-                enabled: newPipelineMenuItems.model != undefined && newPipelineMenuItems.model.length > 0
+                enabled: newPipelineMenuItems.model !== undefined && newPipelineMenuItems.model.length > 0
                 property int maxWidth: 1000
                 property int fullWidth: {
                     var result = 0;
@@ -621,7 +648,7 @@ ApplicationWindow {
             Menu {
                 id: openRecentMenu
                 title: "Open Recent"
-                enabled: recentFilesMenuItems.model != undefined && recentFilesMenuItems.model.length > 0
+                enabled: recentFilesMenuItems.model !== undefined && recentFilesMenuItems.model.length > 0
                 property int maxWidth: 1000
                 property int fullWidth: {
                     var result = 0;
@@ -866,7 +893,7 @@ ApplicationWindow {
             dialog.detailedText = message.detailedText
         }
 
-        onGraphChanged: {
+        function onGraphChanged() {
             // open CompatibilityManager after file loading if any issue is detected
             if(compatibilityManager.issueCount)
                 compatibilityManager.open()
@@ -874,9 +901,9 @@ ApplicationWindow {
             graphEditor.fit()
         }
 
-        onInfo: createDialog(dialogsFactory.info, arguments[0])
-        onWarning: createDialog(dialogsFactory.warning, arguments[0])
-        onError: createDialog(dialogsFactory.error, arguments[0])
+        function onInfo() { createDialog(dialogsFactory.info, arguments[0]) }
+        function onWarning() { createDialog(dialogsFactory.warning, arguments[0]) }
+        function onError() { createDialog(dialogsFactory.error, arguments[0]) }
     }
 
 
@@ -961,7 +988,7 @@ ApplicationWindow {
                     // 3D viewer
                     for (var i = 0; i < node.attributes.count; i++) {
                         var attr = node.attributes.at(i)
-                        if(attr.isOutput && attr.desc.semantic != "image" && workspaceView.viewIn3D(attr, mouse))
+                        if(attr.isOutput && attr.desc.semantic !== "image" && workspaceView.viewIn3D(attr, mouse))
                             break;
                     }
                 }

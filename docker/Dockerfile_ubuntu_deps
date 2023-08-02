@@ -9,11 +9,11 @@ LABEL maintainer="AliceVision Team alicevision-team@googlegroups.com"
 
 ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
-    QT_DIR=/opt/Qt5.14.1/5.14.1/gcc_64 \
+    QT_DIR=/opt/Qt/5.15.2/gcc_64 \
     QT_CI_LOGIN=alicevisionjunk@gmail.com \
     QT_CI_P=azerty1.
 
-# Workaround for qmlAlembic/qtAliceVision builds: fuse lib/lib64 folders
+# Workaround for QtAliceVision builds: fuse lib/lib64 folders
 #RUN ln -s ${AV_INSTALL}/lib ${AV_INSTALL}/lib64
 
 # Install libs needed by Qt
@@ -42,7 +42,6 @@ RUN apt-get update && \
 	libz-dev \
 	systemd \
 	ssh
-	
 
 RUN apt-get install -y --no-install-recommends \
 	software-properties-common
@@ -53,10 +52,11 @@ RUN apt install python3-pip -y && pip3 install --upgrade pip
 # Install Qt (to build plugins)
 WORKDIR /tmp/qt
 COPY dl/qt.run /tmp/qt
-COPY ./docker/qt-installer-noninteractive.qs ${MESHROOM_DEV}/docker/
-RUN chmod +x qt.run && \
-    ./qt.run --verbose --platform minimal --script "${MESHROOM_DEV}/docker/qt-installer-noninteractive.qs" && \
-    rm qt.run
+RUN chmod +x qt.run
+RUN ./qt.run --verbose --email ${QT_CI_LOGIN} --password ${QT_CI_P} --accept-obligations --accept-licenses \
+    --default-answer --platform minimal --no-force-installations --no-default-installations --confirm-command \
+    install qt.qt5.5152.gcc_64 qt.qt5.5152.qtcharts qt.qt5.5152.qtcharts.gcc_64
+RUN rm qt.run
 
 COPY ./*requirements.txt ./setup.py ${MESHROOM_DEV}/
 

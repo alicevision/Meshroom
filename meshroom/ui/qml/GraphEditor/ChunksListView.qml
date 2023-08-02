@@ -1,7 +1,7 @@
-import QtQuick 2.11
-import QtQuick.Controls 2.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import QtQuick.Controls 1.4 as Controls1 // SplitView
-import QtQuick.Layouts 1.3
+import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
 import Controls 1.0
 
@@ -80,7 +80,7 @@ ColumnLayout {
             id: chunkDelegate
             property var chunk: object
             text: index
-            width: parent.width
+            width: parent ? parent.width : 0
             leftPadding: 8
             onClicked: {
                 chunksLV.forceActiveFocus()

@@ -441,6 +441,7 @@ class Reconstruction(UIGraph):
         self._solvedIntrinsics = None
         self._selectedViewId = None
         self._selectedViewpoint = None
+        self._pickedViewId = None
         self._liveSfmManager = LiveSfmManager(self)
 
         self._workerThreads = ThreadPool(processes=1)
@@ -696,6 +697,7 @@ class Reconstruction(UIGraph):
         self.sfmAugmented.emit(first, last)
         return sfm[0], sfm[-1]
 
+    @Slot(result="QVariantList")
     def allImagePaths(self):
         """ Get all image paths in the reconstruction. """
         return [vp.path.value for node in self._cameraInits for vp in node.viewpoints.value]
@@ -1066,6 +1068,7 @@ class Reconstruction(UIGraph):
         if viewId == self._selectedViewId:
             return
         self._selectedViewId = viewId
+        self.setPickedViewId(viewId)
         vp = None
         if self.viewpoints:
             vp = next((v for v in self.viewpoints if str(v.viewId.value) == self._selectedViewId), None)
@@ -1077,6 +1080,12 @@ class Reconstruction(UIGraph):
             # Reconstruction has ownership of Viewpoint object - destroy it when not needed anymore
             self._selectedViewpoint.deleteLater()
         self._selectedViewpoint = ViewpointWrapper(viewpointAttribute, self) if viewpointAttribute else None
+
+    def setPickedViewId(self, viewId):
+        if viewId == self._pickedViewId:
+            return
+        self._pickedViewId = viewId
+        self.pickedViewIdChanged.emit()
 
     def reconstructedCamerasCount(self):
         """ Get the number of reconstructed cameras in the current context. """
@@ -1123,6 +1132,8 @@ class Reconstruction(UIGraph):
     selectedViewIdChanged = Signal()
     selectedViewId = Property(str, lambda self: self._selectedViewId, setSelectedViewId, notify=selectedViewIdChanged)
     selectedViewpoint = Property(ViewpointWrapper, lambda self: self._selectedViewpoint, notify=selectedViewIdChanged)
+    pickedViewIdChanged = Signal()
+    pickedViewId = Property(str, lambda self: self._pickedViewId, setPickedViewId, notify=pickedViewIdChanged)
 
     sfmChanged = Signal()
     sfm = Property(QObject, getSfm, setSfm, notify=sfmChanged)

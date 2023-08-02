@@ -1,6 +1,6 @@
-import QtQuick 2.7
-import QtQuick.Controls 2.0
-import QtQuick.Layouts 1.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
 import Controls 1.0
 
@@ -26,6 +26,7 @@ FocusScope {
     property var activeNodeFisheye: _reconstruction ? _reconstruction.activeNodes.get("PanoramaInit").node : null
     property bool cropFisheye : activeNodeFisheye ? activeNodeFisheye.attribute("useFisheye").value : false
     property bool enable8bitViewer: enable8bitViewerAction.checked
+    property bool enableSequencePlayer: enableSequencePlayerAction.checked
 
     QtObject {
         id: m
@@ -33,7 +34,10 @@ FocusScope {
             // Metadata from viewpoint attribute
             // Read from the reconstruction object
             if (_reconstruction) {
-                return getViewpointMetadata(_reconstruction.selectedViewId);
+                let vp = getViewpoint(_reconstruction.selectedViewId);
+                if (vp) {
+                    return JSON.parse(vp.childAttribute("metadata").value);
+                }
             }
             return {};
         }
@@ -99,7 +103,7 @@ FocusScope {
 
     // slots
     Keys.onPressed: {
-        if(event.key == Qt.Key_F) {
+        if(event.key === Qt.Key_F) {
             root.fit();
             event.accepted = true;
         }
@@ -147,7 +151,7 @@ FocusScope {
         // make sure the image is ready for use
         if(!imgContainer.image)
             return;
-        if(imgContainer.image.status != Image.Ready)
+        if(imgContainer.image.status !== Image.Ready)
             return;
 
         // for Exif orientation tags 5 to 8, a 90 degrees rotation is applied
@@ -195,70 +199,113 @@ FocusScope {
         displayedNode = null;
     }
 
-    function getImageFile() {
-        // entry point for getting the image file URL
-        if (useExternal) {
-            return sourceExternal;
-        }
-        if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
-            return Filepath.stringToUrl(getViewpointAttribute("path",_reconstruction.selectedViewId));
-        }
+    function getViewpoint(viewId) {
+        // Get viewpoint from cameraInit with matching id
+        // This requires to loop over all viewpoints
 
-        var viewId = -1;
-        var intrinsicId = -1;
-        var poseId = -1;
-        var fileName = "";
-        if (_reconstruction) {
-            viewId = _reconstruction.selectedViewId;
-            intrinsicId = getViewpointAttribute("intrinsicId", viewId);
-            poseId = getViewpointAttribute("poseId", viewId);
-            fileName = Filepath.removeExtension(Filepath.basename(getViewpointAttribute("path", viewId)));
-        }
-        var patterns = {"<VIEW_ID>": viewId, "<INTRINSIC_ID>": intrinsicId, "<POSE_ID>": poseId, "<FILENAME>": fileName}
-        return getFileAttributePath(displayedNode, outputAttribute.name,patterns);
-    }
-
-    function getFileAttributePath(node, attrName, patterns) {
-        // get output attribute with matching name
-        // and parse with the patterns present in the patterns dict
-        if (!node)
-            return "";
-        for (var i = 0; i < node.attributes.count; i++) {
-            var attr = node.attributes.at(i);
-            if (attr.name == attrName) {
-                let path = String(attr.value)
-                for (var key in patterns) {
-                    if (patterns.hasOwnProperty(key)) {
-                        path = path.replace(key, patterns[key])
-                    }
-                }
-                return Filepath.stringToUrl(path);
-            }
-        }
-        return "";
-    }
-
-    function getViewpointAttribute(attributeName, viewId) {
-        // get viewpoint from cameraInit with matching id and return the attribute corresponding to the attributeName
         for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
             var vp = _reconstruction.viewpoints.at(i);
             if (vp.childAttribute("viewId").value == viewId) {
-                return vp.childAttribute(attributeName).value;
+                return vp;
             }
         }
+
         return undefined;
     }
 
-    function getViewpointMetadata(viewId) {
-        // get viewpoint from cameraInit with matching id
-        // and get its image filepath
-        for (var i = 0; i < _reconstruction.viewpoints.count; i++) {
-            var vp = _reconstruction.viewpoints.at(i);
-            if (vp.childAttribute("viewId").value == viewId) {
-                return JSON.parse(vp.childAttribute("metadata").value);
+    function getAttributeByName(node, attrName) {
+        // Get attribute from given node by name
+        // This requires to loop over all atributes
+
+        for (var i = 0; i < node.attributes.count; i++) {
+            var attr = node.attributes.at(i);
+            if (attr.name == attrName) {
+                return attr;
             }
         }
-        return {};
+
+        return undefined;
+    }
+
+    function resolve(path, vp) {
+        // Resolve dynamic path that depends on viewpoint
+
+        let replacements = {
+            "<VIEW_ID>": vp.childAttribute("viewId").value,
+            "<INTRINSIC_ID>": vp.childAttribute("intrinsicId").value,
+            "<POSE_ID>": vp.childAttribute("poseId").value,
+            "<PATH>": vp.childAttribute("path").value,
+            "<FILENAME>": Filepath.removeExtension(Filepath.basename(vp.childAttribute("path").value)),
+        };
+
+        let resolved = path;
+        for (let key in replacements) {
+            resolved = resolved.replace(key, replacements[key]);
+        }
+
+        return resolved;
+    }
+
+    function getImageFile() {
+        // Entry point for getting the image file URL
+
+        if (useExternal) {
+            return sourceExternal;
+        }
+
+        if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
+            let vp = getViewpoint(_reconstruction.pickedViewId);
+            let path = vp ? vp.childAttribute("path").value : "";
+            return Filepath.stringToUrl(path);
+        }
+
+        if (_reconstruction) {
+            let vp = getViewpoint(_reconstruction.pickedViewId);
+            let attr = getAttributeByName(displayedNode, outputAttribute.name);
+            let path = attr ? attr.value : "";
+            let resolved = vp ? resolve(path, vp) : "";
+            return Filepath.stringToUrl(resolved);
+        }
+
+        return undefined;
+    }
+
+    function buildOrderedSequence(path_template) {
+        // Resolve the path template on the sequence of viewpoints
+        // ordered by path
+
+        let objs = []
+        for (let i = 0; i < _reconstruction.viewpoints.count; i++) {
+            objs.push(_reconstruction.viewpoints.at(i));
+        }
+        objs.sort((a, b) => { return a.childAttribute("path").value < b.childAttribute("path").value ? -1 : 1; });
+
+        let seq = [];
+        for (let i = 0; i < objs.length; i++) {
+            seq.push(resolve(path_template, objs[i]));
+        }
+
+        return seq;
+    }
+
+    function getSequence() {
+        // Entry point for getting the current image sequence
+
+        if (useExternal) {
+            return [];
+        }
+
+        if (_reconstruction && (!displayedNode || outputAttribute.name == "gallery")) {
+            return buildOrderedSequence("<PATH>");
+        }
+
+        if (_reconstruction) {
+            let attr = getAttributeByName(displayedNode, outputAttribute.name);
+            let path_template = attr ? attr.value : "";
+            return buildOrderedSequence(path_template);
+        }
+
+        return [];
     }
 
     onDisplayedNodeChanged: {
@@ -285,7 +332,7 @@ FocusScope {
 
     Connections {
         target: _reconstruction
-        onSelectedViewIdChanged: {
+        function onSelectedViewIdChanged() {
             root.source = getImageFile();
             if (useExternal)
                 useExternal = false;
@@ -294,7 +341,9 @@ FocusScope {
 
     Connections {
         target: displayedNode
-        onOutputAttrEnabledChanged: tryLoadNode(displayedNode)
+        function onOutputAttrEnabledChanged() {
+            tryLoadNode(displayedNode)
+        }
     }
     // context menu
     property Component contextMenu: Menu {
@@ -333,7 +382,7 @@ FocusScope {
                 {
                     return null;
                 }
-                if(floatImageViewerLoader.item.containsMouse == false)
+                if(floatImageViewerLoader.item.containsMouse === false)
                 {
                     return null;
                 }
@@ -389,9 +438,9 @@ FocusScope {
                     orientationTag: imgContainer.orientationTag
                     xOrigin: imgContainer.width / 2
                     yOrigin: imgContainer.height / 2
-                    property var fittedOnce: false
-                    property var previousWidth: 0
-                    property var previousHeight: 0
+                    property bool fittedOnce: false
+                    property int previousWidth: 0
+                    property int previousHeight: 0
                     onHeightChanged: {
                         /* Image size is not updated through a single signal with the floatImage viewer, unlike
                          * the simple QML image viewer: instead of updating straight away the width and height to x and
@@ -404,7 +453,7 @@ FocusScope {
                          * group has already been auto-fitted. If we change the group of images (when another project is
                          * opened, for example, and the images have a different size), then another auto-fit needs to be
                          * performed */
-                        if ((!fittedOnce && imgContainer.image.status == Image.Ready && imgContainer.image.height > 0) ||
+                        if ((!fittedOnce && imgContainer.image && imgContainer.image.status === Image.Ready && imgContainer.image.height > 0) ||
                             (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
                             fit();
                             fittedOnce = true;
@@ -415,9 +464,8 @@ FocusScope {
 
                     onActiveChanged: {
                         if (active) {
-                            // instantiate and initialize a FeaturesViewer component dynamically using Loader.setSource
+                            // instantiate and initialize a FLoatImage component dynamically using Loader.setSource
                             // Note: It does not work to use previously created component, so we re-create it with setSource.
-                            // floatViewerComp.createObject(floatImageViewerLoader, {
                             setSource("FloatImage.qml", {
                                 'source':  Qt.binding(function() { return getImageFile(); }),
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
@@ -433,7 +481,9 @@ FocusScope {
                                 'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                                 'canBeHovered': false,
                                 'idView': Qt.binding(function() { return (_reconstruction ? _reconstruction.selectedViewId : -1); }),
-                                'cropFisheye': false
+                                'cropFisheye': false,
+                                'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? getSequence() : []); }),
+                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction; })
                                 })
                           } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -460,7 +510,7 @@ FocusScope {
                                 'isHighlightable': Qt.binding(function(){ return panoramaViewerToolbar.enableHover;}),
                                 'displayGridPano': Qt.binding(function(){ return panoramaViewerToolbar.displayGrid;}),
                                 'mouseMultiplier': Qt.binding(function(){ return panoramaViewerToolbar.mouseSpeed;}),
-                                'msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready
+                                'msfmData': Qt.binding(function() { return (msfmDataLoader && msfmDataLoader.item && msfmDataLoader.status === Loader.Ready
                                                                            && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null; }),
                             })
                         } else {
@@ -1135,7 +1185,7 @@ FocusScope {
                             font.pointSize: 11
                             Layout.minimumWidth: 0
                             checkable: true
-                            enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId != -1
+                            enabled: activeNode && activeNode.isComputed && _reconstruction.selectedViewId !== -1
                             checked: false
                             visible: activeNode
                             onEnabledChanged: {
@@ -1294,6 +1344,16 @@ FocusScope {
                         }
 
                     }
+                }
+
+                SequencePlayer {
+                    id: sequencePlayer
+                    anchors.margins: 0
+                    Layout.fillWidth: true
+                    sortedViewIds: (root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? buildOrderedSequence("<VIEW_ID>") : []
+                    viewer: floatImageViewerLoader.status === Loader.Ready ? floatImageViewerLoader.item : null
+                    visible: root.enableSequencePlayer
+                    enabled: root.enableSequencePlayer
                 }
             }
         }

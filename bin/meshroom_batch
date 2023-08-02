@@ -180,9 +180,9 @@ with multiview.GraphModification(graph):
     # setup cache directory
     graph.cacheDir = args.cache if args.cache else meshroom.core.defaultCacheFolder
 
-    if args.save:
-        graph.save(args.save, setupProjectFile=not bool(args.cache))
-        print('File successfully saved: "{}"'.format(args.save))
+if args.save:
+    graph.save(args.save, setupProjectFile=not bool(args.cache))
+    print('File successfully saved: "{}"'.format(args.save))
 
 if not args.output:
     print('No output set, results will be available in the cache folder: "{}"'.format(graph.cacheDir))

@@ -1,9 +1,9 @@
-import QtQuick 2.9
-import QtQuick.Controls 2.3
-import QtQuick.Layouts 1.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.11
 import MaterialIcons 2.2
-import QtPositioning 5.8
-import QtLocation 5.9
+import QtPositioning 5.15
+import QtLocation 5.15
 
 import Controls 1.0
 import Utils 1.0
@@ -45,7 +45,7 @@ FloatingPane {
     function getGPSCoordinates(metadata)
     {
         // GPS data available
-        if(metadata && metadata["GPS:Longitude"] != undefined && metadata["GPS:Latitude"] != undefined)
+        if(metadata && metadata["GPS:Longitude"] !== undefined && metadata["GPS:Latitude"] !== undefined)
         {
             var latitude = gpsMetadataToCoordinates(metadata["GPS:Latitude"], metadata["GPS:LatitudeRef"])
             var longitude = gpsMetadataToCoordinates(metadata["GPS:Longitude"], metadata["GPS:LongitudeRef"])
@@ -79,11 +79,11 @@ FloatingPane {
                 var entry = {}
                 // split on ":" to get group and key
                 var i = key.lastIndexOf(":")
-                if(i == -1)
+                if(i === -1)
                 {
                     i = key.lastIndexOf("/")
                 }
-                if(i != -1)
+                if(i !== -1)
                 {
                     entry["group"] = key.substr(0, i)
                     entry["key"] = key.substr(i+1)
@@ -190,7 +190,7 @@ FloatingPane {
                 sortRole: "raw"
                 filters: [{role: "raw", value: searchBar.text}]
                 delegate: RowLayout {
-                    width: parent.width
+                    width: parent ? parent.width : 0
                     Label {
                         text: key
                         leftPadding: 6
@@ -267,7 +267,7 @@ FloatingPane {
 
                 Connections {
                     target: root
-                    onCoordinatesChanged: recenter()
+                    function onCoordinatesChanged() { recenter() }
                 }
 
                 zoomLevel: 16
@@ -289,7 +289,7 @@ FloatingPane {
                     anchors.right: parent.right
                     anchors.top: parent.top
                     padding: 2
-                    visible: map.center != coordinates
+                    visible: map.center !== coordinates
 
                     ToolButton {
                         font.family: MaterialIcons.fontFamily

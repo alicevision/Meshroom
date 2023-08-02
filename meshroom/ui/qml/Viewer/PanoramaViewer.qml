@@ -1,4 +1,4 @@
-import QtQuick 2.11
+import QtQuick 2.15
 import Utils 1.0
 
 import AliceVision 1.0 as AliceVision
@@ -28,7 +28,7 @@ AliceVision.PanoramaViewer {
         }
     }
 
-    property var readyToLoad: Image.Null
+    property int readyToLoad: Image.Null
 
     property int subdivisionsPano: 12
 
@@ -42,7 +42,7 @@ AliceVision.PanoramaViewer {
 
     property bool cropFisheyePano: false
 
-    property var idSelected : -1
+    property int idSelected : -1
 
     onIsHighlightableChanged:{
         for (var i = 0; i < repeater.model; ++i) {
@@ -53,26 +53,26 @@ AliceVision.PanoramaViewer {
     property alias containsMouse: mouseAreaPano.containsMouse
 
     property bool isRotating: false
-    property var lastX : 0
-    property var lastY: 0
+    property double lastX : 0
+    property double lastY: 0
 
-    property var xStart : 0
-    property var yStart : 0
+    property double xStart : 0
+    property double yStart : 0
 
-    property var previous_yaw: 0;
-    property var previous_pitch: 0;
-    property var previous_roll: 0;
+    property double previous_yaw: 0;
+    property double previous_pitch: 0;
+    property double previous_roll: 0;
 
     property double yaw: 0;
     property double pitch: 0;
     property double roll: 0;
 
-    property var activeNode: _reconstruction.activeNodes.get('SfMTransform').node
+    property var activeNode: _reconstruction.activeNodes.get('SfMTransform').node;
 
     // Yaw and Pitch in Degrees from SfMTransform node sliders
-    property int yawNode: activeNode.attribute("manualTransform.manualRotation.y").value;
-    property int pitchNode: activeNode.attribute("manualTransform.manualRotation.x").value;
-    property int rollNode: activeNode.attribute("manualTransform.manualRotation.z").value;
+    property double yawNode: activeNode ? activeNode.attribute("manualTransform.manualRotation.y").value : 0;
+    property double pitchNode: activeNode ? activeNode.attribute("manualTransform.manualRotation.x").value : 0;
+    property double rollNode: activeNode ? activeNode.attribute("manualTransform.manualRotation.z").value : 0;
 
     //Convert angle functions
     function toDegrees(radians){
@@ -137,9 +137,7 @@ AliceVision.PanoramaViewer {
                     // Rotate Panorama
                     if (isRotating && isEditable) {
 
-                        var nx = Math.max(0, mouse.x)
                         var nx = Math.min(width - 1, mouse.x)
-                        var ny = Math.max(0, mouse.y)
                         var ny = Math.min(height - 1, mouse.y)
 
                         var xoffset = nx - lastX;
@@ -156,17 +154,18 @@ AliceVision.PanoramaViewer {
                             var end_pt = Qt.vector2d(latitude_end, longitude_end)
 
                             var previous_euler = Qt.vector3d(previous_yaw, previous_pitch, previous_roll)
+                            var result
 
                             if (mouse.modifiers & Qt.ControlModifier)
                             {
-                                var result = Transformations3DHelper.updatePanoramaInPlane(previous_euler, start_pt, end_pt)
+                                result = Transformations3DHelper.updatePanoramaInPlane(previous_euler, start_pt, end_pt)
                                 root.pitch = result.x
                                 root.yaw = result.y
                                 root.roll = result.z  
                             }
                             else
                             {
-                                var result = Transformations3DHelper.updatePanorama(previous_euler, start_pt, end_pt)
+                                result = Transformations3DHelper.updatePanorama(previous_euler, start_pt, end_pt)
                                 root.pitch = result.x
                                 root.yaw = result.y
                                 root.roll = result.z  
@@ -294,7 +293,6 @@ AliceVision.PanoramaViewer {
                         'surface.pitch': Qt.binding(function() { return root.pitch; }),
                         'surface.yaw': Qt.binding(function() { return root.yaw; }),
                         'surface.roll': Qt.binding(function() { return root.roll; }),
-                        'index' : index,
                         'idView': Qt.binding(function() { return idViewItem; }),
                         'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue; }),
                         'gain': Qt.binding(function() { return hdrImageToolbar.gainValue; }),
@@ -302,7 +300,8 @@ AliceVision.PanoramaViewer {
                         'downscaleLevel' : Qt.binding(function() { return downscale; }),
                         'source':  Qt.binding(function() { return sourceItem; }),
                         'surface.msfmData': Qt.binding(function() { return root.msfmData }),
-                        'canBeHovered': true
+                        'canBeHovered': true,
+                        'useSequence': false
                     })
                     imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.status === Image.Ready ? true : false; })
                 }
@@ -317,7 +316,7 @@ AliceVision.PanoramaViewer {
         }
         Connections {
             target: root
-            onDownscaleReady: {
+            function onDownscaleReady() {
                 root.imagesLoaded = 0;
 
                 // Retrieve downscale value from C++

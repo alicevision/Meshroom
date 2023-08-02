@@ -1,8 +1,8 @@
-import QtQuick 2.7
-import Qt3D.Core 2.1
-import Qt3D.Render 2.1
-import Qt3D.Input 2.1
-import Qt3D.Logic 2.0
+import QtQuick 2.15
+import Qt3D.Core 2.15
+import Qt3D.Render 2.15
+import Qt3D.Input 2.15
+import Qt3D.Logic 2.15
 import QtQml 2.2
 
 import Meshroom.Helpers 1.0
@@ -63,10 +63,11 @@ Entity {
             currentPosition.x = mouse.x;
             currentPosition.y = mouse.y;
 
-            const dt = 0.02
+            const dt = 0.02;
+            var d;
 
             if(panning) { // translate
-                var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
+                d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
                 var tx = axisMX.value * root.translateSpeed * d;
                 var ty = axisMY.value * root.translateSpeed * d;
                 mouseHandler.hasMoved = true;
@@ -80,7 +81,7 @@ Entity {
                 return;
             }
             if(zooming) { // zoom with alt + RMD
-                var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.1;
+                d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.1;
                 var tz = axisMX.value * root.translateSpeed * d;
                 mouseHandler.hasMoved = true;
                 root.camera.translate(Qt.vector3d(0, 0, tz).times(dt), Camera.DontTranslateViewCenter)

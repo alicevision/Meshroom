@@ -1,5 +1,5 @@
-import QtQuick 2.11
-import QtQuick.Layouts 1.3
+import QtQuick 2.15
+import QtQuick.Layouts 1.11
 
 import Controls 1.0
 

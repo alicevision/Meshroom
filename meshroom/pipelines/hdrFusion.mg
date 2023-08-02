@@ -2,12 +2,12 @@
     "header": {
         "nodesVersions": {
             "Publish": "1.3",
-            "LdrToHdrSampling": "4.0",
             "LdrToHdrMerge": "4.1",
-            "LdrToHdrCalibration": "3.0",
-            "CameraInit": "9.0"
+            "CameraInit": "9.0",
+            "LdrToHdrSampling": "4.0",
+            "LdrToHdrCalibration": "3.0"
         },
-        "releaseVersion": "2023.2.0-develop",
+        "releaseVersion": "2023.2.0",
         "fileVersion": "1.1",
         "template": true
     },

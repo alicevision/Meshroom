@@ -521,6 +521,9 @@ class BaseNode(BaseObject):
     def getName(self):
         return self._name
 
+    def getDefaultLabel(self):
+        return self.nameToLabel(self._name)
+
     def getLabel(self):
         """
         Returns:
@@ -530,7 +533,7 @@ class BaseNode(BaseObject):
             label = self.internalAttribute("label").value.strip()
             if label:
                 return label
-        return self.nameToLabel(self._name)
+        return self.getDefaultLabel()
 
     def getColor(self):
         """
@@ -1151,6 +1154,7 @@ class BaseNode(BaseObject):
 
 
     name = Property(str, getName, constant=True)
+    defaultLabel = Property(str, getDefaultLabel, constant=True)
     nodeType = Property(str, nodeType.fget, constant=True)
     documentation = Property(str, getDocumentation, constant=True)
     positionChanged = Signal()

@@ -23,11 +23,11 @@ def createParser():
         help="sfmData with the animated camera.",
     )
     parser.add_argument(
-        "--rangeStart", type=int, required=False,
+        "--rangeStart", type=int, required=False, default=-1,
         help="Range start for processing views. Set to -1 to process all views.",
     )
     parser.add_argument(
-        "--rangeSize", type=int, required=False,
+        "--rangeSize", type=int, required=False, default=0,
         help="Range size for processing views.",
     )
     parser.add_argument(
@@ -91,6 +91,7 @@ def setupCamera(intrinsic, pose):
 
     bpy.context.scene.render.resolution_x = int(intrinsic['width'])
     bpy.context.scene.render.resolution_y = int(intrinsic['height'])
+    bpy.context.scene.render.pixel_aspect_x = float(intrinsic['pixelRatio'])
 
     camData.sensor_width = float(intrinsic['sensorWidth'])
     camData.lens = float(intrinsic['focalLength'])
@@ -199,15 +200,15 @@ def setupWireframeShading(mesh, color):
     # Emission node
     nodeEmission = material.node_tree.nodes.new(type='ShaderNodeEmission')
     nodeEmission.inputs['Color'].default_value = color
-    # Transparent BSDF node
-    nodeTransparent = material.node_tree.nodes.new(type='ShaderNodeBsdfTransparent')
+    # Holdout node
+    nodeHoldout = material.node_tree.nodes.new(type='ShaderNodeHoldout')
     # Max Shader node
     nodeMix = material.node_tree.nodes.new(type='ShaderNodeMixShader')
     # Retrieve ouput node
     nodeOutput = material.node_tree.nodes['Material Output']
     # Connect nodes
     material.node_tree.links.new(nodeWireframe.outputs['Fac'], nodeMix.inputs['Fac'])
-    material.node_tree.links.new(nodeTransparent.outputs['BSDF'], nodeMix.inputs[1])
+    material.node_tree.links.new(nodeHoldout.outputs['Holdout'], nodeMix.inputs[1])
     material.node_tree.links.new(nodeEmission.outputs['Emission'], nodeMix.inputs[2])
     material.node_tree.links.new(nodeMix.outputs['Shader'], nodeOutput.inputs['Surface'])
     # Apply material to mesh
@@ -216,37 +217,20 @@ def setupWireframeShading(mesh, color):
 
 
 def setupLineArtShading(obj, mesh, color):
-    '''Setup materials and Solidify modifier for line art shading.'''
-    # Transparent filling material
-    matFill = bpy.data.materials.new('Fill')
-    matFill.use_backface_culling = True
-    matFill.use_nodes = True
-    matFill.blend_method = 'BLEND'
-    matFill.show_transparent_back = False
-    matFill.node_tree.links.clear()
-    nodeTransparent = matFill.node_tree.nodes.new(type='ShaderNodeBsdfTransparent')
-    nodeOutputFill = matFill.node_tree.nodes['Material Output']
-    matFill.node_tree.links.new(nodeTransparent.outputs['BSDF'], nodeOutputFill.inputs['Surface'])
-    # Colored edge material
-    matEdge = bpy.data.materials.new('Edge')
-    matEdge.use_backface_culling = True
-    matEdge.use_nodes = True
-    matEdge.blend_method = 'BLEND'
-    matEdge.node_tree.links.clear()
-    nodeEmission = matEdge.node_tree.nodes.new(type='ShaderNodeEmission')
-    nodeEmission.inputs['Color'].default_value = color
-    nodeOutputEdge = matEdge.node_tree.nodes['Material Output']
-    matEdge.node_tree.links.new(nodeEmission.outputs['Emission'], nodeOutputEdge.inputs['Surface'])
-    # Apply materials to mesh
+    '''Setup line art shading using Freestyle.'''
+    # Freestyle
+    bpy.context.scene.render.use_freestyle = True
+    bpy.data.linestyles["LineStyle"].color = (color[0], color[1], color[2])
+    # Holdout material
+    material = bpy.data.materials.new('Holdout')
+    material.use_nodes = True
+    material.node_tree.links.clear()
+    nodeHoldout = material.node_tree.nodes.new(type='ShaderNodeHoldout')
+    nodeOutput = material.node_tree.nodes['Material Output']
+    material.node_tree.links.new(nodeHoldout.outputs['Holdout'], nodeOutput.inputs['Surface'])
+    # Apply material to mesh
     mesh.materials.clear()
-    mesh.materials.append(matFill)
-    mesh.materials.append(matEdge)
-    # Solidify modifier
-    solidify = obj.modifiers.new('Solidify', type='SOLIDIFY')
-    solidify.thickness = -0.01
-    solidify.use_rim = False
-    solidify.use_flip_normals = True
-    solidify.material_offset = 1
+    mesh.materials.append(material)
 
 
 def setupPointCloudShading(obj, color, size):
@@ -337,8 +321,8 @@ def main():
         setupPointCloudShading(sceneObj, color, args.particleSize)
 
     print("Retrieve range")
-    rangeStart = args.rangeStart if args.rangeStart else -1
-    rangeSize = args.rangeSize if args.rangeSize else -1
+    rangeStart = args.rangeStart
+    rangeSize = args.rangeSize
     if rangeStart != -1:
         if rangeStart < 0 or rangeSize < 0 or rangeStart > len(views):
             print("Invalid range")

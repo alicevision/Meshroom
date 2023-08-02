@@ -1,6 +1,6 @@
-import QtQuick 2.9
-import QtQuick.Layouts 1.3
-import QtQuick.Controls 2.2
+import QtQuick 2.15
+import QtQuick.Layouts 1.11
+import QtQuick.Controls 2.15
 import MaterialIcons 2.2
 import Utils 1.0
 
@@ -125,7 +125,7 @@ RowLayout {
         id: choice_component
         ComboBox {
             id: combo
-            model: attribute.desc.values
+            model: attribute.desc !== undefined ? attribute.desc.values : undefined
             width: intrinsicModel.columnWidths[columnIndex]
             enabled: !root.readOnly
 
@@ -141,7 +141,7 @@ RowLayout {
 
             Connections {
                 target: attribute
-                onValueChanged: combo.currentIndex = combo.find(attribute.value)
+                function onValueChanged() { combo.currentIndex = combo.find(attribute.value) }
             }
         }
     }

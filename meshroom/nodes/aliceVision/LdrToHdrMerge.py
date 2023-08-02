@@ -1,6 +1,8 @@
 __version__ = "4.1"
 
 import json
+import os
+from collections import Counter
 
 from meshroom.core import desc
 
@@ -66,6 +68,7 @@ Merge LDR images into HDR images.
             value=0,
             range=(0, 10, 1),
             uid=[0],
+            group="bracketsParams"
         ),
         desc.BoolParam(
             name="offsetRefBracketIndexEnabled",
@@ -93,6 +96,32 @@ Merge LDR images into HDR images.
             range=(0.0, 1.0, 0.01),
             uid=[0],
             enabled= lambda node: (node.nbBrackets.value != 1 and not node.offsetRefBracketIndexEnabled.value),
+        ),
+        desc.FloatParam(
+            name='minSignificantValue',
+            label='Minimum Significant Value',
+            description='Minimum channel input value to be considered in advanced pixelwise merging.',
+            value=0.05,
+            range=(0.0, 1.0, 0.001),
+            uid=[0],
+            enabled= lambda node: (node.nbBrackets.value != 1),
+        ),
+        desc.FloatParam(
+            name='maxSignificantValue',
+            label='Maximum Significant Value',
+            description='Maximum channel input value to be considered in advanced pixelwise merging.',
+            value=0.995,
+            range=(0.0, 1.0, 0.001),
+            uid=[0],
+            enabled= lambda node: (node.nbBrackets.value != 1),
+        ),
+        desc.BoolParam(
+            name='computeLightMasks',
+            label='Compute Light Masks',
+            description="Compute masks of low and high lights and missing info.",
+            value=False,
+            uid=[0],
+            enabled= lambda node: node.nbBrackets.value != 1,
         ),
         desc.BoolParam(
             name="byPass",
@@ -234,33 +263,31 @@ Merge LDR images into HDR images.
         if not isinstance(node.nodeDesc, cls):
             raise ValueError("Node {} is not an instance of type {}".format(node, cls))
         # TODO: use Node version for this test
-        if 'userNbBrackets' not in node.getAttributes().keys():
+        if "userNbBrackets" not in node.getAttributes().keys():
             # Old version of the node
             return
         if node.userNbBrackets.value != 0:
             node.nbBrackets.value = node.userNbBrackets.value
             return
-        # logging.info("[LDRToHDR] Update start: version:" + str(node.packageVersion))
         cameraInitOutput = node.input.getLinkParam(recursive=True)
         if not cameraInitOutput:
             node.nbBrackets.value = 0
             return
-        if not cameraInitOutput.node.hasAttribute('viewpoints'):
-            if cameraInitOutput.node.hasAttribute('input'):
+        if not cameraInitOutput.node.hasAttribute("viewpoints"):
+            if cameraInitOutput.node.hasAttribute("input"):
                 cameraInitOutput = cameraInitOutput.node.input.getLinkParam(recursive=True)
-        if cameraInitOutput and cameraInitOutput.node and cameraInitOutput.node.hasAttribute('viewpoints'):
+        if cameraInitOutput and cameraInitOutput.node and cameraInitOutput.node.hasAttribute("viewpoints"):
             viewpoints = cameraInitOutput.node.viewpoints.value
         else:
             # No connected CameraInit
             node.nbBrackets.value = 0
             return
 
-        # logging.info("[LDRToHDR] Update start: nb viewpoints:" + str(len(viewpoints)))
         inputs = []
         for viewpoint in viewpoints:
             jsonMetadata = viewpoint.metadata.value
             if not jsonMetadata:
-                # no metadata, we cannot found the number of brackets
+                # no metadata, we cannot find the number of brackets
                 node.nbBrackets.value = 0
                 return
             d = json.loads(jsonMetadata)
@@ -272,20 +299,44 @@ Merge LDR images into HDR images.
                 # We assume that there is no multi-bracketing, so nothing to do.
                 node.nbBrackets.value = 1
                 return
-            inputs.append((viewpoint.path.value, (fnumber, shutterSpeed, iso)))
+            inputs.append((viewpoint.path.value, (float(fnumber), float(shutterSpeed), float(iso))))
         inputs.sort()
 
         exposureGroups = []
         exposures = []
+        prevFnumber = 0.0
+        prevShutterSpeed = 0.0
+        prevIso = 0.0
+        prevPath = None  # Stores the dirname of the previous parsed image
+        newGroup = False  # True if a new exposure group needs to be created (useful when there are several datasets)
         for path, exp in inputs:
-            if exposures and exp != exposures[-1] and exp == exposures[0]:
+            # If the dirname of the previous image and the dirname of the current image do not match, this means that the
+            # dataset that is being parsed has changed. A new group needs to be created but will fail to be detected in the
+            # next "if" statement if the new dataset's exposure levels are different. Setting "newGroup" to True prevents this
+            # from happening.
+            if prevPath is not None and prevPath != os.path.dirname(path):
+                newGroup = True
+
+            # A new group is created if the current image's exposure level is larger than the previous image's, if there
+            # were any changes in the ISO or aperture value, or if a new dataset has been detected with the path.
+            # Since the input images are ordered, the shutter speed should always be decreasing, so a shutter speed larger
+            # than the previous one indicates the start of a new exposure group.
+            fnumber, shutterSpeed, iso = exp
+            if exposures:
+                prevFnumber, prevShutterSpeed, prevIso = exposures[-1]
+            if exposures and len(exposures) > 1 and (fnumber != prevFnumber or shutterSpeed > prevShutterSpeed or iso != prevIso) or newGroup:
                 exposureGroups.append(exposures)
                 exposures = [exp]
             else:
                 exposures.append(exp)
+
+            prevPath = os.path.dirname(path)
+            newGroup = False
+
         exposureGroups.append(exposures)
+
         exposures = None
-        bracketSizes = set()
+        bracketSizes = Counter()
         if len(exposureGroups) == 1:
             if len(set(exposureGroups[0])) == 1:
                 # Single exposure and multiple views
@@ -295,11 +346,27 @@ Merge LDR images into HDR images.
                 node.nbBrackets.value = len(exposureGroups[0])
         else:
             for expGroup in exposureGroups:
-                bracketSizes.add(len(expGroup))
-            if len(bracketSizes) == 1:
-                node.nbBrackets.value = bracketSizes.pop()
-                # logging.info("[LDRToHDR] nb bracket size:" + str(node.nbBrackets.value))
-            else:
-                node.nbBrackets.value = 0
-        # logging.info("[LDRToHDR] Update end")
+                bracketSizes[len(expGroup)] += 1
 
+            if len(bracketSizes) == 0:
+                node.nbBrackets.value = 0
+            else:
+                bestTuple = None
+                for tuple in bracketSizes.most_common():
+                    if bestTuple is None or tuple[1] > bestTuple[1]:
+                        bestTuple = tuple
+                    elif tuple[1] == bestTuple[1]:
+                        bestTuple = tuple if tuple[0] > bestTuple[0] else bestTuple
+
+                bestBracketSize = bestTuple[0]
+                bestCount = bestTuple[1]
+                node.nbBrackets.value = bestBracketSize
+
+    def processChunk(self, chunk):
+        # Trick to avoid sending --nbBrackets to the command line when the bracket detection is automatic.
+        # Otherwise, the AliceVision executable has no way of determining whether the bracket detection was automatic
+        # or if it was hard-set by the user.
+        self.commandLine = "aliceVision_LdrToHdrMerge {allParams}"
+        if chunk.node.userNbBrackets.value == chunk.node.nbBrackets.value:
+            self.commandLine += "{bracketsParams}"
+        super(LdrToHdrMerge, self).processChunk(chunk)

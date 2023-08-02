@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 import json
 import os
@@ -29,6 +29,21 @@ Post process the panorama.
             label="Fill Holes Algorithm",
             description="Fill the non attributed pixels with push pull algorithm if set.",
             value=False,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name="exportLevels",
+            label="Export Downscaled Levels",
+            description="Export downscaled panorama levels.",
+            value=False,
+            uid=[0],
+        ),
+        desc.IntParam(
+            name="lastLevelMaxSize",
+            label="Last Level Max Size",
+            description="Maximum width of smallest downscaled panorama level.",
+            value=3840,
+            range=(1, 100000),
             uid=[0],
         ),
         desc.IntParam(

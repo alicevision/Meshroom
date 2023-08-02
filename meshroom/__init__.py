@@ -8,7 +8,7 @@ class VersionStatus(Enum):
     release = 1
     develop = 2
 
-__version__ = "2023.2.0"
+__version__ = "2023.3.0"
 # Always increase the minor version when switching from release to develop.
 __version_status__ = VersionStatus.develop
 
@@ -120,6 +120,8 @@ def setupEnvironment(backend=Backend.STANDALONE):
         qtPluginsDir = os.path.join(rootDir, "qtPlugins")
         sensorDBPath = os.path.join(aliceVisionShareDir, "cameraSensors.db")
         voctreePath = os.path.join(aliceVisionShareDir, "vlfeat_K80L3.SIFT.tree")
+        sphereDetectionModel = os.path.join(aliceVisionShareDir, "sphereDetection_Mask-RCNN.onnx")
+        semanticSegmentationModel = os.path.join(aliceVisionShareDir, "fcn_resnet50.onnx")
 
         env = {
             'PATH': aliceVisionBinDir,
@@ -134,7 +136,9 @@ def setupEnvironment(backend=Backend.STANDALONE):
         variables = {
             "ALICEVISION_ROOT": aliceVisionDir,
             "ALICEVISION_SENSOR_DB": sensorDBPath,
-            "ALICEVISION_VOCTREE": voctreePath
+            "ALICEVISION_VOCTREE": voctreePath,
+            "ALICEVISION_SPHERE_DETECTION_MODEL": sphereDetectionModel,
+            "ALICEVISION_SEMANTIC_SEGMENTATION_MODEL": semanticSegmentationModel
         }
 
         for key, value in variables.items():
@@ -143,3 +147,6 @@ def setupEnvironment(backend=Backend.STANDALONE):
                 os.environ[key] = value
     else:
         addToEnvPath("PATH", os.environ.get("ALICEVISION_BIN_PATH", ""))
+
+
+os.environ["QML_XHR_ALLOW_FILE_READ"] = '1'

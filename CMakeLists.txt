@@ -8,8 +8,7 @@ endif()
 set(ALICEVISION_ROOT "$ENV{ALICEVISION_ROOT}" CACHE STRING "AliceVision root dir")
 set(QT_DIR "$ENV{QT_DIR}" CACHE STRING "Qt root directory")
 
-option(MR_BUILD_QMLALEMBIC "Enable building of qmlAlembic plugin" ON)
-option(MR_BUILD_QTALICEVISION "Enable building of qtAliceVision plugin" ON)
+option(MR_BUILD_QTALICEVISION "Enable building of QtAliceVision plugin" ON)
 
 if(CMAKE_BUILD_TYPE MATCHES Release)
     message(STATUS "Force CMAKE_INSTALL_DO_STRIP in Release")
@@ -36,31 +35,16 @@ include(GNUInstallDirs)
 
 # message(STATUS "QT_CMAKE_FLAGS: ${QT_CMAKE_FLAGS}")
 
-if(MR_BUILD_QMLALEMBIC)
-set(QMLALEMBIC_TARGET qmlAlembic)
-ExternalProject_Add(${QMLALEMBIC_TARGET}
-      GIT_REPOSITORY https://github.com/alicevision/qmlAlembic
-      GIT_TAG develop
-      PREFIX ${BUILD_DIR}
-      BUILD_IN_SOURCE 0
-      BUILD_ALWAYS 0
-      SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/qmlalembic
-      BINARY_DIR ${BUILD_DIR}/qmlalembic_build
-      INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
-      CONFIGURE_COMMAND ${CMAKE_COMMAND} ${CMAKE_CORE_BUILD_FLAGS} ${ALEMBIC_CMAKE_FLAGS} -DCMAKE_PREFIX_PATH:PATH=${QT_DIR} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> <SOURCE_DIR>
-      )
-endif()
-
 if(MR_BUILD_QTALICEVISION)
-set(QTALICEVISION_TARGET qtAliceVision)
+set(QTALICEVISION_TARGET QtAliceVision)
 ExternalProject_Add(${QTALICEVISION_TARGET}
-      GIT_REPOSITORY https://github.com/alicevision/qtAliceVision
+      GIT_REPOSITORY https://github.com/alicevision/QtAliceVision
       GIT_TAG develop
       PREFIX ${BUILD_DIR}
       BUILD_IN_SOURCE 0
       BUILD_ALWAYS 0
-      SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/qtAliceVision
-      BINARY_DIR ${BUILD_DIR}/qtAliceVision_build
+      SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/QtAliceVision
+      BINARY_DIR ${BUILD_DIR}/QtAliceVision_build
       INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
       CONFIGURE_COMMAND ${CMAKE_COMMAND} ${CMAKE_CORE_BUILD_FLAGS} ${ALEMBIC_CMAKE_FLAGS} -DCMAKE_PREFIX_PATH:PATH=${QT_DIR}$<SEMICOLON>${ALICEVISION_ROOT} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> <SOURCE_DIR>
       )

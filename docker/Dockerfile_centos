@@ -13,7 +13,7 @@ ENV MESHROOM_DEV=/opt/Meshroom \
     MESHROOM_BUILD=/tmp/Meshroom_build \
     MESHROOM_BUNDLE=/opt/Meshroom_bundle \
     AV_INSTALL=/opt/AliceVision_install \
-    QT_DIR=/opt/Qt5.14.1/5.14.1/gcc_64 \
+    QT_DIR=/opt/Qt/5.15.2/gcc_64 \
     PATH="${PATH}:${MESHROOM_BUNDLE}" \
     OPENIMAGEIO_LIBRARY=/opt/AliceVision_install/lib
 
@@ -24,17 +24,16 @@ WORKDIR ${MESHROOM_BUILD}
 # Build Meshroom plugins
 RUN cmake "${MESHROOM_DEV}" -DCMAKE_PREFIX_PATH="${AV_INSTALL}" -DALICEVISION_ROOT="${AV_INSTALL}" -DCMAKE_INSTALL_PREFIX="${MESHROOM_BUNDLE}/qtPlugins"
 
-RUN make "-j$(nproc)" qmlAlembic
-RUN make "-j$(nproc)" qtAliceVision
+RUN make "-j$(nproc)" QtAliceVision
 RUN make "-j$(nproc)" && \
-  rm -rf "${MESHROOM_BUILD}" "${MESHROOM_DEV}" \
-    ${MESHROOM_BUNDLE}/aliceVision/share/doc \
-    ${MESHROOM_BUNDLE}/aliceVision/share/eigen3 \
-    ${MESHROOM_BUNDLE}/aliceVision/share/fonts \
-    ${MESHROOM_BUNDLE}/aliceVision/share/lemon \
-    ${MESHROOM_BUNDLE}/aliceVision/share/libraw \
-    ${MESHROOM_BUNDLE}/aliceVision/share/man/ \
-    aliceVision/share/pkgconfig
+    rm -rf "${MESHROOM_BUILD}" "${MESHROOM_DEV}" \
+           ${MESHROOM_BUNDLE}/aliceVision/share/doc \
+           ${MESHROOM_BUNDLE}/aliceVision/share/eigen3 \
+           ${MESHROOM_BUNDLE}/aliceVision/share/fonts \
+           ${MESHROOM_BUNDLE}/aliceVision/share/lemon \
+           ${MESHROOM_BUNDLE}/aliceVision/share/libraw \
+           ${MESHROOM_BUNDLE}/aliceVision/share/man/ \
+           aliceVision/share/pkgconfig
 
 COPY *requirements.txt *.md *.py ${MESHROOM_DEV}/
 COPY ./docs ${MESHROOM_DEV}/docs
@@ -61,6 +60,8 @@ RUN source scl_source enable rh-python36 && \
            ${MESHROOM_BUNDLE}/lib/PySide2/rcc \
            ${MESHROOM_BUNDLE}/lib/PySide2/designer
 
+# Copy missing libassimpsceneimport.so
+COPY dl/libassimpsceneimport.so ${MESHROOM_BUNDLE}/lib/PySide2/Qt/plugins/sceneparsers
 
 # Enable SSH X11 forwarding, needed when the Docker image
 # is run on a remote machine

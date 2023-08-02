@@ -8,7 +8,7 @@ currentDir = os.path.dirname(os.path.abspath(__file__))
 class ScenePreview(desc.CommandLineNode):
     commandLine = '{blenderCmdValue} -b --python {scriptValue} -- {allParams}'
     size = desc.DynamicNodeSize('cameras')
-    parallelization = desc.Parallelization(blockSize=10)
+    parallelization = desc.Parallelization(blockSize=40)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     category = 'Utils'

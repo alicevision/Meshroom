@@ -90,6 +90,35 @@ This node export undistorted images so the depth map and texturing can be comput
             uid=[0],
             advanced=True,
         ),
+        desc.FloatParam(
+            name="landmarksMaskScale",
+            label="Landmarks Mask Scale",
+            description="Scale (relative to image size) of the projection of landmarks"
+                " to mask images for depth computation.\n"
+                "If 0, masking using landmarks will not be used.",
+            value=0.,
+            range=(0.0, 1.0, 0.01),
+            uid=[0],
+            advanced=True
+        ),
+        desc.IntParam(
+            name="nbNeighborObservations",
+            label="Number of Neighbor Observations",
+            description="Number of neighbor observations to be considered for the landmarks-based masking.",
+            value=5,
+            range=(0, 50, 1),
+            uid=[0],
+            advanced=True
+        ),
+        desc.FloatParam(
+            name="percentile",
+            label="Percentile",
+            description="TODO.",
+            value=0.95,
+            range=(0.0, 1.0, 0.01),
+            uid=[0],
+            advanced=True
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",

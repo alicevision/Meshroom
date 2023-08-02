@@ -244,6 +244,7 @@ QtObject {
     readonly property string crop_portrait: "\ue3c5"
     readonly property string crop_rotate: "\ue437"
     readonly property string crop_square: "\ue3c6"
+    readonly property string dangerous: "\ue99a"
     readonly property string dashboard: "\ue871"
     readonly property string data_usage: "\ue1af"
     readonly property string date_range: "\ue916"

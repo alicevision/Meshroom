@@ -467,4 +467,4 @@ The needed metadata are:
 
     def processChunk(self, chunk):
         self.createViewpointsFile(chunk.node)
-        desc.CommandLineNode.processChunk(self, chunk)
+        super(CameraInit, self).processChunk(chunk)

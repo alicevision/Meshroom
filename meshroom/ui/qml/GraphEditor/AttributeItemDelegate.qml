@@ -1,7 +1,7 @@
 import QtQuick 2.9
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.2
-import QtQuick.Dialogs 1.0
+import QtQuick.Dialogs 1.3
 import MaterialIcons 2.2
 import Utils 1.0
 
@@ -23,9 +23,23 @@ RowLayout {
 
     spacing: 2
 
+    function updateAttributeLabel()
+    {
+        errorLabel.visible = !attribute.validValue
+        background.color = attribute.validValue ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
+
+        if (attribute.desc) {
+            var tooltip = ""
+            if (!attribute.validValue && attribute.desc.errorMessage !== "")
+                tooltip += "<i><b>Error: </b>" + Format.plainToHtml(attribute.desc.errorMessage) + "</i><br><br>"
+            tooltip += "<b> " + attribute.desc.name + "</b><br>" + Format.plainToHtml(attribute.desc.description)
+
+            parameterTooltip.text = tooltip
+        }
+    }
 
     Pane {
-        background: Rectangle { color: Qt.darker(parent.palette.window, 1.1) }
+        background: Rectangle { id: background; color: object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5) }
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
         Layout.fillHeight: true
@@ -34,6 +48,22 @@ RowLayout {
             spacing: 0
             width: parent.width
             height: parent.height
+
+            MaterialLabel {
+                id: errorLabel
+
+                text: MaterialIcons.dangerous
+                font.pointSize: 10
+                leftPadding: 5
+                visible: !object.validValue
+
+                MouseArea {
+                    id: errorLabelMA
+                    anchors.fill: parent
+                    hoverEnabled: true
+                }
+            }
+
             Label {
                 id: parameterLabel
 
@@ -44,19 +74,28 @@ RowLayout {
                 padding: 5
                 wrapMode: Label.WrapAtWordBoundaryOrAnywhere
 
-                text: attribute.label
+                text: object.label
 
                 // Tooltip hint with attribute's description
-                ToolTip.text: "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.desc.description)
-                ToolTip.visible: parameterMA.containsMouse
-                ToolTip.delay: 800
+                ToolTip {
+                    id: parameterTooltip
+
+                    text: {
+                        var tooltip = ""
+                        if (!object.validValue && object.desc.errorMessage !== "")
+                            tooltip += "<i><b>Error: </b>" + Format.plainToHtml(object.desc.errorMessage) + "</i><br><br>"
+                        tooltip += "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.desc.description)
+                        return tooltip
+                    }
+                    visible: parameterMA.containsMouse || errorLabelMA.containsMouse
+                    delay: 800
+                }
 
                 // make label bold if attribute's value is not the default one
                 font.bold: !object.isOutput && !object.isDefault
 
                 // make label italic if attribute is a link
                 font.italic: object.isLink
-
 
                 MouseArea {
                     id: parameterMA
@@ -74,7 +113,10 @@ RowLayout {
                         MenuItem {
                             text: "Reset To Default Value"
                             enabled: root.editable && !attribute.isDefault
-                            onTriggered: _reconstruction.resetAttribute(attribute)
+                            onTriggered: {
+                                _reconstruction.resetAttribute(attribute)
+                                updateAttributeLabel()
+                            }
                         }
 
                         MenuSeparator {
@@ -129,12 +171,15 @@ RowLayout {
         case "IntParam":
         case "FloatParam":
             _reconstruction.setAttribute(root.attribute, Number(value))
+            updateAttributeLabel()
             break;
         case "File":
             _reconstruction.setAttribute(root.attribute, value)
             break;
         default:
             _reconstruction.setAttribute(root.attribute, value.trim())
+            updateAttributeLabel()
+            break;
         }
     }
 
@@ -370,6 +415,7 @@ RowLayout {
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: {
                         setTextFieldAttribute(text)
+
                         // When the text is too long, display the left part
                         // (with the most important values and cut the floating point details)
                         ensureVisible(0)
@@ -400,12 +446,13 @@ RowLayout {
                         snapMode: Slider.SnapAlways
 
                         onPressedChanged: {
-                            if(!pressed)
+                            if (!pressed) {
                                 _reconstruction.setAttribute(attribute, formattedValue)
+                                updateAttributeLabel()
+                            }
                         }
                     }
                 }
-
             }
         }
 

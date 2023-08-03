@@ -70,7 +70,7 @@ Calibrate LDR to HDR response curve from samples.
                         "It is detected automatically from input Viewpoints metadata if 'userNbBrackets' is 0,\n"
                         "else it is equal to 'userNbBrackets'.",
             value=0,
-            range=(0, 10, 1),
+            range=(0, 15, 1),
             uid=[0],
             group="bracketsParams"
         ),

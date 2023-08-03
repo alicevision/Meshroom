@@ -84,7 +84,7 @@ Sample pixels from Low range images for HDR creation.
                         "It is detected automatically from input Viewpoints metadata if 'userNbBrackets'\n"
                         "is 0, else it is equal to 'userNbBrackets'.",
             value=0,
-            range=(0, 10, 1),
+            range=(0, 15, 1),
             uid=[0],
             group="bracketsParams"
         ),

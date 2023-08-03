@@ -32,6 +32,40 @@ It filters the landmark observations to allow a limited number of observations.
             advanced=True,
             uid=[0],
         ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="featuresFolder",
+                label="Features Folder",
+                description="",
+                value="",
+                uid=[], #TODO
+            ),
+            name="featuresFolders",
+            label="Features Folders",
+            description="Folder(s) containing the extracted features and descriptors."
+        ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="matchesFolder",
+                label="Matches Folder",
+                description="",
+                value="",
+                uid=[], #TODO
+            ),
+            name="matchesFolders",
+            label="Matches Folders",
+            description="Folder(s) in which the computed matches are stored."
+        ),
+        desc.ChoiceParam(
+            name="describerTypes",
+            label="Describer Types",
+            description="Describer types used to describe an image.",
+            value=["dspsift"],
+            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv", "tag16h5"],
+            exclusive=False,
+            uid=[],  # TODO: 0
+            joinChar=",",
+        ),
     ]
 
     outputs = [

@@ -264,7 +264,7 @@ Sample pixels from Low range images for HDR creation.
             fnumber, shutterSpeed, iso = exp
             if exposures:
                 prevFnumber, prevShutterSpeed, prevIso = exposures[-1]
-            if exposures and len(exposures) > 1 and (fnumber != prevFnumber or shutterSpeed > prevShutterSpeed or iso != prevIso) or newGroup:
+            if exposures and len(exposures) > 1 and (fnumber > prevFnumber or shutterSpeed > prevShutterSpeed or iso < prevIso) or newGroup:
                 exposureGroups.append(exposures)
                 exposures = [exp]
             else:

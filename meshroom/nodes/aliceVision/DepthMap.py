@@ -616,7 +616,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             name="depth",
             label="Depth Maps",
             description="Generated depth maps.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap.exr",
             uid=[],
             group="", # do not export on the command line
@@ -625,7 +625,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             name="sim",
             label="Sim Maps",
             description="Generated sim maps.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<VIEW_ID>_simMap.exr",
             uid=[],
             group="", # do not export on the command line
@@ -643,7 +643,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             name="depthSgm",
             label="Depth Maps SGM",
             description="Debug: Depth maps SGM",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_sgm.exr",
             uid=[],
             group="", # do not export on the command line
@@ -653,7 +653,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             name="depthSgmUpscaled",
             label="Depth Maps SGM Upscaled",
             description="Debug: Depth maps SGM upscaled.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_sgmUpscaled.exr",
             uid=[],
             group="", # do not export on the command line
@@ -663,7 +663,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             name="depthRefined",
             label="Depth Maps Refined",
             description="Debug: Depth maps after refinement",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<VIEW_ID>_depthMap_refinedFused.exr",
             uid=[],
             group="", # do not export on the command line

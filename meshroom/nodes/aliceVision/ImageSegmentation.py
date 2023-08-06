@@ -76,7 +76,7 @@ Generate a mask with segmented labels for each pixel.
             name="masks",
             label="Masks",
             description="Generated segmentation masks.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<VIEW_ID>.exr",
             group="",
             uid=[],

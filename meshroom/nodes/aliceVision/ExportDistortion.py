@@ -32,7 +32,7 @@ Export the distortion model and parameters of cameras in a SfM scene.
             name='distoStMap',
             label='Distortion ST Map',
             description='Calibrated distortion ST map.',
-            semantic='image',
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + '<INTRINSIC_ID>_distort.exr',
             group='',  # do not export on the command line
             uid=[],
@@ -41,7 +41,7 @@ Export the distortion model and parameters of cameras in a SfM scene.
             name='undistoStMap',
             label='Undistortion ST Map',
             description='Calibrated undistortion ST map.',
-            semantic='image',
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + '<INTRINSIC_ID>_undistort.exr',
             group='',  # do not export on the command line
             uid=[],

@@ -63,7 +63,7 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             name="output",
             label="Labels",
             description="",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "labels.exr",
             uid=[],
         ),

@@ -59,7 +59,7 @@ The detection method also supports nested calibration grids.
             enabled= lambda node: node.exportDebugImages.value,
             label='Checker Lines',
             description='Debug Images.',
-            semantic='image',
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + '<VIEW_ID>.png',
             group='',  # do not export on the command line
             uid=[],

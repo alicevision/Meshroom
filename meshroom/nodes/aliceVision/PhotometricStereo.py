@@ -121,7 +121,7 @@ The lighting conditions are assumed to be known.
             name="normals",
             label="Normal Maps Camera",
             description="Generated normal maps in the camera coordinate system.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<POSE_ID>_normals.exr",
             uid=[],
             group="", # do not export on the command line
@@ -130,7 +130,7 @@ The lighting conditions are assumed to be known.
             name="normalsWorld",
             label="Normal Maps World",
             description="Generated normal maps in the world coordinate system.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<POSE_ID>_normals_w.exr",
             uid=[],
             group="", # do not export on the command line
@@ -139,7 +139,7 @@ The lighting conditions are assumed to be known.
             name="albedo",
             label="Albedo Maps",
             description="Generated albedo maps.",
-            semantic="image",
+            semantic=desc.Semantic.IMAGE,
             value=desc.Node.internalFolder + "<POSE_ID>_albedo.exr",
             uid=[],
             group="", # do not export on the command line

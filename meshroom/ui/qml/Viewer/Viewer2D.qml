@@ -151,8 +151,6 @@ FocusScope {
         // make sure the image is ready for use
         if(!imgContainer.image)
             return;
-        if(imgContainer.image.status !== Image.Ready)
-            return;
 
         // for Exif orientation tags 5 to 8, a 90 degrees rotation is applied
         // therefore image dimensions must be inverted
@@ -453,7 +451,7 @@ FocusScope {
                          * group has already been auto-fitted. If we change the group of images (when another project is
                          * opened, for example, and the images have a different size), then another auto-fit needs to be
                          * performed */
-                        if ((!fittedOnce && imgContainer.image && imgContainer.image.status === Image.Ready && imgContainer.image.height > 0) ||
+                        if ((!fittedOnce && imgContainer.image && imgContainer.image.height > 0) ||
                             (fittedOnce && ((width > 1 && previousWidth != width) || (height > 1 && previousHeight != height)))) {
                             fit();
                             fittedOnce = true;
@@ -483,7 +481,8 @@ FocusScope {
                                 'idView': Qt.binding(function() { return (_reconstruction ? _reconstruction.selectedViewId : -1); }),
                                 'cropFisheye': false,
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? getSequence() : []); }),
-                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction; })
+                                'targetSize': Qt.binding(function() { return imgLayout.width * imgContainer.scale; }),
+                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction; }),
                                 })
                           } else {
                                 // Force the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

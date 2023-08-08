@@ -111,4 +111,12 @@ Post process the panorama.
             value=desc.Node.internalFolder + "panoramaPreview.jpg",
             uid=[],
         ),
+        desc.File(
+            name="downscaledPanoramaLevels",
+            label="Downscaled Panorama Levels",
+            description="Downscaled versions of the generated panorama.",
+            value=desc.Node.internalFolder + "level_*.exr",
+            uid=[],
+            group='',
+        ),
     ]

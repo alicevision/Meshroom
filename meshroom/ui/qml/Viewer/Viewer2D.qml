@@ -129,14 +129,15 @@ FocusScope {
             }
         }
         onWheel: {
-            var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
+            var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor;
 
             if(Math.min(imgContainer.width, imgContainer.image.height) * imgContainer.scale * zoomFactor < 10)
-                return
-            var point = mapToItem(imgContainer, wheel.x, wheel.y)
-            imgContainer.x += (1-zoomFactor) * point.x * imgContainer.scale
-            imgContainer.y += (1-zoomFactor) * point.y * imgContainer.scale
-            imgContainer.scale *= zoomFactor
+                return;
+            var point = mapToItem(imgContainer, wheel.x, wheel.y);
+            imgContainer.x += (1-zoomFactor) * point.x * imgContainer.scale;
+            imgContainer.y += (1-zoomFactor) * point.y * imgContainer.scale;
+            imgContainer.scale *= zoomFactor;
+            floatImageViewerLoader.targetSize *= zoomFactor;
         }
     }
 
@@ -167,6 +168,9 @@ FocusScope {
         // so that container center corresponds to image center
         imgContainer.x += (orientedWidth - imgContainer.image.width) * 0.5 * imgContainer.scale;
         imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale;
+
+        // reset target size
+        floatImageViewerLoader.targetSize = Math.max(imgLayout.width, root.height);
     }
 
     function tryLoadNode(node) {
@@ -439,6 +443,7 @@ FocusScope {
                     property bool fittedOnce: false
                     property int previousWidth: 0
                     property int previousHeight: 0
+                    property real targetSize: 1000
                     onHeightChanged: {
                         /* Image size is not updated through a single signal with the floatImage viewer, unlike
                          * the simple QML image viewer: instead of updating straight away the width and height to x and
@@ -481,7 +486,7 @@ FocusScope {
                                 'idView': Qt.binding(function() { return (_reconstruction ? _reconstruction.selectedViewId : -1); }),
                                 'cropFisheye': false,
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? getSequence() : []); }),
-                                'targetSize': Qt.binding(function() { return imgLayout.width * imgContainer.scale; }),
+                                'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize; }),
                                 'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction; }),
                                 })
                           } else {

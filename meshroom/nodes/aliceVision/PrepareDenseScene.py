@@ -93,29 +93,21 @@ This node export undistorted images so the depth map and texturing can be comput
         desc.FloatParam(
             name="landmarksMaskScale",
             label="Landmarks Mask Scale",
-            description="Scale (relative to image size) of the projection of landmarks"
-                " to mask images for depth computation.\n"
-                "If 0, masking using landmarks will not be used.",
+            description="Scale of the projection of landmarks to mask images for depth computation.\n"
+                "If 0, masking using landmarks will not be used.\n"
+                "Otherwise, it's used to scale the projection radius \n"
+                "(either specified by `inputRadiiFile` or by image size if the former is not given).",
             value=0.,
             range=(0.0, 1.0, 0.01),
             uid=[0],
             advanced=True
         ),
-        desc.IntParam(
-            name="nbNeighborObservations",
-            label="Number of Neighbor Observations",
-            description="Number of neighbor observations to be considered for the landmarks-based masking.",
-            value=5,
-            range=(0, 50, 1),
-            uid=[0],
-            advanced=True
-        ),
-        desc.FloatParam(
-            name="percentile",
-            label="Percentile",
-            description="TODO.",
-            value=0.95,
-            range=(0.0, 1.0, 0.01),
+        desc.File(
+            name="inputRadiiFile",
+            label="Input Radii File",
+            description="Input Radii file containing the estimated projection radius of landmarks per view. \n"
+                "If not specified, image size will be used to specify the radius.",
+            value="",
             uid=[0],
             advanced=True
         ),

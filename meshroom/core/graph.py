@@ -307,6 +307,9 @@ class Graph(BaseObject):
                 # Update filepath related members
                 # Note: needs to be done at the end as it will trigger an updateInternals.
                 self._setFilepath(filepath)
+            elif not isTemplate:
+                # If no filepath is being set but the graph is not a template, trigger an updateInternals either way.
+                self.updateInternals()
 
             # By this point, the graph has been fully loaded and an updateInternals has been triggered, so all the nodes'
             # links have been resolved and their UID computations are all complete.
@@ -322,15 +325,15 @@ class Graph(BaseObject):
         """
         Compare the UIDs of all the nodes in the graph with the UID that is expected in the graph file. If there
         are mismatches, the nodes with the unexpected UID are replaced with "UidConflict" compatibility nodes.
+        Already existing nodes are removed and re-added to the graph identically to preserve all the edges,
+        which may otherwise be invalidated when a node with output edges but a UID conflict is re-generated as a
+        compatibility node.
 
         Args:
             data (dict): the dictionary containing all the nodes to import and their data
         """
         for nodeName, nodeData in sorted(data.items(), key=lambda x: self.getNodeIndexFromName(x[0])):
             node = self.node(nodeName)
-            # If the node is a CompatibilityNode, its UID is not available and there is no need to check it
-            if isinstance(node, CompatibilityNode):
-                continue
 
             savedUid = nodeData.get("uids", "").get("0", "")  # Node's UID from the graph file
             graphUid = node._uids.get(0)  # Node's UID from the graph itself
@@ -339,6 +342,13 @@ class Graph(BaseObject):
                 logging.debug("UID conflict detected for {}".format(nodeName))
                 self.removeNode(nodeName)
                 n = nodeFactory(nodeData, nodeName, template=False, uidConflict=True)
+                self._addNode(n, nodeName)
+            else:
+                # f connecting nodes have UID conflicts and are removed/re-added to the graph, some edges may be lost:
+                # the links will be erroneously updated, and any further resolution will fail.
+                # Recreating the entire graph as it was ensures that all edges will be correctly preserved.
+                self.removeNode(nodeName)
+                n = nodeFactory(nodeData, nodeName, template=False, uidConflict=False)
                 self._addNode(n, nodeName)
 
     def updateImportedProject(self, data):

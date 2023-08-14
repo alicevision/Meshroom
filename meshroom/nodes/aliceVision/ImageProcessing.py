@@ -164,8 +164,7 @@ Convert or apply filtering to the input images.
                     description="Chromatic aberration (fringing) correction if the model parameters are available in the metadata.",
                     value=False,
                     uid=[0],
-                    enabled=False  # To replace with the line below when the correction of chromatic aberration will be available
-                    # enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value
+                    enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value
                 )
             ]
         ),

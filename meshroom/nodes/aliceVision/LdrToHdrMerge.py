@@ -2,6 +2,7 @@ __version__ = "4.1"
 
 import json
 import os
+import math
 from collections import Counter
 
 from meshroom.core import desc
@@ -291,9 +292,20 @@ Merge LDR images into HDR images.
                 node.nbBrackets.value = 0
                 return
             d = json.loads(jsonMetadata)
-            fnumber = findMetadata(d, ["FNumber", "Exif:ApertureValue", "ApertureValue", "Aperture"], "")
-            shutterSpeed = findMetadata(d, ["Exif:ShutterSpeedValue", "ShutterSpeedValue", "ShutterSpeed"], "")
-            iso = findMetadata(d, ["Exif:ISOSpeedRatings", "ISOSpeedRatings", "ISO"], "")
+
+            # Find Fnumber
+            fnumber = findMetadata(d, ["FNumber"], "")
+            if fnumber == "":
+                aperture = findMetadata(d, ["Exif:ApertureValue", "ApertureValue", "Aperture"], "")
+                if aperture == "":
+                    fnumber = -1.0
+                else:
+                    fnumber = pow(2.0, aperture / 2.0)
+
+            # Get shutter speed and ISO
+            shutterSpeed = findMetadata(d, ["ExposureTime", "Exif:ShutterSpeedValue", "ShutterSpeedValue", "ShutterSpeed"], -1.0)
+            iso = findMetadata(d, ["Exif:PhotographicSensitivity", "PhotographicSensitivity", "Photographic Sensitivity", "ISO"], -1.0)
+
             if not fnumber and not shutterSpeed:
                 # If one image without shutter or fnumber, we cannot found the number of brackets.
                 # We assume that there is no multi-bracketing, so nothing to do.
@@ -308,6 +320,7 @@ Merge LDR images into HDR images.
         prevShutterSpeed = 0.0
         prevIso = 0.0
         prevPath = None  # Stores the dirname of the previous parsed image
+        prevExposure = None
         newGroup = False  # True if a new exposure group needs to be created (useful when there are several datasets)
         for path, exp in inputs:
             # If the dirname of the previous image and the dirname of the current image do not match, this means that the
@@ -317,20 +330,18 @@ Merge LDR images into HDR images.
             if prevPath is not None and prevPath != os.path.dirname(path):
                 newGroup = True
 
-            # A new group is created if the current image's exposure level is larger than the previous image's, if there
-            # were any changes in the ISO or aperture value, or if a new dataset has been detected with the path.
-            # Since the input images are ordered, the shutter speed should always be decreasing, so a shutter speed larger
-            # than the previous one indicates the start of a new exposure group.
-            fnumber, shutterSpeed, iso = exp
-            if exposures:
-                prevFnumber, prevShutterSpeed, prevIso = exposures[-1]
-            if exposures and len(exposures) > 1 and (fnumber > prevFnumber or shutterSpeed > prevShutterSpeed or iso < prevIso) or newGroup:
+            currentExposure = LdrToHdrMerge.getExposure(exp)
+
+            # Create a new group if the current image's exposure level is smaller than the previous image's, or
+            # if a new dataset has been detected (with a change in the path of the images).
+            if prevExposure and currentExposure < prevExposure or newGroup:
                 exposureGroups.append(exposures)
                 exposures = [exp]
             else:
                 exposures.append(exp)
 
             prevPath = os.path.dirname(path)
+            prevExposure = currentExposure
             newGroup = False
 
         exposureGroups.append(exposures)
@@ -360,6 +371,40 @@ Merge LDR images into HDR images.
 
                 bestBracketSize = bestTuple[0]
                 node.nbBrackets.value = bestBracketSize
+
+    @staticmethod
+    def getExposure(exp, refIso = 100.0, refFnumber = 1.0):
+        fnumber, shutterSpeed, iso = exp
+
+        validShutterSpeed = shutterSpeed > 0.0 and math.isfinite(shutterSpeed)
+        validFnumber = fnumber > 0.0 and math.isfinite(fnumber)
+
+        if not validShutterSpeed and not validFnumber:
+            return -1.0
+
+        validRefFnumber = refFnumber > 0.0 and math.isfinite(refFnumber)
+
+        if not validShutterSpeed:
+            shutterSpeed = 1.0 / 200.0
+
+        if not validFnumber:
+            if validRefFnumber:
+                fnumber = refFnumber
+            else:
+                fnumber = 2.0
+
+        lRefFnumber = refFnumber
+        if not validRefFnumber:
+            lRefFnumber = fnumber
+
+        isoToAperture = 1.0
+        if iso > 1e-6 and refIso > 1e-6:
+            isoToAperture = math.sqrt(iso / refIso)
+
+        newFnumber = fnumber * isoToAperture
+        expIncrease = (newFnumber / lRefFnumber) * (newFnumber / lRefFnumber)
+
+        return shutterSpeed * expIncrease
 
     def processChunk(self, chunk):
         # Trick to avoid sending --nbBrackets to the command line when the bracket detection is automatic.

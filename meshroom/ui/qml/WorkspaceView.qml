@@ -66,7 +66,6 @@ Item {
 
         Controls1.SplitView {
             orientation: Qt.Vertical
-            Layout.fillWidth: true
             Layout.fillHeight: true
             implicitWidth: Math.round(parent.width * 0.2)
             Layout.minimumWidth: imageGallery.defaultCellSize
@@ -182,7 +181,6 @@ Item {
             Layout.minimumWidth: 20
             Layout.minimumHeight: 80
             Layout.fillHeight: true
-            Layout.fillWidth: true
             implicitWidth: Math.round(parent.width * 0.45)
 
             Loader {
@@ -199,7 +197,7 @@ Item {
             Panel {
                 id: panel3dViewer
                 title: "3D Viewer"
-  
+
                 property alias viewer3D: c_viewer3D
 
                 Controls1.SplitView {

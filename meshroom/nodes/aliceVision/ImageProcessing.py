@@ -1,4 +1,4 @@
-__version__ = "3.2"
+__version__ = "3.3"
 
 from meshroom.core import desc
 

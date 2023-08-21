@@ -55,6 +55,7 @@ FloatingPane {
 
         onPlayingChanged: {
             syncSelected = !playing;
+            viewer.playback(m.playing);
         }
     }
 
@@ -82,6 +83,10 @@ FloatingPane {
         interval: 1000 / m.fps
 
         onTriggered: {
+            if (viewer.status !== Image.Ready) {
+                // Wait for current image to be displayed before switching to next image
+                return;
+            }
             let nextIndex = m.frame + 1;
             if (nextIndex == sortedViewIds.length) {
                 if (m.repeat) {
@@ -166,6 +171,7 @@ FloatingPane {
             stepSize: 1
             snapMode: Slider.SnapAlways
             live: true
+            enabled: !m.playing
 
             from: 0
             to: sortedViewIds.length - 1

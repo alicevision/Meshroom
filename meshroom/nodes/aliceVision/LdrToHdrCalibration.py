@@ -60,6 +60,8 @@ Calibrate LDR to HDR response curve from samples.
             range=(0, 15, 1),
             uid=[],
             group="user",  # not used directly on the command line
+            errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
+                         "Errors will occur during the computation."
         ),
         desc.IntParam(
             name="nbBrackets",
@@ -68,7 +70,7 @@ Calibrate LDR to HDR response curve from samples.
                         "It is detected automatically from input Viewpoints metadata if 'userNbBrackets' is 0,\n"
                         "else it is equal to 'userNbBrackets'.",
             value=0,
-            range=(0, 10, 1),
+            range=(0, 15, 1),
             uid=[0],
             group="bracketsParams"
         ),
@@ -181,13 +183,24 @@ Calibrate LDR to HDR response curve from samples.
         if "userNbBrackets" not in node.getAttributes().keys():
             # Old version of the node
             return
-        if node.userNbBrackets.value != 0:
-            node.nbBrackets.value = node.userNbBrackets.value
-            return
+        node.userNbBrackets.validValue = True  # Reset the status of "userNbBrackets"
+
         cameraInitOutput = node.input.getLinkParam(recursive=True)
         if not cameraInitOutput:
             node.nbBrackets.value = 0
             return
+        if node.userNbBrackets.value != 0:
+            # The number of brackets has been manually forced: check whether it is valid or not
+            if cameraInitOutput and cameraInitOutput.node and cameraInitOutput.node.hasAttribute("viewpoints"):
+                viewpoints = cameraInitOutput.node.viewpoints.value
+                # The number of brackets should be a multiple of the number of input images
+                if (len(viewpoints) % node.userNbBrackets.value != 0):
+                    node.userNbBrackets.validValue = False
+                else:
+                    node.userNbBrackets.validValue = True
+            node.nbBrackets.value = node.userNbBrackets.value
+            return
+
         if not cameraInitOutput.node.hasAttribute("viewpoints"):
             if cameraInitOutput.node.hasAttribute("input"):
                 cameraInitOutput = cameraInitOutput.node.input.getLinkParam(recursive=True)

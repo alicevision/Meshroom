@@ -137,7 +137,6 @@ FocusScope {
             imgContainer.x += (1-zoomFactor) * point.x * imgContainer.scale;
             imgContainer.y += (1-zoomFactor) * point.y * imgContainer.scale;
             imgContainer.scale *= zoomFactor;
-            floatImageViewerLoader.targetSize *= zoomFactor;
         }
     }
 
@@ -168,9 +167,6 @@ FocusScope {
         // so that container center corresponds to image center
         imgContainer.x += (orientedWidth - imgContainer.image.width) * 0.5 * imgContainer.scale;
         imgContainer.y += (orientedHeight - imgContainer.image.height) * 0.5 * imgContainer.scale;
-
-        // reset target size
-        floatImageViewerLoader.targetSize = Math.max(imgLayout.width, root.height);
     }
 
     function tryLoadNode(node) {
@@ -443,7 +439,7 @@ FocusScope {
                     property bool fittedOnce: false
                     property int previousWidth: 0
                     property int previousHeight: 0
-                    property real targetSize: 1000
+                    property real targetSize: Math.max(width, height) * imgContainer.scale;
                     onHeightChanged: {
                         /* Image size is not updated through a single signal with the floatImage viewer, unlike
                          * the simple QML image viewer: instead of updating straight away the width and height to x and

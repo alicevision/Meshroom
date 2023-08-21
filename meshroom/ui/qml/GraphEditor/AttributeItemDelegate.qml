@@ -25,7 +25,6 @@ RowLayout {
 
     function updateAttributeLabel()
     {
-        errorLabel.visible = !attribute.validValue
         background.color = attribute.validValue ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
 
         if (attribute.desc) {
@@ -48,21 +47,6 @@ RowLayout {
             spacing: 0
             width: parent.width
             height: parent.height
-
-            MaterialLabel {
-                id: errorLabel
-
-                text: MaterialIcons.dangerous
-                font.pointSize: 10
-                leftPadding: 5
-                visible: !object.validValue
-
-                MouseArea {
-                    id: errorLabelMA
-                    anchors.fill: parent
-                    hoverEnabled: true
-                }
-            }
 
             Label {
                 id: parameterLabel
@@ -87,7 +71,7 @@ RowLayout {
                         tooltip += "<b>" + object.desc.name + "</b><br>" + Format.plainToHtml(object.desc.description)
                         return tooltip
                     }
-                    visible: parameterMA.containsMouse || errorLabelMA.containsMouse
+                    visible: parameterMA.containsMouse
                     delay: 800
                 }
 

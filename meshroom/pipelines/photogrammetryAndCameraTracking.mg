@@ -569,8 +569,8 @@
         "ImageSegmentation_1": {
             "nodeType": "ImageSegmentation",
             "position": [
-                6,
-                203
+                0,
+                200
             ],
             "inputs": {
                 "input": "{CameraInit_1.output}"

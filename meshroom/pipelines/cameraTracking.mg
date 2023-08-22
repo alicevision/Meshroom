@@ -493,7 +493,7 @@
         "ImageSegmentation_1": {
             "nodeType": "ImageSegmentation",
             "position": [
-                3,
+                0,
                 200
             ],
             "inputs": {

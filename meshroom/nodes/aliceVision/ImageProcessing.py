@@ -1,4 +1,4 @@
-__version__ = "3.2"
+__version__ = "3.3"
 
 from meshroom.core import desc
 
@@ -164,8 +164,7 @@ Convert or apply filtering to the input images.
                     description="Chromatic aberration (fringing) correction if the model parameters are available in the metadata.",
                     value=False,
                     uid=[0],
-                    enabled=False  # To replace with the line below when the correction of chromatic aberration will be available
-                    # enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value
+                    enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value
                 )
             ]
         ),
@@ -571,6 +570,23 @@ Convert or apply filtering to the input images.
             uid=[0],
         ),
 
+        desc.File(
+            name='lensCorrectionProfileInfo',
+            label='Lens Correction Profile Info',
+            description='''Lens Correction Profile filepath or database directory.''',
+            value='${ALICEVISION_LENS_PROFILE_INFO}',
+            uid=[],
+        ),
+        
+        desc.BoolParam(
+            name='lensCorrectionProfileSearchIgnoreCameraModel',
+            label='LCP Generic Search',
+            description='The lens name and camera maker are used to match the LCP database, but the camera model is ignored.',
+            value=True,
+            uid=[0],
+            advanced=True,
+        ),
+        
         desc.ChoiceParam(
             name="storageDataType",
             label="Storage Data Type For EXR Output",

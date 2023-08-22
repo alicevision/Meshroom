@@ -196,6 +196,7 @@ class Attribute(BaseObject):
             self.requestNodeUpdate()
 
         self.valueChanged.emit()
+        self.validValueChanged.emit()
 
     def upgradeValue(self, exportedValue):
         self._set_value(exportedValue)

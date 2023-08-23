@@ -79,19 +79,6 @@ This node allows to setup the Panorama:
             joinChar=",",
             enabled=lambda node: node.initializeCameras.value == "Spherical",
         ),
-        desc.ListAttribute(
-            elementDesc=desc.File(
-                name="dependency",
-                label="",
-                description="",
-                value="",
-                uid=[],
-            ),
-            name="dependency",
-            label="Dependency",
-            description="Folder(s) in which computed features are stored. (WORKAROUND for valid Tractor graph submission)",
-            group="forDependencyOnly", # not a command line argument
-        ),
         desc.BoolParam(
             name="useFisheye",
             label="Full Fisheye",

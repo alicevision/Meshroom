@@ -329,6 +329,6 @@ Calibrate LDR to HDR response curve from samples.
             isoToAperture = math.sqrt(iso / refIso)
 
         newFnumber = fnumber * isoToAperture
-        expIncrease = (newFnumber / lRefFnumber) * (newFnumber / lRefFnumber)
+        expIncrease = (lRefFnumber / newFnumber) * (lRefFnumber / newFnumber)
 
         return shutterSpeed * expIncrease

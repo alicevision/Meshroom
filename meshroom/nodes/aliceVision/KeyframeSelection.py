@@ -1,4 +1,4 @@
-__version__ = "4.1"
+__version__ = "4.2"
 
 import os
 from meshroom.core import desc
@@ -250,6 +250,18 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             enabled=lambda node: node.smartSelection.enabled,
                             advanced=True
                         ),
+                        desc.IntParam(
+                            name="minBlockSize",
+                            label="Multi-Threading Minimum Block Size",
+                            description="The minimum number of frames to process for a thread to be spawned.\n"
+                                        "If using all the available threads implies processing less than this value in every thread, then less threads should be spawned,\n"
+                                        "and each will process at least 'minBlockSize' (except maybe for the very last thread, that might process less).",
+                            value=10,
+                            range=(1, 1000, 1),
+                            uid=[],
+                            enabled=lambda node: node.smartSelection.enabled,
+                            advanced=True
+                        )
                     ]
                 )
             ]

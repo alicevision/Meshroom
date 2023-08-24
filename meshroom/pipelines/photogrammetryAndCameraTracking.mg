@@ -5,29 +5,29 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "MeshDecimate": "1.0",
-            "Texturing": "6.0",
-            "ExportDistortion": "1.0",
-            "CameraInit": "9.0",
-            "ImageMatchingMultiSfM": "1.0",
-            "StructureFromMotion": "3.1",
-            "FeatureExtraction": "1.3",
-            "ApplyCalibration": "1.0",
-            "Publish": "1.3",
             "DepthMap": "4.0",
-            "DistortionCalibration": "3.0",
-            "DepthMapFilter": "3.0",
-            "ImageSegmentation": "1.0",
-            "CheckerboardDetection": "1.0",
-            "ScenePreview": "1.0",
-            "Meshing": "7.0",
-            "PrepareDenseScene": "3.0",
-            "ImageMatching": "2.0",
+            "StructureFromMotion": "3.1",
+            "ApplyCalibration": "1.0",
+            "Texturing": "6.0",
+            "PrepareDenseScene": "3.1",
             "KeyframeSelection": "4.1",
+            "ScenePreview": "1.0",
+            "DepthMapFilter": "3.0",
+            "MeshDecimate": "1.0",
+            "MeshFiltering": "3.0",
+            "Publish": "1.3",
+            "ImageMatchingMultiSfM": "1.0",
+            "FeatureMatching": "2.0",
+            "Meshing": "7.0",
+            "CameraInit": "9.0",
+            "ImageMatching": "2.0",
+            "CheckerboardDetection": "1.0",
             "ConvertSfMFormat": "2.0",
             "ExportAnimatedCamera": "2.0",
-            "FeatureMatching": "2.0",
-            "MeshFiltering": "3.0"
+            "DistortionCalibration": "3.0",
+            "ExportDistortion": "1.0",
+            "FeatureExtraction": "1.3",
+            "ImageSegmentation": "1.0"
         }
     },
     "graph": {
@@ -52,8 +52,7 @@
             "inputs": {
                 "input": "{ApplyCalibration_1.output}",
                 "masksFolder": "{ImageSegmentation_1.output}",
-                "maskExtension": "exr",
-                "maskInvert": true
+                "maskExtension": "exr"
             },
             "internalInputs": {
                 "color": "#575963"
@@ -286,6 +285,20 @@
             "internalInputs": {
                 "comment": "Estimate cameras parameters for the complete camera tracking sequence.",
                 "color": "#80766f"
+            }
+        },
+        "ImageSegmentation_1": {
+            "nodeType": "ImageSegmentation",
+            "position": [
+                0,
+                200
+            ],
+            "inputs": {
+                "input": "{CameraInit_1.output}",
+                "maskInvert": true
+            },
+            "internalInputs": {
+                "color": "#575963"
             }
         },
         "StructureFromMotion_2": {
@@ -561,19 +574,6 @@
                 "featuresFolders": "{ImageMatchingMultiSfM_2.featuresFolders}",
                 "imagePairsList": "{ImageMatchingMultiSfM_2.output}",
                 "describerTypes": "{FeatureExtraction_1.describerTypes}"
-            },
-            "internalInputs": {
-                "color": "#575963"
-            }
-        },
-        "ImageSegmentation_1": {
-            "nodeType": "ImageSegmentation",
-            "position": [
-                0,
-                200
-            ],
-            "inputs": {
-                "input": "{CameraInit_1.output}"
             },
             "internalInputs": {
                 "color": "#575963"

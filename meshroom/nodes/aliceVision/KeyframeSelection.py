@@ -1,4 +1,4 @@
-__version__ = "4.2"
+__version__ = "5.0"
 
 import os
 from meshroom.core import desc
@@ -118,6 +118,20 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             description="Camera sensor width database path.",
             value="${ALICEVISION_SENSOR_DB}",
             uid=[0],
+        ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="masks",
+                label="Masks Path",
+                description="Directory containing masks to apply to the frames.",
+                value="",
+                uid=[0],
+            ),
+            name="maskPaths",
+            label="Masks",
+            description="Masks (e.g. segmentation masks) used to exclude some parts of the frames from the score computations\n"
+                        "for the smart keyframe selection.",
+            enabled=lambda node: node.selectionMethod.useSmartSelection.value
         ),
         desc.GroupAttribute(
             name="selectionMethod",

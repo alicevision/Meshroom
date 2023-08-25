@@ -23,7 +23,6 @@ Generate a mask with segmented labels for each pixel.
             value="",
             uid=[0],
         ),
-
         desc.File(
             name="modelPath",
             label="Segmentation Model",
@@ -31,7 +30,6 @@ Generate a mask with segmented labels for each pixel.
             value="${ALICEVISION_SEMANTIC_SEGMENTATION_MODEL}",
             uid=[0]
         ),
-
         desc.ChoiceParam(
             name="validClasses",
             label="Classes",
@@ -52,7 +50,13 @@ Generate a mask with segmented labels for each pixel.
             exclusive=False,
             uid=[0],
         ),
-
+        desc.BoolParam(
+            name="maskInvert",
+            label="Invert Masks",
+            description="Invert mask values. If selected, the pixels corresponding to the mask will be set to 0 instead of 255.",
+            value=False,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",

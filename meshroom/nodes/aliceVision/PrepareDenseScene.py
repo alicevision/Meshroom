@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "3.1"
 
 from meshroom.core import desc
 
@@ -45,6 +45,15 @@ This node export undistorted images so the depth map and texturing can be comput
             name="masksFolders",
             label="Masks Folders",
             description="Use masks from specific folder(s). Filename should be the same or the image UID.",
+        ),
+        desc.ChoiceParam(
+            name="maskExtension",
+            label="Mask Extension",
+            description="File extension for the masks to use.",
+            value="png",
+            values=["exr", "jpg", "png"],
+            exclusive=True,
+            uid=[0]
         ),
         desc.ChoiceParam(
             name="outputFileType",

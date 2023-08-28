@@ -5,29 +5,29 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
+            "ExportDistortion": "1.0",
+            "FeatureExtraction": "1.3",
             "DepthMap": "4.0",
-            "StructureFromMotion": "3.1",
-            "ApplyCalibration": "1.0",
             "Texturing": "6.0",
-            "PrepareDenseScene": "3.1",
-            "KeyframeSelection": "4.1",
+            "ImageSegmentation": "1.0",
+            "ApplyCalibration": "1.0",
             "ScenePreview": "1.0",
-            "DepthMapFilter": "3.0",
             "MeshDecimate": "1.0",
-            "MeshFiltering": "3.0",
+            "KeyframeSelection": "5.0",
+            "PrepareDenseScene": "3.1",
             "Publish": "1.3",
+            "MeshFiltering": "3.0",
+            "DepthMapFilter": "3.0",
+            "Meshing": "7.0",
             "ImageMatchingMultiSfM": "1.0",
             "FeatureMatching": "2.0",
-            "Meshing": "7.0",
             "CameraInit": "9.0",
             "ImageMatching": "2.0",
             "CheckerboardDetection": "1.0",
             "ConvertSfMFormat": "2.0",
+            "StructureFromMotion": "3.1",
             "ExportAnimatedCamera": "2.0",
-            "DistortionCalibration": "3.0",
-            "ExportDistortion": "1.0",
-            "FeatureExtraction": "1.3",
-            "ImageSegmentation": "1.0"
+            "DistortionCalibration": "3.0"
         }
     },
     "graph": {
@@ -122,6 +122,9 @@
             "inputs": {
                 "inputPaths": [
                     "{ApplyCalibration_1.output}"
+                ],
+                "maskPaths": [
+                    "{ImageSegmentation_1.output}"
                 ]
             },
             "internalInputs": {

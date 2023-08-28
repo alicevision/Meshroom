@@ -556,9 +556,10 @@ class Node(object):
     parallelization = None
     documentation = ''
     category = 'Other'
+    coreNode = None
 
-    def __init__(self):
-        pass
+    def __init__(self, coreNode = None):
+        self.coreNode = coreNode
 
     def upgradeAttributeValues(self, attrValues, fromVersion):
         return attrValues
@@ -598,6 +599,9 @@ class CommandLineNode(Node):
     commandLine = ''  # need to be defined on the node
     parallelization = None
     commandLineRange = ''
+
+    def __init__(self, coreNode = None):
+        super().__init__(coreNode)
 
     def buildCommandLine(self, chunk):
 
@@ -665,7 +669,8 @@ class AVCommandLineNode(CommandLineNode):
     cmdMem = ''
     cmdCore = ''
 
-    def __init__(self):
+    def __init__(self, coreNode = None):
+        super().__init__(coreNode)
         
         if AVCommandLineNode.cgroupParsed is False:
 

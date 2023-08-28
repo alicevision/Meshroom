@@ -506,8 +506,8 @@ The needed metadata are:
         ),
     ]
 
-    def __init__(self):
-        super(CameraInit, self).__init__()
+    def __init__(self, coreNode = None):
+        super(CameraInit, self).__init__(coreNode)
 
     def initialize(self, node, inputs, recursiveInputs):
         # Reset graph inputs

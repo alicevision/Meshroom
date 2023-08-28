@@ -169,8 +169,8 @@ Entity {
             property bool hasBoundingBox: {
                 if(nodeType === "Meshing" && currentNode.attribute("useBoundingBox")) // Can have a BoundingBox 
                 {
-                    if(currentNode.automaticBBoxValid !== undefined)
-                        return currentNode.attribute("useBoundingBox").value || currentNode.automaticBBoxValid
+                    if(currentNode.runtimeAttribute("automaticBBoxValid") !== undefined)
+                        return currentNode.attribute("useBoundingBox").value || currentNode.runtimeAttribute("automaticBBoxValid").value
                     return currentNode.attribute("useBoundingBox").value
                 }
                 return false

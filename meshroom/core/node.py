@@ -20,7 +20,6 @@ from meshroom.common import Signal, Variant, Property, BaseObject, Slot, ListMod
 from meshroom.core import desc, stats, hashValue, nodeVersion, Version
 from meshroom.core.attribute import attributeFactory, ListAttribute, GroupAttribute, Attribute
 from meshroom.core.exception import NodeUpgradeError, UnknownNodeTypeError
-from meshroom.core.nodes import getNodeClass
 
 def getWritingFilepath(filepath):
     return filepath + '.writing.' + str(uuid.uuid4())
@@ -487,10 +486,6 @@ class BaseNode(BaseObject):
         self._nodeType = nodeType
         self.nodeDesc = None
 
-        # instantiate node description if nodeType is valid
-        if nodeType in meshroom.core.nodesDesc:
-            self.nodeDesc = meshroom.core.nodesDesc[nodeType]()
-
         self.packageName = self.packageVersion = ""
         self._internalFolder = ""
 
@@ -504,11 +499,16 @@ class BaseNode(BaseObject):
         self._position = position or Position()
         self._attributes = DictModel(keyAttrName='name', parent=self)
         self._internalAttributes = DictModel(keyAttrName='name', parent=self)
+        self._runtimeAttributes = DictModel(keyAttrName='name', parent=self)
         self.attributesPerUid = defaultdict(set)
         self._alive = True  # for QML side to know if the node can be used or is going to be deleted
         self._locked = False
         self._duplicates = ListModel(parent=self)  # list of nodes with the same uid
         self._hasDuplicates = False
+
+        # instantiate node description if nodeType is valid
+        if nodeType in meshroom.core.nodesDesc:
+            self.nodeDesc = meshroom.core.nodesDesc[nodeType](coreNode=self)
 
         self.globalStatusChanged.connect(self.updateDuplicatesStatusAndLocked)
 
@@ -612,6 +612,10 @@ class BaseNode(BaseObject):
         # No group or list attributes for internal attributes
         # The internal attribute itself can be returned directly
         return self._internalAttributes.get(name)
+
+    @Slot(str, result=Attribute)
+    def runtimeAttribute(self, name):
+        return self._runtimeAttributes.get(name)
 
     def setInternalAttributeValues(self, values):
         # initialize internal attribute values
@@ -1563,8 +1567,7 @@ class CompatibilityNode(BaseNode):
                 # store internal attributes that could be used during node upgrade
                 commonInternalAttributes.append(attrName)
 
-        cls = getNodeClass(self.nodeType)
-        node = cls(self.nodeType, position=self.position)
+        node = Node(self.nodeType, position=self.position)
         # convert attributes from a list of tuples into a dict
         attrValues = {key: value for (key, value) in self.inputs.items()}
         intAttrValues = {key: value for (key, value) in self.internalInputs.items()}
@@ -1685,8 +1688,7 @@ def nodeFactory(nodeDict, name=None, template=False, uidConflict=False):
                     break
 
     if compatibilityIssue is None:
-        cls = getNodeClass(nodeType)
-        node = cls(nodeType, position, **inputs)
+        node = Node(nodeType, position, **inputs)
         node.setInternalAttributeValues(internalInputs)
     else:
         logging.warning("Compatibility issue detected for node '{}': {}".format(name, compatibilityIssue.name))

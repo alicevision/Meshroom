@@ -3,6 +3,9 @@ __version__ = "5.0"
 import os
 from meshroom.core import desc
 
+# List of supported video extensions (provided by OpenImageIO)
+videoExts = [".avi", ".mov", ".mp4", ".m4a", ".m4v", ".3gp", ".3g2", ".mj2", ".m4v", ".mpg"]
+
 class KeyframeSelectionNodeSize(desc.DynamicNodeSize):
     def computeSize(self, node):
         inputPathsSize = super(KeyframeSelectionNodeSize, self).computeSize(node)
@@ -299,6 +302,8 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             value="none",
             values=["none", "exr", "jpg", "png"],
             exclusive=True,
+            validValue=lambda node: not (any(ext in input.value.lower() for ext in videoExts for input in node.inputPaths.value) and node.outputExtension.value == "none"),
+            errorMessage="A video input has been provided. The output extension should be different from 'none'.",
             uid=[0],
         ),
         desc.ChoiceParam(

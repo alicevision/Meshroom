@@ -1,23 +1,23 @@
 {
     "header": {
         "nodesVersions": {
-            "SfMTransform": "3.1",
-            "PanoramaEstimation": "1.0",
-            "ImageMatching": "2.0",
-            "PanoramaWarping": "1.1",
-            "PanoramaMerging": "1.0",
-            "PanoramaCompositing": "2.0",
-            "LdrToHdrSampling": "4.0",
-            "PanoramaPrepareImages": "1.1",
-            "FeatureMatching": "2.0",
-            "LdrToHdrMerge": "4.1",
-            "PanoramaPostProcessing": "2.0",
             "CameraInit": "9.0",
-            "LdrToHdrCalibration": "3.0",
-            "Publish": "1.3",
-            "PanoramaInit": "2.0",
             "FeatureExtraction": "1.3",
-            "PanoramaSeams": "2.0"
+            "LdrToHdrCalibration": "3.0",
+            "PanoramaEstimation": "1.0",
+            "PanoramaSeams": "2.0",
+            "ImageMatching": "2.0",
+            "SfMTransform": "3.1",
+            "PanoramaPrepareImages": "1.1",
+            "PanoramaInit": "2.0",
+            "Publish": "1.3",
+            "PanoramaPostProcessing": "2.0",
+            "FeatureMatching": "2.0",
+            "LdrToHdrSampling": "4.0",
+            "PanoramaWarping": "1.1",
+            "PanoramaCompositing": "2.0",
+            "PanoramaMerging": "1.0",
+            "LdrToHdrMerge": "4.1"
         },
         "releaseVersion": "2023.3.0-develop",
         "fileVersion": "1.1",
@@ -42,7 +42,7 @@
         "PanoramaWarping_1": {
             "nodeType": "PanoramaWarping",
             "position": [
-                2200,
+                2000,
                 0
             ],
             "inputs": {
@@ -78,7 +78,7 @@
         "ImageMatching_1": {
             "nodeType": "ImageMatching",
             "position": [
-                1400,
+                1200,
                 0
             ],
             "inputs": {
@@ -93,7 +93,7 @@
             "nodeType": "FeatureExtraction",
             "position": [
                 1000,
-                0
+                70
             ],
             "inputs": {
                 "input": "{LdrToHdrMerge_1.outSfMData}",
@@ -103,7 +103,7 @@
         "PanoramaMerging_1": {
             "nodeType": "PanoramaMerging",
             "position": [
-                2800,
+                2600,
                 0
             ],
             "inputs": {
@@ -115,7 +115,7 @@
         "PanoramaCompositing_1": {
             "nodeType": "PanoramaCompositing",
             "position": [
-                2600,
+                2400,
                 0
             ],
             "inputs": {
@@ -146,7 +146,7 @@
         "PanoramaPostProcessing_1": {
             "nodeType": "PanoramaPostProcessing",
             "position": [
-                3000,
+                2800,
                 0
             ],
             "inputs": {
@@ -168,7 +168,7 @@
         "SfMTransform_1": {
             "nodeType": "SfMTransform",
             "position": [
-                2000,
+                1800,
                 0
             ],
             "inputs": {
@@ -179,7 +179,7 @@
         "PanoramaSeams_1": {
             "nodeType": "PanoramaSeams",
             "position": [
-                2400,
+                2200,
                 0
             ],
             "inputs": {
@@ -190,7 +190,7 @@
         "PanoramaEstimation_1": {
             "nodeType": "PanoramaEstimation",
             "position": [
-                1800,
+                1600,
                 0
             ],
             "inputs": {
@@ -205,20 +205,17 @@
         "PanoramaInit_1": {
             "nodeType": "PanoramaInit",
             "position": [
-                1200,
-                0
+                1000,
+                -50
             ],
             "inputs": {
-                "input": "{FeatureExtraction_1.input}",
-                "dependency": [
-                    "{FeatureExtraction_1.output}"
-                ]
+                "input": "{LdrToHdrMerge_1.outSfMData}"
             }
         },
         "FeatureMatching_1": {
             "nodeType": "FeatureMatching",
             "position": [
-                1600,
+                1400,
                 0
             ],
             "inputs": {
@@ -231,13 +228,14 @@
         "Publish_1": {
             "nodeType": "Publish",
             "position": [
-                3200,
+                3000,
                 0
             ],
             "inputs": {
                 "inputFiles": [
                     "{PanoramaPostProcessing_1.outputPanorama}",
-                    "{PanoramaPostProcessing_1.outputPanoramaPreview}"
+                    "{PanoramaPostProcessing_1.outputPanoramaPreview}",
+                    "{PanoramaPostProcessing_1.downscaledPanoramaLevels}"
                 ]
             }
         }

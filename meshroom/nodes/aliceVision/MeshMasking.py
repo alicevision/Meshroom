@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "1.1"
 
 from meshroom.core import desc
 
@@ -46,6 +46,15 @@ Decimate triangles based on image masks.
             name="masksFolders",
             label="Masks Folders",
             description="Use masks from specific folder(s). Filename should be the same or the image UID.",
+        ),
+        desc.ChoiceParam(
+            name="maskExtension",
+            label="Mask Extension",
+            description="File extension for the masks to use.",
+            value="png",
+            values=["exr", "jpg", "png"],
+            exclusive=True,
+            uid=[0]
         ),
         desc.IntParam(
             name="threshold",

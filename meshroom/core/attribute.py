@@ -62,6 +62,7 @@ class Attribute(BaseObject):
         self._value = copy.copy(attributeDesc.value)
         self._label = attributeDesc.label
         self._enabled = True
+        self._validValue = True
 
         # invalidation value for output attributes
         self._invalidationValue = ""
@@ -147,6 +148,24 @@ class Attribute(BaseObject):
         """ Value for which the attribute should be ignored during the UID computation. """
         return self.attributeDesc.uidIgnoreValue
 
+    def getValidValue(self):
+        """
+        Get the status of _validValue:
+            - If it is a function, execute it and return the result
+            - Otherwise, simply return its value
+        """
+        if isinstance(self.desc.validValue, types.FunctionType):
+            try:
+                return self.desc.validValue(self.node)
+            except Exception:
+                return True
+        return self._validValue
+
+    def setValidValue(self, value):
+        if self._validValue == value:
+            return
+        self._validValue = value
+
     def _get_value(self):
         if self.isLink:
             return self.getLinkParam().value
@@ -177,6 +196,7 @@ class Attribute(BaseObject):
             self.requestNodeUpdate()
 
         self.valueChanged.emit()
+        self.validValueChanged.emit()
 
     def upgradeValue(self, exportedValue):
         self._set_value(exportedValue)
@@ -338,6 +358,8 @@ class Attribute(BaseObject):
     enabledChanged = Signal()
     enabled = Property(bool, getEnabled, setEnabled, notify=enabledChanged)
     uidIgnoreValue = Property(Variant, getUidIgnoreValue, constant=True)
+    validValueChanged = Signal()
+    validValue = Property(bool, getValidValue, setValidValue, notify=validValueChanged)
 
 
 def raiseIfLink(func):

@@ -278,7 +278,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name="correctEV",
             label="Correct Exposure",
             description="Uniformize images exposure values.",
-            value=False,
+            value=True,
             uid=[0],
         ),
         desc.BoolParam(

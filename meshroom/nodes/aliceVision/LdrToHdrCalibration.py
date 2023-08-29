@@ -1,6 +1,7 @@
 __version__ = "3.0"
 
 import json
+import math
 import os
 from collections import Counter
 
@@ -59,6 +60,8 @@ Calibrate LDR to HDR response curve from samples.
             range=(0, 15, 1),
             uid=[],
             group="user",  # not used directly on the command line
+            errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
+                         "Errors will occur during the computation."
         ),
         desc.IntParam(
             name="nbBrackets",
@@ -67,7 +70,7 @@ Calibrate LDR to HDR response curve from samples.
                         "It is detected automatically from input Viewpoints metadata if 'userNbBrackets' is 0,\n"
                         "else it is equal to 'userNbBrackets'.",
             value=0,
-            range=(0, 10, 1),
+            range=(0, 15, 1),
             uid=[0],
             group="bracketsParams"
         ),
@@ -180,13 +183,24 @@ Calibrate LDR to HDR response curve from samples.
         if "userNbBrackets" not in node.getAttributes().keys():
             # Old version of the node
             return
-        if node.userNbBrackets.value != 0:
-            node.nbBrackets.value = node.userNbBrackets.value
-            return
+        node.userNbBrackets.validValue = True  # Reset the status of "userNbBrackets"
+
         cameraInitOutput = node.input.getLinkParam(recursive=True)
         if not cameraInitOutput:
             node.nbBrackets.value = 0
             return
+        if node.userNbBrackets.value != 0:
+            # The number of brackets has been manually forced: check whether it is valid or not
+            if cameraInitOutput and cameraInitOutput.node and cameraInitOutput.node.hasAttribute("viewpoints"):
+                viewpoints = cameraInitOutput.node.viewpoints.value
+                # The number of brackets should be a multiple of the number of input images
+                if (len(viewpoints) % node.userNbBrackets.value != 0):
+                    node.userNbBrackets.validValue = False
+                else:
+                    node.userNbBrackets.validValue = True
+            node.nbBrackets.value = node.userNbBrackets.value
+            return
+
         if not cameraInitOutput.node.hasAttribute("viewpoints"):
             if cameraInitOutput.node.hasAttribute("input"):
                 cameraInitOutput = cameraInitOutput.node.input.getLinkParam(recursive=True)
@@ -205,9 +219,20 @@ Calibrate LDR to HDR response curve from samples.
                 node.nbBrackets.value = 0
                 return
             d = json.loads(jsonMetadata)
-            fnumber = findMetadata(d, ["FNumber", "Exif:ApertureValue", "ApertureValue", "Aperture"], "")
-            shutterSpeed = findMetadata(d, ["Exif:ShutterSpeedValue", "ShutterSpeedValue", "ShutterSpeed"], "")
-            iso = findMetadata(d, ["Exif:ISOSpeedRatings", "ISOSpeedRatings", "ISO"], "")
+
+            # Find Fnumber
+            fnumber = findMetadata(d, ["FNumber"], "")
+            if fnumber == "":
+                aperture = findMetadata(d, ["Exif:ApertureValue", "ApertureValue", "Aperture"], "")
+                if aperture == "":
+                    fnumber = -1.0
+                else:
+                    fnumber = pow(2.0, aperture / 2.0)
+
+            # Get shutter speed and ISO
+            shutterSpeed = findMetadata(d, ["ExposureTime", "Exif:ShutterSpeedValue", "ShutterSpeedValue", "ShutterSpeed"], -1.0)
+            iso = findMetadata(d, ["Exif:PhotographicSensitivity", "PhotographicSensitivity", "Photographic Sensitivity", "ISO"], -1.0)
+
             if not fnumber and not shutterSpeed:
                 # If one image without shutter or fnumber, we cannot found the number of brackets.
                 # We assume that there is no multi-bracketing, so nothing to do.
@@ -222,6 +247,7 @@ Calibrate LDR to HDR response curve from samples.
         prevShutterSpeed = 0.0
         prevIso = 0.0
         prevPath = None  # Stores the dirname of the previous parsed image
+        prevExposure = None
         newGroup = False  # True if a new exposure group needs to be created (useful when there are several datasets)
         for path, exp in inputs:
             # If the dirname of the previous image and the dirname of the current image do not match, this means that the
@@ -231,20 +257,18 @@ Calibrate LDR to HDR response curve from samples.
             if prevPath is not None and prevPath != os.path.dirname(path):
                 newGroup = True
 
-            # A new group is created if the current image's exposure level is larger than the previous image's, if there
-            # were any changes in the ISO or aperture value, or if a new dataset has been detected with the path.
-            # Since the input images are ordered, the shutter speed should always be decreasing, so a shutter speed larger
-            # than the previous one indicates the start of a new exposure group.
-            fnumber, shutterSpeed, iso = exp
-            if exposures:
-                prevFnumber, prevShutterSpeed, prevIso = exposures[-1]
-            if exposures and len(exposures) > 1 and (fnumber != prevFnumber or shutterSpeed > prevShutterSpeed or iso != prevIso) or newGroup:
+            currentExposure = LdrToHdrCalibration.getExposure(exp)
+
+            # Create a new group if the current image's exposure level is smaller than the previous image's, or
+            # if a new dataset has been detected (with a change in the path of the images).
+            if prevExposure and currentExposure < prevExposure or newGroup:
                 exposureGroups.append(exposures)
                 exposures = [exp]
             else:
                 exposures.append(exp)
 
             prevPath = os.path.dirname(path)
+            prevExposure = currentExposure
             newGroup = False
 
         exposureGroups.append(exposures)
@@ -273,5 +297,38 @@ Calibrate LDR to HDR response curve from samples.
                         bestTuple = tuple if tuple[0] > bestTuple[0] else bestTuple
 
                 bestBracketSize = bestTuple[0]
-                bestCount = bestTuple[1]
                 node.nbBrackets.value = bestBracketSize
+
+    @staticmethod
+    def getExposure(exp, refIso = 100.0, refFnumber = 1.0):
+        fnumber, shutterSpeed, iso = exp
+
+        validShutterSpeed = shutterSpeed > 0.0 and math.isfinite(shutterSpeed)
+        validFnumber = fnumber > 0.0 and math.isfinite(fnumber)
+
+        if not validShutterSpeed and not validFnumber:
+            return -1.0
+
+        validRefFnumber = refFnumber > 0.0 and math.isfinite(refFnumber)
+
+        if not validShutterSpeed:
+            shutterSpeed = 1.0 / 200.0
+
+        if not validFnumber:
+            if validRefFnumber:
+                fnumber = refFnumber
+            else:
+                fnumber = 2.0
+
+        lRefFnumber = refFnumber
+        if not validRefFnumber:
+            lRefFnumber = fnumber
+
+        isoToAperture = 1.0
+        if iso > 1e-6 and refIso > 1e-6:
+            isoToAperture = math.sqrt(iso / refIso)
+
+        newFnumber = fnumber * isoToAperture
+        expIncrease = (lRefFnumber / newFnumber) * (lRefFnumber / newFnumber)
+
+        return shutterSpeed * expIncrease

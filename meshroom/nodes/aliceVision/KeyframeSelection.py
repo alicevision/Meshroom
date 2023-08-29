@@ -1,7 +1,10 @@
-__version__ = "4.1"
+__version__ = "5.0"
 
 import os
 from meshroom.core import desc
+
+# List of supported video extensions (provided by OpenImageIO)
+videoExts = [".avi", ".mov", ".mp4", ".m4a", ".m4v", ".3gp", ".3g2", ".mj2", ".m4v", ".mpg"]
 
 class KeyframeSelectionNodeSize(desc.DynamicNodeSize):
     def computeSize(self, node):
@@ -118,6 +121,20 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             description="Camera sensor width database path.",
             value="${ALICEVISION_SENSOR_DB}",
             uid=[0],
+        ),
+        desc.ListAttribute(
+            elementDesc=desc.File(
+                name="masks",
+                label="Masks Path",
+                description="Directory containing masks to apply to the frames.",
+                value="",
+                uid=[0],
+            ),
+            name="maskPaths",
+            label="Masks",
+            description="Masks (e.g. segmentation masks) used to exclude some parts of the frames from the score computations\n"
+                        "for the smart keyframe selection.",
+            enabled=lambda node: node.selectionMethod.useSmartSelection.value
         ),
         desc.GroupAttribute(
             name="selectionMethod",
@@ -250,6 +267,18 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             enabled=lambda node: node.smartSelection.enabled,
                             advanced=True
                         ),
+                        desc.IntParam(
+                            name="minBlockSize",
+                            label="Multi-Threading Minimum Block Size",
+                            description="The minimum number of frames to process for a thread to be spawned.\n"
+                                        "If using all the available threads implies processing less than this value in every thread, then less threads should be spawned,\n"
+                                        "and each will process at least 'minBlockSize' (except maybe for the very last thread, that might process less).",
+                            value=10,
+                            range=(1, 1000, 1),
+                            uid=[],
+                            enabled=lambda node: node.smartSelection.enabled,
+                            advanced=True
+                        )
                     ]
                 )
             ]
@@ -273,6 +302,8 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             value="none",
             values=["none", "exr", "jpg", "png"],
             exclusive=True,
+            validValue=lambda node: not (any(ext in input.value.lower() for ext in videoExts for input in node.inputPaths.value) and node.outputExtension.value == "none"),
+            errorMessage="A video input has been provided. The output extension should be different from 'none'.",
             uid=[0],
         ),
         desc.ChoiceParam(

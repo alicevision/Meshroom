@@ -100,12 +100,13 @@ Sample pixels from Low range images for HDR creation.
             name="calibrationMethod",
             label="Calibration Method",
             description="Method used for camera calibration:\n"
+                        " - AUTO: If RAW images are detected then Linear behavior is selected else Debevec calibration method is enabled.\n"
                         " - Linear: Disable the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear.\n"
                         " - Debevec: This is the standard method for HDR calibration.\n"
                         " - Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision.\n"
                         " - Laguerre: Simple but robust method estimating the minimal number of parameters.",
-            values=["linear", "debevec", "grossberg", "laguerre"],
-            value="debevec",
+            values=["AUTO", "linear", "debevec", "grossberg", "laguerre"],
+            value="AUTO",
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
@@ -124,8 +125,8 @@ Sample pixels from Low range images for HDR creation.
             name="workingColorSpace",
             label="Working Color Space",
             description="Allows you to choose the color space in which the data are processed.",
-            value="sRGB",
-            values=["sRGB", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
+            value="AUTO",
+            values=["AUTO", "sRGB", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,

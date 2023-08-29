@@ -140,7 +140,7 @@ def initScene():
     bpy.context.scene.cycles.use_denoising = False
 
 
-def initCompositing():
+def initCompositing(useBackground, useMasks):
     '''Initialize Blender compositing graph for adding background image to render.'''
     bpy.context.scene.render.film_transparent = True
     bpy.context.scene.use_nodes = True
@@ -148,21 +148,22 @@ def initCompositing():
     nodeSetAlpha = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeSetAlpha")
     nodeBackground = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
     nodeMask = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
-    bpy.context.scene.node_tree.links.new(
-        nodeAlphaOver.outputs['Image'],
-        bpy.context.scene.node_tree.nodes['Composite'].inputs['Image'])
-    bpy.context.scene.node_tree.links.new(
-        nodeBackground.outputs['Image'],
-        nodeAlphaOver.inputs[1])
-    bpy.context.scene.node_tree.links.new(
-        bpy.context.scene.node_tree.nodes['Render Layers'].outputs['Image'],
-        nodeSetAlpha.inputs['Image'])
-    bpy.context.scene.node_tree.links.new(
-        nodeMask.outputs['Image'],
-        nodeSetAlpha.inputs['Alpha'])
-    bpy.context.scene.node_tree.links.new(
-        nodeSetAlpha.outputs['Image'],
-        nodeAlphaOver.inputs[2])
+    nodeRender = bpy.context.scene.node_tree.nodes['Render Layers']
+    nodeComposite = bpy.context.scene.node_tree.nodes['Composite']
+    if useBackground and useMasks:
+        bpy.context.scene.node_tree.links.new(nodeBackground.outputs['Image'], nodeAlphaOver.inputs[1])
+        bpy.context.scene.node_tree.links.new(nodeRender.outputs['Image'], nodeSetAlpha.inputs['Image'])
+        bpy.context.scene.node_tree.links.new(nodeMask.outputs['Image'], nodeSetAlpha.inputs['Alpha'])
+        bpy.context.scene.node_tree.links.new(nodeSetAlpha.outputs['Image'], nodeAlphaOver.inputs[2])
+        bpy.context.scene.node_tree.links.new(nodeAlphaOver.outputs['Image'], nodeComposite.inputs['Image'])
+    elif useBackground:
+        bpy.context.scene.node_tree.links.new(nodeBackground.outputs['Image'], nodeAlphaOver.inputs[1])
+        bpy.context.scene.node_tree.links.new(nodeRender.outputs['Image'], nodeAlphaOver.inputs[2])
+        bpy.context.scene.node_tree.links.new(nodeAlphaOver.outputs['Image'], nodeComposite.inputs['Image'])
+    elif useMasks:
+        bpy.context.scene.node_tree.links.new(nodeRender.outputs['Image'], nodeSetAlpha.inputs['Image'])
+        bpy.context.scene.node_tree.links.new(nodeMask.outputs['Image'], nodeSetAlpha.inputs['Alpha'])
+        bpy.context.scene.node_tree.links.new(nodeSetAlpha.outputs['Image'], nodeComposite.inputs['Image'])
     return nodeBackground, nodeMask
 
 
@@ -332,7 +333,7 @@ def main():
     initScene()
 
     print("Init compositing")
-    nodeBackground, nodeMask = initCompositing()
+    nodeBackground, nodeMask = initCompositing(args.useBackground, args.useMasks)
 
     print("Parse cameras SfM file")
     views, intrinsics, poses = parseSfMCameraFile(args.cameras)

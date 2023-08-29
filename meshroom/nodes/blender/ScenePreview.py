@@ -68,7 +68,7 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
         ),
         desc.BoolParam(
             name="useMasks",
-            label="Use Masks",
+            label="Apply Masks",
             description="Apply mask to the rendered geometry.",
             value=True,
             uid=[0],

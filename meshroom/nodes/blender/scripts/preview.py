@@ -36,11 +36,19 @@ def createParser():
     )
     parser.add_argument(
         "--undistortedImages", metavar='FILE', required=False,
-        help="Save the generated file to the specified path",
+        help="Path to folder containing undistorted images to use as background.",
     )
     parser.add_argument(
         "--model", metavar='FILE', required=True,
         help="Point Cloud or Mesh used in the rendering.",
+    )
+    parser.add_argument(
+        "--useMasks", type=lambda x: (str(x).lower() == 'true'), required=True,
+        help="Apply mask to the rendered geometry or not.",
+    )
+    parser.add_argument(
+        "--masks", metavar='FILE', required=False,
+        help="Path to folder containing masks to apply on rendered geometry.",
     )
     parser.add_argument(
         "--particleSize", type=float, required=False,
@@ -136,17 +144,26 @@ def initCompositing():
     '''Initialize Blender compositing graph for adding background image to render.'''
     bpy.context.scene.render.film_transparent = True
     bpy.context.scene.use_nodes = True
-    bpy.context.scene.node_tree.nodes.new(type="CompositorNodeAlphaOver")
-    bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
+    nodeAlphaOver = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeAlphaOver")
+    nodeSetAlpha = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeSetAlpha")
+    nodeBackground = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
+    nodeMask = bpy.context.scene.node_tree.nodes.new(type="CompositorNodeImage")
     bpy.context.scene.node_tree.links.new(
-        bpy.context.scene.node_tree.nodes['Alpha Over'].outputs['Image'],
+        nodeAlphaOver.outputs['Image'],
         bpy.context.scene.node_tree.nodes['Composite'].inputs['Image'])
     bpy.context.scene.node_tree.links.new(
-        bpy.context.scene.node_tree.nodes['Image'].outputs['Image'],
-        bpy.context.scene.node_tree.nodes['Alpha Over'].inputs[1])
+        nodeBackground.outputs['Image'],
+        nodeAlphaOver.inputs[1])
     bpy.context.scene.node_tree.links.new(
         bpy.context.scene.node_tree.nodes['Render Layers'].outputs['Image'],
-        bpy.context.scene.node_tree.nodes['Alpha Over'].inputs[2])
+        nodeSetAlpha.inputs['Image'])
+    bpy.context.scene.node_tree.links.new(
+        nodeMask.outputs['Image'],
+        nodeSetAlpha.inputs['Alpha'])
+    bpy.context.scene.node_tree.links.new(
+        nodeSetAlpha.outputs['Image'],
+        nodeAlphaOver.inputs[2])
+    return nodeBackground, nodeMask
 
 
 def setupRender(view, intrinsic, pose, outputDir):
@@ -157,7 +174,7 @@ def setupRender(view, intrinsic, pose, outputDir):
     bpy.context.scene.render.filepath = os.path.abspath(outputDir + '/' + baseImgName + '_preview.jpg')
 
 
-def setupBackground(view, folderUndistorted):
+def setupBackground(view, folderUndistorted, nodeBackground):
     '''Retrieve undistorted image corresponding to view and use it as background.'''
     matches = glob.glob(folderUndistorted + '/*' + view['viewId'] + "*") # try with viewId
     if len(matches) == 0:
@@ -168,8 +185,23 @@ def setupBackground(view, folderUndistorted):
         return None
     undistortedImgPath = matches[0]
     img = bpy.data.images.load(filepath=undistortedImgPath)
-    bpy.context.scene.node_tree.nodes["Image"].image = img
+    nodeBackground.image = img
     return img
+
+
+def setupMask(view, folderMasks, nodeMask):
+    '''Retrieve mask corresponding to view and use it in compositing graph.'''
+    matches = glob.glob(folderMasks + '/*' + view['viewId'] + "*") # try with viewId
+    if len(matches) == 0:
+        baseImgName = os.path.splitext(os.path.basename(view['path']))[0]
+        matches = glob.glob(folderMasks + '/*' + baseImgName + "*") # try with image name
+    if len(matches) == 0:
+        # no background image found
+        return None
+    maskPath = matches[0]
+    mask = bpy.data.images.load(filepath=maskPath)
+    nodeMask.image = mask
+    return mask
 
 
 def loadModel(filename):
@@ -300,8 +332,7 @@ def main():
     initScene()
 
     print("Init compositing")
-    if args.useBackground:
-        initCompositing()
+    nodeBackground, nodeMask = initCompositing()
 
     print("Parse cameras SfM file")
     views, intrinsics, poses = parseSfMCameraFile(args.cameras)
@@ -344,19 +375,31 @@ def main():
             continue
 
         print("Rendering view " + view['viewId'])
+
         img = None
         if args.useBackground:
-            img = setupBackground(view, args.undistortedImages)
+            img = setupBackground(view, args.undistortedImages, nodeBackground)
             if not img:
                 # background setup failed
                 # do not render this frame
                 continue
+        
+        mask = None
+        if args.useMasks:
+            mask = setupMask(view, args.masks, nodeMask)
+            if not mask:
+                # mask setup failed
+                # do not render this frame
+                continue
+        
         setupRender(view, intrinsic, pose, args.output)
         bpy.ops.render.render(write_still=True)
 
+        # clear memory
         if img:
-            # clear memory 
             bpy.data.images.remove(img)
+        if mask:
+            bpy.data.images.remove(mask)
 
     print("Done")
     return 0

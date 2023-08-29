@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "2.0"
 
 from meshroom.core import desc
 import os.path
@@ -65,6 +65,21 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
             value="",
             uid=[0],
             enabled=lambda node: node.useBackground.value,
+        ),
+        desc.BoolParam(
+            name="useMasks",
+            label="Use Masks",
+            description="Apply mask to the rendered geometry.",
+            value=True,
+            uid=[0],
+        ),
+        desc.File(
+            name="masks",
+            label="Masks",
+            description="Folder containing the masks.",
+            value="",
+            uid=[0],
+            enabled=lambda node: node.useMasks.value,
         ),
         desc.GroupAttribute(
             name="pointCloudParams",

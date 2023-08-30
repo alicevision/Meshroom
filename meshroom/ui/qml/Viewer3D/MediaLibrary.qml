@@ -52,6 +52,8 @@ Entity {
             "displayBoundingBox": true, // for Meshing node only
             "hasTransform": false, // for SfMTransform node only
             "displayTransform": true, // for SfMTransform node only
+            "hasObservations": false, // for nodes with Sfm data only
+            "displayObservations": false, // for nodes with Sfm data only
             "section": "",
             "attribute": null,
             "entity": null,
@@ -185,6 +187,9 @@ Entity {
             onHasTransformChanged: model.hasTransform = hasTransform
             property bool displayTransform: model.displayTransform
 
+            // Specific properties to nodes with Sfm data (declared and initialized for every Entity anyway)
+            property bool hasObservations: nodeType === "SfMFilter" || nodeType === "StructureFromMotion"
+            onHasObservationsChanged: model.hasObservations = hasObservations
 
             // Create the medias
             MediaLoader {
@@ -230,6 +235,7 @@ Entity {
                 renderMode: root.renderMode
                 enabled: visible
                 viewer2DInfo: root.viewer2DInfo
+                displayObservations: model.displayObservations
 
                 // QObject.destroyed signal is not accessible
                 // Use the object as NodeInstantiator model to be notified of its deletion

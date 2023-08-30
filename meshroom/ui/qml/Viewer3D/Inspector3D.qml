@@ -210,7 +210,7 @@ FloatingPane {
 
                     model: SortFilterDelegateModel {
                         model: mediaLibrary.model
-                        sortRole: "label"
+                        sortRole: ""
                         filters: [{role: "label", value: searchBar.text}]
                         delegate: MouseArea {
                             id: mediaDelegate

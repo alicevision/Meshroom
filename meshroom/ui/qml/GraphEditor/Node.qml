@@ -213,6 +213,38 @@ Item {
                             font.pointSize: 8
                         }
 
+                        // TextField {
+                        //     id: nodeLabel
+                        //     Layout.fillWidth: true
+                        //     text: node ? node.label : ""
+                        //     padding: 4
+                        //     color: root.mainSelected ? "white" : activePalette.text
+                        //     // elide: Text.ElideMiddle
+                        //     font.pointSize: 8
+                        //     // readOnly: !root.editable
+                        //     // text: attribute.value
+                        //     selectByMouse: true
+                        //     // onEditingFinished: setTextFieldAttribute(text)
+                        //     onAccepted: {
+                        //         // setTextFieldAttribute(text)
+                        //         root.forceActiveFocus()
+                        //     }
+                        //     Component.onDestruction: {
+                        //         // if(activeFocus)
+                        //         //     setTextFieldAttribute(text)
+                        //     }
+                        //     // DropArea {
+                        //     //     enabled: root.editable
+                        //     //     anchors.fill: parent
+                        //     //     onDropped: {
+                        //     //         if(drop.hasUrls)
+                        //     //             setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
+                        //     //         else if(drop.hasText && drop.text != '')
+                        //     //             setTextFieldAttribute(drop.text)
+                        //     //     }
+                        //     // }
+                        // }
+
                         // Node State icons
                         RowLayout {
                             Layout.fillWidth: true

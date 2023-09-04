@@ -5,29 +5,29 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "ExportDistortion": "1.0",
-            "FeatureExtraction": "1.3",
-            "DepthMap": "4.0",
-            "Texturing": "6.0",
             "ImageSegmentation": "1.0",
             "ApplyCalibration": "1.0",
-            "ScenePreview": "1.0",
             "MeshDecimate": "1.0",
-            "KeyframeSelection": "5.0",
             "PrepareDenseScene": "3.1",
             "Publish": "1.3",
             "MeshFiltering": "3.0",
             "DepthMapFilter": "3.0",
             "Meshing": "7.0",
             "ImageMatchingMultiSfM": "1.0",
+            "ScenePreview": "2.0",
             "FeatureMatching": "2.0",
             "CameraInit": "9.0",
             "ImageMatching": "2.0",
             "CheckerboardDetection": "1.0",
             "ConvertSfMFormat": "2.0",
+            "KeyframeSelection": "5.0",
             "StructureFromMotion": "3.1",
             "ExportAnimatedCamera": "2.0",
-            "DistortionCalibration": "3.0"
+            "DistortionCalibration": "3.0",
+            "ExportDistortion": "1.0",
+            "FeatureExtraction": "1.3",
+            "DepthMap": "4.0",
+            "Texturing": "6.0"
         }
     },
     "graph": {
@@ -240,7 +240,8 @@
             "inputs": {
                 "cameras": "{ConvertSfMFormat_1.output}",
                 "model": "{MeshDecimate_1.output}",
-                "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}"
+                "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}",
+                "masks": "{ImageSegmentation_1.output}"
             },
             "internalInputs": {
                 "color": "#4c594c"

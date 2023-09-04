@@ -167,9 +167,10 @@ Merge LDR images into HDR images.
         desc.ChoiceParam(
             name="workingColorSpace",
             label="Working Color Space",
-            description="Allows you to choose the color space in which the data are processed.",
-            value="AUTO",
-            values=["AUTO", "sRGB", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
+            description="Color space in which the data are processed.\n"
+                        "If 'auto' is selected, the working color space will be 'Linear' if RAW images are detected; otherwise, it will be set to 'sRGB'.",
+            value="auto",
+            values=["auto", "sRGB", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,

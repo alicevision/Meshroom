@@ -100,13 +100,13 @@ Sample pixels from Low range images for HDR creation.
             name="calibrationMethod",
             label="Calibration Method",
             description="Method used for camera calibration:\n"
-                        " - AUTO: If RAW images are detected then Linear behavior is selected else Debevec calibration method is enabled.\n"
-                        " - Linear: Disable the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), the images will be automatically converted to linear.\n"
-                        " - Debevec: This is the standard method for HDR calibration.\n"
-                        " - Grossberg: Based on learned database of cameras, it allows to reduce the CRF to few parameters while keeping all the precision.\n"
+                        " - Auto: If RAW images are detected, the 'Linear' calibration method will be used. Otherwise, the 'Debevec'  calibration method will be used.\n"
+                        " - Linear: Disables the calibration and assumes a linear Camera Response Function. If images are encoded in a known colorspace (like sRGB for JPEG), they will be automatically converted to linear.\n"
+                        " - Debevec: Standard method for HDR calibration.\n"
+                        " - Grossberg: Based on a learned database of cameras, allows to reduce the Camera Response Function to a few parameters while keeping all the precision.\n"
                         " - Laguerre: Simple but robust method estimating the minimal number of parameters.",
-            values=["AUTO", "linear", "debevec", "grossberg", "laguerre"],
-            value="AUTO",
+            values=["auto", "linear", "debevec", "grossberg", "laguerre"],
+            value="auto",
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,
@@ -124,9 +124,10 @@ Sample pixels from Low range images for HDR creation.
         desc.ChoiceParam(
             name="workingColorSpace",
             label="Working Color Space",
-            description="Allows you to choose the color space in which the data are processed.",
-            value="AUTO",
-            values=["AUTO", "sRGB", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
+            description="Color space in which the data are processed.\n"
+                        "If 'auto' is selected, the working color space will be 'Linear' if RAW images are detected; otherwise, it will be set to 'sRGB'.",
+            value="auto",
+            values=["auto", "sRGB", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
             exclusive=True,
             uid=[0],
             enabled= lambda node: node.byPass.enabled and not node.byPass.value,

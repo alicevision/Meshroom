@@ -13,6 +13,8 @@ RowLayout {
 
     property variant attribute: null
     property bool readOnly: false // whether the attribute's value can be modified
+    property bool objectsHideable: true
+    property string filterText: ""
 
     property alias label: parameterLabel  // accessor to the internal Label (attribute's name)
     property int labelWidth               // shortcut to set the fixed size of the Label
@@ -489,32 +491,39 @@ RowLayout {
 
                     ScrollBar.vertical: ScrollBar { id: sb }
 
-                    delegate:  RowLayout {
-                        id: item
-                        property var childAttrib: object
-                        layoutDirection: Qt.RightToLeft
-                        width: lv.width - sb.width
-                        Component.onCompleted: {
-                            var cpt = Qt.createComponent("AttributeItemDelegate.qml")
-                            var obj = cpt.createObject(item,
-                                                       {'attribute': Qt.binding(function() { return item.childAttrib }),
-                                                        'readOnly': Qt.binding(function() { return !root.editable })
-                                                       })
-                            obj.Layout.fillWidth = true
-                            obj.label.text = index
-                            obj.label.horizontalAlignment = Text.AlignHCenter
-                            obj.label.verticalAlignment = Text.AlignVCenter
-                            obj.doubleClicked.connect(function(attr) {root.doubleClicked(attr)})
-                        }
-                        ToolButton {
-                            enabled: root.editable
-                            text: MaterialIcons.remove_circle_outline
-                            font.family: MaterialIcons.fontFamily
-                            font.pointSize: 11
-                            padding: 2
-                            ToolTip.text: "Remove Element"
-                            ToolTip.visible: hovered
-                            onClicked: _reconstruction.removeAttribute(item.childAttrib)
+                    delegate:  Loader{
+                        active: !objectsHideable
+                            || ((object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
+                            && (object.isLinkNested && GraphEditorSettings.showLinkAttributes || !object.isLinkNested && GraphEditorSettings.showNotLinkAttributes))
+                        visible: active
+                        height: item ? implicitHeight : -spacing // compensate for spacing if item is hidden
+                        sourceComponent: RowLayout {
+                            id: item
+                            property var childAttrib: object
+                            layoutDirection: Qt.RightToLeft
+                            width: lv.width - sb.width
+                            Component.onCompleted: {
+                                var cpt = Qt.createComponent("AttributeItemDelegate.qml")
+                                var obj = cpt.createObject(item,
+                                                        {'attribute': Qt.binding(function() { return item.childAttrib }),
+                                                            'readOnly': Qt.binding(function() { return !root.editable })
+                                                        })
+                                obj.Layout.fillWidth = true
+                                obj.label.text = index
+                                obj.label.horizontalAlignment = Text.AlignHCenter
+                                obj.label.verticalAlignment = Text.AlignVCenter
+                                obj.doubleClicked.connect(function(attr) {root.doubleClicked(attr)})
+                            }
+                            ToolButton {
+                                enabled: root.editable
+                                text: MaterialIcons.remove_circle_outline
+                                font.family: MaterialIcons.fontFamily
+                                font.pointSize: 11
+                                padding: 2
+                                ToolTip.text: "Remove Element"
+                                ToolTip.visible: hovered
+                                onClicked: _reconstruction.removeAttribute(item.childAttrib)
+                            }
                         }
                     }
                 }
@@ -531,6 +540,8 @@ RowLayout {
                                                {'model': Qt.binding(function() { return attribute.value }),
                                                 'readOnly': Qt.binding(function() { return root.readOnly }),
                                                 'labelWidth': 100, // reduce label width for children (space gain)
+                                                'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
+                                                'filterText': Qt.binding(function() { return root.filterText }),
                                                })
                     obj.Layout.fillWidth = true;
                     obj.attributeDoubleClicked.connect(function(attr) {root.doubleClicked(attr)})

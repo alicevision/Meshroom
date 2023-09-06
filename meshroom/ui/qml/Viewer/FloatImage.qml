@@ -11,13 +11,13 @@ import AliceVision 1.0 as AliceVision
 AliceVision.FloatImageViewer {
     id: root
 
-    width: textureSize.width
-    height: textureSize.height
+    width: sourceSize.width
+    height: sourceSize.height
     visible: true
 
     // paintedWidth / paintedHeight / status for compatibility with standard Image
-    property int paintedWidth: textureSize.width
-    property int paintedHeight: textureSize.height
+    property int paintedWidth: sourceSize.width
+    property int paintedHeight: sourceSize.height
     property var status: {
         if(root.loading)
             return Image.Loading;

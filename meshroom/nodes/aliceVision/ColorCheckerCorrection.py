@@ -37,6 +37,20 @@ If multiple color charts are submitted, only the first one will be taken in acco
             value="",
             uid=[0],
         ),
+        desc.BoolParam(
+            name="luminanceOnly",
+            label="Luminance Correction Only",
+            description="Only correct the luminance level.",
+            value=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name="useBestColorCheckerOnly",
+            label="Use Best Color Chart Only",
+            description="Use only the color chart with the best orientation and size to compute the color correction model.",
+            value=True,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name="extension",
             label="Output File Extension",

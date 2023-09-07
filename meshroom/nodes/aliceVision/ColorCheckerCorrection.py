@@ -37,11 +37,16 @@ If multiple color charts are submitted, only the first one will be taken in acco
             value="",
             uid=[0],
         ),
-        desc.BoolParam(
-            name="luminanceOnly",
-            label="Luminance Correction Only",
-            description="Only correct the luminance level.",
-            value=True,
+        desc.ChoiceParam(
+            name="correctionMethod",
+            label="Correction Level",
+            description="Level of correction:\n"
+                        " - luminance: Ajust luminance level only.\n"
+                        " - whiteBalance: Apply white balancing in addition to luminance adjustment.\n"
+                        " - full: Full color correction.",
+            value="luminance",
+            values=["luminance", "whiteBalance", "full"],
+            exclusive=True,
             uid=[0],
         ),
         desc.BoolParam(

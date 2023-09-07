@@ -157,7 +157,7 @@
             "inputs": {
                 "inputPanorama": "{PanoramaMerging_1.outputPanorama}",
                 "fillHoles": true,
-                "exportLevels": true
+                "exportLevels": false
             }
         },
         "PanoramaPrepareImages_1": {

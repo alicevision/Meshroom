@@ -1,4 +1,4 @@
-__version__ = "3.1"
+__version__ = "3.2"
 
 from meshroom.core import desc
 
@@ -371,6 +371,14 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             exclusive=True,
             uid=[],
             advanced=True,
+        ),
+        desc.BoolParam(
+            name="logIntermediateSteps",
+            label="Log Intermediate Steps",
+            description="Dump the current state of the scene as an SfMData file every 3 resections.",
+            value=False,
+            uid=[],
+            advanced=True
         ),
         desc.ChoiceParam(
             name="verboseLevel",

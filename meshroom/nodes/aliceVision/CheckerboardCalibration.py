@@ -3,8 +3,8 @@ __version__ = '1.0'
 from meshroom.core import desc
 
 
-class IntrinsicsCalibration(desc.AVCommandLineNode):
-    commandLine = 'aliceVision_intrinsicsCalibration {allParams}'
+class CheckerboardCalibration(desc.AVCommandLineNode):
+    commandLine = 'aliceVision_checkerboardCalibration {allParams}'
     size = desc.DynamicNodeSize('input')
 
     category = 'Other'

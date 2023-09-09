@@ -51,6 +51,22 @@ Dev notes:
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name="processAllImages",
+            label="Process All Images",
+            description="If checked, detection will be launched on all images.\n"
+                        "If unchecked, only images with a name fitting a regular expression are considered.",
+            value=True,
+            uid=[0],
+        ),
+        desc.File(
+            name="filter",
+            label="Filter",
+            description="Regex to filter images on which he detection will be launched.",
+            value="*_macbeth.*",
+            uid=[0],
+            enabled=lambda node: not node.processAllImages.value
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",

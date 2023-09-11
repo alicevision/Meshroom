@@ -17,7 +17,9 @@
             "PanoramaWarping": "1.1",
             "PanoramaCompositing": "2.0",
             "PanoramaMerging": "1.0",
-            "LdrToHdrMerge": "4.1"
+            "LdrToHdrMerge": "4.1",
+            "ColorCheckerDetection": "1.0",
+            "ColorCheckerCorrection": "1.0"
         },
         "releaseVersion": "2023.3.0-develop",
         "fileVersion": "1.1",
@@ -42,7 +44,7 @@
         "PanoramaWarping_1": {
             "nodeType": "PanoramaWarping",
             "position": [
-                2000,
+                2400,
                 0
             ],
             "inputs": {
@@ -75,10 +77,31 @@
                 "input": "{PanoramaPrepareImages_1.output}"
             }
         },
+        "ColorCheckerDetection_1": {
+            "nodeType": "ColorCheckerDetection",
+            "position": [
+                1000,
+                -58
+            ],
+            "inputs": {
+                "input": "{LdrToHdrMerge_1.outSfMData}"
+            }
+        },
+        "ColorCheckerCorrection_1": {
+            "nodeType": "ColorCheckerCorrection",
+            "position": [
+                1200,
+                72
+            ],
+            "inputs": {
+                "inputData": "{ColorCheckerDetection_1.outputData}",
+                "input": "{LdrToHdrMerge_1.outSfMData}"
+            }
+        },
         "ImageMatching_1": {
             "nodeType": "ImageMatching",
             "position": [
-                1200,
+                1600,
                 0
             ],
             "inputs": {
@@ -92,18 +115,18 @@
         "FeatureExtraction_1": {
             "nodeType": "FeatureExtraction",
             "position": [
-                1000,
+                1400,
                 70
             ],
             "inputs": {
-                "input": "{LdrToHdrMerge_1.outSfMData}",
+                "input": "{ColorCheckerCorrection_1.outSfMData}",
                 "describerQuality": "high"
             }
         },
         "PanoramaMerging_1": {
             "nodeType": "PanoramaMerging",
             "position": [
-                2600,
+                3000,
                 0
             ],
             "inputs": {
@@ -115,7 +138,7 @@
         "PanoramaCompositing_1": {
             "nodeType": "PanoramaCompositing",
             "position": [
-                2400,
+                2800,
                 0
             ],
             "inputs": {
@@ -146,7 +169,7 @@
         "PanoramaPostProcessing_1": {
             "nodeType": "PanoramaPostProcessing",
             "position": [
-                2800,
+                3200,
                 0
             ],
             "inputs": {
@@ -168,7 +191,7 @@
         "SfMTransform_1": {
             "nodeType": "SfMTransform",
             "position": [
-                1800,
+                2200,
                 0
             ],
             "inputs": {
@@ -179,7 +202,7 @@
         "PanoramaSeams_1": {
             "nodeType": "PanoramaSeams",
             "position": [
-                2200,
+                2600,
                 0
             ],
             "inputs": {
@@ -190,7 +213,7 @@
         "PanoramaEstimation_1": {
             "nodeType": "PanoramaEstimation",
             "position": [
-                1600,
+                2000,
                 0
             ],
             "inputs": {
@@ -205,17 +228,17 @@
         "PanoramaInit_1": {
             "nodeType": "PanoramaInit",
             "position": [
-                1000,
+                1400,
                 -50
             ],
             "inputs": {
-                "input": "{LdrToHdrMerge_1.outSfMData}"
+                "input": "{ColorCheckerCorrection_1.outSfMData}"
             }
         },
         "FeatureMatching_1": {
             "nodeType": "FeatureMatching",
             "position": [
-                1400,
+                1800,
                 0
             ],
             "inputs": {
@@ -228,7 +251,7 @@
         "Publish_1": {
             "nodeType": "Publish",
             "position": [
-                3000,
+                3400,
                 0
             ],
             "inputs": {

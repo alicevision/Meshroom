@@ -40,6 +40,13 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             uid=[0],
         ),
         desc.File(
+            name="normalsFolder",
+            label="Normals Folder",
+            description="Use normal maps from a specific folder to texture the mesh.\nFilename should be : uid_normalMap.",
+            value="",
+            uid=[0],
+        ),
+        desc.File(
             name="inputMesh",
             label="Mesh",
             description="Optional input mesh to texture. By default, it will texture the result of the reconstruction.",
@@ -105,7 +112,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                 ),
             ],
         ),
-        desc.GroupAttribute(name="bumpMapping", label="Bump Mapping", description="Bump mapping parameters.",
+        desc.GroupAttribute(name="bumpMapping", label="Bump Mapping", description="Bump Mapping Parameters",
             enabled=lambda node: (node.inputRefMesh.value != ''),
             group=None,
             groupDesc=[

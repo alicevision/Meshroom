@@ -106,12 +106,30 @@ with multiview.GraphModification(graph):
         """Utility method for parsing the input and inputRecursive arguments."""
         mapInputs = {}
         for inp in inputs:
-            inputGroup = inp.split(':')
+            # Stop after the first occurrence to handle multiple input paths on Windows platforms
+            inputGroup = inp.split(':', 1)
             nodeName = None
             if len(inputGroup) == 1 and uniqueInitNode:
                 nodeName = uniqueInitNode.getName()
             elif len(inputGroup) == 2:
+                # If inputGroup[0] is a valid node name, use it as such.
+                if (inputGroup[0] in graph.toDict().keys()):
+                    nodeName = inputGroup[0]
+                # Otherwise, the platform might be Windows and inputGroup[0] is part of the input path:
+                # in that case, we should behave as if len(inputGroup) == 1, use the uniqueInitNode's name
+                # and re-join the path together.
+                elif uniqueInitNode:
+                    nodeName = uniqueInitNode.getName()
+                    inputGroup = [":".join(inputGroup)]
+                else:
+                    print('Syntax error in input argument')
+            # If a node name has been provided and the platform is Windows, the length of inputGroup might be
+            # 3: first the node name, then the first path of the input path, then the rest of the input path.
+            # The input path should also be re-joined here.
+            elif len(inputGroup) == 3:
                 nodeName = inputGroup[0]
+                inputGroup[1] = ":".join(inputGroup[1:])
+                inputGroup.pop(-1)
             else:
                 print('Syntax error in input argument')
                 sys.exit(1)

@@ -373,8 +373,9 @@ def parseSfMJsonFile(sfmJsonFile):
     for view in report['views']:
         views[view['viewId']] = view
 
-    for pose in report['poses']:
-        poses[pose['poseId']] = pose['pose']
+    if "poses" in report:
+        for pose in report['poses']:
+            poses[pose['poseId']] = pose['pose']
 
     for intrinsic in report['intrinsics']:
         intrinsics[intrinsic['intrinsicId']] = intrinsic

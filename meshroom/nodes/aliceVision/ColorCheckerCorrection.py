@@ -56,6 +56,13 @@ If multiple color charts are submitted, only the first one will be taken in acco
             value=True,
             uid=[0],
         ),
+        desc.BoolParam(
+            name="keepImageName",
+            label="Keep Image Name",
+            description="Keep image names if different from the view Ids.",
+            value=True,
+            uid=[0],
+        ),
         desc.ChoiceParam(
             name="extension",
             label="Output File Extension",

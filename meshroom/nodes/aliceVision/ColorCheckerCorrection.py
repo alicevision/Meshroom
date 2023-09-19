@@ -45,7 +45,7 @@ If multiple color charts are submitted, only the first one will be taken in acco
                         " - whiteBalance: Apply white balancing in addition to luminance adjustment.\n"
                         " - full: Full color correction.",
             value="luminance",
-            values=["luminance", "whiteBalance", "full"],
+            values=["luminance", "whiteBalance", "full", "bypass"],
             exclusive=True,
             uid=[0],
         ),

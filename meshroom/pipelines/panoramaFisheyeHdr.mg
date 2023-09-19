@@ -11,7 +11,7 @@
             "PanoramaPrepareImages": "1.1",
             "PanoramaInit": "2.0",
             "Publish": "1.3",
-            "PanoramaPostProcessing": "2.0",
+            "PanoramaPostProcessing": "2.1",
             "FeatureMatching": "2.0",
             "LdrToHdrSampling": "4.0",
             "PanoramaWarping": "1.1",

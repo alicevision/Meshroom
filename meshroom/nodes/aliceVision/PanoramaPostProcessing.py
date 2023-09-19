@@ -83,6 +83,24 @@ Post process the panorama.
             uid=[0],
             enabled=lambda node: node.compressionMethod.value in ["dwaa", "dwab", "zip", "zips"]
         ),
+        desc.StringParam(
+            name="panoramaName",
+            label="Output Panorama Name",
+            description="Name of the output panorama.",
+            value="panorama.exr",
+            uid=[],
+            group=None,
+            advanced=True
+        ),
+        desc.StringParam(
+            name="previewName",
+            label="Panorama Preview Name",
+            description="Name of the preview of the output panorama.",
+            value="panoramaPreview.jpg",
+            uid=[],
+            group=None,
+            advanced=True,
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
@@ -100,7 +118,7 @@ Post process the panorama.
             label="Output Panorama",
             description="Generated panorama in EXR format.",
             semantic="image",
-            value=desc.Node.internalFolder + "panorama.exr",
+            value=lambda attr: desc.Node.internalFolder + attr.node.panoramaName.value,
             uid=[],
         ),
         desc.File(
@@ -108,14 +126,14 @@ Post process the panorama.
             label="Output Panorama Preview",
             description="Preview of the generated panorama in JPG format.",
             semantic="image",
-            value=desc.Node.internalFolder + "panoramaPreview.jpg",
+            value=lambda attr: desc.Node.internalFolder + attr.node.previewName.value,
             uid=[],
         ),
         desc.File(
             name="downscaledPanoramaLevels",
             label="Downscaled Panorama Levels",
             description="Downscaled versions of the generated panorama.",
-            value=desc.Node.internalFolder + "level_*.exr",
+            value=lambda attr: desc.Node.internalFolder + os.path.splitext(attr.node.panoramaName.value)[0] + "_level_*.exr",
             uid=[],
             group='',
         ),

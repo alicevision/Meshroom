@@ -141,8 +141,6 @@ with multiview.GraphModification(graph):
     initNodes = graph.findInitNodes()
     uniqueInitNode = initNodes[0] if (len(initNodes) == 1) else None
     
-    print("input : " + args.input)
-
     # parse inputs for each init node
     mapInput = parseInputs(args.input, uniqueInitNode)
     

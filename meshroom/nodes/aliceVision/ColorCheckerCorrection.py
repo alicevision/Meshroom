@@ -43,7 +43,8 @@ If multiple color charts are submitted, only the first one will be taken in acco
             description="Level of correction:\n"
                         " - luminance: Ajust luminance level only.\n"
                         " - whiteBalance: Apply white balancing in addition to luminance adjustment.\n"
-                        " - full: Full color correction.",
+                        " - full: Full color correction."
+                        " - bypass: Do nothing.",
             value="luminance",
             values=["luminance", "whiteBalance", "full", "bypass"],
             exclusive=True,
@@ -52,7 +53,8 @@ If multiple color charts are submitted, only the first one will be taken in acco
         desc.BoolParam(
             name="useBestColorCheckerOnly",
             label="Use Best Color Chart Only",
-            description="Use only the color chart with the best orientation and size to compute the color correction model.",
+            description="If checked, use only the color chart with the best orientation and size to compute the color correction model.\n"
+                        "If unchecked, combine all detected color checkers.",
             value=True,
             uid=[0],
         ),

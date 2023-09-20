@@ -62,7 +62,7 @@ Dev notes:
         desc.File(
             name="filter",
             label="Filter",
-            description="Regex to filter images on which he detection will be launched.",
+            description="Regex to select the images on which the colorchecker detection will be computed.",
             value="*_macbeth.*",
             uid=[0],
             enabled=lambda node: not node.processAllImages.value

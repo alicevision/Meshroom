@@ -244,6 +244,15 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             uid=[0],
             advanced=True,
         ),
+        desc.IntParam(
+            name="minVis",
+            label="Min Observations",
+            description="Filter points based on their number of observations.",
+            value=2,
+            range=(1, 20, 1),
+            uid=[0],
+            advanced=True,
+        ),
         desc.FloatParam(
             name="pixSizeMarginInitCoef",
             label="Pix Size Margin Init Coef",

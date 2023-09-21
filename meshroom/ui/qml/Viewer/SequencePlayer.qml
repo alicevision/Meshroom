@@ -244,7 +244,7 @@ FloatingPane {
 
             checkable: true
             checked: false
-            text: MaterialIcons.replay
+            text: MaterialIcons.repeat
             ToolTip.text: "Repeat"
 
             onCheckedChanged: {

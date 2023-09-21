@@ -55,7 +55,11 @@ FloatingPane {
 
         onPlayingChanged: {
             syncSelected = !playing;
-            viewer.playback(m.playing);
+            if(playing && (frame + 1 >= sortedViewIds.length))
+            {
+                frame = 0;
+            }
+            viewer.playback(playing);
         }
     }
 

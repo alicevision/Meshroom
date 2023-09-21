@@ -43,7 +43,7 @@ FloatingPane {
         property bool syncSelected: true
         property bool playing: false
         property bool repeat: false
-        property real fps: 1
+        property real fps: 24
 
         onFrameChanged: {
             updateReconstructionView();
@@ -231,6 +231,7 @@ FloatingPane {
                 from: 1
                 to: 60
                 stepSize: 1
+                value: m.fps
 
                 onValueChanged: {
                     m.fps = value;

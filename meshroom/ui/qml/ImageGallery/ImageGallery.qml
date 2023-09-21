@@ -781,7 +781,7 @@ Panel {
             iconText: MaterialIcons.filter
             label: activeNode ? activeNode.attribute("nbBrackets").value : ""
             visible: activeNode
-            enabled: activeNode && activeNode.isComputed
+            enabled: activeNode && activeNode.isComputed && (m.viewpoints ? m.viewpoints.count > 0 : false)
             property string nodeID: activeNode ? (activeNode.label + activeNode.isComputed) : ""
             onNodeIDChanged: {
                 if(checked) {

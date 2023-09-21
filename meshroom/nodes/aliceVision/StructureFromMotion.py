@@ -1,4 +1,4 @@
-__version__ = "3.2"
+__version__ = "3.3"
 
 from meshroom.core import desc
 
@@ -345,6 +345,13 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             name="computeStructureColor",
             label="Compute Structure Color",
             description="Enable/Disable color computation of every 3D point.",
+            value=True,
+            uid=[0],
+        ),
+        desc.BoolParam(
+            name="useAutoTransform",
+            label="Automatically align result",
+            description="Enable/Disable automatic alignment of result.",
             value=True,
             uid=[0],
         ),

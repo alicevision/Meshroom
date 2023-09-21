@@ -1,4 +1,4 @@
-__version__ = "4.0"
+__version__ = "5.0"
 
 from meshroom.core import desc
 
@@ -7,7 +7,7 @@ class DepthMap(desc.AVCommandLineNode):
     commandLine = 'aliceVision_depthMapEstimation {allParams}'
     gpu = desc.Level.INTENSIVE
     size = desc.DynamicNodeSize('input')
-    parallelization = desc.Parallelization(blockSize=3)
+    parallelization = desc.Parallelization(blockSize=12)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     category = 'Dense Reconstruction'

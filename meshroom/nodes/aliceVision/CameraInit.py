@@ -31,7 +31,7 @@ Viewpoint = [
 Intrinsic = [
     desc.IntParam(name="intrinsicId", label="ID", description="Intrinsic UID.", value=-1, uid=[0], range=None),
     desc.FloatParam(name="initialFocalLength", label="Initial Focal Length",
-                    description="Initial guess on the focal length (in pixels).\n"
+                    description="Initial guess on the focal length (in mm).\n"
                                 "When we have an initial value from EXIF, this value is not accurate but it cannot be wrong.\n"
                                 "So this value is used to limit the range of possible values in the optimization.\n"
                                 "If this value is set to -1, it will not be used and the focal length will not be bounded.",

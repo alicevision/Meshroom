@@ -43,7 +43,7 @@ FloatingPane {
         property bool syncSelected: true
         property bool playing: false
         property bool repeat: false
-        property real fps: 1
+        property real fps: 24
 
         onFrameChanged: {
             updateReconstructionView();
@@ -55,7 +55,11 @@ FloatingPane {
 
         onPlayingChanged: {
             syncSelected = !playing;
-            viewer.playback(m.playing);
+            if(playing && (frame + 1 >= sortedViewIds.length))
+            {
+                frame = 0;
+            }
+            viewer.playback(playing);
         }
     }
 
@@ -231,6 +235,7 @@ FloatingPane {
                 from: 1
                 to: 60
                 stepSize: 1
+                value: m.fps
 
                 onValueChanged: {
                     m.fps = value;
@@ -243,7 +248,7 @@ FloatingPane {
 
             checkable: true
             checked: false
-            text: MaterialIcons.replay
+            text: MaterialIcons.repeat
             ToolTip.text: "Repeat"
 
             onCheckedChanged: {

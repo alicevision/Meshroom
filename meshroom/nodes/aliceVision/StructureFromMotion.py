@@ -350,8 +350,11 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         ),
         desc.BoolParam(
             name="useAutoTransform",
-            label="Automatically align result",
-            description="Enable/Disable automatic alignment of result.",
+            label="Automatic Alignment",
+            description="Enable/Disable automatic alignment of the 3D reconstruction.\n"
+                        "Determines scene orientation from the cameras' X axis,\n"
+                        "determines north and scale from GPS information if available,\n"
+                        "and defines ground level from the point cloud.",
             value=True,
             uid=[0],
         ),

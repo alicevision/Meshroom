@@ -9,6 +9,7 @@ class NodalSfM(desc.AVCommandLineNode):
 
     category = 'Sparse Reconstruction'
     documentation = '''
+A Structure-From-Motion node specifically designed to handle pure rotation camera movements.
 '''
 
     inputs = [

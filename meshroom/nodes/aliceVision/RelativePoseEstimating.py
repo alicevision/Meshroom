@@ -11,6 +11,7 @@ class RelativePoseEstimating(desc.AVCommandLineNode):
 
     category = 'Sparse Reconstruction'
     documentation = '''
+Estimate relative pose between each pair of views that share tracks.
 '''
 
     inputs = [

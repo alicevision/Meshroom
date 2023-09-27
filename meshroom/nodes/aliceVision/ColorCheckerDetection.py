@@ -35,6 +35,25 @@ Dev notes:
             value="",
             uid=[0],
         ),
+        desc.ChoiceParam(
+            name="ccType",
+            label="Colorchart Type",
+            description="Colorchart type:\n"
+                        " - mcc24   classical macbeth 24 patches\n"
+                        " - sg140   Digital SG 140 patches\n"
+                        " - Vinyl18 DKK colorchart 12 patches + 6 rectangles)",
+            value="mcc24",
+            values=["mcc24", "sg140", "Vinyl18"],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.File(
+            name="modelFolder",
+            label="Model Folder",
+            description="DNN model directory path.",
+            value="${ALICEVISION_COLORCHARTDETECTION_MODEL_FOLDER}",
+            uid=[0],
+        ),
         desc.IntParam(
             name="maxCount",
             label="Max Count By Image",

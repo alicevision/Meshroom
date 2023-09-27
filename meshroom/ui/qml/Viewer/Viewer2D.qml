@@ -678,17 +678,21 @@ FocusScope {
 
                 // ColorCheckerViewer: display color checker detection results
                 // note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
-                Loader {
+                ExifOrientedViewer {
                     id: colorCheckerViewerLoader
                     anchors.centerIn: parent
+                    orientationTag: imgContainer.orientationTag
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ColorCheckerDetection").node : null
                     active: (displayColorCheckerViewerLoader.checked && activeNode)
 
-
                     sourceComponent: ColorCheckerViewer {
+                        width: imgContainer.width
+                        height: imgContainer.height
+
                         visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
                         source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
-                        image: imgContainer.image
                         viewpoint: _reconstruction.selectedViewpoint
                         zoom: imgContainer.scale
 

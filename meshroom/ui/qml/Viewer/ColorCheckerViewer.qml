@@ -5,7 +5,6 @@ Item {
 
     property url source: undefined
     property var json: null
-    property var image: null
     property var viewpoint: null
     property real zoom: 1.0
 
@@ -15,10 +14,6 @@ Item {
     readonly property real ccheckerSizeX: 1675.0
     readonly property real ccheckerSizeY: 1125.0
 
-    // offset the cchecker top left corner to match the image top left corner
-    x: -image.width / 2 + ccheckerSizeX / 2
-    y: -image.height / 2 + ccheckerSizeY / 2
-
     property var ccheckers: []
     property int selectedCChecker: -1
 
@@ -26,7 +21,6 @@ Item {
     onSourceChanged: { readSourceFile(); }
     onViewpointChanged: { loadCCheckers(); }
     property var updatePane: null
-
 
     function getColors() {
         if (ccheckers[selectedCChecker] === undefined)
@@ -79,11 +73,13 @@ Item {
                 var cpt = Qt.createComponent("ColorCheckerEntity.qml");
 
                 var obj = cpt.createObject(root, {
+                    x: ccheckerSizeX / 2,
+                    y: ccheckerSizeY / 2,
                     sizeX: root.ccheckerSizeX,
                     sizeY: root.ccheckerSizeY,
                     colors: root.json.checkers[i].colors
                 });
-                obj.transform(root.json.checkers[i].transform);
+                obj.applyTransform(root.json.checkers[i].transform);
                 ccheckers.push(obj);
                 selectedCChecker = ccheckers.length-1;
                 break;
@@ -98,5 +94,4 @@ Item {
         ccheckers = [];
         selectedCChecker = -1;
     }
-
 }

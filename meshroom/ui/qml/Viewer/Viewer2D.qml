@@ -611,17 +611,21 @@ FocusScope {
                     active: (displayFisheyeCircleLoader.checked && activeNode)
 
                     sourceComponent: CircleGizmo {
+                        width: imgContainer.width
+                        height: imgContainer.height
+
                         property bool useAuto: activeNode.attribute("estimateFisheyeCircle").value
                         readOnly: useAuto
                         visible: (!useAuto) || activeNode.isComputed
                         property real userFisheyeRadius: activeNode.attribute("fisheyeRadius").value
                         property variant fisheyeAutoParams: _reconstruction.getAutoFisheyeCircle(activeNode)
 
-                        x: useAuto ? fisheyeAutoParams.x : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
-                        y: useAuto ? fisheyeAutoParams.y : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
-                        radius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
+                        circleX: useAuto ? fisheyeAutoParams.x : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
+                        circleY: useAuto ? fisheyeAutoParams.y : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
 
-                        border.width: Math.max(1, (3.0 / imgContainer.scale))
+                        circleRadius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
+
+                        circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))
                         onMoved: {
                             if(!useAuto)
                             {
@@ -661,9 +665,9 @@ FocusScope {
                         readOnly: false
                         x: activeNode.attribute("sphereCenter.x").value
                         y: activeNode.attribute("sphereCenter.y").value
-                        radius: activeNode.attribute("sphereRadius").value
+                        circleRadius: activeNode.attribute("sphereRadius").value
 
-                        border.width: Math.max(1, (3.0 / imgContainer.scale))
+                        circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))
                         onMoved: {
                             _reconstruction.setAttribute(
                                 activeNode.attribute("sphereCenter"),

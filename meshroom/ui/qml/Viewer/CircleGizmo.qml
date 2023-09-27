@@ -1,6 +1,6 @@
 import QtQuick 2.15
 
-Rectangle {
+Item {
     id: root
 
     property bool readOnly: false
@@ -8,11 +8,38 @@ Rectangle {
     signal moved()
     signal incrementRadius(real radiusOffset)
 
-    width: radius * 2
-    height: width
-    color: "transparent"
-    border.width: 5
-    border.color: readOnly ? "green" : "yellow"
+    // Circle
+    property real circleX: 0.
+    property real circleY: 0.
+    Rectangle {
+        id: circle
+
+        width: radius * 2
+        height: width
+
+        x: circleX + (root.width - width) / 2
+        y: circleY + (root.height - height) / 2
+
+        color: "transparent"
+        border.width: 5
+        border.color: readOnly ? "green" : "yellow"
+
+        // Cross to visualize the circle center
+        Rectangle {
+            color: parent.border.color
+            anchors.centerIn: parent
+            width: parent.width * 0.2
+            height: parent.border.width * 0.5
+        }
+        Rectangle {
+            color: parent.border.color
+            anchors.centerIn: parent
+            width: parent.border.width * 0.5
+            height: parent.height * 0.2
+        }
+    }
+    property alias circleRadius: circle.radius
+    property alias circleBorder: circle.border
 
     /*
     // visualize top-left corner for debugging purpose
@@ -27,37 +54,6 @@ Rectangle {
         height: 500
     }
     */
-    // Cross to visualize the circle center
-    Rectangle {
-        color: parent.border.color
-        anchors.centerIn: parent
-        width: parent.width * 0.2
-        height: parent.border.width * 0.5
-    }
-    Rectangle {
-        color: parent.border.color
-        anchors.centerIn: parent
-        width: parent.border.width * 0.5
-        height: parent.height * 0.2
-    }
-
-    Behavior on x {
-        NumberAnimation {
-            duration: 100
-        }
-    }
-
-    Behavior on y {
-        NumberAnimation {
-            duration: 100
-        }
-    }
-
-    Behavior on radius {
-        NumberAnimation {
-            duration: 100
-        }
-    }
 
     Loader {
         anchors.fill: parent

@@ -645,26 +645,22 @@ FocusScope {
                 }
 
                 // LightingCalibration: display circle
-                // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
-                Loader {
+                ExifOrientedViewer {
                     anchors.centerIn: parent
+                    orientationTag: imgContainer.orientationTag
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node
                     active: (displayLightingCircleLoader.checked && activeNode)
 
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
-
                     sourceComponent: CircleGizmo {
+                        width: imgContainer.width
+                        height: imgContainer.height
+
                         readOnly: false
-                        x: activeNode.attribute("sphereCenter.x").value
-                        y: activeNode.attribute("sphereCenter.y").value
+
+                        circleX: activeNode.attribute("sphereCenter.x").value
+                        circleY: activeNode.attribute("sphereCenter.y").value
                         circleRadius: activeNode.attribute("sphereRadius").value
 
                         circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))

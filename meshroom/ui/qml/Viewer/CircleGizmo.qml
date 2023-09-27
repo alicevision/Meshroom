@@ -5,7 +5,7 @@ Item {
 
     property bool readOnly: false
 
-    signal moved()
+    signal moved(real xoffset, real yoffset)
     signal incrementRadius(real radiusOffset)
 
     // Circle
@@ -37,6 +37,45 @@ Item {
             width: parent.border.width * 0.5
             height: parent.height * 0.2
         }
+
+        Loader {
+            anchors.fill: parent
+            active: !root.readOnly
+
+            sourceComponent: MouseArea {
+                id: mArea
+                anchors.fill: parent
+                cursorShape: root.readOnly ? Qt.ArrowCursor : (controlModifierEnabled ? Qt.SizeBDiagCursor : (pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor))
+                propagateComposedEvents: true
+
+                property bool controlModifierEnabled: false
+                onPositionChanged: {
+                    mArea.controlModifierEnabled = (mouse.modifiers & Qt.ControlModifier)
+                    mouse.accepted = false;
+                }
+                acceptedButtons: Qt.LeftButton
+                hoverEnabled: true
+                drag.target: circle
+
+                drag.onActiveChanged: {
+                    if(!drag.active) {
+                        root.moved(circle.x - (root.width - circle.width) / 2, circle.y - (root.height - circle.height) / 2);
+                    }
+                }
+                onPressed: {
+                    forceActiveFocus();
+                }
+                onWheel: {
+                    mArea.controlModifierEnabled = (wheel.modifiers & Qt.ControlModifier)
+                    if (wheel.modifiers & Qt.ControlModifier) {
+                        root.incrementRadius(wheel.angleDelta.y / 120.0);
+                        wheel.accepted = true;
+                    } else {
+                        wheel.accepted = false;
+                    }
+                }
+            }
+        }
     }
     property alias circleRadius: circle.radius
     property alias circleBorder: circle.border
@@ -54,43 +93,4 @@ Item {
         height: 500
     }
     */
-
-    Loader {
-        anchors.fill: parent
-        active: !root.readOnly
-
-        sourceComponent: MouseArea {
-            id: mArea
-            anchors.fill: parent
-            cursorShape: root.readOnly ? Qt.ArrowCursor : (controlModifierEnabled ? Qt.SizeBDiagCursor : (pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor))
-            propagateComposedEvents: true
-
-            property bool controlModifierEnabled: false
-            onPositionChanged: {
-                mArea.controlModifierEnabled = (mouse.modifiers & Qt.ControlModifier)
-                mouse.accepted = false;
-            }
-            acceptedButtons: Qt.LeftButton
-            hoverEnabled: true
-            drag.target: root
-
-            drag.onActiveChanged: {
-                if(!drag.active) {
-                    moved();
-                }
-            }
-            onPressed: {
-                forceActiveFocus();
-            }
-            onWheel: {
-                mArea.controlModifierEnabled = (wheel.modifiers & Qt.ControlModifier)
-                if (wheel.modifiers & Qt.ControlModifier) {
-                    incrementRadius(wheel.angleDelta.y / 120.0);
-                    wheel.accepted = true;
-                } else {
-                    wheel.accepted = false;
-                }
-            }
-        }
-    }
 }

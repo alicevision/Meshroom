@@ -631,7 +631,7 @@ FocusScope {
                             {
                                 _reconstruction.setAttribute(
                                     activeNode.attribute("fisheyeCenterOffset"),
-                                    JSON.stringify([x, y])
+                                    JSON.stringify([xoffset, yoffset])
                                 );
                             }
                         }
@@ -667,7 +667,7 @@ FocusScope {
                         onMoved: {
                             _reconstruction.setAttribute(
                                 activeNode.attribute("sphereCenter"),
-                                JSON.stringify([x, y])
+                                JSON.stringify([xoffset, yoffset])
                             );
                         }
                         onIncrementRadius: {

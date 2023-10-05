@@ -611,23 +611,27 @@ FocusScope {
                     active: (displayFisheyeCircleLoader.checked && activeNode)
 
                     sourceComponent: CircleGizmo {
+                        width: imgContainer.width
+                        height: imgContainer.height
+
                         property bool useAuto: activeNode.attribute("estimateFisheyeCircle").value
                         readOnly: useAuto
                         visible: (!useAuto) || activeNode.isComputed
                         property real userFisheyeRadius: activeNode.attribute("fisheyeRadius").value
                         property variant fisheyeAutoParams: _reconstruction.getAutoFisheyeCircle(activeNode)
 
-                        x: useAuto ? fisheyeAutoParams.x : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
-                        y: useAuto ? fisheyeAutoParams.y : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
-                        radius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
+                        circleX: useAuto ? fisheyeAutoParams.x : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_x").value
+                        circleY: useAuto ? fisheyeAutoParams.y : activeNode.attribute("fisheyeCenterOffset.fisheyeCenterOffset_y").value
 
-                        border.width: Math.max(1, (3.0 / imgContainer.scale))
+                        circleRadius: useAuto ? fisheyeAutoParams.z : ((imgContainer.image ? Math.min(imgContainer.image.width, imgContainer.image.height) : 1.0) * 0.5 * (userFisheyeRadius * 0.01))
+
+                        circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))
                         onMoved: {
                             if(!useAuto)
                             {
                                 _reconstruction.setAttribute(
                                     activeNode.attribute("fisheyeCenterOffset"),
-                                    JSON.stringify([x, y])
+                                    JSON.stringify([xoffset, yoffset])
                                 );
                             }
                         }
@@ -641,33 +645,29 @@ FocusScope {
                 }
 
                 // LightingCalibration: display circle
-                // note: use a Loader to evaluate if a PanoramaInit node exist and displayFisheyeCircle checked at runtime
-                Loader {
+                ExifOrientedViewer {
                     anchors.centerIn: parent
+                    orientationTag: imgContainer.orientationTag
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     property var activeNode: _reconstruction.activeNodes.get("SphereDetection").node
                     active: (displayLightingCircleLoader.checked && activeNode)
 
-                    // handle rotation/position based on available metadata
-                    rotation: {
-                        var orientation = m.imgMetadata ? m.imgMetadata["Orientation"] : 0
-                        switch(orientation) {
-                            case "6": return 90;
-                            case "8": return -90;
-                            default: return 0;
-                        }
-                    }
-
                     sourceComponent: CircleGizmo {
-                        readOnly: false
-                        x: activeNode.attribute("sphereCenter.x").value
-                        y: activeNode.attribute("sphereCenter.y").value
-                        radius: activeNode.attribute("sphereRadius").value
+                        width: imgContainer.width
+                        height: imgContainer.height
 
-                        border.width: Math.max(1, (3.0 / imgContainer.scale))
+                        readOnly: false
+
+                        circleX: activeNode.attribute("sphereCenter.x").value
+                        circleY: activeNode.attribute("sphereCenter.y").value
+                        circleRadius: activeNode.attribute("sphereRadius").value
+
+                        circleBorder.width: Math.max(1, (3.0 / imgContainer.scale))
                         onMoved: {
                             _reconstruction.setAttribute(
                                 activeNode.attribute("sphereCenter"),
-                                JSON.stringify([x, y])
+                                JSON.stringify([xoffset, yoffset])
                             );
                         }
                         onIncrementRadius: {
@@ -678,17 +678,21 @@ FocusScope {
 
                 // ColorCheckerViewer: display color checker detection results
                 // note: use a Loader to evaluate if a ColorCheckerDetection node exist and displayColorChecker checked at runtime
-                Loader {
+                ExifOrientedViewer {
                     id: colorCheckerViewerLoader
                     anchors.centerIn: parent
+                    orientationTag: imgContainer.orientationTag
+                    xOrigin: imgContainer.width / 2
+                    yOrigin: imgContainer.height / 2
                     property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("ColorCheckerDetection").node : null
                     active: (displayColorCheckerViewerLoader.checked && activeNode)
 
-
                     sourceComponent: ColorCheckerViewer {
+                        width: imgContainer.width
+                        height: imgContainer.height
+
                         visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
                         source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
-                        image: imgContainer.image
                         viewpoint: _reconstruction.selectedViewpoint
                         zoom: imgContainer.scale
 

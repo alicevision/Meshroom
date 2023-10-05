@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "4.0"
 
 from meshroom.core import desc
 
@@ -7,7 +7,7 @@ class DepthMapFilter(desc.AVCommandLineNode):
     commandLine = 'aliceVision_depthMapFiltering {allParams}'
     gpu = desc.Level.NORMAL
     size = desc.DynamicNodeSize('input')
-    parallelization = desc.Parallelization(blockSize=10)
+    parallelization = desc.Parallelization(blockSize=24)
     commandLineRange = '--rangeStart {rangeStart} --rangeSize {rangeBlockSize}'
 
     category = 'Dense Reconstruction'
@@ -23,7 +23,7 @@ This allows to filter unstable points before starting the fusion of all depth ma
             description="SfMData file.",
             value="",
             uid=[0],
-        ),    
+        ),
         desc.File(
             name="depthMapsFolder",
             label="Depth Maps Folder",

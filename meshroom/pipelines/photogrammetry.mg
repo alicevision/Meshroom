@@ -5,9 +5,9 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "DepthMapFilter": "3.0",
+            "DepthMapFilter": "4.0",
             "Meshing": "7.0",
-            "DepthMap": "4.0",
+            "DepthMap": "5.0",
             "FeatureExtraction": "1.2",
             "PrepareDenseScene": "3.0",
             "CameraInit": "9.0",

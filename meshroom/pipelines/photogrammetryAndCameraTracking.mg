@@ -11,7 +11,7 @@
             "PrepareDenseScene": "3.1",
             "Publish": "1.3",
             "MeshFiltering": "3.0",
-            "DepthMapFilter": "3.0",
+            "DepthMapFilter": "4.0",
             "Meshing": "7.0",
             "ImageMatchingMultiSfM": "1.0",
             "ScenePreview": "2.0",
@@ -26,7 +26,7 @@
             "DistortionCalibration": "3.0",
             "ExportDistortion": "1.0",
             "FeatureExtraction": "1.3",
-            "DepthMap": "4.0",
+            "DepthMap": "5.0",
             "Texturing": "6.0"
         }
     },

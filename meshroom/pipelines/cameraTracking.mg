@@ -5,31 +5,31 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "ImageSegmentation": "1.0",
-            "ApplyCalibration": "1.0",
-            "MeshDecimate": "1.0",
-            "PrepareDenseScene": "3.1",
-            "MeshFiltering": "3.0",
-            "SfMTransfer": "2.1",
-            "Publish": "1.3",
-            "DepthMapFilter": "4.0",
-            "Meshing": "7.0",
-            "ImageMatchingMultiSfM": "1.0",
-            "ScenePreview": "2.0",
-            "FeatureMatching": "2.0",
             "CameraInit": "9.0",
-            "ImageMatching": "2.0",
-            "CheckerboardDetection": "1.0",
             "ConvertSfMFormat": "2.0",
-            "SfMTriangulation": "1.0",
-            "KeyframeSelection": "5.0",
-            "StructureFromMotion": "3.1",
-            "ExportAnimatedCamera": "2.0",
             "DistortionCalibration": "3.0",
             "ExportDistortion": "1.0",
+            "CheckerboardDetection": "1.0",
+            "PrepareDenseScene": "3.1",
+            "MeshFiltering": "3.0",
+            "Meshing": "7.0",
             "FeatureExtraction": "1.3",
+            "SfMTriangulation": "1.0",
+            "FeatureMatching": "2.0",
+            "KeyframeSelection": "5.0",
+            "ScenePreview": "2.0",
+            "Texturing": "6.0",
+            "ImageSegmentation": "1.0",
+            "DepthMapFilter": "4.0",
             "DepthMap": "5.0",
-            "Texturing": "6.0"
+            "ImageMatchingMultiSfM": "1.0",
+            "ApplyCalibration": "1.0",
+            "ImageMatching": "2.0",
+            "Publish": "1.3",
+            "SfMTransfer": "2.1",
+            "StructureFromMotion": "3.3",
+            "ExportAnimatedCamera": "2.0",
+            "MeshDecimate": "1.0"
         }
     },
     "graph": {
@@ -230,7 +230,9 @@
             "inputs": {
                 "input": "{SfMTransfer_1.output}",
                 "featuresFolders": "{StructureFromMotion_2.featuresFolders}",
-                "matchesFolders": "{StructureFromMotion_2.matchesFolders}"
+                "matchesFolders": "{StructureFromMotion_2.matchesFolders}",
+                "minAngleForTriangulation": 1.0,
+                "minAngleForLandmark": 0.5
             },
             "internalInputs": {
                 "color": "#3f3138"
@@ -407,7 +409,8 @@
                 "minInputTrackLength": 5,
                 "minNumberOfObservationsForTriangulation": 3,
                 "minAngleForTriangulation": 1.0,
-                "minAngleForLandmark": 0.5
+                "minAngleForLandmark": 0.5,
+                "filterTrackForks": true
             },
             "internalInputs": {
                 "comment": "Estimate cameras parameters for the complete camera tracking sequence.",

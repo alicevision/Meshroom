@@ -227,7 +227,9 @@
             "inputs": {
                 "input": "{SfMTransfer_1.output}",
                 "featuresFolders": "{StructureFromMotion_2.featuresFolders}",
-                "matchesFolders": "{StructureFromMotion_2.matchesFolders}"
+                "matchesFolders": "{StructureFromMotion_2.matchesFolders}",
+                "minAngleForTriangulation": 1.0,
+                "minAngleForLandmark": 0.5
             },
             "internalInputs": {
                 "color": "#3f3138"
@@ -361,7 +363,8 @@
                 "minInputTrackLength": 5,
                 "minNumberOfObservationsForTriangulation": 3,
                 "minAngleForTriangulation": 1.0,
-                "minAngleForLandmark": 0.5
+                "minAngleForLandmark": 0.5,
+                "filterTrackForks": true
             },
             "internalInputs": {
                 "comment": "Estimate cameras parameters for the complete camera tracking sequence.",

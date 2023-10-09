@@ -463,6 +463,15 @@ Convert or apply filtering to the input images.
             uid=[0],
         ),
         desc.ChoiceParam(
+            name="inputColorSpace",
+            label="Input Color Space",
+            description="Allows you to force the color space of the input image.",
+            value="AUTO",
+            values=["AUTO", "sRGB", "rec709", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
+            exclusive=True,
+            uid=[0],
+        ),
+        desc.ChoiceParam(
             name="outputColorSpace",
             label="Output Color Space",
             description="Allows you to choose the color space of the output image.",

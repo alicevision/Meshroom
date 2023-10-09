@@ -31,8 +31,7 @@ Item {
     }
 
 
-    function transform(matrix) {
-        var m = matrix
+    function applyTransform(m) {
         transformation.matrix = Qt.matrix4x4(
                 m[0][0], m[0][1],  0, m[0][2],
                 m[1][0], m[1][1],  0, m[1][2],

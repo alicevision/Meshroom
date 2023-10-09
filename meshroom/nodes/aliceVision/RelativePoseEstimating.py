@@ -11,6 +11,7 @@ class RelativePoseEstimating(desc.AVCommandLineNode):
 
     category = 'Sparse Reconstruction'
     documentation = '''
+Estimate relative pose between each pair of views that share tracks.
 '''
 
     inputs = [
@@ -49,6 +50,13 @@ class RelativePoseEstimating(desc.AVCommandLineNode):
             exclusive=False,
             uid=[0],
             joinChar=",",
+        ),
+        desc.BoolParam(
+            name="enforcePureRotation",
+            label="Enforce pure rotation",
+            description="Enforce pure rotation as a model",
+            value=False,
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",

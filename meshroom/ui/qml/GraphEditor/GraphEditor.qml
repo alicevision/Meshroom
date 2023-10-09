@@ -27,7 +27,9 @@ Item {
 
     signal nodeDoubleClicked(var mouse, var node)
     signal computeRequest(var node)
+    signal groupComputeRequest(var nodes)
     signal submitRequest(var node)
+    signal groupSubmitRequest(var nodes)
 
     // trigger initial fit() after initialization
     // (ensure GraphEditor has its final size)
@@ -436,7 +438,14 @@ Item {
                     text: "Compute"
                     enabled: nodeMenu.canComputeNode && (nodeMenu.canSubmitOrCompute%2 == 1) //canSubmit if canSubmitOrCompute == 1(can compute) or 3(can compute & submit)
                     onTriggered: {
-                        computeRequest(nodeMenu.currentNode)
+                        if (uigraph.selectedNodes.count > 1) {
+                            // compute request for group
+                            console.warn("Sending grouped compute request")
+                            groupComputeRequest(uigraph.selectedNodes)
+                        } else {
+                            console.warn("Sending single compute request")
+                            computeRequest(nodeMenu.currentNode)
+                        }
                     }
                 }
                 MenuItem {
@@ -444,7 +453,14 @@ Item {
                     enabled: nodeMenu.canComputeNode && nodeMenu.canSubmitOrCompute > 1
                     visible: uigraph ? uigraph.canSubmit : false
                     height: visible ? implicitHeight : 0
-                    onTriggered: submitRequest(nodeMenu.currentNode)
+                    onTriggered: {
+                        if (uigraph.selectedNodes.length > 1) {
+                            // submit request for group
+                            groupSubmitRequest(uigraph.selectedNodes)
+                        } else {
+                            submitRequest(nodeMenu.currentNode)
+                        }
+                    }
                 }
                 MenuItem {
                     text: "Stop Computation"

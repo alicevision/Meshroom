@@ -232,6 +232,24 @@ ApplicationWindow {
             }
         }
 
+        function groupCompute(nodes, force) {
+            if (!force && warnIfUnsaved && !_reconstruction.graph.filepath)
+            {
+                unsavedComputeDialog.currentNode = nodes[0]
+                unsavedComputeDialog.open()
+            }
+            else
+            {
+                try {
+                    _reconstruction.executeGroup(nodes)
+                } catch (error) {
+                    const data = ErrorHandler.analyseError(error)
+                    if (data.context === "COMPUTATION")
+                        computeSubmitErrorDialog.openError(data.type, data.msg, nodes)
+                }
+            }
+        }
+
         function submit(node) {
             if (!canSubmit) {
                 unsavedSubmitDialog.open()
@@ -1173,6 +1191,10 @@ ApplicationWindow {
                     onComputeRequest: {
                         _reconstruction.forceNodesStatusUpdate();
                         computeManager.compute(node)
+                    }
+                    onGroupComputeRequest: {
+                        _reconstruction.forceNodesStatusUpdate();
+                        computeManager.groupCompute(nodes)
                     }
                     onSubmitRequest: {
                         _reconstruction.forceNodesStatusUpdate();

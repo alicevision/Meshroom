@@ -369,7 +369,7 @@ class TaskManager(BaseObject):
 
     def submit(self, graph, submitter=None, toNodes=None, submitLabel="{projectName}"):
         """
-        Nodes are send to the renderfarm
+        Nodes are sent to the renderfarm
         :param graph:
         :param submitter:
         :param toNodes:

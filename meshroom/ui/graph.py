@@ -12,7 +12,7 @@ from PySide2.QtCore import Slot, QJsonValue, QObject, QUrl, Property, Signal, QP
 from meshroom.core import sessionUid
 from meshroom.common.qt import QObjectListModel
 from meshroom.core.attribute import Attribute, ListAttribute
-from meshroom.core.graph import Graph, Edge
+from meshroom.core.graph import Graph, Edge, Visitor
 
 from meshroom.core.taskManager import TaskManager
 
@@ -493,6 +493,19 @@ class UIGraph(QObject):
         self._taskManager.compute(self._graph, nodes)
         self.updateLockedUndoStack()  # explicitly call the update while it is already computing
 
+    @Slot(QObject)
+    def executeGroup(self, nodes):
+        print("getting in execute group")
+        g = Graph('Temporary sub-graph', self)
+        print(nodes)
+        for node in nodes:
+            g.addNewNode(node, node.attributes)
+
+        print(g)
+        toCompute = [self._graph.node("ImageMatching_1"), self._graph.node("ImageMatching_2")]
+#        self._taskManager.compute(self._graph, toCompute)
+#        self.updateLockedUndoStack()
+
     @Slot()
     def stopExecution(self):
         if not self.isComputingLocally():
@@ -528,7 +541,7 @@ class UIGraph(QObject):
     def submit(self, node=None):
         """ Submit the graph to the default Submitter.
         If a node is specified, submit this node and its uncomputed predecessors.
-        Otherwise, submit the whole
+        Otherwise, submit the whole graph.
 
         Notes:
             Default submitter is specified using the MESHROOM_DEFAULT_SUBMITTER environment variable.

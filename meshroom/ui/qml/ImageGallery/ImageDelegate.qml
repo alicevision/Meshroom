@@ -20,6 +20,7 @@ Item {
 
     signal pressed(var mouse)
     signal removeRequest()
+    signal removeAllImagesRequest()
 
     default property alias children: imageMA.children
 
@@ -77,6 +78,11 @@ Item {
                 text: "Remove"
                 enabled: !root.readOnly
                 onClicked: removeRequest()
+            }
+            MenuItem {
+                text: "Remove All Images"
+                enabled: !root.readOnly
+                onClicked: removeAllImagesRequest()
             }
             MenuItem {
                 text: "Define As Center Image"

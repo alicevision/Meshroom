@@ -82,7 +82,7 @@ Item {
                 text: "Define As Center Image"
                 property var activeNode: _reconstruction ? _reconstruction.activeNodes.get("SfMTransform").node : null
                 enabled: !root.readOnly && _viewpoint.viewId != -1 && _reconstruction && activeNode
-                onClicked: activeNode.attribute("transformation").value = _viewpoint.viewId.toString()
+                onClicked: _reconstruction.setAttribute(activeNode.attribute("transformation"), _viewpoint.viewId.toString())
             }
             Menu {
                 id: sfmSetPairMenu
@@ -92,12 +92,12 @@ Item {
 
                 MenuItem {
                     text: "A"
-                    onClicked: sfmSetPairMenu.activeNode.attribute("initialPairA").value = _viewpoint.viewId.toString()
+                    onClicked: _reconstruction.setAttribute(sfmSetPairMenu.activeNode.attribute("initialPairA"), _viewpoint.viewId.toString())
                 }
 
                 MenuItem {
                     text: "B"
-                    onClicked: sfmSetPairMenu.activeNode.attribute("initialPairB").value = _viewpoint.viewId.toString()
+                    onClicked: _reconstruction.setAttribute(sfmSetPairMenu.activeNode.attribute("initialPairB"), _viewpoint.viewId.toString())
                 }
             }
         }

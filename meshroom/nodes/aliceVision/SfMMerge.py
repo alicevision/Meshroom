@@ -29,27 +29,27 @@ class MergeNodeSize(object):
         return size1 + size2
 
 
-class SfmMerge(desc.AVCommandLineNode):
+class SfMMerge(desc.AVCommandLineNode):
     commandLine = 'aliceVision_sfmMerge {allParams}'
     size = MergeNodeSize('firstinput', 'secondinput')
 
     category = 'Utils'
     documentation = '''
-Merge two sfmData into a single one. Fails if some uid is shared among them
+Merges two SfMData files into a single one. Fails if some UID is shared among them.
 '''
 
     inputs = [
         desc.File(
             name="firstinput",
-            label="SfMData",
-            description="First Input SfMData file.",
+            label="First SfMData",
+            description="First input SfMData file to merge.",
             value="",
             uid=[0],
         ),
         desc.File(
             name="secondinput",
-            label="SfMData",
-            description="Second Input SfMData file.",
+            label="Second SfMData",
+            description="Second input SfMData file to merge.",
             value="",
             uid=[0],
         ),

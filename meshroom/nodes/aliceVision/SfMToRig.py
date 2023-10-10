@@ -3,13 +3,13 @@ __version__ = "1.0"
 from meshroom.core import desc
 import os.path
 
-class SfmToRig(desc.AVCommandLineNode):
+class SfMToRig(desc.AVCommandLineNode):
     commandLine = 'aliceVision_sfmToRig {allParams}'
     size = desc.DynamicNodeSize('input')
 
     category = 'Utils'
     documentation = '''
-Assumes input sfm data describes a set of cameras capturing a scene at a common time. Transform the set of cameras into a rig of cameras.
+Assumes the input SfMData describes a set of cameras capturing a scene at a common time. Transformd the set of cameras into a rig of cameras.
 '''
 
     inputs = [

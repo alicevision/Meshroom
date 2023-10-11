@@ -79,7 +79,7 @@ Item {
                 tempCameraInit: reconstruction ? reconstruction.tempCameraInit : null
                 cameraInitIndex: reconstruction ? reconstruction.cameraInitIndex : -1
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
-                onAllViewpointsCleared: { reconstruction.clearImages(); reconstruction.selectedViewId = "-1" }
+                onAllViewpointsCleared: { reconstruction.removeAllImages(); reconstruction.selectedViewId = "-1" }
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
             }
             LiveSfmView {

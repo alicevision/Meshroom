@@ -290,7 +290,7 @@ Panel {
                     }
 
                     function removeAllImages() {
-                        _reconstruction.clearImages()
+                        _reconstruction.removeAllImages()
                         _reconstruction.selectedViewId = "-1"
                     }
 

@@ -477,21 +477,21 @@ ApplicationWindow {
     }
 
     Action {
-        id: clearImagesAction
-        property string tooltip: "Clear images for the current CameraInit group"
-        text: "Clear Images"
+        id: removeAllImagesAction
+        property string tooltip: "Remove all the images from the current CameraInit group"
+        text: "Remove All Images"
         onTriggered: {
-            _reconstruction.clearImages()
+            _reconstruction.removeAllImages()
             _reconstruction.selectedViewId = "-1"
         }
     }
 
     Action {
-        id: clearAllImagesAction
-        property string tooltip: "Clear all the images for all the CameraInit groups"
-        text: "Clear All Images"
+        id: removeImagesFromAllGroupsAction
+        property string tooltip: "Remove all the images from all the CameraInit groups"
+        text: "Remove Images From All CameraInit Nodes"
         onTriggered: {
-            _reconstruction.clearAllImages()
+            _reconstruction.removeImagesFromAllGroups()
             _reconstruction.selectedViewId = "-1"
         }
     }
@@ -723,15 +723,16 @@ ApplicationWindow {
             }
 
             MenuItem {
-                action: clearImagesAction
+                action: removeAllImagesAction
                 ToolTip.visible: hovered
-                ToolTip.text: clearImagesAction.tooltip
+                ToolTip.text: removeAllImagesAction.tooltip
             }
 
             MenuSeparator { }
             Menu {
                 id: advancedMenu
                 title: "Advanced"
+                implicitWidth: 300
 
                 Action {
                     id: saveAsTemplateAction
@@ -768,9 +769,9 @@ ApplicationWindow {
                 }
 
                 MenuItem {
-                    action: clearAllImagesAction
+                    action: removeImagesFromAllGroupsAction
                     ToolTip.visible: hovered
-                    ToolTip.text: clearAllImagesAction.tooltip
+                    ToolTip.text: removeImagesFromAllGroupsAction.tooltip
                 }
             }
             MenuSeparator { }

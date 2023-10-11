@@ -356,13 +356,13 @@ class ListAttributeRemoveCommand(GraphCommand):
         listAttribute.insert(self.index, self.value)
 
 
-class ClearImagesCommand(GraphCommand):
+class RemoveImagesCommand(GraphCommand):
     def __init__(self, graph, cameraInitNodes, parent=None):
-        super(ClearImagesCommand, self).__init__(graph, parent)
+        super(RemoveImagesCommand, self).__init__(graph, parent)
         self.cameraInits = cameraInitNodes
         self.viewpoints = { cameraInit.name: cameraInit.attribute("viewpoints").getExportValue() for cameraInit in self.cameraInits }
         self.intrinsics = { cameraInit.name: cameraInit.attribute("intrinsics").getExportValue() for cameraInit in self.cameraInits }
-        self.title = "Clear{}Images".format(" " if len(self.cameraInits) == 1 else " All ")
+        self.title = "Remove{}Images".format(" " if len(self.cameraInits) == 1 else " All ")
         self.setText(self.title)
 
     def redoImpl(self):

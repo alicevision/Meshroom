@@ -289,8 +289,22 @@ Panel {
                         }
                     }
 
+                    function removeAllImages() {
+                        _reconstruction.removeAllImages()
+                        _reconstruction.selectedViewId = "-1"
+                    }
+
                     onRemoveRequest: sendRemoveRequest()
-                    Keys.onDeletePressed: sendRemoveRequest()
+                    Keys.onPressed: (event) => {
+                        if (event.key === Qt.Key_Delete && event.modifiers === Qt.ShiftModifier) {
+                            removeAllImages()
+                        } else if (event.key === Qt.Key_Delete) {
+                            sendRemoveRequest()
+                        }
+                    }
+                    onRemoveAllImagesRequest: {
+                        removeAllImages()
+                    }
 
                     RowLayout {
                         anchors.top: parent.top

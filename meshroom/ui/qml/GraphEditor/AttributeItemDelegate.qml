@@ -496,7 +496,7 @@ RowLayout {
                             || ((object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
                             && (object.isLinkNested && GraphEditorSettings.showLinkAttributes || !object.isLinkNested && GraphEditorSettings.showNotLinkAttributes))
                         visible: active
-                        height: item ? implicitHeight : -spacing // compensate for spacing if item is hidden
+                        height: implicitHeight
                         sourceComponent: RowLayout {
                             id: item
                             property var childAttrib: object

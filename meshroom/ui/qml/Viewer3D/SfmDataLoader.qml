@@ -5,7 +5,7 @@ import Qt3D.Render 2.15
 import Qt3D.Extras 2.15
 
 /**
- * Support for sfmdata files in Qt3d.
+ * Support for SfMData files in Qt3D.
  * Create this component dynamically to test for SfmDataEntity plugin availability.
  */
 SfmDataEntity {
@@ -20,12 +20,12 @@ SfmDataEntity {
     function spawnCameraSelectors() {
         var validCameras = 0;
         // spawn camera selector for each camera
-        for(var i = 0; i < root.cameras.length; ++i)
+        for (var i = 0; i < root.cameras.length; ++i)
         {
             var cam = root.cameras[i];
             // retrieve view id
             var viewId = cam.viewId;
-            if(viewId === undefined)
+            if (viewId === undefined)
                 continue;
             camSelectionComponent.createObject(cam, {"viewId": viewId});
             validCameras++;
@@ -43,9 +43,6 @@ SfmDataEntity {
         Entity {
             id: camSelector
             property string viewId
-            // Qt 5.13: binding cameraPicker.enabled to cameraPickerEnabled
-            //          causes rendering issues when entity gets disabled.
-            //          set CuboidMesh extent to 0 to disable picking.
             property color customColor: Qt.hsva((parseInt(viewId) / 255.0) % 1.0, 0.3, 1.0, 1.0)
             property real extent: cameraPickingEnabled ? 0.2 : 0
 
@@ -54,14 +51,12 @@ SfmDataEntity {
                 Transform {
                     translation: Qt.vector3d(0, 0, 0.5 * cameraBack.zExtent)
                 },
-                CuboidMesh { id: cameraBack; xExtent: parent.extent; yExtent: xExtent; zExtent: xExtent * 0.2 },
-                /*
-                // Use a stick to represent the camera
-                Transform {
-                    translation: Qt.vector3d(0, 0, 0.5 * cameraStick.zExtent)
+                CuboidMesh {
+                    id: cameraBack
+                    xExtent: parent.extent
+                    yExtent: xExtent
+                    zExtent: xExtent * 0.2
                 },
-                CuboidMesh { id: cameraStick; xExtent: parent.extent * 0.2; yExtent: xExtent; zExtent: xExtent * 50.0 },
-                */
                 PhongMaterial{
                     id: mat
                     ambient: _reconstruction && viewId === _reconstruction.selectedViewId ? activePalette.highlight : customColor // "#CCC"
@@ -77,7 +72,7 @@ SfmDataEntity {
                     onReleased: {
                         const delta = Qt.point(Math.abs(pos.x - pick.position.x), Math.abs(pos.y - pick.position.y));
                         // only trigger picking when mouse has not moved between press and release
-                        if(delta.x + delta.y < 4)
+                        if (delta.x + delta.y < 4)
                         {
                             _reconstruction.selectedViewId = camSelector.viewId;
                         }
@@ -85,6 +80,5 @@ SfmDataEntity {
                 }
             ]
         }
-
     }
 }

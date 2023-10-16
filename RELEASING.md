@@ -36,7 +36,7 @@ Tags
    - Merge "rcMAJOR.MINOR" into "develop"
    - Push "develop" into "master"
    - Create branch: vMAJOR.MINOR
-   - Create tag: vMAJOR.MINOR.PATCH on Meshroom, qtAliceVision, qmlAlembic
+   - Create tag: vMAJOR.MINOR.PATCH on Meshroom, qtAliceVision
    - Create branch from develop: "startMAJOR.MINOR"
  - Upload binaries on fosshub
  - Fill up Github release note

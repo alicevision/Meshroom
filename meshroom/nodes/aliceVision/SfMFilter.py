@@ -217,6 +217,16 @@ of observations per landmark; the nearest observations are kept.
                                 and node.filterParams.filterObservations3D.observationsPropagationEnabled.value,
                             uid=[0],
                         ),
+                        desc.BoolParam(
+                            name="observationsPropagationKeep",
+                            label="Keep Propagated Observations",
+                            description="Specifies if propagated observations are to be kept at the end.",
+                            value=False,
+                            enabled=lambda node: node.filterParams.filterObservations3D.filterObservations3DEnabled.value
+                                and node.filterParams.filterObservations3D.propagationEnabled.value
+                                and node.filterParams.filterObservations3D.observationsPropagationEnabled.value,
+                            uid=[0],
+                        ),
                         desc.FloatParam(
                             name="neighborsInfluence",
                             label="Neighbors Influence",

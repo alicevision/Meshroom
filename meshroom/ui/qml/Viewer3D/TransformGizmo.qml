@@ -65,7 +65,7 @@ Entity {
     }
 
     function convertAxisEnum(axis) {
-        switch(axis) {
+        switch (axis) {
             case TransformGizmo.Axis.X: return Qt.vector3d(1,0,0)
             case TransformGizmo.Axis.Y: return Qt.vector3d(0,1,0)
             case TransformGizmo.Axis.Z: return Qt.vector3d(0,0,1)
@@ -73,7 +73,7 @@ Entity {
     }
 
     function convertTypeEnum(type) {
-        switch(type) {
+        switch (type) {
             case TransformGizmo.Type.TRANSLATION: return "TRANSLATION"
             case TransformGizmo.Type.ROTATION: return "ROTATION"
             case TransformGizmo.Type.SCALE: return "SCALE"
@@ -216,7 +216,7 @@ Entity {
                 const pickedAxis = convertAxisEnum(objectPicker.gizmoAxis)
 
                 // TRANSLATION or SCALE transformation
-                if(objectPicker.gizmoType === TransformGizmo.Type.TRANSLATION || objectPicker.gizmoType === TransformGizmo.Type.SCALE) {
+                if (objectPicker.gizmoType === TransformGizmo.Type.TRANSLATION || objectPicker.gizmoType === TransformGizmo.Type.SCALE) {
                     // Compute the vector PickedPosition -> CurrentMousePoint
                     const pickedPosition = objectPicker.screenPoint
                     const mouseVector = Qt.vector2d(mouse.x - pickedPosition.x, -(mouse.y - pickedPosition.y))
@@ -234,12 +234,11 @@ Entity {
                     const offset = cosAngle * mouseVector.length() / objectPicker.scaleUnit
 
                     // Do the transformation
-                    if(objectPicker.gizmoType === TransformGizmo.Type.TRANSLATION && offset !== 0) {
+                    if (objectPicker.gizmoType === TransformGizmo.Type.TRANSLATION && offset !== 0) {
                         doRelativeTranslation(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a translation from the initial Object Model Matrix when we picked the gizmo
-                    }
-                    else if(objectPicker.gizmoType === TransformGizmo.Type.SCALE && offset !== 0) {
-                        if(root.uniformScale)
-                            doRelativeScale(objectPicker.modelMatrix, Qt.vector3d(1,1,1).times(offset)) // Do a uniform scale from the initial Object Model Matrix when we picked the gizmo
+                    } else if (objectPicker.gizmoType === TransformGizmo.Type.SCALE && offset !== 0) {
+                        if (root.uniformScale)
+                            doRelativeScale(objectPicker.modelMatrix, Qt.vector3d(1, 1, 1).times(offset)) // Do a uniform scale from the initial Object Model Matrix when we picked the gizmo
                         else
                             doRelativeScale(objectPicker.modelMatrix, pickedAxis.times(offset)) // Do a scale on one axis from the initial Object Model Matrix when we picked the gizmo
                     }
@@ -247,7 +246,7 @@ Entity {
                     return
                 }
                 // ROTATION transformation
-                else if(objectPicker.gizmoType === TransformGizmo.Type.ROTATION) {
+                else if (objectPicker.gizmoType === TransformGizmo.Type.ROTATION) {
                     // Get Screen Coordinates of the gizmo center
                     const gizmoCenterPoint = gizmoDisplayTransform.matrix.times(Qt.vector4d(0, 0, 0, 1))
                     const screenCenter2D = Transformations3DHelper.pointFromWorldToScreen(gizmoCenterPoint, camera, root.windowSize)
@@ -259,25 +258,25 @@ Entity {
                     const mouseVector = Qt.vector2d(mouse.x - screenCenter2D.x, -(mouse.y - screenCenter2D.y))
 
                     // Get the angle from the originalVector to the mouseVector
-                    const angle = Math.atan2(-originalVector.y*mouseVector.x + originalVector.x*mouseVector.y, originalVector.x*mouseVector.x + originalVector.y*mouseVector.y) * 180 / Math.PI
+                    const angle = Math.atan2(-originalVector.y * mouseVector.x + originalVector.x * mouseVector.y, originalVector.x * mouseVector.x + originalVector.y * mouseVector.y) * 180 / Math.PI
 
                     // Get the orientation of the gizmo in function of the camera
                     const gizmoLocalAxisVector = gizmoDisplayTransform.matrix.times(Qt.vector4d(pickedAxis.x, pickedAxis.y, pickedAxis.z, 0))
                     const gizmoToCameraVector = camera.position.toVector4d().minus(gizmoCenterPoint)
                     const orientation = gizmoLocalAxisVector.dotProduct(gizmoToCameraVector) > 0 ? 1 : -1
 
-                    if (angle !== 0) doRelativeRotation(objectPicker.modelMatrix, pickedAxis, angle*orientation) // Do a rotation from the initial Object Model Matrix when we picked the gizmo
+                    if (angle !== 0) doRelativeRotation(objectPicker.modelMatrix, pickedAxis, angle * orientation) // Do a rotation from the initial Object Model Matrix when we picked the gizmo
 
                     return
                 }
             }
 
-            if(objectPicker && objectPicker.button === Qt.RightButton) {
+            if (objectPicker && objectPicker.button === Qt.RightButton) {
                 resetMenu.popup(window)
             }
         }
         onReleased: {
-            if(objectPicker && mouse.button === Qt.LeftButton) {
+            if (objectPicker && mouse.button === Qt.LeftButton) {
                 const type = objectPicker.gizmoType
                 objectPicker = null // To prevent going again in the onPositionChanged
                 emitGizmoChanged(type)
@@ -362,14 +361,14 @@ Entity {
         Entity {
             id: axisContainer
             property int axis : {
-                switch(index) {
+                switch (index) {
                     case 0: return TransformGizmo.Axis.X
                     case 1: return TransformGizmo.Axis.Y
                     case 2: return TransformGizmo.Axis.Z
                 }                
             }
             property color baseColor: {
-                switch(axis) {
+                switch (axis) {
                     case TransformGizmo.Axis.X: return "#e63b55" // Red
                     case TransformGizmo.Axis.Y: return "#83c414" // Green
                     case TransformGizmo.Axis.Z: return "#3387e2" // Blue
@@ -395,12 +394,12 @@ Entity {
                     Transform {
                         id: cylinderTransform
                         matrix: {
-                            const offset = cylinderMesh.length/2 + centerSphereMesh.radius
+                            const offset = cylinderMesh.length / 2 + centerSphereMesh.radius
                             const m = Qt.matrix4x4()
-                            switch(axis) {
+                            switch (axis) {
                                 case TransformGizmo.Axis.X: {
                                     m.translate(Qt.vector3d(offset, 0, 0))
-                                    m.rotate(90, Qt.vector3d(0,0,1)) 
+                                    m.rotate(90, Qt.vector3d(0, 0, 1))
                                     break
                                 }   
                                 case TransformGizmo.Axis.Y: {
@@ -409,7 +408,7 @@ Entity {
                                 }
                                 case TransformGizmo.Axis.Z: {
                                     m.translate(Qt.vector3d(0, 0, offset))
-                                    m.rotate(90, Qt.vector3d(1,0,0))
+                                    m.rotate(90, Qt.vector3d(1, 0, 0))
                                     break
                                 }
                             }
@@ -437,7 +436,7 @@ Entity {
                             switch(axis) {
                                 case TransformGizmo.Axis.X: {
                                     m.translate(Qt.vector3d(offset, 0, 0))
-                                    m.rotate(90, Qt.vector3d(0,0,1))
+                                    m.rotate(90, Qt.vector3d(0, 0, 1))
                                     break
                                 }
                                 case TransformGizmo.Axis.Y: {
@@ -446,7 +445,7 @@ Entity {
                                 }
                                 case TransformGizmo.Axis.Z: {
                                     m.translate(Qt.vector3d(0, 0, offset))
-                                    m.rotate(90, Qt.vector3d(1,0,0))
+                                    m.rotate(90, Qt.vector3d(1, 0, 0))
                                     break
                                 }
                             }
@@ -486,23 +485,23 @@ Entity {
 
                 ConeMesh {
                     id: coneMesh
-                    bottomRadius : 0.035
-                    topRadius : 0.001
-                    hasBottomEndcap : true
-                    hasTopEndcap : true
-                    length : 0.13
-                    rings : 2
-                    slices : 8
+                    bottomRadius: 0.035
+                    topRadius: 0.001
+                    hasBottomEndcap: true
+                    hasTopEndcap: true
+                    length: 0.13
+                    rings: 2
+                    slices: 8
                 }
                 Transform {
                     id: coneTransform
                     matrix: {
                         const offset = cylinderMesh.length + centerSphereMesh.radius + 0.4
                         const m = Qt.matrix4x4()
-                        switch(axis) {
+                        switch (axis) {
                             case TransformGizmo.Axis.X: {
                                 m.translate(Qt.vector3d(offset, 0, 0))
-                                m.rotate(-90, Qt.vector3d(0,0,1))
+                                m.rotate(-90, Qt.vector3d(0, 0, 1))
                                 break
                             }
                             case TransformGizmo.Axis.Y: {
@@ -511,7 +510,7 @@ Entity {
                             }
                             case TransformGizmo.Axis.Z: {
                                 m.translate(Qt.vector3d(0, 0, offset))
-                                m.rotate(90, Qt.vector3d(1,0,0))
+                                m.rotate(90, Qt.vector3d(1, 0, 0))
                                 break
                             }
                         }
@@ -557,12 +556,12 @@ Entity {
                 Transform {
                     id: torusTransform
                     matrix: {
-                        const scaleDiff = 2*torusMesh.minorRadius + 0.01 // Just to make sure there is no face overlapping
+                        const scaleDiff = 2 * torusMesh.minorRadius + 0.01 // Just to make sure there is no face overlapping
                         const m = Qt.matrix4x4()
-                        switch(axis) {
-                            case TransformGizmo.Axis.X: m.rotate(90, Qt.vector3d(0,1,0)); break
-                            case TransformGizmo.Axis.Y: m.rotate(90, Qt.vector3d(1,0,0)); m.scale(Qt.vector3d(1-scaleDiff, 1-scaleDiff, 1-scaleDiff)); break
-                            case TransformGizmo.Axis.Z: m.scale(Qt.vector3d(1-2*scaleDiff, 1-2*scaleDiff, 1-2*scaleDiff)); break
+                        switch (axis) {
+                            case TransformGizmo.Axis.X: m.rotate(90, Qt.vector3d(0, 1, 0)); break
+                            case TransformGizmo.Axis.Y: m.rotate(90, Qt.vector3d(1, 0, 0)); m.scale(Qt.vector3d(1 - scaleDiff, 1 - scaleDiff, 1 - scaleDiff)); break
+                            case TransformGizmo.Axis.Z: m.scale(Qt.vector3d(1 - 2 * scaleDiff, 1 - 2 * scaleDiff, 1 - 2 * scaleDiff)); break
                         }
                         return m
                     }

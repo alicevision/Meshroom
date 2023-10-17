@@ -234,14 +234,14 @@ FloatingPane {
                             }
 
                             hoverEnabled: true
-                            onEntered: { if(model.attribute) uigraph.hoveredNode = model.attribute.node }
-                            onExited: { if(model.attribute) uigraph.hoveredNode = null }
+                            onEntered: { if (model.attribute) uigraph.hoveredNode = model.attribute.node }
+                            onExited: { if (model.attribute) uigraph.hoveredNode = null }
                             onClicked: {
-                                if(model.attribute)
+                                if (model.attribute)
                                     uigraph.selectedNode = model.attribute.node;
                                 else
                                     uigraph.selectedNode = null;
-                                if(mouse.button == Qt.RightButton)
+                                if (mouse.button == Qt.RightButton)
                                     contextMenu.popup();
                                 mediaListView.currentIndex = index;
                             }
@@ -269,9 +269,9 @@ FloatingPane {
                                     Layout.fillHeight: true
                                     width: 2
                                     color: {
-                                        if(mediaListView.currentIndex == index || mediaDelegate.isSelectedNode)
+                                        if (mediaListView.currentIndex == index || mediaDelegate.isSelectedNode)
                                             return label.palette.highlight;
-                                        if(mediaDelegate.hovered)
+                                        if (mediaDelegate.hovered)
                                             return Qt.darker(label.palette.highlight, 1.5);
                                         return "transparent";
                                     }
@@ -287,7 +287,7 @@ FloatingPane {
                                     flat: true
                                     opacity: model.visible ? 1.0 : 0.6
                                     onClicked: {
-                                        if(hoverArea.modifiers & Qt.ControlModifier)
+                                        if (hoverArea.modifiers & Qt.ControlModifier)
                                             mediaLibrary.solo(index);
                                         else
                                             model.visible = !model.visible
@@ -364,7 +364,7 @@ FloatingPane {
                                                 Connections {
                                                     target: mediaLibrary
                                                     function onLoadRequest(idx) {
-                                                        if(idx === index)
+                                                        if (idx === index)
                                                             focusAnim.restart()
                                                     }
                                                 }
@@ -387,7 +387,7 @@ FloatingPane {
                                                 RowLayout {
                                                     spacing: 1
                                                     visible: model.vertexCount
-                                                    MaterialLabel {  text: MaterialIcons.grain }
+                                                    MaterialLabel { text: MaterialIcons.grain }
                                                     Label { text: Format.intToString(model.vertexCount) }
                                                 }
                                                 RowLayout {

@@ -31,30 +31,29 @@ FocusScope {
 
     // functions
     function resetCameraPosition() {
-        mainCamera.position = defaultCamPosition;
-        mainCamera.upVector = defaultCamUpVector;
-        mainCamera.viewCenter = defaultCamViewCenter;
+        mainCamera.position = defaultCamPosition
+        mainCamera.upVector = defaultCamUpVector
+        mainCamera.viewCenter = defaultCamViewCenter
     }
 
     function load(filepath, label = undefined) {
-        mediaLibrary.load(filepath, label);
+        mediaLibrary.load(filepath, label)
     }
 
     /// View 'attribute' in the 3D Viewer. Media will be loaded if needed.
     /// Returns whether the attribute can be visualized (matching type and extension).
     function view(attribute) {
-        if( attribute.desc.type === "File"
-           && Viewer3DSettings.supportedExtensions.indexOf(Filepath.extension(attribute.value)) > - 1 )
-        {
-            mediaLibrary.view(attribute);
-            return true;
+        if (attribute.desc.type === "File"
+           && Viewer3DSettings.supportedExtensions.indexOf(Filepath.extension(attribute.value)) > - 1) {
+            mediaLibrary.view(attribute)
+            return true
         }
-        return false;
+        return false
     }
 
     /// Solo (i.e display only) the given attribute.
     function solo(attribute) {
-        mediaLibrary.solo(mediaLibrary.find(attribute));
+        mediaLibrary.solo(mediaLibrary.find(attribute))
     }
 
     function clear() {
@@ -90,12 +89,9 @@ FocusScope {
         Keys.onPressed: {
             if (event.key === Qt.Key_F) {
                 resetCameraPosition();
-            }
-            else if(Qt.Key_1 <= event.key && event.key < Qt.Key_1 + Viewer3DSettings.renderModes.length)
-            {
+            } else if (Qt.Key_1 <= event.key && event.key < Qt.Key_1 + Viewer3DSettings.renderModes.length) {
                 Viewer3DSettings.renderMode = event.key - Qt.Key_1;
-            }
-            else {
+            } else {
                 event.accepted = false
             }
         }
@@ -168,19 +164,16 @@ FocusScope {
                 focus: scene3D.activeFocus
                 onMousePressed: {
                     scene3D.forceActiveFocus()
-                    if(mouse.button === Qt.LeftButton)
-                    {
-                        if(!doubleClickTimer.running)
+                    if (mouse.button === Qt.LeftButton) {
+                        if (!doubleClickTimer.running)
                             doubleClickTimer.restart()
-                    }
-                    else
+                    } else
                         doubleClickTimer.stop()
                 }
                 onMouseReleased: {
-                    if(moving)
+                    if (moving)
                         return
-                    if(!moved && mouse.button === Qt.RightButton)
-                    {
+                    if (!moved && mouse.button === Qt.RightButton) {
                         contextMenu.popup()
                     }
                 }
@@ -260,11 +253,10 @@ FocusScope {
                 ]
 
                 onPressed: {
-                    if(pick.button === Qt.LeftButton)
-                    {
-                        mainCamera.viewCenter = pick.worldIntersection;
+                    if (pick.button === Qt.LeftButton) {
+                        mainCamera.viewCenter = pick.worldIntersection
                     }
-                    doubleClickTimer.stop();
+                    doubleClickTimer.stop()
                 }
 
             }

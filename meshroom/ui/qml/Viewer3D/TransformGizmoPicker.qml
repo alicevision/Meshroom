@@ -34,7 +34,8 @@ ObjectPicker {
         gizmoMaterial.ambient = "white"
     }
     onExited: {
-        if(!isPressed) gizmoMaterial.ambient = gizmoBaseColor
+        if (!isPressed)
+            gizmoMaterial.ambient = gizmoBaseColor
     }
     onReleased: {
         gizmoMaterial.ambient = gizmoBaseColor

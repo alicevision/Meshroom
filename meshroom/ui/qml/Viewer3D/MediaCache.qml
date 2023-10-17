@@ -41,65 +41,63 @@ Entity {
 
     /// The current number of managed entities
     function currentSize() {
-        return Object.keys(mediaCache).length;
+        return Object.keys(mediaCache).length
     }
 
     /// Whether the cache contains an entity for the given source
     function contains(source) {
-        return mediaCache[source] !== undefined;
+        return mediaCache[source] !== undefined
     }
 
     /// Add an entity to the cache
-    function add(source, object){
-        if(!Filepath.exists(source))
-            return false;
-        if(contains(source))
-            return true;
-        if(debug) { console.log("[cache] add: " + source); }
-        mediaCache[source] = object;
-        object.parent = root;
+    function add(source, object) {
+        if (!Filepath.exists(source))
+            return false
+        if (contains(source))
+            return true
+        if (debug) { console.log("[cache] add: " + source) }
+        mediaCache[source] = object
+        object.parent = root
         // remove oldest entry in cache
-        if(currentSize() > cacheSize)
-            shrink();
-        return true;
+        if (currentSize() > cacheSize)
+            shrink()
+        return true
     }
 
     /// Pop an entity from the cache based on its source
-    function pop(source){
-        if(!contains(source))
-            return undefined;
+    function pop(source) {
+        if (!contains(source))
+            return undefined
 
-        var obj = mediaCache[source];
-        delete mediaCache[source];
-        if(debug) { console.log("[cache] pop: " + source); }
+        var obj = mediaCache[source]
+        delete mediaCache[source]
+        if (debug) { console.log("[cache] pop: " + source) }
         // delete cached obj if file does not exist on disk anymore
-        if(!Filepath.exists(source))
-        {
-            if(debug){ console.log("[cache] destroy: " + source); }
-            obj.destroy();
-            obj = undefined;
+        if (!Filepath.exists(source)) {
+            if (debug) { console.log("[cache] destroy: " + source) }
+            obj.destroy()
+            obj = undefined
         }
-        return obj;
+        return obj
     }
 
     /// Remove and destroy an entity from cache
     function destroyEntity(source) {
-        var obj = pop(source);
-        if(obj)
-            obj.destroy();
+        var obj = pop(source)
+        if (obj)
+            obj.destroy()
     }
-
 
     // Shrink cache to fit max size
     function shrink() {
-        while(currentSize() > cacheSize)
-            destroyEntity(Object.keys(mediaCache)[0]);
+        while (currentSize() > cacheSize)
+            destroyEntity(Object.keys(mediaCache)[0])
     }
 
     // Clear cache and destroy all managed entities
     function clear() {
-        Object.keys(mediaCache).forEach(function(key){
-            destroyEntity(key);
-        });
+        Object.keys(mediaCache).forEach(function(key) {
+            destroyEntity(key)
+        })
     }
 }

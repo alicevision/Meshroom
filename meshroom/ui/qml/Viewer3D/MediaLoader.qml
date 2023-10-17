@@ -26,43 +26,46 @@ import Utils 1.0
     property bool cached: false
 
     onSourceChanged: {
-        if(cached) {
-            root.status = SceneLoader.Ready;
-            return;
+        if (cached) {
+            root.status = SceneLoader.Ready
+            return
         }
 
         // clear previously created object if any
-        if(object) {
-            object.destroy();
-            object = null;
+        if (object) {
+            object.destroy()
+            object = null
         }
 
-        var component = undefined;
-        status = SceneLoader.Loading;
+        var component = undefined
+        status = SceneLoader.Loading
 
-        if(!Filepath.exists(source)) {
-            status = SceneLoader.None;
-            return;
+        if (!Filepath.exists(source)) {
+            status = SceneLoader.None
+            return
         }
 
-        switch(Filepath.extension(source)) {
+        switch (Filepath.extension(source)) {
             case ".abc": 
             case ".json":
             case ".sfm":
-                if(Viewer3DSettings.supportSfmData) 
-                {
-                    component = sfmDataLoaderEntityComponent; 
-                }
-                break;
-            case ".exr": if(Viewer3DSettings.supportDepthMap) component = exrLoaderComponent; break;
+                if (Viewer3DSettings.supportSfmData)
+                    component = sfmDataLoaderEntityComponent
+                break
+            case ".exr":
+                if (Viewer3DSettings.supportDepthMap)
+                    component = exrLoaderComponent
+                break
             case ".obj":
             case ".stl":
-            default: component = sceneLoaderEntityComponent; break;
+            default:
+                component = sceneLoaderEntityComponent
+                break
         }
 
         // Media loader available
-        if(component) {
-            object = component.createObject(root, {"source": source});
+        if (component) {
+            object = component.createObject(root, {"source": source})
         }
     }
 
@@ -76,8 +79,8 @@ import Utils 1.0
                 SceneLoader {
                     source: parent.source
                     onStatusChanged: {
-                        if(status == SceneLoader.Ready) {
-                            textureCount = sceneLoaderPostProcess(sceneLoaderEntity);
+                        if (status == SceneLoader.Ready) {
+                            textureCount = sceneLoaderPostProcess(sceneLoaderEntity)
                             faceCount = Scene3DHelper.faceCount(sceneLoaderEntity)
                         }
                         root.status = status;
@@ -92,18 +95,16 @@ import Utils 1.0
         MediaLoaderEntity {
             id: sfmDataLoaderEntity
             Component.onCompleted: {
-
                 var obj = Viewer3DSettings.sfmDataLoaderComp.createObject(sfmDataLoaderEntity, {
                                                'source': source,
                                                'pointSize': Qt.binding(function() { return 0.01 * Viewer3DSettings.pointSize }),
                                                'locatorScale': Qt.binding(function() { return Viewer3DSettings.cameraScale }),
                                                'cameraPickingEnabled': Qt.binding(function() { return root.enabled })
-                                           });
+                                           })
 
                 obj.statusChanged.connect(function() {
-                    
-                    if(obj.status === SceneLoader.Ready) {
-                        for(var i = 0; i < obj.pointClouds.length; ++i) {
+                    if (obj.status === SceneLoader.Ready) {
+                        for (var i = 0; i < obj.pointClouds.length; ++i) {
                             vertexCount += Scene3DHelper.vertexCount(obj.pointClouds[i]);
                         }
                         cameraCount = obj.spawnCameraSelectors();
@@ -120,38 +121,37 @@ import Utils 1.0
             id: exrLoaderEntity
             Component.onCompleted: {
                 var fSize = Filepath.fileSizeMB(source)
-                if(fSize > 500)
-                {
+                if (fSize > 500) {
                     // Do not load images that are larger than 500MB
                     console.warn("Viewer3D: Do not load the EXR in 3D as the file size is too large: " + fSize + "MB")
-                    root.status = SceneLoader.Error;
-                    return;
+                    root.status = SceneLoader.Error
+                    return
                 }
+
                 // EXR loading strategy:
                 //   - [1] as a depth map
                 var obj = Viewer3DSettings.depthMapLoaderComp.createObject(
                             exrLoaderEntity, {
                                 'source': source
-                            });
+                            })
 
-                if(obj.status === SceneLoader.Ready)
-                {
-                    faceCount = Scene3DHelper.faceCount(obj);
-                    root.status = SceneLoader.Ready;
-                    return;
+                if (obj.status === SceneLoader.Ready) {
+                    faceCount = Scene3DHelper.faceCount(obj)
+                    root.status = SceneLoader.Ready
+                    return
                 }
 
                 //   - [2] as an environment map
-                obj.destroy();
-                root.status = SceneLoader.Loading;
+                obj.destroy()
+                root.status = SceneLoader.Loading
                 obj = Qt.createComponent("EnvironmentMapEntity.qml").createObject(
                             exrLoaderEntity, {
                                 'source': source,
                                 'position': Qt.binding(function() { return root.camera.position })
-                            });
+                            })
                 obj.statusChanged.connect(function() {
                     root.status = obj.status;
-                });
+                })
             }
         }
     }
@@ -165,25 +165,25 @@ import Utils 1.0
     // instantiate a MaterialSwitcher instead. Returns the faceCount
     function sceneLoaderPostProcess(rootEntity)
     {
-        var materials = Scene3DHelper.findChildrenByProperty(rootEntity, "diffuse");
-        var entities = [];
-        var texCount = 0;
-        materials.forEach(function(mat){
-            entities.push(mat.parent);
+        var materials = Scene3DHelper.findChildrenByProperty(rootEntity, "diffuse")
+        var entities = []
+        var texCount = 0
+        materials.forEach(function(mat) {
+            entities.push(mat.parent)
         })
 
         entities.forEach(function(entity) {
-            var mats = [];
-            var componentsToRemove = [];
+            var mats = []
+            var componentsToRemove = []
             // Create as many MaterialSwitcher as individual materials for this entity
             // NOTE: we let each MaterialSwitcher modify the components of the entity
             //       and therefore remove the default material spawned by the sceneLoader
-            for(var i = 0; i < entity.components.length; ++i)
+            for (var i = 0; i < entity.components.length; ++i)
             {
                 var comp = entity.components[i]
 
                 // handle DiffuseMapMaterials created by SceneLoader
-                if(comp.toString().indexOf("QDiffuseMapMaterial") > -1) {
+                if (comp.toString().indexOf("QDiffuseMapMaterial") > -1) {
                     // store material definition
                     var m = {
                         "diffuseMap": comp.diffuse.data[0].source,
@@ -192,29 +192,29 @@ import Utils 1.0
                         "ambient": comp.ambient,
                         "mode": root.renderMode
                     }
-                    texCount++;
+                    texCount++
                     mats.push(m)
-                    componentsToRemove.push(comp);
+                    componentsToRemove.push(comp)
                 }
 
-                if(comp.toString().indexOf("QPhongMaterial") > -1) {
+                if (comp.toString().indexOf("QPhongMaterial") > -1) {
                     // create MaterialSwitcher with default colors
                     mats.push({})
-                    componentsToRemove.push(comp);
+                    componentsToRemove.push(comp)
                 }
             }
 
-            mats.forEach(function(m){
+            mats.forEach(function(m) {
                 // create a material switcher for each material definition
                 var matSwitcher = materialSwitcherComponent.createObject(entity, m)
                 matSwitcher.mode = Qt.binding(function(){ return root.renderMode })
             })
 
             // remove replaced components
-            componentsToRemove.forEach(function(comp){
-                Scene3DHelper.removeComponent(entity, comp);
-            });
+            componentsToRemove.forEach(function(comp) {
+                Scene3DHelper.removeComponent(entity, comp)
+            })
         })
-        return texCount;
+        return texCount
     }
 }

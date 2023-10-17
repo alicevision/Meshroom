@@ -49,7 +49,7 @@ Entity {
                 },
                 DiffuseSpecularMaterial {
                     ambient: {
-                        switch(index) {
+                        switch (index) {
                             case 0: return xColor;
                             case 1: return yColor;
                             case 2: return zColor;

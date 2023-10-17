@@ -14,7 +14,11 @@ Dialog {
 
     // Fade in transition
     enter: Transition {
-        NumberAnimation { property: "opacity"; from: 0.0; to: 1.0 }
+        NumberAnimation {
+            property: "opacity"
+            from: 0.0
+            to: 1.0
+        }
     }
 
     modal: true
@@ -173,14 +177,14 @@ Dialog {
                             // try to load the local file
                             var url = Filepath.stringToUrl(modelData.localUrl)
                             // fallback to the online url if file is not found
-                            if(!Filepath.exists(url))
+                            if (!Filepath.exists(url))
                                 url = modelData.onlineUrl
                             Request.get(url,
-                                        function(xhr){
-                                            if(xhr.readyState === XMLHttpRequest.DONE)
+                                        function(xhr) {
+                                            if (xhr.readyState === XMLHttpRequest.DONE)
                                             {
                                                 // status is OK
-                                                if(xhr.status === 200)
+                                                if (xhr.status === 200)
                                                     textArea.text = MeshroomApp.markdownToHtml(xhr.responseText)
                                                 else
                                                     textArea.text = "Could not load license file. Available online at <a href='" + url + "'>"+ url + "</a>."

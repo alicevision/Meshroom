@@ -93,7 +93,7 @@ Panel {
                 enabled: liveSfmManager ? liveSfmManager.running || folderPath.text.trim() != '' : false
                 checked: liveSfmManager ? liveSfmManager.running : false
                 onClicked: {
-                    if(!liveSfmManager.running)
+                    if (!liveSfmManager.running)
                         liveSfmManager.start(folderPath.text, minImg_SB.value)
                     else
                         liveSfmManager.stop()

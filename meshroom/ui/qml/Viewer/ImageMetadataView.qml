@@ -94,7 +94,13 @@ FloatingPane {
                     entry["group"] = "-"
                     entry["key"] = key
                 }
-                entry["value"] = metadata[key]
+
+                // If a key has an empty corresponding value, set it as an empty string.
+                // Otherwise it will be considered as a Variant Map.
+                if (typeof(metadata[key]) != "string")
+                    entry["value"] = ""
+                else
+                    entry["value"] = metadata[key]
                 entry["raw"] = entry["group"] + ":" + entry["key"] + "=" + entry["value"]
                 entries.push(entry)
             }
@@ -199,7 +205,7 @@ FloatingPane {
                         elide: Text.ElideRight
                     }
                     Label {
-                        text: value
+                        text: value != undefined ? value : ""
                         Layout.fillWidth: true
                         wrapMode: Label.WrapAtWordBoundaryOrAnywhere
                     }

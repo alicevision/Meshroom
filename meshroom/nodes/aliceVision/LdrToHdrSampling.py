@@ -94,7 +94,7 @@ Sample pixels from Low range images for HDR creation.
             description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
             uid=[0],
-            enabled= lambda node: node.nbBrackets.value != 1,
+            enabled=lambda node: node.nbBrackets.value != 1,
         ),
         desc.ChoiceParam(
             name="calibrationMethod",
@@ -109,7 +109,7 @@ Sample pixels from Low range images for HDR creation.
             value="auto",
             exclusive=True,
             uid=[0],
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name="channelQuantizationPower",
@@ -119,7 +119,7 @@ Sample pixels from Low range images for HDR creation.
             range=(8, 14, 1),
             uid=[0],
             advanced=True,
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name="workingColorSpace",
@@ -130,7 +130,7 @@ Sample pixels from Low range images for HDR creation.
             values=["auto", "sRGB", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
             exclusive=True,
             uid=[0],
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name="blockSize",
@@ -140,7 +140,7 @@ Sample pixels from Low range images for HDR creation.
             range=(8, 1024, 1),
             uid=[0],
             advanced=True,
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name="radius",
@@ -150,7 +150,7 @@ Sample pixels from Low range images for HDR creation.
             range=(0, 10, 1),
             uid=[0],
             advanced=True,
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name="maxCountSample",
@@ -160,7 +160,7 @@ Sample pixels from Low range images for HDR creation.
             range=(10, 1000, 10),
             uid=[0],
             advanced=True,
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.BoolParam(
             name="debug",
@@ -168,7 +168,7 @@ Sample pixels from Low range images for HDR creation.
             description="Export debug files to analyze the sampling strategy.",
             value=False,
             uid=[],
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name="verboseLevel",

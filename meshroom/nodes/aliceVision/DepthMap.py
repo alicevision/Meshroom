@@ -299,7 +299,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     value=1,
                     range=(-1, 10, 1),
                     uid=[0],
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.IntParam(
                     name="refineStepXY",
@@ -308,7 +308,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     value=1,
                     range=(-1, 10, 1),
                     uid=[0],
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.IntParam(
                     name="refineMaxTCamsPerTile",
@@ -317,7 +317,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     value=4,
                     range=(1, 20, 1),
                     uid=[0],
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.IntParam(
                     name="refineSubsampling",
@@ -327,7 +327,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     range=(1, 30, 1),
                     uid=[0],
                     advanced=True,
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.IntParam(
                     name="refineHalfNbDepths",
@@ -339,7 +339,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     range=(1, 50, 1),
                     uid=[0],
                     advanced=True,
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.IntParam(
                     name="refineWSH",
@@ -349,7 +349,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     range=(1, 20, 1),
                     uid=[0],
                     advanced=True,
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.FloatParam(
                     name="refineSigma",
@@ -359,7 +359,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     range=(0.0, 30.0, 0.5),
                     uid=[0],
                     advanced=True,
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.FloatParam(
                     name="refineGammaC",
@@ -369,7 +369,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     range=(0.0, 30.0, 0.5),
                     uid=[0],
                     advanced=True,
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.FloatParam(
                     name="refineGammaP",
@@ -379,7 +379,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     range=(0.0, 30.0, 0.5),
                     uid=[0],
                     advanced=True,
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.BoolParam(
                     name="refineInterpolateMiddleDepth",
@@ -387,7 +387,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Enable middle depth bilinear interpolation.",
                     value=False,
                     uid=[0],
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
                 desc.BoolParam(
                     name="refineUseConsistentScale",
@@ -395,7 +395,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     description="Compare patch with consistent scale for similarity volume computation.",
                     value=False,
                     uid=[0],
-                    enabled= lambda node: node.refine.refineEnabled.value,
+                    enabled=lambda node: node.refine.refineEnabled.value,
                 ),
             ]
         ),
@@ -420,7 +420,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     range=(1, 500, 10),
                     uid=[0],
                     advanced=True,
-                    enabled= lambda node: node.colorOptimization.colorOptimizationEnabled.value,
+                    enabled=lambda node: node.colorOptimization.colorOptimizationEnabled.value,
                 ),
             ]
         ),
@@ -452,7 +452,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     label="Subparts",
                     description="User custom patch pattern subparts for similarity volume computation.",
                     advanced=True,
-                    enabled= lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
+                    enabled=lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
                     elementDesc=desc.GroupAttribute(
                         name="customPatchPatternSubpart",
                         label="Patch Pattern Subpart",
@@ -511,7 +511,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     value=False,
                     uid=[0],
                     advanced=True,
-                    enabled= lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
+                    enabled=lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
                 ),
             ]
         ),

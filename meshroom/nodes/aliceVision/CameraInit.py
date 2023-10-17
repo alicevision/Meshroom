@@ -38,8 +38,8 @@ Intrinsic = [
                     value=-1.0, uid=[0], range=None),
     desc.FloatParam(name="focalLength", label="Focal Length", description="Known/calibrated focal length (in mm).", value=1000.0, uid=[0], range=(0.0, 10000.0, 1.0)),
     desc.FloatParam(name="pixelRatio", label="Pixel Ratio", description="Ratio between the pixel width and the pixel height.", value=1.0, uid=[0], range=(0.0, 10.0, 0.1)),
-    desc.BoolParam(name='pixelRatioLocked', label='Pixel Ratio Locked',
-                   description='The pixel ratio value is locked for estimation.',
+    desc.BoolParam(name="pixelRatioLocked", label="Pixel Ratio Locked",
+                   description="The pixel ratio value is locked for estimation.",
                    value=True, uid=[0]),
     desc.ChoiceParam(name="type", label="Camera Type",
                      description="Mathematical model used to represent a camera:\n"
@@ -241,7 +241,7 @@ The needed metadata are:
         desc.ChoiceParam(
             name="allowedCameraModels",
             label="Allowed Camera Models",
-            description='List of the camera models that can be attributed.',
+            description="List of the camera models that can be attributed.",
             value=["pinhole", "radial1", "radial3", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3deradial4", "3declassicld"],
             values=["pinhole", "radial1", "radial3", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3deradial4", "3declassicld"],
             exclusive=False,
@@ -320,10 +320,10 @@ The needed metadata are:
 
     outputs = [
         desc.File(
-            name='output',
-            label='SfMData',
-            description='''Output SfMData.''',
-            value=desc.Node.internalFolder + 'cameraInit.sfm',
+            name="output",
+            label="SfMData",
+            description="Output SfMData.",
+            value=desc.Node.internalFolder + "cameraInit.sfm",
             uid=[],
         ),
     ]

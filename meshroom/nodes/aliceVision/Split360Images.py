@@ -31,7 +31,7 @@ class Split360Images(desc.AVCommandLineNode):
             name="input",
             label="Input",
             description="Single image, image folder or SfMData file.",
-            value='',
+            value="",
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -80,7 +80,7 @@ class Split360Images(desc.AVCommandLineNode):
             groupDesc=[
                 desc.IntParam(
                     name="equirectangularNbSplits",
-                    label='Nb Splits',
+                    label="Nb Splits",
                     description="Equirectangular number of splits.",
                     value=2,
                     range=(1, 100, 1),

@@ -17,7 +17,7 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
         desc.File(
             name="input",
             label="Input",
-            description="SfMData file.",
+            description="Input SfMData file.",
             value="",
             uid=[0],
         ),
@@ -45,7 +45,7 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             elementDesc=desc.File(
                 name="imageId",
                 label="Image ID",
-                description="UID or path of an image to add to the whitelist.",
+                description="UID or path of an image to add to the white list.",
                 value="",
                 uid=[0],
             ),

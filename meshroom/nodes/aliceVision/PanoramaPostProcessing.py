@@ -135,6 +135,6 @@ Post process the panorama.
             description="Downscaled versions of the generated panorama.",
             value=lambda attr: desc.Node.internalFolder + os.path.splitext(attr.node.panoramaName.value)[0] + "_level_*.exr",
             uid=[],
-            group='',
+            group="",
         ),
     ]

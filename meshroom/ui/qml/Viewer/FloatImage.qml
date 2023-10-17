@@ -19,27 +19,26 @@ AliceVision.FloatImageViewer {
     property int paintedWidth: sourceSize.width
     property int paintedHeight: sourceSize.height
     property var status: {
-        if(root.loading)
+        if (root.loading)
             return Image.Loading;
-        else if((root.source === "") ||
-                (root.sourceSize.height <= 0) ||
-                (root.sourceSize.width <= 0))
-            return Image.Null;
+        else if ((root.source === "") ||
+                 (root.sourceSize.height <= 0) ||
+                 (root.sourceSize.width <= 0))
+            return Image.Null
 
-        return Image.Ready;
+        return Image.Ready
     }
 
     onStatusChanged: {
         if (viewerTypeString === "panorama") {
-            var activeNode = _reconstruction.activeNodes.get('SfMTransform').node;
+            var activeNode = _reconstruction.activeNodes.get('SfMTransform').node
         }
         root.surface.setIdView(idView);
     }
 
     property string channelModeString : "rgba"
     channelMode: {
-        switch(channelModeString)
-        {
+        switch (channelModeString) {
             case "rgb": return AliceVision.FloatImageViewer.EChannelMode.RGB
             case "r": return AliceVision.FloatImageViewer.EChannelMode.R
             case "g": return AliceVision.FloatImageViewer.EChannelMode.G
@@ -51,8 +50,7 @@ AliceVision.FloatImageViewer {
 
     property string viewerTypeString : "hdr"
     surface.viewerType: {
-        switch(viewerTypeString)
-        {
+        switch (viewerTypeString) {
             case "hdr": return AliceVision.Surface.EViewerType.HDR;
             case "distortion": return AliceVision.Surface.EViewerType.DISTORTION;
             case "panorama": return AliceVision.Surface.EViewerType.PANORAMA;
@@ -60,7 +58,7 @@ AliceVision.FloatImageViewer {
         }
     }
 
-    property int pointsNumber: (surface.subdivisions + 1) * (surface.subdivisions + 1);
+    property int pointsNumber: (surface.subdivisions + 1) * (surface.subdivisions + 1)
 
     property int idView: 0;
 
@@ -78,20 +76,20 @@ AliceVision.FloatImageViewer {
     }
 
     function isMouseOver(mx, my) {
-        return root.surface.isMouseInside(mx, my);
+        return root.surface.isMouseInside(mx, my)
     }
 
     function getMouseCoordinates(mx, my) {
         if (isMouseOver(mx, my)) {
             root.surface.mouseOver = true
-            return true;
+            return true
         } else {
             root.surface.mouseOver = false
-            return false;
+            return false
         }
     }
 
-    function onChangedHighlightState(isHighlightable){
+    function onChangedHighlightState(isHighlightable) {
         if (!isHighlightable) root.surface.mouseOver = false
     }
 
@@ -101,12 +99,12 @@ AliceVision.FloatImageViewer {
     */
 
     function updatePrincipalPoint() {
-        var pp = root.surface.getPrincipalPoint();
-        ppRect.x = pp.x;
-        ppRect.y = pp.y;
+        var pp = root.surface.getPrincipalPoint()
+        ppRect.x = pp.x
+        ppRect.y = pp.y
     }
 
-    property bool isPrincipalPointsDisplayed : false;
+    property bool isPrincipalPointsDisplayed : false
 
     Item {
         id: principalPoint

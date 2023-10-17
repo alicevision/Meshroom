@@ -52,9 +52,9 @@ FloatingPane {
                                 from: 0
                                 to: 1
                                 first.value: 0
-                                first.onMoved: { root.featuresViewer.featureMinScaleFilter = Math.pow(first.value,4); }
+                                first.onMoved: { root.featuresViewer.featureMinScaleFilter = Math.pow(first.value,4) }
                                 second.value: 1
-                                second.onMoved: { root.featuresViewer.featureMaxScaleFilter = Math.pow(second.value,4); }
+                                second.onMoved: { root.featuresViewer.featureMaxScaleFilter = Math.pow(second.value,4) }
                                 stepSize: 0.01
                             }
                         }
@@ -120,7 +120,7 @@ FloatingPane {
                         }
                         RowLayout {
                             Label {
-                                text: "Display 3d Tracks:"
+                                text: "Display 3D Tracks:"
                             }
                             CheckBox {
                                 id: display3dTracksCB
@@ -163,20 +163,20 @@ FloatingPane {
                                 editable: true
 
                                 textFromValue: function(value, locale) {
-                                    if (value === -1) return "No Limit";
-                                    if (value ===  0) return "Disable";
-                                    return value;
+                                    if (value === -1) return "No Limit"
+                                    if (value ===  0) return "Disable"
+                                    return value
                                 }
 
                                 valueFromText: function(text, locale) {
-                                    if (text === "No Limit") return -1;
-                                    if (text === "Disable")  return 0;
-                                    return Number.fromLocaleString(locale, text);
+                                    if (text === "No Limit") return -1
+                                    if (text === "Disable")  return 0
+                                    return Number.fromLocaleString(locale, text)
                                 }
 
                                 onValueChanged: {
                                     if (root.featuresViewer)
-                                        root.featuresViewer.timeWindow = timeWindowSB.value;
+                                        root.featuresViewer.timeWindow = timeWindowSB.value
                                 }
                             }
                         }
@@ -212,7 +212,7 @@ FloatingPane {
                     text: MaterialIcons.center_focus_strong
                     ToolTip.text: "Display Extracted Features"
                     onClicked: {
-                        featureType.viewer.displayFeatures = featuresVisibilityButton.checked;
+                        featureType.viewer.displayFeatures = featuresVisibilityButton.checked
                     }
                     font.pointSize: 10
                     opacity: featureType.viewer.visible ? 1.0 : 0.6
@@ -225,8 +225,8 @@ FloatingPane {
                     text: MaterialIcons.timeline
                     ToolTip.text: "Display Tracks"
                     onClicked: {
-                        featureType.viewer.displayTracks = tracksVisibilityButton.checked;
-                        root.featuresViewer.enableTimeWindow = tracksVisibilityButton.checked;
+                        featureType.viewer.displayTracks = tracksVisibilityButton.checked
+                        root.featuresViewer.enableTimeWindow = tracksVisibilityButton.checked
                     }
                     font.pointSize: 10
                 }
@@ -238,7 +238,7 @@ FloatingPane {
                     text: MaterialIcons.sync
                     ToolTip.text: "Display Matches"
                     onClicked: {
-                        featureType.viewer.displayMatches = matchesVisibilityButton.checked;
+                        featureType.viewer.displayMatches = matchesVisibilityButton.checked
                     }
                     font.pointSize: 10
                 }
@@ -250,7 +250,7 @@ FloatingPane {
                     text: MaterialIcons.fiber_manual_record
                     ToolTip.text: "Display Landmarks"
                     onClicked: {
-                        featureType.viewer.displayLandmarks = landmarksVisibilityButton.checked;
+                        featureType.viewer.displayLandmarks = landmarksVisibilityButton.checked
                     }
                     font.pointSize: 10
                 }

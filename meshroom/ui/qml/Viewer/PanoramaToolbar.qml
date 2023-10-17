@@ -26,7 +26,7 @@ FloatingPane {
     background: Rectangle { color: root.palette.window }
 
     function updateDownscaleValue(level) {
-        downscaleSpinBox.value = level;
+        downscaleSpinBox.value = level
     }
 
     DoubleValidator {
@@ -79,7 +79,7 @@ FloatingPane {
                 ToolTip.text: "Reset Subdivisions"
 
                 onClicked: {
-                    subdivisionsCtrl.value = subdivisionsDefaultValue;
+                    subdivisionsCtrl.value = subdivisionsDefaultValue
                 }
             }
             TextField {
@@ -119,7 +119,7 @@ FloatingPane {
                 ToolTip.text: "Reset the mouse multiplier"
 
                 onClicked: {
-                    speedSpinBox.value = 1;
+                    speedSpinBox.value = 1
                 }
             }
             SpinBox {
@@ -134,7 +134,7 @@ FloatingPane {
 
                 validator: DoubleValidator {
                     bottom: Math.min(speedSpinBox.from, speedSpinBox.to)
-                    top:  Math.max(speedSpinBox.from, speedSpinBox.to)
+                    top: Math.max(speedSpinBox.from, speedSpinBox.to)
                 }
 
                 textFromValue: function(value, locale) {
@@ -152,7 +152,7 @@ FloatingPane {
                 ToolTip.text: "Reset the downscale"
 
                 onClicked: {
-                    downscaleSpinBox.value = downscaleDefaultValue;
+                    downscaleSpinBox.value = downscaleDefaultValue
                 }
             }
             SpinBox {
@@ -167,17 +167,15 @@ FloatingPane {
 
                 validator: DoubleValidator {
                     bottom: Math.min(downscaleSpinBox.from, downscaleSpinBox.to)
-                    top:  Math.max(downscaleSpinBox.from, downscaleSpinBox.to)
+                    top: Math.max(downscaleSpinBox.from, downscaleSpinBox.to)
                 }
 
                 textFromValue: function(value, locale) {
-                    if(value === 0){
+                    if (value === 0){
                         return 1
+                    } else {
+                        return "1/" + Math.pow(2, value).toString()
                     }
-                    else{
-                        return "1/" + Math.pow(2,value).toString()
-                    }
-
                 }
             }
         }
@@ -188,5 +186,4 @@ FloatingPane {
         font: subdivisionsLabel.font
         text: "100.00"
     }
-
 }

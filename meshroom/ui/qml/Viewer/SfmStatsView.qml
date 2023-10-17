@@ -88,9 +88,8 @@ FloatingPane {
                 checkState: residualLegend.buttonGroup.checkState
                 onClicked: {
                     var _checked = checked;
-                    for(var i = 0; i < residualChart.count; ++i)
-                    {
-                        residualChart.series(i).visible = _checked;
+                    for (var i = 0; i < residualChart.count; ++i) {
+                        residualChart.series(i).visible = _checked
                     }
                 }
             }
@@ -141,8 +140,7 @@ FloatingPane {
             axisY: observationsLengthsvalueAxisY
             name: "Current"
         }
-
-        }
+    }
 
     Item {
         id: observationsLengthsBtnContainer
@@ -162,9 +160,8 @@ FloatingPane {
                 checkState: observationsLengthsLegend.buttonGroup.checkState
                 onClicked: {
                     var _checked = checked;
-                    for(var i = 0; i < observationsLengthsChart.count; ++i)
-                    {
-                        observationsLengthsChart.series(i).visible = _checked;
+                    for (var i = 0; i < observationsLengthsChart.count; ++i) {
+                        observationsLengthsChart.series(i).visible = _checked
                     }
                 }
             }
@@ -173,7 +170,6 @@ FloatingPane {
                 id: observationsLengthsLegend
                 chartView: observationsLengthsChart
             }
-
         }
     }
 
@@ -232,9 +228,8 @@ FloatingPane {
                 checkState: observationsScaleLegend.buttonGroup.checkState
                 onClicked: {
                     var _checked = checked;
-                    for(var i = 0; i < observationsScaleChart.count; ++i)
-                    {
-                        observationsScaleChart.series(i).visible = _checked;
+                    for (var i = 0; i < observationsScaleChart.count; ++i) {
+                        observationsScaleChart.series(i).visible = _checked
                     }
                 }
             }
@@ -252,12 +247,12 @@ FloatingPane {
         msfmData: (root.visible && root.msfmData && root.msfmData.status === AliceVision.MSfMData.Ready) ? root.msfmData : null
         viewId: root.viewId
         onViewStatsChanged: {
-            fillResidualFullSerie(residualFullLineSerie);
-            fillResidualViewSerie(residualViewLineSerie);
-            fillObservationsLengthsFullSerie(observationsLengthsFullLineSerie);
-            fillObservationsLengthsViewSerie(observationsLengthsViewLineSerie);
-            fillObservationsScaleFullSerie(observationsScaleFullLineSerie);
-            fillObservationsScaleViewSerie(observationsScaleViewLineSerie);
+            fillResidualFullSerie(residualFullLineSerie)
+            fillResidualViewSerie(residualViewLineSerie)
+            fillObservationsLengthsFullSerie(observationsLengthsFullLineSerie)
+            fillObservationsLengthsViewSerie(observationsLengthsViewLineSerie)
+            fillObservationsScaleFullSerie(observationsScaleFullLineSerie)
+            fillObservationsScaleViewSerie(observationsScaleViewLineSerie)
         }
     }
 }

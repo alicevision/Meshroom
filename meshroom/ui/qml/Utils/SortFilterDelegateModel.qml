@@ -46,8 +46,7 @@ DelegateModel {
                 // no sorting: move everything from unsorted to sorted group
                 if(sortRole == "") {
                     unsortedItems.setGroups(0, unsortedItems.count, ["items"])
-                }
-                else {
+                } else {
                     sort()
                 }
                 // perform filter invalidation in both cases
@@ -68,9 +67,8 @@ DelegateModel {
 
     /// Get the index of the first element which matches 'value' for the given 'roleName'
     function find(value, roleName) {
-        for(var i = 0; i < filteredItems.count; ++i)
-        {
-            if(modelData(filteredItems.get(i), roleName) == value)
+        for (var i = 0; i < filteredItems.count; ++i) {
+            if (modelData(filteredItems.get(i), roleName) == value)
                 return i
         }
         return -1
@@ -89,12 +87,12 @@ DelegateModel {
         if (filter === undefined) {
             return true;
         }
-        switch(value.constructor.name)
+        switch (value.constructor.name)
         {
-        case "String":
-            return value.toLowerCase().indexOf(filter.toLowerCase()) > -1
-        default:
-            return value === filter
+            case "String":
+                return value.toLowerCase().indexOf(filter.toLowerCase()) > -1
+            default:
+                return value === filter
         }
     }
 
@@ -114,7 +112,7 @@ DelegateModel {
     ]
 
     function invalidateSort() {
-        if(!sortFilterModel.model || !sortFilterModel.model.count)
+        if (!sortFilterModel.model || !sortFilterModel.model.count)
             return;
 
         // move everything from "items" to "unsorted
@@ -124,15 +122,11 @@ DelegateModel {
 
     /// Invalidate filtering
     function invalidateFilters() {
-        for(var i=0; i < items.count; ++i)
-        {
+        for (var i = 0; i < items.count; ++i) {
             // if the property value contains filterText, add it to the filtered group
-            if(respectFilters(items.get(i)))
-            {
+            if (respectFilters(items.get(i))) {
                 items.addGroups(items.get(i), 1, "filtered")
-            }
-            else // otherwise, remove it from the filtered group
-            {
+            } else { // otherwise, remove it from the filtered group
                 items.removeGroups(items.get(i), 1, "filtered")
             }
         }
@@ -146,7 +140,7 @@ DelegateModel {
         while (lower < upper) {
             var middle = Math.floor(lower + (upper - lower) / 2)
             var result = lessThan(item, items.get(middle))
-            if(sortOrder == Qt.DescendingOrder)
+            if (sortOrder == Qt.DescendingOrder)
                 result = !result
             if (result) {
                 upper = middle
@@ -168,5 +162,4 @@ DelegateModel {
         // if some items were actually sorted, filter will be correctly invalidated
         // as unsortedGroup 'changed' signal will be triggered
     }
-
 }

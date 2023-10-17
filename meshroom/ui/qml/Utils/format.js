@@ -10,12 +10,12 @@ function intToString(v) {
 
 // Convert a plain text to an html escaped string.
 function plainToHtml(t) {
-    var escaped = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); // escape text
-    return escaped.replace(/\n/g, '<br>'); // replace line breaks
+    var escaped = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // escape text
+    return escaped.replace(/\n/g, '<br>') // replace line breaks
 }
 
 function sec2time(time) {
-    var pad = function(num, size) { return ('000' + num).slice(size * -1); },
+    var pad = function(num, size) { return ('000' + num).slice(size * -1) },
     hours = Math.floor(time / 60 / 60),
     minutes = Math.floor(time / 60) % 60,
     seconds = Math.floor(time - minutes * 60);

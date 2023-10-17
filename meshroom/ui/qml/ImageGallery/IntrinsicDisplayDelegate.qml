@@ -48,8 +48,7 @@ RowLayout {
                 sourceComponent: {
                     if (!attribute)
                         return undefined
-                    switch (attribute.type)
-                    {
+                    switch (attribute.type) {
                        case "ChoiceParam": return choice_component
                        case "IntParam": return int_component
                        case "FloatParam": return float_component
@@ -115,7 +114,7 @@ RowLayout {
                 _reconstruction.setAttribute(attribute, Number(text))
             }
             Component.onDestruction: {
-                if(activeFocus)
+                if (activeFocus)
                     _reconstruction.setAttribute(attribute, Number(text))
             }
         }
@@ -176,7 +175,7 @@ RowLayout {
             readOnly: root.readOnly
             enabled: !readOnly
 
-            clip: true;
+            clip: true
 
             autoScroll: activeFocus
 
@@ -203,10 +202,9 @@ RowLayout {
                 _reconstruction.setAttribute(attribute, Number(text))
             }
             Component.onDestruction: {
-                if(activeFocus)
+                if (activeFocus)
                     _reconstruction.setAttribute(attribute, Number(text))
             }
         }
     }
-
 }

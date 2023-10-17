@@ -21,9 +21,8 @@ ImageBadge {
 
     function findMetadata(key) {
         var keyLower = key.toLowerCase()
-        for(var mKey in metadata)
-        {
-            if(mKey.toLowerCase().endsWith(keyLower))
+        for (var mKey in metadata) {
+            if (mKey.toLowerCase().endsWith(keyLower))
                 return metadata[mKey]
         }
         return ""

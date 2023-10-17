@@ -78,35 +78,33 @@ Panel {
 
     function parseIntr() {
         parsedIntrinsic = []
-        if(!m.intrinsics) {
+        if (!m.intrinsics) {
             return
         }
 
-        //Loop through all intrinsics
-        for(var i = 0; i < m.intrinsics.count; ++i) {
+        // Loop through all intrinsics
+        for (var i = 0; i < m.intrinsics.count; ++i) {
             var intrinsic = {}
 
-            //Loop through all attributes
-            for(var j=0; j < m.intrinsics.at(i).value.count; ++j) {
+            // Loop through all attributes
+            for (var j = 0; j < m.intrinsics.at(i).value.count; ++j) {
                 var currentAttribute = m.intrinsics.at(i).value.at(j)
-                if(currentAttribute.type === "GroupAttribute") {
-                    for(var k=0; k < currentAttribute.value.count; ++k) {
+                if (currentAttribute.type === "GroupAttribute") {
+                    for (var k = 0; k < currentAttribute.value.count; ++k) {
                         intrinsic[currentAttribute.name + "." + currentAttribute.value.at(k).name] = currentAttribute.value.at(k)
                     }
-                }
-                else if(currentAttribute.type === "ListAttribute") {
+                } else if (currentAttribute.type === "ListAttribute") {
                     // not needed for now
-                }
-                else {
+                } else {
                     intrinsic[currentAttribute.name] = currentAttribute
                 }
             }
             // Table Model needs to contain an entry for each column.
             // In case of old file formats, some intrinsic keys that we display may not exist in the model.
             // So, here we create an empty entry to enforce that the key exists in the model.
-            for(var n = 0; n < intrinsicModel.columnNames.length; ++n) {
+            for (var n = 0; n < intrinsicModel.columnNames.length; ++n) {
                 var name = intrinsicModel.columnNames[n]
-                if(!(name in intrinsic)) {
+                if (!(name in intrinsic)) {
                     intrinsic[name] = {}
                 }
             }
@@ -219,14 +217,14 @@ Panel {
                 function onThumbnailCreated(imgSource, callerID) {
                     let item = grid.itemAtIndex(callerID);  // item is an ImageDelegate
                     if (item && item.source === imgSource) {
-                        item.updateThumbnail();
-                        return;
+                        item.updateThumbnail()
+                        return
                     }
                     // fallback in case the ImageDelegate cellID changed
                     for (let idx = 0; idx < grid.count; idx++) {
-                        item = grid.itemAtIndex(idx);
+                        item = grid.itemAtIndex(idx)
                         if (item && item.source === imgSource) {
-                            item.updateThumbnail();
+                            item.updateThumbnail()
                         }
                     }
                 }
@@ -252,18 +250,18 @@ Panel {
 
                 // override modelData to return basename of viewpoint's path for sorting
                 function modelData(item, roleName_) {
-                    var roleNameAndCmd = roleName_.split(".");
-                    var roleName = roleName_;
-                    var cmd = "";
-                    if(roleNameAndCmd.length >= 2) {
-                        roleName = roleNameAndCmd[0];
-                        cmd = roleNameAndCmd[1];
+                    var roleNameAndCmd = roleName_.split(".")
+                    var roleName = roleName_
+                    var cmd = ""
+                    if (roleNameAndCmd.length >= 2) {
+                        roleName = roleNameAndCmd[0]
+                        cmd = roleNameAndCmd[1]
                     }
-                    if(cmd == "isReconstructed")
+                    if (cmd == "isReconstructed")
                         return _reconstruction.isReconstructed(item.model.object);
 
                     var value = item.model.object.childAttribute(roleName).value;
-                    if(cmd == "basename")
+                    if (cmd == "basename")
                         return Filepath.basename(value);
                     if (cmd == "asString") 
                         return value.toString();
@@ -374,43 +372,28 @@ Panel {
             // Keyboard shortcut to change current image group
             Keys.priority: Keys.BeforeItem
             Keys.onPressed: {
-                if(event.modifiers & Qt.AltModifier)
-                {
-                    if(event.key === Qt.Key_Right)
-                    {
+                if (event.modifiers & Qt.AltModifier) {
+                    if (event.key === Qt.Key_Right) {
                         _reconstruction.cameraInitIndex = Math.min(root.cameraInits.count - 1, root.cameraInitIndex + 1)
                         event.accepted = true
-                    }
-                    else if(event.key === Qt.Key_Left)
-                    {
+                    } else if (event.key === Qt.Key_Left) {
                         _reconstruction.cameraInitIndex = Math.max(0, root.cameraInitIndex - 1)
                         event.accepted = true
                     }
-                }
-                else
-                {
-                    if(event.key === Qt.Key_Right)
-                    {
+                } else {
+                    if (event.key === Qt.Key_Right) {
                         grid.moveCurrentIndexRight()
                         event.accepted = true
-                    }
-                    else if(event.key === Qt.Key_Left)
-                    {
+                    } else if (event.key === Qt.Key_Left) {
                         grid.moveCurrentIndexLeft()
                         event.accepted = true
-                    }
-                    else if(event.key === Qt.Key_Up)
-                    {
+                    } else if (event.key === Qt.Key_Up) {
                         grid.moveCurrentIndexUp()
                         event.accepted = true
-                    }
-                    else if(event.key === Qt.Key_Down)
-                    {
+                    } else if (event.key === Qt.Key_Down) {
                         grid.moveCurrentIndexDown()
                         event.accepted = true
-                    }
-                    else if (event.key === Qt.Key_Tab)
-                    {
+                    } else if (event.key === Qt.Key_Tab) {
                         searchBar.forceActiveFocus()
                         event.accepted = true
                     }
@@ -513,7 +496,7 @@ Panel {
             MouseArea {
                 anchors.fill: parent
                 onPressed: {
-                    if(mouse.button == Qt.LeftButton)
+                    if (mouse.button == Qt.LeftButton)
                         grid.forceActiveFocus()
                     mouse.accepted = false
                 }
@@ -611,7 +594,10 @@ Panel {
                 enabled: nodesCB.currentIndex > 0
                 onClicked: nodesCB.decrementCurrentIndex()
             }
-            Label { id: groupLabel; text: "Group " }
+            Label {
+                id: groupLabel
+                text: "Group "
+            }
             ComboBox {
                 id: nodesCB
                 model: {
@@ -718,8 +704,8 @@ Panel {
                 }
             }
             onEnabledChanged: {
-                if(!enabled) {
-                    if(checked)
+                if (!enabled) {
+                    if (checked)
                         inputImagesFilterButton.checked = true
                     checked = false
                 }
@@ -751,8 +737,8 @@ Panel {
                 }
             }
             onEnabledChanged: {
-                if(!enabled) {
-                    if(checked)
+                if (!enabled) {
+                    if (checked)
                         inputImagesFilterButton.checked = true
                     checked = false
                 }
@@ -782,8 +768,8 @@ Panel {
                 }
             }
             onEnabledChanged: {
-                if(!enabled) {
-                    if(checked)
+                if (!enabled) {
+                    if (checked)
                         inputImagesFilterButton.checked = true
                     checked = false
                 }
@@ -806,34 +792,34 @@ Panel {
             enabled: activeNode && activeNode.isComputed && (m.viewpoints ? m.viewpoints.count > 0 : false)
             property string nodeID: activeNode ? (activeNode.label + activeNode.isComputed) : ""
             onNodeIDChanged: {
-                if(checked) {
-                    open();
+                if (checked) {
+                    open()
                 }
             }
             onEnabledChanged: {
                 // Reset the toggle to avoid getting stuck
                 // with the HDR node checked but disabled.
-                if(checked) {
-                    checked = false;
-                    close();
+                if (checked) {
+                    checked = false
+                    close()
                 }
             }
             checkable: true
             checked: false
             onClicked: {
-                if(checked) {
-                    open();
+                if (checked) {
+                    open()
                 } else {
-                    close();
+                    close()
                 }
             }
             function open() {
-                if(imageProcessing.checked)
-                    imageProcessing.checked = false;
-                _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
+                if (imageProcessing.checked)
+                    imageProcessing.checked = false
+                _reconstruction.setupTempCameraInit(activeNode, "outSfMData")
             }
             function close() {
-                _reconstruction.clearTempCameraInit();
+                _reconstruction.clearTempCameraInit()
             }
         }
 
@@ -850,34 +836,34 @@ Panel {
             enabled: activeNode && activeNode.isComputed
             property string nodeID: activeNode ? (activeNode.label + activeNode.isComputed) : ""
             onNodeIDChanged: {
-                if(checked) {
-                    open();
+                if (checked) {
+                    open()
                 }
             }
             onEnabledChanged: {
                 // Reset the toggle to avoid getting stuck
                 // with the HDR node checked but disabled.
-                if(checked) {
-                    checked = false;
-                    close();
+                if (checked) {
+                    checked = false
+                    close()
                 }
             }
             checkable: true
             checked: false
             onClicked: {
-                if(checked) {
-                    open();
+                if (checked) {
+                    open()
                 } else {
-                    close();
+                    close()
                 }
             }
             function open() {
-                if(displayHDR.checked)
-                    displayHDR.checked = false;
-                _reconstruction.setupTempCameraInit(activeNode, "outSfMData");
+                if (displayHDR.checked)
+                    displayHDR.checked = false
+                _reconstruction.setupTempCameraInit(activeNode, "outSfMData")
             }
             function close() {
-                _reconstruction.clearTempCameraInit();
+                _reconstruction.clearTempCameraInit()
             }
         }
 

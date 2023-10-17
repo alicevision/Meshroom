@@ -29,11 +29,11 @@ ToolButton {
 
         padding: 4
         // content width is missing side padding (hence the + padding*2)
-        implicitWidth: colorChart.contentItem.width + padding*2
+        implicitWidth: colorChart.contentItem.width + padding * 2
 
         // center the current color
-        y: - (root.height - padding) / 2
-        x: - colorChart.currentItem.x - padding
+        y: -(root.height - padding) / 2
+        x: -colorChart.currentItem.x - padding
 
         // Colors palette
         ListView {
@@ -57,8 +57,8 @@ ToolButton {
                 }
 
                 onClicked: {
-                    colorPicked(index);
-                    palettePopup.close();
+                    colorPicked(index)
+                    palettePopup.close()
                 }
             }
         }

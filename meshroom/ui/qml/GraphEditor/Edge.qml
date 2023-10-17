@@ -45,7 +45,7 @@ Shape {
         strokeWidth: 1
         // final visual width of this path (never below 1)
         readonly property real visualWidth: Math.max(strokeWidth, 1)
-        dashPattern: [6/visualWidth, 4/visualWidth]
+        dashPattern: [6 / visualWidth, 4 / visualWidth]
         capStyle: ShapePath.RoundCap
 
         PathCubic {
@@ -53,8 +53,10 @@ Shape {
             property real ctrlPtDist: 30
             x: root.endX
             y: root.endY
-            relativeControl1X: ctrlPtDist; relativeControl1Y: 0
-            control2X: x - ctrlPtDist; control2Y: y
+            relativeControl1X: ctrlPtDist
+            relativeControl1Y: 0
+            control2X: x - ctrlPtDist
+            control2Y: y
         }
     }
 

@@ -20,9 +20,8 @@ MessageDialog {
     // the number of CompatibilityNodes that can be upgraded
     readonly property int upgradableCount: {
         var count = 0
-        for(var i=0; i<issueCount; ++i)
-        {
-            if(nodesModel.at(i).canUpgrade)
+        for (var i = 0; i < issueCount; ++i) {
+            if (nodesModel.at(i).canUpgrade)
                 count++;
         }
         return count
@@ -34,8 +33,7 @@ MessageDialog {
         t += '-------------------------\n'
         t += "Node | Issue | Upgradable\n"
         t += '-------------------------\n'
-        for(var i=0; i<issueCount; ++i)
-        {
+        for (var i = 0; i < issueCount; ++i) {
             var n = nodesModel.at(i)
              t += n.nodeType + " | " + n.issueDetails +  " | " + n.canUpgrade + "\n"
         }
@@ -108,7 +106,6 @@ MessageDialog {
                     font.bold: true
                 }
             }
-
         }
 
         Label {
@@ -126,11 +123,9 @@ MessageDialog {
     }
 
     onAccepted: {
-        if(upgradableCount)
-        {
+        if (upgradableCount) {
             uigraph.upgradeAllNodes()
             upgradeDone()
         }
     }
-
 }

@@ -23,7 +23,6 @@ Loader {
     property Component iconDelegate: Component {
 
         Label {
-
             text: MaterialIcons.warning
             font.family: MaterialIcons.fontFamily
             font.pointSize: 12
@@ -74,6 +73,5 @@ Loader {
                 }
             }
         }
-
     }
 }

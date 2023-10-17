@@ -20,7 +20,7 @@ ListView {
         id: chunkDelegate
         height: root.chunkHeight
         width: root.chunkWidth
-        color: Colors.getChunkColor(object, {"NONE": root.defaultColor})
+        color: Colors.getChunkColor(object, { "NONE": root.defaultColor })
     }
 }
 

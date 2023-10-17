@@ -150,8 +150,8 @@ Item {
 
             function getNbFinishedChunks(chunks) {
                 var nbSuccess = 0
-                for(var i = 0; i < chunks.count; i++) {
-                    if(chunks.at(i).statusName === "SUCCESS") {
+                for (var i = 0; i < chunks.count; i++) {
+                    if (chunks.at(i).statusName === "SUCCESS") {
                         nbSuccess += 1
                     }
                 }
@@ -159,7 +159,7 @@ Item {
             }
 
             Label {
-                text: index+1
+                text: index + 1
                 Layout.preferredWidth: nbMetrics.width + 20
                 Layout.preferredHeight: parent.height
                 horizontalAlignment: Label.AlignHCenter
@@ -253,36 +253,36 @@ Item {
                 Layout.minimumWidth: progressMetrics.width + 20
                 Layout.preferredHeight: parent.height
 
-                    ListView {
-                        id: chunkList
-                        width: parent.width
-                        height: parent.height
-                        orientation: ListView.Horizontal
-                        model: object.chunks
-                        property var node: object
+                ListView {
+                    id: chunkList
+                    width: parent.width
+                    height: parent.height
+                    orientation: ListView.Horizontal
+                    model: object.chunks
+                    property var node: object
 
-                        spacing: 3
+                    spacing: 3
 
-                        delegate: Label {
-                            width: (ListView.view.width / ListView.view.model.count) -3
-                            height: ListView.view.height
-                            anchors.verticalCenter: parent.verticalCenter
-                            background: Rectangle {
-                                color: Colors.getChunkColor(object, {"NONE": bgColor})
-                                radius: 3
-                                border.width: 2
-                                border.color: chunkList.node === uigraph.selectedNode ? Colors.sysPalette.text : Colors.getChunkColor(object, {"NONE": bgColor})
+                    delegate: Label {
+                        width: (ListView.view.width / ListView.view.model.count) - 3
+                        height: ListView.view.height
+                        anchors.verticalCenter: parent.verticalCenter
+                        background: Rectangle {
+                            color: Colors.getChunkColor(object, {"NONE": bgColor})
+                            radius: 3
+                            border.width: 2
+                            border.color: chunkList.node === uigraph.selectedNode ? Colors.sysPalette.text : Colors.getChunkColor(object, {"NONE": bgColor})
 
-                            }
+                        }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                onPressed: {
-                                    selectNode(chunkList.node)
-                                }
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: {
+                                selectNode(chunkList.node)
                             }
                         }
                     }
+                }
             }
         }
     }

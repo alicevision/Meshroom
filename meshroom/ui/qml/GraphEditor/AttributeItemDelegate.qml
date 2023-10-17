@@ -25,8 +25,7 @@ RowLayout {
 
     spacing: 2
 
-    function updateAttributeLabel()
-    {
+    function updateAttributeLabel() {
         background.color = attribute.validValue ?  Qt.darker(palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
 
         if (attribute.desc) {
@@ -40,7 +39,10 @@ RowLayout {
     }
 
     Pane {
-        background: Rectangle { id: background; color: object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5) }
+        background: Rectangle {
+            id: background
+            color: object.validValue ? Qt.darker(parent.palette.window, 1.1) : Qt.darker(Colors.red, 1.5)
+        }
         padding: 0
         Layout.preferredWidth: labelWidth || implicitWidth
         Layout.fillHeight: true
@@ -128,8 +130,7 @@ RowLayout {
 
                     onClicked: {
                         forceActiveFocus()
-                        if(mouse.button == Qt.RightButton)
-                        {
+                        if (mouse.button == Qt.RightButton) {
                             var menu = menuComp.createObject(parameterLabel)
                             menu.parent = parameterLabel
                             menu.popup()
@@ -147,25 +148,23 @@ RowLayout {
         }
     }
 
-    function setTextFieldAttribute(value)
-    {
+    function setTextFieldAttribute(value) {
         // editingFinished called even when TextField is readonly
-        if(!editable)
+        if (!editable)
             return
-        switch(attribute.type)
-        {
-        case "IntParam":
-        case "FloatParam":
-            _reconstruction.setAttribute(root.attribute, Number(value))
-            updateAttributeLabel()
-            break;
-        case "File":
-            _reconstruction.setAttribute(root.attribute, value)
-            break;
-        default:
-            _reconstruction.setAttribute(root.attribute, value.trim())
-            updateAttributeLabel()
-            break;
+        switch (attribute.type) {
+            case "IntParam":
+            case "FloatParam":
+                _reconstruction.setAttribute(root.attribute, Number(value))
+                updateAttributeLabel()
+                break
+            case "File":
+                _reconstruction.setAttribute(root.attribute, value)
+                break
+            default:
+                _reconstruction.setAttribute(root.attribute, value.trim())
+                updateAttributeLabel()
+                break
         }
     }
 
@@ -173,24 +172,28 @@ RowLayout {
         Layout.fillWidth: true
 
         sourceComponent: {
-            switch(attribute.type)
-            {
-            case "ChoiceParam": return attribute.desc.exclusive ? comboBox_component : multiChoice_component
-            case "IntParam": return slider_component
-            case "FloatParam":
-                if(attribute.desc.semantic === 'color/hue')
-                    return color_hue_component 
-                return slider_component
-            case "BoolParam": return checkbox_component
-            case "ListAttribute": return listAttribute_component
-            case "GroupAttribute": return groupAttribute_component
-            case "StringParam":
-                if (attribute.desc.semantic === 'multiline')
-                    return textArea_component
-                return textField_component
-            case "ColorParam":
-                return color_component
-            default: return textField_component
+            switch (attribute.type) {
+                case "ChoiceParam":
+                    return attribute.desc.exclusive ? comboBox_component : multiChoice_component
+                case "IntParam": return slider_component
+                case "FloatParam":
+                    if (attribute.desc.semantic === 'color/hue')
+                        return color_hue_component
+                    return slider_component
+                case "BoolParam":
+                    return checkbox_component
+                case "ListAttribute":
+                    return listAttribute_component
+                case "GroupAttribute":
+                    return groupAttribute_component
+                case "StringParam":
+                    if (attribute.desc.semantic === 'multiline')
+                        return textArea_component
+                    return textField_component
+                case "ColorParam":
+                    return color_component
+                default:
+                    return textField_component
             }
         }
 
@@ -206,16 +209,16 @@ RowLayout {
                     root.forceActiveFocus()
                 }
                 Component.onDestruction: {
-                    if(activeFocus)
+                    if (activeFocus)
                         setTextFieldAttribute(text)
                 }
                 DropArea {
                     enabled: root.editable
                     anchors.fill: parent
                     onDropped: {
-                        if(drop.hasUrls)
+                        if (drop.hasUrls)
                             setTextFieldAttribute(Filepath.urlToString(drop.urls[0]))
-                        else if(drop.hasText && drop.text != '')
+                        else if (drop.hasText && drop.text != '')
                             setTextFieldAttribute(drop.text)
                     }
                 }
@@ -282,7 +285,7 @@ RowLayout {
                     checked: node && node.color === "" ? false : true
                     text: "Custom Color"
                     onClicked: {
-                        if(checked) {
+                        if (checked) {
                             _reconstruction.setAttribute(attribute, "#0000FF")
                         } else {
                             _reconstruction.setAttribute(attribute, "")
@@ -300,7 +303,7 @@ RowLayout {
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: setTextFieldAttribute(text)
                     Component.onDestruction: {
-                        if(activeFocus)
+                        if (activeFocus)
                             setTextFieldAttribute(text)
                     }
                 }
@@ -366,8 +369,11 @@ RowLayout {
                         checked: attribute.value.indexOf(modelData) >= 0
                         onToggled: {
                             var t = attribute.value
-                            if(!checked) { t.splice(t.indexOf(modelData), 1) } // remove element
-                            else { t.push(modelData) }                         // add element
+                            if (!checked) {
+                                t.splice(t.indexOf(modelData), 1) // remove element
+                            } else {
+                                t.push(modelData) // add element
+                            }
                             _reconstruction.setAttribute(attribute, t)
                         }
                     }
@@ -397,7 +403,7 @@ RowLayout {
                     // When the value change keep the text align to the left to be able to read the most important part
                     // of the number. When we are editing (item is in focus), the content should follow the editing.
                     autoScroll: activeFocus
-                    validator: attribute.type == "FloatParam" ? doubleValidator : intValidator
+                    validator: attribute.type === "FloatParam" ? doubleValidator : intValidator
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: {
                         setTextFieldAttribute(text)
@@ -407,7 +413,7 @@ RowLayout {
                         ensureVisible(0)
                     }
                     Component.onDestruction: {
-                        if(activeFocus)
+                        if (activeFocus)
                             setTextFieldAttribute(text)
                     }
                     Component.onCompleted: {
@@ -482,7 +488,7 @@ RowLayout {
                 ListView {
                     id: lv
                     model: listAttribute_layout.expanded ? attribute.value : undefined
-                    visible: model != undefined && count > 0
+                    visible: model !== undefined && count > 0
                     implicitHeight: Math.min(contentHeight, 300)
                     Layout.fillWidth: true
                     Layout.margins: 4
@@ -491,7 +497,7 @@ RowLayout {
 
                     ScrollBar.vertical: ScrollBar { id: sb }
 
-                    delegate:  Loader{
+                    delegate: Loader {
                         active: !objectsHideable
                             || ((object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
                             && (object.isLinkNested && GraphEditorSettings.showLinkAttributes || !object.isLinkNested && GraphEditorSettings.showNotLinkAttributes))
@@ -505,14 +511,15 @@ RowLayout {
                             Component.onCompleted: {
                                 var cpt = Qt.createComponent("AttributeItemDelegate.qml")
                                 var obj = cpt.createObject(item,
-                                                        {'attribute': Qt.binding(function() { return item.childAttrib }),
+                                                        {
+                                                            'attribute': Qt.binding(function() { return item.childAttrib }),
                                                             'readOnly': Qt.binding(function() { return !root.editable })
                                                         })
                                 obj.Layout.fillWidth = true
                                 obj.label.text = index
                                 obj.label.horizontalAlignment = Text.AlignHCenter
                                 obj.label.verticalAlignment = Text.AlignVCenter
-                                obj.doubleClicked.connect(function(attr) {root.doubleClicked(attr)})
+                                obj.doubleClicked.connect(function(attr) { root.doubleClicked(attr) })
                             }
                             ToolButton {
                                 enabled: root.editable
@@ -537,11 +544,12 @@ RowLayout {
                 Component.onCompleted:  {
                     var cpt = Qt.createComponent("AttributeEditor.qml");
                     var obj = cpt.createObject(groupItem,
-                                               {'model': Qt.binding(function() { return attribute.value }),
-                                                'readOnly': Qt.binding(function() { return root.readOnly }),
-                                                'labelWidth': 100, // reduce label width for children (space gain)
-                                                'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
-                                                'filterText': Qt.binding(function() { return root.filterText }),
+                                               {
+                                                   'model': Qt.binding(function() { return attribute.value }),
+                                                   'readOnly': Qt.binding(function() { return root.readOnly }),
+                                                   'labelWidth': 100, // reduce label width for children (space gain)
+                                                   'objectsHideable': Qt.binding(function() { return root.objectsHideable }),
+                                                   'filterText': Qt.binding(function() { return root.filterText }),
                                                })
                     obj.Layout.fillWidth = true;
                     obj.attributeDoubleClicked.connect(function(attr) {root.doubleClicked(attr)})
@@ -565,7 +573,7 @@ RowLayout {
                     onEditingFinished: setTextFieldAttribute(text)
                     onAccepted: setTextFieldAttribute(text)
                     Component.onDestruction: {
-                        if(activeFocus)
+                        if (activeFocus)
                             setTextFieldAttribute(text)
                     }
                 }
@@ -575,9 +583,9 @@ RowLayout {
                     color: Qt.hsla(slider.pressed ? slider.formattedValue : attribute.value, 1, 0.5, 1)
                 }
                 Slider {
+                    id: slider
                     Layout.fillWidth: true
 
-                    id: slider
                     readonly property int stepDecimalCount: 2
                     readonly property real formattedValue: value.toFixed(stepDecimalCount)
                     enabled: root.editable
@@ -587,7 +595,7 @@ RowLayout {
                     stepSize: 0.01
                     snapMode: Slider.SnapAlways
                     onPressedChanged: {
-                        if(!pressed)
+                        if (!pressed)
                             _reconstruction.setAttribute(attribute, formattedValue)
                     }
 

@@ -79,10 +79,10 @@ Item {
     }
 
     function getPropertyWithDefault(prop, name, defaultValue) {
-        if(prop.hasOwnProperty(name)) {
-            return prop[name];
+        if (prop.hasOwnProperty(name)) {
+            return prop[name]
         }
-        return defaultValue;
+        return defaultValue
     }
 
     Timer {
@@ -94,33 +94,30 @@ Item {
 
     function readSourceFile() {
         // make sure we are trying to load a statistics file
-        if(!Filepath.urlToString(source).endsWith("statistics"))
-            return;
+        if (!Filepath.urlToString(source).endsWith("statistics"))
+            return
 
-        var xhr = new XMLHttpRequest;
-        xhr.open("GET", source);
+        var xhr = new XMLHttpRequest
+        xhr.open("GET", source)
 
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {
-
-                if(sourceModified === undefined || sourceModified < xhr.getResponseHeader('Last-Modified')) {
+                if (sourceModified === undefined || sourceModified < xhr.getResponseHeader('Last-Modified')) {
                     try {
-                        root.jsonObject = JSON.parse(xhr.responseText);
-                    }
-                    catch(exc)
-                    {
+                        root.jsonObject = JSON.parse(xhr.responseText)
+                    } catch(exc) {
                         console.warning("Failed to parse statistics file: " + source)
-                        root.jsonObject = {};
-                        return;
+                        root.jsonObject = {}
+                        return
                     }
-                    resetCharts();
+                    resetCharts()
                     sourceModified = xhr.getResponseHeader('Last-Modified')
-                    root.createCharts();
-                    reloadTimer.restart();
+                    root.createCharts()
+                    reloadTimer.restart()
                 }
             }
-        };
-        xhr.send();
+        }
+        xhr.send()
     }
 
     function resetCharts() {
@@ -151,7 +148,7 @@ Item {
         var category
         do {
             category = jsonObject.computer.curves["cpuUsage." + categoryCount]
-            if(category !== undefined) {
+            if (category !== undefined) {
                 categories.push(category)
                 categoryCount++
             }
@@ -164,17 +161,17 @@ Item {
 
         root.nbReads = categories[0].length-1
 
-        for(var j = 0; j < nbCores; j++) {
+        for (var j = 0; j < nbCores; j++) {
             var lineSerie = cpuChart.createSeries(ChartView.SeriesTypeLine, "CPU" + j, valueCpuX, valueCpuY)
 
-            if(categories[j].length === 1) {
+            if (categories[j].length === 1) {
                 lineSerie.append(0, categories[j][0])
                 lineSerie.append(root.deltaTime, categories[j][0])
             } else {
-                var displayLength = Math.min(maxDisplayLength, categories[j].length);
-                var step = categories[j].length / displayLength;
-                for(var kk = 0; kk < displayLength; kk+=step) {
-                    var k = Math.floor(kk*step)
+                var displayLength = Math.min(maxDisplayLength, categories[j].length)
+                var step = categories[j].length / displayLength
+                for (var kk = 0; kk < displayLength; kk += step) {
+                    var k = Math.floor(kk * step)
                     lineSerie.append(k * root.deltaTime, categories[j][k])
                 }
             }
@@ -184,35 +181,34 @@ Item {
         var averageLine = cpuChart.createSeries(ChartView.SeriesTypeLine, "AVERAGE", valueCpuX, valueCpuY)
         var average = []
 
-        var displayLengthA = Math.min(maxDisplayLength, categories[0].length);
-        var stepA = categories[0].length / displayLengthA;
-        for(var l = 0; l < displayLengthA; l+=step) {
+        var displayLengthA = Math.min(maxDisplayLength, categories[0].length)
+        var stepA = categories[0].length / displayLengthA
+        for (var l = 0; l < displayLengthA; l += step) {
             average.push(0)
         }
 
-        for(var m = 0; m < categories.length; m++) {
-            var displayLengthB = Math.min(maxDisplayLength, categories[m].length);
-            var stepB = categories[0].length / displayLengthB;
-            for(var nn = 0; nn < displayLengthB; nn++) {
-                var n = Math.floor(nn*stepB)
+        for (var m = 0; m < categories.length; m++) {
+            var displayLengthB = Math.min(maxDisplayLength, categories[m].length)
+            var stepB = categories[0].length / displayLengthB
+            for (var nn = 0; nn < displayLengthB; nn++) {
+                var n = Math.floor(nn * stepB)
                 average[nn] += categories[m][n]
             }
         }
 
-        for(var q = 0; q < average.length; q++) {
+        for (var q = 0; q < average.length; q++) {
             average[q] = average[q] / (categories.length)
-
             averageLine.append(q * root.deltaTime * stepA, average[q])
         }
 
-        averageLine.color = colors[colors.length-1]
+        averageLine.color = colors[colors.length - 1]
     }
 
     function hideOtherCpu(index) {
-        for(var i = 0; i < cpuChart.count; i++) {
-            cpuChart.series(i).visible = false;
+        for (var i = 0; i < cpuChart.count; i++) {
+            cpuChart.series(i).visible = false
         }
-        cpuChart.series(index).visible = true;
+        cpuChart.series(index).visible = true
     }
 
 
@@ -226,10 +222,9 @@ Item {
 
         root.ramTotal = getPropertyWithDefault(jsonObject.computer, 'ramTotal', -1)
         root.ramLabel = "RAM: "
-        if(root.ramTotal <= 0)
-        {
+        if (root.ramTotal <= 0) {
             var maxRamPeak = 0
-            for(var i = 0; i < ram.length; i++) {
+            for (var i = 0; i < ram.length; i++) {
                 maxRamPeak = Math.max(maxRamPeak, ram[i])
             }
             root.ramTotal = maxRamPeak
@@ -238,19 +233,19 @@ Item {
 
         var ramSerie = ramChart.createSeries(ChartView.SeriesTypeLine, root.ramLabel + root.ramTotal + "GB", valueRamX, valueRamY)
 
-        if(ram.length === 1) {
+        if (ram.length === 1) {
             // Create 2 entries if we have only one input value to create a segment that can be display
-            ramSerie.append(0, ram[0]);
-            ramSerie.append(root.deltaTime, ram[0]);
+            ramSerie.append(0, ram[0])
+            ramSerie.append(root.deltaTime, ram[0])
         } else {
-            var displayLength = Math.min(maxDisplayLength, ram.length);
-            var step = ram.length / displayLength;
+            var displayLength = Math.min(maxDisplayLength, ram.length)
+            var step = ram.length / displayLength
             for(var ii = 0; ii < displayLength; ii++) {
-                var i = Math.floor(ii*step);
-                ramSerie.append(i * root.deltaTime, ram[i]);
+                var i = Math.floor(ii * step)
+                ramSerie.append(i * root.deltaTime, ram[i])
             }
         }
-        ramSerie.color = colors[10];
+        ramSerie.color = colors[10]
     }
 
 /**************************
@@ -269,9 +264,9 @@ Item {
         var gpuUsedMemorySerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Memory", valueGpuX, valueGpuY)
         var gpuTemperatureSerie = gpuChart.createSeries(ChartView.SeriesTypeLine, "Temperature", valueGpuX, valueGpuY)
 
-        var gpuMemoryRatio = root.gpuTotalMemory > 0 ? (100 / root.gpuTotalMemory) : 1;
+        var gpuMemoryRatio = root.gpuTotalMemory > 0 ? (100 / root.gpuTotalMemory) : 1
 
-        if(gpuUsedMemory.length === 1) {
+        if (gpuUsedMemory.length === 1) {
             gpuUsedSerie.append(0, gpuUsed[0])
             gpuUsedSerie.append(1 * root.deltaTime, gpuUsed[0])
 
@@ -282,9 +277,9 @@ Item {
             gpuTemperatureSerie.append(1 * root.deltaTime, gpuTemperature[0])
             root.gpuMaxAxis = Math.max(gpuMaxAxis, gpuTemperature[0])
         } else {
-            var displayLength = Math.min(maxDisplayLength, gpuUsedMemory.length);
-            var step = gpuUsedMemory.length / displayLength;
-            for(var ii = 0; ii < displayLength; ii+=step) {
+            var displayLength = Math.min(maxDisplayLength, gpuUsedMemory.length)
+            var step = gpuUsedMemory.length / displayLength
+            for (var ii = 0; ii < displayLength; ii += step) {
                 var i = Math.floor(ii*step)
                 gpuUsedSerie.append(i * root.deltaTime, gpuUsed[i])
 
@@ -356,7 +351,6 @@ Item {
                         width: parent.width
                         anchors.horizontalCenter: parent.horizontalCenter
 
-
                         ChartViewCheckBox {
                             id: allCPU
                             text: "ALL"
@@ -365,9 +359,8 @@ Item {
                             leftPadding: 0
                             onClicked: {
                                 var _checked = checked;
-                                for(var i = 0; i < cpuChart.count; ++i)
-                                {
-                                    cpuChart.series(i).visible = _checked;
+                                for (var i = 0; i < cpuChart.count; ++i) {
+                                    cpuChart.series(i).visible = _checked
                                 }
                             }
                         }
@@ -378,7 +371,6 @@ Item {
                             Layout.fillHeight: true
                             chartView: cpuChart
                         }
-
                     }
                 }
 
@@ -386,7 +378,7 @@ Item {
                     id: cpuChart
 
                     Layout.fillWidth: true
-                    Layout.preferredHeight: width/2
+                    Layout.preferredHeight: width / 2
                     margins.top: 0
                     margins.bottom: 0
                     antialiasing: true
@@ -425,7 +417,6 @@ Item {
                         shadesBorderColor: textColor
                         labelsColor: textColor
                     }
-
                 }
             }
 
@@ -442,7 +433,7 @@ Item {
                     margins.top: 0
                     margins.bottom: 0
                     Layout.fillWidth: true
-                    Layout.preferredHeight: width/2
+                    Layout.preferredHeight: width / 2
                     antialiasing: true
                     legend.color: textColor
                     legend.labelColor: textColor
@@ -491,7 +482,6 @@ Item {
 
             ColumnLayout {
 
-
                 InteractiveChartView {
                     id: gpuChart
 
@@ -537,8 +527,6 @@ Item {
                     }
                 }
             }
-
         }
     }
-
 }

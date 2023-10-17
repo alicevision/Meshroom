@@ -24,7 +24,7 @@ FloatingPane {
         RowLayout {
             // Node used to read features
             Label {
-                text: _reconstruction ? _reconstruction.activeNodes.get("featureProvider").node.label : ""
+                text: _reconstruction && _reconstruction.activeNodes.get("featureProvider").node ? _reconstruction.activeNodes.get("featureProvider").node.label : ""
                 Layout.fillWidth: true
             }
             // Settings menu

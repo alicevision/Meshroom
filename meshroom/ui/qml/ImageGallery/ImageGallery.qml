@@ -35,6 +35,14 @@ Panel {
     title: "Image Gallery"
     implicitWidth: (root.defaultCellSize + 2) * 2
 
+    Connections {
+        target: _reconstruction
+
+        function onCameraInitChanged() {
+            nodesCB.currentIndex = root.cameraInitIndex
+        }
+    }
+
     QtObject {
         id: m
         property variant currentCameraInit: _reconstruction && _reconstruction.tempCameraInit ? _reconstruction.tempCameraInit : root.cameraInit

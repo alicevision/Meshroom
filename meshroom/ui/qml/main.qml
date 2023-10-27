@@ -995,7 +995,7 @@ ApplicationWindow {
                 }
 
                 function viewIn3D(attribute, mouse) {
-                    if(!panel3dViewer)
+                    if(!panel3dViewer || !attribute.node.has3DOutput)
                         return false;
                     var loaded = panel3dViewer.viewer3D.view(attribute);
                     // solo media if Control modifier was held

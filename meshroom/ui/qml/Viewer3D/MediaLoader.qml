@@ -46,7 +46,14 @@ import Utils 1.0
         }
 
         switch(Filepath.extension(source)) {
-            case ".abc": if(Viewer3DSettings.supportAlembic) component = abcLoaderEntityComponent; break;
+            case ".abc": 
+            case ".json":
+            case ".sfm":
+                if(Viewer3DSettings.supportSfmData) 
+                {
+                    component = sfmDataLoaderEntityComponent; 
+                }
+                break;
             case ".exr": if(Viewer3DSettings.supportDepthMap) component = exrLoaderComponent; break;
             case ".obj":
             case ".stl":
@@ -81,12 +88,12 @@ import Utils 1.0
     }
 
     Component {
-        id: abcLoaderEntityComponent
+        id: sfmDataLoaderEntityComponent
         MediaLoaderEntity {
-            id: abcLoaderEntity
+            id: sfmDataLoaderEntity
             Component.onCompleted: {
 
-                var obj = Viewer3DSettings.abcLoaderComp.createObject(abcLoaderEntity, {
+                var obj = Viewer3DSettings.sfmDataLoaderComp.createObject(sfmDataLoaderEntity, {
                                                'source': source,
                                                'pointSize': Qt.binding(function() { return 0.01 * Viewer3DSettings.pointSize }),
                                                'locatorScale': Qt.binding(function() { return Viewer3DSettings.cameraScale }),
@@ -94,6 +101,7 @@ import Utils 1.0
                                            });
 
                 obj.statusChanged.connect(function() {
+                    
                     if(obj.status === SceneLoader.Ready) {
                         for(var i = 0; i < obj.pointClouds.length; ++i) {
                             vertexCount += Scene3DHelper.vertexCount(obj.pointClouds[i]);

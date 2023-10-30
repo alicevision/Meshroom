@@ -16,11 +16,11 @@ import logging
 
 
 parser = argparse.ArgumentParser(description='Launch the full photogrammetry or Panorama HDR pipeline.')
-parser.add_argument('-i', '--input', metavar='NODEINSTANCE:SFM/FOLDERS/IMAGES;...', type=str, nargs='*',
+parser.add_argument('-i', '--input', metavar='NODEINSTANCE:"SFM/FOLDERS/IMAGES;..."', type=str, nargs='*',
                     default=[],
                     help='Input folder containing images or folders of images or file (.sfm or .json) '
                          'with images paths and optionally predefined camera intrinsics.')
-parser.add_argument('-I', '--inputRecursive', metavar='NODEINSTANCE:FOLDERS/IMAGES;...', type=str, nargs='*',
+parser.add_argument('-I', '--inputRecursive', metavar='NODEINSTANCE:"FOLDERS/IMAGES;..."', type=str, nargs='*',
                     default=[],
                     help='Input folders containing all images recursively.')
 
@@ -134,7 +134,7 @@ with multiview.GraphModification(graph):
                 print('Syntax error in input argument')
                 sys.exit(1)
             nodeInputs = inputGroup[-1].split(';')
-            mapInputs[nodeName] = nodeInputs
+            mapInputs[nodeName] = [os.path.abspath(path) for path in nodeInputs]
         return mapInputs
     
     # get init nodes
@@ -170,7 +170,7 @@ with multiview.GraphModification(graph):
         publishNodes = graph.nodesOfType('Publish')
         if len(publishNodes) > 0:
             for node in publishNodes:
-                node.output.value = args.output
+                node.output.value = os.path.abspath(args.output)
         else:
             raise RuntimeError("meshroom_batch requires a pipeline graph with at least one Publish node, none found.")
 

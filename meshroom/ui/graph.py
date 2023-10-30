@@ -813,14 +813,14 @@ class UIGraph(QObject):
         self.push(commands.ListAttributeRemoveCommand(self._graph, attribute))
 
     @Slot()
-    def clearImages(self):
-        with self.groupedGraphModification("Clear Images"):
-            self.push(commands.ClearImagesCommand(self._graph, [self.cameraInit]))
+    def removeAllImages(self):
+        with self.groupedGraphModification("Remove All Images"):
+            self.push(commands.RemoveImagesCommand(self._graph, [self.cameraInit]))
 
     @Slot()
-    def clearAllImages(self):
-        with self.groupedGraphModification("Clear All Images"):
-            self.push(commands.ClearImagesCommand(self._graph, list(self.cameraInits)))
+    def removeImagesFromAllGroups(self):
+        with self.groupedGraphModification("Remove Images From All CameraInit Nodes"):
+            self.push(commands.RemoveImagesCommand(self._graph, list(self.cameraInits)))
 
     @Slot(Node)
     def appendSelection(self, node):

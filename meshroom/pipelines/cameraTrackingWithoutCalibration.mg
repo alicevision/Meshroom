@@ -7,9 +7,6 @@
         "nodesVersions": {
             "CameraInit": "9.0",
             "ConvertSfMFormat": "2.0",
-            "DistortionCalibration": "3.0",
-            "ExportDistortion": "1.0",
-            "CheckerboardDetection": "1.0",
             "PrepareDenseScene": "3.1",
             "MeshFiltering": "3.0",
             "Meshing": "7.0",
@@ -264,7 +261,7 @@
                     "{ExportAnimatedCamera_1.output}",
                     "{Texturing_1.output}",
                     "{ScenePreview_1.output}",
-                    "{ExportDistortion_1.output}"
+                    ""
                 ]
             }
         },
@@ -300,48 +297,6 @@
                 "color": "#3f3138"
             }
         },
-        "CheckerboardDetection_1": {
-            "nodeType": "CheckerboardDetection",
-            "position": [
-                -400,
-                -160
-            ],
-            "inputs": {
-                "input": "{CameraInit_2.output}",
-                "useNestedGrids": true,
-                "exportDebugImages": true
-            },
-            "internalInputs": {
-                "color": "#302e2e"
-            }
-        },
-        "DistortionCalibration_1": {
-            "nodeType": "DistortionCalibration",
-            "position": [
-                -200,
-                -160
-            ],
-            "inputs": {
-                "input": "{CheckerboardDetection_1.input}",
-                "checkerboards": "{CheckerboardDetection_1.output}"
-            },
-            "internalInputs": {
-                "color": "#302e2e"
-            }
-        },
-        "ExportDistortion_1": {
-            "nodeType": "ExportDistortion",
-            "position": [
-                0,
-                -160
-            ],
-            "inputs": {
-                "input": "{DistortionCalibration_1.output}"
-            },
-            "internalInputs": {
-                "color": "#302e2e"
-            }
-        },
         "ApplyCalibration_1": {
             "nodeType": "ApplyCalibration",
             "position": [
@@ -349,8 +304,7 @@
                 0
             ],
             "inputs": {
-                "input": "{CameraInit_1.output}",
-                "calibration": "{DistortionCalibration_1.output}"
+                "input": "{CameraInit_1.output}"
             },
             "internalInputs": {
                 "color": "#575963"
@@ -483,18 +437,6 @@
             },
             "internalInputs": {
                 "color": "#80766f"
-            }
-        },
-        "CameraInit_2": {
-            "nodeType": "CameraInit",
-            "position": [
-                -600,
-                -160
-            ],
-            "inputs": {},
-            "internalInputs": {
-                "label": "CameraInitLensGrid",
-                "color": "#302e2e"
             }
         },
         "FeatureMatching_3": {

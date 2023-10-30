@@ -6,16 +6,20 @@ import MaterialIcons 2.2
  * Viewer3DSettings singleton gathers properties related to the 3D Viewer capabilities, state and display options.
  */
 Item {
-    readonly property Component abcLoaderComp: Qt.createComponent("AlembicLoader.qml")
-    readonly property bool supportAlembic: abcLoaderComp.status == Component.Ready
+    readonly property Component sfmDataLoaderComp: Qt.createComponent("SfmDataLoader.qml")
+    readonly property bool supportSfmData: sfmDataLoaderComp.status == Component.Ready
     readonly property Component depthMapLoaderComp: Qt.createComponent("DepthMapLoader.qml")
     readonly property bool supportDepthMap: depthMapLoaderComp.status == Component.Ready
 
     // supported 3D files extensions
     readonly property var supportedExtensions: {
         var exts = ['.obj', '.stl', '.fbx', '.gltf'];
-        if(supportAlembic)
+        if(supportSfmData)
+        {
             exts.push('.abc');
+            exts.push('.json');
+            exts.push('.sfm');
+        }
         if(supportDepthMap)
             exts.push('.exr');
         return exts;

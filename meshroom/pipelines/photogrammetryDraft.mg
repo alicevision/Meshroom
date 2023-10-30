@@ -1,17 +1,18 @@
 {
     "header": {
         "nodesVersions": {
+            "PrepareDenseScene": "3.1",
             "Meshing": "7.0",
-            "FeatureExtraction": "1.2",
-            "CameraInit": "9.0",
-            "FeatureMatching": "2.0",
-            "MeshFiltering": "3.0",
             "Texturing": "6.0",
-            "StructureFromMotion": "3.1",
             "ImageMatching": "2.0",
+            "MeshFiltering": "3.0",
+            "FeatureExtraction": "1.3",
+            "StructureFromMotion": "3.3",
+            "FeatureMatching": "2.0",
+            "CameraInit": "9.0",
             "Publish": "1.3"
         },
-        "releaseVersion": "2023.2.0",
+        "releaseVersion": "2023.3.0-develop",
         "fileVersion": "1.1",
         "template": true
     },
@@ -19,22 +20,23 @@
         "Texturing_1": {
             "nodeType": "Texturing",
             "position": [
-                1400,
+                1600,
                 0
             ],
             "inputs": {
                 "input": "{Meshing_1.output}",
+                "imagesFolder": "{PrepareDenseScene_1.output}",
                 "inputMesh": "{MeshFiltering_1.outputMesh}"
             }
         },
         "Meshing_1": {
             "nodeType": "Meshing",
             "position": [
-                1000,
+                1200,
                 0
             ],
             "inputs": {
-                "input": "{StructureFromMotion_1.output}"
+                "input": "{PrepareDenseScene_1.input}"
             }
         },
         "ImageMatching_1": {
@@ -86,7 +88,7 @@
         "MeshFiltering_1": {
             "nodeType": "MeshFiltering",
             "position": [
-                1200,
+                1400,
                 0
             ],
             "inputs": {
@@ -109,7 +111,7 @@
         "Publish_1": {
             "nodeType": "Publish",
             "position": [
-                1600,
+                1800,
                 0
             ],
             "inputs": {
@@ -118,6 +120,16 @@
                     "{Texturing_1.outputMaterial}",
                     "{Texturing_1.outputTextures}"
                 ]
+            }
+        },
+        "PrepareDenseScene_1": {
+            "nodeType": "PrepareDenseScene",
+            "position": [
+                1000,
+                0
+            ],
+            "inputs": {
+                "input": "{StructureFromMotion_1.output}"
             }
         }
     }

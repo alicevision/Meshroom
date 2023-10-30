@@ -5,28 +5,28 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "CameraInit": "9.0",
+            "ExportAnimatedCamera": "2.0",
+            "DepthMapFilter": "4.0",
+            "Texturing": "6.0",
             "ConvertSfMFormat": "2.0",
-            "PrepareDenseScene": "3.1",
-            "MeshFiltering": "3.0",
-            "Meshing": "7.0",
+            "Publish": "1.3",
+            "MeshDecimate": "1.0",
+            "CameraInit": "9.0",
+            "ImageSegmentation": "1.0",
+            "ApplyCalibration": "1.0",
             "FeatureExtraction": "1.3",
+            "ScenePreview": "2.0",
+            "StructureFromMotion": "3.3",
+            "MeshFiltering": "3.0",
+            "ImageMatchingMultiSfM": "1.0",
+            "DepthMap": "5.0",
+            "PrepareDenseScene": "3.1",
+            "ImageMatching": "2.0",
+            "KeyframeSelection": "5.0",
+            "SfMTransfer": "2.1",
             "SfMTriangulation": "1.0",
             "FeatureMatching": "2.0",
-            "KeyframeSelection": "5.0",
-            "ScenePreview": "2.0",
-            "Texturing": "6.0",
-            "ImageSegmentation": "1.0",
-            "DepthMapFilter": "4.0",
-            "DepthMap": "5.0",
-            "ImageMatchingMultiSfM": "1.0",
-            "ApplyCalibration": "1.0",
-            "ImageMatching": "2.0",
-            "Publish": "1.3",
-            "SfMTransfer": "2.1",
-            "StructureFromMotion": "3.3",
-            "ExportAnimatedCamera": "2.0",
-            "MeshDecimate": "1.0"
+            "Meshing": "7.0"
         }
     },
     "graph": {
@@ -63,7 +63,8 @@
             ],
             "inputs": {
                 "input": "{PrepareDenseScene_1.input}",
-                "imagesFolder": "{PrepareDenseScene_1.output}"
+                "imagesFolder": "{PrepareDenseScene_1.output}",
+                "downscale": 1
             },
             "internalInputs": {
                 "color": "#3f3138"
@@ -397,7 +398,10 @@
                 "matchesFolders": [
                     "{FeatureMatching_1.output}"
                 ],
-                "describerTypes": "{FeatureMatching_1.describerTypes}"
+                "describerTypes": "{FeatureMatching_1.describerTypes}",
+                "minAngleForTriangulation": 1.0,
+                "minAngleForLandmark": 0.5,
+                "filterTrackForks": true
             },
             "internalInputs": {
                 "comment": "Solve all keyframes first.",

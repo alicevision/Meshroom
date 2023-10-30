@@ -39,7 +39,7 @@ Can also be used to calibrate a lighting dome (RTI type).
             label="Calibration Method",
             description="Method used for light calibration.\n"
                         "Use 'brightestPoint' for shiny spheres and 'whiteSphere' for white matte spheres.",
-            values=["brightestPoint", "whiteSphere"],
+            values=["brightestPoint", "whiteSphere", "HS"],
             value="brightestPoint",
             exclusive=True,
             uid=[0],

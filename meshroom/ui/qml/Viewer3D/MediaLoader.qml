@@ -117,6 +117,12 @@ import Utils 1.0
                     resectionId = Viewer3DSettings.resectionIdCount
                     root.status = obj.status;
                 })
+
+                obj.cameraSelected.connect(
+                    function(viewId) {
+                        obj.selectedViewId = viewId
+                    }
+                )
             }
         }
     }

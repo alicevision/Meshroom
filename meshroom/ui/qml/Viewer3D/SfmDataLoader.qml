@@ -17,6 +17,13 @@ SfmDataEntity {
 
     signal cameraSelected(var viewId)
 
+    Connections {
+        target: _reconstruction
+        function onSelectedViewIdChanged() {
+            root.cameraSelected(_reconstruction.selectedViewId)
+        }
+    }
+
     function spawnCameraSelectors() {
         var validCameras = 0;
         // spawn camera selector for each camera

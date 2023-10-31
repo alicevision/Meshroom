@@ -109,6 +109,7 @@ FloatingPane {
                 Flow {
                     Layout.fillWidth: true
                     spacing: 2
+
                     // Synchronization
                     MaterialToolButton {
                         id: syncViewpointCamera
@@ -118,6 +119,7 @@ FloatingPane {
                         checked: enabled && Viewer3DSettings.syncViewpointCamera
                         onClicked: Viewer3DSettings.syncViewpointCamera = !Viewer3DSettings.syncViewpointCamera
                     }
+
                     // Image Overlay controls
                     RowLayout {
                         visible: syncViewpointCamera.enabled && Viewer3DSettings.syncViewpointCamera
@@ -150,6 +152,82 @@ FloatingPane {
                         ToolTip.text: "Frame Overlay"
                         checked: Viewer3DSettings.viewpointImageFrame
                         onClicked: Viewer3DSettings.viewpointImageFrame = !Viewer3DSettings.viewpointImageFrame
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    RowLayout {
+                        Layout.fillHeight: true
+                        spacing: 2
+
+                        MaterialToolButton {
+                            id: resectionIdButton
+                            text: MaterialIcons.switch_video
+                            ToolTip.text: "Display Cameras Based On Resection IDs"
+                            ToolTip.visible: hovered
+                            enabled: Viewer3DSettings.resectionIdCount
+                            checked: enabled && Viewer3DSettings.displayResectionIds
+                            onClicked: {
+                                Viewer3DSettings.displayResectionIds = !Viewer3DSettings.displayResectionIds
+                                Viewer3DSettings.resectionId = Viewer3DSettings.resectionIdCount
+                                resectionIdSlider.value = Viewer3DSettings.resectionId
+                            }
+
+                            onEnabledChanged: {
+                                Viewer3DSettings.resectionId = Viewer3DSettings.resectionIdCount
+                                resectionIdSlider.value = Viewer3DSettings.resectionId
+                                if (!enabled) {
+                                    Viewer3DSettings.displayResectionIds = false
+                                }
+                            }
+                        }
+
+                        Slider {
+                            id: resectionIdSlider
+                            value: Viewer3DSettings.resectionId
+                            from: 0
+                            to: Viewer3DSettings.resectionIdCount
+                            stepSize: 1
+                            onMoved: Viewer3DSettings.resectionId = value
+                            Layout.fillWidth: true
+                            leftPadding: 2
+                            rightPadding: 2
+                            ToolTip.text: "Resection ID " + value + "/" + Viewer3DSettings.resectionIdCount
+                            ToolTip.visible: hovered || pressed
+                            ToolTip.delay: 150
+                            visible: Viewer3DSettings.displayResectionIds
+                        }
+                    }
+
+                    Label {
+                        text: "Cameras for ID " + Viewer3DSettings.resectionId + ": " + Viewer3DSettings.resectionGroups[Viewer3DSettings.resectionId]
+                        font.pointSize: 8
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
+                        visible: Viewer3DSettings.displayResectionIds
+                    }
+
+                    Label {
+                        text: {
+                            let currentCameras = 0
+                            let totalCameras = 0
+                            for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
+                                if (i <= Viewer3DSettings.resectionId)
+                                    currentCameras += Viewer3DSettings.resectionGroups[i]
+                                totalCameras += Viewer3DSettings.resectionGroups[i]
+                            }
+
+                            return "(total cameras: " + currentCameras + "/" + totalCameras + ")"
+                        }
+                        font.pointSize: 8
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
+                        visible: Viewer3DSettings.displayResectionIds
                     }
                 }
             }
@@ -191,6 +269,12 @@ FloatingPane {
                     spacing: 4
 
                     ScrollBar.vertical: ScrollBar { id: scrollBar }
+
+                    onCountChanged: {
+                        if (mediaListView.count === 0) {
+                            Viewer3DSettings.resectionIdCount = 0
+                        }
+                    }
 
                     currentIndex: -1
 

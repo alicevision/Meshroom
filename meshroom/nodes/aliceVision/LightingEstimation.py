@@ -13,7 +13,7 @@ class LightingEstimation(desc.AVCommandLineNode):
     inputs = [
         desc.File(
             name="input",
-            label="SfMData",
+            label="Input SfMData",
             description="Input SfMData file.",
             value="",
             uid=[0],

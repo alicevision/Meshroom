@@ -45,19 +45,16 @@ Item {
     SystemPalette { id: activePalette }
 
     /// Get node delegate for the given node object
-    function nodeDelegate(node)
-    {
-        for(var i=0; i<nodeRepeater.count; ++i)
-        {
-            if(nodeRepeater.itemAt(i).node === node)
+    function nodeDelegate(node) {
+        for(var i = 0; i < nodeRepeater.count; ++i) {
+            if (nodeRepeater.itemAt(i).node === node)
                 return nodeRepeater.itemAt(i)
         }
         return undefined
     }
 
     /// Select node delegate
-    function selectNode(node)
-    {
+    function selectNode(node) {
         uigraph.selectedNode = node
         if (node !== null) {
             uigraph.appendSelection(node)
@@ -79,8 +76,7 @@ Item {
     }
 
     /// Copy node content to clipboard
-    function copyNodes()
-    {
+    function copyNodes() {
         var nodeContent = uigraph.getSelectedNodesContent()
         if (nodeContent !== '') {
             Clipboard.clear()
@@ -89,8 +85,7 @@ Item {
     }
 
     /// Paste content of clipboard to graph editor and create new node if valid
-    function pasteNodes()
-    {
+    function pasteNodes() {
         var finalPosition = undefined
         var centerPosition = false
         if (mouseArea.containsMouse) {
@@ -115,37 +110,30 @@ Item {
     }
 
     /// Get the coordinates of the point at the center of the GraphEditor
-    function getCenterPosition()
-    {
+    function getCenterPosition() {
         return mapToItem(draggable, mouseArea.width / 2, mouseArea.height / 2)
     }
 
     Keys.onPressed: {
         if (event.key === Qt.Key_F) {
-            fit();
-        } 
-        else if (event.key === Qt.Key_Delete) {
+            fit()
+        } else if (event.key === Qt.Key_Delete) {
             if (event.modifiers === Qt.AltModifier) {
-                uigraph.removeNodesFrom(uigraph.selectedNodes);
+                uigraph.removeNodesFrom(uigraph.selectedNodes)
+            } else {
+                uigraph.removeNodes(uigraph.selectedNodes)
             }
-            else {
-                uigraph.removeNodes(uigraph.selectedNodes);
-            }
-        }
-        else if (event.key === Qt.Key_D) {
-            duplicateNode(event.modifiers === Qt.AltModifier);
-        }
-        else if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
-            copyNodes();
-        }
-        else if (event.key === Qt.Key_V && event.modifiers === Qt.ControlModifier) {
-            pasteNodes();
-        }
-        else if (event.key === Qt.Key_Tab) {
-            event.accepted = true;
+        } else if (event.key === Qt.Key_D) {
+            duplicateNode(event.modifiers === Qt.AltModifier)
+        } else if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
+            copyNodes()
+        } else if (event.key === Qt.Key_V && event.modifiers === Qt.ControlModifier) {
+            pasteNodes()
+        } else if (event.key === Qt.Key_Tab) {
+            event.accepted = true
             if (mouseArea.containsMouse) {
-                newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY);
-                newNodeMenu.popup();
+                newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouseArea.mouseX, mouseArea.mouseY)
+                newNodeMenu.popup()
             }
         }
     }
@@ -164,14 +152,14 @@ Item {
         cursorShape: drag.target == draggable ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
         onWheel: {
-            var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1/factor
+            var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1 / factor
             var scale = draggable.scale * zoomFactor
             scale = Math.min(Math.max(minZoom, scale), maxZoom)
-            if(draggable.scale == scale)
+            if (draggable.scale == scale)
                 return
             var point = mapToItem(draggable, wheel.x, wheel.y)
-            draggable.x += (1-zoomFactor) * point.x * draggable.scale
-            draggable.y += (1-zoomFactor) * point.y * draggable.scale
+            draggable.x += (1 - zoomFactor) * point.x * draggable.scale
+            draggable.y += (1 - zoomFactor) * point.y * draggable.scale
             draggable.scale = scale
             workspaceMoved()
         }
@@ -197,16 +185,15 @@ Item {
             workspaceClicked()
         }
         onPositionChanged: {
-            if(drag.active)
+            if (drag.active)
                 workspaceMoved()
         }
 
         onClicked: {
-            if(mouse.button == Qt.RightButton)
-            {
+            if (mouse.button == Qt.RightButton) {
                 // store mouse click position in 'draggable' coordinates as new node spawn position
-                newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y);
-                newNodeMenu.popup();
+                newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
+                newNodeMenu.popup()
             }
         }
 
@@ -217,8 +204,7 @@ Item {
             property point spawnPosition
             property variant menuKeys: Object.keys(root.nodeTypesModel).concat(Object.values(MeshroomApp.pipelineTemplateNames))
 
-            function createNode(nodeType)
-            {
+            function createNode(nodeType) {
                 uigraph.clearNodeSelection() // Ensures that only the created node / imported pipeline will be selected
 
                 // "nodeType" might be a pipeline (artificially added in the "Pipelines" category) instead of a node
@@ -231,8 +217,7 @@ Item {
                 close()
             }
 
-            function importPipeline(pipeline)
-            {
+            function importPipeline(pipeline) {
                 if (MeshroomApp.pipelineTemplateNames.includes(pipeline)) {
                     var url = MeshroomApp.pipelineTemplateFiles[MeshroomApp.pipelineTemplateNames.indexOf(pipeline)]["path"]
                     var nodes = uigraph.importProject(Filepath.stringToUrl(url), spawnPosition)
@@ -243,21 +228,20 @@ Item {
                 return false
             }
 
-            function parseCategories()
-            {
+            function parseCategories() {
                 // Organize nodes based on their category
                 // {"category1": ["node1", "node2"], "category2": ["node3", "node4"]}
                 let categories = {};
                 for (const [name, data] of Object.entries(root.nodeTypesModel)) {
                     let category = data["category"];
                     if (categories[category] === undefined) {
-                        categories[category] = [];
+                        categories[category] = []
                     }
                     categories[category].push(name)
                 }
 
                 // Add a "Pipelines" category, filled with the list of templates to create pipelines from the menu
-                categories["Pipelines"] = MeshroomApp.pipelineTemplateNames;
+                categories["Pipelines"] = MeshroomApp.pipelineTemplateNames
 
                 return categories
             }
@@ -287,27 +271,27 @@ Item {
                     // Hide items that does not match the filter text
                     visible: modelData.toLowerCase().indexOf(searchBar.text.toLowerCase()) > -1
                     // Reset menu currentIndex if highlighted items gets filtered out
-                    onVisibleChanged: if(highlighted) newNodeMenu.currentIndex = 0
+                    onVisibleChanged: if (highlighted) newNodeMenu.currentIndex = 0
                     text: modelData
                     // Forward key events to the search bar to continue typing seamlessly
                     // even if this delegate took the activeFocus due to mouse hovering
                     Keys.forwardTo: [searchBar.textField]
                     Keys.onPressed: {
                         event.accepted = false;
-                        switch(event.key) {
+                        switch (event.key) {
                             case Qt.Key_Return:
                             case Qt.Key_Enter:
                                 // create node on validation (Enter/Return keys)
-                                newNodeMenu.createNode(modelData);
-                                event.accepted = true;
-                                break;
+                                newNodeMenu.createNode(modelData)
+                                event.accepted = true
+                                break
                             case Qt.Key_Up:
                             case Qt.Key_Down:
                             case Qt.Key_Left:
                             case Qt.Key_Right:
-                                break; // ignore if arrow key was pressed to let the menu be controlled
+                                break  // ignore if arrow key was pressed to let the menu be controlled
                             default:
-                                searchBar.forceActiveFocus();
+                                searchBar.forceActiveFocus()
                         }
                     }
                     // Create node on mouse click
@@ -339,7 +323,7 @@ Item {
             // Dynamically add the menu categories
             Instantiator {
                 model: !(searchBar.text !== "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
-                onObjectAdded: newNodeMenu.insertMenu(index+1, object ) // add sub-menu under the search bar
+                onObjectAdded: newNodeMenu.insertMenu(index + 1, object ) // add sub-menu under the search bar
                 onObjectRemoved: newNodeMenu.removeMenu(object)
 
                 delegate: Menu {
@@ -409,12 +393,10 @@ Item {
                     onPressed: {
                         const canEdit = !edge.dst.node.locked
 
-                        if(event.button === Qt.RightButton)
-                        {
-                            if(canEdit && (event.modifiers & Qt.AltModifier)) {
+                        if (event.button === Qt.RightButton) {
+                            if (canEdit && (event.modifiers & Qt.AltModifier)) {
                                 uigraph.removeEdge(edge)
-                            }
-                            else {
+                            } else {
                                 edgeMenu.currentEdge = edge
                                 edgeMenu.popup()
                             }
@@ -478,8 +460,8 @@ Item {
                     ToolTip.text: "Copy selection to the clipboard and immediately paste it"
                     ToolTip.visible: hovered
                     onTriggered: {
-                        copyNodes();
-                        pasteNodes();
+                        copyNodes()
+                        pasteNodes()
                     }
                 }
                 MenuItem {
@@ -489,11 +471,14 @@ Item {
                     MaterialToolButton {
                         id: duplicateFollowingButton
                         height: parent.height
-                        anchors { right: parent.right; rightMargin: parent.padding }
+                        anchors {
+                            right: parent.right
+                            rightMargin: parent.padding
+                        }
                         text: MaterialIcons.fast_forward
                         onClicked: {
-                            duplicateNode(true);
-                            nodeMenu.close();
+                            duplicateNode(true)
+                            nodeMenu.close()
                         }
                     }
                 }
@@ -504,11 +489,14 @@ Item {
                     MaterialToolButton {
                         id: removeFollowingButton
                         height: parent.height
-                        anchors { right: parent.right; rightMargin: parent.padding }
+                        anchors {
+                            right: parent.right
+                            rightMargin: parent.padding
+                        }
                         text: MaterialIcons.fast_forward
                         onClicked: {
-                            uigraph.removeNodesFrom(uigraph.selectedNodes);
-                            nodeMenu.close();
+                            uigraph.removeNodesFrom(uigraph.selectedNodes)
+                            nodeMenu.close()
                         }
                     }
                 }
@@ -516,35 +504,38 @@ Item {
                 MenuItem {
                     text: "Delete Data" + (deleteFollowingButton.hovered ? " From Here" : "" ) + "..."
                     enabled: {
-                        if(!nodeMenu.currentNode)
+                        if (!nodeMenu.currentNode)
                             return false
                         // Check if the current node is locked (needed because it does not belong to its own duplicates list)
-                        if(nodeMenu.currentNode.locked)
+                        if (nodeMenu.currentNode.locked)
                             return false
                         // Check if at least one of the duplicate nodes is locked
-                        for(let i = 0; i < nodeMenu.currentNode.duplicates.count; ++i) {
-                            if(nodeMenu.currentNode.duplicates.at(i).locked)
+                        for (let i = 0; i < nodeMenu.currentNode.duplicates.count; ++i) {
+                            if (nodeMenu.currentNode.duplicates.at(i).locked)
                                 return false
                         }
                         return true
                     }
 
                     function showConfirmationDialog(deleteFollowing) {
-                        uigraph.forceNodesStatusUpdate();
+                        uigraph.forceNodesStatusUpdate()
                         var obj = deleteDataDialog.createObject(root,
                                            {
                                                "node": nodeMenu.currentNode,
                                                "deleteFollowing": deleteFollowing
-                                           });
+                                           })
                         obj.open()
-                        nodeMenu.close();
+                        nodeMenu.close()
                     }
 
                     onTriggered: showConfirmationDialog(false)
 
                     MaterialToolButton {
                         id: deleteFollowingButton
-                        anchors { right: parent.right; rightMargin: parent.padding }
+                        anchors {
+                            right: parent.right
+                            rightMargin: parent.padding
+                        }
                         height: parent.height
                         text: MaterialIcons.fast_forward
                         onClicked: parent.showConfirmationDialog(true)
@@ -566,10 +557,10 @@ Item {
                             standardButtons: Dialog.Yes | Dialog.Cancel
 
                             onAccepted: {
-                                if(deleteFollowing)
-                                    uigraph.clearDataFrom(uigraph.selectedNodes);
+                                if (deleteFollowing)
+                                    uigraph.clearDataFrom(uigraph.selectedNodes)
                                 else
-                                    uigraph.clearData(uigraph.selectedNodes);
+                                    uigraph.clearData(uigraph.selectedNodes)
                             }
                             onClosed: destroy()
                         }
@@ -611,7 +602,7 @@ Item {
                                     return
                                 }
                             } else if (mouse.modifiers & Qt.AltModifier) {
-                                if (!(mouse.modifiers & Qt.ControlModifier)){
+                                if (!(mouse.modifiers & Qt.ControlModifier)) {
                                     uigraph.clearNodeSelection()
                                 }
                                 uigraph.selectFollowing(node)
@@ -796,10 +787,10 @@ Item {
                 padding: 0
                 enabled: graphSearchBar.text !== ""
                 onClicked: {
-                    navigation.currentIndex--;
+                    navigation.currentIndex--
                     if (navigation.currentIndex === -1)
-                        navigation.currentIndex = filteredNodes.count - 1;
-                    navigation.nextItem();
+                        navigation.currentIndex = filteredNodes.count - 1
+                    navigation.nextItem()
                 }
             }
 
@@ -808,10 +799,10 @@ Item {
                 padding: 0
                 enabled: graphSearchBar.text !== ""
                 onClicked: {
-                    navigation.currentIndex++;
+                    navigation.currentIndex++
                     if (navigation.currentIndex === filteredNodes.count)
-                        navigation.currentIndex = 0;
-                    navigation.nextItem();
+                        navigation.currentIndex = 0
+                    navigation.nextItem()
                 }
             }
 
@@ -839,38 +830,34 @@ Item {
             }
         }
 
-        function nextItem()
-        {
+        function nextItem() {
             // compute bounding box
             var node = nodeRepeater.itemAt(filteredNodes.itemAt(navigation.currentIndex).index_)
             var bbox = Qt.rect(node.x, node.y, node.width, node.height)
             // rescale to fit the bounding box in the view, zoom is limited to prevent huge text
-            draggable.scale = Math.min(Math.min(root.width/bbox.width, root.height/bbox.height),maxZoom)
+            draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height),maxZoom)
             // recenter
-            draggable.x = bbox.x*draggable.scale*-1 + (root.width-bbox.width*draggable.scale)*0.5
-            draggable.y = bbox.y*draggable.scale*-1 + (root.height-bbox.height*draggable.scale)*0.5
+            draggable.x = bbox.x*draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
+            draggable.y = bbox.y*draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
         }
     }
 
-    function registerAttributePin(attribute, pin)
-    {
+    function registerAttributePin(attribute, pin) {
         root._attributeToDelegate[attribute] = pin
     }
-    function unregisterAttributePin(attribute, pin)
-    {
+    function unregisterAttributePin(attribute, pin) {
         delete root._attributeToDelegate[attribute]
     }
 
-    function boundingBox()
-    {
+    function boundingBox() {
         var first = nodeRepeater.itemAt(0)
         var bbox = Qt.rect(first.x, first.y, first.x + first.width, first.y + first.height)
-        for(var i=0; i<root.graph.nodes.count; ++i) {
+        for (var i = 0; i < root.graph.nodes.count; ++i) {
             var item = nodeRepeater.itemAt(i)
             bbox.x = Math.min(bbox.x, item.x)
             bbox.y = Math.min(bbox.y, item.y)
-            bbox.width = Math.max(bbox.width, item.x+item.width)
-            bbox.height = Math.max(bbox.height, item.y+item.height)
+            bbox.width = Math.max(bbox.width, item.x + item.width)
+            bbox.height = Math.max(bbox.height, item.y + item.height)
         }
         bbox.width -= bbox.x
         bbox.height -= bbox.y
@@ -882,10 +869,9 @@ Item {
         // compute bounding box
         var bbox = boundingBox()
         // rescale to fit the bounding box in the view, zoom is limited to prevent huge text
-        draggable.scale = Math.min(Math.min(root.width/bbox.width, root.height/bbox.height),maxZoom)
+        draggable.scale = Math.min(Math.min(root.width / bbox.width, root.height / bbox.height), maxZoom)
         // recenter
-        draggable.x = bbox.x*draggable.scale*-1 + (root.width-bbox.width*draggable.scale)*0.5
-        draggable.y = bbox.y*draggable.scale*-1 + (root.height-bbox.height*draggable.scale)*0.5
+        draggable.x = bbox.x * draggable.scale * -1 + (root.width - bbox.width * draggable.scale) * 0.5
+        draggable.y = bbox.y * draggable.scale * -1 + (root.height - bbox.height * draggable.scale) * 0.5
     }
-
 }

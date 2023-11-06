@@ -17,11 +17,11 @@ RowLayout {
     property bool displayOutputPinForInput: true
 
     // position of the anchor for attaching and edge to this attribute pin
-    readonly property point inputAnchorPos: Qt.point(inputAnchor.x + inputAnchor.width/2,
-                                                    inputAnchor.y + inputAnchor.height/2)
+    readonly property point inputAnchorPos: Qt.point(inputAnchor.x + inputAnchor.width / 2,
+                                                     inputAnchor.y + inputAnchor.height / 2)
 
-    readonly property point outputAnchorPos: Qt.point(outputAnchor.x + outputAnchor.width/2,
-                                                    outputAnchor.y + outputAnchor.height/2)
+    readonly property point outputAnchorPos: Qt.point(outputAnchor.x + outputAnchor.width / 2,
+                                                      outputAnchor.y + outputAnchor.height / 2)
 
     readonly property bool isList: attribute && attribute.type === "ListAttribute"
 
@@ -39,8 +39,8 @@ RowLayout {
     Repeater {
         id: childrenRepeater
         model: isList && !attribute.isLink ? attribute.value : 0
-        onItemAdded: {childPinCreated(item.childAttribute, item)}
-        onItemRemoved: {childPinDeleted(item.childAttribute, item)}
+        onItemAdded: childPinCreated(item.childAttribute, item)
+        onItemRemoved: childPinDeleted(item.childAttribute, item)
         delegate: Item {
             property var childAttribute: object
         }
@@ -52,10 +52,10 @@ RowLayout {
 
         width: 8
         height: width
-        radius: isList ? 0 : width/2
+        radius: isList ? 0 : width / 2
         Layout.alignment: Qt.AlignVCenter
 
-        border.color:  Colors.sysPalette.mid
+        border.color: Colors.sysPalette.mid
         color: Colors.sysPalette.base
 
         Rectangle {
@@ -64,7 +64,7 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: 2
             color: {
-                if(inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop))
+                if (inputConnectMA.containsMouse || inputConnectMA.drag.active || (inputDropArea.containsDrag && inputDropArea.acceptableDrop))
                     return Colors.sysPalette.highlight
                 return Colors.sysPalette.text
             }
@@ -84,19 +84,17 @@ RowLayout {
             keys: [inputDragTarget.objectName]
             onEntered: {
                 // Check if attributes are compatible to create a valid connection
-                if( root.readOnly                                         // cannot connect on a read-only attribute
-                  || drag.source.objectName != inputDragTarget.objectName // not an edge connector
-                  || drag.source.baseType !== inputDragTarget.baseType    // not the same base type
-                  || drag.source.nodeItem === inputDragTarget.nodeItem    // connection between attributes of the same node
-                  || (drag.source.isList && !inputDragTarget.isList)      // connection between a list and a simple attribute
-                  || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
-                  || drag.source.connectorType === "input"                // refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
-                  )
-                {
+                if (root.readOnly                                           // cannot connect on a read-only attribute
+                    || drag.source.objectName != inputDragTarget.objectName // not an edge connector
+                    || drag.source.baseType !== inputDragTarget.baseType    // not the same base type
+                    || drag.source.nodeItem === inputDragTarget.nodeItem    // connection between attributes of the same node
+                    || (drag.source.isList && !inputDragTarget.isList)      // connection between a list and a simple attribute
+                    || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
+                    || drag.source.connectorType === "input"                // refuse to connect an "input pin" on another one (input attr can be connected to input attr, but not the graphical pin)
+                   ) {
                     // Refuse attributes connection
                     drag.accepted = false
-                }
-                else if (inputDragTarget.attribute.isLink) { // already connected attribute
+                } else if (inputDragTarget.attribute.isLink) { // already connected attribute
                     root.edgeAboutToBeRemoved(inputDragTarget.attribute)
                 }
                 inputDropArea.acceptableDrop = drag.accepted
@@ -159,8 +157,8 @@ RowLayout {
         Edge {
             id: inputConnectEdge
             visible: false
-            point1x: inputDragTarget.x + inputDragTarget.width/2
-            point1y: inputDragTarget.y + inputDragTarget.height/2
+            point1x: inputDragTarget.x + inputDragTarget.width / 2
+            point1y: inputDragTarget.y + inputDragTarget.height / 2
             point2x: parent.width / 2
             point2y: parent.width / 2
             color: palette.highlight
@@ -214,7 +212,7 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: 2
             color: {
-                if(outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
+                if (outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
                     return Colors.sysPalette.highlight
                 return Colors.sysPalette.text
             }
@@ -234,18 +232,16 @@ RowLayout {
             keys: [outputDragTarget.objectName]
             onEntered: {
                 // Check if attributes are compatible to create a valid connection
-                if( drag.source.objectName != outputDragTarget.objectName // not an edge connector
-                  || drag.source.baseType !== outputDragTarget.baseType   // not the same base type
-                  || drag.source.nodeItem === outputDragTarget.nodeItem   // connection between attributes of the same node
-                  || (!drag.source.isList && outputDragTarget.isList)     // connection between a list and a simple attribute
-                  || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
-                  || drag.source.connectorType === "output"               // refuse to connect an output pin on another one
-                  )
-                {
+                if (drag.source.objectName != outputDragTarget.objectName   // not an edge connector
+                    || drag.source.baseType !== outputDragTarget.baseType   // not the same base type
+                    || drag.source.nodeItem === outputDragTarget.nodeItem   // connection between attributes of the same node
+                    || (!drag.source.isList && outputDragTarget.isList)     // connection between a list and a simple attribute
+                    || (drag.source.isList && childrenRepeater.count)       // source/target are lists but target already has children
+                    || drag.source.connectorType === "output"               // refuse to connect an output pin on another one
+                   ) {
                     // Refuse attributes connection
                     drag.accepted = false
-                }
-                else if (drag.source.attribute.isLink) { // already connected attribute
+                } else if (drag.source.attribute.isLink) { // already connected attribute
                     root.edgeAboutToBeRemoved(drag.source.attribute)
                 }
                 outputDropArea.acceptableDrop = drag.accepted
@@ -277,8 +273,8 @@ RowLayout {
             height: parent.height
             Drag.keys: [outputDragTarget.objectName]
             Drag.active: outputConnectMA.drag.active
-            Drag.hotSpot.x: width*0.5
-            Drag.hotSpot.y: height*0.5
+            Drag.hotSpot.x: width * 0.5
+            Drag.hotSpot.y: height * 0.5
         }
 
         MouseArea {
@@ -304,8 +300,8 @@ RowLayout {
             visible: false
             point1x: parent.width / 2
             point1y: parent.width / 2
-            point2x: outputDragTarget.x + outputDragTarget.width/2
-            point2y: outputDragTarget.y + outputDragTarget.height/2
+            point2x: outputDragTarget.x + outputDragTarget.width / 2
+            point2y: outputDragTarget.y + outputDragTarget.height / 2
             color: palette.highlight
             thickness: outputDragTarget.dropAccepted ? 2 : 1
         }
@@ -354,8 +350,8 @@ RowLayout {
                 script: {
                     // Add the right offset if the initial click is not exactly at the center of the connection circle.
                     var pos = inputDragTarget.mapFromItem(inputConnectMA, inputConnectMA.mouseX, inputConnectMA.mouseY);
-                    inputDragTarget.x = pos.x - inputDragTarget.width/2;
-                    inputDragTarget.y = pos.y - inputDragTarget.height/2;
+                    inputDragTarget.x = pos.x - inputDragTarget.width / 2;
+                    inputDragTarget.y = pos.y - inputDragTarget.height / 2;
                 }
             }
         },
@@ -374,11 +370,10 @@ RowLayout {
             StateChangeScript {
                 script: {
                     var pos = outputDragTarget.mapFromItem(outputConnectMA, outputConnectMA.mouseX, outputConnectMA.mouseY);
-                    outputDragTarget.x = pos.x - outputDragTarget.width/2;
-                    outputDragTarget.y = pos.y - outputDragTarget.height/2;
+                    outputDragTarget.x = pos.x - outputDragTarget.width / 2;
+                    outputDragTarget.y = pos.y - outputDragTarget.height / 2;
                 }
             }
         }
     ]
-
 }

@@ -36,10 +36,10 @@ Item {
     // update thumbnail location
     // can be called from the GridView when a new thumbnail has been written on disk
     function updateThumbnail() {
-        thumbnail.source = ThumbnailCache.thumbnail(root.source, root.cellID);
+        thumbnail.source = ThumbnailCache.thumbnail(root.source, root.cellID)
     }
     onSourceChanged: {
-        updateThumbnail();
+        updateThumbnail()
     }
 
     // Send a new request after 5 seconds if thumbnail is not loaded
@@ -49,7 +49,7 @@ Item {
         running: true
         onTriggered: {
             if (thumbnail.status == Image.Null) {
-                updateThumbnail();
+                updateThumbnail()
             }
         }
     }

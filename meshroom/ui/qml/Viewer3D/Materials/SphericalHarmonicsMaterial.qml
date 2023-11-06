@@ -33,24 +33,23 @@ Material {
             return;
         }
         Request.get(Filepath.urlToString(shlSource), function(xhr) {
-            if(xhr.readyState === XMLHttpRequest.DONE) {
-                var coeffs = [];
-                var lines = xhr.responseText.split("\n");
-                lines.forEach(function(l){
-                    var lineCoeffs = [];
-                    l.split(" ").forEach(function(v){
-                        if(v) { lineCoeffs.push(v); }
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                var coeffs = []
+                var lines = xhr.responseText.split("\n")
+                lines.forEach(function(l) {
+                    var lineCoeffs = []
+                    l.split(" ").forEach(function(v) {
+                        if (v) { lineCoeffs.push(v) }
                     })
-                    if(lineCoeffs.length == 3)
-                        coeffs.push(Qt.vector3d(lineCoeffs[0], lineCoeffs[1], lineCoeffs[2]));
-                });
+                    if (lineCoeffs.length == 3)
+                        coeffs.push(Qt.vector3d(lineCoeffs[0], lineCoeffs[1], lineCoeffs[2]))
+                })
 
-                if(coeffs.length == 9) {
-                    coefficients = coeffs;
-                }
-                else {
-                    console.warn("Invalid SHL file: " + shlSource + " with " + coeffs.length + " coefficients.");
-                    coefficients = noCoeffs;
+                if (coeffs.length == 9) {
+                    coefficients = coeffs
+                } else {
+                    console.warn("Invalid SHL file: " + shlSource + " with " + coeffs.length + " coefficients.")
+                    coefficients = noCoeffs
                 }
             }
         })

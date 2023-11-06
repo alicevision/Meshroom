@@ -25,8 +25,8 @@ Dialog {
         return asString
     }
 
-    x: parent.width/2 - width/2
-    y: parent.height/2 - height/2
+    x: parent.width / 2 - width / 2
+    y: parent.height / 2 - height / 2
     modal: true
 
     padding: 15
@@ -128,5 +128,4 @@ Dialog {
             }
         ]
     }
-
 }

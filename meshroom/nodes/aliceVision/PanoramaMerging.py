@@ -22,7 +22,7 @@ Merge all inputs coming from the PanoramaCompositing node.
             name="input",
             label="Input SfMData",
             description="Input SfMData file.",
-            value='',
+            value="",
             uid=[0],
         ),
         desc.File(

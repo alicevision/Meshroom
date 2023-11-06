@@ -38,17 +38,14 @@ FloatingPane {
     // note: We need to use csvData.getNbColumns() slot instead of the csvData.nbColumns property to avoid a crash on linux.
     property bool crfReady: csvData && csvData.ready && (csvData.getNbColumns() >= 4)
     onCrfReadyChanged: {
-        if(crfReady)
-        {
+        if (crfReady) {
             redCurve.clear()
             greenCurve.clear()
             blueCurve.clear()
             csvData.getColumn(1).fillChartSerie(redCurve)
             csvData.getColumn(2).fillChartSerie(greenCurve)
             csvData.getColumn(3).fillChartSerie(blueCurve)
-        }
-        else
-        {
+        } else {
             redCurve.clear()
             greenCurve.clear()
             blueCurve.clear()
@@ -125,7 +122,7 @@ FloatingPane {
                     checkState: legend.buttonGroup.checkState
                     onClicked: {
                         const _checked = checked
-                        for(let i = 0; i < responseChart.count; ++i) {
+                        for (let i = 0; i < responseChart.count; ++i) {
                             responseChart.series(i).visible = _checked
                         }
                     }

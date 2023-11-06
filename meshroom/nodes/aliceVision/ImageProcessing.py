@@ -413,7 +413,7 @@ Convert or apply filtering to the input images.
                 desc.BoolParam(
                     name="nlmFilterEnabled",
                     label="Enable",
-                    description='Use Non-Local Mean Denoising from OpenCV to denoise images.',
+                    description="Use Non-Local Mean Denoising from OpenCV to denoise images.",
                     value=False,
                     uid=[0],
                 ),
@@ -587,17 +587,17 @@ Convert or apply filtering to the input images.
         ),
 
         desc.File(
-            name='lensCorrectionProfileInfo',
-            label='Lens Correction Profile Info',
-            description='''Lens Correction Profile filepath or database directory.''',
-            value='${ALICEVISION_LENS_PROFILE_INFO}',
+            name="lensCorrectionProfileInfo",
+            label="Lens Correction Profile Info",
+            description="Lens Correction Profile filepath or database directory.",
+            value="${ALICEVISION_LENS_PROFILE_INFO}",
             uid=[],
         ),
         
         desc.BoolParam(
-            name='lensCorrectionProfileSearchIgnoreCameraModel',
-            label='LCP Generic Search',
-            description='The lens name and camera maker are used to match the LCP database, but the camera model is ignored.',
+            name="lensCorrectionProfileSearchIgnoreCameraModel",
+            label="LCP Generic Search",
+            description="The lens name and camera maker are used to match the LCP database, but the camera model is ignored.",
             value=True,
             uid=[0],
             advanced=True,
@@ -689,7 +689,7 @@ Convert or apply filtering to the input images.
             label="Images",
             description="Output images.",
             semantic="image",
-            value= outputImagesValueFunct,
+            value=outputImagesValueFunct,
             group="",  # do not export on the command line
             uid=[],
         ),

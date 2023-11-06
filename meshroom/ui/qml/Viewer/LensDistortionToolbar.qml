@@ -77,7 +77,7 @@ FloatingPane {
                 ToolTip.text: "Reset Opacity"
 
                 onClicked: {
-                    opacityCtrl.value = opacityDefaultValue;
+                    opacityCtrl.value = opacityDefaultValue
                 }
             }
             TextField {
@@ -118,7 +118,7 @@ FloatingPane {
                 ToolTip.text: "Reset Subdivisions"
 
                 onClicked: {
-                    subdivisionsCtrl.value = subdivisionsDefaultValue;
+                    subdivisionsCtrl.value = subdivisionsDefaultValue
                 }
             }
             TextField {

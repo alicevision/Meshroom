@@ -15,7 +15,7 @@ function analyseError(error) {
     // Group 2: ErrorType
     // Group 3: ErrorMessage
     const regex = /\[(.*)\]\s(.*):([^]*)/
-    if(!regex.test(msg))
+    if (!regex.test(msg))
         return {
             context: "",
             type: "",

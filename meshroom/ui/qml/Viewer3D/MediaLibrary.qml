@@ -26,11 +26,11 @@ Entity {
 
     /// True while at least one media is being loaded
     readonly property bool loading: {
-        for(var i=0; i<m.mediaModel.count; ++i) {
-            if(m.mediaModel.get(i).status === SceneLoader.Loading)
-                return true;
+        for (var i = 0; i < m.mediaModel.count; ++i) {
+            if (m.mediaModel.get(i).status === SceneLoader.Loading)
+                return true
         }
-        return false;
+        return false
     }
 
     signal pressed(var pick)
@@ -63,37 +63,36 @@ Entity {
     }
 
     function makeElement(values) {
-        return Object.assign({}, JSON.parse(JSON.stringify(m.mediaElement)), values);
+        return Object.assign({}, JSON.parse(JSON.stringify(m.mediaElement)), values)
     }
 
     function ensureVisible(source) {
         var idx = find(source);
-        if(idx === -1)
+        if (idx === -1)
             return
-        m.mediaModel.get(idx).visible = true;
-        loadRequest(idx);
+        m.mediaModel.get(idx).visible = true
+        loadRequest(idx)
     }
 
     function find(source) {
-        for(var i=0; i<m.mediaModel.count; ++i) {
-            var elt = m.mediaModel.get(i);
-            if( elt.source === source || elt.attribute === source)
-                return i;
+        for (var i = 0; i < m.mediaModel.count; ++i) {
+            var elt = m.mediaModel.get(i)
+            if (elt.source === source || elt.attribute === source)
+                return i
         }
-        return -1;
+        return -1
     }
 
     function load(filepath, label = undefined) {
-        var pathStr = Filepath.urlToString(filepath);
-        if(!Filepath.exists(pathStr))
-        {
-            console.warn("Media Error: File " + pathStr + " does not exist.");
-            return;
+        var pathStr = Filepath.urlToString(filepath)
+        if (!Filepath.exists(pathStr)) {
+            console.warn("Media Error: File " + pathStr + " does not exist.")
+            return
         }
         // file already loaded, return
-        if(m.sourceToEntity[pathStr]) {
-            ensureVisible(pathStr);
-            return;
+        if (m.sourceToEntity[pathStr]) {
+            ensureVisible(pathStr)
+            return
         }
 
         // add file to the internal ListModel
@@ -101,48 +100,48 @@ Entity {
                     "source": pathStr,
                     "label": label ? label : Filepath.basename(pathStr),
                     "section": "External"
-        }));
+        }))
     }
 
     function view(attribute) {
-        if(m.sourceToEntity[attribute]) {
-            ensureVisible(attribute);
-            return;
+        if (m.sourceToEntity[attribute]) {
+            ensureVisible(attribute)
+            return
         }
 
-        var attrLabel = attribute.isOutput ? "" : attribute.fullName.replace(attribute.node.name, "");
-        var section = attribute.node.label;
+        var attrLabel = attribute.isOutput ? "" : attribute.fullName.replace(attribute.node.name, "")
+        var section = attribute.node.label
         // add file to the internal ListModel
         m.mediaModel.append(makeElement({
                 "label": section + attrLabel,
                 "section": section,
                 "attribute": attribute,
-        }));
+        }))
     }
 
     function remove(index) {
         // remove corresponding entry from model
-        m.mediaModel.remove(index);
+        m.mediaModel.remove(index)
     }
 
     /// Get entity based on source
     function entity(source) {
-        return sourceToEntity[source];
+        return sourceToEntity[source]
     }
 
     function entityAt(index) {
-        return instantiator.objectAt(index);
+        return instantiator.objectAt(index)
     }
 
     function solo(index) {
-        for(var i=0; i<m.mediaModel.count; ++i) {
-            m.mediaModel.setProperty(i, "visible", i === index);
+        for (var i = 0; i < m.mediaModel.count; ++i) {
+            m.mediaModel.setProperty(i, "visible", i === index)
         }
     }
 
     function clear() {
-        m.mediaModel.clear();
-        cache.clear();
+        m.mediaModel.clear()
+        cache.clear()
     }
 
     // Cache that keeps in memory the last unloaded 3D media
@@ -165,7 +164,7 @@ Entity {
 
             // Specific properties to the MESHING node (declared and initialized for every Entity anyway)
             property bool hasBoundingBox: {
-                if(nodeType === "Meshing" && currentNode.attribute("useBoundingBox")) // Can have a BoundingBox 
+                if (nodeType === "Meshing" && currentNode.attribute("useBoundingBox")) // Can have a BoundingBox
                     return currentNode.attribute("useBoundingBox").value
                 return false
             }
@@ -174,7 +173,7 @@ Entity {
 
             // Specific properties to the SFMTRANSFORM node (declared and initialized for every Entity anyway)
             property bool hasTransform: {
-                if(nodeType === "SfMTransform" && currentNode.attribute("method")) // Can have a Transform 
+                if (nodeType === "SfMTransform" && currentNode.attribute("method")) // Can have a Transform
                     return currentNode.attribute("method").value === "manual"
                 return false
             }
@@ -182,7 +181,7 @@ Entity {
             property bool displayTransform: model.displayTransform
 
 
-            // Create the media
+            // Create the medias
             MediaLoader {
                 id: mediaLoader
 
@@ -202,9 +201,9 @@ Entity {
                 property string rawSource: attribute ? attribute.value : model.source
                 // whether dependencies are statified (applies for output/connected input attributes only)
                 readonly property bool dependencyReady: {
-                    if(attribute) {
+                    if (attribute) {
                         const rootAttribute = attribute.isLink ? attribute.rootLinkParam : attribute
-                        if(rootAttribute.isOutput)
+                        if (rootAttribute.isOutput)
                             return rootAttribute.node.globalStatus === "SUCCESS"
                     }
                     return true // is an input param without link (so no dependency) or an external file
@@ -236,48 +235,48 @@ Entity {
 
                 property bool alive: attribute ? attribute.node.alive : false
                 onAliveChanged: {
-                    if(!alive && index >= 0)
+                    if (!alive && index >= 0)
                           remove(index)
                 }
 
                 // 'visible' property drives media loading request
                 onVisibleChanged: {
                     // always request media loading if visible
-                    if(model.visible)
-                        model.requested = true;
+                    if (model.visible)
+                        model.requested = true
                     // only cancel loading request if media is not valid
                     // (a media won't be unloaded if already loaded, only hidden)
-                    else if(!model.valid)
-                        model.requested = false;
+                    else if (!model.valid)
+                        model.requested = false
                 }
 
                 function updateCacheAndModel(forceRequest) {
                     // don't cache explicitly unloaded media
-                    if(model.requested && object && dependencyReady) {
+                    if (model.requested && object && dependencyReady) {
                         // cache current object
-                        if(cache.add(Filepath.urlToString(mediaLoader.source), object));
-                            object = null;
+                        if (cache.add(Filepath.urlToString(mediaLoader.source), object))
+                            object = null
                     }
-                    updateModel(forceRequest);
+                    updateModel(forceRequest)
                 }
 
                 function updateModel(forceRequest) {
                     // update model's source path if input is an attribute
-                    if(attribute) {
-                        model.source = rawSource;
+                    if (attribute) {
+                        model.source = rawSource
                     }
                     // auto-restore entity if raw source is in cache
-                    model.requested = forceRequest || (!model.valid && model.requested) || cache.contains(rawSource);
-                    model.valid = Filepath.exists(rawSource) && dependencyReady;
+                    model.requested = forceRequest || (!model.valid && model.requested) || cache.contains(rawSource)
+                    model.valid = Filepath.exists(rawSource) && dependencyReady
                 }
 
                 Component.onCompleted: {
                     // keep 'source' -> 'entity' reference
-                    m.sourceToEntity[modelSource] = instantiatedEntity;
+                    m.sourceToEntity[modelSource] = instantiatedEntity
                     // always request media loading when delegate has been created
-                    updateModel(true);
+                    updateModel(true)
                     // if external media failed to open, remove element from model
-                    if(!attribute && !object)
+                    if (!attribute && !object)
                         remove(index)
                 }
 
@@ -285,36 +284,36 @@ Entity {
                     updateCacheAndModel(false)
 
                     // Avoid the bounding box to disappear when we move it after a mesh already computed
-                    if(instantiatedEntity.hasBoundingBox && !currentSource)
+                    if (instantiatedEntity.hasBoundingBox && !currentSource)
                         model.visible = true
                 }
 
                 onFinalSourceChanged: {
                     // update media visibility
                     // (useful if media was explicitly unloaded or hidden but loaded back from cache)
-                    model.visible = model.requested;
+                    model.visible = model.requested
 
-                    var cachedObject = cache.pop(rawSource);
-                    cached = cachedObject !== undefined;
-                    if(cached) {
-                        object = cachedObject;
+                    var cachedObject = cache.pop(rawSource)
+                    cached = cachedObject !== undefined
+                    if (cached) {
+                        object = cachedObject
                         // only change cached object parent if mediaLoader has been fully instantiated
                         // by the NodeInstantiator; otherwise re-parenting will fail silently and the object will disappear...
                         // see "onFullyInstantiatedChanged" and parent NodeInstantiator's "onObjectAdded"
-                        if(fullyInstantiated) {
-                            object.parent = mediaLoader;
+                        if (fullyInstantiated) {
+                            object.parent = mediaLoader
                         }
                     }
-                    mediaLoader.source = Filepath.stringToUrl(finalSource);
-                    if(object) {
+                    mediaLoader.source = Filepath.stringToUrl(finalSource)
+                    if (object) {
                         // bind media info to corresponding model roles
                         // (test for object validity to avoid error messages right after object has been deleted)
-                        var boundProperties = ["vertexCount", "faceCount", "cameraCount", "textureCount"];
-                        boundProperties.forEach( function(prop){
-                            model[prop] = Qt.binding(function() { return object ? object[prop] : 0; });
+                        var boundProperties = ["vertexCount", "faceCount", "cameraCount", "textureCount"]
+                        boundProperties.forEach(function(prop) {
+                            model[prop] = Qt.binding(function() { return object ? object[prop] : 0 })
                         })
                     }
-                    else if(finalSource && status === Component.Ready) {
+                    else if (finalSource && status === Component.Ready) {
                         // source was valid but no loader was created, remove element
                         // check if component is ready to avoid removing element from the model before adding instance to the node
                         remove(index)
@@ -323,15 +322,15 @@ Entity {
 
                 onFullyInstantiatedChanged: {
                     // delayed reparenting of object coming from the cache
-                    if(object)
-                        object.parent = mediaLoader;
+                    if (object)
+                        object.parent = mediaLoader
                 }
 
                 onStatusChanged: {
                     model.status = status
                     // remove model entry for external media that failed to load
-                    if(status === SceneLoader.Error && !model.attribute)
-                        remove(index);
+                    if (status === SceneLoader.Error && !model.attribute)
+                        remove(index)
                 }
 
                 components: [
@@ -384,11 +383,11 @@ Entity {
 
         onObjectAdded: {
             // notify object that it is now fully instantiated
-            object.fullyInstantiated = true;
+            object.fullyInstantiated = true
         }
 
         onObjectRemoved: {
-            if(m.sourceToEntity[object.modelSource])
+            if (m.sourceToEntity[object.modelSource])
                 delete m.sourceToEntity[object.modelSource]
         }
     }

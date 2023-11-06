@@ -14,7 +14,7 @@ class CameraRigCalibration(desc.AVCommandLineNode):
     inputs = [
         desc.File(
             name="sfmdata",
-            label='SfMData',
+            label="SfMData",
             description="Input SfMData file.",
             value="",
             uid=[0],

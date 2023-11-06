@@ -72,8 +72,7 @@ Panel {
                 hoverEnabled: true
             }
 
-            function getLongestChunkTime(chunks)
-            {
+            function getLongestChunkTime(chunks) {
                 if (chunks.count <= 1)
                     return 0
 

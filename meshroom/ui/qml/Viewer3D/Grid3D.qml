@@ -23,7 +23,7 @@ Entity {
                             function buildGrid(first, last, offset, attribute) {
                                 var vertexCount = (((last-first)/offset)+1)*4;
                                 var f32 = new Float32Array(vertexCount*3);
-                                for(var id = 0, i = first; i <= last; i += offset, id++)
+                                for (var id = 0, i = first; i <= last; i += offset, id++)
                                 {
                                     f32[12*id] = i;
                                     f32[12*id+1] = 0.0;

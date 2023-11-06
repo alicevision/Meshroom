@@ -32,15 +32,15 @@ Item {
 
     // Load a 3D media file in the 3D viewer
     function load3DMedia(filepath, label = undefined) {
-        if(panel3dViewerLoader.active) {
-            panel3dViewerLoader.item.viewer3D.load(filepath, label);
+        if (panel3dViewerLoader.active) {
+            panel3dViewerLoader.item.viewer3D.load(filepath, label)
         }
     }
 
     Connections {
         target: reconstruction
         function onGraphChanged() {
-            if(panel3dViewerLoader.active) {
+            if (panel3dViewerLoader.active) {
                 panel3dViewerLoader.item.viewer3D.clear()
             }
         }
@@ -51,11 +51,11 @@ Item {
 
     // Load reconstruction's current SfM file
     function viewSfM() {
-        var activeNode = _reconstruction.activeNodes ? _reconstruction.activeNodes.get('sfm').node : null;
-        if(!activeNode)
-            return;
-        if(panel3dViewerLoader.active) {
-            panel3dViewerLoader.item.viewer3D.view(activeNode.attribute('output'));
+        var activeNode = _reconstruction.activeNodes ? _reconstruction.activeNodes.get('sfm').node : null
+        if (!activeNode)
+            return
+        if (panel3dViewerLoader.active) {
+            panel3dViewerLoader.item.viewer3D.view(activeNode.attribute('output'))
         }
     }
 

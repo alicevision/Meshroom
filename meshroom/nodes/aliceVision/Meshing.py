@@ -326,7 +326,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
         ),
         desc.IntParam(
             name="helperPointsGridSize",
-            label='Helper Points Grid Size',
+            label="Helper Points Grid Size",
             description="Grid size for the helper points.",
             value=10,
             range=(0, 50, 1),

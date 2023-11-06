@@ -46,22 +46,14 @@ QtObject {
         {"time": 90, "color": red}
     ]
 
-    function getChunkColor(chunk, overrides)
-    {
-        if(overrides && chunk.statusName in overrides)
-        {
+    function getChunkColor(chunk, overrides) {
+        if (overrides && chunk.statusName in overrides) {
             return overrides[chunk.statusName]
-        }
-        else if(chunk.execModeName === "EXTERN"
-           && chunk.statusName in statusColorsExternOverrides)
-        {
+        } else if (chunk.execModeName === "EXTERN" && chunk.statusName in statusColorsExternOverrides) {
             return statusColorsExternOverrides[chunk.statusName]
-        }
-        else if(chunk.nodeName !== chunk.statusNodeName && chunk.statusName in ghostColors) {
+        } else if (chunk.nodeName !== chunk.statusNodeName && chunk.statusName in ghostColors) {
             return ghostColors[chunk.statusName]
-        }
-        else if(chunk.statusName in statusColors)
-        {
+        } else if (chunk.statusName in statusColors) {
             return statusColors[chunk.statusName]
         }
         console.warn("Unknown status : " + chunk.status)
@@ -73,30 +65,30 @@ QtObject {
             parseInt(color.toString().substr(1, 2), 16) / 255, 
             parseInt(color.toString().substr(3, 2), 16) / 255, 
             parseInt(color.toString().substr(5, 2), 16) / 255
-        ];
+        ]
     }
 
     function interpolate(c1, c2, u) {
-        let rgb1 = toRgb(c1);
-        let rgb2 = toRgb(c2);
+        let rgb1 = toRgb(c1)
+        let rgb2 = toRgb(c2)
         return Qt.rgba(
-            rgb1[0] * (1-u) + rgb2[0] * u, 
-            rgb1[1] * (1-u) + rgb2[1] * u, 
-            rgb1[2] * (1-u) + rgb2[2] * u
-        );
+            rgb1[0] * (1 - u) + rgb2[0] * u,
+            rgb1[1] * (1 - u) + rgb2[1] * u,
+            rgb1[2] * (1 - u) + rgb2[2] * u
+        )
     }
 
     function durationColor(t) {
         if (t < durationColorScale[0].time) {
-            return durationColorScale[0].color;
+            return durationColorScale[0].color
         }
         if (t > durationColorScale[durationColorScale.length-1].time) {
-            return durationColorScale[durationColorScale.length-1].color;
+            return durationColorScale[durationColorScale.length-1].color
         }
         for (let idx = 1; idx < durationColorScale.length; idx++) {
             if (t < durationColorScale[idx].time) {
-                let u = (t - durationColorScale[idx-1].time) / (durationColorScale[idx].time - durationColorScale[idx-1].time);
-                return interpolate(durationColorScale[idx-1].color, durationColorScale[idx].color, u);
+                let u = (t - durationColorScale[idx - 1].time) / (durationColorScale[idx].time - durationColorScale[idx - 1].time)
+                return interpolate(durationColorScale[idx - 1].color, durationColorScale[idx].color, u)
             }
         }
     }

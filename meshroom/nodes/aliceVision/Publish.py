@@ -22,7 +22,7 @@ This node allows to copy files into a specific folder.
             elementDesc=desc.File(
                 name="input",
                 label="Input",
-                description="",
+                description="File or folder to publish.",
                 value="",
                 uid=[0],
             ),

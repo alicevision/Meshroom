@@ -18,7 +18,7 @@ ColumnLayout {
 
     onChunksChanged: {
         // When the list changes, ensure the current index is in the new range
-        if(currentIndex >= chunks.count)
+        if (currentIndex >= chunks.count)
             currentIndex = chunks.count-1
     }
 
@@ -39,8 +39,7 @@ ColumnLayout {
         focus: true
         currentIndex: root.currentIndex
         onCurrentIndexChanged: {
-            if(chunksLV.currentIndex !== root.currentIndex)
-            {
+            if (chunksLV.currentIndex !== root.currentIndex) {
                 // When the list is resized, the currentIndex is reset to 0.
                 // So here we force it to keep the binding.
                 chunksLV.currentIndex = Qt.binding(function() { return root.currentIndex })
@@ -67,7 +66,7 @@ ColumnLayout {
         }
         highlight: Component {
             Rectangle {
-                visible: true // !root.chunksSummary
+                visible: true  // !root.chunksSummary
                 color: activePalette.highlight
                 opacity: 0.3
                 z: 2

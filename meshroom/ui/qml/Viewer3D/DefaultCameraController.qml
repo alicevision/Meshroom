@@ -48,50 +48,50 @@ Entity {
         property bool hasMoved
         sourceDevice: loseMouseFocus ? null : mouseSourceDevice
         onPressed: {
-            _pressed = true;
-            currentPosition.x = lastPosition.x = mouse.x;
-            currentPosition.y = lastPosition.y = mouse.y;
-            hasMoved = false;
-            mousePressed(mouse);
+            _pressed = true
+            currentPosition.x = lastPosition.x = mouse.x
+            currentPosition.y = lastPosition.y = mouse.y
+            hasMoved = false
+            mousePressed(mouse)
         }
         onReleased: {
-            _pressed = false;
-            mouseReleased(mouse, hasMoved);
+            _pressed = false
+            mouseReleased(mouse, hasMoved)
         }
         onClicked: mouseClicked(mouse)
         onPositionChanged: {
-            currentPosition.x = mouse.x;
-            currentPosition.y = mouse.y;
+            currentPosition.x = mouse.x
+            currentPosition.y = mouse.y
 
-            const dt = 0.02;
-            var d;
+            const dt = 0.02
+            var d
 
-            if(panning) { // translate
-                d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03;
-                var tx = axisMX.value * root.translateSpeed * d;
-                var ty = axisMY.value * root.translateSpeed * d;
-                mouseHandler.hasMoved = true;
-                root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt));
-                return;
+            if (panning) { // translate
+                d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.03
+                var tx = axisMX.value * root.translateSpeed * d
+                var ty = axisMY.value * root.translateSpeed * d
+                mouseHandler.hasMoved = true
+                root.camera.translate(Qt.vector3d(-tx, -ty, 0).times(dt))
+                return
             }
-            if(moving){ // trackball rotation
-                trackball.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition, dt);
-                mouseHandler.lastPosition = mouseHandler.currentPosition;
-                mouseHandler.hasMoved = true;
-                return;
+            if (moving){ // trackball rotation
+                trackball.rotate(mouseHandler.lastPosition, mouseHandler.currentPosition, dt)
+                mouseHandler.lastPosition = mouseHandler.currentPosition
+                mouseHandler.hasMoved = true
+                return
             }
-            if(zooming) { // zoom with alt + RMD
-                d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.1;
-                var tz = axisMX.value * root.translateSpeed * d;
-                mouseHandler.hasMoved = true;
+            if (zooming) { // zoom with alt + RMD
+                d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.1
+                var tz = axisMX.value * root.translateSpeed * d
+                mouseHandler.hasMoved = true
                 root.camera.translate(Qt.vector3d(0, 0, tz).times(dt), Camera.DontTranslateViewCenter)
-                return;
+                return
             }
         }
         onDoubleClicked: mouseDoubleClicked(mouse)
         onWheel: {
-            var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.2;
-            var tz = (wheel.angleDelta.y / 120) * d;
+            var d = (root.camera.viewCenter.minus(root.camera.position)).length() * 0.2
+            var tz = (wheel.angleDelta.y / 120) * d
             root.camera.translate(Qt.vector3d(0, 0, tz), Camera.DontTranslateViewCenter)
         }
     }
@@ -105,7 +105,7 @@ Entity {
         // stays active, even when it's released.
         // Handle this issue manually by keeping an additional _pressed state
         // which is cleared when focus changes (used for 'pickingActive' property).
-        onFocusChanged: if(!focus) _pressed = false
+        onFocusChanged: if (!focus) _pressed = false
         onPressed: _pressed = true
         onReleased: _pressed = false
     }

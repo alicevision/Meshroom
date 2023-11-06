@@ -27,7 +27,7 @@ Entity {
 
         // Update node SfMTransform slider values when the gizmo has changed: translation, rotation, scale, type
         transformGizmo.onGizmoChanged: {
-            switch(type) {
+            switch (type) {
                 case TransformGizmo.Type.TRANSLATION: {
                     _reconstruction.setAttribute(
                         root.currentSfMTransformNode.attribute("manualTransform.manualTranslation"),

@@ -13,9 +13,9 @@ FloatingPane {
     property real gainDefaultValue: 1.0
     property real gammaDefaultValue: 1.0
 
-    function resetDefaultValues(){
-        gainCtrl.value = root.gainDefaultValue;
-        gammaCtrl.value = root.gammaDefaultValue;
+    function resetDefaultValues() {
+        gainCtrl.value = root.gainDefaultValue
+        gammaCtrl.value = root.gammaDefaultValue
     }
 
     property real slidersPowerValue: 4.0
@@ -65,7 +65,7 @@ FloatingPane {
                 ToolTip.text: "Reset Gain"
 
                 onClicked: {
-                    gainCtrl.value = gainDefaultValue;
+                    gainCtrl.value = gainDefaultValue
                 }
             }
             TextField {
@@ -80,7 +80,7 @@ FloatingPane {
                 selectByMouse: true
                 validator: doubleValidator
                 onAccepted: {
-                    gainCtrl.value = Math.pow(Number(gainLabel.text), 1.0/slidersPowerValue)
+                    gainCtrl.value = Math.pow(Number(gainLabel.text), 1.0 / slidersPowerValue)
                 }
             }
             Slider {
@@ -120,7 +120,7 @@ FloatingPane {
                 selectByMouse: true
                 validator: doubleValidator
                 onAccepted: {
-                    gammaCtrl.value = Math.pow(Number(gammaLabel.text), 1.0/slidersPowerValue)
+                    gammaCtrl.value = Math.pow(Number(gammaLabel.text), 1.0 / slidersPowerValue)
                 }
             }
             Slider {
@@ -148,7 +148,7 @@ FloatingPane {
             TextField {
                 id: red
                 property real value: root.colorRGBA ? root.colorRGBA.x : 0.0
-                property real value_gamma: Math.pow(value, 1.0/2.2)
+                property real value_gamma: Math.pow(value, 1.0 / 2.2)
                 text: root.colorRGBA ? value.toFixed(6) : "--"
 
                 Layout.preferredWidth: textMetrics_colorValue.width
@@ -192,7 +192,7 @@ FloatingPane {
             TextField {
                 id: blue
                 property real value: root.colorRGBA ? root.colorRGBA.z : 0.0
-                property real value_gamma: Math.pow(value, 1.0/2.2)
+                property real value_gamma: Math.pow(value, 1.0 / 2.2)
                 text: root.colorRGBA ? value.toFixed(6) : "--"
                 
                 Layout.preferredWidth: textMetrics_colorValue.width
@@ -214,7 +214,7 @@ FloatingPane {
             TextField {
                 id: alpha
                 property real value: root.colorRGBA ? root.colorRGBA.w : 0.0
-                property real value_gamma: Math.pow(value, 1.0/2.2)
+                property real value_gamma: Math.pow(value, 1.0 / 2.2)
                 text: root.colorRGBA ? value.toFixed(6) : "--"
                 
                 Layout.preferredWidth: textMetrics_colorValue.width

@@ -112,6 +112,9 @@ import Utils 1.0
                     }
                     Viewer3DSettings.resectionIdCount = obj.countResectionIds();
                     Viewer3DSettings.resectionGroups = obj.countResectionGroups(Viewer3DSettings.resectionIdCount + 1);
+                    resectionIdCount = Viewer3DSettings.resectionIdCount
+                    resectionGroups = Viewer3DSettings.resectionGroups
+                    resectionId = Viewer3DSettings.resectionIdCount
                     root.status = obj.status;
                 })
             }

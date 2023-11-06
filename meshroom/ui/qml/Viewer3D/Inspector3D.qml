@@ -352,10 +352,23 @@ FloatingPane {
                                 if (mouse.button == Qt.RightButton)
                                     contextMenu.popup();
                                 mediaListView.currentIndex = index;
+
+                                // Update the resection ID-related objects based on the active model
+                                Viewer3DSettings.resectionIdCount = model.resectionIdCount
+                                Viewer3DSettings.resectionGroups = model.resectionGroups
+                                Viewer3DSettings.resectionId = model.resectionId
+                                resectionIdSlider.value = model.resectionId
                             }
                             onDoubleClicked: {
                                 model.visible = true;
                                 nodeActivated(model.attribute.node);
+                            }
+
+                            Connections {
+                                target: resectionIdSlider
+                                function onValueChanged() {
+                                    model.resectionId = resectionIdSlider.value
+                                }
                             }
 
                             RowLayout {

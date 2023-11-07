@@ -31,7 +31,8 @@ FloatingPane {
         anchors.fill: parent
         spacing: 4
 
-        Group {
+        ExpandableGroup {
+            id: displayGroup
             Layout.fillWidth: true
             title: "DISPLAY"
 
@@ -43,6 +44,7 @@ FloatingPane {
                 Flow {
                     Layout.columnSpan: 2
                     Layout.fillWidth: true
+                    visible: displayGroup.expanded
                     spacing: 1
                     MaterialToolButton {
                         text: MaterialIcons.grid_on
@@ -63,8 +65,13 @@ FloatingPane {
                         onClicked: Viewer3DSettings.displayOrigin = !Viewer3DSettings.displayOrigin
                     }
                 }
-                MaterialLabel { text: MaterialIcons.grain; padding: 2 }
+                MaterialLabel {
+                    text: MaterialIcons.grain
+                    padding: 2
+                    visible: displayGroup.expanded
+                }
                 RowLayout {
+                    visible: displayGroup.expanded
                     Slider {
                         Layout.fillWidth: true; from: 0; to: 5; stepSize: 0.001
                         value: Viewer3DSettings.pointSize
@@ -83,8 +90,13 @@ FloatingPane {
                     }
 
                 }
-                MaterialLabel { text: MaterialIcons.videocam; padding: 2 }
+                MaterialLabel {
+                    text: MaterialIcons.videocam
+                    padding: 2
+                    visible: displayGroup.expanded
+                }
                 Slider {
+                    visible: displayGroup.expanded
                     value: Viewer3DSettings.cameraScale
                     from: 0
                     to: 2
@@ -99,15 +111,19 @@ FloatingPane {
             }
         }
 
-        Group {
+        ExpandableGroup {
+            id: cameraGroup
             Layout.fillWidth: true
             title: "CAMERA"
+
+
             ColumnLayout {
                 width: parent.width
 
                 // Image/Camera synchronization
                 Flow {
                     Layout.fillWidth: true
+                    visible: cameraGroup.expanded
                     spacing: 2
 
                     // Synchronization
@@ -115,7 +131,7 @@ FloatingPane {
                         id: syncViewpointCamera
                         enabled: _reconstruction ? _reconstruction.sfmReport : false
                         text: MaterialIcons.linked_camera
-                        ToolTip.text: "Sync with Image Selection"
+                        ToolTip.text: "View Through The Active Camera"
                         checked: enabled && Viewer3DSettings.syncViewpointCamera
                         onClicked: Viewer3DSettings.syncViewpointCamera = !Viewer3DSettings.syncViewpointCamera
                     }
@@ -158,6 +174,7 @@ FloatingPane {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 2
+                    visible: cameraGroup.expanded
 
                     RowLayout {
                         Layout.fillHeight: true
@@ -166,7 +183,7 @@ FloatingPane {
                         MaterialToolButton {
                             id: resectionIdButton
                             text: MaterialIcons.switch_video
-                            ToolTip.text: "Display Cameras Based On Resection IDs"
+                            ToolTip.text: "Timeline Of Camera Reconstruction Groups"
                             ToolTip.visible: hovered
                             enabled: Viewer3DSettings.resectionIdCount
                             checked: enabled && Viewer3DSettings.displayResectionIds
@@ -195,15 +212,22 @@ FloatingPane {
                             Layout.fillWidth: true
                             leftPadding: 2
                             rightPadding: 2
-                            ToolTip.text: "Resection ID " + value + "/" + Viewer3DSettings.resectionIdCount
-                            ToolTip.visible: hovered || pressed
-                            ToolTip.delay: 150
+                            visible: Viewer3DSettings.displayResectionIds
+                        }
+
+                        Label {
+                            text: resectionIdSlider.value + "/" + Viewer3DSettings.resectionIdCount
                             visible: Viewer3DSettings.displayResectionIds
                         }
                     }
 
                     Label {
-                        text: "Cameras for ID " + Viewer3DSettings.resectionId + ": " + Viewer3DSettings.resectionGroups[Viewer3DSettings.resectionId]
+                        text: {
+                            var id = Viewer3DSettings.resectionIdCount
+                            if (Viewer3DSettings.resectionId !== undefined)
+                                id = Math.min(Viewer3DSettings.resectionId, Viewer3DSettings.resectionIdCount)
+                            return "Nb Of Cameras In Group " + id + ": " + Viewer3DSettings.resectionGroups[id]
+                        }
                         font.pointSize: 8
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
@@ -221,7 +245,7 @@ FloatingPane {
                                 totalCameras += Viewer3DSettings.resectionGroups[i]
                             }
 
-                            return "(total cameras: " + currentCameras + "/" + totalCameras + ")"
+                            return "Nb Of Cumulated Cameras: " + currentCameras + "/" + totalCameras
                         }
                         font.pointSize: 8
                         Layout.fillWidth: true

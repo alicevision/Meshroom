@@ -116,7 +116,6 @@ FloatingPane {
             Layout.fillWidth: true
             title: "CAMERA"
 
-
             ColumnLayout {
                 width: parent.width
 
@@ -221,37 +220,56 @@ FloatingPane {
                         }
                     }
 
-                    Label {
-                        text: {
-                            var id = Viewer3DSettings.resectionIdCount
-                            if (Viewer3DSettings.resectionId !== undefined)
-                                id = Math.min(Viewer3DSettings.resectionId, Viewer3DSettings.resectionIdCount)
-                            return "Nb Of Cameras In Group " + id + ": " + Viewer3DSettings.resectionGroups[id]
-                        }
-                        font.pointSize: 8
+                    RowLayout {
+                        spacing: 10
                         Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignHCenter
-                        visible: Viewer3DSettings.displayResectionIds
-                    }
+                        Layout.margins: 2
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
-                    Label {
-                        text: {
-                            let currentCameras = 0
-                            let totalCameras = 0
-                            for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
-                                if (i <= Viewer3DSettings.resectionId)
-                                    currentCameras += Viewer3DSettings.resectionGroups[i]
-                                totalCameras += Viewer3DSettings.resectionGroups[i]
+                        MaterialToolLabel {
+                            iconText: MaterialIcons.stop
+                            label: {
+                                var id = undefined
+                                // Ensure there are entries in resectionGroups and a valid resectionId before accessing anything
+                                if (Viewer3DSettings.resectionId !== undefined && Viewer3DSettings.resectionGroups.length > 0)
+                                    id = Math.min(Viewer3DSettings.resectionId, Viewer3DSettings.resectionIdCount)
+                                if (id !== undefined)
+                                    return Viewer3DSettings.resectionGroups[id]
+                                return 0
+
                             }
-
-                            return "Nb Of Cumulated Cameras: " + currentCameras + "/" + totalCameras
+                            ToolTip.text: "Number Of Cameras In Current Resection Group"
+                            visible: Viewer3DSettings.displayResectionIds
                         }
-                        font.pointSize: 8
-                        Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignHCenter
-                        visible: Viewer3DSettings.displayResectionIds
+
+                        MaterialToolLabel {
+                            iconText: MaterialIcons.auto_awesome_motion
+                            label: {
+                                let currentCameras = 0
+                                for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
+                                    if (i <= Viewer3DSettings.resectionId)
+                                        currentCameras += Viewer3DSettings.resectionGroups[i]
+                                }
+
+                                return currentCameras
+                            }
+                            ToolTip.text: "Number Of Cumulated Cameras"
+                            visible: Viewer3DSettings.displayResectionIds
+                        }
+
+                        MaterialToolLabel {
+                            iconText: MaterialIcons.videocam
+                            label: {
+                                let totalCameras = 0
+                                for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
+                                    totalCameras += Viewer3DSettings.resectionGroups[i]
+                                }
+
+                                return totalCameras
+                            }
+                            ToolTip.text: "Total Number Of Cameras"
+                            visible: Viewer3DSettings.displayResectionIds
+                        }
                     }
                 }
             }

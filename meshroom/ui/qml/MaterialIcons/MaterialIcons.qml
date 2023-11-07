@@ -92,6 +92,7 @@ QtObject {
     readonly property string attachment: "\ue2bc"
     readonly property string audiotrack: "\ue3a1"
     readonly property string autorenew: "\ue863"
+    readonly property string auto_awesome_motion: "\ue661"
     readonly property string av_timer: "\ue01b"
     readonly property string backspace: "\ue14a"
     readonly property string backup: "\ue864"

@@ -711,8 +711,12 @@ class BaseNode(BaseObject):
                     # if there is a valid command line "group"
                     v = attr.getValueStr()
                     cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-                    cmdVars[name + 'Value'] = str(v)
+                    cmdVars[name + 'Value'] = v
 
+                    # List elements may give a fully empty string and will not be sent to the command line.
+                    # String attributes will return only quotes if it is empty and thus will be send to the command line.
+                    # But a List of string containing 1 element,
+                    # and this element is an empty string will also return quotes and will be send to the command line.
                     if v:
                         cmdVars[group] = cmdVars.get(group, '') + ' ' + cmdVars[name]
                 elif isinstance(attr, GroupAttribute):
@@ -762,7 +766,7 @@ class BaseNode(BaseObject):
             v = attr.getValueStr()
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-            self._cmdVars[name + 'Value'] = str(v)
+            self._cmdVars[name + 'Value'] = v
 
             if v:
                 self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \

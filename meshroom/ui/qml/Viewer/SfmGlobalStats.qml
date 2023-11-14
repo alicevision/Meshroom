@@ -115,9 +115,8 @@ FloatingPane {
                 checkState: residualsPerViewLegend.buttonGroup.checkState
                 onClicked: {
                     var _checked = checked;
-                    for(var i = 0; i < residualsPerViewChart.count; ++i)
-                    {
-                        residualsPerViewChart.series(i).visible = _checked;
+                    for (var i = 0; i < residualsPerViewChart.count; ++i) {
+                        residualsPerViewChart.series(i).visible = _checked
                     }
                 }
             }
@@ -214,9 +213,8 @@ FloatingPane {
                 checkState: observationsLengthsPerViewLegend.buttonGroup.checkState
                 onClicked: {
                     var _checked = checked;
-                    for(var i = 0; i < observationsLengthsPerViewChart.count; ++i)
-                    {
-                        observationsLengthsPerViewChart.series(i).visible = _checked;
+                    for (var i = 0; i < observationsLengthsPerViewChart.count; ++i) {
+                        observationsLengthsPerViewChart.series(i).visible = _checked
                     }
                 }
             }
@@ -225,7 +223,6 @@ FloatingPane {
                 id: observationsLengthsPerViewLegend
                 chartView: observationsLengthsPerViewChart
             }
-
         }
     }
 
@@ -278,7 +275,6 @@ FloatingPane {
         anchors.leftMargin: landmarksPerViewChart.width * 0.25
 
         RowLayout {
-
             ChartViewCheckBox {
                 id: allFeatures
                 text: "ALL"
@@ -286,9 +282,8 @@ FloatingPane {
                 checkState: landmarksFeatTracksPerViewLegend.buttonGroup.checkState
                 onClicked: {
                     var _checked = checked;
-                    for(var i = 0; i < landmarksPerViewChart.count; ++i)
-                    {
-                        landmarksPerViewChart.series(i).visible = _checked;
+                    for (var i = 0; i < landmarksPerViewChart.count; ++i) {
+                        landmarksPerViewChart.series(i).visible = _checked
                     }
                 }
             }
@@ -297,7 +292,6 @@ FloatingPane {
                 id: landmarksFeatTracksPerViewLegend
                 chartView: landmarksPerViewChart
             }
-
         }
     }
 
@@ -308,20 +302,20 @@ FloatingPane {
         mTracks: root.mTracks
 
         onAxisChanged: {
-            fillLandmarksPerViewSerie(landmarksPerViewLineSerie);
-            fillTracksPerViewSerie(tracksPerViewLineSerie);
-            fillResidualsMinPerViewSerie(residualsMinPerViewLineSerie);
-            fillResidualsMaxPerViewSerie(residualsMaxPerViewLineSerie);
-            fillResidualsMeanPerViewSerie(residualsMeanPerViewLineSerie);
-            fillResidualsMedianPerViewSerie(residualsMedianPerViewLineSerie);
-            fillResidualsFirstQuartilePerViewSerie(residualsFirstQuartilePerViewLineSerie);
-            fillResidualsThirdQuartilePerViewSerie(residualsThirdQuartilePerViewLineSerie);
-            fillObservationsLengthsMinPerViewSerie(observationsLengthsMinPerViewLineSerie);
-            fillObservationsLengthsMaxPerViewSerie(observationsLengthsMaxPerViewLineSerie);
-            fillObservationsLengthsMeanPerViewSerie(observationsLengthsMeanPerViewLineSerie);
-            fillObservationsLengthsMedianPerViewSerie(observationsLengthsMedianPerViewLineSerie);
-            fillObservationsLengthsFirstQuartilePerViewSerie(observationsLengthsFirstQuartilePerViewLineSerie);
-            fillObservationsLengthsThirdQuartilePerViewSerie(observationsLengthsThirdQuartilePerViewLineSerie);
+            fillLandmarksPerViewSerie(landmarksPerViewLineSerie)
+            fillTracksPerViewSerie(tracksPerViewLineSerie)
+            fillResidualsMinPerViewSerie(residualsMinPerViewLineSerie)
+            fillResidualsMaxPerViewSerie(residualsMaxPerViewLineSerie)
+            fillResidualsMeanPerViewSerie(residualsMeanPerViewLineSerie)
+            fillResidualsMedianPerViewSerie(residualsMedianPerViewLineSerie)
+            fillResidualsFirstQuartilePerViewSerie(residualsFirstQuartilePerViewLineSerie)
+            fillResidualsThirdQuartilePerViewSerie(residualsThirdQuartilePerViewLineSerie)
+            fillObservationsLengthsMinPerViewSerie(observationsLengthsMinPerViewLineSerie)
+            fillObservationsLengthsMaxPerViewSerie(observationsLengthsMaxPerViewLineSerie)
+            fillObservationsLengthsMeanPerViewSerie(observationsLengthsMeanPerViewLineSerie)
+            fillObservationsLengthsMedianPerViewSerie(observationsLengthsMedianPerViewLineSerie)
+            fillObservationsLengthsFirstQuartilePerViewSerie(observationsLengthsFirstQuartilePerViewLineSerie)
+            fillObservationsLengthsThirdQuartilePerViewSerie(observationsLengthsThirdQuartilePerViewLineSerie)
         }
     }
 }

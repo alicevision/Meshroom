@@ -5,29 +5,29 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "ExportAnimatedCamera": "2.0",
-            "DepthMapFilter": "4.0",
             "Texturing": "6.0",
-            "ExportDistortion": "1.0",
-            "ConvertSfMFormat": "2.0",
-            "Publish": "1.3",
-            "MeshDecimate": "1.0",
-            "CameraInit": "9.0",
-            "ImageSegmentation": "1.0",
-            "ApplyCalibration": "1.0",
-            "FeatureExtraction": "1.3",
-            "ScenePreview": "2.0",
-            "StructureFromMotion": "3.3",
-            "MeshFiltering": "3.0",
             "DistortionCalibration": "3.0",
-            "ImageMatchingMultiSfM": "1.0",
-            "DepthMap": "5.0",
-            "PrepareDenseScene": "3.1",
-            "ImageMatching": "2.0",
-            "KeyframeSelection": "5.0",
-            "CheckerboardDetection": "1.0",
+            "ConvertSfMFormat": "2.0",
+            "FeatureExtraction": "1.3",
+            "ExportDistortion": "1.0",
+            "ApplyCalibration": "1.0",
+            "ImageSegmentation": "1.0",
             "FeatureMatching": "2.0",
-            "Meshing": "7.0"
+            "ScenePreview": "2.0",
+            "KeyframeSelection": "5.0",
+            "MeshDecimate": "1.0",
+            "MeshFiltering": "3.0",
+            "ImageMatchingMultiSfM": "1.0",
+            "CameraInit": "9.0",
+            "DepthMapFilter": "4.0",
+            "ImageMatching": "2.0",
+            "ExportAnimatedCamera": "2.0",
+            "PrepareDenseScene": "3.1",
+            "Publish": "1.3",
+            "Meshing": "7.0",
+            "DepthMap": "5.0",
+            "StructureFromMotion": "3.3",
+            "CheckerboardDetection": "1.0"
         }
     },
     "graph": {
@@ -285,7 +285,8 @@
                 "minNumberOfObservationsForTriangulation": 3,
                 "minAngleForTriangulation": 1.0,
                 "minAngleForLandmark": 0.5,
-                "filterTrackForks": true
+                "filterTrackForks": true,
+                "useAutoTransform": false
             },
             "internalInputs": {
                 "comment": "Estimate cameras parameters for the complete camera tracking sequence.",
@@ -323,7 +324,8 @@
                 "lockScenePreviouslyReconstructed": true,
                 "minAngleForTriangulation": 1.0,
                 "minAngleForLandmark": 0.5,
-                "filterTrackForks": true
+                "filterTrackForks": true,
+                "useAutoTransform": false
             },
             "internalInputs": {
                 "comment": "Solve all keyframes first.",

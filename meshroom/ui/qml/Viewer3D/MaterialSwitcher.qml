@@ -35,18 +35,16 @@ Entity {
 
     function removeComponentsByType(entity, type)
     {
-        if(!entity)
+        if (!entity)
             return
-        for(var i=0; i < entity.components.length; ++i)
+        for (var i = 0; i < entity.components.length; ++i)
         {
-            if(entity.components[i].toString().indexOf(type) !== -1)
-            {
+            if (entity.components[i].toString().indexOf(type) !== -1) {
                 //entity.components[i].enabled = false;
-                Scene3DHelper.removeComponent(entity, entity.components[i]);
+                Scene3DHelper.removeComponent(entity, entity.components[i])
             }
         }
     }
-
 
     StateGroup {
         id: modeState

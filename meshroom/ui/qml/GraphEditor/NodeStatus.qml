@@ -47,49 +47,44 @@ FocusScope {
 
                 function readSourceFile() {
                     // make sure we are trying to load a statistics file
-                    if(!Filepath.urlToString(source).endsWith("status"))
-                        return;
+                    if (!Filepath.urlToString(source).endsWith("status"))
+                        return
 
-                    var xhr = new XMLHttpRequest;
-                    xhr.open("GET", source);
+                    var xhr = new XMLHttpRequest
+                    xhr.open("GET", source)
 
                     xhr.onreadystatechange = function() {
                         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
                             // console.warn("StatusListModel: read valid file")
-                            if(lastModified === undefined || lastModified !== xhr.getResponseHeader('Last-Modified')) {
+                            if (lastModified === undefined || lastModified !== xhr.getResponseHeader('Last-Modified')) {
                                 lastModified = xhr.getResponseHeader('Last-Modified')
                                 try {
-                                    var jsonObject = JSON.parse(xhr.responseText);
+                                    var jsonObject = JSON.parse(xhr.responseText)
 
-                                    var entries = [];
+                                    var entries = []
                                     // prepare data to populate the ListModel from the input json object
-                                    for(var key in jsonObject)
-                                    {
-                                        var entry = {};
-                                        entry["key"] = key;
-                                        entry["value"] = String(jsonObject[key]);
-                                        entries.push(entry);
+                                    for (var key in jsonObject) {
+                                        var entry = {}
+                                        entry["key"] = key
+                                        entry["value"] = String(jsonObject[key])
+                                        entries.push(entry)
                                     }
                                     // reset the model with prepared data (limit to one update event)
-                                    statusListModel.clear();
-                                    statusListModel.append(entries);
-                                }
-                                catch(exc)
-                                {
+                                    statusListModel.clear()
+                                    statusListModel.append(entries)
+                                } catch(exc) {
                                     // console.warn("StatusListModel: failed to read file")
-                                    lastModified = undefined;
-                                    statusListModel.clear();
+                                    lastModified = undefined
+                                    statusListModel.clear()
                                 }
                             }
-                        }
-                        else
-                        {
+                        } else {
                             // console.warn("StatusListModel: invalid file")
-                            lastModified = undefined;
-                            statusListModel.clear();
+                            lastModified = undefined
+                            statusListModel.clear()
                         }
-                    };
-                    xhr.send();
+                    }
+                    xhr.send()
                 }
             }
 

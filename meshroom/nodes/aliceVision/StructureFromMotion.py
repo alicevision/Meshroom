@@ -65,7 +65,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         desc.File(
             name="input",
             label="SfMData",
-            description='SfMData file.',
+            description="Input SfMData file.",
             value="",
             uid=[0],
         ),
@@ -323,7 +323,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
         ),
         desc.IntParam(
             name="minNbCamerasToRefinePrincipalPoint",
-            label='Min Nb Cameras To Refine Principal Point',
+            label="Min Nb Cameras To Refine Principal Point",
             description="Minimum number of cameras to refine the principal point of the cameras (one of the intrinsic parameters of the camera).\n"
                         "If we do not have enough cameras, the principal point is considered to be in the center of the image.\n"
                         "If minNbCamerasToRefinePrincipalPoint <= 0, the principal point is never refined."

@@ -131,7 +131,7 @@ Contrary to the StructureFromMotion node, this node does not infer the camera po
         ),
         desc.ChoiceParam(
             name="interFileExtension",
-            label='Inter File Extension',
+            label="Inter File Extension",
             description="Extension of the intermediate file export.",
             value=".abc",
             values=(".abc", ".ply"),

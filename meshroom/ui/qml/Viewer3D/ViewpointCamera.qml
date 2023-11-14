@@ -32,10 +32,10 @@ Entity {
             id: transform
 
             Behavior on rotation {
-                PropertyAnimation { duration: 200}
+                PropertyAnimation { duration: 200 }
             }
             Behavior on translation {
-                Vector3dAnimation { duration: 200}
+                Vector3dAnimation { duration: 200 }
             }
         }
     ]

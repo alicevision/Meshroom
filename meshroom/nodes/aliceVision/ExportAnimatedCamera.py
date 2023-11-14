@@ -59,7 +59,7 @@ Based on the input image filenames, it will recognize the input video sequence t
             values=["jpg", "png", "tif", "exr"],
             exclusive=True,
             uid=[0],
-            enabled= lambda node: node.exportUndistortedImages.value,
+            enabled=lambda node: node.exportUndistortedImages.value,
         ),
         desc.BoolParam(
             name="exportFullROD",

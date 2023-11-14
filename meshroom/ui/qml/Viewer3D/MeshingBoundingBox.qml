@@ -28,7 +28,7 @@ Entity {
             var rotationEuler_cv = Qt.vector3d(rotation.x, rotation.y, rotation.z)
             var rotation_gl = Transformations3DHelper.convertRotationFromCV2GL(rotationEuler_cv)
 
-            switch(type) {
+            switch (type) {
                 case TransformGizmo.Type.TRANSLATION: {
                     _reconstruction.setAttribute(
                         root.currentMeshingNode.attribute("boundingBox.bboxTranslation"),

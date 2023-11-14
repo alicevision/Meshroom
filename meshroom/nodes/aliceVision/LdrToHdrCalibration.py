@@ -80,7 +80,7 @@ Calibrate LDR to HDR response curve from samples.
             description="Bypass HDR creation and use the medium bracket as the source for the next steps.",
             value=False,
             uid=[0],
-            enabled= lambda node: node.nbBrackets.value != 1,
+            enabled=lambda node: node.nbBrackets.value != 1,
         ),
         desc.ChoiceParam(
             name="calibrationMethod",
@@ -95,7 +95,7 @@ Calibrate LDR to HDR response curve from samples.
             value="auto",
             exclusive=True,
             uid=[0],
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name="calibrationWeight",
@@ -109,7 +109,7 @@ Calibrate LDR to HDR response curve from samples.
             values=["default", "gaussian", "triangle", "plateau"],
             exclusive=True,
             uid=[0],
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name="channelQuantizationPower",
@@ -119,7 +119,7 @@ Calibrate LDR to HDR response curve from samples.
             range=(8, 14, 1),
             uid=[0],
             advanced=True,
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name="workingColorSpace",
@@ -131,7 +131,7 @@ Calibrate LDR to HDR response curve from samples.
             exclusive=True,
             uid=[],
             group="user",  # not used directly on the command line
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.IntParam(
             name="maxTotalPoints",
@@ -143,7 +143,7 @@ Calibrate LDR to HDR response curve from samples.
             range=(8, 10000000, 1000),
             uid=[0],
             advanced=True,
-            enabled= lambda node: node.byPass.enabled and not node.byPass.value,
+            enabled=lambda node: node.byPass.enabled and not node.byPass.value,
         ),
         desc.ChoiceParam(
             name="verboseLevel",

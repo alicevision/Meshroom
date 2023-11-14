@@ -39,7 +39,7 @@ This node allows to recompute the mesh surface with a new topology and uniform d
         ),
         desc.IntParam(
             name="minVertices",
-            label='Min Vertices',
+            label="Min Vertices",
             description="Minimum number of output vertices.",
             value=0,
             range=(0, 1000000, 1),

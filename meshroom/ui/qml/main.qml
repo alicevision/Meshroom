@@ -34,9 +34,9 @@ ApplicationWindow {
     onClosing: {
         // make sure document is saved before exiting application
         close.accepted = false
-        if(!ensureNotComputing())
+        if (!ensureNotComputing())
             return
-        ensureSaved(function(){ Qt.quit() })
+        ensureSaved(function() { Qt.quit() })
     }
 
     palette: _PaletteManager.palette
@@ -134,7 +134,7 @@ ApplicationWindow {
 
         onAccepted: {
             // save current file
-            if(saveAction.enabled)
+            if (saveAction.enabled)
             {
                 saveAction.trigger()
                 fireCallback()
@@ -144,7 +144,7 @@ ApplicationWindow {
             {
                 saveFileDialog.open()
                 function _callbackWrapper(rc) {
-                    if(rc === Platform.Dialog.Accepted)
+                    if (rc === Platform.Dialog.Accepted)
                         fireCallback()
                     saveFileDialog.closed.disconnect(_callbackWrapper)
                 }
@@ -155,7 +155,7 @@ ApplicationWindow {
         function fireCallback()
         {
             // call the callback and reset it
-            if(_callback)
+            if (_callback)
                 _callback()
             _callback = undefined
         }
@@ -215,7 +215,7 @@ ApplicationWindow {
                                  false
 
         function compute(node, force) {
-            if(!force && warnIfUnsaved && !_reconstruction.graph.filepath)
+            if (!force && warnIfUnsaved && !_reconstruction.graph.filepath)
             {
                 unsavedComputeDialog.currentNode = node;
                 unsavedComputeDialog.open();
@@ -226,7 +226,7 @@ ApplicationWindow {
                 }
                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
-                    if(data.context === "COMPUTATION")
+                    if (data.context === "COMPUTATION")
                         computeSubmitErrorDialog.openError(data.type, data.msg, node)
                 }
             }
@@ -241,7 +241,7 @@ ApplicationWindow {
                 }
                 catch (error) {
                     const data = ErrorHandler.analyseError(error)
-                    if(data.context === "SUBMITTING")
+                    if (data.context === "SUBMITTING")
                         computeSubmitErrorDialog.openError(data.type, data.msg, node)
                 }
             }
@@ -255,10 +255,18 @@ ApplicationWindow {
 
             function openError(type, msg, node) {
                 errorType = type
-                switch(type) {
-                    case "Already Submitted": this.setupPendingStatusError(msg, node); break
-                    case "Compatibility Issue": this.setupCompatibilityIssue(msg); break
-                    default: this.onlyDisplayError(msg)
+                switch (type) {
+                    case "Already Submitted": {
+                            this.setupPendingStatusError(msg, node)
+                            break
+                    }
+                    case "Compatibility Issue": {
+                        this.setupCompatibilityIssue(msg)
+                        break
+                    }
+                    default: {
+                        this.onlyDisplayError(msg)
+                    }
                 }
 
                 this.open()
@@ -291,7 +299,7 @@ ApplicationWindow {
             text: ""
 
             onAccepted: {
-                switch(errorType) {
+                switch (errorType) {
                     case "Already Submitted": {
                         close()
                         _reconstruction.graph.clearSubmittedNodes()
@@ -337,7 +345,11 @@ ApplicationWindow {
                 standardButton(Dialog.Discard).text = "Continue without Saving"
             }
 
-            onDiscarded: { close(); computeManager.compute(currentNode, true) }
+            onDiscarded: {
+                close()
+                computeManager.compute(currentNode, true)
+            }
+
             onAccepted: saveAsAction.trigger()
         }
 
@@ -363,8 +375,7 @@ ApplicationWindow {
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         onAccepted: {
-            if(_reconstruction.loadUrl(fileUrl))
-            {
+            if (_reconstruction.loadUrl(fileUrl)) {
                 MeshroomApp.addRecentProjectFile(fileUrl.toString())
             }
         }
@@ -413,13 +424,9 @@ ApplicationWindow {
     function ensureSaved(callback)
     {
         var saved = _reconstruction.undoStack.clean
-        // If current document is modified, open "unsaved dialog"
-        if(!saved)
-        {
+        if (!saved) {  // If current document is modified, open "unsaved dialog"
             unsavedDialog.prompt(callback)
-        }
-        else // otherwise, directly call the callback
-        {
+        } else {  // Otherwise, directly call the callback
             callback()
         }
         return saved
@@ -438,7 +445,7 @@ ApplicationWindow {
     // Check and return whether no local computation is in progress
     function ensureNotComputing()
     {
-        if(_reconstruction.computingLocally)
+        if (_reconstruction.computingLocally)
         {
             // Open a warning dialog to ask for computation to be stopped
             computingAtExitDialog.open()
@@ -578,23 +585,23 @@ ApplicationWindow {
         let folder = "";
 
         if (imagesFolder.toString() === "" && workspaceView.imageGallery.galleryGrid.itemAtIndex(0) !== null) {
-            imagesFolder = Filepath.stringToUrl(Filepath.dirname(workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source));
+            imagesFolder = Filepath.stringToUrl(Filepath.dirname(workspaceView.imageGallery.galleryGrid.itemAtIndex(0).source))
         }
 
         if (_reconstruction.graph && _reconstruction.graph.filepath) {
-            folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath));
+            folder = Filepath.stringToUrl(Filepath.dirname(_reconstruction.graph.filepath))
         } else {
             var projects = MeshroomApp.recentProjectFiles;
             if (projects.length > 0 && Filepath.exists(projects[0])) {
-                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]));
+                folder = Filepath.stringToUrl(Filepath.dirname(projects[0]))
             }
         }
 
         if (importImages && imagesFolder.toString() !== "" && Filepath.exists(imagesFolder)) {
-            folder = imagesFolder;
+            folder = imagesFolder
         }
 
-        dialog.folder = folder;
+        dialog.folder = folder
     }
 
     header: MenuBar {
@@ -609,8 +616,8 @@ ApplicationWindow {
                 property int fullWidth: {
                     var result = 0;
                     for (var i = 0; i < count; ++i) {
-                        var item = itemAt(i);
-                        result = Math.max(item.implicitWidth + item.padding * 2, result);
+                        var item = itemAt(i)
+                        result = Math.max(item.implicitWidth + item.padding * 2, result)
                     }
                     return result;
                 }
@@ -641,8 +648,8 @@ ApplicationWindow {
                 text: "Open"
                 shortcut: "Ctrl+O"
                 onTriggered: ensureSaved(function() {
-                        initFileDialogFolder(openFileDialog);
-                        openFileDialog.open();
+                        initFileDialogFolder(openFileDialog)
+                        openFileDialog.open()
                     })
             }
             Menu {
@@ -653,10 +660,10 @@ ApplicationWindow {
                 property int fullWidth: {
                     var result = 0;
                     for (var i = 0; i < count; ++i) {
-                        var item = itemAt(i);
-                        result = Math.max(item.implicitWidth + item.padding * 2, result);
+                        var item = itemAt(i)
+                        result = Math.max(item.implicitWidth + item.padding * 2, result)
                     }
-                    return result;
+                    return result
                 }
                 implicitWidth: fullWidth
                 Repeater {
@@ -664,14 +671,11 @@ ApplicationWindow {
                     model: MeshroomApp.recentProjectFiles
                     MenuItem {
                         onTriggered: ensureSaved(function() {
-                            openRecentMenu.dismiss();
-                            if(_reconstruction.loadUrl(modelData))
-                            {
-                                MeshroomApp.addRecentProjectFile(modelData);
-                            }
-                            else
-                            {
-                                MeshroomApp.removeRecentProjectFile(modelData);
+                            openRecentMenu.dismiss()
+                            if (_reconstruction.loadUrl(modelData)) {
+                                MeshroomApp.addRecentProjectFile(modelData)
+                            } else {
+                                MeshroomApp.removeRecentProjectFile(modelData)
                             }
                         })
                         
@@ -692,13 +696,11 @@ ApplicationWindow {
                 shortcut: "Ctrl+S"
                 enabled: _reconstruction ? (_reconstruction.graph && !_reconstruction.graph.filepath) || !_reconstruction.undoStack.clean : false
                 onTriggered: {
-                    if(_reconstruction.graph.filepath) {
-                        _reconstruction.save();
-                    }
-                    else
-                    {
-                        initFileDialogFolder(saveFileDialog);
-                        saveFileDialog.open();
+                    if (_reconstruction.graph.filepath) {
+                        _reconstruction.save()
+                    } else {
+                        initFileDialogFolder(saveFileDialog)
+                        saveFileDialog.open()
                     }
                 }
             }
@@ -707,8 +709,8 @@ ApplicationWindow {
                 text: "Save As..."
                 shortcut: "Ctrl+Shift+S"
                 onTriggered: {
-                    initFileDialogFolder(saveFileDialog);
-                    saveFileDialog.open();
+                    initFileDialogFolder(saveFileDialog)
+                    saveFileDialog.open()
                 }
             }
             MenuSeparator { }
@@ -717,8 +719,8 @@ ApplicationWindow {
                 text: "Import Images"
                 shortcut: "Ctrl+I"
                 onTriggered: {
-                    initFileDialogFolder(importImagesDialog, true);
-                    importImagesDialog.open();
+                    initFileDialogFolder(importImagesDialog, true)
+                    importImagesDialog.open()
                 }
             }
 
@@ -743,8 +745,8 @@ ApplicationWindow {
                         onActivated: saveAsTemplateAction.triggered()
                     }
                     onTriggered: {
-                            initFileDialogFolder(saveTemplateDialog);
-                            saveTemplateDialog.open();
+                        initFileDialogFolder(saveTemplateDialog)
+                        saveTemplateDialog.open()
                     }
                 }
 
@@ -763,8 +765,8 @@ ApplicationWindow {
                         onActivated: importProjectAction.triggered()
                     }
                     onTriggered: {
-                        initFileDialogFolder(importProjectDialog);
-                        importProjectDialog.open();
+                        initFileDialogFolder(importProjectDialog)
+                        importProjectDialog.open()
                     }
                 }
 
@@ -896,7 +898,7 @@ ApplicationWindow {
 
         function onGraphChanged() {
             // open CompatibilityManager after file loading if any issue is detected
-            if(compatibilityManager.issueCount)
+            if (compatibilityManager.issueCount)
                 compatibilityManager.open()
             // trigger fit to visualize all nodes
             graphEditor.fit()
@@ -984,24 +986,25 @@ ApplicationWindow {
 
                 function viewNode(node, mouse) {
                     // 2D viewer
-                    viewer2D.tryLoadNode(node);
+                    viewer2D.tryLoadNode(node)
 
                     // 3D viewer
                     for (var i = 0; i < node.attributes.count; i++) {
                         var attr = node.attributes.at(i)
-                        if(attr.isOutput && attr.desc.semantic !== "image" && workspaceView.viewIn3D(attr, mouse))
-                            break;
+                        if (attr.isOutput && attr.desc.semantic !== "image" && workspaceView.viewIn3D(attr, mouse))
+                            break
                     }
                 }
 
                 function viewIn3D(attribute, mouse) {
-                    if(!panel3dViewer || !attribute.node.has3DOutput)
-                        return false;
-                    var loaded = panel3dViewer.viewer3D.view(attribute);
+                    if (!panel3dViewer || !attribute.node.has3DOutput)
+                        return false
+                    var loaded = panel3dViewer.viewer3D.view(attribute)
+
                     // solo media if Control modifier was held
-                    if(loaded && mouse && mouse.modifiers & Qt.ControlModifier)
-                        panel3dViewer.viewer3D.solo(attribute);
-                    return loaded;
+                    if (loaded && mouse && mouse.modifiers & Qt.ControlModifier)
+                        panel3dViewer.viewer3D.solo(attribute)
+                    return loaded
                 }
             }
         }
@@ -1203,8 +1206,8 @@ ApplicationWindow {
                 readOnly: node ? node.locked : false
 
                 onUpgradeRequest: {
-                    var n = _reconstruction.upgradeNode(node);
-                    _reconstruction.selectedNode = n;
+                    var n = _reconstruction.upgradeNode(node)
+                    _reconstruction.selectedNode = n
                 }
             }
         }

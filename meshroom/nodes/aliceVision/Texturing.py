@@ -350,7 +350,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             ),
         desc.File(
             name="outputMaterial",
-            enabled= lambda node: node.outputMeshFileType.value == "obj",
+            enabled=lambda node: node.outputMeshFileType.value == "obj",
             label="Material",
             description="Output material file.",
             value=desc.Node.internalFolder + "texturedMesh.mtl",
@@ -361,7 +361,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name="outputTextures",
             label="Textures",
             description="Output texture files.",
-            value= lambda attr: desc.Node.internalFolder + "texture_*." + attr.node.colorMapping.colorMappingFileType.value if attr.node.colorMapping.enable.value else "",
+            value=lambda attr: desc.Node.internalFolder + "texture_*." + attr.node.colorMapping.colorMappingFileType.value if attr.node.colorMapping.enable.value else "",
             uid=[],
             group=""
         )

@@ -17,60 +17,60 @@ Item {
     property var ccheckers: []
     property int selectedCChecker: -1
 
-    Component.onCompleted: { readSourceFile(); }
-    onSourceChanged: { readSourceFile(); }
-    onViewpointChanged: { loadCCheckers(); }
+    Component.onCompleted: { readSourceFile() }
+    onSourceChanged: { readSourceFile() }
+    onViewpointChanged: { loadCCheckers() }
     property var updatePane: null
 
     function getColors() {
         if (ccheckers[selectedCChecker] === undefined)
-            return null;
+            return null
 
         if (ccheckers[selectedCChecker].colors === undefined)
-            return null;
+            return null
 
-        return ccheckers[selectedCChecker].colors;
+        return ccheckers[selectedCChecker].colors
     }
 
     function readSourceFile() {
-        var xhr = new XMLHttpRequest;
+        var xhr = new XMLHttpRequest
         // console.warn("readSourceFile: " + root.source)
-        xhr.open("GET", root.source);
+        xhr.open("GET", root.source)
 
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status == 200) {
                 try {
-                    root.json = null;
+                    root.json = null
                     // console.warn("readSourceFile: update json from " + root.source)
-                    root.json = JSON.parse(xhr.responseText);
+                    root.json = JSON.parse(xhr.responseText)
                     // console.warn("readSourceFile: root.json.checkers.length=" + root.json.checkers.length)
-                }
-                catch(exc)
-                {
-                    console.warn("Failed to parse ColorCheckerDetection JSON file: " + source);
-                    return;
+                } catch(exc) {
+                    console.warn("Failed to parse ColorCheckerDetection JSON file: " + source)
+                    return
                 }
             }
-            loadCCheckers();
-        };
-        xhr.send();
+            loadCCheckers()
+        }
+        xhr.send()
     }
 
     function loadCCheckers() {
-        emptyCCheckers();
-        if (root.json === null)
-        {
-            return;
+        emptyCCheckers()
+        if (root.json === null) {
+            return
         }
 
-        var currentImagePath = (root.viewpoint && root.viewpoint.attribute && root.viewpoint.attribute.childAttribute("path")) ? root.viewpoint.attribute.childAttribute("path").value : null
-        var viewId = (root.viewpoint && root.viewpoint.attribute && root.viewpoint.attribute.childAttribute("viewId")) ? root.viewpoint.attribute.childAttribute("viewId").value : null
+        var currentImagePath = (root.viewpoint && root.viewpoint.attribute && root.viewpoint.attribute.childAttribute("path"))
+                               ? root.viewpoint.attribute.childAttribute("path").value : null
+        var viewId = (root.viewpoint && root.viewpoint.attribute && root.viewpoint.attribute.childAttribute("viewId"))
+                     ? root.viewpoint.attribute.childAttribute("viewId").value : null
+
         for (var i = 0; i < root.json.checkers.length; i++) {
             // Only load ccheckers for the current view
             var checker = root.json.checkers[i]
             if (checker.viewId === viewId ||
                 checker.imagePath === currentImagePath) {
-                var cpt = Qt.createComponent("ColorCheckerEntity.qml");
+                var cpt = Qt.createComponent("ColorCheckerEntity.qml")
 
                 var obj = cpt.createObject(root, {
                     x: ccheckerSizeX / 2,
@@ -78,20 +78,20 @@ Item {
                     sizeX: root.ccheckerSizeX,
                     sizeY: root.ccheckerSizeY,
                     colors: root.json.checkers[i].colors
-                });
-                obj.applyTransform(root.json.checkers[i].transform);
-                ccheckers.push(obj);
-                selectedCChecker = ccheckers.length-1;
-                break;
+                })
+                obj.applyTransform(root.json.checkers[i].transform)
+                ccheckers.push(obj)
+                selectedCChecker = ccheckers.length - 1
+                break
             }
         }
-        updatePane();
+        updatePane()
     }
 
     function emptyCCheckers() {
         for (var i = 0; i < ccheckers.length; i++)
-            ccheckers[i].destroy();
-        ccheckers = [];
-        selectedCChecker = -1;
+            ccheckers[i].destroy()
+        ccheckers = []
+        selectedCChecker = -1
     }
 }

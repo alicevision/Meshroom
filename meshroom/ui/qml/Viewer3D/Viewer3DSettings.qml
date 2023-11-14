@@ -14,14 +14,14 @@ Item {
     // supported 3D files extensions
     readonly property var supportedExtensions: {
         var exts = ['.obj', '.stl', '.fbx', '.gltf'];
-        if(supportSfmData)
-        {
-            exts.push('.abc');
-            exts.push('.json');
-            exts.push('.sfm');
+        if (supportSfmData) {
+            exts.push('.abc')
+            exts.push('.json')
+            exts.push('.sfm')
         }
-        if(supportDepthMap)
-            exts.push('.exr');
+        if (supportDepthMap)
+            exts.push('.exr')
+
         return exts;
     }
 

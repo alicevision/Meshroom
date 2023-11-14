@@ -48,7 +48,7 @@ ChartView {
             //     root.zoomIn(r)
             // }
             onClicked: {
-                    root.zoomReset();
+                root.zoomReset()
             }
         }
     }

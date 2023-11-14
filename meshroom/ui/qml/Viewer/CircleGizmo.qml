@@ -51,27 +51,27 @@ Item {
                 property bool controlModifierEnabled: false
                 onPositionChanged: {
                     mArea.controlModifierEnabled = (mouse.modifiers & Qt.ControlModifier)
-                    mouse.accepted = false;
+                    mouse.accepted = false
                 }
                 acceptedButtons: Qt.LeftButton
                 hoverEnabled: true
                 drag.target: circle
 
                 drag.onActiveChanged: {
-                    if(!drag.active) {
-                        root.moved(circle.x - (root.width - circle.width) / 2, circle.y - (root.height - circle.height) / 2);
+                    if (!drag.active) {
+                        root.moved(circle.x - (root.width - circle.width) / 2, circle.y - (root.height - circle.height) / 2)
                     }
                 }
                 onPressed: {
-                    forceActiveFocus();
+                    forceActiveFocus()
                 }
                 onWheel: {
                     mArea.controlModifierEnabled = (wheel.modifiers & Qt.ControlModifier)
                     if (wheel.modifiers & Qt.ControlModifier) {
-                        root.incrementRadius(wheel.angleDelta.y / 120.0);
-                        wheel.accepted = true;
+                        root.incrementRadius(wheel.angleDelta.y / 120.0)
+                        wheel.accepted = true
                     } else {
-                        wheel.accepted = false;
+                        wheel.accepted = false
                     }
                 }
             }

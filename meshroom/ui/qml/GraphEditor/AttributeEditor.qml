@@ -31,7 +31,7 @@ ListView {
             && (object.isDefault && GraphEditorSettings.showDefaultAttributes || !object.isDefault && GraphEditorSettings.showModifiedAttributes)
             && (object.isOutput && GraphEditorSettings.showOutputAttributes || !object.isOutput && GraphEditorSettings.showInputAttributes)
             && (object.isLinkNested && GraphEditorSettings.showLinkAttributes || !object.isLink && GraphEditorSettings.showNotLinkAttributes))
-        ) && object.matchText(filterText)
+            ) && object.matchText(filterText)
         visible: active
 
         sourceComponent: AttributeItemDelegate {

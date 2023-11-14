@@ -17,30 +17,30 @@ The detection method also supports nested calibration grids.
 
     inputs = [
         desc.File(
-            name='input',
-            label='Input',
-            description='SfMData File. Viewpoints must correspond to lens calibration grids.',
-            value='',
+            name="input",
+            label="Input",
+            description="Input SfMData file. Viewpoints must correspond to lens calibration grids.",
+            value="",
             uid=[0],
         ),
         desc.BoolParam(
-            name='useNestedGrids',
-            label='Nested calibration grid',
-            description='Images contain nested calibration grids. These grids must be centered on the image center.',
+            name="useNestedGrids",
+            label="Nested Calibration Grid",
+            description="Enable if images contain nested calibration grids. These grids must be centered on the image center.",
             value=False,
             uid=[0],
         ),
         desc.BoolParam(
-            name='doubleSize',
-            label='Double Size',
-            description='Double the image size prior to processing',
+            name="doubleSize",
+            label="Double Size",
+            description="Double the image size prior to processing.",
             value=False,
             uid=[0],
         ),
         desc.BoolParam(
-            name='exportDebugImages',
-            label='Export Debug Images',
-            description='Export Debug Images',
+            name="exportDebugImages",
+            label="Export Debug Images",
+            description="Export debug images.",
             value=False,
             uid=[0],
         ),
@@ -48,20 +48,20 @@ The detection method also supports nested calibration grids.
 
     outputs = [
         desc.File(
-            name='output',
-            label='Folder',
-            description='',
+            name="output",
+            label="Folder",
+            description="Output folder.",
             value=desc.Node.internalFolder,
             uid=[],
         ),
         desc.File(
-            name='checkerLines',
-            enabled= lambda node: node.exportDebugImages.value,
-            label='Checker Lines',
-            description='Debug Images.',
-            semantic='image',
-            value=desc.Node.internalFolder + '<VIEW_ID>.png',
-            group='',  # do not export on the command line
+            name="checkerLines",
+            enabled=lambda node: node.exportDebugImages.value,
+            label="Checker Lines",
+            description="Debug images.",
+            semantic="image",
+            value=desc.Node.internalFolder + "<VIEW_ID>.png",
+            group="",  # do not export on the command line
             uid=[],
         ),
     ]

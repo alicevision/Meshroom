@@ -23,7 +23,7 @@ Flow {
 
     /// Shortcut function to clear legend
     function clear() {
-        seriesModel.clear();
+        seriesModel.clear()
     }
 
     // Update internal ListModel when ChartView's series change
@@ -33,19 +33,19 @@ Flow {
             seriesModel.append({"series": series})
         }
         function onSeriesRemoved(series) {
-            for(var i = 0; i < seriesModel.count; ++i) {
-                if(seriesModel.get(i)["series"] === series) {
-                    seriesModel.remove(i);
-                    return;
+            for (var i = 0; i < seriesModel.count; ++i) {
+                if (seriesModel.get(i)["series"] === series) {
+                    seriesModel.remove(i)
+                    return
                 }
             }
         }
     }
 
     onChartViewChanged: {
-        clear();
-        for(var i = 0; i < chartView.count; ++i)
-            seriesModel.append({"series": chartView.series(i)});
+        clear()
+        for (var i = 0; i < chartView.count; ++i)
+            seriesModel.append({"series": chartView.series(i)})
     }
 
     Repeater {
@@ -64,10 +64,10 @@ Flow {
             color: series.color
 
             onHoveredChanged: {
-                if(hovered && series.visible)
-                    root.hoveredSeries = series;
+                if (hovered && series.visible)
+                    root.hoveredSeries = series
                 else
-                    root.hoveredSeries = null;
+                    root.hoveredSeries = null
             }
 
             // hovered serie properties override
@@ -85,10 +85,10 @@ Flow {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    if(mouse.modifiers & Qt.ControlModifier)
-                        root.soloSeries(index);
+                    if (mouse.modifiers & Qt.ControlModifier)
+                        root.soloSeries(index)
                     else
-                        series.visible = !series.visible;
+                        series.visible = !series.visible
                 }
             }
         }
@@ -96,10 +96,9 @@ Flow {
 
     /// Hide all series but the one at index 'idx'
     function soloSeries(idx) {
-        for(var i = 0; i < seriesModel.count; i++) {
-            chartView.series(i).visible = false;
+        for (var i = 0; i < seriesModel.count; i++) {
+            chartView.series(i).visible = false
         }
-        chartView.series(idx).visible = true;
+        chartView.series(idx).visible = true
     }
-
 }

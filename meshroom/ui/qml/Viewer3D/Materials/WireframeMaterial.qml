@@ -4,12 +4,12 @@ import Qt3D.Render 2.15
 Material {
     id: root
 
-    property color ambient: Qt.rgba( 0.05, 0.05, 0.05, 1.0 )
-    property color diffuse: Qt.rgba( 0.7, 0.7, 0.7, 1.0 )
-    property color specular: Qt.rgba( 0.95, 0.95, 0.95, 1.0 )
+    property color ambient: Qt.rgba(0.05, 0.05, 0.05, 1.0)
+    property color diffuse: Qt.rgba(0.7, 0.7, 0.7, 1.0)
+    property color specular: Qt.rgba(0.95, 0.95, 0.95, 1.0)
     property real shininess: 1.0
     property real lineWidth: 0.8
-    property color lineColor: Qt.rgba( 0.2, 0.2, 0.2, 1.0 )
+    property color lineColor: Qt.rgba(0.2, 0.2, 0.2, 1.0)
     property vector3d lightIntensity: Qt.vector3d(0.7, 0.7, 0.7)
     property vector4d lightPosition:  Qt.vector4d(0.0, 0.0, 0.0, 1.0)
 

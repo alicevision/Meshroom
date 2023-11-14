@@ -30,8 +30,8 @@ FloatingPane {
 
                 Rectangle {
                     id: cell
-                    width: root.width / grid.columns - grid.spacing * (grid.columns+1) / grid.columns
-                    height: root.height / grid.rows - grid.spacing * (grid.rows+1) / grid.rows
+                    width: root.width / grid.columns - grid.spacing * (grid.columns + 1) / grid.columns
+                    height: root.height / grid.rows - grid.spacing * (grid.rows + 1) / grid.rows
                     color: Qt.rgba(modelData.r, modelData.g, modelData.b, 1.0)
                 }
 

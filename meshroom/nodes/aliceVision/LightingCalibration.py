@@ -14,7 +14,7 @@ Can also be used to calibrate a lighting dome (RTI type).
     inputs = [
         desc.File(
             name="inputPath",
-            label="SfMData",
+            label="Input SfMData",
             description="Input SfMData file.",
             value="",
             uid=[0]

@@ -9,7 +9,7 @@ import Controls 1.0
 import Utils 1.0
 
 /**
- * ImageMetadataView displays a JSON model representing an image"s metadata as a ListView.
+ * ImageMetadataView displays a JSON model representing an image's metadata as a ListView.
  */
 FloatingPane {
     id: root
@@ -27,12 +27,10 @@ FloatingPane {
      * GPS coordinates in metadata can be store in 3 forms:
      * (degrees), (degrees, minutes), (degrees, minutes, seconds)
      */
-    function gpsMetadataToCoordinates(value, ref)
-    {
+    function gpsMetadataToCoordinates(value, ref) {
         var values = value.split(",")
         var result = 0
-        for(var i=0; i < values.length; ++i)
-        {
+        for (var i = 0; i < values.length; ++i) {
             // divide each component by the corresponding power of 60
             // 1 for degree, 60 for minutes, 3600 for seconds
             result += Number(values[i]) / Math.pow(60, i)
@@ -42,19 +40,14 @@ FloatingPane {
     }
 
     /// Try to get GPS coordinates from metadata
-    function getGPSCoordinates(metadata)
-    {
+    function getGPSCoordinates(metadata) {
         // GPS data available
-        if(metadata && metadata["GPS:Longitude"] !== undefined && metadata["GPS:Latitude"] !== undefined)
-        {
+        if (metadata && metadata["GPS:Longitude"] !== undefined && metadata["GPS:Latitude"] !== undefined) {
             var latitude = gpsMetadataToCoordinates(metadata["GPS:Latitude"], metadata["GPS:LatitudeRef"])
             var longitude = gpsMetadataToCoordinates(metadata["GPS:Longitude"], metadata["GPS:LongitudeRef"])
             var altitude = metadata["GPS:Altitude"] || 0
             return QtPositioning.coordinate(latitude, longitude, altitude)
-        }
-        // GPS data unavailable: reset coordinates to default value
-        else
-        {
+        } else {  // GPS data unavailable: reset coordinates to default value
             return QtPositioning.coordinate()
         }
     }
@@ -74,27 +67,29 @@ FloatingPane {
             metadataModel.clear()
             var entries = []
             // prepare data to populate the model from the input metadata object
-            for(var key in metadata)
-            {
+            for (var key in metadata) {
                 var entry = {}
                 // split on ":" to get group and key
                 var i = key.lastIndexOf(":")
-                if(i === -1)
-                {
+                if (i === -1) {
                     i = key.lastIndexOf("/")
                 }
-                if(i !== -1)
-                {
+
+                if (i !== -1) {
                     entry["group"] = key.substr(0, i)
                     entry["key"] = key.substr(i+1)
-                }
-                else
-                {
+                } else {
                     // set default group to something convenient for sorting
                     entry["group"] = "-"
                     entry["key"] = key
                 }
-                entry["value"] = metadata[key]
+
+                // If a key has an empty corresponding value, set it as an empty string.
+                // Otherwise it will be considered as a Variant Map.
+                if (typeof(metadata[key]) != "string")
+                    entry["value"] = ""
+                else
+                    entry["value"] = metadata[key]
                 entry["raw"] = entry["group"] + ":" + entry["key"] + "=" + entry["value"]
                 entries.push(entry)
             }
@@ -104,22 +99,12 @@ FloatingPane {
         }
     }
 
-//    Button {
-//        onClicked: {
-//            if(sortedMetadataModel.sortOrder == Qt.DescendingOrder)
-//                sortedMetadataModel.sortOrder = Qt.AscendingOrder
-//            else
-//                sortedMetadataModel.sortOrder = Qt.DescendingOrder
-//        }
-//    }
-
     // Background WheelEvent grabber
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.MiddleButton
         onWheel: wheel.accepted = true
     }
-
 
     // Main Layout
     ColumnLayout {
@@ -138,16 +123,15 @@ FloatingPane {
             Label {
                 id: exposureLabel
                 text: {
-                    if(metadata["ExposureTime"] === undefined)
-                        return "";
-                    var expStr = metadata["ExposureTime"];
-                    var exp = parseFloat(expStr);
-                    if(exp < 1.0)
-                    {
-                        var invExp = 1.0 / exp;
-                        return "1/" + invExp.toFixed(0);
+                    if (metadata["ExposureTime"] === undefined)
+                        return ""
+                    var expStr = metadata["ExposureTime"]
+                    var exp = parseFloat(expStr)
+                    if (exp < 1.0) {
+                        var invExp = 1.0 / exp
+                        return "1/" + invExp.toFixed(0)
                     }
-                    return expStr;
+                    return expStr
                 }
                 elide: Text.ElideRight
                 horizontalAlignment: Text.AlignHLeft
@@ -199,7 +183,7 @@ FloatingPane {
                         elide: Text.ElideRight
                     }
                     Label {
-                        text: value
+                        text: value != undefined ? value : ""
                         Layout.fillWidth: true
                         wrapMode: Label.WrapAtWordBoundaryOrAnywhere
                     }

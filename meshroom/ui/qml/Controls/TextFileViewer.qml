@@ -23,7 +23,7 @@ Item {
 
     onSourceChanged: loadSource()
     onAutoReloadChanged: loadSource()
-    onVisibleChanged: if(visible) loadSource()
+    onVisibleChanged: if (visible) loadSource()
 
     RowLayout {
         anchors.fill: parent
@@ -67,16 +67,16 @@ Item {
                         MenuItem {
                             text: "Copy Visible Text"
                             onTriggered: {
-                                var t = "";
-                                for(var i = textView.firstVisibleIndex(); i < textView.lastVisibleIndex(); ++i)
-                                    t += textView.model.get(i).line + "\n";
-                                Clipboard.setText(t);
+                                var t = ""
+                                for (var i = textView.firstVisibleIndex(); i < textView.lastVisibleIndex(); ++i)
+                                    t += textView.model.get(i).line + "\n"
+                                Clipboard.setText(t)
                             }
                         }
                         MenuItem {
                             text: "Copy All"
                             onTriggered: {
-                                Clipboard.setText(textView.text);
+                                Clipboard.setText(textView.text)
                             }
                          }
                     }
@@ -120,54 +120,53 @@ Item {
                 highlightFollowsCurrentItem: true
                 highlightMoveDuration: 0
                 Keys.onPressed: {
-                    switch(event.key)
-                    {
-                    case Qt.Key_Home:
-                        textView.positionViewAtBeginning();
-                        break;
-                    case Qt.Key_End:
-                        textView.positionViewAtEnd();
-                        break;
-                    case Qt.Key_Up:
-                        currentIndex = firstVisibleIndex();
-                        decrementCurrentIndex();
-                        break;
-                    case Qt.Key_Down:
-                        currentIndex = lastVisibleIndex();
-                        incrementCurrentIndex();
-                        break;
-                    case Qt.Key_PageUp:
-                        textView.positionViewAtIndex(firstVisibleIndex(), ListView.End);
-                        break;
-                    case Qt.Key_PageDown:
-                        textView.positionViewAtIndex(lastVisibleIndex(), ListView.Beginning);
-                        break;
+                    switch (event.key) {
+                        case Qt.Key_Home:
+                            textView.positionViewAtBeginning()
+                            break
+                        case Qt.Key_End:
+                            textView.positionViewAtEnd()
+                            break
+                        case Qt.Key_Up:
+                            currentIndex = firstVisibleIndex()
+                            decrementCurrentIndex()
+                            break;
+                        case Qt.Key_Down:
+                            currentIndex = lastVisibleIndex()
+                            incrementCurrentIndex()
+                            break;
+                        case Qt.Key_PageUp:
+                            textView.positionViewAtIndex(firstVisibleIndex(), ListView.End)
+                            break
+                        case Qt.Key_PageDown:
+                            textView.positionViewAtIndex(lastVisibleIndex(), ListView.Beginning)
+                            break
                     }
                 }
 
                 function setText(value) {
                     // store current first index
-                    var topIndex = firstVisibleIndex();
+                    var topIndex = firstVisibleIndex()
                     // store whether autoscroll to bottom is active
-                    var scrollToBottom = atYEnd && autoscroll.checked;
+                    var scrollToBottom = atYEnd && autoscroll.checked
                     // replace text
-                    text = value;
+                    text = value
 
                     // restore content position by either:
                     //  - autoscrolling to bottom
-                    if(scrollToBottom)
-                        positionViewAtEnd();
+                    if (scrollToBottom)
+                        positionViewAtEnd()
                     //  - setting first visible index back (when possible)
-                    else if(topIndex !== firstVisibleIndex())
-                        positionViewAtIndex(Math.min(topIndex, count-1), ListView.Beginning);
+                    else if (topIndex !== firstVisibleIndex())
+                        positionViewAtIndex(Math.min(topIndex, count - 1), ListView.Beginning)
                 }
 
                 function firstVisibleIndex() {
-                    return indexAt(contentX, contentY);
+                    return indexAt(contentX, contentY)
                 }
 
                 function lastVisibleIndex() {
-                    return indexAt(contentX, contentY + height - 2);
+                    return indexAt(contentX, contentY + height - 2)
                 }
 
                 ScrollBar.vertical: ScrollBar {
@@ -286,11 +285,11 @@ Item {
 
                                 color: {
                                     // color line according to log level
-                                    if(text.indexOf("[warning]") >= 0)
-                                        return Colors.orange;
+                                    if (text.indexOf("[warning]") >= 0)
+                                        return Colors.orange
                                     else if(text.indexOf("[error]") >= 0)
-                                        return Colors.red;
-                                    return palette.text;
+                                        return Colors.red
+                                    return palette.text
                                 }
                             }
                         }
@@ -339,66 +338,63 @@ Item {
 
 
     // Load current source file and update ListView's model
-    function loadSource()
-    {
-        if(!visible)
-            return;
+    function loadSource() {
+        if (!visible)
+            return
 
-        loading = true;
-        var xhr = new XMLHttpRequest;
+        loading = true
+        var xhr = new XMLHttpRequest
 
-        xhr.open("GET", root.source);
+        xhr.open("GET", root.source)
         xhr.onreadystatechange = function() {
             // - can't rely on 'Last-Modified' header response to verify
             //   that file has changed on disk (not always up-to-date)
             // - instead, let QML engine evaluate whether 'text' property value has changed
-            if(xhr.readyState === XMLHttpRequest.DONE) {
-                textView.setText(xhr.status === 200 ? xhr.responseText : "");
-                loading = false;
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                textView.setText(xhr.status === 200 ? xhr.responseText : "")
+                loading = false
                 // re-trigger reload source file
-                if(autoReload)
-                    reloadTimer.restart();
+                if (autoReload)
+                    reloadTimer.restart()
             }
-        };
-        xhr.send();
+        }
+        xhr.send()
     }
 
     // Parse log-line to see if it contains a time indicator
     // and if yes then turn it into a time value (in seconds)
-    function getLogLineTime(line) 
-    {
-        const regex = /[0-9]{2}:[0-9]{2}:[0-9]{2}/;
-        const found = line.match(regex);
+    function getLogLineTime(line) {
+        const regex = /[0-9]{2}:[0-9]{2}:[0-9]{2}/
+        const found = line.match(regex)
         if (found && found.length > 0) {
-            let hh = parseInt(found[0].substring(0, 2));
-            let mm = parseInt(found[0].substring(3, 5));
-            let ss = parseInt(found[0].substring(6, 8));
-            let time = ss + 60*mm + 3600*hh;
+            let hh = parseInt(found[0].substring(0, 2))
+            let mm = parseInt(found[0].substring(3, 5))
+            let ss = parseInt(found[0].substring(6, 8))
+            let time = ss + 60 * mm + 3600 * hh;
             if (!isNaN(time)) {
-                return time;
+                return time
             }
         }
-        return -1;
+        return -1
     }
 
     // Update a log-lines ListModel from a log-text by filling it with elements containing: 
     // - a log-line (string)
     // - the elapsed time since the last log-line containing a time value and this one (if it also contains a time value)
-    function updateLogLinesModel(llm, text)
-    {
-        llm.clear();
-        const lines = text.split('\n');
-        const times = lines.map(line => getLogLineTime(line));
-        let prev_idx = -1;
+    function updateLogLinesModel(llm, text) {
+        llm.clear()
+        const lines = text.split('\n')
+        const times = lines.map(line => getLogLineTime(line))
+        let prev_idx = -1
         for (let i = 0; i < lines.length; i++) {
-            let delta = -1;
+            let delta = -1
             if (times[i] >= 0) {
                 if (prev_idx >= 0) {
-                    delta = times[i]-times[prev_idx];
+                    delta = times[i]-times[prev_idx]
                 }
-                prev_idx = i;
+                prev_idx = i
             }
-            llm.append({"line": lines[i], "duration": delta});
+            llm.append({"line": lines[i], "duration": delta})
         }
     }
 }

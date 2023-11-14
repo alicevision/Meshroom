@@ -107,13 +107,13 @@ Item {
     // Used to generate list of node's label sharing the same uid
     function generateDuplicateList() {
         let str = "<b>Shares internal folder (data) with:</b>"
-        for(let i = 0; i < node.duplicates.count; ++i) {
-            if(i % 5 === 0)
+        for (let i = 0; i < node.duplicates.count; ++i) {
+            if (i % 5 === 0)
                 str += "<br>"
 
             const currentNode = node.duplicates.at(i)
 
-            if(i === node.duplicates.count - 1) {
+            if (i === node.duplicates.count - 1) {
                 str += currentNode.nameToLabel(currentNode.name)
                 return str
             }
@@ -138,9 +138,8 @@ Item {
         onEntered: root.entered()
         onExited: root.exited()
         drag.onActiveChanged: {
-            if(!drag.active)
-            {
-                root.moved(Qt.point(root.x, root.y));
+            if (!drag.active) {
+                root.moved(Qt.point(root.x, root.y))
             }
         }
 
@@ -244,15 +243,23 @@ Item {
                                 palette.text: Colors.sysPalette.text
                                 ToolTip.text: toolTipText
 
-                                onPressed: { offsetReleased.running = false; toolTipText = visible ? generateDuplicateList() : "" }
-                                onReleased: { toolTipText = "" ; offsetReleased.running = true }
+                                onPressed: {
+                                    offsetReleased.running = false
+                                    toolTipText = visible ? generateDuplicateList() : ""
+                                }
+                                onReleased: {
+                                    toolTipText = ""
+                                    offsetReleased.running = true
+                                }
                                 onCanceled: released()
 
                                 // Used for a better user experience with the button
                                 // Avoid to change the text too quickly
                                 Timer {
                                     id: offsetReleased
-                                    interval: 750; running: false; repeat: false
+                                    interval: 750
+                                    running: false
+                                    repeat: false
                                     onTriggered: parent.toolTipText = visible ? parent.baseText : ""
                                 }
                             }
@@ -521,4 +528,3 @@ Item {
         }
     }
 }
-

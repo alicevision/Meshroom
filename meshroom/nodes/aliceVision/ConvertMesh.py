@@ -19,10 +19,10 @@ class ConvertMesh(desc.AVCommandLineNode):
         ),
         desc.ChoiceParam(
             name="outputMeshFileType",
-            label="File Type",
+            label="Output File Type",
             description="Output mesh format (*.obj, *.gltf, *.fbx, *.stl).",
             value="obj",
-            values=("gltf", "obj", "fbx", "stl"),
+            values=["gltf", "obj", "fbx", "stl"],
             exclusive=True,
             uid=[0],
             group="",

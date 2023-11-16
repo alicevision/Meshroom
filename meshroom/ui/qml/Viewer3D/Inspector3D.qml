@@ -233,7 +233,7 @@ FloatingPane {
                                 // Ensure there are entries in resectionGroups and a valid resectionId before accessing anything
                                 if (Viewer3DSettings.resectionId !== undefined && Viewer3DSettings.resectionGroups.length > 0)
                                     id = Math.min(Viewer3DSettings.resectionId, Viewer3DSettings.resectionIdCount)
-                                if (id !== undefined)
+                                if (id !== undefined && Viewer3DSettings.resectionGroups[id] !== undefined)
                                     return Viewer3DSettings.resectionGroups[id]
                                 return 0
 
@@ -343,13 +343,25 @@ FloatingPane {
                             // add mediaLibrary.count in the binding to ensure 'entity'
                             // is re-evaluated when mediaLibrary delegates are modified
                             property bool loading: model.status === SceneLoader.Loading
-                            property bool hovered:  model.attribute ? (uigraph ? uigraph.hoveredNode === model.attribute.node : false) : containsMouse
+                            property bool hovered: model.attribute ? (uigraph ? uigraph.hoveredNode === model.attribute.node : false) : containsMouse
                             property bool isSelectedNode: model.attribute ? (uigraph ? uigraph.selectedNode === model.attribute.node : false) : false
 
                             onIsSelectedNodeChanged: updateCurrentIndex()
 
                             function updateCurrentIndex() {
-                                if(isSelectedNode) { mediaListView.currentIndex = index }
+                                if (isSelectedNode) {
+                                    mediaListView.currentIndex = index
+                                }
+
+                                // If the index is updated, and the resection ID count is available, update every resection-related variable:
+                                // this covers the changes of index that occur when a node whose output is already loaded in the 3D viewer is
+                                // clicked/double-clicked, and when the active entry is removed from the list.
+                                if (model.resectionIdCount) {
+                                    Viewer3DSettings.resectionIdCount = model.resectionIdCount
+                                    Viewer3DSettings.resectionGroups = model.resectionGroups
+                                    Viewer3DSettings.resectionId = model.resectionId
+                                    resectionIdSlider.value = model.resectionId
+                                }
                             }
 
                             height: childrenRect.height
@@ -360,16 +372,22 @@ FloatingPane {
                             }
 
                             hoverEnabled: true
-                            onEntered: { if (model.attribute) uigraph.hoveredNode = model.attribute.node }
-                            onExited: { if (model.attribute) uigraph.hoveredNode = null }
+                            onEntered: {
+                                if (model.attribute)
+                                    uigraph.hoveredNode = model.attribute.node
+                            }
+                            onExited: {
+                                if (model.attribute)
+                                    uigraph.hoveredNode = null
+                            }
                             onClicked: {
                                 if (model.attribute)
-                                    uigraph.selectedNode = model.attribute.node;
+                                    uigraph.selectedNode = model.attribute.node
                                 else
-                                    uigraph.selectedNode = null;
+                                    uigraph.selectedNode = null
                                 if (mouse.button == Qt.RightButton)
-                                    contextMenu.popup();
-                                mediaListView.currentIndex = index;
+                                    contextMenu.popup()
+                                mediaListView.currentIndex = index
 
                                 // Update the resection ID-related objects based on the active model
                                 Viewer3DSettings.resectionIdCount = model.resectionIdCount

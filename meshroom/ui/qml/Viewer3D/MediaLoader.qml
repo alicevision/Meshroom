@@ -99,8 +99,9 @@ import Utils 1.0
                                                'source': source,
                                                'pointSize': Qt.binding(function() { return 0.01 * Viewer3DSettings.pointSize }),
                                                'locatorScale': Qt.binding(function() { return Viewer3DSettings.cameraScale }),
-                                               'cameraPickingEnabled': Qt.binding(function() { return root.enabled })
-                                           })
+                                               'cameraPickingEnabled': Qt.binding(function() { return root.enabled }),
+                                               'resectionId': Qt.binding(function() { return Viewer3DSettings.resectionId })
+                                           });
 
                 obj.statusChanged.connect(function() {
                     if (obj.status === SceneLoader.Ready) {
@@ -109,6 +110,11 @@ import Utils 1.0
                         }
                         cameraCount = obj.spawnCameraSelectors();
                     }
+                    Viewer3DSettings.resectionIdCount = obj.countResectionIds();
+                    Viewer3DSettings.resectionGroups = obj.countResectionGroups(Viewer3DSettings.resectionIdCount + 1);
+                    resectionIdCount = Viewer3DSettings.resectionIdCount
+                    resectionGroups = Viewer3DSettings.resectionGroups
+                    resectionId = Viewer3DSettings.resectionIdCount
                     root.status = obj.status;
                 })
             }

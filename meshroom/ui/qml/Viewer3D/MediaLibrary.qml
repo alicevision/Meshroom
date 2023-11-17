@@ -58,6 +58,9 @@ Entity {
             "faceCount": 0,
             "cameraCount": 0,
             "textureCount": 0,
+            "resectionIdCount": 0,
+            "resectionId": 0,
+            "resectionGroups": [],
             "status": SceneLoader.None
         })
     }
@@ -308,12 +311,11 @@ Entity {
                     if (object) {
                         // bind media info to corresponding model roles
                         // (test for object validity to avoid error messages right after object has been deleted)
-                        var boundProperties = ["vertexCount", "faceCount", "cameraCount", "textureCount"]
+                        var boundProperties = ["vertexCount", "faceCount", "cameraCount", "textureCount", "resectionIdCount", "resectionId", "resectionGroups"]
                         boundProperties.forEach(function(prop) {
                             model[prop] = Qt.binding(function() { return object ? object[prop] : 0 })
                         })
-                    }
-                    else if (finalSource && status === Component.Ready) {
+                    } else if (finalSource && status === Component.Ready) {
                         // source was valid but no loader was created, remove element
                         // check if component is ready to avoid removing element from the model before adding instance to the node
                         remove(index)

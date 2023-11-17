@@ -56,4 +56,10 @@ Item {
     readonly property bool showViewpointImageOverlay: syncViewpointCamera && viewpointImageOverlay
     property bool viewpointImageFrame: false
     readonly property bool showViewpointImageFrame: syncViewpointCamera && viewpointImageFrame
+
+    // Cameras' resection IDs
+    property bool displayResectionIds: false
+    property int resectionIdCount: 0
+    property int resectionId: resectionIdCount
+    property var resectionGroups: []  // Number of cameras for each resection ID
 }

@@ -33,6 +33,34 @@ SfmDataEntity {
         return validCameras;
     }
 
+    function countResectionIds() {
+        var maxResectionId = 0
+        for (var i = 0; i < root.cameras.length; i++) {
+            var cam = root.cameras[i]
+            var resectionId = cam.resectionId
+            if (resectionId === undefined || resectionId === 4294967295)
+                continue
+            if (resectionId > maxResectionId)
+                maxResectionId = resectionId
+        }
+
+        return maxResectionId
+    }
+
+
+    function countResectionGroups(resectionIdCount) {
+        var arr = Array(resectionIdCount).fill(0)
+        for (var i = 0; i < root.cameras.length; i++) {
+            var cam = root.cameras[i]
+            var resectionId = cam.resectionId
+            if (resectionId === undefined || resectionId === 4294967295)
+                continue
+            arr[resectionId] = arr[resectionId] + 1
+        }
+
+        return arr
+    }
+
     SystemPalette {
         id: activePalette
     }

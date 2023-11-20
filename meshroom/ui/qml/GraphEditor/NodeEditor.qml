@@ -34,7 +34,7 @@ Panel {
         else {
             timer.stop()
             if (node !== null && (node.isFinishedOrRunning() || globalStatus == "ERROR")) {
-                computationInfo.text = Format.getTimeStr(node.elapsedTime)
+                computationInfo.text = Format.sec2timeStr(node.elapsedTime)
             }
             else{
                 computationInfo.text =  ""
@@ -57,7 +57,7 @@ Panel {
                         nodeStartDateTime = new Date(node.getStartDateTime()).getTime()
                     }
                     var now = new Date().getTime()
-                    parent.text = Format.getTimeStr((now-nodeStartDateTime)/1000)
+                    parent.text = Format.sec2timeStr((now-nodeStartDateTime)/1000)
                 }
             }
             padding: 2
@@ -75,7 +75,7 @@ Panel {
                 if (node !== null && (node.isFinishedOrRunning() || (node.isSubmittedOrRunning() && node.elapsedTime > 0))) {
                     var longestChunkTime = getLongestChunkTime(node.chunks)
                     if (longestChunkTime > 0)
-                        return "Longest chunk: " + Format.getTimeStr(longestChunkTime) + " (" + node.chunks.count + " chunks)"
+                        return "Longest chunk: " + Format.sec2timeStr(longestChunkTime) + " (" + node.chunks.count + " chunks)"
                     else
                         return ""
                 } else {

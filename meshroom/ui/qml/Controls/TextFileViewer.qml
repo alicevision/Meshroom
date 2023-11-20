@@ -226,7 +226,7 @@ Item {
                             anchors.fill: parent
                         }
                         enabled: logLine.duration > 0
-                        ToolTip.text: "Elapsed time: " + Format.getTimeStr(logLine.duration)
+                        ToolTip.text: "Elapsed time: " + Format.sec2timeStr(logLine.duration)
                         ToolTip.visible: mouseArea.containsMouse
                     }
 

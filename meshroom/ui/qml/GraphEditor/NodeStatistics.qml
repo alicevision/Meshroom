@@ -50,12 +50,12 @@ FocusScope {
             KeyValue {
                 key: "Time"
                 property real time: node.elapsedTime
-                value: time > 0.0 ? Format.sec2time(time) : "-"
+                value: time > 0.0 ? Format.sec2timecode(time) : "-"
             }
             KeyValue {
                 key: "Cumulated Time"
                 property real time: node.recursiveElapsedTime
-                value: time > 0.0 ? Format.sec2time(time) : "-"
+                value: time > 0.0 ? Format.sec2timecode(time) : "-"
             }
         }
     }

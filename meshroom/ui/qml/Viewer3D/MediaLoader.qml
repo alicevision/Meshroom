@@ -100,7 +100,8 @@ import Utils 1.0
                                                'pointSize': Qt.binding(function() { return 0.01 * Viewer3DSettings.pointSize }),
                                                'locatorScale': Qt.binding(function() { return Viewer3DSettings.cameraScale }),
                                                'cameraPickingEnabled': Qt.binding(function() { return root.enabled }),
-                                               'resectionId': Qt.binding(function() { return Viewer3DSettings.resectionId })
+                                               'resectionId': Qt.binding(function() { return Viewer3DSettings.resectionId }),
+                                               'displayResections': Qt.binding(function() { return Viewer3DSettings.displayResectionIds })
                                            });
 
                 obj.statusChanged.connect(function() {

@@ -38,8 +38,9 @@ Can also be used to calibrate a lighting dome (RTI type).
             name="method",
             label="Calibration Method",
             description="Method used for light calibration.\n"
-                        "Use 'brightestPoint' for shiny spheres and 'whiteSphere' for white matte spheres.",
-            values=["brightestPoint", "whiteSphere", "HS"],
+                        "Use 'brightestPoint' for shiny spheres and 'whiteSphere' for white matte spheres.\n"
+                        "Spherical Harmonic lighting can be estimated using 'SH' method.",
+            values=["brightestPoint", "whiteSphere", "SH"],
             value="brightestPoint",
             exclusive=True,
             uid=[0],

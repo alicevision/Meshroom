@@ -45,6 +45,7 @@ SfmDataEntity {
         for (var i = 0; i < root.cameras.length; i++) {
             var cam = root.cameras[i]
             var resectionId = cam.resectionId
+            // 4294967295 = UINT_MAX, which might occur if the value is undefined on the C++ side
             if (resectionId === undefined || resectionId === 4294967295)
                 continue
             if (resectionId > maxResectionId)
@@ -60,6 +61,7 @@ SfmDataEntity {
         for (var i = 0; i < root.cameras.length; i++) {
             var cam = root.cameras[i]
             var resectionId = cam.resectionId
+            // 4294967295 = UINT_MAX, which might occur if the value is undefined on the C++ side
             if (resectionId === undefined || resectionId === 4294967295)
                 continue
             arr[resectionId] = arr[resectionId] + 1

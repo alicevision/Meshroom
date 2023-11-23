@@ -1,7 +1,7 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.3.0-develop",
+        "releaseVersion": "2023.3.0",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {

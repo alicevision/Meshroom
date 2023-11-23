@@ -1,15 +1,15 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.2.0",
+        "releaseVersion": "2023.3.0",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "DistortionCalibration": "3.0",
-            "CheckerboardDetection": "1.0",
+            "ExportDistortion": "1.0",
             "CameraInit": "9.0",
-            "Publish": "1.3",
-            "ExportDistortion": "1.0"
+            "CheckerboardDetection": "1.0",
+            "DistortionCalibration": "3.0",
+            "Publish": "1.3"
         }
     },
     "graph": {

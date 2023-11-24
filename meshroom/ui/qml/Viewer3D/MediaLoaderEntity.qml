@@ -17,4 +17,10 @@ Entity {
     property int cameraCount
     /// Number of textures
     property int textureCount
+    /// Number of resection IDs
+    property int resectionIdCount
+    /// Current resection ID
+    property int resectionId
+    /// Groups of cameras based on resection IDs
+    property var resectionGroups
 }

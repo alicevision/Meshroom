@@ -17,6 +17,13 @@ SfmDataEntity {
 
     signal cameraSelected(var viewId)
 
+    Connections {
+        target: _reconstruction
+        function onSelectedViewIdChanged() {
+            root.cameraSelected(_reconstruction.selectedViewId)
+        }
+    }
+
     function spawnCameraSelectors() {
         var validCameras = 0;
         // spawn camera selector for each camera
@@ -31,6 +38,36 @@ SfmDataEntity {
             validCameras++;
         }
         return validCameras;
+    }
+
+    function countResectionIds() {
+        var maxResectionId = 0
+        for (var i = 0; i < root.cameras.length; i++) {
+            var cam = root.cameras[i]
+            var resectionId = cam.resectionId
+            // 4294967295 = UINT_MAX, which might occur if the value is undefined on the C++ side
+            if (resectionId === undefined || resectionId === 4294967295)
+                continue
+            if (resectionId > maxResectionId)
+                maxResectionId = resectionId
+        }
+
+        return maxResectionId
+    }
+
+
+    function countResectionGroups(resectionIdCount) {
+        var arr = Array(resectionIdCount).fill(0)
+        for (var i = 0; i < root.cameras.length; i++) {
+            var cam = root.cameras[i]
+            var resectionId = cam.resectionId
+            // 4294967295 = UINT_MAX, which might occur if the value is undefined on the C++ side
+            if (resectionId === undefined || resectionId === 4294967295)
+                continue
+            arr[resectionId] = arr[resectionId] + 1
+        }
+
+        return arr
     }
 
     SystemPalette {

@@ -31,7 +31,8 @@ FloatingPane {
         anchors.fill: parent
         spacing: 4
 
-        Group {
+        ExpandableGroup {
+            id: displayGroup
             Layout.fillWidth: true
             title: "DISPLAY"
 
@@ -43,6 +44,7 @@ FloatingPane {
                 Flow {
                     Layout.columnSpan: 2
                     Layout.fillWidth: true
+                    visible: displayGroup.expanded
                     spacing: 1
                     MaterialToolButton {
                         text: MaterialIcons.grid_on
@@ -63,8 +65,13 @@ FloatingPane {
                         onClicked: Viewer3DSettings.displayOrigin = !Viewer3DSettings.displayOrigin
                     }
                 }
-                MaterialLabel { text: MaterialIcons.grain; padding: 2 }
+                MaterialLabel {
+                    text: MaterialIcons.grain
+                    padding: 2
+                    visible: displayGroup.expanded
+                }
                 RowLayout {
+                    visible: displayGroup.expanded
                     Slider {
                         Layout.fillWidth: true; from: 0; to: 5; stepSize: 0.001
                         value: Viewer3DSettings.pointSize
@@ -83,8 +90,13 @@ FloatingPane {
                     }
 
                 }
-                MaterialLabel { text: MaterialIcons.videocam; padding: 2 }
+                MaterialLabel {
+                    text: MaterialIcons.videocam
+                    padding: 2
+                    visible: displayGroup.expanded
+                }
                 Slider {
+                    visible: displayGroup.expanded
                     value: Viewer3DSettings.cameraScale
                     from: 0
                     to: 2
@@ -99,25 +111,30 @@ FloatingPane {
             }
         }
 
-        Group {
+        ExpandableGroup {
+            id: cameraGroup
             Layout.fillWidth: true
             title: "CAMERA"
+
             ColumnLayout {
                 width: parent.width
 
                 // Image/Camera synchronization
                 Flow {
                     Layout.fillWidth: true
+                    visible: cameraGroup.expanded
                     spacing: 2
+
                     // Synchronization
                     MaterialToolButton {
                         id: syncViewpointCamera
                         enabled: _reconstruction ? _reconstruction.sfmReport : false
                         text: MaterialIcons.linked_camera
-                        ToolTip.text: "Sync with Image Selection"
+                        ToolTip.text: "View Through The Active Camera"
                         checked: enabled && Viewer3DSettings.syncViewpointCamera
                         onClicked: Viewer3DSettings.syncViewpointCamera = !Viewer3DSettings.syncViewpointCamera
                     }
+
                     // Image Overlay controls
                     RowLayout {
                         visible: syncViewpointCamera.enabled && Viewer3DSettings.syncViewpointCamera
@@ -150,6 +167,109 @@ FloatingPane {
                         ToolTip.text: "Frame Overlay"
                         checked: Viewer3DSettings.viewpointImageFrame
                         onClicked: Viewer3DSettings.viewpointImageFrame = !Viewer3DSettings.viewpointImageFrame
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    visible: cameraGroup.expanded
+
+                    RowLayout {
+                        Layout.fillHeight: true
+                        spacing: 2
+
+                        MaterialToolButton {
+                            id: resectionIdButton
+                            text: MaterialIcons.switch_video
+                            ToolTip.text: "Timeline Of Camera Reconstruction Groups"
+                            ToolTip.visible: hovered
+                            enabled: Viewer3DSettings.resectionIdCount
+                            checked: enabled && Viewer3DSettings.displayResectionIds
+                            onClicked: {
+                                Viewer3DSettings.displayResectionIds = !Viewer3DSettings.displayResectionIds
+                                Viewer3DSettings.resectionId = Viewer3DSettings.resectionIdCount
+                                resectionIdSlider.value = Viewer3DSettings.resectionId
+                            }
+
+                            onEnabledChanged: {
+                                Viewer3DSettings.resectionId = Viewer3DSettings.resectionIdCount
+                                resectionIdSlider.value = Viewer3DSettings.resectionId
+                                if (!enabled) {
+                                    Viewer3DSettings.displayResectionIds = false
+                                }
+                            }
+                        }
+
+                        Slider {
+                            id: resectionIdSlider
+                            value: Viewer3DSettings.resectionId
+                            from: 0
+                            to: Viewer3DSettings.resectionIdCount
+                            stepSize: 1
+                            onMoved: Viewer3DSettings.resectionId = value
+                            Layout.fillWidth: true
+                            leftPadding: 2
+                            rightPadding: 2
+                            visible: Viewer3DSettings.displayResectionIds
+                        }
+
+                        Label {
+                            text: resectionIdSlider.value + "/" + Viewer3DSettings.resectionIdCount
+                            visible: Viewer3DSettings.displayResectionIds
+                        }
+                    }
+
+                    RowLayout {
+                        spacing: 10
+                        Layout.fillWidth: true
+                        Layout.margins: 2
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                        MaterialToolLabel {
+                            iconText: MaterialIcons.stop
+                            label: {
+                                var id = undefined
+                                // Ensure there are entries in resectionGroups and a valid resectionId before accessing anything
+                                if (Viewer3DSettings.resectionId !== undefined && Viewer3DSettings.resectionGroups.length > 0)
+                                    id = Math.min(Viewer3DSettings.resectionId, Viewer3DSettings.resectionIdCount)
+                                if (id !== undefined && Viewer3DSettings.resectionGroups[id] !== undefined)
+                                    return Viewer3DSettings.resectionGroups[id]
+                                return 0
+
+                            }
+                            ToolTip.text: "Number Of Cameras In Current Resection Group"
+                            visible: Viewer3DSettings.displayResectionIds
+                        }
+
+                        MaterialToolLabel {
+                            iconText: MaterialIcons.auto_awesome_motion
+                            label: {
+                                let currentCameras = 0
+                                for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
+                                    if (i <= Viewer3DSettings.resectionId)
+                                        currentCameras += Viewer3DSettings.resectionGroups[i]
+                                }
+
+                                return currentCameras
+                            }
+                            ToolTip.text: "Number Of Cumulated Cameras"
+                            visible: Viewer3DSettings.displayResectionIds
+                        }
+
+                        MaterialToolLabel {
+                            iconText: MaterialIcons.videocam
+                            label: {
+                                let totalCameras = 0
+                                for (let i = 0; i <= Viewer3DSettings.resectionIdCount; i++) {
+                                    totalCameras += Viewer3DSettings.resectionGroups[i]
+                                }
+
+                                return totalCameras
+                            }
+                            ToolTip.text: "Total Number Of Cameras"
+                            visible: Viewer3DSettings.displayResectionIds
+                        }
                     }
                 }
             }
@@ -192,6 +312,12 @@ FloatingPane {
 
                     ScrollBar.vertical: ScrollBar { id: scrollBar }
 
+                    onCountChanged: {
+                        if (mediaListView.count === 0) {
+                            Viewer3DSettings.resectionIdCount = 0
+                        }
+                    }
+
                     currentIndex: -1
 
                     Connections {
@@ -217,13 +343,25 @@ FloatingPane {
                             // add mediaLibrary.count in the binding to ensure 'entity'
                             // is re-evaluated when mediaLibrary delegates are modified
                             property bool loading: model.status === SceneLoader.Loading
-                            property bool hovered:  model.attribute ? (uigraph ? uigraph.hoveredNode === model.attribute.node : false) : containsMouse
+                            property bool hovered: model.attribute ? (uigraph ? uigraph.hoveredNode === model.attribute.node : false) : containsMouse
                             property bool isSelectedNode: model.attribute ? (uigraph ? uigraph.selectedNode === model.attribute.node : false) : false
 
                             onIsSelectedNodeChanged: updateCurrentIndex()
 
                             function updateCurrentIndex() {
-                                if(isSelectedNode) { mediaListView.currentIndex = index }
+                                if (isSelectedNode) {
+                                    mediaListView.currentIndex = index
+                                }
+
+                                // If the index is updated, and the resection ID count is available, update every resection-related variable:
+                                // this covers the changes of index that occur when a node whose output is already loaded in the 3D viewer is
+                                // clicked/double-clicked, and when the active entry is removed from the list.
+                                if (model.resectionIdCount) {
+                                    Viewer3DSettings.resectionIdCount = model.resectionIdCount
+                                    Viewer3DSettings.resectionGroups = model.resectionGroups
+                                    Viewer3DSettings.resectionId = model.resectionId
+                                    resectionIdSlider.value = model.resectionId
+                                }
                             }
 
                             height: childrenRect.height
@@ -234,20 +372,39 @@ FloatingPane {
                             }
 
                             hoverEnabled: true
-                            onEntered: { if (model.attribute) uigraph.hoveredNode = model.attribute.node }
-                            onExited: { if (model.attribute) uigraph.hoveredNode = null }
+                            onEntered: {
+                                if (model.attribute)
+                                    uigraph.hoveredNode = model.attribute.node
+                            }
+                            onExited: {
+                                if (model.attribute)
+                                    uigraph.hoveredNode = null
+                            }
                             onClicked: {
                                 if (model.attribute)
-                                    uigraph.selectedNode = model.attribute.node;
+                                    uigraph.selectedNode = model.attribute.node
                                 else
-                                    uigraph.selectedNode = null;
+                                    uigraph.selectedNode = null
                                 if (mouse.button == Qt.RightButton)
-                                    contextMenu.popup();
-                                mediaListView.currentIndex = index;
+                                    contextMenu.popup()
+                                mediaListView.currentIndex = index
+
+                                // Update the resection ID-related objects based on the active model
+                                Viewer3DSettings.resectionIdCount = model.resectionIdCount
+                                Viewer3DSettings.resectionGroups = model.resectionGroups
+                                Viewer3DSettings.resectionId = model.resectionId
+                                resectionIdSlider.value = model.resectionId
                             }
                             onDoubleClicked: {
                                 model.visible = true;
                                 nodeActivated(model.attribute.node);
+                            }
+
+                            Connections {
+                                target: resectionIdSlider
+                                function onValueChanged() {
+                                    model.resectionId = resectionIdSlider.value
+                                }
                             }
 
                             RowLayout {

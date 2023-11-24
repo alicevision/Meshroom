@@ -429,7 +429,11 @@ class NodeChunk(BaseObject):
         self.upgradeStatusTo(Status.SUCCESS)
 
     def stopProcess(self):
-        self.upgradeStatusTo(Status.STOPPED)
+        if not self.isExtern():
+            if self._status.status == Status.RUNNING:
+                self.upgradeStatusTo(Status.STOPPED)
+            elif self._status.status == Status.SUBMITTED:
+                self.upgradeStatusTo(Status.NONE)
         self.node.nodeDesc.stopProcess(self)
 
     def isExtern(self):
@@ -942,8 +946,7 @@ class BaseNode(BaseObject):
     def stopComputation(self):
         """ Stop the computation of this node. """
         for chunk in self._chunks.values():
-            if not chunk.isExtern():
-                chunk.stopProcess()
+            chunk.stopProcess()
 
     def getGlobalStatus(self):
         """

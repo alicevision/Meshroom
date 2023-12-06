@@ -5,17 +5,18 @@
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
+            "TracksBuilding": "1.0",
+            "ImageSegmentation": "1.0",
+            "FeatureExtraction": "1.3",
             "ScenePreview": "2.0",
+            "ImageMatching": "2.0",
+            "CameraInit": "9.0",
+            "NodalSfM": "1.0",
+            "ConvertSfMFormat": "2.0",
+            "Publish": "1.3",
             "ExportAnimatedCamera": "2.0",
             "FeatureMatching": "2.0",
-            "NodalSfM": "1.0",
-            "CameraInit": "9.0",
-            "TracksBuilding": "1.0",
-            "FeatureExtraction": "1.3",
-            "RelativePoseEstimating": "1.0",
-            "Publish": "1.3",
-            "ImageMatching": "2.0",
-            "ConvertSfMFormat": "2.0"
+            "RelativePoseEstimating": "1.0"
         }
     },
     "graph": {
@@ -39,13 +40,14 @@
                 0
             ],
             "inputs": {
-                "input": "{CameraInit_1.output}"
+                "input": "{ImageSegmentation_1.input}",
+                "masksFolder": "{ImageSegmentation_1.output}"
             }
         },
         "CameraInit_1": {
             "nodeType": "CameraInit",
             "position": [
-                0,
+                -200,
                 0
             ],
             "inputs": {}
@@ -138,6 +140,7 @@
                 "model": "{NodalSfM_1.output}",
                 "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}",
                 "useMasks": false,
+                "masks": "{ImageSegmentation_1.output}",
                 "pointCloudParams": {
                     "particleSize": 0.001,
                     "particleColor": "Red"
@@ -155,6 +158,20 @@
                     "{ExportAnimatedCamera_1.output}",
                     "{ScenePreview_1.output}"
                 ]
+            }
+        },
+        "ImageSegmentation_1": {
+            "nodeType": "ImageSegmentation",
+            "position": [
+                0,
+                0
+            ],
+            "inputs": {
+                "input": "{CameraInit_1.output}",
+                "maskInvert": true
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         }
     }

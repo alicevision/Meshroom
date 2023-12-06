@@ -31,6 +31,9 @@
                 "featuresFolders": [
                     "{FeatureExtraction_1.output}"
                 ]
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "FeatureExtraction_1": {
@@ -42,6 +45,9 @@
             "inputs": {
                 "input": "{ImageSegmentation_1.input}",
                 "masksFolder": "{ImageSegmentation_1.output}"
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "CameraInit_1": {
@@ -50,7 +56,10 @@
                 -200,
                 0
             ],
-            "inputs": {}
+            "inputs": {},
+            "internalInputs": {
+                "color": "#80766f"
+            }
         },
         "FeatureMatching_1": {
             "nodeType": "FeatureMatching",
@@ -63,6 +72,9 @@
                 "featuresFolders": "{ImageMatching_1.featuresFolders}",
                 "imagePairsList": "{ImageMatching_1.output}",
                 "describerTypes": "{FeatureExtraction_1.describerTypes}"
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "TracksBuilding_1": {
@@ -77,6 +89,9 @@
                 "matchesFolders": [
                     "{FeatureMatching_1.output}"
                 ]
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "RelativePoseEstimating_1": {
@@ -90,6 +105,9 @@
                 "featuresFolders": "{TracksBuilding_1.featuresFolders}",
                 "tracksFilename": "{TracksBuilding_1.output}",
                 "enforcePureRotation": true
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "NodalSfM_1": {
@@ -103,6 +121,9 @@
                 "featuresFolders": "{RelativePoseEstimating_1.featuresFolders}",
                 "tracksFilename": "{RelativePoseEstimating_1.tracksFilename}",
                 "pairs": "{RelativePoseEstimating_1.output}"
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "ExportAnimatedCamera_1": {
@@ -114,6 +135,9 @@
             "inputs": {
                 "input": "{NodalSfM_1.output}",
                 "exportUndistortedImages": true
+            },
+            "internalInputs": {
+                "color": "#80766f"
             }
         },
         "ConvertSfMFormat_1": {
@@ -127,6 +151,9 @@
                 "fileExt": "sfm",
                 "structure": false,
                 "observations": false
+            },
+            "internalInputs": {
+                "color": "#4c594c"
             }
         },
         "ScenePreview_1": {
@@ -145,6 +172,9 @@
                     "particleSize": 0.001,
                     "particleColor": "Red"
                 }
+            },
+            "internalInputs": {
+                "color": "#4c594c"
             }
         },
         "Publish_1": {

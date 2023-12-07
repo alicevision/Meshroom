@@ -57,6 +57,13 @@ Generate a mask with segmented labels for each pixel.
             value=False,
             uid=[0],
         ),
+        desc.BoolParam(
+            name="useGpu",
+            label="Use GPU",
+            description="Use GPU for computation if available",
+            value=True,
+            uid=[],
+        ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",

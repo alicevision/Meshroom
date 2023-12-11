@@ -1,18 +1,18 @@
 {
     "header": {
         "nodesVersions": {
-            "PrepareDenseScene": "3.1",
-            "Meshing": "7.0",
-            "Texturing": "6.0",
-            "ImageMatching": "2.0",
-            "MeshFiltering": "3.0",
-            "FeatureExtraction": "1.3",
             "StructureFromMotion": "3.3",
             "FeatureMatching": "2.0",
+            "Meshing": "7.0",
             "CameraInit": "9.0",
-            "Publish": "1.3"
+            "Texturing": "6.0",
+            "Publish": "1.3",
+            "MeshFiltering": "3.0",
+            "FeatureExtraction": "1.3",
+            "PrepareDenseScene": "3.1",
+            "ImageMatching": "2.0"
         },
-        "releaseVersion": "2023.3.0-develop",
+        "releaseVersion": "2023.3.0",
         "fileVersion": "1.1",
         "template": true
     },

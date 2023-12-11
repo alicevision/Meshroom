@@ -1,15 +1,15 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.2.0-develop",
+        "releaseVersion": "2023.3.0",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
+            "PhotometricStereo": "1.0",
+            "CameraInit": "9.0",
             "SphereDetection": "1.0",
             "LightingCalibration": "1.0",
-            "Publish": "1.2",
-            "CameraInit": "9.0",
-            "PhotometricStereo": "1.0"
+            "Publish": "1.3"
         }
     },
     "graph": {

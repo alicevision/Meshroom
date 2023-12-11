@@ -24,9 +24,10 @@ Tags
  - Source code
    - Create branch from develop: "rcMAJOR.MINOR"
    - Modify version in code, version status to RELEASE (meshroom/__init__.py)
+   - Update the version of all the templates so their version corresponds to the release
    - Create Release note (using https://github.com/cbentejac/github-generate-release-note)
      - ```
-	   ./github-generate-release-note.py -o alicevision -r Meshroom -m "Meshroom MAJOR.MINOR.PATCH" --highlights major-feature --label-include bugfix,ci,scope:doc,scope:build -s updated-asc
+	   ./github-generate-release-note.py -o alicevision -r Meshroom -m "Meshroom MAJOR.MINOR.PATCH" --highlights majorFeature feature --label-include bugfix ci,scope:doc,scope:build -s updated-asc
 	   ```
    - PR to develop: "Release MAJOR.MINOR"
  - Build

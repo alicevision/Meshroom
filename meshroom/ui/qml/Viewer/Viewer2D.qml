@@ -463,11 +463,11 @@ FocusScope {
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
                                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
-                                'isPrincipalPointsDisplayed' : Qt.binding(function() { return lensDistortionImageToolbar.displayPrincipalPoint }),
-                                'surface.displayGrid' :  Qt.binding(function() { return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid }),
-                                'surface.gridOpacity' : Qt.binding(function() { return lensDistortionImageToolbar.opacityValue }),
-                                'surface.gridColor' : Qt.binding(function() { return lensDistortionImageToolbar.color }),
-                                'surface.subdivisions' : Qt.binding(function() { return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue }),
+                                'isPrincipalPointsDisplayed': Qt.binding(function() { return lensDistortionImageToolbar.displayPrincipalPoint }),
+                                'surface.displayGrid':  Qt.binding(function() { return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid }),
+                                'surface.gridOpacity': Qt.binding(function() { return lensDistortionImageToolbar.opacityValue }),
+                                'surface.gridColor': Qt.binding(function() { return lensDistortionImageToolbar.color }),
+                                'surface.subdivisions': Qt.binding(function() { return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue }),
                                 'viewerTypeString': Qt.binding(function() { return displayLensDistortionViewer.checked ? "distortion" : "hdr" }),
                                 'sfmRequired': Qt.binding(function() { return displayLensDistortionViewer.checked ? true : false }),
                                 'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
@@ -476,7 +476,7 @@ FocusScope {
                                 'cropFisheye': false,
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? getSequence() : []) }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
-                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction }),
+                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction })
                                 })
                           } else {
                                 // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -745,6 +745,39 @@ FocusScope {
                         }
                     }
                 }
+
+                FloatingPane {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    Layout.preferredHeight: childrenRect.height
+                    visible: floatImageViewerLoader.item.imageStatus === Image.Error
+                    Layout.alignment: Qt.AlignHCenter
+
+                    RowLayout {
+                        anchors.fill: parent
+
+                        Label {
+                            font.pointSize: 8
+                            text: {
+                                switch (floatImageViewerLoader.item.status) {
+                                    case 2:  // AliceVision.FloatImageViewer.EStatus.OUTDATED_LOADING
+                                        return "Outdated Loading"
+                                    case 3:  // AliceVision.FloatImageViewer.EStatus.MISSING_FILE
+                                        return "Missing File"
+                                    case 4:  // AliceVision.FloatImageViewer.EStatus.ERROR
+                                        return "Error"
+                                    default:
+                                        return ""
+                                }
+                            }
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
+                }
+
                 Item {
                     id: imgPlaceholder
                     Layout.fillWidth: true

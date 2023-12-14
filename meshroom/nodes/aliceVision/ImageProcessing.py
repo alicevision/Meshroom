@@ -460,6 +460,30 @@ Convert or apply filtering to the input images.
                 ),
             ]
         ),
+        desc.GroupAttribute(
+            name="parFilter",
+            label="Pixel Aspect Ratio",
+            description="Pixel Aspect Ratio parameters.",
+            joinChar=":",
+            groupDesc=[
+                desc.BoolParam(
+                    name="parEnabled",
+                    label="Enable",
+                    description="Apply pixel aspect ratio.",
+                    value=False,
+                    uid=[0],
+                ),
+                desc.BoolParam(
+                    name="parRowDecimation",
+                    label="Row decimation",
+                    description="If selected, reduce image height by decimating the number of rows.\n"
+                                "Otherwise, increase width by upsampling image columns.",
+                    value=False,
+                    uid=[0],
+                    enabled=lambda node: node.parFilter.parEnabled.value,
+                ),
+            ]
+        ),
         desc.ChoiceParam(
             name="outputFormat",
             label="Output Image Format",

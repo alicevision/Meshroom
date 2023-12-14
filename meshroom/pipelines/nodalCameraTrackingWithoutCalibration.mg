@@ -1,26 +1,22 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2024.1.0-develop",
+        "releaseVersion": "2023.3.0",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "DistortionCalibration": "3.0",
+            "TracksBuilding": "1.0",
+            "ImageSegmentation": "1.0",
             "FeatureExtraction": "1.3",
             "ScenePreview": "2.0",
-            "FeatureMatching": "2.0",
-            "RelativePoseEstimating": "1.0",
-            "ExportAnimatedCamera": "2.0",
-            "ConvertSfMFormat": "2.0",
-            "ImageSegmentation": "1.0",
-            "NodalSfM": "1.0",
-            "ExportDistortion": "1.0",
-            "CameraInit": "9.0",
-            "CheckerboardDetection": "1.0",
             "ImageMatching": "2.0",
-            "TracksBuilding": "1.0",
-            "ApplyCalibration": "1.0",
-            "Publish": "1.3"
+            "CameraInit": "9.0",
+            "NodalSfM": "1.0",
+            "ConvertSfMFormat": "2.0",
+            "Publish": "1.3",
+            "ExportAnimatedCamera": "2.0",
+            "FeatureMatching": "2.0",
+            "RelativePoseEstimating": "1.0"
         }
     },
     "graph": {
@@ -47,7 +43,7 @@
                 0
             ],
             "inputs": {
-                "input": "{ApplyCalibration_1.output}",
+                "input": "{ImageSegmentation_1.input}",
                 "masksFolder": "{ImageSegmentation_1.output}"
             },
             "internalInputs": {
@@ -190,8 +186,7 @@
             "inputs": {
                 "inputFiles": [
                     "{ExportAnimatedCamera_1.output}",
-                    "{ScenePreview_1.output}",
-                    "{ExportDistortion_1.output}"
+                    "{ScenePreview_1.output}"
                 ]
             }
         },
@@ -199,7 +194,7 @@
             "nodeType": "ImageSegmentation",
             "position": [
                 0,
-                200
+                0
             ],
             "inputs": {
                 "input": "{CameraInit_1.output}",
@@ -207,74 +202,6 @@
             },
             "internalInputs": {
                 "color": "#80766f"
-            }
-        },
-        "CheckerboardDetection_1": {
-            "nodeType": "CheckerboardDetection",
-            "position": [
-                -400,
-                -160
-            ],
-            "inputs": {
-                "input": "{CameraInit_2.output}",
-                "useNestedGrids": true,
-                "exportDebugImages": true
-            },
-            "internalInputs": {
-                "color": "#302e2e"
-            }
-        },
-        "DistortionCalibration_1": {
-            "nodeType": "DistortionCalibration",
-            "position": [
-                -200,
-                -160
-            ],
-            "inputs": {
-                "input": "{CheckerboardDetection_1.input}",
-                "checkerboards": "{CheckerboardDetection_1.output}"
-            },
-            "internalInputs": {
-                "color": "#302e2e"
-            }
-        },
-        "ExportDistortion_1": {
-            "nodeType": "ExportDistortion",
-            "position": [
-                0,
-                -160
-            ],
-            "inputs": {
-                "input": "{DistortionCalibration_1.output}"
-            },
-            "internalInputs": {
-                "color": "#302e2e"
-            }
-        },
-        "ApplyCalibration_1": {
-            "nodeType": "ApplyCalibration",
-            "position": [
-                0,
-                0
-            ],
-            "inputs": {
-                "input": "{CameraInit_1.output}",
-                "calibration": "{DistortionCalibration_1.output}"
-            },
-            "internalInputs": {
-                "color": "#80766f"
-            }
-        },
-        "CameraInit_2": {
-            "nodeType": "CameraInit",
-            "position": [
-                -600,
-                -160
-            ],
-            "inputs": {},
-            "internalInputs": {
-                "label": "CameraInitLensGrid",
-                "color": "#302e2e"
             }
         }
     }

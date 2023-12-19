@@ -46,4 +46,12 @@ Export the distortion model and parameters of cameras in a SfM scene.
             group="",  # do not export on the command line
             uid=[],
         ),
+        desc.BoolParam(
+            name="exportUndistortedGrids",
+            label="Export undistorted lens grids",
+            description="Undistort the lens grids and save as images",
+            value=True,
+            uid=[0],
+            advanced=True,
+        ),
     ]

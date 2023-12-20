@@ -1,7 +1,8 @@
 import argparse
 import os
 
-parser = argparse.ArgumentParser(description='Generate a MaterialIcons.qml singleton from codepoints file.')
+parser = argparse.ArgumentParser(description='Generate a MaterialIcons.qml singleton from codepoints file.\n'
+                                'An example of codepoints file for MaterialIcons: https://github.com/google/material-design-icons/blob/master/font/MaterialIcons-Regular.codepoints.')
 parser.add_argument('codepoints', type=str, help='Codepoints file.')
 parser.add_argument('--output', type=str, default='.', help='')
 

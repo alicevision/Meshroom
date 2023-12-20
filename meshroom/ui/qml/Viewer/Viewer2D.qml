@@ -1140,7 +1140,7 @@ FocusScope {
                             }
 
                             ToolTip.text: activeNode ? "Panorama Viewer " + activeNode.label : "Panorama Viewer"
-                            text: MaterialIcons.panorama_sphere
+                            text: MaterialIcons.panorama_photosphere
                             font.pointSize: 16
                             padding: 0
                             Layout.minimumWidth: 0

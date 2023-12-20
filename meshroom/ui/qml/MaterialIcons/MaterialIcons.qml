@@ -226,7 +226,6 @@ QtObject {
     readonly property string auto_stories: "\ue666"
     readonly property string autofps_select: "\uefdc"
     readonly property string autorenew: "\ue863"
-    readonly property string auto_awesome_motion: "\ue661"
     readonly property string av_timer: "\ue01b"
     readonly property string baby_changing_station: "\uf19b"
     readonly property string back_hand: "\ue764"

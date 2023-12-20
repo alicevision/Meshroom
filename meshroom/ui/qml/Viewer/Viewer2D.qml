@@ -372,7 +372,7 @@ FocusScope {
 
             colorRGBA: {
                 if (!floatImageViewerLoader.item ||
-                    floatImageViewerLoader.item.status !== Image.Ready) {
+                    floatImageViewerLoader.item.imageStatus !== Image.Ready) {
                     return null
                 }
                 if (floatImageViewerLoader.item.containsMouse === false) {

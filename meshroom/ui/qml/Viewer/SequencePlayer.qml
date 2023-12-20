@@ -87,7 +87,7 @@ FloatingPane {
         interval: 1000 / m.fps
 
         onTriggered: {
-            if (viewer.status !== Image.Ready) {
+            if (viewer.imageStatus !== Image.Ready) {
                 // Wait for current image to be displayed before switching to next image
                 return;
             }

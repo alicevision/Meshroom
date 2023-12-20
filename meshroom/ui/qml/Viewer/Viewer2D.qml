@@ -1044,7 +1044,7 @@ FocusScope {
 
                         // zoom label
                         MLabel {
-                            text: ((imgContainer.image && (imgContainer.image.status === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
+                            text: ((imgContainer.image && (imgContainer.image.imageStatus === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton

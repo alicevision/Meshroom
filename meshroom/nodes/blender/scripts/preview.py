@@ -401,6 +401,7 @@ def main():
             finalImg = bpy.data.images.load(bpy.context.scene.render.filepath)
             finalImg.scale(int(bpy.context.scene.render.resolution_x * bpy.context.scene.render.pixel_aspect_x), bpy.context.scene.render.resolution_y)
             finalImg.save()
+            # clear image from memory
             bpy.data.images.remove(finalImg)
 
         # clear memory

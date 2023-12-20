@@ -681,7 +681,7 @@ FocusScope {
                         width: imgContainer.width
                         height: imgContainer.height
 
-                        visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
+                        visible: activeNode.isComputed && json !== undefined && imgContainer.image.imageStatus === Image.Ready
                         source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
                         viewpoint: _reconstruction.selectedViewpoint
                         zoom: imgContainer.scale

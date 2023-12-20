@@ -750,7 +750,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.fillHeight: false
                     Layout.preferredHeight: childrenRect.height
-                    visible: floatImageViewerLoader.item.imageStatus === Image.Error
+                    visible: floatImageViewerLoader.item !== null && floatImageViewerLoader.item.imageStatus === Image.Error
                     Layout.alignment: Qt.AlignHCenter
 
                     RowLayout {
@@ -759,16 +759,19 @@ FocusScope {
                         Label {
                             font.pointSize: 8
                             text: {
-                                switch (floatImageViewerLoader.item.status) {
-                                    case 2:  // AliceVision.FloatImageViewer.EStatus.OUTDATED_LOADING
-                                        return "Outdated Loading"
-                                    case 3:  // AliceVision.FloatImageViewer.EStatus.MISSING_FILE
-                                        return "Missing File"
-                                    case 4:  // AliceVision.FloatImageViewer.EStatus.ERROR
-                                        return "Error"
-                                    default:
-                                        return ""
+                                if (floatImageViewerLoader.item !== null) {
+                                    switch (floatImageViewerLoader.item.status) {
+                                        case 2:  // AliceVision.FloatImageViewer.EStatus.OUTDATED_LOADING
+                                            return "Outdated Loading"
+                                        case 3:  // AliceVision.FloatImageViewer.EStatus.MISSING_FILE
+                                            return "Missing File"
+                                        case 4:  // AliceVision.FloatImageViewer.EStatus.ERROR
+                                            return "Error"
+                                        default:
+                                            return ""
+                                    }
                                 }
+                                return ""
                             }
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter

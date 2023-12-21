@@ -9,7 +9,7 @@
             "PanoramaPostProcessing": "2.0",
             "SfMTransform": "3.1",
             "PanoramaWarping": "1.1",
-            "LdrToHdrCalibration": "3.0",
+            "LdrToHdrCalibration": "3.1",
             "LdrToHdrSampling": "4.0",
             "PanoramaCompositing": "2.0",
             "Publish": "1.3",
@@ -19,7 +19,7 @@
             "ImageMatching": "2.0",
             "PanoramaEstimation": "1.0"
         },
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true
     },

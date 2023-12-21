@@ -74,7 +74,7 @@ FocusScope {
         if (!imgContainer.image)
             return ""
         var res = ""
-        if (imgContainer.image.status === Image.Loading) {
+        if (imgContainer.image.imageStatus === Image.Loading) {
             res += " Image"
         }
         if (mfeaturesLoader.status === Loader.Ready) {
@@ -1389,7 +1389,7 @@ FocusScope {
         Component.onCompleted: {
             running = Qt.binding(function() {
                 return (root.usePanoramaViewer === true && imgContainer.image && imgContainer.image.allImagesLoaded === false)
-                       || (imgContainer.image && imgContainer.image.status === Image.Loading)
+                       || (imgContainer.image && imgContainer.image.imageStatus === Image.Loading)
             })
         }
         // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker

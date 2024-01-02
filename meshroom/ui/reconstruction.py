@@ -452,6 +452,10 @@ class Reconstruction(UIGraph):
 
         self.setDefaultPipeline(defaultPipeline)
 
+    def __del__(self):
+        self._workerThreads.terminate()
+        self._workerThreads.join()
+
     def clear(self):
         self.clearActiveNodes()
         super(Reconstruction, self).clear()

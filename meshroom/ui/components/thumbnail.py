@@ -62,6 +62,10 @@ class ThumbnailCache(QObject):
     cleaningThread = None
     workerThreads = ThreadPool(processes=3)
 
+    def __del__(self):
+        self.workerThreads.terminate()
+        self.workerThreads.join()
+
     @staticmethod
     def initialize():
         """Initialize static fields in cache class and cache directory on disk."""

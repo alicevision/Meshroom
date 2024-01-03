@@ -14,7 +14,7 @@ import DataObjects 1.0
 FloatingPane {
     id: root
 
-    property var ldrHdrCalibrationNode: null
+    property var responsePath: null
     property color textColor: Colors.sysPalette.text
 
     clip: true
@@ -22,8 +22,7 @@ FloatingPane {
 
     CsvData {
         id: csvData
-        property bool hasAttr: (ldrHdrCalibrationNode && ldrHdrCalibrationNode.hasAttribute("response"))
-        filepath: hasAttr ? ldrHdrCalibrationNode.attribute("response").value : ""
+        filepath: responsePath
     }
 
     // To avoid interaction with components in background

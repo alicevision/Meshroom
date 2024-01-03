@@ -3,11 +3,11 @@
         "nodesVersions": {
             "CameraInit": "9.0",
             "LdrToHdrMerge": "4.1",
-            "LdrToHdrCalibration": "3.0",
+            "LdrToHdrCalibration": "3.1",
             "LdrToHdrSampling": "4.0",
             "Publish": "1.3"
         },
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true
     },

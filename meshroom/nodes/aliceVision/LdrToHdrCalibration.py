@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "3.1"
 
 import json
 import math
@@ -161,7 +161,7 @@ Calibrate LDR to HDR response curve from samples.
             name="response",
             label="Response File",
             description="Path to the output response file.",
-            value=desc.Node.internalFolder + "response.csv",
+            value=desc.Node.internalFolder + "response_<INTRINSIC_ID>.csv",
             uid=[],
         )
     ]

@@ -1022,14 +1022,13 @@ FocusScope {
 
                         property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('LdrToHdrCalibration').node : null
                         property var isEnabled: displayLdrHdrCalibrationGraph.checked && activeNode && activeNode.isComputed
-                        // active: isEnabled
-                        // Setting "active" from true to false creates a crash on linux with Qt 5.14.2.
-                        // As a workaround, we clear the CameraResponseGraph with an empty node
-                        // and hide the loader content.
-                        visible: isEnabled
+                        active: isEnabled
+
+                        property var path: activeNode && activeNode.hasAttribute("response") ? activeNode.attribute("response").value : ""
+                        property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
 
                         sourceComponent: CameraResponseGraph {
-                            ldrHdrCalibrationNode: isEnabled ? activeNode : null
+                            responsePath: resolve(path, vp)
                         }
                     }
                 }

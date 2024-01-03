@@ -69,7 +69,7 @@ Generate a mask with segmented labels for each pixel.
             label="Keep Filename",
             description="Keep Input Filename",
             value=False,
-            uid=[],
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",

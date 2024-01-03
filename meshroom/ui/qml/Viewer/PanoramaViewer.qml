@@ -290,7 +290,7 @@ AliceVision.PanoramaViewer {
                         'canBeHovered': true,
                         'useSequence': false
                     })
-                    imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.status === Image.Ready ? true : false })
+                    imageLoaded = Qt.binding(function() { return repeater.itemAt(index).item.imageStatus === Image.Ready ? true : false })
                 }
 
             }

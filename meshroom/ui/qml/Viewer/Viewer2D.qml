@@ -74,7 +74,7 @@ FocusScope {
         if (!imgContainer.image)
             return ""
         var res = ""
-        if (imgContainer.image.status === Image.Loading) {
+        if (imgContainer.image.imageStatus === Image.Loading) {
             res += " Image"
         }
         if (mfeaturesLoader.status === Loader.Ready) {
@@ -372,7 +372,7 @@ FocusScope {
 
             colorRGBA: {
                 if (!floatImageViewerLoader.item ||
-                    floatImageViewerLoader.item.status !== Image.Ready) {
+                    floatImageViewerLoader.item.imageStatus !== Image.Ready) {
                     return null
                 }
                 if (floatImageViewerLoader.item.containsMouse === false) {
@@ -681,7 +681,7 @@ FocusScope {
                         width: imgContainer.width
                         height: imgContainer.height
 
-                        visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
+                        visible: activeNode.isComputed && json !== undefined && imgContainer.image.imageStatus === Image.Ready
                         source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
                         viewpoint: _reconstruction.selectedViewpoint
                         zoom: imgContainer.scale
@@ -750,7 +750,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.fillHeight: false
                     Layout.preferredHeight: childrenRect.height
-                    visible: floatImageViewerLoader.item.imageStatus === Image.Error
+                    visible: floatImageViewerLoader.item !== null && floatImageViewerLoader.item.imageStatus === Image.Error
                     Layout.alignment: Qt.AlignHCenter
 
                     RowLayout {
@@ -759,16 +759,19 @@ FocusScope {
                         Label {
                             font.pointSize: 8
                             text: {
-                                switch (floatImageViewerLoader.item.status) {
-                                    case 2:  // AliceVision.FloatImageViewer.EStatus.OUTDATED_LOADING
-                                        return "Outdated Loading"
-                                    case 3:  // AliceVision.FloatImageViewer.EStatus.MISSING_FILE
-                                        return "Missing File"
-                                    case 4:  // AliceVision.FloatImageViewer.EStatus.ERROR
-                                        return "Error"
-                                    default:
-                                        return ""
+                                if (floatImageViewerLoader.item !== null) {
+                                    switch (floatImageViewerLoader.item.status) {
+                                        case 2:  // AliceVision.FloatImageViewer.EStatus.OUTDATED_LOADING
+                                            return "Outdated Loading"
+                                        case 3:  // AliceVision.FloatImageViewer.EStatus.MISSING_FILE
+                                            return "Missing File"
+                                        case 4:  // AliceVision.FloatImageViewer.EStatus.ERROR
+                                            return "Error"
+                                        default:
+                                            return ""
+                                    }
                                 }
+                                return ""
                             }
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -1041,7 +1044,7 @@ FocusScope {
 
                         // zoom label
                         MLabel {
-                            text: ((imgContainer.image && (imgContainer.image.status === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
+                            text: ((imgContainer.image && (imgContainer.image.imageStatus === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -1140,7 +1143,7 @@ FocusScope {
                             }
 
                             ToolTip.text: activeNode ? "Panorama Viewer " + activeNode.label : "Panorama Viewer"
-                            text: MaterialIcons.panorama_sphere
+                            text: MaterialIcons.panorama_photosphere
                             font.pointSize: 16
                             padding: 0
                             Layout.minimumWidth: 0
@@ -1386,7 +1389,7 @@ FocusScope {
         Component.onCompleted: {
             running = Qt.binding(function() {
                 return (root.usePanoramaViewer === true && imgContainer.image && imgContainer.image.allImagesLoaded === false)
-                       || (imgContainer.image && imgContainer.image.status === Image.Loading)
+                       || (imgContainer.image && imgContainer.image.imageStatus === Image.Loading)
             })
         }
         // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker

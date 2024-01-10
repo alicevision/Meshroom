@@ -1,12 +1,12 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
             "TracksBuilding": "1.0",
-            "ImageSegmentation": "1.0",
+            "ImageSegmentation": "1.2",
             "FeatureExtraction": "1.3",
             "ScenePreview": "2.0",
             "ImageMatching": "2.0",

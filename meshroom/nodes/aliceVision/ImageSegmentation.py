@@ -1,4 +1,4 @@
-__version__ = "1.0"
+__version__ = "1.2"
 
 from meshroom.core import desc
 
@@ -63,6 +63,13 @@ Generate a mask with segmented labels for each pixel.
             description="Use GPU for computation if available",
             value=True,
             uid=[],
+        ),
+        desc.BoolParam(
+            name="keepFilename",
+            label="Keep Filename",
+            description="Keep Input Filename",
+            value=False,
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",

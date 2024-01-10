@@ -12,7 +12,7 @@
             "RelativePoseEstimating": "1.0",
             "ExportAnimatedCamera": "2.0",
             "ConvertSfMFormat": "2.0",
-            "ImageSegmentation": "1.0",
+            "ImageSegmentation": "1.2",
             "NodalSfM": "1.0",
             "ExportDistortion": "1.0",
             "CameraInit": "9.0",

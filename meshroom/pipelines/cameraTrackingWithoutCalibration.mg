@@ -1,7 +1,7 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
@@ -12,7 +12,7 @@
             "DepthMap": "5.0",
             "Texturing": "6.0",
             "ConvertSfMFormat": "2.0",
-            "ImageSegmentation": "1.0",
+            "ImageSegmentation": "1.2",
             "PrepareDenseScene": "3.1",
             "KeyframeSelection": "5.0",
             "ExportAnimatedCamera": "2.0",

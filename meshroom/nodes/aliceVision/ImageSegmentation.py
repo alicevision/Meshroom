@@ -95,7 +95,7 @@ Generate a mask with segmented labels for each pixel.
             label="Masks",
             description="Generated segmentation masks.",
             semantic="image",
-            value=desc.Node.internalFolder + "<VIEW_ID>.exr",
+            value=lambda attr: desc.Node.internalFolder + "<VIEW_ID>.exr" if not attr.node.keepFilename.value else desc.Node.internalFolder + "<FILENAME>.exr",
             group="",
             uid=[],
         ),

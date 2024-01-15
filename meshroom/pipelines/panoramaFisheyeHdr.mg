@@ -1,23 +1,23 @@
 {
     "header": {
         "nodesVersions": {
+            "PanoramaEstimation": "1.0",
+            "LdrToHdrCalibration": "3.1",
+            "PanoramaPostProcessing": "2.0",
+            "FeatureMatching": "2.0",
+            "PanoramaPrepareImages": "1.1",
             "FeatureExtraction": "1.3",
             "PanoramaSeams": "2.0",
-            "PanoramaPostProcessing": "2.0",
-            "PanoramaWarping": "1.1",
-            "LdrToHdrMerge": "4.1",
-            "PanoramaMerging": "1.0",
-            "Publish": "1.3",
-            "PanoramaEstimation": "1.0",
-            "CameraInit": "9.0",
-            "LdrToHdrCalibration": "3.1",
-            "ImageMatching": "2.0",
-            "LdrToHdrSampling": "4.0",
-            "PanoramaPrepareImages": "1.1",
-            "FeatureMatching": "2.0",
             "PanoramaCompositing": "2.0",
+            "PanoramaInit": "2.0",
+            "PanoramaWarping": "1.1",
+            "PanoramaMerging": "1.0",
             "SfMTransform": "3.1",
-            "PanoramaInit": "2.0"
+            "LdrToHdrSampling": "4.0",
+            "Publish": "1.3",
+            "ImageMatching": "2.0",
+            "LdrToHdrMerge": "4.1",
+            "CameraInit": "9.0"
         },
         "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
@@ -42,7 +42,7 @@
         "PanoramaWarping_1": {
             "nodeType": "PanoramaWarping",
             "position": [
-                2000,
+                2200,
                 0
             ],
             "inputs": {
@@ -78,11 +78,11 @@
         "ImageMatching_1": {
             "nodeType": "ImageMatching",
             "position": [
-                1200,
+                1400,
                 0
             ],
             "inputs": {
-                "input": "{PanoramaInit_1.outSfMData}",
+                "input": "{FeatureExtraction_1.input}",
                 "featuresFolders": [
                     "{FeatureExtraction_1.output}"
                 ],
@@ -92,11 +92,11 @@
         "FeatureExtraction_1": {
             "nodeType": "FeatureExtraction",
             "position": [
-                1000,
-                70
+                1200,
+                0
             ],
             "inputs": {
-                "input": "{LdrToHdrMerge_1.outSfMData}",
+                "input": "{PanoramaInit_1.outSfMData}",
                 "describerTypes": [
                     "sift"
                 ],
@@ -107,7 +107,7 @@
         "PanoramaMerging_1": {
             "nodeType": "PanoramaMerging",
             "position": [
-                2600,
+                2800,
                 0
             ],
             "inputs": {
@@ -119,7 +119,7 @@
         "PanoramaCompositing_1": {
             "nodeType": "PanoramaCompositing",
             "position": [
-                2400,
+                2600,
                 0
             ],
             "inputs": {
@@ -151,7 +151,7 @@
         "PanoramaPostProcessing_1": {
             "nodeType": "PanoramaPostProcessing",
             "position": [
-                2800,
+                3000,
                 0
             ],
             "inputs": {
@@ -172,7 +172,7 @@
         "SfMTransform_1": {
             "nodeType": "SfMTransform",
             "position": [
-                1800,
+                2000,
                 0
             ],
             "inputs": {
@@ -183,7 +183,7 @@
         "PanoramaSeams_1": {
             "nodeType": "PanoramaSeams",
             "position": [
-                2200,
+                2400,
                 0
             ],
             "inputs": {
@@ -194,7 +194,7 @@
         "PanoramaEstimation_1": {
             "nodeType": "PanoramaEstimation",
             "position": [
-                1600,
+                1800,
                 0
             ],
             "inputs": {
@@ -210,7 +210,7 @@
             "nodeType": "PanoramaInit",
             "position": [
                 1000,
-                -50
+                0
             ],
             "inputs": {
                 "input": "{LdrToHdrMerge_1.outSfMData}",
@@ -220,7 +220,7 @@
         "FeatureMatching_1": {
             "nodeType": "FeatureMatching",
             "position": [
-                1400,
+                1600,
                 0
             ],
             "inputs": {
@@ -234,7 +234,7 @@
         "Publish_1": {
             "nodeType": "Publish",
             "position": [
-                3000,
+                3200,
                 0
             ],
             "inputs": {

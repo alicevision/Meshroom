@@ -488,7 +488,7 @@
                 "featuresFolders": [
                     "{FeatureExtraction_1.output}"
                 ],
-                "method": "VocabularyTree",
+                "method": "Exhaustive",
                 "matchingMode": "a/b"
             },
             "internalInputs": {

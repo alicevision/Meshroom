@@ -1,6 +1,7 @@
 __version__ = "1.3"
 
 from meshroom.core import desc
+from meshroom.core.utils import COLORSPACES
 
 
 class FeatureExtraction(desc.AVCommandLineNode):
@@ -140,8 +141,8 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
                 name="workingColorSpace",
                 label="Working Color Space",
                 description="Allows you to choose the color space in which the data are processed.",
+                values=COLORSPACES,
                 value="sRGB",
-                values=["sRGB", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
                 exclusive=True,
                 uid=[0],
         ),

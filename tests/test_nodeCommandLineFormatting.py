@@ -64,9 +64,9 @@ def test_formatting_groups():
     n3 = graph.addNewNode('ImageProcessing')
     n3._buildCmdVars()  # prepare vars for command line creation
     name = 'sharpenFilter'
-    assert n3._cmdVars[name + 'Value'] == 'False:3:1.0:0.0'
+    assert n3._cmdVars[name + 'Value'] == '"False:3:1.0:0.0"'
     name = 'fillHoles'
     assert n3._cmdVars[name + 'Value'] == 'False'  # Booleans
     name = 'noiseFilter'
-    assert n3._cmdVars[name + 'Value'] == 'False:"uniform":0.0:1.0:True'
+    assert n3._cmdVars[name + 'Value'] == '"False:uniform:0.0:1.0:True"'
 

@@ -709,9 +709,10 @@ class BaseNode(BaseObject):
                 group = attr.attributeDesc.group(attr.node) if isinstance(attr.attributeDesc.group, types.FunctionType) else attr.attributeDesc.group
                 if group is not None:
                     # if there is a valid command line "group"
-                    v = attr.getValueStr()
+                    v = attr.getValueStr(withQuotes=True)
                     cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-                    cmdVars[name + 'Value'] = v
+                    # xxValue is exposed without quotes to allow to compose expressions
+                    cmdVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
 
                     # List elements may give a fully empty string and will not be sent to the command line.
                     # String attributes will return only quotes if it is empty and thus will be send to the command line.
@@ -763,10 +764,11 @@ class BaseNode(BaseObject):
                 except ValueError as e:
                     logging.warning('Invalid expression value on "{nodeName}.{attrName}" with value "{defaultValue}".\nError: {err}'.format(nodeName=self.name, attrName=attr.name, defaultValue=defaultValue, err=str(e)))
 
-            v = attr.getValueStr()
+            v = attr.getValueStr(withQuotes=True)
 
             self._cmdVars[name] = '--{name} {value}'.format(name=name, value=v)
-            self._cmdVars[name + 'Value'] = v
+            # xxValue is exposed without quotes to allow to compose expressions
+            self._cmdVars[name + 'Value'] = attr.getValueStr(withQuotes=False)
 
             if v:
                 self._cmdVars[attr.attributeDesc.group] = self._cmdVars.get(attr.attributeDesc.group, '') + \

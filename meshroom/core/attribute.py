@@ -516,10 +516,10 @@ class ListAttribute(Attribute):
     def getValueStr(self, withQuotes=True):
         assert(isinstance(self.value, ListModel))
         if self.attributeDesc.joinChar == ' ':
-            return self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=True) for v in self.value])
+            return self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=withQuotes) for v in self.value])
         else:
             v = self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=False) for v in self.value])
-            if v:
+            if withQuotes and v:
                 return '"{}"'.format(v)
             return v
 

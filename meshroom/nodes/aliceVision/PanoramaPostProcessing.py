@@ -4,6 +4,7 @@ import json
 import os
 
 from meshroom.core import desc
+from meshroom.core.utils import COLORSPACES
 
 
 class PanoramaPostProcessing(desc.CommandLineNode):
@@ -58,8 +59,8 @@ Post process the panorama.
             name="outputColorSpace",
             label="Output Color Space",
             description="The color space of the output image.",
+            values=COLORSPACES,
             value="Linear",
-            values=["sRGB", "rec709", "Linear", "ACES2065-1", "ACEScg"],
             exclusive=True,
             uid=[0],
         ),

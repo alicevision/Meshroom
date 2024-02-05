@@ -4,9 +4,9 @@ from meshroom.core import desc
 
 class NormalIntegration(desc.CommandLineNode):
     commandLine = 'aliceVision_normalIntegration {allParams}'
-    category = 'Photometry'
+    category = 'PhotometricStereo'
     documentation = '''
-TODO.
+Evaluate a depth map from a normals map (currently in development)
 '''
 
     inputs = [

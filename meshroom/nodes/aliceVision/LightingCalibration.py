@@ -5,7 +5,7 @@ from meshroom.core import desc
 
 class LightingCalibration(desc.CommandLineNode):
     commandLine = 'aliceVision_lightingCalibration {allParams}'
-    category = 'Photometry'
+    category = 'PhotometricStereo'
     documentation = '''
 Evaluate the lighting in a scene using spheres placed in the scene.
 Can also be used to calibrate a lighting dome (RTI type).
@@ -37,8 +37,9 @@ Can also be used to calibrate a lighting dome (RTI type).
             name="method",
             label="Calibration Method",
             description="Method used for light calibration.\n"
-                        "Use 'brightestPoint' for shiny spheres and 'whiteSphere' for white matte spheres.",
-            values=["brightestPoint", "whiteSphere"],
+                        "Use 'brightestPoint' for shiny spheres and 'whiteSphere' for white matte spheres.\n"
+                        "Spherical Harmonic lighting can be estimated using 'SH' method.",
+            values=["brightestPoint", "whiteSphere", "SH"],
             value="brightestPoint",
             exclusive=True,
             uid=[0]

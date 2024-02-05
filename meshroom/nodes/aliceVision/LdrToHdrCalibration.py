@@ -1,4 +1,4 @@
-__version__ = "3.0"
+__version__ = "3.1"
 
 import json
 import math
@@ -6,6 +6,7 @@ import os
 from collections import Counter
 
 from meshroom.core import desc
+from meshroom.core.utils import COLORSPACES
 
 def findMetadata(d, keys, defaultValue):
     v = None
@@ -126,8 +127,8 @@ Calibrate LDR to HDR response curve from samples.
             label="Working Color Space",
             description="Color space in which the data are processed.\n"
                         "If 'auto' is selected, the working color space will be 'Linear' if RAW images are detected; otherwise, it will be set to 'sRGB'.",
-            value="auto",
-            values=["auto", "sRGB", "Linear", "ACES2065-1", "ACEScg"],
+            values=COLORSPACES,
+            value="AUTO",
             exclusive=True,
             uid=[],
             group="user",  # not used directly on the command line
@@ -161,7 +162,7 @@ Calibrate LDR to HDR response curve from samples.
             name="response",
             label="Response File",
             description="Path to the output response file.",
-            value=desc.Node.internalFolder + "response.csv",
+            value=desc.Node.internalFolder + "response_<INTRINSIC_ID>.csv",
             uid=[],
         )
     ]

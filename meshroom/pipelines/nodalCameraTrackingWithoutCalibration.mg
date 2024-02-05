@@ -1,22 +1,22 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "TracksBuilding": "1.0",
-            "ImageSegmentation": "1.0",
-            "FeatureExtraction": "1.3",
+            "FeatureMatching": "2.0",
+            "ExportAnimatedCamera": "2.0",
             "ScenePreview": "2.0",
+            "ConvertSfMFormat": "2.0",
             "ImageMatching": "2.0",
             "CameraInit": "9.0",
-            "NodalSfM": "1.0",
-            "ConvertSfMFormat": "2.0",
             "Publish": "1.3",
-            "ExportAnimatedCamera": "2.0",
-            "FeatureMatching": "2.0",
-            "RelativePoseEstimating": "1.0"
+            "ImageSegmentation": "1.2",
+            "RelativePoseEstimating": "1.0",
+            "FeatureExtraction": "1.3",
+            "NodalSfM": "1.0",
+            "TracksBuilding": "1.0"
         }
     },
     "graph": {
@@ -198,7 +198,8 @@
             ],
             "inputs": {
                 "input": "{CameraInit_1.output}",
-                "maskInvert": true
+                "maskInvert": true,
+                "keepFilename": true
             },
             "internalInputs": {
                 "color": "#80766f"

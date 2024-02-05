@@ -1,25 +1,25 @@
 {
     "header": {
         "nodesVersions": {
-            "FeatureMatching": "2.0",
-            "PanoramaMerging": "1.0",
-            "PanoramaSeams": "2.0",
-            "CameraInit": "9.0",
-            "LdrToHdrMerge": "4.1",
-            "PanoramaPostProcessing": "2.0",
-            "SfMTransform": "3.1",
-            "PanoramaWarping": "1.1",
-            "LdrToHdrCalibration": "3.0",
-            "LdrToHdrSampling": "4.0",
-            "PanoramaCompositing": "2.0",
-            "Publish": "1.3",
-            "PanoramaPrepareImages": "1.1",
             "FeatureExtraction": "1.3",
-            "PanoramaInit": "2.0",
+            "PanoramaSeams": "2.0",
+            "PanoramaPostProcessing": "2.0",
+            "PanoramaWarping": "1.1",
+            "LdrToHdrMerge": "4.1",
+            "PanoramaMerging": "1.0",
+            "Publish": "1.3",
+            "PanoramaEstimation": "1.0",
+            "CameraInit": "9.0",
+            "LdrToHdrCalibration": "3.1",
             "ImageMatching": "2.0",
-            "PanoramaEstimation": "1.0"
+            "LdrToHdrSampling": "4.0",
+            "PanoramaPrepareImages": "1.1",
+            "FeatureMatching": "2.0",
+            "PanoramaCompositing": "2.0",
+            "SfMTransform": "3.1",
+            "PanoramaInit": "2.0"
         },
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true
     },
@@ -222,7 +222,8 @@
                 "input": "{ImageMatching_1.input}",
                 "featuresFolders": "{ImageMatching_1.featuresFolders}",
                 "imagePairsList": "{ImageMatching_1.output}",
-                "describerTypes": "{FeatureExtraction_1.describerTypes}"
+                "describerTypes": "{FeatureExtraction_1.describerTypes}",
+                "minRequired2DMotion": 5.0
             }
         },
         "Publish_1": {

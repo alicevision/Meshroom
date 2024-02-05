@@ -247,6 +247,8 @@ The needed metadata are:
             exclusive=False,
             uid=[],
             joinChar=",",
+            validValue=lambda node: len(node.allowedCameraModels.value),
+            errorMessage="Need at least one allowed camera model.",
             advanced=True,
         ),
         desc.ChoiceParam(

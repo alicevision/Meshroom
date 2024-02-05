@@ -48,6 +48,10 @@ class FilesModTimePollerThread(QObject):
         else:
             self._filePollerRefresh = PollerRefreshStatus.DISABLED
 
+    def __del__(self):
+        self._threadPool.terminate()
+        self._threadPool.join()
+
     def start(self, files=None):
         """ Start polling thread.
 

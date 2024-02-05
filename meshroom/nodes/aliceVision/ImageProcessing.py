@@ -1,6 +1,7 @@
 __version__ = "3.3"
 
 from meshroom.core import desc
+from meshroom.core.utils import COLORSPACES
 
 import os.path
 
@@ -460,6 +461,30 @@ Convert or apply filtering to the input images.
                 ),
             ]
         ),
+        desc.GroupAttribute(
+            name="parFilter",
+            label="Pixel Aspect Ratio",
+            description="Pixel Aspect Ratio parameters.",
+            joinChar=":",
+            groupDesc=[
+                desc.BoolParam(
+                    name="parEnabled",
+                    label="Enable",
+                    description="Apply pixel aspect ratio.",
+                    value=False,
+                    uid=[0],
+                ),
+                desc.BoolParam(
+                    name="parRowDecimation",
+                    label="Row decimation",
+                    description="If selected, reduce image height by decimating the number of rows.\n"
+                                "Otherwise, increase width by upsampling image columns.",
+                    value=False,
+                    uid=[0],
+                    enabled=lambda node: node.parFilter.parEnabled.value,
+                ),
+            ]
+        ),
         desc.ChoiceParam(
             name="outputFormat",
             label="Output Image Format",
@@ -473,8 +498,8 @@ Convert or apply filtering to the input images.
             name="inputColorSpace",
             label="Input Color Space",
             description="Allows you to force the color space of the input image.",
+            values=COLORSPACES,
             value="AUTO",
-            values=["AUTO", "sRGB", "rec709", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
             exclusive=True,
             uid=[0],
         ),
@@ -482,8 +507,8 @@ Convert or apply filtering to the input images.
             name="outputColorSpace",
             label="Output Color Space",
             description="Allows you to choose the color space of the output image.",
+            values=COLORSPACES,
             value="AUTO",
-            values=["AUTO", "sRGB", "rec709", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
             exclusive=True,
             uid=[0],
         ),
@@ -491,8 +516,8 @@ Convert or apply filtering to the input images.
             name="workingColorSpace",
             label="Working Color Space",
             description="Allows you to choose the color space in which the data are processed.",
+            values=COLORSPACES,
             value="Linear",
-            values=["sRGB", "rec709", "Linear", "ACES2065-1", "ACEScg", "no_conversion"],
             exclusive=True,
             uid=[0],
             enabled=lambda node: not node.applyDcpMetadata.value,

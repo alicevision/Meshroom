@@ -74,7 +74,7 @@ FocusScope {
         if (!imgContainer.image)
             return ""
         var res = ""
-        if (imgContainer.image.status === Image.Loading) {
+        if (imgContainer.image.imageStatus === Image.Loading) {
             res += " Image"
         }
         if (mfeaturesLoader.status === Loader.Ready) {
@@ -372,7 +372,7 @@ FocusScope {
 
             colorRGBA: {
                 if (!floatImageViewerLoader.item ||
-                    floatImageViewerLoader.item.status !== Image.Ready) {
+                    floatImageViewerLoader.item.imageStatus !== Image.Ready) {
                     return null
                 }
                 if (floatImageViewerLoader.item.containsMouse === false) {
@@ -463,11 +463,11 @@ FocusScope {
                                 'gamma': Qt.binding(function() { return hdrImageToolbar.gammaValue }),
                                 'gain': Qt.binding(function() { return hdrImageToolbar.gainValue }),
                                 'channelModeString': Qt.binding(function() { return hdrImageToolbar.channelModeValue }),
-                                'isPrincipalPointsDisplayed' : Qt.binding(function() { return lensDistortionImageToolbar.displayPrincipalPoint }),
-                                'surface.displayGrid' :  Qt.binding(function() { return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid }),
-                                'surface.gridOpacity' : Qt.binding(function() { return lensDistortionImageToolbar.opacityValue }),
-                                'surface.gridColor' : Qt.binding(function() { return lensDistortionImageToolbar.color }),
-                                'surface.subdivisions' : Qt.binding(function() { return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue }),
+                                'isPrincipalPointsDisplayed': Qt.binding(function() { return lensDistortionImageToolbar.displayPrincipalPoint }),
+                                'surface.displayGrid':  Qt.binding(function() { return lensDistortionImageToolbar.visible && lensDistortionImageToolbar.displayGrid }),
+                                'surface.gridOpacity': Qt.binding(function() { return lensDistortionImageToolbar.opacityValue }),
+                                'surface.gridColor': Qt.binding(function() { return lensDistortionImageToolbar.color }),
+                                'surface.subdivisions': Qt.binding(function() { return root.useFloatImageViewer ? 1 : lensDistortionImageToolbar.subdivisionsValue }),
                                 'viewerTypeString': Qt.binding(function() { return displayLensDistortionViewer.checked ? "distortion" : "hdr" }),
                                 'sfmRequired': Qt.binding(function() { return displayLensDistortionViewer.checked ? true : false }),
                                 'surface.msfmData': Qt.binding(function() { return (msfmDataLoader.status === Loader.Ready && msfmDataLoader.item != null && msfmDataLoader.item.status === 2) ? msfmDataLoader.item : null }),
@@ -476,7 +476,7 @@ FocusScope {
                                 'cropFisheye': false,
                                 'sequence': Qt.binding(function() { return ((root.enableSequencePlayer && _reconstruction && _reconstruction.viewpoints.count > 0) ? getSequence() : []) }),
                                 'targetSize': Qt.binding(function() { return floatImageViewerLoader.targetSize }),
-                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction }),
+                                'useSequence': Qt.binding(function() { return root.enableSequencePlayer && !useExternal && _reconstruction })
                                 })
                           } else {
                                 // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14
@@ -681,7 +681,7 @@ FocusScope {
                         width: imgContainer.width
                         height: imgContainer.height
 
-                        visible: activeNode.isComputed && json !== undefined && imgContainer.image.status === Image.Ready
+                        visible: activeNode.isComputed && json !== undefined && imgContainer.image.imageStatus === Image.Ready
                         source: Filepath.stringToUrl(activeNode.attribute("outputData").value)
                         viewpoint: _reconstruction.selectedViewpoint
                         zoom: imgContainer.scale
@@ -745,6 +745,42 @@ FocusScope {
                         }
                     }
                 }
+
+                FloatingPane {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    Layout.preferredHeight: childrenRect.height
+                    visible: floatImageViewerLoader.item !== null && floatImageViewerLoader.item.imageStatus === Image.Error
+                    Layout.alignment: Qt.AlignHCenter
+
+                    RowLayout {
+                        anchors.fill: parent
+
+                        Label {
+                            font.pointSize: 8
+                            text: {
+                                if (floatImageViewerLoader.item !== null) {
+                                    switch (floatImageViewerLoader.item.status) {
+                                        case 2:  // AliceVision.FloatImageViewer.EStatus.OUTDATED_LOADING
+                                            return "Outdated Loading"
+                                        case 3:  // AliceVision.FloatImageViewer.EStatus.MISSING_FILE
+                                            return "Missing File"
+                                        case 4:  // AliceVision.FloatImageViewer.EStatus.ERROR
+                                            return "Error"
+                                        default:
+                                            return ""
+                                    }
+                                }
+                                return ""
+                            }
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
+                }
+
                 Item {
                     id: imgPlaceholder
                     Layout.fillWidth: true
@@ -986,14 +1022,13 @@ FocusScope {
 
                         property var activeNode: _reconstruction ? _reconstruction.activeNodes.get('LdrToHdrCalibration').node : null
                         property var isEnabled: displayLdrHdrCalibrationGraph.checked && activeNode && activeNode.isComputed
-                        // active: isEnabled
-                        // Setting "active" from true to false creates a crash on linux with Qt 5.14.2.
-                        // As a workaround, we clear the CameraResponseGraph with an empty node
-                        // and hide the loader content.
-                        visible: isEnabled
+                        active: isEnabled
+
+                        property var path: activeNode && activeNode.hasAttribute("response") ? activeNode.attribute("response").value : ""
+                        property var vp: _reconstruction ? getViewpoint(_reconstruction.selectedViewId) : null
 
                         sourceComponent: CameraResponseGraph {
-                            ldrHdrCalibrationNode: isEnabled ? activeNode : null
+                            responsePath: resolve(path, vp)
                         }
                     }
                 }
@@ -1008,7 +1043,7 @@ FocusScope {
 
                         // zoom label
                         MLabel {
-                            text: ((imgContainer.image && (imgContainer.image.status === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
+                            text: ((imgContainer.image && (imgContainer.image.imageStatus === Image.Ready)) ? imgContainer.scale.toFixed(2) : "1.00") + "x"
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -1107,7 +1142,7 @@ FocusScope {
                             }
 
                             ToolTip.text: activeNode ? "Panorama Viewer " + activeNode.label : "Panorama Viewer"
-                            text: MaterialIcons.panorama_sphere
+                            text: MaterialIcons.panorama_photosphere
                             font.pointSize: 16
                             padding: 0
                             Layout.minimumWidth: 0
@@ -1353,7 +1388,7 @@ FocusScope {
         Component.onCompleted: {
             running = Qt.binding(function() {
                 return (root.usePanoramaViewer === true && imgContainer.image && imgContainer.image.allImagesLoaded === false)
-                       || (imgContainer.image && imgContainer.image.status === Image.Loading)
+                       || (imgContainer.image && imgContainer.image.imageStatus === Image.Loading)
             })
         }
         // disable the visibility when unused to avoid stealing the mouseEvent to the image color picker

@@ -4,6 +4,7 @@ import json
 import os
 
 from meshroom.core import desc
+from meshroom.core.utils import COLORSPACES
 
 
 class PanoramaWarping(desc.AVCommandLineNode):
@@ -69,8 +70,8 @@ Compute the image warping for each input image in the panorama coordinate system
             name="workingColorSpace",
             label="Working Color Space",
             description="Colorspace in which the panorama warping will be performed.",
+            values=COLORSPACES,
             value="Linear",
-            values=["Linear", "ACES2065-1", "ACEScg", "no_conversion"],
             exclusive=True,
             uid=[0],
         ),

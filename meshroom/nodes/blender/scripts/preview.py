@@ -396,6 +396,14 @@ def main():
         setupRender(view, intrinsic, pose, args.output)
         bpy.ops.render.render(write_still=True)
 
+        # if the pixel aspect ratio is not 1, reload and rescale the rendered image
+        if bpy.context.scene.render.pixel_aspect_x != 1.0:
+            finalImg = bpy.data.images.load(bpy.context.scene.render.filepath)
+            finalImg.scale(int(bpy.context.scene.render.resolution_x * bpy.context.scene.render.pixel_aspect_x), bpy.context.scene.render.resolution_y)
+            finalImg.save()
+            # clear image from memory
+            bpy.data.images.remove(finalImg)
+
         # clear memory
         if img:
             bpy.data.images.remove(img)

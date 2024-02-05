@@ -15,16 +15,19 @@ AliceVision.FloatImageViewer {
     height: sourceSize.height
     visible: true
 
-    // paintedWidth / paintedHeight / status for compatibility with standard Image
+    // paintedWidth / paintedHeight / imageStatus for compatibility with standard Image
     property int paintedWidth: sourceSize.width
     property int paintedHeight: sourceSize.height
-    property var status: {
-        if (root.loading)
-            return Image.Loading;
-        else if ((root.source === "") ||
-                 (root.sourceSize.height <= 0) ||
-                 (root.sourceSize.width <= 0))
+    property var imageStatus: {
+        if (root.status === AliceVision.FloatImageViewer.EStatus.LOADING) {
+            return Image.Loading
+        } else if (root.status === AliceVision.FloatImageViewer.EStatus.ERROR ||
+                   root.status === AliceVision.FloatImageViewer.EStatus.MISSING_FILE ||
+                   root.status === AliceVision.FloatImageViewer.EStatus.OUTDATED_LOADING) {
+            return Image.Error
+        } else if ((root.source === "") || (root.sourceSize.height <= 0) || (root.sourceSize.width <= 0)) {
             return Image.Null
+        }
 
         return Image.Ready
     }

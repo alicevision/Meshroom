@@ -305,15 +305,31 @@ class Attribute(BaseObject):
         return self._value
 
     def getEvalValue(self):
+        '''
+        Return the value. If it is a string, expressions will be evaluated.
+        '''
         if isinstance(self.value, str):
             return Template(self.value).safe_substitute(os.environ)
         return self.value
 
-    def getValueStr(self):
+    def getValueStr(self, withQuotes=True):
+        '''
+        Return the value formatted as a string with quotes to deal with spaces.
+        If it is a string, expressions will be evaluated.
+        If it is an empty string, it will returns 2 quotes.
+        If it is an empty list, it will returns a really empty string.
+        If it is a list with one empty string element, it will returns 2 quotes.
+        '''
+        # ChoiceParam with multiple values should be combined
         if isinstance(self.attributeDesc, desc.ChoiceParam) and not self.attributeDesc.exclusive:
+            # ensure value is a list as expected
             assert(isinstance(self.value, Sequence) and not isinstance(self.value, str))
-            return self.attributeDesc.joinChar.join(self.getEvalValue())
-        if isinstance(self.attributeDesc, (desc.StringParam, desc.File)):
+            v = self.attributeDesc.joinChar.join(self.getEvalValue())
+            if withQuotes and v:
+                return '"{}"'.format(v)
+            return v
+        # String, File, single value Choice are based on strings and should includes quotes to deal with spaces
+        if withQuotes and isinstance(self.attributeDesc, (desc.StringParam, desc.File, desc.ChoiceParam)):
             return '"{}"'.format(self.getEvalValue())
         return str(self.getEvalValue())
 
@@ -497,10 +513,15 @@ class ListAttribute(Attribute):
         else:
             return [attr.getPrimitiveValue(exportDefault=exportDefault) for attr in self._value if not attr.isDefault]
 
-    def getValueStr(self):
-        if isinstance(self.value, ListModel):
-            return self.attributeDesc.joinChar.join([v.getValueStr() for v in self.value])
-        return super(ListAttribute, self).getValueStr()
+    def getValueStr(self, withQuotes=True):
+        assert(isinstance(self.value, ListModel))
+        if self.attributeDesc.joinChar == ' ':
+            return self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=withQuotes) for v in self.value])
+        else:
+            v = self.attributeDesc.joinChar.join([v.getValueStr(withQuotes=False) for v in self.value])
+            if withQuotes and v:
+                return '"{}"'.format(v)
+            return v
 
     def updateInternals(self):
         super(ListAttribute, self).updateInternals()
@@ -616,7 +637,7 @@ class GroupAttribute(Attribute):
         else:
             return {name: attr.getPrimitiveValue(exportDefault=exportDefault) for name, attr in self._value.items() if not attr.isDefault}
 
-    def getValueStr(self):
+    def getValueStr(self, withQuotes=True):
         # add brackets if requested
         strBegin = ''
         strEnd = ''
@@ -626,10 +647,17 @@ class GroupAttribute(Attribute):
                 strEnd = self.attributeDesc.brackets[1]
             else:
                 raise AttributeError("Incorrect brackets on GroupAttribute: {}".format(self.attributeDesc.brackets))
-            
+        
+        # particular case when using space separator
+        spaceSep = self.attributeDesc.joinChar == ' '
+
         # sort values based on child attributes group description order
-        sortedSubValues = [self._value.get(attr.name).getValueStr() for attr in self.attributeDesc.groupDesc]
-        return strBegin + self.attributeDesc.joinChar.join(sortedSubValues) + strEnd
+        sortedSubValues = [self._value.get(attr.name).getValueStr(withQuotes=spaceSep) for attr in self.attributeDesc.groupDesc]
+        s = self.attributeDesc.joinChar.join(sortedSubValues)
+
+        if withQuotes and not spaceSep:
+            return '"{}{}{}"'.format(strBegin, s, strEnd)
+        return '{}{}{}'.format(strBegin, s, strEnd)
 
     def updateInternals(self):
         super(GroupAttribute, self).updateInternals()

@@ -1,33 +1,33 @@
 {
     "header": {
         "pipelineVersion": "2.2",
-        "releaseVersion": "2023.3.0",
+        "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
         "template": true,
         "nodesVersions": {
-            "ScenePreview": "2.0",
+            "ExportAnimatedCamera": "2.0",
+            "Texturing": "6.0",
+            "ImageMatching": "2.0",
             "Publish": "1.3",
             "MeshFiltering": "3.0",
+            "MeshDecimate": "1.0",
             "DepthMapFilter": "4.0",
             "ExportDistortion": "1.0",
-            "DepthMap": "5.0",
-            "Texturing": "6.0",
-            "ConvertSfMFormat": "2.0",
-            "ImageSegmentation": "1.0",
             "PrepareDenseScene": "3.1",
-            "KeyframeSelection": "5.0",
-            "ExportAnimatedCamera": "2.0",
-            "CheckerboardDetection": "1.0",
-            "DistortionCalibration": "3.0",
-            "FeatureExtraction": "1.3",
-            "FeatureMatching": "2.0",
-            "Meshing": "7.0",
-            "CameraInit": "9.0",
             "ImageMatchingMultiSfM": "1.0",
-            "MeshDecimate": "1.0",
+            "Meshing": "7.0",
+            "KeyframeSelection": "5.0",
+            "CheckerboardDetection": "1.0",
+            "ApplyCalibration": "1.0",
+            "ConvertSfMFormat": "2.0",
+            "DepthMap": "5.0",
             "StructureFromMotion": "3.3",
-            "ImageMatching": "2.0",
-            "ApplyCalibration": "1.0"
+            "DistortionCalibration": "3.0",
+            "FeatureMatching": "2.0",
+            "ScenePreview": "2.0",
+            "ImageSegmentation": "1.2",
+            "FeatureExtraction": "1.3",
+            "CameraInit": "9.0"
         }
     },
     "graph": {
@@ -301,7 +301,8 @@
             ],
             "inputs": {
                 "input": "{CameraInit_1.output}",
-                "maskInvert": true
+                "maskInvert": true,
+                "keepFilename": true
             },
             "internalInputs": {
                 "color": "#575963"
@@ -487,7 +488,7 @@
                 "featuresFolders": [
                     "{FeatureExtraction_1.output}"
                 ],
-                "method": "VocabularyTree",
+                "method": "Exhaustive",
                 "matchingMode": "a/b"
             },
             "internalInputs": {

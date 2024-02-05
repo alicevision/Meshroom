@@ -1,6 +1,7 @@
 __version__ = "6.0"
 
 from meshroom.core import desc, Version
+from meshroom.core.utils import COLORSPACES
 import logging
 
 
@@ -259,8 +260,8 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name="workingColorSpace",
             label="Working Color Space",
             description="Color space for the texturing internal computation (does not impact the output file color space).",
+            values=COLORSPACES,
             value="sRGB",
-            values=("sRGB", "Linear", "ACES2065-1", "ACEScg"),
             exclusive=True,
             uid=[0],
             advanced=True,
@@ -269,8 +270,8 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name="outputColorSpace",
             label="Output Color Space",
             description="Color space for the output texture files.",
+            values=COLORSPACES,
             value="AUTO",
-            values=("sRGB", "rec709", "Linear", "ACES2065-1", "ACEScg", "AUTO"),
             exclusive=True,
             uid=[0],
         ),

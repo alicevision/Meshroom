@@ -64,7 +64,7 @@ then it checks the number of features that validates this model and iterate thro
             label="Describer Types",
             description="Describer types used to describe an image.",
             value=["dspsift"],
-            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv", "tag16h5"],
+            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv", "tag16h5", "unknown"],
             exclusive=False,
             uid=[0],
             joinChar=",",

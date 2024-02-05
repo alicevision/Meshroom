@@ -156,10 +156,11 @@ class RemoveNodeCommand(GraphCommand):
         self.nodeName = node.getName()
         self.setText("Remove Node {}".format(self.nodeName))
         self.outEdges = {}
+        self.outListAttributes = {}  # maps attribute's key with a tuple containing the name of the list it is connected to and its value
 
     def redoImpl(self):
-        # only keep outEdges since inEdges are serialized in nodeDict
-        _, self.outEdges = self.graph.removeNode(self.nodeName)
+        # keep outEdges (inEdges are serialized in nodeDict so unneeded here) and outListAttributes to be able to recreate the deleted elements in ListAttributes
+        _, self.outEdges, self.outListAttributes = self.graph.removeNode(self.nodeName)
         return True
 
     def undoImpl(self):
@@ -169,6 +170,15 @@ class RemoveNodeCommand(GraphCommand):
             assert (node.getName() == self.nodeName)
             # recreate out edges deleted on node removal
             for dstAttr, srcAttr in self.outEdges.items():
+                # if edges were connected to ListAttributes, recreate their corresponding entry in said ListAttribute
+                # 0 = attribute name, 1 = attribute index, 2 = attribute value
+                if dstAttr in self.outListAttributes.keys():
+                    listAttr = self.graph.attribute(self.outListAttributes[dstAttr][0])
+                    if isinstance(self.outListAttributes[dstAttr][2], list):
+                        listAttr[self.outListAttributes[dstAttr][1]:self.outListAttributes[dstAttr][1]] = self.outListAttributes[dstAttr][2]
+                    else:
+                        listAttr.insert(self.outListAttributes[dstAttr][1], self.outListAttributes[dstAttr][2])
+
                 self.graph.addEdge(self.graph.attribute(srcAttr),
                                    self.graph.attribute(dstAttr))
 
@@ -410,12 +420,13 @@ class UpgradeNodeCommand(GraphCommand):
         self.nodeDict = node.toDict()
         self.nodeName = node.getName()
         self.outEdges = {}
+        self.outListAttributes = {}
         self.setText("Upgrade Node {}".format(self.nodeName))
 
     def redoImpl(self):
         if not self.graph.node(self.nodeName).canUpgrade:
             return False
-        upgradedNode, inEdges, self.outEdges = self.graph.upgradeNode(self.nodeName)
+        upgradedNode, _, self.outEdges, self.outListAttributes = self.graph.upgradeNode(self.nodeName)
         return upgradedNode
 
     def undoImpl(self):
@@ -427,6 +438,15 @@ class UpgradeNodeCommand(GraphCommand):
             self.graph.addNode(node, self.nodeName)
             # recreate out edges
             for dstAttr, srcAttr in self.outEdges.items():
+                # if edges were connected to ListAttributes, recreate their corresponding entry in said ListAttribute
+                # 0 = attribute name, 1 = attribute index, 2 = attribute value
+                if dstAttr in self.outListAttributes.keys():
+                    listAttr = self.graph.attribute(self.outListAttributes[dstAttr][0])
+                    if isinstance(self.outListAttributes[dstAttr][2], list):
+                        listAttr[self.outListAttributes[dstAttr][1]:self.outListAttributes[dstAttr][1]] = self.outListAttributes[dstAttr][2]
+                    else:
+                        listAttr.insert(self.outListAttributes[dstAttr][1], self.outListAttributes[dstAttr][2])
+
                 self.graph.addEdge(self.graph.attribute(srcAttr),
                                    self.graph.attribute(dstAttr))
 

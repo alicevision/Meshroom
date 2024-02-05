@@ -645,18 +645,38 @@ class Graph(BaseObject):
     @changeTopology
     def removeNode(self, nodeName):
         """
-        Remove the node identified by 'nodeName' from the graph
-        and return in and out edges removed by this operation in two dicts {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+        Remove the node identified by 'nodeName' from the graph.
+        Returns:
+            - a dictionary containing the incoming edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the outgoing edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute prior to the removal of all edges:
+                {dstAttr.getFullNameToNode(), (dstAttr.root.getFullNameToNode(), dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
         inEdges = {}
         outEdges = {}
+        outListAttributes = {}
 
         # Remove all edges arriving to and starting from this node
         with GraphModification(self):
+            # Two iterations over the outgoing edges are necessary:
+            # - the first one is used to collect all the information about the edges while they are all there (overall context)
+            # - once we have collected all the information, the edges (and perhaps the entries in ListAttributes) can actually be removed
+            for edge in self.nodeOutEdges(node):
+                outEdges[edge.dst.getFullNameToNode()] = edge.src.getFullNameToNode()
+
+                if isinstance(edge.dst.root, ListAttribute):
+                    index = edge.dst.root.index(edge.dst)
+                    outListAttributes[edge.dst.getFullNameToNode()] = (edge.dst.root.getFullNameToNode(), index, edge.dst.value if edge.dst.value else None)
+
             for edge in self.nodeOutEdges(node):
                 self.removeEdge(edge.dst)
-                outEdges[edge.dst.getFullNameToNode()] = edge.src.getFullNameToNode()
+
+                # Remove the corresponding attributes from the ListAttributes instead of just emptying their values
+                if isinstance(edge.dst.root, ListAttribute):
+                    index = edge.dst.root.index(edge.dst)
+                    edge.dst.root.remove(index)
+
             for edge in self.nodeInEdges(node):
                 self.removeEdge(edge.dst)
                 inEdges[edge.dst.getFullNameToNode()] = edge.src.getFullNameToNode()
@@ -667,7 +687,7 @@ class Graph(BaseObject):
                 self._importedNodes.remove(node)
             self.update()
 
-        return inEdges, outEdges
+        return inEdges, outEdges, outListAttributes
 
     def addNewNode(self, nodeType, name=None, position=None, **kwargs):
         """
@@ -707,22 +727,35 @@ class Graph(BaseObject):
             nodeName (str): the name of the CompatibilityNode to upgrade
 
         Returns:
-            the list of deleted input/output edges
+            - the upgraded (newly created) node
+            - a dictionary containing the incoming edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the outgoing edges removed by this operation: {dstAttr.getFullNameToNode(), srcAttr.getFullNameToNode()}
+            - a dictionary containing the values, indices and keys of attributes that were connected to a ListAttribute prior to the removal of all edges:
+                {dstAttr.getFullNameToNode(), (dstAttr.root.getFullNameToNode(), dstAttr.index, dstAttr.value)}
         """
         node = self.node(nodeName)
         if not isinstance(node, CompatibilityNode):
             raise ValueError("Upgrade is only available on CompatibilityNode instances.")
         upgradedNode = node.upgrade()
         with GraphModification(self):
-            inEdges, outEdges = self.removeNode(nodeName)
+            inEdges, outEdges, outListAttributes = self.removeNode(nodeName)
             self.addNode(upgradedNode, nodeName)
             for dst, src in outEdges.items():
+                # Re-create the entries in ListAttributes that were completely removed during the call to "removeNode"
+                # If they are not re-created first, adding their edges will lead to errors
+                # 0 = attribute name, 1 = attribute index, 2 = attribute value
+                if dst in outListAttributes.keys():
+                    listAttr = self.attribute(outListAttributes[dst][0])
+                    if isinstance(outListAttributes[dst][2], list):
+                        listAttr[outListAttributes[dst][1]:outListAttributes[dst][1]] = outListAttributes[dst][2]
+                    else:
+                        listAttr.insert(outListAttributes[dst][1], outListAttributes[dst][2])
                 try:
                     self.addEdge(self.attribute(src), self.attribute(dst))
                 except (KeyError, ValueError) as e:
                     logging.warning("Failed to restore edge {} -> {}: {}".format(src, dst, str(e)))
 
-        return upgradedNode, inEdges, outEdges
+        return upgradedNode, inEdges, outEdges, outListAttributes
 
     def upgradeAllNodes(self):
         """ Upgrade all upgradable CompatibilityNode instances in the graph. """

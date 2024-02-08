@@ -56,7 +56,7 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -74,5 +74,5 @@ Estimate the seams lines between the inputs to provide an optimal compositing in
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "panorama.sfm",
             uid=[],
-        )
+        ),
     ]

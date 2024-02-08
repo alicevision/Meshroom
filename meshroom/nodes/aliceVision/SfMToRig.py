@@ -30,7 +30,7 @@ Assumes the input SfMData describes a set of cameras capturing a scene at a comm
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

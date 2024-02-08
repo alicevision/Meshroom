@@ -52,7 +52,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             ),
             name="featuresFolders",
             label="Features Folders",
-            description="Folder(s) containing the extracted features and descriptors."
+            description="Folder(s) containing the extracted features and descriptors.",
         ),
         desc.ChoiceParam(
             name="method",
@@ -138,7 +138,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

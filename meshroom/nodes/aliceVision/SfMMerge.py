@@ -63,7 +63,7 @@ Merges two SfMData files into a single one. Fails if some UID is shared among th
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

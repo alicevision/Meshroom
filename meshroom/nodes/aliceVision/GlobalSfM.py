@@ -35,7 +35,7 @@ It is known to be faster but less robust to challenging datasets than the Increm
             ),
             name="featuresFolders",
             label="Features Folders",
-            description="Folder(s) containing the extracted features."
+            description="Folder(s) containing the extracted features.",
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -47,7 +47,7 @@ It is known to be faster but less robust to challenging datasets than the Increm
             ),
             name="matchesFolders",
             label="Matches Folders",
-            description="Folder(s) in which computed matches are stored."
+            description="Folder(s) in which computed matches are stored.",
         ),
         desc.ChoiceParam(
             name="describerTypes",
@@ -99,7 +99,7 @@ It is known to be faster but less robust to challenging datasets than the Increm
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

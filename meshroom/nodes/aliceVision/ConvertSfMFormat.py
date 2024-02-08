@@ -109,4 +109,3 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             uid=[],
         ),
     ]
-

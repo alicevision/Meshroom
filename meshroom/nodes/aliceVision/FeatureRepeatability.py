@@ -120,7 +120,7 @@ Compare feature/descriptor matching repeatability on some dataset with known hom
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

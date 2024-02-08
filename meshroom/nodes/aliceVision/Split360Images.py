@@ -44,7 +44,11 @@ class Split360Images(desc.AVCommandLineNode):
             exclusive=True,
             uid=[0],
         ),
-        desc.GroupAttribute(name="dualFisheyeGroup", label="Dual Fisheye", description="Dual Fisheye.", group=None,
+        desc.GroupAttribute(
+            name="dualFisheyeGroup",
+            label="Dual Fisheye",
+            description="Dual Fisheye.",
+            group=None,
             enabled=lambda node: node.splitMode.value == "dualfisheye",
             groupDesc=[
                 desc.ChoiceParam(
@@ -74,9 +78,13 @@ class Split360Images(desc.AVCommandLineNode):
                     exclusive=True,
                     uid=[0],
                 ),
-            ]
+            ],
         ),
-        desc.GroupAttribute(name="equirectangularGroup", label="Equirectangular", description="Equirectangular", group=None,
+        desc.GroupAttribute(
+            name="equirectangularGroup",
+            label="Equirectangular",
+            description="Equirectangular",
+            group=None,
             enabled=lambda node: node.splitMode.value == "equirectangular",
             groupDesc=[
                 desc.IntParam(
@@ -110,7 +118,7 @@ class Split360Images(desc.AVCommandLineNode):
                     range=(0.0, 180.0, 1.0),
                     uid=[0],
                 ),
-            ]
+            ],
         ),
         desc.ChoiceParam(
             name="extension",

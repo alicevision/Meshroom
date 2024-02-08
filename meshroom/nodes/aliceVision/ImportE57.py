@@ -24,7 +24,7 @@ Import an E57 file and generate an SfMData.
             ),
             name="input",
             label="Input Files",
-            description="Set of E57 files in the same reference frame."
+            description="Set of E57 files in the same reference frame.",
         ),
         desc.FloatParam(
             name="maxDensity",
@@ -32,7 +32,7 @@ Import an E57 file and generate an SfMData.
             description="Ensure no points has no neighbour closer than maxDensity meters.",
             value=0.01,
             range=(0.0, 0.2, 0.001),
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -42,7 +42,7 @@ Import an E57 file and generate an SfMData.
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

@@ -89,7 +89,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             ),
             name="brands",
             label="Brands",
-            description="Camera brands."
+            description="Camera brands.",
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -101,7 +101,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             ),
             name="models",
             label="Models",
-            description="Camera models."
+            description="Camera models.",
         ),
         desc.ListAttribute(
             elementDesc=desc.FloatParam(
@@ -114,7 +114,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             ),
             name="mmFocals",
             label="Focals",
-            description="Focals in mm (will be used if not 0)."
+            description="Focals in mm (will be used if not 0).",
         ),
         desc.File(
             name="sensorDbPath",
@@ -135,7 +135,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             label="Masks",
             description="Masks (e.g. segmentation masks) used to exclude some parts of the frames from the score computations\n"
                         "for the smart keyframe selection.",
-            enabled=lambda node: node.selectionMethod.useSmartSelection.value
+            enabled=lambda node: node.selectionMethod.useSmartSelection.value,
         ),
         desc.GroupAttribute(
             name="selectionMethod",
@@ -150,7 +150,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                     label="Use Smart Keyframe Selection",
                     description="Use the smart keyframe selection.",
                     value=True,
-                    uid=[0]
+                    uid=[0],
                 ),
                 desc.GroupAttribute(
                     name="regularSelection",
@@ -167,7 +167,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             value=12,
                             range=(1, 1000, 1),
                             uid=[0],
-                            enabled=lambda node: node.regularSelection.enabled
+                            enabled=lambda node: node.regularSelection.enabled,
                         ),
                         desc.IntParam(
                             name="maxFrameStep",
@@ -176,7 +176,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             value=0,
                             range=(0, 1000, 1),
                             uid=[0],
-                            enabled=lambda node: node.regularSelection.enabled
+                            enabled=lambda node: node.regularSelection.enabled,
                         ),
                         desc.IntParam(
                             name="maxNbOutFrames",
@@ -187,7 +187,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             value=0,
                             range=(0, 10000, 1),
                             uid=[0],
-                            enabled=lambda node: node.regularSelection.enabled
+                            enabled=lambda node: node.regularSelection.enabled,
                         ),
                     ],
                 ),
@@ -206,7 +206,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             value=10.0,
                             range=(0.0, 100.0, 1.0),
                             uid=[0],
-                            enabled=lambda node: node.smartSelection.enabled
+                            enabled=lambda node: node.smartSelection.enabled,
                         ),
                         desc.IntParam(
                             name="minNbOutFrames",
@@ -215,7 +215,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             value=10,
                             range=(1, 100, 1),
                             uid=[0],
-                            enabled=lambda node: node.smartSelection.enabled
+                            enabled=lambda node: node.smartSelection.enabled,
                         ),
                         desc.IntParam(
                             name="maxNbOutFrames",
@@ -224,7 +224,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             value=2000,
                             range=(1, 10000, 1),
                             uid=[0],
-                            enabled=lambda node: node.smartSelection.enabled
+                            enabled=lambda node: node.smartSelection.enabled,
                         ),
                         desc.IntParam(
                             name="rescaledWidthSharpness",
@@ -235,7 +235,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             range=(0, 4000, 1),
                             uid=[0],
                             enabled=lambda node: node.smartSelection.enabled,
-                            advanced=True
+                            advanced=True,
                         ),
                         desc.IntParam(
                             name="rescaledWidthFlow",
@@ -246,7 +246,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             range=(0, 4000, 1),
                             uid=[0],
                             enabled=lambda node: node.smartSelection.enabled,
-                            advanced=True
+                            advanced=True,
                         ),
                         desc.IntParam(
                             name="sharpnessWindowSize",
@@ -256,7 +256,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             range=(1, 10000, 1),
                             uid=[0],
                             enabled=lambda node: node.smartSelection.enabled,
-                            advanced=True
+                            advanced=True,
                         ),
                         desc.IntParam(
                             name="flowCellSize",
@@ -266,7 +266,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             range=(10, 2000, 1),
                             uid=[0],
                             enabled=lambda node: node.smartSelection.enabled,
-                            advanced=True
+                            advanced=True,
                         ),
                         desc.IntParam(
                             name="minBlockSize",
@@ -278,11 +278,11 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             range=(1, 1000, 1),
                             uid=[],
                             enabled=lambda node: node.smartSelection.enabled,
-                            advanced=True
-                        )
-                    ]
-                )
-            ]
+                            advanced=True,
+                        ),
+                    ],
+                ),
+            ],
         ),
         desc.BoolParam(
             name="renameKeyframes",
@@ -292,7 +292,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                         "option enabled instead of [00015.exr, 00294.exr, 00825.exr].",
             value=False,
             enabled=lambda node: node.outputExtension.value != "none",
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="outputExtension",
@@ -320,7 +320,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             exclusive=True,
             uid=[0],
             enabled=lambda node: node.outputExtension.value == "exr",
-            advanced=True
+            advanced=True,
         ),
         desc.GroupAttribute(
             name="debugOptions",
@@ -342,7 +342,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             label="Export Scores To CSV",
                             description="Export the computed sharpness and optical flow scores to a CSV file.",
                             value=False,
-                            uid=[0]
+                            uid=[0],
                         ),
                         desc.StringParam(
                             name="csvFilename",
@@ -350,7 +350,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             description="Name of the CSV file to export. It will be written in the node's output folder.",
                             value="scores.csv",
                             uid=[0],
-                            enabled=lambda node: node.debugOptions.debugScores.exportScores.value
+                            enabled=lambda node: node.debugOptions.debugScores.exportScores.value,
                         ),
                         desc.BoolParam(
                             name="exportSelectedFrames",
@@ -358,9 +358,9 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             description="Add a column in the CSV file containing 1s for frames that were selected and 0s for those that were not.",
                             value=False,
                             uid=[0],
-                            enabled=lambda node: node.debugOptions.debugScores.exportScores.value
-                        )
-                    ]
+                            enabled=lambda node: node.debugOptions.debugScores.exportScores.value,
+                        ),
+                    ],
                 ),
                 desc.GroupAttribute(
                     name="opticalFlowVisualisation",
@@ -375,7 +375,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             description="Export each frame's optical flow HSV visualisation as PNG images.",
                             value=False,
                             uid=[0],
-                            enabled=lambda node: node.debugOptions.opticalFlowVisualisation.enabled
+                            enabled=lambda node: node.debugOptions.opticalFlowVisualisation.enabled,
                         ),
                         desc.BoolParam(
                             name="flowVisualisationOnly",
@@ -384,9 +384,9 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                                         "If this option is selected, all the other options will be ignored.",
                             value=False,
                             uid=[0],
-                            enabled=lambda node: node.debugOptions.opticalFlowVisualisation.enabled
-                        )
-                    ]
+                            enabled=lambda node: node.debugOptions.opticalFlowVisualisation.enabled,
+                        ),
+                    ],
                 ),
                 desc.BoolParam(
                     name="skipSharpnessComputation",
@@ -394,7 +394,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                     description="Skip the sharpness score computation. A fixed score of 1.0 will be applied by default to all the frames.",
                     value=False,
                     uid=[0],
-                    enabled=lambda node: node.debugOptions.enabled
+                    enabled=lambda node: node.debugOptions.enabled,
                 ),
                 desc.BoolParam(
                     name="skipSelection",
@@ -402,9 +402,9 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                     description="Compute the sharpness and optical flow scores, but do not proceed to the frame selection.",
                     value=False,
                     uid=[0],
-                    enabled=lambda node: node.debugOptions.enabled
-                )
-            ]
+                    enabled=lambda node: node.debugOptions.enabled,
+                ),
+            ],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -438,7 +438,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             description="Output SfMData file containing all the frames that were not selected as keyframes.\n"
                         "If the input contains videos, this file will not be written since all the frames that were not selected do not actually exist on disk.",
             value=desc.Node.internalFolder + "frames.sfm",
-            uid=[]
-        )
+            uid=[],
+        ),
     ]
 

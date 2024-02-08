@@ -18,21 +18,21 @@ Can also be used to calibrate a lighting dome (RTI type).
             label="Input SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0]
+            uid=[0],
         ),
         desc.File(
             name="inputJSON",
             label="Sphere Detection File",
             description="Input JSON file containing sphere centers and radiuses.",
             value="",
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="saveAsModel",
             label="Save As Model",
             description="Check if this calibration file will be used with other datasets.",
             value=False,
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="method",
@@ -42,7 +42,7 @@ Can also be used to calibrate a lighting dome (RTI type).
             values=["brightestPoint", "whiteSphere"],
             value="brightestPoint",
             exclusive=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -52,7 +52,7 @@ Can also be used to calibrate a lighting dome (RTI type).
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -61,6 +61,6 @@ Can also be used to calibrate a lighting dome (RTI type).
             label="Light File",
             description="Light information will be written here.",
             value=desc.Node.internalFolder + "/lights.json",
-            uid=[]
-        )
+            uid=[],
+        ),
     ]

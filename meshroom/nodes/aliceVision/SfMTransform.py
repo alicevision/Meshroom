@@ -74,25 +74,31 @@ The transformation can be based on:
                     description="Translation in space.",
                     groupDesc=[
                         desc.FloatParam(
-                            name="x", label="x", description="X offset.",
+                            name="x",
+                            label="x",
+                            description="X offset.",
                             value=0.0,
                             uid=[0],
-                            range=(-20.0, 20.0, 0.01)
+                            range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
-                            name="y", label="y", description="Y offset.",
+                            name="y",
+                            label="y",
+                            description="Y offset.",
                             value=0.0,
                             uid=[0],
-                            range=(-20.0, 20.0, 0.01)
+                            range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
-                            name="z", label="z", description="Z offset.",
+                            name="z",
+                            label="z",
+                            description="Z offset.",
                             value=0.0,
                             uid=[0],
-                            range=(-20.0, 20.0, 0.01)
-                        )
+                            range=(-20.0, 20.0, 0.01),
+                        ),
                     ],
-                    joinChar=","
+                    joinChar=",",
                 ),
                 desc.GroupAttribute(
                     name="manualRotation",
@@ -100,25 +106,31 @@ The transformation can be based on:
                     description="Rotation in Euler angles.",
                     groupDesc=[
                         desc.FloatParam(
-                            name="x", label="x", description="Euler X rotation.",
+                            name="x",
+                            label="x",
+                            description="Euler X rotation.",
                             value=0.0,
                             uid=[0],
-                            range=(-90.0, 90.0, 1.0)
+                            range=(-90.0, 90.0, 1.0),
                         ),
                         desc.FloatParam(
-                            name="y", label="y", description="Euler Y rotation.",
+                            name="y",
+                            label="y",
+                            description="Euler Y rotation.",
                             value=0.0,
                             uid=[0],
-                            range=(-180.0, 180.0, 1.0)
+                            range=(-180.0, 180.0, 1.0),
                         ),
                         desc.FloatParam(
-                            name="z", label="z", description="Euler Z rotation.",
+                            name="z",
+                            label="z",
+                            description="Euler Z rotation.",
                             value=0.0,
                             uid=[0],
-                            range=(-180.0, 180.0, 1.0)
-                        )
+                            range=(-180.0, 180.0, 1.0),
+                        ),
                     ],
-                    joinChar=","
+                    joinChar=",",
                 ),
                 desc.FloatParam(
                     name="manualScale",
@@ -126,8 +138,8 @@ The transformation can be based on:
                     description="Uniform scale.",
                     value=1.0,
                     uid=[0],
-                    range=(0.0, 20.0, 0.01)
-                )
+                    range=(0.0, 20.0, 0.01),
+                ),
             ],
             joinChar=",",
             enabled=lambda node: node.method.value == "manual",
@@ -152,14 +164,54 @@ The transformation can be based on:
         ),
         desc.ListAttribute(
             name="markers",
-            elementDesc=desc.GroupAttribute(name="markerAlign", label="Marker Align", description="", joinChar=":", groupDesc=[
-                desc.IntParam(name="markerId", label="Marker", description="Marker ID.", value=0, uid=[0], range=(0, 32, 1)),
-                desc.GroupAttribute(name="markerCoord", label="Coord", description="Marker coordinates.", joinChar=",", groupDesc=[
-                    desc.FloatParam(name="x", label="x", description="X coordinates for the marker.", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
-                    desc.FloatParam(name="y", label="y", description="Y coordinates for the marker.", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
-                    desc.FloatParam(name="z", label="z", description="Z coordinates for the marker.", value=0.0, uid=[0], range=(-2.0, 2.0, 1.0)),
-                ])
-            ]),
+            elementDesc=desc.GroupAttribute(
+                name="markerAlign",
+                label="Marker Align",
+                description="",
+                joinChar=":",
+                groupDesc=[
+                    desc.IntParam(
+                        name="markerId",
+                        label="Marker",
+                        description="Marker ID.",
+                        value=0,
+                        uid=[0],
+                        range=(0, 32, 1),
+                    ),
+                    desc.GroupAttribute(
+                        name="markerCoord",
+                        label="Coord",
+                        description="Marker coordinates.",
+                        joinChar=",",
+                        groupDesc=[
+                            desc.FloatParam(
+                                name="x",
+                                label="x",
+                                description="X coordinates for the marker.",
+                                value=0.0,
+                                uid=[0],
+                                range=(-2.0, 2.0, 1.0),
+                            ),
+                            desc.FloatParam(
+                                name="y",
+                                label="y",
+                                description="Y coordinates for the marker.",
+                                value=0.0,
+                                uid=[0],
+                                range=(-2.0, 2.0, 1.0),
+                            ),
+                            desc.FloatParam(
+                                name="z",
+                                label="z",
+                                description="Z coordinates for the marker.",
+                                value=0.0,
+                                uid=[0],
+                                range=(-2.0, 2.0, 1.0),
+                            ),
+                        ],
+                    ),
+                ],
+            ),
             label="Markers",
             description="Markers alignment points.",
         ),

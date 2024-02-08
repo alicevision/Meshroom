@@ -138,13 +138,13 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             uid=[0],
         ),
         desc.ChoiceParam(
-                name="workingColorSpace",
-                label="Working Color Space",
-                description="Allows you to choose the color space in which the data are processed.",
-                values=COLORSPACES,
-                value="sRGB",
-                exclusive=True,
-                uid=[0],
+            name="workingColorSpace",
+            label="Working Color Space",
+            description="Allows you to choose the color space in which the data are processed.",
+            values=COLORSPACES,
+            value="sRGB",
+            exclusive=True,
+            uid=[0],
         ),
         desc.BoolParam(
             name="forceCpuExtraction",
@@ -171,7 +171,7 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

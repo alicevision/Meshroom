@@ -31,7 +31,7 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             ),
             name="featuresFolders",
             label="Features Folders",
-            description="Folder(s) containing the extracted features and descriptors."
+            description="Folder(s) containing the extracted features and descriptors.",
         ),
         desc.File(
             name="tracksFilename",
@@ -65,7 +65,7 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -75,5 +75,5 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.abc",
             uid=[],
-        )
+        ),
     ]

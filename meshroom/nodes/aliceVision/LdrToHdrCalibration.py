@@ -62,7 +62,7 @@ Calibrate LDR to HDR response curve from samples.
             uid=[],
             group="user",  # not used directly on the command line
             errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
-                         "Errors will occur during the computation."
+                         "Errors will occur during the computation.",
         ),
         desc.IntParam(
             name="nbBrackets",
@@ -73,7 +73,7 @@ Calibrate LDR to HDR response curve from samples.
             value=0,
             range=(0, 15, 1),
             uid=[0],
-            group="bracketsParams"
+            group="bracketsParams",
         ),
         desc.BoolParam(
             name="byPass",
@@ -154,7 +154,7 @@ Calibrate LDR to HDR response curve from samples.
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -164,7 +164,7 @@ Calibrate LDR to HDR response curve from samples.
             description="Path to the output response file.",
             value=desc.Node.internalFolder + "response_<INTRINSIC_ID>.csv",
             uid=[],
-        )
+        ),
     ]
 
     def processChunk(self, chunk):

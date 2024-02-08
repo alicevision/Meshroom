@@ -33,7 +33,7 @@ Estimate relative pose between each pair of views that share tracks.
             ),
             name="featuresFolders",
             label="Features Folders",
-            description="Folder(s) containing the extracted features and descriptors."
+            description="Folder(s) containing the extracted features and descriptors.",
         ),
         desc.File(
             name="tracksFilename",
@@ -67,7 +67,7 @@ Estimate relative pose between each pair of views that share tracks.
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -77,5 +77,5 @@ Estimate relative pose between each pair of views that share tracks.
             description="Path to the output Pairs info files directory.",
             value=desc.Node.internalFolder,
             uid=[],
-        )
+        ),
     ]

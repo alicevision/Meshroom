@@ -71,7 +71,7 @@ Merge all inputs coming from the PanoramaCompositing node.
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

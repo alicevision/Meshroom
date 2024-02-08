@@ -81,7 +81,7 @@ class LightingEstimation(desc.AVCommandLineNode):
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
     
     outputs = [

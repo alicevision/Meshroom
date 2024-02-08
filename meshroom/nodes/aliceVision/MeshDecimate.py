@@ -72,7 +72,7 @@ This node allows to reduce the density of the Mesh.
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

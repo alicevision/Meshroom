@@ -40,7 +40,7 @@ class ExportMatches(desc.AVCommandLineNode):
             ),
             name="featuresFolders",
             label="Features Folders",
-            description="Folder(s) containing the extracted features and descriptors."
+            description="Folder(s) containing the extracted features and descriptors.",
         ),
         desc.ListAttribute(
             elementDesc=desc.File(
@@ -52,7 +52,7 @@ class ExportMatches(desc.AVCommandLineNode):
             ),
             name="matchesFolders",
             label="Matches Folders",
-            description="Folder(s) in which computed matches are stored."
+            description="Folder(s) in which computed matches are stored.",
         ),
         desc.ChoiceParam(
             name="verboseLevel",

@@ -172,9 +172,9 @@ Convert or apply filtering to the input images.
                     description="Chromatic aberration (fringing) correction if the model parameters are available in the metadata.",
                     value=False,
                     uid=[0],
-                    enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value
-                )
-            ]
+                    enabled=lambda node: node.lensCorrection.lensCorrectionEnabled.value,
+                ),
+            ],
         ),
         desc.FloatParam(
             name="scaleFactor",
@@ -264,7 +264,7 @@ Convert or apply filtering to the input images.
                     uid=[0],
                     enabled=lambda node: node.sharpenFilter.sharpenFilterEnabled.value,
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="bilateralFilter",
@@ -307,7 +307,7 @@ Convert or apply filtering to the input images.
                     uid=[0],
                     enabled=lambda node: node.bilateralFilter.bilateralFilterEnabled.value,
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="claheFilter",
@@ -341,7 +341,7 @@ Convert or apply filtering to the input images.
                     uid=[0],
                     enabled=lambda node: node.claheFilter.claheEnabled.value,
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="noiseFilter",
@@ -402,7 +402,7 @@ Convert or apply filtering to the input images.
                     uid=[0],
                     enabled=lambda node: node.noiseFilter.noiseEnabled.value,
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="nlmFilter",
@@ -459,7 +459,7 @@ Convert or apply filtering to the input images.
                     uid=[0],
                     enabled=lambda node: node.nlmFilter.nlmFilterEnabled.value,
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="parFilter",
@@ -483,7 +483,7 @@ Convert or apply filtering to the input images.
                     uid=[0],
                     enabled=lambda node: node.parFilter.parEnabled.value,
                 ),
-            ]
+            ],
         ),
         desc.ChoiceParam(
             name="outputFormat",
@@ -522,7 +522,6 @@ Convert or apply filtering to the input images.
             uid=[0],
             enabled=lambda node: not node.applyDcpMetadata.value,
         ),
-        
         desc.ChoiceParam(
             name="rawColorInterpretation",
             label="RAW Color Interpretation",
@@ -532,7 +531,6 @@ Convert or apply filtering to the input images.
             exclusive=True,
             uid=[0],
         ),
-        
         desc.BoolParam(
             name="applyDcpMetadata",
             label="Apply DCP Metadata",
@@ -540,7 +538,6 @@ Convert or apply filtering to the input images.
             value=False,
             uid=[0],
         ),
-        
         desc.File(
             name="colorProfileDatabase",
             label="Color Profile Database",
@@ -549,7 +546,6 @@ Convert or apply filtering to the input images.
             uid=[],
             enabled=lambda node: (node.rawColorInterpretation.value == "DCPLinearProcessing") or (node.rawColorInterpretation.value == "DCPMetadata"),
         ),
-        
         desc.BoolParam(
             name="errorOnMissingColorProfile",
             label="Error On Missing DCP Color Profile",
@@ -558,7 +554,6 @@ Convert or apply filtering to the input images.
             uid=[0],
             enabled=lambda node: (node.rawColorInterpretation.value == "DCPLinearProcessing") or (node.rawColorInterpretation.value == "DCPMetadata"),
         ),
-        
         desc.BoolParam(
             name="useDCPColorMatrixOnly",
             label="Use DCP Color Matrix Only",
@@ -567,7 +562,6 @@ Convert or apply filtering to the input images.
             uid=[0],
             enabled=lambda node: (node.rawColorInterpretation.value == "DCPLinearProcessing") or (node.rawColorInterpretation.value == "DCPMetadata"),
         ),
-        
         desc.BoolParam(
             name="doWBAfterDemosaicing",
             label="WB After Demosaicing",
@@ -576,7 +570,6 @@ Convert or apply filtering to the input images.
             uid=[0],
             enabled=lambda node: (node.rawColorInterpretation.value == "DCPLinearProcessing") or (node.rawColorInterpretation.value == "DCPMetadata"),
         ),
-        
         desc.ChoiceParam(
             name="demosaicingAlgo",
             label="Demosaicing Algorithm",
@@ -586,7 +579,6 @@ Convert or apply filtering to the input images.
             exclusive=True,
             uid=[0],
         ),
-        
         desc.ChoiceParam(
             name="highlightMode",
             label="Highlight Mode",
@@ -600,7 +592,6 @@ Convert or apply filtering to the input images.
             exclusive=True,
             uid=[0],
         ),
-        
         desc.FloatParam(
             name="correlatedColorTemperature",
             label="Illuminant Color Temperature",
@@ -610,7 +601,6 @@ Convert or apply filtering to the input images.
             range=(-1.0, 10000.0, 1.0),
             uid=[0],
         ),
-
         desc.File(
             name="lensCorrectionProfileInfo",
             label="Lens Correction Profile Info",
@@ -618,7 +608,6 @@ Convert or apply filtering to the input images.
             value="${ALICEVISION_LENS_PROFILE_INFO}",
             uid=[],
         ),
-        
         desc.BoolParam(
             name="lensCorrectionProfileSearchIgnoreCameraModel",
             label="LCP Generic Search",
@@ -627,7 +616,6 @@ Convert or apply filtering to the input images.
             uid=[0],
             advanced=True,
         ),
-        
         desc.ChoiceParam(
             name="storageDataType",
             label="Storage Data Type For EXR Output",
@@ -641,7 +629,6 @@ Convert or apply filtering to the input images.
             exclusive=True,
             uid=[0],
         ),
-        
         desc.ChoiceParam(
             name="exrCompressionMethod",
             label="EXR Compression Method",
@@ -651,7 +638,6 @@ Convert or apply filtering to the input images.
             exclusive=True,
             uid=[0],
         ),
-        
         desc.IntParam(
             name="exrCompressionLevel",
             label="EXR Compression Level",
@@ -661,9 +647,8 @@ Convert or apply filtering to the input images.
             value=0,
             range=(0, 500, 1),
             uid=[0],
-            enabled=lambda node: node.exrCompressionMethod.value in ["dwaa", "dwab", "zip", "zips"]
+            enabled=lambda node: node.exrCompressionMethod.value in ["dwaa", "dwab", "zip", "zips"],
         ),
-
         desc.BoolParam(
             name="jpegCompress",
             label="JPEG Compress",
@@ -671,7 +656,6 @@ Convert or apply filtering to the input images.
             value=True,
             uid=[0],
         ),
-
         desc.IntParam(
             name="jpegQuality",
             label="JPEG Quality",
@@ -679,9 +663,8 @@ Convert or apply filtering to the input images.
             value=90,
             range=(0, 100, 1),
             uid=[0],
-            enabled=lambda node: node.jpegCompress.value
+            enabled=lambda node: node.jpegCompress.value,
         ),
-
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
@@ -690,7 +673,7 @@ Convert or apply filtering to the input images.
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

@@ -76,7 +76,7 @@ Sample pixels from Low range images for HDR creation.
             uid=[],
             group="user",  # not used directly on the command line
             errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
-                         "Errors will occur during the computation."
+                         "Errors will occur during the computation.",
         ),
         desc.IntParam(
             name="nbBrackets",
@@ -87,7 +87,7 @@ Sample pixels from Low range images for HDR creation.
             value=0,
             range=(0, 15, 1),
             uid=[0],
-            group="bracketsParams"
+            group="bracketsParams",
         ),
         desc.BoolParam(
             name="byPass",
@@ -179,7 +179,7 @@ Sample pixels from Low range images for HDR creation.
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

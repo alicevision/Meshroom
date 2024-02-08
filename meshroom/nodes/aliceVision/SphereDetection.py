@@ -18,21 +18,21 @@ Spheres can be automatically detected or manually defined in the interface.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0]
+            uid=[0],
         ),
         desc.File(
             name="modelPath",
             label="Detection Network",
             description="Deep learning network for automatic calibration sphere detection.",
             value="${ALICEVISION_SPHERE_DETECTION_MODEL}",
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="autoDetect",
             label="Automatic Sphere Detection",
             description="Automatic detection of calibration spheres.",
             value=False,
-            uid=[0]
+            uid=[0],
         ),
         desc.FloatParam(
             name="minScore",
@@ -41,7 +41,7 @@ Spheres can be automatically detected or manually defined in the interface.
             value=0.0,
             range=(0.0, 50.0, 0.01),
             advanced=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.GroupAttribute(
             name="sphereCenter",
@@ -49,18 +49,24 @@ Spheres can be automatically detected or manually defined in the interface.
             description="Center of the circle (XY offset to the center of the image in pixels).",
             groupDesc=[
                 desc.FloatParam(
-                    name="x", label="x", description="X offset in pixels.",
+                    name="x",
+                    label="x",
+                    description="X offset in pixels.",
                     value=0.0,
                     uid=[0],
-                    range=(-1000.0, 10000.0, 1.0)),
+                    range=(-1000.0, 10000.0, 1.0),
+                ),
                 desc.FloatParam(
-                    name="y", label="y", description="Y offset in pixels.",
+                    name="y",
+                    label="y",
+                    description="Y offset in pixels.",
                     value=0.0,
                     uid=[0],
-                    range=(-1000.0, 10000.0, 1.0)),
-                ],
+                    range=(-1000.0, 10000.0, 1.0),
+                ),
+            ],
             enabled=lambda node: not node.autoDetect.value,
-            group=None # skip group from command line
+            group=None,  # skip group from command line
         ),
         desc.FloatParam(
             name="sphereRadius",
@@ -69,7 +75,7 @@ Spheres can be automatically detected or manually defined in the interface.
             value=500.0,
             range=(0.0, 1000.0, 0.1),
             enabled=lambda node: not node.autoDetect.value,
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -79,7 +85,7 @@ Spheres can be automatically detected or manually defined in the interface.
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -88,6 +94,6 @@ Spheres can be automatically detected or manually defined in the interface.
             label="Output Folder",
             description="Sphere detection information will be written here.",
             value=desc.Node.internalFolder,
-            uid=[]
-        )
+            uid=[],
+        ),
     ]

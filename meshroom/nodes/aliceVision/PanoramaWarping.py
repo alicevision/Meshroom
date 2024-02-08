@@ -55,7 +55,7 @@ Compute the image warping for each input image in the panorama coordinate system
             value=50,
             range=(0, 100, 1),
             enabled=lambda node: (node.estimateResolution.value),
-            uid=[0]
+            uid=[0],
         ),
         desc.IntParam(
             name="maxPanoramaWidth",

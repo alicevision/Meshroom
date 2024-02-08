@@ -55,7 +55,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                         "Parameters can be adjusted in advanced settings.",
             value=False,
             uid=[0],
-            group=""
+            group="",
         ),
         desc.GroupAttribute(
             name="boundingBox",
@@ -71,22 +71,22 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                             name="x", label="x", description="X offset.",
                             value=0.0,
                             uid=[0],
-                            range=(-20.0, 20.0, 0.01)
+                            range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Y offset.",
                             value=0.0,
                             uid=[0],
-                            range=(-20.0, 20.0, 0.01)
+                            range=(-20.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Z offset.",
                             value=0.0,
                             uid=[0],
-                            range=(-20.0, 20.0, 0.01)
-                        )
+                            range=(-20.0, 20.0, 0.01),
+                        ),
                     ],
-                    joinChar=","
+                    joinChar=",",
                 ),
                 desc.GroupAttribute(
                     name="bboxRotation",
@@ -110,9 +110,9 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                             value=0.0,
                             uid=[0],
                             range=(-180.0, 180.0, 1.0)
-                        )
+                        ),
                     ],
-                    joinChar=","
+                    joinChar=",",
                 ),
                 desc.GroupAttribute(
                     name="bboxScale",
@@ -123,23 +123,23 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
                             name="x", label="x", description="X scale.",
                             value=1.0,
                             uid=[0],
-                            range=(0.0, 20.0, 0.01)
+                            range=(0.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="y", label="y", description="Y scale.",
                             value=1.0,
                             uid=[0],
-                            range=(0.0, 20.0, 0.01)
+                            range=(0.0, 20.0, 0.01),
                         ),
                         desc.FloatParam(
                             name="z", label="z", description="Z scale.",
                             value=1.0,
                             uid=[0],
-                            range=(0.0, 20.0, 0.01)
-                        )
+                            range=(0.0, 20.0, 0.01),
+                        ),
                     ],
-                    joinChar=","
-                )
+                    joinChar=",",
+                ),
             ],
             joinChar=",",
             enabled=lambda node: node.useBoundingBox.value,
@@ -518,7 +518,7 @@ A Graph Cut Max-Flow is applied to optimally cut the volume. This cut represents
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

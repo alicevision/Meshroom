@@ -30,7 +30,7 @@ class SfMBootStraping(desc.AVCommandLineNode):
             ),
             name="featuresFolders",
             label="Features Folders",
-            description="Folder(s) containing the extracted features and descriptors."
+            description="Folder(s) containing the extracted features and descriptors.",
         ),
         desc.File(
             name="tracksFilename",
@@ -64,7 +64,7 @@ class SfMBootStraping(desc.AVCommandLineNode):
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -74,5 +74,5 @@ class SfMBootStraping(desc.AVCommandLineNode):
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfm.json",
             uid=[],
-        )
+        ),
     ]

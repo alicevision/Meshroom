@@ -64,7 +64,7 @@ Operation types used to merge two meshes:
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

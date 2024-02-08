@@ -55,7 +55,7 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             value="multiband",
             values=["replace", "alpha", "multiband"],
             exclusive=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.IntParam(
             name="forceMinPyramidLevels",
@@ -107,7 +107,7 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             values=["none", "borders", "seams", "all"],
             exclusive=True,
             advanced=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -117,7 +117,7 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -127,5 +127,5 @@ Multiple cameras are contributing to the low frequencies and only the best one c
             description="Output folder containing the composited panorama.",
             value=desc.Node.internalFolder,
             uid=[],
-        )
+        ),
     ]

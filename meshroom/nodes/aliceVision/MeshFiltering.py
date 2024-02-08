@@ -120,7 +120,7 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

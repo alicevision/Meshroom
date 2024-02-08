@@ -52,7 +52,7 @@ class CameraCalibration(desc.AVCommandLineNode):
                     range=(0, 10000, 1),
                     uid=[0],
                 ),
-            ]
+            ],
         ),
         desc.FloatParam(
             name="squareSize",

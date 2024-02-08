@@ -48,5 +48,5 @@ class SfMSplitReconstructed(desc.AVCommandLineNode):
             description="SfMData file containing the non-reconstructed cameras.",
             value=desc.Node.internalFolder + "sfmNonReconstructed.abc",
             uid=[],
-        )
+        ),
     ]

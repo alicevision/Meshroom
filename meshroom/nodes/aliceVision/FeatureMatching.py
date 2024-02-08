@@ -51,7 +51,7 @@ then it checks the number of features that validates this model and iterate thro
             ),
             name="featuresFolders",
             label="Features Folders",
-            description="Folder(s) containing the extracted features and descriptors."
+            description="Folder(s) containing the extracted features and descriptors.",
         ),
         desc.File(
             name="imagePairsList",
@@ -208,7 +208,7 @@ then it checks the number of features that validates this model and iterate thro
             description="Expor debug files (svg, dot).",
             value=False,
             uid=[],
-            advanced=True
+            advanced=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
@@ -218,7 +218,7 @@ then it checks the number of features that validates this model and iterate thro
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
     outputs = [
         desc.File(

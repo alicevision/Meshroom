@@ -61,7 +61,7 @@ This node allows to setup the Panorama:
                         "The contact sheet consists in a preview of the panorama using the input images.",
             value=True,
             uid=[0],
-            enabled=lambda node: node.config.enabled and node.config.value != ""
+            enabled=lambda node: node.config.enabled and node.config.value != "",
         ),
         desc.ListAttribute(
             elementDesc=desc.IntParam(
@@ -101,17 +101,23 @@ This node allows to setup the Panorama:
             description="Center of the fisheye circle (XY offset to the center in pixels).",
             groupDesc=[
                 desc.FloatParam(
-                    name="fisheyeCenterOffset_x", label="x", description="X offset in pixels.",
+                    name="fisheyeCenterOffset_x",
+                    label="x",
+                    description="X offset in pixels.",
                     value=0.0,
                     uid=[0],
-                    range=(-1000.0, 10000.0, 1.0)),
+                    range=(-1000.0, 10000.0, 1.0),
+                ),
                 desc.FloatParam(
-                    name="fisheyeCenterOffset_y", label="y", description="Y offset in pixels.",
+                    name="fisheyeCenterOffset_y",
+                    label="y",
+                    description="Y offset in pixels.",
                     value=0.0,
                     uid=[0],
-                    range=(-1000.0, 10000.0, 1.0)),
-                ],
-            group=None, # skip group from command line
+                    range=(-1000.0, 10000.0, 1.0),
+                ),
+            ],
+            group=None,  # skip group from command line
             enabled=lambda node: node.useFisheye.value and not node.estimateFisheyeCircle.value,
         ),
         desc.FloatParam(
@@ -130,7 +136,7 @@ This node allows to setup the Panorama:
             value="None",
             values=["None", "rotate90", "rotate180", "rotate270"],
             exclusive=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="debugFisheyeCircleEstimation",
@@ -149,7 +155,7 @@ This node allows to setup the Panorama:
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -159,5 +165,5 @@ This node allows to setup the Panorama:
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfmData.sfm",
             uid=[],
-        )
+        ),
     ]

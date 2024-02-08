@@ -85,21 +85,21 @@ The alignment can be based on:
             label="Scale",
             description="Apply scale transformation.",
             value=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="applyRotation",
             label="Rotation",
             description="Apply rotation transformation.",
             value=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="applyTranslation",
             label="Translation",
             description="Apply translation transformation.",
             value=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",

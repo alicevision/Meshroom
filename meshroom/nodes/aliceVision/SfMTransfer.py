@@ -77,21 +77,21 @@ This node allows to transfer poses and/or intrinsics form one SfM scene onto ano
             label="Poses",
             description="Transfer poses.",
             value=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="transferIntrinsics",
             label="Intrinsics",
             description="Transfer cameras intrinsics.",
             value=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="transferLandmarks",
             label="Landmarks",
             description="Transfer landmarks.",
             value=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",

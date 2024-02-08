@@ -21,7 +21,7 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             description="Input mesh in the OBJ file format.",
             value="",
             uid=[0],
-            ),
+        ),
         desc.FloatParam(
             name="simplificationFactor",
             label="Simplification Factor",
@@ -78,7 +78,7 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

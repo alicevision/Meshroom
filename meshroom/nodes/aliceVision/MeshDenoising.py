@@ -90,7 +90,7 @@ for now, the parameters are difficult to control and vary a lot from one dataset
             value="info",
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

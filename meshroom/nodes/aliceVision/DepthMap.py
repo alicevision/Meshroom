@@ -74,40 +74,41 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             description="Tiles are used to split the computation into fixed buffers to fit the GPU best.",
             group=None,
             groupDesc=[
-            desc.IntParam(
-                name="tileBufferWidth",
-                label="Buffer Width",
-                description="Maximum tile buffer width.",
-                value=1024,
-                range=(-1, 2000, 10),
-                uid=[0],
-            ),
-            desc.IntParam(
-                name="tileBufferHeight",
-                label="Buffer Height",
-                description="Maximum tile buffer height.",
-                value=1024,
-                range=(-1, 2000, 10),
-                uid=[0],
-            ),
-            desc.IntParam(
-                name="tilePadding",
-                label="Padding",
-                description="Buffer padding for overlapping tiles.",
-                value=64,
-                range=(0, 500, 1),
-                uid=[0],
-            ),
-            desc.BoolParam(
-                name="autoAdjustSmallImage",
-                label="Auto Adjust Small Image",
-                description="Automatically adjust depth map parameters if images are smaller than one tile\n"
-                            "(maxTCamsPerTile = maxTCams, adjust step if needed).",
-                value=True,
-                uid=[0],
-                advanced=True,
-            ),
-        ]),
+                desc.IntParam(
+                    name="tileBufferWidth",
+                    label="Buffer Width",
+                    description="Maximum tile buffer width.",
+                    value=1024,
+                    range=(-1, 2000, 10),
+                    uid=[0],
+                ),
+                desc.IntParam(
+                    name="tileBufferHeight",
+                    label="Buffer Height",
+                    description="Maximum tile buffer height.",
+                    value=1024,
+                    range=(-1, 2000, 10),
+                    uid=[0],
+                ),
+                desc.IntParam(
+                    name="tilePadding",
+                    label="Padding",
+                    description="Buffer padding for overlapping tiles.",
+                    value=64,
+                    range=(0, 500, 1),
+                    uid=[0],
+                ),
+                desc.BoolParam(
+                    name="autoAdjustSmallImage",
+                    label="Auto Adjust Small Image",
+                    description="Automatically adjust depth map parameters if images are smaller than one tile\n"
+                                "(maxTCamsPerTile = maxTCams, adjust step if needed).",
+                    value=True,
+                    uid=[0],
+                    advanced=True,
+                ),
+            ],
+        ),
         desc.BoolParam(
             name="chooseTCamsPerTile",
             label="Choose Neighbour Cameras Per Tile",
@@ -277,7 +278,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     value=False,
                     uid=[0],
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="refine",
@@ -398,7 +399,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     uid=[0],
                     enabled=lambda node: node.refine.refineEnabled.value,
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="colorOptimization",
@@ -423,7 +424,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     advanced=True,
                     enabled=lambda node: node.colorOptimization.colorOptimizationEnabled.value,
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="customPatchPattern",
@@ -502,7 +503,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                                 range=(0.0, 1.0, 0.1),
                                 uid=[0],
                             ),
-                        ]
+                        ],
                     ),
                 ),
                 desc.BoolParam(
@@ -514,7 +515,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     advanced=True,
                     enabled=lambda node: (node.customPatchPattern.sgmUseCustomPatchPattern.value or node.customPatchPattern.refineUseCustomPatchPattern.value),
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="intermediateResults",
@@ -580,7 +581,7 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
                     uid=[0],
                     advanced=True,
                 ),
-            ]
+            ],
         ),
         desc.IntParam(
             name="nbGPUs",

@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class LightingCalibration(desc.CommandLineNode):
@@ -47,8 +48,8 @@ Can also be used to calibrate a lighting dome (RTI type).
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )

@@ -4,6 +4,7 @@ import json
 import os
 
 from meshroom.core import desc
+from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
 
 class PanoramaEstimation(desc.AVCommandLineNode):
@@ -51,9 +52,8 @@ Estimate relative camera rotations between input images.
             name="describerTypes",
             label="Describer Types",
             description="Describer types used to describe an image.",
+            values=DESCRIBER_TYPES,
             value=["sift"],
-            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4",
-                    "sift_ocv", "akaze_ocv"],
             exclusive=False,
             uid=[0],
             joinChar=",",
@@ -177,8 +177,8 @@ Estimate relative camera rotations between input images.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )

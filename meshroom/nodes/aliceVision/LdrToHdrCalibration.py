@@ -6,7 +6,7 @@ import os
 from collections import Counter
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, VERBOSE_LEVEL
 
 def findMetadata(d, keys, defaultValue):
     v = None
@@ -150,8 +150,8 @@ Calibrate LDR to HDR response curve from samples.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )

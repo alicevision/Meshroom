@@ -4,7 +4,7 @@ import json
 import os
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, EXR_STORAGE_DATA_TYPE, VERBOSE_LEVEL
 
 
 class PanoramaWarping(desc.AVCommandLineNode):
@@ -83,8 +83,8 @@ Compute the image warping for each input image in the panorama coordinate system
                         " - half: Use half float (16 bits per channel).\n"
                         " - halfFinite: Use half float, but clamp values to avoid non-finite values.\n"
                         " - auto: Use half float if all values can fit, else use full float.",
+            values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            values=["float", "half", "halfFinite", "auto"],
             exclusive=True,
             uid=[0],
         ),
@@ -92,8 +92,8 @@ Compute the image warping for each input image in the panorama coordinate system
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

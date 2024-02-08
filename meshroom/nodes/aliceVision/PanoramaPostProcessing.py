@@ -4,7 +4,7 @@ import json
 import os
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, VERBOSE_LEVEL
 
 
 class PanoramaPostProcessing(desc.CommandLineNode):
@@ -106,8 +106,8 @@ Post process the panorama.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )

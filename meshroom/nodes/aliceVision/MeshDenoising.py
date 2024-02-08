@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class MeshDenoising(desc.AVCommandLineNode):
@@ -85,8 +86,8 @@ for now, the parameters are difficult to control and vary a lot from one dataset
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )

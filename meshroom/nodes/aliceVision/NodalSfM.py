@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
 
 class NodalSfM(desc.AVCommandLineNode):
@@ -51,7 +52,7 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             label="Describer Types",
             description="Describer types used to describe an image.",
             value=["dspsift"],
-            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv", "tag16h5"],
+            values=DESCRIBER_TYPES,
             exclusive=False,
             uid=[0],
             joinChar=",",
@@ -60,8 +61,8 @@ A Structure-From-Motion node specifically designed to handle pure rotation camer
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )

@@ -6,7 +6,7 @@ import math
 from collections import Counter
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, EXR_STORAGE_DATA_TYPE, VERBOSE_LEVEL
 
 def findMetadata(d, keys, defaultValue):
     v = None
@@ -229,8 +229,8 @@ Merge LDR images into HDR images.
                         " - half: Use half float (16 bits per channel).\n"
                         " - halfFinite: Use half float, but clamp values to avoid non-finite values.\n"
                         " - auto: Use half float if all values can fit, else use full float.",
+            values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            values=["float", "half", "halfFinite", "auto"],
             exclusive=True,
             uid=[0],
         ),
@@ -238,8 +238,8 @@ Merge LDR images into HDR images.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )

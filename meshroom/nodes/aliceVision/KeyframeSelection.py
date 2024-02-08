@@ -2,6 +2,7 @@ __version__ = "5.0"
 
 import os
 from meshroom.core import desc
+from meshroom.core.utils import EXR_STORAGE_DATA_TYPE, VERBOSE_LEVEL
 
 # List of supported video extensions (provided by OpenImageIO)
 videoExts = [".avi", ".mov", ".mp4", ".m4a", ".m4v", ".3gp", ".3g2", ".mj2", ".m4v", ".mpg"]
@@ -314,8 +315,8 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                         " - half: Use half float (16 bits per channel).\n"
                         " - halfFinite: Use half float, but clamp values to avoid non-finite values.\n"
                         " - auto: Use half float if all values can fit, else use full float.",
+            values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            values=["float", "half", "halfFinite", "auto"],
             exclusive=True,
             uid=[0],
             enabled=lambda node: node.outputExtension.value == "exr",
@@ -409,8 +410,8 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

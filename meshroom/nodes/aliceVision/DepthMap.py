@@ -1,6 +1,7 @@
 __version__ = "5.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class DepthMap(desc.AVCommandLineNode):
@@ -594,8 +595,8 @@ Use a downscale factor of one (full-resolution) only if the quality of the input
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

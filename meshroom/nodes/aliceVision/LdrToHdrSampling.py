@@ -6,7 +6,7 @@ import os
 from collections import Counter
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, VERBOSE_LEVEL
 
 
 def findMetadata(d, keys, defaultValue):
@@ -175,8 +175,8 @@ Sample pixels from Low range images for HDR creation.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )

@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class CheckerboardDetection(desc.AVCommandLineNode):
@@ -43,6 +44,15 @@ The detection method also supports nested calibration grids.
             description="Export debug images.",
             value=False,
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
+            value="info",
+            exclusive=True,
+            uid=[],
         ),
     ]
 

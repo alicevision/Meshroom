@@ -2,6 +2,7 @@ __version__ = "1.0"
 
 import os
 from meshroom.core import desc
+from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
 
 class CameraRigCalibration(desc.AVCommandLineNode):
@@ -52,8 +53,8 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             name="matchDescTypes",
             label="Match Describer Types",
             description="The describer types to use for the matching.",
+            values=DESCRIBER_TYPES,
             value=["dspsift"],
-            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv"],
             exclusive=False,
             uid=[0],
             joinChar=",",
@@ -169,8 +170,8 @@ class CameraRigCalibration(desc.AVCommandLineNode):
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

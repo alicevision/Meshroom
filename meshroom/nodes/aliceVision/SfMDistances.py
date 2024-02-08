@@ -1,6 +1,7 @@
 __version__ = "3.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
 
 class SfMDistances(desc.AVCommandLineNode):
@@ -31,8 +32,8 @@ class SfMDistances(desc.AVCommandLineNode):
             name="landmarksDescriberTypes",
             label="Describer Types",
             description="Describer types used to describe an image (only used when using 'landmarks').",
+            values=DESCRIBER_TYPES,
             value=["cctag3"],
-            values=["sift", "sift_float", "sift_upright", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv"],
             exclusive=False,
             uid=[0],
             joinChar=",",
@@ -59,8 +60,8 @@ class SfMDistances(desc.AVCommandLineNode):
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

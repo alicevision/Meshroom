@@ -1,7 +1,8 @@
 __version__ = "6.0"
 
 from meshroom.core import desc, Version
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, VERBOSE_LEVEL
+
 import logging
 
 
@@ -325,8 +326,8 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

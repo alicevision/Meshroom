@@ -1,6 +1,7 @@
 __version__ = "2.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
 
 class ConvertSfMFormat(desc.AVCommandLineNode):
@@ -35,8 +36,8 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             name="describerTypes",
             label="Describer Types",
             description="Describer types to keep.",
+            values=DESCRIBER_TYPES,
             value=["dspsift"],
-            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv", "tag16h5", "unknown"],
             exclusive=False,
             uid=[0],
             joinChar=",",
@@ -92,8 +93,8 @@ It can also be used to remove specific parts of from an SfM scene (like filter a
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

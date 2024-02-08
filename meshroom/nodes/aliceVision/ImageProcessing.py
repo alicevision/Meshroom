@@ -1,7 +1,7 @@
 __version__ = "3.3"
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, EXR_STORAGE_DATA_TYPE, RAW_COLOR_INTERPRETATION, VERBOSE_LEVEL
 
 import os.path
 
@@ -527,8 +527,8 @@ Convert or apply filtering to the input images.
             name="rawColorInterpretation",
             label="RAW Color Interpretation",
             description="Allows you to choose how RAW data are color processed.",
+            values=RAW_COLOR_INTERPRETATION,
             value="DCPLinearProcessing" if os.environ.get("ALICEVISION_COLOR_PROFILE_DB", "") else "LibRawWhiteBalancing",
-            values=["None", "LibRawNoWhiteBalancing", "LibRawWhiteBalancing", "DCPLinearProcessing", "DCPMetadata", "Auto"],
             exclusive=True,
             uid=[0],
         ),
@@ -636,8 +636,8 @@ Convert or apply filtering to the input images.
                         " - half: Use half float (16 bits per channel).\n"
                         " - halfFinite: Use half float, but clamp values to avoid non-finite values.\n"
                         " - auto: Use half float if all values can fit, else use full float.",
+            values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            values=["float", "half", "halfFinite", "auto"],
             exclusive=True,
             uid=[0],
         ),
@@ -686,8 +686,8 @@ Convert or apply filtering to the input images.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         )

@@ -8,6 +8,7 @@ import tempfile
 import logging
 
 from meshroom.core import desc, Version
+from meshroom.core.utils import RAW_COLOR_INTERPRETATION, VERBOSE_LEVEL
 from meshroom.multiview import FilesByType, findFilesByTypeInFolder
 
 Viewpoint = [
@@ -260,8 +261,8 @@ The needed metadata are:
                         " - LibRawWhiteBalancing: Use internal white balancing from libraw.\n"
                         " - DCPLinearProcessing: Use DCP color profile.\n"
                         " - DCPMetadata: Same as None with DCP info added in metadata.",
+            values=RAW_COLOR_INTERPRETATION,
             value="DCPLinearProcessing" if os.environ.get("ALICEVISION_COLOR_PROFILE_DB", "") else "LibRawWhiteBalancing",
-            values=["None", "LibRawNoWhiteBalancing", "LibRawWhiteBalancing", "DCPLinearProcessing", "DCPMetadata"],
             exclusive=True,
             uid=[0],
         ),
@@ -313,8 +314,8 @@ The needed metadata are:
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

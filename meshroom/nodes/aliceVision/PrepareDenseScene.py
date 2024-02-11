@@ -1,6 +1,7 @@
 __version__ = "3.1"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class PrepareDenseScene(desc.AVCommandLineNode):
@@ -53,7 +54,7 @@ This node export undistorted images so the depth map and texturing can be comput
             value="png",
             values=["exr", "jpg", "png"],
             exclusive=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="outputFileType",
@@ -63,7 +64,7 @@ This node export undistorted images so the depth map and texturing can be comput
             values=["jpg", "png", "tif", "exr"],
             exclusive=True,
             uid=[0],
-            advanced=True
+            advanced=True,
         ),
         desc.BoolParam(
             name="saveMetadata",
@@ -71,7 +72,7 @@ This node export undistorted images so the depth map and texturing can be comput
             description="Save projections and intrinsics information in images metadata (only for .exr images).",
             value=True,
             uid=[0],
-            advanced=True
+            advanced=True,
         ),
         desc.BoolParam(
             name="saveMatricesTxtFiles",
@@ -79,7 +80,7 @@ This node export undistorted images so the depth map and texturing can be comput
             description="Save projections and intrinsics information in text files.",
             value=False,
             uid=[0],
-            advanced=True
+            advanced=True,
         ),
         desc.BoolParam(
             name="evCorrection",
@@ -87,14 +88,14 @@ This node export undistorted images so the depth map and texturing can be comput
             description="Apply a correction on images' exposure value.",
             value=False,
             uid=[0],
-            advanced=True
+            advanced=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),
@@ -116,6 +117,6 @@ This node export undistorted images so the depth map and texturing can be comput
             value=desc.Node.internalFolder + "<VIEW_ID>.{outputFileTypeValue}",
             uid=[],
             group="",
-            advanced=True
+            advanced=True,
         ),
     ]

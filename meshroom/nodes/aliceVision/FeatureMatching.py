@@ -1,6 +1,7 @@
 __version__ = "2.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import DESCRIBER_TYPES, VERBOSE_LEVEL
 
 
 class FeatureMatching(desc.AVCommandLineNode):
@@ -50,7 +51,7 @@ then it checks the number of features that validates this model and iterate thro
             ),
             name="featuresFolders",
             label="Features Folders",
-            description="Folder(s) containing the extracted features and descriptors."
+            description="Folder(s) containing the extracted features and descriptors.",
         ),
         desc.File(
             name="imagePairsList",
@@ -63,8 +64,8 @@ then it checks the number of features that validates this model and iterate thro
             name="describerTypes",
             label="Describer Types",
             description="Describer types used to describe an image.",
+            values=DESCRIBER_TYPES,
             value=["dspsift"],
-            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv", "tag16h5"],
             exclusive=False,
             uid=[0],
             joinChar=",",
@@ -207,17 +208,17 @@ then it checks the number of features that validates this model and iterate thro
             description="Expor debug files (svg, dot).",
             value=False,
             uid=[],
-            advanced=True
+            advanced=True,
         ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
     outputs = [
         desc.File(

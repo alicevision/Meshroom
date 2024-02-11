@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class SfMSplitReconstructed(desc.AVCommandLineNode):
@@ -26,8 +27,8 @@ class SfMSplitReconstructed(desc.AVCommandLineNode):
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),
@@ -47,5 +48,5 @@ class SfMSplitReconstructed(desc.AVCommandLineNode):
             description="SfMData file containing the non-reconstructed cameras.",
             value=desc.Node.internalFolder + "sfmNonReconstructed.abc",
             uid=[],
-        )
+        ),
     ]

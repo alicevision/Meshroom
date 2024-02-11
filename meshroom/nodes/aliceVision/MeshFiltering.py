@@ -1,6 +1,7 @@
 __version__ = "3.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class MeshFiltering(desc.AVCommandLineNode):
@@ -115,11 +116,11 @@ This node applies a Laplacian filtering to remove local defects from the raw Mes
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

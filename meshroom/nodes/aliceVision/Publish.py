@@ -3,6 +3,8 @@ from __future__ import print_function
 __version__ = "1.3"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
+
 import distutils.dir_util as du
 import shutil
 import glob
@@ -42,8 +44,8 @@ This node allows to copy files into a specific folder.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

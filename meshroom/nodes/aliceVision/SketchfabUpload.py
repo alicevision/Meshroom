@@ -1,6 +1,8 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
+
 import glob
 import os
 import json
@@ -177,9 +179,9 @@ Upload a textured mesh on Sketchfab.
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
-            description="Verbosity level (critical, error, warning, info, debug).",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["critical", "error", "warning", "info", "debug"],
             exclusive=True,
             uid=[],
         ),

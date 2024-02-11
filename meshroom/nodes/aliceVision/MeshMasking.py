@@ -1,6 +1,7 @@
 __version__ = "1.1"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class MeshMasking(desc.AVCommandLineNode):
@@ -54,7 +55,7 @@ Decimate triangles based on image masks.
             value="png",
             values=["exr", "jpg", "png"],
             exclusive=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.IntParam(
             name="threshold",
@@ -62,14 +63,14 @@ Decimate triangles based on image masks.
             description="The minimum number of visibilities to keep a vertex.",
             value=1,
             range=(1, 100, 1),
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="smoothBoundary",
             label="Smooth Boundary",
             description="Modify the triangles at the boundary to fit the masks.",
             value=False,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="invert",
@@ -77,7 +78,7 @@ Decimate triangles based on image masks.
             description="If ticked, the selected area is ignored.\n"
                         "If not, only the selected area is considered.",
             value=False,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="undistortMasks",
@@ -85,7 +86,7 @@ Decimate triangles based on image masks.
             description="Undistort the masks with the same parameters as the matching image.\n"
                         "Select it if the masks are drawn on the original images.",
             value=False,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="usePointsVisibilities",
@@ -99,11 +100,11 @@ Decimate triangles based on image masks.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

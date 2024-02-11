@@ -4,7 +4,7 @@ import json
 import os
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, VERBOSE_LEVEL
 
 
 class PanoramaPostProcessing(desc.CommandLineNode):
@@ -53,7 +53,7 @@ Post process the panorama.
             description="The width (in pixels) of the output panorama preview.",
             value=1000,
             range=(0, 5000, 100),
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="outputColorSpace",
@@ -82,7 +82,7 @@ Post process the panorama.
             value=0,
             range=(0, 500, 1),
             uid=[0],
-            enabled=lambda node: node.compressionMethod.value in ["dwaa", "dwab", "zip", "zips"]
+            enabled=lambda node: node.compressionMethod.value in ["dwaa", "dwab", "zip", "zips"],
         ),
         desc.StringParam(
             name="panoramaName",
@@ -91,7 +91,7 @@ Post process the panorama.
             value="panorama.exr",
             uid=[],
             group=None,
-            advanced=True
+            advanced=True,
         ),
         desc.StringParam(
             name="previewName",
@@ -106,11 +106,11 @@ Post process the panorama.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

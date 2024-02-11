@@ -1,6 +1,7 @@
 __version__ = "4.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class DepthMapFilter(desc.AVCommandLineNode):
@@ -113,8 +114,8 @@ This allows to filter unstable points before starting the fusion of all depth ma
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

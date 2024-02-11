@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class CameraCalibration(desc.AVCommandLineNode):
@@ -51,7 +52,7 @@ class CameraCalibration(desc.AVCommandLineNode):
                     range=(0, 10000, 1),
                     uid=[0],
                 ),
-            ]
+            ],
         ),
         desc.FloatParam(
             name="squareSize",
@@ -127,8 +128,8 @@ class CameraCalibration(desc.AVCommandLineNode):
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

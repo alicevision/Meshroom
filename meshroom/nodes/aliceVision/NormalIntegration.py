@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 class NormalIntegration(desc.CommandLineNode):
     commandLine = 'aliceVision_normalIntegration {allParams}'
@@ -15,7 +16,7 @@ TODO.
             label="Normal Maps Folder",
             description="Path to the folder containing the normal maps and the masks.",
             value="",
-            uid=[0]
+            uid=[0],
          ),
         desc.File(
             name="sfmDataFile",
@@ -31,17 +32,17 @@ TODO.
             value=1,
             range=(1, 10, 1),
             advanced=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -50,6 +51,6 @@ TODO.
             label="Output Path",
             description="Path to the output folder.",
             value=desc.Node.internalFolder,
-            uid=[]
-        )
+            uid=[],
+        ),
     ]

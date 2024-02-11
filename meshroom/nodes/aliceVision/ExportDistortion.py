@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 class ExportDistortion(desc.AVCommandLineNode):
     commandLine = 'aliceVision_exportDistortion {allParams}'
@@ -40,6 +41,15 @@ It also allows to export an undistorted image of the lens grids for validation.
             description="Export STMaps for distortion and undistortion.",
             value=True,
             uid=[0],
+        ),
+        desc.ChoiceParam(
+            name="verboseLevel",
+            label="Verbose Level",
+            description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
+            value="info",
+            exclusive=True,
+            uid=[],
         ),
     ]
 

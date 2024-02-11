@@ -2,6 +2,7 @@ __version__ = "2.0"
 
 import os
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class ImageMatching(desc.AVCommandLineNode):
@@ -51,7 +52,7 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             ),
             name="featuresFolders",
             label="Features Folders",
-            description="Folder(s) containing the extracted features and descriptors."
+            description="Folder(s) containing the extracted features and descriptors.",
         ),
         desc.ChoiceParam(
             name="method",
@@ -133,11 +134,11 @@ If images have known poses, use frustum intersection else use VocabularuTree.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

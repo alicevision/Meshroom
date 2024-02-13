@@ -13,7 +13,7 @@ Item {
 
     // supported 3D files extensions
     readonly property var supportedExtensions: {
-        var exts = ['.obj', '.stl', '.fbx', '.gltf'];
+        var exts = ['.obj', '.stl', '.fbx', '.gltf', '.ply'];
         if (supportSfmData) {
             exts.push('.abc')
             exts.push('.json')

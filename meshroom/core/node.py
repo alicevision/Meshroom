@@ -1153,7 +1153,7 @@ class BaseNode(BaseObject):
         Return True if at least one attribute is a File that can be loaded in the 3D Viewer, False otherwise.
         """
         # List of supported extensions, taken from Viewer3DSettings
-        supportedExts = ['.obj', '.stl', '.fbx', '.gltf', '.abc']
+        supportedExts = ['.obj', '.stl', '.fbx', '.gltf', '.abc', '.ply']
         for attr in self._attributes:
             # If the attribute is a File attribute, it is an instance of str and can be iterated over
             hasSupportedExt = isinstance(attr.value, str) and any(ext in attr.value for ext in supportedExts)

@@ -29,9 +29,25 @@ Import an E57 file and generate an SfMData.
         desc.FloatParam(
             name="maxDensity",
             label="Points Density",
-            description="Ensure no points has no neighbour closer than maxDensity meters.",
+            description="Ensure each point has no neighbour closer than maxDensity meters.",
             value=0.01,
             range=(0.0, 0.2, 0.001),
+            uid=[0],
+        ),
+        desc.FloatParam(
+            name="minIntensity",
+            label="Laser Intensity Lower Limit",
+            description="Ensure no point has an intensity lower than this value.",
+            value=0.03,
+            range=(0.0, 1.0, 0.01),
+            uid=[0],
+        ),
+        desc.IntParam(
+            name="maxPointsPerBlock",
+            label="Points Limit",
+            description="Limit the number of points per computation region (For memory usage, 0 means no limit).",
+            value=5000000,
+            range=(0, 10000000, 100000),
             uid=[0],
         ),
         desc.ChoiceParam(
@@ -49,8 +65,8 @@ Import an E57 file and generate an SfMData.
         desc.File(
             name="output",
             label="Output",
-            description="Path to the output SfMData file.",
-            value=desc.Node.internalFolder + "sfm.abc",
+            description="Path to the output JSON file.",
+            value=desc.Node.internalFolder + "inputset.json",
             uid=[],
         ),
     ]

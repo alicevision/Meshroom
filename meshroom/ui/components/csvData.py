@@ -1,7 +1,7 @@
 from meshroom.common.qt import QObjectListModel
 
-from PySide2.QtCore import QObject, Slot, Signal, Property
-from PySide2.QtCharts import QtCharts
+from PySide6.QtCore import QObject, Slot, Signal, Property
+from PySide6 import QtCharts
 
 import csv
 import os

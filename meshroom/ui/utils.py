@@ -1,12 +1,12 @@
 import os
 import time
 
-from PySide2.QtCore import QFileSystemWatcher, QUrl, Slot, QTimer, Property, QObject
-from PySide2.QtQml import QQmlApplicationEngine
+from PySide6.QtCore import QFileSystemWatcher, QUrl, Slot, QTimer, Property, QObject
+from PySide6.QtQml import QQmlApplicationEngine
 try:
-    from PySide2 import shiboken2
+    from PySide6 import shiboken6
 except:
-    import shiboken2
+    import shiboken6
 
 
 class QmlInstantEngine(QQmlApplicationEngine):
@@ -237,7 +237,7 @@ def makeProperty(T, attributeName, notify=None, resetOnDestroy=False):
             setattr(instance, resetCallbackName, lambda self=instance, *args: setter(self, None))
         resetCallback = getattr(instance, resetCallbackName, None)
 
-        if resetCallback and currentValue and shiboken2.isValid(currentValue):
+        if resetCallback and currentValue and shiboken6.isValid(currentValue):
             currentValue.destroyed.disconnect(resetCallback)
         setattr(instance, attributeName, value)
         if resetCallback and value:

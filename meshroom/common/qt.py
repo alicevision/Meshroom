@@ -1,5 +1,5 @@
-from PySide2 import QtCore, QtQml
-import shiboken2
+from PySide6 import QtCore, QtQml
+import shiboken6
 
 class QObjectListModel(QtCore.QAbstractListModel):
     """
@@ -274,7 +274,7 @@ class QObjectListModel(QtCore.QAbstractListModel):
 
     def _dereferenceItem(self, item):
         # Ask for object deletion if parented to the model
-        if shiboken2.isValid(item) and item.parent() == self:
+        if shiboken6.isValid(item) and item.parent() == self:
             # delay deletion until the next event loop
             # This avoids warnings when the QML engine tries to evaluate (but should not)
             # an object that has already been deleted

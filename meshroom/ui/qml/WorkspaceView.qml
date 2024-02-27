@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.Controls 1.4 as Controls1 // For SplitView
 import QtQuick.Layouts 1.11
 import Qt.labs.platform 1.0 as Platform
 import ImageGallery 1.0
@@ -61,10 +60,10 @@ Item {
 
     SystemPalette { id: activePalette }
 
-    Controls1.SplitView {
+    SplitView {
         anchors.fill: parent
 
-        Controls1.SplitView {
+        SplitView {
             orientation: Qt.Vertical
             Layout.fillHeight: true
             implicitWidth: Math.round(parent.width * 0.2)
@@ -200,7 +199,7 @@ Item {
 
                 property alias viewer3D: c_viewer3D
 
-                Controls1.SplitView {
+                SplitView {
                     id: c_viewer3DSplitView
                     anchors.fill: parent
                     Viewer3D {

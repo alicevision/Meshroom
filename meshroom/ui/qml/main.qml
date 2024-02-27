@@ -1,3 +1,5 @@
+import QtCore
+
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.11
@@ -7,7 +9,6 @@ import QtQml.Models 2.15
 import Qt.labs.platform 1.0 as Platform
 import QtQuick.Dialogs
 
-import Qt.labs.settings 1.0
 import GraphEditor 1.0
 import MaterialIcons 2.2
 import Utils 1.0
@@ -16,8 +17,8 @@ import Controls 1.0
 ApplicationWindow {
     id: _window
 
-    width: settings_General.windowWidth
-    height: settings_General.windowHeight
+    width: settingsGeneral.windowWidth
+    height: settingsGeneral.windowHeight
     minimumWidth: 650
     minimumHeight: 500
     visible: true
@@ -81,15 +82,15 @@ ApplicationWindow {
     }
 
     Settings {
-        id: settings_General
-        category: 'General'
+        id: settingsGeneral
+        category: "General"
         property int windowWidth: 1280
         property int windowHeight: 720
     }
 
     Settings {
-        id: settings_UILayout
-        category: 'UILayout'
+        id: settingsUILayout
+        category: "UILayout"
         property alias showLiveReconstruction: liveSfMVisibilityCB.checked
         property alias showGraphEditor: graphEditorVisibilityCB.checked
         property alias showImageViewer: imageViewerVisibilityCB.checked
@@ -97,9 +98,9 @@ ApplicationWindow {
     }
 
     Component.onDestruction: {
-        // store main window dimensions in persisting Settings
-        settings_General.windowWidth = _window.width
-        settings_General.windowHeight = _window.height
+        // Store main window dimensions in persisting Settings
+        settingsGeneral.windowWidth = _window.width
+        settingsGeneral.windowHeight = _window.height
     }
 
     Shortcut {
@@ -1007,7 +1008,7 @@ ApplicationWindow {
             orientation: Qt.Horizontal
             width: parent.width
             height: Math.round(parent.height * 0.3)
-            visible: settings_UILayout.showGraphEditor
+            visible: settingsUILayout.showGraphEditor
 
             TabPanel {
                 id: graphEditorPanel

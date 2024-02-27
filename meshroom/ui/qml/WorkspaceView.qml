@@ -82,7 +82,7 @@ Item {
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
             }
             LiveSfmView {
-                visible: settings_UILayout.showLiveReconstruction
+                visible: settingsUILayout.showLiveReconstruction
                 reconstruction: root.reconstruction
                 Layout.fillWidth: true
                 Layout.preferredHeight: childrenRect.height
@@ -91,7 +91,7 @@ Item {
 
         Panel {
             title: "Image Viewer"
-            visible: settings_UILayout.showImageViewer
+            visible: settingsUILayout.showImageViewer
             implicitWidth: Math.round(parent.width * 0.35)
             Layout.fillHeight: true
             Layout.fillWidth: true
@@ -176,7 +176,7 @@ Item {
         }
 
         Item {
-            visible: settings_UILayout.showViewer3D
+            visible: settingsUILayout.showViewer3D
             Layout.minimumWidth: 20
             Layout.minimumHeight: 80
             Layout.fillHeight: true
@@ -184,7 +184,7 @@ Item {
 
             Loader {
                 id: panel3dViewerLoader
-                active: settings_UILayout.showViewer3D
+                active: settingsUILayout.showViewer3D
                 visible: active
                 anchors.fill: parent
                 sourceComponent: panel3dViewerComponent

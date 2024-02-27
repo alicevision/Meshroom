@@ -39,8 +39,8 @@ RowLayout {
     Repeater {
         id: childrenRepeater
         model: isList && !attribute.isLink ? attribute.value : 0
-        onItemAdded: childPinCreated(item.childAttribute, item)
-        onItemRemoved: childPinDeleted(item.childAttribute, item)
+        onItemAdded: function(item) { childPinCreated(item.childAttribute, item) }
+        onItemRemoved: function(item) { childPinDeleted(item.childAttribute, item) }
         delegate: Item {
             property var childAttribute: object
         }

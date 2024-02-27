@@ -77,7 +77,7 @@ Item {
                 cameraInit: reconstruction ? reconstruction.cameraInit : null
                 tempCameraInit: reconstruction ? reconstruction.tempCameraInit : null
                 cameraInitIndex: reconstruction ? reconstruction.cameraInitIndex : -1
-                onRemoveImageRequest: reconstruction.removeAttribute(attribute)
+                onRemoveImageRequest: function(attribute) { reconstruction.removeAttribute(attribute) }
                 onAllViewpointsCleared: { reconstruction.removeAllImages(); reconstruction.selectedViewId = "-1" }
                 onFilesDropped: reconstruction.handleFilesDrop(drop, augmentSfm ? null : cameraInit)
             }
@@ -213,7 +213,7 @@ Item {
                             anchors.fill: parent
                             keys: ["text/uri-list"]
                             onDropped: {
-                                drop.urls.forEach(function(url){ load3DMedia(url); });
+                                drop.urls.forEach(function(url) { load3DMedia(url); });
                             }
                         }
                         

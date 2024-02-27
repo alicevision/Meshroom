@@ -114,7 +114,7 @@ Item {
         return mapToItem(draggable, mouseArea.width / 2, mouseArea.height / 2)
     }
 
-    Keys.onPressed: {
+    Keys.onPressed: function(event) {
         if (event.key === Qt.Key_F) {
             fit()
         } else if (event.key === Qt.Key_Delete) {
@@ -164,7 +164,7 @@ Item {
             workspaceMoved()
         }
 
-        onPressed: {
+        onPressed: function(mouse) {
             if (mouse.button != Qt.MiddleButton && mouse.modifiers == Qt.NoModifier) {
                 uigraph.clearNodeSelection()
             }
@@ -189,7 +189,7 @@ Item {
                 workspaceMoved()
         }
 
-        onClicked: {
+        onClicked: function(mouse) {
             if (mouse.button == Qt.RightButton) {
                 // store mouse click position in 'draggable' coordinates as new node spawn position
                 newNodeMenu.spawnPosition = mouseArea.mapToItem(draggable, mouse.x, mouse.y)
@@ -316,15 +316,19 @@ Item {
                 id: nodeMenuRepeater
                 model: searchBar.text !== "" ? Object.values(newNodeMenu.menuKeys) : undefined
 
-                // create Menu items from available items
+                // Create menu items from available items
                 delegate: menuItemDelegateComponent
             }
 
             // Dynamically add the menu categories
             Instantiator {
                 model: !(searchBar.text !== "") ? Object.keys(newNodeMenu.parseCategories()).sort() : undefined
-                onObjectAdded: newNodeMenu.insertMenu(index + 1, object ) // add sub-menu under the search bar
-                onObjectRemoved: newNodeMenu.removeMenu(object)
+                onObjectAdded: function(index, object) {
+                    newNodeMenu.insertMenu(index + 1, object) // Add sub-menu under the search bar
+                }
+                onObjectRemoved: function(index, object) {
+                    newNodeMenu.removeMenu(object)
+                }
 
                 delegate: Menu {
                     title: modelData
@@ -588,14 +592,14 @@ Item {
                     selected: uigraph.selectedNodes.contains(node)
                     hovered: uigraph.hoveredNode === node
 
-                    onAttributePinCreated: registerAttributePin(attribute, pin)
-                    onAttributePinDeleted: unregisterAttributePin(attribute, pin)
+                    onAttributePinCreated: function(attribute, pin) { registerAttributePin(attribute, pin) }
+                    onAttributePinDeleted: function(attribute, pin) { unregisterAttributePin(attribute, pin) }
 
-                    onPressed: {
+                    onPressed: function(mouse) {
                         if (mouse.button === Qt.LeftButton) {
                             if (mouse.modifiers & Qt.ControlModifier && !(mouse.modifiers & Qt.AltModifier)) {
                                 if (mainSelected && selected) {
-                                    // left clicking a selected node twice with control will deselect it
+                                    // Left clicking a selected node twice with control will deselect it
                                     uigraph.selectedNodes.remove(node)
                                     uigraph.selectedNodesChanged()
                                     selectNode(null)
@@ -619,9 +623,9 @@ Item {
                         selectNode(node)
                     }
 
-                    onDoubleClicked: root.nodeDoubleClicked(mouse, node)
+                    onDoubleClicked: function(mouse) { root.nodeDoubleClicked(mouse, node) }
 
-                    onMoved: uigraph.moveNode(node, position, uigraph.selectedNodes)
+                    onMoved: function(position) { uigraph.moveNode(node, position, uigraph.selectedNodes) }
 
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null

@@ -31,8 +31,8 @@ ApplicationWindow {
         return t
     }
 
-    onClosing: {
-        // make sure document is saved before exiting application
+    onClosing: function(close) {
+        // Make sure document is saved before exiting application
         close.accepted = false
         if (!ensureNotComputing())
             return
@@ -642,10 +642,10 @@ ApplicationWindow {
                 id: openActionItem
                 text: "Open"
                 shortcut: "Ctrl+O"
-                onTriggered: ensureSaved(function() {
+                onTriggered: ensureSaved(
+                    function() {
                         initFileDialogFolder(openFileDialog)
                         openFileDialog.open()
-                    })
             }
             Menu {
                 id: openRecentMenu
@@ -1165,15 +1165,15 @@ ApplicationWindow {
                     uigraph: _reconstruction
                     nodeTypesModel: _nodeTypes
 
-                    onNodeDoubleClicked: {
+                    onNodeDoubleClicked: function(mouse, node) {
                         _reconstruction.setActiveNode(node);
                         workspaceView.viewNode(node, mouse);
                     }
-                    onComputeRequest: {
+                    onComputeRequest: function(node) {
                         _reconstruction.forceNodesStatusUpdate();
                         computeManager.compute(node)
                     }
-                    onSubmitRequest: {
+                    onSubmitRequest: function(node) {
                         _reconstruction.forceNodesStatusUpdate();
                         computeManager.submit(node)
                     }

@@ -90,7 +90,7 @@ Dialog {
             id: detailedLabel
             text: text
             visible: text != ""
-            onLinkActivated: function(link) { Qt.openUrlExternally(link) }
+            onLinkActivated: function(link) { Qt.openUrlExternally(link) }
         }
         // Additional helper text
         Label {

@@ -1,9 +1,9 @@
-import QtQuick 2.15
-import Qt3D.Core 2.15
-import Qt3D.Render 2.15
-import Qt3D.Input 2.15
-import Qt3D.Logic 2.15
-import QtQml 2.2
+import QtQuick
+import Qt3D.Core 2.6
+import Qt3D.Render 2.6
+import Qt3D.Input 2.6
+import Qt3D.Logic 2.6
+import QtQml
 
 import Meshroom.Helpers 1.0
 

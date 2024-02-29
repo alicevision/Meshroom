@@ -1,5 +1,5 @@
 import AliceVision 1.0
-import QtQuick 2.15
+import QtQuick
 
 /**
  * To evaluate if the QtAliceVision plugin is available.

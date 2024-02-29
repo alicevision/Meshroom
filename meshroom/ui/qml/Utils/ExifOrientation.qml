@@ -1,5 +1,5 @@
 pragma Singleton
-import QtQuick 2.11
+import QtQuick
 
 /**
  * Singleton that defines utility functions for supporting exif orientation tags.

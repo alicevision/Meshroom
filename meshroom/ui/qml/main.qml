@@ -2,12 +2,10 @@ import QtCore
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Window
 import QtQml.Models
-
-import Qt.labs.platform 1.0 as Platform
-import QtQuick.Dialogs
 
 import GraphEditor 1.0
 import MaterialIcons 2.2
@@ -140,7 +138,7 @@ ApplicationWindow {
             {
                 saveFileDialog.open()
                 function _callbackWrapper(rc) {
-                    if (rc === Platform.Dialog.Accepted)
+                    if (rc === Dialog.Accepted)
                         fireCallback()
                     saveFileDialog.closed.disconnect(_callbackWrapper)
                 }
@@ -165,7 +163,7 @@ ApplicationWindow {
         }
     }
 
-    Platform.FileDialog {
+    FileDialog {
         id: saveFileDialog
 
         signal closed(var result)
@@ -173,16 +171,16 @@ ApplicationWindow {
         title: "Save File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         defaultSuffix: ".mg"
-        fileMode: Platform.FileDialog.SaveFile
+        fileMode: FileDialog.SaveFile
         onAccepted: {
-            _reconstruction.saveAs(file)
-            closed(Platform.Dialog.Accepted)
-            MeshroomApp.addRecentProjectFile(file.toString())
+            _reconstruction.saveAs(selectedFile)
+            closed(Dialog.Accepted)
+            MeshroomApp.addRecentProjectFile(selectedFile.toString())
         }
-        onRejected: closed(Platform.Dialog.Rejected)
+        onRejected: closed(Dialog.Rejected)
     }
 
-    Platform.FileDialog {
+    FileDialog {
         id: saveTemplateDialog
 
         signal closed(var result)
@@ -190,13 +188,13 @@ ApplicationWindow {
         title: "Save Template"
         nameFilters: ["Meshroom Graphs (*.mg)"]
         defaultSuffix: ".mg"
-        fileMode: Platform.FileDialog.SaveFile
+        fileMode: FileDialog.SaveFile
         onAccepted: {
-            _reconstruction.saveAsTemplate(file)
-            closed(Platform.Dialog.Accepted)
+            _reconstruction.saveAsTemplate(selectedFile)
+            closed(Dialog.Accepted)
             MeshroomApp.reloadTemplateList()
         }
-        onRejected: closed(Platform.Dialog.Rejected)
+        onRejected: closed(Dialog.Rejected)
     }
 
     Item {
@@ -370,9 +368,10 @@ ApplicationWindow {
         id: openFileDialog
         title: "Open File"
         nameFilters: ["Meshroom Graphs (*.mg)"]
+        fileMode: FileDialog.OpenFile
         onAccepted: {
-            if (_reconstruction.loadUrl(fileUrl)) {
-                MeshroomApp.addRecentProjectFile(fileUrl.toString())
+            if (_reconstruction.loadUrl(selectedFile)) {
+                MeshroomApp.addRecentProjectFile(selectedFile.toString())
             }
         }
     }
@@ -381,10 +380,11 @@ ApplicationWindow {
         id: loadTemplateDialog
         title: "Load Template"
         nameFilters: ["Meshroom Graphs (*.mg)"]
+        fileMode: FileDialog.OpenFile
         onAccepted: {
             // Open the template as a regular file
-            if (_reconstruction.loadUrl(fileUrl, true, true)) {
-                MeshroomApp.addRecentProjectFile(fileUrl.toString())
+            if (_reconstruction.loadUrl(selectedFile, true, true)) {
+                MeshroomApp.addRecentProjectFile(selectedFile.toString())
             }
         }
     }
@@ -395,8 +395,8 @@ ApplicationWindow {
         fileMode: FileDialog.OpenFiles
         nameFilters: []
         onAccepted: {
-            _reconstruction.importImagesUrls(importImagesDialog.fileUrls)
-            imagesFolder = Filepath.dirname(importImagesDialog.fileUrls[0])
+            _reconstruction.importImagesUrls(importImagesDialog.selectedFiles)
+            imagesFolder = Filepath.dirname(importImagesDialog.selectedFiles[0])
             MeshroomApp.addRecentImportedImagesFolder(imagesFolder)
         }
     }
@@ -594,7 +594,7 @@ ApplicationWindow {
             folder = imagesFolder
         }
 
-        dialog.folder = folder
+        dialog.currentFolder = folder
     }
 
     header: MenuBar {
@@ -644,6 +644,8 @@ ApplicationWindow {
                     function() {
                         initFileDialogFolder(openFileDialog)
                         openFileDialog.open()
+                    }
+                )
             }
             Menu {
                 id: openRecentMenu
@@ -779,7 +781,7 @@ ApplicationWindow {
             title: "Edit"
             MenuItem {
                 action: undoAction
-                ToolTip.visible: hovered
+                ToolTip.visible: hovered && enabled
                 ToolTip.text: undoAction.tooltip
             }
             MenuItem {

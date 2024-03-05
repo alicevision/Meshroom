@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt.labs.platform 1.0 as Platform
+
 import ImageGallery 1.0
 import Viewer 1.0
 import Viewer3D 1.0

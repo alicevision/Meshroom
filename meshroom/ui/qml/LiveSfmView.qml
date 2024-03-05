@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import MaterialIcons 2.2
-import Qt.labs.platform 1.0 as Platform // for FileDialog
 
 import Controls 1.0
 
@@ -25,11 +25,11 @@ Panel {
     padding: 2
     clip: true
 
-    Platform.FolderDialog {
+    FolderDialog {
         id: selectFolderDialog
         title: "Live Reconstruction - Select Image Folder"
         onAccepted: {
-            folderPath.text = Filepath.urlToString(folder)
+            folderPath.text = Filepath.urlToString(selectedFolder)
         }
     }
 

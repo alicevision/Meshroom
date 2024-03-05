@@ -47,7 +47,7 @@ Entity {
         property point currentPosition
         property bool hasMoved
         sourceDevice: loseMouseFocus ? null : mouseSourceDevice
-        onPressed: {
+        onPressed: function(mouse) {
             _pressed = true
             currentPosition.x = lastPosition.x = mouse.x
             currentPosition.y = lastPosition.y = mouse.y
@@ -105,7 +105,10 @@ Entity {
         // stays active, even when it's released.
         // Handle this issue manually by keeping an additional _pressed state
         // which is cleared when focus changes (used for 'pickingActive' property).
-        onFocusChanged: if (!focus) _pressed = false
+        onFocusChanged: function(focus) {
+            if (!focus)
+                _pressed = false
+        }
         onPressed: _pressed = true
         onReleased: _pressed = false
     }

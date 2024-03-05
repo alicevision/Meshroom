@@ -21,7 +21,7 @@ AliceVision.FloatImageViewer {
     property var imageStatus: {
         if (root.status === AliceVision.FloatImageViewer.EStatus.LOADING) {
             return Image.Loading
-        } else if (root.status === AliceVision.FloatImageViewer.EStatus.ERROR ||
+        } else if (root.status === AliceVision.FloatImageViewer.EStatus.LOADING_ERROR ||
                    root.status === AliceVision.FloatImageViewer.EStatus.MISSING_FILE ||
                    root.status === AliceVision.FloatImageViewer.EStatus.OUTDATED_LOADING) {
             return Image.Error

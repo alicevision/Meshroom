@@ -511,8 +511,12 @@ Item {
                                             readOnly: root.readOnly || object.isReadOnly
                                             Component.onCompleted: attributePinCreated(attribute, inParamsPin)
                                             Component.onDestruction: attributePinDeleted(attribute, inParamsPin)
-                                            onPressed: root.pressed(mouse)
-                                            onEdgeAboutToBeRemoved: root.edgeAboutToBeRemoved(input)
+                                            onPressed: function(mouse) {
+                                                root.pressed(mouse)
+                                            }
+                                            onEdgeAboutToBeRemoved: function(input) {
+                                                root.edgeAboutToBeRemoved(input)
+                                            }
                                             onChildPinCreated: function(childAttribute, inParamsPin) {
                                                 attributePinCreated(childAttribute, inParamsPin)
                                             }

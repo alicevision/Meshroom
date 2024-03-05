@@ -72,6 +72,7 @@ Item {
             ImageGallery {
                 id: imageGallery
                 Layout.fillHeight: true
+                SplitView.fillHeight: true
                 readOnly: root.readOnly
                 cameraInits: root.cameraInits
                 cameraInit: reconstruction ? reconstruction.cameraInit : null

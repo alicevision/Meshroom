@@ -128,7 +128,7 @@ RowLayout {
                         }
                     }
 
-                    onClicked: {
+                    onClicked: function(mouse) {
                         forceActiveFocus()
                         if (mouse.button == Qt.RightButton) {
                             var menu = menuComp.createObject(parameterLabel)

@@ -151,7 +151,7 @@ Item {
         drag.threshold: 0
         cursorShape: drag.target == draggable ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
-        onWheel: {
+        onWheel: function(wheel) {
             var zoomFactor = wheel.angleDelta.y > 0 ? factor : 1 / factor
             var scale = draggable.scale * zoomFactor
             scale = Math.min(Math.max(minZoom, scale), maxZoom)
@@ -336,8 +336,12 @@ Item {
 
                     Instantiator {
                         model: newNodeMenu.visible && newNodeSubMenu.activeFocus ? newNodeMenu.parseCategories()[modelData] : undefined
-                        onObjectAdded: newNodeSubMenu.insertItem(index, object)
-                        onObjectRemoved: newNodeSubMenu.removeItem(object)
+                        onObjectAdded: function(index, object) {
+                            newNodeSubMenu.insertItem(index, object)
+                        }
+                        onObjectRemoved: function(index, object) {
+                            newNodeSubMenu.removeItem(object)
+                        }
                         delegate: menuItemDelegateComponent
                     }
                 }
@@ -394,7 +398,7 @@ Item {
                     point1y: isValidEdge ? src.globalY + src.outputAnchorPos.y : 0
                     point2x: isValidEdge ? dst.globalX + dst.inputAnchorPos.x : 0
                     point2y: isValidEdge ? dst.globalY + dst.inputAnchorPos.y : 0
-                    onPressed: {
+                    onPressed: function(event) {
                         const canEdit = !edge.dst.node.locked
 
                         if (event.button === Qt.RightButton) {
@@ -630,7 +634,7 @@ Item {
                     onEntered: uigraph.hoveredNode = node
                     onExited: uigraph.hoveredNode = null
 
-                    onEdgeAboutToBeRemoved: {
+                    onEdgeAboutToBeRemoved: function(input) {
                         /*
                         Sometimes the signals are not in the right order
                         because of weird Qt/QML update order (next DropArea

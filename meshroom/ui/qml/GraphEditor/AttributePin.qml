@@ -82,7 +82,7 @@ RowLayout {
             anchors.rightMargin: -root.width * 0.3
 
             keys: [inputDragTarget.objectName]
-            onEntered: {
+            onEntered: function(drag) {
                 // Check if attributes are compatible to create a valid connection
                 if (root.readOnly                                           // cannot connect on a read-only attribute
                     || drag.source.objectName != inputDragTarget.objectName // not an edge connector
@@ -145,7 +145,7 @@ RowLayout {
             anchors.margins: inputDropArea.anchors.margins
             anchors.leftMargin: inputDropArea.anchors.leftMargin
             anchors.rightMargin: inputDropArea.anchors.rightMargin
-            onPressed: {
+            onPressed: function(mouse) {
                 root.pressed(mouse)
             }
             onReleased: {
@@ -230,7 +230,7 @@ RowLayout {
             anchors.leftMargin: -root.width * 0.2
 
             keys: [outputDragTarget.objectName]
-            onEntered: {
+            onEntered: function(drag) {
                 // Check if attributes are compatible to create a valid connection
                 if (drag.source.objectName != outputDragTarget.objectName   // not an edge connector
                     || drag.source.baseType !== outputDragTarget.baseType   // not the same base type
@@ -289,7 +289,7 @@ RowLayout {
             anchors.leftMargin: outputDropArea.anchors.leftMargin
             anchors.rightMargin: outputDropArea.anchors.rightMargin
 
-            onPressed: root.pressed(mouse)
+            onPressed: function(mouse) { root.pressed(mouse) }
             onReleased: outputDragTarget.Drag.drop()
 
             hoverEnabled: true

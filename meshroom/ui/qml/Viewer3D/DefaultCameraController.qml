@@ -59,7 +59,7 @@ Entity {
             mouseReleased(mouse, hasMoved)
         }
         onClicked: mouseClicked(mouse)
-        onPositionChanged: {
+        onPositionChanged: function(mouse) {
             currentPosition.x = mouse.x
             currentPosition.y = mouse.y
 

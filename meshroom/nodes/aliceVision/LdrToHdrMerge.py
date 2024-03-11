@@ -6,7 +6,7 @@ import math
 from collections import Counter
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, EXR_STORAGE_DATA_TYPE, VERBOSE_LEVEL
 
 def findMetadata(d, keys, defaultValue):
     v = None
@@ -61,7 +61,7 @@ Merge LDR images into HDR images.
             uid=[],
             group="user",  # not used directly on the command line
             errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
-                         "Errors will occur during the computation."
+                         "Errors will occur during the computation.",
         ),
         desc.IntParam(
             name="nbBrackets",
@@ -72,7 +72,7 @@ Merge LDR images into HDR images.
             value=0,
             range=(0, 15, 1),
             uid=[0],
-            group="bracketsParams"
+            group="bracketsParams",
         ),
         desc.BoolParam(
             name="offsetRefBracketIndexEnabled",
@@ -229,8 +229,8 @@ Merge LDR images into HDR images.
                         " - half: Use half float (16 bits per channel).\n"
                         " - halfFinite: Use half float, but clamp values to avoid non-finite values.\n"
                         " - auto: Use half float if all values can fit, else use full float.",
+            values=EXR_STORAGE_DATA_TYPE,
             value="float",
-            values=["float", "half", "halfFinite", "auto"],
             exclusive=True,
             uid=[0],
         ),
@@ -238,11 +238,11 @@ Merge LDR images into HDR images.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -260,7 +260,7 @@ Merge LDR images into HDR images.
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfmData.sfm",
             uid=[],
-        )
+        ),
     ]
 
     @classmethod

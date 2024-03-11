@@ -1,3 +1,5 @@
+# [nodes] Harmonize the use of trailing commas across all the nodes
+61a8dcd4e2878f80b2f320f2b1c3c9b41e999b82
 # [nodes] Clean-up: Harmonize nodes' descriptions
 f2d67706511954aa3e1c026ecc858beb8c08f938
 # [qml] Clean-up: Harmonize syntax across all files

@@ -1,7 +1,7 @@
 __version__ = "1.3"
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, DESCRIBER_TYPES, VERBOSE_LEVEL
 
 
 class FeatureExtraction(desc.AVCommandLineNode):
@@ -66,8 +66,8 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             name="describerTypes",
             label="Describer Types",
             description="Describer types used to describe an image.",
+            values=DESCRIBER_TYPES,
             value=["dspsift"],
-            values=["sift", "sift_float", "sift_upright", "dspsift", "akaze", "akaze_liop", "akaze_mldb", "cctag3", "cctag4", "sift_ocv", "akaze_ocv", "tag16h5"],
             exclusive=False,
             uid=[0],
             joinChar=",",
@@ -138,13 +138,13 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             uid=[0],
         ),
         desc.ChoiceParam(
-                name="workingColorSpace",
-                label="Working Color Space",
-                description="Allows you to choose the color space in which the data are processed.",
-                values=COLORSPACES,
-                value="sRGB",
-                exclusive=True,
-                uid=[0],
+            name="workingColorSpace",
+            label="Working Color Space",
+            description="Allows you to choose the color space in which the data are processed.",
+            values=COLORSPACES,
+            value="sRGB",
+            exclusive=True,
+            uid=[0],
         ),
         desc.BoolParam(
             name="forceCpuExtraction",
@@ -167,11 +167,11 @@ It is robust to motion-blur, depth-of-field, occlusion. Be careful to have enoug
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

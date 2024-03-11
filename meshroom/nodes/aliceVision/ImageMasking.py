@@ -1,6 +1,7 @@
 __version__ = "3.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class ImageMasking(desc.AVCommandLineNode):
@@ -47,7 +48,7 @@ class ImageMasking(desc.AVCommandLineNode):
                     semantic="color/hue",
                     value=0.33,
                     range=(0.0, 1.0, 0.01),
-                    uid=[0]
+                    uid=[0],
                 ),
                 desc.FloatParam(
                     name="hsvHueRange",
@@ -55,7 +56,7 @@ class ImageMasking(desc.AVCommandLineNode):
                     description="Tolerance around the hue value to isolate.",
                     value=0.1,
                     range=(0.0, 1.0, 0.01),
-                    uid=[0]
+                    uid=[0],
                 ),
                 desc.FloatParam(
                     name="hsvMinSaturation",
@@ -63,7 +64,7 @@ class ImageMasking(desc.AVCommandLineNode):
                     description="Hue is meaningless if saturation is low. Do not mask pixels below this threshold.",
                     value=0.3,
                     range=(0.0, 1.0, 0.01),
-                    uid=[0]
+                    uid=[0],
                 ),
                 desc.FloatParam(
                     name="hsvMaxSaturation",
@@ -71,7 +72,7 @@ class ImageMasking(desc.AVCommandLineNode):
                     description="Do not mask pixels above this threshold. It might be useful to mask white/black pixels.",
                     value=1.0,
                     range=(0.0, 1.0, 0.01),
-                    uid=[0]
+                    uid=[0],
                 ),
                 desc.FloatParam(
                     name="hsvMinValue",
@@ -79,7 +80,7 @@ class ImageMasking(desc.AVCommandLineNode):
                     description="Hue is meaningless if the value is low. Do not mask pixels below this threshold.",
                     value=0.3,
                     range=(0.0, 1.0, 0.01),
-                    uid=[0]
+                    uid=[0],
                 ),
                 desc.FloatParam(
                     name="hsvMaxValue",
@@ -87,9 +88,9 @@ class ImageMasking(desc.AVCommandLineNode):
                     description="Do not mask pixels above this threshold. It might be useful to mask white/black pixels.",
                     value=1.0,
                     range=(0.0, 1.0, 0.01),
-                    uid=[0]
+                    uid=[0],
                 ),
-            ]
+            ],
         ),
         desc.BoolParam(
             name="invert",
@@ -97,7 +98,7 @@ class ImageMasking(desc.AVCommandLineNode):
             description="If selected, the selected area is ignored.\n"
                         "If not, only the selected area is considered.",
             value=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.IntParam(
             name="growRadius",
@@ -106,7 +107,7 @@ class ImageMasking(desc.AVCommandLineNode):
                         "It might be used to fill the holes: then use shrinkRadius to restore the initial coutours.",
             value=0,
             range=(0, 50, 1),
-            uid=[0]
+            uid=[0],
         ),
         desc.IntParam(
             name="shrinkRadius",
@@ -114,7 +115,7 @@ class ImageMasking(desc.AVCommandLineNode):
             description="Shrink the selected area.",
             value=0,
             range=(0, 50, 1),
-            uid=[0]
+            uid=[0],
         ),
         desc.File(
             name="depthMapFolder",
@@ -134,11 +135,11 @@ class ImageMasking(desc.AVCommandLineNode):
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

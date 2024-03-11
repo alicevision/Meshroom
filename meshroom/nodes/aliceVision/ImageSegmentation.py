@@ -1,6 +1,7 @@
 __version__ = "1.2"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class ImageSegmentation(desc.AVCommandLineNode):
@@ -28,7 +29,7 @@ Generate a mask with segmented labels for each pixel.
             label="Segmentation Model",
             description="Weights file for the internal model.",
             value="${ALICEVISION_SEMANTIC_SEGMENTATION_MODEL}",
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="validClasses",
@@ -75,11 +76,11 @@ Generate a mask with segmented labels for each pixel.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -100,4 +101,3 @@ Generate a mask with segmented labels for each pixel.
             uid=[],
         ),
     ]
-

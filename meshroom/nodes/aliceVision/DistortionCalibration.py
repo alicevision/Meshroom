@@ -1,6 +1,7 @@
 __version__ = '3.0'
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class DistortionCalibration(desc.AVCommandLineNode):
@@ -40,8 +41,8 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),
@@ -54,5 +55,5 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             description="Path to the output SfMData file.",
             value=desc.Node.internalFolder + "sfmData.sfm",
             uid=[],
-        )
+        ),
     ]

@@ -105,7 +105,7 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
                     exclusive=True,
                     uid=[0],
                 ),
-            ]
+            ],
         ),
         desc.GroupAttribute(
             name="meshParams",
@@ -132,7 +132,7 @@ One frame per viewpoint will be rendered, and the undistorted views can optional
                     exclusive=True,
                     uid=[0],
                 ),
-            ]
+            ],
         ),
     ]
 

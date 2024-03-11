@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 
 class MeshResampling(desc.AVCommandLineNode):
@@ -20,7 +21,7 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             description="Input mesh in the OBJ file format.",
             value="",
             uid=[0],
-            ),
+        ),
         desc.FloatParam(
             name="simplificationFactor",
             label="Simplification Factor",
@@ -73,11 +74,11 @@ This node allows to recompute the mesh surface with a new topology and uniform d
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

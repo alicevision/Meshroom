@@ -1,6 +1,7 @@
 __version__ = "1.1"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 import os.path
 
@@ -26,8 +27,8 @@ Prepare images for Panorama pipeline: ensures that images orientations are coher
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

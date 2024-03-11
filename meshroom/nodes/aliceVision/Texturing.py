@@ -1,7 +1,8 @@
 __version__ = "6.0"
 
 from meshroom.core import desc, Version
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, VERBOSE_LEVEL
+
 import logging
 
 
@@ -82,7 +83,10 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             exclusive=True,
             uid=[0],
         ),
-        desc.GroupAttribute(name="colorMapping", label="Color Mapping", description="Color map parameters.",
+        desc.GroupAttribute(
+            name="colorMapping",
+            label="Color Mapping",
+            description="Color map parameters.",
             enabled=lambda node: (node.imagesFolder.value != ''),
             group=None,
             groupDesc=[
@@ -106,7 +110,10 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                 ),
             ],
         ),
-        desc.GroupAttribute(name="bumpMapping", label="Bump Mapping", description="Bump mapping parameters.",
+        desc.GroupAttribute(
+            name="bumpMapping",
+            label="Bump Mapping",
+            description="Bump mapping parameters.",
             enabled=lambda node: (node.inputRefMesh.value != ''),
             group=None,
             groupDesc=[
@@ -150,7 +157,10 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                 ),
             ],
         ),
-        desc.GroupAttribute(name="displacementMapping", label="Displacement Mapping", description="Displacement mapping parameters.",
+        desc.GroupAttribute(
+            name="displacementMapping",
+            label="Displacement Mapping",
+            description="Displacement mapping parameters.",
             enabled=lambda node: (node.inputRefMesh.value != ""),
             group=None,
             groupDesc=[
@@ -167,7 +177,7 @@ Many cameras are contributing to the low frequencies and only the best ones cont
                     label="File Type",
                     description="File type for the height map texture.",
                     value="exr",
-                    values=("exr",),
+                    values=("exr"),
                     exclusive=True,
                     uid=[0],
                     enabled=lambda node: node.displacementMapping.enable.value,
@@ -222,10 +232,38 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name="multiBandNbContrib",
             label="Multi-Band Contributions",
             groupDesc=[
-                desc.IntParam(name="high", label="High Freq", description="High frequency band.", value=1, uid=[0], range=None),
-                desc.IntParam(name="midHigh", label="Mid-High Freq", description="Mid-high frequency band.", value=5, uid=[0], range=None),
-                desc.IntParam(name="midLow", label="Mid-Low Freq", description="Mid-low frequency band.", value=10, uid=[0], range=None),
-                desc.IntParam(name="low", label="Low Freq", description="Low frequency band", value=0, uid=[0], range=None),
+                desc.IntParam(
+                    name="high",
+                    label="High Freq",
+                    description="High frequency band.",
+                    value=1,
+                    uid=[0],
+                    range=None,
+                ),
+                desc.IntParam(
+                    name="midHigh",
+                    label="Mid-High Freq",
+                    description="Mid-high frequency band.",
+                    value=5,
+                    uid=[0],
+                    range=None,
+                ),
+                desc.IntParam(
+                    name="midLow",
+                    label="Mid-Low Freq",
+                    description="Mid-low frequency band.",
+                    value=10,
+                    uid=[0],
+                    range=None,
+                ),
+                desc.IntParam(
+                    name="low",
+                    label="Low Freq",
+                    description="Low frequency band",
+                    value=0,
+                    uid=[0],
+                    range=None,
+                ),
             ],
             description="Number of contributions per frequency band for multi-band blending (each frequency band also contributes to lower bands).",
             advanced=True,
@@ -325,13 +363,12 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),
     ]
-
 
     outputs = [
         desc.File(
@@ -364,8 +401,8 @@ Many cameras are contributing to the low frequencies and only the best ones cont
             description="Output texture files.",
             value=lambda attr: desc.Node.internalFolder + "texture_*." + attr.node.colorMapping.colorMappingFileType.value if attr.node.colorMapping.enable.value else "",
             uid=[],
-            group=""
-        )
+            group="",
+        ),
     ]
 
     def upgradeAttributeValues(self, attrValues, fromVersion):

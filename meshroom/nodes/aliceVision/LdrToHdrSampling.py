@@ -6,7 +6,7 @@ import os
 from collections import Counter
 
 from meshroom.core import desc
-from meshroom.core.utils import COLORSPACES
+from meshroom.core.utils import COLORSPACES, VERBOSE_LEVEL
 
 
 def findMetadata(d, keys, defaultValue):
@@ -76,7 +76,7 @@ Sample pixels from Low range images for HDR creation.
             uid=[],
             group="user",  # not used directly on the command line
             errorMessage="The set number of brackets is not a multiple of the number of input images.\n"
-                         "Errors will occur during the computation."
+                         "Errors will occur during the computation.",
         ),
         desc.IntParam(
             name="nbBrackets",
@@ -87,7 +87,7 @@ Sample pixels from Low range images for HDR creation.
             value=0,
             range=(0, 15, 1),
             uid=[0],
-            group="bracketsParams"
+            group="bracketsParams",
         ),
         desc.BoolParam(
             name="byPass",
@@ -175,11 +175,11 @@ Sample pixels from Low range images for HDR creation.
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [

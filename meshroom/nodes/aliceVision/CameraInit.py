@@ -8,41 +8,120 @@ import tempfile
 import logging
 
 from meshroom.core import desc, Version
+from meshroom.core.utils import RAW_COLOR_INTERPRETATION, VERBOSE_LEVEL
 from meshroom.multiview import FilesByType, findFilesByTypeInFolder
 
 Viewpoint = [
-    desc.IntParam(name="viewId", label="ID", description="Image UID.", value=-1, uid=[0], range=None),
-    desc.IntParam(name="poseId", label="Pose ID", description="Pose ID.", value=-1, uid=[0], range=None),
-    desc.File(name="path", label="Image Path", description="Image filepath.", value="", uid=[0]),
-    desc.IntParam(name="intrinsicId", label="Intrinsic", description="Internal camera parameters.", value=-1, uid=[0], range=None),
-    desc.IntParam(name="rigId", label="Rig", description="Rig parameters.", value=-1, uid=[0], range=None),
-    desc.IntParam(name="subPoseId", label="Rig Sub-Pose", description="Rig sub-pose parameters.", value=-1, uid=[0], range=None),
-    desc.StringParam(name="metadata", label="Image Metadata",
-                     description="The configuration of the Viewpoints is based on the images' metadata.\n"
-                                 "The important ones are:\n"
-                                 " - Focal Length: the focal length in mm.\n"
-                                 " - Make and Model: this information allows to convert the focal in mm into a focal length in pixels using "
-                                 "an embedded sensor database.\n"
-                                 " - Serial Number: allows to uniquely identify a device so multiple devices with the same Make, Model can be "
-                                 "differentiated and their internal parameters are optimized separately.",
-                     value="", uid=[], advanced=True),
+    desc.IntParam(
+        name="viewId",
+        label="ID",
+        description="Image UID.",
+        value=-1,
+        uid=[0],
+        range=None,
+    ),
+    desc.IntParam(
+        name="poseId",
+        label="Pose ID",
+        description="Pose ID.",
+        value=-1,
+        uid=[0],
+        range=None,
+    ),
+    desc.File(
+        name="path",
+        label="Image Path",
+        description="Image filepath.",
+        value="",
+        uid=[0],
+    ),
+    desc.IntParam(
+        name="intrinsicId",
+        label="Intrinsic",
+        description="Internal camera parameters.",
+        value=-1,
+        uid=[0],
+        range=None,
+    ),
+    desc.IntParam(
+        name="rigId",
+        label="Rig",
+        description="Rig parameters.",
+        value=-1,
+        uid=[0],
+        range=None,
+    ),
+    desc.IntParam(
+        name="subPoseId",
+        label="Rig Sub-Pose",
+        description="Rig sub-pose parameters.",
+        value=-1,
+        uid=[0],
+        range=None,
+    ),
+    desc.StringParam(
+        name="metadata",
+        label="Image Metadata",
+        description="The configuration of the Viewpoints is based on the images' metadata.\n"
+                    "The important ones are:\n"
+                    " - Focal Length: the focal length in mm.\n"
+                    " - Make and Model: this information allows to convert the focal in mm into a focal length in pixels using "
+                    "an embedded sensor database.\n"
+                    " - Serial Number: allows to uniquely identify a device so multiple devices with the same Make, Model can be "
+                    "differentiated and their internal parameters are optimized separately.",
+        value="",
+        uid=[],
+        advanced=True,
+    ),
 ]
 
 Intrinsic = [
-    desc.IntParam(name="intrinsicId", label="ID", description="Intrinsic UID.", value=-1, uid=[0], range=None),
-    desc.FloatParam(name="initialFocalLength", label="Initial Focal Length",
-                    description="Initial guess on the focal length (in mm).\n"
-                                "When we have an initial value from EXIF, this value is not accurate but it cannot be wrong.\n"
-                                "So this value is used to limit the range of possible values in the optimization.\n"
-                                "If this value is set to -1, it will not be used and the focal length will not be bounded.",
-                    value=-1.0, uid=[0], range=None),
-    desc.FloatParam(name="focalLength", label="Focal Length", description="Known/calibrated focal length (in mm).", value=1000.0, uid=[0], range=(0.0, 10000.0, 1.0)),
-    desc.FloatParam(name="pixelRatio", label="Pixel Ratio", description="Ratio between the pixel width and the pixel height.", value=1.0, uid=[0], range=(0.0, 10.0, 0.1)),
-    desc.BoolParam(name="pixelRatioLocked", label="Pixel Ratio Locked",
-                   description="The pixel ratio value is locked for estimation.",
-                   value=True, uid=[0]),
-    desc.ChoiceParam(name="type", label="Camera Type",
-                     description="Mathematical model used to represent a camera:\n"
+    desc.IntParam(
+        name="intrinsicId",
+        label="ID",
+        description="Intrinsic UID.",
+        value=-1,
+        uid=[0],
+        range=None,
+    ),
+    desc.FloatParam(
+        name="initialFocalLength",
+        label="Initial Focal Length",
+        description="Initial guess on the focal length (in mm).\n"
+                    "When we have an initial value from EXIF, this value is not accurate but it cannot be wrong.\n"
+                    "So this value is used to limit the range of possible values in the optimization.\n"
+                    "If this value is set to -1, it will not be used and the focal length will not be bounded.",
+        value=-1.0,
+        uid=[0],
+        range=None,
+    ),
+    desc.FloatParam(
+        name="focalLength",
+        label="Focal Length",
+        description="Known/calibrated focal length (in mm).",
+        value=1000.0,
+        uid=[0],
+        range=(0.0, 10000.0, 1.0),
+    ),
+    desc.FloatParam(
+        name="pixelRatio",
+        label="Pixel Ratio",
+        description="Ratio between the pixel width and the pixel height.",
+        value=1.0,
+        uid=[0],
+        range=(0.0, 10.0, 0.1),
+    ),
+    desc.BoolParam(
+        name="pixelRatioLocked",
+        label="Pixel Ratio Locked",
+        description="The pixel ratio value is locked for estimation.",
+        value=True,
+        uid=[0],
+    ),
+    desc.ChoiceParam(
+        name="type",
+        label="Camera Type",
+        description="Mathematical model used to represent a camera:\n"
                      " - pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
                      " - radial1: Pinhole camera with one radial distortion parameter.\n"
                      " - radial3: Pinhole camera with 3 radial distortion parameters.\n"
@@ -52,65 +131,154 @@ Intrinsic = [
                      " - 3deanamorphic4: Pinhole camera with 4 anamorphic distortion coefficients.\n"
                      " - 3declassicld: Pinhole camera with 10 anamorphic distortion coefficients.\n"
                      " - 3deradial4: Pinhole camera with 3DE radial4 model.\n",
-                     value="", values=["", "pinhole", "radial1", "radial3", "brown", "fisheye4", "equidistant_r3", "3deanamorphic4", "3declassicld", "3deradial4"], exclusive=True, uid=[0]),
-    desc.IntParam(name="width", label="Width", description="Image width.", value=0, uid=[0], range=(0, 10000, 1)),
-    desc.IntParam(name="height", label="Height", description="Image height.", value=0, uid=[0], range=(0, 10000, 1)),
-    desc.FloatParam(name="sensorWidth", label="Sensor Width", description="Sensor width (in mm).", value=36.0, uid=[0], range=(0.0, 1000.0, 1.0)),
-    desc.FloatParam(name="sensorHeight", label="Sensor Height", description="Sensor height (in mm).", value=24.0, uid=[0], range=(0.0, 1000.0, 1.0)),
-    desc.StringParam(name="serialNumber", label="Serial Number", description="Device serial number (Camera UID and Lens UID combined).", value="", uid=[0]),
-    desc.GroupAttribute(name="principalPoint", label="Principal Point", description="Position of the optical center in the image (i.e. the sensor surface).", groupDesc=[
-        desc.FloatParam(name="x", label="x", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
-        desc.FloatParam(name="y", label="y", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
-    ]),
-
-    desc.ChoiceParam(name="initializationMode", label="Initialization Mode",
-                     description="Defines how this intrinsic was initialized:\n"
-                                 " - calibrated: calibrated externally.\n"
-                                 " - estimated: estimated from metadata and/or sensor width.\n"
-                                 " - unknown: unknown camera parameters (can still have default value guess).\n"
-                                 " - none: not set.",
-                     values=("calibrated", "estimated", "unknown", "none"),
-                     value="none",
-                     exclusive=True,
-                     uid=[0],
+        value="",
+        values=["", "pinhole", "radial1", "radial3", "brown", "fisheye4", "equidistant_r3", "3deanamorphic4", "3declassicld", "3deradial4"],
+        exclusive=True,
+        uid=[0],
     ),
-
-    desc.ChoiceParam(name="distortionInitializationMode", label="Distortion Initialization Mode",
-                     description="Defines how the distortion model and parameters were initialized:\n"
-                                 " - calibrated: calibrated externally.\n"
-                                 " - estimated: estimated from a database of generic calibration.\n"
-                                 " - unknown: unknown camera parameters (can still have default value guess).\n"
-                                 " - none: not set.",
-                     values=("calibrated", "estimated", "unknown", "none"),
-                     value="none",
-                     exclusive=True,
-                     uid=[0],
+    desc.IntParam(
+        name="width",
+        label="Width",
+        description="Image width.",
+        value=0,
+        uid=[0],
+        range=(0, 10000, 1),
     ),
-
-    desc.ListAttribute(
-            name="distortionParams",
-            elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
-            label="Distortion Params",
-            description="Distortion parameters.",
+    desc.IntParam(
+        name="height",
+        label="Height",
+        description="Image height.",
+        value=0,
+        uid=[0],
+        range=(0, 10000, 1),
+    ),
+    desc.FloatParam(
+        name="sensorWidth",
+        label="Sensor Width",
+        description="Sensor width (in mm).",
+        value=36.0,
+        uid=[0],
+        range=(0.0, 1000.0, 1.0),
+    ),
+    desc.FloatParam(
+        name="sensorHeight",
+        label="Sensor Height",
+        description="Sensor height (in mm).",
+        value=24.0,
+        uid=[0],
+        range=(0.0, 1000.0, 1.0),
+    ),
+    desc.StringParam(
+        name="serialNumber",
+        label="Serial Number",
+        description="Device serial number (Camera UID and Lens UID combined).",
+        value="",
+        uid=[0],
     ),
     desc.GroupAttribute(
-            name="undistortionOffset",
-            label="Undistortion Offset",
-            description="Undistortion offset.",
-            groupDesc=[
-                desc.FloatParam(name="x", label="x", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
-                desc.FloatParam(name="y", label="y", description="", value=0.0, uid=[0], range=(0.0, 10000.0, 1.0)),
-            ]
+        name="principalPoint",
+        label="Principal Point",
+        description="Position of the optical center in the image (i.e. the sensor surface).",
+        groupDesc=[
+            desc.FloatParam(
+                name="x",
+                label="x",
+                description="",
+                value=0.0,
+                uid=[0],
+                range=(0.0, 10000.0, 1.0),
+            ),
+            desc.FloatParam(
+                name="y",
+                label="y",
+                description="",
+                value=0.0,
+                uid=[0],
+                range=(0.0, 10000.0, 1.0),
+            ),
+        ],
+    ),
+    desc.ChoiceParam(
+        name="initializationMode",
+        label="Initialization Mode",
+        description="Defines how this intrinsic was initialized:\n"
+                    " - calibrated: calibrated externally.\n"
+                    " - estimated: estimated from metadata and/or sensor width.\n"
+                    " - unknown: unknown camera parameters (can still have default value guess).\n"
+                    " - none: not set.",
+        values=("calibrated", "estimated", "unknown", "none"),
+        value="none",
+        exclusive=True,
+        uid=[0],
+    ),
+    desc.ChoiceParam(
+        name="distortionInitializationMode",
+        label="Distortion Initialization Mode",
+        description="Defines how the distortion model and parameters were initialized:\n"
+                    " - calibrated: calibrated externally.\n"
+                    " - estimated: estimated from a database of generic calibration.\n"
+                    " - unknown: unknown camera parameters (can still have default value guess).\n"
+                    " - none: not set.",
+        values=("calibrated", "estimated", "unknown", "none"),
+        value="none",
+        exclusive=True,
+        uid=[0],
     ),
     desc.ListAttribute(
-            name="undistortionParams",
-            elementDesc=desc.FloatParam(name="p", label="", description="", value=0.0, uid=[0], range=(-0.1, 0.1, 0.01)),
-            label="Undistortion Params",
-            description="Undistortion parameters."
+        name="distortionParams",
+        elementDesc=desc.FloatParam(
+            name="p",
+            label="",
+            description="",
+            value=0.0,
+            uid=[0],
+            range=(-0.1, 0.1, 0.01),
+        ),
+        label="Distortion Params",
+        description="Distortion parameters.",
     ),
-    desc.BoolParam(name="locked", label="Locked",
-                   description="If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speed-up the reconstruction.",
-                   value=False, uid=[0]
+    desc.GroupAttribute(
+        name="undistortionOffset",
+        label="Undistortion Offset",
+        description="Undistortion offset.",
+        groupDesc=[
+            desc.FloatParam(
+                name="x",
+                label="x",
+                description="",
+                value=0.0,
+                uid=[0],
+                range=(0.0, 10000.0, 1.0),
+            ),
+            desc.FloatParam(
+                name="y",
+                label="y",
+                description="",
+                value=0.0,
+                uid=[0],
+                range=(0.0, 10000.0, 1.0),
+            ),
+        ],
+    ),
+    desc.ListAttribute(
+        name="undistortionParams",
+        elementDesc=desc.FloatParam(
+            name="p",
+            label="",
+            description="",
+            value=0.0,
+            uid=[0],
+            range=(-0.1, 0.1, 0.01),
+        ),
+        label="Undistortion Params",
+        description="Undistortion parameters."
+    ),
+    desc.BoolParam(
+        name="locked",
+        label="Locked",
+        description="If the camera has been calibrated, the internal camera parameters (intrinsics) can be locked. It should improve robustness and speed-up the reconstruction.",
+        value=False,
+        uid=[0],
     ),
 ]
 
@@ -182,14 +350,24 @@ The needed metadata are:
     inputs = [
         desc.ListAttribute(
             name="viewpoints",
-            elementDesc=desc.GroupAttribute(name="viewpoint", label="Viewpoint", description="Viewpoint.", groupDesc=Viewpoint),
+            elementDesc=desc.GroupAttribute(
+                name="viewpoint",
+                label="Viewpoint",
+                description="Viewpoint.",
+                groupDesc=Viewpoint,
+            ),
             label="Viewpoints",
             description="Input viewpoints.",
             group="",
         ),
         desc.ListAttribute(
             name="intrinsics",
-            elementDesc=desc.GroupAttribute(name="intrinsic", label="Intrinsic", description="Intrinsic.", groupDesc=Intrinsic),
+            elementDesc=desc.GroupAttribute(
+                name="intrinsic",
+                label="Intrinsic",
+                description="Intrinsic.",
+                groupDesc=Intrinsic,
+            ),
             label="Intrinsics",
             description="Camera intrinsics.",
             group="",
@@ -242,8 +420,8 @@ The needed metadata are:
             name="allowedCameraModels",
             label="Allowed Camera Models",
             description="List of the camera models that can be attributed.",
-            value=["pinhole", "radial1", "radial3", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3deradial4", "3declassicld"],
             values=["pinhole", "radial1", "radial3", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3deradial4", "3declassicld"],
+            value=["pinhole", "radial1", "radial3", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3deradial4", "3declassicld"],
             exclusive=False,
             uid=[],
             joinChar=",",
@@ -260,8 +438,8 @@ The needed metadata are:
                         " - LibRawWhiteBalancing: Use internal white balancing from libraw.\n"
                         " - DCPLinearProcessing: Use DCP color profile.\n"
                         " - DCPMetadata: Same as None with DCP info added in metadata.",
+            values=RAW_COLOR_INTERPRETATION,
             value="DCPLinearProcessing" if os.environ.get("ALICEVISION_COLOR_PROFILE_DB", "") else "LibRawWhiteBalancing",
-            values=["None", "LibRawNoWhiteBalancing", "LibRawWhiteBalancing", "DCPLinearProcessing", "DCPMetadata"],
             exclusive=True,
             uid=[0],
         ),
@@ -313,8 +491,8 @@ The needed metadata are:
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
         ),

@@ -1,6 +1,7 @@
 __version__ = "1.0"
 
 from meshroom.core import desc
+from meshroom.core.utils import VERBOSE_LEVEL
 
 class PhotometricStereo(desc.CommandLineNode):
     commandLine = 'aliceVision_photometricStereo {allParams}'
@@ -16,7 +17,7 @@ The lighting conditions are assumed to be known.
             label="SfMData",
             description="Input SfMData file.",
             value="",
-            uid=[0]
+            uid=[0],
         ),
         desc.File(
             name="pathToJSONLightFile",
@@ -24,14 +25,14 @@ The lighting conditions are assumed to be known.
             description="Path to a JSON file containing the lighting information.\n"
                         "If empty, .txt files are expected in the image folder.",
             value="defaultJSON.txt",
-            uid=[0]
+            uid=[0],
         ),
         desc.File(
             name="maskPath",
             label="Mask Folder Path",
             description="Path to a folder containing masks or to a mask directly.",
             value="",
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="SHOrder",
@@ -44,7 +45,7 @@ The lighting conditions are assumed to be known.
             value="0",
             exclusive=True,
             advanced=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="removeAmbiant",
@@ -52,7 +53,7 @@ The lighting conditions are assumed to be known.
             description="True if the ambiant light is to be removed on the PS images, false otherwise.",
             value=False,
             advanced=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.BoolParam(
             name="isRobust",
@@ -60,7 +61,7 @@ The lighting conditions are assumed to be known.
             description="True to use the robust algorithm, false otherwise.",
             value=False,
             advanced=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.IntParam(
             name="downscale",
@@ -69,17 +70,17 @@ The lighting conditions are assumed to be known.
             value=1,
             range=(1, 10, 1),
             advanced=True,
-            uid=[0]
+            uid=[0],
         ),
         desc.ChoiceParam(
             name="verboseLevel",
             label="Verbose Level",
             description="Verbosity level (fatal, error, warning, info, debug, trace).",
+            values=VERBOSE_LEVEL,
             value="info",
-            values=["fatal", "error", "warning", "info", "debug", "trace"],
             exclusive=True,
             uid=[],
-        )
+        ),
     ]
 
     outputs = [
@@ -104,7 +105,7 @@ The lighting conditions are assumed to be known.
             description="Output SfMData file containing the albedo information.",
             value=desc.Node.internalFolder + "/albedoMaps.sfm",
             uid=[],
-            group="", # remove from command line
+            group="",  # remove from command line
         ),
         desc.File(
             name="outputSfmDataNormal",
@@ -112,7 +113,7 @@ The lighting conditions are assumed to be known.
             description="Output SfMData file containing the normal maps information.",
             value=desc.Node.internalFolder + "/normalMaps.sfm",
             uid=[],
-            group="", # remove from command line
+            group="",  # remove from command line
         ),
         # these attributes are only here to describe more accurately the output of the node
         # by specifying that it generates 2 sequences of images
@@ -124,7 +125,7 @@ The lighting conditions are assumed to be known.
             semantic="image",
             value=desc.Node.internalFolder + "<POSE_ID>_normals.exr",
             uid=[],
-            group="", # do not export on the command line
+            group="",  # do not export on the command line
         ),
         desc.File(
             name="normalsWorld",
@@ -133,7 +134,7 @@ The lighting conditions are assumed to be known.
             semantic="image",
             value=desc.Node.internalFolder + "<POSE_ID>_normals_w.exr",
             uid=[],
-            group="", # do not export on the command line
+            group="",  # do not export on the command line
         ),
         desc.File(
             name="albedo",
@@ -142,6 +143,6 @@ The lighting conditions are assumed to be known.
             semantic="image",
             value=desc.Node.internalFolder + "<POSE_ID>_albedo.exr",
             uid=[],
-            group="", # do not export on the command line
+            group="",  # do not export on the command line
         ),
     ]

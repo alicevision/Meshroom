@@ -39,9 +39,10 @@ Based on the input image filenames, it will recognize the input video sequence t
             uid=[0],
         ),
         desc.BoolParam(
-            name="exportUVMaps",
-            label="Export UV Maps",
-            description="Export UV maps. Absolutes values (x, y) of distortion are encoded in UV channels.",
+            name="exportSTMaps",
+            label="Export ST Maps",
+            description="Export ST maps. Motion (x, y) is encoded in the image channels to correct the lens distortion.\n"
+                        "It represents the absolute pixel positions of an image normalized between 0 and 1.",
             value=True,
             uid=[0],
         ),

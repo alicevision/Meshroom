@@ -470,7 +470,7 @@ FloatingPane {
                                     enabled: model.visible
                                     Layout.alignment: Qt.AlignTop
                                     Layout.fillHeight: true
-                                    text: MaterialIcons.transform
+                                    text: MaterialIcons.transform_
                                     font.pointSize: 10
                                     ToolTip.text: model.displayBoundingBox ? "Hide BBox" : "Show BBox"
                                     flat: true

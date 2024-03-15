@@ -170,7 +170,6 @@
                 "cameras": "{ConvertSfMFormat_1.output}",
                 "model": "{NodalSfM_1.output}",
                 "undistortedImages": "{ExportAnimatedCamera_1.outputUndistorted}",
-                "useMasks": false,
                 "masks": "{ImageSegmentation_1.output}",
                 "pointCloudParams": {
                     "particleSize": 0.001,

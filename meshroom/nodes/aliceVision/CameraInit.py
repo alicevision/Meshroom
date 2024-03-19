@@ -123,16 +123,27 @@ Intrinsic = [
         label="Camera Type",
         description="Mathematical model used to represent a camera:\n"
                      " - pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
-                     " - radial1: Pinhole camera with one radial distortion parameter.\n"
-                     " - radial3: Pinhole camera with 3 radial distortion parameters.\n"
-                     " - brown: Pinhole camera with 3 radial and 2 tangential distortion parameters.\n"
-                     " - fisheye4: Pinhole camera with 4 distortion parameters suited for fisheye optics (like 120deg FoV).\n"
-                     " - equidistant_r3: Non-projective camera model suited for full-fisheye optics (like 180deg FoV).\n"
+                     " - equidistant: Non-projective camera model suited for full-fisheye optics (like 180deg FoV).\n",
+        value="pinhole",
+        values=["pinhole", "equidistant"],
+        exclusive=True,
+        uid=[0],
+    ),
+    desc.ChoiceParam(
+        name="distortionType",
+        label="Distortion Type",
+        description="Mathematical model used to represent the distortion:\n"
+                     " - radialk1: radial distortion with one parameter.\n"
+                     " - radialk3: radial distortion with three parameters (Best for pinhole cameras).\n"
+                     " - radialk3pt: radial distortion with three parameters and normalized with the sum of parameters (Best for equidistant cameras).\n"
+                     " - brown: distortion with 3 radial and 2 tangential parameters.\n"
+                     " - fisheye1: distortion with 1 parameter suited for fisheye optics (like 120deg FoV).\n"
+                     " - fisheye4: distortion with 4 parameters suited for fisheye optics (like 120deg FoV).\n"
                      " - 3deanamorphic4: Pinhole camera with 4 anamorphic distortion coefficients.\n"
                      " - 3declassicld: Pinhole camera with 10 anamorphic distortion coefficients.\n"
                      " - 3deradial4: Pinhole camera with 3DE radial4 model.\n",
-        value="",
-        values=["", "pinhole", "radial1", "radial3", "brown", "fisheye4", "equidistant_r3", "3deanamorphic4", "3declassicld", "3deradial4"],
+        value="radialk3",
+        values=["none", "radialk1", "radialk3", "radialk3pt", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3declassicld", "3deradial4"],
         exclusive=True,
         uid=[0],
     ),
@@ -417,19 +428,6 @@ The needed metadata are:
             uid=[],
         ),
         desc.ChoiceParam(
-            name="allowedCameraModels",
-            label="Allowed Camera Models",
-            description="List of the camera models that can be attributed.",
-            values=["pinhole", "radial1", "radial3", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3deradial4", "3declassicld"],
-            value=["pinhole", "radial1", "radial3", "brown", "fisheye4", "fisheye1", "3deanamorphic4", "3deradial4", "3declassicld"],
-            exclusive=False,
-            uid=[],
-            joinChar=",",
-            validValue=lambda node: len(node.allowedCameraModels.value),
-            errorMessage="Need at least one allowed camera model.",
-            advanced=True,
-        ),
-        desc.ChoiceParam(
             name="rawColorInterpretation",
             label="RAW Color Interpretation",
             description="Allows to choose how RAW data are color processed:\n"
@@ -621,6 +619,7 @@ The needed metadata are:
             for intrinsic in intrinsics:
                 intrinsic['principalPoint'] = [intrinsic['principalPoint']['x'], intrinsic['principalPoint']['y']]
                 intrinsic['undistortionOffset'] = [intrinsic['undistortionOffset']['x'], intrinsic['undistortionOffset']['y']]
+                intrinsic['undistortionType'] = 'none'
             views = node.viewpoints.getPrimitiveValue(exportDefault=False)
 
             # convert the metadata string into a map
@@ -629,7 +628,7 @@ The needed metadata are:
                     view['metadata'] = json.loads(view['metadata'])
 
             sfmData = {
-                "version": [1, 2, 6],
+                "version": [1, 2, 8],
                 "views": views + newViews,
                 "intrinsics": intrinsics,
                 "featureFolder": "",

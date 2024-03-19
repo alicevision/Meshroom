@@ -29,9 +29,9 @@ Calibration of a camera/lens couple distortion using a full screen checkerboard.
             uid=[0],
         ),
         desc.ChoiceParam(
-            name="cameraModel",
-            label="Camera Model",
-            description="Camera model used to estimate distortion.",
+            name="undistortionModelName",
+            label="Undistortion Model",
+            description="model used to estimate undistortion.",
             value="3deanamorphic4",
             values=["3deanamorphic4"],
             exclusive=True,

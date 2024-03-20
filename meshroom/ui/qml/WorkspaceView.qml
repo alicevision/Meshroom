@@ -210,6 +210,8 @@ Item {
                         Layout.fillHeight: true
                         Layout.minimumWidth: 20
 
+                        SplitView.fillWidth: true
+
                         DropArea {
                             anchors.fill: parent
                             keys: ["text/uri-list"]

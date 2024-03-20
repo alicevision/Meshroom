@@ -1,11 +1,11 @@
 {
     "header": {
         "nodesVersions": {
-            "CameraInit": "10.0",
-            "LdrToHdrMerge": "4.1",
             "LdrToHdrCalibration": "3.1",
             "LdrToHdrSampling": "4.0",
-            "Publish": "1.3"
+            "LdrToHdrMerge": "4.1",
+            "Publish": "1.3",
+            "CameraInit": "10.0"
         },
         "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
@@ -59,18 +59,7 @@
                 0,
                 0
             ],
-            "inputs": {
-                "allowedCameraModels": [
-                    "pinhole",
-                    "radial1",
-                    "radial3",
-                    "brown",
-                    "fisheye1",
-                    "3deanamorphic4",
-                    "3deradial4",
-                    "3declassicld"
-                ]
-            }
+            "inputs": {}
         },
         "Publish_1": {
             "nodeType": "Publish",

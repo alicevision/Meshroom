@@ -1,23 +1,23 @@
 {
     "header": {
         "nodesVersions": {
-            "FeatureExtraction": "1.3",
-            "PanoramaSeams": "2.0",
-            "PanoramaPostProcessing": "2.0",
-            "PanoramaWarping": "1.1",
-            "LdrToHdrMerge": "4.1",
-            "PanoramaMerging": "1.0",
-            "Publish": "1.3",
-            "PanoramaEstimation": "1.0",
-            "CameraInit": "10.0",
             "LdrToHdrCalibration": "3.1",
-            "ImageMatching": "2.0",
             "LdrToHdrSampling": "4.0",
+            "PanoramaSeams": "2.0",
+            "PanoramaWarping": "1.1",
+            "PanoramaPostProcessing": "2.0",
+            "ImageMatching": "2.0",
             "PanoramaPrepareImages": "1.1",
-            "FeatureMatching": "2.0",
             "PanoramaCompositing": "2.0",
             "SfMTransform": "3.1",
-            "PanoramaInit": "2.0"
+            "PanoramaInit": "2.0",
+            "PanoramaEstimation": "1.0",
+            "FeatureExtraction": "1.3",
+            "PanoramaMerging": "1.0",
+            "LdrToHdrMerge": "4.1",
+            "Publish": "1.3",
+            "CameraInit": "10.0",
+            "FeatureMatching": "2.0"
         },
         "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",
@@ -130,18 +130,7 @@
                 0,
                 0
             ],
-            "inputs": {
-                "allowedCameraModels": [
-                    "pinhole",
-                    "radial1",
-                    "radial3",
-                    "brown",
-                    "fisheye1",
-                    "3deanamorphic4",
-                    "3deradial4",
-                    "3declassicld"
-                ]
-            }
+            "inputs": {}
         },
         "PanoramaPostProcessing_1": {
             "nodeType": "PanoramaPostProcessing",

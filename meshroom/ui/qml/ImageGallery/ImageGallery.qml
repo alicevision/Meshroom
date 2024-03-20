@@ -28,6 +28,9 @@ Panel {
     property int defaultCellSize: 160
     property bool readOnly: false
 
+    property bool isMeshroomScene : false
+    property int nbFilesDropped: 0
+
     signal removeImageRequest(var attribute)
     signal allViewpointsCleared()
     signal filesDropped(var drop, var augmentSfm)
@@ -438,7 +441,16 @@ Panel {
                 anchors.fill: parent
                 enabled: !m.readOnly && !intrinsicsFilterButton.checked
                 keys: ["text/uri-list"]
-                // TODO: onEntered: call specific method to filter files based on extension
+                onEntered: {
+                    isMeshroomScene = false
+                    nbFilesDropped = drag.urls.length
+                    if (nbFilesDropped == 1){
+                        var url = drag.urls[0]
+                        if (url.endsWith(".mg")){
+                            isMeshroomScene = true
+                        }
+                    }
+                }
                 onDropped: {
                     var augmentSfm = augmentArea.hovered
                     root.filesDropped(drop, augmentSfm)
@@ -463,7 +475,17 @@ Panel {
                         Layout.fillHeight: true
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        text: "Add Images"
+                        text: {
+                            if (isMeshroomScene) {
+                                if(nbFilesDropped == 1) {
+                                    return "Load Project"
+                                } else {
+                                    return "Only one project"
+                                }
+                            }else if (!isMeshroomScene){
+                                return "Add Images"
+                            }
+                        }
                         font.bold: true
                         background: Rectangle {
                             color: parent.hovered ? parent.palette.highlight : parent.palette.window
@@ -483,7 +505,15 @@ Panel {
                         text: "Augment Reconstruction"
                         font.bold: true
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        visible: m.viewpoints ? m.viewpoints.count > 0 : false
+                        visible: {
+                            if(isMeshroomScene)
+                                return false
+                            if(m.viewpoints){
+                                return m.viewpoints.count > 0
+                            }else{
+                                return false
+                            }
+                        }
                         background: Rectangle {
                             color: parent.hovered ? palette.highlight : palette.window
                             opacity: 0.8

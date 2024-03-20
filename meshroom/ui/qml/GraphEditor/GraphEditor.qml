@@ -29,6 +29,9 @@ Item {
     signal computeRequest(var node)
     signal submitRequest(var node)
 
+    // Files have been dropped
+    signal filesDropped(var drop, var mousePosition)
+
     // trigger initial fit() after initialization
     // (ensure GraphEditor has its final size)
     Component.onCompleted: firstFitTimer.start()
@@ -704,6 +707,20 @@ Item {
 
         Item {
             id: boxSelectDraggable
+        }
+
+        DropArea {
+            id: dropArea
+            anchors.fill: parent
+            keys: ["text/uri-list"]
+            onDropped: {
+                // retrieve mouse position and convert coordinate system
+                // from pixel values to graph reference system
+                var mousePosition = mapToItem(draggable, drag.x, drag.y)
+                // send the list of files,
+                // to create the corresponding nodes or open another scene
+                filesDropped(drop, mousePosition)
+            }
         }
     }
 

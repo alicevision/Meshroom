@@ -1186,6 +1186,9 @@ ApplicationWindow {
                         _reconstruction.forceNodesStatusUpdate();
                         computeManager.submit(node)
                     }
+                    onFilesDropped: {
+                        _reconstruction.handleFilesUrl(drop.urls, null, mousePosition)
+                    }
                 }
 
                 TaskManager {

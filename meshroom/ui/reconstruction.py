@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from multiprocessing.pool import ThreadPool
 from threading import Thread
 
-from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF
+from PySide2.QtCore import QObject, Slot, Property, Signal, QUrl, QSizeF, QPoint
 from PySide2.QtGui import QMatrix4x4, QMatrix3x3, QQuaternion, QVector3D, QVector2D
 
 import meshroom.core
@@ -716,14 +716,24 @@ class Reconstruction(UIGraph):
         """ Get all view Ids involved in the reconstruction. """
         return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints.value]
 
-    @Slot(QObject, Node)
-    def handleFilesDrop(self, drop, cameraInit):
+    @Slot('QList<QUrl>')
+    @Slot('QList<QUrl>', Node)
+    @Slot('QList<QUrl>', Node, 'QPoint')
+    def handleFilesUrl(self, urls, cameraInit=None, position=None):
         """ Handle drop events aiming to add images to the Reconstruction.
-        Fetching urls from dropEvent is generally expensive in QML/JS (bug ?).
         This method allows to reduce process time by doing it on Python side.
         """
-        filesByType = self.getFilesByTypeFromDrop(drop)
+        filesByType = self.getFilesByTypeFromDrop(urls)
         if filesByType.images:
+            if cameraInit is None:
+                boundingBox = self.layout.boundingBox()
+                if not position:
+                    p = Position(boundingBox[0], boundingBox[1] + boundingBox[3])
+                elif isinstance(position, QPoint):
+                    p = Position(position.x(), position.y())
+                else:
+                    p = position
+                cameraInit = self.addNewNode("CameraInit", position=p)
             self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType.images, cameraInit,))
         if filesByType.videos:
             boundingBox = self.layout.boundingBox()
@@ -773,26 +783,33 @@ class Reconstruction(UIGraph):
 
         if not filesByType.images and not filesByType.videos and not filesByType.panoramaInfo:
             if filesByType.other:
-                extensions = set([os.path.splitext(url)[1] for url in filesByType.other])
-                self.error.emit(
-                    Message(
-                        "No Recognized Input File",
-                        "No recognized input file in the {} dropped files".format(len(filesByType.other)),
-                        "Unknown file extensions: " + ', '.join(extensions)
+                singleMgFile = False
+                if len(filesByType.other) == 1:
+                    url = filesByType.other[0]
+                    ext = os.path.splitext(url)[1]
+                    if ext == '.mg':
+                        self.loadUrl(url)
+                        singleMgFile = True
+                if not singleMgFile:
+                    extensions = set([os.path.splitext(url)[1] for url in filesByType.other])
+                    self.error.emit(
+                        Message(
+                            "No Recognized Input File",
+                            "No recognized input file in the {} dropped files".format(len(filesByType.other)),
+                            "Unknown file extensions: " + ', '.join(extensions)
+                        )
                     )
-                )
 
     @staticmethod
-    def getFilesByTypeFromDrop(drop):
+    def getFilesByTypeFromDrop(urls):
         """
 
         Args:
-            drop:
+            urls: list of filepaths
 
         Returns:
             <images, otherFiles> List of recognized images and list of other files
         """
-        urls = drop.property("urls")
         # Build the list of images paths
         filesByType = multiview.FilesByType()
         for url in urls:

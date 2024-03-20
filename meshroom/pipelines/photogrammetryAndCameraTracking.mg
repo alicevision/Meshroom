@@ -22,12 +22,12 @@
             "ConvertSfMFormat": "2.0",
             "DepthMap": "5.0",
             "StructureFromMotion": "3.3",
-            "DistortionCalibration": "3.0",
+            "DistortionCalibration": "4.0",
             "FeatureMatching": "2.0",
             "ScenePreview": "2.0",
             "ImageSegmentation": "1.2",
             "FeatureExtraction": "1.3",
-            "CameraInit": "9.0"
+            "CameraInit": "10.0"
         }
     },
     "graph": {

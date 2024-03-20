@@ -9,7 +9,7 @@
             "DepthMap": "5.0",
             "Meshing": "7.0",
             "FeatureMatching": "2.0",
-            "CameraInit": "9.0",
+            "CameraInit": "10.0",
             "Texturing": "6.0",
             "PrepareDenseScene": "3.1",
             "Publish": "1.3",

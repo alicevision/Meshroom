@@ -6,7 +6,7 @@
         "template": true,
         "nodesVersions": {
             "PhotometricStereo": "1.0",
-            "CameraInit": "9.0",
+            "CameraInit": "10.0",
             "SphereDetection": "1.0",
             "LightingCalibration": "1.0",
             "Publish": "1.3"

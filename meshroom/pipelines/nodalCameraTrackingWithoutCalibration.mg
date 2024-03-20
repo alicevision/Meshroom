@@ -10,7 +10,7 @@
             "ScenePreview": "2.0",
             "ConvertSfMFormat": "2.0",
             "ImageMatching": "2.0",
-            "CameraInit": "9.0",
+            "CameraInit": "10.0",
             "Publish": "1.3",
             "ImageSegmentation": "1.2",
             "RelativePoseEstimating": "1.0",

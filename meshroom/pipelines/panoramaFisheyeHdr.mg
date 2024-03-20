@@ -17,7 +17,7 @@
             "Publish": "1.3",
             "ImageMatching": "2.0",
             "LdrToHdrMerge": "4.1",
-            "CameraInit": "9.0"
+            "CameraInit": "10.0"
         },
         "releaseVersion": "2024.1.0-develop",
         "fileVersion": "1.1",

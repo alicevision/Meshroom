@@ -9,7 +9,7 @@
             "PanoramaMerging": "1.0",
             "Publish": "1.3",
             "PanoramaEstimation": "1.0",
-            "CameraInit": "9.0",
+            "CameraInit": "10.0",
             "LdrToHdrCalibration": "3.1",
             "ImageMatching": "2.0",
             "LdrToHdrSampling": "4.0",

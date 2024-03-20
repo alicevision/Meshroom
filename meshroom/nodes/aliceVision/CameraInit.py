@@ -123,7 +123,7 @@ Intrinsic = [
         label="Camera Type",
         description="Mathematical model used to represent a camera:\n"
                      " - pinhole: Simplest projective camera model without optical distortion (focal and optical center).\n"
-                     " - equidistant: Non-projective camera model suited for full-fisheye optics (like 180deg FoV).\n",
+                     " - equidistant: Non-projective camera model suited for full-fisheye optics (180deg FoV).\n",
         value="pinhole",
         values=["pinhole", "equidistant"],
         exclusive=True,

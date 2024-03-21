@@ -1187,7 +1187,14 @@ ApplicationWindow {
                         computeManager.submit(node)
                     }
                     onFilesDropped: {
-                        _reconstruction.handleFilesUrl(drop.urls, null, mousePosition)
+                        var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
+                        if (filesByType["other"].length > 0) {
+                            ensureSaved(function() {
+                                _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
+                            })
+                        } else {
+                            _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
+                        }
                     }
                 }
 

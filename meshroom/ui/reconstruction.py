@@ -716,15 +716,19 @@ class Reconstruction(UIGraph):
         """ Get all view Ids involved in the reconstruction. """
         return [vp.viewId.value for node in self._cameraInits for vp in node.viewpoints.value]
 
-    @Slot('QList<QUrl>')
-    @Slot('QList<QUrl>', Node)
-    @Slot('QList<QUrl>', Node, 'QPoint')
-    def handleFilesUrl(self, urls, cameraInit=None, position=None):
+    @Slot("QVariantMap")
+    @Slot("QVariantMap", Node)
+    @Slot("QVariantMap", Node, "QPoint")
+    def handleFilesUrl(self, filesByType, cameraInit=None, position=None):
         """ Handle drop events aiming to add images to the Reconstruction.
         This method allows to reduce process time by doing it on Python side.
+
+        Args:
+            {images, videos, panoramaInfo, otherFiles}: Map of paths of recognized images and list of other files
+            Node: cameraInit node used to add new images to it
+            QPoint: position to locate the node (usually the mouse position)
         """
-        filesByType = self.getFilesByTypeFromDrop(urls)
-        if filesByType.images:
+        if filesByType["images"]:
             if cameraInit is None:
                 boundingBox = self.layout.boundingBox()
                 if not position:
@@ -734,15 +738,15 @@ class Reconstruction(UIGraph):
                 else:
                     p = position
                 cameraInit = self.addNewNode("CameraInit", position=p)
-            self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType.images, cameraInit,))
-        if filesByType.videos:
+            self._workerThreads.apply_async(func=self.importImagesSync, args=(filesByType["images"], cameraInit,))
+        if filesByType["videos"]:
             boundingBox = self.layout.boundingBox()
             keyframeNode = self.addNewNode("KeyframeSelection", position=Position(boundingBox[0], boundingBox[1] + boundingBox[3]))
-            keyframeNode.inputPaths.value = filesByType.videos
-            if len(filesByType.videos) == 1:
+            keyframeNode.inputPaths.value = filesByType["videos"]
+            if len(filesByType["videos"]) == 1:
                 newVideoNodeMessage = "New node '{}' added for the input video.".format(keyframeNode.getLabel())
             else:
-                newVideoNodeMessage = "New node '{}' added for a rig of {} synchronized cameras.".format(keyframeNode.getLabel(), len(filesByType.videos))
+                newVideoNodeMessage = "New node '{}' added for a rig of {} synchronized cameras.".format(keyframeNode.getLabel(), len(filesByType["videos"]))
             self.info.emit(
                 Message(
                     "Video Input",
@@ -752,17 +756,17 @@ class Reconstruction(UIGraph):
                     "If you know the Camera Make/Model, it is highly recommended to declare them in the Node."
                 ))
 
-        if filesByType.panoramaInfo:
-            if len(filesByType.panoramaInfo) > 1:
+        if filesByType["panoramaInfo"]:
+            if len(filesByType["panoramaInfo"]) > 1:
                 self.error.emit(
                     Message(
                         "Multiple XML files in input",
-                        "Ignore the xml Panorama files:\n\n'{}'.".format(',\n'.join(filesByType.panoramaInfo)),
+                        "Ignore the xml Panorama files:\n\n'{}'.".format(',\n'.join(filesByType["panoramaInfo"])),
                         "",
                     ))
             else:
                 panoramaInitNodes = self.graph.nodesOfType('PanoramaInit')
-                for panoramaInfoFile in filesByType.panoramaInfo:
+                for panoramaInfoFile in filesByType["panoramaInfo"]:
                     for panoramaInitNode in panoramaInitNodes:
                         panoramaInitNode.attribute('initializeCameras').value = 'File'
                         panoramaInitNode.attribute('config').value = panoramaInfoFile
@@ -771,44 +775,44 @@ class Reconstruction(UIGraph):
                         Message(
                             "Panorama XML",
                             "XML file declared on PanoramaInit node",
-                            "XML file '{}' set on node '{}'".format(','.join(filesByType.panoramaInfo), ','.join([n.getLabel() for n in panoramaInitNodes])),
+                            "XML file '{}' set on node '{}'".format(','.join(filesByType["panoramaInfo"]), ','.join([n.getLabel() for n in panoramaInitNodes])),
                         ))
                 else:
                     self.error.emit(
                         Message(
                             "No PanoramaInit Node",
-                            "No PanoramaInit Node to set the Panorama file:\n'{}'.".format(','.join(filesByType.panoramaInfo)),
+                            "No PanoramaInit Node to set the Panorama file:\n'{}'.".format(','.join(filesByType["panoramaInfo"])),
                             "",
                         ))
 
-        if not filesByType.images and not filesByType.videos and not filesByType.panoramaInfo:
-            if filesByType.other:
+        if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"]:
+            if filesByType["other"]:
                 singleMgFile = False
-                if len(filesByType.other) == 1:
-                    url = filesByType.other[0]
+                if len(filesByType["other"]) == 1:
+                    url = filesByType["other"][0]
                     ext = os.path.splitext(url)[1]
                     if ext == '.mg':
                         self.loadUrl(url)
                         singleMgFile = True
                 if not singleMgFile:
-                    extensions = set([os.path.splitext(url)[1] for url in filesByType.other])
+                    extensions = set([os.path.splitext(url)[1] for url in filesByType["other"]])
                     self.error.emit(
                         Message(
                             "No Recognized Input File",
-                            "No recognized input file in the {} dropped files".format(len(filesByType.other)),
+                            "No recognized input file in the {} dropped files".format(len(filesByType["other"])),
                             "Unknown file extensions: " + ', '.join(extensions)
                         )
                     )
 
-    @staticmethod
-    def getFilesByTypeFromDrop(urls):
+    @Slot("QList<QUrl>", result="QVariantMap")
+    def getFilesByTypeFromDrop(self, urls):
         """
 
         Args:
             urls: list of filepaths
 
         Returns:
-            <images, otherFiles> List of recognized images and list of other files
+            {images, otherFiles}: Map of recognized images and list of other files
         """
         # Build the list of images paths
         filesByType = multiview.FilesByType()
@@ -818,7 +822,7 @@ class Reconstruction(UIGraph):
                 filesByType.extend(multiview.findFilesByTypeInFolder(localFile))
             else:
                 filesByType.addFile(localFile)
-        return filesByType
+        return {"images": filesByType.images, "videos": filesByType.videos, "panoramaInfo":filesByType.panoramaInfo, "other":filesByType.other}
 
     def importImagesFromFolder(self, path, recursive=False):
         """

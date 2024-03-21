@@ -81,7 +81,14 @@ Item {
                 onRemoveImageRequest: reconstruction.removeAttribute(attribute)
                 onAllViewpointsCleared: { reconstruction.removeAllImages(); reconstruction.selectedViewId = "-1" }
                 onFilesDropped: {
-                    reconstruction.handleFilesUrl(drop.urls, augmentSfm ? null : cameraInit)
+                    var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
+                    if (filesByType["other"].length > 0) {
+                        ensureSaved(function() {
+                            reconstruction.handleFilesUrl(filesByType, augmentSfm ? null : cameraInit)
+                        })
+                    } else {
+                        reconstruction.handleFilesUrl(filesByType, augmentSfm ? null : cameraInit)
+                    }
                 }
             }
             LiveSfmView {

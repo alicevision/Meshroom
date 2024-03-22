@@ -785,24 +785,28 @@ class Reconstruction(UIGraph):
                             "",
                         ))
 
-        if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"]:
-            if filesByType["other"]:
-                singleMgFile = False
-                if len(filesByType["other"]) == 1:
-                    url = filesByType["other"][0]
-                    ext = os.path.splitext(url)[1]
-                    if ext == '.mg':
-                        self.loadUrl(url)
-                        singleMgFile = True
-                if not singleMgFile:
-                    extensions = set([os.path.splitext(url)[1] for url in filesByType["other"]])
-                    self.error.emit(
-                        Message(
-                            "No Recognized Input File",
-                            "No recognized input file in the {} dropped files".format(len(filesByType["other"])),
-                            "Unknown file extensions: " + ', '.join(extensions)
-                        )
+        if filesByType["meshroomScene"]:
+            if len(filesByType["meshroomScene"]) > 1:
+                self.error.emit(
+                    Message(
+                        "Too much Meshroom Scenes",
+                        "You should only import 1 .mg file"
                     )
+                )
+            else:
+                self.loadUrl(filesByType["meshroomScene"][0])
+
+
+        if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"] and not filesByType["meshroomScene"]:
+            if filesByType["other"]:
+                extensions = set([os.path.splitext(url)[1] for url in filesByType["other"]])
+                self.error.emit(
+                    Message(
+                        "No Recognized Input File",
+                        "No recognized input file in the {} dropped files".format(len(filesByType["other"])),
+                        "Unknown file extensions: " + ', '.join(extensions)
+                    )
+                )
 
     @Slot("QList<QUrl>", result="QVariantMap")
     def getFilesByTypeFromDrop(self, urls):
@@ -822,7 +826,7 @@ class Reconstruction(UIGraph):
                 filesByType.extend(multiview.findFilesByTypeInFolder(localFile))
             else:
                 filesByType.addFile(localFile)
-        return {"images": filesByType.images, "videos": filesByType.videos, "panoramaInfo":filesByType.panoramaInfo, "other":filesByType.other}
+        return {"images": filesByType.images, "videos": filesByType.videos, "panoramaInfo": filesByType.panoramaInfo, "meshroomScene": filesByType.meshroomScene, "other": filesByType.other}
 
     def importImagesFromFolder(self, path, recursive=False):
         """

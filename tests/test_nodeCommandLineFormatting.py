@@ -17,8 +17,6 @@ def test_formatting_listOfFiles():
     # viewId, poseId, path, intrinsicId, rigId, subPoseId, metadata
     assert n1.viewpoints.getValueStr() == '-1 -1 "/non/existing/fileA" -1 -1 -1 "" -1 -1 "/non/existing/with space/fileB" -1 -1 -1 ""'
 
-    assert n1.allowedCameraModels.getValueStr() == '"pinhole,radial1,radial3,brown,fisheye4,fisheye1,3deanamorphic4,3deradial4,3declassicld"'
-
     graph = Graph('')
     n1 = graph.addNewNode('ImageMatching')
     assert n1.featuresFolders.getValueStr() == ''

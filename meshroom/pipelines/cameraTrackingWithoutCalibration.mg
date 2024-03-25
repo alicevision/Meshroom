@@ -26,7 +26,7 @@
             "ScenePreview": "2.0",
             "ImageSegmentation": "1.2",
             "FeatureExtraction": "1.3",
-            "CameraInit": "9.0"
+            "CameraInit": "10.0"
         }
     },
     "graph": {

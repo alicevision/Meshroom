@@ -394,7 +394,7 @@ Item {
                                 delegate: Loader {
                                     id: outputLoader
                                     active: object.isOutput && isFileAttributeBaseType(object)
-                                    visible: object.enabled
+                                    visible: object.enabled || object.hasOutputConnections
                                     anchors.right: parent.right
                                     width: outputs.width
 

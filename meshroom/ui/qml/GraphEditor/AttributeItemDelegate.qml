@@ -65,6 +65,11 @@ RowLayout {
 
                 text: object.label
 
+                color: {
+                    if (object.hasOutputConnections && !object.enabled) return "grey"
+                    else return "white"
+                }
+
                 // Tooltip hint with attribute's description
                 ToolTip {
                     id: parameterTooltip

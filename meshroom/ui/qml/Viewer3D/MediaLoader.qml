@@ -46,6 +46,17 @@ import Utils 1.0
         }
 
         switch (Filepath.extension(source)) {
+            case ".ply":
+                if ((Filepath.extension(Filepath.removeExtension(source))) == ".pc")
+                {
+                    if (Viewer3DSettings.supportSfmData)
+                        component = sfmDataLoaderEntityComponent
+                }
+                else 
+                {
+                    component = sceneLoaderEntityComponent
+                }
+                break
             case ".abc": 
             case ".json":
             case ".sfm":

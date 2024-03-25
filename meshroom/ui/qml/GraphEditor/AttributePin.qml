@@ -200,7 +200,10 @@ RowLayout {
             horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
             anchors.right: attribute && attribute.isOutput ? parent.right : undefined
             rightPadding: 0
-            color: hovered ? palette.highlight : palette.text
+            color: {
+                if (object.hasOutputConnections && !object.enabled) return "grey"
+                return hovered ? palette.highlight : palette.text
+            }
         }
     }
 
@@ -226,7 +229,7 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: 2
             color: {
-                if (outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
+                if ((!object.hasOutputConnections && object.enabled) && outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
                     return Colors.sysPalette.highlight
                 return Colors.sysPalette.text
             }

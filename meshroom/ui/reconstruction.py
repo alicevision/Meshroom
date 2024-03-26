@@ -403,16 +403,16 @@ class Reconstruction(UIGraph):
     activeNodeCategories = {
         # All nodes generating a sfm scene (3D reconstruction or panorama)
         "sfm": ["StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform",
-                "SfMAlignment"],
+                "SfMAlignment", "SfMFilter", "SfMTriangulation"],
         # All nodes generating a sfmData file
         "sfmData": ["CameraInit", "DistortionCalibration", "StructureFromMotion", "GlobalSfM", "PanoramaEstimation", "SfMTransfer", "SfMTransform",
-                "SfMAlignment"],
+                "SfMAlignment", "SfMFilter", "SfMTriangulation"],
         # All nodes generating depth map files
         "allDepthMap": ["DepthMap", "DepthMapFilter"],
         # Nodes that can be used to provide features folders to the UI
-        "featureProvider": ["FeatureExtraction", "FeatureMatching", "StructureFromMotion"],
+        "featureProvider": ["FeatureExtraction", "FeatureMatching", "StructureFromMotion", "SfMFilter", "SfMTriangulation"],
         # Nodes that can be used to provide matches folders to the UI
-        "matchProvider": ["FeatureMatching", "StructureFromMotion"]
+        "matchProvider": ["FeatureMatching", "StructureFromMotion", "SfMFilter", "SfMTriangulation"]
     }
 
     def __init__(self, undoStack, taskManager, defaultPipeline='', parent=None):

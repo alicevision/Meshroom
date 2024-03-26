@@ -66,8 +66,8 @@ RowLayout {
                 text: object.label
 
                 color: {
-                    if (object.hasOutputConnections && !object.enabled) return "grey"
-                    else return "white"
+                    if (object.hasOutputConnections && !object.enabled) return Colors.lightgrey
+                    else return palette.text
                 }
 
                 // Tooltip hint with attribute's description

@@ -201,7 +201,7 @@ RowLayout {
             anchors.right: attribute && attribute.isOutput ? parent.right : undefined
             rightPadding: 0
             color: {
-                if (object.hasOutputConnections && !object.enabled) return "grey"
+                if (object.hasOutputConnections && !object.enabled) return Colors.lightgrey
                 return hovered ? palette.highlight : palette.text
             }
         }

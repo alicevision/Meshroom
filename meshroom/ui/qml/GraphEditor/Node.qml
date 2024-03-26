@@ -487,6 +487,7 @@ Item {
                                     delegate: Loader {
                                         id: paramLoader
                                         active: !object.isOutput && !isFileAttributeBaseType(object)
+                                        visible: object.enabled || object.isLink || object.hasOutputConnections
                                         property bool isFullyActive: (m.displayParams || object.isLink || object.hasOutputConnections)
                                         width: parent.width
 

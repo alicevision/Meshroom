@@ -66,7 +66,7 @@ RowLayout {
                 text: object.label
 
                 color: {
-                    if (object.hasOutputConnections && !object.enabled) return Colors.lightgrey
+                    if ((object.hasOutputConnections || object.isLink) && !object.enabled) return Colors.lightgrey
                     else return palette.text
                 }
 

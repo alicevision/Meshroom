@@ -29,6 +29,8 @@ FocusScope {
     readonly property var viewpoint: _reconstruction ? _reconstruction.selectedViewpoint : null
     readonly property bool doSyncViewpointCamera: Viewer3DSettings.syncViewpointCamera && (viewpoint && viewpoint.isReconstructed)
 
+    property alias viewer2DInfo: mediaLibrary.viewer2DInfo
+
     // functions
     function resetCameraPosition() {
         mainCamera.position = defaultCamPosition

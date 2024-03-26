@@ -206,6 +206,14 @@ Item {
                     Viewer3D {
                         id: c_viewer3D
 
+                        viewer2DInfo: {
+                            "x": viewer2D.imgContainer.x,
+                            "y": viewer2D.imgContainer.y,
+                            "width": viewer2D.imgLayout.width,
+                            "height": viewer2D.imgLayout.height,
+                            "scale": viewer2D.imgContainer.scale
+                        }
+
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.minimumWidth: 20

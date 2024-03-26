@@ -28,6 +28,9 @@ FocusScope {
     property bool enable8bitViewer: enable8bitViewerAction.checked
     property bool enableSequencePlayer: enableSequencePlayerAction.checked
 
+    readonly property alias imgContainer: imgContainer
+    readonly property alias imgLayout: imgLayout
+
     QtObject {
         id: m
         property variant viewpointMetadata: {

@@ -989,11 +989,15 @@ ApplicationWindow {
                     viewer2D.tryLoadNode(node)
 
                     // 3D viewer
+                    // By default we only display the first 3D item, except if it has the semantic flag "3D"
+                    var alreadyDisplay = false
                     for (var i = 0; i < node.attributes.count; i++) {
                         var attr = node.attributes.at(i)
-                        if (attr.isOutput && attr.desc.semantic !== "image" && workspaceView.viewIn3D(attr, mouse))
-                            break
-                    }
+                        if (attr.isOutput && attr.desc.semantic !== "image")
+                            if (!alreadyDisplay || attr.desc.semantic == "3D")
+                                if (workspaceView.viewIn3D(attr, mouse))
+                                      alreadyDisplay = true
+                        }
                 }
 
                 function viewIn3D(attribute, mouse) {

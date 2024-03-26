@@ -6,9 +6,9 @@
         "template": true,
         "nodesVersions": {
             "ExportDistortion": "1.0",
-            "CameraInit": "9.0",
+            "CameraInit": "10.0",
             "CheckerboardDetection": "1.0",
-            "DistortionCalibration": "3.0",
+            "DistortionCalibration": "4.0",
             "Publish": "1.3"
         }
     },

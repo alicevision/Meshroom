@@ -18,6 +18,7 @@ Entity {
     property Layer frontLayerComponent
     property var window
     property alias uniformScale: transformGizmo.uniformScale // By default, if not set, the value is: false
+    property alias gizmoEnabled : transformGizmo.enabled
     property TransformGizmo transformGizmo: TransformGizmo {
         id: transformGizmo
         camera: root.camera

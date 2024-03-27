@@ -378,7 +378,7 @@ Item {
                     property var src: root._attributeToDelegate[edge.src]
                     property var dst: root._attributeToDelegate[edge.dst]
                     property bool isValidEdge: src !== undefined && dst !== undefined
-                    visible: isValidEdge
+                    visible: isValidEdge && root._attributeToDelegate[edge.src].visible && root._attributeToDelegate[edge.dst].visible
 
                     property bool inFocus: containsMouse || (edgeMenu.opened && edgeMenu.currentEdge === edge)
 
@@ -401,6 +401,30 @@ Item {
                                 edgeMenu.popup()
                             }
                         }
+                    }
+                    onVisibleChanged: {
+                        if (visible) {
+                            // Enable the pins on both sides
+                            root._attributeToDelegate[edge.src].updatePin(true, true)  // isSrc = true, isVisible = true
+                            root._attributeToDelegate[edge.dst].updatePin(false, true)  // isSrc = false, isVisible = true
+                        } else {
+                            // One of the attributes is visible, we do not need to handle the case where both attributes are hidden
+                            if (isValidEdge && (root._attributeToDelegate[edge.src].visible || root._attributeToDelegate[edge.dst].visible)) {
+                                if (root._attributeToDelegate[edge.src].visible) {
+                                    root._attributeToDelegate[edge.src].updatePin(true, false)  // isSrc = true, isVisible = false
+                                } else {
+                                    root._attributeToDelegate[edge.dst].updatePin(false, false)  // isSrc = false, isVisible = false
+                                }
+                            }
+                        }
+                    }
+
+                    Component.onDestruction: {
+                        // Handles the case where the edge is destroyed while hidden because it is replaced: the pins should be re-enabled
+                        if (root._attributeToDelegate[edge.src] && root._attributeToDelegate[edge.src] !== undefined)
+                            root._attributeToDelegate[edge.src].updatePin(true, true)  // isSrc = true, isVisible = true
+                        if (root._attributeToDelegate[edge.dst] && root._attributeToDelegate[edge.dst] !== undefined)
+                            root._attributeToDelegate[edge.dst].updatePin(false, true)  // isSrc = false, isVisible = true
                     }
                 }
             }

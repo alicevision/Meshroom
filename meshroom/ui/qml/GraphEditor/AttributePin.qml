@@ -35,6 +35,16 @@ RowLayout {
     layoutDirection: Qt.LeftToRight
     spacing: 3
 
+    function updatePin(isSrc, isVisible)
+    {
+        if (isSrc) {
+            innerOutputAnchor.linkEnabled = isVisible
+        } else {
+            innerInputAnchor.linkEnabled = isVisible
+        }
+
+    }
+
     // Instantiate empty Items for each child attribute
     Repeater {
         id: childrenRepeater
@@ -59,7 +69,9 @@ RowLayout {
         color: Colors.sysPalette.base
 
         Rectangle {
-            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (attribute && attribute.isLink) || inputConnectMA.drag.active || inputDropArea.containsDrag
+            id: innerInputAnchor
+            property bool linkEnabled: true
+            visible: inputConnectMA.containsMouse || childrenRepeater.count > 0 || (attribute && attribute.isLink && linkEnabled) || inputConnectMA.drag.active || inputDropArea.containsDrag
             radius: isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
@@ -188,7 +200,10 @@ RowLayout {
             horizontalAlignment: attribute && attribute.isOutput ? Text.AlignRight : Text.AlignLeft
             anchors.right: attribute && attribute.isOutput ? parent.right : undefined
             rightPadding: 0
-            color: hovered ? palette.highlight : palette.text
+            color: {
+                if ((object.hasOutputConnections || object.isLink) && !object.enabled) return Colors.lightgrey
+                return hovered ? palette.highlight : palette.text
+            }
         }
     }
 
@@ -207,12 +222,14 @@ RowLayout {
         color: Colors.sysPalette.base
 
         Rectangle {
-            visible: attribute.hasOutputConnections || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
+            id: innerOutputAnchor
+            property bool linkEnabled: true
+            visible: (attribute.hasOutputConnections && linkEnabled) || outputConnectMA.containsMouse || outputConnectMA.drag.active || outputDropArea.containsDrag
             radius: isList ? 0 : 2
             anchors.fill: parent
             anchors.margins: 2
             color: {
-                if (outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
+                if ((!object.hasOutputConnections && object.enabled) && outputConnectMA.containsMouse || outputConnectMA.drag.active || (outputDropArea.containsDrag && outputDropArea.acceptableDrop))
                     return Colors.sysPalette.highlight
                 return Colors.sysPalette.text
             }

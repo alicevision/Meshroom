@@ -14,9 +14,9 @@ Effect {
         Technique {
             graphicsApiFilter {
                 api: GraphicsApiFilter.OpenGL
-                profile: GraphicsApiFilter.CoreProfile
-                majorVersion: 3
-                minorVersion: 1
+                profile: GraphicsApiFilter.RHI
+                majorVersion: 1
+                minorVersion: 0
             }
 
 

@@ -313,12 +313,11 @@ class ChoiceParam(Param):
         super(ChoiceParam, self).__init__(name=name, label=label, description=description, value=value, uid=uid, group=group, advanced=advanced,
                                           semantic=semantic, enabled=enabled, validValue=validValue, errorMessage=errorMessage)
 
-    def conformValue(self, val):
+    def conformValue(self, value):
         """ Conform 'val' to the correct type and check for its validity """
-        val = self._valueType(val)
-        if val not in self.values:
-            raise ValueError('ChoiceParam value "{}" is not in "{}".'.format(val, str(self.values)))
-        return val
+        if not isinstance(value, str):
+            raise ValueError('ChoiceParam value should be a string (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        return value
 
     def validateValue(self, value):
         if self.exclusive:
@@ -573,7 +572,6 @@ class Node(object):
             BaseNode.updateInternals
         """
         pass
-
     @classmethod
     def postUpdate(cls, node):
         """ Method call after node's internal update on invalidation.

@@ -23,8 +23,7 @@ function sec2time(time) {
     return pad(hours, 2) + ':' + pad(minutes, 2) + ':' + pad(seconds, 2)
 }
 
-function getTimeStr(elapsed)
-{
+function getTimeStr(elapsed) {
     if (elapsed <= 0)
         return ""
 
@@ -40,6 +39,10 @@ function getTimeStr(elapsed)
     if (elapsed > 60) {
         min = Math.floor(elapsed / 60)
         elapsed = elapsed - (min * 60)
+        if (Math.round(elapsed) == 60) {
+            min += 1
+            elapsed = Math.max(0, elapsed - 60)
+        }
         finalTime += min + "m"
     }
     if (hours === 0 && min === 0) {

@@ -82,17 +82,17 @@ class FilesByType:
         self.images = []
         self.videos = []
         self.panoramaInfo = []
-        self.meshroomScene = []
+        self.meshroomScenes = []
         self.other = []
 
     def __bool__(self):
-        return self.images or self.videos or self.panoramaInfo or self.meshroomScene
+        return self.images or self.videos or self.panoramaInfo or self.meshroomScenes
 
     def extend(self, other):
         self.images.extend(other.images)
         self.videos.extend(other.videos)
         self.panoramaInfo.extend(other.panoramaInfo)
-        self.meshroomScene.extend(other.meshroomScene)
+        self.meshroomScenes.extend(other.meshroomScenes)
         self.other.extend(other.other)
 
     def addFile(self, file):
@@ -103,7 +103,7 @@ class FilesByType:
         elif hasExtension(file, panoramaInfoExtensions):
             self.panoramaInfo.append(file)
         elif hasExtension(file, meshroomSceneExtensions):
-            self.meshroomScene.append(file)
+            self.meshroomScenes.append(file)
         else:
             self.other.append(file)
 

@@ -724,7 +724,7 @@ class Reconstruction(UIGraph):
         This method allows to reduce process time by doing it on Python side.
 
         Args:
-            {images, videos, panoramaInfo, otherFiles}: Map of paths of recognized images and list of other files
+            {images, videos, panoramaInfo, meshroomScenes, otherFiles}: Map containing the lists of paths for recognized images, videos, Meshroom scenes and other files.
             Node: cameraInit node used to add new images to it
             QPoint: position to locate the node (usually the mouse position)
         """
@@ -785,19 +785,19 @@ class Reconstruction(UIGraph):
                             "",
                         ))
 
-        if filesByType["meshroomScene"]:
-            if len(filesByType["meshroomScene"]) > 1:
+        if filesByType["meshroomScenes"]:
+            if len(filesByType["meshroomScenes"]) > 1:
                 self.error.emit(
                     Message(
-                        "Too much Meshroom Scenes",
-                        "You should only import 1 .mg file"
+                    "Too many Meshroom Scenes",
+                    "A single Meshroom scene (.mg file) can be imported at once."
                     )
                 )
             else:
-                self.loadUrl(filesByType["meshroomScene"][0])
+                self.loadUrl(filesByType["meshroomScenes"][0])
 
 
-        if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"] and not filesByType["meshroomScene"]:
+        if not filesByType["images"] and not filesByType["videos"] and not filesByType["panoramaInfo"] and not filesByType["meshroomScenes"]:
             if filesByType["other"]:
                 extensions = set([os.path.splitext(url)[1] for url in filesByType["other"]])
                 self.error.emit(
@@ -816,7 +816,7 @@ class Reconstruction(UIGraph):
             urls: list of filepaths
 
         Returns:
-            {images, otherFiles}: Map of recognized images and list of other files
+            {images, videos, panoramaInfo, meshroomScenes, otherFiles}: Map containing the lists of paths for recognized images, videos, Meshroom scenes and other files.
         """
         # Build the list of images paths
         filesByType = multiview.FilesByType()
@@ -826,7 +826,7 @@ class Reconstruction(UIGraph):
                 filesByType.extend(multiview.findFilesByTypeInFolder(localFile))
             else:
                 filesByType.addFile(localFile)
-        return {"images": filesByType.images, "videos": filesByType.videos, "panoramaInfo": filesByType.panoramaInfo, "meshroomScene": filesByType.meshroomScene, "other": filesByType.other}
+        return {"images": filesByType.images, "videos": filesByType.videos, "panoramaInfo": filesByType.panoramaInfo, "meshroomScenes": filesByType.meshroomScenes, "other": filesByType.other}
 
     def importImagesFromFolder(self, path, recursive=False):
         """

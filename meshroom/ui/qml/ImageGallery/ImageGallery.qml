@@ -29,7 +29,7 @@ Panel {
     property bool readOnly: false
 
     property bool isMeshroomScene : false
-    property int nbFilesDropped: 0
+    property int nbDraggedFiles: 0
 
     signal removeImageRequest(var attribute)
     signal allViewpointsCleared()
@@ -443,10 +443,10 @@ Panel {
                 keys: ["text/uri-list"]
                 onEntered: {
                     isMeshroomScene = false
-                    nbFilesDropped = drag.urls.length
-                    if (nbFilesDropped == 1){
+                    nbDraggedFiles = drag.urls.length
+                    if (nbDraggedFiles == 1) {
                         var url = drag.urls[0]
-                        if (url.endsWith(".mg")){
+                        if (url.endsWith(".mg")) {
                             isMeshroomScene = true
                         }
                     }
@@ -477,12 +477,12 @@ Panel {
                         verticalAlignment: Text.AlignVCenter
                         text: {
                             if (isMeshroomScene) {
-                                if(nbFilesDropped == 1) {
+                                if (nbDraggedFiles == 1) {
                                     return "Load Project"
                                 } else {
                                     return "Only one project"
                                 }
-                            }else if (!isMeshroomScene){
+                            } else {
                                 return "Add Images"
                             }
                         }
@@ -506,11 +506,13 @@ Panel {
                         font.bold: true
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         visible: {
-                            if(isMeshroomScene)
+                            if (isMeshroomScene) {
                                 return false
-                            if(m.viewpoints){
+                            }
+
+                            if (m.viewpoints) {
                                 return m.viewpoints.count > 0
-                            }else{
+                            } else {
                                 return false
                             }
                         }

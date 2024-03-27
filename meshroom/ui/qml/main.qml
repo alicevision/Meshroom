@@ -1188,7 +1188,7 @@ ApplicationWindow {
                     }
                     onFilesDropped: {
                         var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
-                        if (filesByType["meshroomScene"].length == 1) {
+                        if (filesByType["meshroomScenes"].length == 1) {
                             ensureSaved(function() {
                                 _reconstruction.handleFilesUrl(filesByType, null, mousePosition)
                             })

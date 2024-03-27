@@ -82,7 +82,7 @@ Item {
                 onAllViewpointsCleared: { reconstruction.removeAllImages(); reconstruction.selectedViewId = "-1" }
                 onFilesDropped: {
                     var filesByType = _reconstruction.getFilesByTypeFromDrop(drop.urls)
-                    if (filesByType["meshroomScene"].length == 1) {
+                    if (filesByType["meshroomScenes"].length == 1) {
                         ensureSaved(function() {
                             reconstruction.handleFilesUrl(filesByType, augmentSfm ? null : cameraInit)
                         })

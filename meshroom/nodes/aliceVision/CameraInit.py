@@ -535,6 +535,67 @@ The needed metadata are:
         views, intrinsics = self.buildIntrinsics(node, filesByType.images)
         self.setAttributes(node, {"viewpoints": views, "intrinsics": intrinsics})
 
+    def upgradeTypes(self, intrinsic, itype):
+        if itype == "pinhole":
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "none"
+            intrinsic['undistortionType'] = "none"
+
+        elif itype == "radial1":
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "radialk1"
+            intrinsic['undistortionType'] = "none"
+
+        elif itype == "radial3":
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "radialk3"
+            intrinsic['undistortionType'] = "none"
+        
+        elif itype == "3deradial4":
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "3deradial4"
+            intrinsic['undistortionType'] = "none"
+
+        elif itype == "brown":
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "brown"
+            intrinsic['undistortionType'] = "none"
+
+        elif itype == "fisheye4":
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "fisheye4"
+            intrinsic['undistortionType'] = "none"
+
+        elif itype == "fisheye1":
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "fisheye1"
+            intrinsic['undistortionType'] = "none"
+        
+        elif itype == "3deanamorphic4":
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "none"
+            intrinsic['undistortionType'] = "3deanamorphic4"
+
+        elif itype == "3declassicld":
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "3declassicld"
+            intrinsic['undistortionType'] = "none"
+        
+        elif itype == "equidistant":
+            intrinsic['type'] = "equidistant"
+            intrinsic['distortionType'] = "none"
+            intrinsic['undistortionType'] = "none"
+        
+        elif itype == "equidistant_r3":
+            intrinsic['type'] = "equidistant"
+            intrinsic['distortionType'] = "radialk3pt"
+            intrinsic['undistortionType'] = "none"
+
+        else:
+            intrinsic['type'] = "pinhole"
+            intrinsic['distortionType'] = "none"
+            intrinsic['undistortionType'] = "none"
+
     def upgradeAttributeValues(self, attrValues, fromVersion):
 
         # Starting with version 6, the principal point is now relative to the image center
@@ -560,6 +621,12 @@ The needed metadata are:
                 intrinsic['pixelRatio'] = 1.0
                 intrinsic['pixelRatioLocked'] = False
 
+        #Upgrade types
+        if fromVersion < Version(10, 0):
+            for intrinsic in attrValues['intrinsics']:
+                itype = intrinsic['type']
+                self.upgradeTypes(intrinsic, itype)
+              
         return attrValues
 
     def readSfMData(self, sfmFile):

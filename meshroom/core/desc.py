@@ -315,8 +315,8 @@ class ChoiceParam(Param):
 
     def conformValue(self, value):
         """ Conform 'val' to the correct type and check for its validity """
-        if not isinstance(value, str):
-            raise ValueError('ChoiceParam value should be a string (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        if not isinstance(value, self._valueType):
+            raise ValueError('ChoiceParam value should be a {} (param:{}, value:{}, type:{})'.format(self._valueType, self.name, value, type(value)))
         return value
 
     def validateValue(self, value):

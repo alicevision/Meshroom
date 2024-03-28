@@ -7,7 +7,7 @@ import weakref
 import types
 import logging
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from string import Template
 from meshroom.common import BaseObject, Property, Variant, Signal, ListModel, DictModel, Slot
 from meshroom.core import desc, hashValue
@@ -29,6 +29,8 @@ def attributeFactory(description, value, isOutput, node, root=None, parent=None)
         cls = GroupAttribute
     elif isinstance(description, desc.ListAttribute):
         cls = ListAttribute
+    elif isinstance(description, desc.ChoiceParam):
+        cls = ChoiceParam
     else:
         cls = Attribute
     attr = cls(node, description, isOutput, root, parent)
@@ -170,6 +172,9 @@ class Attribute(BaseObject):
             return
         self._validValue = value
 
+    def validateValue(self, value):
+        return self.desc.validateValue(value)
+
     def _get_value(self):
         if self.isLink:
             return self.getLinkParam().value
@@ -185,8 +190,10 @@ class Attribute(BaseObject):
         else:
             # if we set a new value, we use the attribute descriptor validator to check the validity of the value
             # and apply some conversion if needed
-            convertedValue = self.desc.validateValue(value)
+            convertedValue = self.validateValue(value)
             self._value = convertedValue
+
+        self.node.onAttributeChanged(self)
         # Request graph update when input parameter value is set
         # and parent node belongs to a graph
         # Output attributes value are set internally during the update process,
@@ -392,6 +399,43 @@ def raiseIfLink(func):
     return wrapper
 
 
+class ChoiceParam(Attribute):
+
+    def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
+        super(ChoiceParam, self).__init__(node, attributeDesc, isOutput, root, parent)
+        self._values = None
+
+    def getValues(self):
+        return self._values if self._values is not None else self.desc._values
+
+    def conformValue(self, val):
+        """ Conform 'val' to the correct type and check for its validity """
+        return self.desc._valueType(val)
+
+    def validateValue(self, value):
+        if self.desc.exclusive:
+            return self.conformValue(value)
+
+        if isinstance(value, str):
+            value = value.split(',')
+
+        if not isinstance(value, Iterable):
+            raise ValueError('Non exclusive ChoiceParam value should be iterable (param:{}, value:{}, type:{})'.format(self.name, value, type(value)))
+        return [self.conformValue(v) for v in value]
+
+    def setValues(self, values):
+        if values == self._values:
+            return
+        self._values = values
+        self.valuesChanged.emit()
+
+    def __len__(self):
+        return len(self.getValues())
+
+    valuesChanged = Signal()
+    values = Property(Variant, getValues, setValues, notify=valuesChanged)
+
+
 class ListAttribute(Attribute):
 
     def __init__(self, node, attributeDesc, isOutput, root=None, parent=None):
@@ -567,7 +611,7 @@ class GroupAttribute(Attribute):
                 raise AttributeError(key)
 
     def _set_value(self, exportedValue):
-        value = self.desc.validateValue(exportedValue)
+        value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
             for key, v in value.items():
@@ -581,7 +625,7 @@ class GroupAttribute(Attribute):
             raise AttributeError("Failed to set on GroupAttribute: {}".format(str(value)))
 
     def upgradeValue(self, exportedValue):
-        value = self.desc.validateValue(exportedValue)
+        value = self.validateValue(exportedValue)
         if isinstance(value, dict):
             # set individual child attribute values
             for key, v in value.items():

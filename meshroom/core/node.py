@@ -879,6 +879,14 @@ class BaseNode(BaseObject):
     def _updateChunks(self):
         pass
 
+    def onAttributeChanged(self, attr):
+        paramName = attr.name[:1].upper() + attr.name[1:]
+        methodName = f'on{paramName}Changed'
+        if hasattr(self.nodeDesc, methodName):
+            m = getattr(self.nodeDesc, methodName)
+            if callable(m):
+                m(self)
+
     def updateInternals(self, cacheDir=None):
         """ Update Node's internal parameters and output attributes.
 
@@ -1245,6 +1253,13 @@ class Node(BaseNode):
                 self.attributesPerUid[uidIndex].add(attr)
 
         self.setAttributeValues(kwargs)
+        self.callDesc("onNodeCreated")
+
+    def callDesc(self, methodName, *args, **kwargs):
+        if hasattr(self.nodeDesc, methodName):
+            m = getattr(self.nodeDesc, methodName)
+            if callable(m):
+                m(self, *args, **kwargs)
 
     def setAttributeValues(self, values):
         # initialize attribute values

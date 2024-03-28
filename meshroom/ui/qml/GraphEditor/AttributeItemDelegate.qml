@@ -345,7 +345,7 @@ RowLayout {
             ComboBox {
                 id: combo
                 enabled: root.editable
-                model: attribute.desc.values
+                model: attribute.values
                 Component.onCompleted: currentIndex = find(attribute.value)
                 onActivated: _reconstruction.setAttribute(attribute, currentText)
                 Connections {

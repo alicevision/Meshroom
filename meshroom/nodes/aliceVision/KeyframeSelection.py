@@ -212,7 +212,7 @@ You can extract frames at regular interval by configuring only the min/maxFrameS
                             name="minNbOutFrames",
                             label="Min Nb Output Frames",
                             description="Minimum number of frames selected to be keyframes.",
-                            value=10,
+                            value=40,
                             range=(1, 100, 1),
                             uid=[0],
                             enabled=lambda node: node.smartSelection.enabled,

@@ -29,6 +29,8 @@ Item {
     signal computeRequest(var node)
     signal submitRequest(var node)
 
+    property int nbMeshroomScenes: 0
+    property int nbDraggedFiles: 0
     // Files have been dropped
     signal filesDropped(var drop, var mousePosition)
 
@@ -713,15 +715,45 @@ Item {
             id: dropArea
             anchors.fill: parent
             keys: ["text/uri-list"]
+            onEntered: {
+                nbMeshroomScenes = 0
+                nbDraggedFiles = drag.urls.length
+
+                drag.urls.forEach(function(file) {
+                    if (file.endsWith(".mg")) {
+                        nbMeshroomScenes++
+                    }
+                })
+            }
+
             onDropped: {
-                // retrieve mouse position and convert coordinate system
-                // from pixel values to graph reference system
-                var mousePosition = mapToItem(draggable, drag.x, drag.y)
-                // send the list of files,
-                // to create the corresponding nodes or open another scene
-                filesDropped(drop, mousePosition)
+                if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
+                    // retrieve mouse position and convert coordinate system
+                    // from pixel values to graph reference system
+                    var mousePosition = mapToItem(draggable, drag.x, drag.y)
+                    // send the list of files,
+                    // to create the corresponding nodes or open another scene
+                    filesDropped(drop, mousePosition)
+                } else {
+                    errorDialog.open()
+                }
             }
         }
+    }
+
+    MessageDialog {
+        id: errorDialog
+
+        icon.text: MaterialIcons.error
+        icon.color: "#F44336"
+
+        title: "Different types of files"
+        text: "Do not mix .mg files and other types of files."
+        standardButtons: Dialog.Ok
+
+        parent: Overlay.overlay
+
+        onAccepted: close()
     }
 
     // Toolbar

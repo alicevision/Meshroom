@@ -28,7 +28,7 @@ Panel {
     property int defaultCellSize: 160
     property bool readOnly: false
 
-    property bool isMeshroomScene : false
+    property int nbMeshroomScenes: 0
     property int nbDraggedFiles: 0
 
     signal removeImageRequest(var attribute)
@@ -442,18 +442,22 @@ Panel {
                 enabled: !m.readOnly && !intrinsicsFilterButton.checked
                 keys: ["text/uri-list"]
                 onEntered: {
-                    isMeshroomScene = false
+                    nbMeshroomScenes = 0
                     nbDraggedFiles = drag.urls.length
-                    if (nbDraggedFiles == 1) {
-                        var url = drag.urls[0]
-                        if (url.endsWith(".mg")) {
-                            isMeshroomScene = true
+
+                    drag.urls.forEach(function(file) {
+                        if (file.endsWith(".mg")) {
+                            nbMeshroomScenes++
                         }
-                    }
+                    })
                 }
                 onDropped: {
                     var augmentSfm = augmentArea.hovered
-                    root.filesDropped(drop, augmentSfm)
+                    if (nbMeshroomScenes == nbDraggedFiles || nbMeshroomScenes == 0) {
+                        root.filesDropped(drop, augmentSfm)
+                    } else {
+                        errorDialog.open()
+                    }
                 }
 
                 // Background opacifier
@@ -476,12 +480,14 @@ Panel {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         text: {
-                            if (isMeshroomScene) {
-                                if (nbDraggedFiles == 1) {
-                                    return "Load Project"
-                                } else {
-                                    return "Only one project"
-                                }
+                            if (nbMeshroomScenes != nbDraggedFiles && nbMeshroomScenes != 0) {
+                                return "Do not mix project and images"
+                            }
+
+                            if (nbMeshroomScenes == 1 && nbMeshroomScenes == nbDraggedFiles) {
+                                return "Load Project"
+                            } else if (nbMeshroomScenes == nbDraggedFiles) {
+                                return "Only one project"
                             } else {
                                 return "Add Images"
                             }
@@ -506,7 +512,7 @@ Panel {
                         font.bold: true
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         visible: {
-                            if (isMeshroomScene) {
+                            if (nbMeshroomScenes > 0) {
                                 return false
                             }
 
@@ -922,5 +928,20 @@ Panel {
             to: 250
             implicitWidth: 70
         }
+    }
+
+    MessageDialog {
+        id: errorDialog
+
+        icon.text: MaterialIcons.error
+        icon.color: "#F44336"
+
+        title: "Different types of files"
+        text: "Do not mix .mg files and other types of files."
+        standardButtons: Dialog.Ok
+
+        parent: Overlay.overlay
+
+        onAccepted: close()
     }
 }

@@ -8,6 +8,9 @@ class StructureFromMotion(desc.AVCommandLineNode):
     commandLine = 'aliceVision_incrementalSfM {allParams}'
     size = desc.DynamicNodeSize('input')
 
+    cpu = desc.Level.INTENSIVE
+    ram = desc.Level.INTENSIVE
+
     category = 'Sparse Reconstruction'
     documentation = '''
 This node will analyze feature matches to understand the geometric relationship behind all the 2D observations,

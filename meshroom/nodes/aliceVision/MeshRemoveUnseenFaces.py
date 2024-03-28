@@ -35,7 +35,7 @@ Remove triangles from the mesh when the vertices are not visible by any camera.
             label="Mesh Type",
             description="File type for the output mesh.",
             value="obj",
-            values=("gltf", "obj", "fbx", "stl"),
+            values=["gltf", "obj", "fbx", "stl"],
             exclusive=True,
             uid=[0],
             group="",

@@ -31,7 +31,7 @@ Decimate triangles based on image masks.
             label="Output Mesh Type",
             description="File type of the output mesh.",
             value="obj",
-            values=("obj", "gltf", "fbx", "stl"),
+            values=["obj", "gltf", "fbx", "stl"],
             exclusive=True,
             uid=[0],
             group="",

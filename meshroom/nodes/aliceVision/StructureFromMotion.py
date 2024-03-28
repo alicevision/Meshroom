@@ -378,7 +378,7 @@ It iterates like that, adding cameras and triangulating new 2D features into 3D 
             label="Inter File Extension",
             description="Extension of the intermediate file export.",
             value=".abc",
-            values=(".abc", ".ply"),
+            values=[".abc", ".ply"],
             exclusive=True,
             uid=[],
             advanced=True,

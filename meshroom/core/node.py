@@ -410,10 +410,12 @@ class NodeChunk(BaseObject):
         try:
             self.node.nodeDesc.processChunk(self)
         except Exception as e:
+            self._status.elapsedTime = time.time() - startTime
             if self._status.status != Status.STOPPED:
                 self.upgradeStatusTo(Status.ERROR)
             raise
         except (KeyboardInterrupt, SystemError, GeneratorExit) as e:
+            self._status.elapsedTime = time.time() - startTime
             self.upgradeStatusTo(Status.STOPPED)
             raise
         finally:
@@ -801,6 +803,13 @@ class BaseNode(BaseObject):
             shutil.rmtree(self.internalFolder)
             self.updateStatusFromCache()
 
+    @Slot(result=str)
+    def getStartDateTime(self):
+        """ Return the date (str) of the first running chunk """
+        dateTime = [chunk._status.startDateTime for chunk in self._chunks if chunk._status.status
+                    not in (Status.NONE, Status.SUBMITTED) and chunk._status.startDateTime != ""]
+        return min(dateTime) if len(dateTime) != 0 else ""
+
     def isAlreadySubmitted(self):
         for chunk in self._chunks:
             if chunk.isAlreadySubmitted():
@@ -822,6 +831,11 @@ class BaseNode(BaseObject):
             if chunk.isRunning():
                 return True
         return False
+
+    @Slot(result=bool)
+    def isRunning(self):
+        """ Return True if at least one chunk of this Node is running, False otherwise. """
+        return any(chunk.isRunning() for chunk in self._chunks)
 
     @Slot(result=bool)
     def isFinishedOrRunning(self):

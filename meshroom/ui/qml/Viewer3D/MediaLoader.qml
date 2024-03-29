@@ -20,6 +20,9 @@ import Utils 1.0
     property var object: null
     property int renderMode
 
+    property var viewer2DInfo: null
+    property bool displayObservations: false
+
     /// Scene's current camera
     property Camera camera: null
 
@@ -110,6 +113,9 @@ import Utils 1.0
                                                'source': source,
                                                'pointSize': Qt.binding(function() { return 0.01 * Viewer3DSettings.pointSize }),
                                                'locatorScale': Qt.binding(function() { return Viewer3DSettings.cameraScale }),
+                                               'viewId': Qt.binding(function() { return _reconstruction.selectedViewId }),
+                                               'viewer2DInfo': Qt.binding(function() {return root.viewer2DInfo}),
+                                               'displayObservations': Qt.binding(function() {return root.displayObservations}),
                                                'cameraPickingEnabled': Qt.binding(function() { return root.enabled }),
                                                'resectionId': Qt.binding(function() { return Viewer3DSettings.resectionId }),
                                                'displayResections': Qt.binding(function() { return Viewer3DSettings.displayResectionIds })

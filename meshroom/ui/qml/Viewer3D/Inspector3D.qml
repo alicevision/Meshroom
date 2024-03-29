@@ -496,6 +496,22 @@ FloatingPane {
                                     }
                                 }
 
+                                // Observations visibility (if Sfm node)
+                                MaterialToolButton {
+                                    visible: model.hasObservations
+                                    enabled: model.visible
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.fillHeight: true
+                                    text: MaterialIcons.compare_arrows
+                                    font.pointSize: 10
+                                    ToolTip.text: model.displayObservations ? "Hide observations" : "Show observations"
+                                    flat: true
+                                    opacity: model.visible ? (model.displayObservations ? 1.0 : 0.6) : 0.6
+                                    onClicked: {
+                                        model.displayObservations = !model.displayObservations
+                                    }
+                                }
+
                                 // Media label and info
                                 Item {
                                     implicitHeight: childrenRect.height

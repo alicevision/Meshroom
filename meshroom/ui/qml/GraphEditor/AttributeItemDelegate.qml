@@ -4,6 +4,7 @@ import QtQuick.Controls 2.2
 import QtQuick.Dialogs 1.3
 import MaterialIcons 2.2
 import Utils 1.0
+import Controls 1.0
 
 /**
   Instantiate a control to visualize and edit an Attribute based on its type.
@@ -342,18 +343,9 @@ RowLayout {
 
         Component {
             id: comboBox_component
-            ComboBox {
-                id: combo
-                enabled: root.editable
-                model: attribute.values
-                Component.onCompleted: currentIndex = find(attribute.value)
-                onActivated: _reconstruction.setAttribute(attribute, currentText)
-                Connections {
-                    target: attribute
-                    function onValueChanged() {
-                        combo.currentIndex = combo.find(attribute.value)
-                    }
-                }
+
+            FilterComboBox {
+                inputModel: attribute.desc.values
             }
         }
 

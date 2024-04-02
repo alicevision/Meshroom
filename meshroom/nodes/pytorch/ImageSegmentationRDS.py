@@ -26,8 +26,10 @@ class ImageSegmentationRDS(desc.Node):
     documentation = '''
 Generate a binary mask corresponding to the input text prompt.
 First a recognition model (image to tags) is launched on the input image.
-If the prompt or a synonym is detected is the returned list of tags the detection model (tag to bounded box) is launched.
+If the prompt or a synonym is detected in the returned list of tags the detection model (tag to bounded box) is launched.
+Detection can be forced by setting to True the appropriate parameter.
 If at least one bounded box is returned the segmentation model (bounded box to binary mask) is launched.
+Bounded box sizes can be increased by a ratio from 0 to 100%
 '''
 
     inputs = [
@@ -85,6 +87,14 @@ If at least one bounded box is returned the segmentation model (bounded box to b
             label="Force Detection",
             description="Launch detection step even if nor the prompt neither any synonyms are recognized",
             value=False,
+            uid=[0],
+        ),
+        desc.IntParam(
+            name="bboxMargin",
+            label="Detection Margin",
+            description="Increase bounded box dimensions by the selected percentage",
+            range=(0,100,1),
+            value=0,
             uid=[0],
         ),
         desc.BoolParam(
@@ -145,11 +155,6 @@ If at least one bounded box is returned the segmentation model (bounded box to b
             views = dataAV.getViews()
             for id, v in views.items():
                 inputFile = v.getImage().getImagePath()
-                # if keepFilename:
-                #     outputFile = os.path.join(outDir, Path(inputFile).stem + '.exr')
-                # else:
-                #     outputFile = os.path.join(outDir, str(id) + '.exr')
-                # paths[inputFile] = outputFile
                 if keepFilename:
                     outputFileMask = os.path.join(outDir, Path(inputFile).stem + '.exr')
                     outputFileBoxes = os.path.join(outDir, "bboxes_" + Path(inputFile).stem + '.jpg')
@@ -192,6 +197,7 @@ If at least one bounded box is returned the segmentation model (bounded box to b
                                                            prompt = chunk.node.prompt.value,
                                                            synonyms = chunk.node.synonyms.value,
                                                            force = chunk.node.forceDetection.value,
+                                                           bboxMargin = chunk.node.bboxMargin.value,
                                                            invert = chunk.node.maskInvert.value,
                                                            verbose = False)
 

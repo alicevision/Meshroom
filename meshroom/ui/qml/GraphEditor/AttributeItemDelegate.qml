@@ -346,6 +346,22 @@ RowLayout {
 
             FilterComboBox {
                 inputModel: attribute.desc.values
+
+                Component.onCompleted: {
+                    currentIndex = find(attribute.value)
+                }
+
+                onEditingFinished: function(value) {
+                    _reconstruction.setAttribute(attribute, value)
+                }
+
+                Connections {
+                    target: attribute
+                    onValueChanged: {
+                        filterText.clear()
+                        currentIndex = find(attribute.value)
+                    }
+                }
             }
         }
 

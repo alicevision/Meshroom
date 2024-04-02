@@ -6,25 +6,25 @@ import Utils 1.0
 * ComboBox with filter text area
 *
 * @param inputModel - model to filter
+* @param editingFinished - signal emitted when editing is finished
+* @alias filterText - text to filter the model
 */
 
 ComboBox {
+    id: combo
 
     property var inputModel
+    signal editingFinished(var value)
 
-    id: combo
+    property alias filterText: filterTextArea
+
     enabled: root.editable
     model: {
         var filteredData = inputModel.filter(condition => {
                                             if (filterTextArea.text.length > 0) return condition.toString().includes(filterTextArea.text)
                                             return true
                                         })
-
-        if (filteredData.length == 0 || filterTextArea.length == 0) {
-            filteredData = inputModel
-
-            filterTextArea.background.color = Colors.red
-        } else {
+        if (filteredData.length > 0) {
             filterTextArea.background.color = Qt.lighter(palette.base, 2)
 
             // order filtered data by relevance (results that start with the filter text come first)
@@ -37,8 +37,14 @@ ComboBox {
                 if (!nameA.startsWith(filterText) && nameB.startsWith(filterText))
                     return 1
                 return 0
-            });
+            })
+        } else {
+            filterTextArea.background.color = Colors.red
         }
+
+        if (filteredData.length == 0 || filterTextArea.length == 0) {
+            filteredData = inputModel
+        } 
 
         return filteredData
     }
@@ -68,10 +74,11 @@ ComboBox {
 
                 onEditingFinished: {
                     combo.popup.close()
+                    combo.editingFinished(currentText)
                 }
 
                 Keys.onReturnPressed: {
-                    editingFinished();
+                    editingFinished()
                 }
             }
         }

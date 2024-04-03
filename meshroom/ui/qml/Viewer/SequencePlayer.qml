@@ -54,7 +54,7 @@ FloatingPane {
         }
 
         onPlayingChanged: {
-            syncSelected = !playing;
+            syncSelected = syncButton.checked || !playing;
             if(playing && (frame + 1 >= sortedViewIds.length))
             {
                 frame = 0;
@@ -253,6 +253,22 @@ FloatingPane {
 
             onCheckedChanged: {
                 m.repeat = checked;
+            }
+        }
+
+        MaterialToolButton {
+            id: syncButton
+
+            checkable: true
+            checked: false
+            text: MaterialIcons.sync
+            ToolTip.text: "Sync Viewers and Sequence Player"
+
+            onCheckedChanged: {
+                // if playing, update the syncSelected property
+                if (m.playing) {
+                    m.syncSelected = checked;
+                }
             }
         }
     }

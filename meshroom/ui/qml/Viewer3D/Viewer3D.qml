@@ -111,13 +111,6 @@ FocusScope {
                 viewCenter: defaultCamViewCenter
                 aspectRatio: width/height
 
-                Behavior on viewCenter {
-                    Vector3dAnimation { duration: 250 }
-                }
-                Behavior on position {
-                    Vector3dAnimation { duration: 250 }
-                }
-
                 // Scene light, attached to the camera
                 Entity {
                     components: [

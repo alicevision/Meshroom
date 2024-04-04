@@ -29,6 +29,9 @@ FloatingPane {
                 _reconstruction.selectedViewId = sortedViewIds[m.frame];
             } else {
                 _reconstruction.pickedViewId = sortedViewIds[m.frame];
+                if (m.sync3DSelected) {
+                    _reconstruction.updateSelectedViewpoint(_reconstruction.pickedViewId);
+                }
             }
         }
     }
@@ -41,6 +44,7 @@ FloatingPane {
 
         property int frame: 0
         property bool syncSelected: true
+        property bool sync3DSelected: false
         property bool playing: false
         property bool repeat: false
         property real fps: 24
@@ -269,6 +273,19 @@ FloatingPane {
                 if (m.playing) {
                     m.syncSelected = checked;
                 }
+            }
+        }
+
+        MaterialToolButton {
+            id: sync3DButton
+
+            checkable: true
+            checked: false
+            text: MaterialIcons.sync_alt
+            ToolTip.text: "Sync 3D Viewer and Sequence Player"
+
+            onCheckedChanged: {
+                m.sync3DSelected = checked;
             }
         }
     }

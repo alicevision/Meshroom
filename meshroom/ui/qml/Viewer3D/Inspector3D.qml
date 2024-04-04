@@ -128,11 +128,12 @@ FloatingPane {
                     // Synchronization
                     MaterialToolButton {
                         id: syncViewpointCamera
-                        enabled: _reconstruction ? _reconstruction.sfmReport : false
+                        enabled: _reconstruction && mediaLibrary.count > 0 ? _reconstruction.sfmReport : false
                         text: MaterialIcons.linked_camera
                         ToolTip.text: "View Through The Active Camera"
+                        checkable: true
                         checked: enabled && Viewer3DSettings.syncViewpointCamera
-                        onClicked: Viewer3DSettings.syncViewpointCamera = !Viewer3DSettings.syncViewpointCamera
+                        onCheckedChanged: Viewer3DSettings.syncViewpointCamera = !Viewer3DSettings.syncViewpointCamera
                     }
 
                     // Image Overlay controls

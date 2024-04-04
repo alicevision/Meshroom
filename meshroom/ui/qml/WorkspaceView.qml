@@ -226,6 +226,13 @@ Item {
                                 drop.urls.forEach(function(url){ load3DMedia(url); });
                             }
                         }
+
+                        Connections {
+                            target: viewer2D
+                            function onSync3DSelectedChanged() {
+                                Viewer3DSettings.syncWithPickedViewId = viewer2D.sync3DSelected
+                            }
+                        }
                         
                         // Load reconstructed model
                         Button {

@@ -22,6 +22,7 @@ FloatingPane {
     // Exposed properties
     property var sortedViewIds: []
     property var viewer: null
+    readonly property alias sync3DSelected: m.sync3DSelected
 
     function updateReconstructionView() {
         if (_reconstruction && m.frame >= 0 && m.frame < sortedViewIds.length) {

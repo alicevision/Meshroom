@@ -12,6 +12,8 @@ SfmDataEntity {
     id: root
 
     property bool cameraPickingEnabled: true
+    property bool syncPickedViewId: false
+
     // filter out non-reconstructed cameras
     skipHidden: true
 
@@ -21,6 +23,9 @@ SfmDataEntity {
         target: _reconstruction
         function onSelectedViewIdChanged() {
             root.cameraSelected(_reconstruction.selectedViewId)
+        }
+        function onSelectedViewpointChanged() {
+            root.cameraSelected(_reconstruction.pickedViewId)
         }
     }
 
@@ -96,7 +101,7 @@ SfmDataEntity {
                 },
                 PhongMaterial{
                     id: mat
-                    ambient: _reconstruction && viewId === _reconstruction.selectedViewId ? activePalette.highlight : customColor // "#CCC"
+                    ambient: _reconstruction && (viewId === _reconstruction.selectedViewId || (viewId === _reconstruction.pickedViewId && syncPickedViewId)) ? activePalette.highlight : customColor // "#CCC"
                     diffuse: cameraPicker.containsMouse ? Qt.lighter(activePalette.highlight, 1.2) : ambient
                 },
                 ObjectPicker {

@@ -28,6 +28,8 @@ FocusScope {
     property bool enable8bitViewer: enable8bitViewerAction.checked
     property bool enableSequencePlayer: enableSequencePlayerAction.checked
 
+    readonly property alias sync3DSelected: sequencePlayer.sync3DSelected
+
     QtObject {
         id: m
         property variant viewpointMetadata: {

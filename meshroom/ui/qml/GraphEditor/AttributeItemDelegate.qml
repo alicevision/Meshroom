@@ -357,9 +357,20 @@ RowLayout {
 
                 Connections {
                     target: attribute
-                    onValueChanged: {
-                        filterText.clear()
-                        currentIndex = find(attribute.value)
+                    function onValueChanged() {
+                        // when reset, clear and find the current index
+                        // but if only reopen the combo box, keep the current value
+                        
+                        //convert all values of desc values as string
+                        var valuesAsString = attribute.desc.values.map(function(value) {
+                            return value.toString()
+                        })
+                        if (valuesAsString.includes(attribute.value) || attribute.value === attribute.desc.value) {
+                            filterText.clear()
+                            validValue = true
+                            displayText = currentText
+                            currentIndex = find(attribute.value) 
+                        }
                     }
                 }
             }

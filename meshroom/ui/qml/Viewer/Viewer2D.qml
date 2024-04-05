@@ -586,6 +586,7 @@ FocusScope {
                                 'features': Qt.binding(function() { return mfeaturesLoader.status === Loader.Ready ? mfeaturesLoader.item : null }),
                                 'tracks': Qt.binding(function() { return mtracksLoader.status === Loader.Ready ? mtracksLoader.item : null }),
                                 'sfmData': Qt.binding(function() { return msfmDataLoader.status === Loader.Ready ? msfmDataLoader.item : null }),
+                                'sync3DSelected': Qt.binding(function() { return sequencePlayer.sync3DSelected }),
                             })
                         } else {
                             // Forcing the unload (instead of using Component.onCompleted to load it once and for all) is necessary since Qt 5.14

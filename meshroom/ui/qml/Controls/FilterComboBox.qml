@@ -66,10 +66,16 @@ ComboBox {
 
     popup: Popup {
         width: combo.width
-        implicitHeight: contentItem.implicitHeight
+        implicitHeight: contentItem.implicitHeight 
 
         onAboutToShow: {
             filterTextArea.forceActiveFocus()
+
+            if (mapToGlobal(popup.x, popup.y).y + root.implicitHeight * (model.length + 1) > _window.contentItem.height) {
+                y = -root.implicitHeight * (model.length + 1)
+            } else {
+                y = 0
+            }
         }
 
         contentItem: Item {
